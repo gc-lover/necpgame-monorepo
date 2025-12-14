@@ -1,0 +1,223 @@
+# Issue: #140875761
+metadata:
+  id: ui-guild-contract-board
+  title: Guild Contract Board - Mission Assignment Interface UI/UX Design
+  document_type: design
+  category: ui
+  status: draft
+  version: '1.0.0'
+  last_updated: 2025-12-14T13:00:00Z
+  concept_approved: true
+  owners:
+    - role: ui_ux_designer
+      contact: ui-ux@necp.game
+  tags: [ui, ux, design, guild, contracts, missions]
+  github_issue: 140875761
+summary:
+  problem: Нужен удобный интерфейс для просмотра и принятия гильдейских контрактов с фильтрами, поиском и деталями.
+  goal: Обеспечить игрокам быстрый выбор подходящих контрактов, прозрачную информацию о наградах и требованиях.
+  key_points:
+    - Доска контрактов с фильтрами по типу, сложности, наградам.
+    - Детальная карточка контракта с описанием, требованиями и вознаграждениями.
+    - Система принятия контракта с подтверждением и уведомлениями.
+    - Интеграция с гильдейской статистикой и прогрессом.
+content:
+  visual_design:
+    style: cyberpunk-2077
+    color_scheme:
+      contract_types:
+        combat: '#FF4444'
+        exploration: '#44FF44'
+        crafting: '#4444FF'
+        social: '#FF44FF'
+        special: '#FFFF44'
+      difficulty_levels:
+        easy: '#00FF88'
+        medium: '#FFAA00'
+        hard: '#FF4444'
+        elite: '#AA00FF'
+        legendary: '#FFD642'
+      status_indicators:
+        available: '#00FF88'
+        in_progress: '#FFFF00'
+        completed: '#666666'
+        expired: '#FF4444'
+  interface_structure:
+    main_screen:
+      sections:
+        - id: header_bar
+          components:
+            - type: title_label
+              text: "GUILD CONTRACT BOARD"
+              style: neon_glow
+            - type: guild_info_panel
+              elements: [guild_name, member_count, active_contracts, reputation_score]
+            - type: notification_badge
+              triggers: [new_contracts, contract_deadlines, rewards_claimed]
+        - id: filters_panel
+          components:
+            - type: filter_tabs
+              categories: [all, combat, exploration, crafting, social, special]
+            - type: difficulty_filter
+              levels: [easy, medium, hard, elite, legendary]
+            - type: reward_filter
+              types: [experience, money, items, reputation, guild_points]
+            - type: search_bar
+              behavior: instant_search + autocomplete
+            - type: sort_options
+              options: [newest, reward_value, difficulty, popularity, deadline]
+        - id: contracts_grid
+          components:
+            - type: contract_cards
+              layout: responsive_grid
+              elements:
+                - contract_icon
+                - title
+                - difficulty_indicator
+                - reward_preview
+                - time_remaining
+                - member_count
+              interactions:
+                - hover: show_quick_preview
+                - click: open_detail_view
+                - double_click: quick_accept
+        - id: pagination_controls
+          components:
+            - type: page_navigation
+            - type: items_per_page
+            - type: total_count_display
+    contract_detail_modal:
+      sections:
+        - id: contract_header
+          components:
+            - type: contract_title
+              style: large_bold
+            - type: contract_type_badge
+            - type: difficulty_stars
+            - type: time_remaining_counter
+            - type: reward_summary
+        - id: description_panel
+          components:
+            - type: rich_text_description
+              features: [formatted_text, images, videos]
+            - type: objectives_list
+              format: checklist_with_progress
+            - type: requirements_display
+              elements: [level, skills, items, reputation]
+        - id: rewards_panel
+          components:
+            - type: reward_breakdown
+              categories: [experience, money, items, reputation, unlocks]
+            - type: bonus_rewards
+              conditions: [speed_completion, team_size, difficulty_modifier]
+        - id: team_panel
+          components:
+            - type: current_members_list
+            - type: invite_friends_button
+            - type: required_roles_display
+            - type: join_leave_buttons
+        - id: action_buttons
+          components:
+            - type: accept_contract_button
+              confirmation_modal: true
+            - type: share_contract_button
+            - type: favorite_contract_button
+            - type: report_contract_button
+  interaction_patterns:
+    contract_acceptance:
+      steps:
+        - user_clicks_accept
+        - confirmation_dialog_appears
+        - system_checks_requirements
+        - success: contract_added_to_active
+        - failure: error_message_with_details
+      notifications:
+        - contract_accepted: "Contract added to your active missions"
+        - requirements_not_met: "You don't meet the requirements for this contract"
+        - contract_full: "This contract already has maximum participants"
+    contract_progress:
+      updates:
+        - objective_completed: visual_checkmark + progress_bar_update
+        - time_warning: color_change_to_red + notification
+        - team_member_joined: member_list_update + notification
+        - reward_earned: reward_popup + inventory_update
+  accessibility:
+    keyboard_navigation:
+      - tab_order: filters -> search -> grid -> pagination
+      - shortcuts:
+        - ctrl+f: focus_search
+        - enter: accept_selected_contract
+        - escape: close_modal
+    screen_reader_support:
+      - aria_labels: all_interactive_elements
+      - live_regions: dynamic_content_updates
+      - semantic_html: proper_heading_hierarchy
+  responsive_design:
+    breakpoints:
+      mobile: < 768px
+      tablet: 768px - 1024px
+      desktop: > 1024px
+    mobile_optimizations:
+      - simplified_filters: dropdown_instead_of_tabs
+      - card_layout: single_column_list
+      - touch_friendly: larger_buttons_and_targets
+    tablet_optimizations:
+      - medium_filters: collapsible_sidebar
+      - card_layout: 2_column_grid
+  performance_considerations:
+    lazy_loading:
+      - contract_cards: load_visible + preload_adjacent
+      - contract_details: load_on_demand
+      - images: progressive_loading
+    caching:
+      - filter_results: cache_for_session
+      - user_preferences: persistent_storage
+      - contract_data: background_updates
+  testing_requirements:
+    user_scenarios:
+      - new_player_discovery: first_time_using_board
+      - veteran_player_efficiency: quick_contract_selection
+      - guild_leader_management: overseeing_team_contracts
+      - mobile_player_access: tablet/phone_usage
+    edge_cases:
+      - no_contracts_available: empty_state_handling
+      - network_disconnection: offline_mode_capabilities
+      - conflicting_contracts: requirement_validation
+      - expired_contracts: cleanup_and_removal
+appendix:
+  glossary:
+    - term: Contract Board
+      definition: Центральный интерфейс для просмотра и принятия гильдейских заданий
+    - term: Contract Difficulty
+      definition: Уровень сложности контракта, влияющий на награды и требования
+    - term: Team Contracts
+      definition: Контракты, требующие участия нескольких игроков для выполнения
+    - term: Contract Reputation
+      definition: Рейтинг контракта на основе отзывов предыдущих участников
+  references:
+    - ui-guild-management.yaml
+    - ui-quest-log.yaml
+    - mechanics-guild-system.yaml
+  decisions:
+    - decision: Single Page vs Multi Page
+      choice: Single Page with Modal Details
+      rationale: Упрощает навигацию и позволяет видеть все контракты одновременно
+    - decision: Card Layout vs List Layout
+      choice: Card Grid with Quick Preview
+      rationale: Лучше показывает визуальную информацию о контрактах
+    - decision: Accept Confirmation
+      choice: Required Confirmation Modal
+      rationale: Предотвращает случайное принятие контрактов с серьезными последствиями
+implementation:
+  github_issue: 140875761
+  needs_task: false
+  queue_reference: []
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-12-14
+    author: content_writer
+    changes: 'Создан UI/UX дизайн для Guild Contract Board: доска контрактов с фильтрами, карточками контрактов, детальным модальным окном и системой принятия контрактов.'
+validation:
+  checksum: ''
+  schema_version: '1.0'
