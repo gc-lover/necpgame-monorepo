@@ -1,7 +1,7 @@
 -- Issue: #50
 -- Import NPC from: factions\gangs\voodoo-boys\maman-brigitte-2060-2077.yaml
 -- Version: 1.0.0
--- Generated: 2025-12-14T14:50:15.297584
+-- Generated: 2025-12-14T16:03:07.840138
 -- WARNING  WARNING: Requires 'npc_definitions' table (create via Database agent)
 
 BEGIN;

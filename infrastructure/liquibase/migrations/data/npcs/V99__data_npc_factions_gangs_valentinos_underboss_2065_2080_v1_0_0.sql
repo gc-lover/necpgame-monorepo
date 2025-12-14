@@ -1,7 +1,7 @@
 -- Issue: #50
 -- Import NPC from: factions\gangs\valentinos\underboss-2065-2080.yaml
 -- Version: 1.0.0
--- Generated: 2025-12-14T12:57:10.353612
+-- Generated: 2025-12-14T16:03:07.835474
 -- WARNING  WARNING: Requires 'npc_definitions' table (create via Database agent)
 
 BEGIN;

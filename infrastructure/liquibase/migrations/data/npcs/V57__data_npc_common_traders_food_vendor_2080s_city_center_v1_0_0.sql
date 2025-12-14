@@ -1,7 +1,7 @@
 -- Issue: #50
 -- Import NPC from: common\traders\food-vendor-2080s-city-center.yaml
 -- Version: 1.0.0
--- Generated: 2025-12-14T12:57:10.184314
+-- Generated: 2025-12-14T16:03:07.657167
 -- WARNING  WARNING: Requires 'npc_definitions' table (create via Database agent)
 
 BEGIN;

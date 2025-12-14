@@ -1,7 +1,7 @@
 -- Issue: #50
 -- Import dialogue from: quest-side-maelstrom-double-cross.yaml
 -- Version: 1.1.0
--- Generated: 2025-12-13T21:13:37.201657
+-- Generated: 2025-12-14T16:03:08.357986
 -- WARNING  WARNING: Requires 'dialogue_nodes' table (create via Database agent)
 
 BEGIN;

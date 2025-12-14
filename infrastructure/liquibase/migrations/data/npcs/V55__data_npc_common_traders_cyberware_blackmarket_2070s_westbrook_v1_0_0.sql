@@ -1,7 +1,7 @@
 -- Issue: #50
 -- Import NPC from: common\traders\cyberware-blackmarket-2070s-westbrook.yaml
 -- Version: 1.0.0
--- Generated: 2025-12-14T12:57:10.177662
+-- Generated: 2025-12-14T16:03:07.650569
 -- WARNING  WARNING: Requires 'npc_definitions' table (create via Database agent)
 
 BEGIN;

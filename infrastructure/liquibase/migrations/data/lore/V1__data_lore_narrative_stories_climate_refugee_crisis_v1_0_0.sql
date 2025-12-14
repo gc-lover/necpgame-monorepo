@@ -1,0 +1,232 @@
+-- Issue: #40, #552, #558, #559, #560, #561, #562, #563, #564
+-- Import lore from: narrative\stories\climate-refugee-crisis.yaml
+-- Generated: 2025-12-14T16:03:09.070668
+
+BEGIN;
+
+-- Lore: story-climate-refugee-crisis
+INSERT INTO narrative.lore_entries (
+    lore_id, title, document_type, category,
+    content_data, version
+)
+VALUES (
+    'story-climate-refugee-crisis',
+    'Кризис климатических беженцев',
+    'canon',
+    'narrative-story',
+    '{
+  "metadata": {
+    "id": "story-climate-refugee-crisis",
+    "title": "Кризис климатических беженцев",
+    "document_type": "canon",
+    "category": "narrative-story",
+    "status": "draft",
+    "version": "1.0.0",
+    "last_updated": "2025-12-14T12:00:00+00:00",
+    "concept_approved": false,
+    "concept_reviewed_at": "",
+    "owners": [
+      {
+        "role": "concept_director",
+        "contact": "concept@necp.game"
+      }
+    ],
+    "tags": [
+      "climate",
+      "refugees",
+      "crisis",
+      "migration",
+      "humanitarian"
+    ],
+    "topics": [
+      "climate_migration",
+      "humanitarian_crisis",
+      "border_conflicts"
+    ],
+    "related_systems": [
+      "narrative-service",
+      "social-service",
+      "world-service"
+    ],
+    "related_documents": [],
+    "source": "shared/docs/knowledge/canon/narrative/stories/climate-refugee-crisis.md",
+    "visibility": "internal",
+    "audience": [
+      "concept",
+      "narrative",
+      "liveops"
+    ],
+    "risk_level": "high"
+  },
+  "review": {
+    "chain": [
+      {
+        "role": "concept_director",
+        "reviewer": "",
+        "reviewed_at": "",
+        "status": "pending"
+      }
+    ],
+    "next_actions": []
+  },
+  "summary": {
+    "problem": "Миллионы людей бегут от климатических катастроф, создавая глобальный кризис.",
+    "goal": "Показать человеческую сторону климатической миграции и ее геополитические последствия.",
+    "essence": "Изменение климата не только разрушает экологию, но и перекраивает карту человечества.",
+    "key_points": [
+      "Масштабная миграция из затопленных регионов",
+      "Конфликты на границах и ресурсные войны",
+      "Гуманитарные кризисы и международная помощь"
+    ]
+  },
+  "story_narrative": {
+    "hook": "Семья из затопленного Бангладеш прибывает в Амстердам, ища убежища.",
+    "inciting_incident": "Глобальный шторм уничтожает прибрежные города по всему миру.",
+    "rising_action": [
+      "Массовый исход из Юго-Восточной Азии и островных государств",
+      "Закрытие границ и строительство стен",
+      "Гуманитарные кризисы в лагерях беженцев",
+      "Экономические последствия перераспределения населения"
+    ],
+    "climax": "Вооруженный конфликт на границе ЕС из-за наплыва беженцев.",
+    "falling_action": "Международные переговоры и перераспределение ресурсов.",
+    "resolution": "Новый мировой порядок с измененными границами и приоритетами."
+  },
+  "characters": {
+    "primary": [
+      {
+        "name": "Aisha Rahman",
+        "role": "Климатическая беженка, лидер общины",
+        "motivation": "Защитить свою семью и соотечественников",
+        "arc": "От жертвы к активисту за права мигрантов"
+      },
+      {
+        "name": "Commissioner Van der Berg",
+        "role": "Европейский чиновник по миграции",
+        "motivation": "Поддерживать порядок и европейские ценности",
+        "arc": "От бюрократа к гуманисту"
+      }
+    ],
+    "supporting": [
+      {
+        "name": "Marcus Kane",
+        "role": "Корпоративный лоббист",
+        "motivation": "Использовать кризис для прибыли",
+        "arc": "От opportunist к глобальному игроку"
+      }
+    ]
+  },
+  "themes": [
+    "Климатические изменения затрагивают всех",
+    "Границы - иллюзия в глобальном мире",
+    "Сострадание как основа выживания человечества"
+  ],
+  "world_building": {
+    "regions": [
+      {
+        "Sundarbans Delta": "Полностью затоплена, миллионы беженцев"
+      },
+      {
+        "Pacific Islands": "Государства исчезают под водой"
+      },
+      {
+        "Mediterranean": "Горячая точка миграции"
+      },
+      {
+        "Arctic": "Новые возможности для поселений"
+      }
+    ],
+    "conflicts": [
+      {
+        "Border Wars": "Вооруженные столкновения на границах"
+      },
+      {
+        "Resource Scarcity": "Борьба за воду, еду, жилье"
+      },
+      {
+        "Cultural Clashes": "Интеграция разных культур"
+      }
+    ]
+  },
+  "timeline": [
+    {
+      "date": "2030-01-01",
+      "event": "Первая массовая волна беженцев"
+    },
+    {
+      "date": "2030-06-15",
+      "event": "Закрытие границ ЕС"
+    },
+    {
+      "date": "2030-09-01",
+      "event": "Гуманитарный кризис в лагерях"
+    },
+    {
+      "date": "2030-12-25",
+      "event": "Вооруженный конфликт на границе"
+    },
+    {
+      "date": "2031-03-01",
+      "event": "Международное соглашение о перераспределении"
+    }
+  ],
+  "player_impact": {
+    "choices": [
+      {
+        "humanitarian_aid": "Помочь беженцам интегрироваться"
+      },
+      {
+        "border_security": "Участвовать в охране границ"
+      },
+      {
+        "corporate_exploitation": "Использовать кризис для бизнеса"
+      }
+    ],
+    "consequences": [
+      {
+        "reputation_changes": "Влияние на глобальное восприятие"
+      },
+      {
+        "access_changes": "Доступ к новым регионам и ресурсам"
+      },
+      {
+        "story_branches": "Альтернативные сюжетные линии в разных регионах"
+      }
+    ]
+  },
+  "appendix": {
+    "glossary": [],
+    "references": [],
+    "decisions": []
+  },
+  "implementation": {
+    "github_issue": 140879399,
+    "needs_task": false,
+    "queue_reference": [],
+    "blockers": []
+  },
+  "history": [
+    {
+      "version": "1.0.0",
+      "date": "2025-12-14",
+      "author": "content_writer",
+      "changes": "Создан нарратив \"Кризис климатических беженцев\" с полной структурой миграции."
+    }
+  ],
+  "validation": {
+    "checksum": "",
+    "schema_version": "1.0"
+  }
+}'::jsonb,
+    1
+)
+ON CONFLICT (lore_id) DO UPDATE SET
+    title = EXCLUDED.title,
+    document_type = EXCLUDED.document_type,
+    category = EXCLUDED.category,
+    content_data = EXCLUDED.content_data,
+    version = EXCLUDED.version,
+    updated_at = CURRENT_TIMESTAMP;
+
+
+COMMIT;

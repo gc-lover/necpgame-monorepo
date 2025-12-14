@@ -1,7 +1,7 @@
 -- Issue: #50
 -- Import NPC from: important\saburo-arasaka.yaml
 -- Version: 0.2.0
--- Generated: 2025-12-14T12:57:10.603033
+-- Generated: 2025-12-14T16:03:08.093564
 -- WARNING  WARNING: Requires 'npc_definitions' table (create via Database agent)
 
 BEGIN;

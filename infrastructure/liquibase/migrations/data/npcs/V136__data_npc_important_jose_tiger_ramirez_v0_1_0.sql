@@ -1,7 +1,7 @@
 -- Issue: #50
 -- Import NPC from: important\jose-tiger-ramirez.yaml
 -- Version: 0.1.0
--- Generated: 2025-12-14T14:41:04.535863
+-- Generated: 2025-12-14T16:03:07.991281
 -- WARNING  WARNING: Requires 'npc_definitions' table (create via Database agent)
 
 BEGIN;

@@ -1,7 +1,7 @@
 -- Issue: #50
 -- Import dialogue from: npc-dialogues-basic.yaml
 -- Version: 1.0.0
--- Generated: 2025-12-13T21:13:37.144804
+-- Generated: 2025-12-14T16:03:08.294942
 -- WARNING  WARNING: Requires 'dialogue_nodes' table (create via Database agent)
 
 BEGIN;

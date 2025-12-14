@@ -1,6 +1,6 @@
 -- Issue: #40, #552, #558, #559, #560, #561, #562, #563, #564
 -- Import lore from: narrative\sid-endings\endings\cities\night-city-endings.yaml
--- Generated: 2025-12-13T21:13:37.866574
+-- Generated: 2025-12-14T16:03:09.038039
 
 BEGIN;
 

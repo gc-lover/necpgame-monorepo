@@ -1,7 +1,7 @@
 -- Issue: #50
 -- Import NPC from: factions\gangs\wraiths\master-mechanic-2055-2085.yaml
 -- Version: 1.0.0
--- Generated: 2025-12-14T12:57:10.369142
+-- Generated: 2025-12-14T16:03:07.852227
 -- WARNING  WARNING: Requires 'npc_definitions' table (create via Database agent)
 
 BEGIN;

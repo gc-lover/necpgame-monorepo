@@ -1,6 +1,6 @@
 -- Issue: #50
 -- Import quest from: america\atlanta\2020-2029\quest-006-southern-food.yaml
--- Generated: 2025-12-13T21:13:33.258015
+-- Generated: 2025-12-14T16:03:04.132758
 
 BEGIN;
 

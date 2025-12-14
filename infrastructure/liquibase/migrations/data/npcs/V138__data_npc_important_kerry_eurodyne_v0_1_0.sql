@@ -1,7 +1,7 @@
 -- Issue: #50
 -- Import NPC from: important\kerry-eurodyne.yaml
 -- Version: 0.1.0
--- Generated: 2025-12-14T12:57:10.514932
+-- Generated: 2025-12-14T16:03:07.999972
 -- WARNING  WARNING: Requires 'npc_definitions' table (create via Database agent)
 
 BEGIN;

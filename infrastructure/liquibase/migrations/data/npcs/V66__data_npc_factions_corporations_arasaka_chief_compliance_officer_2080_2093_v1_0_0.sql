@@ -1,7 +1,7 @@
 -- Issue: #50
 -- Import NPC from: factions\corporations\arasaka\chief-compliance-officer-2080-2093.yaml
 -- Version: 1.0.0
--- Generated: 2025-12-14T12:57:10.220997
+-- Generated: 2025-12-14T16:03:07.692366
 -- WARNING  WARNING: Requires 'npc_definitions' table (create via Database agent)
 
 BEGIN;

@@ -1,7 +1,7 @@
 -- Issue: #50
 -- Import dialogue from: quest-main-002-choose-path.yaml
 -- Version: 1.2.0
--- Generated: 2025-12-13T21:13:37.197672
+-- Generated: 2025-12-14T16:03:08.354105
 -- WARNING  WARNING: Requires 'dialogue_nodes' table (create via Database agent)
 
 BEGIN;

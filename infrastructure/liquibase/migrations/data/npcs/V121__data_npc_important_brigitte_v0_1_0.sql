@@ -1,7 +1,7 @@
 -- Issue: #50
 -- Import NPC from: important\brigitte.yaml
 -- Version: 0.1.0
--- Generated: 2025-12-14T14:50:15.379379
+-- Generated: 2025-12-14T16:03:07.924794
 -- WARNING  WARNING: Requires 'npc_definitions' table (create via Database agent)
 
 BEGIN;

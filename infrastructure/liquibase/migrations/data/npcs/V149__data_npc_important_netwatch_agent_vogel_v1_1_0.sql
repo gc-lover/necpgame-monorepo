@@ -1,7 +1,7 @@
 -- Issue: #50
 -- Import NPC from: important\netwatch-agent-vogel.yaml
 -- Version: 1.1.0
--- Generated: 2025-12-14T12:57:10.555985
+-- Generated: 2025-12-14T16:03:08.043789
 -- WARNING  WARNING: Requires 'npc_definitions' table (create via Database agent)
 
 BEGIN;

@@ -1,6 +1,6 @@
 -- Issue: #40, #552, #558, #559, #560, #561, #562, #563, #564
 -- Import lore from: lore\_03-lore\timeline-author\regions\america\cities\toronto-2020-2093.yaml
--- Generated: 2025-12-13T21:13:37.454807
+-- Generated: 2025-12-14T16:03:08.590839
 
 BEGIN;
 

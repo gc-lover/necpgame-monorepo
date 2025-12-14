@@ -1,7 +1,7 @@
 -- Issue: #50
 -- Import NPC from: factions\gangs\6th-street\civil-defense-coordinator-2066-2078.yaml
 -- Version: 1.0.0
--- Generated: 2025-12-14T12:57:10.287333
+-- Generated: 2025-12-14T16:03:07.768898
 -- WARNING  WARNING: Requires 'npc_definitions' table (create via Database agent)
 
 BEGIN;

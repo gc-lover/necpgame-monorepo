@@ -1,7 +1,7 @@
 -- Issue: #50
 -- Import dialogue from: npc-rita-moreno.yaml
 -- Version: 1.3.0
--- Generated: 2025-12-13T21:13:37.172662
+-- Generated: 2025-12-14T16:03:08.325685
 -- WARNING  WARNING: Requires 'dialogue_nodes' table (create via Database agent)
 
 BEGIN;

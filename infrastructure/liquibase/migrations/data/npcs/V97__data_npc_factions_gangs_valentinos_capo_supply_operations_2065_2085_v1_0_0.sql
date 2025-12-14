@@ -1,7 +1,7 @@
 -- Issue: #50
 -- Import NPC from: factions\gangs\valentinos\capo-supply-operations-2065-2085.yaml
 -- Version: 1.0.0
--- Generated: 2025-12-14T12:57:10.346167
+-- Generated: 2025-12-14T16:03:07.826663
 -- WARNING  WARNING: Requires 'npc_definitions' table (create via Database agent)
 
 BEGIN;

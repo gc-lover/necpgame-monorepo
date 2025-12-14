@@ -1,7 +1,7 @@
 -- Issue: #50
 -- Import NPC from: common\service\street-doc-2065-heywood.yaml
 -- Version: 1.0.0
--- Generated: 2025-12-14T12:57:10.156309
+-- Generated: 2025-12-14T16:03:07.630236
 -- WARNING  WARNING: Requires 'npc_definitions' table (create via Database agent)
 
 BEGIN;

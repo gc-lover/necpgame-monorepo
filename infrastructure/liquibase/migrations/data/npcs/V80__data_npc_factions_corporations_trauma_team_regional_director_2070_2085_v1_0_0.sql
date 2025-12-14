@@ -1,7 +1,7 @@
 -- Issue: #50
 -- Import NPC from: factions\corporations\trauma-team\regional-director-2070-2085.yaml
 -- Version: 1.0.0
--- Generated: 2025-12-14T12:57:10.279592
+-- Generated: 2025-12-14T16:03:07.759166
 -- WARNING  WARNING: Requires 'npc_definitions' table (create via Database agent)
 
 BEGIN;

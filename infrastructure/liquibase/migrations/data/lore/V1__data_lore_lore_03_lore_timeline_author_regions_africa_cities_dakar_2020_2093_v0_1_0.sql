@@ -1,6 +1,6 @@
 -- Issue: #40, #552, #558, #559, #560, #561, #562, #563, #564
 -- Import lore from: lore\_03-lore\timeline-author\regions\africa\cities\dakar-2020-2093.yaml
--- Generated: 2025-12-13T21:13:37.324656
+-- Generated: 2025-12-14T16:03:08.466091
 
 BEGIN;
 

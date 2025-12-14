@@ -1,7 +1,7 @@
 -- Issue: #50
 -- Import NPC from: factions\corporations\kang-tao\vp-export-operations-2055-2075.yaml
 -- Version: 1.0.0
--- Generated: 2025-12-14T12:57:10.250668
+-- Generated: 2025-12-14T16:03:07.728003
 -- WARNING  WARNING: Requires 'npc_definitions' table (create via Database agent)
 
 BEGIN;

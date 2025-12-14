@@ -1,7 +1,7 @@
 -- Issue: #50
 -- Import NPC from: important\hiroshi-tanaka.yaml
 -- Version: 1.0.0
--- Generated: 2025-12-14T12:57:10.485681
+-- Generated: 2025-12-14T16:03:07.970536
 -- WARNING  WARNING: Requires 'npc_definitions' table (create via Database agent)
 
 BEGIN;

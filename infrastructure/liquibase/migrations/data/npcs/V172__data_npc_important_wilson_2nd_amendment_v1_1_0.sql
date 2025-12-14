@@ -1,7 +1,7 @@
 -- Issue: #50
 -- Import NPC from: important\wilson-2nd-amendment.yaml
 -- Version: 1.1.0
--- Generated: 2025-12-14T12:57:10.649074
+-- Generated: 2025-12-14T16:03:08.141292
 -- WARNING  WARNING: Requires 'npc_definitions' table (create via Database agent)
 
 BEGIN;

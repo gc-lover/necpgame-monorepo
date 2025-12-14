@@ -1,6 +1,6 @@
 -- Issue: #40, #552, #558, #559, #560, #561, #562, #563, #564
 -- Import lore from: narrative\scenarios\main-story\classes\2078-2093-classes-branches.yaml
--- Generated: 2025-12-13T21:13:37.810567
+-- Generated: 2025-12-14T16:03:08.983828
 
 BEGIN;
 

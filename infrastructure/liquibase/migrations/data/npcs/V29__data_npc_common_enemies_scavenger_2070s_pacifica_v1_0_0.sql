@@ -1,7 +1,7 @@
 -- Issue: #50
 -- Import NPC from: common\enemies\scavenger-2070s-pacifica.yaml
 -- Version: 1.0.0
--- Generated: 2025-12-14T12:57:10.077149
+-- Generated: 2025-12-14T16:03:07.560184
 -- WARNING  WARNING: Requires 'npc_definitions' table (create via Database agent)
 
 BEGIN;

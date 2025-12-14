@@ -1,7 +1,7 @@
 -- Issue: #50
 -- Import NPC from: important\sasquatch.yaml
 -- Version: 0.1.0
--- Generated: 2025-12-14T12:57:10.611144
+-- Generated: 2025-12-14T16:03:08.101657
 -- WARNING  WARNING: Requires 'npc_definitions' table (create via Database agent)
 
 BEGIN;

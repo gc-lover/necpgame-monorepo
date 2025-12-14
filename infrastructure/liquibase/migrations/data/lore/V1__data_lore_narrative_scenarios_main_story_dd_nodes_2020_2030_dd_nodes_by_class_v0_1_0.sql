@@ -1,6 +1,6 @@
 -- Issue: #40, #552, #558, #559, #560, #561, #562, #563, #564
 -- Import lore from: narrative\scenarios\main-story\dd-nodes\2020-2030-dd-nodes-by-class.yaml
--- Generated: 2025-12-13T21:13:37.813994
+-- Generated: 2025-12-14T16:03:08.986595
 
 BEGIN;
 

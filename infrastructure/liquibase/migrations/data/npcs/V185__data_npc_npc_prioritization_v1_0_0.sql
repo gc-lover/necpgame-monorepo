@@ -1,7 +1,7 @@
 -- Issue: #50
 -- Import NPC from: npc-prioritization.yaml
 -- Version: 1.0.0
--- Generated: 2025-12-14T12:57:10.701560
+-- Generated: 2025-12-14T16:03:08.197956
 -- WARNING  WARNING: Requires 'npc_definitions' table (create via Database agent)
 
 BEGIN;
