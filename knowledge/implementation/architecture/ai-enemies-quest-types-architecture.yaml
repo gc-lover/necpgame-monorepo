@@ -1,0 +1,340 @@
+# Issue: #1861
+metadata:
+  id: ai-enemies-quest-types-architecture
+  title: "Архитектура системы новых AI врагов и типов квестов"
+  document_type: architecture
+  category: systems
+  status: draft
+  version: "1.0.0"
+  last_updated: 2025-12-14T14:15:00Z
+  owners:
+    - role: architect
+      contact: architect@necp.game
+  tags:
+    - architecture
+    - ai
+    - enemies
+    - quests
+    - gameplay
+    - combat
+    - narrative
+  related_systems:
+    - gameplay-service
+    - world-service
+    - narrative-service
+    - analytics-service
+  related_documents:
+    - id: combat-ai-enemies-architecture
+      relation: extends
+    - id: quest-system-architecture
+      relation: extends
+  github_issue: 1861
+  visibility: internal
+  audience:
+    - architect
+    - backend
+    - content-writer
+    - api-designer
+
+summary:
+  problem: |
+    Требуется спроектировать единую архитектуру для новых AI врагов и типов квестов,
+    включающую:
+    - Расширенные профили AI врагов с новыми механиками
+    - Новые типы квестов с интеграцией AI
+    - Синергию между AI поведением и квестовым нарративом
+    - Телеметрию и аналитику для балансировки
+  goal: |
+    Создать архитектурную схему объединенной системы AI врагов и квестов с:
+    - Новыми профилями AI врагов (Hacker-Illusionist, Sniper-Tracker, Cyberpsycho)
+    - Новыми типами квестов (Elimination, Escort, Defense, Investigation)
+    - Интеграцией AI поведения с квестовым прогрессом
+    - Системой телеметрии для аналитики
+  essence: |
+    Объединенная архитектура AI врагов и квестовой системы с фокусом на
+    динамические взаимодействия, нарративную глубину и адаптивную сложность.
+
+architecture:
+  overview: |
+    Архитектура объединяет AI врагов и квестовую систему в единый игровой опыт:
+
+    1. **AI Enemy Profiles** - расширенные профили с уникальными механиками
+    2. **Quest Types** - новые типы квестов с AI интеграцией
+    3. **Dynamic Encounters** - адаптивные встречи на основе квестового прогресса
+    4. **Narrative AI** - поведенческие изменения AI в зависимости от сюжета
+    5. **Telemetry & Analytics** - сбор данных для балансировки
+    6. **Quest-AI Synergy** - взаимосвязь между квестами и поведением AI
+
+  microservices:
+    - name: gameplay-service
+      port: 8083
+      responsibility: |
+        Управление AI врагами и квестами:
+        - Профили AI врагов с новыми механиками
+        - Логика типов квестов
+        - Управление динамическими встречами
+        - Синхронизация AI с квестовым прогрессом
+      components:
+        - ai-enemy-manager: управление профилями AI врагов
+        - quest-engine: движок обработки квестов
+        - dynamic-encounter-manager: управление адаптивными встречами
+        - ai-narrative-adapter: адаптация AI под нарратив
+        - quest-ai-synergy: синергия квестов и AI
+      endpoints:
+        - GET /api/v1/gameplay/ai/enemies/profiles - профили AI врагов
+        - POST /api/v1/gameplay/ai/enemies/spawn/{profileId} - спавн AI врага
+        - GET /api/v1/gameplay/quests/types - типы квестов
+        - POST /api/v1/gameplay/quests/create/{typeId} - создание квеста
+        - GET /api/v1/gameplay/quests/{questId}/ai-synergy - AI синергия квеста
+        - POST /api/v1/gameplay/encounters/dynamic - создание динамической встречи
+
+    - name: narrative-service
+      port: 8085
+      responsibility: |
+        Нарративная интеграция AI врагов:
+        - Контент AI врагов и их backstory
+        - Квестовый контент с AI элементами
+        - Динамические диалоги на основе AI поведения
+        - Лоровая интеграция AI и квестов
+      components:
+        - ai-lore-manager: управление лором AI врагов
+        - quest-narrative-engine: нарративный движок квестов
+        - dynamic-dialogue-system: система динамических диалогов
+        - ai-quest-integration: интеграция AI в квесты
+
+  data_flows:
+    ai_enemy_creation:
+      steps:
+        - user_initiates_quest: Пользователь начинает квест
+        - quest_engine_selects_type: Движок квестов выбирает тип
+        - narrative_service_provides_content: Нарративный сервис предоставляет контент
+        - gameplay_service_spawns_ai: Игровой сервис спавнит AI врагов
+        - ai_adapts_to_narrative: AI адаптируется под нарратив квеста
+        - telemetry_collects_data: Сбор телеметрии
+
+    quest_ai_interaction:
+      steps:
+        - player_encounters_ai: Игрок встречает AI врага
+        - ai_behavior_engine_processes: Движок поведения обрабатывает действия
+        - quest_progress_updates: Прогресс квеста обновляется
+        - narrative_adapts_to_ai: Нарратив адаптируется под поведение AI
+        - player_receives_feedback: Игрок получает обратную связь
+        - analytics_store_data: Аналитика сохраняет данные
+
+  ai_enemy_profiles:
+    hacker_illusionist:
+      description: "Хакер-иллюзионист создает ложные сигналы и фантомы"
+      mechanics:
+        - phantom_signals: ложные метки на карте
+        - hud_glitches: помехи в интерфейсе игрока
+        - distraction_tactics: отвлечение для союзников
+      difficulty_levels:
+        street: базовые иллюзии, короткие помехи
+        tactical: сложные фантомы, координация с отрядом
+        mythic: массовые иллюзии, адаптивные тактики
+      quest_integration:
+        - investigation_quests: раскрытие истинного положения
+        - defense_quests: защита от иллюзорных угроз
+        - escort_quests: сопровождение сквозь иллюзии
+
+    sniper_tracker:
+      description: "Снайпер с маркерами и зональным контролем"
+      mechanics:
+        - target_marking: метки для союзников
+        - smoke_mines: создание зон контроля
+        - position_rotation: смена огневых позиций
+      difficulty_levels:
+        street: одиночные выстрелы с метками
+        tactical: координация с отрядом, дымовые завесы
+        mythic: множественные маркеры, адаптивный ротация
+      quest_integration:
+        - elimination_quests: приоритетные цели
+        - defense_quests: зональный контроль
+        - escort_quests: предотвращение прорывов
+
+    cyberpsycho_boss:
+      description: "Босс с киберпсихозом и фазовыми изменениями"
+      mechanics:
+        - rage_phases: режимы ярости и замыканий
+        - unpredictable_movement: рывки и телепортация
+        - adaptive_behavior: смена целей по приоритетам
+      difficulty_levels:
+        raid_tier_1: базовые фазы, предсказуемые паттерны
+        raid_tier_2: сложные комбо, адаптивные приоритеты
+        raid_tier_3: хаотичные движения, множественные фазы
+      quest_integration:
+        - boss_hunt_quests: специализированная охота
+        - raid_quests: командные сражения
+        - story_quests: нарративные босс-файты
+
+  quest_types:
+    elimination:
+      description: "Устранение целей с AI адаптацией"
+      mechanics:
+        - target_prioritization: AI меняет поведение при устранении
+        - reinforcement_calls: вызов подкреплений
+        - escape_behaviors: побег при угрозе
+      ai_integration:
+        - dynamic_difficulty: сложность растет с прогрессом
+        - behavioral_changes: AI становится осторожнее
+        - narrative_feedback: диалоги отражают изменения
+
+    escort:
+      description: "Сопровождение с AI угрозами"
+      mechanics:
+        - dynamic_threats: AI появляются на маршруте
+        - route_adaptation: изменение пути из-за угроз
+        - protection_objectives: защита от AI атак
+      ai_integration:
+        - ambush_coordination: скоординированные засады
+        - pursuit_behaviors: преследование при обнаружении
+        - escalation_mechanics: усиление угроз с временем
+
+    defense:
+      description: "Защита позиций от AI волн"
+      mechanics:
+        - wave_systems: последовательные волны AI
+        - reinforcement_points: точки спавна подкреплений
+        - objective_hold: удержание ключевых точек
+      ai_integration:
+        - tactical_coordination: скоординированные атаки
+        - adaptive_strategies: смена тактик при провалах
+        - boss_encounters: финальные босс-фазы
+
+    investigation:
+      description: "Расследование с AI подсказками"
+      mechanics:
+        - clue_discovery: поиск улик от AI поведения
+        - false_leads: ложные следы от AI иллюзий
+        - evidence_collection: сбор доказательств
+      ai_integration:
+        - deceptive_behaviors: AI создает ложные следы
+        - reactive_changes: AI реагирует на расследование
+        - revelation_moments: раскрытие истинной природы AI
+
+  database_schema:
+    tables:
+      ai_enemy_profiles:
+        columns:
+          - id: uuid primary key
+          - name: varchar(255) not null
+          - type: varchar(100) not null
+          - difficulty_level: enum('street','tactical','mythic','raid')
+          - mechanics: jsonb
+          - quest_synergies: jsonb
+          - telemetry_config: jsonb
+          - created_at: timestamp
+          - updated_at: timestamp
+
+      quest_types:
+        columns:
+          - id: uuid primary key
+          - name: varchar(255) not null
+          - category: varchar(100) not null
+          - ai_integration_rules: jsonb
+          - difficulty_scaling: jsonb
+          - reward_structure: jsonb
+          - created_at: timestamp
+          - updated_at: timestamp
+
+      dynamic_encounters:
+        columns:
+          - id: uuid primary key
+          - quest_id: uuid references quests(id)
+          - ai_profile_ids: uuid[] references ai_enemy_profiles(id)
+          - spawn_conditions: jsonb
+          - behavior_modifiers: jsonb
+          - narrative_triggers: jsonb
+          - created_at: timestamp
+
+      ai_quest_telemetry:
+        columns:
+          - id: uuid primary key
+          - encounter_id: uuid references dynamic_encounters(id)
+          - ai_profile_id: uuid references ai_enemy_profiles(id)
+          - player_actions: jsonb
+          - ai_responses: jsonb
+          - quest_progress_impact: jsonb
+          - timestamp: timestamp
+
+  technical_requirements:
+    performance:
+      - ai_processing: <50ms per enemy per tick
+      - quest_evaluation: <10ms per quest update
+      - telemetry_collection: <5ms per event
+      - memory_usage: <100MB per active encounter
+
+    scalability:
+      - concurrent_encounters: 1000+ simultaneous
+      - ai_instances: 10000+ active enemies
+      - quest_processing: horizontal scaling support
+      - database_connections: connection pooling
+
+    reliability:
+      - ai_state_persistence: guaranteed state recovery
+      - quest_progress_backup: automatic checkpoints
+      - telemetry_durability: event sourcing pattern
+      - failure_recovery: graceful degradation
+
+  implementation_plan:
+    phase_1: "AI Enemy Profiles"
+      - hacker_illusionist: базовая реализация
+      - sniper_tracker: маркерная система
+      - database_schema: профили и телеметрия
+
+    phase_2: "Quest Types"
+      - elimination: AI адаптация
+      - escort: динамические угрозы
+      - defense: волновая система
+
+    phase_3: "Integration"
+      - investigation: AI подсказки
+      - dynamic_encounters: адаптивные встречи
+      - narrative_ai: поведенческая адаптация
+
+    phase_4: "Optimization"
+      - performance_tuning: <50ms требования
+      - telemetry_analytics: балансировка
+      - scalability_testing: нагрузочное тестирование
+
+  risk_assessment:
+    technical_risks:
+      - ai_complexity: высокая сложность поведенческих деревьев
+      - quest_ai_sync: синхронизация состояний
+      - performance_overhead: влияние на общую производительность
+
+    mitigation_strategies:
+      - modular_design: разделение на независимые компоненты
+      - incremental_implementation: поэтапная разработка
+      - performance_monitoring: постоянный мониторинг метрик
+
+    fallback_options:
+      - simplified_ai: базовые поведения при перегрузке
+      - quest_fallback: статические квесты без AI адаптации
+      - telemetry_throttling: ограничение сбора данных
+
+validation:
+  success_criteria:
+    - ai_profiles: 3+ новых профиля с уникальными механиками
+    - quest_types: 4+ типа квестов с AI интеграцией
+    - performance: <50ms на AI обработку
+    - telemetry: полная аналитика поведения
+    - scalability: 1000+ одновременных встреч
+
+  testing_approach:
+    - unit_tests: компонентное тестирование AI и квестов
+    - integration_tests: тестирование AI-квест взаимодействия
+    - performance_tests: нагрузочное тестирование
+    - gameplay_tests: пользовательское тестирование баланса
+
+  monitoring_metrics:
+    - ai_processing_time: среднее время обработки AI
+    - quest_completion_rate: процент завершения квестов
+    - encounter_success_rate: успех в динамических встречах
+    - player_satisfaction: метрики вовлеченности
+
+history:
+  - version: "1.0.0"
+    date: 2025-12-14
+    author: architect_agent
+    changes: Created architecture for new AI enemies and quest types
