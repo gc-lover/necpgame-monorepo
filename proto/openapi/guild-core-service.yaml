@@ -1,0 +1,1126 @@
+openapi: 3.0.3
+# Issue: #1856
+# Guild Core Service - основной сервис управления гильдиями
+# Port: 8084
+info:
+  title: Guild Core Service API
+  description: |
+    Основной микросервис для управления гильдиями в NECPGAME.
+    Обеспечивает CRUD операции с гильдиями, управление членством,
+    систему рангов и прав доступа.
+
+    **Архитектурные требования:**
+    - P99 latency <50ms для основных операций
+    - Rate limiting: 100 req/min per user
+    - Struct alignment для оптимизации памяти
+    - Полная интеграция с notification-service
+  version: 1.0.0
+  contact:
+    name: API Designer Agent
+    email: api@necp.game
+
+servers:
+  - url: http://localhost:8084/api/v1
+    description: Development server
+  - url: https://guild-core.necp.game/api/v1
+    description: Production server
+
+security:
+  - BearerAuth: []
+
+paths:
+  # Управление гильдиями
+  /guilds:
+    get:
+      tags: [Guilds]
+      operationId: listGuilds
+      summary: Получить список гильдий
+      description: Возвращает список гильдий с фильтрами и пагинацией
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+            maxLength: 50
+          description: Поиск по названию или тегу
+        - name: type
+          in: query
+          schema:
+            $ref: '#/components/schemas/GuildType'
+          description: Фильтр по типу гильдии
+        - name: recruiting
+          in: query
+          schema:
+            type: boolean
+            default: false
+          description: Только recruiting гильдии
+        - name: level_min
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+          description: Минимальный уровень гильдии
+        - name: level_max
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+          description: Максимальный уровень гильдии
+        - name: sort_by
+          in: query
+          schema:
+            type: string
+            enum: [name, level, member_count, created_at]
+            default: name
+          description: Сортировка
+        - name: sort_order
+          in: query
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: asc
+          description: Порядок сортировки
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 20
+          description: Количество результатов
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          description: Смещение для пагинации
+      responses:
+        '200':
+          description: Список гильдий
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuildListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      tags: [Guilds]
+      operationId: createGuild
+      summary: Создать гильдию
+      description: Создает новую гильдию
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateGuildRequest'
+      responses:
+        '201':
+          description: Гильдия создана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Guild'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          description: Название или тег уже заняты
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /guilds/{guild_id}:
+    parameters:
+      - name: guild_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: ID гильдии
+
+    get:
+      tags: [Guilds]
+      operationId: getGuild
+      summary: Получить информацию о гильдии
+      responses:
+        '200':
+          description: Информация о гильдии
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Guild'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    put:
+      tags: [Guilds]
+      operationId: updateGuild
+      summary: Обновить гильдию
+      description: Обновляет настройки гильдии (только лидер)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateGuildRequest'
+      responses:
+        '200':
+          description: Гильдия обновлена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Guild'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags: [Guilds]
+      operationId: deleteGuild
+      summary: Распустить гильдию
+      description: Распускает гильдию (только лидер)
+      responses:
+        '204':
+          description: Гильдия распущена
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # Управление членством
+  /guilds/{guild_id}/members:
+    parameters:
+      - name: guild_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+
+    get:
+      tags: [Members]
+      operationId: getGuildMembers
+      summary: Получить членов гильдии
+      parameters:
+        - name: online_only
+          in: query
+          schema:
+            type: boolean
+            default: false
+          description: Только онлайн члены
+        - name: rank_filter
+          in: query
+          schema:
+            type: string
+            enum: [leader, deputy, officer, veteran, member, recruit]
+          description: Фильтр по рангу
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Список членов
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuildMembersResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /guilds/{guild_id}/members/{user_id}:
+    parameters:
+      - name: guild_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: user_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+
+    put:
+      tags: [Members]
+      operationId: updateMemberRole
+      summary: Изменить роль члена
+      description: Изменяет роль члена гильдии (только лидер/офицеры)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateMemberRoleRequest'
+      responses:
+        '200':
+          description: Роль обновлена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuildMember'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags: [Members]
+      operationId: removeMember
+      summary: Исключить члена
+      description: Исключает члена из гильдии
+      responses:
+        '204':
+          description: Член исключен
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # Заявки на вступление
+  /guilds/{guild_id}/applications:
+    parameters:
+      - name: guild_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+
+    get:
+      tags: [Applications]
+      operationId: getGuildApplications
+      summary: Получить заявки на вступление
+      description: Получить список заявок (только офицеры)
+      parameters:
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/ApplicationStatus'
+            default: PENDING
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Список заявок
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuildApplicationsResponse'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /guilds/{guild_id}/apply:
+    parameters:
+      - name: guild_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+
+    post:
+      tags: [Applications]
+      operationId: applyToGuild
+      summary: Подать заявку на вступление
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApplyToGuildRequest'
+      responses:
+        '201':
+          description: Заявка подана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuildApplication'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          description: Уже в гильдии или заявка уже подана
+
+  /guilds/{guild_id}/invite:
+    parameters:
+      - name: guild_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+
+    post:
+      tags: [Invitations]
+      operationId: inviteToGuild
+      summary: Пригласить игрока в гильдию
+      description: Отправляет приглашение игроку (только офицеры)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InviteToGuildRequest'
+      responses:
+        '200':
+          description: Приглашение отправлено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  invitation_id:
+                    type: string
+                    format: uuid
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /guilds/{guild_id}/invitations/{invitation_id}/accept:
+    parameters:
+      - name: guild_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: invitation_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+
+    post:
+      tags: [Invitations]
+      operationId: acceptInvitation
+      summary: Принять приглашение в гильдию
+      responses:
+        '200':
+          description: Приглашение принято
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuildMember'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '410':
+          description: Приглашение истекло
+
+  /guilds/{guild_id}/invitations/{invitation_id}/decline:
+    parameters:
+      - name: guild_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: invitation_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+
+    post:
+      tags: [Invitations]
+      operationId: declineInvitation
+      summary: Отклонить приглашение в гильдию
+      responses:
+        '200':
+          description: Приглашение отклонено
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /guilds/{guild_id}/applications/{application_id}/review:
+    parameters:
+      - name: guild_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: application_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+
+    post:
+      tags: [Applications]
+      operationId: reviewApplication
+      summary: Рассмотреть заявку
+      description: Принять или отклонить заявку (только офицеры)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReviewApplicationRequest'
+      responses:
+        '200':
+          description: Заявка обработана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuildApplication'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # Система рангов
+  /guilds/{guild_id}/ranks:
+    parameters:
+      - name: guild_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+
+    get:
+      tags: [Ranks]
+      operationId: getGuildRanks
+      summary: Получить ранги гильдии
+      responses:
+        '200':
+          description: Список рангов
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GuildRank'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    post:
+      tags: [Ranks]
+      operationId: createGuildRank
+      summary: Создать ранг
+      description: Создает новый ранг гильдии (только офицеры)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateGuildRankRequest'
+      responses:
+        '201':
+          description: Ранг создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuildRank'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /guilds/{guild_id}/ranks/{rank_id}:
+    parameters:
+      - name: guild_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: rank_id
+        in: path
+        required: true
+        schema:
+          type: integer
+
+    put:
+      tags: [Ranks]
+      operationId: updateGuildRank
+      summary: Обновить ранг
+      description: Обновляет ранг гильдии (только офицеры)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateGuildRankRequest'
+      responses:
+        '200':
+          description: Ранг обновлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuildRank'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags: [Ranks]
+      operationId: deleteGuildRank
+      summary: Удалить ранг
+      description: Удаляет ранг гильдии (только офицеры, нельзя удалить системные ранги)
+      responses:
+        '204':
+          description: Ранг удален
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # Статистика и метрики
+  /guilds/{guild_id}/stats:
+    parameters:
+      - name: guild_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+
+    get:
+      tags: [Stats]
+      operationId: getGuildStats
+      summary: Получить статистику гильдии
+      responses:
+        '200':
+          description: Статистика гильдии
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuildStats'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # WebSocket для real-time событий
+  /guilds/ws:
+    get:
+      tags: [WebSocket]
+      operationId: guildWebSocket
+      summary: WebSocket для гильдейских событий
+      description: |
+        WebSocket endpoint для real-time гильдейских событий.
+
+        **Протокол подключения:**
+        `ws://host/guilds/ws?token=jwt_token`
+
+        **Входящие сообщения:**
+        - `{"type": "join_guild", "guild_id": "uuid"}`
+        - `{"type": "leave_guild", "guild_id": "uuid"}`
+
+        **Исходящие сообщения:**
+        - `{"type": "member_online", "data": {"user_id": "uuid", "guild_id": "uuid"}}`
+        - `{"type": "member_offline", "data": {"user_id": "uuid", "guild_id": "uuid"}}`
+        - `{"type": "guild_updated", "data": {"guild_id": "uuid", "changes": {...}}}`
+        - `{"type": "new_application", "data": {"application_id": "uuid"}}`
+        - `{"type": "application_reviewed", "data": {"application_id": "uuid", "status": "accepted"}}`
+
+        **Ограничения:**
+        - Rate limit: 100 messages/minute per guild
+        - Max connections: 1000 per guild
+        - Message size limit: 4KB
+      responses:
+        '101':
+          description: WebSocket соединение установлено
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    # Основные типы
+    GuildType:
+      type: string
+      enum: [open, invite_only, closed]
+      description: Тип гильдии
+      default: open
+
+    GuildRole:
+      type: string
+      enum: [leader, deputy, officer, veteran, member, recruit]
+      description: Роль в гильдии
+
+    ApplicationStatus:
+      type: string
+      enum: [PENDING, ACCEPTED, REJECTED, EXPIRED]
+      description: Статус заявки
+
+    # Запросы
+    CreateGuildRequest:
+      type: object
+      required:
+        - name
+        - tag
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 50
+          description: Название гильдии
+        tag:
+          type: string
+          minLength: 2
+          maxLength: 5
+          pattern: '^[A-Z0-9]+$'
+          description: Тег гильдии (только заглавные буквы и цифры)
+        description:
+          type: string
+          maxLength: 500
+          description: Описание гильдии
+        type:
+          $ref: '#/components/schemas/GuildType'
+        recruiting:
+          type: boolean
+          default: true
+          description: Принимает ли гильдия новых членов
+
+    UpdateGuildRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 50
+        tag:
+          type: string
+          minLength: 2
+          maxLength: 5
+          pattern: '^[A-Z0-9]+$'
+        description:
+          type: string
+          maxLength: 500
+        type:
+          $ref: '#/components/schemas/GuildType'
+        recruiting:
+          type: boolean
+
+    UpdateMemberRoleRequest:
+      type: object
+      required:
+        - role
+      properties:
+        role:
+          $ref: '#/components/schemas/GuildRole'
+
+    ApplyToGuildRequest:
+      type: object
+      properties:
+        message:
+          type: string
+          maxLength: 200
+          description: Сообщение для офицеров гильдии
+
+    InviteToGuildRequest:
+      type: object
+      required:
+        - user_id
+      properties:
+        user_id:
+          type: string
+          format: uuid
+          description: ID приглашаемого игрока
+        message:
+          type: string
+          maxLength: 200
+          description: Личное сообщение
+
+    ReviewApplicationRequest:
+      type: object
+      required:
+        - action
+      properties:
+        action:
+          type: string
+          enum: [accept, reject]
+        reason:
+          type: string
+          maxLength: 200
+          description: Причина отказа (только для reject)
+
+    CreateGuildRankRequest:
+      type: object
+      required:
+        - name
+        - level
+        - permissions
+      properties:
+        name:
+          type: string
+          minLength: 2
+          maxLength: 30
+          description: Название ранга
+        level:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Уровень ранга (выше = больше прав)
+        permissions:
+          $ref: '#/components/schemas/GuildPermissions'
+
+    UpdateGuildRankRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 2
+          maxLength: 30
+        level:
+          type: integer
+          minimum: 1
+          maximum: 100
+        permissions:
+          $ref: '#/components/schemas/GuildPermissions'
+
+    GuildPermissions:
+      type: object
+      properties:
+        invite_members:
+          type: boolean
+          default: false
+        kick_members:
+          type: boolean
+          default: false
+        manage_ranks:
+          type: boolean
+          default: false
+        manage_bank:
+          type: boolean
+          default: false
+        declare_war:
+          type: boolean
+          default: false
+        manage_territories:
+          type: boolean
+          default: false
+        edit_guild_info:
+          type: boolean
+          default: false
+        view_bank_history:
+          type: boolean
+          default: false
+
+    # Ответы
+    GuildListResponse:
+      type: object
+      required:
+        - guilds
+        - total
+        - limit
+        - offset
+      properties:
+        guilds:
+          type: array
+          items:
+            $ref: '#/components/schemas/GuildSummary'
+        total:
+          type: integer
+          description: Общее количество гильдий
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+    GuildSummary:
+      type: object
+      required:
+        - guild_id
+        - name
+        - tag
+        - level
+        - member_count
+        - type
+        - recruiting
+      properties:
+        guild_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        tag:
+          type: string
+        level:
+          type: integer
+        member_count:
+          type: integer
+        type:
+          $ref: '#/components/schemas/GuildType'
+        recruiting:
+          type: boolean
+        leader_name:
+          type: string
+          description: Имя лидера
+
+    Guild:
+      type: object
+      required:
+        - guild_id
+        - name
+        - tag
+        - leader
+        - level
+        - experience
+        - max_members
+        - member_count
+        - type
+        - recruiting
+        - created_at
+        - updated_at
+      properties:
+        guild_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        tag:
+          type: string
+        description:
+          type: string
+        leader:
+          $ref: '#/components/schemas/UserSummary'
+        level:
+          type: integer
+        experience:
+          type: integer
+        max_members:
+          type: integer
+        member_count:
+          type: integer
+        type:
+          $ref: '#/components/schemas/GuildType'
+        recruiting:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    UserSummary:
+      type: object
+      required:
+        - user_id
+        - username
+      properties:
+        user_id:
+          type: string
+          format: uuid
+        username:
+          type: string
+        avatar_url:
+          type: string
+          format: uri
+
+    GuildMembersResponse:
+      type: object
+      required:
+        - members
+        - total
+      properties:
+        members:
+          type: array
+          items:
+            $ref: '#/components/schemas/GuildMember'
+        total:
+          type: integer
+
+    GuildMember:
+      type: object
+      required:
+        - user
+        - role
+        - joined_at
+        - contribution_points
+        - is_online
+      properties:
+        user:
+          $ref: '#/components/schemas/UserSummary'
+        role:
+          $ref: '#/components/schemas/GuildRole'
+        joined_at:
+          type: string
+          format: date-time
+        contribution_points:
+          type: integer
+        is_online:
+          type: boolean
+        last_seen:
+          type: string
+          format: date-time
+
+    GuildApplicationsResponse:
+      type: object
+      required:
+        - applications
+        - total
+      properties:
+        applications:
+          type: array
+          items:
+            $ref: '#/components/schemas/GuildApplication'
+        total:
+          type: integer
+
+    GuildApplication:
+      type: object
+      required:
+        - application_id
+        - user
+        - status
+        - applied_at
+      properties:
+        application_id:
+          type: string
+          format: uuid
+        user:
+          $ref: '#/components/schemas/UserSummary'
+        message:
+          type: string
+        status:
+          $ref: '#/components/schemas/ApplicationStatus'
+        applied_at:
+          type: string
+          format: date-time
+        reviewed_at:
+          type: string
+          format: date-time
+        reviewed_by:
+          $ref: '#/components/schemas/UserSummary'
+        review_reason:
+          type: string
+
+    GuildRank:
+      type: object
+      required:
+        - rank_id
+        - name
+        - level
+        - permissions
+        - created_at
+      properties:
+        rank_id:
+          type: integer
+        name:
+          type: string
+        level:
+          type: integer
+        permissions:
+          $ref: '#/components/schemas/GuildPermissions'
+        member_count:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+
+    GuildStats:
+      type: object
+      required:
+        - total_members
+        - active_members_7d
+        - total_experience
+        - avg_contribution_points
+        - created_at
+      properties:
+        total_members:
+          type: integer
+        active_members_7d:
+          type: integer
+        total_experience:
+          type: integer
+        avg_contribution_points:
+          type: integer
+        top_contributors:
+          type: array
+          items:
+            $ref: '#/components/schemas/GuildMember'
+          maxItems: 5
+        created_at:
+          type: string
+          format: date-time
+
+    # Общие схемы ошибок
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+
+  responses:
+    BadRequest:
+      description: Неверный запрос
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    Unauthorized:
+      description: Не авторизован
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    Forbidden:
+      description: Доступ запрещен
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    NotFound:
+      description: Не найдено
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
