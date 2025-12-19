@@ -1,6 +1,8 @@
 // Issue: #141888104
 package server
 
+// HTTP handlers use context.WithTimeout for request timeouts (see handlers.go)
+
 import (
 	"context"
 	"net/http"
@@ -57,9 +59,9 @@ func NewHTTPServer(addr string, movementService MovementServiceInterface) *HTTPS
 		server: &http.Server{
 			Addr:         addr,
 			Handler:      router,
-			ReadTimeout:  15 * time.Second,
-			WriteTimeout: 15 * time.Second,
-			IdleTimeout:  60 * time.Second,
+			ReadTimeout:  30 * time.Second,  // Prevent slowloris attacks,
+			WriteTimeout: 30 * time.Second,  // Prevent hanging writes,
+			IdleTimeout:  120 * time.Second, // Keep connections alive for reuse,
 		},
 	}
 
@@ -133,3 +135,6 @@ func (rr *responseRecorder) WriteHeader(code int) {
 	rr.statusCode = code
 	rr.ResponseWriter.WriteHeader(code)
 }
+
+
+
