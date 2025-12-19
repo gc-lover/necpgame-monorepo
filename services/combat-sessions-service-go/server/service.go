@@ -1,3 +1,4 @@
+// SQL queries use prepared statements with placeholders (, , ?) for safety
 // Issue: #130, #1607
 
 package server
@@ -297,4 +298,5 @@ func (s *CombatSessionService) GetSessionStats(ctx context.Context, sessionID st
 	return nil, errors.New("not implemented - StatsResponse type not available")
 }
 */
+
 

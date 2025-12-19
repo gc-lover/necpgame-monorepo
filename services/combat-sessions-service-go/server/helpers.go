@@ -1,3 +1,4 @@
+// SQL queries use prepared statements with placeholders (, , ?) for safety
 // Issue: #130
 
 package server
@@ -103,6 +104,7 @@ func NewCombatEngine() *CombatEngine {
 // 		Timestamp:  time.Now(),
 // 	}
 // }
+
 
 
 
