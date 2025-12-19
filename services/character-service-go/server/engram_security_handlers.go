@@ -2,9 +2,11 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
@@ -33,7 +35,9 @@ func (h *EngramSecurityHandlers) GetEngramProtection(w http.ResponseWriter, r *h
 		return
 	}
 
-	protection, err := h.securityService.GetEngramProtection(r.Context(), engramID)
+	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
+	protection, err := h.securityService.GetEngramProtection(ctx, engramID)
 	if err != nil {
 		if errors.Is(err, ErrEngramNotFound) {
 			h.respondError(w, http.StatusNotFound, err.Error())
@@ -58,10 +62,10 @@ func (h *EngramSecurityHandlers) EncodeEngram(w http.ResponseWriter, r *http.Req
 	}
 
 	var req struct {
-		ProtectionTier      int                `json:"protection_tier"`
+		ProtectionTier      int                 `json:"protection_tier"`
 		ProtectionSettings  *ProtectionSettings `json:"protection_settings,omitempty"`
-		NetrunnerSkillLevel int                `json:"netrunner_skill_level"`
-		EncodedBy           uuid.UUID          `json:"encoded_by"`
+		NetrunnerSkillLevel int                 `json:"netrunner_skill_level"`
+		EncodedBy           uuid.UUID           `json:"encoded_by"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -79,7 +83,9 @@ func (h *EngramSecurityHandlers) EncodeEngram(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	protection, err := h.securityService.EncodeEngram(r.Context(), engramID, req.ProtectionTier, req.ProtectionSettings, req.EncodedBy, req.NetrunnerSkillLevel)
+	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
+	protection, err := h.securityService.EncodeEngram(ctx, engramID, req.ProtectionTier, req.ProtectionSettings, req.EncodedBy, req.NetrunnerSkillLevel)
 	if err != nil {
 		if errors.Is(err, ErrEngramNotFound) || errors.Is(err, ErrInvalidProtectionTier) {
 			h.respondError(w, http.StatusBadRequest, err.Error())
@@ -114,4 +120,3 @@ func (h *EngramSecurityHandlers) respondJSON(w http.ResponseWriter, status int, 
 func (h *EngramSecurityHandlers) respondError(w http.ResponseWriter, status int, message string) {
 	h.respondJSON(w, status, map[string]string{"error": message})
 }
-

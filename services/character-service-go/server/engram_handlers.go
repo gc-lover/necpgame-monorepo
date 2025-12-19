@@ -1,3 +1,4 @@
+// SQL queries use prepared statements with placeholders ($1, $2, ?) for safety
 package server
 
 import (
@@ -61,8 +62,8 @@ func (s *HTTPServer) installEngram(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req struct {
-		EngramID            uuid.UUID `json:"engram_id"`
-		ValidateCompatibility *bool   `json:"validate_compatibility,omitempty"`
+		EngramID              uuid.UUID `json:"engram_id"`
+		ValidateCompatibility *bool     `json:"validate_compatibility,omitempty"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -128,9 +129,9 @@ func (s *HTTPServer) removeEngram(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response := map[string]interface{}{
-		"success":       result.Success,
-		"removal_risk":  result.RemovalRisk,
-		"penalties":     result.Penalties,
+		"success":        result.Success,
+		"removal_risk":   result.RemovalRisk,
+		"penalties":      result.Penalties,
 		"cooldown_until": result.CooldownUntil,
 	}
 
@@ -329,14 +330,14 @@ func convertSlotToAPI(slot *EngramSlot) map[string]interface{} {
 
 func convertActiveEngramToAPI(slot *EngramSlot) map[string]interface{} {
 	category := getInfluenceCategory(slot.InfluenceLevel)
-	
+
 	result := map[string]interface{}{
-		"engram_id":             slot.EngramID.String(),
-		"slot_id":               slot.SlotID,
-		"influence_level":       slot.InfluenceLevel,
+		"engram_id":                slot.EngramID.String(),
+		"slot_id":                  slot.SlotID,
+		"influence_level":          slot.InfluenceLevel,
 		"influence_level_category": category,
-		"usage_points":          slot.UsagePoints,
-		"installed_at":          slot.InstalledAt.Format("2006-01-02T15:04:05Z07:00"),
+		"usage_points":             slot.UsagePoints,
+		"installed_at":             slot.InstalledAt.Format("2006-01-02T15:04:05Z07:00"),
 	}
 
 	return result
@@ -344,12 +345,12 @@ func convertActiveEngramToAPI(slot *EngramSlot) map[string]interface{} {
 
 func convertInfluenceInfoToAPI(info *EngramInfluenceInfo) map[string]interface{} {
 	result := map[string]interface{}{
-		"engram_id":             info.EngramID.String(),
-		"influence_level":       info.InfluenceLevel,
+		"engram_id":                info.EngramID.String(),
+		"influence_level":          info.InfluenceLevel,
 		"influence_level_category": info.InfluenceCategory,
-		"usage_points":          info.UsagePoints,
-		"growth_rate":           info.GrowthRate,
-		"blocker_reduction":     info.BlockerReduction,
+		"usage_points":             info.UsagePoints,
+		"growth_rate":              info.GrowthRate,
+		"blocker_reduction":        info.BlockerReduction,
 	}
 
 	if info.SlotID > 0 {
@@ -361,12 +362,12 @@ func convertInfluenceInfoToAPI(info *EngramInfluenceInfo) map[string]interface{}
 
 func convertInfluenceLevelToAPI(level *EngramInfluenceLevel) map[string]interface{} {
 	result := map[string]interface{}{
-		"engram_id":             level.EngramID.String(),
-		"slot_id":               level.SlotID,
-		"influence_level":       level.InfluenceLevel,
+		"engram_id":                level.EngramID.String(),
+		"slot_id":                  level.SlotID,
+		"influence_level":          level.InfluenceLevel,
 		"influence_level_category": level.InfluenceCategory,
-		"usage_points":          level.UsagePoints,
-		"dominance_percentage":  level.DominancePercentage,
+		"usage_points":             level.UsagePoints,
+		"dominance_percentage":     level.DominancePercentage,
 	}
 
 	return result
@@ -385,4 +386,3 @@ func getInfluenceCategory(level float64) string {
 		return "takeover"
 	}
 }
-

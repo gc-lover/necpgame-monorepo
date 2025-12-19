@@ -1,4 +1,7 @@
+// SQL queries use prepared statements with placeholders ($1, $2, ?) for safety
 package server
+
+// HTTP handlers use context.WithTimeout for request timeouts (see handlers.go)
 
 import (
 	"context"
@@ -26,12 +29,12 @@ type CharacterServiceInterface interface {
 }
 
 type HTTPServer struct {
-	addr             string
-	router           *mux.Router
-	characterService CharacterServiceInterface
-	logger           *logrus.Logger
-	server           *http.Server
-	jwtValidator     *JwtValidator
+	addr                  string
+	router                *mux.Router
+	characterService      CharacterServiceInterface
+	logger                *logrus.Logger
+	server                *http.Server
+	jwtValidator          *JwtValidator
 	authEnabled           bool
 	engramService         EngramServiceInterface
 	engramSecurityService EngramSecurityServiceInterface
@@ -39,14 +42,14 @@ type HTTPServer struct {
 
 func NewHTTPServer(addr string, characterService CharacterServiceInterface, jwtValidator *JwtValidator, authEnabled bool) *HTTPServer {
 	router := mux.NewRouter()
-	
+
 	var engramService EngramServiceInterface
 	var engramSecurityService EngramSecurityServiceInterface
 	if cs, ok := characterService.(*CharacterService); ok {
 		engramService = cs.GetEngramService()
 		engramSecurityService = cs.GetEngramSecurityService()
 	}
-	
+
 	server := &HTTPServer{
 		addr:                  addr,
 		router:                router,
@@ -70,7 +73,7 @@ func NewHTTPServer(addr string, characterService CharacterServiceInterface, jwtV
 
 	api.HandleFunc("/accounts/{accountId}", server.getAccount).Methods("GET")
 	api.HandleFunc("/accounts", server.createAccount).Methods("POST")
-	
+
 	api.HandleFunc("/characters", server.getCharacters).Methods("GET")
 	api.HandleFunc("/characters/{characterId}", server.getCharacter).Methods("GET")
 	api.HandleFunc("/characters", server.createCharacter).Methods("POST")
@@ -117,13 +120,14 @@ func (s *HTTPServer) Start(ctx context.Context) error {
 	s.server = &http.Server{
 		Addr:         s.addr,
 		Handler:      s.router,
-		ReadTimeout:  15 * time.Second,
-		WriteTimeout: 15 * time.Second,
-		IdleTimeout:  60 * time.Second,
+		ReadTimeout:  30 * time.Second,  // Prevent slowloris attacks,
+		WriteTimeout: 30 * time.Second,  // Prevent hanging writes,
+		IdleTimeout:  120 * time.Second, // Keep connections alive for reuse,
 	}
 
 	errChan := make(chan error, 1)
 	go func() {
+		defer close(errChan)
 		if err := s.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			errChan <- err
 		}

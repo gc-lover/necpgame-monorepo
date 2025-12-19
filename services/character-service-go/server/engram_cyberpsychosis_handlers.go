@@ -2,8 +2,10 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
@@ -32,7 +34,9 @@ func (h *EngramCyberpsychosisHandlers) GetEngramCyberpsychosisRisk(w http.Respon
 		return
 	}
 
-	result, err := h.cyberpsychosisService.GetCyberpsychosisRisk(r.Context(), characterID)
+	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
+	result, err := h.cyberpsychosisService.GetCyberpsychosisRisk(ctx, characterID)
 	if err != nil {
 		h.logger.WithError(err).Error("Failed to get cyberpsychosis risk")
 		h.respondError(w, http.StatusInternalServerError, "Failed to retrieve cyberpsychosis risk")
@@ -61,7 +65,9 @@ func (h *EngramCyberpsychosisHandlers) UpdateEngramCyberpsychosisRisk(w http.Res
 		return
 	}
 
-	result, err := h.cyberpsychosisService.UpdateCyberpsychosisRisk(r.Context(), characterID)
+	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
+	result, err := h.cyberpsychosisService.UpdateCyberpsychosisRisk(ctx, characterID)
 	if err != nil {
 		h.logger.WithError(err).Error("Failed to update cyberpsychosis risk")
 		h.respondError(w, http.StatusInternalServerError, "Failed to update cyberpsychosis risk")
@@ -90,7 +96,9 @@ func (h *EngramCyberpsychosisHandlers) GetEngramBlockers(w http.ResponseWriter, 
 		return
 	}
 
-	blockers, err := h.cyberpsychosisService.GetBlockers(r.Context(), characterID)
+	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
+	blockers, err := h.cyberpsychosisService.GetBlockers(ctx, characterID)
 	if err != nil {
 		h.logger.WithError(err).Error("Failed to get engram blockers")
 		h.respondError(w, http.StatusInternalServerError, "Failed to retrieve engram blockers")
@@ -148,7 +156,9 @@ func (h *EngramCyberpsychosisHandlers) InstallEngramBlocker(w http.ResponseWrite
 		return
 	}
 
-	result, err := h.cyberpsychosisService.InstallBlocker(r.Context(), characterID, req.BlockerTier)
+	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
+	result, err := h.cyberpsychosisService.InstallBlocker(ctx, characterID, req.BlockerTier)
 	if err != nil {
 		h.logger.WithError(err).Error("Failed to install blocker")
 		h.respondError(w, http.StatusInternalServerError, "Failed to install blocker")
@@ -188,6 +198,3 @@ func (h *EngramCyberpsychosisHandlers) respondJSON(w http.ResponseWriter, status
 func (h *EngramCyberpsychosisHandlers) respondError(w http.ResponseWriter, status int, message string) {
 	h.respondJSON(w, status, map[string]string{"error": message})
 }
-
-
-
