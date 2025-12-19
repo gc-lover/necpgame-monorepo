@@ -2,6 +2,8 @@
 // OPTIMIZATION: 90% faster than oapi-codegen
 package server
 
+// HTTP handlers use context.WithTimeout for request timeouts (see handlers.go)
+
 import (
 	"context"
 	"net/http"
@@ -45,16 +47,27 @@ func NewHTTPServer(addr string, service *PartyService) *HTTPServer {
 		server: &http.Server{
 			Addr:         addr,
 			Handler:      router,
-			ReadTimeout:  15 * time.Second,
-			WriteTimeout: 15 * time.Second,
-			IdleTimeout:  60 * time.Second,
+			ReadTimeout:  30 * time.Second,  // Prevent slowloris attacks,
+			WriteTimeout: 30 * time.Second,  // Prevent hanging writes,
+			IdleTimeout:  120 * time.Second, // Keep connections alive for reuse,
 		},
 	}
 }
 
 // Start starts HTTP server
 func (s *HTTPServer) Start() error {
-	return s.server.ListenAndServe()
+	// Start server in background with proper goroutine management
+	errChan := make(chan error, 1)
+	go func() {
+		defer close(errChan)
+		if err := s.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			errChan <- err
+		}
+	}()
+
+	// Wait indefinitely (server runs until shutdown)
+	err := <-errChan
+	return err
 }
 
 // Shutdown gracefully shuts down server
@@ -89,3 +102,6 @@ func recoverMiddleware(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 	})
 }
+
+
+
