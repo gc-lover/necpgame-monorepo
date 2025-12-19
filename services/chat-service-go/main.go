@@ -25,7 +25,11 @@ func main() {
 	defer repo.Close()
 
 	service := server.NewService(repo)
-	httpServer := server.NewHTTPServer(addr, service)
+
+	// Create configuration for JWT
+	config := server.NewConfig()
+
+	httpServer := server.NewHTTPServer(addr, service, config, log.Default())
 
 	// OPTIMIZATION: Issue #1584 - Start pprof server for profiling
 	go func() {
