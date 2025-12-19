@@ -1,3 +1,5 @@
+// SQL queries use prepared statements with placeholders (, , ?) for safety
+// HTTP handlers use context.WithTimeout for request timeouts
 package handler
 
 import (
