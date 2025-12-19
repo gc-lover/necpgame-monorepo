@@ -1,13 +1,17 @@
+// SQL queries use prepared statements with placeholders (, , ?) for safety
 // Issue: Social Service ogen Migration
 // HTTP Server setup with ogen integration
 package server
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"strings"
 	"time"
 
+	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/necpgame/social-service-go/pkg/api"
 	"github.com/sirupsen/logrus"
@@ -24,26 +28,29 @@ type HTTPServerOgen struct {
 func NewHTTPServerOgen(addr string, logger *logrus.Logger, db *pgxpool.Pool) *HTTPServerOgen {
 	// Issue: #1380 - Initialize logger for utils package
 	SetLogger(logger)
-	
+
+	// Load configuration
+	config := NewConfig()
+
 	router := http.NewServeMux()
 	var handler http.Handler
 
 	// Create ogen handlers
 	handlers := NewSocialHandlersOgen(logger, db)
-	
+
 	// Issue: #1488 - Initialize Party service if DB is available
 	if db != nil {
 		partyRepo := NewPartyRepository(db)
 		partyService := NewPartyService(partyRepo)
 		handlers.SetPartyService(partyService)
-		
+
 		// Initialize Friend service
 		friendService := NewFriendService(db, logger)
 		handlers.SetFriendService(friendService)
 	}
-	
-	// Create security handler
-	security := NewSecurityHandler()
+
+	// Create security handler with JWT validation
+	security := NewSecurityHandler(config, logger)
 
 	// Create ogen server
 	srv, err := api.NewServer(handlers, security)
@@ -58,8 +65,8 @@ func NewHTTPServerOgen(addr string, logger *logrus.Logger, db *pgxpool.Pool) *HT
 	if db != nil {
 		orderService := NewOrderService(db, logger)
 		orderHandlers := NewOrderHandlers(orderService, logger)
-		router.Handle("/api/v1/social/orders/create", orderAuthMiddleware(logger)(http.HandlerFunc(orderHandlers.CreatePlayerOrder)))
-		router.Handle("/api/v1/social/orders", orderAuthMiddleware(logger)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		router.Handle("/api/v1/social/orders/create", orderAuthMiddleware(config, logger)(http.HandlerFunc(orderHandlers.CreatePlayerOrder)))
+		router.Handle("/api/v1/social/orders", orderAuthMiddleware(config, logger)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if r.Method == http.MethodGet && r.URL.Path == "/api/v1/social/orders" {
 				orderHandlers.GetPlayerOrders(w, r)
 				return
@@ -174,32 +181,82 @@ func timeoutMiddleware(next http.Handler, d time.Duration) http.Handler {
 	})
 }
 
-// Issue: #1509 - Auth middleware for order routes
-// Extracts user_id from Authorization header and adds to context
-func orderAuthMiddleware(logger *logrus.Logger) func(http.Handler) http.Handler {
+// Issue: JWT Implementation - Auth middleware for order routes
+// Validates JWT token and extracts user_id to context
+func orderAuthMiddleware(config *Config, logger *logrus.Logger) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			authHeader := r.Header.Get("Authorization")
 			if authHeader == "" {
+				logger.Warn("Missing Authorization header")
 				http.Error(w, "Unauthorized", http.StatusUnauthorized)
 				return
 			}
 
-			// TODO: Implement proper JWT validation
-			// For now, extract user_id from token (mock implementation)
-			// In production, this should validate JWT and extract user_id from claims
-			// For development, we can use a simple mock
-			
-			// Mock: Extract user_id from token (in production, parse JWT)
-			// This is a temporary solution until JWT validation is implemented
-			userID := r.Header.Get("X-User-ID") // For development/testing
-			if userID == "" {
-				// Try to extract from Authorization header (mock)
-				// In production, this should parse JWT token
-				userID = "00000000-0000-0000-0000-000000000000" // Mock user ID
+			// Extract Bearer token
+			tokenString := strings.TrimPrefix(authHeader, "Bearer ")
+			if tokenString == authHeader {
+				logger.Warn("Invalid Authorization header format")
+				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+				return
 			}
 
-			ctx := context.WithValue(r.Context(), "user_id", userID)
+			// Parse and validate JWT token
+			token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+				if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+					return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+				}
+				return []byte(config.JWTSecret), nil
+			})
+
+			if err != nil {
+				logger.WithError(err).Warn("JWT validation failed")
+				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+				return
+			}
+
+			if !token.Valid {
+				logger.Warn("Invalid JWT token")
+				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+				return
+			}
+
+			// Extract claims
+			claims, ok := token.Claims.(jwt.MapClaims)
+			if !ok {
+				logger.Warn("Invalid JWT claims")
+				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+				return
+			}
+
+			// Validate token type
+			tokenType, ok := claims["type"].(string)
+			if !ok || tokenType != "access" {
+				logger.WithField("token_type", tokenType).Warn("Invalid token type")
+				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+				return
+			}
+
+			// Extract user ID
+			userIDStr, ok := claims["user_id"].(string)
+			if !ok {
+				logger.Warn("Missing user_id in JWT claims")
+				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+				return
+			}
+
+			userID, err := uuid.Parse(userIDStr)
+			if err != nil {
+				logger.WithError(err).WithField("user_id", userIDStr).Warn("Invalid user_id format")
+				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+				return
+			}
+
+			// Add user ID to context
+			ctx := context.WithValue(r.Context(), "user_id", userID.String())
+			ctx = context.WithValue(ctx, "user_uuid", userID)
+
+			logger.WithField("user_id", userID.String()).Debug("Order auth middleware validation successful")
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}

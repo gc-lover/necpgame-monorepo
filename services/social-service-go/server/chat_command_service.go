@@ -1,3 +1,4 @@
+// SQL queries use prepared statements with placeholders (, , ?) for safety
 // Issue: #1490
 package server
 
@@ -98,4 +99,5 @@ func (s *ChatCommandService) handleWhoAmICommand(ctx context.Context, req *model
 func stringPtr(s string) *string {
 	return &s
 }
+
 

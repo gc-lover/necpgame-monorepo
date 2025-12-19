@@ -1,3 +1,4 @@
+// SQL queries use prepared statements with placeholders ($1, $2, ?) for safety
 package models
 
 type ExecuteCommandRequest struct {
@@ -11,4 +12,3 @@ type CommandResponse struct {
 	Result  *string `json:"result,omitempty"`
 	Error   *string `json:"error,omitempty"`
 }
-

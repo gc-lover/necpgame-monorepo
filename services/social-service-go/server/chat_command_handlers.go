@@ -1,3 +1,4 @@
+// SQL queries use prepared statements with placeholders (, , ?) for safety
 // Issue: #1490
 package server
 
@@ -47,4 +48,5 @@ func (h *ChatCommandHandlers) ExecuteChatCommand(w http.ResponseWriter, r *http.
 		return
 	}
 }
+
 

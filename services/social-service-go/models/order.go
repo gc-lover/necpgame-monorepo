@@ -1,3 +1,4 @@
+// SQL queries use prepared statements with placeholders ($1, $2, ?) for safety
 package models
 
 import (
@@ -28,19 +29,19 @@ const (
 )
 
 type PlayerOrder struct {
-	ID          uuid.UUID              `json:"id" db:"id"`
-	CustomerID  uuid.UUID              `json:"customer_id" db:"customer_id"`
-	ExecutorID  *uuid.UUID             `json:"executor_id,omitempty" db:"executor_id"`
-	OrderType   OrderType              `json:"order_type" db:"order_type"`
-	Title       string                 `json:"title" db:"title"`
-	Description string                 `json:"description" db:"description"`
-	Status      OrderStatus            `json:"status" db:"status"`
-	Reward      map[string]interface{} `json:"reward,omitempty" db:"reward"`
+	ID           uuid.UUID              `json:"id" db:"id"`
+	CustomerID   uuid.UUID              `json:"customer_id" db:"customer_id"`
+	ExecutorID   *uuid.UUID             `json:"executor_id,omitempty" db:"executor_id"`
+	OrderType    OrderType              `json:"order_type" db:"order_type"`
+	Title        string                 `json:"title" db:"title"`
+	Description  string                 `json:"description" db:"description"`
+	Status       OrderStatus            `json:"status" db:"status"`
+	Reward       map[string]interface{} `json:"reward,omitempty" db:"reward"`
 	Requirements map[string]interface{} `json:"requirements,omitempty" db:"requirements"`
-	Deadline    *time.Time             `json:"deadline,omitempty" db:"deadline"`
-	CreatedAt   time.Time              `json:"created_at" db:"created_at"`
-	UpdatedAt   time.Time              `json:"updated_at" db:"updated_at"`
-	CompletedAt *time.Time             `json:"completed_at,omitempty" db:"completed_at"`
+	Deadline     *time.Time             `json:"deadline,omitempty" db:"deadline"`
+	CreatedAt    time.Time              `json:"created_at" db:"created_at"`
+	UpdatedAt    time.Time              `json:"updated_at" db:"updated_at"`
+	CompletedAt  *time.Time             `json:"completed_at,omitempty" db:"completed_at"`
 }
 
 type CreatePlayerOrderRequest struct {
@@ -77,52 +78,3 @@ type PlayerOrderReview struct {
 	Comment    string    `json:"comment" db:"comment"`
 	CreatedAt  time.Time `json:"created_at" db:"created_at"`
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

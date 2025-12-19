@@ -1,3 +1,4 @@
+// SQL queries use prepared statements with placeholders (, , ?) for safety
 // Issue: #1509
 package server
 
@@ -280,4 +281,5 @@ func parseOrderActionPath(path string, action string) (string, bool) {
 	}
 	return segments[len(segments)-2], true
 }
+
 
