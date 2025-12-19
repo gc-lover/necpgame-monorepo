@@ -79,8 +79,9 @@ func (vr *ViewRefresher) RefreshAllViews(ctx context.Context) error {
 	log.Println("Refreshing all materialized views...")
 
 	// Call PostgreSQL function (CONCURRENTLY = no locks!)
+	// Safe static query - no parameters needed (uses $1, $2 placeholders when needed)
 	query := "SELECT public.refresh_all_leaderboard_views()"
-	
+
 	start := time.Now()
 	_, err := vr.db.ExecContext(ctx, query)
 	elapsed := time.Since(start)
@@ -135,5 +136,3 @@ func getEnv(key, defaultValue string) string {
 	}
 	return defaultValue
 }
-
-
