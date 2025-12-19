@@ -278,3 +278,7 @@ type AIInstance struct {
 	DestroyedAt     *time.Time             `json:"destroyed_at,omitempty"`
 }
 
+
+
+
+
