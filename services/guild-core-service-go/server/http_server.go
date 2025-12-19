@@ -96,3 +96,7 @@ func (s *SecurityHandler) HandleBearerAuth(ctx context.Context, operationName st
 	ctx = context.WithValue(ctx, "user_id", userID)
 	return ctx, nil
 }
+
+
+
+

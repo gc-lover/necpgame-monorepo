@@ -154,3 +154,7 @@ func (h *Handlers) GuildWebSocket(ctx context.Context, params api.GetGuildParams
 	// Return TYPED response (ogen will marshal directly!)
 	return result, nil
 }
+
+
+
+

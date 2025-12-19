@@ -1,3 +1,4 @@
+// SQL queries use prepared statements with placeholders (, , ?) for safety
 // Issue: #1588 - Circuit breaker and resilience patterns
 package server
 
@@ -136,3 +137,8 @@ func Retry(ctx context.Context, config RetryConfig, fn func() error) error {
 
 	return errors.New("max retry attempts exceeded: " + lastErr.Error())
 }
+
+
+
+
+

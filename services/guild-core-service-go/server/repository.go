@@ -263,3 +263,7 @@ func (r *Repository) IsUserInGuild(ctx context.Context, guildID, userID uuid.UUI
 
 	return true, nil
 }
+
+
+
+
