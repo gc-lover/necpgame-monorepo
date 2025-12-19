@@ -1,4 +1,4 @@
-//go:generate go run github.com/ogen-go/ogen/cmd/ogen@latest --target . --package interactive_objects --clean ../../proto/openapi/interactive-objects-service.yaml
+//go:generate go run github.com/ogen-go/ogen/cmd/ogen@latest --target . --package interactive_objects --clean ../../proto/openapi/world/interactive-objects-service/interactive-objects-service.yaml
 
 package main
 
