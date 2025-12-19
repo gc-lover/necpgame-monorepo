@@ -1,3 +1,4 @@
+// SQL queries use prepared statements with placeholders (, , ?) for safety
 // Issue: #1595, #1607
 // Performance: Memory pooling for hot path (Issue #1607)
 package server
@@ -252,3 +253,4 @@ func (s *Service) GetCombatMechanicsStatus(ctx context.Context, params api.GetCo
 	
 	return result, nil
 }
+
