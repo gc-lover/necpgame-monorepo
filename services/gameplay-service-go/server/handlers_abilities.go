@@ -65,8 +65,17 @@ func (h *Handlers) CreateOrUpdateAbilityLoadout(ctx context.Context, req *api.Ab
 		return &api.CreateOrUpdateAbilityLoadoutInternalServerError{}, nil
 	}
 
-	// TODO: Get characterID from context (from SecurityHandler)
-	characterID := uuid.Nil // Placeholder
+	// Get characterID from JWT auth context
+	userIDValue := ctx.Value("user_id")
+	if userIDValue == nil {
+		return &api.CreateOrUpdateAbilityLoadoutUnauthorized{}, nil
+	}
+
+	characterID, err := uuid.Parse(userIDValue.(string))
+	if err != nil {
+		h.logger.WithError(err).Error("CreateOrUpdateAbilityLoadout: invalid user_id format")
+		return &api.CreateOrUpdateAbilityLoadoutInternalServerError{}, nil
+	}
 
 	loadout, err := h.abilityService.UpdateLoadout(ctx, characterID, req)
 	if err != nil {
@@ -122,8 +131,17 @@ func (h *Handlers) GetAbilityLoadouts(ctx context.Context, params api.GetAbility
 		return &api.GetAbilityLoadoutsInternalServerError{}, nil
 	}
 
-	// TODO: Get characterID from context (from SecurityHandler)
-	characterID := uuid.Nil // Placeholder
+	// Get characterID from JWT auth context
+	userIDValue := ctx.Value("user_id")
+	if userIDValue == nil {
+		return &api.GetAbilityLoadoutsUnauthorized{}, nil
+	}
+
+	characterID, err := uuid.Parse(userIDValue.(string))
+	if err != nil {
+		h.logger.WithError(err).Error("GetAbilityLoadouts: invalid user_id format")
+		return &api.GetAbilityLoadoutsInternalServerError{}, nil
+	}
 
 	loadout, err := h.abilityService.GetLoadout(ctx, characterID)
 	if err != nil {
@@ -158,8 +176,17 @@ func (h *Handlers) GetCyberpsychosisState(ctx context.Context) (api.GetCyberpsyc
 		return &api.GetCyberpsychosisStateInternalServerError{}, nil
 	}
 
-	// TODO: Get characterID from context (from SecurityHandler)
-	characterID := uuid.Nil // Placeholder
+	// Get characterID from JWT auth context
+	userIDValue := ctx.Value("user_id")
+	if userIDValue == nil {
+		return &api.GetCyberpsychosisStateUnauthorized{}, nil
+	}
+
+	characterID, err := uuid.Parse(userIDValue.(string))
+	if err != nil {
+		h.logger.WithError(err).Error("GetCyberpsychosisState: invalid user_id format")
+		return &api.GetCyberpsychosisStateInternalServerError{}, nil
+	}
 
 	state, err := h.abilityService.GetCyberpsychosisState(ctx, characterID)
 	if err != nil {
@@ -181,8 +208,17 @@ func (h *Handlers) GetAbilityMetrics(ctx context.Context, params api.GetAbilityM
 		return &api.GetAbilityMetricsInternalServerError{}, nil
 	}
 
-	// TODO: Get characterID from context (from SecurityHandler)
-	characterID := uuid.Nil // Placeholder
+	// Get characterID from JWT auth context
+	userIDValue := ctx.Value("user_id")
+	if userIDValue == nil {
+		return &api.GetAbilityMetricsUnauthorized{}, nil
+	}
+
+	characterID, err := uuid.Parse(userIDValue.(string))
+	if err != nil {
+		h.logger.WithError(err).Error("GetAbilityMetrics: invalid user_id format")
+		return &api.GetAbilityMetricsInternalServerError{}, nil
+	}
 
 	var abilityIDOpt api.OptUUID
 	if params.AbilityID.Set {
@@ -242,8 +278,17 @@ func (h *Handlers) ApplySynergy(ctx context.Context, req *api.SynergyApplyReques
 		return &api.ApplySynergyInternalServerError{}, nil
 	}
 
-	// TODO: Get characterID from context (from SecurityHandler)
-	characterID := uuid.Nil // Placeholder
+	// Get characterID from JWT auth context
+	userIDValue := ctx.Value("user_id")
+	if userIDValue == nil {
+		return &api.ApplySynergyUnauthorized{}, nil
+	}
+
+	characterID, err := uuid.Parse(userIDValue.(string))
+	if err != nil {
+		h.logger.WithError(err).Error("ApplySynergy: invalid user_id format")
+		return &api.ApplySynergyInternalServerError{}, nil
+	}
 
 	response, err := h.abilityService.ApplySynergy(ctx, characterID, req)
 	if err != nil {
@@ -264,8 +309,17 @@ func (h *Handlers) CheckCooldowns(ctx context.Context, req *api.CooldownCheckReq
 		return &api.CheckCooldownsInternalServerError{}, nil
 	}
 
-	// TODO: Get characterID from context (from SecurityHandler)
-	characterID := uuid.Nil // Placeholder
+	// Get characterID from JWT auth context
+	userIDValue := ctx.Value("user_id")
+	if userIDValue == nil {
+		return &api.CheckCooldownsUnauthorized{}, nil
+	}
+
+	characterID, err := uuid.Parse(userIDValue.(string))
+	if err != nil {
+		h.logger.WithError(err).Error("CheckCooldowns: invalid user_id format")
+		return &api.CheckCooldownsInternalServerError{}, nil
+	}
 
 	result, err := h.abilityService.GetCooldowns(ctx, characterID)
 	if err != nil {
@@ -329,8 +383,17 @@ func (h *Handlers) UpdateCyberpsychosis(ctx context.Context, req *api.Cyberpsych
 		return &api.UpdateCyberpsychosisInternalServerError{}, nil
 	}
 
-	// TODO: Get characterID from context (from SecurityHandler)
-	characterID := uuid.Nil // Placeholder
+	// Get characterID from JWT auth context
+	userIDValue := ctx.Value("user_id")
+	if userIDValue == nil {
+		return &api.UpdateCyberpsychosisUnauthorized{}, nil
+	}
+
+	characterID, err := uuid.Parse(userIDValue.(string))
+	if err != nil {
+		h.logger.WithError(err).Error("UpdateCyberpsychosis: invalid user_id format")
+		return &api.UpdateCyberpsychosisInternalServerError{}, nil
+	}
 
 	// TODO: Implement cyberpsychosis update logic
 	state, err := h.abilityService.GetCyberpsychosisState(ctx, characterID)

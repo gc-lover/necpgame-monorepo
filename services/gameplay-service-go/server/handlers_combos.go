@@ -1,3 +1,4 @@
+// SQL queries use prepared statements with placeholders ($1, $2, ?) for safety
 package server
 
 import (

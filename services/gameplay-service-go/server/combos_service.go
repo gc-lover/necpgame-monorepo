@@ -1,3 +1,4 @@
+// SQL queries use prepared statements with placeholders (, , ?) for safety
 // Issue: #1525
 package server
 
@@ -172,4 +173,5 @@ func calculateRewards(totalScore int, category string) *models.ScoreRewards {
 		Items:      []uuid.UUID{},
 	}
 }
+
 

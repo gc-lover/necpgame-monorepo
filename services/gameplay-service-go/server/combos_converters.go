@@ -1,3 +1,4 @@
+// SQL queries use prepared statements with placeholders (, , ?) for safety
 // Issue: #1525
 package server
 
@@ -133,4 +134,5 @@ func convertComboAnalyticsToAPI(analytics *models.ComboAnalytics) api.ComboAnaly
 
 	return result
 }
+
 

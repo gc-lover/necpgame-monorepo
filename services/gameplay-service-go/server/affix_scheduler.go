@@ -39,6 +39,11 @@ func (s *AffixScheduler) Start() {
 	}
 
 	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				s.logger.WithField("panic", r).Error("Affix scheduler panic recovered")
+			}
+		}()
 		// Check immediately on start
 		s.checkAndRotate(context.Background())
 
@@ -68,7 +73,7 @@ func (s *AffixScheduler) Stop() {
 // checkAndRotate checks if rotation is needed and triggers it
 func (s *AffixScheduler) checkAndRotate(ctx context.Context) {
 	now := time.Now().UTC()
-	
+
 	// Check if it's Monday 00:00-00:59 UTC
 	if now.Weekday() != time.Monday || now.Hour() != 0 {
 		return
@@ -94,4 +99,3 @@ func (s *AffixScheduler) checkAndRotate(ctx context.Context) {
 		s.logger.Info("Automatic affix rotation completed successfully")
 	}
 }
-

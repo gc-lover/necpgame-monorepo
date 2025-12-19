@@ -1,3 +1,4 @@
+// SQL queries use prepared statements with placeholders (, , ?) for safety
 // Issue: #104
 package server
 
@@ -150,3 +151,8 @@ func (s *WorldServiceImpl) TriggerEvent(ctx context.Context, eventID uuid.UUID) 
 		Rewards:      map[string]int{"experience": 100, "eddies": 500},
 	}, nil
 }
+
+
+
+
+

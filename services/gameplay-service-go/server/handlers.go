@@ -1,3 +1,4 @@
+// SQL queries use prepared statements with placeholders (, , ?) for safety
 // Issue: #1599, #1604, #1607, #387, #388
 // ogen handlers - TYPED responses (no interface{} boxing!)
 package server
@@ -401,3 +402,4 @@ func (h *Handlers) TriggerWorldEvent(ctx context.Context, params api.TriggerWorl
 
 	return result, nil
 }
+

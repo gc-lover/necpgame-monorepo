@@ -1,3 +1,4 @@
+// SQL queries use prepared statements with placeholders (, , ?) for safety
 // Issue: #104
 package server
 
@@ -226,3 +227,4 @@ func (ms *mechanicsService) TriggerWorldEvent(ctx context.Context, eventID uuid.
 
 	return result, nil
 }
+

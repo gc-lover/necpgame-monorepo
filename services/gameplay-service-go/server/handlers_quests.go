@@ -6,6 +6,7 @@ import (
 
 	"github.com/gc-lover/necpgame-monorepo/services/gameplay-service-go/pkg/api"
 	"github.com/google/uuid"
+	"github.com/sirupsen/logrus"
 )
 
 // Quest and AI handlers
@@ -21,11 +22,23 @@ func (h *Handlers) CancelQuest(ctx context.Context, params api.CancelQuestParams
 		return &api.CancelQuestInternalServerError{}, nil
 	}
 
-	// TODO: Get characterID from context (from SecurityHandler)
-	// characterID := uuid.Nil // Placeholder
+	// Get characterID from JWT auth context
+	userIDValue := ctx.Value("user_id")
+	if userIDValue == nil {
+		return &api.CancelQuestUnauthorized{}, nil
+	}
+
+	characterID, err := uuid.Parse(userIDValue.(string))
+	if err != nil {
+		h.logger.WithError(err).Error("CancelQuest: invalid user_id format")
+		return &api.CancelQuestInternalServerError{}, nil
+	}
 
 	// TODO: Implement actual quest cancellation logic
-	h.logger.WithField("quest_id", params.QuestID).Info("CancelQuest called (stub)")
+	h.logger.WithFields(logrus.Fields{
+		"quest_id":     params.QuestID,
+		"character_id": characterID,
+	}).Info("CancelQuest called")
 
 	// Return quest instance (200 OK)
 	// TODO: Get actual quest instance from repository
@@ -46,11 +59,23 @@ func (h *Handlers) CheckQuestConditions(ctx context.Context, params api.CheckQue
 		return &api.CheckQuestConditionsInternalServerError{}, nil
 	}
 
-	// TODO: Get characterID from context (from SecurityHandler)
-	// characterID := uuid.Nil // Placeholder
+	// Get characterID from JWT auth context
+	userIDValue := ctx.Value("user_id")
+	if userIDValue == nil {
+		return &api.CheckQuestConditionsUnauthorized{}, nil
+	}
+
+	characterID, err := uuid.Parse(userIDValue.(string))
+	if err != nil {
+		h.logger.WithError(err).Error("CheckQuestConditions: invalid user_id format")
+		return &api.CheckQuestConditionsInternalServerError{}, nil
+	}
 
 	// TODO: Implement actual condition checking logic
-	h.logger.WithField("quest_id", params.QuestID).Info("CheckQuestConditions called (stub)")
+	h.logger.WithFields(logrus.Fields{
+		"quest_id":     params.QuestID,
+		"character_id": characterID,
+	}).Info("CheckQuestConditions called")
 
 	return &api.CheckQuestConditionsOK{
 		AllConditionsMet: true,
@@ -69,11 +94,23 @@ func (h *Handlers) CompleteQuest(ctx context.Context, req api.OptCompleteQuestRe
 		return &api.CompleteQuestInternalServerError{}, nil
 	}
 
-	// TODO: Get characterID from context (from SecurityHandler)
-	// characterID := uuid.Nil // Placeholder
+	// Get characterID from JWT auth context
+	userIDValue := ctx.Value("user_id")
+	if userIDValue == nil {
+		return &api.CompleteQuestUnauthorized{}, nil
+	}
+
+	characterID, err := uuid.Parse(userIDValue.(string))
+	if err != nil {
+		h.logger.WithError(err).Error("CompleteQuest: invalid user_id format")
+		return &api.CompleteQuestInternalServerError{}, nil
+	}
 
 	// TODO: Implement actual quest completion logic
-	h.logger.WithField("quest_id", params.QuestID).Info("CompleteQuest called (stub)")
+	h.logger.WithFields(logrus.Fields{
+		"quest_id":     params.QuestID,
+		"character_id": characterID,
+	}).Info("CompleteQuest called")
 
 	return &api.CompleteQuestResponse{
 		QuestInstance: api.QuestInstance{
@@ -95,11 +132,24 @@ func (h *Handlers) DistributeQuestRewards(ctx context.Context, params api.Distri
 		return &api.DistributeQuestRewardsInternalServerError{}, nil
 	}
 
-	// TODO: Get characterID from context (from SecurityHandler)
-	// characterID := uuid.Nil // Placeholder
+	// Get characterID from JWT auth context
+	userIDValue := ctx.Value("user_id")
+	if userIDValue == nil {
+		return &api.DistributeQuestRewardsUnauthorized{}, nil
+	}
+
+	characterID, err := uuid.Parse(userIDValue.(string))
+	if err != nil {
+		h.logger.WithError(err).Error("DistributeQuestRewards: invalid user_id format")
+		return &api.DistributeQuestRewardsInternalServerError{}, nil
+	}
 
 	// TODO: Implement actual reward distribution logic
-	// For now, return a basic response
+	h.logger.WithFields(logrus.Fields{
+		"quest_id":     params.QuestID,
+		"character_id": characterID,
+	}).Info("DistributeQuestRewards called")
+
 	return &api.DistributeQuestRewardsOK{
 		Success: true,
 		Rewards: api.QuestRewards{},

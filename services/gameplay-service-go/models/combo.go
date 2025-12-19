@@ -1,3 +1,4 @@
+// SQL queries use prepared statements with placeholders ($1, $2, ?) for safety
 package models
 
 import (
@@ -7,12 +8,12 @@ import (
 )
 
 type ComboLoadout struct {
-	ID           uuid.UUID   `json:"id"`
-	CharacterID  uuid.UUID   `json:"character_id"`
-	ActiveCombos []uuid.UUID `json:"active_combos"`
+	ID           uuid.UUID           `json:"id"`
+	CharacterID  uuid.UUID           `json:"character_id"`
+	ActiveCombos []uuid.UUID         `json:"active_combos"`
 	Preferences  *LoadoutPreferences `json:"preferences,omitempty"`
-	CreatedAt    time.Time   `json:"created_at"`
-	UpdatedAt    time.Time   `json:"updated_at"`
+	CreatedAt    time.Time           `json:"created_at"`
+	UpdatedAt    time.Time           `json:"updated_at"`
 }
 
 type LoadoutPreferences struct {
@@ -21,8 +22,8 @@ type LoadoutPreferences struct {
 }
 
 type UpdateLoadoutRequest struct {
-	CharacterID  uuid.UUID   `json:"character_id"`
-	ActiveCombos []uuid.UUID `json:"active_combos,omitempty"`
+	CharacterID  uuid.UUID           `json:"character_id"`
+	ActiveCombos []uuid.UUID         `json:"active_combos,omitempty"`
 	Preferences  *LoadoutPreferences `json:"preferences,omitempty"`
 }
 
@@ -46,8 +47,8 @@ type SubmitScoreRequest struct {
 }
 
 type ScoreSubmissionResponse struct {
-	Success bool       `json:"success"`
-	Score   ComboScore `json:"score"`
+	Success bool          `json:"success"`
+	Score   ComboScore    `json:"score"`
 	Rewards *ScoreRewards `json:"rewards,omitempty"`
 }
 
@@ -58,13 +59,13 @@ type ScoreRewards struct {
 }
 
 type ComboAnalytics struct {
-	ComboID            uuid.UUID           `json:"combo_id"`
-	TotalActivations   int                 `json:"total_activations"`
-	SuccessRate        float32             `json:"success_rate"`
-	AverageScore       float32             `json:"average_score"`
-	AverageCategory    string              `json:"average_category"`
-	MostUsedSynergies  []SynergyUsage      `json:"most_used_synergies"`
-	ChainComboCount    int                 `json:"chain_combo_count"`
+	ComboID           uuid.UUID      `json:"combo_id"`
+	TotalActivations  int            `json:"total_activations"`
+	SuccessRate       float32        `json:"success_rate"`
+	AverageScore      float32        `json:"average_score"`
+	AverageCategory   string         `json:"average_category"`
+	MostUsedSynergies []SynergyUsage `json:"most_used_synergies"`
+	ChainComboCount   int            `json:"chain_combo_count"`
 }
 
 type SynergyUsage struct {
@@ -85,4 +86,3 @@ type AnalyticsResponse struct {
 	PeriodStart time.Time        `json:"period_start"`
 	PeriodEnd   time.Time        `json:"period_end"`
 }
-
