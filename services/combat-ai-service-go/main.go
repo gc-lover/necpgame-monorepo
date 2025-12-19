@@ -29,8 +29,11 @@ func main() {
 	// Initialize service
 	service := server.NewService(repo)
 
+	// Create configuration for JWT
+	config := server.NewConfig()
+
 	// Create HTTP server
-	httpServer := server.NewHTTPServer(addr, service)
+	httpServer := server.NewHTTPServer(addr, service, config, log.Default())
 
 	// OPTIMIZATION: Issue #1584 - Start pprof server for profiling
 	go func() {
@@ -82,4 +85,3 @@ func getEnv(key, defaultValue string) string {
 	}
 	return defaultValue
 }
-
