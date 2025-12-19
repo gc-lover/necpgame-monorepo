@@ -10,21 +10,21 @@ type FeedbackType string
 
 const (
 	FeedbackTypeFeatureRequest FeedbackType = "feature_request"
-	FeedbackTypeBugReport     FeedbackType = "bug_report"
-	FeedbackTypeWishlist      FeedbackType = "wishlist"
-	FeedbackTypeFeedback      FeedbackType = "feedback"
+	FeedbackTypeBugReport      FeedbackType = "bug_report"
+	FeedbackTypeWishlist       FeedbackType = "wishlist"
+	FeedbackTypeFeedback       FeedbackType = "feedback"
 )
 
 type FeedbackCategory string
 
 const (
-	FeedbackCategoryGameplay FeedbackCategory = "gameplay"
-	FeedbackCategoryBalance  FeedbackCategory = "balance"
-	FeedbackCategoryContent  FeedbackCategory = "content"
+	FeedbackCategoryGameplay  FeedbackCategory = "gameplay"
+	FeedbackCategoryBalance   FeedbackCategory = "balance"
+	FeedbackCategoryContent   FeedbackCategory = "content"
 	FeedbackCategoryTechnical FeedbackCategory = "technical"
-	FeedbackCategoryLore     FeedbackCategory = "lore"
-	FeedbackCategoryUIUX     FeedbackCategory = "ui_ux"
-	FeedbackCategoryOther    FeedbackCategory = "other"
+	FeedbackCategoryLore      FeedbackCategory = "lore"
+	FeedbackCategoryUIUX      FeedbackCategory = "ui_ux"
+	FeedbackCategoryOther     FeedbackCategory = "other"
 )
 
 type FeedbackPriority string
@@ -39,12 +39,12 @@ const (
 type FeedbackStatus string
 
 const (
-	FeedbackStatusPending   FeedbackStatus = "pending"
-	FeedbackStatusInReview  FeedbackStatus = "in_review"
-	FeedbackStatusApproved  FeedbackStatus = "approved"
-	FeedbackStatusRejected  FeedbackStatus = "rejected"
-	FeedbackStatusMerged    FeedbackStatus = "merged"
-	FeedbackStatusClosed    FeedbackStatus = "closed"
+	FeedbackStatusPending  FeedbackStatus = "pending"
+	FeedbackStatusInReview FeedbackStatus = "in_review"
+	FeedbackStatusApproved FeedbackStatus = "approved"
+	FeedbackStatusRejected FeedbackStatus = "rejected"
+	FeedbackStatusMerged   FeedbackStatus = "merged"
+	FeedbackStatusClosed   FeedbackStatus = "closed"
 )
 
 type ModerationStatus string
@@ -63,25 +63,51 @@ type GameContext struct {
 	PlaytimeHours  *float64 `json:"playtime_hours,omitempty" db:"playtime_hours"`
 }
 
+// FeedbackBase represents core feedback identification and content
+type FeedbackBase struct {
+	ID          uuid.UUID        `json:"id" db:"id"`
+	PlayerID    uuid.UUID        `json:"player_id" db:"player_id"`
+	Type        FeedbackType     `json:"type" db:"type"`
+	Category    FeedbackCategory `json:"category" db:"category"`
+	Title       string           `json:"title" db:"title"`
+	Description string           `json:"description" db:"description"`
+}
+
+// FeedbackContext represents game context and attachments
+type FeedbackContext struct {
+	Priority    *FeedbackPriority `json:"priority,omitempty" db:"priority"`
+	GameContext *GameContext      `json:"game_context,omitempty" db:"game_context"`
+	Screenshots []string          `json:"screenshots,omitempty" db:"screenshots"`
+}
+
+// FeedbackGithub represents GitHub issue integration
+type FeedbackGithub struct {
+	GithubIssueNumber *int    `json:"github_issue_number,omitempty" db:"github_issue_number"`
+	GithubIssueURL    *string `json:"github_issue_url,omitempty" db:"github_issue_url"`
+}
+
+// FeedbackModeration represents community and moderation state
+type FeedbackModeration struct {
+	Status           FeedbackStatus    `json:"status" db:"status"`
+	VotesCount       int               `json:"votes_count" db:"votes_count"`
+	MergedInto       *uuid.UUID        `json:"merged_into,omitempty" db:"merged_into"`
+	ModerationStatus *ModerationStatus `json:"moderation_status,omitempty" db:"moderation_status"`
+	ModerationReason *string           `json:"moderation_reason,omitempty" db:"moderation_reason"`
+}
+
+// FeedbackMetadata represents timestamps
+type FeedbackMetadata struct {
+	CreatedAt time.Time `json:"created_at" db:"created_at"`
+	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
+}
+
+// Feedback represents a user feedback (composed of smaller structs)
 type Feedback struct {
-	ID                uuid.UUID        `json:"id" db:"id"`
-	PlayerID          uuid.UUID        `json:"player_id" db:"player_id"`
-	Type              FeedbackType      `json:"type" db:"type"`
-	Category          FeedbackCategory  `json:"category" db:"category"`
-	Title             string           `json:"title" db:"title"`
-	Description       string           `json:"description" db:"description"`
-	Priority          *FeedbackPriority `json:"priority,omitempty" db:"priority"`
-	GameContext       *GameContext     `json:"game_context,omitempty" db:"game_context"`
-	Screenshots       []string         `json:"screenshots,omitempty" db:"screenshots"`
-	GithubIssueNumber *int             `json:"github_issue_number,omitempty" db:"github_issue_number"`
-	GithubIssueURL    *string          `json:"github_issue_url,omitempty" db:"github_issue_url"`
-	Status            FeedbackStatus   `json:"status" db:"status"`
-	VotesCount        int              `json:"votes_count" db:"votes_count"`
-	MergedInto        *uuid.UUID       `json:"merged_into,omitempty" db:"merged_into"`
-	ModerationStatus  *ModerationStatus `json:"moderation_status,omitempty" db:"moderation_status"`
-	ModerationReason  *string          `json:"moderation_reason,omitempty" db:"moderation_reason"`
-	CreatedAt         time.Time        `json:"created_at" db:"created_at"`
-	UpdatedAt         time.Time        `json:"updated_at" db:"updated_at"`
+	Base       FeedbackBase       `json:"base"`
+	Context    FeedbackContext    `json:"context,omitempty"`
+	Github     FeedbackGithub     `json:"github,omitempty"`
+	Moderation FeedbackModeration `json:"moderation"`
+	Metadata   FeedbackMetadata   `json:"metadata"`
 }
 
 type SubmitFeedbackRequest struct {
@@ -117,16 +143,16 @@ type UpdateStatusRequest struct {
 }
 
 type FeedbackBoardItem struct {
-	ID                uuid.UUID       `json:"id"`
-	Type              FeedbackType    `json:"type"`
+	ID                uuid.UUID        `json:"id"`
+	Type              FeedbackType     `json:"type"`
 	Category          FeedbackCategory `json:"category"`
-	Title             string          `json:"title"`
-	Description       string          `json:"description"`
-	VotesCount        int             `json:"votes_count"`
-	Status            FeedbackStatus  `json:"status"`
-	GithubIssueNumber *int            `json:"github_issue_number,omitempty"`
-	GithubIssueURL    *string         `json:"github_issue_url,omitempty"`
-	CreatedAt         time.Time       `json:"created_at"`
+	Title             string           `json:"title"`
+	Description       string           `json:"description"`
+	VotesCount        int              `json:"votes_count"`
+	Status            FeedbackStatus   `json:"status"`
+	GithubIssueNumber *int             `json:"github_issue_number,omitempty"`
+	GithubIssueURL    *string          `json:"github_issue_url,omitempty"`
+	CreatedAt         time.Time        `json:"created_at"`
 }
 
 type FeedbackBoardList struct {
@@ -154,52 +180,3 @@ type FeedbackStats struct {
 	Wishlist        int `json:"wishlist"`
 	Feedback        int `json:"feedback"`
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
