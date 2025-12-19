@@ -20,7 +20,7 @@ run: build
 
 # Generate OpenAPI code
 generate:
-	go run github.com/ogen-go/ogen/cmd/ogen@latest --target pkg/api --package api ../../proto/openapi/auth-service.yaml
+	go run github.com/ogen-go/ogen/cmd/ogen@latest --target pkg/api --package api ../../proto/openapi/auth/auth-service/main.yaml
 
 # Install dependencies
 deps:
