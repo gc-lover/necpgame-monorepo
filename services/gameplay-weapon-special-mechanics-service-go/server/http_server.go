@@ -1,6 +1,8 @@
 // Issue: #1595
 package server
 
+// HTTP handlers use context.WithTimeout for request timeouts (see handlers.go)
+
 import (
 	"context"
 	"net/http"
@@ -41,12 +43,26 @@ func NewHTTPServer(addr string, service *Service) *HTTPServer {
 		server: &http.Server{
 			Addr:    addr,
 			Handler: router,
+			ReadTimeout:  30 * time.Second,  // Prevent slowloris attacks
+			WriteTimeout: 30 * time.Second,  // Prevent hanging writes
+			IdleTimeout:  120 * time.Second, // Keep connections alive for reuse
 		},
 	}
 }
 
 func (s *HTTPServer) Start() error {
-	return s.server.ListenAndServe()
+	// Start server in background with proper goroutine management
+	errChan := make(chan error, 1)
+	go func() {
+		defer close(errChan)
+		if err := s.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			errChan <- err
+		}
+	}()
+
+	// Wait indefinitely (server runs until shutdown)
+	err := <-errChan
+	return err
 }
 
 func (s *HTTPServer) Shutdown(ctx context.Context) error {
@@ -90,4 +106,7 @@ func RecoveryMiddleware(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 	})
 }
+
+
+
 
