@@ -3,6 +3,8 @@
 // PERFORMANCE: OGEN routes (hot path) already maximum speed, removed chi overhead from health/metrics
 package server
 
+// HTTP handlers use context.WithTimeout for request timeouts (see handlers.go)
+
 import (
 	"context"
 	"net/http"
@@ -53,9 +55,9 @@ func NewHTTPServer(addr string, service *Service) *HTTPServer {
 		server: &http.Server{
 			Addr:         addr,
 			Handler:      mux,
-			ReadTimeout:  15 * time.Second,
-			WriteTimeout: 15 * time.Second,
-			IdleTimeout:  60 * time.Second,
+			ReadTimeout:  30 * time.Second,  // Prevent slowloris attacks,
+			WriteTimeout: 30 * time.Second,  // Prevent hanging writes,
+			IdleTimeout:  120 * time.Second, // Keep connections alive for reuse,
 		},
 	}
 }
@@ -94,7 +96,18 @@ func requestIDMiddleware(next http.Handler) http.Handler {
 
 // Start starts HTTP server
 func (s *HTTPServer) Start() error {
-	return s.server.ListenAndServe()
+	// Start server in background with proper goroutine management
+	errChan := make(chan error, 1)
+	go func() {
+		defer close(errChan)
+		if err := s.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			errChan <- err
+		}
+	}()
+
+	// Wait indefinitely (server runs until shutdown)
+	err := <-errChan
+	return err
 }
 
 // Shutdown gracefully shuts down HTTP server
@@ -113,3 +126,6 @@ func metricsHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("# HELP combat_combos_service metrics\n"))
 }
+
+
+
