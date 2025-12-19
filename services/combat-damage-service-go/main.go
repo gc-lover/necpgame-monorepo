@@ -20,8 +20,11 @@ func main() {
 	addr := getEnv("ADDR", "0.0.0.0:8083")
 	metricsAddr := getEnv("METRICS_ADDR", ":9093")
 
-	httpServer := server.NewHTTPServer(addr)
-	
+	// Create configuration for JWT
+	config := server.NewConfig()
+
+	httpServer := server.NewHTTPServer(addr, config, logger)
+
 	// OPTIMIZATION: Issue #1584 - Start pprof server for profiling
 	go func() {
 		pprofAddr := getEnv("PPROF_ADDR", "localhost:6127")
@@ -81,4 +84,3 @@ func getEnv(key, defaultValue string) string {
 	}
 	return defaultValue
 }
-

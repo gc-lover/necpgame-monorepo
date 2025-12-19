@@ -1,11 +1,15 @@
 // Issue: #1595
 package server
 
+// HTTP handlers use context.WithTimeout for request timeouts (see handlers.go)
+
 import (
 	"context"
+		"time"
 	"net/http"
 
 	"github.com/gc-lover/necpgame-monorepo/services/combat-damage-service-go/pkg/api"
+	"github.com/sirupsen/logrus"
 )
 
 // HTTPServer represents HTTP server
@@ -17,14 +21,14 @@ type HTTPServer struct {
 }
 
 // NewHTTPServer creates new HTTP server
-func NewHTTPServer(addr string) *HTTPServer {
+func NewHTTPServer(addr string, config *Config, logger *logrus.Logger) *HTTPServer {
 	router := http.NewServeMux()
 
 	// Handlers (реализация api.Handler из handlers.go)
 	handlers := NewHandlers()
 
 	// Integration with ogen (creates its own Chi router)
-	secHandler := &SecurityHandler{}
+	secHandler := NewSecurityHandler(config, logger)
 	ogenServer, err := api.NewServer(handlers, secHandler)
 	if err != nil {
 		panic(err)
@@ -50,13 +54,27 @@ func NewHTTPServer(addr string) *HTTPServer {
 		server: &http.Server{
 			Addr:    addr,
 			Handler: router,
+			ReadTimeout:  30 * time.Second,  // Prevent slowloris attacks
+			WriteTimeout: 30 * time.Second,  // Prevent hanging writes
+			IdleTimeout:  120 * time.Second, // Keep connections alive for reuse
 		},
 	}
 }
 
 // Start starts HTTP server
 func (s *HTTPServer) Start() error {
-	return s.server.ListenAndServe()
+	// Start server in background with proper goroutine management
+	errChan := make(chan error, 1)
+	go func() {
+		defer close(errChan)
+		if err := s.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			errChan <- err
+		}
+	}()
+
+	// Wait indefinitely (server runs until shutdown)
+	err := <-errChan
+	return err
 }
 
 // Shutdown gracefully shuts down HTTP server
@@ -102,3 +120,6 @@ func recoverMiddleware(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 	})
 }
+
+
+
