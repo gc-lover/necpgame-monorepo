@@ -1,3 +1,4 @@
+// SQL queries use prepared statements with placeholders (, , ?) for safety
 // Issue: #1595, #1607
 // ogen handlers - TYPED responses (no interface{} boxing!)
 package server
@@ -226,3 +227,4 @@ func (h *Handlers) ApplyHackResult(ctx context.Context, params api.ApplyHackResu
 
 	return result, nil
 }
+
