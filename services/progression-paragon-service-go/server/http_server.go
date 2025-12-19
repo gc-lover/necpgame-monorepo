@@ -1,5 +1,7 @@
 package server
 
+// HTTP handlers use context.WithTimeout for request timeouts (see handlers.go)
+
 import (
 	"context"
 	"net/http"
@@ -49,13 +51,14 @@ func (s *HTTPServer) Start(ctx context.Context) error {
 	s.server = &http.Server{
 		Addr:         s.addr,
 		Handler:      s.router,
-		ReadTimeout:  15 * time.Second,
-		WriteTimeout: 15 * time.Second,
-		IdleTimeout:  60 * time.Second,
+		ReadTimeout:  30 * time.Second,  // Prevent slowloris attacks,
+		WriteTimeout: 30 * time.Second,  // Prevent hanging writes,
+		IdleTimeout:  120 * time.Second, // Keep connections alive for reuse,
 	}
 
 	errChan := make(chan error, 1)
 	go func() {
+			defer close(errChan)
 		if err := s.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			errChan <- err
 		}
@@ -93,4 +96,7 @@ func RecoveryMiddleware(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 	})
 }
+
+
+
 
