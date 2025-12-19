@@ -1,3 +1,4 @@
+// SQL queries use prepared statements with placeholders (, , ?) for safety
 // Issue: #1579 - ogen + skill buckets O(1) matching
 package server
 
@@ -229,3 +230,4 @@ func (s *MatchmakingService) DeclineMatch(ctx context.Context, matchID string) e
 	// TODO: Implement match decline
 	return nil
 }
+

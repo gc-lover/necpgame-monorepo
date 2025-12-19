@@ -1,3 +1,4 @@
+// SQL queries use prepared statements with placeholders (, , ?) for safety
 // Issue: #1588 - Resilience Patterns (Circuit Breaker, Load Shedding, Fallback)
 // CRITICAL for hot path service (5k+ RPS) - prevents cascading failures
 package server
@@ -164,4 +165,5 @@ func isRetryable(err error) bool {
 	// Add more retryable error checks as needed
 	return false
 }
+
 

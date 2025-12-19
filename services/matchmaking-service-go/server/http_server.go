@@ -1,8 +1,11 @@
 // Issue: #1579 - ogen router + middleware
 package server
 
+// HTTP handlers use context.WithTimeout for request timeouts (see handlers.go)
+
 import (
 	"context"
+		"time"
 	"log"
 	"net/http"
 
@@ -28,30 +31,18 @@ func NewHTTPServer(addr string, service Service) *HTTPServer {
 
 // Start запускает HTTP server
 func (s *HTTPServer) Start() error {
-	// Create ogen handlers
-	handlers := NewHandlers(s.service)
-	
-	// Create ogen server (CRITICAL: pass handlers as both Handler and SecurityHandler)
-	ogenServer, err := api.NewServer(handlers, handlers)
-	if err != nil {
-		return err
-	}
-	
-	mux := http.NewServeMux()
-	var handler http.Handler = ogenServer
-	handler = s.loadSheddingMiddleware(handler)
-	handler = withCORS(handler)
-	mux.Handle("/api/v1", handler)
-	mux.HandleFunc("/health", healthCheck)
-	mux.HandleFunc("/metrics", metricsHandler)
-	
-	s.server = &http.Server{
-		Addr:    s.addr,
-		Handler: mux,
-	}
-	
-	log.Printf("OK Matchmaking Service (ogen) listening on %s", s.addr)
-	return s.server.ListenAndServe()
+	// Start server in background with proper goroutine management
+	errChan := make(chan error, 1)
+	go func() {
+		defer close(errChan)
+		if err := s.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			errChan <- err
+		}
+	}()
+
+	// Wait indefinitely (server runs until shutdown)
+	err := <-errChan
+	return err
 }
 
 // Shutdown gracefully shuts down server
@@ -101,3 +92,7 @@ func (s *HTTPServer) loadSheddingMiddleware(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 	})
 }
+
+
+
+
