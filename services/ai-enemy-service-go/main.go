@@ -1,4 +1,4 @@
-//go:generate go run github.com/ogen-go/ogen/cmd/ogen@latest --target . --package ai_enemy --clean ../../proto/openapi/ai-enemy-service.yaml
+//go:generate go run github.com/ogen-go/ogen/cmd/ogen@latest --target . --package ai_enemy --clean ../../proto/openapi/ai/ai-enemy-service/main.yaml
 
 package main
 
