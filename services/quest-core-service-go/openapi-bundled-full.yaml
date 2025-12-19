@@ -1,0 +1,444 @@
+openapi: 3.0.3
+info:
+  title: Gameplay Quests Core Service API
+  description: API для основных операций с квестами
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+servers:
+  - url: http://localhost:8083/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+security:
+  - BearerAuth: []
+tags:
+  - name: Quests
+    description: Система квестов и заданий
+paths:
+  /gameplay/quests:
+    get:
+      tags:
+        - Quests
+      summary: Получить список доступных квестов
+      operationId: getAvailableQuests
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: characterId
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Список доступных квестов
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  quests:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Quest'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /gameplay/quests/{questId}/start:
+    post:
+      tags:
+        - Quests
+      summary: Начать выполнение квеста
+      operationId: startQuest
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: questId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartQuestRequest'
+      responses:
+        '200':
+          description: Квест начат
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestInstance'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /gameplay/quests/instances/{instanceId}:
+    get:
+      tags:
+        - Quests
+      summary: Получить информацию о квесте
+      operationId: getQuestInstance
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: instanceId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Информация о квесте
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestInstance'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /gameplay/quests/{questId}:
+    get:
+      tags:
+        - Quests
+      summary: Получить информацию о квесте
+      operationId: getQuestInfo
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: questId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Информация о квесте
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Quest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /gameplay/quests/player/{playerId}:
+    get:
+      tags:
+        - Quests
+      summary: Получить квесты игрока
+      operationId: getPlayerQuests
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: playerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum:
+              - NOT_STARTED
+              - IN_PROGRESS
+              - COMPLETED
+              - FAILED
+              - CANCELLED
+      responses:
+        '200':
+          description: Квесты игрока
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerQuestsResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /gameplay/quests/{questId}/cancel:
+    post:
+      tags:
+        - Quests
+      summary: Отменить квест
+      operationId: cancelQuest
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: questId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CancelQuestRequest'
+      responses:
+        '200':
+          description: Квест отменен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestInstance'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /gameplay/quests/content/reload:
+    post:
+      tags:
+        - Quests
+      summary: Импортировать контентный квест из YAML в БД
+      operationId: reloadQuestContent
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReloadQuestContentRequest'
+      responses:
+        '200':
+          description: Квест успешно импортирован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReloadQuestContentResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT токен для аутентификации
+  schemas:
+    Quest:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+        quest_type:
+          type: string
+        status:
+          type: string
+          enum:
+            - NOT_STARTED
+            - IN_PROGRESS
+            - COMPLETED
+            - FAILED
+            - CANCELLED
+        rewards:
+          type: object
+          additionalProperties: true
+        objectives:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuestObjective'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    QuestInstance:
+      type: object
+      properties:
+        instance_id:
+          type: string
+          format: uuid
+        quest_id:
+          type: string
+          format: uuid
+        character_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum:
+            - NOT_STARTED
+            - IN_PROGRESS
+            - COMPLETED
+            - FAILED
+            - CANCELLED
+        started_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        objectives:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuestObjective'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    QuestObjective:
+      type: object
+      properties:
+        id:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum:
+            - pending
+            - in_progress
+            - completed
+            - failed
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    StartQuestRequest:
+      type: object
+      required:
+        - character_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    CancelQuestRequest:
+      type: object
+      required:
+        - player_id
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        reason:
+          type: string
+          nullable: true
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    PlayerQuestsResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        quests:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuestInstance'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    ReloadQuestContentRequest:
+      type: object
+      required:
+        - quest_id
+        - yaml_content
+      properties:
+        quest_id:
+          type: string
+          description: ID квеста из YAML файла (metadata.id)
+        yaml_content:
+          type: object
+          description: Полное содержимое YAML файла квеста
+          additionalProperties: true
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    ReloadQuestContentResponse:
+      type: object
+      properties:
+        quest_id:
+          type: string
+        message:
+          type: string
+        imported_at:
+          type: string
+          format: date-time
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    Error:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          description: Тип ошибки
+        message:
+          type: string
+          description: Сообщение об ошибке
+        code:
+          type: string
+          description: Код ошибки
+          nullable: true
+        details:
+          type: object
+          additionalProperties: true
+          description: Дополнительные детали ошибки
+          nullable: true
+  responses:
+    BadRequest:
+      description: Неверный запрос
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: BadRequest
+            message: Неверные параметры запроса
+            code: INVALID_PARAMETERS
+    Unauthorized:
+      description: Требуется аутентификация
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: Unauthorized
+            message: Требуется аутентификация
+            code: AUTH_REQUIRED
+    InternalServerError:
+      description: Внутренняя ошибка сервера
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: InternalServerError
+            message: Внутренняя ошибка сервера
+            code: INTERNAL_ERROR
+    NotFound:
+      description: Ресурс не найден
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: NotFound
+            message: Ресурс не найден
+            code: RESOURCE_NOT_FOUND

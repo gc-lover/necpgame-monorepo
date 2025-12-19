@@ -5,9 +5,164 @@ package api
 import (
 	"time"
 
+	"github.com/go-faster/errors"
 	"github.com/go-faster/jx"
 	"github.com/google/uuid"
 )
+
+// Ref: #/components/schemas/AutoBanRequest
+type AutoBanRequest struct {
+	PlayerID    uuid.UUID                    `json:"player_id"`
+	Reason      string                       `json:"reason"`
+	TriggerType OptAutoBanRequestTriggerType `json:"trigger_type"`
+}
+
+// GetPlayerID returns the value of PlayerID.
+func (s *AutoBanRequest) GetPlayerID() uuid.UUID {
+	return s.PlayerID
+}
+
+// GetReason returns the value of Reason.
+func (s *AutoBanRequest) GetReason() string {
+	return s.Reason
+}
+
+// GetTriggerType returns the value of TriggerType.
+func (s *AutoBanRequest) GetTriggerType() OptAutoBanRequestTriggerType {
+	return s.TriggerType
+}
+
+// SetPlayerID sets the value of PlayerID.
+func (s *AutoBanRequest) SetPlayerID(val uuid.UUID) {
+	s.PlayerID = val
+}
+
+// SetReason sets the value of Reason.
+func (s *AutoBanRequest) SetReason(val string) {
+	s.Reason = val
+}
+
+// SetTriggerType sets the value of TriggerType.
+func (s *AutoBanRequest) SetTriggerType(val OptAutoBanRequestTriggerType) {
+	s.TriggerType = val
+}
+
+type AutoBanRequestTriggerType string
+
+const (
+	AutoBanRequestTriggerTypeSpam       AutoBanRequestTriggerType = "spam"
+	AutoBanRequestTriggerTypeToxicity   AutoBanRequestTriggerType = "toxicity"
+	AutoBanRequestTriggerTypeHarassment AutoBanRequestTriggerType = "harassment"
+	AutoBanRequestTriggerTypeCheating   AutoBanRequestTriggerType = "cheating"
+)
+
+// AllValues returns all AutoBanRequestTriggerType values.
+func (AutoBanRequestTriggerType) AllValues() []AutoBanRequestTriggerType {
+	return []AutoBanRequestTriggerType{
+		AutoBanRequestTriggerTypeSpam,
+		AutoBanRequestTriggerTypeToxicity,
+		AutoBanRequestTriggerTypeHarassment,
+		AutoBanRequestTriggerTypeCheating,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s AutoBanRequestTriggerType) MarshalText() ([]byte, error) {
+	switch s {
+	case AutoBanRequestTriggerTypeSpam:
+		return []byte(s), nil
+	case AutoBanRequestTriggerTypeToxicity:
+		return []byte(s), nil
+	case AutoBanRequestTriggerTypeHarassment:
+		return []byte(s), nil
+	case AutoBanRequestTriggerTypeCheating:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *AutoBanRequestTriggerType) UnmarshalText(data []byte) error {
+	switch AutoBanRequestTriggerType(data) {
+	case AutoBanRequestTriggerTypeSpam:
+		*s = AutoBanRequestTriggerTypeSpam
+		return nil
+	case AutoBanRequestTriggerTypeToxicity:
+		*s = AutoBanRequestTriggerTypeToxicity
+		return nil
+	case AutoBanRequestTriggerTypeHarassment:
+		*s = AutoBanRequestTriggerTypeHarassment
+		return nil
+	case AutoBanRequestTriggerTypeCheating:
+		*s = AutoBanRequestTriggerTypeCheating
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Ref: #/components/schemas/AutoBanResponse
+type AutoBanResponse struct {
+	Success       OptBool   `json:"success"`
+	BanID         OptUUID   `json:"ban_id"`
+	DurationHours OptInt    `json:"duration_hours"`
+	Reason        OptString `json:"reason"`
+}
+
+// GetSuccess returns the value of Success.
+func (s *AutoBanResponse) GetSuccess() OptBool {
+	return s.Success
+}
+
+// GetBanID returns the value of BanID.
+func (s *AutoBanResponse) GetBanID() OptUUID {
+	return s.BanID
+}
+
+// GetDurationHours returns the value of DurationHours.
+func (s *AutoBanResponse) GetDurationHours() OptInt {
+	return s.DurationHours
+}
+
+// GetReason returns the value of Reason.
+func (s *AutoBanResponse) GetReason() OptString {
+	return s.Reason
+}
+
+// SetSuccess sets the value of Success.
+func (s *AutoBanResponse) SetSuccess(val OptBool) {
+	s.Success = val
+}
+
+// SetBanID sets the value of BanID.
+func (s *AutoBanResponse) SetBanID(val OptUUID) {
+	s.BanID = val
+}
+
+// SetDurationHours sets the value of DurationHours.
+func (s *AutoBanResponse) SetDurationHours(val OptInt) {
+	s.DurationHours = val
+}
+
+// SetReason sets the value of Reason.
+func (s *AutoBanResponse) SetReason(val OptString) {
+	s.Reason = val
+}
+
+func (*AutoBanResponse) autoBanUserRes() {}
+
+type AutoBanUserBadRequest Error
+
+func (*AutoBanUserBadRequest) autoBanUserRes() {}
+
+type AutoBanUserInternalServerError Error
+
+func (*AutoBanUserInternalServerError) autoBanUserRes() {}
+
+type AutoBanUserUnauthorized Error
+
+func (*AutoBanUserUnauthorized) autoBanUserRes() {}
 
 type BanChatUserBadRequest Error
 
@@ -253,6 +408,286 @@ func (s *ChatBan) SetCreatedAt(val OptDateTime) {
 	s.CreatedAt = val
 }
 
+// Ref: #/components/schemas/ChatReport
+type ChatReport struct {
+	ID         OptUUID             `json:"id"`
+	MessageID  OptUUID             `json:"message_id"`
+	PlayerID   OptUUID             `json:"player_id"`
+	ReportedBy OptUUID             `json:"reported_by"`
+	Reason     OptString           `json:"reason"`
+	Status     OptChatReportStatus `json:"status"`
+	CreatedAt  OptDateTime         `json:"created_at"`
+	ResolvedAt OptNilDateTime      `json:"resolved_at"`
+	ResolvedBy OptNilUUID          `json:"resolved_by"`
+}
+
+// GetID returns the value of ID.
+func (s *ChatReport) GetID() OptUUID {
+	return s.ID
+}
+
+// GetMessageID returns the value of MessageID.
+func (s *ChatReport) GetMessageID() OptUUID {
+	return s.MessageID
+}
+
+// GetPlayerID returns the value of PlayerID.
+func (s *ChatReport) GetPlayerID() OptUUID {
+	return s.PlayerID
+}
+
+// GetReportedBy returns the value of ReportedBy.
+func (s *ChatReport) GetReportedBy() OptUUID {
+	return s.ReportedBy
+}
+
+// GetReason returns the value of Reason.
+func (s *ChatReport) GetReason() OptString {
+	return s.Reason
+}
+
+// GetStatus returns the value of Status.
+func (s *ChatReport) GetStatus() OptChatReportStatus {
+	return s.Status
+}
+
+// GetCreatedAt returns the value of CreatedAt.
+func (s *ChatReport) GetCreatedAt() OptDateTime {
+	return s.CreatedAt
+}
+
+// GetResolvedAt returns the value of ResolvedAt.
+func (s *ChatReport) GetResolvedAt() OptNilDateTime {
+	return s.ResolvedAt
+}
+
+// GetResolvedBy returns the value of ResolvedBy.
+func (s *ChatReport) GetResolvedBy() OptNilUUID {
+	return s.ResolvedBy
+}
+
+// SetID sets the value of ID.
+func (s *ChatReport) SetID(val OptUUID) {
+	s.ID = val
+}
+
+// SetMessageID sets the value of MessageID.
+func (s *ChatReport) SetMessageID(val OptUUID) {
+	s.MessageID = val
+}
+
+// SetPlayerID sets the value of PlayerID.
+func (s *ChatReport) SetPlayerID(val OptUUID) {
+	s.PlayerID = val
+}
+
+// SetReportedBy sets the value of ReportedBy.
+func (s *ChatReport) SetReportedBy(val OptUUID) {
+	s.ReportedBy = val
+}
+
+// SetReason sets the value of Reason.
+func (s *ChatReport) SetReason(val OptString) {
+	s.Reason = val
+}
+
+// SetStatus sets the value of Status.
+func (s *ChatReport) SetStatus(val OptChatReportStatus) {
+	s.Status = val
+}
+
+// SetCreatedAt sets the value of CreatedAt.
+func (s *ChatReport) SetCreatedAt(val OptDateTime) {
+	s.CreatedAt = val
+}
+
+// SetResolvedAt sets the value of ResolvedAt.
+func (s *ChatReport) SetResolvedAt(val OptNilDateTime) {
+	s.ResolvedAt = val
+}
+
+// SetResolvedBy sets the value of ResolvedBy.
+func (s *ChatReport) SetResolvedBy(val OptNilUUID) {
+	s.ResolvedBy = val
+}
+
+type ChatReportStatus string
+
+const (
+	ChatReportStatusPending   ChatReportStatus = "pending"
+	ChatReportStatusResolved  ChatReportStatus = "resolved"
+	ChatReportStatusDismissed ChatReportStatus = "dismissed"
+)
+
+// AllValues returns all ChatReportStatus values.
+func (ChatReportStatus) AllValues() []ChatReportStatus {
+	return []ChatReportStatus{
+		ChatReportStatusPending,
+		ChatReportStatusResolved,
+		ChatReportStatusDismissed,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s ChatReportStatus) MarshalText() ([]byte, error) {
+	switch s {
+	case ChatReportStatusPending:
+		return []byte(s), nil
+	case ChatReportStatusResolved:
+		return []byte(s), nil
+	case ChatReportStatusDismissed:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *ChatReportStatus) UnmarshalText(data []byte) error {
+	switch ChatReportStatus(data) {
+	case ChatReportStatusPending:
+		*s = ChatReportStatusPending
+		return nil
+	case ChatReportStatusResolved:
+		*s = ChatReportStatusResolved
+		return nil
+	case ChatReportStatusDismissed:
+		*s = ChatReportStatusDismissed
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Ref: #/components/schemas/ChatWarning
+type ChatWarning struct {
+	ID        OptUUID                `json:"id"`
+	PlayerID  OptUUID                `json:"player_id"`
+	Reason    OptString              `json:"reason"`
+	Severity  OptChatWarningSeverity `json:"severity"`
+	IssuedBy  OptUUID                `json:"issued_by"`
+	CreatedAt OptDateTime            `json:"created_at"`
+	ExpiresAt OptNilDateTime         `json:"expires_at"`
+}
+
+// GetID returns the value of ID.
+func (s *ChatWarning) GetID() OptUUID {
+	return s.ID
+}
+
+// GetPlayerID returns the value of PlayerID.
+func (s *ChatWarning) GetPlayerID() OptUUID {
+	return s.PlayerID
+}
+
+// GetReason returns the value of Reason.
+func (s *ChatWarning) GetReason() OptString {
+	return s.Reason
+}
+
+// GetSeverity returns the value of Severity.
+func (s *ChatWarning) GetSeverity() OptChatWarningSeverity {
+	return s.Severity
+}
+
+// GetIssuedBy returns the value of IssuedBy.
+func (s *ChatWarning) GetIssuedBy() OptUUID {
+	return s.IssuedBy
+}
+
+// GetCreatedAt returns the value of CreatedAt.
+func (s *ChatWarning) GetCreatedAt() OptDateTime {
+	return s.CreatedAt
+}
+
+// GetExpiresAt returns the value of ExpiresAt.
+func (s *ChatWarning) GetExpiresAt() OptNilDateTime {
+	return s.ExpiresAt
+}
+
+// SetID sets the value of ID.
+func (s *ChatWarning) SetID(val OptUUID) {
+	s.ID = val
+}
+
+// SetPlayerID sets the value of PlayerID.
+func (s *ChatWarning) SetPlayerID(val OptUUID) {
+	s.PlayerID = val
+}
+
+// SetReason sets the value of Reason.
+func (s *ChatWarning) SetReason(val OptString) {
+	s.Reason = val
+}
+
+// SetSeverity sets the value of Severity.
+func (s *ChatWarning) SetSeverity(val OptChatWarningSeverity) {
+	s.Severity = val
+}
+
+// SetIssuedBy sets the value of IssuedBy.
+func (s *ChatWarning) SetIssuedBy(val OptUUID) {
+	s.IssuedBy = val
+}
+
+// SetCreatedAt sets the value of CreatedAt.
+func (s *ChatWarning) SetCreatedAt(val OptDateTime) {
+	s.CreatedAt = val
+}
+
+// SetExpiresAt sets the value of ExpiresAt.
+func (s *ChatWarning) SetExpiresAt(val OptNilDateTime) {
+	s.ExpiresAt = val
+}
+
+type ChatWarningSeverity string
+
+const (
+	ChatWarningSeverityLow    ChatWarningSeverity = "low"
+	ChatWarningSeverityMedium ChatWarningSeverity = "medium"
+	ChatWarningSeverityHigh   ChatWarningSeverity = "high"
+)
+
+// AllValues returns all ChatWarningSeverity values.
+func (ChatWarningSeverity) AllValues() []ChatWarningSeverity {
+	return []ChatWarningSeverity{
+		ChatWarningSeverityLow,
+		ChatWarningSeverityMedium,
+		ChatWarningSeverityHigh,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s ChatWarningSeverity) MarshalText() ([]byte, error) {
+	switch s {
+	case ChatWarningSeverityLow:
+		return []byte(s), nil
+	case ChatWarningSeverityMedium:
+		return []byte(s), nil
+	case ChatWarningSeverityHigh:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *ChatWarningSeverity) UnmarshalText(data []byte) error {
+	switch ChatWarningSeverity(data) {
+	case ChatWarningSeverityLow:
+		*s = ChatWarningSeverityLow
+		return nil
+	case ChatWarningSeverityMedium:
+		*s = ChatWarningSeverityMedium
+		return nil
+	case ChatWarningSeverityHigh:
+		*s = ChatWarningSeverityHigh
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
 // Ref: #/components/schemas/Error
 type Error struct {
 	// Тип ошибки.
@@ -317,6 +752,160 @@ func (s *ErrorDetails) init() ErrorDetails {
 	return m
 }
 
+type FilterChatMessageBadRequest Error
+
+func (*FilterChatMessageBadRequest) filterChatMessageRes() {}
+
+type FilterChatMessageInternalServerError Error
+
+func (*FilterChatMessageInternalServerError) filterChatMessageRes() {}
+
+type FilterChatMessageUnauthorized Error
+
+func (*FilterChatMessageUnauthorized) filterChatMessageRes() {}
+
+// Ref: #/components/schemas/FilterMessageRequest
+type FilterMessageRequest struct {
+	Message   string    `json:"message"`
+	PlayerID  uuid.UUID `json:"player_id"`
+	ChannelID OptUUID   `json:"channel_id"`
+}
+
+// GetMessage returns the value of Message.
+func (s *FilterMessageRequest) GetMessage() string {
+	return s.Message
+}
+
+// GetPlayerID returns the value of PlayerID.
+func (s *FilterMessageRequest) GetPlayerID() uuid.UUID {
+	return s.PlayerID
+}
+
+// GetChannelID returns the value of ChannelID.
+func (s *FilterMessageRequest) GetChannelID() OptUUID {
+	return s.ChannelID
+}
+
+// SetMessage sets the value of Message.
+func (s *FilterMessageRequest) SetMessage(val string) {
+	s.Message = val
+}
+
+// SetPlayerID sets the value of PlayerID.
+func (s *FilterMessageRequest) SetPlayerID(val uuid.UUID) {
+	s.PlayerID = val
+}
+
+// SetChannelID sets the value of ChannelID.
+func (s *FilterMessageRequest) SetChannelID(val OptUUID) {
+	s.ChannelID = val
+}
+
+// Ref: #/components/schemas/FilterResponse
+type FilterResponse struct {
+	Allowed         OptBool                   `json:"allowed"`
+	FilteredMessage OptNilString              `json:"filtered_message"`
+	Violations      []string                  `json:"violations"`
+	Severity        OptFilterResponseSeverity `json:"severity"`
+}
+
+// GetAllowed returns the value of Allowed.
+func (s *FilterResponse) GetAllowed() OptBool {
+	return s.Allowed
+}
+
+// GetFilteredMessage returns the value of FilteredMessage.
+func (s *FilterResponse) GetFilteredMessage() OptNilString {
+	return s.FilteredMessage
+}
+
+// GetViolations returns the value of Violations.
+func (s *FilterResponse) GetViolations() []string {
+	return s.Violations
+}
+
+// GetSeverity returns the value of Severity.
+func (s *FilterResponse) GetSeverity() OptFilterResponseSeverity {
+	return s.Severity
+}
+
+// SetAllowed sets the value of Allowed.
+func (s *FilterResponse) SetAllowed(val OptBool) {
+	s.Allowed = val
+}
+
+// SetFilteredMessage sets the value of FilteredMessage.
+func (s *FilterResponse) SetFilteredMessage(val OptNilString) {
+	s.FilteredMessage = val
+}
+
+// SetViolations sets the value of Violations.
+func (s *FilterResponse) SetViolations(val []string) {
+	s.Violations = val
+}
+
+// SetSeverity sets the value of Severity.
+func (s *FilterResponse) SetSeverity(val OptFilterResponseSeverity) {
+	s.Severity = val
+}
+
+func (*FilterResponse) filterChatMessageRes() {}
+
+type FilterResponseSeverity string
+
+const (
+	FilterResponseSeverityLow      FilterResponseSeverity = "low"
+	FilterResponseSeverityMedium   FilterResponseSeverity = "medium"
+	FilterResponseSeverityHigh     FilterResponseSeverity = "high"
+	FilterResponseSeverityCritical FilterResponseSeverity = "critical"
+)
+
+// AllValues returns all FilterResponseSeverity values.
+func (FilterResponseSeverity) AllValues() []FilterResponseSeverity {
+	return []FilterResponseSeverity{
+		FilterResponseSeverityLow,
+		FilterResponseSeverityMedium,
+		FilterResponseSeverityHigh,
+		FilterResponseSeverityCritical,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s FilterResponseSeverity) MarshalText() ([]byte, error) {
+	switch s {
+	case FilterResponseSeverityLow:
+		return []byte(s), nil
+	case FilterResponseSeverityMedium:
+		return []byte(s), nil
+	case FilterResponseSeverityHigh:
+		return []byte(s), nil
+	case FilterResponseSeverityCritical:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *FilterResponseSeverity) UnmarshalText(data []byte) error {
+	switch FilterResponseSeverity(data) {
+	case FilterResponseSeverityLow:
+		*s = FilterResponseSeverityLow
+		return nil
+	case FilterResponseSeverityMedium:
+		*s = FilterResponseSeverityMedium
+		return nil
+	case FilterResponseSeverityHigh:
+		*s = FilterResponseSeverityHigh
+		return nil
+	case FilterResponseSeverityCritical:
+		*s = FilterResponseSeverityCritical
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
 type GetChatBansInternalServerError Error
 
 func (*GetChatBansInternalServerError) getChatBansRes() {}
@@ -324,6 +913,70 @@ func (*GetChatBansInternalServerError) getChatBansRes() {}
 type GetChatBansUnauthorized Error
 
 func (*GetChatBansUnauthorized) getChatBansRes() {}
+
+type GetChatReportsInternalServerError Error
+
+func (*GetChatReportsInternalServerError) getChatReportsRes() {}
+
+type GetChatReportsStatus string
+
+const (
+	GetChatReportsStatusPending   GetChatReportsStatus = "pending"
+	GetChatReportsStatusResolved  GetChatReportsStatus = "resolved"
+	GetChatReportsStatusDismissed GetChatReportsStatus = "dismissed"
+)
+
+// AllValues returns all GetChatReportsStatus values.
+func (GetChatReportsStatus) AllValues() []GetChatReportsStatus {
+	return []GetChatReportsStatus{
+		GetChatReportsStatusPending,
+		GetChatReportsStatusResolved,
+		GetChatReportsStatusDismissed,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s GetChatReportsStatus) MarshalText() ([]byte, error) {
+	switch s {
+	case GetChatReportsStatusPending:
+		return []byte(s), nil
+	case GetChatReportsStatusResolved:
+		return []byte(s), nil
+	case GetChatReportsStatusDismissed:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *GetChatReportsStatus) UnmarshalText(data []byte) error {
+	switch GetChatReportsStatus(data) {
+	case GetChatReportsStatusPending:
+		*s = GetChatReportsStatusPending
+		return nil
+	case GetChatReportsStatusResolved:
+		*s = GetChatReportsStatusResolved
+		return nil
+	case GetChatReportsStatusDismissed:
+		*s = GetChatReportsStatusDismissed
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+type GetChatReportsUnauthorized Error
+
+func (*GetChatReportsUnauthorized) getChatReportsRes() {}
+
+type GetChatWarningsInternalServerError Error
+
+func (*GetChatWarningsInternalServerError) getChatWarningsRes() {}
+
+type GetChatWarningsUnauthorized Error
+
+func (*GetChatWarningsUnauthorized) getChatWarningsRes() {}
 
 // NewNilInt returns new NilInt with value set to v.
 func NewNilInt(v int) NilInt {
@@ -364,6 +1017,52 @@ func (o NilInt) Get() (v int, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o NilInt) Or(d int) int {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptAutoBanRequestTriggerType returns new OptAutoBanRequestTriggerType with value set to v.
+func NewOptAutoBanRequestTriggerType(v AutoBanRequestTriggerType) OptAutoBanRequestTriggerType {
+	return OptAutoBanRequestTriggerType{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptAutoBanRequestTriggerType is optional AutoBanRequestTriggerType.
+type OptAutoBanRequestTriggerType struct {
+	Value AutoBanRequestTriggerType
+	Set   bool
+}
+
+// IsSet returns true if OptAutoBanRequestTriggerType was set.
+func (o OptAutoBanRequestTriggerType) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptAutoBanRequestTriggerType) Reset() {
+	var v AutoBanRequestTriggerType
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptAutoBanRequestTriggerType) SetTo(v AutoBanRequestTriggerType) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptAutoBanRequestTriggerType) Get() (v AutoBanRequestTriggerType, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptAutoBanRequestTriggerType) Or(d AutoBanRequestTriggerType) AutoBanRequestTriggerType {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -416,6 +1115,98 @@ func (o OptBool) Or(d bool) bool {
 	return d
 }
 
+// NewOptChatReportStatus returns new OptChatReportStatus with value set to v.
+func NewOptChatReportStatus(v ChatReportStatus) OptChatReportStatus {
+	return OptChatReportStatus{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptChatReportStatus is optional ChatReportStatus.
+type OptChatReportStatus struct {
+	Value ChatReportStatus
+	Set   bool
+}
+
+// IsSet returns true if OptChatReportStatus was set.
+func (o OptChatReportStatus) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptChatReportStatus) Reset() {
+	var v ChatReportStatus
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptChatReportStatus) SetTo(v ChatReportStatus) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptChatReportStatus) Get() (v ChatReportStatus, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptChatReportStatus) Or(d ChatReportStatus) ChatReportStatus {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptChatWarningSeverity returns new OptChatWarningSeverity with value set to v.
+func NewOptChatWarningSeverity(v ChatWarningSeverity) OptChatWarningSeverity {
+	return OptChatWarningSeverity{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptChatWarningSeverity is optional ChatWarningSeverity.
+type OptChatWarningSeverity struct {
+	Value ChatWarningSeverity
+	Set   bool
+}
+
+// IsSet returns true if OptChatWarningSeverity was set.
+func (o OptChatWarningSeverity) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptChatWarningSeverity) Reset() {
+	var v ChatWarningSeverity
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptChatWarningSeverity) SetTo(v ChatWarningSeverity) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptChatWarningSeverity) Get() (v ChatWarningSeverity, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptChatWarningSeverity) Or(d ChatWarningSeverity) ChatWarningSeverity {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptDateTime returns new OptDateTime with value set to v.
 func NewOptDateTime(v time.Time) OptDateTime {
 	return OptDateTime{
@@ -456,6 +1247,98 @@ func (o OptDateTime) Get() (v time.Time, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptDateTime) Or(d time.Time) time.Time {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptFilterResponseSeverity returns new OptFilterResponseSeverity with value set to v.
+func NewOptFilterResponseSeverity(v FilterResponseSeverity) OptFilterResponseSeverity {
+	return OptFilterResponseSeverity{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptFilterResponseSeverity is optional FilterResponseSeverity.
+type OptFilterResponseSeverity struct {
+	Value FilterResponseSeverity
+	Set   bool
+}
+
+// IsSet returns true if OptFilterResponseSeverity was set.
+func (o OptFilterResponseSeverity) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptFilterResponseSeverity) Reset() {
+	var v FilterResponseSeverity
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptFilterResponseSeverity) SetTo(v FilterResponseSeverity) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptFilterResponseSeverity) Get() (v FilterResponseSeverity, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptFilterResponseSeverity) Or(d FilterResponseSeverity) FilterResponseSeverity {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptGetChatReportsStatus returns new OptGetChatReportsStatus with value set to v.
+func NewOptGetChatReportsStatus(v GetChatReportsStatus) OptGetChatReportsStatus {
+	return OptGetChatReportsStatus{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptGetChatReportsStatus is optional GetChatReportsStatus.
+type OptGetChatReportsStatus struct {
+	Value GetChatReportsStatus
+	Set   bool
+}
+
+// IsSet returns true if OptGetChatReportsStatus was set.
+func (o OptGetChatReportsStatus) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptGetChatReportsStatus) Reset() {
+	var v GetChatReportsStatus
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptGetChatReportsStatus) SetTo(v GetChatReportsStatus) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptGetChatReportsStatus) Get() (v GetChatReportsStatus, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptGetChatReportsStatus) Or(d GetChatReportsStatus) GetChatReportsStatus {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -760,6 +1643,115 @@ func (o OptNilString) Or(d string) string {
 	return d
 }
 
+// NewOptNilUUID returns new OptNilUUID with value set to v.
+func NewOptNilUUID(v uuid.UUID) OptNilUUID {
+	return OptNilUUID{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptNilUUID is optional nullable uuid.UUID.
+type OptNilUUID struct {
+	Value uuid.UUID
+	Set   bool
+	Null  bool
+}
+
+// IsSet returns true if OptNilUUID was set.
+func (o OptNilUUID) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptNilUUID) Reset() {
+	var v uuid.UUID
+	o.Value = v
+	o.Set = false
+	o.Null = false
+}
+
+// SetTo sets value to v.
+func (o *OptNilUUID) SetTo(v uuid.UUID) {
+	o.Set = true
+	o.Null = false
+	o.Value = v
+}
+
+// IsNull returns true if value is Null.
+func (o OptNilUUID) IsNull() bool { return o.Null }
+
+// SetToNull sets value to null.
+func (o *OptNilUUID) SetToNull() {
+	o.Set = true
+	o.Null = true
+	var v uuid.UUID
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptNilUUID) Get() (v uuid.UUID, ok bool) {
+	if o.Null {
+		return v, false
+	}
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptNilUUID) Or(d uuid.UUID) uuid.UUID {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptResolveReportResponseActionTaken returns new OptResolveReportResponseActionTaken with value set to v.
+func NewOptResolveReportResponseActionTaken(v ResolveReportResponseActionTaken) OptResolveReportResponseActionTaken {
+	return OptResolveReportResponseActionTaken{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptResolveReportResponseActionTaken is optional ResolveReportResponseActionTaken.
+type OptResolveReportResponseActionTaken struct {
+	Value ResolveReportResponseActionTaken
+	Set   bool
+}
+
+// IsSet returns true if OptResolveReportResponseActionTaken was set.
+func (o OptResolveReportResponseActionTaken) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptResolveReportResponseActionTaken) Reset() {
+	var v ResolveReportResponseActionTaken
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptResolveReportResponseActionTaken) SetTo(v ResolveReportResponseActionTaken) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptResolveReportResponseActionTaken) Get() (v ResolveReportResponseActionTaken, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptResolveReportResponseActionTaken) Or(d ResolveReportResponseActionTaken) ResolveReportResponseActionTaken {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptString returns new OptString with value set to v.
 func NewOptString(v string) OptString {
 	return OptString{
@@ -852,6 +1844,52 @@ func (o OptUUID) Or(d uuid.UUID) uuid.UUID {
 	return d
 }
 
+// NewOptWarnUserRequestSeverity returns new OptWarnUserRequestSeverity with value set to v.
+func NewOptWarnUserRequestSeverity(v WarnUserRequestSeverity) OptWarnUserRequestSeverity {
+	return OptWarnUserRequestSeverity{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptWarnUserRequestSeverity is optional WarnUserRequestSeverity.
+type OptWarnUserRequestSeverity struct {
+	Value WarnUserRequestSeverity
+	Set   bool
+}
+
+// IsSet returns true if OptWarnUserRequestSeverity was set.
+func (o OptWarnUserRequestSeverity) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptWarnUserRequestSeverity) Reset() {
+	var v WarnUserRequestSeverity
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptWarnUserRequestSeverity) SetTo(v WarnUserRequestSeverity) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptWarnUserRequestSeverity) Get() (v WarnUserRequestSeverity, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptWarnUserRequestSeverity) Or(d WarnUserRequestSeverity) WarnUserRequestSeverity {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 type ReportChatMessageBadRequest Error
 
 func (*ReportChatMessageBadRequest) reportChatMessageRes() {}
@@ -863,6 +1901,56 @@ func (*ReportChatMessageInternalServerError) reportChatMessageRes() {}
 type ReportChatMessageUnauthorized Error
 
 func (*ReportChatMessageUnauthorized) reportChatMessageRes() {}
+
+// Ref: #/components/schemas/ReportListResponse
+type ReportListResponse struct {
+	Reports []ChatReport `json:"reports"`
+	Total   OptInt       `json:"total"`
+	Limit   OptInt       `json:"limit"`
+	Offset  OptInt       `json:"offset"`
+}
+
+// GetReports returns the value of Reports.
+func (s *ReportListResponse) GetReports() []ChatReport {
+	return s.Reports
+}
+
+// GetTotal returns the value of Total.
+func (s *ReportListResponse) GetTotal() OptInt {
+	return s.Total
+}
+
+// GetLimit returns the value of Limit.
+func (s *ReportListResponse) GetLimit() OptInt {
+	return s.Limit
+}
+
+// GetOffset returns the value of Offset.
+func (s *ReportListResponse) GetOffset() OptInt {
+	return s.Offset
+}
+
+// SetReports sets the value of Reports.
+func (s *ReportListResponse) SetReports(val []ChatReport) {
+	s.Reports = val
+}
+
+// SetTotal sets the value of Total.
+func (s *ReportListResponse) SetTotal(val OptInt) {
+	s.Total = val
+}
+
+// SetLimit sets the value of Limit.
+func (s *ReportListResponse) SetLimit(val OptInt) {
+	s.Limit = val
+}
+
+// SetOffset sets the value of Offset.
+func (s *ReportListResponse) SetOffset(val OptInt) {
+	s.Offset = val
+}
+
+func (*ReportListResponse) getChatReportsRes() {}
 
 // Ref: #/components/schemas/ReportMessageRequest
 type ReportMessageRequest struct {
@@ -917,6 +2005,227 @@ func (s *ReportResponse) SetReportID(val OptUUID) {
 }
 
 func (*ReportResponse) reportChatMessageRes() {}
+
+type ResolveChatReportBadRequest Error
+
+func (*ResolveChatReportBadRequest) resolveChatReportRes() {}
+
+type ResolveChatReportInternalServerError Error
+
+func (*ResolveChatReportInternalServerError) resolveChatReportRes() {}
+
+type ResolveChatReportNotFound Error
+
+func (*ResolveChatReportNotFound) resolveChatReportRes() {}
+
+type ResolveChatReportUnauthorized Error
+
+func (*ResolveChatReportUnauthorized) resolveChatReportRes() {}
+
+// Ref: #/components/schemas/ResolveReportRequest
+type ResolveReportRequest struct {
+	Action           ResolveReportRequestAction `json:"action"`
+	BanDurationHours OptNilInt                  `json:"ban_duration_hours"`
+	ResolvedBy       OptUUID                    `json:"resolved_by"`
+	Notes            OptString                  `json:"notes"`
+}
+
+// GetAction returns the value of Action.
+func (s *ResolveReportRequest) GetAction() ResolveReportRequestAction {
+	return s.Action
+}
+
+// GetBanDurationHours returns the value of BanDurationHours.
+func (s *ResolveReportRequest) GetBanDurationHours() OptNilInt {
+	return s.BanDurationHours
+}
+
+// GetResolvedBy returns the value of ResolvedBy.
+func (s *ResolveReportRequest) GetResolvedBy() OptUUID {
+	return s.ResolvedBy
+}
+
+// GetNotes returns the value of Notes.
+func (s *ResolveReportRequest) GetNotes() OptString {
+	return s.Notes
+}
+
+// SetAction sets the value of Action.
+func (s *ResolveReportRequest) SetAction(val ResolveReportRequestAction) {
+	s.Action = val
+}
+
+// SetBanDurationHours sets the value of BanDurationHours.
+func (s *ResolveReportRequest) SetBanDurationHours(val OptNilInt) {
+	s.BanDurationHours = val
+}
+
+// SetResolvedBy sets the value of ResolvedBy.
+func (s *ResolveReportRequest) SetResolvedBy(val OptUUID) {
+	s.ResolvedBy = val
+}
+
+// SetNotes sets the value of Notes.
+func (s *ResolveReportRequest) SetNotes(val OptString) {
+	s.Notes = val
+}
+
+type ResolveReportRequestAction string
+
+const (
+	ResolveReportRequestActionBan     ResolveReportRequestAction = "ban"
+	ResolveReportRequestActionWarn    ResolveReportRequestAction = "warn"
+	ResolveReportRequestActionDismiss ResolveReportRequestAction = "dismiss"
+)
+
+// AllValues returns all ResolveReportRequestAction values.
+func (ResolveReportRequestAction) AllValues() []ResolveReportRequestAction {
+	return []ResolveReportRequestAction{
+		ResolveReportRequestActionBan,
+		ResolveReportRequestActionWarn,
+		ResolveReportRequestActionDismiss,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s ResolveReportRequestAction) MarshalText() ([]byte, error) {
+	switch s {
+	case ResolveReportRequestActionBan:
+		return []byte(s), nil
+	case ResolveReportRequestActionWarn:
+		return []byte(s), nil
+	case ResolveReportRequestActionDismiss:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *ResolveReportRequestAction) UnmarshalText(data []byte) error {
+	switch ResolveReportRequestAction(data) {
+	case ResolveReportRequestActionBan:
+		*s = ResolveReportRequestActionBan
+		return nil
+	case ResolveReportRequestActionWarn:
+		*s = ResolveReportRequestActionWarn
+		return nil
+	case ResolveReportRequestActionDismiss:
+		*s = ResolveReportRequestActionDismiss
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Ref: #/components/schemas/ResolveReportResponse
+type ResolveReportResponse struct {
+	Success     OptBool                             `json:"success"`
+	ReportID    OptUUID                             `json:"report_id"`
+	ActionTaken OptResolveReportResponseActionTaken `json:"action_taken"`
+	BanID       OptNilUUID                          `json:"ban_id"`
+	WarningID   OptNilUUID                          `json:"warning_id"`
+}
+
+// GetSuccess returns the value of Success.
+func (s *ResolveReportResponse) GetSuccess() OptBool {
+	return s.Success
+}
+
+// GetReportID returns the value of ReportID.
+func (s *ResolveReportResponse) GetReportID() OptUUID {
+	return s.ReportID
+}
+
+// GetActionTaken returns the value of ActionTaken.
+func (s *ResolveReportResponse) GetActionTaken() OptResolveReportResponseActionTaken {
+	return s.ActionTaken
+}
+
+// GetBanID returns the value of BanID.
+func (s *ResolveReportResponse) GetBanID() OptNilUUID {
+	return s.BanID
+}
+
+// GetWarningID returns the value of WarningID.
+func (s *ResolveReportResponse) GetWarningID() OptNilUUID {
+	return s.WarningID
+}
+
+// SetSuccess sets the value of Success.
+func (s *ResolveReportResponse) SetSuccess(val OptBool) {
+	s.Success = val
+}
+
+// SetReportID sets the value of ReportID.
+func (s *ResolveReportResponse) SetReportID(val OptUUID) {
+	s.ReportID = val
+}
+
+// SetActionTaken sets the value of ActionTaken.
+func (s *ResolveReportResponse) SetActionTaken(val OptResolveReportResponseActionTaken) {
+	s.ActionTaken = val
+}
+
+// SetBanID sets the value of BanID.
+func (s *ResolveReportResponse) SetBanID(val OptNilUUID) {
+	s.BanID = val
+}
+
+// SetWarningID sets the value of WarningID.
+func (s *ResolveReportResponse) SetWarningID(val OptNilUUID) {
+	s.WarningID = val
+}
+
+func (*ResolveReportResponse) resolveChatReportRes() {}
+
+type ResolveReportResponseActionTaken string
+
+const (
+	ResolveReportResponseActionTakenBan     ResolveReportResponseActionTaken = "ban"
+	ResolveReportResponseActionTakenWarn    ResolveReportResponseActionTaken = "warn"
+	ResolveReportResponseActionTakenDismiss ResolveReportResponseActionTaken = "dismiss"
+)
+
+// AllValues returns all ResolveReportResponseActionTaken values.
+func (ResolveReportResponseActionTaken) AllValues() []ResolveReportResponseActionTaken {
+	return []ResolveReportResponseActionTaken{
+		ResolveReportResponseActionTakenBan,
+		ResolveReportResponseActionTakenWarn,
+		ResolveReportResponseActionTakenDismiss,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s ResolveReportResponseActionTaken) MarshalText() ([]byte, error) {
+	switch s {
+	case ResolveReportResponseActionTakenBan:
+		return []byte(s), nil
+	case ResolveReportResponseActionTakenWarn:
+		return []byte(s), nil
+	case ResolveReportResponseActionTakenDismiss:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *ResolveReportResponseActionTaken) UnmarshalText(data []byte) error {
+	switch ResolveReportResponseActionTaken(data) {
+	case ResolveReportResponseActionTakenBan:
+		*s = ResolveReportResponseActionTakenBan
+		return nil
+	case ResolveReportResponseActionTakenWarn:
+		*s = ResolveReportResponseActionTakenWarn
+		return nil
+	case ResolveReportResponseActionTakenDismiss:
+		*s = ResolveReportResponseActionTakenDismiss
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
 
 // Ref: #/components/schemas/RevokeBanRequest
 type RevokeBanRequest struct {
@@ -976,3 +2285,189 @@ func (*RevokeChatBanNotFound) revokeChatBanRes() {}
 type RevokeChatBanUnauthorized Error
 
 func (*RevokeChatBanUnauthorized) revokeChatBanRes() {}
+
+type WarnChatUserBadRequest Error
+
+func (*WarnChatUserBadRequest) warnChatUserRes() {}
+
+type WarnChatUserInternalServerError Error
+
+func (*WarnChatUserInternalServerError) warnChatUserRes() {}
+
+type WarnChatUserUnauthorized Error
+
+func (*WarnChatUserUnauthorized) warnChatUserRes() {}
+
+// Ref: #/components/schemas/WarnResponse
+type WarnResponse struct {
+	Success       OptBool `json:"success"`
+	WarningID     OptUUID `json:"warning_id"`
+	TotalWarnings OptInt  `json:"total_warnings"`
+}
+
+// GetSuccess returns the value of Success.
+func (s *WarnResponse) GetSuccess() OptBool {
+	return s.Success
+}
+
+// GetWarningID returns the value of WarningID.
+func (s *WarnResponse) GetWarningID() OptUUID {
+	return s.WarningID
+}
+
+// GetTotalWarnings returns the value of TotalWarnings.
+func (s *WarnResponse) GetTotalWarnings() OptInt {
+	return s.TotalWarnings
+}
+
+// SetSuccess sets the value of Success.
+func (s *WarnResponse) SetSuccess(val OptBool) {
+	s.Success = val
+}
+
+// SetWarningID sets the value of WarningID.
+func (s *WarnResponse) SetWarningID(val OptUUID) {
+	s.WarningID = val
+}
+
+// SetTotalWarnings sets the value of TotalWarnings.
+func (s *WarnResponse) SetTotalWarnings(val OptInt) {
+	s.TotalWarnings = val
+}
+
+func (*WarnResponse) warnChatUserRes() {}
+
+// Ref: #/components/schemas/WarnUserRequest
+type WarnUserRequest struct {
+	PlayerID uuid.UUID                  `json:"player_id"`
+	Reason   string                     `json:"reason"`
+	Severity OptWarnUserRequestSeverity `json:"severity"`
+}
+
+// GetPlayerID returns the value of PlayerID.
+func (s *WarnUserRequest) GetPlayerID() uuid.UUID {
+	return s.PlayerID
+}
+
+// GetReason returns the value of Reason.
+func (s *WarnUserRequest) GetReason() string {
+	return s.Reason
+}
+
+// GetSeverity returns the value of Severity.
+func (s *WarnUserRequest) GetSeverity() OptWarnUserRequestSeverity {
+	return s.Severity
+}
+
+// SetPlayerID sets the value of PlayerID.
+func (s *WarnUserRequest) SetPlayerID(val uuid.UUID) {
+	s.PlayerID = val
+}
+
+// SetReason sets the value of Reason.
+func (s *WarnUserRequest) SetReason(val string) {
+	s.Reason = val
+}
+
+// SetSeverity sets the value of Severity.
+func (s *WarnUserRequest) SetSeverity(val OptWarnUserRequestSeverity) {
+	s.Severity = val
+}
+
+type WarnUserRequestSeverity string
+
+const (
+	WarnUserRequestSeverityLow    WarnUserRequestSeverity = "low"
+	WarnUserRequestSeverityMedium WarnUserRequestSeverity = "medium"
+	WarnUserRequestSeverityHigh   WarnUserRequestSeverity = "high"
+)
+
+// AllValues returns all WarnUserRequestSeverity values.
+func (WarnUserRequestSeverity) AllValues() []WarnUserRequestSeverity {
+	return []WarnUserRequestSeverity{
+		WarnUserRequestSeverityLow,
+		WarnUserRequestSeverityMedium,
+		WarnUserRequestSeverityHigh,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s WarnUserRequestSeverity) MarshalText() ([]byte, error) {
+	switch s {
+	case WarnUserRequestSeverityLow:
+		return []byte(s), nil
+	case WarnUserRequestSeverityMedium:
+		return []byte(s), nil
+	case WarnUserRequestSeverityHigh:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *WarnUserRequestSeverity) UnmarshalText(data []byte) error {
+	switch WarnUserRequestSeverity(data) {
+	case WarnUserRequestSeverityLow:
+		*s = WarnUserRequestSeverityLow
+		return nil
+	case WarnUserRequestSeverityMedium:
+		*s = WarnUserRequestSeverityMedium
+		return nil
+	case WarnUserRequestSeverityHigh:
+		*s = WarnUserRequestSeverityHigh
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+// Ref: #/components/schemas/WarningListResponse
+type WarningListResponse struct {
+	Warnings []ChatWarning `json:"warnings"`
+	Total    OptInt        `json:"total"`
+	Limit    OptInt        `json:"limit"`
+	Offset   OptInt        `json:"offset"`
+}
+
+// GetWarnings returns the value of Warnings.
+func (s *WarningListResponse) GetWarnings() []ChatWarning {
+	return s.Warnings
+}
+
+// GetTotal returns the value of Total.
+func (s *WarningListResponse) GetTotal() OptInt {
+	return s.Total
+}
+
+// GetLimit returns the value of Limit.
+func (s *WarningListResponse) GetLimit() OptInt {
+	return s.Limit
+}
+
+// GetOffset returns the value of Offset.
+func (s *WarningListResponse) GetOffset() OptInt {
+	return s.Offset
+}
+
+// SetWarnings sets the value of Warnings.
+func (s *WarningListResponse) SetWarnings(val []ChatWarning) {
+	s.Warnings = val
+}
+
+// SetTotal sets the value of Total.
+func (s *WarningListResponse) SetTotal(val OptInt) {
+	s.Total = val
+}
+
+// SetLimit sets the value of Limit.
+func (s *WarningListResponse) SetLimit(val OptInt) {
+	s.Limit = val
+}
+
+// SetOffset sets the value of Offset.
+func (s *WarningListResponse) SetOffset(val OptInt) {
+	s.Offset = val
+}
+
+func (*WarningListResponse) getChatWarningsRes() {}

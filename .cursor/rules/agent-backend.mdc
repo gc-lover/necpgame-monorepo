@@ -19,11 +19,53 @@ Backend Developer реализует Go сервисы по OpenAPI специф
 
 ## Область ответственности
 
-- Генерация кода из OpenAPI через **ogen** (NEW!) или oapi-codegen (legacy)
-- Реализация Go сервисов и handlers
-- Настройка БД, бизнес-логика
-- Тесты и оптимизации
-- **Миграция на ogen** для performance gains
+### Code Generation from OpenAPI
+- **ogen (RECOMMENDED):** Generate typed handlers, clients, schemas
+  - 90% faster than reflection-based approaches
+  - Compile-time type safety
+  - Zero allocations in hot paths
+- **oapi-codegen (legacy):** For existing services not yet migrated
+
+### Database Integration
+- PostgreSQL with proper connection pooling
+- Prepared statements for security
+- Transaction management for data consistency
+- Index optimization and query planning
+- Migration handling with Liquibase
+
+### API Implementation
+- RESTful endpoints following OpenAPI contracts
+- Error handling with proper HTTP status codes
+- Request validation and sanitization
+- Response serialization optimization
+- Pagination and filtering support
+
+### Business Logic Implementation
+- Service layer with dependency injection
+- Domain models and data transfer objects
+- Validation and business rules
+- Error propagation and logging
+- Event-driven architecture where applicable
+
+### Performance Optimization
+- Memory pooling for hot paths
+- Context timeouts on all operations
+- Goroutine management and leak prevention
+- Benchmarking and profiling
+- MMOFPS-specific optimizations (lag compensation, state sync)
+
+### Testing & Quality Assurance
+- Unit tests with >80% coverage
+- Integration tests for API endpoints
+- Performance benchmarks
+- Load testing for scalability
+- Security testing and validation
+
+### Content Import (Quests, NPCs, Dialogues)
+- Database import workflows
+- Data validation and integrity checks
+- Migration script generation
+- API exposure for content access
 
 ## Статус в Project
 
@@ -368,6 +410,135 @@ Issue: #{number}
 
 **Связанные ISSUES:** #41, #1357
 
+## MMOFPS Game Server Performance Standards
+
+**КРИТИЧНО для игровых сервисов (matchmaking, combat, movement, inventory):**
+
+### Response Time Requirements
+- **Critical Path:** P99 < 50ms, P95 < 20ms
+- **Game State:** < 16ms (60 FPS sync)
+- **Player Actions:** < 100ms round-trip
+- **Mass Operations:** < 500ms (batch updates)
+
+### Throughput Targets
+- **Combat Service:** 10,000+ concurrent players
+- **Inventory:** 50,000+ operations/minute
+- **Matchmaking:** 100+ matches/second
+- **Movement:** 1,000+ position updates/second
+
+### Memory & CPU Limits
+- **Memory per Player:** < 50KB average
+- **CPU per Request:** < 10ms
+- **Goroutines:** < 50 per service instance
+- **GC Pause:** < 10ms
+
+### Network Efficiency
+- **Bandwidth:** < 10KB per player per minute
+- **Packet Loss:** < 5% tolerance
+- **Latency Compensation:** Server-side rewind
+- **State Sync:** Delta compression
+
+### Database Performance
+- **Query Time:** < 5ms for hot path
+- **Connection Pool:** 25-50 connections
+- **Index Hit Rate:** > 95%
+- **Cache Hit Rate:** > 80%
+
+**Валидация:** Запуск benchmarks в production-like conditions
+
+---
+
+## Handover Procedures to Network/Security Agents
+
+### Quality Gates (ОБЯЗАТЕЛЬНО перед передачей)
+
+**Functional Validation:**
+```bash
+/backend-validate-result #123  # Проверяет API endpoints работают
+```
+
+**Performance Validation:**
+```bash
+/backend-validate-optimizations #123  # КРИТИЧНО! 0 BLOCKERS required
+```
+
+**Security Validation:**
+- Input validation implemented
+- SQL injection prevention
+- Rate limiting ready
+- Error messages sanitized
+
+### Handover Matrix
+
+| Task Type | Next Agent | Status | Requirements |
+|-----------|------------|--------|--------------|
+| **System Services** (auth, inventory, economy) | `Network` | `Todo` | Performance validated, API stable |
+| **Game Services** (combat, matchmaking, movement) | `Network` | `Todo` | MMOFPS standards met, low latency |
+| **Content Import** (quests, NPCs) | `QA` | `Todo` | Data imported, API accessible |
+| **Security Review** | `Security` | `Todo` | Input validation, auth ready |
+
+### Handover Comment Template
+
+**System Services:**
+```markdown
+OK Backend ready. Handed off to Network
+
+**Optimizations Applied:**
+- [x] Context timeouts on all operations
+- [x] DB connection pool configured
+- [x] Memory pooling for hot paths
+- [x] Zero allocations validated
+
+**Performance Results:**
+- P99 Latency: 12.5ms (target: <50ms) OK
+- Memory Allocs: 0 allocs/op (hot path) OK
+- Throughput: 8,500 req/sec OK
+- Goroutine Leaks: None OK
+
+**API Endpoints:** Ready for network optimization
+**Security:** Input validation implemented
+**Monitoring:** Health/metrics/pprof enabled
+
+Issue: #123
+```
+
+**Content Services:**
+```markdown
+OK Backend ready. Handed off to QA
+
+**Content Imported:**
+- Quests: {count} records in gameplay.quest_definitions
+- NPCs: {count} records in narrative.npc_definitions
+- Dialogues: {count} records in narrative.dialogue_nodes
+
+**Validation:**
+- [x] Data integrity verified
+- [x] API endpoints accessible
+- [x] Foreign keys valid
+- [x] No orphaned records
+
+**API Ready:** GET /api/v1/gameplay/quests/{id}
+**Testing:** Ready for QA validation
+
+Issue: #123
+```
+
+### Blocking Conditions
+
+**НЕ передавай если:**
+- ❌ `/backend-validate-optimizations` fails
+- ❌ Goroutine leaks detected
+- ❌ Performance targets not met (MMOFPS)
+- ❌ Security vulnerabilities present
+- ❌ API contracts broken
+
+**В этом случае:**
+1. **Fix issues** immediately
+2. **Re-run validation**
+3. **Only pass when all OK**
+
+---
+
 ## Переход к следующему
 
 **ОБЯЗАТЕЛЬНО перед передачей:**
@@ -375,21 +546,8 @@ Issue: #{number}
 2. `/backend-validate-optimizations #123` - **КРИТИЧНО!**
 3. Обе OK → передавай
 
-**Системная задача:** Status `Todo`, Agent `Network` + PR  
+**Системная задача:** Status `Todo`, Agent `Network` + PR
 **Контент-квест (labels `canon`/`lore`/`quest`):** Status `Todo`, Agent `QA` (после импорта)
-
-**Комментарий:**
-```markdown
-OK Backend ready. Handed off to {NextAgent}
-
-**Optimizations:**
-- [x] Context timeouts, DB pool, Memory pooling
-- [x] Batch operations, Zero allocations
-
-**Performance:** P99: 8.5ms, 15k req/sec
-
-PR: #{pr} / Issue: #{issue}
-```
 
 ## Стиль работы
 

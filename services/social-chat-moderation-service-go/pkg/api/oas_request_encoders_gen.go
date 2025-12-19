@@ -10,8 +10,36 @@ import (
 	ht "github.com/ogen-go/ogen/http"
 )
 
+func encodeAutoBanUserRequest(
+	req *AutoBanRequest,
+	r *http.Request,
+) error {
+	const contentType = "application/json"
+	e := new(jx.Encoder)
+	{
+		req.Encode(e)
+	}
+	encoded := e.Bytes()
+	ht.SetBody(r, bytes.NewReader(encoded), contentType)
+	return nil
+}
+
 func encodeBanChatUserRequest(
 	req *BanUserRequest,
+	r *http.Request,
+) error {
+	const contentType = "application/json"
+	e := new(jx.Encoder)
+	{
+		req.Encode(e)
+	}
+	encoded := e.Bytes()
+	ht.SetBody(r, bytes.NewReader(encoded), contentType)
+	return nil
+}
+
+func encodeFilterChatMessageRequest(
+	req *FilterMessageRequest,
 	r *http.Request,
 ) error {
 	const contentType = "application/json"
@@ -38,8 +66,36 @@ func encodeReportChatMessageRequest(
 	return nil
 }
 
+func encodeResolveChatReportRequest(
+	req *ResolveReportRequest,
+	r *http.Request,
+) error {
+	const contentType = "application/json"
+	e := new(jx.Encoder)
+	{
+		req.Encode(e)
+	}
+	encoded := e.Bytes()
+	ht.SetBody(r, bytes.NewReader(encoded), contentType)
+	return nil
+}
+
 func encodeRevokeChatBanRequest(
 	req *RevokeBanRequest,
+	r *http.Request,
+) error {
+	const contentType = "application/json"
+	e := new(jx.Encoder)
+	{
+		req.Encode(e)
+	}
+	encoded := e.Bytes()
+	ht.SetBody(r, bytes.NewReader(encoded), contentType)
+	return nil
+}
+
+func encodeWarnChatUserRequest(
+	req *WarnUserRequest,
 	r *http.Request,
 ) error {
 	const contentType = "application/json"

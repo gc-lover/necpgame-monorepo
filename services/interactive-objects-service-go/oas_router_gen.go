@@ -81,6 +81,26 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 					return
 				}
 
+			case 'c': // Prefix: "content/reload"
+
+				if l := len("content/reload"); len(elem) >= l && elem[0:l] == "content/reload" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				if len(elem) == 0 {
+					// Leaf node.
+					switch r.Method {
+					case "POST":
+						s.handleReloadContentRequest([0]string{}, elemIsEscaped, w, r)
+					default:
+						s.notAllowed(w, r, "POST")
+					}
+
+					return
+				}
+
 			case 'h': // Prefix: "health"
 
 				if l := len("health"); len(elem) >= l && elem[0:l] == "health" {
@@ -478,6 +498,31 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 						r.operationID = "getAirportObjects"
 						r.operationGroup = ""
 						r.pathPattern = "/airport-objects"
+						r.args = args
+						r.count = 0
+						return r, true
+					default:
+						return
+					}
+				}
+
+			case 'c': // Prefix: "content/reload"
+
+				if l := len("content/reload"); len(elem) >= l && elem[0:l] == "content/reload" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				if len(elem) == 0 {
+					// Leaf node.
+					switch method {
+					case "POST":
+						r.name = ReloadContentOperation
+						r.summary = "Reload interactive objects content from YAML"
+						r.operationID = "reloadContent"
+						r.operationGroup = ""
+						r.pathPattern = "/content/reload"
 						r.args = args
 						r.count = 0
 						return r, true

@@ -87,6 +87,29 @@ func NewHTTPServer(addr string) *HTTPServer {
 	// Mount ogen server under /api/v1
 	router.Handle("/api/v1/", handler)
 
+	// Manual route for quest content reload (not in ogen spec yet)
+	router.HandleFunc("/api/v1/gameplay/quests/content/reload", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
+
+		var req ReloadQuestContentRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, "Invalid JSON: "+err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		response, err := handlers.ReloadQuestContent(r.Context(), &req)
+		if err != nil {
+			http.Error(w, "Internal error: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(response)
+	})
+
 	server.server = &http.Server{
 		Addr:         addr,
 		Handler:      router,

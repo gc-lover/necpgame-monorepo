@@ -8,30 +8,66 @@ import (
 
 // Handler handles operations described by OpenAPI v3 specification.
 type Handler interface {
+	// AutoBanUser implements autoBanUser operation.
+	//
+	// Автоматический бан за нарушения.
+	//
+	// POST /social/chat/auto-ban
+	AutoBanUser(ctx context.Context, req *AutoBanRequest) (AutoBanUserRes, error)
 	// BanChatUser implements banChatUser operation.
 	//
 	// Забанить пользователя.
 	//
 	// POST /social/chat/ban
 	BanChatUser(ctx context.Context, req *BanUserRequest) (BanChatUserRes, error)
+	// FilterChatMessage implements filterChatMessage operation.
+	//
+	// Проверить сообщение на запрещенный контент.
+	//
+	// POST /social/chat/filter
+	FilterChatMessage(ctx context.Context, req *FilterMessageRequest) (FilterChatMessageRes, error)
 	// GetChatBans implements getChatBans operation.
 	//
 	// Получить список банов.
 	//
 	// GET /social/chat/bans
 	GetChatBans(ctx context.Context, params GetChatBansParams) (GetChatBansRes, error)
+	// GetChatReports implements getChatReports operation.
+	//
+	// Получить список жалоб.
+	//
+	// GET /social/chat/reports
+	GetChatReports(ctx context.Context, params GetChatReportsParams) (GetChatReportsRes, error)
+	// GetChatWarnings implements getChatWarnings operation.
+	//
+	// Получить список предупреждений.
+	//
+	// GET /social/chat/warnings
+	GetChatWarnings(ctx context.Context, params GetChatWarningsParams) (GetChatWarningsRes, error)
 	// ReportChatMessage implements reportChatMessage operation.
 	//
 	// Пожаловаться на сообщение.
 	//
 	// POST /social/chat/report
 	ReportChatMessage(ctx context.Context, req *ReportMessageRequest) (ReportChatMessageRes, error)
+	// ResolveChatReport implements resolveChatReport operation.
+	//
+	// Разрешить жалобу.
+	//
+	// POST /social/chat/reports/{report_id}/resolve
+	ResolveChatReport(ctx context.Context, req *ResolveReportRequest, params ResolveChatReportParams) (ResolveChatReportRes, error)
 	// RevokeChatBan implements revokeChatBan operation.
 	//
 	// Отменить бан.
 	//
 	// DELETE /social/chat/bans/{ban_id}
 	RevokeChatBan(ctx context.Context, req *RevokeBanRequest, params RevokeChatBanParams) (RevokeChatBanRes, error)
+	// WarnChatUser implements warnChatUser operation.
+	//
+	// Выдать предупреждение пользователю.
+	//
+	// POST /social/chat/warnings
+	WarnChatUser(ctx context.Context, req *WarnUserRequest) (WarnChatUserRes, error)
 }
 
 // Server implements http server based on OpenAPI v3 specification and

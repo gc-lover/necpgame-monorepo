@@ -15,9 +15,10 @@ import (
 )
 
 // HTTPServer represents HTTP server (no chi dependency)
+// OPTIMIZATION: Struct alignment - pointer first (8 bytes), then string (16 bytes)
 type HTTPServer struct {
-	addr   string
-	server *http.Server
+	server *http.Server // 8 bytes
+	addr   string       // 16 bytes
 }
 
 // NewHTTPServer creates new HTTP server WITHOUT chi
@@ -38,9 +39,9 @@ func NewHTTPServer(addr string, service *Service) *HTTPServer {
 	// Middleware chain (no duplication, optimized)
 	apiHandler := chainMiddleware(ogenServer,
 		recoveryMiddleware,  // panic recovery
-		requestIDMiddleware,  // request ID
-		LoggingMiddleware,    // structured logging
-		MetricsMiddleware,    // metrics
+		requestIDMiddleware, // request ID
+		LoggingMiddleware,   // structured logging
+		MetricsMiddleware,   // metrics
 	)
 
 	// Mount OGEN (hot path - maximum speed, static router)
@@ -126,6 +127,3 @@ func metricsHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("# HELP combat_combos_service metrics\n"))
 }
-
-
-

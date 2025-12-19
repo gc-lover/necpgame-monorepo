@@ -12,3 +12,7 @@ type HackObjectRes interface {
 type InteractWithObjectRes interface {
 	interactWithObjectRes()
 }
+
+type ReloadContentRes interface {
+	reloadContentRes()
+}

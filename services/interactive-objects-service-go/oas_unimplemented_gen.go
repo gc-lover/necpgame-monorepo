@@ -121,6 +121,15 @@ func (UnimplementedHandler) InteractWithObject(ctx context.Context, req *Interac
 	return r, ht.ErrNotImplemented
 }
 
+// ReloadContent implements reloadContent operation.
+//
+// Import or update interactive objects definitions from YAML content data.
+//
+// POST /content/reload
+func (UnimplementedHandler) ReloadContent(ctx context.Context, req *ReloadContentRequest) (r ReloadContentRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // RemoveObject implements removeObject operation.
 //
 // Remove object.

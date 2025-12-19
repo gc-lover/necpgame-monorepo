@@ -80,6 +80,12 @@ type Handler interface {
 	//
 	// POST /objects/{object_id}/interact
 	InteractWithObject(ctx context.Context, req *InteractRequest, params InteractWithObjectParams) (InteractWithObjectRes, error)
+	// ReloadContent implements reloadContent operation.
+	//
+	// Import or update interactive objects definitions from YAML content data.
+	//
+	// POST /content/reload
+	ReloadContent(ctx context.Context, req *ReloadContentRequest) (ReloadContentRes, error)
 	// RemoveObject implements removeObject operation.
 	//
 	// Remove object.

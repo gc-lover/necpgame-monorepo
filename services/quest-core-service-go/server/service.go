@@ -264,3 +264,20 @@ func (s *Service) CompleteQuest(ctx context.Context, questID uuid.UUID, req *api
 	return response, nil
 }
 
+// ImportQuestDefinition imports a quest definition from YAML content
+func (s *Service) ImportQuestDefinition(ctx context.Context, questDef *QuestDefinition) error {
+	// Check if quest already exists
+	existing, err := s.repo.GetQuestDefinitionByID(ctx, questDef.QuestID)
+	if err != nil && err.Error() != "not found" {
+		return fmt.Errorf("failed to check existing quest: %w", err)
+	}
+
+	if existing != nil {
+		// Update existing quest
+		return s.repo.UpdateQuestDefinition(ctx, questDef)
+	} else {
+		// Create new quest
+		return s.repo.CreateQuestDefinition(ctx, questDef)
+	}
+}
+

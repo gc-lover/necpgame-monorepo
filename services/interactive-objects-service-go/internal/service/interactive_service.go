@@ -11,23 +11,25 @@ import (
 )
 
 // InteractiveService handles interactive objects business logic
+// Field alignment optimized: pointers first, then smaller fields
 type InteractiveService struct {
-	repo        *repository.Repository
-	memoryPool  *MemoryPool
-	atomicStats *AtomicStatistics
+	atomicStats *AtomicStatistics      // 8 bytes (pointer)
+	repo        *repository.Repository // 8 bytes (pointer)
+	memoryPool  *MemoryPool            // 8 bytes (pointer)
 }
 
 // MemoryPool provides zero-allocation object reuse
 type MemoryPool struct {
-	objectPool *sync.Pool
+	objectPool *sync.Pool // 8 bytes (pointer)
 }
 
 // AtomicStatistics provides lock-free metrics collection
+// Field alignment optimized: int64 fields aligned to 8-byte boundaries
 type AtomicStatistics struct {
-	activeObjects         int64
-	interactionsProcessed int64
-	rewardsDistributed    int64
-	objectsDestroyed      int64
+	objectsDestroyed      int64 // 8 bytes
+	rewardsDistributed    int64 // 8 bytes
+	interactionsProcessed int64 // 8 bytes
+	activeObjects         int64 // 8 bytes
 }
 
 // NewInteractiveService creates a new interactive service instance
@@ -161,20 +163,22 @@ func (s *InteractiveService) GetTelemetry() *ServiceTelemetry {
 }
 
 // InteractionResult represents the outcome of an interaction
+// Field alignment optimized: strings first, then smaller fields
 type InteractionResult struct {
-	InteractionType string `json:"interaction_type"`
-	Success         bool   `json:"success"`
-	RewardType      string `json:"reward_type"`
-	RewardAmount    int    `json:"reward_amount"`
-	NewStatus       string `json:"new_status"`
+	InteractionType string `json:"interaction_type"` // 16 bytes (string header)
+	RewardType      string `json:"reward_type"`      // 16 bytes (string header)
+	NewStatus       string `json:"new_status"`       // 16 bytes (string header)
+	RewardAmount    int    `json:"reward_amount"`    // 8 bytes (int)
+	Success         bool   `json:"success"`          // 1 byte (bool)
 }
 
 // ServiceTelemetry contains service performance metrics
+// Field alignment optimized: int64 fields aligned to 8-byte boundaries
 type ServiceTelemetry struct {
-	ActiveObjects         int64 `json:"active_objects"`
-	InteractionsProcessed int64 `json:"interactions_processed"`
-	RewardsDistributed    int64 `json:"rewards_distributed"`
-	ObjectsDestroyed      int64 `json:"objects_destroyed"`
+	ObjectsDestroyed      int64 `json:"objects_destroyed"`      // 8 bytes
+	RewardsDistributed    int64 `json:"rewards_distributed"`    // 8 bytes
+	InteractionsProcessed int64 `json:"interactions_processed"` // 8 bytes
+	ActiveObjects         int64 `json:"active_objects"`         // 8 bytes
 }
 
 // Private methods

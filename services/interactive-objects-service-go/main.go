@@ -1,4 +1,4 @@
-//go:generate go run github.com/ogen-go/ogen/cmd/ogen@latest --target . --package interactive_objects --clean ../../proto/openapi/world/interactive-objects-service/main.yaml
+//go:generate go run github.com/ogen-go/ogen/cmd/ogen@latest --target . --package interactive_objects --clean ../../proto/openapi/interactive-objects-service.yaml
 
 package main
 
@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	_ "net/http/pprof" // Import for pprof profiling
 	"os"
 	"os/signal"
 	"syscall"
@@ -15,6 +16,7 @@ import (
 	"github.com/go-redis/redis/v8"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"go.uber.org/zap"
 
 	"necpgame/services/interactive-objects-service-go/internal/config"
 	"necpgame/services/interactive-objects-service-go/internal/handler"
@@ -29,14 +31,20 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to load config: %v", err)
 	}
+	defer cfg.Logger.Sync() // Flush logs on exit
 
-	db, err := initDatabase(ctx, cfg.DatabaseURL)
+	cfg.Logger.Info("Starting Interactive Objects Service",
+		zap.String("service", cfg.ServiceName),
+		zap.String("environment", cfg.Environment),
+		zap.Int("port", cfg.Port))
+
+	db, err := initDatabase(ctx, cfg.DatabaseURL, cfg.Logger)
 	if err != nil {
-		log.Fatalf("Failed to initialize database: %v", err)
+		cfg.Logger.Fatal("Failed to initialize database", zap.Error(err))
 	}
 	defer db.Close()
 
-	rdb := initRedis(cfg.RedisURL)
+	rdb := initRedis(cfg.RedisURL, cfg.Logger)
 
 	interactiveService := service.NewInteractiveService(repository.NewRepository(db, rdb))
 	h := handler.NewHandler(interactiveService)
@@ -55,44 +63,62 @@ func main() {
 			Addr:    ":9092",
 			Handler: promhttp.Handler(),
 		}
-		log.Printf("Starting metrics server on :9092")
+		cfg.Logger.Info("Starting metrics server", zap.String("addr", ":9092"))
 		if err := metricsSrv.ListenAndServe(); err != nil {
-			log.Printf("Metrics server error: %v", err)
+			cfg.Logger.Error("Metrics server error", zap.Error(err))
+		}
+	}()
+
+	// Start profiling server
+	go func() {
+		profilingSrv := &http.Server{
+			Addr:    ":6060",
+			Handler: nil, // Default mux with pprof handlers
+		}
+		cfg.Logger.Info("Starting profiling server", zap.String("addr", ":6060"))
+		if err := profilingSrv.ListenAndServe(); err != nil {
+			cfg.Logger.Error("Profiling server error", zap.Error(err))
 		}
 	}()
 
 	go func() {
-		log.Printf("Starting Interactive Objects Service on port %d", cfg.Port)
+		cfg.Logger.Info("Starting Interactive Objects Service",
+			zap.Int("port", cfg.Port))
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("Server error: %v", err)
+			cfg.Logger.Fatal("Server error", zap.Error(err))
 		}
 	}()
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
-	log.Println("Shutting down server...")
+	cfg.Logger.Info("Shutting down server...")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
 	if err := srv.Shutdown(ctx); err != nil {
-		log.Fatalf("Server forced to shutdown: %v", err)
+		cfg.Logger.Fatal("Server forced to shutdown", zap.Error(err))
 	}
 
-	log.Println("Server exited")
+	cfg.Logger.Info("Server exited")
 }
 
-func initDatabase(ctx context.Context, url string) (*pgxpool.Pool, error) {
+func initDatabase(ctx context.Context, url string, logger *zap.Logger) (*pgxpool.Pool, error) {
 	config, err := pgxpool.ParseConfig(url)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse database config: %w", err)
 	}
 
-	config.MaxConns = 20
-	config.MinConns = 5
+	// Optimized DB pool config for MMOFPS performance
+	config.MaxConns = 50
+	config.MinConns = 10
 	config.MaxConnLifetime = time.Hour
 	config.MaxConnIdleTime = 30 * time.Minute
+
+	logger.Info("Initializing database connection pool",
+		zap.Int32("max_conns", config.MaxConns),
+		zap.Int32("min_conns", config.MinConns))
 
 	pool, err := pgxpool.ConnectConfig(ctx, config)
 	if err != nil {
@@ -103,13 +129,14 @@ func initDatabase(ctx context.Context, url string) (*pgxpool.Pool, error) {
 		return nil, fmt.Errorf("failed to ping database: %w", err)
 	}
 
+	logger.Info("Database connection established")
 	return pool, nil
 }
 
-func initRedis(url string) *redis.Client {
+func initRedis(url string, logger *zap.Logger) *redis.Client {
 	opt, err := redis.ParseURL(url)
 	if err != nil {
-		log.Fatalf("Failed to parse Redis URL: %v", err)
+		logger.Fatal("Failed to parse Redis URL", zap.Error(err))
 	}
 
 	rdb := redis.NewClient(opt)
@@ -118,8 +145,9 @@ func initRedis(url string) *redis.Client {
 	defer cancel()
 
 	if err := rdb.Ping(ctx).Err(); err != nil {
-		log.Fatalf("Failed to connect to Redis: %v", err)
+		logger.Fatal("Failed to connect to Redis", zap.Error(err))
 	}
 
+	logger.Info("Redis connection established")
 	return rdb
 }

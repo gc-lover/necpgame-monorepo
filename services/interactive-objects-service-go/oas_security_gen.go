@@ -45,6 +45,7 @@ var operationRolesBearerAuth = map[string][]string{
 	GetZoneObjectsOperation:     []string{},
 	HackObjectOperation:         []string{},
 	InteractWithObjectOperation: []string{},
+	ReloadContentOperation:      []string{},
 	RemoveObjectOperation:       []string{},
 	UpdateObjectOperation:       []string{},
 }

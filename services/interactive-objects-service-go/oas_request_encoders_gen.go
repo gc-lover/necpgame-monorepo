@@ -52,6 +52,20 @@ func encodeInteractWithObjectRequest(
 	return nil
 }
 
+func encodeReloadContentRequest(
+	req *ReloadContentRequest,
+	r *http.Request,
+) error {
+	const contentType = "application/json"
+	e := new(jx.Encoder)
+	{
+		req.Encode(e)
+	}
+	encoded := e.Bytes()
+	ht.SetBody(r, bytes.NewReader(encoded), contentType)
+	return nil
+}
+
 func encodeUpdateObjectRequest(
 	req *UpdateObjectRequest,
 	r *http.Request,

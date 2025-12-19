@@ -30,20 +30,20 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ReportMessageRequest'
+              $ref: "#/components/schemas/ReportMessageRequest"
       responses:
-        '200':
+        "200":
           description: Жалоба отправлена
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ReportResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+                $ref: "#/components/schemas/ReportResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
   /social/chat/ban:
     post:
       tags:
@@ -57,20 +57,20 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/BanUserRequest'
+              $ref: "#/components/schemas/BanUserRequest"
       responses:
-        '200':
+        "200":
           description: Пользователь забанен
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/BanResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+                $ref: "#/components/schemas/BanResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
   /social/chat/bans:
     get:
       tags:
@@ -85,19 +85,19 @@ paths:
           schema:
             type: string
             format: uuid
-        - $ref: '#/components/parameters/Limit'
-        - $ref: '#/components/parameters/Offset'
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
       responses:
-        '200':
+        "200":
           description: Список банов
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/BanListResponse'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+                $ref: "#/components/schemas/BanListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
   /social/chat/bans/{ban_id}:
     delete:
       tags:
@@ -107,28 +107,193 @@ paths:
       security:
         - BearerAuth: []
       parameters:
-        - $ref: '#/components/parameters/BanId'
+        - $ref: "#/components/parameters/BanId"
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/RevokeBanRequest'
+              $ref: "#/components/schemas/RevokeBanRequest"
       responses:
-        '200':
+        "200":
           description: Бан отменен
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RevokeBanResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+                $ref: "#/components/schemas/RevokeBanResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /social/chat/filter:
+    post:
+      tags:
+        - Chat Moderation
+      summary: Проверить сообщение на запрещенный контент
+      operationId: filterChatMessage
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FilterMessageRequest"
+      responses:
+        "200":
+          description: Результат фильтрации
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FilterResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /social/chat/warnings:
+    post:
+      tags:
+        - Chat Moderation
+      summary: Выдать предупреждение пользователю
+      operationId: warnChatUser
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WarnUserRequest"
+      responses:
+        "200":
+          description: Предупреждение выдано
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WarnResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+    get:
+      tags:
+        - Chat Moderation
+      summary: Получить список предупреждений
+      operationId: getChatWarnings
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+      responses:
+        "200":
+          description: Список предупреждений
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WarningListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /social/chat/auto-ban:
+    post:
+      tags:
+        - Chat Moderation
+      summary: Автоматический бан за нарушения
+      operationId: autoBanUser
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AutoBanRequest"
+      responses:
+        "200":
+          description: Автобан применен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AutoBanResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /social/chat/reports:
+    get:
+      tags:
+        - Chat Moderation
+      summary: Получить список жалоб
+      operationId: getChatReports
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, resolved, dismissed]
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+      responses:
+        "200":
+          description: Список жалоб
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+  /social/chat/reports/{report_id}/resolve:
+    post:
+      tags:
+        - Chat Moderation
+      summary: Разрешить жалобу
+      operationId: resolveChatReport
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ReportId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResolveReportRequest"
+      responses:
+        "200":
+          description: Жалоба разрешена
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResolveReportResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 components:
   securitySchemes:
     BearerAuth:
@@ -139,105 +304,148 @@ components:
   schemas:
     ReportMessageRequest:
       type: object
-      required:
-        - message_id
-        - reason
+      required: [message_id, reason]
       properties:
-        message_id:
-          type: string
-          format: uuid
-        reason:
-          type: string
-          maxLength: 500
+        message_id: {type: string, format: uuid}
+        reason: {type: string, maxLength: 500}
     ReportResponse:
       type: object
       properties:
-        success:
-          type: boolean
-        report_id:
-          type: string
-          format: uuid
+        success: {type: boolean}
+        report_id: {type: string, format: uuid}
     BanUserRequest:
       type: object
-      required:
-        - player_id
-        - reason
-        - duration_hours
+      required: [player_id, reason, duration_hours]
       properties:
-        player_id:
-          type: string
-          format: uuid
-        reason:
-          type: string
-          maxLength: 500
-        duration_hours:
-          type: integer
-          nullable: true
+        player_id: {type: string, format: uuid}
+        reason: {type: string, maxLength: 500}
+        duration_hours: {type: integer, nullable: true}
     BanResponse:
       type: object
       properties:
-        success:
-          type: boolean
-        ban_id:
-          type: string
-          format: uuid
-        expires_at:
-          type: string
-          format: date-time
-          nullable: true
+        success: {type: boolean}
+        ban_id: {type: string, format: uuid}
+        expires_at: {type: string, format: date-time, nullable: true}
     BanListResponse:
       type: object
       properties:
-        bans:
-          type: array
-          items:
-            $ref: '#/components/schemas/ChatBan'
-        total:
-          type: integer
-        limit:
-          type: integer
-        offset:
-          type: integer
+        bans: {type: array, items: {$ref: "#/components/schemas/ChatBan"}}
+        total: {type: integer}
+        limit: {type: integer}
+        offset: {type: integer}
     ChatBan:
       type: object
       properties:
-        id:
-          type: string
-          format: uuid
-        player_id:
-          type: string
-          format: uuid
-        reason:
-          type: string
-        duration_hours:
-          type: integer
-          nullable: true
-        expires_at:
-          type: string
-          format: date-time
-          nullable: true
-        banned_by:
-          type: string
-          format: uuid
-        created_at:
-          type: string
-          format: date-time
+        id: {type: string, format: uuid}
+        player_id: {type: string, format: uuid}
+        reason: {type: string}
+        duration_hours: {type: integer, nullable: true}
+        expires_at: {type: string, format: date-time, nullable: true}
+        banned_by: {type: string, format: uuid}
+        created_at: {type: string, format: date-time}
     RevokeBanRequest:
       type: object
-      required:
-        - revoked_by
+      required: [revoked_by]
       properties:
-        revoked_by:
-          type: string
-          format: uuid
+        revoked_by: {type: string, format: uuid}
     RevokeBanResponse:
       type: object
       properties:
-        success:
-          type: boolean
-        ban_id:
-          type: string
-          format: uuid
+        success: {type: boolean}
+        ban_id: {type: string, format: uuid}
+    FilterMessageRequest:
+      type: object
+      required: [message, player_id]
+      properties:
+        message: {type: string, maxLength: 1000}
+        player_id: {type: string, format: uuid}
+        channel_id: {type: string, format: uuid}
+    FilterResponse:
+      type: object
+      properties:
+        allowed: {type: boolean}
+        filtered_message: {type: string, nullable: true}
+        violations: {type: array, items: {type: string}}
+        severity: {type: string, enum: [low, medium, high, critical]}
+    WarnUserRequest:
+      type: object
+      required: [player_id, reason]
+      properties:
+        player_id: {type: string, format: uuid}
+        reason: {type: string, maxLength: 500}
+        severity: {type: string, enum: [low, medium, high], default: medium}
+    WarnResponse:
+      type: object
+      properties:
+        success: {type: boolean}
+        warning_id: {type: string, format: uuid}
+        total_warnings: {type: integer}
+    WarningListResponse:
+      type: object
+      properties:
+        warnings: {type: array, items: {$ref: "#/components/schemas/ChatWarning"}}
+        total: {type: integer}
+        limit: {type: integer}
+        offset: {type: integer}
+    ChatWarning:
+      type: object
+      properties:
+        id: {type: string, format: uuid}
+        player_id: {type: string, format: uuid}
+        reason: {type: string}
+        severity: {type: string, enum: [low, medium, high]}
+        issued_by: {type: string, format: uuid}
+        created_at: {type: string, format: date-time}
+        expires_at: {type: string, format: date-time, nullable: true}
+    AutoBanRequest:
+      type: object
+      required: [player_id, reason]
+      properties:
+        player_id: {type: string, format: uuid}
+        reason: {type: string, maxLength: 500}
+        trigger_type: {type: string, enum: [spam, toxicity, harassment, cheating]}
+    AutoBanResponse:
+      type: object
+      properties:
+        success: {type: boolean}
+        ban_id: {type: string, format: uuid}
+        duration_hours: {type: integer}
+        reason: {type: string}
+    ReportListResponse:
+      type: object
+      properties:
+        reports: {type: array, items: {$ref: "#/components/schemas/ChatReport"}}
+        total: {type: integer}
+        limit: {type: integer}
+        offset: {type: integer}
+    ChatReport:
+      type: object
+      properties:
+        id: {type: string, format: uuid}
+        message_id: {type: string, format: uuid}
+        player_id: {type: string, format: uuid}
+        reported_by: {type: string, format: uuid}
+        reason: {type: string}
+        status: {type: string, enum: [pending, resolved, dismissed]}
+        created_at: {type: string, format: date-time}
+        resolved_at: {type: string, format: date-time, nullable: true}
+        resolved_by: {type: string, format: uuid, nullable: true}
+    ResolveReportRequest:
+      type: object
+      required: [action]
+      properties:
+        action: {type: string, enum: [ban, warn, dismiss]}
+        ban_duration_hours: {type: integer, nullable: true}
+        resolved_by: {type: string, format: uuid}
+        notes: {type: string, maxLength: 1000}
+    ResolveReportResponse:
+      type: object
+      properties:
+        success: {type: boolean}
+        report_id: {type: string, format: uuid}
+        action_taken: {type: string, enum: [ban, warn, dismiss]}
+        ban_id: {type: string, format: uuid, nullable: true}
+        warning_id: {type: string, format: uuid, nullable: true}
     Error:
       type: object
       required:
@@ -265,7 +473,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Error'
+            $ref: "#/components/schemas/Error"
           example:
             error: BadRequest
             message: Неверные параметры запроса
@@ -275,7 +483,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Error'
+            $ref: "#/components/schemas/Error"
           example:
             error: Unauthorized
             message: Требуется аутентификация
@@ -285,7 +493,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Error'
+            $ref: "#/components/schemas/Error"
           example:
             error: InternalServerError
             message: Внутренняя ошибка сервера
@@ -295,7 +503,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Error'
+            $ref: "#/components/schemas/Error"
           example:
             error: NotFound
             message: Ресурс не найден
@@ -328,3 +536,11 @@ components:
         type: string
         format: uuid
       description: Идентификатор бана
+    ReportId:
+      name: report_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Идентификатор жалобы

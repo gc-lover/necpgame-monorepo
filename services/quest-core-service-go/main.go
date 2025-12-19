@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	_ "net/http/pprof" // OPTIMIZATION: Issue #1584
 	"os"
@@ -14,13 +15,18 @@ import (
 )
 
 func main() {
+	fmt.Println("Starting Quest Core Service...")
 	logger := server.GetLogger()
 	logger.Info("Quest Core Service (Go) starting...")
 
 	addr := getEnv("ADDR", "0.0.0.0:8083")
 	metricsAddr := getEnv("METRICS_ADDR", ":9093")
+	fmt.Printf("Server address: %s, Metrics address: %s\n", addr, metricsAddr)
 
+	fmt.Println("Creating HTTP server...")
 	httpServer := server.NewHTTPServer(addr)
+	fmt.Println("OK HTTP server created successfully")
+	logger.Info("OK HTTP server created successfully")
 
 	// OPTIMIZATION: Issue #1584 - Start pprof server for profiling
 	go func() {
@@ -55,17 +61,12 @@ func main() {
 		}
 	}()
 
-	go func() {
-		logger.WithField("addr", addr).Info("HTTP server starting")
-		if err := httpServer.Start(); err != nil && err != http.ErrServerClosed {
-			logger.WithError(err).Fatal("Could not start HTTP server")
-		}
-	}()
-
-	stop := make(chan os.Signal, 1)
-	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
-
-	<-stop
+	logger.WithField("addr", addr).Info("HTTP server starting")
+	fmt.Println("Starting HTTP server...")
+	if err := httpServer.Start(); err != nil && err != http.ErrServerClosed {
+		logger.WithError(err).Fatal("Could not start HTTP server")
+		fmt.Printf("Could not start HTTP server: %v\n", err)
+	}
 
 	logger.Info("Shutting down servers...")
 

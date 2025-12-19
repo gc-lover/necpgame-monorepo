@@ -210,6 +210,29 @@ paths:
               schema:
                 $ref: "#/components/schemas/HackFailure"
 
+  /content/reload:
+    post:
+      summary: Reload interactive objects content from YAML
+      operationId: reloadContent
+      description: Import or update interactive objects definitions from YAML content data
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReloadContentRequest"
+      responses:
+        "200":
+          description: Content imported successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReloadContentResponse"
+        "400":
+          description: Invalid request data
+        "500":
+          description: Internal server error
+
   /zones/{zone_id}/objects:
     get:
       summary: Get all objects in zone
@@ -413,6 +436,17 @@ components:
         - ai_terminal
         - chemical_synthesizer
         - cryo_chamber
+        - server_rack
+        - biometric_lock
+        - corporate_safe
+        - conference_system
+        - illegal_lab
+        - smuggling_hatch
+        - secret_tunnel
+        - faction_blockpost
+        - comm_relay
+        - medical_station
+        - logistics_container
 
     ObjectStatus:
       type: string
@@ -1020,6 +1054,34 @@ components:
         chamber_status:
           type: string
           enum: [active, inactive, breached, destroyed]
+
+    ReloadContentRequest:
+      type: object
+      required:
+        - content_id
+        - yaml_content
+      properties:
+        content_id:
+          type: string
+          description: Unique identifier for the content batch
+        yaml_content:
+          type: object
+          description: YAML content data as parsed JSON object
+          additionalProperties: true
+
+    ReloadContentResponse:
+      type: object
+      properties:
+        content_id:
+          type: string
+        message:
+          type: string
+        imported_at:
+          type: string
+          format: date-time
+        objects_count:
+          type: integer
+          description: Number of objects processed
         awakening_difficulty:
           type: integer
           minimum: 1

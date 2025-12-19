@@ -8,31 +8,33 @@ import (
 	"time"
 
 	"github.com/gc-lover/necpgame-monorepo/services/combat-combos-service-ogen-go/pkg/api"
-	_ "github.com/lib/pq"
 	"github.com/google/uuid"
+	_ "github.com/lib/pq"
 )
 
 // Repository handles database operations
+// OPTIMIZATION: Struct alignment - single pointer field (already optimal)
 type Repository struct {
-	db *sql.DB
+	db *sql.DB // 8 bytes
 }
 
 // Internal models
+// OPTIMIZATION: Struct alignment - group by size (largest first)
 type Activation struct {
-	ID          string
-	CharacterID string
-	ComboID     string
-	ActivatedAt time.Time
+	ActivatedAt time.Time // 24 bytes (time.Time has 24 bytes)
+	ID          string    // 16 bytes
+	CharacterID string    // 16 bytes
+	ComboID     string    // 16 bytes
 }
 
 type ScoreRecord struct {
-	ActivationID        string
-	ExecutionDifficulty int32
-	DamageOutput        int32
-	VisualImpact        int32
-	TeamCoordination    int32
-	TotalScore          int32
-	Category            string
+	ActivationID        string // 16 bytes
+	Category            string // 16 bytes
+	ExecutionDifficulty int32  // 4 bytes
+	DamageOutput        int32  // 4 bytes
+	VisualImpact        int32  // 4 bytes
+	TeamCoordination    int32  // 4 bytes
+	TotalScore          int32  // 4 bytes
 }
 
 // NewRepository creates new repository with database connection
@@ -156,4 +158,3 @@ func (r *Repository) GetComboAnalytics(ctx context.Context, params api.GetComboA
 	analytics := []api.ComboAnalytics{}
 	return analytics, nil
 }
-

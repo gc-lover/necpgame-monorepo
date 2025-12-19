@@ -4,11 +4,14 @@ package server
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/gc-lover/necpgame-monorepo/services/quest-core-service-go/pkg/api"
 	"github.com/redis/go-redis/v9"
+	"gopkg.in/yaml.v3"
 )
 
 // Context timeout constants
@@ -20,6 +23,32 @@ const (
 var (
 	ErrNotFound = errors.New("not found")
 )
+
+// ReloadQuestContentRequest - request for importing quest from YAML
+type ReloadQuestContentRequest struct {
+	QuestID    string `json:"quest_id"`
+	YamlContent string `json:"yaml_content"`
+}
+
+// ReloadQuestContentResponse - response for quest import
+type ReloadQuestContentResponse struct {
+	QuestID string `json:"quest_id"`
+	Message string `json:"message"`
+}
+
+// QuestDefinition represents a quest definition for import
+type QuestDefinition struct {
+	QuestID      string
+	Title        string
+	QuestType    string
+	LevelMin     int
+	LevelMax     int
+	Requirements string // JSON
+	Objectives   string // JSON
+	Rewards      string // JSON
+	ContentData  string // Full YAML as JSON
+	IsActive     bool
+}
 
 // Handlers implements api.Handler interface (ogen typed handlers!)
 type Handlers struct {
@@ -110,4 +139,116 @@ func (h *Handlers) CompleteQuest(ctx context.Context, req api.OptCompleteQuestRe
 	}
 
 	return result, nil
+}
+
+// ReloadQuestContent - import quest from YAML content
+func (h *Handlers) ReloadQuestContent(ctx context.Context, req *ReloadQuestContentRequest) (*ReloadQuestContentResponse, error) {
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
+
+	// Parse YAML content into quest definition
+	questDef, err := h.parseQuestYAML(req.YamlContent)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse YAML content: %w", err)
+	}
+
+	// Import quest into database
+	err = h.service.ImportQuestDefinition(ctx, questDef)
+	if err != nil {
+		return nil, errors.New("failed to import quest: " + err.Error())
+	}
+
+	return &ReloadQuestContentResponse{
+		QuestID: req.QuestID,
+		Message: "Quest imported successfully",
+	}, nil
+}
+
+// parseQuestYAML parses YAML content into QuestDefinition struct
+func (h *Handlers) parseQuestYAML(yamlContent string) (*QuestDefinition, error) {
+	// Validate required content
+	if yamlContent == "" {
+		return nil, errors.New("YAML content is empty")
+	}
+
+	// Parse YAML string into map
+	var yamlData map[string]interface{}
+	if err := yaml.Unmarshal([]byte(yamlContent), &yamlData); err != nil {
+		return nil, fmt.Errorf("failed to parse YAML: %w", err)
+	}
+
+	// Extract metadata
+	metadata, ok := yamlData["metadata"].(map[string]interface{})
+	if !ok {
+		return nil, errors.New("missing or invalid metadata section")
+	}
+
+	// Validate metadata fields
+	metadataID, ok := metadata["id"].(string)
+	if !ok || metadataID == "" {
+		return nil, errors.New("metadata.id must be a non-empty string")
+	}
+
+	metadataTitle, ok := metadata["title"].(string)
+	if !ok || metadataTitle == "" {
+		return nil, errors.New("metadata.title must be a non-empty string")
+	}
+
+	questID := metadataID
+	title := metadataTitle
+
+	// Extract quest_definition
+	questDefData, ok := yamlData["quest_definition"].(map[string]interface{})
+	if !ok {
+		return nil, errors.New("missing or invalid quest_definition section")
+	}
+
+	questType, _ := questDefData["quest_type"].(string)
+	levelMin, _ := questDefData["level_min"].(float64) // YAML numbers are float64
+	levelMax, _ := questDefData["level_max"].(float64)
+
+	// Extract requirements, objectives, rewards
+	requirements, _ := questDefData["requirements"].(map[string]interface{})
+	objectives, _ := questDefData["objectives"].([]interface{})
+	rewards, _ := questDefData["rewards"].(map[string]interface{})
+
+	// Convert objectives to JSON
+	objectivesJSON, err := json.Marshal(objectives)
+	if err != nil {
+		return nil, errors.New("failed to marshal objectives: " + err.Error())
+	}
+
+	// Convert requirements and rewards to JSON
+	requirementsJSON, err := json.Marshal(requirements)
+	if err != nil {
+		return nil, errors.New("failed to marshal requirements: " + err.Error())
+	}
+
+	rewardsJSON, err := json.Marshal(rewards)
+	if err != nil {
+		return nil, errors.New("failed to marshal rewards: " + err.Error())
+	}
+
+	// Create QuestDefinition
+	questDef := &QuestDefinition{
+		QuestID:     questID,
+		Title:       title,
+		QuestType:   questType,
+		LevelMin:    int(levelMin),
+		LevelMax:    int(levelMax),
+		Requirements: string(requirementsJSON),
+		Objectives:   string(objectivesJSON),
+		Rewards:     string(rewardsJSON),
+		ContentData: "{}", // Will be populated from yamlContent
+		IsActive:    true,
+	}
+
+	// Convert full content to JSON for ContentData
+	contentJSON, err := json.Marshal(yamlContent)
+	if err != nil {
+		return nil, errors.New("failed to marshal content data: " + err.Error())
+	}
+	questDef.ContentData = string(contentJSON)
+
+	return questDef, nil
 }

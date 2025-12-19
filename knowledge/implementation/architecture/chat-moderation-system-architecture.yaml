@@ -1,0 +1,538 @@
+# Issue: #1911
+metadata:
+  id: architecture-chat-moderation-system
+  title: 'Архитектура системы модерации чата'
+  document_type: architecture
+  category: implementation
+  status: draft
+  version: '1.0.0'
+  last_updated: 2025-12-19T22:10:00Z
+  owners:
+    - role: backend_developer
+      contact: backend@necpgame.com
+  tags:
+    - chat
+    - moderation
+    - security
+    - performance
+  topics:
+    - architecture
+    - microservices
+    - real-time
+  related_systems:
+    - chat-service
+    - user-management-service
+    - notification-service
+  related_documents:
+    - id: issue-1911
+      title: GitHub Issue #1911
+      link: https://github.com/gc-lover/necpgame-monorepo/issues/1911
+      relation: implements
+      implemented_at: 2025-12-19T22:10:00Z
+  source: knowledge/implementation/architecture/chat-moderation-system-architecture.yaml
+  visibility: internal
+  audience:
+    - backend
+    - architect
+    - qa
+  risk_level: medium
+
+summary:
+  problem: Необходима система модерации чата для предотвращения токсичного контента, спама и нарушений в MMOFPS игре.
+  goal: Создать масштабируемую систему модерации с низкой латентностью для обработки тысяч сообщений в секунду.
+  essence: Микросервис с middleware архитектурой, ML-based токсичностью анализом и real-time обработкой.
+  key_points:
+    - Middleware для синхронной проверки сообщений
+    - ML модель для детекции токсичности
+    - Кеширование правил для высокой производительности
+    - Асинхронная обработка нарушений
+
+architecture:
+  overview:
+    title: Общая архитектура
+    description: |
+      Система модерации чата реализована как отдельный микросервис с middleware архитектурой.
+
+      ```
+      [Chat Client] → [Chat Service] → [Moderation Middleware] → [Message Validation] → [Send]
+                           ↓                           ↓                           ↓
+                    [Violation Detected] → [Action Engine] → [Notification] → [Database Log]
+      ```
+
+  components:
+    - name: Moderation Service
+      type: microservice
+      description: Основной сервис модерации с API и логикой
+      technologies:
+        - Go 1.21+
+        - PostgreSQL
+        - Redis
+        - OpenAPI 3.0
+      responsibilities:
+        - Проверка сообщений через middleware
+        - Управление правилами модерации
+        - Обработка нарушений и действий
+        - Логирование для аудита
+
+    - name: Moderation Middleware
+      type: middleware
+      description: Синхронная проверка сообщений перед отправкой
+      responsibilities:
+        - Фильтрация слов (blacklist/whitelist)
+        - Детекция спама по паттернам
+        - Проверка на токсичность
+        - Блокировка подозрительных сообщений
+
+    - name: ML Toxicity Analyzer
+      type: service
+      description: ML модель для анализа токсичности текста
+      technologies:
+        - Python + FastAPI
+        - TensorFlow/PyTorch
+        - BERT-based model
+      responsibilities:
+        - Классификация токсичного контента
+        - Определение severity уровня
+        - Обучение на игровых данных
+
+    - name: Moderation Dashboard
+      type: web_application
+      description: Интерфейс для модераторов
+      technologies:
+        - React + TypeScript
+        - WebSocket для real-time
+      responsibilities:
+        - Просмотр нарушений
+        - Ручная модерация
+        - Управление правилами
+        - Статистика и аналитика
+
+  data_model:
+    title: Модель данных
+    description: Основные сущности системы модерации
+
+    entities:
+      - name: ModerationRule
+        description: Правила модерации (фильтры, паттерны)
+        fields:
+          - name: id
+            type: UUID
+            description: Уникальный идентификатор
+          - name: rule_type
+            type: enum
+            values: [word_filter, spam_pattern, toxicity_threshold]
+            description: Тип правила
+          - name: pattern
+            type: string
+            description: Регулярное выражение или список слов
+          - name: severity
+            type: enum
+            values: [low, medium, high, critical]
+            description: Уровень серьезности
+          - name: action
+            type: enum
+            values: [warn, mute, ban, delete]
+            description: Автоматическое действие
+          - name: is_active
+            type: boolean
+            description: Активно ли правило
+
+      - name: ModerationViolation
+        description: Зафиксированное нарушение
+        fields:
+          - name: id
+            type: UUID
+            description: Уникальный идентификатор
+          - name: player_id
+            type: UUID
+            description: ID игрока-нарушителя
+          - name: message_id
+            type: UUID
+            description: ID сообщения
+          - name: violation_type
+            type: enum
+            values: [spam, toxicity, harassment, forbidden_words]
+            description: Тип нарушения
+          - name: severity_score
+            type: float
+            description: Оценка серьезности (0.0-1.0)
+          - name: rule_triggered
+            type: UUID
+            description: ID правила, которое сработало
+          - name: detected_at
+            type: timestamp
+            description: Время обнаружения
+
+      - name: ModerationAction
+        description: Действие модерации
+        fields:
+          - name: id
+            type: UUID
+            description: Уникальный идентификатор
+          - name: violation_id
+            type: UUID
+            description: ID нарушения
+          - name: action_type
+            type: enum
+            values: [warning, mute, ban, message_delete]
+            description: Тип действия
+          - name: duration
+            type: interval
+            description: Длительность (для mute/ban)
+          - name: moderator_id
+            type: UUID
+            description: ID модератора (или auto для автоматических)
+          - name: applied_at
+            type: timestamp
+            description: Время применения
+
+      - name: ModerationLog
+        description: Аудит лог всех действий
+        fields:
+          - name: id
+            type: UUID
+            description: Уникальный идентификатор
+          - name: player_id
+            type: UUID
+            description: ID затронутого игрока
+          - name: action
+            type: string
+            description: Описание действия
+          - name: details
+            type: jsonb
+            description: Дополнительные детали
+          - name: ip_address
+            type: inet
+            description: IP адрес для tracking
+          - name: user_agent
+            type: string
+            description: User agent для анализа
+          - name: created_at
+            type: timestamp
+            description: Время создания лога
+
+  api_design:
+    title: API дизайн
+    description: REST API endpoints для управления модерацией
+
+    endpoints:
+      - path: /moderation/rules
+        method: GET
+        description: Получить список активных правил модерации
+        parameters:
+          - name: rule_type
+            type: query
+            enum: [word_filter, spam_pattern, toxicity_threshold]
+          - name: limit
+            type: query
+            default: 50
+            max: 100
+        response:
+          type: object
+          properties:
+            rules:
+              type: array
+              items:
+                $ref: '#/components/schemas/ModerationRule'
+            total:
+              type: integer
+
+      - path: /moderation/rules
+        method: POST
+        description: Создать новое правило модерации
+        request:
+          type: object
+          required: [rule_type, pattern, severity]
+          properties:
+            rule_type:
+              type: string
+              enum: [word_filter, spam_pattern, toxicity_threshold]
+            pattern:
+              type: string
+            severity:
+              type: string
+              enum: [low, medium, high, critical]
+            action:
+              type: string
+              enum: [warn, mute, ban, delete]
+        response:
+          $ref: '#/components/schemas/ModerationRule'
+
+      - path: /moderation/violations
+        method: GET
+        description: Получить список нарушений
+        parameters:
+          - name: player_id
+            type: query
+            format: uuid
+          - name: violation_type
+            type: query
+            enum: [spam, toxicity, harassment, forbidden_words]
+          - name: status
+            type: query
+            enum: [pending, resolved, dismissed]
+            default: pending
+          - name: limit
+            type: query
+            default: 20
+            max: 100
+        response:
+          type: object
+          properties:
+            violations:
+              type: array
+              items:
+                $ref: '#/components/schemas/ModerationViolation'
+            total:
+              type: integer
+
+      - path: /moderation/actions/{violation_id}
+        method: POST
+        description: Применить действие к нарушению
+        parameters:
+          - name: violation_id
+            type: path
+            required: true
+            format: uuid
+        request:
+          type: object
+          required: [action_type]
+          properties:
+            action_type:
+              type: string
+              enum: [warning, mute, ban, message_delete, dismiss]
+            duration:
+              type: string
+              description: ISO 8601 duration (для mute/ban)
+            reason:
+              type: string
+              maxLength: 500
+        response:
+          $ref: '#/components/schemas/ModerationAction'
+
+      - path: /moderation/messages/check
+        method: POST
+        description: Синхронная проверка сообщения (middleware endpoint)
+        request:
+          type: object
+          required: [player_id, message, channel_type]
+          properties:
+            player_id:
+              type: string
+              format: uuid
+            message:
+              type: string
+              maxLength: 500
+            channel_type:
+              type: string
+              enum: [global, team, party, whisper, trade]
+            metadata:
+              type: object
+              description: Дополнительная информация о сообщении
+        response:
+          type: object
+          properties:
+            allowed:
+              type: boolean
+            violation_detected:
+              type: boolean
+            violation_type:
+              type: string
+              enum: [spam, toxicity, harassment, forbidden_words]
+            severity_score:
+              type: number
+              minimum: 0
+              maximum: 1
+            action_required:
+              type: boolean
+              description: Требуется ручная модерация
+            filtered_message:
+              type: string
+              description: Отфильтрованное сообщение (если применимо)
+
+  performance_requirements:
+    title: Требования к производительности
+    description: Критические метрики для MMOFPS игры
+
+    targets:
+      - metric: Message Check Latency (P99)
+        target: <50ms
+        description: 99% сообщений проверяются быстрее 50мс
+        measurement: Prometheus histogram_quantile(0.99, rate(http_request_duration_seconds[5m]))
+
+      - metric: Throughput
+        target: >1000 req/sec
+        description: Минимум 1000 проверок сообщений в секунду
+        measurement: rate(http_requests_total{endpoint="/moderation/messages/check"}[1m])
+
+      - metric: Memory Usage
+        target: <512MB per instance
+        description: Ограничение памяти для horizontal scaling
+        measurement: process_resident_memory_bytes
+
+      - metric: CPU Usage
+        target: <70% per core
+        description: CPU overhead для модерации
+        measurement: rate(process_cpu_user_seconds_total[5m]) / rate(process_cpu_seconds_total[5m])
+
+      - metric: Database Query Latency (P95)
+        target: <10ms
+        description: БД запросы для правил и логов
+        measurement: histogram_quantile(0.95, rate(db_query_duration_seconds[5m]))
+
+  security_requirements:
+    title: Требования безопасности
+    description: OWASP Top 10 и игровая специфика
+
+    requirements:
+      - category: Input Validation
+        description: Все входные данные валидируются и sanitизируются
+        implementation:
+          - HTML escaping для сообщений
+          - Length limits для всех строк
+          - Type validation для UUID и enum полей
+
+      - category: Rate Limiting
+        description: Защита от abuse через rate limiting
+        implementation:
+          - Per-player message limits (10/sec)
+          - API endpoint limits (1000/min per IP)
+          - Burst protection для спам атак
+
+      - category: Audit Logging
+        description: Полное логирование для compliance
+        implementation:
+          - Все действия модерации логируются
+          - IP addresses и user agents сохраняются
+          - Логи immutable и tamper-proof
+
+      - category: Data Protection
+        description: Защита персональных данных
+        implementation:
+          - PII encryption at rest
+          - Message content hashing для поиска
+          - Data retention policies
+
+  scaling_strategy:
+    title: Стратегия масштабирования
+    description: Horizontal scaling для миллионов игроков
+
+    strategies:
+      - name: Database Sharding
+        description: Разделение данных по player_id для масштабирования
+        implementation:
+          - Hash-based sharding по player_id
+          - Read replicas для analytics
+          - Connection pooling optimization
+
+      - name: Redis Caching
+        description: Кеширование правил и состояния для низкой латентности
+        implementation:
+          - Rules cache с TTL 5 минут
+          - Player violation history cache
+          - Distributed locks для consistency
+
+      - name: Microservice Architecture
+        description: Независимое развертывание компонентов
+        implementation:
+          - Moderation Service (core logic)
+          - ML Service (toxicity analysis)
+          - Dashboard Service (UI)
+          - Notification Service (alerts)
+
+      - name: Load Balancing
+        description: Распределение нагрузки между инстансами
+        implementation:
+          - Kubernetes HPA по CPU/memory
+          - Service mesh (Istio/Linkerd)
+          - Circuit breakers для resilience
+
+  monitoring_alerting:
+    title: Мониторинг и алертинг
+    description: Observability для production эксплуатации
+
+    metrics:
+      - name: violation_rate
+        type: counter
+        description: Количество обнаруженных нарушений в минуту
+        labels: [violation_type, severity]
+
+      - name: moderation_latency
+        type: histogram
+        description: Латентность проверки сообщений
+        buckets: [0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1.0]
+
+      - name: rule_hit_rate
+        type: counter
+        description: Количество срабатываний каждого правила
+        labels: [rule_id, rule_type]
+
+      - name: ml_model_accuracy
+        type: gauge
+        description: Точность ML модели токсичности
+        labels: [model_version]
+
+    alerts:
+      - name: High Violation Rate
+        condition: rate(violation_rate[5m]) > 100
+        severity: warning
+        description: Высокий уровень нарушений, возможно требуется обновление правил
+
+      - name: Moderation Latency Spike
+        condition: histogram_quantile(0.99, rate(moderation_latency[5m])) > 0.1
+        severity: critical
+        description: Критическое увеличение латентности модерации
+
+      - name: ML Model Drift
+        condition: ml_model_accuracy < 0.8
+        severity: warning
+        description: Снижение точности ML модели, требуется retraining
+
+  implementation_plan:
+    title: План реализации
+    description: Поэтапная разработка системы
+
+    phases:
+      - name: Phase 1 - Core Infrastructure
+        duration: 2 weeks
+        tasks:
+          - Создать OpenAPI спецификацию
+          - Реализовать базовые модели данных
+          - Настроить database schema и migrations
+          - Создать базовый микросервис с health checks
+
+      - name: Phase 2 - Moderation Logic
+        duration: 3 weeks
+        tasks:
+          - Реализовать word filters и pattern matching
+          - Добавить spam detection logic
+          - Интегрировать ML toxicity analyzer (mock)
+          - Создать middleware для message checking
+
+      - name: Phase 3 - Actions & Logging
+        duration: 2 weeks
+        tasks:
+          - Реализовать violation processing pipeline
+          - Добавить moderation actions (mute, ban, warn)
+          - Настроить audit logging
+          - Создать notification system
+
+      - name: Phase 4 - Optimization & Testing
+        duration: 2 weeks
+        tasks:
+          - Добавить performance optimizations
+          - Написать comprehensive tests
+          - Настроить monitoring и alerting
+          - Load testing и performance validation
+
+      - name: Phase 5 - Production Deployment
+        duration: 1 week
+        tasks:
+          - Kubernetes manifests
+          - CI/CD pipelines
+          - Production monitoring setup
+          - Documentation and training
+
+validation:
+  checksum: ''
+  schema_version: '1.0'

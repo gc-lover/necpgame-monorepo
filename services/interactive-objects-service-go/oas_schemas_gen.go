@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/go-faster/errors"
+	"github.com/go-faster/jx"
 	"github.com/google/uuid"
 )
 
@@ -939,10 +940,9 @@ func (s *CreateObjectRequestThreatLevel) UnmarshalText(data []byte) error {
 
 // Ref: #/components/schemas/CryoChamber
 type CryoChamber struct {
-	ObjectID            OptUUID                     `json:"object_id"`
-	SubjectType         OptCryoChamberSubjectType   `json:"subject_type"`
-	ChamberStatus       OptCryoChamberChamberStatus `json:"chamber_status"`
-	AwakeningDifficulty OptInt                      `json:"awakening_difficulty"`
+	ObjectID      OptUUID                     `json:"object_id"`
+	SubjectType   OptCryoChamberSubjectType   `json:"subject_type"`
+	ChamberStatus OptCryoChamberChamberStatus `json:"chamber_status"`
 }
 
 // GetObjectID returns the value of ObjectID.
@@ -960,11 +960,6 @@ func (s *CryoChamber) GetChamberStatus() OptCryoChamberChamberStatus {
 	return s.ChamberStatus
 }
 
-// GetAwakeningDifficulty returns the value of AwakeningDifficulty.
-func (s *CryoChamber) GetAwakeningDifficulty() OptInt {
-	return s.AwakeningDifficulty
-}
-
 // SetObjectID sets the value of ObjectID.
 func (s *CryoChamber) SetObjectID(val OptUUID) {
 	s.ObjectID = val
@@ -978,11 +973,6 @@ func (s *CryoChamber) SetSubjectType(val OptCryoChamberSubjectType) {
 // SetChamberStatus sets the value of ChamberStatus.
 func (s *CryoChamber) SetChamberStatus(val OptCryoChamberChamberStatus) {
 	s.ChamberStatus = val
-}
-
-// SetAwakeningDifficulty sets the value of AwakeningDifficulty.
-func (s *CryoChamber) SetAwakeningDifficulty(val OptInt) {
-	s.AwakeningDifficulty = val
 }
 
 type CryoChamberChamberStatus string
@@ -3386,6 +3376,17 @@ const (
 	ObjectTypeAiTerminal          ObjectType = "ai_terminal"
 	ObjectTypeChemicalSynthesizer ObjectType = "chemical_synthesizer"
 	ObjectTypeCryoChamber         ObjectType = "cryo_chamber"
+	ObjectTypeServerRack          ObjectType = "server_rack"
+	ObjectTypeBiometricLock       ObjectType = "biometric_lock"
+	ObjectTypeCorporateSafe       ObjectType = "corporate_safe"
+	ObjectTypeConferenceSystem    ObjectType = "conference_system"
+	ObjectTypeIllegalLab          ObjectType = "illegal_lab"
+	ObjectTypeSmugglingHatch      ObjectType = "smuggling_hatch"
+	ObjectTypeSecretTunnel        ObjectType = "secret_tunnel"
+	ObjectTypeFactionBlockpost    ObjectType = "faction_blockpost"
+	ObjectTypeCommRelay           ObjectType = "comm_relay"
+	ObjectTypeMedicalStation      ObjectType = "medical_station"
+	ObjectTypeLogisticsContainer  ObjectType = "logistics_container"
 )
 
 // AllValues returns all ObjectType values.
@@ -3406,6 +3407,17 @@ func (ObjectType) AllValues() []ObjectType {
 		ObjectTypeAiTerminal,
 		ObjectTypeChemicalSynthesizer,
 		ObjectTypeCryoChamber,
+		ObjectTypeServerRack,
+		ObjectTypeBiometricLock,
+		ObjectTypeCorporateSafe,
+		ObjectTypeConferenceSystem,
+		ObjectTypeIllegalLab,
+		ObjectTypeSmugglingHatch,
+		ObjectTypeSecretTunnel,
+		ObjectTypeFactionBlockpost,
+		ObjectTypeCommRelay,
+		ObjectTypeMedicalStation,
+		ObjectTypeLogisticsContainer,
 	}
 }
 
@@ -3441,6 +3453,28 @@ func (s ObjectType) MarshalText() ([]byte, error) {
 	case ObjectTypeChemicalSynthesizer:
 		return []byte(s), nil
 	case ObjectTypeCryoChamber:
+		return []byte(s), nil
+	case ObjectTypeServerRack:
+		return []byte(s), nil
+	case ObjectTypeBiometricLock:
+		return []byte(s), nil
+	case ObjectTypeCorporateSafe:
+		return []byte(s), nil
+	case ObjectTypeConferenceSystem:
+		return []byte(s), nil
+	case ObjectTypeIllegalLab:
+		return []byte(s), nil
+	case ObjectTypeSmugglingHatch:
+		return []byte(s), nil
+	case ObjectTypeSecretTunnel:
+		return []byte(s), nil
+	case ObjectTypeFactionBlockpost:
+		return []byte(s), nil
+	case ObjectTypeCommRelay:
+		return []byte(s), nil
+	case ObjectTypeMedicalStation:
+		return []byte(s), nil
+	case ObjectTypeLogisticsContainer:
 		return []byte(s), nil
 	default:
 		return nil, errors.Errorf("invalid value: %q", s)
@@ -3494,6 +3528,39 @@ func (s *ObjectType) UnmarshalText(data []byte) error {
 		return nil
 	case ObjectTypeCryoChamber:
 		*s = ObjectTypeCryoChamber
+		return nil
+	case ObjectTypeServerRack:
+		*s = ObjectTypeServerRack
+		return nil
+	case ObjectTypeBiometricLock:
+		*s = ObjectTypeBiometricLock
+		return nil
+	case ObjectTypeCorporateSafe:
+		*s = ObjectTypeCorporateSafe
+		return nil
+	case ObjectTypeConferenceSystem:
+		*s = ObjectTypeConferenceSystem
+		return nil
+	case ObjectTypeIllegalLab:
+		*s = ObjectTypeIllegalLab
+		return nil
+	case ObjectTypeSmugglingHatch:
+		*s = ObjectTypeSmugglingHatch
+		return nil
+	case ObjectTypeSecretTunnel:
+		*s = ObjectTypeSecretTunnel
+		return nil
+	case ObjectTypeFactionBlockpost:
+		*s = ObjectTypeFactionBlockpost
+		return nil
+	case ObjectTypeCommRelay:
+		*s = ObjectTypeCommRelay
+		return nil
+	case ObjectTypeMedicalStation:
+		*s = ObjectTypeMedicalStation
+		return nil
+	case ObjectTypeLogisticsContainer:
+		*s = ObjectTypeLogisticsContainer
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
@@ -5835,6 +5902,118 @@ func (s *Position) SetZ(val OptFloat32) {
 func (s *Position) SetZoneID(val OptUUID) {
 	s.ZoneID = val
 }
+
+// ReloadContentBadRequest is response for ReloadContent operation.
+type ReloadContentBadRequest struct{}
+
+func (*ReloadContentBadRequest) reloadContentRes() {}
+
+// ReloadContentInternalServerError is response for ReloadContent operation.
+type ReloadContentInternalServerError struct{}
+
+func (*ReloadContentInternalServerError) reloadContentRes() {}
+
+// Ref: #/components/schemas/ReloadContentRequest
+type ReloadContentRequest struct {
+	// Unique identifier for the content batch.
+	ContentID string `json:"content_id"`
+	// YAML content data as parsed JSON object.
+	YamlContent ReloadContentRequestYamlContent `json:"yaml_content"`
+}
+
+// GetContentID returns the value of ContentID.
+func (s *ReloadContentRequest) GetContentID() string {
+	return s.ContentID
+}
+
+// GetYamlContent returns the value of YamlContent.
+func (s *ReloadContentRequest) GetYamlContent() ReloadContentRequestYamlContent {
+	return s.YamlContent
+}
+
+// SetContentID sets the value of ContentID.
+func (s *ReloadContentRequest) SetContentID(val string) {
+	s.ContentID = val
+}
+
+// SetYamlContent sets the value of YamlContent.
+func (s *ReloadContentRequest) SetYamlContent(val ReloadContentRequestYamlContent) {
+	s.YamlContent = val
+}
+
+// YAML content data as parsed JSON object.
+type ReloadContentRequestYamlContent map[string]jx.Raw
+
+func (s *ReloadContentRequestYamlContent) init() ReloadContentRequestYamlContent {
+	m := *s
+	if m == nil {
+		m = map[string]jx.Raw{}
+		*s = m
+	}
+	return m
+}
+
+// Ref: #/components/schemas/ReloadContentResponse
+type ReloadContentResponse struct {
+	ContentID  OptString   `json:"content_id"`
+	Message    OptString   `json:"message"`
+	ImportedAt OptDateTime `json:"imported_at"`
+	// Number of objects processed.
+	ObjectsCount        OptInt `json:"objects_count"`
+	AwakeningDifficulty OptInt `json:"awakening_difficulty"`
+}
+
+// GetContentID returns the value of ContentID.
+func (s *ReloadContentResponse) GetContentID() OptString {
+	return s.ContentID
+}
+
+// GetMessage returns the value of Message.
+func (s *ReloadContentResponse) GetMessage() OptString {
+	return s.Message
+}
+
+// GetImportedAt returns the value of ImportedAt.
+func (s *ReloadContentResponse) GetImportedAt() OptDateTime {
+	return s.ImportedAt
+}
+
+// GetObjectsCount returns the value of ObjectsCount.
+func (s *ReloadContentResponse) GetObjectsCount() OptInt {
+	return s.ObjectsCount
+}
+
+// GetAwakeningDifficulty returns the value of AwakeningDifficulty.
+func (s *ReloadContentResponse) GetAwakeningDifficulty() OptInt {
+	return s.AwakeningDifficulty
+}
+
+// SetContentID sets the value of ContentID.
+func (s *ReloadContentResponse) SetContentID(val OptString) {
+	s.ContentID = val
+}
+
+// SetMessage sets the value of Message.
+func (s *ReloadContentResponse) SetMessage(val OptString) {
+	s.Message = val
+}
+
+// SetImportedAt sets the value of ImportedAt.
+func (s *ReloadContentResponse) SetImportedAt(val OptDateTime) {
+	s.ImportedAt = val
+}
+
+// SetObjectsCount sets the value of ObjectsCount.
+func (s *ReloadContentResponse) SetObjectsCount(val OptInt) {
+	s.ObjectsCount = val
+}
+
+// SetAwakeningDifficulty sets the value of AwakeningDifficulty.
+func (s *ReloadContentResponse) SetAwakeningDifficulty(val OptInt) {
+	s.AwakeningDifficulty = val
+}
+
+func (*ReloadContentResponse) reloadContentRes() {}
 
 // RemoveObjectNoContent is response for RemoveObject operation.
 type RemoveObjectNoContent struct{}

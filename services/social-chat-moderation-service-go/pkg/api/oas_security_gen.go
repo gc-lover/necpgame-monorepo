@@ -34,10 +34,16 @@ func findAuthorization(h http.Header, prefix string) (string, bool) {
 }
 
 var operationRolesBearerAuth = map[string][]string{
+	AutoBanUserOperation:       []string{},
 	BanChatUserOperation:       []string{},
+	FilterChatMessageOperation: []string{},
 	GetChatBansOperation:       []string{},
+	GetChatReportsOperation:    []string{},
+	GetChatWarningsOperation:   []string{},
 	ReportChatMessageOperation: []string{},
+	ResolveChatReportOperation: []string{},
 	RevokeChatBanOperation:     []string{},
+	WarnChatUserOperation:      []string{},
 }
 
 func (s *Server) securityBearerAuth(ctx context.Context, operationName OperationName, req *http.Request) (context.Context, bool, error) {

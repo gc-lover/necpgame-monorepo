@@ -689,34 +689,6 @@ func (s *CryoChamber) Validate() error {
 			Error: err,
 		})
 	}
-	if err := func() error {
-		if value, ok := s.AwakeningDifficulty.Get(); ok {
-			if err := func() error {
-				if err := (validate.Int{
-					MinSet:        true,
-					Min:           1,
-					MaxSet:        true,
-					Max:           100,
-					MinExclusive:  false,
-					MaxExclusive:  false,
-					MultipleOfSet: false,
-					MultipleOf:    0,
-					Pattern:       nil,
-				}).Validate(int64(value)); err != nil {
-					return errors.Wrap(err, "int")
-				}
-				return nil
-			}(); err != nil {
-				return err
-			}
-		}
-		return nil
-	}(); err != nil {
-		failures = append(failures, validate.FieldError{
-			Name:  "awakening_difficulty",
-			Error: err,
-		})
-	}
 	if len(failures) > 0 {
 		return &validate.Error{Fields: failures}
 	}
@@ -2204,6 +2176,28 @@ func (s ObjectType) Validate() error {
 		return nil
 	case "cryo_chamber":
 		return nil
+	case "server_rack":
+		return nil
+	case "biometric_lock":
+		return nil
+	case "corporate_safe":
+		return nil
+	case "conference_system":
+		return nil
+	case "illegal_lab":
+		return nil
+	case "smuggling_hatch":
+		return nil
+	case "secret_tunnel":
+		return nil
+	case "faction_blockpost":
+		return nil
+	case "comm_relay":
+		return nil
+	case "medical_station":
+		return nil
+	case "logistics_container":
+		return nil
 	default:
 		return errors.Errorf("invalid value: %v", s)
 	}
@@ -2266,6 +2260,46 @@ func (s *Position) Validate() error {
 	}(); err != nil {
 		failures = append(failures, validate.FieldError{
 			Name:  "z",
+			Error: err,
+		})
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+	return nil
+}
+
+func (s *ReloadContentResponse) Validate() error {
+	if s == nil {
+		return validate.ErrNilPointer
+	}
+
+	var failures []validate.FieldError
+	if err := func() error {
+		if value, ok := s.AwakeningDifficulty.Get(); ok {
+			if err := func() error {
+				if err := (validate.Int{
+					MinSet:        true,
+					Min:           1,
+					MaxSet:        true,
+					Max:           100,
+					MinExclusive:  false,
+					MaxExclusive:  false,
+					MultipleOfSet: false,
+					MultipleOf:    0,
+					Pattern:       nil,
+				}).Validate(int64(value)); err != nil {
+					return errors.Wrap(err, "int")
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "awakening_difficulty",
 			Error: err,
 		})
 	}

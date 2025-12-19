@@ -61,6 +61,26 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				break
 			}
 			switch elem[0] {
+			case 'a': // Prefix: "auto-ban"
+
+				if l := len("auto-ban"); len(elem) >= l && elem[0:l] == "auto-ban" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				if len(elem) == 0 {
+					// Leaf node.
+					switch r.Method {
+					case "POST":
+						s.handleAutoBanUserRequest([0]string{}, elemIsEscaped, w, r)
+					default:
+						s.notAllowed(w, r, "POST")
+					}
+
+					return
+				}
+
 			case 'b': // Prefix: "ban"
 
 				if l := len("ban"); len(elem) >= l && elem[0:l] == "ban" {
@@ -134,9 +154,9 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 				}
 
-			case 'r': // Prefix: "report"
+			case 'f': // Prefix: "filter"
 
-				if l := len("report"); len(elem) >= l && elem[0:l] == "report" {
+				if l := len("filter"); len(elem) >= l && elem[0:l] == "filter" {
 					elem = elem[l:]
 				} else {
 					break
@@ -146,9 +166,118 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 					// Leaf node.
 					switch r.Method {
 					case "POST":
+						s.handleFilterChatMessageRequest([0]string{}, elemIsEscaped, w, r)
+					default:
+						s.notAllowed(w, r, "POST")
+					}
+
+					return
+				}
+
+			case 'r': // Prefix: "report"
+
+				if l := len("report"); len(elem) >= l && elem[0:l] == "report" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				if len(elem) == 0 {
+					switch r.Method {
+					case "POST":
 						s.handleReportChatMessageRequest([0]string{}, elemIsEscaped, w, r)
 					default:
 						s.notAllowed(w, r, "POST")
+					}
+
+					return
+				}
+				switch elem[0] {
+				case 's': // Prefix: "s"
+
+					if l := len("s"); len(elem) >= l && elem[0:l] == "s" {
+						elem = elem[l:]
+					} else {
+						break
+					}
+
+					if len(elem) == 0 {
+						switch r.Method {
+						case "GET":
+							s.handleGetChatReportsRequest([0]string{}, elemIsEscaped, w, r)
+						default:
+							s.notAllowed(w, r, "GET")
+						}
+
+						return
+					}
+					switch elem[0] {
+					case '/': // Prefix: "/"
+
+						if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						// Param: "report_id"
+						// Match until "/"
+						idx := strings.IndexByte(elem, '/')
+						if idx < 0 {
+							idx = len(elem)
+						}
+						args[0] = elem[:idx]
+						elem = elem[idx:]
+
+						if len(elem) == 0 {
+							break
+						}
+						switch elem[0] {
+						case '/': // Prefix: "/resolve"
+
+							if l := len("/resolve"); len(elem) >= l && elem[0:l] == "/resolve" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								// Leaf node.
+								switch r.Method {
+								case "POST":
+									s.handleResolveChatReportRequest([1]string{
+										args[0],
+									}, elemIsEscaped, w, r)
+								default:
+									s.notAllowed(w, r, "POST")
+								}
+
+								return
+							}
+
+						}
+
+					}
+
+				}
+
+			case 'w': // Prefix: "warnings"
+
+				if l := len("warnings"); len(elem) >= l && elem[0:l] == "warnings" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				if len(elem) == 0 {
+					// Leaf node.
+					switch r.Method {
+					case "GET":
+						s.handleGetChatWarningsRequest([0]string{}, elemIsEscaped, w, r)
+					case "POST":
+						s.handleWarnChatUserRequest([0]string{}, elemIsEscaped, w, r)
+					default:
+						s.notAllowed(w, r, "GET,POST")
 					}
 
 					return
@@ -254,6 +383,31 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 				break
 			}
 			switch elem[0] {
+			case 'a': // Prefix: "auto-ban"
+
+				if l := len("auto-ban"); len(elem) >= l && elem[0:l] == "auto-ban" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				if len(elem) == 0 {
+					// Leaf node.
+					switch method {
+					case "POST":
+						r.name = AutoBanUserOperation
+						r.summary = "Автоматический бан за нарушения"
+						r.operationID = "autoBanUser"
+						r.operationGroup = ""
+						r.pathPattern = "/social/chat/auto-ban"
+						r.args = args
+						r.count = 0
+						return r, true
+					default:
+						return
+					}
+				}
+
 			case 'b': // Prefix: "ban"
 
 				if l := len("ban"); len(elem) >= l && elem[0:l] == "ban" {
@@ -340,9 +494,9 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 
 				}
 
-			case 'r': // Prefix: "report"
+			case 'f': // Prefix: "filter"
 
-				if l := len("report"); len(elem) >= l && elem[0:l] == "report" {
+				if l := len("filter"); len(elem) >= l && elem[0:l] == "filter" {
 					elem = elem[l:]
 				} else {
 					break
@@ -352,11 +506,145 @@ func (s *Server) FindPath(method string, u *url.URL) (r Route, _ bool) {
 					// Leaf node.
 					switch method {
 					case "POST":
+						r.name = FilterChatMessageOperation
+						r.summary = "Проверить сообщение на запрещенный контент"
+						r.operationID = "filterChatMessage"
+						r.operationGroup = ""
+						r.pathPattern = "/social/chat/filter"
+						r.args = args
+						r.count = 0
+						return r, true
+					default:
+						return
+					}
+				}
+
+			case 'r': // Prefix: "report"
+
+				if l := len("report"); len(elem) >= l && elem[0:l] == "report" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				if len(elem) == 0 {
+					switch method {
+					case "POST":
 						r.name = ReportChatMessageOperation
 						r.summary = "Пожаловаться на сообщение"
 						r.operationID = "reportChatMessage"
 						r.operationGroup = ""
 						r.pathPattern = "/social/chat/report"
+						r.args = args
+						r.count = 0
+						return r, true
+					default:
+						return
+					}
+				}
+				switch elem[0] {
+				case 's': // Prefix: "s"
+
+					if l := len("s"); len(elem) >= l && elem[0:l] == "s" {
+						elem = elem[l:]
+					} else {
+						break
+					}
+
+					if len(elem) == 0 {
+						switch method {
+						case "GET":
+							r.name = GetChatReportsOperation
+							r.summary = "Получить список жалоб"
+							r.operationID = "getChatReports"
+							r.operationGroup = ""
+							r.pathPattern = "/social/chat/reports"
+							r.args = args
+							r.count = 0
+							return r, true
+						default:
+							return
+						}
+					}
+					switch elem[0] {
+					case '/': // Prefix: "/"
+
+						if l := len("/"); len(elem) >= l && elem[0:l] == "/" {
+							elem = elem[l:]
+						} else {
+							break
+						}
+
+						// Param: "report_id"
+						// Match until "/"
+						idx := strings.IndexByte(elem, '/')
+						if idx < 0 {
+							idx = len(elem)
+						}
+						args[0] = elem[:idx]
+						elem = elem[idx:]
+
+						if len(elem) == 0 {
+							break
+						}
+						switch elem[0] {
+						case '/': // Prefix: "/resolve"
+
+							if l := len("/resolve"); len(elem) >= l && elem[0:l] == "/resolve" {
+								elem = elem[l:]
+							} else {
+								break
+							}
+
+							if len(elem) == 0 {
+								// Leaf node.
+								switch method {
+								case "POST":
+									r.name = ResolveChatReportOperation
+									r.summary = "Разрешить жалобу"
+									r.operationID = "resolveChatReport"
+									r.operationGroup = ""
+									r.pathPattern = "/social/chat/reports/{report_id}/resolve"
+									r.args = args
+									r.count = 1
+									return r, true
+								default:
+									return
+								}
+							}
+
+						}
+
+					}
+
+				}
+
+			case 'w': // Prefix: "warnings"
+
+				if l := len("warnings"); len(elem) >= l && elem[0:l] == "warnings" {
+					elem = elem[l:]
+				} else {
+					break
+				}
+
+				if len(elem) == 0 {
+					// Leaf node.
+					switch method {
+					case "GET":
+						r.name = GetChatWarningsOperation
+						r.summary = "Получить список предупреждений"
+						r.operationID = "getChatWarnings"
+						r.operationGroup = ""
+						r.pathPattern = "/social/chat/warnings"
+						r.args = args
+						r.count = 0
+						return r, true
+					case "POST":
+						r.name = WarnChatUserOperation
+						r.summary = "Выдать предупреждение пользователю"
+						r.operationID = "warnChatUser"
+						r.operationGroup = ""
+						r.pathPattern = "/social/chat/warnings"
 						r.args = args
 						r.count = 0
 						return r, true

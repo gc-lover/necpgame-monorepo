@@ -18,6 +18,7 @@ const (
 	GetZoneObjectsOperation     OperationName = "GetZoneObjects"
 	HackObjectOperation         OperationName = "HackObject"
 	InteractWithObjectOperation OperationName = "InteractWithObject"
+	ReloadContentOperation      OperationName = "ReloadContent"
 	RemoveObjectOperation       OperationName = "RemoveObject"
 	UpdateObjectOperation       OperationName = "UpdateObject"
 )

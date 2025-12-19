@@ -6,8 +6,14 @@ package api
 type OperationName = string
 
 const (
+	AutoBanUserOperation       OperationName = "AutoBanUser"
 	BanChatUserOperation       OperationName = "BanChatUser"
+	FilterChatMessageOperation OperationName = "FilterChatMessage"
 	GetChatBansOperation       OperationName = "GetChatBans"
+	GetChatReportsOperation    OperationName = "GetChatReports"
+	GetChatWarningsOperation   OperationName = "GetChatWarnings"
 	ReportChatMessageOperation OperationName = "ReportChatMessage"
+	ResolveChatReportOperation OperationName = "ResolveChatReport"
 	RevokeChatBanOperation     OperationName = "RevokeChatBan"
+	WarnChatUserOperation      OperationName = "WarnChatUser"
 )

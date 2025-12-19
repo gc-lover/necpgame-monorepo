@@ -25,30 +25,33 @@ func NewRepository(db *pgxpool.Pool, rdb *redis.Client) *Repository {
 }
 
 // InteractiveObject represents an interactive object in the database
+// Field alignment optimized: large fields first, then smaller
 type InteractiveObject struct {
-	ID         string     `json:"id" db:"id"`
-	ObjectType string     `json:"object_type" db:"object_type"`
-	Position   Position   `json:"position" db:"position"`
-	ZoneType   string     `json:"zone_type" db:"zone_type"`
-	ZoneID     string     `json:"zone_id" db:"zone_id"`
-	Status     string     `json:"status" db:"status"`
-	Data       ObjectData `json:"data" db:"data"`
-	CreatedAt  time.Time  `json:"created_at" db:"created_at"`
-	LastUsed   *time.Time `json:"last_used,omitempty" db:"last_used"`
+	Data       ObjectData `json:"data" db:"data"`                     // 24 bytes (struct)
+	Position   Position   `json:"position" db:"position"`             // 24 bytes (struct)
+	CreatedAt  time.Time  `json:"created_at" db:"created_at"`         // 24 bytes (time.Time)
+	LastUsed   *time.Time `json:"last_used,omitempty" db:"last_used"` // 8 bytes (pointer)
+	ID         string     `json:"id" db:"id"`                         // 16 bytes (string header)
+	ObjectType string     `json:"object_type" db:"object_type"`       // 16 bytes (string header)
+	ZoneType   string     `json:"zone_type" db:"zone_type"`           // 16 bytes (string header)
+	ZoneID     string     `json:"zone_id" db:"zone_id"`               // 16 bytes (string header)
+	Status     string     `json:"status" db:"status"`                 // 16 bytes (string header)
 }
 
 // Position represents 3D coordinates
+// Field alignment optimized: float64 fields aligned to 8-byte boundaries
 type Position struct {
-	X float64 `json:"x"`
-	Y float64 `json:"y"`
-	Z float64 `json:"z"`
+	X float64 `json:"x"` // 8 bytes
+	Y float64 `json:"y"` // 8 bytes
+	Z float64 `json:"z"` // 8 bytes
 }
 
 // ObjectData contains object-specific data
+// Field alignment optimized: pointers grouped together
 type ObjectData struct {
-	Charges       *int `json:"charges,omitempty"`
-	SecurityLevel *int `json:"security_level,omitempty"`
-	RewardPool    *int `json:"reward_pool,omitempty"`
+	RewardPool    *int `json:"reward_pool,omitempty"`    // 8 bytes (pointer)
+	Charges       *int `json:"charges,omitempty"`        // 8 bytes (pointer)
+	SecurityLevel *int `json:"security_level,omitempty"` // 8 bytes (pointer)
 }
 
 // SaveObject saves an interactive object to the database

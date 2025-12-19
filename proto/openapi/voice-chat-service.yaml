@@ -1,0 +1,1914 @@
+openapi: 3.0.3
+info:
+  title: Voice Chat Service API
+  description: |
+    API для управления системой голосового чата в NECPGAME.
+    Обеспечивает голосовую коммуникацию через WebRTC с поддержкой различных типов каналов.
+  version: 1.0.0
+  contact:
+    name: Voice Chat Team
+    email: voice@necp.game
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production server
+  - url: https://staging-api.necp.game/v1
+    description: Staging server
+  - url: http://localhost:8085/v1
+    description: Local development
+
+security:
+  - BearerAuth: []
+  - ApiKeyAuth: []
+
+paths:
+  # Управление каналами
+  /social/voice/channels:
+    get:
+      summary: Получить список голосовых каналов
+      description: |
+        Возвращает список доступных голосовых каналов с фильтрацией по типу и состоянию.
+        Поддерживает пагинацию для больших списков.
+      operationId: getVoiceChannels
+      tags:
+        - Voice Channels
+      parameters:
+        - name: channelType
+          in: query
+          schema:
+            type: string
+            enum: [PARTY, GUILD, RAID, PROXIMITY]
+          description: Фильтр по типу канала
+        - name: isActive
+          in: query
+          schema:
+            type: boolean
+            default: true
+          description: Показывать только активные каналы
+        - name: playerId
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: ID игрока для фильтрации доступных каналов
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Количество элементов на страницу
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          description: Смещение для пагинации
+      responses:
+        "200":
+          description: Успешный ответ со списком каналов
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  channels:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/VoiceChannel"
+                  pagination:
+                    $ref: "#/components/schemas/PaginationInfo"
+                  total:
+                    type: integer
+                    description: Общее количество каналов
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+    post:
+      summary: Создать новый голосовой канал
+      description: |
+        Создает новый голосовой канал указанного типа.
+        Проверяет права доступа и лимиты.
+      operationId: createVoiceChannel
+      tags:
+        - Voice Channels
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - channelType
+                - name
+              properties:
+                channelType:
+                  type: string
+                  enum: [PARTY, GUILD, RAID, PROXIMITY]
+                  description: Тип создаваемого канала
+                name:
+                  type: string
+                  minLength: 1
+                  maxLength: 255
+                  description: Название канала
+                maxParticipants:
+                  type: integer
+                  minimum: 2
+                  maximum: 100
+                  description: Максимальное количество участников
+                qualityPreset:
+                  type: string
+                  enum: [HIGH, MEDIUM, LOW, ADAPTIVE]
+                  default: MEDIUM
+                  description: Пресет качества звука
+                associatedEntityId:
+                  type: string
+                  format: uuid
+                  description: ID связанной сущности (party, guild, raid)
+      responses:
+        "201":
+          description: Канал успешно создан
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VoiceChannel"
+          headers:
+            Location:
+              schema:
+                type: string
+                format: uri
+              description: URL созданного канала
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "403":
+          description: Недостаточно прав для создания канала
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Канал с таким именем уже существует
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /social/voice/channels/{channelId}:
+    get:
+      summary: Получить информацию о канале
+      description: Возвращает подробную информацию о голосовом канале
+      operationId: getVoiceChannel
+      tags:
+        - Voice Channels
+      parameters:
+        - name: channelId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID канала
+      responses:
+        "200":
+          description: Успешный ответ с информацией о канале
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VoiceChannel"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+    delete:
+      summary: Удалить голосовой канал
+      description: |
+        Удаляет голосовой канал. Доступно только владельцу или администратору.
+        Все участники будут отключены.
+      operationId: deleteVoiceChannel
+      tags:
+        - Voice Channels
+      parameters:
+        - name: channelId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID канала
+      responses:
+        "204":
+          description: Канал успешно удален
+        "403":
+          description: Недостаточно прав для удаления канала
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: Невозможно удалить канал с активными участниками
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /social/voice/channels/{channelId}/join:
+    post:
+      summary: Присоединиться к голосовому каналу
+      description: |
+        Присоединяет игрока к голосовому каналу.
+        Возвращает WebRTC токен для установления соединения.
+      operationId: joinVoiceChannel
+      tags:
+        - Voice Channels
+      parameters:
+        - name: channelId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID канала
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                position:
+                  $ref: "#/components/schemas/Vector3D"
+                  description: Позиция игрока (для proximity каналов)
+      responses:
+        "200":
+          description: Успешно присоединен к каналу
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  participant:
+                    $ref: "#/components/schemas/VoiceParticipant"
+                  webrtcToken:
+                    type: string
+                    description: WebRTC токен для соединения
+                  channel:
+                    $ref: "#/components/schemas/VoiceChannel"
+                required:
+                  - participant
+                  - webrtcToken
+                  - channel
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "403":
+          description: Доступ к каналу запрещен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: Канал полон или игрок уже в другом канале
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /social/voice/channels/{channelId}/leave:
+    post:
+      summary: Покинуть голосовой канал
+      description: Отключает игрока от голосового канала
+      operationId: leaveVoiceChannel
+      tags:
+        - Voice Channels
+      parameters:
+        - name: channelId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID канала
+      responses:
+        "204":
+          description: Успешно покинул канал
+        "404":
+          description: Канал или участник не найден
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  # WebRTC соединения
+  /social/voice/webrtc/token:
+    post:
+      summary: Получить WebRTC токен
+      description: |
+        Генерирует WebRTC токен для подключения к голосовому каналу.
+        Токен содержит информацию о канале и участнике.
+      operationId: getWebRTCToken
+      tags:
+        - WebRTC
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - channelId
+                - playerId
+              properties:
+                channelId:
+                  type: string
+                  format: uuid
+                  description: ID канала
+                playerId:
+                  type: string
+                  format: uuid
+                  description: ID игрока
+                provider:
+                  type: string
+                  enum: [AGORA, TWILIO, SELF_HOSTED]
+                  default: SELF_HOSTED
+                  description: WebRTC провайдер
+      responses:
+        "200":
+          description: WebRTC токен успешно сгенерирован
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    description: WebRTC токен
+                  provider:
+                    type: string
+                    enum: [AGORA, TWILIO, SELF_HOSTED]
+                    description: Используемый провайдер
+                  expiresAt:
+                    type: string
+                    format: date-time
+                    description: Время истечения токена
+                  channelId:
+                    type: string
+                    format: uuid
+                    description: ID канала
+                required:
+                  - token
+                  - provider
+                  - expiresAt
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "403":
+          description: Доступ к каналу запрещен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Канал не найден
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /social/voice/webrtc/connect:
+    post:
+      summary: Установить WebRTC соединение
+      description: |
+        Инициирует установление WebRTC соединения для голосового канала.
+        Возвращает параметры для сигналинга.
+      operationId: connectWebRTC
+      tags:
+        - WebRTC
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - channelId
+                - playerId
+                - offer
+              properties:
+                channelId:
+                  type: string
+                  format: uuid
+                  description: ID канала
+                playerId:
+                  type: string
+                  format: uuid
+                  description: ID игрока
+                offer:
+                  type: object
+                  description: WebRTC offer SDP
+                  additionalProperties: true
+                provider:
+                  type: string
+                  enum: [AGORA, TWILIO, SELF_HOSTED]
+                  default: SELF_HOSTED
+                  description: WebRTC провайдер
+      responses:
+        "200":
+          description: Соединение установлено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  connectionId:
+                    type: string
+                    format: uuid
+                    description: ID соединения
+                  answer:
+                    type: object
+                    description: WebRTC answer SDP
+                    additionalProperties: true
+                  iceServers:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        urls:
+                          type: array
+                          items:
+                            type: string
+                        username:
+                          type: string
+                        credential:
+                          type: string
+                      required:
+                        - urls
+                    description: ICE серверы для NAT traversal
+                required:
+                  - connectionId
+                  - answer
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "403":
+          description: Доступ запрещен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Соединение уже установлено
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /social/voice/webrtc/disconnect:
+    post:
+      summary: Разорвать WebRTC соединение
+      description: Корректно разрывает WebRTC соединение
+      operationId: disconnectWebRTC
+      tags:
+        - WebRTC
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - channelId
+                - playerId
+              properties:
+                channelId:
+                  type: string
+                  format: uuid
+                  description: ID канала
+                playerId:
+                  type: string
+                  format: uuid
+                  description: ID игрока
+      responses:
+        "204":
+          description: Соединение разорвано
+        "404":
+          description: Соединение не найдено
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  # Микшер аудио
+  /social/voice/mixer/configure:
+    post:
+      summary: Настроить аудио микшер
+      description: |
+        Настраивает параметры микширования аудио для канала.
+        Влияет на громкость, эффекты и маршрутизацию.
+      operationId: configureAudioMixer
+      tags:
+        - Audio Mixer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - channelId
+              properties:
+                channelId:
+                  type: string
+                  format: uuid
+                  description: ID канала
+                volumeSettings:
+                  type: object
+                  description: Настройки громкости
+                  additionalProperties:
+                    type: number
+                    minimum: 0.0
+                    maximum: 2.0
+                effects:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/AudioEffect"
+                  description: Аудио эффекты
+                routing:
+                  type: object
+                  description: Настройки маршрутизации
+                  additionalProperties:
+                    type: array
+                    items:
+                      type: string
+                      format: uuid
+      responses:
+        "200":
+          description: Микшер настроен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  mixerConfig:
+                    $ref: "#/components/schemas/AudioMixerConfig"
+                  appliedAt:
+                    type: string
+                    format: date-time
+                    description: Время применения настроек
+                required:
+                  - mixerConfig
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "403":
+          description: Недостаточно прав для настройки микшера
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /social/voice/mixer/status:
+    get:
+      summary: Получить статус аудио микшера
+      description: Возвращает текущий статус и настройки микшера для канала
+      operationId: getAudioMixerStatus
+      tags:
+        - Audio Mixer
+      parameters:
+        - name: channelId
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID канала
+      responses:
+        "200":
+          description: Статус микшера получен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AudioMixerStatus"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  # Управление участниками
+  /social/voice/channels/{channelId}/participants:
+    get:
+      summary: Получить список участников канала
+      description: Возвращает список всех участников голосового канала
+      operationId: getChannelParticipants
+      tags:
+        - Participants
+      parameters:
+        - name: channelId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID канала
+        - name: includeInactive
+          in: query
+          schema:
+            type: boolean
+            default: false
+          description: Включать неактивных участников
+      responses:
+        "200":
+          description: Список участников получен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  participants:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/VoiceParticipant"
+                  total:
+                    type: integer
+                    description: Общее количество участников
+                required:
+                  - participants
+                  - total
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /social/voice/participants/{participantId}/mute:
+    post:
+      summary: Заглушить участника
+      description: |
+        Заглушает участника канала. Доступно владельцу канала или администратору.
+        Участник не сможет передавать звук.
+      operationId: muteParticipant
+      tags:
+        - Participants
+      parameters:
+        - name: participantId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID участника
+      responses:
+        "200":
+          description: Участник заглушен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VoiceParticipant"
+        "403":
+          description: Недостаточно прав для заглушения участника
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: Участник уже заглушен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /social/voice/participants/{participantId}/deafen:
+    post:
+      summary: Оглохшить участника
+      description: |
+        Оглохшает участника канала. Участник не сможет слышать других,
+        но сможет передавать звук (если не заглушен).
+      operationId: deafenParticipant
+      tags:
+        - Participants
+      parameters:
+        - name: participantId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID участника
+      responses:
+        "200":
+          description: Участник оглохшен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VoiceParticipant"
+        "403":
+          description: Недостаточно прав для оглушения участника
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: Участник уже оглохшен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /social/voice/participants/{participantId}/kick:
+    post:
+      summary: Исключить участника из канала
+      description: |
+        Исключает участника из голосового канала.
+        Доступно владельцу канала или администратору.
+      operationId: kickParticipant
+      tags:
+        - Participants
+      parameters:
+        - name: participantId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID участника
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  maxLength: 255
+                  description: Причина исключения
+                banDuration:
+                  type: integer
+                  description: Длительность бана в секундах (опционально)
+      responses:
+        "204":
+          description: Участник исключен
+        "403":
+          description: Недостаточно прав для исключения участника
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  # Proximity каналы
+  /social/voice/proximity/update:
+    post:
+      summary: Обновить позицию для proximity канала
+      description: |
+        Обновляет позицию игрока в мире для расчета proximity каналов.
+        Влияет на список участников и пространственное позиционирование звука.
+      operationId: updateProximityPosition
+      tags:
+        - Proximity
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - playerId
+                - position
+              properties:
+                playerId:
+                  type: string
+                  format: uuid
+                  description: ID игрока
+                position:
+                  $ref: "#/components/schemas/Vector3D"
+                  description: Текущая позиция игрока
+                channelId:
+                  type: string
+                  format: uuid
+                  description: ID proximity канала (если игрок в нем)
+      responses:
+        "200":
+          description: Позиция обновлена
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  nearbyPlayers:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        playerId:
+                          type: string
+                          format: uuid
+                        distance:
+                          type: number
+                          format: float
+                          description: Расстояние до игрока
+                        position:
+                          $ref: "#/components/schemas/Vector3D"
+                      required:
+                        - playerId
+                        - distance
+                    description: Игроки в радиусе proximity
+                  channelUpdated:
+                    type: boolean
+                    description: Был ли обновлен proximity канал
+                required:
+                  - nearbyPlayers
+                  - channelUpdated
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          description: Игрок не найден
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /social/voice/proximity/nearby/{playerId}:
+    get:
+      summary: Получить ближайших игроков
+      description: |
+        Возвращает список игроков в радиусе proximity канала для указанного игрока.
+        Используется для предварительного расчета и оптимизации.
+      operationId: getNearbyPlayers
+      tags:
+        - Proximity
+      parameters:
+        - name: playerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID игрока
+        - name: radius
+          in: query
+          schema:
+            type: number
+            format: float
+            minimum: 1.0
+            maximum: 100.0
+            default: 20.0
+          description: Радиус поиска в метрах
+        - name: maxResults
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 20
+          description: Максимальное количество результатов
+      responses:
+        "200":
+          description: Ближайшие игроки получены
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  playerId:
+                    type: string
+                    format: uuid
+                    description: ID запрашивающего игрока
+                  radius:
+                    type: number
+                    format: float
+                    description: Используемый радиус поиска
+                  nearbyPlayers:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        playerId:
+                          type: string
+                          format: uuid
+                        distance:
+                          type: number
+                          format: float
+                        position:
+                          $ref: "#/components/schemas/Vector3D"
+                        isInVoiceRange:
+                          type: boolean
+                          description: В зоне голосового общения
+                      required:
+                        - playerId
+                        - distance
+                        - isInVoiceRange
+                    description: Список ближайших игроков
+                  total:
+                    type: integer
+                    description: Общее количество найденных игроков
+                required:
+                  - playerId
+                  - nearbyPlayers
+        "404":
+          description: Игрок не найден
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  # Управление качеством
+  /social/voice/quality/presets:
+    get:
+      summary: Получить доступные пресеты качества
+      description: Возвращает список доступных пресетов качества звука
+      operationId: getQualityPresets
+      tags:
+        - Quality
+      responses:
+        "200":
+          description: Пресеты качества получены
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  presets:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/QualityPreset"
+                    description: Доступные пресеты качества
+                required:
+                  - presets
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /social/voice/quality/set:
+    post:
+      summary: Установить качество звука
+      description: |
+        Устанавливает качество звука для канала или игрока.
+        Может быть автоматическим или ручным.
+      operationId: setAudioQuality
+      tags:
+        - Quality
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - targetType
+                - targetId
+              properties:
+                targetType:
+                  type: string
+                  enum: [channel, player]
+                  description: Тип цели (канал или игрок)
+                targetId:
+                  type: string
+                  format: uuid
+                  description: ID цели
+                qualityPreset:
+                  type: string
+                  enum: [HIGH, MEDIUM, LOW, ADAPTIVE]
+                  description: Пресет качества
+                customSettings:
+                  $ref: "#/components/schemas/AudioQualitySettings"
+                  description: Пользовательские настройки качества
+      responses:
+        "200":
+          description: Качество установлено
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  qualitySettings:
+                    $ref: "#/components/schemas/AudioQualitySettings"
+                  appliedAt:
+                    type: string
+                    format: date-time
+                    description: Время применения
+                required:
+                  - qualitySettings
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "403":
+          description: Недостаточно прав для изменения качества
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /social/voice/quality/status:
+    get:
+      summary: Получить статус качества звука
+      description: Возвращает текущий статус качества для канала или игрока
+      operationId: getAudioQualityStatus
+      tags:
+        - Quality
+      parameters:
+        - name: targetType
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [channel, player]
+          description: Тип цели
+        - name: targetId
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID цели
+      responses:
+        "200":
+          description: Статус качества получен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AudioQualityStatus"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  # События каналов
+  /social/voice/events/{channelId}:
+    get:
+      summary: Получить события канала
+      description: |
+        Возвращает последние события голосового канала.
+        Полезно для отладки и мониторинга.
+      operationId: getChannelEvents
+      tags:
+        - Events
+      parameters:
+        - name: channelId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID канала
+        - name: eventType
+          in: query
+          schema:
+            type: string
+            enum: [joined, left, muted, speaking, quality_changed]
+          description: Фильтр по типу события
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+          description: Количество событий
+        - name: since
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: События начиная с указанного времени
+      responses:
+        "200":
+          description: События канала получены
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  channelId:
+                    type: string
+                    format: uuid
+                    description: ID канала
+                  events:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/VoiceEvent"
+                    description: Список событий
+                  total:
+                    type: integer
+                    description: Общее количество событий
+                required:
+                  - channelId
+                  - events
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  # Статистика
+  /social/voice/stats/channels:
+    get:
+      summary: Статистика каналов
+      description: Возвращает статистику по голосовым каналам
+      operationId: getChannelsStats
+      tags:
+        - Statistics
+      parameters:
+        - name: timeRange
+          in: query
+          schema:
+            type: string
+            enum: [1h, 24h, 7d, 30d]
+            default: 24h
+          description: Временной диапазон статистики
+      responses:
+        "200":
+          description: Статистика каналов получена
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timeRange:
+                    type: string
+                    description: Временной диапазон
+                  totalChannels:
+                    type: integer
+                    description: Общее количество каналов
+                  activeChannels:
+                    type: integer
+                    description: Активных каналов
+                  channelsByType:
+                    type: object
+                    description: Каналы по типам
+                    additionalProperties:
+                      type: integer
+                  averageParticipantsPerChannel:
+                    type: number
+                    format: float
+                    description: Среднее количество участников на канал
+                  peakConcurrentChannels:
+                    type: integer
+                    description: Пиковое количество одновременных каналов
+                required:
+                  - timeRange
+                  - totalChannels
+                  - activeChannels
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /social/voice/stats/participants:
+    get:
+      summary: Статистика участников
+      description: Возвращает статистику по участникам голосового чата
+      operationId: getParticipantsStats
+      tags:
+        - Statistics
+      parameters:
+        - name: timeRange
+          in: query
+          schema:
+            type: string
+            enum: [1h, 24h, 7d, 30d]
+            default: 24h
+          description: Временной диапазон статистики
+      responses:
+        "200":
+          description: Статистика участников получена
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timeRange:
+                    type: string
+                    description: Временной диапазон
+                  totalParticipants:
+                    type: integer
+                    description: Общее количество участников
+                  uniqueParticipants:
+                    type: integer
+                    description: Уникальных участников
+                  averageSessionDuration:
+                    type: number
+                    format: float
+                    description: Средняя длительность сессии в минутах
+                  peakConcurrentParticipants:
+                    type: integer
+                    description: Пиковое количество одновременных участников
+                  participantsByChannelType:
+                    type: object
+                    description: Участники по типам каналов
+                    additionalProperties:
+                      type: integer
+                required:
+                  - timeRange
+                  - totalParticipants
+                  - uniqueParticipants
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /social/voice/stats/quality:
+    get:
+      summary: Статистика качества звука
+      description: Возвращает статистику качества голосового соединения
+      operationId: getQualityStats
+      tags:
+        - Statistics
+      parameters:
+        - name: timeRange
+          in: query
+          schema:
+            type: string
+            enum: [1h, 24h, 7d, 30d]
+            default: 24h
+          description: Временной диапазон статистики
+      responses:
+        "200":
+          description: Статистика качества получена
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timeRange:
+                    type: string
+                    description: Временной диапазон
+                  averageLatency:
+                    type: number
+                    format: float
+                    description: Средняя задержка в мс
+                  averagePacketLoss:
+                    type: number
+                    format: float
+                    description: Средняя потеря пакетов в процентах
+                  qualityDistribution:
+                    type: object
+                    description: Распределение по качеству
+                    properties:
+                      high:
+                        type: number
+                        format: float
+                        description: Доля соединений с высоким качеством
+                      medium:
+                        type: number
+                        format: float
+                        description: Доля соединений со средним качеством
+                      low:
+                        type: number
+                        format: float
+                        description: Доля соединений с низким качеством
+                    required:
+                      - high
+                      - medium
+                      - low
+                  reconnections:
+                    type: integer
+                    description: Количество переподключений
+                required:
+                  - timeRange
+                  - averageLatency
+                  - qualityDistribution
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+components:
+  schemas:
+    # Основные сущности
+    VoiceChannel:
+      type: object
+      description: Голосовой канал
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Уникальный ID канала
+        channelType:
+          type: string
+          enum: [PARTY, GUILD, RAID, PROXIMITY]
+          description: Тип канала
+        name:
+          type: string
+          description: Название канала
+        ownerId:
+          type: string
+          format: uuid
+          description: ID владельца канала
+        maxParticipants:
+          type: integer
+          description: Максимальное количество участников
+        currentParticipants:
+          type: integer
+          description: Текущее количество участников
+        qualityPreset:
+          type: string
+          enum: [HIGH, MEDIUM, LOW, ADAPTIVE]
+          description: Пресет качества
+        isActive:
+          type: boolean
+          description: Активен ли канал
+        associatedEntityId:
+          type: string
+          format: uuid
+          description: ID связанной сущности (party/guild/raid)
+        createdAt:
+          type: string
+          format: date-time
+          description: Время создания
+        updatedAt:
+          type: string
+          format: date-time
+          description: Время последнего обновления
+      required:
+        - id
+        - channelType
+        - name
+        - maxParticipants
+        - qualityPreset
+        - isActive
+        - createdAt
+
+    VoiceParticipant:
+      type: object
+      description: Участник голосового канала
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID участника
+        channelId:
+          type: string
+          format: uuid
+          description: ID канала
+        playerId:
+          type: string
+          format: uuid
+          description: ID игрока
+        webrtcToken:
+          type: string
+          description: WebRTC токен
+        isMuted:
+          type: boolean
+          description: Заглушен ли участник
+        isDeafened:
+          type: boolean
+          description: Оглохшен ли участник
+        isSpeaking:
+          type: boolean
+          description: Говорит ли участник
+        position:
+          $ref: "#/components/schemas/Vector3D"
+          description: Позиция (для proximity)
+        joinedAt:
+          type: string
+          format: date-time
+          description: Время присоединения
+        lastActivityAt:
+          type: string
+          format: date-time
+          description: Последняя активность
+      required:
+        - id
+        - channelId
+        - playerId
+        - isMuted
+        - isDeafened
+        - isSpeaking
+        - joinedAt
+
+    Vector3D:
+      type: object
+      description: 3D вектор позиции
+      properties:
+        x:
+          type: number
+          format: float
+          description: Координата X
+        y:
+          type: number
+          format: float
+          description: Координата Y
+        z:
+          type: number
+          format: float
+          description: Координата Z
+      required:
+        - x
+        - y
+        - z
+
+    AudioEffect:
+      type: object
+      description: Аудио эффект
+      properties:
+        type:
+          type: string
+          enum: [echo, reverb, distortion, compression]
+          description: Тип эффекта
+        parameters:
+          type: object
+          description: Параметры эффекта
+          additionalProperties:
+            type: number
+      required:
+        - type
+
+    AudioMixerConfig:
+      type: object
+      description: Конфигурация аудио микшера
+      properties:
+        channelId:
+          type: string
+          format: uuid
+          description: ID канала
+        volumeSettings:
+          type: object
+          description: Настройки громкости
+          additionalProperties:
+            type: number
+        effects:
+          type: array
+          items:
+            $ref: "#/components/schemas/AudioEffect"
+          description: Активные эффекты
+        routing:
+          type: object
+          description: Маршрутизация аудио
+          additionalProperties:
+            type: array
+            items:
+              type: string
+              format: uuid
+      required:
+        - channelId
+
+    AudioMixerStatus:
+      type: object
+      description: Статус аудио микшера
+      properties:
+        channelId:
+          type: string
+          format: uuid
+          description: ID канала
+        isActive:
+          type: boolean
+          description: Активен ли микшер
+        currentLoad:
+          type: number
+          format: float
+          description: Текущая нагрузка (0-1)
+        activeEffects:
+          type: array
+          items:
+            $ref: "#/components/schemas/AudioEffect"
+          description: Активные эффекты
+        lastUpdated:
+          type: string
+          format: date-time
+          description: Последнее обновление
+      required:
+        - channelId
+        - isActive
+        - currentLoad
+
+    QualityPreset:
+      type: object
+      description: Пресет качества звука
+      properties:
+        name:
+          type: string
+          enum: [HIGH, MEDIUM, LOW, ADAPTIVE]
+          description: Название пресета
+        sampleRate:
+          type: integer
+          description: Частота дискретизации в Гц
+        channels:
+          type: integer
+          enum: [1, 2]
+          description: Количество каналов
+        bitrate:
+          type: integer
+          description: Битрейт в кбит/с
+        description:
+          type: string
+          description: Описание пресета
+      required:
+        - name
+        - sampleRate
+        - channels
+        - bitrate
+
+    AudioQualitySettings:
+      type: object
+      description: Настройки качества звука
+      properties:
+        sampleRate:
+          type: integer
+          minimum: 8000
+          maximum: 48000
+          description: Частота дискретизации в Гц
+        channels:
+          type: integer
+          enum: [1, 2]
+          description: Количество каналов
+        bitrate:
+          type: integer
+          minimum: 16
+          maximum: 256
+          description: Битрейт в кбит/с
+        adaptive:
+          type: boolean
+          description: Адаптивное качество
+        maxLatency:
+          type: integer
+          description: Максимальная задержка в мс
+      required:
+        - sampleRate
+        - channels
+        - bitrate
+
+    AudioQualityStatus:
+      type: object
+      description: Статус качества звука
+      properties:
+        targetType:
+          type: string
+          enum: [channel, player]
+          description: Тип цели
+        targetId:
+          type: string
+          format: uuid
+          description: ID цели
+        currentSettings:
+          $ref: "#/components/schemas/AudioQualitySettings"
+          description: Текущие настройки
+        measuredLatency:
+          type: integer
+          description: Измеренная задержка в мс
+        packetLossPercent:
+          type: number
+          format: float
+          description: Потеря пакетов в процентах
+        qualityScore:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Общий score качества (0-1)
+        lastUpdated:
+          type: string
+          format: date-time
+          description: Последнее обновление
+      required:
+        - targetType
+        - targetId
+        - currentSettings
+        - qualityScore
+
+    VoiceEvent:
+      type: object
+      description: Событие голосового чата
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID события
+        channelId:
+          type: string
+          format: uuid
+          description: ID канала
+        eventType:
+          type: string
+          enum: [joined, left, muted, deafened, speaking, quality_changed]
+          description: Тип события
+        participantId:
+          type: string
+          format: uuid
+          description: ID участника
+        data:
+          type: object
+          description: Дополнительные данные события
+          additionalProperties: true
+        timestamp:
+          type: string
+          format: date-time
+          description: Время события
+      required:
+        - id
+        - channelId
+        - eventType
+        - timestamp
+
+    PaginationInfo:
+      type: object
+      description: Информация о пагинации
+      properties:
+        limit:
+          type: integer
+          description: Размер страницы
+        offset:
+          type: integer
+          description: Смещение
+        hasNext:
+          type: boolean
+          description: Есть следующая страница
+        hasPrev:
+          type: boolean
+          description: Есть предыдущая страница
+      required:
+        - limit
+        - offset
+        - hasNext
+        - hasPrev
+
+    Error:
+      type: object
+      description: Описание ошибки
+      properties:
+        code:
+          type: string
+          description: Код ошибки
+        message:
+          type: string
+          description: Сообщение об ошибке
+        details:
+          type: object
+          description: Дополнительные детали ошибки
+          additionalProperties: true
+      required:
+        - code
+        - message
+
+  # Переиспользуемые ответы
+  responses:
+    BadRequest:
+      description: Неверный запрос
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+    Unauthorized:
+      description: Не авторизован
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+    NotFound:
+      description: Ресурс не найден
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+    InternalServerError:
+      description: Внутренняя ошибка сервера
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+  # Схемы безопасности
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT токен авторизации
+
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API ключ для сервер-сервер коммуникации
+
+# WebSocket спецификации (документация)
+x-websockets:
+  voice-channel-updates:
+    url: wss://api.necp.game/v1/social/voice/channels/{channelId}
+    description: |
+      WebSocket для обновлений состояния голосового канала в реальном времени.
+      Отправляет события о присоединении/выходе участников, изменении состояния.
+    parameters:
+      channelId:
+        type: string
+        format: uuid
+        description: ID канала
+    messages:
+      participant-joined:
+        type: object
+        properties:
+          type:
+            type: string
+            enum: [participant_joined]
+          data:
+            $ref: "#/components/schemas/VoiceParticipant"
+
+      participant-left:
+        type: object
+        properties:
+          type:
+            type: string
+            enum: [participant_left]
+          data:
+            type: object
+            properties:
+              participantId:
+                type: string
+                format: uuid
+              leftAt:
+                type: string
+                format: date-time
+
+      participant-state-changed:
+        type: object
+        properties:
+          type:
+            type: string
+            enum: [participant_state_changed]
+          data:
+            type: object
+            properties:
+              participantId:
+                type: string
+                format: uuid
+              oldState:
+                type: object
+                properties:
+                  isMuted:
+                    type: boolean
+                  isDeafened:
+                    type: boolean
+                  isSpeaking:
+                    type: boolean
+              newState:
+                type: object
+                properties:
+                  isMuted:
+                    type: boolean
+                  isDeafened:
+                    type: boolean
+                  isSpeaking:
+                    type: boolean
+
+  voice-quality-updates:
+    url: wss://api.necp.game/v1/social/voice/quality/{targetId}
+    description: |
+      WebSocket для обновлений качества звука в реальном времени.
+      Отправляет изменения качества и метрики соединения.
+    parameters:
+      targetId:
+        type: string
+        format: uuid
+        description: ID цели (канал или игрок)
+    messages:
+      quality-changed:
+        type: object
+        properties:
+          type:
+            type: string
+            enum: [quality_changed]
+          data:
+            $ref: "#/components/schemas/AudioQualityStatus"
+
+# Event Bus спецификации (документация)
+x-event-bus:
+  events:
+    voice.channel.created:
+      description: Канал создан
+      payload:
+        type: object
+        properties:
+          channelId:
+            type: string
+            format: uuid
+          channelType:
+            type: string
+            enum: [PARTY, GUILD, RAID, PROXIMITY]
+          ownerId:
+            type: string
+            format: uuid
+        required:
+          - channelId
+          - channelType
+
+    voice.participant.joined:
+      description: Участник присоединился к каналу
+      payload:
+        type: object
+        properties:
+          channelId:
+            type: string
+            format: uuid
+          participantId:
+            type: string
+            format: uuid
+          playerId:
+            type: string
+            format: uuid
+        required:
+          - channelId
+          - participantId
+          - playerId
+
+    voice.participant.left:
+      description: Участник покинул канал
+      payload:
+        type: object
+        properties:
+          channelId:
+            type: string
+            format: uuid
+          participantId:
+            type: string
+            format: uuid
+          playerId:
+            type: string
+            format: uuid
+          reason:
+            type: string
+            enum: [voluntary, kicked, channel_deleted, timeout]
+        required:
+          - channelId
+          - participantId
+          - playerId
+
+    voice.participant.muted:
+      description: Участник заглушен
+      payload:
+        type: object
+        properties:
+          channelId:
+            type: string
+            format: uuid
+          participantId:
+            type: string
+            format: uuid
+          mutedBy:
+            type: string
+            format: uuid
+        required:
+          - channelId
+          - participantId
+
+    voice.quality.adapted:
+      description: Качество звука адаптировано
+      payload:
+        type: object
+        properties:
+          targetType:
+            type: string
+            enum: [channel, player]
+          targetId:
+            type: string
+            format: uuid
+          oldQuality:
+            type: string
+            enum: [HIGH, MEDIUM, LOW]
+          newQuality:
+            type: string
+            enum: [HIGH, MEDIUM, LOW]
+          reason:
+            type: string
+            enum: [network_degradation, load_balancing, manual_override]
+        required:
+          - targetType
+          - targetId
+          - oldQuality
+          - newQuality
+# Issue: #244

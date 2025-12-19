@@ -13,12 +13,30 @@ type UnimplementedHandler struct{}
 
 var _ Handler = UnimplementedHandler{}
 
+// AutoBanUser implements autoBanUser operation.
+//
+// Автоматический бан за нарушения.
+//
+// POST /social/chat/auto-ban
+func (UnimplementedHandler) AutoBanUser(ctx context.Context, req *AutoBanRequest) (r AutoBanUserRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // BanChatUser implements banChatUser operation.
 //
 // Забанить пользователя.
 //
 // POST /social/chat/ban
 func (UnimplementedHandler) BanChatUser(ctx context.Context, req *BanUserRequest) (r BanChatUserRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// FilterChatMessage implements filterChatMessage operation.
+//
+// Проверить сообщение на запрещенный контент.
+//
+// POST /social/chat/filter
+func (UnimplementedHandler) FilterChatMessage(ctx context.Context, req *FilterMessageRequest) (r FilterChatMessageRes, _ error) {
 	return r, ht.ErrNotImplemented
 }
 
@@ -31,6 +49,24 @@ func (UnimplementedHandler) GetChatBans(ctx context.Context, params GetChatBansP
 	return r, ht.ErrNotImplemented
 }
 
+// GetChatReports implements getChatReports operation.
+//
+// Получить список жалоб.
+//
+// GET /social/chat/reports
+func (UnimplementedHandler) GetChatReports(ctx context.Context, params GetChatReportsParams) (r GetChatReportsRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// GetChatWarnings implements getChatWarnings operation.
+//
+// Получить список предупреждений.
+//
+// GET /social/chat/warnings
+func (UnimplementedHandler) GetChatWarnings(ctx context.Context, params GetChatWarningsParams) (r GetChatWarningsRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // ReportChatMessage implements reportChatMessage operation.
 //
 // Пожаловаться на сообщение.
@@ -40,11 +76,29 @@ func (UnimplementedHandler) ReportChatMessage(ctx context.Context, req *ReportMe
 	return r, ht.ErrNotImplemented
 }
 
+// ResolveChatReport implements resolveChatReport operation.
+//
+// Разрешить жалобу.
+//
+// POST /social/chat/reports/{report_id}/resolve
+func (UnimplementedHandler) ResolveChatReport(ctx context.Context, req *ResolveReportRequest, params ResolveChatReportParams) (r ResolveChatReportRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // RevokeChatBan implements revokeChatBan operation.
 //
 // Отменить бан.
 //
 // DELETE /social/chat/bans/{ban_id}
 func (UnimplementedHandler) RevokeChatBan(ctx context.Context, req *RevokeBanRequest, params RevokeChatBanParams) (r RevokeChatBanRes, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
+// WarnChatUser implements warnChatUser operation.
+//
+// Выдать предупреждение пользователю.
+//
+// POST /social/chat/warnings
+func (UnimplementedHandler) WarnChatUser(ctx context.Context, req *WarnUserRequest) (r WarnChatUserRes, _ error) {
 	return r, ht.ErrNotImplemented
 }

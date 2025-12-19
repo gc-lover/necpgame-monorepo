@@ -1,0 +1,798 @@
+openapi: 3.0.3
+info:
+  title: Chat Moderation Service API
+  description: API for chat moderation in NECPGAME MMOFPS
+  version: 1.0.0
+  contact:
+    name: Backend Team
+    email: backend@necpgame.com
+
+servers:
+  - url: http://localhost:8080
+    description: Development server
+  - url: https://api.necpgame.com
+    description: Production server
+
+security:
+  - BearerAuth: []
+
+paths:
+  # Moderation Rules Management
+  /api/v1/moderation/rules:
+    get:
+      summary: Get moderation rules
+      description: Retrieve all active moderation rules
+      operationId: getModerationRules
+      tags: [Moderation Rules]
+      parameters:
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [word_filter, spam_detection, toxicity_analysis]
+          description: Filter by rule type
+        - name: active
+          in: query
+          schema:
+            type: boolean
+            default: true
+          description: Filter by active status
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+          description: Maximum number of rules to return
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          description: Number of rules to skip
+      responses:
+        '200':
+          description: List of moderation rules
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  rules:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ModerationRule'
+                  total:
+                    type: integer
+                    description: Total number of rules
+                  limit:
+                    type: integer
+                  offset:
+                    type: integer
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      summary: Create moderation rule
+      description: Create a new moderation rule
+      operationId: createModerationRule
+      tags: [Moderation Rules]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateModerationRuleRequest'
+      responses:
+        '201':
+          description: Moderation rule created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModerationRule'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/moderation/rules/{rule_id}:
+    get:
+      summary: Get moderation rule by ID
+      description: Retrieve a specific moderation rule
+      operationId: getModerationRule
+      tags: [Moderation Rules]
+      parameters:
+        - name: rule_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Rule ID
+      responses:
+        '200':
+          description: Moderation rule details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModerationRule'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    put:
+      summary: Update moderation rule
+      description: Update an existing moderation rule
+      operationId: updateModerationRule
+      tags: [Moderation Rules]
+      parameters:
+        - name: rule_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Rule ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateModerationRuleRequest'
+      responses:
+        '200':
+          description: Moderation rule updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModerationRule'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    delete:
+      summary: Delete moderation rule
+      description: Delete a moderation rule
+      operationId: deleteModerationRule
+      tags: [Moderation Rules]
+      parameters:
+        - name: rule_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Rule ID
+      responses:
+        '204':
+          description: Moderation rule deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # Violations Management
+  /api/v1/moderation/violations:
+    get:
+      summary: Get moderation violations
+      description: Retrieve moderation violations with filtering
+      operationId: getModerationViolations
+      tags: [Violations]
+      parameters:
+        - name: player_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by player ID
+        - name: rule_type
+          in: query
+          schema:
+            type: string
+            enum: [word_filter, spam_detection, toxicity_analysis]
+          description: Filter by violation type
+        - name: severity
+          in: query
+          schema:
+            type: string
+            enum: [low, medium, high, critical]
+          description: Filter by severity
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, reviewed, resolved]
+            default: pending
+          description: Filter by status
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: List of moderation violations
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  violations:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ModerationViolation'
+                  total:
+                    type: integer
+                  limit:
+                    type: integer
+                  offset:
+                    type: integer
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/moderation/violations/{violation_id}:
+    get:
+      summary: Get violation details
+      description: Retrieve detailed information about a violation
+      operationId: getModerationViolation
+      tags: [Violations]
+      parameters:
+        - name: violation_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Violation ID
+      responses:
+        '200':
+          description: Violation details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModerationViolation'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    patch:
+      summary: Update violation status
+      description: Update the status of a moderation violation
+      operationId: updateViolationStatus
+      tags: [Violations]
+      parameters:
+        - name: violation_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Violation ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum: [pending, reviewed, resolved]
+                reviewed_by:
+                  type: string
+                  format: uuid
+                  description: Moderator ID who reviewed the violation
+                review_notes:
+                  type: string
+                  maxLength: 1000
+                  description: Review notes
+              required:
+                - status
+      responses:
+        '200':
+          description: Violation status updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModerationViolation'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # Actions Management
+  /api/v1/moderation/actions/{violation_id}:
+    post:
+      summary: Apply moderation action
+      description: Apply a moderation action for a violation
+      operationId: applyModerationAction
+      tags: [Actions]
+      parameters:
+        - name: violation_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Violation ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApplyModerationActionRequest'
+      responses:
+        '201':
+          description: Moderation action applied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModerationAction'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # Moderation Logs
+  /api/v1/moderation/logs:
+    get:
+      summary: Get moderation logs
+      description: Retrieve moderation action logs for auditing
+      operationId: getModerationLogs
+      tags: [Logs]
+      parameters:
+        - name: player_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by player ID
+        - name: moderator_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by moderator ID
+        - name: action_type
+          in: query
+          schema:
+            type: string
+            enum: [warning, mute, ban, unban]
+          description: Filter by action type
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Start date for filtering
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: End date for filtering
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Moderation logs
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  logs:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ModerationLog'
+                  total:
+                    type: integer
+                  limit:
+                    type: integer
+                  offset:
+                    type: integer
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # Message Moderation Check
+  /api/v1/moderation/check-message:
+    post:
+      summary: Check message for violations
+      description: Check if a chat message violates moderation rules (hot path - P99 <50ms)
+      operationId: checkMessage
+      tags: [Moderation]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CheckMessageRequest'
+      responses:
+        '200':
+          description: Message check result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckMessageResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    # Core Models
+    ModerationRule:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Rule unique identifier
+        name:
+          type: string
+          maxLength: 100
+          description: Human-readable rule name
+        type:
+          type: string
+          enum: [word_filter, spam_detection, toxicity_analysis]
+          description: Type of moderation rule
+        pattern:
+          type: string
+          maxLength: 1000
+          description: Pattern to match (regex for spam, words for filter)
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+          description: Severity level
+        action:
+          type: string
+          enum: [warn, mute, ban]
+          description: Automatic action to take
+        active:
+          type: boolean
+          default: true
+          description: Whether rule is active
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - type
+        - severity
+        - action
+        - active
+
+    ModerationViolation:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+          description: Player who committed violation
+        rule_id:
+          type: string
+          format: uuid
+          description: Rule that was violated
+        rule_type:
+          type: string
+          enum: [word_filter, spam_detection, toxicity_analysis]
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+        message_content:
+          type: string
+          maxLength: 1000
+          description: Original message content
+        violation_details:
+          type: object
+          description: Additional violation details
+        status:
+          type: string
+          enum: [pending, reviewed, resolved]
+          default: pending
+        reviewed_by:
+          type: string
+          format: uuid
+          nullable: true
+          description: Moderator who reviewed
+        review_notes:
+          type: string
+          maxLength: 1000
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required:
+        - id
+        - player_id
+        - rule_id
+        - rule_type
+        - severity
+        - status
+
+    ModerationAction:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        violation_id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        action_type:
+          type: string
+          enum: [warning, mute, ban, unban]
+        duration:
+          type: integer
+          nullable: true
+          description: Duration in seconds (null for permanent)
+        reason:
+          type: string
+          maxLength: 500
+        moderator_id:
+          type: string
+          format: uuid
+          description: Moderator who applied action
+        created_at:
+          type: string
+          format: date-time
+      required:
+        - id
+        - violation_id
+        - player_id
+        - action_type
+        - reason
+        - moderator_id
+
+    ModerationLog:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        action_type:
+          type: string
+          enum: [warning, mute, ban, unban]
+        rule_type:
+          type: string
+          enum: [word_filter, spam_detection, toxicity_analysis]
+        moderator_id:
+          type: string
+          format: uuid
+        details:
+          type: object
+          description: Additional action details
+        created_at:
+          type: string
+          format: date-time
+      required:
+        - id
+        - player_id
+        - action_type
+        - rule_type
+        - moderator_id
+
+    # Request/Response Models
+    CreateModerationRuleRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        type:
+          type: string
+          enum: [word_filter, spam_detection, toxicity_analysis]
+        pattern:
+          type: string
+          maxLength: 1000
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+        action:
+          type: string
+          enum: [warn, mute, ban]
+      required:
+        - name
+        - type
+        - severity
+        - action
+
+    UpdateModerationRuleRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        pattern:
+          type: string
+          maxLength: 1000
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+        action:
+          type: string
+          enum: [warn, mute, ban]
+        active:
+          type: boolean
+
+    ApplyModerationActionRequest:
+      type: object
+      properties:
+        action_type:
+          type: string
+          enum: [warning, mute, ban, unban]
+        duration:
+          type: integer
+          nullable: true
+          minimum: 60
+          maximum: 31536000  # 1 year
+          description: Duration in seconds
+        reason:
+          type: string
+          maxLength: 500
+        moderator_id:
+          type: string
+          format: uuid
+      required:
+        - action_type
+        - reason
+        - moderator_id
+
+    CheckMessageRequest:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        channel_id:
+          type: string
+          format: uuid
+        message:
+          type: string
+          maxLength: 1000
+        metadata:
+          type: object
+          description: Additional message metadata
+      required:
+        - player_id
+        - message
+
+    CheckMessageResponse:
+      type: object
+      properties:
+        allowed:
+          type: boolean
+          description: Whether message is allowed
+        violations:
+          type: array
+          items:
+            type: object
+            properties:
+              rule_id:
+                type: string
+                format: uuid
+              rule_type:
+                type: string
+                enum: [word_filter, spam_detection, toxicity_analysis]
+              severity:
+                type: string
+                enum: [low, medium, high, critical]
+              description:
+                type: string
+        action_required:
+          type: boolean
+          description: Whether moderator action is required
+        processing_time_ms:
+          type: number
+          description: Time taken to process message
+      required:
+        - allowed
+        - violations
+        - action_required
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "Invalid request parameters"
+              code:
+                type: string
+                example: "VALIDATION_ERROR"
+              details:
+                type: object
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "Resource not found"
+              code:
+                type: string
+                example: "NOT_FOUND"
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "Internal server error"
+              code:
+                type: string
+                example: "INTERNAL_ERROR"
+              request_id:
+                type: string
+                example: "req-12345"

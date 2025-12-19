@@ -19,12 +19,40 @@ Database Engineer проектирует схемы БД, создает Liquiba
 
 ## Область ответственности
 
-- Проектирование детальных схем БД
-- Liquibase миграции в `infrastructure/liquibase/`
-- Оптимизация запросов/индексов
-- Репликация, партиционирование
-- Мониторинг производительности
-- **РЕФАКТОРИНГ existing таблиц** (column order, indexes, partitioning)
+### Data Modeling & Schema Design
+- Entity-relationship modeling (3NF minimum)
+- Proper PostgreSQL data types and constraints
+- Foreign key relationships and referential integrity
+- JSONB fields for flexible game data (inventory, settings)
+- Table partitioning strategies for large datasets
+
+### Indexing & Performance Tuning
+- Primary keys and unique constraints
+- B-tree indexes for equality/range queries
+- GIN indexes for JSONB full-text search
+- Covering indexes for hot query patterns
+- Partial indexes for filtered queries
+
+### Migration Management
+- Liquibase changelog structure and versioning
+- Forward/backward migration scripts
+- Data transformation during schema changes
+- Rollback procedures for all migrations
+- Migration testing in staging environments
+
+### Query Optimization
+- EXPLAIN ANALYZE for query performance analysis
+- Query rewriting for better execution plans
+- Index usage statistics and maintenance
+- Connection pooling configuration
+- Prepared statement optimization
+
+### Scalability & High Availability
+- Read replica configuration for read-heavy workloads
+- Table partitioning for time-series data
+- Archive/purge strategies for old data
+- Backup and recovery procedures
+- Monitoring and alerting setup
 
 ## Статус в Project
 
@@ -310,29 +338,122 @@ Issue: #{number}
 - ERD диаграммы (Mermaid)
 - **Issue в начале:** `-- Issue: #123` (SQL) или `# Issue: #123` (YAML)
 
+## MMOFPS Database Scalability Requirements
+
+**КРИТИЧНО для игровых нагрузок:**
+
+### Performance Targets
+- **Hot Queries:** < 5ms P95 (player state, inventory, matchmaking)
+- **Bulk Operations:** < 100ms (guild updates, trading, events)
+- **Concurrent Users:** 10,000+ simultaneous players
+- **Data Volume:** 100M+ player records, 1B+ game events
+
+### Scalability Patterns
+- **Partitioning:** Time-series for logs/events, hash for players
+- **Indexing Strategy:** Covering indexes for 95%+ queries
+- **Connection Pooling:** 25-50 connections per service
+- **Read Replicas:** 3-5 replicas for read-heavy workloads
+- **Caching Layer:** Redis for session/player state
+
+### Game-Specific Optimizations
+- **Player Data:** Sharding by region/server cluster
+- **Matchmaking:** Fast lookups with composite indexes
+- **Inventory:** JSONB with GIN indexes for item queries
+- **Leaderboards:** Materialized views with refresh strategies
+- **Audit Logs:** Partitioned tables with retention policies
+
+### Monitoring & Alerting
+- Query performance monitoring (> 100ms queries)
+- Index usage statistics (> 90% index hit rate)
+- Table growth tracking (auto-partitioning triggers)
+- Connection pool utilization (< 80% utilization)
+
+---
+
+## Handover Procedures to Backend Agent
+
+### Quality Gates (ОБЯЗАТЕЛЬНО перед передачей)
+
+**Schema Validation:**
+- Schema design reviewed and approved
+- Liquibase migrations validated (dry-run)
+- Performance benchmarks meet requirements
+- Security policies implemented (RBAC, encryption)
+
+**Migration Testing:**
+- Forward/backward migrations tested
+- Rollback procedures documented
+- Data integrity preserved
+- No breaking changes for existing data
+
+### Handover Matrix
+
+| Task Type | Next Agent | Status | Requirements |
+|-----------|------------|--------|--------------|
+| **Schema Design** (new tables) | `API` | `Todo` | Schema ready for API design |
+| **Content Migration** (quest/NPC data) | `Backend` | `Todo` | Migrations applied, tables populated |
+| **Performance Optimization** | `Backend` | `Todo` | Indexes created, queries optimized |
+| **System Migration** (core tables) | `Backend` | `Todo` | Schema deployed, ready for integration |
+
+### Handover Comment Templates
+
+**Schema Design Handover (to API Designer):**
+```markdown
+OK Database schema ready. Handed off to API Designer
+
+**Schema Details:**
+- Tables: {count} created/optimized
+- Indexes: {count} covering indexes added
+- Performance: Expected query <5ms P95
+- Scalability: Partitioned for {expected_rows} rows
+
+**For API Designer:**
+- Use consistent field ordering
+- Hot endpoints marked for optimization
+- Pagination patterns implemented
+
+Issue: #123
+```
+
+**Content Migration Handover (to Backend):**
+```markdown
+OK Database migrations applied. Handed off to Backend
+
+**Content Imported:**
+- Quests: {count} records in gameplay.quest_definitions
+- NPCs: {count} records in narrative.npc_definitions
+- Dialogues: {count} records in narrative.dialogue_nodes
+
+**Validation:**
+- [x] Foreign keys valid
+- [x] Data integrity verified
+- [x] Performance tested
+- [x] Rollback procedures documented
+
+**API Ready:** GET /api/v1/gameplay/quests/{id}
+**Testing:** Ready for backend integration
+
+Issue: #123
+```
+
+### Blocking Conditions
+
+**НЕ передавай если:**
+- ❌ Schema not reviewed/approved
+- ❌ Performance targets not met
+- ❌ Migrations not tested (forward/backward)
+- ❌ Security policies not implemented
+- ❌ No rollback procedures documented
+
+---
+
 ## Переход к следующему
 
 1. `/database-validate-result #123`
 2. **Определи тип задачи:**
    - **Системная задача** (создание схем) → Status `Todo`, Agent `API Designer`
-   - **Контентная задача** (применение миграций данных) → Status `Todo`, Agent `QA`
+   - **Контентная задача** (применение миграций данных) → Status `Todo`, Agent `Backend`
 3. Комментарий с performance hints
-
-```markdown
-OK Database ready. Handed off to API Designer
-
-**Performance:**
-- Table: players (1M rows expected)
-- Columns ordered large → small
-- Covering indexes for hot queries
-- Expected query <5ms P95
-
-**For API Designer:**
-- Use same field order in OpenAPI
-- Marked hot endpoints
-
-Issue: #123
-```
 
 ## Стиль работы
 

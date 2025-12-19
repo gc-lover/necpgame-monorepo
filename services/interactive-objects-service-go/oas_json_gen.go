@@ -1496,19 +1496,12 @@ func (s *CryoChamber) encodeFields(e *jx.Encoder) {
 			s.ChamberStatus.Encode(e)
 		}
 	}
-	{
-		if s.AwakeningDifficulty.Set {
-			e.FieldStart("awakening_difficulty")
-			s.AwakeningDifficulty.Encode(e)
-		}
-	}
 }
 
-var jsonFieldsNameOfCryoChamber = [4]string{
+var jsonFieldsNameOfCryoChamber = [3]string{
 	0: "object_id",
 	1: "subject_type",
 	2: "chamber_status",
-	3: "awakening_difficulty",
 }
 
 // Decode decodes CryoChamber from json.
@@ -1548,16 +1541,6 @@ func (s *CryoChamber) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"chamber_status\"")
-			}
-		case "awakening_difficulty":
-			if err := func() error {
-				s.AwakeningDifficulty.Reset()
-				if err := s.AwakeningDifficulty.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"awakening_difficulty\"")
 			}
 		default:
 			return d.Skip()
@@ -5147,6 +5130,28 @@ func (s *ObjectType) Decode(d *jx.Decoder) error {
 		*s = ObjectTypeChemicalSynthesizer
 	case ObjectTypeCryoChamber:
 		*s = ObjectTypeCryoChamber
+	case ObjectTypeServerRack:
+		*s = ObjectTypeServerRack
+	case ObjectTypeBiometricLock:
+		*s = ObjectTypeBiometricLock
+	case ObjectTypeCorporateSafe:
+		*s = ObjectTypeCorporateSafe
+	case ObjectTypeConferenceSystem:
+		*s = ObjectTypeConferenceSystem
+	case ObjectTypeIllegalLab:
+		*s = ObjectTypeIllegalLab
+	case ObjectTypeSmugglingHatch:
+		*s = ObjectTypeSmugglingHatch
+	case ObjectTypeSecretTunnel:
+		*s = ObjectTypeSecretTunnel
+	case ObjectTypeFactionBlockpost:
+		*s = ObjectTypeFactionBlockpost
+	case ObjectTypeCommRelay:
+		*s = ObjectTypeCommRelay
+	case ObjectTypeMedicalStation:
+		*s = ObjectTypeMedicalStation
+	case ObjectTypeLogisticsContainer:
+		*s = ObjectTypeLogisticsContainer
 	default:
 		*s = ObjectType(v)
 	}
@@ -6746,6 +6751,306 @@ func (s *Position) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *Position) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *ReloadContentRequest) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *ReloadContentRequest) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("content_id")
+		e.Str(s.ContentID)
+	}
+	{
+		e.FieldStart("yaml_content")
+		s.YamlContent.Encode(e)
+	}
+}
+
+var jsonFieldsNameOfReloadContentRequest = [2]string{
+	0: "content_id",
+	1: "yaml_content",
+}
+
+// Decode decodes ReloadContentRequest from json.
+func (s *ReloadContentRequest) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode ReloadContentRequest to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "content_id":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := d.Str()
+				s.ContentID = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"content_id\"")
+			}
+		case "yaml_content":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				if err := s.YamlContent.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"yaml_content\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode ReloadContentRequest")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00000011,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfReloadContentRequest) {
+					name = jsonFieldsNameOfReloadContentRequest[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *ReloadContentRequest) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *ReloadContentRequest) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s ReloadContentRequestYamlContent) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields implements json.Marshaler.
+func (s ReloadContentRequestYamlContent) encodeFields(e *jx.Encoder) {
+	for k, elem := range s {
+		e.FieldStart(k)
+
+		if len(elem) != 0 {
+			e.Raw(elem)
+		}
+	}
+}
+
+// Decode decodes ReloadContentRequestYamlContent from json.
+func (s *ReloadContentRequestYamlContent) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode ReloadContentRequestYamlContent to nil")
+	}
+	m := s.init()
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		var elem jx.Raw
+		if err := func() error {
+			v, err := d.RawAppend(nil)
+			elem = jx.Raw(v)
+			if err != nil {
+				return err
+			}
+			return nil
+		}(); err != nil {
+			return errors.Wrapf(err, "decode field %q", k)
+		}
+		m[string(k)] = elem
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode ReloadContentRequestYamlContent")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s ReloadContentRequestYamlContent) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *ReloadContentRequestYamlContent) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *ReloadContentResponse) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *ReloadContentResponse) encodeFields(e *jx.Encoder) {
+	{
+		if s.ContentID.Set {
+			e.FieldStart("content_id")
+			s.ContentID.Encode(e)
+		}
+	}
+	{
+		if s.Message.Set {
+			e.FieldStart("message")
+			s.Message.Encode(e)
+		}
+	}
+	{
+		if s.ImportedAt.Set {
+			e.FieldStart("imported_at")
+			s.ImportedAt.Encode(e, json.EncodeDateTime)
+		}
+	}
+	{
+		if s.ObjectsCount.Set {
+			e.FieldStart("objects_count")
+			s.ObjectsCount.Encode(e)
+		}
+	}
+	{
+		if s.AwakeningDifficulty.Set {
+			e.FieldStart("awakening_difficulty")
+			s.AwakeningDifficulty.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfReloadContentResponse = [5]string{
+	0: "content_id",
+	1: "message",
+	2: "imported_at",
+	3: "objects_count",
+	4: "awakening_difficulty",
+}
+
+// Decode decodes ReloadContentResponse from json.
+func (s *ReloadContentResponse) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode ReloadContentResponse to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "content_id":
+			if err := func() error {
+				s.ContentID.Reset()
+				if err := s.ContentID.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"content_id\"")
+			}
+		case "message":
+			if err := func() error {
+				s.Message.Reset()
+				if err := s.Message.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"message\"")
+			}
+		case "imported_at":
+			if err := func() error {
+				s.ImportedAt.Reset()
+				if err := s.ImportedAt.Decode(d, json.DecodeDateTime); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"imported_at\"")
+			}
+		case "objects_count":
+			if err := func() error {
+				s.ObjectsCount.Reset()
+				if err := s.ObjectsCount.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"objects_count\"")
+			}
+		case "awakening_difficulty":
+			if err := func() error {
+				s.AwakeningDifficulty.Reset()
+				if err := s.AwakeningDifficulty.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"awakening_difficulty\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode ReloadContentResponse")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *ReloadContentResponse) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *ReloadContentResponse) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
