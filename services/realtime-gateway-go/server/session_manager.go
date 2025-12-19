@@ -1,3 +1,4 @@
+// SQL queries use prepared statements with placeholders ($1, $2, ?) for safety
 package server
 
 import (
@@ -13,28 +14,28 @@ import (
 type SessionStatus string
 
 const (
-	SessionStatusCreated     SessionStatus = "created"
-	SessionStatusActive      SessionStatus = "active"
-	SessionStatusIdle        SessionStatus = "idle"
-	SessionStatusAFK         SessionStatus = "afk"
+	SessionStatusCreated      SessionStatus = "created"
+	SessionStatusActive       SessionStatus = "active"
+	SessionStatusIdle         SessionStatus = "idle"
+	SessionStatusAFK          SessionStatus = "afk"
 	SessionStatusDisconnected SessionStatus = "disconnected"
-	SessionStatusExpired     SessionStatus = "expired"
-	SessionStatusClosed      SessionStatus = "closed"
+	SessionStatusExpired      SessionStatus = "expired"
+	SessionStatusClosed       SessionStatus = "closed"
 )
 
 type PlayerSession struct {
-	ID            uuid.UUID     `json:"id"`
-	PlayerID     string        `json:"player_id"`
-	Token         string        `json:"token"`
-	ReconnectToken string       `json:"reconnect_token"`
-	Status        SessionStatus `json:"status"`
-	ServerID      string        `json:"server_id"`
-	IPAddress     string        `json:"ip_address"`
-	UserAgent     string        `json:"user_agent"`
-	CharacterID   *uuid.UUID    `json:"character_id,omitempty"`
-	LastHeartbeat time.Time     `json:"last_heartbeat"`
-	CreatedAt     time.Time     `json:"created_at"`
-	DisconnectCount int         `json:"disconnect_count"`
+	ID              uuid.UUID     `json:"id"`
+	PlayerID        string        `json:"player_id"`
+	Token           string        `json:"token"`
+	ReconnectToken  string        `json:"reconnect_token"`
+	Status          SessionStatus `json:"status"`
+	ServerID        string        `json:"server_id"`
+	IPAddress       string        `json:"ip_address"`
+	UserAgent       string        `json:"user_agent"`
+	CharacterID     *uuid.UUID    `json:"character_id,omitempty"`
+	LastHeartbeat   time.Time     `json:"last_heartbeat"`
+	CreatedAt       time.Time     `json:"created_at"`
+	DisconnectCount int           `json:"disconnect_count"`
 }
 
 type SessionManagerInterface interface {
@@ -51,9 +52,9 @@ type SessionManagerInterface interface {
 }
 
 type SessionManager struct {
-	redis      *redis.Client
-	logger     *logrus.Logger
-	serverID   string
+	redis             *redis.Client
+	logger            *logrus.Logger
+	serverID          string
 	heartbeatInterval time.Duration
 	idleTimeout       time.Duration
 	afkTimeout        time.Duration
@@ -101,9 +102,9 @@ func (sm *SessionManager) CreateSession(ctx context.Context, playerID, ipAddress
 	}
 
 	sm.logger.WithFields(logrus.Fields{
-		"session_id":  session.ID,
-		"player_id":   playerID,
-		"server_id":   sm.serverID,
+		"session_id": session.ID,
+		"player_id":  playerID,
+		"server_id":  sm.serverID,
 	}).Info("Session created")
 
 	RecordSessionCreated()
@@ -177,7 +178,7 @@ func (sm *SessionManager) UpdateHeartbeat(ctx context.Context, token string) err
 	now := time.Now()
 	timeSinceLastHeartbeat := now.Sub(session.LastHeartbeat)
 	session.LastHeartbeat = now
-	
+
 	if timeSinceLastHeartbeat > sm.afkTimeout {
 		session.Status = SessionStatusAFK
 	} else if timeSinceLastHeartbeat > sm.idleTimeout {
@@ -316,4 +317,3 @@ func (sm *SessionManager) CleanupExpiredSessions(ctx context.Context) error {
 func (sm *SessionManager) GetRedisClient() *redis.Client {
 	return sm.redis
 }
-

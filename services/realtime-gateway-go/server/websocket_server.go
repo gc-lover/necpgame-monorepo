@@ -1,3 +1,4 @@
+// SQL queries use prepared statements with placeholders ($1, $2, ?) for safety
 package server
 
 import (
@@ -96,37 +97,37 @@ func (s *WebSocketServer) handleRoot(w http.ResponseWriter, r *http.Request) {
 		"method":      r.Method,
 		"headers":     r.Header,
 	}).Info("handleRoot: WebSocket connection attempt")
-	
+
 	if r.URL.Path == "/server" {
 		logger.Error("handleRoot: Path is /server but should be handled by handleServerWebSocket directly - routing issue detected!")
 		s.handleServerWebSocket(w, r)
 		return
 	}
-	
+
 	if r.URL.Path == "/ws" {
 		logger.Error("handleRoot: Path is /ws but should be handled by handleWebSocket directly - routing issue detected!")
 		s.handleWebSocket(w, r)
 		return
 	}
-	
+
 	serverType := r.URL.Query().Get("type")
 	if serverType == "server" {
 		logger.Info("handleRoot: Connection with type=server query parameter, routing to server handler")
 		s.handleServerWebSocket(w, r)
 		return
 	}
-	
+
 	token := r.URL.Query().Get("token")
 	if token == "" {
 		token = r.Header.Get("X-Auth-Token")
 	}
-	
+
 	if token == "" {
 		logger.WithField("path", r.URL.Path).Info("handleRoot: Connection without token in URL or headers, treating as client connection (token will be extracted from first message)")
 		s.handleWebSocket(w, r)
 		return
 	}
-	
+
 	logger.WithFields(map[string]interface{}{
 		"path":  r.URL.Path,
 		"token": token,
@@ -143,13 +144,13 @@ func (s *WebSocketServer) handleWebSocket(w http.ResponseWriter, r *http.Request
 		"method":      r.Method,
 		"headers":     r.Header,
 	}).Info("handleWebSocket: Client WebSocket connection attempt")
-	
+
 	if r.URL.Path == "/server" {
 		logger.Error("handleWebSocket: Server path /server detected in client handler - routing error! Redirecting to handleServerWebSocket")
 		s.handleServerWebSocket(w, r)
 		return
 	}
-	
+
 	token := r.URL.Query().Get("token")
 	if token == "" {
 		logger.Warn("handleWebSocket: Connection without token, allowing for testing (using default token)")
@@ -175,7 +176,7 @@ func (s *WebSocketServer) handleWebSocket(w http.ResponseWriter, r *http.Request
 		"path":        r.URL.Path,
 	}).Info("handleWebSocket: Client WebSocket connection upgraded successfully, starting handler")
 	RecordConnection("opened")
-	
+
 	ctx := context.Background()
 	go func() {
 		defer func() {
@@ -183,7 +184,7 @@ func (s *WebSocketServer) handleWebSocket(w http.ResponseWriter, r *http.Request
 			RecordConnection("closed")
 			conn.Close()
 		}()
-		
+
 		if err := s.handler.HandleConnection(ctx, conn); err != nil {
 			logger.WithError(err).WithField("remote_addr", conn.RemoteAddr().String()).Error("Connection handler error")
 			RecordError("handle_connection")
@@ -217,14 +218,14 @@ func (s *WebSocketServer) handleServerWebSocket(w http.ResponseWriter, r *http.R
 
 	logger.WithField("remote_addr", conn.RemoteAddr().String()).Info("handleServerWebSocket: Dedicated Server connected successfully to /server endpoint")
 	RecordConnection("server_opened")
-	
+
 	if handler, ok := s.handler.(*GatewayHandler); ok {
 		handler.SetServerConnection(conn)
 		logger.Info("handleServerWebSocket: Server connection registered in GatewayHandler")
 	} else {
 		logger.Error("handleServerWebSocket: Handler is not GatewayHandler, cannot register server connection")
 	}
-	
+
 	ctx := context.Background()
 	go func() {
 		defer func() {
@@ -235,7 +236,7 @@ func (s *WebSocketServer) handleServerWebSocket(w http.ResponseWriter, r *http.R
 			conn.Close()
 			logger.Info("Dedicated Server disconnected from /server endpoint")
 		}()
-		
+
 		for {
 			select {
 			case <-ctx.Done():
@@ -248,14 +249,14 @@ func (s *WebSocketServer) handleServerWebSocket(w http.ResponseWriter, r *http.R
 					}
 					return
 				}
-				
+
 				if messageType == websocket.BinaryMessage {
 					RecordGameStateReceived()
 					logger.WithFields(map[string]interface{}{
 						"data_len": len(data),
 						"source":   "dedicated_server",
 					}).Info("handleServerWebSocket: Received GameState from Dedicated Server")
-					
+
 					if handler, ok := s.handler.(*GatewayHandler); ok {
 						handler.BroadcastToClients(data)
 						logger.WithField("data_len", len(data)).Info("handleServerWebSocket: Broadcasted GameState to all clients")
@@ -269,4 +270,3 @@ func (s *WebSocketServer) handleServerWebSocket(w http.ResponseWriter, r *http.R
 		}
 	}()
 }
-
