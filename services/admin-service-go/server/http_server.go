@@ -149,6 +149,7 @@ func (s *HTTPServer) Start(ctx context.Context) error {
 
 	errChan := make(chan error, 1)
 	go func() {
+			defer close(errChan)
 		if err := s.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			errChan <- err
 		}
@@ -168,3 +169,4 @@ func (s *HTTPServer) Shutdown(ctx context.Context) error {
 	}
 	return nil
 }
+

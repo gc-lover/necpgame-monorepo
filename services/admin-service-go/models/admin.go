@@ -1,3 +1,4 @@
+// SQL queries use prepared statements with placeholders ($1, $2, ?) for safety
 package models
 
 import (
@@ -9,17 +10,17 @@ import (
 type AdminActionType string
 
 const (
-	AdminActionTypeBan        AdminActionType = "ban"
-	AdminActionTypeKick       AdminActionType = "kick"
-	AdminActionTypeMute       AdminActionType = "mute"
-	AdminActionTypeUnban      AdminActionType = "unban"
-	AdminActionTypeUnmute     AdminActionType = "unmute"
-	AdminActionTypeGiveItem   AdminActionType = "give_item"
-	AdminActionTypeRemoveItem AdminActionType = "remove_item"
-	AdminActionTypeSetCurrency AdminActionType = "set_currency"
-	AdminActionTypeAddCurrency AdminActionType = "add_currency"
-	AdminActionTypeSetWorldFlag AdminActionType = "set_world_flag"
-	AdminActionTypeCreateEvent AdminActionType = "create_event"
+	AdminActionTypeBan              AdminActionType = "ban"
+	AdminActionTypeKick             AdminActionType = "kick"
+	AdminActionTypeMute             AdminActionType = "mute"
+	AdminActionTypeUnban            AdminActionType = "unban"
+	AdminActionTypeUnmute           AdminActionType = "unmute"
+	AdminActionTypeGiveItem         AdminActionType = "give_item"
+	AdminActionTypeRemoveItem       AdminActionType = "remove_item"
+	AdminActionTypeSetCurrency      AdminActionType = "set_currency"
+	AdminActionTypeAddCurrency      AdminActionType = "add_currency"
+	AdminActionTypeSetWorldFlag     AdminActionType = "set_world_flag"
+	AdminActionTypeCreateEvent      AdminActionType = "create_event"
 	AdminActionTypeSendNotification AdminActionType = "send_notification"
 )
 
@@ -32,19 +33,19 @@ const (
 	PermissionWorldManagement  AdminPermission = "world_management"
 	PermissionEventManagement  AdminPermission = "event_management"
 	PermissionAnalytics        AdminPermission = "analytics"
-	PermissionAudit           AdminPermission = "audit"
+	PermissionAudit            AdminPermission = "audit"
 )
 
 type AdminAuditLog struct {
-	ID          uuid.UUID              `json:"id" db:"id"`
-	AdminID     uuid.UUID              `json:"admin_id" db:"admin_id"`
-	ActionType  AdminActionType        `json:"action_type" db:"action_type"`
-	TargetID    *uuid.UUID             `json:"target_id,omitempty" db:"target_id"`
-	TargetType  string                 `json:"target_type" db:"target_type"`
-	Details     map[string]interface{} `json:"details" db:"details"`
-	IPAddress   string                 `json:"ip_address" db:"ip_address"`
-	UserAgent   string                 `json:"user_agent" db:"user_agent"`
-	CreatedAt   time.Time              `json:"created_at" db:"created_at"`
+	ID         uuid.UUID              `json:"id" db:"id"`
+	AdminID    uuid.UUID              `json:"admin_id" db:"admin_id"`
+	ActionType AdminActionType        `json:"action_type" db:"action_type"`
+	TargetID   *uuid.UUID             `json:"target_id,omitempty" db:"target_id"`
+	TargetType string                 `json:"target_type" db:"target_type"`
+	Details    map[string]interface{} `json:"details" db:"details"`
+	IPAddress  string                 `json:"ip_address" db:"ip_address"`
+	UserAgent  string                 `json:"user_agent" db:"user_agent"`
+	CreatedAt  time.Time              `json:"created_at" db:"created_at"`
 }
 
 type BanPlayerRequest struct {
@@ -80,17 +81,17 @@ type RemoveItemRequest struct {
 }
 
 type SetCurrencyRequest struct {
-	CharacterID uuid.UUID `json:"character_id"`
-	CurrencyType string   `json:"currency_type"`
-	Amount      int64     `json:"amount"`
-	Reason      string    `json:"reason"`
+	CharacterID  uuid.UUID `json:"character_id"`
+	CurrencyType string    `json:"currency_type"`
+	Amount       int64     `json:"amount"`
+	Reason       string    `json:"reason"`
 }
 
 type AddCurrencyRequest struct {
-	CharacterID uuid.UUID `json:"character_id"`
-	CurrencyType string   `json:"currency_type"`
-	Amount      int64     `json:"amount"`
-	Reason      string    `json:"reason"`
+	CharacterID  uuid.UUID `json:"character_id"`
+	CurrencyType string    `json:"currency_type"`
+	Amount       int64     `json:"amount"`
+	Reason       string    `json:"reason"`
 }
 
 type SetWorldFlagRequest struct {
@@ -110,10 +111,10 @@ type CreateEventRequest struct {
 }
 
 type SearchPlayersRequest struct {
-	Query     string `json:"query"`
-	SearchBy  string `json:"search_by"`
-	Limit     int    `json:"limit"`
-	Offset    int    `json:"offset"`
+	Query    string `json:"query"`
+	SearchBy string `json:"search_by"`
+	Limit    int    `json:"limit"`
+	Offset   int    `json:"offset"`
 }
 
 type AdminActionResponse struct {
@@ -135,17 +136,16 @@ type PlayerSearchResponse struct {
 
 type PlayerSearchResult struct {
 	CharacterID uuid.UUID `json:"character_id"`
-	AccountID    uuid.UUID `json:"account_id"`
-	Name         string    `json:"name"`
-	Level        int       `json:"level"`
-	LastSeen     time.Time `json:"last_seen"`
+	AccountID   uuid.UUID `json:"account_id"`
+	Name        string    `json:"name"`
+	Level       int       `json:"level"`
+	LastSeen    time.Time `json:"last_seen"`
 }
 
 type AnalyticsResponse struct {
-	OnlinePlayers    int                    `json:"online_players"`
-	EconomyMetrics   map[string]interface{} `json:"economy_metrics"`
-	CombatMetrics    map[string]interface{} `json:"combat_metrics"`
+	OnlinePlayers      int                    `json:"online_players"`
+	EconomyMetrics     map[string]interface{} `json:"economy_metrics"`
+	CombatMetrics      map[string]interface{} `json:"combat_metrics"`
 	PerformanceMetrics map[string]interface{} `json:"performance_metrics"`
-	Timestamp        time.Time              `json:"timestamp"`
+	Timestamp          time.Time              `json:"timestamp"`
 }
-
