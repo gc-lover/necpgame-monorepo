@@ -15,6 +15,9 @@ import (
 )
 
 func main() {
+	logger := server.GetLogger()
+	logger.Info("Achievement Service (Go) starting...")
+
 	dbURL := getEnv("DATABASE_URL", "postgres://postgres:postgres@localhost:5432/necpgame?sslmode=disable")
 
 	db, err := sql.Open("postgres", dbURL)
@@ -36,8 +39,11 @@ func main() {
 
 	service := server.NewService(repository)
 
+	// Create configuration for JWT
+	config := server.NewConfig()
+
 	addr := getEnv("HTTP_ADDR", ":8097")
-	httpServer := server.NewHTTPServer(addr, service)
+	httpServer := server.NewHTTPServer(addr, service, config, logger)
 
 	go func() {
 		mux := http.NewServeMux()
@@ -55,7 +61,6 @@ func main() {
 	}()
 
 	// Issue: #1585 - Runtime Goroutine Monitoring
-	logger := server.GetLogger()
 	monitor := server.NewGoroutineMonitor(300, logger) // Max 300 goroutines for achievement service
 	go monitor.Start()
 	defer monitor.Stop()
