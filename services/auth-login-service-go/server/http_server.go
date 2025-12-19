@@ -94,6 +94,7 @@ func (s *HTTPServer) Start() error {
 
 	// Запускаем сервер в горутине
 	go func() {
+			defer close(errChan)
 		if err := s.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			s.logger.Fatal("Failed to start server", zap.Error(err))
 		}
@@ -164,3 +165,4 @@ func (s *Service) MetricsHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Write([]byte(metrics))
 }
+
