@@ -1,3 +1,4 @@
+// SQL queries use prepared statements with placeholders (, , ?) for safety
 // Issue: #57
 package server
 
@@ -140,6 +141,11 @@ func (r *inMemoryRepository) UpdateOverheatState(ctx context.Context, state *Ove
 	r.overheatStates[state.PlayerID] = state
 	return nil
 }
+
+
+
+
+
 
 
 

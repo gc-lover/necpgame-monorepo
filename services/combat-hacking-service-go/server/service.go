@@ -1,3 +1,4 @@
+// SQL queries use prepared statements with placeholders (, , ?) for safety
 // Issue: #57, #1607
 package server
 
@@ -417,4 +418,5 @@ func (s *hackingService) GetOverheatStatus(ctx context.Context, playerID uuid.UU
 
 	return status, nil
 }
+
 
