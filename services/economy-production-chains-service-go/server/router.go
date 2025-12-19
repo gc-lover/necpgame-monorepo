@@ -1,3 +1,4 @@
+// HTTP handlers use context.WithTimeout for request timeouts
 package server
 
 import (
