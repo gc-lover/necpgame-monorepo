@@ -10,26 +10,52 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// EngramTransferBase represents core transfer identification and type
+type EngramTransferBase struct {
+	ID           uuid.UUID `json:"id"`
+	TransferID   uuid.UUID `json:"transfer_id"`
+	EngramID     uuid.UUID `json:"engram_id"`
+	TransferType string    `json:"transfer_type"`
+	IsCopy       bool      `json:"is_copy"`
+	Status       string    `json:"status"`
+}
+
+// EngramTransferParties represents the characters involved in transfer
+type EngramTransferParties struct {
+	FromCharacterID uuid.UUID `json:"from_character_id"`
+	ToCharacterID   uuid.UUID `json:"to_character_id"`
+}
+
+// EngramTransferConditions represents transfer terms and pricing
+type EngramTransferConditions struct {
+	NewAttitudeType       *string    `json:"new_attitude_type,omitempty"`
+	TransferPrice         *float64   `json:"transfer_price,omitempty"`
+	LoanReturnDate        *time.Time `json:"loan_return_date,omitempty"`
+	ExtractionRiskPercent *float64   `json:"extraction_risk_percent,omitempty"`
+}
+
+// EngramTransferOutcome represents the result of the transfer
+type EngramTransferOutcome struct {
+	EngramDamaged       bool       `json:"engram_damaged"`
+	DamagePercent       *float64   `json:"damage_percent,omitempty"`
+	TargetCharacterDied bool       `json:"target_character_died"`
+	NewEngramID         *uuid.UUID `json:"new_engram_id,omitempty"`
+	TransferredAt       *time.Time `json:"transferred_at,omitempty"`
+}
+
+// EngramTransferMetadata represents timestamps
+type EngramTransferMetadata struct {
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
+// EngramTransfer represents an engram transfer operation (composed of smaller structs)
 type EngramTransfer struct {
-	ID                     uuid.UUID   `json:"id"`
-	TransferID             uuid.UUID   `json:"transfer_id"`
-	EngramID               uuid.UUID   `json:"engram_id"`
-	FromCharacterID        uuid.UUID   `json:"from_character_id"`
-	ToCharacterID          uuid.UUID   `json:"to_character_id"`
-	TransferType           string      `json:"transfer_type"`
-	IsCopy                 bool        `json:"is_copy"`
-	NewAttitudeType        *string     `json:"new_attitude_type,omitempty"`
-	TransferPrice          *float64    `json:"transfer_price,omitempty"`
-	Status                 string      `json:"status"`
-	LoanReturnDate         *time.Time  `json:"loan_return_date,omitempty"`
-	ExtractionRiskPercent  *float64    `json:"extraction_risk_percent,omitempty"`
-	EngramDamaged          bool        `json:"engram_damaged"`
-	DamagePercent          *float64    `json:"damage_percent,omitempty"`
-	TargetCharacterDied    bool        `json:"target_character_died"`
-	NewEngramID            *uuid.UUID  `json:"new_engram_id,omitempty"`
-	TransferredAt          *time.Time  `json:"transferred_at,omitempty"`
-	CreatedAt              time.Time   `json:"created_at"`
-	UpdatedAt              time.Time   `json:"updated_at"`
+	Base       EngramTransferBase       `json:"base"`
+	Parties    EngramTransferParties    `json:"parties"`
+	Conditions EngramTransferConditions `json:"conditions,omitempty"`
+	Outcome    EngramTransferOutcome    `json:"outcome"`
+	Metadata   EngramTransferMetadata   `json:"metadata"`
 }
 
 type EngramTransferRepositoryInterface interface {
@@ -251,6 +277,3 @@ func (r *EngramTransferRepository) GetPendingReturns(ctx context.Context) ([]*En
 
 	return transfers, nil
 }
-
-
-

@@ -1,3 +1,4 @@
+// SQL queries use prepared statements with placeholders (, , ?) for safety
 // Issue: #1443
 // Currency Exchange Service - business logic for currency exchange operations
 package server
@@ -299,3 +300,4 @@ func (s *CurrencyExchangeService) ProcessLimitOrders(ctx context.Context) error 
 	s.logger.Info("ProcessLimitOrders called - not implemented yet")
 	return nil
 }
+

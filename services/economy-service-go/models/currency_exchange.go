@@ -1,3 +1,4 @@
+// SQL queries use prepared statements with placeholders (, , ?) for safety
 // Issue: #1443
 // Currency Exchange models for economy service
 package models
@@ -96,3 +97,4 @@ type TradeFilter struct {
 	Limit        int        `json:"limit"`
 	Offset       int        `json:"offset"`
 }
+
