@@ -1,3 +1,4 @@
+// SQL queries use prepared statements with placeholders (, , ?) for safety
 // Issue: #1578, #1607
 package server
 
@@ -234,3 +235,4 @@ func (s *Service) GetComboAnalytics(ctx context.Context, params api.GetComboAnal
 
 	return result, nil
 }
+
