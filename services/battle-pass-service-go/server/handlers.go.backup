@@ -24,7 +24,8 @@ func NewBattlePassHandlers(service BattlePassServiceInterface) *BattlePassHandle
 }
 
 func (h *BattlePassHandlers) GetCurrentBattlePass(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
+	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
 	season, err := h.service.GetCurrentSeason(ctx)
 	if err != nil {
 		h.logger.WithError(err).Error("Failed to get current season")
@@ -42,7 +43,8 @@ func (h *BattlePassHandlers) GetCurrentBattlePass(w http.ResponseWriter, r *http
 }
 
 func (h *BattlePassHandlers) GetPlayerProgress(w http.ResponseWriter, r *http.Request, params api.GetPlayerProgressParams) {
-	ctx := r.Context()
+	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
 
 	characterID := uuid.UUID(params.CharacterId)
 	var seasonID uuid.UUID
@@ -75,7 +77,8 @@ func (h *BattlePassHandlers) GetPlayerProgress(w http.ResponseWriter, r *http.Re
 }
 
 func (h *BattlePassHandlers) PurchasePremium(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
+	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
 
 	var req api.PurchasePremiumRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -96,7 +99,8 @@ func (h *BattlePassHandlers) PurchasePremium(w http.ResponseWriter, r *http.Requ
 }
 
 func (h *BattlePassHandlers) GetLevelRequirements(w http.ResponseWriter, r *http.Request, level int) {
-	ctx := r.Context()
+	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
 
 	if level < 1 || level > 100 {
 		h.respondError(w, http.StatusBadRequest, "invalid level")

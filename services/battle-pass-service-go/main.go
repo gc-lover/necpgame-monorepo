@@ -68,7 +68,10 @@ func main() {
 	defer monitor.Stop()
 	logger.Println("OK Goroutine monitor started")
 
-	srv := server.NewHTTPServer(addr, handlers, svc)
+	// Create configuration for JWT
+	config := server.NewConfig()
+
+	srv := server.NewHTTPServer(addr, handlers, svc, config, logger)
 
 	log.Printf("Starting battle-pass-service on %s", addr)
 	if err := srv.Start(); err != nil {
