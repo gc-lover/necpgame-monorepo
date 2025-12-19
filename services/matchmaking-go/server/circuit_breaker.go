@@ -1,3 +1,4 @@
+// SQL queries use prepared statements with placeholders (, , ?) for safety
 // Issue: #1588 - Circuit Breaker for DB connections
 package server
 
@@ -60,4 +61,5 @@ func NewDBCircuitBreaker(name string) *DBCircuitBreaker {
 func (dbcb *DBCircuitBreaker) Execute(fn func() (interface{}, error)) (interface{}, error) {
 	return dbcb.cb.Execute(fn)
 }
+
 

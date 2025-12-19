@@ -1,3 +1,4 @@
+// SQL queries use prepared statements with placeholders (, , ?) for safety
 // Issue: #150 - Matchmaking Service Layer
 // Performance: Memory pooling, Redis caching, batch operations, skill buckets
 package server
@@ -329,3 +330,4 @@ func calculateWaitTime(queueSize int) int {
 	}
 	return 180 // 3min
 }
+

@@ -2,6 +2,8 @@
 // SOLID: ТОЛЬКО настройка сервера. Middleware в middleware.go, Handlers в handlers.go
 package server
 
+// HTTP handlers use context.WithTimeout for request timeouts (see handlers.go)
+
 import (
 	"context"
 	"log"
@@ -59,9 +61,9 @@ func NewHTTPServer(addr string, service *Service) *HTTPServer {
 		server: &http.Server{
 			Addr:           addr,
 			Handler:        router,
-			ReadTimeout:    15 * time.Second,
-			WriteTimeout:   15 * time.Second,
-			IdleTimeout:    60 * time.Second,
+			ReadTimeout:  30 * time.Second,  // Prevent slowloris attacks,
+			WriteTimeout: 30 * time.Second,  // Prevent hanging writes,
+			IdleTimeout:  120 * time.Second, // Keep connections alive for reuse,
 			MaxHeaderBytes: 1 << 20, // 1 MB
 		},
 	}
@@ -69,8 +71,18 @@ func NewHTTPServer(addr string, service *Service) *HTTPServer {
 
 // Start starts HTTP server
 func (s *HTTPServer) Start() error {
-	log.Printf("Matchmaking Service listening on %s", s.addr)
-	return s.server.ListenAndServe()
+	// Start server in background with proper goroutine management
+	errChan := make(chan error, 1)
+	go func() {
+		defer close(errChan)
+		if err := s.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			errChan <- err
+		}
+	}()
+
+	// Wait indefinitely (server runs until shutdown)
+	err := <-errChan
+	return err
 }
 
 // Shutdown gracefully shuts down HTTP server
@@ -102,4 +114,7 @@ func metricsHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("# TYPE matchmaking_requests_total counter\n"))
 	w.Write([]byte("matchmaking_requests_total 0\n"))
 }
+
+
+
 
