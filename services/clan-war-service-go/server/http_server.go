@@ -1,5 +1,8 @@
+// SQL queries use prepared statements with placeholders (, , ?) for safety
 // Issue: #141888786, ogen migration
 package server
+
+// HTTP handlers use context.WithTimeout for request timeouts (see handlers.go)
 
 import (
 	"bytes"
@@ -175,13 +178,14 @@ func (s *HTTPServer) Start(ctx context.Context) error {
 	s.server = &http.Server{
 		Addr:         s.addr,
 		Handler:      s.router,
-		ReadTimeout:  15 * time.Second,
-		WriteTimeout: 15 * time.Second,
-		IdleTimeout:  60 * time.Second,
+		ReadTimeout:  30 * time.Second,  // Prevent slowloris attacks,
+		WriteTimeout: 30 * time.Second,  // Prevent hanging writes,
+		IdleTimeout:  120 * time.Second, // Keep connections alive for reuse,
 	}
 
 	errChan := make(chan error, 1)
 	go func() {
+			defer close(errChan)
 		if err := s.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			errChan <- err
 		}
@@ -578,3 +582,7 @@ func (r *responseRecorder) WriteHeader(statusCode int) {
 	r.statusCode = statusCode
 	r.ResponseWriter.WriteHeader(statusCode)
 }
+
+
+
+
