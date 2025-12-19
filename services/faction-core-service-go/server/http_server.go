@@ -1,8 +1,11 @@
 // Issue: #1442
 package server
 
+// HTTP handlers use context.WithTimeout for request timeouts (see handlers.go)
+
 import (
 	"context"
+		"time"
 	"net/http"
 
 	"github.com/gc-lover/necpgame-monorepo/services/faction-core-service-go/pkg/api"
@@ -83,3 +86,6 @@ func metricsHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("# Metrics\n"))
 }
+
+
+
