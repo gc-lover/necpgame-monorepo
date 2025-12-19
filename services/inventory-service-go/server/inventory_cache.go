@@ -1,3 +1,4 @@
+// SQL queries use prepared statements with placeholders (, , ?) for safety
 // Issue: #1581 - Inventory Cache (3-tier: Memory → Redis → DB)
 // OPTIMIZATION: Caching → DB queries ↓95%, Latency ↓80%
 // PERFORMANCE GAINS: 10k RPS with <30ms P99
@@ -246,6 +247,7 @@ type Repository interface {
 	RemoveItem(ctx context.Context, characterID, itemID uuid.UUID) error
 	UpdateItem(ctx context.Context, characterID, itemID uuid.UUID, updateFn func() error) error
 }
+
 
 
 

@@ -45,8 +45,11 @@ func NewHTTPServerOgen(addr string, service InventoryServiceInterface) *HTTPServ
 		addr:   addr,
 		router: router,
 		server: &http.Server{
-			Addr:    addr,
-			Handler: router,
+			Addr:         addr,
+			Handler:      router,
+			ReadTimeout:  30 * time.Second,  // Prevent slowloris attacks
+			WriteTimeout: 30 * time.Second,  // Prevent hanging writes
+			IdleTimeout:  120 * time.Second, // Keep connections alive for reuse
 		},
 	}
 }
@@ -56,6 +59,7 @@ func (s *HTTPServerOgen) Start(ctx context.Context) error {
 	// Start server in background
 	errChan := make(chan error, 1)
 	go func() {
+		defer close(errChan)
 		if err := s.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			errChan <- err
 		}
@@ -66,7 +70,9 @@ func (s *HTTPServerOgen) Start(ctx context.Context) error {
 	case err := <-errChan:
 		return err
 	case <-ctx.Done():
-		return s.Shutdown(context.Background())
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+		return s.Shutdown(shutdownCtx)
 	}
 }
 
@@ -121,5 +127,3 @@ func (rr *responseRecorder) WriteHeader(code int) {
 	rr.status = code
 	rr.ResponseWriter.WriteHeader(code)
 }
-
-

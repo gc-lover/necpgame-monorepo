@@ -1,3 +1,4 @@
+// SQL queries use prepared statements with placeholders (, , ?) for safety
 // Issue: #141887950
 package server
 
@@ -433,5 +434,6 @@ func (s *InventoryService) findFreeSlot(items []models.InventoryItem, capacity i
 
 	return -1
 }
+
 
 

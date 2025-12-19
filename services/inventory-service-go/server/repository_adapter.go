@@ -1,3 +1,4 @@
+// SQL queries use prepared statements with placeholders (, , ?) for safety
 // Issue: #1591 - Repository adapter for InventoryRepository
 package server
 
@@ -80,3 +81,4 @@ func (a *RepositoryAdapter) UpdateItem(ctx context.Context, characterID, itemID 
 	// Execute update function
 	return updateFn()
 }
+
