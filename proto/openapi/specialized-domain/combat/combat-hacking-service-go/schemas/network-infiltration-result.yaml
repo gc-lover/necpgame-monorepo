@@ -1,0 +1,87 @@
+# Issue: #1530
+type: object
+required:
+  - infiltration_id
+  - success
+  - access_level
+properties:
+  infiltration_id:
+    type: string
+    format: uuid
+    description: Unique identifier for this infiltration operation
+  success:
+    type: boolean
+    description: Whether infiltration was successful
+  access_level:
+    type: string
+    enum: [none, user, admin, root, backdoor]
+    description: Level of access gained to the network
+  session_details:
+    type: object
+    description: Details of the established network session
+    required:
+      - session_id
+      - duration_minutes
+    properties:
+      session_id:
+        type: string
+        format: uuid
+        description: ID of the network session
+      duration_minutes:
+        type: integer
+        minimum: 1
+        maximum: 1440
+        description: Expected duration of session in minutes
+      ip_address:
+        type: string
+        format: ipv4
+        description: Assigned IP address in the network
+      permissions:
+        type: array
+        items:
+          type: string
+          enum: [read_files, write_files, execute_commands, access_databases, control_devices, escalate_privileges]
+        description: Granted permissions in the network
+  detection_risk:
+    type: object
+    required:
+      - current_level
+      - detection_threshold
+    properties:
+      current_level:
+        type: number
+        format: float
+        minimum: 0.0
+        maximum: 1.0
+        description: Current detection risk level (0.0-1.0)
+      detection_threshold:
+        type: number
+        format: float
+        minimum: 0.0
+        maximum: 1.0
+        description: Threshold at which detection occurs
+      time_to_detection:
+        type: integer
+        minimum: 0
+        description: Estimated time to detection in minutes (0 = already detected)
+  network_topology:
+    type: object
+    description: Discovered network topology information
+    properties:
+      total_hosts:
+        type: integer
+        minimum: 1
+        description: Total number of hosts in the network
+      vulnerable_hosts:
+        type: integer
+        minimum: 0
+        description: Number of vulnerable hosts discovered
+      security_zones:
+        type: array
+        items:
+          type: string
+          enum: [dmz, internal, secure, isolated]
+        description: Security zones identified in the network
+  error_message:
+    type: string
+    description: Error message if infiltration failed

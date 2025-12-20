@@ -1,0 +1,39 @@
+# Issue: #2237 - NPC Import Paths
+paths:
+  # NPC Import Operations
+  /import/npcs:
+    post:
+      summary: "Bulk import NPC definitions from YAML"
+      operationId: importNpcs
+      tags: ["NPC Import"]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                files:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                  minItems: 1
+                  maxItems: 100
+                validate_only:
+                  type: boolean
+                  default: false
+                rollback_on_error:
+                  type: boolean
+                  default: true
+      responses:
+        '200':
+          $ref: '../schemas/import-schemas.yaml#/components/schemas/ImportResult'
+        '400':
+          $ref: '../../../common.yaml#/components/responses/BadRequest'
+        '422':
+          description: "Validation failed"
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/import-schemas.yaml#/components/schemas/ValidationError'

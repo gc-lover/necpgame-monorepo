@@ -1,0 +1,70 @@
+# Issue: #2237 - Quest Import Paths
+paths:
+  # Quest Import Operations
+  /import/quests:
+    post:
+      summary: "Bulk import quest definitions from YAML"
+      description: |
+        Import multiple quest definitions from YAML content.
+        Supports transactional import with validation and rollback.
+      operationId: importQuests
+      tags: ["Quest Import"]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                files:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                    description: "YAML quest definition files"
+                  minItems: 1
+                  maxItems: 100
+                  description: "Quest YAML files to import"
+                validate_only:
+                  type: boolean
+                  default: false
+                  description: "Only validate without importing"
+                rollback_on_error:
+                  type: boolean
+                  default: true
+                  description: "Rollback all changes if any file fails"
+      responses:
+        '200':
+          description: "Import completed successfully"
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/import-schemas.yaml#/components/schemas/ImportResult'
+        '400':
+          $ref: '../../../common.yaml#/components/responses/BadRequest'
+        '422':
+          description: "Validation failed"
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/import-schemas.yaml#/components/schemas/ValidationError'
+
+  /import/quests/{batch_id}/status:
+    get:
+      summary: "Get quest import batch status"
+      operationId: getQuestImportStatus
+      tags: ["Quest Import"]
+      parameters:
+        - name: batch_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: "Import status"
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/import-schemas.yaml#/components/schemas/ImportStatus'

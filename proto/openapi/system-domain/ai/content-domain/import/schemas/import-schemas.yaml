@@ -1,0 +1,93 @@
+# Issue: #2237 - Content Import Schemas
+components:
+  schemas:
+    # Import Results (memory-aligned: large fields first)
+    ImportResult:
+      type: object
+      properties:
+        batch_id:
+          type: string
+          format: uuid
+          description: "Import batch identifier"
+        total_files:
+          type: integer
+          minimum: 0
+          description: "Total files processed"
+        success_count:
+          type: integer
+          minimum: 0
+          description: "Successfully imported files"
+        error_count:
+          type: integer
+          minimum: 0
+          description: "Files with errors"
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ImportError'
+          description: "Detailed error information"
+        processing_time_ms:
+          type: integer
+          description: "Total processing time in milliseconds"
+        created_at:
+          type: string
+          format: date-time
+
+    ImportError:
+      type: object
+      properties:
+        filename:
+          type: string
+          description: "Name of the file that failed"
+        error_type:
+          type: string
+          enum: [validation, database, processing]
+          description: "Type of error"
+        error_message:
+          type: string
+          description: "Human-readable error message"
+        line_number:
+          type: integer
+          description: "Line number where error occurred (if applicable)"
+
+    ImportStatus:
+      type: object
+      properties:
+        batch_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [processing, completed, failed]
+        progress_percent:
+          type: integer
+          minimum: 0
+          maximum: 100
+        estimated_completion:
+          type: string
+          format: date-time
+
+    ValidationResult:
+      type: object
+      properties:
+        total_files:
+          type: integer
+        valid_count:
+          type: integer
+        invalid_count:
+          type: integer
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ValidationError'
+
+    ValidationError:
+      type: object
+      properties:
+        filename:
+          type: string
+        errors:
+          type: array
+          items:
+            type: string
+          description: "List of validation errors"

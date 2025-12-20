@@ -1,0 +1,314 @@
+# Issue: #content-management-api
+openapi: 3.0.3
+info:
+  title: Social Domain - Content Management Quests Module
+  description: |
+    **Quest Management API** for NECPGAME MMOFPS RPG.
+
+    **Purpose:** CRUD operations for quest definitions
+
+    **Performance Targets:**
+    - Content load: 500+ RPS, P99 <50ms
+    - Batch operations: 1000+ items/sec
+    - Memory: <200MB per service instance
+    - Cache hit rate: >90%
+
+    **Features:**
+    - Quest CRUD operations
+    - Filtering by level, status
+    - Rewards and objectives management
+  version: 1.0.0
+  contact:
+    name: NECPGAME Content API Support
+    email: content@social.necpgame.com
+
+servers:
+  - url: http://localhost:8084/api/v1/social/content/quests
+    description: Development server
+  - url: https://api.necpgame.com/api/v1/social/content/quests
+    description: Production server
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Quests
+    description: Quest management endpoints
+
+paths:
+  /:
+    get:
+      summary: List quests with filtering
+      operationId: listQuests
+      tags: [Quests]
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, completed, archived]
+        - name: level_min
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+        - name: level_max
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+      responses:
+        "200":
+          description: List of quests
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuestsListResponse"
+    post:
+      summary: Create new quest
+      operationId: createQuest
+      tags: [Quests]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateQuestRequest"
+      responses:
+        "201":
+          description: Quest created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuestResponse"
+
+  /{quest_id}:
+    get:
+      summary: Get quest by ID
+      operationId: getQuest
+      tags: [Quests]
+      parameters:
+        - name: quest_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Quest details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuestResponse"
+    put:
+      summary: Update quest
+      operationId: updateQuest
+      tags: [Quests]
+      parameters:
+        - name: quest_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateQuestRequest"
+      responses:
+        "200":
+          description: Quest updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuestResponse"
+    delete:
+      summary: Delete quest
+      operationId: deleteQuest
+      tags: [Quests]
+      parameters:
+        - name: quest_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Quest deleted
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    # Quest schemas
+    Quest:
+      type: object
+      required: [id, title, status, level_min, level_max]
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+          maxLength: 200
+        description:
+          type: string
+          maxLength: 2000
+        status:
+          type: string
+          enum: [active, completed, archived]
+        level_min:
+          type: integer
+          minimum: 1
+          maximum: 100
+        level_max:
+          type: integer
+          minimum: 1
+          maximum: 100
+        rewards:
+          type: array
+          items:
+            $ref: "#/components/schemas/QuestReward"
+        objectives:
+          type: array
+          items:
+            $ref: "#/components/schemas/QuestObjective"
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    QuestReward:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [experience, currency, item, reputation]
+        amount:
+          type: integer
+          minimum: 0
+        item_id:
+          type: string
+          format: uuid
+
+    QuestObjective:
+      type: object
+      required: [description, type]
+      properties:
+        description:
+          type: string
+          maxLength: 500
+        type:
+          type: string
+          enum: [kill, collect, deliver, explore, talk]
+        target_count:
+          type: integer
+          minimum: 1
+        progress:
+          type: integer
+          minimum: 0
+
+    CreateQuestRequest:
+      type: object
+      required: [title, level_min, level_max]
+      properties:
+        title:
+          type: string
+          maxLength: 200
+        description:
+          type: string
+          maxLength: 2000
+        level_min:
+          type: integer
+          minimum: 1
+          maximum: 100
+        level_max:
+          type: integer
+          minimum: 1
+          maximum: 100
+        rewards:
+          type: array
+          items:
+            $ref: "#/components/schemas/QuestReward"
+        objectives:
+          type: array
+          items:
+            $ref: "#/components/schemas/QuestObjective"
+
+    UpdateQuestRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          maxLength: 200
+        description:
+          type: string
+          maxLength: 2000
+        status:
+          type: string
+          enum: [active, completed, archived]
+        level_min:
+          type: integer
+          minimum: 1
+          maximum: 100
+        level_max:
+          type: integer
+          minimum: 1
+          maximum: 100
+        rewards:
+          type: array
+          items:
+            $ref: "#/components/schemas/QuestReward"
+        objectives:
+          type: array
+          items:
+            $ref: "#/components/schemas/QuestObjective"
+
+    QuestResponse:
+      type: object
+      properties:
+        quest:
+          $ref: "#/components/schemas/Quest"
+
+    QuestsListResponse:
+      type: object
+      properties:
+        quests:
+          type: array
+          items:
+            $ref: "#/components/schemas/Quest"
+        total_count:
+          type: integer
+          minimum: 0
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+        offset:
+          type: integer
+          minimum: 0

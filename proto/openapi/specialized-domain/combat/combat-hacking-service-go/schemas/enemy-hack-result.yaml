@@ -1,0 +1,78 @@
+# Issue: #1530
+type: object
+required:
+  - hack_id
+  - success
+  - hack_type
+properties:
+  hack_id:
+    type: string
+    format: uuid
+    description: Unique identifier for this hack operation
+  success:
+    type: boolean
+    description: Whether the hack was successful
+  hack_type:
+    type: string
+    enum: [overload, shutdown, control, data_extract, disrupt]
+    description: Type of hacking attack performed
+  effect_applied:
+    type: object
+    description: Details of the applied hacking effect
+    required:
+      - effect_type
+      - duration_seconds
+    properties:
+      effect_type:
+        type: string
+        enum: [stunned, blinded, slowed, weakened, controlled, overloaded]
+        description: Type of effect applied to the enemy
+      duration_seconds:
+        type: integer
+        minimum: 1
+        maximum: 300
+        description: Duration of the effect in seconds
+      damage_bonus:
+        type: integer
+        minimum: 0
+        description: Additional damage bonus if applicable
+      control_commands:
+        type: array
+        items:
+          type: string
+          enum: [move_to, attack_target, defend_position, surrender]
+        description: Control commands if enemy is controlled
+  ice_damage:
+    type: object
+    description: Damage taken from ICE countermeasures
+    required:
+      - damage_amount
+      - ice_type
+    properties:
+      damage_amount:
+        type: integer
+        minimum: 0
+        description: Amount of damage taken from ICE
+      ice_type:
+        type: string
+        enum: [basic, advanced, lethal]
+        description: Type of ICE that caused damage
+      overheat_level:
+        type: number
+        format: float
+        minimum: 0.0
+        maximum: 1.0
+        description: Current overheat level (0.0-1.0)
+  data_extracted:
+    type: object
+    description: Data extracted from the hack (if data_extract type)
+    properties:
+      implant_data:
+        type: object
+        description: Extracted implant configuration data
+      combat_stats:
+        type: object
+        description: Extracted combat statistics
+  error_message:
+    type: string
+    description: Error message if hack failed

@@ -1,0 +1,56 @@
+# Issue: #1530
+type: object
+required:
+  - scan_id
+  - success
+  - detected_implants
+properties:
+  scan_id:
+    type: string
+    format: uuid
+    description: Unique identifier for this scan operation
+  success:
+    type: boolean
+    description: Whether the scan was successful
+  detected_implants:
+    type: array
+    items:
+      type: object
+      required:
+        - implant_type
+        - vulnerability_level
+        - ice_protection
+      properties:
+        implant_type:
+          type: string
+          enum: [neural_link, cyber_eyes, reflex_booster, pain_editor, adrenal_pump, muscle_replacement, bone_lacing, subdermal_armor]
+          description: Type of detected implant
+        vulnerability_level:
+          type: integer
+          minimum: 1
+          maximum: 10
+          description: Vulnerability level (1-10, higher = more vulnerable)
+        ice_protection:
+          type: object
+          required:
+            - level
+            - type
+          properties:
+            level:
+              type: integer
+              minimum: 0
+              maximum: 5
+              description: ICE protection level (0 = no protection)
+            type:
+              type: string
+              enum: [none, basic, advanced, lethal]
+              description: Type of ICE protection
+        hack_success_chance:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Estimated chance of successful hack (0.0-1.0)
+  error_message:
+    type: string
+    description: Error message if scan failed

@@ -1,0 +1,111 @@
+# Issue: #1530
+type: object
+required:
+  - support_id
+  - granted
+  - support_type
+properties:
+  support_id:
+    type: string
+    format: uuid
+    description: Unique identifier for this support session
+  granted:
+    type: boolean
+    description: Whether combat support was granted
+  support_type:
+    type: string
+    enum: [enemy_tracking, device_control, network_intelligence, cyberware_boost, counter_hacking]
+    description: Type of support granted
+  support_details:
+    type: object
+    description: Details of the granted support
+    properties:
+      duration_minutes:
+        type: integer
+        minimum: 1
+        maximum: 30
+        description: Actual duration of support granted
+      effectiveness:
+        type: number
+        format: float
+        minimum: 0.0
+        maximum: 1.0
+        description: Effectiveness multiplier for support actions (0.0-1.0)
+      enemy_tracking:
+        type: object
+        description: Enemy tracking support details
+        properties:
+          tracked_enemies:
+            type: array
+            items:
+              type: string
+              format: uuid
+            description: IDs of enemies now being tracked
+          tracking_accuracy:
+            type: number
+            format: float
+            minimum: 0.0
+            maximum: 1.0
+            description: Accuracy of enemy tracking
+      device_control:
+        type: object
+        description: Device control support details
+        properties:
+          controlled_devices:
+            type: array
+            items:
+              type: string
+              format: uuid
+            description: IDs of devices now under control
+          control_commands:
+            type: array
+            items:
+              type: string
+              enum: [activate, deactivate, target_enemy, provide_cover]
+            description: Available control commands
+      network_intelligence:
+        type: object
+        description: Network intelligence support details
+        properties:
+          intel_quality:
+            type: string
+            enum: [basic, detailed, comprehensive]
+            description: Quality level of network intelligence
+          threat_assessment:
+            type: object
+            description: Assessment of network threats
+      cyberware_boost:
+        type: object
+        description: Cyberware boost support details
+        properties:
+          boosted_implants:
+            type: array
+            items:
+              type: string
+              enum: [neural_link, reflex_booster, adrenal_pump]
+            description: Implants that received boost
+          boost_multiplier:
+            type: number
+            format: float
+            minimum: 1.0
+            maximum: 2.0
+            description: Performance boost multiplier
+      counter_hacking:
+        type: object
+        description: Counter-hacking support details
+        properties:
+          protection_level:
+            type: string
+            enum: [basic, advanced, elite]
+            description: Level of counter-hacking protection
+          blocked_attacks:
+            type: integer
+            minimum: 0
+            description: Number of hacking attacks blocked so far
+  cooldown_minutes:
+    type: integer
+    minimum: 0
+    description: Cooldown before requesting support again
+  error_message:
+    type: string
+    description: Error message if support was denied

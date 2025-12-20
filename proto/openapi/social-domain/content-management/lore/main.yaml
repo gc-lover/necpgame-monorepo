@@ -1,0 +1,195 @@
+# Issue: #content-management-api
+openapi: 3.0.3
+info:
+  title: Social Domain - Content Management Lore Module
+  description: |
+    **Lore Management API** for NECPGAME MMOFPS RPG.
+
+    **Purpose:** CRUD operations for game lore and narrative content
+
+    **Performance Targets:**
+    - Lore queries: 500+ RPS, P99 <40ms
+    - Full-text search: <100ms
+    - Memory: <150MB per service instance
+
+    **Features:**
+    - Lore entry CRUD
+    - Category/timeline filtering
+    - Full-text search
+    - Related entity linking
+  version: 1.0.0
+  contact:
+    name: NECPGAME Content API Support
+    email: content@social.necpgame.com
+
+servers:
+  - url: http://localhost:8084/api/v1/social/content/lore
+    description: Development server
+  - url: https://api.necpgame.com/api/v1/social/content/lore
+    description: Production server
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Lore
+    description: Lore management endpoints
+
+paths:
+  /:
+    get:
+      summary: List lore entries
+      operationId: listLore
+      tags: [Lore]
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum: [characters, factions, locations, events, technology]
+        - name: timeline_year
+          in: query
+          schema:
+            type: integer
+            minimum: 2000
+            maximum: 2100
+        - name: search
+          in: query
+          schema:
+            type: string
+            maxLength: 100
+      responses:
+        "200":
+          description: List of lore entries
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoreListResponse"
+    post:
+      summary: Create new lore entry
+      operationId: createLore
+      tags: [Lore]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateLoreRequest"
+      responses:
+        "201":
+          description: Lore entry created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoreResponse"
+
+  /{lore_id}:
+    get:
+      summary: Get lore entry by ID
+      operationId: getLore
+      tags: [Lore]
+      parameters:
+        - name: lore_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Lore entry details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoreResponse"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    # Lore schemas
+    LoreEntry:
+      type: object
+      required: [id, title, category, content]
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+          maxLength: 200
+        category:
+          type: string
+          enum: [characters, factions, locations, events, technology]
+        content:
+          type: string
+          maxLength: 5000
+        timeline_year:
+          type: integer
+          minimum: 2000
+          maximum: 2100
+        tags:
+          type: array
+          items:
+            type: string
+            maxLength: 50
+        related_entities:
+          type: array
+          items:
+            type: string
+            format: uuid
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CreateLoreRequest:
+      type: object
+      required: [title, category, content]
+      properties:
+        title:
+          type: string
+          maxLength: 200
+        category:
+          type: string
+          enum: [characters, factions, locations, events, technology]
+        content:
+          type: string
+          maxLength: 5000
+        timeline_year:
+          type: integer
+          minimum: 2000
+          maximum: 2100
+        tags:
+          type: array
+          items:
+            type: string
+            maxLength: 50
+        related_entities:
+          type: array
+          items:
+            type: string
+            format: uuid
+
+    LoreResponse:
+      type: object
+      properties:
+        lore_entry:
+          $ref: "#/components/schemas/LoreEntry"
+
+    LoreListResponse:
+      type: object
+      properties:
+        lore_entries:
+          type: array
+          items:
+            $ref: "#/components/schemas/LoreEntry"
+        total_count:
+          type: integer
+          minimum: 0

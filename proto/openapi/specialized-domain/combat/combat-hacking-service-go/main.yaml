@@ -1,0 +1,439 @@
+# Issue: #1530
+openapi: 3.0.3
+info:
+  title: Combat Hacking Service Go API
+  description: |
+    Enterprise-Grade Combat Hacking Service API for NECPGAME MMOFPS RPG.
+
+    **Enterprise-Grade Domain:** specialized-domain
+    **Module:** combat-hacking-service-go
+    **Purpose:** High-performance hacking operations, network infiltration, and cyber combat management
+
+    **BACKEND NOTE:** Struct field alignment optimized (large → small types).
+    All schemas ordered for optimal memory layout in generated Go code.
+    Expected memory savings: 30-50% for hacking-related structs.
+
+    **Features:**
+    - Real-time hacking operations (1000+ RPS)
+    - Network infiltration and ICE bypass
+    - Cyber combat effects and counter-hacking
+    - Anti-cheat validation for hacking attempts
+    - Device and infrastructure hacking
+    - Implant manipulation and cyberware control
+
+    **Performance:** P99 <10ms for hacking operations, zero allocations in hot path
+  version: 1.0.0
+  license:
+    name: Proprietary
+    url: https://necpgame.com/license
+  contact:
+    name: NECPGAME API Support
+    url: https://necpgame.com/support
+    email: api@combat-hacking.necpgame.com
+
+servers:
+  - url: http://localhost:8084/api/v1
+    description: Combat Hacking Service Go (development)
+  - url: https://combat-hacking-go.necpgame.com/api/v1
+    description: Combat Hacking Service Go (production)
+
+tags:
+  - name: Enemy Hacking
+    description: Hacking enemy implants and cyberware
+  - name: Device Hacking
+    description: Hacking devices, cameras, and electronics
+  - name: Infrastructure Hacking
+    description: Hacking networks and infrastructure
+  - name: Combat Hacking
+    description: Real-time hacking in combat scenarios
+  - name: Anti-Cheat
+    description: Hacking validation and cheat prevention
+
+paths:
+  # Health check
+  /health:
+    get:
+      summary: Service health check
+      operationId: healthCheck
+      tags:
+        - Health
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        '503':
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # Enemy hacking - HOT PATH
+  /hacking/enemies/scan:
+    post:
+      summary: Scan enemy cyberware
+      operationId: scanEnemyCyberware
+      description: |
+        Scan enemy implants and cyberware for vulnerabilities.
+
+        **BACKEND NOTE:** Hot path - optimized for 1000+ RPS, zero allocations.
+      tags:
+        - Enemy Hacking
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EnemyScanRequest'
+      responses:
+        '200':
+          description: Enemy scan result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnemyScanResult'
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /hacking/enemies/attack:
+    post:
+      summary: Execute enemy hacking attack
+      operationId: executeEnemyHack
+      description: Execute a hacking attack on enemy cyberware or implants.
+      tags:
+        - Enemy Hacking
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EnemyHackRequest'
+      responses:
+        '200':
+          description: Hacking attack result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnemyHackResult'
+        '400':
+          description: Invalid hacking parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Hacking blocked by ICE
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # Device hacking
+  /hacking/devices/scan:
+    post:
+      summary: Scan device vulnerabilities
+      operationId: scanDevice
+      description: Scan electronic devices for hacking vulnerabilities.
+      tags:
+        - Device Hacking
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeviceScanRequest'
+      responses:
+        '200':
+          description: Device scan result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceScanResult'
+
+  /hacking/devices/hack:
+    post:
+      summary: Hack electronic device
+      operationId: hackDevice
+      description: Execute hacking attack on electronic device.
+      tags:
+        - Device Hacking
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeviceHackRequest'
+      responses:
+        '200':
+          description: Device hack result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceHackResult'
+
+  # Infrastructure hacking
+  /hacking/networks/infiltrate:
+    post:
+      summary: Infiltrate network
+      operationId: infiltrateNetwork
+      description: Attempt to infiltrate a computer network.
+      tags:
+        - Infrastructure Hacking
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NetworkInfiltrationRequest'
+      responses:
+        '200':
+          description: Network infiltration result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NetworkInfiltrationResult'
+        '403':
+          description: Network access denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /hacking/networks/extract-data:
+    post:
+      summary: Extract data from network
+      operationId: extractNetworkData
+      description: Extract data from infiltrated network.
+      tags:
+        - Infrastructure Hacking
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DataExtractionRequest'
+      responses:
+        '200':
+          description: Data extraction result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DataExtractionResult'
+
+  # Combat hacking support
+  /hacking/combat/support:
+    post:
+      summary: Request combat hacking support
+      operationId: requestCombatSupport
+      description: Request hacking support for ongoing combat.
+      tags:
+        - Combat Hacking
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CombatSupportRequest'
+      responses:
+        '200':
+          description: Combat support granted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CombatSupportResult'
+
+  # Anti-cheat validation
+  /hacking/validate:
+    post:
+      summary: Validate hacking attempt
+      operationId: validateHackingAttempt
+      description: |
+        Validate hacking attempt for anti-cheat purposes.
+
+        **BACKEND NOTE:** Used for cheat detection and prevention.
+      tags:
+        - Anti-Cheat
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HackingValidationRequest'
+      responses:
+        '200':
+          description: Validation result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HackingValidationResult'
+        '400':
+          description: Invalid validation request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # Active hacks management
+  /hacking/active/{player_id}:
+    get:
+      summary: Get active hacks
+      operationId: getActiveHacks
+      description: Retrieve all active hacks for a player.
+      tags:
+        - Combat Hacking
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Player ID
+      responses:
+        '200':
+          description: Active hacks list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActiveHacksResponse'
+
+  /hacking/active/{hack_id}/cancel:
+    post:
+      summary: Cancel active hack
+      operationId: cancelActiveHack
+      description: Cancel an active hacking operation.
+      tags:
+        - Combat Hacking
+      parameters:
+        - name: hack_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Hack ID to cancel
+      responses:
+        '200':
+          description: Hack cancelled successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: cancelled
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      description: JWT Bearer token authentication
+
+  schemas:
+    # Health response
+    HealthResponse:
+      type: object
+      required:
+        - status
+        - timestamp
+      properties:
+        status:
+          type: string
+          enum: [healthy]
+        timestamp:
+          type: string
+          format: date-time
+        version:
+          type: string
+
+    # Error response
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          description: Error code
+        message:
+          type: string
+          description: Human-readable error message
+        details:
+          type: object
+          description: Additional error details
+
+    # Enemy hacking - memory optimized
+    EnemyScanRequest:
+      $ref: './schemas/enemy-scan-request.yaml'
+
+    EnemyScanResult:
+      $ref: './schemas/enemy-scan-result.yaml'
+
+    EnemyHackRequest:
+      $ref: './schemas/enemy-hack-request.yaml'
+
+    EnemyHackResult:
+      $ref: './schemas/enemy-hack-result.yaml'
+
+    # Device hacking
+    DeviceScanRequest:
+      $ref: './schemas/device-scan-request.yaml'
+
+    DeviceScanResult:
+      $ref: './schemas/device-scan-result.yaml'
+
+    DeviceHackRequest:
+      $ref: './schemas/device-hack-request.yaml'
+
+    DeviceHackResult:
+      $ref: './schemas/device-hack-result.yaml'
+
+    # Infrastructure hacking
+    NetworkInfiltrationRequest:
+      $ref: './schemas/network-infiltration-request.yaml'
+
+    NetworkInfiltrationResult:
+      $ref: './schemas/network-infiltration-result.yaml'
+
+    DataExtractionRequest:
+      $ref: './schemas/data-extraction-request.yaml'
+
+    DataExtractionResult:
+      $ref: './schemas/data-extraction-result.yaml'
+
+    # Combat support
+    CombatSupportRequest:
+      $ref: './schemas/combat-support-request.yaml'
+
+    CombatSupportResult:
+      $ref: './schemas/combat-support-result.yaml'
+
+    # Anti-cheat validation
+    HackingValidationRequest:
+      $ref: './schemas/hacking-validation-request.yaml'
+
+    HackingValidationResult:
+      $ref: './schemas/hacking-validation-result.yaml'
+
+    # Active hacks
+    ActiveHacksResponse:
+      $ref: './schemas/active-hacks-response.yaml'
+
+security:
+  - BearerAuth: []

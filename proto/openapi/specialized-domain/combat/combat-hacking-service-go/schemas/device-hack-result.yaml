@@ -1,0 +1,91 @@
+# Issue: #1530
+type: object
+required:
+  - hack_id
+  - success
+  - hack_action
+properties:
+  hack_id:
+    type: string
+    format: uuid
+    description: Unique identifier for this hack operation
+  success:
+    type: boolean
+    description: Whether the hack was successful
+  hack_action:
+    type: string
+    enum: [take_control, disable, overload, extract_data, reprogram, destroy]
+    description: Action that was performed
+  device_status:
+    type: string
+    enum: [normal, disabled, overloaded, destroyed, controlled, reprogrammed]
+    description: Current status of the device after hack
+  control_session:
+    type: object
+    description: Control session details if device is now controlled
+    required:
+      - session_id
+      - duration_minutes
+    properties:
+      session_id:
+        type: string
+        format: uuid
+        description: ID of the control session
+      duration_minutes:
+        type: integer
+        minimum: 1
+        maximum: 60
+        description: Duration of control in minutes
+      available_commands:
+        type: array
+        items:
+          type: string
+          enum: [move, activate, deactivate, self_destruct, transmit_data]
+        description: Available commands for controlling the device
+  extracted_data:
+    type: object
+    description: Data extracted from device (if extract_data action)
+    properties:
+      security_logs:
+        type: array
+        items:
+          type: string
+        description: Security logs from the device
+      configuration:
+        type: object
+        description: Device configuration data
+      stored_information:
+        type: object
+        description: Any stored information on the device
+  reprogram_details:
+    type: object
+    description: Details of reprogramming (if reprogram action)
+    required:
+      - new_behavior
+    properties:
+      new_behavior:
+        type: string
+        description: Description of the new programmed behavior
+      effectiveness:
+        type: number
+        format: float
+        minimum: 0.0
+        maximum: 1.0
+        description: Effectiveness of the reprogramming (0.0-1.0)
+  destruction_details:
+    type: object
+    description: Details of destruction (if destroy action)
+    required:
+      - destruction_type
+    properties:
+      destruction_type:
+        type: string
+        enum: [overload, virus, physical_damage]
+        description: Type of destruction applied
+      collateral_damage:
+        type: integer
+        minimum: 0
+        description: Amount of collateral damage caused
+  error_message:
+    type: string
+    description: Error message if hack failed

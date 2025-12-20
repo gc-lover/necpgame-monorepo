@@ -1,0 +1,216 @@
+# Issue: #content-management-api
+openapi: 3.0.3
+info:
+  title: Social Domain - Content Management Dialogues Module
+  description: |
+    **Dialogue Management API** for NECPGAME MMOFPS RPG.
+
+    **Purpose:** CRUD operations for NPC dialogues and conversation trees
+
+    **Performance Targets:**
+    - Dialogue queries: 2000+ RPS, P99 <20ms
+    - Tree traversal: <5ms per node
+    - Memory: <50MB per service instance
+
+    **Features:**
+    - Dialogue tree CRUD
+    - Condition-based responses
+    - Quest integration
+  version: 1.0.0
+  contact:
+    name: NECPGAME Content API Support
+    email: content@social.necpgame.com
+
+servers:
+  - url: http://localhost:8084/api/v1/social/content/dialogues
+    description: Development server
+  - url: https://api.necpgame.com/api/v1/social/content/dialogues
+    description: Production server
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Dialogues
+    description: Dialogue management endpoints
+
+paths:
+  /:
+    get:
+      summary: List dialogues
+      operationId: listDialogues
+      tags: [Dialogues]
+      parameters:
+        - name: npc_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: quest_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: List of dialogues
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DialoguesListResponse"
+    post:
+      summary: Create new dialogue
+      operationId: createDialogue
+      tags: [Dialogues]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateDialogueRequest"
+      responses:
+        "201":
+          description: Dialogue created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DialogueResponse"
+
+  /{dialogue_id}:
+    get:
+      summary: Get dialogue by ID
+      operationId: getDialogue
+      tags: [Dialogues]
+      parameters:
+        - name: dialogue_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Dialogue details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DialogueResponse"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    # Dialogue schemas
+    Dialogue:
+      type: object
+      required: [id, npc_id, nodes]
+      properties:
+        id:
+          type: string
+          format: uuid
+        npc_id:
+          type: string
+          format: uuid
+        quest_id:
+          type: string
+          format: uuid
+        nodes:
+          type: array
+          items:
+            $ref: "#/components/schemas/DialogueNode"
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    DialogueNode:
+      type: object
+      required: [id, text, responses]
+      properties:
+        id:
+          type: string
+          format: uuid
+        text:
+          type: string
+          maxLength: 1000
+        responses:
+          type: array
+          items:
+            $ref: "#/components/schemas/DialogueResponse"
+        conditions:
+          type: array
+          items:
+            $ref: "#/components/schemas/DialogueCondition"
+
+    DialogueResponse:
+      type: object
+      required: [text]
+      properties:
+        text:
+          type: string
+          maxLength: 200
+        next_node_id:
+          type: string
+          format: uuid
+        actions:
+          type: array
+          items:
+            $ref: "#/components/schemas/DialogueAction"
+
+    DialogueCondition:
+      type: object
+      required: [type, value]
+      properties:
+        type:
+          type: string
+          enum: [quest_completed, item_owned, reputation_level, faction_standing]
+        value:
+          type: string
+        operator:
+          type: string
+          enum: [equals, greater_than, less_than, contains]
+
+    DialogueAction:
+      type: object
+      required: [type]
+      properties:
+        type:
+          type: string
+          enum: [start_quest, complete_quest, give_item, remove_item, change_reputation]
+        target_id:
+          type: string
+          format: uuid
+        amount:
+          type: integer
+
+    CreateDialogueRequest:
+      type: object
+      required: [npc_id, nodes]
+      properties:
+        npc_id:
+          type: string
+          format: uuid
+        quest_id:
+          type: string
+          format: uuid
+        nodes:
+          type: array
+          items:
+            $ref: "#/components/schemas/DialogueNode"
+
+    DialoguesListResponse:
+      type: object
+      properties:
+        dialogues:
+          type: array
+          items:
+            $ref: "#/components/schemas/Dialogue"
+        total_count:
+          type: integer
+          minimum: 0

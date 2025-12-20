@@ -1,0 +1,70 @@
+# Issue: #2237 - Content Import API for Backend
+openapi: 3.0.3
+info:
+  title: "Content Import Service API"
+  description: |
+    Enterprise-grade content import service for bulk YAML content operations.
+
+    Supports mass import of quests, NPCs, dialogues, and lore from YAML files.
+    Optimized for 1000+ content files import with validation and rollback.
+
+    BACKEND NOTE: Memory-aligned schemas for efficient bulk processing.
+    Expected throughput: 500 content files/minute with validation.
+  version: 1.0.0
+  contact:
+    name: "Content Management Team"
+
+servers:
+  - url: https://api.necpgame.com/v1/content
+    description: Production server
+  - url: http://localhost:8080/api/v1/content
+    description: Local development
+
+security:
+  - BearerAuth: []
+
+paths:
+  $ref: './paths/quest-import.yaml#/paths'
+  $ref: './paths/npc-import.yaml#/paths'
+  $ref: './paths/dialogue-import.yaml#/paths'
+  $ref: './paths/lore-import.yaml#/paths'
+  $ref: './paths/validation-export.yaml#/paths'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    $ref: './schemas/import-schemas.yaml#/components/schemas'
+
+  responses:
+    ImportSuccess:
+      description: "Import completed successfully"
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ImportResult'
+
+    ValidationFailed:
+      description: "Content validation failed"
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ValidationError'
+
+    BadRequest:
+      description: "Invalid request parameters"
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: string
+              details:
+                type: object

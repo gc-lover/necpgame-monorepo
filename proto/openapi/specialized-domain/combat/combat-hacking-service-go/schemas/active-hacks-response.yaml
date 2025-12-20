@@ -1,0 +1,120 @@
+# Issue: #1530
+type: object
+required:
+  - player_id
+  - active_hacks
+properties:
+  player_id:
+    type: string
+    format: uuid
+    description: ID of the player
+  active_hacks:
+    type: array
+    items:
+      type: object
+      required:
+        - hack_id
+        - hack_type
+        - target_id
+        - start_time
+        - status
+      properties:
+        hack_id:
+          type: string
+          format: uuid
+          description: Unique identifier for the hack
+        hack_type:
+          type: string
+          enum: [enemy_hack, device_hack, network_infiltration, data_extraction, combat_support]
+          description: Type of hacking operation
+        target_id:
+          type: string
+          format: uuid
+          description: ID of the target being hacked
+        target_type:
+          type: string
+          enum: [enemy, device, network, data_source, combat_session]
+          description: Type of target
+        start_time:
+          type: string
+          format: date-time
+          description: When the hack was initiated
+        estimated_completion:
+          type: string
+          format: date-time
+          description: Estimated completion time
+        status:
+          type: string
+          enum: [in_progress, completing, completed, failed, cancelled]
+          description: Current status of the hack
+        progress_percent:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Completion progress (0.0-1.0)
+        effect_details:
+          type: object
+          description: Details of the hack effect (if applicable)
+          properties:
+            effect_type:
+              type: string
+              enum: [control, disable, overload, data_transfer, support_active]
+              description: Type of effect being applied
+            duration_remaining_seconds:
+              type: integer
+              minimum: 0
+              description: Time remaining for effect in seconds
+            intensity_level:
+              type: integer
+              minimum: 1
+              maximum: 5
+              description: Current intensity level of the hack
+        risk_metrics:
+          type: object
+          description: Current risk metrics for this hack
+          properties:
+            detection_risk:
+              type: number
+              format: float
+              minimum: 0.0
+              maximum: 1.0
+              description: Current detection risk (0.0-1.0)
+            ice_damage_risk:
+              type: number
+              format: float
+              minimum: 0.0
+              maximum: 1.0
+              description: Risk of taking ICE damage (0.0-1.0)
+            failure_probability:
+              type: number
+              format: float
+              minimum: 0.0
+              maximum: 1.0
+              description: Probability of hack failure (0.0-1.0)
+  total_active_hacks:
+    type: integer
+    minimum: 0
+    description: Total number of active hacks for this player
+  resource_usage:
+    type: object
+    description: Current resource usage by active hacks
+    properties:
+      ram_percentage:
+        type: number
+        format: float
+        minimum: 0.0
+        maximum: 1.0
+        description: RAM usage percentage (0.0-1.0)
+      processing_percentage:
+        type: number
+        format: float
+        minimum: 0.0
+        maximum: 1.0
+        description: CPU processing usage percentage (0.0-1.0)
+      overheat_level:
+        type: number
+        format: float
+        minimum: 0.0
+        maximum: 1.0
+        description: Current overheat level from hacking (0.0-1.0)

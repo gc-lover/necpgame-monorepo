@@ -1,0 +1,62 @@
+# Issue: #1530
+type: object
+required:
+  - scan_id
+  - success
+  - vulnerabilities
+properties:
+  scan_id:
+    type: string
+    format: uuid
+    description: Unique identifier for this scan operation
+  success:
+    type: boolean
+    description: Whether the scan was successful
+  vulnerabilities:
+    type: array
+    items:
+      type: object
+      required:
+        - vulnerability_type
+        - severity
+        - exploitability
+      properties:
+        vulnerability_type:
+          type: string
+          enum: [weak_password, outdated_firmware, misconfiguration, backdoor, physical_access, network_exposure]
+          description: Type of vulnerability found
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+          description: Severity level of the vulnerability
+        exploitability:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: How easily exploitable (0.0-1.0)
+        description:
+          type: string
+          description: Human-readable description of the vulnerability
+  device_info:
+    type: object
+    required:
+      - model
+      - firmware_version
+    properties:
+      model:
+        type: string
+        description: Device model information
+      firmware_version:
+        type: string
+        description: Current firmware version
+      security_level:
+        type: string
+        enum: [none, basic, advanced, military]
+        description: Overall security level of the device
+  recommended_actions:
+    type: array
+    items:
+      type: string
+      enum: [password_crack, firmware_exploit, physical_override, network_spoof, backdoor_access]
+    description: Recommended hacking actions based on scan results

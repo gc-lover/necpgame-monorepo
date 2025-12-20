@@ -1,0 +1,68 @@
+# Issue: #2237 - Validation and Export Paths
+paths:
+  # Content Validation
+  /validate:
+    post:
+      summary: "Validate content files without importing"
+      operationId: validateContent
+      tags: ["Validation"]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                content_type:
+                  type: string
+                  enum: [quests, npcs, dialogues, lore]
+                  description: "Type of content to validate"
+                files:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                  minItems: 1
+                  maxItems: 50
+      responses:
+        '200':
+          description: "Validation completed"
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/import-schemas.yaml#/components/schemas/ValidationResult'
+
+  # Content Export (for backup/migration)
+  /export/{content_type}:
+    get:
+      summary: "Export content as YAML files"
+      operationId: exportContent
+      tags: ["Export"]
+      parameters:
+        - name: content_type
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [quests, npcs, dialogues, lore]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 1000
+            default: 100
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: "Content exported"
+          content:
+            application/zip:
+              schema:
+                type: string
+                format: binary

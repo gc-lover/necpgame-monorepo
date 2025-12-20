@@ -1,0 +1,81 @@
+# Issue: #1530
+type: object
+required:
+  - validation_id
+  - is_valid
+  - confidence_score
+properties:
+  validation_id:
+    type: string
+    format: uuid
+    description: Unique identifier for this validation check
+  is_valid:
+    type: boolean
+    description: Whether the hacking attempt is considered valid (not cheating)
+  confidence_score:
+    type: number
+    format: float
+    minimum: 0.0
+    maximum: 1.0
+    description: Confidence level in the validation result (0.0-1.0)
+  validation_flags:
+    type: array
+    items:
+      type: string
+      enum: [speed_hack_detected, aimbot_suspected, wallhack_indicated, macro_usage, invalid_distance, impossible_timing, unauthorized_tools]
+    description: Specific validation flags that were triggered
+  risk_assessment:
+    type: object
+    required:
+      - risk_level
+      - risk_factors
+    properties:
+      risk_level:
+        type: string
+        enum: [low, medium, high, critical]
+        description: Overall risk level of the hacking attempt
+      risk_factors:
+        type: array
+        items:
+          type: object
+          required:
+            - factor
+            - severity
+          properties:
+            factor:
+              type: string
+              enum: [unusual_speed, perfect_accuracy, invalid_targeting, timing_anomaly, unauthorized_access, environmental_mismatch]
+              description: Specific risk factor identified
+            severity:
+              type: number
+              format: float
+              minimum: 0.0
+              maximum: 1.0
+              description: Severity of this risk factor (0.0-1.0)
+        description: Detailed risk factors identified
+  recommended_actions:
+    type: array
+    items:
+      type: string
+      enum: [allow_attempt, flag_for_review, temporary_ban, permanent_ban, log_incident, require_manual_review]
+    description: Recommended actions based on validation results
+  detection_metadata:
+    type: object
+    description: Technical metadata about the detection process
+    properties:
+      processing_time_ms:
+        type: integer
+        minimum: 0
+        description: Time taken to perform validation in milliseconds
+      algorithms_used:
+        type: array
+        items:
+          type: string
+          enum: [behavioral_analysis, statistical_modeling, pattern_recognition, distance_calculation, timing_analysis]
+        description: Algorithms used in validation
+      false_positive_probability:
+        type: number
+        format: float
+        minimum: 0.0
+        maximum: 1.0
+        description: Estimated probability of false positive detection
