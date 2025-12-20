@@ -1,0 +1,101 @@
+# Guild territory management operations
+# Issue: #2235
+
+paths:
+  # Guild territories
+  /guilds/{guild_id}/territories:
+    get:
+      summary: Get guild territories
+      description: Retrieves list of territories controlled by the guild.
+      operationId: getGuildTerritories
+      tags:
+        - Guild Territories
+      parameters:
+        - name: guild_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Guild identifier
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [controlled, contested, lost]
+            default: controlled
+          description: Territory control status
+      responses:
+        '200':
+          description: Territories retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/territory-schemas.yaml#/components/schemas/GuildTerritoriesResponse'
+        '403':
+          description: Not authorized to view territories
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+        '404':
+          description: Guild not found
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+
+    post:
+      summary: Claim territory
+      description: |
+        Attempts to claim a territory for the guild.
+
+        **BACKEND NOTE:** Complex operation involving:
+        - Territory availability checks
+        - Combat requirements validation
+        - Resource cost deduction
+        - Notification broadcasts
+      operationId: claimTerritory
+      tags:
+        - Guild Territories
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: guild_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Guild identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/territory-schemas.yaml#/components/schemas/ClaimTerritoryRequest'
+      responses:
+        '201':
+          description: Territory claim initiated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/territory-schemas.yaml#/components/schemas/TerritoryClaimResponse'
+        '400':
+          description: Invalid request or territory not available
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+        '403':
+          description: Not authorized to claim territories
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+        '409':
+          description: Territory already claimed or contested
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'

@@ -1,0 +1,246 @@
+# Guild member management operations
+# Issue: #2235
+
+paths:
+  # Guild member management
+  /guilds/{guild_id}/members:
+    get:
+      summary: Get guild members
+      description: Retrieves list of guild members with their roles and status.
+      operationId: getGuildMembers
+      tags:
+        - Guild Members
+      parameters:
+        - name: guild_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Guild identifier
+        - name: role
+          in: query
+          schema:
+            type: string
+            enum: [leader, officer, member, recruit]
+          description: Filter by member role
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, inactive, suspended]
+            default: active
+          description: Filter by member status
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 250
+            default: 50
+          description: Number of results per page
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          description: Pagination offset
+      responses:
+        '200':
+          description: Members retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/member-schemas.yaml#/components/schemas/GuildMembersResponse'
+        '400':
+          description: Invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+        '403':
+          description: Not authorized to view guild members
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+        '404':
+          description: Guild not found
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+
+    post:
+      summary: Invite player to guild
+      description: |
+        Sends an invitation to a player to join the guild.
+
+        **BACKEND NOTE:** Creates invitation record and sends notification.
+        Player must accept invitation to become member.
+      operationId: invitePlayerToGuild
+      tags:
+        - Guild Members
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: guild_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Guild identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/member-schemas.yaml#/components/schemas/InvitePlayerRequest'
+      responses:
+        '201':
+          description: Invitation sent successfully
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/member-schemas.yaml#/components/schemas/InvitationResponse'
+        '400':
+          description: Invalid request data
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+        '403':
+          description: Not authorized to invite players
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+        '404':
+          description: Guild not found
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+        '409':
+          description: Player already invited or member
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+
+  /guilds/{guild_id}/members/{player_id}:
+    put:
+      summary: Update member role
+      description: |
+        Updates a member's role within the guild.
+
+        **BACKEND NOTE:** Requires leadership permissions.
+        Role changes are logged for audit purposes.
+      operationId: updateMemberRole
+      tags:
+        - Guild Members
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: guild_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Guild identifier
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Player identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/member-schemas.yaml#/components/schemas/UpdateMemberRoleRequest'
+      responses:
+        '200':
+          description: Member role updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/member-schemas.yaml#/components/schemas/GuildMemberResponse'
+        '400':
+          description: Invalid request data
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+        '403':
+          description: Not authorized to update member roles
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+        '404':
+          description: Guild or member not found
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+
+    delete:
+      summary: Remove member from guild
+      description: |
+        Removes a member from the guild (kick or voluntary leave).
+
+        **BACKEND NOTE:** Handles both voluntary leaves and forced removals.
+        Different authorization levels required.
+      operationId: removeGuildMember
+      tags:
+        - Guild Members
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: guild_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Guild identifier
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Player identifier
+        - name: reason
+          in: query
+          schema:
+            type: string
+            enum: [voluntary, inactive, violation, leadership_decision]
+          description: Reason for removal (required for kicks)
+      responses:
+        '204':
+          description: Member removed successfully (No Content)
+        '400':
+          description: Invalid parameters or reason required
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+        '403':
+          description: Not authorized to remove this member
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+        '404':
+          description: Guild or member not found
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'

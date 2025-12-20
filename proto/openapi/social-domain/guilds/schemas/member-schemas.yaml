@@ -1,0 +1,108 @@
+# Guild member management schemas
+# Issue: #2235
+
+components:
+  schemas:
+    # Guild member entity
+    GuildMember:
+      type: object
+      required:
+        - player_id
+        - username
+        - role
+        - joined_at
+        - is_active
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          description: Player identifier
+        username:
+          type: string
+          description: Player display name
+          example: "V_Judy"
+        role:
+          type: string
+          enum: [leader, officer, member, recruit]
+          description: Member role in guild
+        joined_at:
+          type: string
+          format: date-time
+          description: When player joined the guild
+        last_active:
+          type: string
+          format: date-time
+          description: Last activity timestamp
+        contribution_score:
+          type: integer
+          minimum: 0
+          description: Member contribution score
+        is_active:
+          type: boolean
+          description: Whether member is currently active
+
+    GuildMembersResponse:
+      type: object
+      required:
+        - members
+        - total_count
+      properties:
+        members:
+          type: array
+          items:
+            $ref: '#/components/schemas/GuildMember'
+        total_count:
+          type: integer
+          description: Total number of members
+
+    GuildMemberResponse:
+      type: object
+      required:
+        - member
+      properties:
+        member:
+          $ref: '#/components/schemas/GuildMember'
+
+    InvitePlayerRequest:
+      type: object
+      required:
+        - player_id
+        - message
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          description: Player to invite
+        message:
+          type: string
+          maxLength: 200
+          description: Invitation message
+
+    InvitationResponse:
+      type: object
+      required:
+        - invitation_id
+        - expires_at
+      properties:
+        invitation_id:
+          type: string
+          format: uuid
+          description: Unique invitation identifier
+        expires_at:
+          type: string
+          format: date-time
+          description: When invitation expires
+
+    UpdateMemberRoleRequest:
+      type: object
+      required:
+        - new_role
+      properties:
+        new_role:
+          type: string
+          enum: [leader, officer, member, recruit]
+          description: New role for the member
+        reason:
+          type: string
+          maxLength: 200
+          description: Reason for role change

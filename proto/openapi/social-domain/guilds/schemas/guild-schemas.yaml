@@ -1,0 +1,231 @@
+# Guild entity and management schemas
+# Issue: #2235
+
+components:
+  schemas:
+    # Guild entity - memory optimized (large → small types)
+    Guild:
+      type: object
+      required:
+        - id
+        - name
+        - created_at
+        - level
+        - member_count
+        - is_active
+      properties:
+        # Large types first (for struct alignment)
+        id:
+          type: string
+          format: uuid
+          description: Guild unique identifier
+          example: "550e8400-e29b-41d4-a716-446655440000"
+
+        name:
+          type: string
+          minLength: 3
+          maxLength: 50
+          description: Guild display name
+          example: "Shadow Hunters"
+
+        description:
+          type: string
+          maxLength: 500
+          description: Guild description
+          example: "Elite PvP guild focused on territory control and resource acquisition."
+
+        motto:
+          type: string
+          maxLength: 100
+          description: Guild motto/slogan
+          example: "Conquer or Die"
+
+        faction:
+          type: string
+          enum: [corporate, nomad, street_kid, mercenary, other]
+          description: Guild faction alignment
+          example: "nomad"
+
+        leader_id:
+          type: string
+          format: uuid
+          description: UUID of the guild leader
+          example: "550e8400-e29b-41d4-a716-446655440001"
+
+        created_at:
+          type: string
+          format: date-time
+          description: Timestamp of guild creation
+          example: "2025-12-20T10:00:00Z"
+
+        last_activity:
+          type: string
+          format: date-time
+          description: Last guild activity timestamp
+          example: "2025-12-20T14:30:00Z"
+
+        # Medium types
+        level:
+          type: integer
+          format: int32
+          minimum: 1
+          maximum: 100
+          description: Guild level
+          example: 15
+
+        member_count:
+          type: integer
+          format: int32
+          minimum: 1
+          maximum: 250
+          description: Current number of members
+          example: 75
+
+        max_members:
+          type: integer
+          format: int32
+          minimum: 1
+          maximum: 250
+          description: Maximum allowed members
+          example: 100
+
+        reputation_score:
+          type: integer
+          format: int32
+          minimum: -10000
+          maximum: 10000
+          description: Guild reputation score
+          example: 1250
+
+        territory_count:
+          type: integer
+          format: int32
+          minimum: 0
+          maximum: 50
+          description: Number of controlled territories
+          example: 3
+
+        win_rate:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Guild PvP win rate
+          example: 0.67
+
+        # Small types
+        is_recruiting:
+          type: boolean
+          description: Whether guild is accepting new members
+          example: true
+
+        is_active:
+          type: boolean
+          description: Indicates if the guild is active
+          example: true
+
+        has_bank:
+          type: boolean
+          description: Whether guild has bank functionality
+          example: true
+
+    # Request to create a new guild
+    CreateGuildRequest:
+      type: object
+      required:
+        - name
+        - description
+        - faction
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 50
+          description: Desired guild name
+          example: "Night City Legends"
+        description:
+          type: string
+          maxLength: 500
+          description: Guild description
+          example: "A new guild rising in Night City, seeking glory and wealth."
+        motto:
+          type: string
+          maxLength: 100
+          description: Guild motto
+          example: "Power Through Unity"
+        faction:
+          type: string
+          enum: [corporate, nomad, street_kid, mercenary, other]
+          description: Guild faction alignment
+          example: "street_kid"
+        max_members:
+          type: integer
+          minimum: 1
+          maximum: 250
+          default: 50
+          description: Maximum members allowed
+        is_recruiting:
+          type: boolean
+          default: true
+          description: Whether to accept new members immediately
+
+    # Request to update an existing guild
+    UpdateGuildRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 50
+          description: New guild name
+          example: "Night City Elite"
+        description:
+          type: string
+          maxLength: 500
+          description: New guild description
+          example: "Updated description for the elite guild."
+        motto:
+          type: string
+          maxLength: 100
+          description: New guild motto
+        faction:
+          type: string
+          enum: [corporate, nomad, street_kid, mercenary, other]
+          description: New faction alignment
+        max_members:
+          type: integer
+          minimum: 1
+          maximum: 250
+          description: New maximum members
+        is_recruiting:
+          type: boolean
+          description: Update recruiting status
+
+    # Response for a single guild
+    GuildResponse:
+      type: object
+      required:
+        - guild
+      properties:
+        guild:
+          $ref: '#/components/schemas/Guild'
+
+    # Response for a list of guilds
+    GuildsListResponse:
+      type: object
+      required:
+        - guilds
+        - total_count
+      properties:
+        guilds:
+          type: array
+          items:
+            $ref: '#/components/schemas/Guild'
+          description: List of guilds
+        total_count:
+          type: integer
+          description: Total number of guilds matching criteria
+          example: 150
+        has_more:
+          type: boolean
+          description: Whether there are more results available
+          example: true

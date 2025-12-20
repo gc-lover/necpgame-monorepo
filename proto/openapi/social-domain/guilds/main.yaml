@@ -3,187 +3,126 @@ openapi: 3.0.3
 info:
   title: Social Domain - Guilds Module API
   description: |
-    Guilds module API for NECPGAME MMOFPS RPG.
+    **Enterprise-Grade Guilds Module** for NECPGAME MMOFPS RPG.
 
-    **Enterprise-Grade Domain:** social-domain
+    **Module Purpose:** Complete guild management system with warfare, territories, and social hierarchy
+
+    **Architecture:** Event-driven microservice with Kafka integration
+    **Domain:** social-domain
     **Module:** guilds
-    **Purpose:** Complete guild management system
+
+    **Core Features:**
+    - Guild creation and lifecycle management
+    - Member management and roles (leader, officer, member)
+    - Guild bank and resource management
+    - Territory claiming and defense
+    - Guild warfare and PvP mechanics
+    - Reputation and ranking systems
+    - Cross-guild alliances and diplomacy
+
+    **Performance Targets:**
+    - Hot paths: 2000+ RPS, P99 <15ms (guild status, member lists)
+    - Event throughput: 1000+ events/sec (guild updates, territory changes)
+    - Memory: <30MB per service instance (optimized structs)
+    - Cache hit rate: >95% (Redis for active guilds)
 
     **BACKEND NOTE:** Struct field alignment optimized (large → small types).
     All schemas ordered for optimal memory layout in generated Go code.
     Expected memory savings: 30-50% for guild-related structs.
-
-    **Features:**
-    - Guild creation and management
-    - Member management and roles
-    - Guild bank and resources
-    - Guild territories and wars
-    - Guild tournaments and events
   version: 1.0.0
-  license:
-    name: Proprietary
   contact:
-    name: NECPGAME API Support
+    name: NECPGAME Guilds API Support
     url: https://necpgame.com/support
     email: api@guilds.necpgame.com
 
 servers:
-  - url: http://localhost:8084/api/v1
-    description: Guilds Service (development)
+  - url: http://localhost:8084/api/v1/social-domain/guilds
+    description: Guilds Module Development Server
   - url: https://guilds.necpgame.com/api/v1
-    description: Guilds Service (production)
+    description: Guilds Module Production Server
 
 security:
   - BearerAuth: []
 
 tags:
   - name: Guild Management
-    description: Core guild operations
-  - name: Member Management
-    description: Guild member operations
-  - name: Role Management
-    description: Guild roles and permissions
-  - name: Bank Management
-    description: Guild bank and resources
-  - name: Territory Management
-    description: Guild territories
-  - name: War Management
-    description: Guild wars and PvP
+    description: Core guild CRUD operations
+  - name: Guild Members
+    description: Member management and roles
+  - name: Guild Bank
+    description: Resource and inventory management
+  - name: Guild Territories
+    description: Territory claiming and control
+  - name: Guild Warfare
+    description: PvP and conflict systems
+  - name: Guild Statistics
+    description: Analytics and performance metrics
 
-# Include paths from sub-modules
 paths:
-  # Guild Core operations
-  $ref: './guild-core-service.yaml#/paths'
+  # Guild management endpoints
+  /health:
+    $ref: './paths/guild-management.yaml#/paths/~1health'
+  /guilds:
+    $ref: './paths/guild-management.yaml#/paths/~1guilds'
+  /guilds/{guild_id}:
+    $ref: './paths/guild-management.yaml#/paths/~1guilds~1{guild_id}'
 
-  # Member management (will be created in next iteration)
-  # $ref: './guild-service/guild-members-paths.yaml#/paths'
+  # Member management endpoints
+  /guilds/{guild_id}/members:
+    $ref: './paths/member-management.yaml#/paths/~1guilds~1{guild_id}~1members'
+  /guilds/{guild_id}/members/{player_id}:
+    $ref: './paths/member-management.yaml#/paths/~1guilds~1{guild_id}~1members~1{player_id}'
 
-  # Bank operations (existing file)
-  $ref: './guild-bank-service.yaml#/paths'
-
-  # Territory operations (existing file)
-  $ref: './guild-territory-service.yaml#/paths'
-
-  # War operations (existing file)
-  $ref: './guild-war-service.yaml#/paths'
+  # Territory management endpoints
+  /guilds/{guild_id}/territories:
+    $ref: './paths/territory-management.yaml#/paths/~1guilds~1{guild_id}~1territories'
 
 components:
   securitySchemes:
     BearerAuth:
       type: http
       scheme: bearer
-      bearerFormat: JWT
+      description: JWT Bearer token authentication
 
-  # Common parameters
-  parameters:
-    GuildId:
-      name: guildId
-      in: path
-      required: true
-      description: Guild unique identifier
-      schema:
-        type: string
-        format: uuid
-        example: "550e8400-e29b-41d4-a716-446655440000"
-
-    Page:
-      name: page
-      in: query
-      description: Page number for pagination
-      schema:
-        type: integer
-        minimum: 1
-        default: 1
-
-    Limit:
-      name: limit
-      in: query
-      description: Number of items per page
-      schema:
-        type: integer
-        minimum: 1
-        maximum: 100
-        default: 20
-
-  # Schemas (core schemas defined here, extended by sub-modules)
   schemas:
-    # Common error responses
-    ErrorResponse:
-      type: object
-      required:
-        - error
-        - message
-      properties:
-        error:
-          type: string
-          example: "VALIDATION_ERROR"
-        message:
-          type: string
-          example: "Invalid guild name"
-        details:
-          type: object
-          additionalProperties: true
-
+    # Include schemas from separate files
     HealthResponse:
-      type: object
-      properties:
-        status:
-          type: string
-          enum: [ok, degraded, down]
-          example: "ok"
-        timestamp:
-          type: string
-          format: date-time
-          example: "2024-01-01T12:00:00Z"
-        version:
-          type: string
-          example: "1.0.0"
+      $ref: './schemas/health-schemas.yaml#/components/schemas/HealthResponse'
+    ErrorResponse:
+      $ref: './schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
 
-  # Common responses
-  responses:
-    BadRequest:
-      description: Bad request
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
+    # Guild schemas
+    Guild:
+      $ref: './schemas/guild-schemas.yaml#/components/schemas/Guild'
+    CreateGuildRequest:
+      $ref: './schemas/guild-schemas.yaml#/components/schemas/CreateGuildRequest'
+    UpdateGuildRequest:
+      $ref: './schemas/guild-schemas.yaml#/components/schemas/UpdateGuildRequest'
+    GuildResponse:
+      $ref: './schemas/guild-schemas.yaml#/components/schemas/GuildResponse'
+    GuildsListResponse:
+      $ref: './schemas/guild-schemas.yaml#/components/schemas/GuildsListResponse'
 
-    Unauthorized:
-      description: Authentication required
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
+    # Member schemas
+    GuildMember:
+      $ref: './schemas/member-schemas.yaml#/components/schemas/GuildMember'
+    GuildMembersResponse:
+      $ref: './schemas/member-schemas.yaml#/components/schemas/GuildMembersResponse'
+    GuildMemberResponse:
+      $ref: './schemas/member-schemas.yaml#/components/schemas/GuildMemberResponse'
+    InvitePlayerRequest:
+      $ref: './schemas/member-schemas.yaml#/components/schemas/InvitePlayerRequest'
+    InvitationResponse:
+      $ref: './schemas/member-schemas.yaml#/components/schemas/InvitationResponse'
+    UpdateMemberRoleRequest:
+      $ref: './schemas/member-schemas.yaml#/components/schemas/UpdateMemberRoleRequest'
 
-    Forbidden:
-      description: Insufficient permissions
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-
-    NotFound:
-      description: Resource not found
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-
-    TooManyRequests:
-      description: Rate limit exceeded
-      headers:
-        Retry-After:
-          schema:
-            type: integer
-            example: 60
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-
-    InternalServerError:
-      description: Internal server error
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
+    # Territory schemas
+    Territory:
+      $ref: './schemas/territory-schemas.yaml#/components/schemas/Territory'
+    GuildTerritoriesResponse:
+      $ref: './schemas/territory-schemas.yaml#/components/schemas/GuildTerritoriesResponse'
+    ClaimTerritoryRequest:
+      $ref: './schemas/territory-schemas.yaml#/components/schemas/ClaimTerritoryRequest'
+    TerritoryClaimResponse:
+      $ref: './schemas/territory-schemas.yaml#/components/schemas/TerritoryClaimResponse'
