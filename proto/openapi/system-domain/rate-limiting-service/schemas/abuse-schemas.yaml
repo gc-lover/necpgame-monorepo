@@ -1,0 +1,356 @@
+# Abuse prevention and detection schemas
+# Issue: #2063
+
+components:
+  schemas:
+    # Abuse report for automated analysis
+    AbuseReport:
+      type: object
+      required:
+        - reporter_service
+        - suspect_identifier
+        - abuse_type
+        - evidence
+      properties:
+        reporter_service:
+          type: string
+          description: Service reporting the potential abuse
+          example: "guild-service"
+        suspect_identifier:
+          type: string
+          description: Suspected abuser identifier (IP, user ID, etc.)
+          example: "192.168.1.100"
+        identifier_type:
+          type: string
+          enum: [ip, user_id, api_key, session_id]
+          description: Type of suspect identifier
+          example: "ip"
+        abuse_type:
+          type: string
+          enum: [ddos_attempt, credential_stuffing, scraping, api_misuse, rate_manipulation]
+          description: Type of suspected abuse
+          example: "ddos_attempt"
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+          default: "medium"
+          description: Reported severity level
+        evidence:
+          type: object
+          description: Evidence supporting the abuse report
+          properties:
+            request_count:
+              type: integer
+              description: Number of suspicious requests
+              example: 1000
+            time_window_seconds:
+              type: integer
+              description: Time window for the suspicious activity
+              example: 300
+            unusual_patterns:
+              type: array
+              items:
+                type: string
+              description: Unusual patterns observed
+              example: ["rapid_endpoint_switching", "identical_payloads", "non_human_timing"]
+            affected_endpoints:
+              type: array
+              items:
+                type: string
+              description: Endpoints being abused
+              example: ["/api/v1/guilds/search", "/api/v1/players/online"]
+            user_agents:
+              type: array
+              items:
+                type: string
+              description: Suspicious user agents
+              example: ["Bot/1.0", "SuspiciousClient/2.1"]
+        context:
+          type: object
+          description: Additional context information
+          properties:
+            geo_location:
+              type: string
+              description: Geographic location if known
+              example: "Unknown"
+            vpn_detected:
+              type: boolean
+              description: Whether VPN usage was detected
+              example: true
+            proxy_detected:
+              type: boolean
+              description: Whether proxy usage was detected
+              example: false
+            tor_exit_node:
+              type: boolean
+              description: Whether Tor exit node was detected
+              example: false
+
+    # Blacklist management
+    BlacklistRequest:
+      type: object
+      required:
+        - entity_identifier
+        - entity_type
+        - reason
+      properties:
+        entity_identifier:
+          type: string
+          description: Entity to blacklist (IP, user ID, etc.)
+          example: "192.168.1.100"
+        entity_type:
+          type: string
+          enum: [ip, user_id, api_key, service, subnet]
+          description: Type of entity being blacklisted
+          example: "ip"
+        reason:
+          type: string
+          maxLength: 1000
+          description: Reason for blacklisting
+          example: "Confirmed DDoS attack from this IP address"
+        duration_seconds:
+          type: integer
+          minimum: 60
+          maximum: 2592000 # 30 days
+          default: 3600
+          description: How long to blacklist (0 = permanent)
+        severity:
+          type: string
+          enum: [temporary, permanent, critical]
+          default: "temporary"
+          description: Blacklist severity level
+        reported_by:
+          type: string
+          description: Who/what reported this entity
+          example: "security-team"
+
+    # Blacklist entry response
+    BlacklistEntry:
+      type: object
+      required:
+        - entry_id
+        - entity_identifier
+        - entity_type
+        - reason
+        - created_at
+        - expires_at
+        - status
+      properties:
+        entry_id:
+          type: string
+          format: uuid
+          description: Unique blacklist entry identifier
+          example: "bl1a2b3c4-d5e6-7890-1234-567890abcdef"
+        entity_identifier:
+          type: string
+          description: Blacklisted entity identifier
+          example: "192.168.1.100"
+        entity_type:
+          type: string
+          enum: [ip, user_id, api_key, service, subnet]
+          description: Type of blacklisted entity
+          example: "ip"
+        reason:
+          type: string
+          description: Reason for blacklisting
+          example: "Confirmed DDoS attack from this IP address"
+        severity:
+          type: string
+          enum: [temporary, permanent, critical]
+          description: Blacklist severity level
+          example: "temporary"
+        created_at:
+          type: string
+          format: date-time
+          description: When entry was created
+          example: "2025-12-20T21:43:00Z"
+        expires_at:
+          type: string
+          format: date-time
+          description: When blacklist expires (null for permanent)
+          example: "2025-12-20T22:43:00Z"
+        status:
+          type: string
+          enum: [active, expired, removed]
+          description: Current blacklist status
+          example: "active"
+        reported_by:
+          type: string
+          description: Who/what reported this entity
+          example: "security-team"
+        hit_count:
+          type: integer
+          minimum: 0
+          description: How many times this entry blocked requests
+          example: 150
+        last_hit_at:
+          type: string
+          format: date-time
+          description: Last time this entry blocked a request
+          example: "2025-12-20T21:45:30Z"
+
+    # Blacklist list response
+    BlacklistResponse:
+      type: object
+      required:
+        - entries
+        - total_count
+      properties:
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/BlacklistEntry'
+          description: List of blacklist entries
+        total_count:
+          type: integer
+          minimum: 0
+          description: Total number of entries
+        active_count:
+          type: integer
+          minimum: 0
+          description: Number of active entries
+        expired_count:
+          type: integer
+          minimum: 0
+          description: Number of expired entries
+        limit:
+          type: integer
+          description: Items per page
+        offset:
+          type: integer
+          description: Items skipped
+
+    # DDoS attack pattern detection
+    DDoSPattern:
+      type: object
+      required:
+        - pattern_id
+        - pattern_type
+        - detected_at
+        - severity
+        - affected_endpoints
+        - attack_characteristics
+      properties:
+        pattern_id:
+          type: string
+          format: uuid
+          description: Unique pattern identifier
+        pattern_type:
+          type: string
+          enum: [syn_flood, http_flood, slowloris, amplification, reflection, application_layer]
+          description: Type of DDoS attack pattern
+          example: "http_flood"
+        detected_at:
+          type: string
+          format: date-time
+          description: When pattern was detected
+          example: "2025-12-20T21:40:00Z"
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+          description: Attack severity
+          example: "high"
+        affected_endpoints:
+          type: array
+          items:
+            type: string
+          description: Endpoints being attacked
+          example: ["/api/v1/players/online", "/api/v1/guilds/search"]
+        attack_characteristics:
+          type: object
+          description: Technical characteristics of the attack
+          properties:
+            requests_per_second:
+              type: integer
+              description: Attack intensity
+              example: 5000
+            unique_ips:
+              type: integer
+              description: Number of unique attacking IPs
+              example: 50
+            botnet_indicators:
+              type: array
+              items:
+                type: string
+              description: Indicators of botnet involvement
+              example: ["coordinated_timing", "similar_user_agents", "rapid_ip_rotation"]
+            amplification_factor:
+              type: number
+              format: float
+              description: How much the attack is amplified
+              example: 2.5
+        mitigation_actions:
+          type: array
+          items:
+            type: object
+            properties:
+              action_type:
+                type: string
+                enum: [rate_limit_increase, blacklist_add, geo_block, challenge_required]
+                example: "rate_limit_increase"
+              target:
+                type: string
+                description: What the action targets
+                example: "all_endpoints"
+              applied_at:
+                type: string
+                format: date-time
+                description: When action was applied
+                example: "2025-12-20T21:40:30Z"
+              effectiveness:
+                type: string
+                enum: [pending, effective, ineffective]
+                description: How effective the mitigation was
+                example: "effective"
+          description: Automated mitigation actions taken
+
+    # Security event for logging and alerting
+    SecurityEvent:
+      type: object
+      required:
+        - event_id
+        - event_type
+        - timestamp
+        - severity
+        - source
+      properties:
+        event_id:
+          type: string
+          format: uuid
+          description: Unique security event identifier
+        event_type:
+          type: string
+          enum: [abuse_detected, blacklist_hit, ddos_pattern, anomaly_detected, mitigation_applied]
+          description: Type of security event
+          example: "abuse_detected"
+        timestamp:
+          type: string
+          format: date-time
+          description: Event timestamp
+          example: "2025-12-20T21:43:15Z"
+        severity:
+          type: string
+          enum: [info, low, medium, high, critical]
+          description: Event severity
+          example: "high"
+        source:
+          type: string
+          description: Service/component that generated the event
+          example: "rate-limiting-service"
+        details:
+          type: object
+          description: Event-specific details
+          additionalProperties: true
+          example:
+            suspect_ip: "192.168.1.100"
+            blocked_requests: 250
+            attack_type: "http_flood"
+        mitigation_status:
+          type: string
+          enum: [none, automatic, manual, pending]
+          description: Type of mitigation applied
+          example: "automatic"
+        alert_sent:
+          type: boolean
+          description: Whether alert was sent to security team
+          example: true

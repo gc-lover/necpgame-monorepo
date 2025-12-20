@@ -1,0 +1,342 @@
+# Rate limit management schemas
+# Issue: #2063
+
+components:
+  schemas:
+    # Rate limit rule entity - memory optimized
+    RateLimitRule:
+      type: object
+      required:
+        - rule_id
+        - service_name
+        - endpoint_pattern
+        - algorithm
+        - limits
+        - created_at
+        - status
+      properties:
+        # Large types first
+        rule_id:
+          type: string
+          format: uuid
+          description: Unique rate limit rule identifier
+          example: "rl1a2b3c4-d5e6-7890-1234-567890abcdef"
+
+        service_name:
+          type: string
+          description: Name of the protected service
+          example: "guild-service"
+
+        endpoint_pattern:
+          type: string
+          description: Endpoint pattern to protect (supports wildcards)
+          example: "/api/v1/guilds/*/members"
+
+        description:
+          type: string
+          maxLength: 500
+          description: Optional rule description
+          example: "Standard rate limit for guild member operations"
+
+        created_at:
+          type: string
+          format: date-time
+          description: Rule creation timestamp
+          example: "2025-12-20T21:43:00Z"
+
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+          example: "2025-12-20T21:45:00Z"
+
+        # Medium types
+        algorithm:
+          type: string
+          enum: [token_bucket, sliding_window, leaky_bucket, fixed_window]
+          description: Rate limiting algorithm
+          example: "token_bucket"
+
+        status:
+          type: string
+          enum: [active, inactive, paused]
+          description: Rule status
+          example: "active"
+
+        priority:
+          type: integer
+          minimum: 0
+          maximum: 100
+          default: 50
+          description: Rule priority (higher values take precedence)
+          example: 75
+
+        # Small types
+        limits:
+          type: object
+          description: Rate limit configuration
+          properties:
+            requests_per_second:
+              type: integer
+              minimum: 1
+              maximum: 10000
+              description: Requests per second limit
+              example: 100
+            requests_per_minute:
+              type: integer
+              minimum: 1
+              maximum: 100000
+              description: Requests per minute limit
+              example: 1000
+            requests_per_hour:
+              type: integer
+              minimum: 1
+              maximum: 1000000
+              description: Requests per hour limit
+              example: 10000
+            burst_limit:
+              type: integer
+              minimum: 1
+              maximum: 100000
+              description: Burst allowance (extra requests allowed)
+              example: 200
+
+        scope:
+          type: object
+          description: Rule scope configuration
+          properties:
+            user_id:
+              type: boolean
+              description: Apply per user ID
+              example: true
+            ip_address:
+              type: boolean
+              description: Apply per IP address
+              example: true
+            api_key:
+              type: boolean
+              description: Apply per API key
+              example: false
+            region:
+              type: string
+              enum: [global, regional, local]
+              description: Geographic scope
+              example: "regional"
+
+        enforcement:
+          type: object
+          description: Enforcement configuration
+          properties:
+            block_duration_seconds:
+              type: integer
+              minimum: 1
+              maximum: 3600
+              description: How long to block when limit exceeded
+              example: 300
+            gradual_backoff:
+              type: boolean
+              description: Use gradual backoff instead of fixed block
+              example: true
+            notify_on_violation:
+              type: boolean
+              description: Send notifications when limits exceeded
+              example: false
+
+    # Create rate limit request
+    CreateRateLimitRequest:
+      type: object
+      required:
+        - service_name
+        - endpoint_pattern
+        - algorithm
+        - limits
+      properties:
+        service_name:
+          type: string
+          description: Name of the service to protect
+          example: "guild-service"
+        endpoint_pattern:
+          type: string
+          description: Endpoint pattern to protect
+          example: "/api/v1/guilds/*/members"
+        algorithm:
+          type: string
+          enum: [token_bucket, sliding_window, leaky_bucket, fixed_window]
+          default: "token_bucket"
+          description: Rate limiting algorithm
+        limits:
+          type: object
+          description: Rate limit configuration
+          properties:
+            requests_per_second:
+              type: integer
+              minimum: 1
+              maximum: 10000
+              default: 100
+              description: Requests per second limit
+            requests_per_minute:
+              type: integer
+              minimum: 1
+              maximum: 100000
+              description: Requests per minute limit
+            requests_per_hour:
+              type: integer
+              minimum: 1
+              maximum: 1000000
+              description: Requests per hour limit
+            burst_limit:
+              type: integer
+              minimum: 1
+              maximum: 100000
+              default: 200
+              description: Burst allowance
+        scope:
+          type: object
+          description: Rule scope configuration
+          properties:
+            user_id:
+              type: boolean
+              default: true
+              description: Apply per user ID
+            ip_address:
+              type: boolean
+              default: true
+              description: Apply per IP address
+            api_key:
+              type: boolean
+              default: false
+              description: Apply per API key
+            region:
+              type: string
+              enum: [global, regional, local]
+              default: "regional"
+              description: Geographic scope
+        enforcement:
+          type: object
+          description: Enforcement configuration
+          properties:
+            block_duration_seconds:
+              type: integer
+              minimum: 1
+              maximum: 3600
+              default: 300
+              description: Block duration when limit exceeded
+            gradual_backoff:
+              type: boolean
+              default: true
+              description: Use gradual backoff
+            notify_on_violation:
+              type: boolean
+              default: false
+              description: Send violation notifications
+        description:
+          type: string
+          maxLength: 500
+          description: Optional rule description
+        priority:
+          type: integer
+          minimum: 0
+          maximum: 100
+          default: 50
+          description: Rule priority
+
+    # Update rate limit request
+    UpdateRateLimitRequest:
+      type: object
+      properties:
+        algorithm:
+          type: string
+          enum: [token_bucket, sliding_window, leaky_bucket, fixed_window]
+          description: New rate limiting algorithm
+        limits:
+          type: object
+          description: Updated rate limit configuration
+          properties:
+            requests_per_second:
+              type: integer
+              minimum: 1
+              maximum: 10000
+              description: New requests per second limit
+            requests_per_minute:
+              type: integer
+              minimum: 1
+              maximum: 100000
+              description: New requests per minute limit
+            requests_per_hour:
+              type: integer
+              minimum: 1
+              maximum: 1000000
+              description: New requests per hour limit
+            burst_limit:
+              type: integer
+              minimum: 1
+              maximum: 100000
+              description: New burst allowance
+        scope:
+          type: object
+          description: Updated scope configuration
+          properties:
+            user_id:
+              type: boolean
+              description: Apply per user ID
+            ip_address:
+              type: boolean
+              description: Apply per IP address
+            api_key:
+              type: boolean
+              description: Apply per API key
+            region:
+              type: string
+              enum: [global, regional, local]
+              description: Geographic scope
+        enforcement:
+          type: object
+          description: Updated enforcement configuration
+          properties:
+            block_duration_seconds:
+              type: integer
+              minimum: 1
+              maximum: 3600
+              description: New block duration
+            gradual_backoff:
+              type: boolean
+              description: Use gradual backoff
+            notify_on_violation:
+              type: boolean
+              description: Send violation notifications
+        description:
+          type: string
+          maxLength: 500
+          description: Updated rule description
+        priority:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: New rule priority
+        status:
+          type: string
+          enum: [active, inactive, paused]
+          description: New rule status
+
+    # Rate limit list response
+    RateLimitListResponse:
+      type: object
+      required:
+        - rules
+        - total_count
+      properties:
+        rules:
+          type: array
+          items:
+            $ref: '#/components/schemas/RateLimitRule'
+          description: List of rate limit rules
+        total_count:
+          type: integer
+          minimum: 0
+          description: Total number of rules
+        limit:
+          type: integer
+          description: Items per page
+        offset:
+          type: integer
+          description: Items skipped

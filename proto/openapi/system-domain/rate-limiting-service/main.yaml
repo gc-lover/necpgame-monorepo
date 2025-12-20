@@ -1,0 +1,525 @@
+# Issue: #2063
+openapi: 3.0.3
+info:
+  title: System Domain - Rate Limiting and Throttling API
+  description: |
+    **Enterprise-Grade Rate Limiting and Throttling API** for NECPGAME MMOFPS RPG.
+
+    **Module Purpose:** Comprehensive API protection system with advanced rate limiting, throttling mechanisms, quota management, and abuse prevention for 50+ microservices.
+
+    **Architecture:** High-performance, distributed rate limiting system with Redis clustering, real-time monitoring, adaptive algorithms, and multi-layer protection strategies.
+
+    **Core Features:**
+    - Multi-tier rate limiting (user, IP, endpoint, service-level)
+    - Advanced throttling algorithms (token bucket, sliding window, leaky bucket)
+    - Dynamic quota management with burst allowances
+    - Real-time monitoring and analytics
+    - Adaptive rate limiting based on traffic patterns
+    - Geo-based rate limiting and regional policies
+    - Integration with authentication and authorization
+    - Automated mitigation for DDoS and abuse patterns
+
+    **Performance Targets:**
+    - Rate limit checks: 5000+ per second, P99 <10ms
+    - Distributed state synchronization: <50ms propagation
+    - Memory per rate limit rule: <2KB (optimized storage)
+    - False positive rate: <0.01% for legitimate traffic
+    - Throughput: 100k+ requests/sec per service instance
+
+    **BACKEND NOTE:** Redis clustering required for distributed rate limiting. Lua scripts for atomic operations.
+    Adaptive algorithms critical for gaming traffic patterns. Integration with service mesh essential.
+  version: 1.0.0
+  contact:
+    name: NECPGAME Rate Limiting API Support
+    url: https://necpgame.com/support
+    email: api@rate-limiting.necpgame.com
+
+servers:
+  - url: http://localhost:8089/api/v1/system-domain/rate-limiting
+    description: Rate Limiting Service Development Server
+  - url: https://rate-limiting.necpgame.com/api/v1
+    description: Rate Limiting Service Production Server
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Rate Limit Management
+    description: Core rate limit CRUD operations and configuration
+  - name: Throttling Policies
+    description: Throttling algorithm management and policies
+  - name: Quota Management
+    description: User/service quota allocation and monitoring
+  - name: Monitoring & Analytics
+    description: Real-time monitoring and traffic analytics
+  - name: Abuse Prevention
+    description: DDoS protection and abuse detection
+  - name: System
+    description: Health checks and system operations
+
+paths:
+  # Health and system endpoints
+  /health:
+    get:
+      summary: Rate limiting service health check
+      operationId: rateLimitingHealth
+      tags:
+        - System
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/health-schemas.yaml#/components/schemas/HealthResponse'
+        '503':
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+
+  # Rate limit management
+  /rate-limits:
+    post:
+      summary: Create a new rate limit rule
+      description: |
+        Creates a new rate limit rule for API protection.
+
+        **BACKEND NOTE:** Validates rule configuration, registers with Redis, updates service mesh.
+        Rule becomes active immediately with configured parameters.
+      operationId: createRateLimit
+      tags:
+        - Rate Limit Management
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/rate-limit-schemas.yaml#/components/schemas/CreateRateLimitRequest'
+      responses:
+        '201':
+          description: Rate limit rule created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/rate-limit-schemas.yaml#/components/schemas/RateLimitRule'
+        '400':
+          description: Invalid rate limit configuration
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+        '409':
+          description: Rate limit rule with this ID already exists
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+
+    get:
+      summary: List rate limit rules
+      description: Retrieve a paginated list of rate limit rules with optional filtering
+      operationId: listRateLimits
+      tags:
+        - Rate Limit Management
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: service_name
+          in: query
+          schema:
+            type: string
+          description: Filter by service name
+        - name: endpoint
+          in: query
+          schema:
+            type: string
+          description: Filter by endpoint pattern
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of items per page
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          description: Number of items to skip
+      responses:
+        '200':
+          description: Rate limit rules retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/rate-limit-schemas.yaml#/components/schemas/RateLimitListResponse'
+
+  /rate-limits/{rule_id}:
+    get:
+      summary: Get rate limit rule details
+      description: Retrieve detailed information about a specific rate limit rule
+      operationId: getRateLimit
+      tags:
+        - Rate Limit Management
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: rule_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Rate limit rule unique identifier
+      responses:
+        '200':
+          description: Rate limit rule details retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/rate-limit-schemas.yaml#/components/schemas/RateLimitRule'
+        '404':
+          description: Rate limit rule not found
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+
+    put:
+      summary: Update rate limit rule configuration
+      description: |
+        Updates rate limit rule configuration (limits, algorithms, etc.).
+
+        **BACKEND NOTE:** Validates new configuration, applies changes atomically.
+        May trigger traffic redistribution if limits are modified.
+      operationId: updateRateLimit
+      tags:
+        - Rate Limit Management
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: rule_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Rate limit rule unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/rate-limit-schemas.yaml#/components/schemas/UpdateRateLimitRequest'
+      responses:
+        '200':
+          description: Rate limit rule updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/rate-limit-schemas.yaml#/components/schemas/RateLimitRule'
+        '400':
+          description: Invalid configuration
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+        '404':
+          description: Rate limit rule not found
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+
+    delete:
+      summary: Delete rate limit rule
+      description: |
+        Removes a rate limit rule from the system.
+
+        **BACKEND NOTE:** Cleans up Redis state, unregisters from service mesh.
+        Use with caution - may expose service to abuse.
+      operationId: deleteRateLimit
+      tags:
+        - Rate Limit Management
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: rule_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Rate limit rule unique identifier
+      responses:
+        '204':
+          description: Rate limit rule deleted successfully
+        '404':
+          description: Rate limit rule not found
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+
+  # User quotas and limits
+  /quotas/{user_id}:
+    get:
+      summary: Get user quota information
+      description: Retrieve current quota usage and limits for a user
+      operationId: getUserQuota
+      tags:
+        - Quota Management
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: User unique identifier
+      responses:
+        '200':
+          description: User quota information retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/quota-schemas.yaml#/components/schemas/UserQuota'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+
+    put:
+      summary: Update user quota limits
+      description: |
+        Updates quota limits for a specific user.
+
+        **BACKEND NOTE:** Validates new limits, applies changes immediately.
+        May trigger notifications if limits are reduced significantly.
+      operationId: updateUserQuota
+      tags:
+        - Quota Management
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: User unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/quota-schemas.yaml#/components/schemas/UpdateQuotaRequest'
+      responses:
+        '200':
+          description: User quota updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/quota-schemas.yaml#/components/schemas/UserQuota'
+        '400':
+          description: Invalid quota configuration
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+
+  # Real-time monitoring
+  /monitoring/rate-limits:
+    get:
+      summary: Get real-time rate limiting statistics
+      description: Retrieve current rate limiting statistics and blocked requests
+      operationId: getRateLimitStats
+      tags:
+        - Monitoring & Analytics
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: timeframe
+          in: query
+          schema:
+            type: string
+            enum: [1m, 5m, 15m, 1h]
+            default: 5m
+          description: Statistics timeframe
+        - name: service_name
+          in: query
+          schema:
+            type: string
+          description: Filter by service name
+      responses:
+        '200':
+          description: Rate limiting statistics retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/monitoring-schemas.yaml#/components/schemas/RateLimitStats'
+        '403':
+          description: Not authorized to view statistics
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+
+  # Abuse prevention
+  /abuse/report:
+    post:
+      summary: Report potential abuse
+      description: |
+        Report suspicious activity for automated analysis and potential blocking.
+
+        **BACKEND NOTE:** Triggers automated analysis, may result in temporary blocks.
+        Used by services to report potential DDoS or abuse patterns.
+      operationId: reportAbuse
+      tags:
+        - Abuse Prevention
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/abuse-schemas.yaml#/components/schemas/AbuseReport'
+      responses:
+        '202':
+          description: Abuse report accepted for processing
+        '400':
+          description: Invalid abuse report
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+
+  /abuse/blacklist:
+    post:
+      summary: Add IP/service to blacklist
+      description: |
+        Manually add IP address or service identifier to blacklist.
+
+        **BACKEND NOTE:** Immediate blocking across all services.
+        Administrative override for emergency situations.
+      operationId: blacklistEntity
+      tags:
+        - Abuse Prevention
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/abuse-schemas.yaml#/components/schemas/BlacklistRequest'
+      responses:
+        '201':
+          description: Entity added to blacklist
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/abuse-schemas.yaml#/components/schemas/BlacklistEntry'
+        '400':
+          description: Invalid blacklist request
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+        '409':
+          description: Entity already blacklisted
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+
+    get:
+      summary: Get blacklist entries
+      description: Retrieve current blacklist entries with optional filtering
+      operationId: getBlacklist
+      tags:
+        - Abuse Prevention
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: entity_type
+          in: query
+          schema:
+            type: string
+            enum: [ip, user_id, service]
+          description: Filter by entity type
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of entries per page
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          description: Number of entries to skip
+      responses:
+        '200':
+          description: Blacklist entries retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/abuse-schemas.yaml#/components/schemas/BlacklistResponse'
+
+  /abuse/blacklist/{entry_id}:
+    delete:
+      summary: Remove from blacklist
+      description: Remove an entity from the blacklist
+      operationId: removeFromBlacklist
+      tags:
+        - Abuse Prevention
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: entry_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Blacklist entry unique identifier
+      responses:
+        '204':
+          description: Entity removed from blacklist
+        '404':
+          description: Blacklist entry not found
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      description: JWT Bearer token authentication
