@@ -43,8 +43,23 @@ paths:
               - cosmetic:equipped
               - cosmetic:unequipped
               - cosmetic:shop-rotated
-        - $ref: 'common.yaml#/components/parameters/Limit'
-        - $ref: 'common.yaml#/components/parameters/Offset'
+        - name: limit
+          in: query
+          description: Maximum number of items to return
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          description: Number of items to skip
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
       responses:
         '200':
           description: События косметики
@@ -53,16 +68,42 @@ paths:
               schema:
                 $ref: 'cosmetic-service-schemas.yaml#/components/schemas/CosmeticEventsResponse'
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          description: Unauthorized access
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Unauthorized"
         '404':
-          $ref: 'common.yaml#/components/responses/NotFound'
+          description: Resource not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Not found"
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Internal server error"
 
 components:
   securitySchemes:
     BearerAuth:
-      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+      type: http
+      scheme: bearer
+      description: JWT Bearer token authentication
 
 security:
   - BearerAuth: [ ]
