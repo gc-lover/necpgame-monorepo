@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -130,7 +131,7 @@ func (s *CircuitBreakerService) persistCircuitState(circuit *CircuitBreaker) err
 		return err
 	}
 
-	return s.redisClient.Set(r.Context(), key, data, 24*time.Hour).Err()
+	return s.redisClient.Set(context.TODO(), key, data, 24*time.Hour).Err()
 }
 
 func (s *CircuitBreakerService) metricsCollector() {
@@ -225,8 +226,8 @@ func (s *CircuitBreakerService) syncCircuitStates() {
 		circuit := value.(*CircuitBreaker)
 
 		// Check if state needs to be synchronized with Redis
-		key := fmt.Sprintf("circuit:%s", circuit.CircuitID)
-		data, err := s.redisClient.Get(r.Context(), key).Result()
+		redisKey := fmt.Sprintf("circuit:%s", circuit.CircuitID)
+		data, err := s.redisClient.Get(context.TODO(), redisKey).Result()
 		if err == nil {
 			var remoteCircuit CircuitBreaker
 			if err := json.Unmarshal([]byte(data), &remoteCircuit); err == nil {

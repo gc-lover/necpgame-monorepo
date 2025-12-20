@@ -1,0 +1,374 @@
+          - transaction_type, status
+
+      - name: portfolio_snapshots
+        description: Снимки портфелей для аналитики
+        fields:
+          - id: UUID (PK)
+          - player_id: UUID (FK accounts)
+          - total_value: DECIMAL(10,2)
+          - total_cost: DECIMAL(10,2)
+          - total_profit_loss: DECIMAL(10,2)
+          - total_profit_loss_percentage: DECIMAL(5,2)
+          - distribution: JSONB (распределение по типам продуктов)
+          - risk_score: DECIMAL(3,2) (0.00-1.00)
+          - snapshot_at: TIMESTAMP
+        indexes:
+          - player_id, snapshot_at
+          - snapshot_at
+
+      - name: investment_risk_alerts
+        description: Алерты по рискам инвестиций
+        fields:
+          - id: UUID (PK)
+          - player_id: UUID (FK accounts)
+          - position_id: UUID (FK player_investment_positions, nullable)
+          - alert_type: ENUM (margin_call, kyc_required, high_risk, suitability_warning)
+          - severity: ENUM (low, medium, high, critical)
+          - message: TEXT
+          - resolved: BOOLEAN
+          - resolved_at: TIMESTAMP (nullable)
+          - created_at: TIMESTAMP
+        indexes:
+          - player_id, resolved
+          - alert_type, severity
+
+technical_specification:
+  backend_requirements:
+    - Реализация Investment Manager в economy-service:
+      - CRUD операции с инвестиционными позициями
+      - Управление транзакциями
+      - Валидация инвестиций
+    - Реализация Investment Product Catalog:
+      - Каталог продуктов (акции, облигации, недвижимость, производственные доли, спекуляции)
+      - Управление доступностью продуктов
+    - Реализация Portfolio Manager:
+      - Управление портфелями игроков
+      - Расчёт стоимости портфеля
+      - Распределение капитала
+    - Реализация Risk Analyzer:
+      - Расчёт уровней риска
+      - Проверка suitability и margin requirements
+      - Генерация алертов
+    - Реализация Portfolio Rebalancer:
+      - Анализ распределения портфеля
+      - Генерация рекомендаций
+      - Применение ребалансировки
+    - Реализация Dividend Calculator:
+      - Расчёт дивидендов и выплат
+      - Начисление выплат
+    - Реализация Investment Analytics Collector:
+      - Сбор метрик портфеля
+      - Анализ доходности
+      - Генерация прогнозов
+    - Реализация Investment Lifecycle Manager:
+      - Управление жизненным циклом инвестиций
+      - Переходы между стадиями
+    - Интеграция с stock-exchange-service для акций
+    - Интеграция с housing-service для недвижимости
+    - Создание схемы БД (investment_products, player_investment_positions, investment_transactions, portfolio_snapshots, investment_risk_alerts)
+
+  performance_requirements:
+    - Получение каталога продуктов: <200 мс
+    - Создание позиции: <300 мс
+    - Расчёт стоимости портфеля: <500 мс
+    - Анализ рисков: <1000 мс
+    - Поддержка до 10000 активных позиций на игрока
+
+  scalability_requirements:
+    - Горизонтальное масштабирование через пул инстансов
+    - Распределение портфелей по инстансам
+    - Кэширование каталога продуктов в Redis
+    - Асинхронная обработка дивидендов через очереди
+
+subtasks:
+  - id: investment-manager
+    title: Реализация Investment Manager
+    description: |
+      CRUD операции и управление инвестициями:
+      - Создание, обновление, закрытие позиций
+      - Управление транзакциями
+      - Валидация инвестиций
+    priority: high
+    estimated_time: 6-7 дней
+
+  - id: investment-product-catalog
+    title: Реализация Investment Product Catalog
+    description: |
+      Каталог инвестиционных продуктов:
+      - Управление продуктами
+      - Характеристики продуктов
+      - Доступность продуктов
+    priority: high
+    estimated_time: 4-5 дней
+
+  - id: portfolio-manager
+    title: Реализация Portfolio Manager
+    description: |
+      Управление портфелями:
+      - Создание и управление портфелями
+      - Расчёт стоимости портфеля
+      - Распределение капитала
+    priority: high
+    estimated_time: 5-6 дней
+
+  - id: risk-analyzer
+    title: Реализация Risk Analyzer
+    description: |
+      Анализ рисков:
+      - Расчёт уровней риска
+      - Проверка suitability и margin
+      - Генерация алертов
+    priority: high
+    estimated_time: 6-7 дней
+
+  - id: portfolio-rebalancer
+    title: Реализация Portfolio Rebalancer
+    description: |
+      Рекомендации по ребалансировке:
+      - Анализ распределения
+      - Генерация рекомендаций
+      - Применение ребалансировки
+    priority: medium
+    estimated_time: 5-6 дней
+
+  - id: dividend-calculator
+    title: Реализация Dividend Calculator
+    description: |
+      Расчёт дивидендов и выплат:
+      - Расчёт дивидендов
+      - Расчёт доходности
+      - Начисление выплат
+    priority: high
+    estimated_time: 4-5 дней
+
+  - id: investment-analytics-collector
+    title: Реализация Investment Analytics Collector
+    description: |
+      Сбор аналитики:
+      - Сбор метрик
+      - Анализ доходности
+      - Генерация прогнозов
+    priority: medium
+    estimated_time: 5-6 дней
+
+  - id: investment-lifecycle-manager
+    title: Реализация Investment Lifecycle Manager
+    description: |
+      Управление жизненным циклом:
+      - Discovery, Research, Purchase, Hold, Rebalance, Exit
+      - Переходы между стадиями
+    priority: medium
+    estimated_time: 4-5 дней
+
+  - id: database-schema
+    title: Создание схемы БД для инвестиций
+    description: |
+      Создание таблиц:
+      - investment_products
+      - player_investment_positions
+      - investment_transactions
+      - portfolio_snapshots
+      - investment_risk_alerts
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: api-endpoints
+    title: Реализация REST API endpoints
+    description: |
+      Создание всех endpoints для системы инвестиций:
+      - CRUD операции
+      - Управление портфелями
+      - Аналитика и рекомендации
+    priority: high
+    estimated_time: 4-5 дней
+
+  - id: stock-exchange-integration
+    title: Интеграция с Stock Exchange
+    description: |
+      Интеграция с биржей:
+      - Получение данных об акциях
+      - Синхронизация цен
+      - Обработка дивидендов
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: housing-integration
+    title: Интеграция с Housing System
+    description: |
+      Интеграция с недвижимостью:
+      - Получение данных о недвижимости
+      - Синхронизация доходности
+    priority: medium
+    estimated_time: 3-4 дня
+
+  - id: event-bus-integration
+    title: Интеграция с Event Bus
+    description: |
+      Публикация и подписка на события:
+      - economy.investment.* события
+      - Подписка на economy.event.active, stock-exchange.price.updated, housing.yield.updated
+    priority: high
+    estimated_time: 2-3 дня
+
+  - id: integration-testing
+    title: Интеграционное тестирование
+    description: |
+      Тесты системы инвестиций:
+      - Тесты жизненного цикла
+      - Тесты расчёта доходности
+      - Тесты рисков и алертов
+      - Тесты интеграций
+      - Тесты производительности
+    priority: high
+    estimated_time: 6-7 дней
+
+diagrams:
+  component_diagram: |
+    ```mermaid
+    graph TB
+        subgraph "Economy Service"
+            IM[Investment Manager]
+            IPC[Investment Product Catalog]
+            PM[Portfolio Manager]
+            DCM[Dividend Calculator]
+            ILM[Investment Lifecycle Manager]
+        end
+
+        subgraph "Analytics Service"
+            IAC[Investment Analytics Collector]
+            RA[Risk Analyzer]
+            PR[Portfolio Rebalancer]
+        end
+
+        subgraph "Stock Exchange Service"
+            SIM[Stock Integration Manager]
+        end
+
+        subgraph "Housing Service"
+            REIM[Real Estate Integration Manager]
+        end
+
+        subgraph "Database"
+            DB[(PostgreSQL<br/>investment_products<br/>player_investment_positions<br/>investment_transactions<br/>portfolio_snapshots<br/>investment_risk_alerts)]
+        end
+
+        subgraph "Event Bus"
+            EB[Kafka/Event Bus]
+        end
+
+        subgraph "External Services"
+            WS[Wallet Service]
+            ES[Economy Events]
+        end
+
+        IM --> IPC
+        IM --> PM
+        IM --> DCM
+        IM --> ILM
+        PM --> RA
+        PM --> PR
+        IM --> SIM
+        IM --> REIM
+        IAC --> RA
+        IAC --> PR
+        IM --> DB
+        PM --> DB
+        DCM --> DB
+        IM --> EB
+        PM --> EB
+        DCM --> EB
+        IM --> WS
+        IM --> ES
+        SIM --> ES
+    ```
+
+  investment_lifecycle_flow: |
+    ```mermaid
+    stateDiagram-v2
+        [*] --> DISCOVERY: Find Products
+        DISCOVERY --> RESEARCH: Select Product
+        RESEARCH --> PURCHASE: Buy Investment
+        PURCHASE --> HOLD: Position Active
+        HOLD --> REBALANCE: Rebalance Portfolio
+        HOLD --> EXIT: Sell Investment
+        REBALANCE --> HOLD: Rebalanced
+        EXIT --> [*]
+        
+        HOLD --> HOLD: Dividend/Interest Paid
+        HOLD --> EXIT: Force Exit (Risk)
+    ```
+
+  portfolio_management_flow: |
+    ```mermaid
+    sequenceDiagram
+        participant P as Player
+        participant IM as Investment Manager
+        participant PM as Portfolio Manager
+        participant RA as Risk Analyzer
+        participant PR as Portfolio Rebalancer
+        participant WS as Wallet Service
+
+        P->>IM: Request Products
+        IM->>P: Return Product Catalog
+        P->>IM: Purchase Investment
+        IM->>RA: Check Suitability
+        RA->>IM: Return Risk Analysis
+        IM->>WS: Deduct Funds
+        WS->>IM: Confirm Payment
+        IM->>PM: Update Portfolio
+        PM->>PR: Check Rebalancing
+        PR->>PM: Return Recommendations
+        PM->>P: Portfolio Updated
+    ```
+
+decisions:
+  - id: adr-investments-architecture
+    summary: |
+      Выбрана микросервисная архитектура с economy-service как основным сервисом
+      и отдельными модулями для аналитики, рисков и ребалансировки.
+
+  - id: adr-investment-lifecycle
+    summary: |
+      Реализован жизненный цикл инвестиций с состояниями DISCOVERY → RESEARCH → PURCHASE → HOLD → REBALANCE → EXIT
+      для управления инвестициями от обнаружения до выхода.
+
+  - id: adr-portfolio-management
+    summary: |
+      Портфели управляются через Portfolio Manager с поддержкой диверсификации,
+      ребалансировки и аналитики для оптимизации доходности.
+
+  - id: adr-risk-management
+    summary: |
+      Риски управляются через Risk Analyzer с проверкой suitability, margin requirements
+      и генерацией алертов для контроля рисков игроков.
+
+validation:
+  architecture_complete: true
+  components_defined: true
+  microservices_identified: true
+  api_endpoints_described: true
+  technical_specification_ready: true
+  subtasks_defined: true
+
+next_steps:
+  - Передача задачи агенту API Designer для создания OpenAPI спецификации
+  - Детализация формата инвестиционных продуктов (JSONB структура)
+  - Определение формата портфелей и распределения
+  - Создание схем сообщений для Event Bus
+
+history:
+  - version: "1.0.0"
+    date: 2025-11-23
+    author: Architect Agent
+    changes: |
+      Создана полная архитектура системы инвестиций:
+      - Определены микросервисы (economy-service, stock-exchange-service, housing-service, analytics-service)
+      - Определены компоненты (Investment Manager, Investment Product Catalog, Portfolio Manager, Risk Analyzer, Portfolio Rebalancer, Dividend Calculator, Investment Analytics Collector, Investment Lifecycle Manager)
+      - Описаны API endpoints (высокоуровнево)
+      - Спроектированы потоки данных (discovery, purchase, dividend payout, rebalancing, exit)
+      - Определена структура БД (investment_products, player_investment_positions, investment_transactions, portfolio_snapshots, investment_risk_alerts)
+      - Описаны интеграции с другими сервисами (stock-exchange, housing, economy-events, analytics, wallet)
+      - Определены Event Bus события (published и subscribed)
+      - Создано техническое задание
+      - Разбито на подзадачи
+

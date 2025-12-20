@@ -31,6 +31,11 @@ func NewRepository(db *pgxpool.Pool, rdb *redis.Client, logger *zap.Logger) *Rep
 	}
 }
 
+// GetRedisClient returns the Redis client for rate limiting operations
+func (r *Repository) GetRedisClient() *redis.Client {
+	return r.rdb
+}
+
 // ModerationRuleRepository interface for rule operations
 type ModerationRuleRepository interface {
 	CreateRule(ctx context.Context, rule *models.ModerationRule) error

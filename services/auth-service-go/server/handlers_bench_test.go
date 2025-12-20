@@ -5,7 +5,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/NECPGAME/auth-service-go/pkg/api"
+	"necpgame/services/auth-service-go/pkg/api"
 	"go.uber.org/zap"
 )
 

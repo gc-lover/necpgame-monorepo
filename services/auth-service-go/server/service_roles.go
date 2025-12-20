@@ -7,7 +7,7 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/NECPGAME/auth-service-go/pkg/api"
+	"necpgame/services/auth-service-go/pkg/api"
 )
 
 // GetUserRoles получает роли пользователя

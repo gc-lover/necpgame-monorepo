@@ -55,3 +55,5 @@ func (h *Handlers) HealthCheck(ctx context.Context) (*api.HealthCheckOK, error) 
 
 	return result, nil
 }
+
+// TODO: League methods will be implemented after OpenAPI spec update and code regeneration

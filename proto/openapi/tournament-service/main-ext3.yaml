@@ -1,0 +1,400 @@
+          type: string
+          enum: [accepted, pending_approval, rejected]
+        joined_at:
+          type: integer
+          format: int64
+        message:
+          type: string
+      required:
+        - tournament_id
+        - player_id
+        - status
+        - joined_at
+
+    UnregisterTournamentRequest:
+      type: object
+      properties:
+        player_id:
+          type: string
+        reason:
+          type: string
+          maxLength: 500
+      required:
+        - player_id
+
+    UnregisterTournamentResponse:
+      type: object
+      properties:
+        tournament_id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+        unregistered_at:
+          type: integer
+          format: int64
+        refund_processed:
+          type: boolean
+      required:
+        - tournament_id
+        - player_id
+        - unregistered_at
+
+    GetTournamentBracketResponse:
+      type: object
+      properties:
+        tournament_id:
+          type: string
+          format: uuid
+        current_round:
+          type: integer
+        total_rounds:
+          type: integer
+        matches:
+          type: array
+          items:
+            $ref: '#/components/schemas/Match'
+      required:
+        - tournament_id
+        - current_round
+        - total_rounds
+
+    # Match schemas
+    Match:
+      type: object
+      properties:
+        match_id:
+          type: string
+          format: uuid
+        tournament_id:
+          type: string
+          format: uuid
+        round:
+          type: integer
+        position:
+          type: integer
+        player1_id:
+          type: string
+        player2_id:
+          type: string
+        winner_id:
+          type: string
+        status:
+          type: string
+          enum: [scheduled, in_progress, completed, cancelled]
+        scheduled_time:
+          type: integer
+          format: int64
+        started_time:
+          type: integer
+          format: int64
+        completed_time:
+          type: integer
+          format: int64
+        score:
+          $ref: '#/components/schemas/MatchScore'
+        spectators:
+          type: array
+          items:
+            type: string
+        streaming_url:
+          type: string
+        metadata:
+          type: object
+          additionalProperties: true
+      required:
+        - match_id
+        - tournament_id
+        - status
+
+    MatchScore:
+      type: object
+      properties:
+        player1_score:
+          type: integer
+        player2_score:
+          type: integer
+        winner_id:
+          type: string
+        match_duration:
+          type: integer
+        statistics:
+          type: object
+          additionalProperties: true
+
+    ListMatchesResponse:
+      type: object
+      properties:
+        matches:
+          type: array
+          items:
+            $ref: '#/components/schemas/Match'
+        total_count:
+          type: integer
+      required:
+        - matches
+        - total_count
+
+    GetMatchResponse:
+      type: object
+      properties:
+        match:
+          $ref: '#/components/schemas/MatchDetail'
+      required:
+        - match
+
+    MatchDetail:
+      type: object
+      properties:
+        match_id:
+          type: string
+          format: uuid
+        tournament_id:
+          type: string
+          format: uuid
+        round:
+          type: integer
+        player1:
+          $ref: '#/components/schemas/PlayerInfo'
+        player2:
+          $ref: '#/components/schemas/PlayerInfo'
+        winner:
+          $ref: '#/components/schemas/PlayerInfo'
+        status:
+          type: string
+        scheduled_time:
+          type: integer
+          format: int64
+        started_time:
+          type: integer
+          format: int64
+        completed_time:
+          type: integer
+          format: int64
+        score:
+          $ref: '#/components/schemas/MatchScore'
+        spectators_count:
+          type: integer
+        streaming_url:
+          type: string
+        metadata:
+          type: object
+          additionalProperties: true
+      required:
+        - match_id
+        - tournament_id
+        - status
+
+    PlayerInfo:
+      type: object
+      properties:
+        player_id:
+          type: string
+        display_name:
+          type: string
+        level:
+          type: integer
+        rating:
+          type: integer
+      required:
+        - player_id
+
+    UpdateMatchResultRequest:
+      type: object
+      properties:
+        score:
+          $ref: '#/components/schemas/MatchScore'
+        winner_id:
+          type: string
+      required:
+        - score
+
+    UpdateMatchResultResponse:
+      type: object
+      properties:
+        match_id:
+          type: string
+          format: uuid
+        tournament_id:
+          type: string
+          format: uuid
+        winner_id:
+          type: string
+        loser_id:
+          type: string
+        updated_at:
+          type: integer
+          format: int64
+        next_match_scheduled:
+          type: boolean
+        tournament_progress_updated:
+          type: boolean
+      required:
+        - match_id
+        - tournament_id
+        - winner_id
+        - updated_at
+
+    # Ranking schemas
+    GetRankingsResponse:
+      type: object
+      properties:
+        leaderboard_type:
+          type: string
+        rankings:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlayerRanking'
+        total_count:
+          type: integer
+        generated_at:
+          type: integer
+          format: int64
+      required:
+        - leaderboard_type
+        - rankings
+        - total_count
+        - generated_at
+
+    PlayerRanking:
+      type: object
+      properties:
+        player_id:
+          type: string
+        display_name:
+          type: string
+        rating:
+          type: integer
+        rank:
+          type: string
+        wins:
+          type: integer
+        losses:
+          type: integer
+        win_rate:
+          type: number
+          format: float
+        streak:
+          type: integer
+        last_active:
+          type: integer
+          format: int64
+        achievements:
+          type: array
+          items:
+            type: string
+        game_mode_stats:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/PlayerStats'
+        overall_stats:
+          $ref: '#/components/schemas/PlayerStats'
+        updated_at:
+          type: integer
+          format: int64
+      required:
+        - player_id
+        - rating
+        - wins
+        - losses
+        - updated_at
+
+    PlayerStats:
+      type: object
+      properties:
+        total_matches:
+          type: integer
+        total_wins:
+          type: integer
+        total_losses:
+          type: integer
+        win_rate:
+          type: number
+          format: float
+        current_streak:
+          type: integer
+        longest_win_streak:
+          type: integer
+        favorite_game_mode:
+          type: string
+        total_prizes_won:
+          type: integer
+        total_earnings:
+          type: integer
+        joined_at:
+          type: integer
+          format: int64
+      required:
+        - total_matches
+        - total_wins
+        - total_losses
+
+    GetPlayerRankingResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+        rankings:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/PlayerRanking'
+        overall_stats:
+          $ref: '#/components/schemas/PlayerStats'
+      required:
+        - player_id
+        - rankings
+
+    # League schemas
+    League:
+      type: object
+      properties:
+        league_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        game_mode:
+          type: string
+        status:
+          type: string
+          enum: [active, completed, upcoming]
+        current_season:
+          type: integer
+        max_teams:
+          type: integer
+        current_teams:
+          type: integer
+        season_start_time:
+          type: integer
+          format: int64
+        season_end_time:
+          type: integer
+          format: int64
+        rules:
+          type: object
+          additionalProperties:
+            type: string
+        prizes:
+          type: array
+          items:
+            $ref: '#/components/schemas/Prize'
+        region:
+          type: string
+        created_at:
+          type: integer
+          format: int64
+        updated_at:
+          type: integer
+          format: int64
+      required:
+        - league_id
+        - name
+        - status
+        - current_season
+
+    ListLeaguesResponse:
+      type: object
+      properties:
+        leagues:

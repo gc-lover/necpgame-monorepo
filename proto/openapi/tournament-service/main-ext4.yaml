@@ -1,0 +1,271 @@
+          type: array
+          items:
+            $ref: '#/components/schemas/LeagueSummary'
+        total_count:
+          type: integer
+      required:
+        - leagues
+        - total_count
+
+    LeagueSummary:
+      type: object
+      properties:
+        league_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        game_mode:
+          type: string
+        status:
+          type: string
+        current_season:
+          type: integer
+        team_count:
+          type: integer
+        max_teams:
+          type: integer
+        season_end_time:
+          type: integer
+          format: int64
+        region:
+          type: string
+      required:
+        - league_id
+        - name
+        - status
+        - current_season
+
+    CreateLeagueRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        description:
+          type: string
+          maxLength: 2000
+        game_mode:
+          type: string
+          minLength: 1
+          maxLength: 100
+        max_teams:
+          type: integer
+          minimum: 2
+          maximum: 1000
+        season_start_time:
+          type: integer
+          format: int64
+        season_end_time:
+          type: integer
+          format: int64
+        rules:
+          type: object
+          additionalProperties:
+            type: string
+        prizes:
+          type: array
+          items:
+            $ref: '#/components/schemas/Prize'
+        region:
+          type: string
+      required:
+        - name
+        - game_mode
+        - season_start_time
+        - season_end_time
+
+    CreateLeagueResponse:
+      type: object
+      properties:
+        league_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        status:
+          type: string
+        current_season:
+          type: integer
+        created_at:
+          type: integer
+          format: int64
+      required:
+        - league_id
+        - name
+        - status
+        - current_season
+        - created_at
+
+    JoinLeagueRequest:
+      type: object
+      properties:
+        player_id:
+          type: string
+        team_name:
+          type: string
+          minLength: 1
+          maxLength: 100
+      required:
+        - player_id
+
+    JoinLeagueResponse:
+      type: object
+      properties:
+        league_id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+        team_id:
+          type: string
+          format: uuid
+        joined_at:
+          type: integer
+          format: int64
+        current_rank:
+          type: integer
+      required:
+        - league_id
+        - player_id
+        - team_id
+        - joined_at
+
+    # Reward schemas
+    GetTournamentRewardsResponse:
+      type: object
+      properties:
+        tournament_id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+        available_rewards:
+          type: array
+          items:
+            $ref: '#/components/schemas/Reward'
+        claimed_rewards:
+          type: array
+          items:
+            type: string
+      required:
+        - tournament_id
+        - player_id
+        - available_rewards
+        - claimed_rewards
+
+    Reward:
+      type: object
+      properties:
+        reward_id:
+          type: string
+        position:
+          type: integer
+        reward_type:
+          type: string
+        reward_value:
+          type: string
+        description:
+          type: string
+        claimed:
+          type: boolean
+        claim_deadline:
+          type: integer
+          format: int64
+      required:
+        - reward_id
+        - reward_type
+        - reward_value
+
+    ClaimRewardsRequest:
+      type: object
+      properties:
+        tournament_id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+        reward_ids:
+          type: array
+          items:
+            type: string
+      required:
+        - tournament_id
+        - player_id
+        - reward_ids
+
+    ClaimRewardsResponse:
+      type: object
+      properties:
+        tournament_id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+        claimed_rewards:
+          type: array
+          items:
+            type: string
+        total_value:
+          type: integer
+        claimed_at:
+          type: integer
+          format: int64
+      required:
+        - tournament_id
+        - player_id
+        - claimed_rewards
+        - claimed_at
+
+    # Statistics schemas
+    GetGlobalStatisticsResponse:
+      type: object
+      properties:
+        time_range:
+          type: string
+        total_tournaments:
+          type: integer
+        active_tournaments:
+          type: integer
+        total_participants:
+          type: integer
+        total_matches_played:
+          type: integer
+        average_tournament_size:
+          type: number
+          format: float
+        popular_game_modes:
+          type: array
+          items:
+            $ref: '#/components/schemas/GameModeStats'
+        region_activity:
+          type: object
+          additionalProperties:
+            type: integer
+        generated_at:
+          type: integer
+          format: int64
+      required:
+        - time_range
+        - total_tournaments
+        - active_tournaments
+        - total_participants
+        - total_matches_played
+        - popular_game_modes
+        - region_activity
+        - generated_at
+
+    GameModeStats:
+      type: object
+      properties:
+        game_mode:
+          type: string
+        tournaments_count:
+          type: integer
+        participants_count:
+          type: integer
+      required:
+        - game_mode
+        - tournaments_count
+        - participants_count

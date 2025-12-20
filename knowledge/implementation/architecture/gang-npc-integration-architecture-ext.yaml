@@ -1,0 +1,297 @@
+        fields:
+          - id: UUID (PK)
+          - gang_id: VARCHAR(50) (FK gangs)
+          - player_id: UUID (FK accounts)
+          - family_role: VARCHAR(50) (роль в семье)
+          - bond_strength: INTEGER (сила связи, 0-100)
+          - related_members: UUID[] (array of related player IDs)
+          - created_at: TIMESTAMP
+          - updated_at: TIMESTAMP
+        indexes:
+          - gang_id, player_id
+          - player_id, bond_strength
+
+technical_specification:
+  backend_requirements:
+    - Расширение gameplay-service-go модулями:
+      - street-honor (система уличной чести)
+      - gang-clan-conflicts (клановые столкновения)
+      - gang-honor-code (кодекс чести)
+      - gang-recruitment (вербовка в банды)
+      - gang-family (семейная модель)
+    - Расширение world-service-go модулями:
+      - gang-territory (управление территорией)
+      - gang-cultural-events (культурные события)
+    - Интеграция с npc-integration-system для базовой функциональности NPC
+    - Интеграция с clan-war-system для PvP механизмов
+    - Интеграция с quest-engine для квестов защиты территории
+
+  gang_npc_specific_requirements:
+    - NPC Хосе Рамирес (Valentinos):
+      - Квесты защиты Heywood
+      - Культурные события Valentinos
+      - Вербовка новых членов
+      - Клановые столкновения с Maelstrom
+      - Управление кодексом чести
+
+  performance_requirements:
+    - Поддержка до 20 активных клановых конфликтов одновременно
+    - Задержка обновления чести: <50 мс
+    - Поддержка до 50 активных культурных событий
+    - Поддержка до 30 активных программ вербовки
+    - Поддержка до 100 территорий банд
+
+  scalability_requirements:
+    - Горизонтальное масштабирование через пул инстансов
+    - Кэширование состояния чести в Redis
+    - Асинхронная обработка конфликтов через event bus
+    - Batch-обработка обновлений чести
+
+subtasks:
+  - id: street-honor-system-module
+    title: Реализация Street Honor System модуля
+    description: |
+      Система уличной чести:
+      - Отслеживание уличной чести игроков
+      - Управление уровнями чести
+      - Влияние на доступность контента
+    priority: high
+    estimated_time: 5-6 дней
+
+  - id: gang-territory-manager-module
+    title: Реализация Gang Territory Manager модуля
+    description: |
+      Управление территорией банд:
+      - Определение территорий
+      - Управление контролем территории
+      - Защита территории
+    priority: high
+    estimated_time: 5-6 дней
+
+  - id: gang-clan-conflict-manager-module
+    title: Реализация Gang Clan Conflict Manager модуля
+    description: |
+      Управление клановыми столкновениями:
+      - Инициация столкновений
+      - Координация PvP конфликтов
+      - Управление результатами
+    priority: high
+    estimated_time: 6-7 дней
+
+  - id: gang-honor-code-system-module
+    title: Реализация Gang Honor Code System модуля
+    description: |
+      Система кодекса чести:
+      - Управление кодексом чести
+      - Проверка соблюдения кодекса
+      - Последствия нарушений
+    priority: high
+    estimated_time: 4-5 дней
+
+  - id: gang-cultural-events-manager-module
+    title: Реализация Gang Cultural Events Manager модуля
+    description: |
+      Управление культурными событиями:
+      - Создание культурных событий
+      - Координация участников
+      - Управление наградами
+    priority: high
+    estimated_time: 5-6 дней
+
+  - id: gang-recruitment-system-module
+    title: Реализация Gang Recruitment System модуля
+    description: |
+      Система вербовки в банды:
+      - Создание программ вербовки
+      - Управление кандидатами
+      - Процесс инициации
+    priority: high
+    estimated_time: 5-6 дней
+
+  - id: gang-family-system-module
+    title: Реализация Gang Family System модуля
+    description: |
+      Семейная модель сообщества:
+      - Управление семейными связями
+      - Отслеживание отношений
+      - Управление семейными событиями
+    priority: high
+    estimated_time: 4-5 дней
+
+  - id: database-schema-gang-integration
+    title: Создание схемы БД для интеграции банд
+    description: |
+      Создание таблиц для интеграции банд:
+      - street_honor
+      - gang_territories
+      - gang_clan_conflicts
+      - gang_honor_code
+      - gang_honor_violations
+      - gang_cultural_events
+      - gang_recruitment_programs
+      - gang_recruitment_candidates
+      - gang_family_bonds
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: api-endpoints-gang-integration
+    title: Реализация REST API endpoints для интеграции банд
+    description: |
+      Создание всех endpoints для интеграции банд:
+      - Honor endpoints
+      - Territory endpoints
+      - Conflict endpoints
+      - Honor code endpoints
+      - Cultural events endpoints
+      - Recruitment endpoints
+      - Family endpoints
+    priority: high
+    estimated_time: 4-5 дней
+
+  - id: integration-testing-gang
+    title: Интеграционное тестирование систем банд
+    description: |
+      Тесты интеграции банд:
+      - Тесты уличной чести
+      - Тесты управления территорией
+      - Тесты клановых столкновений
+      - Тесты кодекса чести
+      - Тесты культурных событий
+      - Тесты вербовки
+      - Тесты семейной модели
+    priority: high
+    estimated_time: 6-7 дней
+
+diagrams:
+  component_diagram: |
+    ```mermaid
+    graph TB
+        subgraph "Gang NPC Integration System"
+            SHS[Street Honor System]
+            GTM[Gang Territory Manager]
+            GCCM[Gang Clan Conflict Manager]
+            GHCS[Gang Honor Code System]
+            GCEM[Gang Cultural Events Manager]
+            GRS[Gang Recruitment System]
+            GFS[Gang Family System]
+        end
+
+        subgraph "NPC Integration System"
+            NQM[NPC Quest Manager]
+            NRT[NPC Relationship Tracker]
+            NDS[NPC Dialogue System]
+        end
+
+        subgraph "Game Services"
+            CWS[Clan War System]
+            QE[Quest Engine]
+            WS[World Service]
+        end
+
+        subgraph "Database"
+            DB[(PostgreSQL<br/>street_honor<br/>gang_territories<br/>gang_clan_conflicts<br/>gang_honor_code<br/>gang_cultural_events<br/>gang_recruitment_programs<br/>gang_family_bonds)]
+        end
+
+        subgraph "NPC"
+            NPC[Хосе Рамирес<br/>Valentinos Leader]
+        end
+
+        subgraph "Client"
+            CL[UE5 Client]
+        end
+
+        CL -->|interact| NPC
+        NPC --> NDS
+        NDS --> NQM
+        NDS --> SHS
+        NDS --> GTM
+        NDS --> GCCM
+        NDS --> GHCS
+        NDS --> GCEM
+        NDS --> GRS
+        GCCM --> CWS
+        GTM --> WS
+        GCEM --> WS
+        SHS --> DB
+        GTM --> DB
+        GCCM --> DB
+        GHCS --> DB
+        GCEM --> DB
+        GRS --> DB
+        GFS --> DB
+    ```
+
+  street_honor_flow_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant C as Client
+        participant NPC as Хосе Рамирес
+        participant NDS as NPC Dialogue System
+        participant SHS as Street Honor System
+        participant GHCS as Gang Honor Code System
+
+        C->>NPC: Interact
+        NPC->>NDS: Show dialogue tree
+        NDS->>C: Display "Show Respect" option
+        C->>NDS: Select "Show Respect"
+        NDS->>SHS: Update honor (+3)
+        SHS->>GHCS: Check honor code compliance
+        GHCS->>SHS: Compliance confirmed
+        SHS->>C: Honor updated
+        Note over C,GHCS: Player gains access to new content
+    ```
+
+decisions:
+  - id: adr-gang-npc-integration-architecture
+    summary: |
+      Выбрана архитектура, расширяющая общую NPC интеграцию для NPC лидеров банд
+      с фокусом на уличную честь и клановые столкновения.
+
+  - id: adr-street-honor-system
+    summary: |
+      Реализована отдельная система уличной чести для банд с влиянием на доступность
+      контента и интеграцией с кодексом чести.
+
+  - id: adr-gang-territory-management
+    summary: |
+      Управление территорией банд обеспечивает динамический контроль районов
+      и защиту от врагов с влиянием на игровой мир.
+
+  - id: adr-gang-clan-conflicts
+    summary: |
+      Интеграция с clan-war-system для PvP механизмов клановых столкновений
+      обеспечивает единообразие и переиспользование логики.
+
+  - id: adr-gang-honor-code
+    summary: |
+      Система кодекса чести обеспечивает структурированные правила поведения
+      с последствиями за нарушения и наградами за соблюдение.
+
+validation:
+  architecture_complete: true
+  components_defined: true
+  microservices_identified: true
+  api_endpoints_described: true
+  technical_specification_ready: true
+  subtasks_defined: true
+
+next_steps:
+  - Передача задачи агенту API Designer для создания OpenAPI спецификации
+  - Детализация схем данных для интеграции банд
+  - Определение формата кодекса чести
+  - Создание спецификации системы уличной чести
+
+history:
+  - version: "1.0.0"
+    date: 2025-11-23
+    author: Architect Agent
+    changes: |
+      Создана полная архитектура интеграции NPC лидеров банд с игровыми системами:
+      - Определены компоненты (Street Honor System, Gang Territory Manager, Gang Clan Conflict Manager, Gang Honor Code System, Gang Cultural Events Manager, Gang Recruitment System, Gang Family System)
+      - Описаны API endpoints (высокоуровнево)
+      - Спроектированы потоки данных (street honor flow, territory defense flow, clan conflict flow, cultural event flow)
+      - Определена структура БД (9 таблиц)
+      - Спроектирована интеграция с игровыми системами (NPC integration, clan war system, quest engine, world service)
+      - Создано техническое задание
+      - Разбито на подзадачи (10 подзадач)
+

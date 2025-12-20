@@ -1,0 +1,252 @@
+    - Интеграция с Redis для hot data очередей
+    - Интеграция с PostgreSQL для персистентности
+    - Оптимизация алгоритмов подбора
+    - Оптимизация запросов к БД
+
+  realtime_requirements:
+    - Уведомления о найденном матче через WebSocket
+    - Обновления статуса очереди в реальном времени
+    - Синхронизация состояния матча
+
+  performance_requirements:
+    - Вход в очередь < 50ms
+    - Поиск матча < 200ms (первая попытка)
+    - Расчёт баланса < 100ms
+    - Обновление рейтинга < 50ms
+    - Поддержка до 10K игроков в очереди одновременно
+    - Поддержка до 1000 активных матчей
+
+  scalability_requirements:
+    - Горизонтальное масштабирование через matchmaking-go
+    - Распределение нагрузки на очереди
+    - Оптимизация алгоритмов подбора
+    - Кэширование рейтингов в Redis
+
+subtasks:
+  - id: queue-manager-module
+    title: Реализация модуля Queue Manager
+    description: |
+      Управление очередями
+      Интеграция с Redis
+      Расширение диапазона поиска
+    priority: high
+    estimated_time: 4-5 дней
+
+  - id: matchmaking-engine-implementation
+    title: Реализация Matchmaking Engine
+    description: |
+      Алгоритмы подбора
+      Поиск кандидатов
+      Формирование команд
+    priority: high
+    estimated_time: 5-6 дней
+
+  - id: rating-system-development
+    title: Реализация Rating System
+    description: |
+      Управление рейтингами
+      Расчёт MMR/ELO
+      Обновление рейтинга
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: team-balancer-implementation
+    title: Реализация Team Balancer
+    description: |
+      Балансировка команд
+      Snake draft алгоритм
+      Распределение ролей
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: match-quality-calculator
+    title: Реализация Match Quality Calculator
+    description: |
+      Расчёт качества матча
+      Match Quality Score
+      Оптимизация качества
+    priority: medium
+    estimated_time: 2-3 дня
+
+  - id: anti-smurf-detector
+    title: Реализация Anti-Smurf Detector
+    description: |
+      Обнаружение смурфов
+      Анализ статистики
+      Применение ограничений
+    priority: medium
+    estimated_time: 2-3 дня
+
+  - id: session-creator-implementation
+    title: Реализация Session Creator
+    description: |
+      Создание игровых сессий
+      Интеграция с gameplay-service
+      Уведомление игроков
+    priority: high
+    estimated_time: 2-3 дня
+
+  - id: database-optimization
+    title: Оптимизация БД и запросов
+    description: |
+      Создание индексов
+      Оптимизация запросов
+      Кэширование рейтингов
+    priority: medium
+    estimated_time: 1-2 дня
+
+  - id: api-endpoints
+    title: Реализация REST API endpoints
+    description: |
+      Создание всех endpoints для матчмейкинга
+      Интеграция с существующим API
+    priority: high
+    estimated_time: 2-3 дня
+
+  - id: integration-testing
+    title: Интеграционное тестирование
+    description: |
+      Тесты очередей
+      Тесты алгоритмов подбора
+      Тесты рейтинговой системы
+      Тесты интеграций
+    priority: high
+    estimated_time: 3-4 дня
+
+diagrams:
+  component_diagram: |
+    ```mermaid
+    graph TB
+        subgraph "Matchmaking Service"
+            QM[Queue Manager]
+            ME[Matchmaking Engine]
+            RS[Rating System]
+            TB[Team Balancer]
+            MQC[Match Quality Calculator]
+            ASD[Anti-Smurf Detector]
+            SC[Session Creator]
+        end
+
+        subgraph "Storage"
+            Redis[(Redis<br/>Queues<br/>Hot Data)]
+            DB[(PostgreSQL<br/>matchmaking_queues<br/>player_ratings<br/>matchmaking_matches)]
+        end
+
+        subgraph "External Services"
+            GS[Gameplay Service]
+            CS[Character Service]
+            PS[Party Service]
+            RG[Realtime Gateway]
+        end
+
+        subgraph "Client"
+            CL[UE5 Client]
+        end
+
+        CL -->|join queue| QM
+        QM -->|store| Redis
+        QM --> ME
+        ME --> RS
+        ME --> TB
+        ME --> MQC
+        ME --> ASD
+        ME --> SC
+        RS -->|store| DB
+        SC -->|create session| GS
+        ME -->|player data| CS
+        QM -->|party info| PS
+        SC -->|notify| RG
+        RG -->|push events| CL
+    ```
+
+  data_flow_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant P as Player
+        participant QM as Queue Manager
+        participant ME as Matchmaking Engine
+        participant TB as Team Balancer
+        participant RS as Rating System
+        participant SC as Session Creator
+        participant GS as Gameplay Service
+
+        P->>QM: Join queue
+        QM->>QM: Add to Redis
+        QM->>ME: Start matching
+        ME->>RS: Get ratings
+        ME->>ME: Find candidates
+        ME->>TB: Balance teams
+        ME->>ME: Calculate quality
+        ME->>SC: Create match
+        SC->>GS: Create session
+        SC->>P: Notify players
+    ```
+
+decisions:
+  - id: adr-matchmaking-architecture
+    summary: |
+      Выбрана модульная архитектура внутри matchmaking-go для обеспечения
+      централизованного управления всей системой матчмейкинга.
+
+  - id: adr-redis-postgresql
+    summary: |
+      Использование Redis для hot data очередей и PostgreSQL для персистентности
+      обеспечивает баланс между производительностью и надёжностью.
+
+  - id: adr-matching-algorithms
+    summary: |
+      Различные алгоритмы подбора для разных режимов обеспечивают оптимальное
+      качество матчей для каждого типа контента.
+
+  - id: adr-rating-system
+    summary: |
+      ELO система с сезонными сбросами обеспечивает справедливый и динамичный
+      рейтинг для всех игроков.
+
+  - id: adr-team-balancing
+    summary: |
+      Snake draft алгоритм обеспечивает справедливую балансировку команд и
+      повышает качество матчей.
+
+validation:
+  architecture_complete: true
+  components_defined: true
+  microservices_identified: true
+  api_endpoints_described: true
+  technical_specification_ready: true
+  subtasks_defined: true
+
+next_steps:
+  - Передача задачи агенту API Designer для создания OpenAPI спецификации
+  - Детализация API endpoints
+  - Создание request/response схем
+  - Определение алгоритмов подбора
+
+history:
+  - version: '1.1.0'
+    date: 2025-11-30
+    author: Architect Agent
+    changes: |
+      Добавлена детальная синхронизация данных:
+      - Event Sourcing для всех изменений состояния матчмейкинга
+      - CQRS Pattern для разделения команд и запросов
+      - Saga Pattern для распределенных операций (создание матча, обновление рейтинга)
+      - Outbox Pattern для гарантированной доставки событий
+      - Обновлена секция data_consistency с механизмами синхронизации
+      - Добавлена спецификация тикрейта для операций с очередью, матчмейкингом и рейтингом
+  - version: '1.0.0'
+    date: 2025-11-22
+    author: Architect Agent
+    changes: |
+      Создана полная архитектура системы матчмейкинга:
+      - Определены компоненты (Queue Manager, Matchmaking Engine, Rating System, Team Balancer, Match Quality Calculator, Anti-Smurf Detector, Session Creator)
+      - Описаны API endpoints (высокоуровнево)
+      - Спроектированы потоки данных
+      - Определена структура БД (matchmaking_queues, player_ratings, matchmaking_matches, matchmaking_match_players, matchmaking_sessions)
+      - Спроектирована система очередей
+      - Спроектированы алгоритмы подбора
+      - Спроектирована система рейтинга
+      - Создано техническое задание
+      - Разбито на подзадачи
+
+

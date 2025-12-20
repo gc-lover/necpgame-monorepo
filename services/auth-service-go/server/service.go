@@ -28,19 +28,6 @@ type AuthService struct {
 	sessionResponsePool sync.Pool
 }
 
-// OPTIMIZATION: Issue #1998 - Memory-aligned user and session structs
-type User struct {
-	UserID       string    `json:"user_id"`       // 16 bytes
-	Username     string    `json:"username"`      // 16 bytes
-	Email        string    `json:"email"`         // 16 bytes
-	PasswordHash string    `json:"-"`             // 16 bytes (not serialized)
-	DisplayName  string    `json:"display_name"`  // 16 bytes
-	Status       string    `json:"status"`        // 16 bytes
-	CreatedAt    time.Time `json:"created_at"`    // 24 bytes
-	LastLogin    time.Time `json:"last_login"`    // 24 bytes
-	Level        int       `json:"level"`         // 8 bytes
-	Experience   int       `json:"experience"`    // 8 bytes
-}
 
 type Session struct {
 	SessionID    string    `json:"session_id"`     // 16 bytes

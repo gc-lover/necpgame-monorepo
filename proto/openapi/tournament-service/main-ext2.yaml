@@ -1,0 +1,400 @@
+  /tournament/statistics:
+    get:
+      tags:
+        - Statistics
+      summary: Get global tournament statistics
+      operationId: getGlobalStatistics
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: time_range
+          in: query
+          schema:
+            type: string
+            enum: [day, week, month, year]
+            default: month
+      responses:
+        '200':
+          description: Global statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetGlobalStatisticsResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    # Error schema
+    Error:
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+        message:
+          type: string
+        details:
+          type: string
+      required:
+        - code
+        - message
+
+    # Tournament schemas
+    Tournament:
+      type: object
+      properties:
+        tournament_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        game_mode:
+          type: string
+        tournament_format:
+          type: string
+          enum: [single_elimination, double_elimination, round_robin, swiss, free_for_all]
+        status:
+          type: string
+          enum: [draft, registration_open, in_progress, completed, cancelled]
+        max_participants:
+          type: integer
+        min_participants:
+          type: integer
+        current_participants:
+          type: integer
+        registration_start_time:
+          type: integer
+          format: int64
+        registration_end_time:
+          type: integer
+          format: int64
+        start_time:
+          type: integer
+          format: int64
+        end_time:
+          type: integer
+          format: int64
+        rules:
+          type: object
+          additionalProperties:
+            type: string
+        prizes:
+          type: array
+          items:
+            $ref: '#/components/schemas/Prize'
+        entry_fee:
+          $ref: '#/components/schemas/EntryFee'
+        visibility:
+          type: string
+          enum: [public, private, invite_only]
+        region_restrictions:
+          type: array
+          items:
+            type: string
+        skill_requirements:
+          $ref: '#/components/schemas/SkillRequirements'
+        auto_progression:
+          type: boolean
+        match_timeout:
+          type: integer
+        allow_spectators:
+          type: boolean
+        streaming_enabled:
+          type: boolean
+        current_round:
+          type: integer
+        total_rounds:
+          type: integer
+        created_at:
+          type: integer
+          format: int64
+        updated_at:
+          type: integer
+          format: int64
+        last_activity:
+          type: integer
+          format: int64
+
+    # Helper schemas
+    Prize:
+      type: object
+      properties:
+        position:
+          type: integer
+        reward_type:
+          type: string
+        reward_value:
+          type: string
+        description:
+          type: string
+      required:
+        - position
+        - reward_type
+        - reward_value
+
+    EntryFee:
+      type: object
+      properties:
+        currency_type:
+          type: string
+        amount:
+          type: integer
+      required:
+        - currency_type
+        - amount
+
+    SkillRequirements:
+      type: object
+      properties:
+        min_level:
+          type: integer
+        max_level:
+          type: integer
+        required_achievements:
+          type: array
+          items:
+            type: string
+
+    # Request/Response schemas
+    CreateTournamentRequest:
+      type: object
+      properties:
+        tournament_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        description:
+          type: string
+          maxLength: 2000
+        game_mode:
+          type: string
+          minLength: 1
+          maxLength: 100
+        tournament_format:
+          type: string
+          enum: [single_elimination, double_elimination, round_robin, swiss, free_for_all]
+          default: single_elimination
+        max_participants:
+          type: integer
+          minimum: 2
+          maximum: 10000
+          default: 128
+        min_participants:
+          type: integer
+          minimum: 2
+          maximum: 1000
+          default: 4
+        registration_start_time:
+          type: integer
+          format: int64
+        registration_end_time:
+          type: integer
+          format: int64
+        start_time:
+          type: integer
+          format: int64
+        end_time:
+          type: integer
+          format: int64
+        rules:
+          type: object
+          additionalProperties:
+            type: string
+        prizes:
+          type: array
+          items:
+            $ref: '#/components/schemas/Prize'
+        entry_fee:
+          $ref: '#/components/schemas/EntryFee'
+        visibility:
+          type: string
+          enum: [public, private, invite_only]
+          default: public
+        region_restrictions:
+          type: array
+          items:
+            type: string
+        skill_requirements:
+          $ref: '#/components/schemas/SkillRequirements'
+        auto_progression:
+          type: boolean
+          default: true
+        match_timeout:
+          type: integer
+          minimum: 60
+          maximum: 3600
+          default: 600
+        allow_spectators:
+          type: boolean
+          default: true
+        streaming_enabled:
+          type: boolean
+          default: false
+      required:
+        - name
+        - game_mode
+        - registration_start_time
+        - registration_end_time
+        - start_time
+        - end_time
+
+    CreateTournamentResponse:
+      type: object
+      properties:
+        tournament_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        leader_id:
+          type: string
+        status:
+          type: string
+        member_count:
+          type: integer
+        created_at:
+          type: integer
+          format: int64
+      required:
+        - tournament_id
+        - name
+        - status
+        - member_count
+        - created_at
+
+    ListTournamentsResponse:
+      type: object
+      properties:
+        tournaments:
+          type: array
+          items:
+            $ref: '#/components/schemas/TournamentSummary'
+        total_count:
+          type: integer
+      required:
+        - tournaments
+        - total_count
+
+    TournamentSummary:
+      type: object
+      properties:
+        tournament_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        game_mode:
+          type: string
+        status:
+          type: string
+        participant_count:
+          type: integer
+        max_participants:
+          type: integer
+        start_time:
+          type: integer
+          format: int64
+        end_time:
+          type: integer
+          format: int64
+        region_restrictions:
+          type: array
+          items:
+            type: string
+        created_at:
+          type: integer
+          format: int64
+      required:
+        - tournament_id
+        - name
+        - status
+        - participant_count
+        - max_participants
+        - created_at
+
+    GetTournamentResponse:
+      type: object
+      properties:
+        tournament:
+          $ref: '#/components/schemas/Tournament'
+      required:
+        - tournament
+
+    UpdateTournamentRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        description:
+          type: string
+          maxLength: 2000
+        status:
+          type: string
+          enum: [draft, registration_open, in_progress, completed, cancelled]
+        rules:
+          type: object
+          additionalProperties:
+            type: string
+        prizes:
+          type: array
+          items:
+            $ref: '#/components/schemas/Prize'
+
+    UpdateTournamentResponse:
+      type: object
+      properties:
+        tournament_id:
+          type: string
+          format: uuid
+        updated_fields:
+          type: array
+          items:
+            type: string
+        updated_at:
+          type: integer
+          format: int64
+      required:
+        - tournament_id
+        - updated_fields
+        - updated_at
+
+    RegisterTournamentRequest:
+      type: object
+      properties:
+        player_id:
+          type: string
+        team_id:
+          type: string
+        message:
+          type: string
+          maxLength: 500
+      required:
+        - player_id
+
+    RegisterTournamentResponse:
+      type: object
+      properties:
+        tournament_id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+        status:

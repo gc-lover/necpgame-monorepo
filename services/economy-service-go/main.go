@@ -85,6 +85,14 @@ func main() {
 		logger.Info("Weapon combinations service initialized")
 	}
 
+	craftingRepo := server.NewCraftingRepository(dbPool)
+	craftingService := server.NewCraftingService(craftingRepo, redisClient)
+	logger.Info("Crafting service initialized")
+
+	contractRepo := server.NewContractRepository(dbPool)
+	contractService := server.NewContractService(contractRepo, redisClient)
+	logger.Info("Contract service initialized")
+
 	currencyExchangeRepo := server.NewCurrencyExchangeRepository(dbPool)
 	currencyExchangeService := server.NewCurrencyExchangeService(currencyExchangeRepo)
 	logger.Info("Currency exchange service initialized")
@@ -102,7 +110,7 @@ func main() {
 		logger.Info("JWT authentication disabled")
 	}
 
-	httpServer := server.NewHTTPServer(addr, tradeService, currencyExchangeService, jwtValidator, authEnabled, engramCreationService, engramTransferService, weaponCombinationsService)
+	httpServer := server.NewHTTPServer(addr, tradeService, currencyExchangeService, jwtValidator, authEnabled, engramCreationService, engramTransferService, weaponCombinationsService, craftingService, contractService)
 
 	metricsMux := http.NewServeMux()
 	metricsMux.Handle("/metrics", promhttp.Handler())

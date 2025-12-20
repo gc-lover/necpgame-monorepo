@@ -4,109 +4,104 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"sync"
 	"time"
-
-	"github.com/redis/go-redis/v9"
-	"github.com/sirupsen/logrus"
-	"golang.org/x/time/rate"
 )
 
-// OPTIMIZATION: Issue #2156 - Memory-aligned struct for circuit breaker performance
-type CircuitBreakerService struct {
-	logger          *logrus.Logger
-	metrics         *CircuitBreakerMetrics
-	config          *CircuitBreakerServiceConfig
+func (s *CircuitBreakerService) ListDegradationPolicies(w http.ResponseWriter, r *http.Request) {
+	policies := []*DegradationPolicySummary{}
 
-	// OPTIMIZATION: Issue #2156 - Redis for distributed state management
-	redisClient     *redis.Client
+	s.degradationPolicies.Range(func(key, value interface{}) bool {
+		policy := value.(*DegradationPolicy)
 
-	// OPTIMIZATION: Issue #2156 - Thread-safe storage for MMO resilience management
-	circuits        sync.Map // OPTIMIZATION: Concurrent circuit breaker management
-	bulkheads       sync.Map // OPTIMIZATION: Concurrent bulkhead management
-	timeouts        sync.Map // OPTIMIZATION: Concurrent timeout management
-	degradationPolicies sync.Map // OPTIMIZATION: Concurrent degradation policy management
-	rateLimiters    sync.Map // OPTIMIZATION: Per-client rate limiting
-
-	// OPTIMIZATION: Issue #2156 - Memory pooling for hot path structs (zero allocations target!)
-	circuitResponsePool sync.Pool
-	bulkheadResponsePool sync.Pool
-	timeoutResponsePool sync.Pool
-	degradationResponsePool sync.Pool
-}
-
-func NewCircuitBreakerService(logger *logrus.Logger, metrics *CircuitBreakerMetrics, config *CircuitBreakerServiceConfig) *CircuitBreakerService {
-	s := &CircuitBreakerService{
-		logger:  logger,
-		metrics: metrics,
-		config:  config,
-	}
-
-	// Initialize Redis client
-	s.redisClient = redis.NewClient(&redis.Options{
-		Addr:         config.RedisAddr,
-		Password:     "",
-		DB:           0,
-		DialTimeout:  5 * time.Second,
-		ReadTimeout:  3 * time.Second,
-		WriteTimeout: 3 * time.Second,
-		PoolSize:     10,
-		MinIdleConns: 2,
+		summary := &DegradationPolicySummary{
+			PolicyID:         policy.PolicyID,
+			ServiceName:      policy.ServiceName,
+			Status:           policy.Status,
+			TriggerCount:     policy.TriggerCount,
+			RecoveryCount:    policy.RecoveryCount,
+			LastTriggeredAt:  policy.LastTriggeredAt.Unix(),
+			CreatedAt:        policy.CreatedAt.Unix(),
+		}
+		policies = append(policies, summary)
+		return true
 	})
 
-	// OPTIMIZATION: Issue #2156 - Initialize memory pools (zero allocations target!)
-	s.circuitResponsePool = sync.Pool{
-		New: func() interface{} {
-			return &CreateCircuitResponse{}
-		},
-	}
-	s.bulkheadResponsePool = sync.Pool{
-		New: func() interface{} {
-			return &CreateBulkheadResponse{}
-		},
-	}
-	s.timeoutResponsePool = sync.Pool{
-		New: func() interface{} {
-			return &CreateTimeoutResponse{}
-		},
-	}
-	s.degradationResponsePool = sync.Pool{
-		New: func() interface{} {
-			return &CreateDegradationPolicyResponse{}
-		},
+	resp := &ListDegradationPoliciesResponse{
+		Policies:    policies,
+		TotalCount:  len(policies),
 	}
 
-	// Start background processes
-	go s.metricsCollector()
-	go s.stateSynchronizer()
-	go s.cleanupProcess()
-
-	return s
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(resp)
 }
 
-// OPTIMIZATION: Issue #2156 - Rate limiting middleware for circuit breaker protection
-func (s *CircuitBreakerService) RateLimitMiddleware() func(http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			clientID := r.Header.Get("X-Client-ID")
-			if clientID == "" {
-				clientID = r.RemoteAddr // Fallback to IP
-			}
+// Metrics and monitoring methods
+func (s *CircuitBreakerService) GetMetrics(w http.ResponseWriter, r *http.Request) {
+	circuitID := r.URL.Query().Get("circuit_id")
+	timeRange := r.URL.Query().Get("time_range")
 
-			limiter, _ := s.rateLimiters.LoadOrStore(clientID, rate.NewLimiter(100, 200)) // 100 req/sec burst 200
+	// Collect circuit metrics
+	var circuitMetrics []*CircuitBreakerMetricsData
+	s.circuits.Range(func(key, value interface{}) bool {
+		circuit := value.(*CircuitBreaker)
 
-			if !limiter.(*rate.Limiter).Allow() {
-				s.logger.WithField("client_id", clientID).Warn("circuit breaker API rate limit exceeded")
-				http.Error(w, "Too many requests", http.StatusTooManyRequests)
-				return
-			}
+		if circuitID != "" && circuit.CircuitID != circuitID {
+			return true
+		}
 
-			next.ServeHTTP(w, r)
-		})
+		circuitMetrics = append(circuitMetrics, &circuit.Metrics)
+		return true
+	})
+
+	// Collect bulkhead metrics
+	var bulkheadMetrics []*BulkheadMetricsData
+	s.bulkheads.Range(func(key, value interface{}) bool {
+		bulkhead := value.(*Bulkhead)
+		bulkheadMetrics = append(bulkheadMetrics, &bulkhead.Metrics)
+		return true
+	})
+
+	// Collect timeout metrics
+	var timeoutMetrics []map[string]interface{}
+	s.timeouts.Range(func(key, value interface{}) bool {
+		timeout := value.(*TimeoutConfig)
+		metric := map[string]interface{}{
+			"timeout_id":        timeout.TimeoutID,
+			"service_name":      timeout.ServiceName,
+			"timeouts_triggered": timeout.TimeoutsTriggered,
+			"average_response_time": timeout.AverageResponseTime.Milliseconds(),
+		}
+		timeoutMetrics = append(timeoutMetrics, metric)
+		return true
+	})
+
+	// Collect degradation policy metrics
+	var degradationMetrics []map[string]interface{}
+	s.degradationPolicies.Range(func(key, value interface{}) bool {
+		policy := value.(*DegradationPolicy)
+		metric := map[string]interface{}{
+			"policy_id":       policy.PolicyID,
+			"status":          policy.Status,
+			"trigger_count":   policy.TriggerCount,
+			"recovery_count":  policy.RecoveryCount,
+		}
+		degradationMetrics = append(degradationMetrics, metric)
+		return true
+	})
+
+	resp := &GetMetricsResponse{
+		Circuits:           circuitMetrics,
+		Bulkheads:          bulkheadMetrics,
+		Timeouts:           timeoutMetrics,
+		DegradationPolicies: degradationMetrics,
+		TimeRange:          timeRange,
+		GeneratedAt:        time.Now().Unix(),
 	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(resp)
 }
 
-// Health check method
 func (s *CircuitBreakerService) HealthCheck(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)

@@ -6,6 +6,9 @@ info:
     API for real-time voice communication in MMOFPS RPG.
     Handles proximity audio, group channels, text-to-speech, and voice moderation.
     Optimized for MMO performance with 5000+ concurrent voice connections.
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
 
 servers:
   - url: http://localhost:8080
@@ -18,23 +21,22 @@ tags:
   - name: Voice Channels
     description: Voice channel management and operations
   - name: Audio Streaming
-    description: Real-time audio streaming and processing
-  - name: Proximity Audio
-    description: Location-based audio attenuation and effects
+    description: Real-time audio streaming and proximity effects
   - name: Text-to-Speech
-    description: TTS conversion and voice synthesis
+    description: Text-to-speech conversion and audio generation
   - name: Moderation
-    description: Voice chat moderation and content filtering
+    description: Voice chat moderation and abuse reporting
 
 paths:
-  /voice/health:
+  /voice-chat/health:
     get:
       tags:
         - Voice Channels
       summary: Health check for Voice Chat Service
       operationId: healthCheck
+      security: []
       responses:
-        '200':
+        "200":
           description: Service is healthy
           content:
             application/json:
@@ -44,111 +46,355 @@ paths:
                   status:
                     type: string
                     example: "healthy"
+                  service:
+                    type: string
+                    example: "voice-chat-service"
+                  version:
+                    type: string
+                    example: "1.0.0"
+                  active_channels:
+                    type: integer
+                    example: 150
+                  active_connections:
+                    type: integer
+                    example: 5000
+                  audio_streams:
+                    type: integer
+                    example: 200
+        "500":
+          description: Service unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
 
-# Voice Channels API
-paths:
-  $ref: './paths/voice-channels.yaml'
-
-# Audio Streaming API
-paths:
-  $ref: './paths/audio-streaming.yaml'
-
-# Text-to-Speech API
-paths:
-  $ref: './paths/tts.yaml'
-
-# Moderation API
-paths:
-  $ref: './paths/moderation.yaml'
-
-components:
-  securitySchemes:
-    BearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
-
-  responses:
-    BadRequest:
-      description: Bad request
-      content:
-        application/json:
+  /voice-chat/channels:
+    get:
+      tags:
+        - Voice Channels
+      summary: List voice channels with filtering and pagination
+      operationId: listChannels
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: type
+          in: query
           schema:
-            $ref: '#/components/schemas/Error'
-    InternalError:
-      description: Internal server error
-      content:
-        application/json:
+            type: string
+            enum: [global, guild, group, proximity, private]
+        - name: status
+          in: query
           schema:
-            $ref: '#/components/schemas/Error'
+            type: string
+            enum: [active, inactive, full]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        "200":
+          description: List of voice channels
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListChannelsResponse"
+        "400":
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
 
-  schemas:
-    Error:
-      type: object
-      properties:
-        code:
-          type: integer
-          format: int32
-        message:
-          type: string
-      required:
-        - code
-        - message
+    post:
+      tags:
+        - Voice Channels
+      summary: Create a new voice channel
+      operationId: createChannel
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateChannelRequest"
+      responses:
+        "201":
+          description: Channel created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateChannelResponse"
+        "400":
+          description: Invalid request data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Channel name already exists
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
 
-    # Request/Response schemas
-    CreateChannelRequest:
-      $ref: './schemas/requests.yaml#/CreateChannelRequest'
+  /voice-chat/channels/{channelId}:
+    get:
+      tags:
+        - Voice Channels
+      summary: Get voice channel details
+      operationId: getChannel
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: channelId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Channel details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetChannelResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Channel not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
 
-    CreateChannelResponse:
-      $ref: './schemas/responses.yaml#/CreateChannelResponse'
+    put:
+      tags:
+        - Voice Channels
+      summary: Update voice channel settings
+      operationId: updateChannel
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: channelId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateChannelRequest"
+      responses:
+        "200":
+          description: Channel updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UpdateChannelResponse"
+        "400":
+          description: Invalid request data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Not channel owner
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Channel not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
 
-    GetChannelsResponse:
-      $ref: './schemas/responses.yaml#/GetChannelsResponse'
+    delete:
+      tags:
+        - Voice Channels
+      summary: Delete voice channel
+      operationId: deleteChannel
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: channelId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Channel deleted
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Not channel owner
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Channel not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
 
-    GetChannelResponse:
-      $ref: './schemas/responses.yaml#/GetChannelResponse'
+  /voice-chat/channels/{channelId}/join:
+    post:
+      tags:
+        - Voice Channels
+      summary: Join voice channel
+      operationId: joinChannel
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: channelId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/JoinChannelRequest"
+      responses:
+        "200":
+          description: Successfully joined channel
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JoinChannelResponse"
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Channel is full or access denied
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Channel not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
 
-    UpdateChannelRequest:
-      $ref: './schemas/requests.yaml#/UpdateChannelRequest'
+  /voice-chat/channels/{channelId}/leave:
+    post:
+      tags:
+        - Voice Channels
+      summary: Leave voice channel
+      operationId: leaveChannel
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: channelId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Successfully left channel
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LeaveChannelResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Channel not found or not a member
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
 
-    UpdateChannelResponse:
-      $ref: './schemas/responses.yaml#/UpdateChannelResponse'
-
-    JoinChannelRequest:
-      $ref: './schemas/requests.yaml#/JoinChannelRequest'
-
-    JoinChannelResponse:
-      $ref: './schemas/responses.yaml#/JoinChannelResponse'
-
-    LeaveChannelResponse:
-      $ref: './schemas/responses.yaml#/LeaveChannelResponse'
-
-    StartStreamRequest:
-      $ref: './schemas/requests.yaml#/StartStreamRequest'
-
-    StartStreamResponse:
-      $ref: './schemas/responses.yaml#/StartStreamResponse'
-
-    StopStreamResponse:
-      $ref: './schemas/responses.yaml#/StopStreamResponse'
-
-    GetProximityResponse:
-      $ref: './schemas/responses.yaml#/GetProximityResponse'
-
-    TextToSpeechRequest:
-      $ref: './schemas/requests.yaml#/TextToSpeechRequest'
-
-    TextToSpeechResponse:
-      $ref: './schemas/responses.yaml#/TextToSpeechResponse'
-
-    ReportAbuseRequest:
-      $ref: './schemas/requests.yaml#/ReportAbuseRequest'
-
-    ReportAbuseResponse:
-      $ref: './schemas/responses.yaml#/ReportAbuseResponse'
-
-    MuteUserRequest:
-      $ref: './schemas/requests.yaml#/MuteUserRequest'
-
-    MuteUserResponse:
-      $ref: './schemas/responses.yaml#/MuteUserResponse'
+  /voice-chat/audio/stream:
+    post:
+      tags:
+        - Audio Streaming
+      summary: Start audio streaming session
+      operationId: startAudioStream
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StartAudioStreamRequest"
+      responses:
+        "200":
+          description: Audio streaming session started
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StartAudioStreamResponse"
+        "400":

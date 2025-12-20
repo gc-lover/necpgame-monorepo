@@ -1,0 +1,400 @@
+      type: string
+    claimed_at:
+      type: integer
+      format: int64
+    claim_cost_paid:
+      type: boolean
+    defense_bonus:
+      type: number
+      format: float
+    strategic_value:
+      type: integer
+  required:
+    - territory_id
+    - guild_id
+    - claimed_at
+
+UpdateTerritoryResponse:
+  type: object
+  properties:
+    territory_id:
+      type: string
+    updated_fields:
+      type: array
+      items:
+        type: string
+    updated_at:
+      type: integer
+      format: int64
+  required:
+    - territory_id
+    - updated_at
+
+GetGuildTerritoriesResponse:
+  type: object
+  properties:
+    guild_id:
+      type: string
+    territories:
+      type: array
+      items:
+        $ref: '#/GuildTerritory'
+    total_count:
+      type: integer
+      minimum: 0
+  required:
+    - guild_id
+    - territories
+    - total_count
+
+GetTerritoryResponse:
+  type: object
+  properties:
+    territory:
+      $ref: '#/TerritoryDetails'
+  required:
+    - territory
+
+GuildTerritory:
+  type: object
+  properties:
+    territory_id:
+      type: string
+    name:
+      type: string
+    type:
+      type: string
+    zone:
+      type: string
+    controlled_since:
+      type: integer
+      format: int64
+    defense_level:
+      type: integer
+      minimum: 1
+    strategic_value:
+      type: integer
+    status:
+      type: string
+      enum: [controlled, contested, upgrading]
+    last_defended:
+      type: integer
+      format: int64
+  required:
+    - territory_id
+    - name
+    - type
+    - zone
+    - controlled_since
+    - status
+
+TerritoryDetails:
+  type: object
+  properties:
+    territory_id:
+      type: string
+    name:
+      type: string
+    type:
+      type: string
+    zone:
+      type: string
+    coordinates:
+      type: object
+      properties:
+        x:
+          type: number
+          format: float
+        y:
+          type: number
+          format: float
+        z:
+          type: number
+          format: float
+    radius:
+      type: number
+      format: float
+    controlling_guild_id:
+      type: string
+    controlling_guild_name:
+      type: string
+    controlled_since:
+      type: integer
+      format: int64
+    defense_level:
+      type: integer
+      minimum: 1
+    strategic_value:
+      type: integer
+    status:
+      type: string
+    upgrade_level:
+      type: integer
+      minimum: 1
+    buildings:
+      type: array
+      items:
+        type: object
+        properties:
+          building_type:
+            type: string
+          level:
+            type: integer
+          position:
+            type: object
+            properties:
+              x:
+                type: number
+                format: float
+              y:
+                type: number
+                format: float
+              z:
+                type: number
+                format: float
+    resources:
+      type: array
+      items:
+        type: object
+        properties:
+          resource_type:
+            type: string
+          generation_rate:
+            type: number
+            format: float
+          current_amount:
+            type: number
+            format: float
+          max_capacity:
+            type: number
+            format: float
+    policies:
+      type: object
+      properties:
+        access_level:
+          type: string
+        tax_rate:
+          type: number
+          format: float
+        pvp_allowed:
+          type: boolean
+        resource_extraction_allowed:
+          type: boolean
+    statistics:
+      $ref: '#/TerritoryStatistics'
+  required:
+    - territory_id
+    - name
+    - type
+    - zone
+    - coordinates
+    - controlling_guild_id
+    - status
+
+TerritoryStatistics:
+  type: object
+  properties:
+    battles_fought:
+      type: integer
+      minimum: 0
+    battles_won:
+      type: integer
+      minimum: 0
+    resources_extracted:
+      type: integer
+      minimum: 0
+    tax_collected:
+      type: integer
+      minimum: 0
+    last_battle:
+      type: integer
+      format: int64
+    controlling_guild_changes:
+      type: integer
+      minimum: 0
+
+DeclareWarResponse:
+  type: object
+  properties:
+    war_id:
+      type: string
+    declaring_guild_id:
+      type: string
+    target_guild_id:
+      type: string
+    status:
+      type: string
+      enum: [declared, negotiation_period, active, paused]
+    declared_at:
+      type: integer
+      format: int64
+    war_starts_at:
+      type: integer
+      format: int64
+    duration_hours:
+      type: integer
+  required:
+    - war_id
+    - declaring_guild_id
+    - target_guild_id
+    - status
+    - declared_at
+
+UpdateWarResponse:
+  type: object
+  properties:
+    war_id:
+      type: string
+    status:
+      type: string
+    updated_at:
+      type: integer
+      format: int64
+  required:
+    - war_id
+    - status
+    - updated_at
+
+ListGuildWarsResponse:
+  type: object
+  properties:
+    wars:
+      type: array
+      items:
+        $ref: '#/GuildWarSummary'
+    total_count:
+      type: integer
+      minimum: 0
+  required:
+    - wars
+    - total_count
+
+GetGuildWarResponse:
+  type: object
+  properties:
+    war:
+      $ref: '#/GuildWarDetails'
+  required:
+    - war
+
+GuildWarSummary:
+  type: object
+  properties:
+    war_id:
+      type: string
+    declaring_guild_name:
+      type: string
+    target_guild_name:
+      type: string
+    war_type:
+      type: string
+    status:
+      type: string
+    started_at:
+      type: integer
+      format: int64
+    ends_at:
+      type: integer
+      format: int64
+    battles_count:
+      type: integer
+      minimum: 0
+  required:
+    - war_id
+    - declaring_guild_name
+    - target_guild_name
+    - status
+
+GuildWarDetails:
+  type: object
+  properties:
+    war_id:
+      type: string
+    declaring_guild_id:
+      type: string
+    declaring_guild_name:
+      type: string
+    target_guild_id:
+      type: string
+    target_guild_name:
+      type: string
+    war_type:
+      type: string
+    objectives:
+      type: array
+      items:
+        type: string
+    status:
+      type: string
+    declared_at:
+      type: integer
+      format: int64
+    started_at:
+      type: integer
+      format: int64
+    ends_at:
+      type: integer
+      format: int64
+    duration_hours:
+      type: integer
+    battle_rules:
+      type: object
+      properties:
+        max_participants_per_battle:
+          type: integer
+        allowed_zones:
+          type: array
+          items:
+            type: string
+        restricted_weapons:
+          type: array
+          items:
+            type: string
+        scoring_system:
+          type: string
+        victory_conditions:
+          type: array
+          items:
+            type: string
+    stake:
+      type: object
+      properties:
+        currency_amount:
+          type: integer
+        territories:
+          type: array
+          items:
+            type: string
+        resources:
+          type: object
+          additionalProperties:
+            type: integer
+        reputation_impact:
+          type: integer
+    battles:
+      type: array
+      items:
+        $ref: '#/WarBattle'
+    statistics:
+      $ref: '#/WarStatistics'
+  required:
+    - war_id
+    - declaring_guild_id
+    - target_guild_id
+    - status
+
+WarBattle:
+  type: object
+  properties:
+    battle_id:
+      type: string
+    zone:
+      type: string
+    started_at:
+      type: integer
+      format: int64
+    ended_at:
+      type: integer
+      format: int64
+    winner_guild_id:
+      type: string

@@ -1,0 +1,246 @@
+        columns:
+          - id: UUID PRIMARY KEY
+          - character_id: UUID FOREIGN KEY
+          - weapon_id: UUID FOREIGN KEY
+          - shots_fired: INTEGER
+          - hits: INTEGER
+          - headshots: INTEGER
+          - accuracy: DECIMAL(5,2)
+          - avg_ttk: DECIMAL(5,2)
+          - recoil_control: DECIMAL(5,2)
+          - timestamp: TIMESTAMP
+
+  integrations:
+    combat_session: |
+      - Интеграция стрельбы с боевой сессией
+      - Синхронизация попаданий и урона
+      - Обработка частей тела и типов урона
+
+    ability_service: |
+      - Получение способностей, влияющих на стрельбу
+      - Интеграция способностей с модификаторами
+      - Обработка мобильных способностей
+
+    implant_service: |
+      - Получение данных об имплантах для стрельбы
+      - Расчет бонусов имплантов для отдачи и точности
+      - Интеграция имплантов с модификаторами
+
+    progression_service: |
+      - Получение данных о навыках стрельбы
+      - Расчет бонусов навыков для отдачи и точности
+      - Обновление навыков на основе стрельбы
+
+    economy_service: |
+      - Получение данных о модах оружия
+      - Интеграция с крафтом модов
+      - Обработка распыления оружия
+
+    inventory_service: |
+      - Проверка экипированного оружия
+      - Получение данных о модах оружия
+      - Расчет модификаторов экипировки
+
+    analytics_service: |
+      - Логирование всех выстрелов и попаданий
+      - Сбор метрик точности и TTK
+      - Анализ паттернов стрельбы
+      - Детект эксплойтов
+
+    realtime_gateway: |
+      - Отправка realtime обновлений отдачи
+      - Синхронизация TTK
+      - Уведомления о модификаторах
+
+technical_specification:
+  subtasks:
+    - id: shooting-profile-manager
+      title: Реализация менеджера профилей стрельбы
+      description: |
+        Реализация Shooting Profile Manager с управлением профилями TTK,
+        применением модификаторов и интеграцией с режимами игры.
+      dependencies: []
+      estimated_effort: 4 days
+
+    - id: recoil-pattern-manager
+      title: Реализация менеджера отдачи
+      description: |
+        Реализация Recoil Pattern Manager с управлением паттернами отдачи,
+        применением модификаторов и realtime обновлениями.
+      dependencies: []
+      estimated_effort: 4 days
+
+    - id: ttk-calculator
+      title: Реализация калькулятора TTK
+      description: |
+        Реализация TTK Calculator с расчетом TTK по режимам,
+        учетом модификаторов и динамической корректировкой.
+      dependencies: [shooting-profile-manager]
+      estimated_effort: 3 days
+
+    - id: damage-calculator
+      title: Реализация калькулятора урона
+      description: |
+        Реализация Damage Calculator с расчетом урона по частям тела,
+        учетом типов урона и сопротивлений.
+      dependencies: []
+      estimated_effort: 4 days
+
+    - id: modifier-system
+      title: Реализация системы модификаторов
+      description: |
+        Реализация Modifier System с применением модификаторов от имплантов,
+        навыков и экипировки к стрельбе.
+      dependencies: []
+      estimated_effort: 4 days
+
+    - id: loadout-manager
+      title: Реализация менеджера лоадаутов
+      description: |
+        Реализация Loadout Manager с сохранением и загрузкой лоадаутов оружия,
+        валидацией и управлением активными лоадаутами.
+      dependencies: []
+      estimated_effort: 3 days
+
+    - id: ballistics-engine
+      title: Реализация движка баллистики
+      description: |
+        Реализация Ballistics Engine с расчетом траекторий, рикошетов,
+        закрученных выстрелов и профилей дистанции.
+      dependencies: []
+      estimated_effort: 5 days
+
+    - id: weapon-customization-manager
+      title: Реализация менеджера кастомизации
+      description: |
+        Реализация Weapon Customization Manager с управлением модулями оружия,
+        проверкой совместимости и интеграцией с крафтом.
+      dependencies: []
+      estimated_effort: 4 days
+
+    - id: shooting-telemetry-collector
+      title: Реализация сборщика телеметрии
+      description: |
+        Реализация Shooting Telemetry Collector с логированием выстрелов,
+        сбором метрик и интеграцией с Analytics Service.
+      dependencies: []
+      estimated_effort: 3 days
+
+    - id: websocket-channels
+      title: Реализация WebSocket каналов
+      description: |
+        Реализация WebSocket каналов для realtime обновлений отдачи,
+        TTK и модификаторов.
+      dependencies: [recoil-pattern-manager, ttk-calculator]
+      estimated_effort: 3 days
+
+    - id: event-bus-integration
+      title: Интеграция с Event Bus
+      description: |
+        Реализация публикации и подписки на события через Kafka
+        для всех компонентов системы стрельбы.
+      dependencies: [shooting-profile-manager, modifier-system]
+      estimated_effort: 2 days
+
+    - id: database-schema
+      title: Создание схемы БД
+      description: |
+        Создание таблиц БД для профилей, отдачи, TTK, модификаторов, лоадаутов,
+        баллистики, кастомизации и телеметрии с миграциями Liquibase.
+      dependencies: []
+      estimated_effort: 2 days
+
+diagrams:
+  component_diagram: |
+    ```mermaid
+    graph TB
+        Client[UE5 Client] --> Gateway[API Gateway]
+        
+        Gateway --> GameplayService[Gameplay Service<br/>8083]
+        
+        GameplayService --> SPM[Shooting Profile Manager]
+        GameplayService --> RPM[Recoil Pattern Manager]
+        GameplayService --> TTKC[TTK Calculator]
+        GameplayService --> DC[Damage Calculator]
+        GameplayService --> MS[Modifier System]
+        GameplayService --> LM[Loadout Manager]
+        GameplayService --> BE[Ballistics Engine]
+        GameplayService --> WCM[Weapon Customization Manager]
+        GameplayService --> STC[Shooting Telemetry Collector]
+        
+        SPM --> TTKC
+        SPM --> MS
+        RPM --> MS
+        DC --> MS
+        
+        GameplayService --> CombatSession[Combat Session]
+        GameplayService --> AbilityService[Ability Service]
+        GameplayService --> ImplantService[Implant Service]
+        GameplayService --> ProgressionService[Progression Service]
+        GameplayService --> EconomyService[Economy Service]
+        GameplayService --> InventoryService[Inventory Service]
+        GameplayService --> AnalyticsService[Analytics Service]
+        
+        GameplayService --> EventBus[Event Bus<br/>Kafka]
+        EventBus --> RealtimeGateway[Realtime Gateway]
+        
+        GameplayService --> DB[(Gameplay DB)]
+        
+        Client --> WSShooting[WebSocket<br/>Shooting]
+        WSShooting --> GameplayService
+    ```
+
+  shooting_flow_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant C as Client
+        participant SPM as Shooting Profile Manager
+        participant RPM as Recoil Pattern Manager
+        participant DC as Damage Calculator
+        participant MS as Modifier System
+        participant EB as Event Bus
+        
+        C->>SPM: Start shooting
+        SPM->>SPM: Determine mode (PvE/PvP/Arena)
+        SPM->>SPM: Apply TTK profile
+        SPM->>MS: Get modifiers
+        MS-->>SPM: Modifiers
+        SPM->>EB: Publish combat.shooting.ttk-adjusted
+        
+        C->>RPM: Fire weapon
+        RPM->>RPM: Get recoil pattern
+        RPM->>MS: Apply modifiers
+        MS-->>RPM: Modified recoil
+        RPM->>EB: Publish combat.shooting.recoil-updated
+        RPM-->>C: Recoil update
+        
+        C->>DC: Hit target
+        DC->>DC: Determine body part
+        DC->>DC: Apply multiplier
+        DC->>MS: Get modifiers
+        MS-->>DC: Modifiers
+        DC->>DC: Calculate damage
+        DC-->>C: Damage result
+    ```
+
+  modifier_application_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant IS as Implant Service
+        participant PS as Progression Service
+        participant MS as Modifier System
+        participant SPM as Shooting Profile Manager
+        participant RPM as Recoil Pattern Manager
+        participant EB as Event Bus
+        
+        IS->>EB: Publish combat.implant.activated
+        PS->>EB: Publish progression.skill-updated
+        
+        EB->>MS: Subscribe to events
+        MS->>MS: Determine modifier type
+        MS->>MS: Calculate modifier value
+        MS->>SPM: Apply to shooting profile
+        MS->>RPM: Apply to recoil
+        MS->>EB: Publish combat.shooting.modifier-applied
+    ```
+

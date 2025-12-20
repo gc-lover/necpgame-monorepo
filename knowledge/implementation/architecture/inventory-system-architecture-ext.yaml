@@ -1,0 +1,202 @@
+      Объединение и разделение стеков
+      Оптимизация размещения
+    priority: high
+    estimated_time: 2-3 дня
+
+  - id: weight-calculator
+    title: Реализация Weight Calculator
+    description: |
+      Расчёт веса инвентаря
+      Проверка ограничений
+      Валидация подбора предметов
+    priority: high
+    estimated_time: 2-3 дня
+
+  - id: database-optimization
+    title: Оптимизация БД и запросов
+    description: |
+      Создание индексов
+      Оптимизация запросов
+      Кэширование активных инвентарей
+    priority: medium
+    estimated_time: 2-3 дня
+
+  - id: api-endpoints
+    title: Реализация REST API endpoints
+    description: |
+      Создание всех endpoints для инвентаря
+      Интеграция с существующим API economy-service
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: realtime-integration
+    title: Интеграция с Realtime Gateway
+    description: |
+      Синхронизация изменений инвентаря
+      Push уведомления
+      Оптимизация трафика
+    priority: high
+    estimated_time: 2-3 дня
+
+  - id: integration-testing
+    title: Интеграционное тестирование
+    description: |
+      Тесты операций с инвентарём
+      Тесты экипировки
+      Тесты интеграций с другими сервисами
+    priority: high
+    estimated_time: 2-3 дня
+
+diagrams:
+  component_diagram: |
+    ```mermaid
+    graph TB
+        subgraph "Economy Service"
+            IM[Inventory Manager]
+            EM[Equipment Manager]
+            SM[Storage Manager]
+            ISM[Item Stack Manager]
+            WC[Weight Calculator]
+        end
+
+        subgraph "Database"
+            DB[(PostgreSQL<br/>character_inventory<br/>character_items<br/>character_equipment<br/>character_storage)]
+        end
+
+        subgraph "External Services"
+            CHS[Character Service]
+            LS[Loot System]
+            TS[Trade System]
+            RG[Realtime Gateway]
+        end
+
+        subgraph "Client"
+            CL[UE5 Client]
+        end
+
+        CL -->|API requests| IM
+        IM --> EM
+        IM --> SM
+        IM --> ISM
+        IM --> WC
+        IM -->|store| DB
+        EM -->|store| DB
+        SM -->|store| DB
+        IM -->|get stats| CHS
+        IM -->|apply stats| CHS
+        IM -->|receive items| LS
+        IM -->|trade items| TS
+        IM -->|sync state| RG
+        RG -->|push events| CL
+    ```
+
+  data_flow_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant CL as Client
+        participant IM as Inventory Manager
+        participant WC as Weight Calculator
+        participant ISM as Item Stack Manager
+        participant CHS as Character Service
+        participant RG as Realtime Gateway
+
+        CL->>IM: Pickup item
+        IM->>WC: Check weight limit
+        WC->>IM: Weight OK
+        IM->>ISM: Check stack merge
+        ISM->>IM: Can merge
+        IM->>IM: Add to inventory
+        IM->>WC: Update weight
+        IM->>CHS: Update character weight
+        IM->>RG: Sync changes
+        RG->>CL: Push update
+    ```
+
+  inventory_structure: |
+    ```mermaid
+    graph LR
+        subgraph "Character Inventory"
+            B[Backpack<br/>Slots: 0-99]
+            E[Equipment<br/>Weapon, Armor, Implants]
+            S[Storage<br/>Bank, Stash]
+        end
+
+        subgraph "Item Operations"
+            A[Add Item]
+            M[Move Item]
+            R[Remove Item]
+            ST[Stack Operations]
+        end
+
+        B --> A
+        B --> M
+        B --> R
+        B --> ST
+        E --> A
+        E --> M
+        S --> A
+        S --> M
+    ```
+
+decisions:
+  - id: adr-inventory-architecture
+    summary: |
+      Выбрана модульная архитектура внутри economy-service-go для обеспечения
+      тесной интеграции с торговлей и экономикой.
+
+  - id: adr-server-side-management
+    summary: |
+      Все операции с инвентарём выполняются на сервере для защиты от читов
+      и обеспечения консистентности данных.
+
+  - id: adr-slot-based-system
+    summary: |
+      Система на основе слотов обеспечивает простоту управления и визуализации,
+      с поддержкой stacking для оптимизации пространства.
+
+  - id: adr-weight-system
+    summary: |
+      Система веса добавляет реалистичность и ограничивает количество предметов,
+      создавая стратегический выбор для игроков.
+
+  - id: adr-realtime-sync
+    summary: |
+      Realtime синхронизация через gateway обеспечивает актуальность данных
+      для всех клиентов и предотвращает конфликты.
+
+validation:
+  architecture_complete: true
+  components_defined: true
+  microservices_identified: true
+  api_endpoints_described: true
+  technical_specification_ready: true
+  subtasks_defined: true
+
+next_steps:
+  - Передача задачи агенту API Designer для создания OpenAPI спецификации
+  - Детализация API endpoints
+  - Создание request/response схем
+
+history:
+  - version: '1.1.0'
+    date: 2025-11-30
+    author: Architect Agent
+    changes: |
+      Обновлена архитектура системы инвентаря:
+      - Добавлена детальная синхронизация данных (Event Sourcing, CQRS, Saga Pattern, Outbox Pattern)
+      - Добавлена спецификация тикрейта для операций с инвентарём
+      - Расширен раздел data_consistency с механизмами синхронизации
+      - Добавлены требования к задержке для операций
+  - version: '1.0.0'
+    date: 2025-11-22
+    author: Architect Agent
+    changes: |
+      Создана полная архитектура системы инвентаря:
+      - Определены компоненты (Inventory Manager, Equipment Manager, Storage Manager, Item Stack Manager, Weight Calculator)
+      - Описаны API endpoints (высокоуровнево)
+      - Спроектированы потоки данных
+      - Определена структура БД
+      - Создано техническое задание
+      - Разбито на подзадачи
+
+

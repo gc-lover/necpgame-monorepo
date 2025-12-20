@@ -17,19 +17,19 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"go.uber.org/zap"
 
-	"necpgame/services/api-gateway-service-go/server"
+	"necpgame/services/api-gateway-service-go/config"
 )
 
 // APIGatewayServer представляет API Gateway сервер
 type APIGatewayServer struct {
 	server *http.Server
 	logger *zap.Logger
-	config *server.Config
+	config *config.Config
 	proxy  *httputil.ReverseProxy
 }
 
 // NewAPIGatewayServer создает новый API Gateway сервер
-func NewAPIGatewayServer(logger *zap.Logger, config *server.Config) *APIGatewayServer {
+func NewAPIGatewayServer(logger *zap.Logger, config *config.Config) *APIGatewayServer {
 	// Создаем reverse proxy
 	proxy := &httputil.ReverseProxy{
 		Director: func(req *http.Request) {},
@@ -183,7 +183,7 @@ func (g *APIGatewayServer) determineTargetService(path string) string {
 }
 
 // proxyToService выполняет проксирование запроса к целевому сервису
-func (g *APIGatewayServer) proxyToService(w http.ResponseWriter, r *http.Request, targetURL *url.URL, serviceConfig *server.ServiceConfig, serviceName string) error {
+func (g *APIGatewayServer) proxyToService(w http.ResponseWriter, r *http.Request, targetURL *url.URL, serviceConfig *config.ServiceConfig, serviceName string) error {
 	// Создаем контекст с таймаутом
 	ctx, cancel := context.WithTimeout(r.Context(), serviceConfig.Timeout)
 	defer cancel()
@@ -290,7 +290,7 @@ func (g *APIGatewayServer) HealthCheckHandler(w http.ResponseWriter, r *http.Req
 }
 
 // checkServiceHealth проверяет здоровье конкретного сервиса
-func (g *APIGatewayServer) checkServiceHealth(serviceName string, serviceConfig *server.ServiceConfig) map[string]interface{} {
+func (g *APIGatewayServer) checkServiceHealth(serviceName string, serviceConfig *config.ServiceConfig) map[string]interface{} {
 	healthURL := serviceConfig.URL + serviceConfig.HealthCheck
 
 	client := &http.Client{Timeout: 5 * time.Second}

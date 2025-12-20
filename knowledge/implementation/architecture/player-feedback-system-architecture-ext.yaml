@@ -1,0 +1,222 @@
+          * Обработка ошибок
+          * Кэширование ответов
+        
+        **Интеграция:**
+        - Использование существующего HTTP клиента проекта
+        - Интеграция с системой аутентификации
+        - Интеграция с системой уведомлений (опционально)
+      mechanics_links: []
+      assets: []
+    - id: agent-architecture
+      title: Архитектура агента player-feedback
+      body: |
+        **Агент: agent:player-feedback**
+        
+        **Расположение:** `.cursor/rules/agent-player-feedback.mdc` (новый файл)
+        
+        **Ответственность:**
+        - Мониторинг GitHub Issues с меткой `player-feedback`
+        - Классификация обращений
+        - Объединение дубликатов
+        - Маршрутизация к соответствующим агентам
+        - Обновление статусов в БД
+        
+        **Workflow:**
+        
+        1. **Мониторинг:**
+           - Периодическая проверка Issues (каждые 5 минут)
+           - Фильтрация по метке `player-feedback` и статусу `open`
+           - Получение новых Issues через GitHub API
+        
+        2. **Классификация:**
+           - Анализ типа обращения из Issue body
+           - Определение категории
+           - Извлечение приоритета
+           - Проверка контекста игры
+        
+        3. **Объединение дубликатов:**
+           - Семантический поиск похожих Issues
+           - Объединение в одно обращение
+           - Перенос голосов
+           - Сохранение всех авторов
+        
+        4. **Маршрутизация:**
+           - Добавление меток соответствующего агента
+           - Обновление меток этапа разработки
+           - Передача Issue агенту
+        
+        5. **Обновление статуса:**
+           - Обновление статуса в БД через API feedback-service
+           - Синхронизация с GitHub Issue
+        
+        **Интеграции:**
+        - GitHub API (MCP GitHub)
+        - feedback-service API
+        - База данных (через API)
+      mechanics_links: []
+      assets: []
+    - id: security-architecture
+      title: Архитектура безопасности
+      body: |
+        **Компоненты безопасности:**
+        
+        **1. Аутентификация:**
+        - Session token validation через session-service
+        - JWT токены для агентов
+        - Middleware для проверки аутентификации
+        
+        **2. Авторизация:**
+        - Проверка прав доступа (только свои обращения)
+        - Роли: player, moderator, admin, agent
+        - RBAC для административных операций
+        
+        **3. Rate Limiting:**
+        - Token bucket algorithm
+        - Лимиты:
+          * 5 обращений/час на игрока
+          * 20 обращений/день на игрока
+          * 10 голосов/минуту на игрока
+          * 1000 обращений/час глобально
+        - HTTP 429 при превышении
+        - Retry-After заголовок
+        
+        **4. Валидация данных:**
+        - Валидация на клиенте (UE5)
+        - Строгая валидация на сервере (Go)
+        - Проверка типов, длины, форматов
+        
+        **5. Санитизация:**
+        - Очистка HTML тегов
+        - Экранирование специальных символов
+        - Защита от XSS
+        - Prepared statements для SQL
+        
+        **6. Анонимизация:**
+        - Player ID не отображается публично
+        - Анонимные ID для публичного доступа
+        - Маскирование в логах
+        
+        **7. Модерация:**
+        - Автоматическая проверка на спам
+        - Проверка на запрещенные слова
+        - Ручная модерация (опционально)
+        
+        **8. Мониторинг:**
+        - Логирование всех операций
+        - Метрики безопасности
+        - Алерты при подозрительной активности
+      mechanics_links: []
+      assets: []
+    - id: scalability
+      title: Масштабируемость
+      body: |
+        **Горизонтальное масштабирование:**
+        - Stateless сервис (можно запускать несколько инстансов)
+        - Балансировка нагрузки через Envoy
+        - Shared database (PostgreSQL)
+        
+        **Вертикальное масштабирование:**
+        - Оптимизация запросов к БД
+        - Индексы для частых запросов
+        - Кэширование популярных данных (Redis, опционально)
+        
+        **Производительность:**
+        - Асинхронная обработка некритичных операций
+        - Batch операции для обновления статусов
+        - Connection pooling для БД
+        
+        **Мониторинг:**
+        - Метрики Prometheus
+        - Логи Loki
+        - Трейсы Tempo
+        - Health checks `/health`
+      mechanics_links: []
+      assets: []
+    - id: deployment
+      title: Развертывание
+      body: |
+        **Docker:**
+        - Multi-stage build для минимального образа
+        - Базовый образ: `golang:alpine`
+        - Финальный образ: `alpine:latest`
+        
+        **Kubernetes:**
+        - Deployment манифест
+        - Service для внутреннего доступа
+        - ConfigMap для конфигурации
+        - Secret для GitHub токенов
+        - HorizontalPodAutoscaler для масштабирования
+        
+        **Конфигурация:**
+        - Environment variables для настроек
+        - GitHub App credentials в Secrets
+        - Database connection string в Secrets
+        - Rate limit настройки в ConfigMap
+      mechanics_links: []
+      assets: []
+  subtasks:
+    - id: subtask-1
+      title: Проектирование детальной БД схемы
+      description: Создание детальной схемы БД с миграциями
+      assigned_to: database-engineer
+      status: pending
+    - id: subtask-2
+      title: Создание OpenAPI спецификации
+      description: Детальное описание всех API endpoints
+      assigned_to: api-designer
+      status: pending
+    - id: subtask-3
+      title: Реализация feedback-service
+      description: Реализация микросервиса на Go
+      assigned_to: backend-developer
+      status: pending
+    - id: subtask-4
+      title: Реализация клиентской части (UE5)
+      description: Создание UI формы и доски идей
+      assigned_to: ue5-developer
+      status: pending
+    - id: subtask-5
+      title: Создание агента player-feedback
+      description: Реализация агента для классификации и маршрутизации
+      assigned_to: agent-developer
+      status: pending
+appendix:
+  glossary:
+    - term: feedback-service
+      definition: Микросервис для обработки обращений от игроков
+    - term: player-feedback
+      definition: Обращение от игрока через in-game форму
+    - term: agent:player-feedback
+      definition: Агент для классификации и маршрутизации обращений
+  references:
+    - title: Концепция системы
+      link: knowledge/analysis/tasks/ideas/2025-11-23-IDEA-player-feedback-system.yaml
+    - title: GitHub Issue #1335
+      link: https://github.com/gc-lover/necpgame-monorepo/issues/1335
+  decisions:
+    - date: 2025-11-23
+      decision: Использовать микросервисную архитектуру с отдельным feedback-service
+      rationale: Изоляция ответственности, независимое масштабирование, соответствие существующим паттернам
+    - date: 2025-11-23
+      decision: PostgreSQL для хранения данных
+      rationale: Соответствие существующей инфраструктуре, поддержка JSONB для game_context
+    - date: 2025-11-23
+      decision: REST API для взаимодействия
+      rationale: Простота интеграции, соответствие существующим сервисам
+    - date: 2025-11-23
+      decision: GitHub API для создания Issues
+      rationale: Интеграция с существующим workflow разработки
+implementation:
+  github_issue: 1335
+  needs_task: true
+  queue_reference: []
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-11-23
+    author: architect
+    changes: Создана архитектура системы обратной связи от игроков
+validation:
+  checksum: ''
+  schema_version: '1.0'
+

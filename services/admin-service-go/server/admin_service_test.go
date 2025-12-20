@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"sync"
 	"testing"
 	"time"
 
@@ -44,6 +45,11 @@ func (m *mockAdminRepository) CountAuditLogs(ctx context.Context, adminID *uuid.
 	return args.Int(0), args.Error(1)
 }
 
+func (m *mockAdminRepository) CreateAuditLogsBatch(ctx context.Context, logs []*models.AdminAuditLog) error {
+	args := m.Called(ctx, logs)
+	return args.Error(0)
+}
+
 type mockEventBus struct {
 	mock.Mock
 }
@@ -67,6 +73,23 @@ func setupTestService() (*AdminService, *mockAdminRepository, *mockEventBus, *re
 		logger:     GetLogger(),
 		eventBus:   mockEventBus,
 		httpClient: &http.Client{Timeout: 10 * time.Second},
+	}
+
+	// Initialize memory pools for tests
+	service.auditLogPool = sync.Pool{
+		New: func() interface{} {
+			return &models.AdminAuditLog{}
+		},
+	}
+	service.responsePool = sync.Pool{
+		New: func() interface{} {
+			return &models.AdminActionResponse{}
+		},
+	}
+	service.searchResultPool = sync.Pool{
+		New: func() interface{} {
+			return &models.PlayerSearchResult{}
+		},
 	}
 
 	return service, mockRepo, mockEventBus, redisClient

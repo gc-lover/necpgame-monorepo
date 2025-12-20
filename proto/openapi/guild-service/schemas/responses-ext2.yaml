@@ -1,0 +1,357 @@
+    participants_declaring:
+      type: integer
+    participants_target:
+      type: integer
+    casualties_declaring:
+      type: integer
+    casualties_target:
+      type: integer
+    objectives_completed:
+      type: integer
+  required:
+    - battle_id
+    - zone
+    - started_at
+    - winner_guild_id
+
+WarStatistics:
+  type: object
+  properties:
+    total_battles:
+      type: integer
+      minimum: 0
+    battles_won_declaring:
+      type: integer
+      minimum: 0
+    battles_won_target:
+      type: integer
+      minimum: 0
+    total_casualties:
+      type: integer
+      minimum: 0
+    territories_conquered:
+      type: integer
+      minimum: 0
+    resources_captured:
+      type: integer
+      minimum: 0
+    reputation_change_declaring:
+      type: integer
+    reputation_change_target:
+      type: integer
+
+ProposeAllianceResponse:
+  type: object
+  properties:
+    alliance_id:
+      type: string
+    proposing_guild_id:
+      type: string
+    target_guild_id:
+      type: string
+    status:
+      type: string
+      enum: [proposed, negotiation_period, active, rejected]
+    proposed_at:
+      type: integer
+      format: int64
+    expires_at:
+      type: integer
+      format: int64
+  required:
+    - alliance_id
+    - proposing_guild_id
+    - target_guild_id
+    - status
+    - proposed_at
+
+ListAlliancesResponse:
+  type: object
+  properties:
+    alliances:
+      type: array
+      items:
+        $ref: '#/GuildAllianceSummary'
+    total_count:
+      type: integer
+      minimum: 0
+  required:
+    - alliances
+    - total_count
+
+GuildAllianceSummary:
+  type: object
+  properties:
+    alliance_id:
+      type: string
+    guild1_name:
+      type: string
+    guild2_name:
+      type: string
+    alliance_type:
+      type: string
+    status:
+      type: string
+    formed_at:
+      type: integer
+      format: int64
+    expires_at:
+      type: integer
+      format: int64
+  required:
+    - alliance_id
+    - guild1_name
+    - guild2_name
+    - status
+
+CreateContractResponse:
+  type: object
+  properties:
+    contract_id:
+      type: string
+    guild_id:
+      type: string
+    status:
+      type: string
+    created_at:
+      type: integer
+      format: int64
+    expires_at:
+      type: integer
+      format: int64
+  required:
+    - contract_id
+    - guild_id
+    - status
+    - created_at
+
+AcceptContractResponse:
+  type: object
+  properties:
+    contract_id:
+      type: string
+    player_id:
+      type: string
+    accepted_at:
+      type: integer
+      format: int64
+    time_to_complete:
+      type: integer
+  required:
+    - contract_id
+    - player_id
+    - accepted_at
+
+ListContractsResponse:
+  type: object
+  properties:
+    contracts:
+      type: array
+      items:
+        $ref: '#/GuildContractSummary'
+    total_count:
+      type: integer
+      minimum: 0
+  required:
+    - contracts
+    - total_count
+
+GuildContractSummary:
+  type: object
+  properties:
+    contract_id:
+      type: string
+    title:
+      type: string
+    guild_name:
+      type: string
+    contract_type:
+      type: string
+    priority:
+      type: string
+    difficulty:
+      type: string
+    reward_amount:
+      type: integer
+      minimum: 0
+    status:
+      type: string
+    expires_at:
+      type: integer
+      format: int64
+    applicants_count:
+      type: integer
+      minimum: 0
+  required:
+    - contract_id
+    - title
+    - guild_name
+    - status
+
+GetGuildStatisticsResponse:
+  type: object
+  properties:
+    guild_id:
+      type: string
+    time_range:
+      type: string
+    statistics:
+      $ref: '#/DetailedGuildStatistics'
+    generated_at:
+      type: integer
+      format: int64
+  required:
+    - guild_id
+    - time_range
+    - statistics
+    - generated_at
+
+DetailedGuildStatistics:
+  type: object
+  properties:
+    member_stats:
+      type: object
+      properties:
+        current_members:
+          type: integer
+        new_members:
+          type: integer
+        departed_members:
+          type: integer
+        average_level:
+          type: number
+          format: float
+        member_retention_rate:
+          type: number
+          format: float
+    territory_stats:
+      type: object
+      properties:
+        territories_controlled:
+          type: integer
+        territories_conquered:
+          type: integer
+        territories_lost:
+          type: integer
+        total_defense_level:
+          type: integer
+        resources_generated:
+          type: integer
+    war_stats:
+      type: object
+      properties:
+        wars_declared:
+          type: integer
+        wars_won:
+          type: integer
+        wars_lost:
+          type: integer
+        battles_participated:
+          type: integer
+        battles_won:
+          type: integer
+        total_casualties:
+          type: integer
+    contract_stats:
+      type: object
+      properties:
+        contracts_posted:
+          type: integer
+        contracts_completed:
+          type: integer
+        total_rewards_paid:
+          type: integer
+        average_completion_time:
+          type: integer
+    economic_stats:
+      type: object
+      properties:
+        total_wealth:
+          type: integer
+        wealth_gained:
+          type: integer
+        wealth_spent:
+          type: integer
+        tax_collected:
+          type: integer
+        resources_traded:
+          type: integer
+    social_stats:
+      type: object
+      properties:
+        alliances_active:
+          type: integer
+        reputation_gained:
+          type: integer
+        reputation_lost:
+          type: integer
+        total_interactions:
+          type: integer
+    activity_stats:
+      type: object
+      properties:
+        daily_active_members:
+          type: integer
+        weekly_active_members:
+          type: integer
+        monthly_active_members:
+          type: integer
+        average_session_length:
+          type: integer
+        peak_concurrent_members:
+          type: integer
+
+GetGlobalStatisticsResponse:
+  type: object
+  properties:
+    time_range:
+      type: string
+    total_guilds:
+      type: integer
+      minimum: 0
+    active_guilds:
+      type: integer
+      minimum: 0
+    total_members:
+      type: integer
+      minimum: 0
+    total_territories:
+      type: integer
+      minimum: 0
+    active_wars:
+      type: integer
+      minimum: 0
+    active_alliances:
+      type: integer
+      minimum: 0
+    total_contracts:
+      type: integer
+      minimum: 0
+    average_guild_size:
+      type: number
+      format: float
+    most_popular_faction:
+      type: string
+    top_guilds_by_level:
+      type: array
+      items:
+        type: object
+        properties:
+          guild_name:
+            type: string
+          level:
+            type: integer
+          member_count:
+            type: integer
+        required:
+          - guild_name
+          - level
+          - member_count
+    generated_at:
+      type: integer
+      format: int64
+  required:
+    - time_range
+    - total_guilds
+    - total_members
+    - generated_at

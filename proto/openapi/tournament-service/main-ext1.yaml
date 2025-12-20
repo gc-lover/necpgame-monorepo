@@ -1,0 +1,400 @@
+      operationId: listMatches
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: tournament_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: player_id
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [scheduled, in_progress, completed, cancelled]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: List of matches
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListMatchesResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /tournament/matches/{matchId}:
+    get:
+      tags:
+        - Matches
+      summary: Get match details
+      operationId: getMatch
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: matchId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Match details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetMatchResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Match not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    put:
+      tags:
+        - Matches
+      summary: Update match result
+      operationId: updateMatchResult
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: matchId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateMatchResultRequest'
+      responses:
+        '200':
+          description: Match result updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateMatchResultResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Match not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /tournament/rankings:
+    get:
+      tags:
+        - Rankings
+      summary: Get player rankings
+      operationId: getRankings
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: leaderboard_type
+          in: query
+          schema:
+            type: string
+            enum: [global, tournament, seasonal]
+            default: global
+        - name: game_mode
+          in: query
+          schema:
+            type: string
+        - name: region
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+      responses:
+        '200':
+          description: Player rankings
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetRankingsResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /tournament/rankings/{playerId}:
+    get:
+      tags:
+        - Rankings
+      summary: Get player ranking details
+      operationId: getPlayerRanking
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: playerId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Player ranking details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetPlayerRankingResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Player not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /tournament/leagues:
+    get:
+      tags:
+        - Leagues
+      summary: List leagues
+      operationId: listLeagues
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, completed, upcoming]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 20
+      responses:
+        '200':
+          description: List of leagues
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListLeaguesResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      tags:
+        - Leagues
+      summary: Create a new league
+      operationId: createLeague
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateLeagueRequest'
+      responses:
+        '201':
+          description: League created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateLeagueResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /tournament/leagues/{leagueId}/join:
+    post:
+      tags:
+        - Leagues
+      summary: Join league
+      operationId: joinLeague
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: leagueId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JoinLeagueRequest'
+      responses:
+        '200':
+          description: Successfully joined league
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JoinLeagueResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: League not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /tournament/tournaments/{tournamentId}/rewards:
+    get:
+      tags:
+        - Rewards
+      summary: Get tournament rewards for player
+      operationId: getTournamentRewards
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: tournamentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Tournament rewards
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetTournamentRewardsResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Tournament not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      tags:
+        - Rewards
+      summary: Claim tournament rewards
+      operationId: claimRewards
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: tournamentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClaimRewardsRequest'
+      responses:
+        '200':
+          description: Rewards claimed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClaimRewardsResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Tournament not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+

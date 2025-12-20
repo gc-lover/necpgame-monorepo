@@ -6,6 +6,7 @@ import (
 	"net/http/pprof"
 	"os"
 	"os/signal"
+	"runtime/debug"
 	"syscall"
 	"time"
 
@@ -14,22 +15,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// OPTIMIZATION: Issue #2156 - Memory-aligned struct for circuit breaker service performance
-type CircuitBreakerServiceConfig struct {
-	HTTPAddr       string        `json:"http_addr"`       // 16 bytes
-	RedisAddr      string        `json:"redis_addr"`      // 16 bytes
-	PprofAddr      string        `json:"pprof_addr"`      // 16 bytes
-	HealthAddr     string        `json:"health_addr"`     // 16 bytes
-	ReadTimeout    time.Duration `json:"read_timeout"`    // 8 bytes
-	WriteTimeout   time.Duration `json:"write_timeout"`   // 8 bytes
-	MaxHeaderBytes int           `json:"max_header_bytes"` // 8 bytes
-	MaxConnections int           `json:"max_connections"` // 8 bytes
-	MetricsInterval time.Duration `json:"metrics_interval"` // 8 bytes
-	StateSyncInterval time.Duration `json:"state_sync_interval"` // 8 bytes
-	DefaultFailureThreshold int   `json:"default_failure_threshold"` // 8 bytes
-	DefaultTimeout   time.Duration `json:"default_timeout"` // 8 bytes
-	CleanupInterval  time.Duration `json:"cleanup_interval"` // 8 bytes
-}
+
 
 func main() {
 	logger := logrus.New()
@@ -38,7 +24,7 @@ func main() {
 	})
 	logger.SetLevel(logrus.InfoLevel)
 
-	config := &CircuitBreakerServiceConfig{
+	config := &server.CircuitBreakerServiceConfig{
 		HTTPAddr:                getEnv("HTTP_ADDR", ":8090"),
 		RedisAddr:               getEnv("REDIS_ADDR", "localhost:6379"),
 		PprofAddr:               getEnv("PPROF_ADDR", ":6866"),
@@ -67,6 +53,14 @@ func main() {
 	srv, err := server.NewCircuitBreakerServer(config, logger)
 	if err != nil {
 		logger.WithError(err).Fatal("failed to initialize circuit breaker server")
+	}
+
+	// OPTIMIZATION: Issue #2202 - GC tuning for circuit breaker service performance
+	// Set GOGC to 50 for optimal balance between memory usage and GC overhead
+	oldGC := os.Getenv("GOGC")
+	if oldGC == "" {
+		debug.SetGCPercent(50) // 50% instead of default 100%
+		logger.Info("OK GC tuning applied: GOGC=50 for optimal circuit breaker performance")
 	}
 
 	// OPTIMIZATION: Issue #2156 - Health check endpoint with circuit breaker metrics

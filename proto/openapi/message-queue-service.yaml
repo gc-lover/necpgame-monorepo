@@ -1,0 +1,502 @@
+openapi: 3.0.3
+info:
+  title: Message Queue Service API
+  description: High-throughput message queue service optimized for MMO RPG real-time communication
+  version: 1.0.0
+  contact:
+    name: NECPGAME Team
+    email: team@necpgame.com
+
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Local development server
+
+paths:
+  /health:
+    get:
+      summary: Health check endpoint
+      description: Returns service health status
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "healthy"
+                  time:
+                    type: string
+                    format: date-time
+
+  /messages:
+    post:
+      summary: Enqueue a message
+      description: Add a message to a queue with optional priority and TTL
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EnqueueMessageRequest'
+      responses:
+        '200':
+          description: Message successfully enqueued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnqueueMessageResponse'
+        '400':
+          description: Invalid request
+        '500':
+          description: Internal server error
+
+    get:
+      summary: Dequeue messages
+      description: Retrieve messages from a queue for processing
+      parameters:
+        - name: queue
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Name of the queue
+        - name: consumer_id
+          in: query
+          schema:
+            type: string
+          description: Consumer identifier for load balancing
+        - name: group_id
+          in: query
+          schema:
+            type: string
+          description: Consumer group identifier
+        - name: max_messages
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 1
+          description: Maximum number of messages to retrieve
+      responses:
+        '200':
+          description: Messages retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DequeueMessageResponse'
+        '400':
+          description: Invalid request
+        '500':
+          description: Internal server error
+
+  /messages/{messageId}/ack:
+    put:
+      summary: Acknowledge message processing
+      description: Confirm successful or failed message processing
+      parameters:
+        - name: messageId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Message identifier
+        - name: queue
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Queue name
+        - name: consumer_id
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Consumer identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AcknowledgeMessageRequest'
+      responses:
+        '200':
+          description: Message acknowledged
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AcknowledgeMessageResponse'
+        '400':
+          description: Invalid request
+        '404':
+          description: Message not found
+        '500':
+          description: Internal server error
+
+  /queues:
+    post:
+      summary: Create a queue
+      description: Create a new message queue with specified configuration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateQueueRequest'
+      responses:
+        '201':
+          description: Queue created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateQueueResponse'
+        '400':
+          description: Invalid request
+        '409':
+          description: Queue already exists
+        '500':
+          description: Internal server error
+
+  /queues/{queueName}:
+    get:
+      summary: Get queue information
+      description: Retrieve information about a specific queue
+      parameters:
+        - name: queueName
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Name of the queue
+      responses:
+        '200':
+          description: Queue information retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  message_count:
+                    type: integer
+                  consumer_count:
+                    type: integer
+        '404':
+          description: Queue not found
+        '500':
+          description: Internal server error
+
+    delete:
+      summary: Delete a queue
+      description: Delete an existing queue and all its messages
+      parameters:
+        - name: queueName
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Name of the queue to delete
+      responses:
+        '200':
+          description: Queue deleted successfully
+        '404':
+          description: Queue not found
+        '500':
+          description: Internal server error
+
+  /consumers:
+    post:
+      summary: Register a consumer
+      description: Register a new message consumer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                consumer_id:
+                  type: string
+                queue_name:
+                  type: string
+                group_id:
+                  type: string
+      responses:
+        '201':
+          description: Consumer registered successfully
+        '400':
+          description: Invalid request
+        '409':
+          description: Consumer already exists
+
+  /consumers/{consumerId}/heartbeat:
+    put:
+      summary: Consumer heartbeat
+      description: Update consumer heartbeat to indicate it's still active
+      parameters:
+        - name: consumerId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Consumer identifier
+      responses:
+        '200':
+          description: Heartbeat updated
+        '404':
+          description: Consumer not found
+
+  /consumers/{consumerId}:
+    delete:
+      summary: Unregister a consumer
+      description: Remove a consumer from the system
+      parameters:
+        - name: consumerId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Consumer identifier
+      responses:
+        '200':
+          description: Consumer unregistered
+        '404':
+          description: Consumer not found
+
+  /groups:
+    post:
+      summary: Create consumer group
+      description: Create a new consumer group for load balancing
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                group_id:
+                  type: string
+                queue_name:
+                  type: string
+      responses:
+        '201':
+          description: Consumer group created
+        '400':
+          description: Invalid request
+
+  /groups/{groupId}/consumers:
+    post:
+      summary: Add consumer to group
+      description: Add a consumer to an existing consumer group
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Consumer group identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                consumer_id:
+                  type: string
+      responses:
+        '200':
+          description: Consumer added to group
+        '404':
+          description: Group or consumer not found
+
+  /groups/{groupId}/consumers/{consumerId}:
+    delete:
+      summary: Remove consumer from group
+      description: Remove a consumer from a consumer group
+      parameters:
+        - name: groupId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Consumer group identifier
+        - name: consumerId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Consumer identifier
+      responses:
+        '200':
+          description: Consumer removed from group
+        '404':
+          description: Group or consumer not found
+
+components:
+  schemas:
+    EnqueueMessageRequest:
+      type: object
+      required:
+        - queue_name
+        - payload
+      properties:
+        queue_name:
+          type: string
+          description: Name of the queue
+          example: "game-events"
+        payload:
+          type: string
+          description: Message payload (JSON string)
+          example: "{\"event\":\"player_join\",\"player_id\":\"12345\"}"
+        headers:
+          type: object
+          additionalProperties:
+            type: string
+          description: Optional message headers
+          example: {"content-type": "application/json", "priority": "high"}
+        priority:
+          type: integer
+          minimum: 0
+          maximum: 255
+          default: 0
+          description: Message priority (higher values = higher priority)
+        ttl:
+          type: integer
+          format: int64
+          description: Time-to-live in milliseconds
+          example: 3600000
+
+    EnqueueMessageResponse:
+      type: object
+      properties:
+        message_id:
+          type: string
+          description: Unique message identifier
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        queued_at:
+          type: integer
+          format: int64
+          description: Unix timestamp when message was queued
+          example: 1640995200
+
+    DequeueMessageResponse:
+      type: object
+      properties:
+        messages:
+          type: array
+          items:
+            $ref: '#/components/schemas/Message'
+        count:
+          type: integer
+          description: Number of messages returned
+          example: 1
+
+    Message:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique message identifier
+        queue_name:
+          type: string
+          description: Queue name
+        payload:
+          type: string
+          description: Message payload
+        headers:
+          type: object
+          additionalProperties:
+            type: string
+        priority:
+          type: integer
+        ttl:
+          type: integer
+          format: int64
+          description: Time-to-live in milliseconds
+        created_at:
+          type: integer
+          format: int64
+          description: Creation timestamp
+        expires_at:
+          type: integer
+          format: int64
+          description: Expiration timestamp
+        delivered_at:
+          type: integer
+          format: int64
+          description: Delivery timestamp
+        retry_count:
+          type: integer
+        max_retries:
+          type: integer
+        status:
+          type: string
+          enum: [queued, processing, acknowledged, failed, expired]
+
+    AcknowledgeMessageRequest:
+      type: object
+      required:
+        - success
+      properties:
+        success:
+          type: boolean
+          description: Whether message processing was successful
+        error:
+          type: string
+          description: Error message if processing failed
+
+    AcknowledgeMessageResponse:
+      type: object
+      properties:
+        message_id:
+          type: string
+        acknowledged:
+          type: boolean
+
+    CreateQueueRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          description: Queue name
+        max_size:
+          type: integer
+          description: Maximum queue size
+          default: 10000
+        message_ttl:
+          type: integer
+          format: int64
+          description: Default message TTL in milliseconds
+        priority:
+          type: boolean
+          description: Whether this is a priority queue
+          default: false
+        persistent:
+          type: boolean
+          description: Whether queue persists across restarts
+          default: true
+
+    CreateQueueResponse:
+      type: object
+      properties:
+        name:
+          type: string
+        created_at:
+          type: integer
+          format: int64
+
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+
+security:
+  - ApiKeyAuth: []

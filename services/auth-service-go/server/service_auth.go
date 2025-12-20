@@ -9,7 +9,7 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
 
-	"github.com/NECPGAME/auth-service-go/pkg/api"
+	"necpgame/services/auth-service-go/pkg/api"
 )
 
 // Register регистрирует нового пользователя

@@ -1,42 +1,58 @@
-// Issue: #1943
 package main
 
 import (
 	"context"
 	"fmt"
 	"net/http"
-	_ "net/http/pprof" // OPTIMIZATION: Issue #1584
+	_ "net/http/pprof" // OPTIMIZATION: Issue #2177 - Enable pprof profiling
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
-	"github.com/gc-lover/necpgame-monorepo/services/guild-service-go/server"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/sirupsen/logrus"
+
+	"necpgame/services/guild-service-go/server"
 )
 
 func main() {
-	fmt.Println("Starting Guild Service...")
-	logger := server.GetLogger()
-	logger.Info("Guild Service (Go) starting...")
+	// Initialize structured logging
+	logger := server.NewLogger()
 
-	addr := getEnv("ADDR", "0.0.0.0:8084")
-	metricsAddr := getEnv("METRICS_ADDR", ":9184")
-	fmt.Printf("Server address: %s, Metrics address: %s\n", addr, metricsAddr)
+	logger.Info("🚀 Starting Guild Service...")
 
-	// Issue: #1943 - Initialize guild service with optimizations
-	guildService, err := server.NewGuildService()
-	if err != nil {
-		logger.WithError(err).Fatal("Failed to initialize guild service")
+	// Configuration
+	config := &server.GuildServiceConfig{
+		Port:                   getEnv("PORT", "8080"),
+		ReadTimeout:            30 * time.Second,
+		WriteTimeout:           30 * time.Second,
+		MaxHeaderBytes:         1 << 20, // 1MB
+		RedisAddr:              getEnv("REDIS_ADDR", "localhost:6379"),
+		TerritoryUpdateInterval: 5 * time.Minute,
+		WarUpdateInterval:      1 * time.Minute,
+		StatsCleanupInterval:   24 * time.Hour,
 	}
 
-	httpServer := server.NewHTTPServer(addr, guildService)
-	fmt.Println("OK HTTP server created successfully")
-	logger.Info("OK HTTP server created successfully")
+	// Initialize metrics (placeholder for now)
+	metrics := &server.GuildMetrics{
+		ActiveGuilds:      0,
+		ActiveMembers:     0,
+		GuildCreations:    0,
+		GuildJoins:        0,
+		GuildLeaves:       0,
+		ValidationErrors:  0,
+		TerritoryClaims:   0,
+		WarDeclarations:   0,
+		AllianceFormations: 0,
+		ContractCreations: 0,
+	}
 
-	// OPTIMIZATION: Issue #1584 - Start pprof server for profiling
+	// Initialize service
+	guildService := server.NewGuildService(logger, metrics, config)
+
+	// OPTIMIZATION: Issue #2177 - Start pprof server for profiling
 	go func() {
-		pprofAddr := getEnv("PPROF_ADDR", "localhost:6862")
+		pprofAddr := getEnv("PPROF_ADDR", "localhost:6868")
 		logger.WithField("addr", pprofAddr).Info("pprof server starting")
 		// Endpoints: /debug/pprof/profile, /debug/pprof/heap, /debug/pprof/goroutine
 		if err := http.ListenAndServe(pprofAddr, nil); err != nil {
@@ -44,64 +60,38 @@ func main() {
 		}
 	}()
 
-	// Issue: #1585 - Runtime Goroutine Monitoring
-	monitor := server.NewGoroutineMonitor(150, logger) // Max 150 goroutines for guild service
+	// Issue #2177 - Runtime Goroutine Monitoring
+	monitor := server.NewGoroutineMonitor(500, logger) // Max 500 goroutines for guild service
 	go monitor.Start()
 	defer monitor.Stop()
 	logger.Info("OK Goroutine monitor started")
 
-	metricsMux := http.NewServeMux()
-	metricsMux.Handle("/metrics", promhttp.Handler())
+	// Initialize HTTP server
+	httpServer := server.NewHTTPServer(guildService, logger, config)
 
-	metricsServer := &http.Server{
-		Addr:         metricsAddr,
-		Handler:      metricsMux,
-		ReadTimeout:  10 * time.Second,
-		WriteTimeout: 10 * time.Second,
-	}
-
+	// Start server in a goroutine
 	go func() {
-		logger.WithField("addr", metricsAddr).Info("Metrics server starting")
-		if err := metricsServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			logger.WithError(err).Fatal("Could not start metrics server")
+		logger.Info("🌐 Guild Service starting on port " + config.Port)
+		if err := httpServer.Start(); err != nil {
+			logger.WithError(err).Fatal("Failed to start HTTP server")
 		}
 	}()
 
-	// Graceful shutdown handling
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	// Wait for interrupt signal to gracefully shutdown the server
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
 
-	logger.WithField("addr", addr).Info("HTTP server starting")
-	fmt.Println("Starting HTTP server...")
+	logger.Info("🛑 Shutting down Guild Service...")
 
-	go func() {
-		if err := httpServer.Start(); err != nil && err != http.ErrServerClosed {
-			logger.WithError(err).Fatal("Could not start HTTP server")
-			fmt.Printf("Could not start HTTP server: %v\n", err)
-		}
-	}()
-
-	<-c
-	logger.Info("Shutting down servers...")
-
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	// Give outstanding requests 30 seconds to complete
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	if err := httpServer.Shutdown(ctx); err != nil {
-		logger.WithError(err).Error("HTTP server shutdown failed")
-	} else {
-		logger.Info("HTTP server gracefully stopped")
-	}
-
-	if err := metricsServer.Shutdown(ctx); err != nil {
-		logger.WithError(err).Error("Metrics server shutdown failed")
-	} else {
-		logger.Info("Metrics server gracefully stopped")
-	}
-
-	logger.Info("Guild Service (Go) stopped.")
+	logger.Info("OK Guild Service stopped gracefully")
 }
 
+// getEnv gets an environment variable or returns a default value
 func getEnv(key, defaultValue string) string {
 	if value, exists := os.LookupEnv(key); exists {
 		return value

@@ -85,7 +85,7 @@ func (gm *GoroutineMonitor) checkGoroutines() {
 
 		// Force garbage collection as emergency measure for circuit breaker
 		runtime.GC()
-		runtime.ForceGC()
+		runtime.GC()
 	} else {
 		// Log normal stats at debug level
 		gm.logger.WithFields(logrus.Fields{

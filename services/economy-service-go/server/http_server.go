@@ -34,13 +34,15 @@ type HTTPServer struct {
 	engramCreationService     EngramCreationServiceInterface
 	engramTransferService     EngramTransferServiceInterface
 	weaponCombinationsService WeaponCombinationsServiceInterface
+	craftingService           *CraftingService
+	contractService           *ContractService
 	logger                    *logrus.Logger
 	server                    *http.Server
 	jwtValidator              *JwtValidator
 	authEnabled               bool
 }
 
-func NewHTTPServer(addr string, tradeService TradeServiceInterface, currencyExchangeService CurrencyExchangeServiceInterface, jwtValidator *JwtValidator, authEnabled bool, engramCreationService EngramCreationServiceInterface, engramTransferService EngramTransferServiceInterface, weaponCombinationsService WeaponCombinationsServiceInterface) *HTTPServer {
+func NewHTTPServer(addr string, tradeService TradeServiceInterface, currencyExchangeService CurrencyExchangeServiceInterface, jwtValidator *JwtValidator, authEnabled bool, engramCreationService EngramCreationServiceInterface, engramTransferService EngramTransferServiceInterface, weaponCombinationsService WeaponCombinationsServiceInterface, craftingService *CraftingService, contractService *ContractService) *HTTPServer {
 	router := mux.NewRouter()
 
 	server := &HTTPServer{
@@ -51,6 +53,8 @@ func NewHTTPServer(addr string, tradeService TradeServiceInterface, currencyExch
 		engramCreationService:     engramCreationService,
 		engramTransferService:     engramTransferService,
 		weaponCombinationsService: weaponCombinationsService,
+		craftingService:           craftingService,
+		contractService:           contractService,
 		logger:                    GetLogger(),
 		jwtValidator:              jwtValidator,
 		authEnabled:               authEnabled,
@@ -101,6 +105,49 @@ func NewHTTPServer(addr string, tradeService TradeServiceInterface, currencyExch
 	// 	weaponCombinationsAPI := economy.PathPrefix("/weapons").Subrouter()
 	// 	weaponcombinationsapi.HandlerFromMux(weaponCombinationsHandlers, weaponCombinationsAPI)
 	// }
+
+	// Crafting API routes
+	if server.craftingService != nil {
+		craftingHandlers := NewCraftingHandlers(server.craftingService)
+		router.HandleFunc("/api/v1/economy/crafting/recipes/{recipeId}", craftingHandlers.GetRecipeHandler).Methods("GET")
+		router.HandleFunc("/api/v1/economy/crafting/recipes", craftingHandlers.GetRecipesByCategoryHandler).Methods("GET")
+		router.HandleFunc("/api/v1/economy/crafting/start", craftingHandlers.StartCraftingHandler).Methods("POST")
+		router.HandleFunc("/api/v1/economy/crafting/orders", craftingHandlers.GetPlayerOrdersHandler).Methods("GET")
+		router.HandleFunc("/api/v1/economy/crafting/orders/{orderId}", craftingHandlers.GetOrderHandler).Methods("GET")
+		router.HandleFunc("/api/v1/economy/crafting/orders/{orderId}/cancel", craftingHandlers.CancelOrderHandler).Methods("POST")
+		router.HandleFunc("/api/v1/economy/crafting/cost/{recipeId}", craftingHandlers.CalculateCostHandler).Methods("GET")
+		router.HandleFunc("/api/v1/economy/crafting/contracts", craftingHandlers.CreateContractHandler).Methods("POST")
+		router.HandleFunc("/api/v1/economy/crafting/contracts", craftingHandlers.GetContractsHandler).Methods("GET")
+	}
+
+	// Contract API routes
+	if server.contractService != nil {
+		contractHandlers := NewContractHandlers(server.contractService)
+
+		// Contract management
+		router.HandleFunc("/api/v1/economy/contracts", contractHandlers.CreateContractHandler).Methods("POST")
+		router.HandleFunc("/api/v1/economy/contracts", contractHandlers.GetUserContractsHandler).Methods("GET")
+		router.HandleFunc("/api/v1/economy/contracts/{contractId}", contractHandlers.GetContractHandler).Methods("GET")
+
+		// Contract lifecycle
+		router.HandleFunc("/api/v1/economy/contracts/{contractId}/negotiate", contractHandlers.StartNegotiationHandler).Methods("POST")
+		router.HandleFunc("/api/v1/economy/contracts/{contractId}/terms", contractHandlers.UpdateContractTermsHandler).Methods("PUT")
+		router.HandleFunc("/api/v1/economy/contracts/{contractId}/accept", contractHandlers.AcceptContractHandler).Methods("POST")
+
+		// Escrow management
+		router.HandleFunc("/api/v1/economy/contracts/{contractId}/escrow/deposit", contractHandlers.DepositEscrowHandler).Methods("POST")
+
+		// Contract completion and cancellation
+		router.HandleFunc("/api/v1/economy/contracts/{contractId}/complete", contractHandlers.CompleteContractHandler).Methods("POST")
+		router.HandleFunc("/api/v1/economy/contracts/{contractId}/cancel", contractHandlers.CancelContractHandler).Methods("POST")
+
+		// Dispute management
+		router.HandleFunc("/api/v1/economy/contracts/{contractId}/dispute", contractHandlers.CreateDisputeHandler).Methods("POST")
+		router.HandleFunc("/api/v1/economy/contracts/{contractId}/dispute/resolve", contractHandlers.ResolveDisputeHandler).Methods("POST")
+
+		// Contract history
+		router.HandleFunc("/api/v1/economy/contracts/{contractId}/history", contractHandlers.GetContractHistoryHandler).Methods("GET")
+	}
 
 	router.HandleFunc("/health", server.healthCheck).Methods("GET")
 

@@ -1,0 +1,400 @@
+CreateGuildResponse:
+  type: object
+  properties:
+    guild_id:
+      type: string
+    name:
+      type: string
+    leader_id:
+      type: string
+    status:
+      type: string
+      enum: [active, inactive, disbanded]
+    member_count:
+      type: integer
+      minimum: 0
+    created_at:
+      type: integer
+      format: int64
+    founding_fee_paid:
+      type: boolean
+  required:
+    - guild_id
+    - name
+    - leader_id
+    - status
+    - member_count
+    - created_at
+
+UpdateGuildResponse:
+  type: object
+  properties:
+    guild_id:
+      type: string
+    updated_fields:
+      type: array
+      items:
+        type: string
+    updated_at:
+      type: integer
+      format: int64
+  required:
+    - guild_id
+    - updated_at
+
+ListGuildsResponse:
+  type: object
+  properties:
+    guilds:
+      type: array
+      items:
+        $ref: '#/GuildSummary'
+    total_count:
+      type: integer
+      minimum: 0
+  required:
+    - guilds
+    - total_count
+
+GetGuildResponse:
+  type: object
+  properties:
+    guild:
+      $ref: '#/GuildDetails'
+  required:
+    - guild
+
+GuildSummary:
+  type: object
+  properties:
+    guild_id:
+      type: string
+    name:
+      type: string
+    faction:
+      type: string
+    leader_name:
+      type: string
+    member_count:
+      type: integer
+      minimum: 0
+    max_members:
+      type: integer
+    level:
+      type: integer
+      minimum: 1
+    reputation:
+      type: integer
+    region:
+      type: string
+    status:
+      type: string
+    created_at:
+      type: integer
+      format: int64
+  required:
+    - guild_id
+    - name
+    - faction
+    - leader_name
+    - member_count
+    - level
+    - status
+
+GuildDetails:
+  type: object
+  properties:
+    guild_id:
+      type: string
+    name:
+      type: string
+    description:
+      type: string
+    motto:
+      type: string
+    faction:
+      type: string
+    leader_id:
+      type: string
+    leader_name:
+      type: string
+    officer_count:
+      type: integer
+      minimum: 0
+    member_count:
+      type: integer
+      minimum: 0
+    max_members:
+      type: integer
+    level:
+      type: integer
+      minimum: 1
+    experience:
+      type: integer
+      minimum: 0
+    reputation:
+      type: integer
+    wealth:
+      type: integer
+      minimum: 0
+    region:
+      type: string
+    headquarters_location:
+      type: object
+      properties:
+        zone:
+          type: string
+        coordinates:
+          type: object
+          properties:
+            x:
+              type: number
+              format: float
+            y:
+              type: number
+              format: float
+            z:
+              type: number
+              format: float
+    colors:
+      type: object
+      properties:
+        primary:
+          type: string
+        secondary:
+          type: string
+        emblem_url:
+          type: string
+    policies:
+      $ref: '#/GuildPolicies'
+    achievements:
+      type: array
+      items:
+        type: object
+        properties:
+          achievement_id:
+            type: string
+          name:
+            type: string
+          description:
+            type: string
+          unlocked_at:
+            type: integer
+            format: int64
+    statistics:
+      $ref: '#/GuildStatistics'
+    territories_count:
+      type: integer
+      minimum: 0
+    wars_active:
+      type: integer
+      minimum: 0
+    alliances_active:
+      type: integer
+      minimum: 0
+    status:
+      type: string
+    created_at:
+      type: integer
+      format: int64
+    last_activity:
+      type: integer
+      format: int64
+  required:
+    - guild_id
+    - name
+    - faction
+    - leader_id
+    - member_count
+    - level
+    - status
+
+GuildPolicies:
+  type: object
+  properties:
+    pvp_enabled:
+      type: boolean
+    territory_claims_enabled:
+      type: boolean
+    war_participation:
+      type: string
+    contract_sharing:
+      type: boolean
+    resource_sharing:
+      type: boolean
+    tax_rate:
+      type: number
+      format: float
+
+GuildStatistics:
+  type: object
+  properties:
+    total_members_ever:
+      type: integer
+      minimum: 0
+    wars_won:
+      type: integer
+      minimum: 0
+    wars_lost:
+      type: integer
+      minimum: 0
+    territories_conquered:
+      type: integer
+      minimum: 0
+    territories_lost:
+      type: integer
+      minimum: 0
+    contracts_completed:
+      type: integer
+      minimum: 0
+    reputation_gained:
+      type: integer
+    reputation_lost:
+      type: integer
+    total_wealth_earned:
+      type: integer
+      minimum: 0
+    average_member_level:
+      type: number
+      format: float
+    member_retention_rate:
+      type: number
+      format: float
+
+JoinGuildResponse:
+  type: object
+  properties:
+    guild_id:
+      type: string
+    player_id:
+      type: string
+    status:
+      type: string
+      enum: [accepted, pending_approval, rejected]
+    joined_at:
+      type: integer
+      format: int64
+    application_id:
+      type: string
+  required:
+    - guild_id
+    - player_id
+    - status
+
+LeaveGuildResponse:
+  type: object
+  properties:
+    guild_id:
+      type: string
+    player_id:
+      type: string
+    left_at:
+      type: integer
+      format: int64
+    refund_processed:
+      type: boolean
+  required:
+    - guild_id
+    - player_id
+    - left_at
+
+GetGuildMembersResponse:
+  type: object
+  properties:
+    guild_id:
+      type: string
+    members:
+      type: array
+      items:
+        $ref: '#/GuildMember'
+    total_count:
+      type: integer
+      minimum: 0
+  required:
+    - guild_id
+    - members
+    - total_count
+
+GuildMember:
+  type: object
+  properties:
+    player_id:
+      type: string
+    player_name:
+      type: string
+    role:
+      type: string
+      enum: [leader, officer, member, recruit]
+    rank_title:
+      type: string
+    level:
+      type: integer
+      minimum: 1
+    joined_at:
+      type: integer
+      format: int64
+    last_active:
+      type: integer
+      format: int64
+    status:
+      type: string
+      enum: [active, inactive, suspended]
+    contributions:
+      $ref: '#/MemberContributions'
+    permissions:
+      type: array
+      items:
+        type: string
+  required:
+    - player_id
+    - player_name
+    - role
+    - level
+    - joined_at
+    - status
+
+MemberContributions:
+  type: object
+  properties:
+    contracts_completed:
+      type: integer
+      minimum: 0
+    wars_participated:
+      type: integer
+      minimum: 0
+    resources_contributed:
+      type: integer
+      minimum: 0
+    currency_contributed:
+      type: integer
+      minimum: 0
+    territories_defended:
+      type: integer
+      minimum: 0
+    reputation_gained:
+      type: integer
+
+UpdateMemberResponse:
+  type: object
+  properties:
+    guild_id:
+      type: string
+    player_id:
+      type: string
+    role:
+      type: string
+    updated_at:
+      type: integer
+      format: int64
+  required:
+    - guild_id
+    - player_id
+    - role
+    - updated_at
+
+ClaimTerritoryResponse:
+  type: object
+  properties:
+    territory_id:
+      type: string
+    guild_id:

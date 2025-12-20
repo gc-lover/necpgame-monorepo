@@ -2,122 +2,132 @@ package main
 
 import (
 	"context"
+	"flag"
+	"log"
 	"net/http"
-	"net/http/pprof"
 	"os"
 	"os/signal"
+	"runtime"
+	"sync"
 	"syscall"
 	"time"
 
+	_ "net/http/pprof"
 	"github.com/gc-lover/necpgame-monorepo/services/message-queue-service-go/server"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
 )
 
-// OPTIMIZATION: Issue #2143 - Memory-aligned struct for message queue service performance
+// OPTIMIZATION: Issue #2205 - Memory-aligned struct for message queue service performance
 type MessageQueueServiceConfig struct {
-	HTTPAddr       string        `json:"http_addr"`       // 16 bytes
-	RabbitMQAddr   string        `json:"rabbitmq_addr"`   // 16 bytes
-	RedisAddr      string        `json:"redis_addr"`      // 16 bytes
-	PprofAddr      string        `json:"pprof_addr"`      // 16 bytes
-	HealthAddr     string        `json:"health_addr"`     // 16 bytes
-	ReadTimeout    time.Duration `json:"read_timeout"`    // 8 bytes
-	WriteTimeout   time.Duration `json:"write_timeout"`   // 8 bytes
-	MaxHeaderBytes int           `json:"max_header_bytes"` // 8 bytes
-	MaxConnections int           `json:"max_connections"` // 8 bytes
-	QueueBufferSize int          `json:"queue_buffer_size"` // 8 bytes
-	MessageBatchSize int         `json:"message_batch_size"` // 8 bytes
-	ConsumerTimeout time.Duration `json:"consumer_timeout"` // 8 bytes
-	HeartbeatInterval time.Duration `json:"heartbeat_interval"` // 8 bytes
+	StateSyncInterval       time.Duration `json:"state_sync_interval"`       // 8 bytes
+	ReadTimeout             time.Duration `json:"read_timeout"`              // 8 bytes
+	WriteTimeout            time.Duration `json:"write_timeout"`             // 8 bytes
+	MetricsInterval         time.Duration `json:"metrics_interval"`          // 8 bytes
+	DefaultTimeout          time.Duration `json:"default_timeout"`           // 8 bytes
+	CleanupInterval         time.Duration `json:"cleanup_interval"`          // 8 bytes
+	HTTPAddr                string        `json:"http_addr"`                 // 16 bytes
+	RedisAddr               string        `json:"redis_addr"`                // 16 bytes
+	PprofAddr               string        `json:"pprof_addr"`                // 16 bytes
+	HealthAddr              string        `json:"health_addr"`               // 16 bytes
+	MaxConnections          int           `json:"max_connections"`           // 8 bytes
+	MaxHeaderBytes          int           `json:"max_header_bytes"`          // 8 bytes
+	DefaultQueueSize        int           `json:"default_queue_size"`         // 8 bytes
+	DefaultMessageTTL       time.Duration `json:"default_message_ttl"`        // 8 bytes
 }
 
 func main() {
 	logger := logrus.New()
-	logger.SetFormatter(&logrus.JSONFormatter{
-		TimestampFormat: time.RFC3339,
-	})
+	logger.SetFormatter(&logrus.JSONFormatter{})
 	logger.SetLevel(logrus.InfoLevel)
 
 	config := &MessageQueueServiceConfig{
-		HTTPAddr:          getEnv("HTTP_ADDR", ":8080"),
-		RabbitMQAddr:      getEnv("RABBITMQ_ADDR", "amqp://guest:guest@localhost:5672/"),
-		RedisAddr:         getEnv("REDIS_ADDR", "localhost:6379"),
-		PprofAddr:         getEnv("PPROF_ADDR", ":6867"),
-		HealthAddr:        getEnv("HEALTH_ADDR", ":8081"),
+		HTTPAddr:          ":8080",
+		RedisAddr:         "localhost:6379",
+		PprofAddr:         ":6060",
+		HealthAddr:        ":8081",
 		ReadTimeout:       30 * time.Second,
 		WriteTimeout:      30 * time.Second,
+		MetricsInterval:   10 * time.Second,
+		StateSyncInterval: 30 * time.Second,
+		DefaultTimeout:    5 * time.Second,
+		CleanupInterval:   5 * time.Minute,
+		MaxConnections:    10000,
 		MaxHeaderBytes:    1 << 20, // 1MB
-		MaxConnections:    10000,   // OPTIMIZATION: Support 10k+ concurrent connections
-		QueueBufferSize:   1000,    // OPTIMIZATION: Buffer for message queuing
-		MessageBatchSize:  100,     // OPTIMIZATION: Batch processing for throughput
-		ConsumerTimeout:   30 * time.Second,
-		HeartbeatInterval: 10 * time.Second, // OPTIMIZATION: RabbitMQ heartbeat
+		DefaultQueueSize:  10000,
+		DefaultMessageTTL: 24 * time.Hour,
 	}
 
-	// OPTIMIZATION: Issue #2143 - Start pprof server for message queue performance profiling
+	// Parse command line flags
+	flag.StringVar(&config.HTTPAddr, "http-addr", config.HTTPAddr, "HTTP server address")
+	flag.StringVar(&config.RedisAddr, "redis-addr", config.RedisAddr, "Redis server address")
+	flag.StringVar(&config.PprofAddr, "pprof-addr", config.PprofAddr, "Pprof server address")
+	flag.StringVar(&config.HealthAddr, "health-addr", config.HealthAddr, "Health check server address")
+	flag.Parse()
+
+	// OPTIMIZATION: Issue #2205 - GC tuning for message queue performance
+	runtime.SetGCPercent(50)
+
+	// Start pprof server
 	go func() {
-		logger.WithField("addr", config.PprofAddr).Info("pprof server starting")
-		// Endpoints: /debug/pprof/profile, /debug/pprof/heap, /debug/pprof/goroutine
+		logger.WithField("addr", config.PprofAddr).Info("starting pprof server")
 		if err := http.ListenAndServe(config.PprofAddr, nil); err != nil {
 			logger.WithError(err).Error("pprof server failed")
 		}
 	}()
 
-	// Initialize message queue service with performance optimizations
-	srv, err := server.NewMessageQueueServer(config, logger)
-	if err != nil {
-		logger.WithError(err).Fatal("failed to initialize message queue server")
-	}
-
-	// OPTIMIZATION: Issue #2143 - Health check endpoint with queue metrics
-	healthMux := http.NewServeMux()
-	healthMux.HandleFunc("/health", srv.HealthCheck)
-	healthMux.Handle("/metrics", promhttp.Handler())
-
+	// Start health check server
 	go func() {
-		logger.WithField("addr", config.HealthAddr).Info("health/metrics server starting")
-		if err := http.ListenAndServe(config.HealthAddr, healthMux); err != nil {
+		http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte("OK"))
+		})
+		logger.WithField("addr", config.HealthAddr).Info("starting health server")
+		if err := http.ListenAndServe(config.HealthAddr, nil); err != nil {
 			logger.WithError(err).Error("health server failed")
 		}
 	}()
 
-	// Start HTTP server
-	httpSrv := &http.Server{
-		Addr:           config.HTTPAddr,
-		Handler:        srv.Router(),
-		ReadTimeout:    config.ReadTimeout,
-		WriteTimeout:   config.WriteTimeout,
-		MaxHeaderBytes: config.MaxHeaderBytes,
+	// Create message queue service
+	service, err := server.NewMessageQueueService(config, logger)
+	if err != nil {
+		log.Fatal("failed to create message queue service:", err)
 	}
 
 	// Start HTTP server
+	httpServer, err := server.NewMessageQueueServer(config, service, logger)
+	if err != nil {
+		log.Fatal("failed to create HTTP server:", err)
+	}
+
+	// Start servers
+	var wg sync.WaitGroup
+	wg.Add(1)
+
 	go func() {
-		logger.WithField("addr", config.HTTPAddr).Info("message queue service starting")
-		if err := httpSrv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			logger.WithError(err).Fatal("message queue server failed")
+		defer wg.Done()
+		logger.WithField("addr", config.HTTPAddr).Info("starting HTTP server")
+		if err := httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			logger.WithError(err).Error("HTTP server failed")
 		}
 	}()
 
-	// OPTIMIZATION: Issue #2143 - Graceful shutdown with timeout
+	// Wait for interrupt signal
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 
-	logger.Info("shutting down message queue service...")
+	logger.Info("shutting down servers...")
 
+	// Graceful shutdown
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	if err := httpSrv.Shutdown(ctx); err != nil {
-		logger.WithError(err).Error("server forced to shutdown")
+	if err := httpServer.Shutdown(ctx); err != nil {
+		logger.WithError(err).Error("HTTP server shutdown failed")
 	}
 
-	logger.Info("message queue service stopped")
-}
+	service.Shutdown(ctx)
 
-func getEnv(key, defaultValue string) string {
-	if value := os.Getenv(key); value != "" {
-		return value
-	}
-	return defaultValue
+	wg.Wait()
+	logger.Info("servers stopped")
 }

@@ -1,0 +1,400 @@
+# Issue: #140890170 - Crafting mechanics OpenAPI specification
+openapi: 3.0.3
+info:
+  title: Crafting Service API
+  version: 1.0.0
+  contact:
+    name: NEPGAME Development Team
+    email: dev@necp.game
+  description: |
+    Crafting Service API for MMOFPS RPG - Production and Manufacturing Systems.
+
+    ## Core Components
+    - Recipe System: Hierarchical recipes with materials and requirements
+    - Crafting Orders: Async production with quality modifiers
+    - Station System: Workstations with efficiency bonuses
+    - Production Chains: Multi-stage manufacturing processes
+
+    ## Architecture Overview
+    - Async processing with Redis queues
+    - Recipe validation and material consumption
+    - Quality calculation with modifiers
+    - Event-driven production completion
+
+    ## Performance Requirements
+    - Recipe queries: 1000+ RPS with P99 <50ms
+    - Order operations: 200+ RPS with P99 <100ms
+    - Station queries: 500+ RPS with P99 <50ms
+    - Memory optimized with object pooling
+
+servers:
+  - url: http://localhost:8210
+    description: Local development
+  - url: https://api.necpgame.com/v1
+    description: Production API
+
+tags:
+  - name: crafting
+    description: Core crafting operations
+  - name: recipes
+    description: Recipe management and queries
+  - name: orders
+    description: Production order management
+  - name: stations
+    description: Crafting station operations
+
+security:
+  - BearerAuth: []
+
+paths:
+  # ============================================================================
+  # RECIPE SYSTEM
+  # ============================================================================
+
+  /api/v1/economy/crafting/recipes:
+    get:
+      tags: [recipes]
+      summary: Get recipes by category
+      description: Retrieve recipes filtered by category, tier, and quality
+      operationId: getRecipesByCategory
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum: [weapons, armor, implants, vehicles, consumables, tools]
+          description: Recipe category filter
+        - name: tier
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 5
+          description: Recipe tier filter (1-5)
+        - name: quality
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+          description: Minimum quality filter
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of recipes to return
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          description: Pagination offset
+      responses:
+        '200':
+          description: Recipes retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecipeListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/economy/crafting/recipes/{recipeId}:
+    get:
+      tags: [recipes]
+      summary: Get recipe by ID
+      description: Retrieve detailed recipe information including materials and requirements
+      operationId: getRecipeById
+      parameters:
+        - name: recipeId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Recipe unique identifier
+      responses:
+        '200':
+          description: Recipe retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Recipe'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/economy/crafting/recipes/{recipeId}/cost:
+    get:
+      tags: [recipes]
+      summary: Calculate crafting cost
+      description: Calculate total crafting cost including materials and fees
+      operationId: calculateCraftingCost
+      parameters:
+        - name: recipeId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Recipe unique identifier
+        - name: station_bonus
+          in: query
+          schema:
+            type: number
+            format: float
+            minimum: 0.0
+            maximum: 2.0
+            default: 1.0
+          description: Station efficiency bonus multiplier
+        - name: quality_modifier
+          in: query
+          schema:
+            type: number
+            format: float
+            minimum: 0.1
+            maximum: 2.0
+            default: 1.0
+          description: Quality modifier for cost calculation
+      responses:
+        '200':
+          description: Cost calculated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CraftingCost'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # ============================================================================
+  # CRAFTING ORDERS
+  # ============================================================================
+
+  /api/v1/economy/crafting/orders:
+    get:
+      tags: [orders]
+      summary: Get player crafting orders
+      description: Retrieve active and completed crafting orders for the authenticated player
+      operationId: getPlayerOrders
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, active, completed, failed, cancelled]
+          description: Order status filter
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of orders to return
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          description: Pagination offset
+      responses:
+        '200':
+          description: Orders retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      tags: [orders]
+      summary: Create crafting contract
+      description: Create a new crafting contract for production services
+      operationId: createCraftingContract
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateContractRequest'
+      responses:
+        '201':
+          description: Contract created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Contract'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/economy/crafting/start:
+    post:
+      tags: [orders]
+      summary: Start crafting order
+      description: Start a new crafting order with specified recipe and quality settings
+      operationId: startCraftingOrder
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartCraftingRequest'
+      responses:
+        '202':
+          description: Crafting order started successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/economy/crafting/orders/{orderId}:
+    get:
+      tags: [orders]
+      summary: Get crafting order details
+      description: Retrieve detailed information about a specific crafting order
+      operationId: getCraftingOrder
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Order unique identifier
+      responses:
+        '200':
+          description: Order retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/economy/crafting/orders/{orderId}/cancel:
+    post:
+      tags: [orders]
+      summary: Cancel crafting order
+      description: Cancel an active crafting order with refund calculation
+      operationId: cancelCraftingOrder
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Order unique identifier
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  description: Cancellation reason
+                  maxLength: 500
+      responses:
+        '200':
+          description: Order cancelled successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  refund_amount:
+                    type: number
+                    format: float
+                    description: Refunded currency amount
+                  message:
+                    type: string
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # ============================================================================
+  # CRAFTING STATIONS
+  # ============================================================================
+
+  /api/v1/economy/crafting/stations:
+    get:
+      tags: [stations]
+      summary: Get available crafting stations
+      description: Retrieve crafting stations available to the player
+      operationId: getCraftingStations
+      parameters:
+        - name: zone_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Zone filter for stations
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum: [basic, professional, factory, specialized]
+          description: Station category filter
+      responses:
+        '200':
+          description: Stations retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StationListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/economy/crafting/stations/{stationId}/book:
+    post:
+      tags: [stations]
+      summary: Book crafting station
+      description: Reserve a crafting station for exclusive use
+      operationId: bookCraftingStation
+      parameters:
+        - name: stationId
+          in: path

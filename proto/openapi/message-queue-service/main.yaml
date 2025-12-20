@@ -6,6 +6,9 @@ info:
     API for asynchronous message processing and event-driven architecture.
     Handles RabbitMQ queues, message routing, dead letter queues, and event publishing.
     Optimized for high-throughput MMO event processing with 100k+ messages/second.
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
 
 servers:
   - url: http://localhost:8080
@@ -33,6 +36,7 @@ paths:
         - Queues
       summary: Health check for Message Queue Service
       operationId: healthCheck
+      security: []
       responses:
         '200':
           description: Service is healthy
@@ -44,43 +48,79 @@ paths:
                   status:
                     type: string
                     example: "healthy"
+                  service:
+                    type: string
+                    example: "message-queue-service"
+                  version:
+                    type: string
+                    example: "1.0.0"
+                  active_queues:
+                    type: integer
+                    example: 150
+                  active_consumers:
+                    type: integer
+                    example: 50
+                  messages_processed:
+                    type: integer
+                    example: 1000000
+        '500':
+          description: Service unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
   /mq/queues:
     get:
       tags:
         - Queues
-      summary: List all message queues
+      summary: List message queues with filtering and pagination
       operationId: listQueues
       security:
         - BearerAuth: []
       parameters:
-        - name: pattern
+        - name: name_pattern
           in: query
           schema:
             type: string
-            description: Queue name pattern filter
+            description: Filter queues by name pattern
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, paused, dead]
         - name: limit
           in: query
           schema:
             type: integer
             minimum: 1
             maximum: 100
-            default: 50
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
       responses:
         '200':
-          description: Queues retrieved successfully
+          description: List of queues
           content:
             application/json:
               schema:
-                $ref: '#/schemas/responses.yaml#/ListQueuesResponse'
+                $ref: '#/components/schemas/ListQueuesResponse'
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '401':
           description: Unauthorized
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-        '500':
-          $ref: '#/components/responses/InternalError'
 
     post:
       tags:
@@ -94,16 +134,20 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/schemas/requests.yaml#/CreateQueueRequest'
+              $ref: '#/components/schemas/CreateQueueRequest'
       responses:
         '201':
           description: Queue created successfully
           content:
             application/json:
               schema:
-                $ref: '#/schemas/responses.yaml#/CreateQueueResponse'
+                $ref: '#/components/schemas/CreateQueueResponse'
         '400':
-          $ref: '#/components/responses/BadRequest'
+          description: Invalid request data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '401':
           description: Unauthorized
           content:
@@ -117,7 +161,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
         '500':
-          $ref: '#/components/responses/InternalError'
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
   /mq/queues/{queueName}:
     get:
@@ -133,13 +181,15 @@ paths:
           required: true
           schema:
             type: string
+            minLength: 1
+            maxLength: 255
       responses:
         '200':
-          description: Queue details retrieved successfully
+          description: Queue details
           content:
             application/json:
               schema:
-                $ref: '#/schemas/responses.yaml#/GetQueueResponse'
+                $ref: '#/components/schemas/GetQueueResponse'
         '401':
           description: Unauthorized
           content:
@@ -152,39 +202,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-        '500':
-          $ref: '#/components/responses/InternalError'
-
-    delete:
-      tags:
-        - Queues
-      summary: Delete a message queue
-      operationId: deleteQueue
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: queueName
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        '204':
-          description: Queue deleted successfully
-        '401':
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '404':
-          description: Queue not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '500':
-          $ref: '#/components/responses/InternalError'
 
     put:
       tags:
@@ -199,21 +216,27 @@ paths:
           required: true
           schema:
             type: string
+            minLength: 1
+            maxLength: 255
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/schemas/requests.yaml#/UpdateQueueRequest'
+              $ref: '#/components/schemas/UpdateQueueRequest'
       responses:
         '200':
-          description: Queue updated successfully
+          description: Queue updated
           content:
             application/json:
               schema:
-                $ref: '#/schemas/responses.yaml#/UpdateQueueResponse'
+                $ref: '#/components/schemas/UpdateQueueResponse'
         '400':
-          $ref: '#/components/responses/BadRequest'
+          description: Invalid request data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '401':
           description: Unauthorized
           content:
@@ -226,14 +249,43 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-        '500':
-          $ref: '#/components/responses/InternalError'
 
-  /mq/messages:
+    delete:
+      tags:
+        - Queues
+      summary: Delete a queue
+      operationId: deleteQueue
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: queueName
+          in: path
+          required: true
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 255
+      responses:
+        '204':
+          description: Queue deleted
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Queue not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /mq/messages/publish:
     post:
       tags:
         - Messages
-      summary: Publish a message to a queue
+      summary: Publish a message to a queue or exchange
       operationId: publishMessage
       security:
         - BearerAuth: []
@@ -242,16 +294,20 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/schemas/requests.yaml#/PublishMessageRequest'
+              $ref: '#/components/schemas/PublishMessageRequest'
       responses:
-        '202':
+        '200':
           description: Message published successfully
           content:
             application/json:
               schema:
-                $ref: '#/schemas/responses.yaml#/PublishMessageResponse'
+                $ref: '#/components/schemas/PublishMessageResponse'
         '400':
-          $ref: '#/components/responses/BadRequest'
+          description: Invalid request data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '401':
           description: Unauthorized
           content:
@@ -259,59 +315,13 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
         '404':
-          description: Queue not found
+          description: Queue or exchange not found
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-        '429':
-          description: Rate limit exceeded
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '500':
-          $ref: '#/components/responses/InternalError'
 
-  /mq/messages/batch:
-    post:
-      tags:
-        - Messages
-      summary: Publish multiple messages in batch
-      operationId: publishBatchMessages
-      security:
-        - BearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/schemas/requests.yaml#/PublishBatchRequest'
-      responses:
-        '202':
-          description: Messages published successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/schemas/responses.yaml#/PublishBatchResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '429':
-          description: Rate limit exceeded
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '500':
-          $ref: '#/components/responses/InternalError'
-
-  /mq/consume:
+  /mq/messages/consume:
     post:
       tags:
         - Messages
@@ -324,18 +334,20 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/schemas/requests.yaml#/ConsumeMessagesRequest'
+              $ref: '#/components/schemas/ConsumeMessagesRequest'
       responses:
         '200':
-          description: Messages consumed successfully
+          description: Messages consumed
           content:
             application/json:
               schema:
-                $ref: '#/schemas/responses.yaml#/ConsumeMessagesResponse'
-        '204':
-          description: No messages available
+                $ref: '#/components/schemas/ConsumeMessagesResponse'
         '400':
-          $ref: '#/components/responses/BadRequest'
+          description: Invalid request data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '401':
           description: Unauthorized
           content:
@@ -348,53 +360,41 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-        '500':
-          $ref: '#/components/responses/InternalError'
 
-  /mq/consumers:
-    post:
+  /mq/exchanges:
+    get:
       tags:
-        - Consumers
-      summary: Register a message consumer
-      operationId: registerConsumer
+        - Exchanges
+      summary: List message exchanges
+      operationId: listExchanges
       security:
         - BearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/schemas/requests.yaml#/RegisterConsumerRequest'
+      parameters:
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [direct, topic, fanout, headers]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
       responses:
-        '201':
-          description: Consumer registered successfully
+        '200':
+          description: List of exchanges
           content:
             application/json:
               schema:
-                $ref: '#/schemas/responses.yaml#/RegisterConsumerResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest'
+                $ref: '#/components/schemas/ListExchangesResponse'
         '401':
           description: Unauthorized
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-        '409':
-          description: Consumer already exists
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '500':
-          $ref: '#/components/responses/InternalError'
 
-    get:
+    post:
       tags:
-        - Consumers
-      summary: List all registered consumers
-      operationId: listConsumers
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: queue

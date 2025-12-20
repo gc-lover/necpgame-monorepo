@@ -93,7 +93,7 @@ func NewAPIGateway(logger *zap.Logger, config *APIGatewayConfig) (*APIGateway, e
 // initializeComponents инициализирует компоненты gateway
 func (g *APIGateway) initializeComponents() error {
 	// Rate limiter
-	g.rateLimiter = NewRateLimiter(g.config.RateLimitRPM, g.config.BurstLimit, g.logger)
+	g.rateLimiter = NewRateLimiter(g.config.RateLimitRPM)
 
 	// Circuit breaker manager
 	g.circuitBreaker = NewCircuitBreakerManager(g.config, g.logger)
@@ -233,7 +233,7 @@ func (g *APIGateway) initializeServer() error {
 	// API routes
 	r.Route("/api/v1", func(r chi.Router) {
 		// Rate limiting для всех API запросов
-		r.Use(g.rateLimiter.Middleware())
+		r.Use(g.rateLimiter.Middleware)
 
 		// Authentication routes (без JWT проверки)
 		r.Post("/auth/login", g.authProxy.ServeHTTP)

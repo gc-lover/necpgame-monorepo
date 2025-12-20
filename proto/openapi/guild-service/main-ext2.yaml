@@ -1,0 +1,476 @@
+                $ref: '#/schemas/responses.yaml#/GetGuildWarResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: War not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    put:
+      tags:
+        - Wars
+      summary: Update war status or terms
+      operationId: updateWar
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: warId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/schemas/requests.yaml#/UpdateWarRequest'
+      responses:
+        '200':
+          description: War updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/schemas/responses.yaml#/UpdateWarResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not authorized to modify this war
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: War not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /guild/alliances:
+    get:
+      tags:
+        - Alliances
+      summary: List guild alliances
+      operationId: listAlliances
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: guild_id
+          in: query
+          schema:
+            type: string
+            description: Filter by guild participation
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, pending, dissolved]
+            default: active
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 20
+      responses:
+        '200':
+          description: Alliances retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/schemas/responses.yaml#/ListAlliancesResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      tags:
+        - Alliances
+      summary: Propose alliance between guilds
+      operationId: proposeAlliance
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/schemas/requests.yaml#/ProposeAllianceRequest'
+      responses:
+        '201':
+          description: Alliance proposed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/schemas/responses.yaml#/ProposeAllianceResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Alliance already exists or pending
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /guild/contracts:
+    get:
+      tags:
+        - Contracts
+      summary: List guild contracts and jobs
+      operationId: listContracts
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: guild_id
+          in: query
+          schema:
+            type: string
+            description: Filter by guild
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [bounty, escort, defense, resource, custom]
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [open, in_progress, completed, expired]
+            default: open
+        - name: min_reward
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+        - name: max_reward
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+      responses:
+        '200':
+          description: Contracts retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/schemas/responses.yaml#/ListContractsResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      tags:
+        - Contracts
+      summary: Create guild contract
+      operationId: createContract
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/schemas/requests.yaml#/CreateContractRequest'
+      responses:
+        '201':
+          description: Contract created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/schemas/responses.yaml#/CreateContractResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /guild/contracts/{contractId}/accept:
+    post:
+      tags:
+        - Contracts
+      summary: Accept guild contract
+      operationId: acceptContract
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: contractId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Contract accepted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/schemas/responses.yaml#/AcceptContractResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Contract not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Contract already accepted or expired
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /guild/statistics/guild/{guildId}:
+    get:
+      tags:
+        - Statistics
+      summary: Get guild statistics
+      operationId: getGuildStatistics
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: time_range
+          in: query
+          schema:
+            type: string
+            enum: [day, week, month, year]
+            default: month
+      responses:
+        '200':
+          description: Guild statistics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/schemas/responses.yaml#/GetGuildStatisticsResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Guild not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /guild/statistics/global:
+    get:
+      tags:
+        - Statistics
+      summary: Get global guild statistics
+      operationId: getGlobalStatistics
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: time_range
+          in: query
+          schema:
+            type: string
+            enum: [day, week, month, year]
+            default: month
+      responses:
+        '200':
+          description: Global statistics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/schemas/responses.yaml#/GetGlobalStatisticsResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    InternalError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+        message:
+          type: string
+      required:
+        - code
+        - message
+
+    # Request/Response schemas
+    CreateGuildRequest:
+      $ref: './schemas/requests.yaml#/CreateGuildRequest'
+
+    CreateGuildResponse:
+      $ref: './schemas/responses.yaml#/CreateGuildResponse'
+
+    UpdateGuildRequest:
+      $ref: './schemas/requests.yaml#/UpdateGuildRequest'
+
+    UpdateGuildResponse:
+      $ref: './schemas/responses.yaml#/UpdateGuildResponse'
+
+    JoinGuildRequest:
+      $ref: './schemas/requests.yaml#/JoinGuildRequest'
+
+    JoinGuildResponse:
+      $ref: './schemas/responses.yaml#/JoinGuildResponse'
+
+    LeaveGuildResponse:
+      $ref: './schemas/responses.yaml#/LeaveGuildResponse'
+
+    UpdateMemberRequest:
+      $ref: './schemas/requests.yaml#/UpdateMemberRequest'
+
+    UpdateMemberResponse:
+      $ref: './schemas/responses.yaml#/UpdateMemberResponse'
+
+    ClaimTerritoryRequest:
+      $ref: './schemas/requests.yaml#/ClaimTerritoryRequest'
+
+    ClaimTerritoryResponse:
+      $ref: './schemas/responses.yaml#/ClaimTerritoryResponse'
+
+    UpdateTerritoryRequest:
+      $ref: './schemas/requests.yaml#/UpdateTerritoryRequest'
+
+    UpdateTerritoryResponse:
+      $ref: './schemas/responses.yaml#/UpdateTerritoryResponse'
+
+    DeclareWarRequest:
+      $ref: './schemas/requests.yaml#/DeclareWarRequest'
+
+    DeclareWarResponse:
+      $ref: './schemas/responses.yaml#/DeclareWarResponse'
+
+    UpdateWarRequest:
+      $ref: './schemas/requests.yaml#/UpdateWarRequest'
+
+    UpdateWarResponse:
+      $ref: './schemas/responses.yaml#/UpdateWarResponse'
+
+    ProposeAllianceRequest:
+      $ref: './schemas/requests.yaml#/ProposeAllianceRequest'
+
+    ProposeAllianceResponse:
+      $ref: './schemas/responses.yaml#/ProposeAllianceResponse'
+
+    CreateContractRequest:
+      $ref: './schemas/requests.yaml#/CreateContractRequest'
+
+    CreateContractResponse:
+      $ref: './schemas/responses.yaml#/CreateContractResponse'
+
+    AcceptContractResponse:
+      $ref: './schemas/responses.yaml#/AcceptContractResponse'
+
+    ListGuildsResponse:
+      $ref: './schemas/responses.yaml#/ListGuildsResponse'
+
+    GetGuildResponse:
+      $ref: './schemas/responses.yaml#/GetGuildResponse'
+
+    GetGuildMembersResponse:
+      $ref: './schemas/responses.yaml#/GetGuildMembersResponse'
+
+    GetGuildTerritoriesResponse:
+      $ref: './schemas/responses.yaml#/GetGuildTerritoriesResponse'
+
+    GetTerritoryResponse:
+      $ref: './schemas/responses.yaml#/GetTerritoryResponse'
+
+    ListGuildWarsResponse:
+      $ref: './schemas/responses.yaml#/ListGuildWarsResponse'
+
+    GetGuildWarResponse:
+      $ref: './schemas/responses.yaml#/GetGuildWarResponse'
+
+    ListAlliancesResponse:
+      $ref: './schemas/responses.yaml#/ListAlliancesResponse'
+
+    ListContractsResponse:
+      $ref: './schemas/responses.yaml#/ListContractsResponse'
+
+    GetGuildStatisticsResponse:
+      $ref: './schemas/responses.yaml#/GetGuildStatisticsResponse'
+
+    GetGlobalStatisticsResponse:
+      $ref: './schemas/responses.yaml#/GetGlobalStatisticsResponse'

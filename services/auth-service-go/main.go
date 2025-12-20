@@ -9,7 +9,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/gc-lover/necpgame-monorepo/services/auth-service-go/server"
+	"necpgame/services/auth-service-go/server"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
 )

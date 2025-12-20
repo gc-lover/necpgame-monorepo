@@ -7,6 +7,7 @@ import (
 	_ "net/http/pprof" // OPTIMIZATION: Issue #1584 - profiling endpoints
 	"os"
 	"os/signal"
+	"runtime/debug"
 	"syscall"
 	"time"
 
@@ -31,6 +32,14 @@ func main() {
 	adminService, err := server.NewAdminService(dbURL, redisURL)
 	if err != nil {
 		logger.WithError(err).Fatal("Failed to initialize admin service")
+	}
+
+	// OPTIMIZATION: GC tuning for game servers (Issue #2182)
+	// Set GOGC to 50 for admin service (balance between memory usage and GC overhead)
+	oldGC := os.Getenv("GOGC")
+	if oldGC == "" {
+		debug.SetGCPercent(50) // 50% instead of default 100%
+		logger.Info("OK GC tuning applied: GOGC=50 for optimal admin service performance")
 	}
 
 	jwtValidator := server.NewJwtValidator(keycloakIssuer, jwksURL, logger)

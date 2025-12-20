@@ -11,7 +11,7 @@ import (
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 
-	"github.com/NECPGAME/auth-service-go/pkg/api"
+	"necpgame/services/auth-service-go/pkg/api"
 )
 
 // Handlers содержит обработчики HTTP запросов

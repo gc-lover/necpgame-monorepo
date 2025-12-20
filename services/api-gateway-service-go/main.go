@@ -6,11 +6,11 @@ import (
 	"log"
 	"os"
 	"strconv"
-	"sync"
 	"time"
 
 	"go.uber.org/zap"
 
+	"necpgame/services/api-gateway-service-go/config"
 	"necpgame/services/api-gateway-service-go/server"
 )
 
@@ -40,124 +40,55 @@ func main() {
 	}
 }
 
-// Config содержит конфигурацию API Gateway
-type Config struct {
-	ServerPort              int
-	JWTSecret               string
-	RateLimitRPM            int
-	CircuitBreakerThreshold int
-	Services                map[string]*ServiceConfig
-}
-
-// ServiceConfig содержит конфигурацию для каждого микросервиса
-type ServiceConfig struct {
-	URL            string
-	HealthCheck    string
-	Timeout        time.Duration
-	MaxRetries     int
-	CircuitBreaker *CircuitBreaker
-}
-
-// CircuitBreaker реализует паттерн circuit breaker
-type CircuitBreaker struct {
-	mu           sync.RWMutex
-	failures     int
-	lastFailTime time.Time
-	state        string // "closed", "open", "half-open"
-	threshold    int
-	timeout      time.Duration
-}
-
-// NewCircuitBreaker создает новый circuit breaker
-func NewCircuitBreaker(threshold int, timeout time.Duration) *CircuitBreaker {
-	return &CircuitBreaker{
-		state:     "closed",
-		threshold: threshold,
-		timeout:   timeout,
-	}
-}
-
-// Call выполняет вызов через circuit breaker
-func (cb *CircuitBreaker) Call(fn func() error) error {
-	cb.mu.Lock()
-	defer cb.mu.Unlock()
-
-	switch cb.state {
-	case "open":
-		if time.Since(cb.lastFailTime) > cb.timeout {
-			cb.state = "half-open"
-		} else {
-			return fmt.Errorf("circuit breaker is open")
-		}
-	case "half-open":
-		// Allow one call to test
-	}
-
-	err := fn()
-	if err != nil {
-		cb.failures++
-		cb.lastFailTime = time.Now()
-		if cb.failures >= cb.threshold {
-			cb.state = "open"
-		}
-		return err
-	}
-
-	// Success - reset failures and close circuit
-	cb.failures = 0
-	cb.state = "closed"
-	return nil
-}
-
 // loadConfig загружает конфигурацию из переменных окружения
-func loadConfig() (*Config, error) {
-	config := &Config{
+func loadConfig() (*config.Config, error) {
+	cfg := &config.Config{
 		ServerPort:              getEnvAsInt("SERVER_PORT", 8080),
 		JWTSecret:               getEnv("JWT_SECRET", "your-super-secret-jwt-key-change-in-production"),
 		RateLimitRPM:            getEnvAsInt("RATE_LIMIT_RPM", 1000),
 		CircuitBreakerThreshold: getEnvAsInt("CIRCUIT_BREAKER_THRESHOLD", 5),
-		Services:                make(map[string]*ServiceConfig),
+		Services:                make(map[string]*config.ServiceConfig),
 	}
 
 	// Настройка сервисов
-	config.Services["auth"] = &ServiceConfig{
+	cfg.Services["auth"] = &config.ServiceConfig{
 		URL:            getEnv("AUTH_SERVICE_URL", "http://auth-service:8080"),
 		HealthCheck:    "/health",
 		Timeout:        10 * time.Second,
 		MaxRetries:     3,
-		CircuitBreaker: NewCircuitBreaker(config.CircuitBreakerThreshold, 30*time.Second),
+		CircuitBreaker: config.NewCircuitBreaker(cfg.CircuitBreakerThreshold, 30*time.Second),
 	}
 
-	config.Services["notification"] = &ServiceConfig{
+	cfg.Services["notification"] = &config.ServiceConfig{
 		URL:            getEnv("NOTIFICATION_SERVICE_URL", "http://notification-service:8083"),
 		HealthCheck:    "/health",
 		Timeout:        5 * time.Second,
 		MaxRetries:     2,
-		CircuitBreaker: NewCircuitBreaker(config.CircuitBreakerThreshold, 30*time.Second),
+		CircuitBreaker: config.NewCircuitBreaker(cfg.CircuitBreakerThreshold, 30*time.Second),
 	}
 
-	config.Services["combat"] = &ServiceConfig{
+	cfg.Services["combat"] = &config.ServiceConfig{
 		URL:            getEnv("COMBAT_SERVICE_URL", "http://combat-service:8082"),
 		HealthCheck:    "/health",
 		Timeout:        3 * time.Second,
 		MaxRetries:     1,
-		CircuitBreaker: NewCircuitBreaker(config.CircuitBreakerThreshold, 30*time.Second),
+		CircuitBreaker: config.NewCircuitBreaker(cfg.CircuitBreakerThreshold, 30*time.Second),
 	}
 
-	config.Services["romance"] = &ServiceConfig{
+	cfg.Services["romance"] = &config.ServiceConfig{
 		URL:            getEnv("ROMANCE_SERVICE_URL", "http://romance-core-service:8084"),
 		HealthCheck:    "/health",
 		Timeout:        5 * time.Second,
 		MaxRetries:     2,
-		CircuitBreaker: NewCircuitBreaker(config.CircuitBreakerThreshold, 30*time.Second),
+		CircuitBreaker: config.NewCircuitBreaker(cfg.CircuitBreakerThreshold, 30*time.Second),
 	}
 
 	// Валидация конфигурации
-	if config.JWTSecret == "your-super-secret-jwt-key-change-in-production" {
+	if cfg.JWTSecret == "your-super-secret-jwt-key-change-in-production" {
 		return nil, fmt.Errorf("JWT_SECRET must be changed in production")
 	}
 
-	return config, nil
+	return cfg, nil
 }
 
 // getEnv получает переменную окружения с дефолтным значением

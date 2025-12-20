@@ -1,0 +1,259 @@
+        - left_at
+
+    # Audio streaming schemas
+    StartAudioStreamRequest:
+      type: object
+      properties:
+        channel_id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+        audio_config:
+          $ref: '#/components/schemas/AudioConfig'
+      required:
+        - channel_id
+        - user_id
+
+    AudioConfig:
+      type: object
+      properties:
+        sample_rate:
+          type: integer
+          enum: [8000, 16000, 22050, 44100, 48000]
+          default: 48000
+        channels:
+          type: integer
+          enum: [1, 2]
+          default: 1
+        codec:
+          type: string
+          enum: [opus, speex, g711]
+          default: opus
+        bitrate:
+          type: integer
+          minimum: 8000
+          maximum: 128000
+          default: 64000
+        buffer_size:
+          type: integer
+          minimum: 10
+          maximum: 100
+          default: 20
+        ice_servers:
+          type: array
+          items:
+            type: string
+          maxItems: 10
+      required:
+        - sample_rate
+        - channels
+        - codec
+        - bitrate
+
+    StartAudioStreamResponse:
+      type: object
+      properties:
+        stream_id:
+          type: string
+          format: uuid
+        channel_id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+        websocket_url:
+          type: string
+        ice_servers:
+          type: array
+          items:
+            type: string
+        session_token:
+          type: string
+        started_at:
+          type: integer
+          format: int64
+      required:
+        - stream_id
+        - channel_id
+        - user_id
+        - websocket_url
+        - session_token
+        - started_at
+
+    UpdateProximityRequest:
+      type: object
+      properties:
+        user_id:
+          type: string
+        channel_id:
+          type: string
+          format: uuid
+        position:
+          $ref: '#/components/schemas/PlayerPosition'
+      required:
+        - user_id
+        - channel_id
+        - position
+
+    PlayerPosition:
+      type: object
+      properties:
+        x:
+          type: number
+          format: float
+        y:
+          type: number
+          format: float
+        z:
+          type: number
+          format: float
+        zone:
+          type: string
+      required:
+        - x
+        - y
+        - z
+
+    UpdateProximityResponse:
+      type: object
+      properties:
+        user_id:
+          type: string
+        channel_id:
+          type: string
+          format: uuid
+        audible_users:
+          type: array
+          items:
+            $ref: '#/components/schemas/AudibleUser'
+        updated_at:
+          type: integer
+          format: int64
+      required:
+        - user_id
+        - channel_id
+        - audible_users
+        - updated_at
+
+    AudibleUser:
+      type: object
+      properties:
+        user_id:
+          type: string
+        distance:
+          type: number
+          format: float
+        volume:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+      required:
+        - user_id
+        - distance
+        - volume
+
+    # Text-to-speech schemas
+    SynthesizeSpeechRequest:
+      type: object
+      properties:
+        text:
+          type: string
+          minLength: 1
+          maxLength: 1000
+        voice:
+          type: string
+          enum: [male, female, neutral]
+          default: neutral
+        language:
+          type: string
+          default: "en"
+        speed:
+          type: number
+          format: float
+          minimum: 0.5
+          maximum: 2.0
+          default: 1.0
+        pitch:
+          type: number
+          format: float
+          minimum: 0.5
+          maximum: 2.0
+          default: 1.0
+      required:
+        - text
+
+    SynthesizeSpeechResponse:
+      type: object
+      properties:
+        audio_id:
+          type: string
+          format: uuid
+        text:
+          type: string
+        audio_url:
+          type: string
+        duration:
+          type: number
+          format: float
+        size_bytes:
+          type: integer
+        generated_at:
+          type: integer
+          format: int64
+      required:
+        - audio_id
+        - text
+        - audio_url
+        - duration
+        - generated_at
+
+    # Moderation schemas
+    ReportVoiceAbuseRequest:
+      type: object
+      properties:
+        reported_user_id:
+          type: string
+        channel_id:
+          type: string
+          format: uuid
+        abuse_type:
+          type: string
+          enum: [harassment, spam, inappropriate_content, technical_abuse, other]
+        description:
+          type: string
+          maxLength: 1000
+        evidence_urls:
+          type: array
+          items:
+            type: string
+          maxItems: 5
+      required:
+        - reported_user_id
+        - channel_id
+        - abuse_type
+
+    ReportVoiceAbuseResponse:
+      type: object
+      properties:
+        report_id:
+          type: string
+          format: uuid
+        reported_user_id:
+          type: string
+        channel_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [submitted, under_review, resolved]
+        submitted_at:
+          type: integer
+          format: int64
+      required:
+        - report_id
+        - reported_user_id
+        - channel_id
+        - status
+        - submitted_at

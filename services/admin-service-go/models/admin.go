@@ -36,23 +36,25 @@ const (
 	PermissionAudit            AdminPermission = "audit"
 )
 
+// OPTIMIZATION: Field alignment - large to small (uuid.Time=24 bytes, uuid.UUID=16 bytes, *uuid.UUID=8 bytes, string=16 bytes, AdminActionType=16 bytes)
 type AdminAuditLog struct {
-	ID         uuid.UUID              `json:"id" db:"id"`
-	AdminID    uuid.UUID              `json:"admin_id" db:"admin_id"`
-	ActionType AdminActionType        `json:"action_type" db:"action_type"`
-	TargetID   *uuid.UUID             `json:"target_id,omitempty" db:"target_id"`
-	TargetType string                 `json:"target_type" db:"target_type"`
-	Details    map[string]interface{} `json:"details" db:"details"`
-	IPAddress  string                 `json:"ip_address" db:"ip_address"`
-	UserAgent  string                 `json:"user_agent" db:"user_agent"`
-	CreatedAt  time.Time              `json:"created_at" db:"created_at"`
+	CreatedAt  time.Time              `json:"created_at" db:"created_at"` // 24 bytes - largest
+	Details    map[string]interface{} `json:"details" db:"details"`       // 16 bytes (interface{})
+	ID         uuid.UUID              `json:"id" db:"id"`                 // 16 bytes
+	AdminID    uuid.UUID              `json:"admin_id" db:"admin_id"`     // 16 bytes
+	IPAddress  string                 `json:"ip_address" db:"ip_address"` // 16 bytes
+	UserAgent  string                 `json:"user_agent" db:"user_agent"` // 16 bytes
+	ActionType AdminActionType        `json:"action_type" db:"action_type"` // 16 bytes
+	TargetType string                 `json:"target_type" db:"target_type"`   // 16 bytes
+	TargetID   *uuid.UUID             `json:"target_id,omitempty" db:"target_id"` // 8 bytes - smallest
 }
 
+// OPTIMIZATION: Field alignment - large to small (uuid.UUID=16 bytes, string=16 bytes, *int64=8 bytes, bool=1 byte)
 type BanPlayerRequest struct {
-	CharacterID uuid.UUID `json:"character_id"`
-	Reason      string    `json:"reason"`
-	Duration    *int64    `json:"duration,omitempty"`
-	Permanent   bool      `json:"permanent"`
+	CharacterID uuid.UUID `json:"character_id"`                      // 16 bytes
+	Reason      string    `json:"reason"`                           // 16 bytes
+	Duration    *int64    `json:"duration,omitempty"`               // 8 bytes
+	Permanent   bool      `json:"permanent"`                        // 1 byte
 }
 
 type KickPlayerRequest struct {
@@ -117,11 +119,12 @@ type SearchPlayersRequest struct {
 	Offset   int    `json:"offset"`
 }
 
+// OPTIMIZATION: Field alignment - large to small (time.Time=24 bytes, uuid.UUID=16 bytes, string=16 bytes, bool=1 byte)
 type AdminActionResponse struct {
-	Success   bool      `json:"success"`
-	Message   string    `json:"message"`
-	ActionID  uuid.UUID `json:"action_id"`
-	Timestamp time.Time `json:"timestamp"`
+	Timestamp time.Time `json:"timestamp"`        // 24 bytes - largest
+	ActionID  uuid.UUID `json:"action_id"`        // 16 bytes
+	Message   string    `json:"message"`          // 16 bytes
+	Success   bool      `json:"success"`          // 1 byte - smallest
 }
 
 type AuditLogListResponse struct {

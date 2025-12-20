@@ -2,29 +2,20 @@ package server
 
 import (
 	"runtime"
-	"sync/atomic"
 	"time"
 
 	"github.com/sirupsen/logrus"
 )
 
-// OPTIMIZATION: Issue #2143 - Runtime Goroutine Monitoring for message queue stability
+// GoroutineMonitor monitors goroutine count to prevent leaks
 type GoroutineMonitor struct {
-	maxGoroutines int64
+	maxGoroutines int
 	logger        *logrus.Logger
-	running       int64
 	stopCh        chan struct{}
 }
 
-// OPTIMIZATION: Issue #2143 - Memory-aligned struct
-type GoroutineStats struct {
-	CurrentCount int64     `json:"current_count"` // 8 bytes
-	MaxAllowed   int64     `json:"max_allowed"`   // 8 bytes
-	Timestamp    time.Time `json:"timestamp"`     // 24 bytes
-	IsOverLimit  bool      `json:"is_over_limit"` // 1 byte
-}
-
-func NewGoroutineMonitor(maxGoroutines int64, logger *logrus.Logger) *GoroutineMonitor {
+// NewGoroutineMonitor creates a new goroutine monitor
+func NewGoroutineMonitor(maxGoroutines int, logger *logrus.Logger) *GoroutineMonitor {
 	return &GoroutineMonitor{
 		maxGoroutines: maxGoroutines,
 		logger:        logger,
@@ -32,74 +23,40 @@ func NewGoroutineMonitor(maxGoroutines int64, logger *logrus.Logger) *GoroutineM
 	}
 }
 
+// Start begins monitoring goroutines
 func (gm *GoroutineMonitor) Start() {
-	atomic.StoreInt64(&gm.running, 1)
+	ticker := time.NewTicker(10 * time.Second)
+	defer ticker.Stop()
 
-	go func() {
-		ticker := time.NewTicker(30 * time.Second) // OPTIMIZATION: Check every 30s for message consumers
-		defer ticker.Stop()
-
-		for {
-			select {
-			case <-gm.stopCh:
-				atomic.StoreInt64(&gm.running, 0)
-				return
-			case <-ticker.C:
-				gm.checkGoroutines()
-			}
+	for {
+		select {
+		case <-ticker.C:
+			gm.checkGoroutines()
+		case <-gm.stopCh:
+			return
 		}
-	}()
-
-	gm.logger.WithField("max_goroutines", gm.maxGoroutines).Info("goroutine monitor started")
+	}
 }
 
+// Stop stops the goroutine monitor
 func (gm *GoroutineMonitor) Stop() {
-	if atomic.LoadInt64(&gm.running) == 1 {
-		close(gm.stopCh)
-		// Wait for monitor to stop
-		for atomic.LoadInt64(&gm.running) == 1 {
-			time.Sleep(100 * time.Millisecond)
-		}
-		gm.logger.Info("goroutine monitor stopped")
-	}
+	close(gm.stopCh)
 }
 
+// checkGoroutines checks current goroutine count and logs warnings if too high
 func (gm *GoroutineMonitor) checkGoroutines() {
-	current := int64(runtime.NumGoroutine())
-	maxAllowed := atomic.LoadInt64(&gm.maxGoroutines)
+	count := runtime.NumGoroutine()
 
-	stats := &GoroutineStats{
-		CurrentCount: current,
-		MaxAllowed:   maxAllowed,
-		Timestamp:    time.Now(),
-		IsOverLimit:  current > maxAllowed,
-	}
-
-	if stats.IsOverLimit {
-		// OPTIMIZATION: Issue #2143 - Alert on excessive goroutines for message processing
+	if count > gm.maxGoroutines {
 		gm.logger.WithFields(logrus.Fields{
-			"current_goroutines": stats.CurrentCount,
-			"max_allowed":        stats.MaxAllowed,
-			"over_limit_by":      stats.CurrentCount - stats.MaxAllowed,
-		}).Warn("Message queue goroutine count exceeded maximum allowed - possible message processing overload")
-
-		// Force garbage collection as emergency measure for message queue
-		runtime.GC()
-		runtime.ForceGC()
+			"goroutines":     count,
+			"max_allowed":    gm.maxGoroutines,
+			"service":        "message-queue-service",
+		}).Warn("high goroutine count detected - potential leak")
 	} else {
-		// Log normal stats at debug level
 		gm.logger.WithFields(logrus.Fields{
-			"current_goroutines": stats.CurrentCount,
-			"max_allowed":        stats.MaxAllowed,
-		}).Debug("Message queue goroutine count within limits")
-	}
-}
-
-func (gm *GoroutineMonitor) GetStats() *GoroutineStats {
-	return &GoroutineStats{
-		CurrentCount: int64(runtime.NumGoroutine()),
-		MaxAllowed:   atomic.LoadInt64(&gm.maxGoroutines),
-		Timestamp:    time.Now(),
-		IsOverLimit:  int64(runtime.NumGoroutine()) > atomic.LoadInt64(&gm.maxGoroutines),
+			"goroutines":  count,
+			"service":     "message-queue-service",
+		}).Debug("goroutine count check")
 	}
 }

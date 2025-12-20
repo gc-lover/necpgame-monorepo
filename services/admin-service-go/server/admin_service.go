@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -15,17 +16,24 @@ import (
 
 type AdminRepositoryInterface interface {
 	CreateAuditLog(ctx context.Context, log *models.AdminAuditLog) error
+	CreateAuditLogsBatch(ctx context.Context, logs []*models.AdminAuditLog) error // OPTIMIZATION: Batch operations
 	GetAuditLog(ctx context.Context, logID uuid.UUID) (*models.AdminAuditLog, error)
 	ListAuditLogs(ctx context.Context, adminID *uuid.UUID, actionType *models.AdminActionType, limit, offset int) ([]models.AdminAuditLog, error)
 	CountAuditLogs(ctx context.Context, adminID *uuid.UUID, actionType *models.AdminActionType) (int, error)
 }
 
+// OPTIMIZATION: Memory pooling for MMOFPS performance (Issue #2182)
 type AdminService struct {
-	repo     AdminRepositoryInterface
-	cache    *redis.Client
-	logger   *logrus.Logger
-	eventBus EventBus
-	httpClient *http.Client
+	repo        AdminRepositoryInterface
+	cache       *redis.Client
+	logger      *logrus.Logger
+	eventBus    EventBus
+	httpClient  *http.Client
+
+	// Memory pools for zero allocations in hot path
+	auditLogPool    sync.Pool
+	responsePool    sync.Pool
+	searchResultPool sync.Pool
 }
 
 type EventBus interface {
@@ -82,27 +90,121 @@ func NewAdminService(dbURL, redisURL string) (*AdminService, error) {
 	repo := NewAdminRepository(dbPool)
 	eventBus := NewRedisEventBus(redisClient)
 
-	return &AdminService{
+	service := &AdminService{
 		repo:       repo,
 		cache:      redisClient,
 		logger:     GetLogger(),
 		eventBus:   eventBus,
 		httpClient: &http.Client{Timeout: 10 * time.Second},
-	}, nil
+	}
+
+	// Initialize memory pools for zero allocations
+	service.auditLogPool = sync.Pool{
+		New: func() interface{} {
+			return &models.AdminAuditLog{}
+		},
+	}
+	service.responsePool = sync.Pool{
+		New: func() interface{} {
+			return &models.AdminActionResponse{}
+		},
+	}
+	service.searchResultPool = sync.Pool{
+		New: func() interface{} {
+			return &models.PlayerSearchResult{}
+		},
+	}
+
+	return service, nil
+}
+
+// OPTIMIZATION: Memory pool methods for zero allocations
+func (s *AdminService) getAuditLog() *models.AdminAuditLog {
+	return s.auditLogPool.Get().(*models.AdminAuditLog)
+}
+
+func (s *AdminService) putAuditLog(log *models.AdminAuditLog) {
+	// Reset fields for reuse
+	log.ID = uuid.Nil
+	log.AdminID = uuid.Nil
+	log.TargetID = nil
+	log.TargetType = ""
+	log.Details = nil
+	log.IPAddress = ""
+	log.UserAgent = ""
+	log.CreatedAt = time.Time{}
+	s.auditLogPool.Put(log)
+}
+
+func (s *AdminService) getResponse() *models.AdminActionResponse {
+	return s.responsePool.Get().(*models.AdminActionResponse)
+}
+
+func (s *AdminService) putResponse(resp *models.AdminActionResponse) {
+	// Reset fields for reuse
+	resp.Success = false
+	resp.Message = ""
+	resp.ActionID = uuid.Nil
+	resp.Timestamp = time.Time{}
+	s.responsePool.Put(resp)
 }
 
 func (s *AdminService) LogAction(ctx context.Context, adminID uuid.UUID, actionType models.AdminActionType, targetID *uuid.UUID, targetType string, details map[string]interface{}, ipAddress, userAgent string) error {
-	auditLog := &models.AdminAuditLog{
-		AdminID:    adminID,
-		ActionType: actionType,
-		TargetID:   targetID,
-		TargetType: targetType,
-		Details:    details,
-		IPAddress:  ipAddress,
-		UserAgent:  userAgent,
+	// OPTIMIZATION: Use memory pool for zero allocations in hot path
+	auditLog := s.getAuditLog()
+	auditLog.AdminID = adminID
+	auditLog.ActionType = actionType
+	auditLog.TargetID = targetID
+	auditLog.TargetType = targetType
+	auditLog.Details = details
+	auditLog.IPAddress = ipAddress
+	auditLog.UserAgent = userAgent
+
+	err := s.repo.CreateAuditLog(ctx, auditLog)
+
+	// Return to pool for reuse
+	s.putAuditLog(auditLog)
+
+	return err
+}
+
+// OPTIMIZATION: Batch operations for high-throughput scenarios (Issue #2182)
+func (s *AdminService) LogActionsBatch(ctx context.Context, actions []AdminActionBatch) error {
+	if len(actions) == 0 {
+		return nil
 	}
 
-	return s.repo.CreateAuditLog(ctx, auditLog)
+	logs := make([]*models.AdminAuditLog, 0, len(actions))
+	for _, action := range actions {
+		auditLog := s.getAuditLog()
+		auditLog.AdminID = action.AdminID
+		auditLog.ActionType = action.ActionType
+		auditLog.TargetID = action.TargetID
+		auditLog.TargetType = action.TargetType
+		auditLog.Details = action.Details
+		auditLog.IPAddress = action.IPAddress
+		auditLog.UserAgent = action.UserAgent
+		logs = append(logs, auditLog)
+	}
+
+	err := s.repo.CreateAuditLogsBatch(ctx, logs)
+
+	// Return all logs to pool
+	for _, log := range logs {
+		s.putAuditLog(log)
+	}
+
+	return err
+}
+
+type AdminActionBatch struct {
+	AdminID    uuid.UUID
+	ActionType models.AdminActionType
+	TargetID   *uuid.UUID
+	TargetType string
+	Details    map[string]interface{}
+	IPAddress  string
+	UserAgent  string
 }
 
 func (s *AdminService) BanPlayer(ctx context.Context, adminID uuid.UUID, req *models.BanPlayerRequest, ipAddress, userAgent string) (*models.AdminActionResponse, error) {
@@ -127,12 +229,14 @@ func (s *AdminService) BanPlayer(ctx context.Context, adminID uuid.UUID, req *mo
 
 	RecordAdminAction(string(models.AdminActionTypeBan))
 
-	return &models.AdminActionResponse{
-		Success:   true,
-		Message:   "Player banned successfully",
-		ActionID:  uuid.New(),
-		Timestamp: time.Now(),
-	}, nil
+	// OPTIMIZATION: Use memory pool for zero allocations
+	response := s.getResponse()
+	response.Success = true
+	response.Message = "Player banned successfully"
+	response.ActionID = uuid.New()
+	response.Timestamp = time.Now()
+
+	return response, nil
 }
 
 func (s *AdminService) KickPlayer(ctx context.Context, adminID uuid.UUID, req *models.KickPlayerRequest, ipAddress, userAgent string) (*models.AdminActionResponse, error) {
@@ -153,12 +257,14 @@ func (s *AdminService) KickPlayer(ctx context.Context, adminID uuid.UUID, req *m
 
 	RecordAdminAction(string(models.AdminActionTypeKick))
 
-	return &models.AdminActionResponse{
-		Success:   true,
-		Message:   "Player kicked successfully",
-		ActionID:  uuid.New(),
-		Timestamp: time.Now(),
-	}, nil
+	// OPTIMIZATION: Use memory pool for zero allocations
+	response := s.getResponse()
+	response.Success = true
+	response.Message = "Player kicked successfully"
+	response.ActionID = uuid.New()
+	response.Timestamp = time.Now()
+
+	return response, nil
 }
 
 func (s *AdminService) MutePlayer(ctx context.Context, adminID uuid.UUID, req *models.MutePlayerRequest, ipAddress, userAgent string) (*models.AdminActionResponse, error) {

@@ -1,0 +1,574 @@
+  required:
+    - territory_id
+    - zone
+    - coordinates
+    - name
+
+UpdateTerritoryRequest:
+  type: object
+  properties:
+    name:
+      type: string
+      minLength: 1
+      maxLength: 100
+    type:
+      type: string
+      enum: [resource_node, strategic_point, safe_zone, commercial_district, residential_area, industrial_zone, custom]
+    defense_bonus:
+      type: number
+      format: float
+      minimum: 0.0
+      maximum: 5.0
+    strategic_value:
+      type: integer
+      minimum: 1
+      maximum: 10
+    maintenance_cost:
+      type: object
+      properties:
+        currency_type:
+          type: string
+          enum: [currency, item]
+        amount:
+          type: integer
+          minimum: 0
+        frequency:
+          type: string
+          enum: [hourly, daily, weekly]
+        item_id:
+          type: string
+    upgrade_level:
+      type: integer
+      minimum: 1
+      maximum: 10
+      description: Territory upgrade level
+    buildings:
+      type: array
+      items:
+        type: object
+        properties:
+          building_type:
+            type: string
+            enum: [watchtower, barracks, workshop, market, fortress, custom]
+          level:
+            type: integer
+            minimum: 1
+          position:
+            type: object
+            properties:
+              x:
+                type: number
+                format: float
+              y:
+                type: number
+                format: float
+              z:
+                type: number
+                format: float
+      description: Buildings constructed in territory
+    policies:
+      type: object
+      properties:
+        access_level:
+          type: string
+          enum: [public, guild_only, allies_only, private]
+          default: guild_only
+        tax_rate:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 0.5
+          default: 0.1
+        pvp_allowed:
+          type: boolean
+          default: true
+        resource_extraction_allowed:
+          type: boolean
+          default: true
+      description: Territory-specific policies
+
+DeclareWarRequest:
+  type: object
+  properties:
+    declaring_guild_id:
+      type: string
+      minLength: 1
+      description: Guild declaring war
+    target_guild_id:
+      type: string
+      minLength: 1
+      description: Guild being declared upon
+    war_type:
+      type: string
+      enum: [territorial, resource, revenge, ideological, economic]
+      default: territorial
+      description: Reason/type of war
+    objectives:
+      type: array
+      items:
+        type: string
+        maxLength: 200
+      minItems: 1
+      maxItems: 10
+      description: War objectives/goals
+    duration:
+      type: integer
+      minimum: 1
+      maximum: 168
+      default: 24
+      description: War duration in hours
+    battle_rules:
+      type: object
+      properties:
+        max_participants_per_battle:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+        allowed_zones:
+          type: array
+          items:
+            type: string
+          description: Zones where battles can occur
+        restricted_weapons:
+          type: array
+          items:
+            type: string
+            enum: [explosives, heavy_weapons, vehicles, drones, cyberware]
+          description: Weapons/items not allowed in battles
+        scoring_system:
+          type: string
+          enum: [kills, objectives, territory_control, resource_control]
+          default: kills
+        victory_conditions:
+          type: array
+          items:
+            type: string
+            maxLength: 200
+          minItems: 1
+      description: Rules governing battles during war
+    stake:
+      type: object
+      properties:
+        currency_amount:
+          type: integer
+          minimum: 0
+          default: 0
+        territories:
+          type: array
+          items:
+            type: string
+          description: Territory IDs at stake
+        resources:
+          type: object
+          additionalProperties:
+            type: integer
+            minimum: 0
+          description: Resources at stake
+        reputation_impact:
+          type: integer
+          minimum: -100
+          maximum: 100
+          default: -10
+          description: Reputation change for loser
+      description: What is at stake in this war
+    declaration_message:
+      type: string
+      maxLength: 2000
+      description: Public declaration message
+    negotiation_period:
+      type: integer
+      minimum: 0
+      maximum: 24
+      default: 1
+      description: Hours allowed for negotiation before war starts
+  required:
+    - declaring_guild_id
+    - target_guild_id
+    - objectives
+
+UpdateWarRequest:
+  type: object
+  properties:
+    status:
+      type: string
+      enum: [active, paused, ended, truce_proposed, truce_accepted]
+      description: New war status
+    objectives:
+      type: array
+      items:
+        type: string
+        maxLength: 200
+      description: Updated war objectives
+    duration:
+      type: integer
+      minimum: 1
+      maximum: 168
+      description: Extended war duration in hours
+    battle_rules:
+      type: object
+      properties:
+        max_participants_per_battle:
+          type: integer
+          minimum: 1
+          maximum: 100
+        allowed_zones:
+          type: array
+          items:
+            type: string
+        restricted_weapons:
+          type: array
+          items:
+            type: string
+        scoring_system:
+          type: string
+          enum: [kills, objectives, territory_control, resource_control]
+        victory_conditions:
+          type: array
+          items:
+            type: string
+      description: Updated battle rules
+    stake:
+      type: object
+      properties:
+        currency_amount:
+          type: integer
+          minimum: 0
+        territories:
+          type: array
+          items:
+            type: string
+        resources:
+          type: object
+          additionalProperties:
+            type: integer
+            minimum: 0
+        reputation_impact:
+          type: integer
+          minimum: -100
+          maximum: 100
+      description: Updated stakes
+    ceasefire_terms:
+      type: object
+      properties:
+        duration:
+          type: integer
+          minimum: 1
+          description: Ceasefire duration in hours
+        conditions:
+          type: array
+          items:
+            type: string
+            maxLength: 500
+          description: Ceasefire conditions
+      description: Terms for ceasefire/truce
+    winner_guild_id:
+      type: string
+      description: Guild that won the war (when status is 'ended')
+    war_summary:
+      type: string
+      maxLength: 5000
+      description: Summary of war results and achievements
+
+ProposeAllianceRequest:
+  type: object
+  properties:
+    proposing_guild_id:
+      type: string
+      minLength: 1
+      description: Guild proposing the alliance
+    target_guild_id:
+      type: string
+      minLength: 1
+      description: Guild receiving the proposal
+    alliance_type:
+      type: string
+      enum: [defensive, full, trade, research, temporary]
+      default: defensive
+      description: Type of alliance
+    duration:
+      type: integer
+      minimum: 1
+      maximum: 8760
+      default: 168
+      description: Alliance duration in hours (default 1 week)
+    terms:
+      type: object
+      properties:
+        mutual_defense:
+          type: boolean
+          default: true
+          description: Mutual defense pact
+        resource_sharing:
+          type: object
+          properties:
+            enabled:
+              type: boolean
+              default: false
+            resource_types:
+              type: array
+              items:
+                type: string
+                enum: [currency, materials, technology, information]
+            sharing_percentage:
+              type: number
+              format: float
+              minimum: 0.0
+              maximum: 1.0
+              default: 0.1
+          description: Resource sharing terms
+        territory_access:
+          type: object
+          properties:
+            enabled:
+              type: boolean
+              default: false
+            territory_types:
+              type: array
+              items:
+                type: string
+                enum: [safe_zones, resource_nodes, commercial_districts]
+          description: Territory access terms
+        trade_agreements:
+          type: object
+          properties:
+            enabled:
+              type: boolean
+              default: false
+            discount_percentage:
+              type: number
+              format: float
+              minimum: 0.0
+              maximum: 0.5
+              default: 0.1
+            exclusive_deals:
+              type: array
+              items:
+                type: string
+                maxLength: 200
+              description: Specific trade deals
+          description: Trade agreement terms
+        information_sharing:
+          type: object
+          properties:
+            enabled:
+              type: boolean
+              default: false
+            information_types:
+              type: array
+              items:
+                type: string
+                enum: [threat_intelligence, market_data, technology_research, strategic_planning]
+          description: Information sharing terms
+      description: Detailed alliance terms
+    proposal_message:
+      type: string
+      maxLength: 2000
+      description: Proposal message explaining the alliance rationale
+    negotiation_deadline:
+      type: integer
+      minimum: 1
+      maximum: 168
+      default: 24
+      description: Hours allowed for negotiation
+  required:
+    - proposing_guild_id
+    - target_guild_id
+
+CreateContractRequest:
+  type: object
+  properties:
+    contract_id:
+      type: string
+      minLength: 1
+      maxLength: 255
+      pattern: '^[a-zA-Z0-9._-]+$'
+      description: Unique contract identifier
+    guild_id:
+      type: string
+      minLength: 1
+      description: Guild posting the contract
+    title:
+      type: string
+      minLength: 1
+      maxLength: 200
+      description: Contract title
+    description:
+      type: string
+      minLength: 1
+      maxLength: 5000
+      description: Detailed contract description
+    contract_type:
+      type: string
+      enum: [bounty, escort, defense, resource_gathering, sabotage, delivery, investigation, custom]
+      default: bounty
+      description: Type of contract
+    priority:
+      type: string
+      enum: [low, medium, high, urgent]
+      default: medium
+      description: Contract priority level
+    difficulty:
+      type: string
+      enum: [easy, medium, hard, expert, legendary]
+      default: medium
+      description: Contract difficulty level
+    target:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [player, npc, location, item, information, custom]
+        identifier:
+          type: string
+          description: Target identifier (player ID, NPC name, coordinates, etc.)
+        zone:
+          type: string
+          description: Target zone/location
+        coordinates:
+          type: object
+          properties:
+            x:
+              type: number
+              format: float
+            y:
+              type: number
+              format: float
+            z:
+              type: number
+              format: float
+          description: Target coordinates (if applicable)
+      description: Contract target information
+    objectives:
+      type: array
+      items:
+        type: object
+        properties:
+          objective_type:
+            type: string
+            enum: [eliminate, protect, gather, deliver, investigate, sabotage, survive]
+          description:
+            type: string
+            maxLength: 500
+          quantity:
+            type: integer
+            minimum: 1
+            default: 1
+          time_limit:
+            type: integer
+            minimum: 1
+            description: Time limit in minutes
+          optional:
+            type: boolean
+            default: false
+        required:
+          - objective_type
+          - description
+      minItems: 1
+      maxItems: 10
+      description: Contract objectives
+    rewards:
+      type: array
+      items:
+        type: object
+        properties:
+          reward_type:
+            type: string
+            enum: [currency, item, experience, reputation, title, guild_points, custom]
+          amount:
+            type: integer
+            minimum: 0
+            description: Amount for currency/experience/reputation
+          item_id:
+            type: string
+            description: Item ID for item rewards
+          item_quantity:
+            type: integer
+            minimum: 1
+            default: 1
+          title_name:
+            type: string
+            description: Title name for title rewards
+          description:
+            type: string
+            maxLength: 200
+          conditions:
+            type: string
+            maxLength: 500
+            description: Conditions for claiming this reward
+        required:
+          - reward_type
+      minItems: 1
+      description: Contract rewards
+    requirements:
+      type: object
+      properties:
+        min_level:
+          type: integer
+          minimum: 1
+          default: 1
+        max_level:
+          type: integer
+          minimum: 1
+        required_class:
+          type: string
+        required_skills:
+          type: array
+          items:
+            type: string
+        required_items:
+          type: array
+          items:
+            type: string
+          description: Required item IDs
+        reputation_requirement:
+          type: integer
+          minimum: -100
+          maximum: 100
+          default: 0
+        guild_membership_required:
+          type: boolean
+          default: false
+        max_participants:
+          type: integer
+          minimum: 1
+          maximum: 10
+          default: 1
+      description: Requirements to accept the contract
+    time_limits:
+      type: object
+      properties:
+        expires_at:
+          type: integer
+          format: int64
+          description: Contract expiration timestamp
+        time_to_complete:
+          type: integer
+          minimum: 1
+          description: Time allowed to complete in minutes
+        auto_fail_timeout:
+          type: integer
+          minimum: 1
+          description: Auto-fail timeout in minutes
+      description: Contract time constraints
+    visibility:
+      type: string
+      enum: [public, guild_only, allies_only, private]
+      default: public
+      description: Who can see and accept this contract
+    status:
+      type: string
+      enum: [draft, open, in_progress, completed, failed, expired, cancelled]
+      default: draft
+      description: Contract status
+    metadata:
+      type: object
+      additionalProperties: true
+      description: Additional contract metadata
+  required:
+    - contract_id
+    - guild_id
+    - title
+    - description
+    - objectives
+    - rewards

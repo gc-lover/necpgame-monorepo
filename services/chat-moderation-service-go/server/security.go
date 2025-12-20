@@ -5,7 +5,7 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/gc-lover/necpgame-monorepo/services/chat-moderation-service-go/pkg/api"
+	"necpgame/services/chat-moderation-service-go/pkg/api"
 )
 
 // SecurityHandler implements ogen security handler

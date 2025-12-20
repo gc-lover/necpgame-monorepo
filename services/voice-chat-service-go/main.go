@@ -2,133 +2,97 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"net/http"
-	"net/http/pprof"
+	_ "net/http/pprof" // OPTIMIZATION: Issue #2177 - Enable pprof profiling
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
-	"github.com/gc-lover/necpgame-monorepo/services/voice-chat-service-go/server"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
+
+	"necpgame/services/voice-chat-service-go/server"
 )
 
-// OPTIMIZATION: Issue #2030 - Memory-aligned struct for voice chat service performance
-type VoiceChatServiceConfig struct {
-	HTTPAddr       string        `json:"http_addr"`       // 16 bytes
-	WebSocketAddr  string        `json:"ws_addr"`         // 16 bytes
-	HealthAddr     string        `json:"health_addr"`     // 16 bytes
-	PprofAddr      string        `json:"pprof_addr"`      // 16 bytes
-	DBMaxOpenConns int           `json:"db_max_open_conns"` // 8 bytes
-	ReadTimeout    time.Duration `json:"read_timeout"`    // 8 bytes
-	WriteTimeout   time.Duration `json:"write_timeout"`   // 8 bytes
-	MaxHeaderBytes int           `json:"max_header_bytes"` // 8 bytes
-	MaxVoiceConnections int      `json:"max_voice_connections"` // 8 bytes
-	AudioBufferSize    int       `json:"audio_buffer_size"`     // 8 bytes
-	HeartbeatInterval  time.Duration `json:"heartbeat_interval"` // 8 bytes
-	ProximityRadius    float64   `json:"proximity_radius"`   // 8 bytes
-	MaxChannelSize     int       `json:"max_channel_size"`    // 8 bytes
-}
-
 func main() {
-	logger := logrus.New()
-	logger.SetFormatter(&logrus.JSONFormatter{
-		TimestampFormat: time.RFC3339,
-	})
-	logger.SetLevel(logrus.InfoLevel)
+	// Initialize structured logging
+	logger := server.NewLogger()
 
-	config := &VoiceChatServiceConfig{
-		HTTPAddr:            getEnv("HTTP_ADDR", ":8088"),
-		WebSocketAddr:       getEnv("WS_ADDR", ":8089"),
-		HealthAddr:          getEnv("HEALTH_ADDR", ":8090"),
-		PprofAddr:           getEnv("PPROF_ADDR", ":6868"),
-		DBMaxOpenConns:      300, // OPTIMIZATION: Lower for voice chat service
-		ReadTimeout:         30 * time.Second,
-		WriteTimeout:        30 * time.Second,
-		MaxHeaderBytes:      1 << 20, // 1MB
-		MaxVoiceConnections: 5000,    // OPTIMIZATION: Support 5000+ concurrent voice connections
-		AudioBufferSize:     4096,    // OPTIMIZATION: Audio buffer for low latency
-		HeartbeatInterval:   5 * time.Second, // OPTIMIZATION: Frequent heartbeats for voice
-		ProximityRadius:     25.0,    // OPTIMIZATION: Default proximity audio radius
-		MaxChannelSize:      50,      // OPTIMIZATION: Max participants per channel
+	logger.Info("🎤 Starting Voice Chat Service...")
+
+	// Configuration
+	config := &server.VoiceChatServiceConfig{
+		Port:                   getEnv("PORT", "8080"),
+		ReadTimeout:            30 * time.Second,
+		WriteTimeout:           30 * time.Second,
+		MaxHeaderBytes:         1 << 20, // 1MB
+		RedisAddr:              getEnv("REDIS_ADDR", "localhost:6379"),
+		WebSocketReadTimeout:   60 * time.Second,
+		WebSocketWriteTimeout:  10 * time.Second,
+		MaxVoiceConnections:    5000,
+		ProximityUpdateInterval: 100 * time.Millisecond,
+		ConnectionCleanupInterval: 30 * time.Second,
+		ChannelCleanupInterval: 5 * time.Minute,
 	}
 
-	// OPTIMIZATION: Issue #2030 - Start pprof server for voice performance profiling
+	// Initialize metrics (placeholder for now)
+	metrics := &server.VoiceChatMetrics{
+		ActiveChannels:      0,
+		ActiveConnections:   0,
+		AudioStreams:        0,
+		TTSSynthesizations:  0,
+		ModerationReports:   0,
+		Errors:              0,
+	}
+
+	// Initialize service
+	voiceService := server.NewVoiceChatService(logger, metrics, config)
+
+	// OPTIMIZATION: Issue #2177 - Start pprof server for profiling
 	go func() {
-		logger.WithField("addr", config.PprofAddr).Info("pprof server starting")
+		pprofAddr := getEnv("PPROF_ADDR", "localhost:6868")
+		logger.WithField("addr", pprofAddr).Info("pprof server starting")
 		// Endpoints: /debug/pprof/profile, /debug/pprof/heap, /debug/pprof/goroutine
-		if err := http.ListenAndServe(config.PprofAddr, nil); err != nil {
+		if err := http.ListenAndServe(pprofAddr, nil); err != nil {
 			logger.WithError(err).Error("pprof server failed")
 		}
 	}()
 
-	// Initialize voice chat service with performance optimizations
-	srv, err := server.NewVoiceChatServer(config, logger)
-	if err != nil {
-		logger.WithError(err).Fatal("failed to initialize voice chat server")
-	}
+	// Issue #2177 - Runtime Goroutine Monitoring
+	monitor := server.NewGoroutineMonitor(800, logger) // Max 800 goroutines for voice chat service
+	go monitor.Start()
+	defer monitor.Stop()
+	logger.Info("OK Goroutine monitor started")
 
-	// OPTIMIZATION: Issue #2030 - Health check endpoint with voice metrics
-	healthMux := http.NewServeMux()
-	healthMux.HandleFunc("/health", srv.HealthCheck)
-	healthMux.Handle("/metrics", promhttp.Handler())
+	// Initialize HTTP server
+	httpServer := server.NewHTTPServer(voiceService, logger, config)
 
+	// Start server in a goroutine
 	go func() {
-		logger.WithField("addr", config.HealthAddr).Info("health/metrics server starting")
-		if err := http.ListenAndServe(config.HealthAddr, healthMux); err != nil {
-			logger.WithError(err).Error("health server failed")
+		logger.Info("🌐 Voice Chat Service starting on port " + config.Port)
+		if err := httpServer.Start(); err != nil {
+			logger.WithError(err).Fatal("Failed to start HTTP server")
 		}
 	}()
 
-	// Start main HTTP server
-	httpSrv := &http.Server{
-		Addr:           config.HTTPAddr,
-		Handler:        srv.Router(),
-		ReadTimeout:    config.ReadTimeout,
-		WriteTimeout:   config.WriteTimeout,
-		MaxHeaderBytes: config.MaxHeaderBytes,
-	}
-
-	// Start WebSocket server for voice streaming
-	go func() {
-		logger.WithField("addr", config.WebSocketAddr).Info("WebSocket voice server starting")
-		wsSrv := &http.Server{
-			Addr:    config.WebSocketAddr,
-			Handler: srv.WebSocketRouter(),
-		}
-		if err := wsSrv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			logger.WithError(err).Fatal("WebSocket voice server failed")
-		}
-	}()
-
-	// Start main HTTP server
-	go func() {
-		logger.WithField("addr", config.HTTPAddr).Info("voice chat service starting")
-		if err := httpSrv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			logger.WithError(err).Fatal("voice chat server failed")
-		}
-	}()
-
-	// OPTIMIZATION: Issue #2030 - Graceful shutdown with timeout
+	// Wait for interrupt signal to gracefully shutdown the server
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 
-	logger.Info("shutting down voice chat service...")
+	logger.Info("🛑 Shutting down Voice Chat Service...")
 
+	// Give outstanding requests 30 seconds to complete
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	if err := httpSrv.Shutdown(ctx); err != nil {
-		logger.WithError(err).Error("server forced to shutdown")
-	}
-
-	logger.Info("voice chat service stopped")
+	logger.Info("OK Voice Chat Service stopped gracefully")
 }
 
+// getEnv gets an environment variable or returns a default value
 func getEnv(key, defaultValue string) string {
-	if value := os.Getenv(key); value != "" {
+	if value, exists := os.LookupEnv(key); exists {
 		return value
 	}
 	return defaultValue

@@ -11,7 +11,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/gc-lover/necpgame-monorepo/services/chat-moderation-service-go/server"
+	"necpgame/services/chat-moderation-service-go/server"
 )
 
 func main() {

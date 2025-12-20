@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 )
 
 // TokenClaims represents JWT token claims
@@ -50,11 +51,17 @@ func (s *AuthService) RefreshToken(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// TODO: Get user from database
+	userID, err := uuid.Parse(claims.UserID)
+	if err != nil {
+		s.logger.WithError(err).Error("invalid user ID in token")
+		http.Error(w, "Invalid token", http.StatusUnauthorized)
+		return
+	}
+
 	user := &User{
-		UserID:      claims.UserID,
-		Username:    claims.Username,
-		Email:       claims.Email,
-		DisplayName: claims.DisplayName,
+		ID:       userID,
+		Username: claims.Username,
+		Email:    claims.Email,
 	}
 
 	// Generate new access token

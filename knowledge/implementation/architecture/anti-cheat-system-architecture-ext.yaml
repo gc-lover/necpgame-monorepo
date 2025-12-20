@@ -1,0 +1,262 @@
+
+technical_specification:
+  backend_requirements:
+    - Реализация модулей в realtime-gateway-go:
+      - anti-cheat (основные детекторы)
+      - anti-cheat-reconciliation (reconciliation)
+      - anti-cheat-logging (логирование)
+      - anti-cheat-monitoring (мониторинг)
+      - anti-cheat-penalties (наказания)
+    - Интеграция с session-service для блокировок
+    - Интеграция с gameplay-service для валидации действий
+    - Оптимизация производительности (минимальная задержка)
+
+  realtime_requirements:
+    - Валидация в реальном времени
+    - Минимальная задержка (< 10ms)
+    - Высокая пропускная способность
+
+  performance_requirements:
+    - Валидация скорости < 5ms
+    - Валидация позиции < 5ms
+    - Валидация частоты действий < 3ms
+    - Reconciliation < 10ms
+    - Поддержка до 10K валидаций в секунду
+
+  scalability_requirements:
+    - Горизонтальное масштабирование через realtime-gateway
+    - Распределение нагрузки на валидации
+    - Оптимизация запросов к БД (batch, индексы)
+    - Кэширование статистики в Redis
+
+subtasks:
+  - id: speed-hack-detector-module
+    title: Реализация модуля Speed Hack Detector
+    description: |
+      Обнаружение speed hack
+      Расчёт скорости
+      Проверка максимальной скорости
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: position-validator-implementation
+    title: Реализация Position Validator
+    description: |
+      Валидация позиции
+      Проверка телепортации
+      Проверка коллизий
+    priority: high
+    estimated_time: 4-5 дней
+
+  - id: action-rate-limiter
+    title: Реализация Action Rate Limiter
+    description: |
+      Контроль частоты действий
+      Обнаружение макросов
+      Rate limiting
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: reconciliation-engine
+    title: Реализация Reconciliation Engine
+    description: |
+      Reconciliation клиент-сервер
+      Компенсация лагов
+      Разрешение конфликтов
+    priority: high
+    estimated_time: 4-5 дней
+
+  - id: violation-logger
+    title: Реализация Violation Logger
+    description: |
+      Логирование нарушений
+      Хранение истории
+      Агрегация нарушений
+    priority: high
+    estimated_time: 2-3 дня
+
+  - id: anti-cheat-monitor
+    title: Реализация Anti-Cheat Monitor
+    description: |
+      Мониторинг нарушений
+      Агрегация метрик
+      Триггеры для эскалации
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: penalty-manager
+    title: Реализация Penalty Manager
+    description: |
+      Управление наказаниями
+      Выдача блокировок
+      Интеграция с session service
+    priority: high
+    estimated_time: 3-4 дня
+
+  - id: database-optimization
+    title: Оптимизация БД и запросов
+    description: |
+      Создание индексов
+      Оптимизация запросов
+      Кэширование статистики
+    priority: medium
+    estimated_time: 1-2 дня
+
+  - id: api-endpoints
+    title: Реализация REST API endpoints
+    description: |
+      Создание всех endpoints для античита
+      Интеграция с существующим API realtime-gateway
+    priority: high
+    estimated_time: 2-3 дня
+
+  - id: integration-testing
+    title: Интеграционное тестирование
+    description: |
+      Тесты обнаружения нарушений
+      Тесты reconciliation
+      Тесты наказаний
+      Тесты интеграций
+    priority: high
+    estimated_time: 3-4 дня
+
+diagrams:
+  component_diagram: |
+    ```mermaid
+    graph TB
+        subgraph "Realtime Gateway"
+            SHD[Speed Hack Detector]
+            PV[Position Validator]
+            ARL[Action Rate Limiter]
+            RE[Reconciliation Engine]
+            VL[Violation Logger]
+            ACM[Anti-Cheat Monitor]
+            PM[Penalty Manager]
+        end
+
+        subgraph "Database"
+            DB[(PostgreSQL<br/>anti_cheat_violations<br/>anti_cheat_penalties<br/>anti_cheat_player_stats)]
+        end
+
+        subgraph "External Services"
+            RG[Realtime Gateway]
+            SS[Session Service]
+            GS[Gameplay Service]
+            NS[Notification Service]
+            OBS[Observability]
+        end
+
+        subgraph "Client"
+            CL[UE5 Client]
+        end
+
+        CL -->|movement data| SHD
+        CL -->|position data| PV
+        CL -->|action data| ARL
+        CL -->|state data| RE
+        SHD --> VL
+        PV --> VL
+        ARL --> VL
+        RE --> VL
+        VL --> ACM
+        ACM --> PM
+        PM --> SS
+        PM --> NS
+        VL --> DB
+        ACM --> OBS
+    ```
+
+  data_flow_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant C as Client
+        participant SHD as Speed Hack Detector
+        participant VL as Violation Logger
+        participant ACM as Anti-Cheat Monitor
+        participant PM as Penalty Manager
+
+        C->>SHD: Movement data
+        SHD->>SHD: Calculate speed
+        SHD->>SHD: Check threshold
+        alt Violation detected
+            SHD->>VL: Log violation
+            VL->>ACM: Aggregate violations
+            ACM->>ACM: Check triggers
+            alt Trigger fired
+                ACM->>PM: Apply penalty
+                PM->>PM: Block session
+            end
+        end
+    ```
+
+decisions:
+  - id: adr-anti-cheat-architecture
+    summary: |
+      Выбрана модульная архитектура внутри realtime-gateway-go для обеспечения
+      минимальной задержки при валидации.
+
+  - id: adr-server-side-validation
+    summary: |
+      Все проверки выполняются на сервере для предотвращения обхода клиентских
+      проверок читерами.
+
+  - id: adr-reconciliation
+    summary: |
+      Reconciliation механизм компенсирует лаги сети и снижает ложные срабатывания,
+      обеспечивая баланс между безопасностью и игровым опытом.
+
+  - id: adr-escalation-system
+    summary: |
+      Многоуровневая система эскалации (предупреждения -> временные блокировки ->
+      постоянные блокировки) обеспечивает справедливое наказание и даёт игрокам
+      возможность исправиться.
+
+  - id: adr-performance-optimization
+    summary: |
+      Оптимизация производительности критична для realtime валидации, поэтому
+      используются быстрые алгоритмы и кэширование.
+
+validation:
+  architecture_complete: true
+  components_defined: true
+  microservices_identified: true
+  api_endpoints_described: true
+  technical_specification_ready: true
+  subtasks_defined: true
+
+next_steps:
+  - Передача задачи агенту API Designer для создания OpenAPI спецификации
+  - Детализация API endpoints
+  - Создание request/response схем
+  - Определение формата нарушений и наказаний
+
+history:
+  - version: '1.1.0'
+    date: 2025-11-30
+    author: Architect Agent
+    changes: |
+      Добавлена детальная синхронизация данных:
+      - Event Sourcing для всех изменений состояния античита
+      - CQRS Pattern для разделения команд и запросов
+      - Saga Pattern для распределенных операций (применение наказания, блокировка сессии)
+      - Outbox Pattern для гарантированной доставки событий
+      - Обновлена секция data_consistency с механизмами синхронизации
+      - Добавлена спецификация тикрейта для валидации, reconciliation, логирования нарушений и применения наказаний
+  - version: '1.0.0'
+    date: 2025-11-22
+    author: Architect Agent
+    changes: |
+      Создана полная архитектура системы античита:
+      - Определены компоненты (Speed Hack Detector, Position Validator, Action Rate Limiter, Reconciliation Engine, Violation Logger, Anti-Cheat Monitor, Penalty Manager)
+      - Описаны типы нарушений (SPEED_HACK, POSITION_HACK, ACTION_RATE_HACK, RECONCILIATION_FAILURE)
+      - Описаны API endpoints (высокоуровнево)
+      - Спроектированы потоки данных
+      - Определена структура БД (anti_cheat_violations, anti_cheat_penalties, anti_cheat_player_stats)
+      - Спроектирована система обнаружения speed hack
+      - Спроектирована система валидации позиции
+      - Спроектирована система контроля частоты действий
+      - Спроектирована система reconciliation
+      - Создано техническое задание
+      - Разбито на подзадачи
+
+

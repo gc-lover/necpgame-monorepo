@@ -7,18 +7,18 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/gc-lover/necpgame-monorepo/services/chat-moderation-service-go/pkg/api"
+	"necpgame/services/chat-moderation-service-go/pkg/api"
 )
 
-// HTTPServer represents HTTP server
+// OgenHTTPServer represents HTTP server with OGEN handlers
 // OPTIMIZATION: Struct alignment - pointer first (8 bytes), then string (16 bytes)
-type HTTPServer struct {
+type OgenHTTPServer struct {
 	server *http.Server // 8 bytes
 	addr   string       // 16 bytes
 }
 
-// NewHTTPServer creates new HTTP server
-func NewHTTPServer(addr string, service *Service) *HTTPServer {
+// NewOgenHTTPServer creates new HTTP server with OGEN handlers
+func NewOgenHTTPServer(addr string, service *Service) *OgenHTTPServer {
 	// OGEN server (fast static router)
 	handlers := NewHandlers(service)
 	secHandler := &SecurityHandler{}
@@ -45,7 +45,7 @@ func NewHTTPServer(addr string, service *Service) *HTTPServer {
 	mux.HandleFunc("/health", healthCheck)
 	mux.HandleFunc("/metrics", metricsHandler)
 
-	return &HTTPServer{
+	return &OgenHTTPServer{
 		addr: addr,
 		server: &http.Server{
 			Addr:         addr,
@@ -66,13 +66,13 @@ func chainMiddleware(h http.Handler, mws ...func(http.Handler) http.Handler) htt
 }
 
 // Start starts HTTP server
-func (s *HTTPServer) Start() error {
+func (s *OgenHTTPServer) Start() error {
 	GetLogger().WithField("addr", s.addr).Info("Starting Chat Moderation HTTP server")
 	return s.server.ListenAndServe()
 }
 
 // Shutdown gracefully shuts down HTTP server
-func (s *HTTPServer) Shutdown(ctx context.Context) error {
+func (s *OgenHTTPServer) Shutdown(ctx context.Context) error {
 	return s.server.Shutdown(ctx)
 }
 

@@ -1,0 +1,226 @@
+      - Реакция NPC на репутацию
+      - Доступ к найму NPC
+      - Агрессия NPC на основе репутации
+
+    gameplay_service: |
+      - Получение событий боевой системы
+      - Интеграция с системой прогрессии
+      - Модификация сложности проверок
+
+    analytics_service: |
+      - Логирование всех изменений репутации
+      - Сбор метрик репутации
+      - Анализ паттернов репутации
+
+    realtime_gateway: |
+      - Отправка realtime обновлений репутации
+      - Синхронизация Heat
+      - Уведомления об изменениях доступа
+
+  tickrate_and_network_requirements:
+    reputation_management:
+      tickrate: Event-based (on-demand)
+      network_load: |
+        - Изменение репутации: event-based, ~0.1-0.5 events/sec
+        - Пересчет тира: event-based, ~0.05-0.1 events/sec
+        - Обновление эффектов: event-based, ~0.1-0.3 events/sec
+        - Общий трафик: ~0.2-0.5 KB/sec на игрока
+      sync_strategy: Strong Consistency
+
+    heat_system:
+      tickrate: 1 Hz (периодическое затухание)
+      network_load: |
+        - Затухание Heat: 1 update/sec
+        - Обновление Heat: event-based, ~0.05-0.1 events/sec
+        - Общий трафик: ~0.1-0.2 KB/sec на игрока
+      sync_strategy: Eventual Consistency для затухания, Strong для изменений
+
+    reputation_recovery:
+      tickrate: Event-based (on-demand)
+      network_load: |
+        - Задачи восстановления: event-based, ~0.01-0.05 events/sec
+        - Прогресс восстановления: event-based, ~0.05-0.1 events/sec
+        - Общий трафик: ~0.1-0.2 KB/sec на игрока
+      sync_strategy: Strong Consistency
+
+technical_specification:
+  subtasks:
+    - id: reputation-manager
+      title: Реализация менеджера репутации
+      description: |
+        Реализация Reputation Manager с управлением репутацией персонажей,
+        обновлением значений и интеграцией с другими компонентами.
+      dependencies: []
+      estimated_effort: 4 days
+
+    - id: reputation-tier-calculator
+      title: Реализация калькулятора уровня репутации
+      description: |
+        Реализация Reputation Tier Calculator с расчетом уровня репутации
+        на основе значения и применением эффектов уровня.
+      dependencies: [reputation-manager]
+      estimated_effort: 3 days
+
+    - id: reputation-change-calculator
+      title: Реализация калькулятора изменений репутации
+      description: |
+        Реализация Reputation Change Calculator с расчетом изменений репутации
+        с учетом модификаторов и формул.
+      dependencies: [reputation-manager]
+      estimated_effort: 4 days
+
+    - id: heat-system-manager
+      title: Реализация менеджера системы Heat
+      description: |
+        Реализация Heat System Manager с управлением Heat,
+        расчетом затухания и применением эффектов Heat.
+      dependencies: [reputation-manager]
+      estimated_effort: 4 days
+
+    - id: access-control-manager
+      title: Реализация менеджера контроля доступа
+      description: |
+        Реализация Access Control Manager с проверкой доступа,
+        расчетом скидок и применением ограничений.
+      dependencies: [reputation-tier-calculator]
+      estimated_effort: 3 days
+
+    - id: reputation-recovery-manager
+      title: Реализация менеджера восстановления репутации
+      description: |
+        Реализация Reputation Recovery Manager с управлением задачами восстановления,
+        отслеживанием прогресса и применением изменений.
+      dependencies: [reputation-manager]
+      estimated_effort: 4 days
+
+    - id: faction-relations-manager
+      title: Реализация менеджера отношений фракций
+      description: |
+        Реализация Faction Relations Manager с управлением матрицей отношений,
+        пересчетом репутации с другими фракциями.
+      dependencies: [reputation-manager]
+      estimated_effort: 4 days
+
+    - id: reputation-effects-applier
+      title: Реализация применителя эффектов репутации
+      description: |
+        Реализация Reputation Effects Applier с применением эффектов репутации
+        к экономике, миру и другим системам.
+      dependencies: [reputation-tier-calculator]
+      estimated_effort: 4 days
+
+    - id: reputation-telemetry-collector
+      title: Реализация сборщика телеметрии
+      description: |
+        Реализация Reputation Telemetry Collector с логированием изменений,
+        сбором метрик и интеграцией с Analytics Service.
+      dependencies: [reputation-manager]
+      estimated_effort: 3 days
+
+    - id: websocket-channels
+      title: Реализация WebSocket каналов
+      description: |
+        Реализация WebSocket каналов для realtime обновлений репутации,
+        Heat и доступа.
+      dependencies: [reputation-manager, heat-system-manager]
+      estimated_effort: 3 days
+
+    - id: event-bus-integration
+      title: Интеграция с Event Bus
+      description: |
+        Реализация публикации и подписки на события через Kafka
+        для всех компонентов репутационной системы.
+      dependencies: [reputation-manager, reputation-change-calculator]
+      estimated_effort: 2 days
+
+    - id: database-schema
+      title: Создание схемы БД
+      description: |
+        Создание таблиц БД для репутации, истории, восстановления, Heat,
+        матрицы отношений и кэша эффектов с миграциями Liquibase.
+      dependencies: []
+      estimated_effort: 2 days
+
+diagrams:
+  component_diagram: |
+    ```mermaid
+    graph TB
+        Client[UE5 Client] --> Gateway[API Gateway]
+        
+        Gateway --> SocialService[Social Service<br/>8084]
+        
+        SocialService --> RM[Reputation Manager]
+        SocialService --> RTC[Reputation Tier Calculator]
+        SocialService --> RCC[Reputation Change Calculator]
+        SocialService --> HSM[Heat System Manager]
+        SocialService --> ACM[Access Control Manager]
+        SocialService --> RRM[Reputation Recovery Manager]
+        SocialService --> FRM[Faction Relations Manager]
+        SocialService --> REA[Reputation Effects Applier]
+        SocialService --> RTColl[Reputation Telemetry Collector]
+        
+        RM --> RTC
+        RM --> RCC
+        RM --> HSM
+        RTC --> ACM
+        RTC --> REA
+        RCC --> FRM
+        
+        SocialService --> EconomyService[Economy Service]
+        SocialService --> WorldService[World Service]
+        SocialService --> QuestService[Quest Service]
+        SocialService --> NPCService[NPC Service]
+        SocialService --> GameplayService[Gameplay Service]
+        SocialService --> AnalyticsService[Analytics Service]
+        
+        SocialService --> EventBus[Event Bus<br/>Kafka]
+        EventBus --> RealtimeGateway[Realtime Gateway]
+        
+        SocialService --> DB[(Social DB)]
+        
+        Client --> WSReputation[WebSocket<br/>Reputation]
+        WSReputation --> SocialService
+    ```
+
+  reputation_change_flow_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant E as Event
+        participant RCC as Reputation Change Calculator
+        participant RM as Reputation Manager
+        participant RTC as Reputation Tier Calculator
+        participant REA as Reputation Effects Applier
+        participant ES as Economy Service
+        participant WS as World Service
+        participant EB as Event Bus
+        
+        E->>RCC: Game event
+        RCC->>RCC: Calculate base change
+        RCC->>RCC: Apply modifiers
+        RCC->>RCC: Calculate final change
+        RCC->>RM: Update reputation
+        RM->>RTC: Recalculate tier
+        RTC->>RTC: Determine new tier
+        RTC->>REA: Apply effects
+        REA->>ES: Update discounts
+        REA->>WS: Update access
+        RM->>EB: Publish social.reputation.changed
+    ```
+
+  heat_decay_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant HSM as Heat System Manager
+        participant RM as Reputation Manager
+        participant RTC as Reputation Tier Calculator
+        participant EB as Event Bus
+        
+        Note over HSM: Time-based decay
+        HSM->>HSM: Calculate time passed
+        HSM->>RM: Get current reputation
+        HSM->>RTC: Get tier bonus
+        HSM->>HSM: Calculate heat reduction
+        HSM->>HSM: Apply reduction
+        HSM->>EB: Publish social.reputation.heat-updated
+    ```
+

@@ -12,7 +12,7 @@ import (
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 
-	"github.com/NECPGAME/auth-service-go/pkg/api"
+	"necpgame/services/auth-service-go/pkg/api"
 )
 
 // HTTPServer содержит HTTP сервер и зависимости

@@ -6,6 +6,9 @@ info:
     API for managing competitive tournaments, leagues, and ranked competitions
     in MMO environments. Supports various tournament formats, matchmaking,
     prize distribution, and real-time updates for thousands of concurrent players.
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
 
 servers:
   - url: http://localhost:8080
@@ -35,6 +38,7 @@ paths:
         - Tournaments
       summary: Health check for Tournament Service
       operationId: healthCheck
+      security: []
       responses:
         '200':
           description: Service is healthy
@@ -46,12 +50,24 @@ paths:
                   status:
                     type: string
                     example: "healthy"
+                  service:
+                    type: string
+                    example: "tournament-service"
+                  version:
+                    type: string
+                    example: "1.0.0"
+        '500':
+          description: Service unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
   /tournament/tournaments:
     get:
       tags:
         - Tournaments
-      summary: List tournaments
+      summary: List tournaments with filtering and pagination
       operationId: listTournaments
       security:
         - BearerAuth: []
@@ -71,14 +87,26 @@ paths:
             type: integer
             minimum: 1
             maximum: 100
-            default: 50
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
       responses:
         '200':
-          description: Tournaments retrieved successfully
+          description: List of tournaments
           content:
             application/json:
               schema:
-                $ref: '#/schemas/responses.yaml#/ListTournamentsResponse'
+                $ref: '#/components/schemas/ListTournamentsResponse'
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '401':
           description: Unauthorized
           content:
@@ -98,16 +126,20 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/schemas/requests.yaml#/CreateTournamentRequest'
+              $ref: '#/components/schemas/CreateTournamentRequest'
       responses:
         '201':
           description: Tournament created successfully
           content:
             application/json:
               schema:
-                $ref: '#/schemas/responses.yaml#/CreateTournamentResponse'
+                $ref: '#/components/schemas/CreateTournamentResponse'
         '400':
-          $ref: '#/components/responses/BadRequest'
+          description: Invalid request data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '401':
           description: Unauthorized
           content:
@@ -115,7 +147,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
         '500':
-          $ref: '#/components/responses/InternalError'
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
   /tournament/tournaments/{tournamentId}:
     get:
@@ -131,13 +167,14 @@ paths:
           required: true
           schema:
             type: string
+            format: uuid
       responses:
         '200':
-          description: Tournament details retrieved successfully
+          description: Tournament details
           content:
             application/json:
               schema:
-                $ref: '#/schemas/responses.yaml#/GetTournamentResponse'
+                $ref: '#/components/schemas/GetTournamentResponse'
         '401':
           description: Unauthorized
           content:
@@ -154,7 +191,7 @@ paths:
     put:
       tags:
         - Tournaments
-      summary: Update tournament configuration
+      summary: Update tournament
       operationId: updateTournament
       security:
         - BearerAuth: []
@@ -164,21 +201,26 @@ paths:
           required: true
           schema:
             type: string
+            format: uuid
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/schemas/requests.yaml#/UpdateTournamentRequest'
+              $ref: '#/components/schemas/UpdateTournamentRequest'
       responses:
         '200':
-          description: Tournament updated successfully
+          description: Tournament updated
           content:
             application/json:
               schema:
-                $ref: '#/schemas/responses.yaml#/UpdateTournamentResponse'
+                $ref: '#/components/schemas/UpdateTournamentResponse'
         '400':
-          $ref: '#/components/responses/BadRequest'
+          description: Invalid request data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '401':
           description: Unauthorized
           content:
@@ -195,7 +237,7 @@ paths:
     delete:
       tags:
         - Tournaments
-      summary: Cancel a tournament
+      summary: Cancel tournament
       operationId: cancelTournament
       security:
         - BearerAuth: []
@@ -205,9 +247,10 @@ paths:
           required: true
           schema:
             type: string
+            format: uuid
       responses:
         '204':
-          description: Tournament cancelled successfully
+          description: Tournament cancelled
         '401':
           description: Unauthorized
           content:
@@ -225,7 +268,7 @@ paths:
     post:
       tags:
         - Tournaments
-      summary: Register for a tournament
+      summary: Register for tournament
       operationId: registerForTournament
       security:
         - BearerAuth: []
@@ -235,21 +278,26 @@ paths:
           required: true
           schema:
             type: string
+            format: uuid
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/schemas/requests.yaml#/RegisterTournamentRequest'
+              $ref: '#/components/schemas/RegisterTournamentRequest'
       responses:
         '200':
           description: Registration successful
           content:
             application/json:
               schema:
-                $ref: '#/schemas/responses.yaml#/RegisterTournamentResponse'
+                $ref: '#/components/schemas/RegisterTournamentResponse'
         '400':
-          $ref: '#/components/responses/BadRequest'
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '401':
           description: Unauthorized
           content:
@@ -273,7 +321,7 @@ paths:
     post:
       tags:
         - Tournaments
-      summary: Unregister from a tournament
+      summary: Unregister from tournament
       operationId: unregisterFromTournament
       security:
         - BearerAuth: []
@@ -283,13 +331,20 @@ paths:
           required: true
           schema:
             type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UnregisterTournamentRequest'
       responses:
         '200':
           description: Unregistration successful
           content:
             application/json:
               schema:
-                $ref: '#/schemas/responses.yaml#/UnregisterTournamentResponse'
+                $ref: '#/components/schemas/UnregisterTournamentResponse'
         '401':
           description: Unauthorized
           content:
@@ -317,18 +372,14 @@ paths:
           required: true
           schema:
             type: string
-        - name: round
-          in: query
-          schema:
-            type: integer
-            minimum: 1
+            format: uuid
       responses:
         '200':
-          description: Bracket retrieved successfully
+          description: Tournament bracket
           content:
             application/json:
               schema:
-                $ref: '#/schemas/responses.yaml#/GetTournamentBracketResponse'
+                $ref: '#/components/schemas/GetTournamentBracketResponse'
         '401':
           description: Unauthorized
           content:
@@ -346,55 +397,4 @@ paths:
     get:
       tags:
         - Matches
-      summary: List matches
-      operationId: listMatches
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: tournament_id
-          in: query
-          schema:
-            type: string
-        - name: player_id
-          in: query
-          schema:
-            type: string
-        - name: status
-          in: query
-          schema:
-            type: string
-            enum: [scheduled, in_progress, completed, cancelled]
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 50
-      responses:
-        '200':
-          description: Matches retrieved successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/schemas/responses.yaml#/ListMatchesResponse'
-        '401':
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-
-  /tournament/matches/{matchId}:
-    get:
-      tags:
-        - Matches
-      summary: Get match details
-      operationId: getMatch
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: matchId
-          in: path
-          required: true
-          schema:
+      summary: List matches with filtering

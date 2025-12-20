@@ -1,0 +1,400 @@
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Channel not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /voice-chat/audio/proximity:
+    post:
+      tags:
+        - Audio Streaming
+      summary: Update player position for proximity audio
+      operationId: updateProximity
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProximityRequest'
+      responses:
+        '200':
+          description: Proximity updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateProximityResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /voice-chat/tts/synthesize:
+    post:
+      tags:
+        - Text-to-Speech
+      summary: Convert text to speech
+      operationId: synthesizeSpeech
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SynthesizeSpeechRequest'
+      responses:
+        '200':
+          description: Speech synthesized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SynthesizeSpeechResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /voice-chat/moderation/report:
+    post:
+      tags:
+        - Moderation
+      summary: Report voice chat abuse
+      operationId: reportVoiceAbuse
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReportVoiceAbuseRequest'
+      responses:
+        '200':
+          description: Report submitted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportVoiceAbuseResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    # Error schema
+    Error:
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+        message:
+          type: string
+        details:
+          type: string
+      required:
+        - code
+        - message
+
+    # Voice channel schemas
+    VoiceChannel:
+      type: object
+      properties:
+        channel_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        type:
+          type: string
+          enum: [global, guild, group, proximity, private]
+        owner_id:
+          type: string
+        participant_count:
+          type: integer
+        max_participants:
+          type: integer
+        is_public:
+          type: boolean
+        settings:
+          $ref: '#/components/schemas/ChannelSettings'
+        created_at:
+          type: integer
+          format: int64
+        last_activity:
+          type: integer
+          format: int64
+      required:
+        - channel_id
+        - name
+        - type
+        - owner_id
+        - participant_count
+        - max_participants
+
+    ChannelSettings:
+      type: object
+      properties:
+        proximity_radius:
+          type: number
+          format: float
+          default: 50.0
+        codec:
+          type: string
+          enum: [opus, speex, g711]
+          default: opus
+        bitrate:
+          type: integer
+          minimum: 8000
+          maximum: 128000
+          default: 64000
+        echo_cancellation:
+          type: boolean
+          default: true
+        voice_activity_detection:
+          type: boolean
+          default: true
+        noise_suppression:
+          type: boolean
+          default: true
+      required:
+        - proximity_radius
+        - codec
+        - bitrate
+
+    CreateChannelRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          pattern: '^[a-zA-Z0-9._-]+$'
+        type:
+          type: string
+          enum: [global, guild, group, proximity, private]
+          default: group
+        max_participants:
+          type: integer
+          minimum: 2
+          maximum: 1000
+          default: 50
+        is_public:
+          type: boolean
+          default: true
+        settings:
+          $ref: '#/components/schemas/ChannelSettings'
+      required:
+        - name
+        - type
+
+    CreateChannelResponse:
+      type: object
+      properties:
+        channel_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        type:
+          type: string
+        websocket_url:
+          type: string
+        stun_servers:
+          type: array
+          items:
+            type: string
+        turn_servers:
+          type: array
+          items:
+            type: string
+        created_at:
+          type: integer
+          format: int64
+      required:
+        - channel_id
+        - name
+        - type
+        - websocket_url
+
+    ListChannelsResponse:
+      type: object
+      properties:
+        channels:
+          type: array
+          items:
+            $ref: '#/components/schemas/VoiceChannel'
+        total_count:
+          type: integer
+      required:
+        - channels
+        - total_count
+
+    GetChannelResponse:
+      type: object
+      properties:
+        channel:
+          $ref: '#/components/schemas/VoiceChannel'
+        participants:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChannelParticipant'
+      required:
+        - channel
+        - participants
+
+    ChannelParticipant:
+      type: object
+      properties:
+        user_id:
+          type: string
+        display_name:
+          type: string
+        is_muted:
+          type: boolean
+        is_deafened:
+          type: boolean
+        joined_at:
+          type: integer
+          format: int64
+      required:
+        - user_id
+        - display_name
+        - is_muted
+        - is_deafened
+
+    UpdateChannelRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        max_participants:
+          type: integer
+          minimum: 2
+          maximum: 1000
+        is_public:
+          type: boolean
+        settings:
+          $ref: '#/components/schemas/ChannelSettings'
+
+    UpdateChannelResponse:
+      type: object
+      properties:
+        channel_id:
+          type: string
+          format: uuid
+        updated_fields:
+          type: array
+          items:
+            type: string
+        updated_at:
+          type: integer
+          format: int64
+      required:
+        - channel_id
+        - updated_fields
+        - updated_at
+
+    JoinChannelRequest:
+      type: object
+      properties:
+        user_id:
+          type: string
+        mute_on_join:
+          type: boolean
+          default: false
+        deafen_on_join:
+          type: boolean
+          default: false
+      required:
+        - user_id
+
+    JoinChannelResponse:
+      type: object
+      properties:
+        channel_id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+        websocket_url:
+          type: string
+        session_token:
+          type: string
+        joined_at:
+          type: integer
+          format: int64
+      required:
+        - channel_id
+        - user_id
+        - websocket_url
+        - session_token
+        - joined_at
+
+    LeaveChannelResponse:
+      type: object
+      properties:
+        channel_id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+        left_at:
+          type: integer
+          format: int64
+      required:
+        - channel_id
+        - user_id

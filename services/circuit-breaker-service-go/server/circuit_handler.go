@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"time"
@@ -9,7 +10,24 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// OPTIMIZATION: Issue #2156 - Circuit breaker management operations
+func parseAlertThresholds(m map[string]interface{}) AlertThresholds {
+	thresholds := AlertThresholds{}
+	if errorRate, ok := m["error_rate"].(float64); ok {
+		thresholds.ErrorRate = errorRate
+	}
+	if responseTime, ok := m["response_time"].(float64); ok {
+		thresholds.ResponseTime = int64(responseTime)
+	}
+	if consecutiveFailures, ok := m["consecutive_failures"].(float64); ok {
+		thresholds.ConsecutiveFailures = int(consecutiveFailures)
+	}
+	if slowCallRate, ok := m["slow_call_rate"].(float64); ok {
+		thresholds.SlowCallRate = slowCallRate
+	}
+	return thresholds
+}
+
+// OPTIMIZATION: Issue #2202 - Circuit breaker management operations with context timeouts
 func (s *CircuitBreakerService) CreateCircuit(w http.ResponseWriter, r *http.Request) {
 	var req CreateCircuitRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -39,7 +57,7 @@ func (s *CircuitBreakerService) CreateCircuit(w http.ResponseWriter, r *http.Req
 			FallbackEnabled:        req.FallbackEnabled,
 			FallbackResponse:       req.FallbackResponse,
 			MetricsEnabled:         req.MetricsEnabled,
-			AlertThresholds:        AlertThresholds(req.AlertThresholds),
+			AlertThresholds:        parseAlertThresholds(req.AlertThresholds),
 		},
 		StateHistory: []StateChange{},
 		Metrics:      CircuitBreakerMetricsData{},
@@ -159,29 +177,29 @@ func (s *CircuitBreakerService) UpdateCircuit(w http.ResponseWriter, r *http.Req
 	circuit := circuitValue.(*CircuitBreaker)
 
 	// Update fields
-	if req.FailureThreshold > 0 {
-		circuit.Config.FailureThreshold = req.FailureThreshold
+	if req.FailureThreshold != nil && *req.FailureThreshold > 0 {
+		circuit.Config.FailureThreshold = *req.FailureThreshold
 	}
-	if req.SuccessThreshold > 0 {
-		circuit.Config.SuccessThreshold = req.SuccessThreshold
+	if req.SuccessThreshold != nil && *req.SuccessThreshold > 0 {
+		circuit.Config.SuccessThreshold = *req.SuccessThreshold
 	}
-	if req.Timeout > 0 {
-		circuit.Config.Timeout = time.Duration(req.Timeout) * time.Millisecond
+	if req.Timeout != nil && *req.Timeout > 0 {
+		circuit.Config.Timeout = time.Duration(*req.Timeout) * time.Millisecond
 	}
-	if req.RetryDelay > 0 {
-		circuit.Config.RetryDelay = time.Duration(req.RetryDelay) * time.Millisecond
+	if req.RetryDelay != nil && *req.RetryDelay > 0 {
+		circuit.Config.RetryDelay = time.Duration(*req.RetryDelay) * time.Millisecond
 	}
-	if req.MaxRetryDelay > 0 {
-		circuit.Config.MaxRetryDelay = time.Duration(req.MaxRetryDelay) * time.Millisecond
+	if req.MaxRetryDelay != nil && *req.MaxRetryDelay > 0 {
+		circuit.Config.MaxRetryDelay = time.Duration(*req.MaxRetryDelay) * time.Millisecond
 	}
-	if req.MonitoringWindow > 0 {
-		circuit.Config.MonitoringWindow = time.Duration(req.MonitoringWindow) * time.Millisecond
+	if req.MonitoringWindow != nil && *req.MonitoringWindow > 0 {
+		circuit.Config.MonitoringWindow = time.Duration(*req.MonitoringWindow) * time.Millisecond
 	}
-	if req.SlowCallThreshold > 0 {
-		circuit.Config.SlowCallThreshold = time.Duration(req.SlowCallThreshold) * time.Millisecond
+	if req.SlowCallThreshold != nil && *req.SlowCallThreshold > 0 {
+		circuit.Config.SlowCallThreshold = time.Duration(*req.SlowCallThreshold) * time.Millisecond
 	}
-	if req.SlowCallRateThreshold > 0 {
-		circuit.Config.SlowCallRateThreshold = req.SlowCallRateThreshold
+	if req.SlowCallRateThreshold != nil && *req.SlowCallRateThreshold > 0 {
+		circuit.Config.SlowCallRateThreshold = *req.SlowCallRateThreshold
 	}
 	if req.FallbackEnabled {
 		circuit.Config.FallbackEnabled = req.FallbackEnabled
@@ -192,14 +210,16 @@ func (s *CircuitBreakerService) UpdateCircuit(w http.ResponseWriter, r *http.Req
 	if req.MetricsEnabled {
 		circuit.Config.MetricsEnabled = req.MetricsEnabled
 	}
-	if req.AlertThresholds.ErrorRate > 0 {
-		circuit.Config.AlertThresholds.ErrorRate = req.AlertThresholds.ErrorRate
-	}
-	if req.AlertThresholds.SlowCallRate > 0 {
-		circuit.Config.AlertThresholds.SlowCallRate = req.AlertThresholds.SlowCallRate
-	}
-	if req.AlertThresholds.ConsecutiveFailures > 0 {
-		circuit.Config.AlertThresholds.ConsecutiveFailures = req.AlertThresholds.ConsecutiveFailures
+	if req.AlertThresholds != nil {
+		if errorRate, ok := (*req.AlertThresholds)["error_rate"].(float64); ok && errorRate > 0 {
+			circuit.Config.AlertThresholds.ErrorRate = errorRate
+		}
+		if slowCallRate, ok := (*req.AlertThresholds)["slow_call_rate"].(float64); ok && slowCallRate > 0 {
+			circuit.Config.AlertThresholds.SlowCallRate = slowCallRate
+		}
+		if consecutiveFailures, ok := (*req.AlertThresholds)["consecutive_failures"].(float64); ok && consecutiveFailures > 0 {
+			circuit.Config.AlertThresholds.ConsecutiveFailures = int(consecutiveFailures)
+		}
 	}
 
 	resp := &UpdateCircuitResponse{

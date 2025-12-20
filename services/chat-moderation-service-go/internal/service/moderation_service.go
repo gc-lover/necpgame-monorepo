@@ -260,8 +260,14 @@ func (s *ModerationService) GetModerationRules(ctx context.Context, ruleType *mo
 
 	paginatedRules := filteredRules[start:end]
 
+	// Convert slice of pointers to slice of values
+	var ruleValues []models.ModerationRule
+	for _, rule := range paginatedRules {
+		ruleValues = append(ruleValues, *rule)
+	}
+
 	return &models.ModerationRulesResponse{
-		Rules:  paginatedRules,
+		Rules:  ruleValues,
 		Total:  len(filteredRules),
 		Limit:  limit,
 		Offset: offset,
@@ -333,19 +339,12 @@ func (s *ModerationService) ApplyModerationAction(ctx context.Context, violation
 
 // GetStats returns moderation service statistics
 func (s *ModerationService) GetStats(ctx context.Context, timeframe string) (*models.ModerationStatsResponse, error) {
-	// Calculate time range
-	var startTime time.Time
+	// Calculate time range (placeholder - not used in simplified implementation)
 	switch timeframe {
-	case "1h":
-		startTime = time.Now().Add(-time.Hour)
-	case "24h":
-		startTime = time.Now().Add(-24 * time.Hour)
-	case "7d":
-		startTime = time.Now().Add(-7 * 24 * time.Hour)
-	case "30d":
-		startTime = time.Now().Add(-30 * 24 * time.Hour)
+	case "1h", "24h", "7d", "30d":
+		// Valid timeframes
 	default:
-		startTime = time.Now().Add(-24 * time.Hour)
+		timeframe = "24h" // Default to 24 hours
 	}
 
 	// Get data from repository (simplified implementation)
@@ -383,7 +382,8 @@ func (s *ModerationService) checkRateLimit(ctx context.Context, playerID uuid.UU
 	key := fmt.Sprintf("ratelimit:player:%s", playerID.String())
 
 	// Simple sliding window implementation
-	count, err := s.repo.(*repository.Repository).rdb.Incr(ctx, key).Result()
+	rdb := s.repo.GetRedisClient()
+	count, err := rdb.Incr(ctx, key).Result()
 	if err != nil {
 		s.logger.Warn("Rate limit check failed", zap.Error(err))
 		return false // Allow on error
@@ -391,7 +391,7 @@ func (s *ModerationService) checkRateLimit(ctx context.Context, playerID uuid.UU
 
 	// Set expiration on first request
 	if count == 1 {
-		s.repo.(*repository.Repository).rdb.Expire(ctx, key, time.Minute)
+		rdb.Expire(ctx, key, time.Minute)
 	}
 
 	return count > int64(s.config.RateLimitPerSecond*60) // Per minute limit

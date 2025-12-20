@@ -1,0 +1,208 @@
+
+    narrative_service: |
+      - Управление сюжетными линиями
+      - Интеграция с системой лиг
+      - Управление каноном
+
+    event_service: |
+      - Публикация событий квестов
+      - Подписка на события других систем
+      - Управление временными событиями
+
+    progression_service: |
+      - Получение данных навыков для проверок
+      - Обновление прогресса при завершении квестов
+      - Интеграция с системой ачивок
+
+    realtime_gateway: |
+      - Отправка уведомлений о квестах
+      - Реалтайм обновления прогресса
+      - Синхронизация состояния диалогов
+
+technical_specification:
+  subtasks:
+    - id: quest-engine-core
+      title: Реализация основного движка квестов
+      description: |
+        Реализация Quest Engine с поддержкой state machine, управления инстансами,
+        обработки целей и интеграции с event bus.
+      dependencies: []
+      estimated_effort: 5 days
+
+    - id: quest-content-manager
+      title: Реализация менеджера контента квестов
+      description: |
+        Реализация Quest Content Manager с загрузкой и кэшированием определений квестов,
+        версионированием и фильтрацией.
+      dependencies: [quest-engine-core]
+      estimated_effort: 3 days
+
+    - id: dialogue-system
+      title: Реализация системы диалогов
+      description: |
+        Реализация Dialogue System с поддержкой диалоговых деревьев, выборов игрока,
+        условий и сохранения состояния.
+      dependencies: [quest-engine-core]
+      estimated_effort: 4 days
+
+    - id: quest-branch-manager
+      title: Реализация менеджера ветвления
+      description: |
+        Реализация Quest Branch Manager с отслеживанием выборов, применением последствий
+        и управлением блокировкой контента.
+      dependencies: [quest-engine-core, dialogue-system]
+      estimated_effort: 4 days
+
+    - id: quest-reward-calculator
+      title: Реализация калькулятора наград
+      description: |
+        Реализация Quest Reward Calculator с расчетом динамических наград, учетом стиля
+        прохождения и интеграцией с economy-service.
+      dependencies: [quest-engine-core]
+      estimated_effort: 3 days
+
+    - id: skill-check-engine
+      title: Реализация движка проверок навыков
+      description: |
+        Реализация Skill Check Engine с проверкой навыков, учетом модификаторов,
+        групповыми проверками и логированием.
+      dependencies: [quest-engine-core]
+      estimated_effort: 3 days
+
+    - id: player-quest-board
+      title: Реализация доски пользовательских квестов
+      description: |
+        Реализация Player Quest Board с созданием квестов игроками, модерацией,
+        рейтингом и интеграцией с досками фиксеров.
+      dependencies: [quest-engine-core, social-service]
+      estimated_effort: 5 days
+
+    - id: quest-analytics
+      title: Реализация аналитики квестов
+      description: |
+        Реализация Quest Analytics с логированием событий, статистикой выборов
+        и метриками для балансировки.
+      dependencies: [quest-engine-core]
+      estimated_effort: 2 days
+
+    - id: quest-event-publisher
+      title: Реализация публикатора событий
+      description: |
+        Реализация Quest Event Publisher с публикацией событий в event bus,
+        подпиской на события других систем и синхронизацией состояния.
+      dependencies: [quest-engine-core, event-service]
+      estimated_effort: 2 days
+
+    - id: database-schema
+      title: Создание схемы БД для квестов
+      description: |
+        Создание таблиц БД для квестов, диалогов, ветвления, проверок навыков
+        и пользовательских квестов с миграциями Liquibase.
+      dependencies: []
+      estimated_effort: 2 days
+
+diagrams:
+  component_diagram: |
+    ```mermaid
+    graph TB
+        Client[UE5 Client] --> Gateway[API Gateway]
+        Gateway --> QuestEngine[Quest Engine]
+        Gateway --> DialogueSystem[Dialogue System]
+        Gateway --> QuestBoard[Player Quest Board]
+        
+        QuestEngine --> ContentManager[Quest Content Manager]
+        QuestEngine --> BranchManager[Quest Branch Manager]
+        QuestEngine --> RewardCalc[Quest Reward Calculator]
+        QuestEngine --> SkillCheck[Skill Check Engine]
+        QuestEngine --> EventPub[Quest Event Publisher]
+        
+        DialogueSystem --> BranchManager
+        DialogueSystem --> SkillCheck
+        
+        QuestEngine --> CharacterService[Character Service]
+        QuestEngine --> EconomyService[Economy Service]
+        QuestEngine --> SocialService[Social Service]
+        QuestEngine --> NarrativeService[Narrative Service]
+        QuestEngine --> ProgressionService[Progression Service]
+        
+        EventPub --> EventBus[Event Bus]
+        EventBus --> RealtimeGateway[Realtime Gateway]
+        
+        QuestEngine --> Analytics[Quest Analytics]
+        QuestBoard --> SocialService
+        
+        QuestEngine --> DB[(Quest Database)]
+        DialogueSystem --> DB
+        BranchManager --> DB
+        SkillCheck --> DB
+        QuestBoard --> DB
+        Analytics --> DB
+    ```
+
+  quest_flow_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant C as Client
+        participant QE as Quest Engine
+        participant CM as Content Manager
+        participant BM as Branch Manager
+        participant RC as Reward Calculator
+        participant ES as Economy Service
+        participant EB as Event Bus
+        
+        C->>QE: POST /quests/start
+        QE->>CM: Load quest definition
+        CM-->>QE: Quest definition
+        QE->>BM: Check branch availability
+        BM-->>QE: Available branches
+        QE->>QE: Create quest instance
+        QE->>EB: Publish quest:started
+        QE-->>C: Quest started
+        
+        Note over C,EB: Player completes objectives
+        
+        C->>QE: POST /quests/{id}/complete-objective
+        QE->>QE: Update progress
+        QE->>EB: Publish quest:objective-completed
+        QE-->>C: Objective completed
+        
+        C->>QE: POST /quests/{id}/complete
+        QE->>RC: Calculate rewards
+        RC-->>QE: Rewards
+        QE->>ES: Distribute rewards
+        ES-->>QE: Rewards distributed
+        QE->>BM: Apply consequences
+        QE->>EB: Publish quest:completed
+        QE-->>C: Quest completed with rewards
+    ```
+
+  dialogue_flow_diagram: |
+    ```mermaid
+    sequenceDiagram
+        participant C as Client
+        participant DS as Dialogue System
+        participant SC as Skill Check Engine
+        participant BM as Branch Manager
+        participant PS as Progression Service
+        
+        C->>DS: GET /dialogues/{id}
+        DS->>DS: Load dialogue tree
+        DS->>BM: Check conditions
+        BM-->>DS: Available options
+        DS-->>C: Dialogue with options
+        
+        C->>DS: POST /dialogues/{id}/select
+        DS->>DS: Check if skill check needed
+        alt Skill check required
+            DS->>SC: Execute skill check
+            SC->>PS: Get player skills
+            PS-->>SC: Skills data
+            SC->>SC: Calculate result
+            SC-->>DS: Check result
+        end
+        DS->>BM: Apply choice consequences
+        BM-->>DS: Consequences applied
+        DS->>DS: Move to next node
+        DS-->>C: Next dialogue node
+    ```
+

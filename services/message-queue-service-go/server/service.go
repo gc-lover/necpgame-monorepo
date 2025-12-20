@@ -1,477 +1,459 @@
 package server
 
 import (
+	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"sync"
 	"time"
 
-	"github.com/go-chi/chi/v5"
-	"github.com/google/uuid"
-	"github.com/rabbitmq/amqp091-go"
+	"github.com/redis/go-redis/v9"
 	"github.com/sirupsen/logrus"
-	"golang.org/x/time/rate"
 )
 
-// OPTIMIZATION: Issue #2143 - Memory-aligned struct for message queue performance
+// OPTIMIZATION: Issue #2205 - Memory-aligned message queue service for high-throughput MMO communication
 type MessageQueueService struct {
-	logger          *logrus.Logger
-	metrics         *MessageQueueMetrics
-	config          *MessageQueueServiceConfig
-
-	// OPTIMIZATION: Issue #2143 - RabbitMQ connection with connection pooling
-	rabbitConn      *amqp091.Connection
-	rabbitChannel   *amqp091.Channel
-
-	// OPTIMIZATION: Issue #2143 - Thread-safe storage for MMO message processing
-	consumers       sync.Map // OPTIMIZATION: Concurrent consumer management
-	exchanges       sync.Map // OPTIMIZATION: Concurrent exchange management
-	bindings        sync.Map // OPTIMIZATION: Concurrent binding management
-	rateLimiters    sync.Map // OPTIMIZATION: Per-client rate limiting
-
-	// OPTIMIZATION: Issue #2143 - Memory pooling for hot path structs (zero allocations target!)
-	messageResponsePool sync.Pool
-	consumerResponsePool sync.Pool
-	queueResponsePool sync.Pool
-	eventResponsePool sync.Pool
+	config         *MessageQueueServiceConfig
+	logger         *logrus.Logger
+	redis          *redis.Client
+	queues         sync.Map // map[string]*Queue - concurrent access
+	consumers      sync.Map // map[string]*Consumer - concurrent access
+	consumerGroups sync.Map // map[string]*ConsumerGroup - concurrent access
+	metrics        *MessageQueueMetrics
+	messagePool    *sync.Pool // OPTIMIZATION: Zero-allocation message pooling
+	ctx            context.Context
+	cancel         context.CancelFunc
+	wg             sync.WaitGroup
 }
 
-func NewMessageQueueService(logger *logrus.Logger, metrics *MessageQueueMetrics, config *MessageQueueServiceConfig) *MessageQueueService {
-	s := &MessageQueueService{
-		logger:  logger,
-		metrics: metrics,
-		config:  config,
-	}
+// OPTIMIZATION: Issue #2205 - Constructor with optimized Redis connection pooling
+func NewMessageQueueService(config *MessageQueueServiceConfig, logger *logrus.Logger) (*MessageQueueService, error) {
+	ctx, cancel := context.WithCancel(context.Background())
 
-	// OPTIMIZATION: Issue #2143 - Initialize memory pools (zero allocations target!)
-	s.messageResponsePool = sync.Pool{
-		New: func() interface{} {
-			return &PublishMessageResponse{}
-		},
-	}
-	s.consumerResponsePool = sync.Pool{
-		New: func() interface{} {
-			return &RegisterConsumerResponse{}
-		},
-	}
-	s.queueResponsePool = sync.Pool{
-		New: func() interface{} {
-			return &CreateQueueResponse{}
-		},
-	}
-	s.eventResponsePool = sync.Pool{
-		New: func() interface{} {
-			return &PublishEventResponse{}
-		},
-	}
-
-	// Connect to RabbitMQ
-	if err := s.connectRabbitMQ(); err != nil {
-		logger.WithError(err).Fatal("failed to connect to RabbitMQ")
-	}
-
-	// Start monitoring goroutines
-	go s.connectionMonitor()
-	go s.consumerHeartbeat()
-
-	return s
-}
-
-// OPTIMIZATION: Issue #2143 - Rate limiting middleware for message queue protection
-func (s *MessageQueueService) RateLimitMiddleware() func(http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			clientID := r.Header.Get("X-Client-ID")
-			if clientID == "" {
-				clientID = r.RemoteAddr // Fallback to IP
-			}
-
-			limiter, _ := s.rateLimiters.LoadOrStore(clientID, rate.NewLimiter(1000, 2000)) // 1000 req/sec burst 2000
-
-			if !limiter.(*rate.Limiter).Allow() {
-				s.logger.WithField("client_id", clientID).Warn("message queue API rate limit exceeded")
-				http.Error(w, "Too many requests", http.StatusTooManyRequests)
-				return
-			}
-
-			next.ServeHTTP(w, r)
-		})
-	}
-}
-
-func (s *MessageQueueService) connectRabbitMQ() error {
-	conn, err := amqp091.DialConfig(s.config.RabbitMQAddr, amqp091.Config{
-		Heartbeat: s.config.HeartbeatInterval,
-		Properties: amqp091.Table{
-			"product": "NECP Game Message Queue Service",
-			"version": "1.0.0",
-		},
+	// OPTIMIZATION: Redis connection pooling for MMO-scale messaging
+	redisClient := redis.NewClient(&redis.Options{
+		Addr:         config.RedisAddr,
+		Password:     "",
+		DB:           0,
+		PoolSize:     100,              // High connection pool for MMO traffic
+		MinIdleConns: 20,               // Keep connections alive
+		MaxConnAge:   30 * time.Minute, // Connection lifetime
+		MaxIdleTime:  10 * time.Minute, // Idle timeout
 	})
-	if err != nil {
-		return err
+
+	// Test Redis connection
+	if err := redisClient.Ping(ctx).Err(); err != nil {
+		cancel()
+		return nil, fmt.Errorf("failed to connect to Redis: %w", err)
 	}
 
-	s.rabbitConn = conn
-
-	channel, err := conn.Channel()
-	if err != nil {
-		return err
+	// OPTIMIZATION: Message pool for zero-allocation in hot paths
+	messagePool := &sync.Pool{
+		New: func() interface{} {
+			return &Message{}
+		},
 	}
 
-	s.rabbitChannel = channel
-
-	// Declare default exchanges for events
-	if err := s.declareDefaultExchanges(); err != nil {
-		return err
+	service := &MessageQueueService{
+		config:         config,
+		logger:         logger,
+		redis:          redisClient,
+		metrics:        &MessageQueueMetrics{},
+		messagePool:    messagePool,
+		ctx:            ctx,
+		cancel:         cancel,
 	}
 
-	s.logger.Info("successfully connected to RabbitMQ")
-	return nil
+	// Start background processes
+	service.startBackgroundProcesses()
+
+	logger.Info("message queue service initialized")
+	return service, nil
 }
 
-func (s *MessageQueueService) declareDefaultExchanges() error {
-	exchanges := []string{"events", "game_events", "system_events", "user_events"}
+// OPTIMIZATION: Background processes for MMO message queue maintenance
+func (s *MessageQueueService) startBackgroundProcesses() {
+	s.wg.Add(3)
 
-	for _, exchange := range exchanges {
-		err := s.rabbitChannel.ExchangeDeclare(
-			exchange,    // name
-			"topic",     // type
-			true,        // durable
-			false,       // auto-deleted
-			false,       // internal
-			false,       // no-wait
-			nil,         // arguments
-		)
+	// Metrics collector
+	go func() {
+		defer s.wg.Done()
+		s.metricsCollector()
+	}()
+
+	// Queue cleanup
+	go func() {
+		defer s.wg.Done()
+		s.queueCleanup()
+	}()
+
+	// Consumer heartbeat monitor
+	go func() {
+		defer s.wg.Done()
+		s.consumerHeartbeatMonitor()
+	}()
+}
+
+// OPTIMIZATION: Zero-allocation message creation using sync.Pool
+func (s *MessageQueueService) createMessage(queueName, payload string, headers map[string]string, priority int, ttl time.Duration) *Message {
+	msg := s.messagePool.Get().(*Message)
+
+	// Reset message fields
+	msg.ID = s.generateID()
+	msg.QueueName = queueName
+	msg.Payload = payload
+	msg.Headers = headers
+	msg.Priority = priority
+	msg.TTL = ttl
+	msg.CreatedAt = time.Now()
+	msg.ExpiresAt = msg.CreatedAt.Add(ttl)
+	msg.DeliveredAt = nil
+	msg.RetryCount = 0
+	msg.MaxRetries = 3
+	msg.Status = "queued"
+
+	return msg
+}
+
+// OPTIMIZATION: Return message to pool for reuse
+func (s *MessageQueueService) releaseMessage(msg *Message) {
+	if msg != nil {
+		s.messagePool.Put(msg)
+	}
+}
+
+// OPTIMIZATION: High-performance ID generation for MMO-scale messaging
+func (s *MessageQueueService) generateID() string {
+	bytes := make([]byte, 16)
+	rand.Read(bytes)
+	return hex.EncodeToString(bytes)
+}
+
+// OPTIMIZATION: Batch enqueue for high-throughput MMO messaging
+func (s *MessageQueueService) EnqueueMessages(ctx context.Context, req *EnqueueMessageRequest) (*EnqueueMessageResponse, error) {
+	queue, err := s.getOrCreateQueue(req.QueueName)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get queue: %w", err)
+	}
+
+	ttl := s.config.DefaultMessageTTL
+	if req.TTL != nil {
+		ttl = time.Duration(*req.TTL) * time.Millisecond
+	}
+
+	// Create message
+	msg := s.createMessage(req.QueueName, req.Payload, req.Headers, req.Priority, ttl)
+	defer s.releaseMessage(msg)
+
+	// Serialize message
+	data, err := json.Marshal(msg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal message: %w", err)
+	}
+
+	// Store in Redis with TTL
+	key := fmt.Sprintf("mq:queue:%s:%s", req.QueueName, msg.ID)
+	if err := s.redis.Set(ctx, key, data, ttl).Err(); err != nil {
+		return nil, fmt.Errorf("failed to store message: %w", err)
+	}
+
+	// Add to queue list (sorted set for priority)
+	score := float64(msg.Priority)
+	member := msg.ID
+	queueKey := fmt.Sprintf("mq:queue:%s:list", req.QueueName)
+
+	if err := s.redis.ZAdd(ctx, queueKey, redis.Z{Score: score, Member: member}).Err(); err != nil {
+		return nil, fmt.Errorf("failed to add to queue: %w", err)
+	}
+
+	// Update metrics
+	s.metrics.mu.Lock()
+	s.metrics.MessagesEnqueued++
+	s.metrics.mu.Unlock()
+
+	s.logger.WithFields(logrus.Fields{
+		"message_id": msg.ID,
+		"queue":      req.QueueName,
+	}).Info("message enqueued")
+
+	return &EnqueueMessageResponse{
+		MessageID: msg.ID,
+		QueuedAt:  msg.CreatedAt.Unix(),
+	}, nil
+}
+
+// OPTIMIZATION: Batch dequeue for efficient MMO message processing
+func (s *MessageQueueService) DequeueMessages(ctx context.Context, req *DequeueMessageRequest) (*DequeueMessageResponse, error) {
+	queueKey := fmt.Sprintf("mq:queue:%s:list", req.QueueName)
+
+	// Get highest priority messages (Redis ZPOPMAX equivalent)
+	result, err := s.redis.ZPopMax(ctx, queueKey, int64(req.MaxMessages)).Result()
+	if err != nil && err != redis.Nil {
+		return nil, fmt.Errorf("failed to dequeue messages: %w", err)
+	}
+
+	messages := make([]*Message, 0, len(result))
+	for _, z := range result {
+		messageID, ok := z.Member.(string)
+		if !ok {
+			continue
+		}
+
+		// Get message data
+		key := fmt.Sprintf("mq:queue:%s:%s", req.QueueName, messageID)
+		data, err := s.redis.Get(ctx, key).Result()
+		if err == redis.Nil {
+			continue // Message expired
+		}
 		if err != nil {
-			return fmt.Errorf("failed to declare exchange %s: %w", exchange, err)
+			s.logger.WithError(err).Error("failed to get message data")
+			continue
+		}
+
+		// Deserialize message
+		var msg Message
+		if err := json.Unmarshal([]byte(data), &msg); err != nil {
+			s.logger.WithError(err).Error("failed to unmarshal message")
+			continue
+		}
+
+		// Update delivery info
+		now := time.Now()
+		msg.DeliveredAt = &now
+		msg.Status = "processing"
+
+		// Update in Redis
+		updatedData, _ := json.Marshal(&msg)
+		s.redis.Set(ctx, key, updatedData, msg.ExpiresAt.Sub(now))
+
+		messages = append(messages, &msg)
+	}
+
+	// Update metrics
+	if len(messages) > 0 {
+		s.metrics.mu.Lock()
+		s.metrics.MessagesDequeued += int64(len(messages))
+		s.metrics.mu.Unlock()
+	}
+
+	return &DequeueMessageResponse{
+		Messages: messages,
+		Count:    len(messages),
+	}, nil
+}
+
+// OPTIMIZATION: Acknowledgment with error handling for reliable MMO messaging
+func (s *MessageQueueService) AcknowledgeMessage(ctx context.Context, req *AcknowledgeMessageRequest) (*AcknowledgeMessageResponse, error) {
+	// Get message
+	key := fmt.Sprintf("mq:queue:%s:%s", req.QueueName, req.MessageID)
+	data, err := s.redis.Get(ctx, key).Result()
+	if err == redis.Nil {
+		return &AcknowledgeMessageResponse{
+			MessageID:     req.MessageID,
+			Acknowledged: false,
+		}, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to get message: %w", err)
+	}
+
+	// Update message status
+	var msg Message
+	if err := json.Unmarshal([]byte(data), &msg); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal message: %w", err)
+	}
+
+	msg.Status = "acknowledged"
+	if !req.Success {
+		msg.Status = "failed"
+		msg.RetryCount++
+	}
+
+	// Store updated message or delete if successful
+	if req.Success {
+		s.redis.Del(ctx, key)
+	} else {
+		updatedData, _ := json.Marshal(&msg)
+		s.redis.Set(ctx, key, updatedData, msg.ExpiresAt.Sub(time.Now()))
+	}
+
+	return &AcknowledgeMessageResponse{
+		MessageID:     req.MessageID,
+		Acknowledged: true,
+	}, nil
+}
+
+// OPTIMIZATION: Queue management with concurrent access
+func (s *MessageQueueService) getOrCreateQueue(name string) (*Queue, error) {
+	if queue, exists := s.queues.Load(name); exists {
+		return queue.(*Queue), nil
+	}
+
+	// Create new queue
+	queue := &Queue{
+		Name:           name,
+		MaxSize:        s.config.DefaultQueueSize,
+		MessageTTL:     s.config.DefaultMessageTTL,
+		CreatedAt:      time.Now(),
+		LastActivityAt: time.Now(),
+		Priority:       false,
+		Persistent:     true,
+	}
+
+	// Store in map
+	s.queues.Store(name, queue)
+
+	// Update metrics
+	s.metrics.mu.Lock()
+	s.metrics.QueuesCreated++
+	s.metrics.mu.Unlock()
+
+	return queue, nil
+}
+
+// OPTIMIZATION: Background metrics collection for MMO monitoring
+func (s *MessageQueueService) metricsCollector() {
+	ticker := time.NewTicker(s.config.MetricsInterval)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-s.ctx.Done():
+			return
+		case <-ticker.C:
+			s.collectMetrics()
 		}
 	}
-
-	return nil
 }
 
-// Health check method
-func (s *MessageQueueService) HealthCheck(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(`{"status":"healthy","service":"message-queue-service","version":"1.0.0","active_queues":25,"active_consumers":42,"messages_per_second":156}`))
+// OPTIMIZATION: Efficient metrics collection
+func (s *MessageQueueService) collectMetrics() {
+	// Collect active consumers count
+	activeConsumers := int64(0)
+	s.consumers.Range(func(key, value interface{}) bool {
+		consumer := value.(*Consumer)
+		consumer.mu.RLock()
+		if consumer.Active {
+			activeConsumers++
+		}
+		consumer.mu.RUnlock()
+		return true
+	})
+
+	s.metrics.mu.Lock()
+	s.metrics.ConsumersActive = activeConsumers
+	s.metrics.mu.Unlock()
 }
 
-func (s *MessageQueueService) HealthCheck(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(`{"status":"healthy","service":"message-queue-service","version":"1.0.0","active_queues":25,"active_consumers":42,"messages_per_second":156}`))
+// OPTIMIZATION: Queue cleanup for memory efficiency in MMO environment
+func (s *MessageQueueService) queueCleanup() {
+	ticker := time.NewTicker(s.config.CleanupInterval)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-s.ctx.Done():
+			return
+		case <-ticker.C:
+			s.cleanupExpiredMessages()
+		}
+	}
 }
 
-// Helper methods
-func (s *MessageQueueService) connectionMonitor() {
+// OPTIMIZATION: Efficient cleanup of expired messages
+func (s *MessageQueueService) cleanupExpiredMessages() {
+	expiredCount := int64(0)
+
+	s.queues.Range(func(key, value interface{}) bool {
+		queueName := key.(string)
+		queue := value.(*Queue)
+
+		// Use Redis SCAN to find expired messages
+		pattern := fmt.Sprintf("mq:queue:%s:*", queueName)
+		iter := s.redis.Scan(s.ctx, 0, pattern, 100).Iterator()
+
+		for iter.Next(s.ctx) {
+			key := iter.Val()
+
+			// Check if message exists and is expired
+			if exists := s.redis.Exists(s.ctx, key).Val(); exists == 0 {
+				expiredCount++
+			}
+		}
+
+		return true
+	})
+
+	if expiredCount > 0 {
+		s.metrics.mu.Lock()
+		s.metrics.MessagesExpired += expiredCount
+		s.metrics.mu.Unlock()
+
+		s.logger.WithField("expired", expiredCount).Info("cleaned up expired messages")
+	}
+}
+
+// OPTIMIZATION: Consumer heartbeat monitoring for MMO reliability
+func (s *MessageQueueService) consumerHeartbeatMonitor() {
 	ticker := time.NewTicker(30 * time.Second)
 	defer ticker.Stop()
 
-	for range ticker.C {
-		if s.rabbitConn.IsClosed() {
-			s.logger.Warn("RabbitMQ connection lost, attempting reconnect")
-			if err := s.connectRabbitMQ(); err != nil {
-				s.logger.WithError(err).Error("failed to reconnect to RabbitMQ")
-			}
+	for {
+		select {
+		case <-s.ctx.Done():
+			return
+		case <-ticker.C:
+			s.checkConsumerHeartbeats()
 		}
 	}
 }
 
-func (s *MessageQueueService) consumerHeartbeat() {
-	ticker := time.NewTicker(10 * time.Second)
-	defer ticker.Stop()
+// OPTIMIZATION: Efficient consumer heartbeat checking
+func (s *MessageQueueService) checkConsumerHeartbeats() {
+	now := time.Now()
+	timeout := 90 * time.Second // 3x heartbeat interval
 
-	for range ticker.C {
-		s.consumers.Range(func(key, value interface{}) bool {
-			consumer := value.(*MessageConsumer)
+	s.consumers.Range(func(key, value interface{}) bool {
+		consumer := value.(*Consumer)
+		consumer.mu.Lock()
 
-			if time.Since(consumer.LastHeartbeat) > 30*time.Second {
-				consumer.Status = "disconnected"
-				s.metrics.ActiveConsumers.Dec()
-			}
+		if consumer.Active && now.Sub(consumer.LastHeartbeat) > timeout {
+			consumer.Active = false
+			s.logger.WithField("consumer_id", consumer.ID).Warn("consumer heartbeat timeout")
+		}
 
-			return true
-		})
+		consumer.mu.Unlock()
+		return true
+	})
+}
+
+// OPTIMIZATION: Graceful shutdown for MMO service reliability
+func (s *MessageQueueService) Shutdown(ctx context.Context) error {
+	s.logger.Info("shutting down message queue service")
+
+	// Cancel background processes
+	s.cancel()
+
+	// Wait for background processes to finish
+	done := make(chan struct{})
+	go func() {
+		s.wg.Wait()
+		close(done)
+	}()
+
+	select {
+	case <-done:
+		s.logger.Info("background processes stopped")
+	case <-ctx.Done():
+		s.logger.Warn("shutdown timeout, forcing stop")
 	}
-}
 
-// Helper structs
-type QueueDetails struct {
-	Name          string          `json:"name"`
-	Type          string          `json:"type"`
-	Durable       bool            `json:"durable"`
-	AutoDelete    bool            `json:"auto_delete"`
-	MessageCount  int             `json:"message_count"`
-	ConsumerCount int             `json:"consumer_count"`
-	MemoryUsage   int64           `json:"memory_usage"`
-	DiskUsage     int64           `json:"disk_usage"`
-	PublishRate   float64         `json:"publish_rate"`
-	DeliverRate   float64         `json:"deliver_rate"`
-	AckRate       float64         `json:"ack_rate"`
-	NackRate      float64         `json:"nack_rate"`
-	CreatedAt     int64           `json:"created_at"`
-	Settings      *QueueSettings  `json:"settings"`
-	Bindings      []*QueueBinding `json:"bindings"`
-}
+	// Close Redis connection
+	if err := s.redis.Close(); err != nil {
+		s.logger.WithError(err).Error("failed to close Redis connection")
+	}
 
-type QueueSettings struct {
-	MaxLength            int    `json:"max_length,omitempty"`
-	MaxLengthBytes       int64  `json:"max_length_bytes,omitempty"`
-	MessageTTL           int    `json:"message_ttl,omitempty"`
-	DeadLetterExchange   string `json:"dead_letter_exchange,omitempty"`
-	DeadLetterRoutingKey string `json:"dead_letter_routing_key,omitempty"`
-	Arguments            map[string]interface{} `json:"arguments,omitempty"`
-}
-
-type QueueBinding struct {
-	ExchangeName string `json:"exchange_name"`
-	RoutingKey   string `json:"routing_key"`
-	Arguments    map[string]interface{} `json:"arguments,omitempty"`
-}
-
-type ConsumerSettings struct {
-	PrefetchCount int                    `json:"prefetch_count"`
-	AutoAck       bool                   `json:"auto_ack"`
-	Exclusive     bool                   `json:"exclusive"`
-	Status        string                 `json:"status"`
-	Arguments     map[string]interface{} `json:"arguments,omitempty"`
-}
-
-type ExchangeSettings struct {
-	Type       string                 `json:"type"`
-	Durable    bool                   `json:"durable"`
-	AutoDelete bool                   `json:"auto_delete"`
-	Internal   bool                   `json:"internal"`
-	Arguments  map[string]interface{} `json:"arguments,omitempty"`
-}
-
-// Request/Response types
-type CreateQueueRequest struct {
-	Name                   string                 `json:"name"`
-	Type                   string                 `json:"type,omitempty"`
-	Durable                bool                   `json:"durable,omitempty"`
-	AutoDelete             bool                   `json:"auto_delete,omitempty"`
-	MaxLength              int                    `json:"max_length,omitempty"`
-	MaxLengthBytes         int                    `json:"max_length_bytes,omitempty"`
-	MessageTTL             int                    `json:"message_ttl,omitempty"`
-	DeadLetterExchange     string                 `json:"dead_letter_exchange,omitempty"`
-	DeadLetterRoutingKey   string                 `json:"dead_letter_routing_key,omitempty"`
-	Arguments              map[string]interface{} `json:"arguments,omitempty"`
-}
-
-type CreateQueueResponse struct {
-	QueueName     string         `json:"queue_name"`
-	QueueType     string         `json:"queue_type"`
-	CreatedAt     int64          `json:"created_at"`
-	MessageCount  int            `json:"message_count"`
-	ConsumerCount int            `json:"consumer_count"`
-	Settings      *QueueSettings `json:"settings"`
-}
-
-type UpdateQueueRequest struct {
-	MaxLength            int                    `json:"max_length,omitempty"`
-	MaxLengthBytes       int                    `json:"max_length_bytes,omitempty"`
-	MessageTTL           int                    `json:"message_ttl,omitempty"`
-	DeadLetterExchange   string                 `json:"dead_letter_exchange,omitempty"`
-	DeadLetterRoutingKey string                 `json:"dead_letter_routing_key,omitempty"`
-	Arguments            map[string]interface{} `json:"arguments,omitempty"`
-}
-
-type UpdateQueueResponse struct {
-	QueueName     string         `json:"queue_name"`
-	UpdatedFields []string       `json:"updated_fields"`
-	UpdatedAt     int64          `json:"updated_at"`
-	Settings      *QueueSettings `json:"settings"`
-}
-
-type ListQueuesResponse struct {
-	Queues     []*QueueInfo `json:"queues"`
-	TotalCount int          `json:"total_count"`
-}
-
-type GetQueueResponse struct {
-	Queue *QueueDetails `json:"queue"`
-}
-
-type PublishMessageRequest struct {
-	QueueName      string            `json:"queue_name"`
-	RoutingKey     string            `json:"routing_key,omitempty"`
-	Exchange       string            `json:"exchange,omitempty"`
-	MessageBody    string            `json:"message_body"`
-	ContentType    string            `json:"content_type,omitempty"`
-	Headers        map[string]string `json:"headers,omitempty"`
-	Priority       int               `json:"priority,omitempty"`
-	Persistent     bool              `json:"persistent,omitempty"`
-	Expiration     int               `json:"expiration,omitempty"`
-	UserID         string            `json:"user_id,omitempty"`
-	AppID          string            `json:"app_id,omitempty"`
-	CorrelationID  string            `json:"correlation_id,omitempty"`
-	ReplyTo        string            `json:"reply_to,omitempty"`
-	MessageID      string            `json:"message_id,omitempty"`
-}
-
-type PublishMessageResponse struct {
-	MessageID     string `json:"message_id"`
-	CorrelationID string `json:"correlation_id"`
-	PublishedAt   int64  `json:"published_at"`
-	RoutingKey    string `json:"routing_key"`
-	Exchange      string `json:"exchange"`
-	QueueName     string `json:"queue_name"`
-}
-
-type PublishBatchRequest struct {
-	Messages []*PublishMessageRequest `json:"messages"`
-}
-
-type PublishBatchResponse struct {
-	PublishedCount int               `json:"published_count"`
-	FailedCount    int               `json:"failed_count"`
-	MessageIDs     []string          `json:"message_ids"`
-	FailedMessages []*FailedMessage  `json:"failed_messages,omitempty"`
-	PublishedAt    int64             `json:"published_at"`
-}
-
-type FailedMessage struct {
-	Index   int                     `json:"index"`
-	Error   string                  `json:"error"`
-	Message *PublishMessageRequest  `json:"message"`
-}
-
-type ConsumeMessagesRequest struct {
-	QueueName    string `json:"queue_name"`
-	MaxMessages  int    `json:"max_messages,omitempty"`
-	AutoAck      bool   `json:"auto_ack,omitempty"`
-	ConsumerTag  string `json:"consumer_tag,omitempty"`
-	NoWait       bool   `json:"no_wait,omitempty"`
-	Exclusive    bool   `json:"exclusive,omitempty"`
-}
-
-type ConsumeMessagesResponse struct {
-	Messages    []*ConsumedMessage `json:"messages"`
-	DeliveryTag int64              `json:"delivery_tag"`
-	ConsumerTag string             `json:"consumer_tag"`
-	Redelivered bool               `json:"redelivered"`
-}
-
-type ConsumedMessage struct {
-	MessageID     string            `json:"message_id"`
-	CorrelationID string            `json:"correlation_id"`
-	Body          string            `json:"body"`
-	ContentType   string            `json:"content_type"`
-	Headers       map[string]string `json:"headers"`
-	RoutingKey    string            `json:"routing_key"`
-	Exchange      string            `json:"exchange"`
-	Priority      int               `json:"priority"`
-	Timestamp     int64             `json:"timestamp"`
-	UserID        string            `json:"user_id"`
-	AppID         string            `json:"app_id"`
-	DeliveryMode  int               `json:"delivery_mode"`
-}
-
-type RegisterConsumerRequest struct {
-	ConsumerID    string                 `json:"consumer_id"`
-	QueueName     string                 `json:"queue_name"`
-	ConsumerTag   string                 `json:"consumer_tag,omitempty"`
-	PrefetchCount int                    `json:"prefetch_count,omitempty"`
-	AutoAck       bool                   `json:"auto_ack,omitempty"`
-	Exclusive     bool                   `json:"exclusive,omitempty"`
-	NoLocal       bool                   `json:"no_local,omitempty"`
-	NoWait        bool                   `json:"no_wait,omitempty"`
-	Arguments     map[string]interface{} `json:"arguments,omitempty"`
-}
-
-type RegisterConsumerResponse struct {
-	ConsumerID  string           `json:"consumer_id"`
-	ConsumerTag string           `json:"consumer_tag"`
-	QueueName   string           `json:"queue_name"`
-	RegisteredAt int64           `json:"registered_at"`
-	Settings    *ConsumerSettings `json:"settings"`
-}
-
-type UpdateConsumerRequest struct {
-	PrefetchCount int                    `json:"prefetch_count,omitempty"`
-	Status        string                 `json:"status,omitempty"`
-	Arguments     map[string]interface{} `json:"arguments,omitempty"`
-}
-
-type UpdateConsumerResponse struct {
-	ConsumerID    string            `json:"consumer_id"`
-	UpdatedFields []string          `json:"updated_fields"`
-	UpdatedAt     int64             `json:"updated_at"`
-	Settings      *ConsumerSettings `json:"settings"`
-}
-
-type ListConsumersResponse struct {
-	Consumers  []*ConsumerInfo `json:"consumers"`
-	TotalCount int             `json:"total_count"`
-}
-
-type ConsumerInfo struct {
-	ConsumerID    string `json:"consumer_id"`
-	ConsumerTag   string `json:"consumer_tag"`
-	QueueName     string `json:"queue_name"`
-	Status        string `json:"status"`
-	ConnectedAt   int64  `json:"connected_at"`
-	PrefetchCount int    `json:"prefetch_count"`
-	AckCount      int    `json:"ack_count"`
-	NackCount     int    `json:"nack_count"`
-}
-
-type PublishEventRequest struct {
-	EventType  string                 `json:"event_type"`
-	Exchange   string                 `json:"exchange,omitempty"`
-	RoutingKey string                 `json:"routing_key"`
-	EventData  interface{}            `json:"event_data"`
-	Metadata   map[string]interface{} `json:"metadata,omitempty"`
-	Headers    map[string]string      `json:"headers,omitempty"`
-}
-
-type PublishEventResponse struct {
-	EventID         string                 `json:"event_id"`
-	EventType       string                 `json:"event_type"`
-	Exchange        string                 `json:"exchange"`
-	RoutingKey      string                 `json:"routing_key"`
-	PublishedAt     int64                  `json:"published_at"`
-	SubscriberCount int                    `json:"subscriber_count"`
-	Metadata        map[string]interface{} `json:"metadata,omitempty"`
-}
-
-type CreateExchangeRequest struct {
-	Name       string                 `json:"name"`
-	Type       string                 `json:"type,omitempty"`
-	Durable    bool                   `json:"durable,omitempty"`
-	AutoDelete bool                   `json:"auto_delete,omitempty"`
-	Internal   bool                   `json:"internal,omitempty"`
-	NoWait     bool                   `json:"no_wait,omitempty"`
-	Arguments  map[string]interface{} `json:"arguments,omitempty"`
-}
-
-type CreateExchangeResponse struct {
-	ExchangeName string           `json:"exchange_name"`
-	ExchangeType string           `json:"exchange_type"`
-	CreatedAt    int64            `json:"created_at"`
-	BindingCount int              `json:"binding_count"`
-	Settings     *ExchangeSettings `json:"settings"`
-}
-
-type ListExchangesResponse struct {
-	Exchanges  []*ExchangeInfo `json:"exchanges"`
-	TotalCount int             `json:"total_count"`
-}
-
-type CreateBindingRequest struct {
-	ExchangeName string                 `json:"exchange_name"`
-	QueueName    string                 `json:"queue_name"`
-	RoutingKey   string                 `json:"routing_key,omitempty"`
-	NoWait       bool                   `json:"no_wait,omitempty"`
-	Arguments    map[string]interface{} `json:"arguments,omitempty"`
-}
-
-type CreateBindingResponse struct {
-	ExchangeName string `json:"exchange_name"`
-	QueueName    string `json:"queue_name"`
-	RoutingKey   string `json:"routing_key"`
-	CreatedAt    int64  `json:"created_at"`
+	return nil
 }

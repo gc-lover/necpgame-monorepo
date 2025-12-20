@@ -1,0 +1,400 @@
+CreateGuildRequest:
+  type: object
+  properties:
+    guild_id:
+      type: string
+      minLength: 1
+      maxLength: 255
+      pattern: '^[a-zA-Z0-9._-]+$'
+      description: Unique identifier for the guild
+    name:
+      type: string
+      minLength: 2
+      maxLength: 100
+      description: Display name of the guild
+    description:
+      type: string
+      maxLength: 2000
+      description: Guild description and lore
+    motto:
+      type: string
+      maxLength: 500
+      description: Guild motto or slogan
+    faction:
+      type: string
+      enum: [neutral, corporation, nomad, street_kid, corpo_kid, fixer, merc, edgerunner, nomad_nomad, nomad_aldtec, nomad_badlands, nomad_nomad_nomad, nomad_nomad_aldtec, nomad_nomad_badlands, custom]
+      default: neutral
+      description: Guild faction alignment
+    leader_id:
+      type: string
+      minLength: 1
+      description: Player ID of the guild leader
+    founding_fee:
+      type: object
+      properties:
+        currency_type:
+          type: string
+          enum: [currency, item]
+          default: currency
+        amount:
+          type: integer
+          minimum: 0
+          default: 10000
+        item_id:
+          type: string
+          description: Required if currency_type is 'item'
+      description: Fee required to found the guild
+    max_members:
+      type: integer
+      minimum: 1
+      maximum: 1000
+      default: 100
+      description: Maximum number of members allowed
+    min_level_requirement:
+      type: integer
+      minimum: 1
+      maximum: 50
+      default: 1
+      description: Minimum player level to join
+    application_required:
+      type: boolean
+      default: false
+      description: Whether applications are required to join
+    recruitment_open:
+      type: boolean
+      default: true
+      description: Whether the guild accepts new members
+    region:
+      type: string
+      description: Primary region where guild operates
+    headquarters_location:
+      type: object
+      properties:
+        zone:
+          type: string
+          description: Game zone/area
+        coordinates:
+          type: object
+          properties:
+            x:
+              type: number
+              format: float
+            y:
+              type: number
+              format: float
+            z:
+              type: number
+              format: float
+      description: Headquarters location coordinates
+    colors:
+      type: object
+      properties:
+        primary:
+          type: string
+          pattern: '^#[0-9A-Fa-f]{6}$'
+          description: Primary guild color (hex)
+        secondary:
+          type: string
+          pattern: '^#[0-9A-Fa-f]{6}$'
+          description: Secondary guild color (hex)
+        emblem_url:
+          type: string
+          format: uri
+          description: Guild emblem/logo URL
+      description: Guild visual customization
+    policies:
+      type: object
+      properties:
+        pvp_enabled:
+          type: boolean
+          default: true
+          description: Whether PvP is allowed in guild activities
+        territory_claims_enabled:
+          type: boolean
+          default: true
+          description: Whether guild can claim territories
+        war_participation:
+          type: string
+          enum: [optional, required, disabled]
+          default: optional
+          description: Guild war participation policy
+        contract_sharing:
+          type: boolean
+          default: true
+          description: Whether contracts are shared among members
+        resource_sharing:
+          type: boolean
+          default: false
+          description: Whether resources are shared automatically
+        tax_rate:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 0.5
+          default: 0.0
+          description: Guild tax rate (0-50%)
+      description: Guild operational policies
+    metadata:
+      type: object
+      additionalProperties: true
+      description: Additional guild metadata
+  required:
+    - guild_id
+    - name
+    - leader_id
+
+UpdateGuildRequest:
+  type: object
+  properties:
+    name:
+      type: string
+      minLength: 2
+      maxLength: 100
+    description:
+      type: string
+      maxLength: 2000
+    motto:
+      type: string
+      maxLength: 500
+    faction:
+      type: string
+      enum: [neutral, corporation, nomad, street_kid, corpo_kid, fixer, merc, edgerunner, nomad_nomad, nomad_aldtec, nomad_badlands, nomad_nomad_nomad, nomad_nomad_aldtec, nomad_nomad_badlands, custom]
+    max_members:
+      type: integer
+      minimum: 1
+      maximum: 1000
+    min_level_requirement:
+      type: integer
+      minimum: 1
+      maximum: 50
+    application_required:
+      type: boolean
+    recruitment_open:
+      type: boolean
+    region:
+      type: string
+    headquarters_location:
+      type: object
+      properties:
+        zone:
+          type: string
+        coordinates:
+          type: object
+          properties:
+            x:
+              type: number
+              format: float
+            y:
+              type: number
+              format: float
+            z:
+              type: number
+              format: float
+    colors:
+      type: object
+      properties:
+        primary:
+          type: string
+          pattern: '^#[0-9A-Fa-f]{6}$'
+        secondary:
+          type: string
+          pattern: '^#[0-9A-Fa-f]{6}$'
+        emblem_url:
+          type: string
+          format: uri
+    policies:
+      type: object
+      properties:
+        pvp_enabled:
+          type: boolean
+        territory_claims_enabled:
+          type: boolean
+        war_participation:
+          type: string
+          enum: [optional, required, disabled]
+        contract_sharing:
+          type: boolean
+        resource_sharing:
+          type: boolean
+        tax_rate:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 0.5
+    metadata:
+      type: object
+      additionalProperties: true
+
+JoinGuildRequest:
+  type: object
+  properties:
+    player_id:
+      type: string
+      minLength: 1
+      description: Player requesting to join
+    application_message:
+      type: string
+      maxLength: 1000
+      description: Optional application message (required if guild requires applications)
+    character_info:
+      type: object
+      properties:
+        level:
+          type: integer
+          minimum: 1
+        class:
+          type: string
+        specialization:
+          type: string
+        reputation:
+          type: integer
+        achievements:
+          type: array
+          items:
+            type: string
+      description: Character information for application review
+    referrer_id:
+      type: string
+      description: ID of existing member who referred this player
+  required:
+    - player_id
+
+UpdateMemberRequest:
+  type: object
+  properties:
+    role:
+      type: string
+      enum: [leader, officer, member, recruit]
+      description: New role for the member
+    rank_title:
+      type: string
+      maxLength: 100
+      description: Custom rank title
+    permissions:
+      type: array
+      items:
+        type: string
+        enum: [invite_members, kick_members, manage_roles, manage_territory, declare_war, manage_alliances, manage_contracts, manage_resources, edit_guild_settings]
+      description: Specific permissions to grant
+    status:
+      type: string
+      enum: [active, inactive, suspended]
+      description: Member status
+    suspension_reason:
+      type: string
+      maxLength: 500
+      description: Reason for suspension (if status is suspended)
+    suspension_duration:
+      type: integer
+      minimum: 1
+      description: Suspension duration in hours
+    notes:
+      type: string
+      maxLength: 1000
+      description: Internal notes about the member
+  required:
+    - role
+
+ClaimTerritoryRequest:
+  type: object
+  properties:
+    territory_id:
+      type: string
+      minLength: 1
+      description: Unique identifier for the territory
+    zone:
+      type: string
+      minLength: 1
+      description: Game zone/area containing the territory
+    coordinates:
+      type: object
+      properties:
+        x:
+          type: number
+          format: float
+        y:
+          type: number
+          format: float
+        z:
+          type: number
+          format: float
+      description: Territory center coordinates
+    radius:
+      type: number
+      format: float
+      minimum: 10.0
+      maximum: 1000.0
+      default: 100.0
+      description: Territory radius in game units
+    name:
+      type: string
+      minLength: 1
+      maxLength: 100
+      description: Human-readable territory name
+    type:
+      type: string
+      enum: [resource_node, strategic_point, safe_zone, commercial_district, residential_area, industrial_zone, custom]
+      default: strategic_point
+      description: Territory type
+    resources:
+      type: array
+      items:
+        type: object
+        properties:
+          resource_type:
+            type: string
+            enum: [ore, energy, water, food, technology, currency]
+          generation_rate:
+            type: number
+            format: float
+            minimum: 0.0
+          max_capacity:
+            type: number
+            format: float
+            minimum: 0.0
+      description: Resources available in this territory
+    defense_bonus:
+      type: number
+      format: float
+      minimum: 0.0
+      maximum: 5.0
+      default: 1.0
+      description: Defense multiplier for controlling guild
+    strategic_value:
+      type: integer
+      minimum: 1
+      maximum: 10
+      default: 5
+      description: Strategic importance (1-10 scale)
+    claim_cost:
+      type: object
+      properties:
+        currency_type:
+          type: string
+          enum: [currency, item]
+          default: currency
+        amount:
+          type: integer
+          minimum: 0
+          default: 5000
+        item_id:
+          type: string
+      description: Cost to claim this territory
+    maintenance_cost:
+      type: object
+      properties:
+        currency_type:
+          type: string
+          enum: [currency, item]
+          default: currency
+        amount:
+          type: integer
+          minimum: 0
+          default: 1000
+        frequency:
+          type: string
+          enum: [hourly, daily, weekly]
+          default: daily
+        item_id:
+          type: string
+      description: Ongoing maintenance cost
