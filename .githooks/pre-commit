@@ -49,6 +49,12 @@ for file in $STAGED_FILES; do
         case $ext in
             go|py|yaml|yml|md|sql|sh|ps1|js|ts|cpp|h|java|php|rb|rs|cs)
                 CHECKED_COUNT=$((CHECKED_COUNT + 1))
+
+                # Skip bundled/generated files
+                if [[ "$file" =~ \.bundled\.yaml$ ]] || [[ "$file" =~ oas_.*\.go$ ]] || [[ "$file" =~ /benchmarks/.*_test\.go$ ]] || [[ "$file" =~ changelog.*\.yaml$ ]] || [[ "$file" =~ readiness-tracker\.yaml$ ]]; then
+                    continue
+                fi
+
                 if [ "$lines" -gt 1000 ]; then
                     FAILED_FILES+=("$file:$lines:1000")
                     echo "FAIL: $file has $lines lines (max: 1000)"

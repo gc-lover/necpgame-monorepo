@@ -1,0 +1,322 @@
+# Issue: #2203 - Crafting Service API - Schemas
+
+Error:
+  type: object
+  required:
+    - error
+    - message
+  properties:
+    error:
+      type: string
+      description: Error code
+    message:
+      type: string
+      description: Human-readable error message
+    details:
+      type: object
+      description: Additional error details
+
+Recipe:
+  type: object
+  required:
+    - id
+    - name
+    - type
+    - materials
+    - result
+  properties:
+    id:
+      type: string
+      format: uuid
+      description: Recipe ID
+    name:
+      type: string
+      description: Recipe name
+    type:
+      type: string
+      enum: [weapon, armor, consumable, material]
+      description: Recipe type
+    category:
+      type: string
+      description: Recipe category
+    materials:
+      type: array
+      items:
+        $ref: '#/MaterialRequirement'
+      description: Required materials
+    result:
+      $ref: '#/RecipeResult'
+      description: Crafting result
+    station_type:
+      type: string
+      description: Required station type
+    crafting_time:
+      type: integer
+      minimum: 1
+      description: Base crafting time in seconds
+    skill_requirements:
+      type: object
+      additionalProperties:
+        type: integer
+        minimum: 0
+      description: Required skill levels
+    quality_modifiers:
+      type: array
+      items:
+        $ref: '#/QualityModifier'
+      description: Quality calculation modifiers
+
+MaterialRequirement:
+  type: object
+  required:
+    - item_id
+    - quantity
+  properties:
+    item_id:
+      type: string
+      format: uuid
+      description: Required item ID
+    quantity:
+      type: integer
+      minimum: 1
+      description: Required quantity
+    quality:
+      type: string
+      enum: [common, uncommon, rare, epic, legendary]
+      description: Minimum quality required
+
+RecipeResult:
+  type: object
+  required:
+    - item_id
+    - quantity
+  properties:
+    item_id:
+      type: string
+      format: uuid
+      description: Result item ID
+    quantity:
+      type: integer
+      minimum: 1
+      description: Result quantity
+    quality_range:
+      type: object
+      properties:
+        min:
+          type: string
+          enum: [common, uncommon, rare, epic, legendary]
+        max:
+          type: string
+          enum: [common, uncommon, rare, epic, legendary]
+      description: Possible quality range
+
+QualityModifier:
+  type: object
+  required:
+    - type
+    - value
+  properties:
+    type:
+      type: string
+      enum: [skill_bonus, station_bonus, material_quality, time_penalty]
+      description: Modifier type
+    value:
+      type: number
+      format: float
+      description: Modifier value
+
+CreateRecipeRequest:
+  type: object
+  required:
+    - name
+    - type
+    - materials
+    - result
+  properties:
+    name:
+      type: string
+      description: Recipe name
+    type:
+      type: string
+      enum: [weapon, armor, consumable, material]
+    category:
+      type: string
+    materials:
+      type: array
+      items:
+        $ref: '#/MaterialRequirement'
+    result:
+      $ref: '#/RecipeResult'
+    station_type:
+      type: string
+    crafting_time:
+      type: integer
+      minimum: 1
+    skill_requirements:
+      type: object
+      additionalProperties:
+        type: integer
+        minimum: 0
+    quality_modifiers:
+      type: array
+      items:
+        $ref: '#/QualityModifier'
+
+RecipeListResponse:
+  type: object
+  required:
+    - recipes
+    - total
+  properties:
+    recipes:
+      type: array
+      items:
+        $ref: '#/Recipe'
+    total:
+      type: integer
+      minimum: 0
+    limit:
+      type: integer
+    offset:
+      type: integer
+
+CraftingOrder:
+  type: object
+  required:
+    - id
+    - player_id
+    - recipe_id
+    - status
+    - created_at
+  properties:
+    id:
+      type: string
+      format: uuid
+      description: Order ID
+    player_id:
+      type: string
+      format: uuid
+      description: Player who placed the order
+    recipe_id:
+      type: string
+      format: uuid
+      description: Recipe being crafted
+    station_id:
+      type: string
+      format: uuid
+      description: Station processing the order
+    status:
+      type: string
+      enum: [pending, processing, completed, failed, cancelled]
+      description: Order status
+    start_time:
+      type: string
+      format: date-time
+      description: When crafting started
+    completion_time:
+      type: string
+      format: date-time
+      description: When crafting completed
+    quality:
+      type: string
+      enum: [common, uncommon, rare, epic, legendary]
+      description: Final item quality
+    materials_consumed:
+      type: array
+      items:
+        type: object
+        properties:
+          item_id:
+            type: string
+            format: uuid
+          quantity:
+            type: integer
+      description: Materials actually consumed
+    created_at:
+      type: string
+      format: date-time
+
+CreateOrderRequest:
+  type: object
+  required:
+    - recipe_id
+  properties:
+    recipe_id:
+      type: string
+      format: uuid
+      description: Recipe to craft
+    station_id:
+      type: string
+      format: uuid
+      description: Preferred station
+    quantity:
+      type: integer
+      minimum: 1
+      default: 1
+      description: Number of items to craft
+    priority:
+      type: string
+      enum: [low, normal, high]
+      default: normal
+      description: Order priority
+
+OrderListResponse:
+  type: object
+  required:
+    - orders
+    - total
+  properties:
+    orders:
+      type: array
+      items:
+        $ref: '#/CraftingOrder'
+    total:
+      type: integer
+      minimum: 0
+    limit:
+      type: integer
+    offset:
+      type: integer
+
+CraftingStation:
+  type: object
+  required:
+    - id
+    - type
+    - status
+  properties:
+    id:
+      type: string
+      format: uuid
+      description: Station ID
+    type:
+      type: string
+      enum: [basic_workbench, advanced_forge, alchemy_lab, enchanting_table]
+      description: Station type
+    name:
+      type: string
+      description: Station name
+    status:
+      type: string
+      enum: [available, busy, maintenance, disabled]
+      description: Station status
+    efficiency_bonus:
+      type: number
+      format: float
+      minimum: 0.0
+      description: Efficiency multiplier
+    quality_bonus:
+      type: number
+      format: float
+      minimum: 0.0
+      description: Quality bonus
+    supported_recipes:
+      type: array
+      items:
+        type: string
+        format: uuid
+      description: Recipe IDs this station can process
+    current_order:
+      type: string
+      format: uuid
+      description: Currently processing order ID

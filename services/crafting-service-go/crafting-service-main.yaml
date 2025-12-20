@@ -1,0 +1,215 @@
+# Issue: #2203 - Crafting Service API - Main Specification
+openapi: 3.0.3
+info:
+  title: Crafting Service API
+  version: 1.0.0
+  contact:
+    name: NEPGAME Development Team
+    email: dev@necp.game
+  description: |
+    Crafting Service API for MMOFPS RPG - Production and Manufacturing Systems.
+
+    ## Core Components
+    - Recipe System: Hierarchical recipes with materials and requirements
+    - Crafting Orders: Async production with quality modifiers
+    - Station System: Workstations with efficiency bonuses
+    - Production Chains: Multi-stage manufacturing processes
+
+servers:
+  - url: http://localhost:8210
+    description: Local development
+  - url: https://api.necpgame.com/v1
+    description: Production API
+
+tags:
+  - name: crafting
+    description: Core crafting operations
+  - name: recipes
+    description: Recipe management and queries
+  - name: orders
+    description: Production order management
+  - name: stations
+    description: Crafting station operations
+
+security:
+  - BearerAuth: []
+
+paths:
+  /health:
+    get:
+      summary: Health check
+      operationId: healthCheck
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "healthy"
+                  timestamp:
+                    type: string
+                    format: date-time
+
+  /api/v1/crafting/recipes:
+    get:
+      tags: [recipes]
+      summary: List recipes
+      operationId: listRecipes
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: type
+          in: query
+          schema:
+            type: string
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Recipes retrieved
+          content:
+            application/json:
+              schema:
+                $ref: './crafting-service-schemas.yaml#/RecipeListResponse'
+
+    post:
+      tags: [recipes]
+      summary: Create recipe
+      operationId: createRecipe
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './crafting-service-schemas.yaml#/CreateRecipeRequest'
+      responses:
+        '201':
+          description: Recipe created
+          content:
+            application/json:
+              schema:
+                $ref: './crafting-service-schemas.yaml#/Recipe'
+
+  /api/v1/crafting/orders:
+    get:
+      tags: [orders]
+      summary: List orders
+      operationId: listOrders
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, processing, completed, failed]
+        - name: player_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: Orders retrieved
+          content:
+            application/json:
+              schema:
+                $ref: './crafting-service-schemas.yaml#/OrderListResponse'
+
+    post:
+      tags: [orders]
+      summary: Create order
+      operationId: createOrder
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './crafting-service-schemas.yaml#/CreateOrderRequest'
+      responses:
+        '201':
+          description: Order created
+          content:
+            application/json:
+              schema:
+                $ref: './crafting-service-schemas.yaml#/CraftingOrder'
+
+  /api/v1/crafting/stations:
+    get:
+      tags: [stations]
+      summary: List stations
+      operationId: listStations
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Stations retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: './crafting-service-schemas.yaml#/CraftingStation'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: './crafting-service-schemas.yaml#/Error'
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: './crafting-service-schemas.yaml#/Error'
+    NotFound:
+      description: Not found
+      content:
+        application/json:
+          schema:
+            $ref: './crafting-service-schemas.yaml#/Error'
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: './crafting-service-schemas.yaml#/Error'

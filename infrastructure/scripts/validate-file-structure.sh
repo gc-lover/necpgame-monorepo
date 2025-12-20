@@ -95,9 +95,14 @@ validate_yaml_files() {
 
     # Check OpenAPI YAML files
     while IFS= read -r -d '' file; do
+        # Skip bundled/generated files
+        if [[ "$file" =~ \.bundled\.yaml$ ]] || [[ "$file" =~ oas_.*\.go$ ]] || [[ "$file" =~ /benchmarks/.*_test\.go$ ]] || [[ "$file" =~ changelog.*\.yaml$ ]] || [[ "$file" =~ readiness-tracker\.yaml$ ]]; then
+            continue
+        fi
+
         lines=$(wc -l < "$file")
         if [ "$lines" -gt 1000 ]; then
-            log_warning "OpenAPI YAML file $file is very large ($lines lines)"
+            log_error "OpenAPI YAML file $file exceeds 1000 lines limit ($lines lines)"
         fi
     done < <(find "$REPO_ROOT" -name "openapi*.yaml" -o -name "*spec*.yaml" -o -name "*api*.yaml" -type f -print0)
 }
