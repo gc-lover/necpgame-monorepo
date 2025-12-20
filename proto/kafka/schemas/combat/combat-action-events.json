@@ -1,0 +1,407 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://necpgame.com/schemas/kafka/combat-action-events.json",
+  "title": "Combat Action Events",
+  "description": "Combat action and ability events. HOT PATH (20k EPS). Memory-optimized for real-time processing. Critical for damage calculation and anti-cheat validation.",
+  "type": "object",
+  "allOf": [
+    { "$ref": "../core/base-event.json" },
+    {
+      "properties": {
+        "event_type": {
+          "enum": [
+            "combat.action.attack",
+            "combat.action.defend",
+            "combat.action.ability",
+            "combat.action.movement",
+            "combat.action.item",
+            "combat.action.status"
+          ]
+        },
+        "data": {
+          "oneOf": [
+            { "$ref": "#/definitions/CombatAttackData" },
+            { "$ref": "#/definitions/CombatDefendData" },
+            { "$ref": "#/definitions/CombatAbilityData" },
+            { "$ref": "#/definitions/CombatMovementData" },
+            { "$ref": "#/definitions/CombatItemData" },
+            { "$ref": "#/definitions/CombatStatusData" }
+          ]
+        }
+      }
+    }
+  ],
+  "definitions": {
+    "CombatAttackData": {
+      "type": "object",
+      "required": ["combat_id", "attacker_id", "target_id", "weapon_type", "base_damage"],
+      "properties": {
+        "combat_id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Combat session identifier"
+        },
+        "attacker_id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Attacking player/character ID"
+        },
+        "target_id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Target player/character ID"
+        },
+        "weapon_type": {
+          "type": "string",
+          "enum": ["melee", "ranged", "magic", "cyberware"],
+          "description": "Type of weapon used"
+        },
+        "weapon_id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Specific weapon instance ID"
+        },
+        "base_damage": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100000,
+          "description": "Base damage before modifiers",
+          "examples": [150]
+        },
+        "critical_hit": {
+          "type": "boolean",
+          "description": "Whether this was a critical hit",
+          "default": false
+        },
+        "hit_location": {
+          "type": "string",
+          "enum": ["head", "torso", "arms", "legs"],
+          "description": "Body part hit"
+        },
+        "distance": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Distance between attacker and target in meters",
+          "examples": [15.5]
+        },
+        "attack_angle": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 360,
+          "description": "Attack angle in degrees",
+          "examples": [45.0]
+        },
+        "modifiers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DamageModifier"
+          },
+          "description": "Applied damage modifiers",
+          "maxItems": 20
+        },
+        "position": {
+          "$ref": "#/definitions/Vector3",
+          "description": "Attacker position at time of attack"
+        },
+        "timestamp_client": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Client-side timestamp"
+        }
+      }
+    },
+    "CombatDefendData": {
+      "type": "object",
+      "required": ["combat_id", "defender_id", "damage_reduced"],
+      "properties": {
+        "combat_id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Combat session identifier"
+        },
+        "defender_id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Defending player/character ID"
+        },
+        "damage_reduced": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Amount of damage reduced/mitigated",
+          "examples": [75]
+        },
+        "defense_type": {
+          "type": "string",
+          "enum": ["dodge", "block", "parry", "armor", "ability"],
+          "description": "Type of defense used"
+        },
+        "armor_type": {
+          "type": "string",
+          "description": "Armor type if applicable",
+          "examples": ["military_armor", "corporate_suit"]
+        },
+        "position": {
+          "$ref": "#/definitions/Vector3",
+          "description": "Defender position"
+        }
+      }
+    },
+    "CombatAbilityData": {
+      "type": "object",
+      "required": ["combat_id", "caster_id", "ability_id", "ability_type"],
+      "properties": {
+        "combat_id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Combat session identifier"
+        },
+        "caster_id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Ability caster ID"
+        },
+        "ability_id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Specific ability instance ID"
+        },
+        "ability_type": {
+          "type": "string",
+          "enum": ["offensive", "defensive", "healing", "crowd_control", "utility"],
+          "description": "Type of ability"
+        },
+        "ability_name": {
+          "type": "string",
+          "description": "Ability name",
+          "examples": ["sandevistan_overdrive", "blackwall_hack"]
+        },
+        "targets": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "description": "Target IDs affected by ability",
+          "maxItems": 50
+        },
+        "area_of_effect": {
+          "$ref": "#/definitions/AreaOfEffect",
+          "description": "Area of effect if applicable"
+        },
+        "cooldown_seconds": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Ability cooldown in seconds",
+          "examples": [30]
+        },
+        "mana_cost": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Mana/energy cost",
+          "examples": [50]
+        },
+        "position": {
+          "$ref": "#/definitions/Vector3",
+          "description": "Caster position"
+        }
+      }
+    },
+    "CombatMovementData": {
+      "type": "object",
+      "required": ["combat_id", "player_id", "from_position", "to_position", "movement_type"],
+      "properties": {
+        "combat_id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Combat session identifier"
+        },
+        "player_id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Moving player/character ID"
+        },
+        "from_position": {
+          "$ref": "#/definitions/Vector3",
+          "description": "Starting position"
+        },
+        "to_position": {
+          "$ref": "#/definitions/Vector3",
+          "description": "Ending position"
+        },
+        "movement_type": {
+          "type": "string",
+          "enum": ["walk", "run", "sprint", "jump", "dodge", "teleport"],
+          "description": "Type of movement"
+        },
+        "distance": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Distance moved in meters",
+          "examples": [5.2]
+        },
+        "speed": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Movement speed m/s",
+          "examples": [8.5]
+        },
+        "obstacles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Obstacles encountered during movement",
+          "examples": ["wall", "enemy", "terrain"]
+        }
+      }
+    },
+    "CombatItemData": {
+      "type": "object",
+      "required": ["combat_id", "player_id", "item_id", "action"],
+      "properties": {
+        "combat_id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Combat session identifier"
+        },
+        "player_id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Player using the item"
+        },
+        "item_id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Item instance ID"
+        },
+        "action": {
+          "type": "string",
+          "enum": ["use", "equip", "unequip", "consume", "throw"],
+          "description": "Action performed with item"
+        },
+        "item_type": {
+          "type": "string",
+          "enum": ["weapon", "armor", "consumable", "grenade", "implant"],
+          "description": "Type of item"
+        },
+        "quantity": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Quantity used/consumed",
+          "default": 1
+        },
+        "position": {
+          "$ref": "#/definitions/Vector3",
+          "description": "Position where item was used"
+        },
+        "targets": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "description": "Affected targets if applicable"
+        }
+      }
+    },
+    "CombatStatusData": {
+      "type": "object",
+      "required": ["combat_id", "player_id", "status_type", "status_change"],
+      "properties": {
+        "combat_id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Combat session identifier"
+        },
+        "player_id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Affected player/character ID"
+        },
+        "status_type": {
+          "type": "string",
+          "enum": ["health", "armor", "stamina", "mana", "status_effect"],
+          "description": "Type of status change"
+        },
+        "status_change": {
+          "type": "string",
+          "enum": ["increased", "decreased", "applied", "removed"],
+          "description": "Type of change"
+        },
+        "value": {
+          "type": "number",
+          "description": "Numeric value of change",
+          "examples": [25, -10, 100]
+        },
+        "effect_name": {
+          "type": "string",
+          "description": "Status effect name if applicable",
+          "examples": ["poisoned", "stunned", "buffed"]
+        },
+        "duration_seconds": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Effect duration in seconds",
+          "examples": [30]
+        },
+        "source_id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Source of status change (ability, item, etc.)"
+        }
+      }
+    },
+    "DamageModifier": {
+      "type": "object",
+      "required": ["type", "value"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["critical", "armor_penetration", "weakness", "resistance", "environment"],
+          "description": "Type of damage modifier"
+        },
+        "value": {
+          "type": "number",
+          "description": "Modifier value (multiplier or flat bonus)",
+          "examples": [1.5, -0.2, 25]
+        },
+        "source": {
+          "type": "string",
+          "description": "Source of modifier",
+          "examples": ["ability", "weapon", "environment"]
+        }
+      }
+    },
+    "Vector3": {
+      "type": "object",
+      "required": ["x", "y", "z"],
+      "properties": {
+        "x": { "type": "number", "examples": [123.45] },
+        "y": { "type": "number", "examples": [67.89] },
+        "z": { "type": "number", "examples": [0.0] }
+      }
+    },
+    "AreaOfEffect": {
+      "type": "object",
+      "required": ["center", "radius"],
+      "properties": {
+        "center": {
+          "$ref": "#/definitions/Vector3",
+          "description": "Center point of area of effect"
+        },
+        "radius": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Radius in meters",
+          "examples": [10.0]
+        },
+        "shape": {
+          "type": "string",
+          "enum": ["circle", "cone", "rectangle"],
+          "default": "circle",
+          "description": "Shape of area of effect"
+        }
+      }
+    }
+  }
+}

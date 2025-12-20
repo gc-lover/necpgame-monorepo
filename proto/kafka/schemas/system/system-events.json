@@ -1,0 +1,575 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://necpgame.com/schemas/kafka/system-events.json",
+  "title": "System Events",
+  "description": "System infrastructure and monitoring events. Long-term retention (90 days). Critical for observability and incident response.",
+  "type": "object",
+  "allOf": [
+    { "$ref": "../core/base-event.json" },
+    {
+      "properties": {
+        "event_type": {
+          "enum": [
+            "system.service.start",
+            "system.service.stop",
+            "system.service.health",
+            "system.service.error",
+            "system.infrastructure.deployment",
+            "system.infrastructure.scaling",
+            "system.monitoring.alert",
+            "system.monitoring.metric",
+            "system.security.audit",
+            "system.performance.threshold"
+          ]
+        },
+        "data": {
+          "oneOf": [
+            { "$ref": "#/definitions/ServiceStartData" },
+            { "$ref": "#/definitions/ServiceStopData" },
+            { "$ref": "#/definitions/ServiceHealthData" },
+            { "$ref": "#/definitions/ServiceErrorData" },
+            { "$ref": "#/definitions/InfrastructureDeploymentData" },
+            { "$ref": "#/definitions/InfrastructureScalingData" },
+            { "$ref": "#/definitions/MonitoringAlertData" },
+            { "$ref": "#/definitions/MonitoringMetricData" },
+            { "$ref": "#/definitions/SecurityAuditData" },
+            { "$ref": "#/definitions/PerformanceThresholdData" }
+          ]
+        }
+      }
+    }
+  ],
+  "definitions": {
+    "ServiceStartData": {
+      "type": "object",
+      "required": ["service_name", "service_version", "start_time"],
+      "properties": {
+        "service_name": {
+          "type": "string",
+          "pattern": "^[a-z]+\\.[a-z]+$",
+          "description": "Service name in domain.service format",
+          "examples": ["combat.damage", "economy.trading"]
+        },
+        "service_version": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+\\.\\d+$",
+          "description": "Service version",
+          "examples": ["1.2.3"]
+        },
+        "instance_id": {
+          "type": "string",
+          "description": "Unique service instance identifier",
+          "examples": ["combat-damage-7f8d9c2a"]
+        },
+        "host": {
+          "type": "string",
+          "description": "Host/server where service is running",
+          "examples": ["k8s-node-15"]
+        },
+        "port": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535,
+          "description": "Service port",
+          "examples": [8080]
+        },
+        "start_time": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Service start timestamp"
+        },
+        "environment": {
+          "type": "string",
+          "enum": ["development", "staging", "production"],
+          "description": "Deployment environment",
+          "default": "production"
+        },
+        "dependencies": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z]+\\.[a-z]+$"
+          },
+          "description": "Required service dependencies",
+          "examples": [["kafka.broker", "redis.cache"]]
+        }
+      }
+    },
+    "ServiceStopData": {
+      "type": "object",
+      "required": ["service_name", "stop_reason", "stop_time"],
+      "properties": {
+        "service_name": {
+          "type": "string",
+          "pattern": "^[a-z]+\\.[a-z]+$",
+          "description": "Service name"
+        },
+        "instance_id": {
+          "type": "string",
+          "description": "Service instance identifier"
+        },
+        "stop_reason": {
+          "type": "string",
+          "enum": ["shutdown", "restart", "crash", "killed", "scaling"],
+          "description": "Reason for stopping"
+        },
+        "stop_time": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Service stop timestamp"
+        },
+        "uptime_seconds": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Service uptime before stopping",
+          "examples": [3600]
+        },
+        "error_message": {
+          "type": "string",
+          "description": "Error message if applicable"
+        },
+        "graceful_shutdown": {
+          "type": "boolean",
+          "description": "Whether shutdown was graceful",
+          "default": true
+        }
+      }
+    },
+    "ServiceHealthData": {
+      "type": "object",
+      "required": ["service_name", "status", "check_time"],
+      "properties": {
+        "service_name": {
+          "type": "string",
+          "pattern": "^[a-z]+\\.[a-z]+$",
+          "description": "Service name"
+        },
+        "instance_id": {
+          "type": "string",
+          "description": "Service instance identifier"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["healthy", "degraded", "unhealthy"],
+          "description": "Health status"
+        },
+        "check_time": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Health check timestamp"
+        },
+        "response_time_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Health check response time",
+          "examples": [45]
+        },
+        "dependencies_status": {
+          "type": "object",
+          "description": "Status of service dependencies",
+          "additionalProperties": {
+            "type": "string",
+            "enum": ["up", "down", "degraded"]
+          },
+          "examples": [{
+            "database": "up",
+            "cache": "up",
+            "kafka": "degraded"
+          }]
+        },
+        "resource_usage": {
+          "$ref": "#/definitions/ResourceUsage"
+        }
+      }
+    },
+    "ServiceErrorData": {
+      "type": "object",
+      "required": ["service_name", "error_type", "error_message", "error_time"],
+      "properties": {
+        "service_name": {
+          "type": "string",
+          "pattern": "^[a-z]+\\.[a-z]+$",
+          "description": "Service name"
+        },
+        "instance_id": {
+          "type": "string",
+          "description": "Service instance identifier"
+        },
+        "error_type": {
+          "type": "string",
+          "enum": ["exception", "timeout", "network", "database", "configuration"],
+          "description": "Type of error"
+        },
+        "error_code": {
+          "type": "string",
+          "description": "Error code",
+          "examples": ["ECONNREFUSED", "TIMEOUT", "VALIDATION_ERROR"]
+        },
+        "error_message": {
+          "type": "string",
+          "description": "Error message",
+          "examples": ["Connection to database failed"]
+        },
+        "error_time": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Error occurrence timestamp"
+        },
+        "stack_trace": {
+          "type": "string",
+          "description": "Stack trace if applicable"
+        },
+        "request_id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Related request ID for tracing"
+        },
+        "severity": {
+          "type": "string",
+          "enum": ["low", "medium", "high", "critical"],
+          "description": "Error severity",
+          "default": "medium"
+        }
+      }
+    },
+    "InfrastructureDeploymentData": {
+      "type": "object",
+      "required": ["component", "action", "environment", "deploy_time"],
+      "properties": {
+        "component": {
+          "type": "string",
+          "description": "Infrastructure component",
+          "examples": ["combat-service", "kafka-cluster", "database"]
+        },
+        "action": {
+          "type": "string",
+          "enum": ["deploy", "rollback", "scale", "restart"],
+          "description": "Deployment action"
+        },
+        "environment": {
+          "type": "string",
+          "enum": ["development", "staging", "production"],
+          "description": "Target environment"
+        },
+        "version": {
+          "type": "string",
+          "description": "Component version",
+          "examples": ["v2.1.3", "1.5.0"]
+        },
+        "deploy_time": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Deployment timestamp"
+        },
+        "deployed_by": {
+          "type": "string",
+          "description": "User/system that performed deployment",
+          "examples": ["jenkins", "kubectl", "admin"]
+        },
+        "duration_seconds": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Deployment duration",
+          "examples": [180]
+        },
+        "status": {
+          "type": "string",
+          "enum": ["success", "failed", "partial"],
+          "description": "Deployment status"
+        }
+      }
+    },
+    "InfrastructureScalingData": {
+      "type": "object",
+      "required": ["component", "scale_type", "old_count", "new_count", "scale_time"],
+      "properties": {
+        "component": {
+          "type": "string",
+          "description": "Scaled component",
+          "examples": ["combat-service", "web-gateway"]
+        },
+        "scale_type": {
+          "type": "string",
+          "enum": ["horizontal", "vertical"],
+          "description": "Type of scaling"
+        },
+        "old_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Previous instance/replica count",
+          "examples": [3]
+        },
+        "new_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "New instance/replica count",
+          "examples": [5]
+        },
+        "scale_time": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Scaling timestamp"
+        },
+        "trigger": {
+          "type": "string",
+          "enum": ["cpu_usage", "memory_usage", "request_rate", "manual", "schedule"],
+          "description": "What triggered the scaling"
+        },
+        "reason": {
+          "type": "string",
+          "description": "Detailed scaling reason",
+          "examples": ["CPU usage > 80%", "Traffic spike"]
+        }
+      }
+    },
+    "MonitoringAlertData": {
+      "type": "object",
+      "required": ["alert_id", "alert_name", "severity", "status", "alert_time"],
+      "properties": {
+        "alert_id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Unique alert identifier"
+        },
+        "alert_name": {
+          "type": "string",
+          "description": "Alert name/rule",
+          "examples": ["High CPU Usage", "Service Down"]
+        },
+        "severity": {
+          "type": "string",
+          "enum": ["info", "warning", "error", "critical"],
+          "description": "Alert severity"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["firing", "resolved"],
+          "description": "Alert status"
+        },
+        "alert_time": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Alert timestamp"
+        },
+        "component": {
+          "type": "string",
+          "description": "Affected component",
+          "examples": ["combat-service", "database"]
+        },
+        "description": {
+          "type": "string",
+          "description": "Alert description",
+          "examples": ["CPU usage is above 90% for 5 minutes"]
+        },
+        "value": {
+          "type": "number",
+          "description": "Metric value that triggered alert",
+          "examples": [95.2]
+        },
+        "threshold": {
+          "type": "number",
+          "description": "Alert threshold",
+          "examples": [90.0]
+        },
+        "labels": {
+          "type": "object",
+          "description": "Additional alert labels",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "MonitoringMetricData": {
+      "type": "object",
+      "required": ["metric_name", "value", "timestamp"],
+      "properties": {
+        "metric_name": {
+          "type": "string",
+          "description": "Metric name",
+          "examples": ["http_requests_total", "cpu_usage_percent"]
+        },
+        "value": {
+          "type": "number",
+          "description": "Metric value",
+          "examples": [1250, 87.5]
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Metric timestamp"
+        },
+        "component": {
+          "type": "string",
+          "description": "Component being monitored",
+          "examples": ["combat-service"]
+        },
+        "instance": {
+          "type": "string",
+          "description": "Component instance",
+          "examples": ["combat-service-7f8d9c2a"]
+        },
+        "unit": {
+          "type": "string",
+          "description": "Metric unit",
+          "examples": ["requests", "percent", "bytes"]
+        },
+        "tags": {
+          "type": "object",
+          "description": "Metric tags/labels",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "examples": [{
+            "method": "POST",
+            "endpoint": "/api/combat",
+            "status": "200"
+          }]
+        }
+      }
+    },
+    "SecurityAuditData": {
+      "type": "object",
+      "required": ["event_type", "user_id", "resource", "action", "timestamp"],
+      "properties": {
+        "event_type": {
+          "type": "string",
+          "description": "Security event type",
+          "examples": ["login", "permission_change", "data_access"]
+        },
+        "user_id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "User performing the action"
+        },
+        "resource": {
+          "type": "string",
+          "description": "Resource being accessed/modified",
+          "examples": ["user.profile", "guild.settings"]
+        },
+        "action": {
+          "type": "string",
+          "description": "Action performed",
+          "examples": ["read", "write", "delete"]
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Event timestamp"
+        },
+        "ip_address": {
+          "type": "string",
+          "description": "Client IP address",
+          "examples": ["192.168.1.100"]
+        },
+        "user_agent": {
+          "type": "string",
+          "description": "Client user agent"
+        },
+        "success": {
+          "type": "boolean",
+          "description": "Whether the action was successful",
+          "default": true
+        },
+        "details": {
+          "type": "object",
+          "description": "Additional security event details",
+          "additionalProperties": true
+        }
+      }
+    },
+    "PerformanceThresholdData": {
+      "type": "object",
+      "required": ["component", "metric", "threshold", "current_value", "breached_at"],
+      "properties": {
+        "component": {
+          "type": "string",
+          "description": "Component that breached threshold",
+          "examples": ["combat-service", "database"]
+        },
+        "metric": {
+          "type": "string",
+          "description": "Metric name",
+          "examples": ["response_time", "cpu_usage", "memory_usage"]
+        },
+        "threshold": {
+          "type": "number",
+          "description": "Threshold value",
+          "examples": [100, 90, 85]
+        },
+        "current_value": {
+          "type": "number",
+          "description": "Current metric value",
+          "examples": [150, 95, 90]
+        },
+        "breached_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When threshold was breached"
+        },
+        "threshold_type": {
+          "type": "string",
+          "enum": ["upper", "lower"],
+          "description": "Type of threshold (upper = value > threshold is bad)",
+          "default": "upper"
+        },
+        "severity": {
+          "type": "string",
+          "enum": ["warning", "critical"],
+          "description": "Performance issue severity",
+          "default": "warning"
+        },
+        "duration_seconds": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "How long threshold has been breached",
+          "examples": [300]
+        }
+      }
+    },
+    "ResourceUsage": {
+      "type": "object",
+      "properties": {
+        "cpu_percent": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "CPU usage percentage",
+          "examples": [75.5]
+        },
+        "memory_percent": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Memory usage percentage",
+          "examples": [60.2]
+        },
+        "memory_bytes": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Memory usage in bytes",
+          "examples": [2147483648]
+        },
+        "disk_percent": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Disk usage percentage",
+          "examples": [45.0]
+        },
+        "network_in_bytes": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Network input in bytes",
+          "examples": [1048576]
+        },
+        "network_out_bytes": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Network output in bytes",
+          "examples": [2097152]
+        }
+      }
+    }
+  }
+}

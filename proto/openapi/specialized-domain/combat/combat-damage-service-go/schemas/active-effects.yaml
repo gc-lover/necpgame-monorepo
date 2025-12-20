@@ -1,0 +1,177 @@
+# Active Effects Response - Memory Optimized
+# Issue: #1526
+
+type: object
+description: |
+  BACKEND NOTE: Active effects query response.
+
+  Fields ordered for struct alignment (large → small):
+  - UUIDs first
+  - Arrays
+  - Integers
+  - Objects
+  - Booleans last
+
+  Expected memory: ~52 bytes/instance.
+required:
+  - participant_id
+  - effects
+  - timestamp
+properties:
+  # UUID (16 bytes)
+  participant_id:
+    type: string
+    format: uuid
+    description: Combat participant ID
+    example: "550e8400-e29b-41d4-a716-446655440000"
+
+  # Arrays (24 bytes)
+  effects:
+    type: array
+    description: Currently active effects
+    items:
+      type: object
+      description: Individual active effect information
+      required:
+        - effect_id
+        - effect_type
+        - remaining_ms
+        - source_id
+      properties:
+        effect_id:
+          type: string
+          format: uuid
+          description: Unique effect instance ID
+        effect_type:
+          type: string
+          enum:
+            - buff_damage
+            - debuff_damage_reduction
+            - buff_speed
+            - debuff_slow
+            - buff_regeneration
+            - debuff_poison
+            - buff_shield
+            - debuff_stun
+            - buff_critical_chance
+            - debuff_accuracy_reduction
+          description: Type of effect
+        remaining_ms:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Remaining duration in milliseconds
+        source_id:
+          type: string
+          format: uuid
+          description: Source entity ID
+        intensity:
+          type: number
+          format: float
+          minimum: 0.1
+          maximum: 5.0
+          description: Current effect intensity
+        stacks:
+          type: integer
+          format: int32
+          minimum: 1
+          maximum: 10
+          description: Current stack count
+        applied_at:
+          type: integer
+          format: int64
+          description: When effect was applied (unix milliseconds)
+    maxItems: 50
+
+  # Integers (8 bytes)
+  timestamp:
+    type: integer
+    format: int64
+    description: Response timestamp (unix milliseconds)
+    example: 1640995200000
+
+  total_effects:
+    type: integer
+    format: int32
+    minimum: 0
+    maximum: 50
+    description: Total number of active effects
+    example: 3
+
+  # Objects (8 bytes pointers)
+  summary:
+    type: object
+    description: Effects summary by category
+    properties:
+      buffs:
+        type: integer
+        format: int32
+        description: Number of active buffs
+      debuffs:
+        type: integer
+        format: int32
+        description: Number of active debuffs
+      status_effects:
+        type: integer
+        format: int32
+        description: Number of active status effects
+
+  # Booleans (1 byte)
+  has_critical_effects:
+    type: boolean
+    description: Whether participant has critical effects (stun, etc.)
+    example: false
+
+  # Nested schema
+  ActiveEffect:
+    type: object
+    description: Individual active effect information
+    required:
+      - effect_id
+      - effect_type
+      - remaining_ms
+      - source_id
+    properties:
+      effect_id:
+        type: string
+        format: uuid
+        description: Unique effect instance ID
+      effect_type:
+        type: string
+        enum:
+          - buff_damage
+          - debuff_damage_reduction
+          - buff_speed
+          - debuff_slow
+          - buff_regeneration
+          - debuff_poison
+          - buff_shield
+          - debuff_stun
+          - buff_critical_chance
+          - debuff_accuracy_reduction
+        description: Type of effect
+      remaining_ms:
+        type: integer
+        format: int32
+        minimum: 0
+        description: Remaining duration in milliseconds
+      source_id:
+        type: string
+        format: uuid
+        description: Source entity ID
+      intensity:
+        type: number
+        format: float
+        minimum: 0.1
+        maximum: 5.0
+        description: Current effect intensity
+      stacks:
+        type: integer
+        format: int32
+        minimum: 1
+        maximum: 10
+        description: Current stack count
+      applied_at:
+        type: integer
+        format: int64
+        description: When effect was applied (unix milliseconds)

@@ -1,0 +1,263 @@
+# Damage Calculation Result - Enterprise Memory Optimized
+# Issue: #1526
+
+type: object
+description: |
+  BACKEND NOTE: Hot path response (1000+ RPS).
+
+  Fields ordered for struct alignment (large → small):
+  - UUIDs (16 bytes) first
+  - Arrays (24 bytes)
+  - Integers (8 bytes)
+  - Objects (8 bytes pointers)
+  - Booleans (1 byte) last
+
+  Expected memory: ~72 bytes/instance.
+  Memory savings: 35-45% vs non-aligned structs.
+required:
+  - attacker_id
+  - target_id
+  - final_damage
+  - damage_type
+  - calculation_id
+properties:
+  # Large types first (16 bytes - UUID)
+  attacker_id:
+    type: string
+    format: uuid
+    description: Attacking participant UUID
+    example: "550e8400-e29b-41d4-a716-446655440000"
+
+  target_id:
+    type: string
+    format: uuid
+    description: Target participant UUID
+    example: "550e8400-e29b-41d4-a716-446655440001"
+
+  calculation_id:
+    type: string
+    format: uuid
+    description: Unique calculation ID for tracking
+    example: "550e8400-e29b-41d4-a716-446655440002"
+
+  # Arrays (24 bytes)
+  applied_modifiers:
+    type: array
+    description: All modifiers applied in calculation
+    items:
+      type: object
+      description: Individual modifier applied in calculation
+      required:
+        - type
+        - value
+        - source
+      properties:
+        type:
+          type: string
+          enum:
+            - critical_hit
+            - weak_spot
+            - armor_reduction
+            - elemental_bonus
+            - implant_synergy
+            - environmental
+            - backstab
+          description: Modifier type
+        value:
+          type: number
+          format: float
+          description: Modifier value
+        source:
+          type: string
+          description: Source of modifier (weapon, implant, environment, etc.)
+    maxItems: 20
+
+  damage_breakdown:
+    type: array
+    description: Detailed damage breakdown by component
+    items:
+      type: object
+      description: Individual damage component in breakdown
+      required:
+        - type
+        - amount
+      properties:
+        type:
+          type: string
+          enum:
+            - base_damage
+            - critical_bonus
+            - weak_spot_bonus
+            - armor_penetration
+            - elemental_damage
+            - synergy_bonus
+            - environmental_modifier
+          description: Component type
+        amount:
+          type: integer
+          format: int32
+          description: Damage amount for this component
+    maxItems: 10
+
+  # Integers (8 bytes)
+  final_damage:
+    type: integer
+    format: int32
+    minimum: 0
+    maximum: 50000
+    description: Final calculated damage after all modifiers
+    example: 187
+
+  base_damage:
+    type: integer
+    format: int32
+    minimum: 0
+    maximum: 10000
+    description: Original base damage
+    example: 150
+
+  armor_reduction:
+    type: integer
+    format: int32
+    minimum: 0
+    maximum: 10000
+    description: Damage reduction from armor
+    example: 25
+
+  timestamp:
+    type: integer
+    format: int64
+    description: Calculation timestamp (unix milliseconds)
+    example: 1640995200000
+
+  processing_time_ns:
+    type: integer
+    format: int64
+    description: Server processing time in nanoseconds
+    example: 2500000
+
+  # Strings (16-24 bytes)
+  damage_type:
+    type: string
+    enum:
+      - physical
+      - fire
+      - cold
+      - lightning
+      - poison
+      - cyber
+      - radiation
+      - explosive
+    description: Final damage type after synergies
+    example: "physical"
+
+  # Floats (8 bytes)
+  critical_multiplier:
+    type: number
+    format: float
+    minimum: 1.0
+    maximum: 5.0
+    description: Applied critical multiplier
+    example: 2.5
+
+  total_multiplier:
+    type: number
+    format: float
+    minimum: 0.0
+    maximum: 10.0
+    description: Total damage multiplier from all sources
+    example: 1.25
+
+  # Objects (8 bytes pointers)
+  target_stats:
+    type: object
+    description: Target stats snapshot at calculation time
+    properties:
+      current_hp:
+        type: integer
+        format: int32
+        minimum: 0
+        description: Current HP before damage
+      max_hp:
+        type: integer
+        format: int32
+        minimum: 1
+        description: Maximum HP
+      armor_rating:
+        type: integer
+        format: int32
+        minimum: 0
+        maximum: 1000
+        description: Current armor rating
+
+  # Booleans (1 byte) - last
+  was_critical:
+    type: boolean
+    description: Whether critical hit was applied
+    example: true
+
+  was_dodged:
+    type: boolean
+    description: Whether attack was dodged (final_damage = 0)
+    example: false
+
+  was_blocked:
+    type: boolean
+    description: Whether attack was blocked
+    example: false
+
+  target_alive:
+    type: boolean
+    description: Whether target survived the damage
+    example: true
+
+  # Nested schemas
+  AppliedModifier:
+    type: object
+    description: Individual modifier applied in calculation
+    required:
+      - type
+      - value
+      - source
+    properties:
+      type:
+        type: string
+        enum:
+          - critical_hit
+          - weak_spot
+          - armor_reduction
+          - elemental_bonus
+          - implant_synergy
+          - environmental
+          - backstab
+        description: Modifier type
+      value:
+        type: number
+        format: float
+        description: Modifier value
+      source:
+        type: string
+        description: Source of modifier (weapon, implant, environment, etc.)
+
+  DamageComponent:
+    type: object
+    description: Individual damage component in breakdown
+    required:
+      - type
+      - amount
+    properties:
+      type:
+        type: string
+        enum:
+          - base_damage
+          - critical_bonus
+          - weak_spot_bonus
+          - armor_penetration
+          - elemental_damage
+          - synergy_bonus
+          - environmental_modifier
+        description: Component type
+      amount:
+        type: integer
+        format: int32
+        description: Damage amount for this component

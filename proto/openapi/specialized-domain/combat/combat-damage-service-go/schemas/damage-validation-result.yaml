@@ -1,0 +1,209 @@
+# Damage Validation Result - Anti-Cheat Optimized
+# Issue: #1526
+
+type: object
+description: |
+  BACKEND NOTE: Anti-cheat validation result.
+
+  Fields ordered for struct alignment (large → small):
+  - UUIDs first
+  - Arrays
+  - Integers
+  - Objects
+  - Booleans last
+
+  Expected memory: ~48 bytes/instance.
+required:
+  - session_id
+  - is_valid
+  - validation_score
+  - server_calculated_damage
+properties:
+  # UUID (16 bytes)
+  session_id:
+    type: string
+    format: uuid
+    description: Combat session ID
+    example: "550e8400-e29b-41d4-a716-446655440000"
+
+  # Arrays (24 bytes)
+  validation_issues:
+    type: array
+    description: Detected validation issues/flags
+    items:
+      type: object
+      description: Individual validation issue detected
+      required:
+        - issue_type
+        - severity
+        - description
+      properties:
+        issue_type:
+          type: string
+          enum:
+            - damage_mismatch
+            - invalid_modifier
+            - line_of_sight_blocked
+            - impossible_timing
+            - suspicious_pattern
+            - weapon_hash_mismatch
+            - position_inconsistency
+          description: Type of validation issue
+        severity:
+          type: string
+          enum:
+            - low
+            - medium
+            - high
+            - critical
+          description: Issue severity level
+        description:
+          type: string
+          description: Human-readable description of the issue
+        evidence_value:
+          type: number
+          format: float
+          description: Quantitative evidence for the issue
+    maxItems: 10
+
+  # Integers (8 bytes)
+  server_calculated_damage:
+    type: integer
+    format: int32
+    minimum: 0
+    maximum: 50000
+    description: Server-calculated correct damage
+    example: 180
+
+  validation_score:
+    type: integer
+    format: int32
+    minimum: 0
+    maximum: 100
+    description: Validation confidence score (0-100, 100 = perfect)
+    example: 95
+
+  timestamp:
+    type: integer
+    format: int64
+    description: Validation timestamp (unix milliseconds)
+    example: 1640995200000
+
+  processing_time_ns:
+    type: integer
+    format: int64
+    description: Server validation time in nanoseconds
+    example: 2000000
+
+  # Strings (16-24 bytes)
+  validation_status:
+    type: string
+    enum:
+      - valid
+      - suspicious
+      - invalid
+      - requires_review
+    description: Overall validation status
+    example: "valid"
+
+  # Objects (8 bytes pointers)
+  corrected_values:
+    type: object
+    description: Corrected values if validation failed
+    properties:
+      corrected_damage:
+        type: integer
+        format: int32
+        description: Corrected damage amount
+      corrected_modifiers:
+        type: array
+        items:
+          type: object
+          description: Corrected modifier value
+          required:
+            - type
+            - correct_value
+          properties:
+            type:
+              type: string
+              description: Modifier type
+            correct_value:
+              type: number
+              format: float
+              description: Server-calculated correct value
+            reported_value:
+              type: number
+              format: float
+              description: Client-reported value
+        description: Corrected modifiers
+
+  # Booleans (1 byte)
+  is_valid:
+    type: boolean
+    description: Whether the reported damage is valid
+    example: true
+
+  requires_server_correction:
+    type: boolean
+    description: Whether server should override client values
+    example: false
+
+  flagged_for_review:
+    type: boolean
+    description: Whether this event should be flagged for manual review
+    example: false
+
+  # Nested schemas
+  ValidationIssue:
+    type: object
+    description: Individual validation issue detected
+    required:
+      - issue_type
+      - severity
+      - description
+    properties:
+      issue_type:
+        type: string
+        enum:
+          - damage_mismatch
+          - invalid_modifier
+          - line_of_sight_blocked
+          - impossible_timing
+          - suspicious_pattern
+          - weapon_hash_mismatch
+          - position_inconsistency
+        description: Type of validation issue
+      severity:
+        type: string
+        enum:
+          - low
+          - medium
+          - high
+          - critical
+        description: Issue severity level
+      description:
+        type: string
+        description: Human-readable description of the issue
+      evidence_value:
+        type: number
+        format: float
+        description: Quantitative evidence for the issue
+
+  CorrectedModifier:
+    type: object
+    description: Corrected modifier value
+    required:
+      - type
+      - correct_value
+    properties:
+      type:
+        type: string
+        description: Modifier type
+      correct_value:
+        type: number
+        format: float
+        description: Server-calculated correct value
+      reported_value:
+        type: number
+        format: float
+        description: Client-reported value

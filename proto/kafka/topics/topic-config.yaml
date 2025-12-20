@@ -1,0 +1,181 @@
+# Kafka Topic Configuration for NECPGAME
+# Issue: #2216
+# Agent: API Designer
+
+topics:
+  # Combat Domain - HOT PATH (20k EPS)
+  - name: game.combat.events
+    partitions: 24
+    replication_factor: 3
+    retention_ms: 604800000  # 7 days
+    segment_ms: 86400000     # 1 day
+    cleanup_policy: delete
+    compression_type: snappy
+    max_message_bytes: 1048576  # 1MB
+    description: Combat session and action events
+
+  - name: game.combat.damage.validation
+    partitions: 12
+    replication_factor: 3
+    retention_ms: 259200000  # 3 days
+    segment_ms: 3600000      # 1 hour
+    cleanup_policy: delete
+    compression_type: snappy
+    max_message_bytes: 524288  # 512KB
+    description: Anti-cheat damage validation events
+
+  # Economy Domain - High throughput
+  - name: game.economy.events
+    partitions: 12
+    replication_factor: 3
+    retention_ms: 2592000000  # 30 days
+    segment_ms: 86400000      # 1 day
+    cleanup_policy: delete
+    compression_type: lz4
+    max_message_bytes: 1048576  # 1MB
+    description: Trading and marketplace events
+
+  - name: game.economy.market.data
+    partitions: 6
+    replication_factor: 3
+    retention_ms: 2592000000  # 30 days
+    segment_ms: 3600000       # 1 hour
+    cleanup_policy: delete
+    compression_type: lz4
+    max_message_bytes: 262144  # 256KB
+    description: Market price and analytics data
+
+  # Social Domain - Medium throughput
+  - name: game.social.events
+    partitions: 8
+    replication_factor: 3
+    retention_ms: 2592000000  # 30 days
+    segment_ms: 86400000      # 1 day
+    cleanup_policy: delete
+    compression_type: gzip
+    max_message_bytes: 524288  # 512KB
+    description: Guild and social interaction events
+
+  - name: game.social.chat.filtered
+    partitions: 16
+    replication_factor: 3
+    retention_ms: 604800000  # 7 days
+    segment_ms: 3600000      # 1 hour
+    cleanup_policy: delete
+    compression_type: snappy
+    max_message_bytes: 131072  # 128KB
+    description: Filtered chat messages for moderation
+
+  # System Domain - Long retention
+  - name: game.system.events
+    partitions: 6
+    replication_factor: 3
+    retention_ms: 7776000000  # 90 days
+    segment_ms: 86400000      # 1 day
+    cleanup_policy: delete
+    compression_type: gzip
+    max_message_bytes: 1048576  # 1MB
+    description: System infrastructure and monitoring events
+
+  - name: game.system.audit
+    partitions: 4
+    replication_factor: 3
+    retention_ms: 15552000000  # 180 days
+    segment_ms: 86400000       # 1 day
+    cleanup_policy: delete
+    compression_type: gzip
+    max_message_bytes: 524288  # 512KB
+    description: Security audit logs
+
+  # Analytics and Processing - Special topics
+  - name: game.analytics.raw
+    partitions: 12
+    replication_factor: 3
+    retention_ms: 2592000000  # 30 days
+    segment_ms: 3600000       # 1 hour
+    cleanup_policy: delete
+    compression_type: snappy
+    max_message_bytes: 2097152  # 2MB
+    description: Raw analytics events before processing
+
+  - name: game.processing.dead.letter
+    partitions: 4
+    replication_factor: 3
+    retention_ms: 604800000   # 7 days
+    segment_ms: 3600000       # 1 hour
+    cleanup_policy: delete
+    compression_type: gzip
+    max_message_bytes: 1048576  # 1MB
+    description: Dead letter queue for failed event processing
+
+# Consumer Groups Configuration
+consumer_groups:
+  combat_processor:
+    topics: [game.combat.events]
+    partitions_per_consumer: 4
+    session_timeout_ms: 30000
+    heartbeat_interval_ms: 3000
+
+  damage_validator:
+    topics: [game.combat.damage.validation]
+    partitions_per_consumer: 6
+    session_timeout_ms: 30000
+    heartbeat_interval_ms: 3000
+
+  economy_processor:
+    topics: [game.economy.events]
+    partitions_per_consumer: 3
+    session_timeout_ms: 30000
+    heartbeat_interval_ms: 3000
+
+  social_processor:
+    topics: [game.social.events]
+    partitions_per_consumer: 2
+    session_timeout_ms: 30000
+    heartbeat_interval_ms: 3000
+
+  analytics_processor:
+    topics: [game.analytics.raw]
+    partitions_per_consumer: 4
+    session_timeout_ms: 45000
+    heartbeat_interval_ms: 3000
+
+  system_monitor:
+    topics: [game.system.events]
+    partitions_per_consumer: 2
+    session_timeout_ms: 30000
+    heartbeat_interval_ms: 3000
+
+# Performance Benchmarks
+performance_targets:
+  combat_events:
+    throughput: 20000  # events/sec
+    latency_p99: 50    # ms
+    durability: 0.999999  # 6 9's
+
+  economy_events:
+    throughput: 5000   # events/sec
+    latency_p99: 100   # ms
+    durability: 0.99999   # 5 9's
+
+  social_events:
+    throughput: 1000   # events/sec
+    latency_p99: 200   # ms
+    durability: 0.9999    # 4 9's
+
+# Scaling Rules
+scaling_rules:
+  - condition: "consumer_lag > 10000"
+    action: "scale_consumers"
+    topic_pattern: "game.*"
+    max_consumers: 20
+
+  - condition: "producer_throughput > 15000"
+    action: "add_partitions"
+    topic_pattern: "game.combat.*"
+    max_partitions: 48
+
+  - condition: "disk_usage > 80%"
+    action: "reduce_retention"
+    topic_pattern: "game.analytics.*"
+    min_retention_days: 7

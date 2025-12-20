@@ -1,0 +1,243 @@
+# Damage Calculation Request - Enterprise Memory Optimized
+# Issue: #1526
+
+type: object
+description: |
+  BACKEND NOTE: Hot path (combat calculations, 1000+ RPS).
+
+  Fields ordered for struct alignment (large → small types):
+  - UUID fields (16 bytes) first
+  - Objects/arrays (24 bytes: pointer + len + cap)
+  - Integers (8 bytes)
+  - Booleans (1 byte) last
+
+  Expected memory: ~64 bytes/instance.
+  Memory savings: 30-50% vs non-aligned structs.
+required:
+  - attacker_id
+  - target_id
+  - base_damage
+  - damage_type
+properties:
+  # Large types first (16 bytes - UUID)
+  attacker_id:
+    type: string
+    format: uuid
+    description: Attacking participant UUID
+    example: "550e8400-e29b-41d4-a716-446655440000"
+
+  target_id:
+    type: string
+    format: uuid
+    description: Target participant UUID
+    example: "550e8400-e29b-41d4-a716-446655440001"
+
+  # Arrays/objects (24 bytes)
+  weapon_modifiers:
+    type: array
+    description: Weapon-specific modifiers and synergies
+    items:
+      type: object
+      description: Individual weapon modifier
+      required:
+        - type
+        - value
+      properties:
+        type:
+          type: string
+          enum:
+            - damage_boost
+            - accuracy_bonus
+            - armor_penetration
+            - elemental_damage
+          description: Modifier type
+        value:
+          type: number
+          format: float
+          description: Modifier value/multiplier
+    maxItems: 10
+
+  implant_synergies:
+    type: array
+    description: Active implant synergies affecting damage
+    items:
+      type: object
+      description: Active implant synergy effect
+      required:
+        - implant_type
+        - synergy_bonus
+      properties:
+        implant_type:
+          type: string
+          enum:
+            - gorilla_arms
+            - mantis_blades
+            - kerenzikov
+            - sandevistan
+            - projectile_launcher
+          description: Implant providing synergy
+        synergy_bonus:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 2.0
+          description: Damage synergy multiplier
+    maxItems: 5
+
+  environmental_modifiers:
+    type: object
+    description: Environmental damage modifiers (weather, terrain, etc.)
+    properties:
+      weather_multiplier:
+        type: number
+        format: float
+        minimum: 0.1
+        maximum: 3.0
+        default: 1.0
+        description: Weather damage multiplier
+      terrain_cover:
+        type: number
+        format: float
+        minimum: 0.0
+        maximum: 1.0
+        default: 0.0
+        description: Terrain cover reduction (0-1)
+
+  # Integers (8 bytes)
+  base_damage:
+    type: integer
+    format: int32
+    minimum: 0
+    maximum: 10000
+    description: Base weapon/ability damage
+    example: 150
+
+  attacker_level:
+    type: integer
+    format: int32
+    minimum: 1
+    maximum: 100
+    description: Attacker character level
+    example: 25
+
+  target_level:
+    type: integer
+    format: int32
+    minimum: 1
+    maximum: 100
+    description: Target character level
+    example: 22
+
+  timestamp:
+    type: integer
+    format: int64
+    description: Request timestamp (unix milliseconds)
+    example: 1640995200000
+
+  # Strings (16-24 bytes with overhead)
+  damage_type:
+    type: string
+    enum:
+      - physical
+      - fire
+      - cold
+      - lightning
+      - poison
+      - cyber
+      - radiation
+      - explosive
+    description: Primary damage type
+    example: "physical"
+
+  weapon_type:
+    type: string
+    description: Weapon class/type for modifiers
+    example: "assault_rifle"
+
+  # Floats (8 bytes)
+  critical_multiplier:
+    type: number
+    format: float
+    minimum: 1.0
+    maximum: 5.0
+    default: 1.0
+    description: Critical hit multiplier
+    example: 2.5
+
+  range_modifier:
+    type: number
+    format: float
+    minimum: 0.1
+    maximum: 2.0
+    default: 1.0
+    description: Range-based damage modifier
+    example: 0.8
+
+  # Booleans (1 byte) - last for alignment
+  is_critical_hit:
+    type: boolean
+    default: false
+    description: Whether this is a critical hit
+    example: true
+
+  is_weak_spot_hit:
+    type: boolean
+    default: false
+    description: Whether hit weak spot/headshot
+    example: false
+
+  is_backstab:
+    type: boolean
+    default: false
+    description: Whether attack is from behind
+    example: false
+
+  ignore_armor:
+    type: boolean
+    default: false
+    description: Whether to ignore target armor
+    example: false
+
+  # Nested schemas for modifiers
+  WeaponModifier:
+    type: object
+    description: Individual weapon modifier
+    required:
+      - type
+      - value
+    properties:
+      type:
+        type: string
+        enum:
+          - damage_boost
+          - accuracy_bonus
+          - armor_penetration
+          - elemental_damage
+        description: Modifier type
+      value:
+        type: number
+        format: float
+        description: Modifier value/multiplier
+
+  ImplantSynergy:
+    type: object
+    description: Active implant synergy effect
+    required:
+      - implant_type
+      - synergy_bonus
+    properties:
+      implant_type:
+        type: string
+        enum:
+          - gorilla_arms
+          - mantis_blades
+          - kerenzikov
+          - sandevistan
+          - projectile_launcher
+        description: Implant providing synergy
+      synergy_bonus:
+        type: number
+        format: float
+        minimum: 0.0
+        maximum: 2.0
+        description: Damage synergy multiplier

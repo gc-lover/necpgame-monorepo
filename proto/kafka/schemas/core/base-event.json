@@ -1,0 +1,127 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://necpgame.com/schemas/kafka/base-event.json",
+  "title": "Base Event Schema",
+  "description": "Base schema for all Kafka events in NECPGAME. Memory-optimized field ordering (large→small types). Expected struct size: 256 bytes.",
+  "type": "object",
+  "required": [
+    "event_id",
+    "event_type",
+    "timestamp",
+    "version",
+    "source"
+  ],
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Unique event identifier for deduplication and idempotency",
+      "examples": ["550e8400-e29b-41d4-a716-446655440000"]
+    },
+    "correlation_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Correlation ID for request tracing across services",
+      "examples": ["550e8400-e29b-41d4-a716-446655440001"]
+    },
+    "session_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Game session identifier",
+      "examples": ["550e8400-e29b-41d4-a716-446655440002"]
+    },
+    "player_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Player identifier (when applicable)",
+      "examples": ["550e8400-e29b-41d4-a716-446655440003"]
+    },
+    "game_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Game instance identifier (when applicable)",
+      "examples": ["550e8400-e29b-41d4-a716-446655440004"]
+    },
+    "event_type": {
+      "type": "string",
+      "pattern": "^[a-z]+\\.[a-z]+\\.[a-z]+$",
+      "description": "Event type in domain.entity.action format",
+      "examples": ["combat.session.start", "economy.trade.execute", "social.guild.join"]
+    },
+    "source": {
+      "type": "string",
+      "pattern": "^[a-z]+\\.[a-z]+$",
+      "description": "Source service in domain.service format",
+      "examples": ["combat.damage", "economy.trading", "social.guilds"]
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Event timestamp in RFC3339 format",
+      "examples": ["2025-12-20T14:30:00Z"]
+    },
+    "data": {
+      "type": "object",
+      "description": "Event-specific data payload",
+      "additionalProperties": true
+    },
+    "metadata": {
+      "$ref": "#/definitions/EventMetadata"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Schema version for compatibility",
+      "examples": ["1.0.0"]
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Optional tags for filtering and routing",
+      "maxItems": 10
+    },
+    "trace_id": {
+      "type": "string",
+      "description": "Distributed tracing identifier"
+    }
+  },
+  "definitions": {
+    "EventMetadata": {
+      "type": "object",
+      "properties": {
+        "priority": {
+          "type": "string",
+          "enum": ["low", "normal", "high", "critical"],
+          "default": "normal",
+          "description": "Event processing priority"
+        },
+        "ttl": {
+          "type": "string",
+          "pattern": "^\\d+[dhms]$",
+          "description": "Time-to-live duration (e.g., '7d', '24h')",
+          "examples": ["7d", "24h", "30m"]
+        },
+        "retry_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10,
+          "default": 0,
+          "description": "Number of retry attempts"
+        },
+        "compression": {
+          "type": "string",
+          "enum": ["none", "gzip", "snappy", "lz4"],
+          "default": "none",
+          "description": "Compression algorithm used"
+        },
+        "size_bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Approximate event size in bytes"
+        }
+      }
+    }
+  }
+}

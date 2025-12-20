@@ -1,0 +1,215 @@
+# Damage Validation Request - Anti-Cheat Optimized
+# Issue: #1526
+
+type: object
+description: |
+  BACKEND NOTE: Anti-cheat damage validation request.
+
+  Fields ordered for struct alignment (large → small):
+  - UUIDs first
+  - Arrays
+  - Integers
+  - Objects
+  - Booleans last
+
+  Expected memory: ~56 bytes/instance.
+required:
+  - session_id
+  - attacker_id
+  - target_id
+  - reported_damage
+  - damage_type
+properties:
+  # UUID (16 bytes)
+  session_id:
+    type: string
+    format: uuid
+    description: Combat session ID
+    example: "550e8400-e29b-41d4-a716-446655440000"
+
+  attacker_id:
+    type: string
+    format: uuid
+    description: Attacking participant UUID
+    example: "550e8400-e29b-41d4-a716-446655440001"
+
+  target_id:
+    type: string
+    format: uuid
+    description: Target participant UUID
+    example: "550e8400-e29b-41d4-a716-446655440002"
+
+  # Arrays (24 bytes)
+  client_modifiers:
+    type: array
+    description: Modifiers reported by client
+    items:
+      type: object
+      description: Modifier reported by client
+      required:
+        - type
+        - value
+      properties:
+        type:
+          type: string
+          enum:
+            - critical_multiplier
+            - range_modifier
+            - weak_spot_bonus
+            - armor_penetration
+            - elemental_damage
+          description: Modifier type
+        value:
+          type: number
+          format: float
+          description: Modifier value
+    maxItems: 15
+
+  # Integers (8 bytes)
+  reported_damage:
+    type: integer
+    format: int32
+    minimum: 0
+    maximum: 50000
+    description: Damage amount reported by client
+    example: 187
+
+  timestamp:
+    type: integer
+    format: int64
+    description: Client timestamp (unix milliseconds)
+    example: 1640995200000
+
+  sequence_number:
+    type: integer
+    format: int32
+    minimum: 0
+    description: Client sequence number for ordering
+    example: 42
+
+  # Strings (16-24 bytes)
+  damage_type:
+    type: string
+    enum:
+      - physical
+      - fire
+      - cold
+      - lightning
+      - poison
+      - cyber
+      - radiation
+      - explosive
+    description: Reported damage type
+    example: "physical"
+
+  weapon_hash:
+    type: string
+    description: Client weapon hash for validation
+    example: "abc123def456"
+
+  # Objects (8 bytes pointers)
+  position_data:
+    type: object
+    description: Position data for line-of-sight validation
+    required:
+      - attacker_pos
+      - target_pos
+    properties:
+      attacker_pos:
+        type: object
+        description: 3D vector coordinates
+        required:
+          - x
+          - y
+          - z
+        properties:
+          x:
+            type: number
+            format: float
+            description: X coordinate
+          y:
+            type: number
+            format: float
+            description: Y coordinate
+          z:
+            type: number
+            format: float
+            description: Z coordinate
+      target_pos:
+        type: object
+        description: 3D vector coordinates
+        required:
+          - x
+          - y
+          - z
+        properties:
+          x:
+            type: number
+            format: float
+            description: X coordinate
+          y:
+            type: number
+            format: float
+            description: Y coordinate
+          z:
+            type: number
+            format: float
+            description: Z coordinate
+      attacker_yaw:
+        type: number
+        format: float
+        description: Attacker facing direction (degrees)
+
+  # Booleans (1 byte)
+  was_critical:
+    type: boolean
+    description: Client reported critical hit
+    example: true
+
+  was_headshot:
+    type: boolean
+    description: Client reported headshot
+    example: false
+
+  # Nested schemas
+  ClientModifier:
+    type: object
+    description: Modifier reported by client
+    required:
+      - type
+      - value
+    properties:
+      type:
+        type: string
+        enum:
+          - critical_multiplier
+          - range_modifier
+          - weak_spot_bonus
+          - armor_penetration
+          - elemental_damage
+        description: Modifier type
+      value:
+        type: number
+        format: float
+        description: Modifier value
+
+  Vector3:
+    type: object
+    description: 3D vector coordinates
+    required:
+      - x
+      - y
+      - z
+    properties:
+      x:
+        type: number
+        format: float
+        description: X coordinate
+      y:
+        type: number
+        format: float
+        description: Y coordinate
+      z:
+        type: number
+        format: float
+        description: Z coordinate

@@ -1,0 +1,171 @@
+# Apply Effects Result - Memory Optimized
+# Issue: #1526
+
+type: object
+description: |
+  BACKEND NOTE: Effects application result.
+
+  Fields ordered for struct alignment (large → small):
+  - UUIDs first
+  - Arrays
+  - Integers
+  - Objects
+  - Booleans last
+
+  Expected memory: ~40 bytes/instance.
+required:
+  - participant_id
+  - applied_effects
+  - success
+properties:
+  # UUID (16 bytes)
+  participant_id:
+    type: string
+    format: uuid
+    description: Combat participant effects were applied to
+    example: "550e8400-e29b-41d4-a716-446655440000"
+
+  # Arrays (24 bytes)
+  applied_effects:
+    type: array
+    description: Successfully applied effects with IDs
+    items:
+      type: object
+      description: Information about successfully applied effect
+      required:
+        - effect_type
+        - effect_id
+        - duration_ms
+      properties:
+        effect_type:
+          type: string
+          description: Type of applied effect
+        effect_id:
+          type: string
+          format: uuid
+          description: Unique effect instance ID
+        duration_ms:
+          type: integer
+          format: int32
+          description: Effect duration in milliseconds
+        stacks:
+          type: integer
+          format: int32
+          description: Current stack count
+    maxItems: 20
+
+  rejected_effects:
+    type: array
+    description: Effects that were rejected (conflicts, limits, etc.)
+    items:
+      type: object
+      description: Information about rejected effect
+      required:
+        - effect_type
+        - reason
+      properties:
+        effect_type:
+          type: string
+          description: Type of rejected effect
+        reason:
+          type: string
+          enum:
+            - effect_limit_reached
+            - conflicting_effect
+            - invalid_parameters
+            - participant_not_found
+            - effect_already_active
+          description: Reason for rejection
+    maxItems: 10
+
+  # Integers (8 bytes)
+  timestamp:
+    type: integer
+    format: int64
+    description: Application timestamp (unix milliseconds)
+    example: 1640995200000
+
+  processing_time_ns:
+    type: integer
+    format: int64
+    description: Server processing time in nanoseconds
+    example: 1500000
+
+  # Strings (16-24 bytes)
+  status:
+    type: string
+    enum:
+      - success
+      - partial_success
+      - failed
+    description: Overall application status
+    example: "success"
+
+  # Objects (8 bytes pointers)
+  summary:
+    type: object
+    description: Application summary statistics
+    properties:
+      total_requested:
+        type: integer
+        format: int32
+        description: Total effects requested
+      successfully_applied:
+        type: integer
+        format: int32
+        description: Successfully applied count
+      rejected_count:
+        type: integer
+        format: int32
+        description: Rejected effects count
+
+  # Booleans (1 byte)
+  success:
+    type: boolean
+    description: Whether application was successful
+    example: true
+
+  # Nested schemas
+  AppliedEffectInfo:
+    type: object
+    description: Information about successfully applied effect
+    required:
+      - effect_type
+      - effect_id
+      - duration_ms
+    properties:
+      effect_type:
+        type: string
+        description: Type of applied effect
+      effect_id:
+        type: string
+        format: uuid
+        description: Unique effect instance ID
+      duration_ms:
+        type: integer
+        format: int32
+        description: Effect duration in milliseconds
+      stacks:
+        type: integer
+        format: int32
+        description: Current stack count
+
+  RejectedEffectInfo:
+    type: object
+    description: Information about rejected effect
+    required:
+      - effect_type
+      - reason
+    properties:
+      effect_type:
+        type: string
+        description: Type of rejected effect
+      reason:
+        type: string
+        enum:
+          - effect_limit_reached
+          - conflicting_effect
+          - invalid_parameters
+          - participant_not_found
+          - effect_already_active
+        description: Reason for rejection

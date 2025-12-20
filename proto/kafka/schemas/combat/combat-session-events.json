@@ -1,0 +1,332 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://necpgame.com/schemas/kafka/combat-session-events.json",
+  "title": "Combat Session Events",
+  "description": "Combat session management events. HOT PATH (20k EPS). Memory-optimized field ordering. Critical for real-time gameplay.",
+  "type": "object",
+  "allOf": [
+    { "$ref": "../core/base-event.json" },
+    {
+      "properties": {
+        "event_type": {
+          "enum": [
+            "combat.session.start",
+            "combat.session.end",
+            "combat.session.join",
+            "combat.session.leave",
+            "combat.session.pause",
+            "combat.session.resume"
+          ]
+        },
+        "data": {
+          "oneOf": [
+            { "$ref": "#/definitions/CombatSessionStartData" },
+            { "$ref": "#/definitions/CombatSessionEndData" },
+            { "$ref": "#/definitions/CombatSessionJoinData" },
+            { "$ref": "#/definitions/CombatSessionLeaveData" },
+            { "$ref": "#/definitions/CombatSessionPauseData" },
+            { "$ref": "#/definitions/CombatSessionResumeData" }
+          ]
+        }
+      }
+    }
+  ],
+  "definitions": {
+    "CombatSessionStartData": {
+      "type": "object",
+      "required": ["combat_id", "combat_type", "participants", "location"],
+      "properties": {
+        "combat_id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Unique combat session identifier",
+          "examples": ["550e8400-e29b-41d4-a716-446655440000"]
+        },
+        "combat_type": {
+          "type": "string",
+          "enum": ["pvp", "pve", "arena", "raid", "boss"],
+          "description": "Type of combat encounter"
+        },
+        "participants": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/CombatParticipant"
+          },
+          "minItems": 1,
+          "maxItems": 100,
+          "description": "Initial participants in the combat"
+        },
+        "location": {
+          "$ref": "#/definitions/Vector3",
+          "description": "Combat location coordinates"
+        },
+        "zone_id": {
+          "type": "string",
+          "description": "Game zone identifier",
+          "examples": ["night_city_combat_zone_01"]
+        },
+        "difficulty": {
+          "type": "string",
+          "enum": ["easy", "normal", "hard", "nightmare"],
+          "description": "Combat difficulty level"
+        },
+        "max_duration_seconds": {
+          "type": "integer",
+          "minimum": 30,
+          "maximum": 3600,
+          "description": "Maximum allowed combat duration",
+          "examples": [1800]
+        },
+        "rules": {
+          "$ref": "#/definitions/CombatRules"
+        }
+      }
+    },
+    "CombatSessionEndData": {
+      "type": "object",
+      "required": ["combat_id", "end_reason", "duration_seconds"],
+      "properties": {
+        "combat_id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Combat session identifier"
+        },
+        "end_reason": {
+          "type": "string",
+          "enum": ["victory", "defeat", "timeout", "disconnect", "cancelled"],
+          "description": "Reason for combat end"
+        },
+        "duration_seconds": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Actual combat duration in seconds",
+          "examples": [245]
+        },
+        "winners": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "description": "Player IDs of winners"
+        },
+        "losers": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "description": "Player IDs of losers"
+        },
+        "statistics": {
+          "$ref": "#/definitions/CombatStatistics"
+        }
+      }
+    },
+    "CombatSessionJoinData": {
+      "type": "object",
+      "required": ["combat_id", "player_id"],
+      "properties": {
+        "combat_id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Combat session identifier"
+        },
+        "player_id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Player joining the combat"
+        },
+        "join_time": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Time when player joined"
+        },
+        "team": {
+          "type": "string",
+          "description": "Team assignment",
+          "examples": ["alpha", "bravo", "spectator"]
+        }
+      }
+    },
+    "CombatSessionLeaveData": {
+      "type": "object",
+      "required": ["combat_id", "player_id", "leave_reason"],
+      "properties": {
+        "combat_id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Combat session identifier"
+        },
+        "player_id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Player leaving the combat"
+        },
+        "leave_reason": {
+          "type": "string",
+          "enum": ["voluntary", "disconnect", "kicked", "banned"],
+          "description": "Reason for leaving"
+        },
+        "leave_time": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Time when player left"
+        }
+      }
+    },
+    "CombatSessionPauseData": {
+      "type": "object",
+      "required": ["combat_id", "pause_reason"],
+      "properties": {
+        "combat_id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Combat session identifier"
+        },
+        "pause_reason": {
+          "type": "string",
+          "enum": ["system_maintenance", "player_afk", "technical_issue"],
+          "description": "Reason for pausing combat"
+        },
+        "pause_time": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Time when combat was paused"
+        }
+      }
+    },
+    "CombatSessionResumeData": {
+      "type": "object",
+      "required": ["combat_id"],
+      "properties": {
+        "combat_id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Combat session identifier"
+        },
+        "resume_time": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Time when combat resumed"
+        }
+      }
+    },
+    "CombatParticipant": {
+      "type": "object",
+      "required": ["player_id", "character_id"],
+      "properties": {
+        "player_id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Player identifier"
+        },
+        "character_id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "Character identifier"
+        },
+        "team": {
+          "type": "string",
+          "description": "Team assignment"
+        },
+        "role": {
+          "type": "string",
+          "enum": ["leader", "member", "spectator"],
+          "description": "Participant role"
+        },
+        "join_time": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Time when participant joined"
+        }
+      }
+    },
+    "Vector3": {
+      "type": "object",
+      "required": ["x", "y", "z"],
+      "properties": {
+        "x": {
+          "type": "number",
+          "description": "X coordinate",
+          "examples": [123.45]
+        },
+        "y": {
+          "type": "number",
+          "description": "Y coordinate",
+          "examples": [67.89]
+        },
+        "z": {
+          "type": "number",
+          "description": "Z coordinate",
+          "examples": [0.0]
+        }
+      }
+    },
+    "CombatRules": {
+      "type": "object",
+      "properties": {
+        "allow_respawn": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether respawning is allowed"
+        },
+        "friendly_fire": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether friendly fire is enabled"
+        },
+        "time_limit": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Time limit in seconds (0 = no limit)"
+        },
+        "max_participants": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "description": "Maximum number of participants"
+        },
+        "victory_conditions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["eliminate_all", "capture_point", "time_limit", "score_threshold"]
+          },
+          "description": "Victory condition types"
+        }
+      }
+    },
+    "CombatStatistics": {
+      "type": "object",
+      "properties": {
+        "total_damage_dealt": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total damage dealt by all participants"
+        },
+        "total_healing_done": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total healing done by all participants"
+        },
+        "kills": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total number of kills"
+        },
+        "deaths": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total number of deaths"
+        },
+        "combat_rating": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 5000,
+          "description": "Overall combat difficulty rating"
+        }
+      }
+    }
+  }
+}

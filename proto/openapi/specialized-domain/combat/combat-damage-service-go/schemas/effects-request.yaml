@@ -1,0 +1,181 @@
+# Apply Effects Request - Memory Optimized
+# Issue: #1526
+
+type: object
+description: |
+  BACKEND NOTE: Combat effects application request.
+
+  Fields ordered for struct alignment (large → small):
+  - UUIDs first
+  - Arrays
+  - Integers
+  - Objects
+  - Booleans last
+
+  Expected memory: ~48 bytes/instance.
+required:
+  - participant_id
+  - effects
+properties:
+  # UUID (16 bytes)
+  participant_id:
+    type: string
+    format: uuid
+    description: Combat participant to apply effects to
+    example: "550e8400-e29b-41d4-a716-446655440000"
+
+  # Arrays (24 bytes)
+  effects:
+    type: array
+    description: Effects to apply
+    items:
+      type: object
+      description: Individual combat effect to apply
+      required:
+        - effect_type
+        - duration_ms
+        - source_id
+      properties:
+        effect_type:
+          type: string
+          enum:
+            - buff_damage
+            - debuff_damage_reduction
+            - buff_speed
+            - debuff_slow
+            - buff_regeneration
+            - debuff_poison
+            - buff_shield
+            - debuff_stun
+            - buff_critical_chance
+            - debuff_accuracy_reduction
+          description: Type of combat effect
+        duration_ms:
+          type: integer
+          format: int32
+          minimum: 1000
+          maximum: 300000
+          description: Effect duration in milliseconds
+        source_id:
+          type: string
+          format: uuid
+          description: Source entity ID (weapon, ability, etc.)
+        intensity:
+          type: number
+          format: float
+          minimum: 0.1
+          maximum: 5.0
+          default: 1.0
+          description: Effect intensity multiplier
+        stacks:
+          type: integer
+          format: int32
+          minimum: 1
+          maximum: 10
+          default: 1
+          description: Number of effect stacks
+    minItems: 1
+    maxItems: 20
+
+  # Integers (8 bytes)
+  session_id:
+    type: integer
+    format: int64
+    description: Combat session ID (optional, for context)
+    example: 12345
+
+  timestamp:
+    type: integer
+    format: int64
+    description: Request timestamp (unix milliseconds)
+    example: 1640995200000
+
+  # Strings (16-24 bytes)
+  source_type:
+    type: string
+    enum:
+      - weapon
+      - ability
+      - implant
+      - environmental
+      - status_effect
+    description: Source of the effects
+    example: "weapon"
+
+  # Objects (8 bytes pointers)
+  context:
+    type: object
+    description: Additional context for effect application
+    properties:
+      area_id:
+        type: string
+        description: Combat area/location ID
+      weather_conditions:
+        type: string
+        enum:
+          - clear
+          - rain
+          - storm
+          - fog
+        description: Current weather affecting effects
+
+  # Booleans (1 byte)
+  override_existing:
+    type: boolean
+    default: false
+    description: Whether to override existing effects of same type
+    example: false
+
+  stack_effects:
+    type: boolean
+    default: true
+    description: Whether effects can stack with existing ones
+    example: true
+
+  # Nested schema
+  CombatEffect:
+    type: object
+    description: Individual combat effect to apply
+    required:
+      - effect_type
+      - duration_ms
+      - source_id
+    properties:
+      effect_type:
+        type: string
+        enum:
+          - buff_damage
+          - debuff_damage_reduction
+          - buff_speed
+          - debuff_slow
+          - buff_regeneration
+          - debuff_poison
+          - buff_shield
+          - debuff_stun
+          - buff_critical_chance
+          - debuff_accuracy_reduction
+        description: Type of combat effect
+      duration_ms:
+        type: integer
+        format: int32
+        minimum: 1000
+        maximum: 300000
+        description: Effect duration in milliseconds
+      source_id:
+        type: string
+        format: uuid
+        description: Source entity ID (weapon, ability, etc.)
+      intensity:
+        type: number
+        format: float
+        minimum: 0.1
+        maximum: 5.0
+        default: 1.0
+        description: Effect intensity multiplier
+      stacks:
+        type: integer
+        format: int32
+        minimum: 1
+        maximum: 10
+        default: 1
+        description: Number of effect stacks
