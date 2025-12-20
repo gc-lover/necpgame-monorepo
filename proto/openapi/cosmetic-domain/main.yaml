@@ -8,6 +8,9 @@ info:
 
     '
   version: 1.0.0
+  license:
+    name: Proprietary
+    url: https://necpgame.com/license
   contact:
     name: NECPGAME API Support
     url: https://necpgame.com/support
@@ -52,6 +55,10 @@ paths:
                 - gzip
                 - deflate
                 - br
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
   /api/v1/cosmetic-domain/health/batch:
     post:
       summary: Batch health check for multiple domains
@@ -88,6 +95,10 @@ paths:
                   total_time_ms:
                     type: integer
                     description: Total processing time
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
   /api/v1/cosmetic-domain/health/ws:
     get:
       summary: Real-time health monitoring WebSocket
@@ -98,12 +109,37 @@ paths:
       responses:
         '101':
           description: WebSocket connection established
+        '200':
+          description: Connection accepted (fallback for non-WebSocket clients)
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
 components:
   securitySchemes:
     BearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
+  responses:
+    BadRequest:
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Forbidden:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
   schemas:
     HealthResponse:
       type: object
