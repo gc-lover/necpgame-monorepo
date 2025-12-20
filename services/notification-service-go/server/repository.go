@@ -34,7 +34,7 @@ func (r *NotificationRepository) CreateNotification(ctx context.Context, notific
 
 	query := `
 		INSERT INTO notifications.notifications (
-			id, user_id, type, title, message, data, priority, status, expires_at, created_at, updated_at
+			id, user_id, type, title, body, data, priority, status, expires_at, created_at, updated_at
 		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 	`
 
@@ -48,7 +48,7 @@ func (r *NotificationRepository) CreateNotification(ctx context.Context, notific
 		notification.UserID,
 		notification.Type,
 		notification.Title,
-		notification.Message,
+		notification.Body,
 		dataJSON,
 		notification.Priority,
 		notification.Status,
@@ -130,7 +130,7 @@ func (r *NotificationRepository) GetUserNotifications(ctx context.Context, userI
 			&notification.UserID,
 			&notification.Type,
 			&notification.Title,
-			&notification.Message,
+			&notification.Body,
 			&dataJSON,
 			&notification.Priority,
 			&notification.Status,
@@ -183,7 +183,7 @@ func (r *NotificationRepository) GetNotificationByID(ctx context.Context, notifi
 		&notification.UserID,
 		&notification.Type,
 		&notification.Title,
-		&notification.Message,
+		&notification.Body,
 		&dataJSON,
 		&notification.Priority,
 		&notification.Status,
@@ -254,7 +254,7 @@ func (r *NotificationRepository) UpdateNotification(ctx context.Context, notific
 		&notification.UserID,
 		&notification.Type,
 		&notification.Title,
-		&notification.Message,
+		&notification.Body,
 		&dataJSON,
 		&notification.Priority,
 		&notification.Status,

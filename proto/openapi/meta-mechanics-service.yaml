@@ -1,0 +1,574 @@
+# Issue: #1928 - Meta Mechanics API for League System and Advanced Progression
+openapi: 3.0.3
+
+info:
+  title: Meta Mechanics Service API
+  version: 1.0.0
+  description: |
+    Advanced meta-progression system for MMOFPS RPG.
+    Handles league rankings, meta-gameplay mechanics, prestige systems, and advanced player progression.
+
+    **Performance Notes:**
+    - Memory-optimized structs (field alignment)
+    - Cached league calculations (Redis)
+    - Event-driven updates (WebSocket)
+
+servers:
+  - url: http://localhost:8170/api/v1
+    description: Meta Mechanics Service (development)
+  - url: https://meta.necpgame.com/api/v1
+    description: Meta Mechanics Service (production)
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Leagues
+    description: League ranking and progression
+  - name: Prestige
+    description: Prestige system management
+  - name: MetaEvents
+    description: Meta-gameplay events
+  - name: Rankings
+    description: Global and regional rankings
+
+paths:
+  /leagues:
+    get:
+      tags: [Leagues]
+      summary: Get league information
+      description: Retrieve league data with rankings and requirements
+      operationId: getLeagues
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: league_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Specific league ID (optional)
+      responses:
+        '200':
+          description: League data retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeagueResponse'
+        '404':
+          description: League not found
+
+    post:
+      tags: [Leagues]
+      summary: Create new league
+      description: Create a new league with custom requirements
+      operationId: createLeague
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateLeagueRequest'
+      responses:
+        '201':
+          description: League created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeagueResponse'
+
+  /leagues/{league_id}/join:
+    post:
+      tags: [Leagues]
+      summary: Join league
+      description: Join a specific league (if requirements met)
+      operationId: joinLeague
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: league_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Successfully joined league
+        '400':
+          description: Requirements not met
+        '404':
+          description: League not found
+
+  /leagues/{league_id}/rankings:
+    get:
+      tags: [Rankings]
+      summary: Get league rankings
+      description: Get current rankings for a league
+      operationId: getLeagueRankings
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: league_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Rankings retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeagueRankingsResponse'
+
+  /prestige:
+    get:
+      tags: [Prestige]
+      summary: Get prestige information
+      description: Get current prestige level and progression
+      operationId: getPrestige
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Prestige data retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrestigeResponse'
+
+    post:
+      tags: [Prestige]
+      summary: Prestige reset
+      description: Perform prestige reset to gain bonuses
+      operationId: prestigeReset
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Prestige reset completed
+        '400':
+          description: Requirements not met
+
+  /meta-events:
+    get:
+      tags: [MetaEvents]
+      summary: Get active meta events
+      description: Retrieve currently active meta-gameplay events
+      operationId: getMetaEvents
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Meta events retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MetaEventsResponse'
+
+    post:
+      tags: [MetaEvents]
+      summary: Create meta event
+      description: Create a new meta-gameplay event (admin only)
+      operationId: createMetaEvent
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateMetaEventRequest'
+      responses:
+        '201':
+          description: Meta event created
+
+  /rankings/global:
+    get:
+      tags: [Rankings]
+      summary: Get global rankings
+      description: Get global player rankings across all categories
+      operationId: getGlobalRankings
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum: [combat, economy, social, overall]
+            default: overall
+        - name: timeframe
+          in: query
+          schema:
+            type: string
+            enum: [daily, weekly, monthly, alltime]
+            default: alltime
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 1000
+            default: 100
+      responses:
+        '200':
+          description: Global rankings retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlobalRankingsResponse'
+
+components:
+  schemas:
+    LeagueResponse:
+      type: object
+      properties:
+        league_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        requirements:
+          $ref: '#/components/schemas/LeagueRequirements'
+        rewards:
+          $ref: '#/components/schemas/LeagueRewards'
+        member_count:
+          type: integer
+        max_members:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+
+    CreateLeagueRequest:
+      type: object
+      required:
+        - name
+        - requirements
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 50
+        description:
+          type: string
+          maxLength: 500
+        requirements:
+          $ref: '#/components/schemas/LeagueRequirements'
+        rewards:
+          $ref: '#/components/schemas/LeagueRewards'
+        max_members:
+          type: integer
+          minimum: 1
+          maximum: 10000
+
+    LeagueRequirements:
+      type: object
+      properties:
+        min_level:
+          type: integer
+          minimum: 1
+        min_prestige:
+          type: integer
+          minimum: 0
+        required_achievements:
+          type: array
+          items:
+            type: string
+        min_combat_rating:
+          type: integer
+          minimum: 0
+
+    LeagueRewards:
+      type: object
+      properties:
+        daily_rewards:
+          type: array
+          items:
+            $ref: '#/components/schemas/RewardItem'
+        weekly_rewards:
+          type: array
+          items:
+            $ref: '#/components/schemas/RewardItem'
+        season_rewards:
+          type: array
+          items:
+            $ref: '#/components/schemas/RewardItem'
+
+    RewardItem:
+      type: object
+      properties:
+        item_type:
+          type: string
+          enum: [currency, item, title, cosmetic]
+        item_id:
+          type: string
+        quantity:
+          type: integer
+          minimum: 1
+
+    LeagueRankingsResponse:
+      type: object
+      properties:
+        league_id:
+          type: string
+          format: uuid
+        rankings:
+          type: array
+          items:
+            $ref: '#/components/schemas/RankingEntry'
+        total_count:
+          type: integer
+        last_updated:
+          type: string
+          format: date-time
+
+    RankingEntry:
+      type: object
+      properties:
+        rank:
+          type: integer
+        player_id:
+          type: string
+          format: uuid
+        player_name:
+          type: string
+        score:
+          type: integer
+        change:
+          type: integer
+          description: Rank change from previous period
+
+    PrestigeResponse:
+      type: object
+      properties:
+        current_level:
+          type: integer
+          minimum: 0
+        current_xp:
+          type: integer
+          minimum: 0
+        xp_to_next:
+          type: integer
+          minimum: 0
+        total_prestige_resets:
+          type: integer
+          minimum: 0
+        bonuses:
+          $ref: '#/components/schemas/PrestigeBonuses'
+        can_reset:
+          type: boolean
+
+    PrestigeBonuses:
+      type: object
+      properties:
+        xp_multiplier:
+          type: number
+          minimum: 1.0
+        currency_multiplier:
+          type: number
+          minimum: 1.0
+        item_drop_rate:
+          type: number
+          minimum: 1.0
+
+    MetaEventsResponse:
+      type: object
+      properties:
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/MetaEvent'
+
+    MetaEvent:
+      type: object
+      properties:
+        event_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        type:
+          type: string
+          enum: [seasonal, special, community]
+        start_time:
+          type: string
+          format: date-time
+        end_time:
+          type: string
+          format: date-time
+        rewards:
+          $ref: '#/components/schemas/EventRewards'
+        progress:
+          $ref: '#/components/schemas/EventProgress'
+
+    CreateMetaEventRequest:
+      type: object
+      required:
+        - name
+        - type
+        - start_time
+        - end_time
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 1000
+        type:
+          type: string
+          enum: [seasonal, special, community]
+        start_time:
+          type: string
+          format: date-time
+        end_time:
+          type: string
+          format: date-time
+        rewards:
+          $ref: '#/components/schemas/EventRewards'
+
+    EventRewards:
+      type: object
+      properties:
+        completion_rewards:
+          type: array
+          items:
+            $ref: '#/components/schemas/RewardItem'
+        milestone_rewards:
+          type: array
+          items:
+            $ref: '#/components/schemas/MilestoneReward'
+
+    MilestoneReward:
+      type: object
+      properties:
+        milestone:
+          type: integer
+          minimum: 1
+        rewards:
+          type: array
+          items:
+            $ref: '#/components/schemas/RewardItem'
+
+    EventProgress:
+      type: object
+      properties:
+        current_value:
+          type: integer
+          minimum: 0
+        target_value:
+          type: integer
+          minimum: 1
+        percentage:
+          type: number
+          minimum: 0
+          maximum: 100
+
+    GlobalRankingsResponse:
+      type: object
+      properties:
+        category:
+          type: string
+        timeframe:
+          type: string
+        rankings:
+          type: array
+          items:
+            $ref: '#/components/schemas/GlobalRankingEntry'
+        last_updated:
+          type: string
+          format: date-time
+
+    GlobalRankingEntry:
+      type: object
+      properties:
+        rank:
+          type: integer
+        player_id:
+          type: string
+          format: uuid
+        player_name:
+          type: string
+        score:
+          type: integer
+        region:
+          type: string
+        league:
+          type: string
+        change:
+          type: integer
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    LeagueId:
+      name: league_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Unique league identifier
+
+  responses:
+    BadRequest:
+      description: Invalid request parameters
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: string
+
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "unauthorized"
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "not found"

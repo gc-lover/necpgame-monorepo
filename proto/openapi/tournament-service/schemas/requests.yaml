@@ -1,0 +1,433 @@
+CreateTournamentRequest:
+  type: object
+  properties:
+    tournament_id:
+      type: string
+      minLength: 1
+      maxLength: 255
+      pattern: '^[a-zA-Z0-9._-]+$'
+    name:
+      type: string
+      minLength: 1
+      maxLength: 255
+    description:
+      type: string
+      maxLength: 2000
+    game_mode:
+      type: string
+      minLength: 1
+      maxLength: 100
+    tournament_format:
+      type: string
+      enum: [single_elimination, double_elimination, round_robin, swiss, free_for_all]
+      default: single_elimination
+    max_participants:
+      type: integer
+      minimum: 2
+      maximum: 10000
+      default: 128
+    min_participants:
+      type: integer
+      minimum: 2
+      maximum: 1000
+      default: 4
+    registration_start_time:
+      type: integer
+      format: int64
+      description: Unix timestamp in milliseconds
+    registration_end_time:
+      type: integer
+      format: int64
+      description: Unix timestamp in milliseconds
+    start_time:
+      type: integer
+      format: int64
+      description: Unix timestamp in milliseconds
+    end_time:
+      type: integer
+      format: int64
+      description: Unix timestamp in milliseconds
+    rules:
+      type: object
+      additionalProperties: true
+      description: Tournament-specific rules and configuration
+    prizes:
+      type: array
+      items:
+        type: object
+        properties:
+          position:
+            type: integer
+            minimum: 1
+          reward_type:
+            type: string
+            enum: [currency, item, title, experience]
+          reward_value:
+            type: string
+            description: JSON string with reward details
+          description:
+            type: string
+            maxLength: 500
+        required:
+          - position
+          - reward_type
+          - reward_value
+      minItems: 1
+    entry_fee:
+      type: object
+      properties:
+        currency_type:
+          type: string
+          enum: [free, currency, item]
+          default: free
+        amount:
+          type: integer
+          minimum: 0
+          default: 0
+        item_id:
+          type: string
+          description: Required if currency_type is 'item'
+    visibility:
+      type: string
+      enum: [public, private, invite_only]
+      default: public
+    region_restrictions:
+      type: array
+      items:
+        type: string
+        description: Region codes (e.g., "NA", "EU", "ASIA")
+    skill_requirements:
+      type: object
+      properties:
+        min_level:
+          type: integer
+          minimum: 1
+        max_level:
+          type: integer
+          minimum: 1
+        min_rank:
+          type: string
+        max_rank:
+          type: string
+        required_achievements:
+          type: array
+          items:
+            type: string
+    auto_progression:
+      type: boolean
+      default: true
+      description: Automatically advance matches when time expires
+    match_timeout:
+      type: integer
+      minimum: 60
+      maximum: 3600
+      default: 600
+      description: Match timeout in seconds
+    allow_spectators:
+      type: boolean
+      default: true
+    streaming_enabled:
+      type: boolean
+      default: false
+    metadata:
+      type: object
+      additionalProperties: true
+      description: Additional tournament metadata
+  required:
+    - tournament_id
+    - name
+    - game_mode
+    - registration_start_time
+    - registration_end_time
+    - start_time
+
+UpdateTournamentRequest:
+  type: object
+  properties:
+    name:
+      type: string
+      minLength: 1
+      maxLength: 255
+    description:
+      type: string
+      maxLength: 2000
+    max_participants:
+      type: integer
+      minimum: 2
+      maximum: 10000
+    registration_start_time:
+      type: integer
+      format: int64
+    registration_end_time:
+      type: integer
+      format: int64
+    start_time:
+      type: integer
+      format: int64
+    end_time:
+      type: integer
+      format: int64
+    rules:
+      type: object
+      additionalProperties: true
+    prizes:
+      type: array
+      items:
+        type: object
+        properties:
+          position:
+            type: integer
+            minimum: 1
+          reward_type:
+            type: string
+            enum: [currency, item, title, experience]
+          reward_value:
+            type: string
+          description:
+            type: string
+            maxLength: 500
+        required:
+          - position
+          - reward_type
+          - reward_value
+    entry_fee:
+      type: object
+      properties:
+        currency_type:
+          type: string
+          enum: [free, currency, item]
+        amount:
+          type: integer
+          minimum: 0
+        item_id:
+          type: string
+    visibility:
+      type: string
+      enum: [public, private, invite_only]
+    region_restrictions:
+      type: array
+      items:
+        type: string
+    skill_requirements:
+      type: object
+      properties:
+        min_level:
+          type: integer
+          minimum: 1
+        max_level:
+          type: integer
+          minimum: 1
+        min_rank:
+          type: string
+        max_rank:
+          type: string
+        required_achievements:
+          type: array
+          items:
+            type: string
+    auto_progression:
+      type: boolean
+    match_timeout:
+      type: integer
+      minimum: 60
+      maximum: 3600
+    allow_spectators:
+      type: boolean
+    streaming_enabled:
+      type: boolean
+    metadata:
+      type: object
+      additionalProperties: true
+
+RegisterTournamentRequest:
+  type: object
+  properties:
+    player_id:
+      type: string
+      minLength: 1
+    team_name:
+      type: string
+      maxLength: 100
+      description: Required for team tournaments
+    team_members:
+      type: array
+      items:
+        type: string
+        description: Player IDs for team members
+      minItems: 1
+      maxItems: 10
+    registration_metadata:
+      type: object
+      additionalProperties: true
+      description: Additional registration information
+  required:
+    - player_id
+
+UpdateMatchResultRequest:
+  type: object
+  properties:
+    winner_id:
+      type: string
+      description: Player/team ID that won the match
+    loser_id:
+      type: string
+      description: Player/team ID that lost the match
+    score:
+      type: object
+      properties:
+        winner_score:
+          type: integer
+          minimum: 0
+        loser_score:
+          type: integer
+          minimum: 0
+        match_duration:
+          type: integer
+          minimum: 0
+          description: Duration in seconds
+        statistics:
+          type: object
+          additionalProperties: true
+      required:
+        - winner_score
+        - loser_score
+    forfeit:
+      type: boolean
+      default: false
+      description: Whether the loser forfeited
+    reason:
+      type: string
+      maxLength: 500
+      description: Reason for match completion
+    metadata:
+      type: object
+      additionalProperties: true
+      description: Additional match result data
+  required:
+    - winner_id
+    - loser_id
+    - score
+
+CreateLeagueRequest:
+  type: object
+  properties:
+    league_id:
+      type: string
+      minLength: 1
+      maxLength: 255
+      pattern: '^[a-zA-Z0-9._-]+$'
+    name:
+      type: string
+      minLength: 1
+      maxLength: 255
+    description:
+      type: string
+      maxLength: 2000
+    game_mode:
+      type: string
+      minLength: 1
+      maxLength: 100
+    season_length:
+      type: integer
+      minimum: 1
+      maximum: 365
+      default: 30
+      description: Season length in days
+    max_teams:
+      type: integer
+      minimum: 2
+      maximum: 1000
+      default: 100
+    promotion_slots:
+      type: integer
+      minimum: 0
+      maximum: 50
+      default: 3
+    relegation_slots:
+      type: integer
+      minimum: 0
+      maximum: 50
+      default: 3
+    match_schedule:
+      type: string
+      enum: [weekly, biweekly, monthly]
+      default: weekly
+    scoring_system:
+      type: object
+      properties:
+        win_points:
+          type: integer
+          minimum: 0
+          default: 3
+        draw_points:
+          type: integer
+          minimum: 0
+          default: 1
+        loss_points:
+          type: integer
+          minimum: 0
+          default: 0
+        bonus_points:
+          type: object
+          additionalProperties: true
+      required:
+        - win_points
+        - draw_points
+        - loss_points
+    entry_requirements:
+      type: object
+      properties:
+        min_rank:
+          type: string
+        required_wins:
+          type: integer
+          minimum: 0
+        invitation_only:
+          type: boolean
+          default: false
+    rewards:
+      type: array
+      items:
+        type: object
+        properties:
+          position:
+            type: integer
+            minimum: 1
+          reward_type:
+            type: string
+            enum: [currency, item, title, promotion]
+          reward_value:
+            type: string
+          description:
+            type: string
+            maxLength: 500
+        required:
+          - position
+          - reward_type
+    region:
+      type: string
+      description: Geographic region for the league
+    visibility:
+      type: string
+      enum: [public, private]
+      default: public
+  required:
+    - league_id
+    - name
+    - game_mode
+
+ClaimRewardsRequest:
+  type: object
+  properties:
+    tournament_id:
+      type: string
+    player_id:
+      type: string
+    reward_ids:
+      type: array
+      items:
+        type: string
+      description: Specific rewards to claim (optional, claims all if not specified)
+  required:
+    - tournament_id
+    - player_id

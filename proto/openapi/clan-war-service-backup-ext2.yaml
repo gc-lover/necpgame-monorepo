@@ -1,0 +1,400 @@
+                          type: integer
+                          description: Очки за территории
+                        killScore:
+                          type: integer
+                          description: Очки за убийства
+                        siegeScore:
+                          type: integer
+                          description: Очки за осады
+                        lastUpdated:
+                          type: string
+                          format: date-time
+                          description: Последнее обновление
+                      required:
+                        - clanId
+                        - totalScore
+                        - territoryScore
+                        - killScore
+                        - siegeScore
+                  winnerClanId:
+                    type: string
+                    format: uuid
+                    description: ID лидирующего клана
+                required:
+                  - warId
+                  - scores
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /world/clan-war/scores/add:
+    post:
+      summary: Начислить очки
+      description: |
+        Начисляет очки участникам войны за действия (убийства, захват территорий и т.д.).
+        Вызывается автоматически из других систем.
+      operationId: addWarScore
+      tags:
+        - Scoring
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - warId
+                - clanId
+                - scoreType
+                - points
+              properties:
+                warId:
+                  type: string
+                  format: uuid
+                  description: ID войны
+                clanId:
+                  type: string
+                  format: uuid
+                  description: ID клана
+                scoreType:
+                  type: string
+                  enum:
+                    [
+                      TERRITORY_CAPTURE,
+                      PLAYER_KILL,
+                      SIEGE_SUCCESS,
+                      BATTLE_VICTORY,
+                    ]
+                  description: Тип начисляемых очков
+                points:
+                  type: integer
+                  minimum: 1
+                  maximum: 10000
+                  description: Количество очков
+                metadata:
+                  type: object
+                  description: Дополнительная информация
+                  properties:
+                    battleId:
+                      type: string
+                      format: uuid
+                      description: ID битвы
+                    territoryId:
+                      type: string
+                      format: uuid
+                      description: ID территории
+                    playerId:
+                      type: string
+                      format: uuid
+                      description: ID игрока (для PLAYER_KILL)
+                    victimClanId:
+                      type: string
+                      format: uuid
+                      description: ID клана жертвы
+                  additionalProperties: true
+      responses:
+        "200":
+          description: Очки начислены
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  warId:
+                    type: string
+                    format: uuid
+                    description: ID войны
+                  clanId:
+                    type: string
+                    format: uuid
+                    description: ID клана
+                  newTotalScore:
+                    type: integer
+                    description: Новый общий счет клана
+                  scoreChange:
+                    type: integer
+                    description: Изменение счета
+                required:
+                  - warId
+                  - clanId
+                  - newTotalScore
+                  - scoreChange
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          description: Война или клан не найдены
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Очки нельзя начислить (война завершена или не активна)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /world/clan-war/{warId}/winner:
+    get:
+      summary: Получить победителя войны
+      description: |
+        Возвращает информацию о победителе клановой войны.
+        Доступно только после завершения войны.
+      operationId: getWarWinner
+      tags:
+        - Scoring
+      parameters:
+        - name: warId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID войны
+      responses:
+        "200":
+          description: Успешный ответ с информацией о победителе
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  warId:
+                    type: string
+                    format: uuid
+                    description: ID войны
+                  winnerClanId:
+                    type: string
+                    format: uuid
+                    description: ID победившего клана
+                  winnerClanName:
+                    type: string
+                    description: Название победившего клана
+                  finalScore:
+                    type: integer
+                    description: Финальный счет победителя
+                  margin:
+                    type: integer
+                    description: Разница с ближайшим соперником
+                  endedAt:
+                    type: string
+                    format: date-time
+                    description: Время окончания войны
+                required:
+                  - warId
+                  - winnerClanId
+                  - winnerClanName
+                  - finalScore
+                  - endedAt
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: Война еще не завершена
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  # Система наград
+  /world/clan-war/{warId}/rewards/distribute:
+    post:
+      summary: Распределить награды войны
+      description: |
+        Распределяет награды победителям и участникам клановой войны.
+        Вызывается автоматически при завершении войны.
+      operationId: distributeWarRewards
+      tags:
+        - Rewards
+      parameters:
+        - name: warId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID войны
+      responses:
+        "200":
+          description: Награды распределены
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  warId:
+                    type: string
+                    format: uuid
+                    description: ID войны
+                  distributedRewards:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        clanId:
+                          type: string
+                          format: uuid
+                          description: ID клана
+                        rewardType:
+                          type: string
+                          enum:
+                            [
+                              WINNER_REWARDS,
+                              PARTICIPATION_REWARDS,
+                              CONSOLATION_PRIZES,
+                            ]
+                          description: Тип награды
+                        rewards:
+                          type: array
+                          items:
+                            $ref: "#/components/schemas/Reward"
+                          description: Список наград
+                      required:
+                        - clanId
+                        - rewardType
+                        - rewards
+                    description: Распределенные награды по кланам
+                  totalDistributed:
+                    type: integer
+                    description: Общее количество распределенных наград
+                required:
+                  - warId
+                  - distributedRewards
+        "403":
+          description: Недостаточно прав для распределения наград
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: Награды уже распределены или война не завершена
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /world/clan-war/{warId}/rewards:
+    get:
+      summary: Получить награды войны
+      description: Возвращает информацию о наградах клановой войны
+      operationId: getWarRewards
+      tags:
+        - Rewards
+      parameters:
+        - name: warId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID войны
+      responses:
+        "200":
+          description: Успешный ответ с наградами войны
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  warId:
+                    type: string
+                    format: uuid
+                    description: ID войны
+                  rewardsDistributed:
+                    type: boolean
+                    description: Распределены ли награды
+                  distributedAt:
+                    type: string
+                    format: date-time
+                    description: Время распределения наград
+                  clanRewards:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        clanId:
+                          type: string
+                          format: uuid
+                        clanName:
+                          type: string
+                        rewards:
+                          type: array
+                          items:
+                            $ref: "#/components/schemas/Reward"
+                        claimed:
+                          type: boolean
+                          description: Забраны ли награды
+                        claimedAt:
+                          type: string
+                          format: date-time
+                          description: Время получения наград
+                      required:
+                        - clanId
+                        - clanName
+                        - rewards
+                        - claimed
+                    description: Награды по кланам
+                required:
+                  - warId
+                  - rewardsDistributed
+                  - clanRewards
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  # Управление союзами
+  /world/clan-war/{warId}/alliance/invite:
+    post:
+      summary: Пригласить союзника
+      description: |
+        Отправляет приглашение клану присоединиться к войне как союзник.
+        Доступно только участникам войны.
+      operationId: inviteAlliance
+      tags:
+        - Alliances
+      parameters:
+        - name: warId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID войны
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - allyClanId
+                - side
+              properties:
+                allyClanId:
+                  type: string
+                  format: uuid
+                  description: ID клана-союзника
+                side:
+                  type: string
+                  enum: [ATTACKER, DEFENDER]
+                  description: Сторона, к которой присоединяется союзник
+                message:
+                  type: string
+                  maxLength: 500
+                  description: Сообщение с приглашением
+      responses:
+        "201":
+          description: Приглашение отправлено
+          content:
+            application/json:
+              schema:
+                type: object

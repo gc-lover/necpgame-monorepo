@@ -1,0 +1,40 @@
+paths:
+  # Moderation Logs
+  /api/v1/moderation/logs:
+    get:
+      summary: Get moderation logs
+      description: Retrieve moderation action logs
+      operationId: getModerationLogs
+      tags: [Moderation Logs]
+      parameters:
+        - name: moderator_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: action_type
+          in: query
+          schema:
+            type: string
+            enum: [warn, mute, ban, delete]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+      responses:
+        "200":
+          description: List of moderation logs
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  logs:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ModerationLog"
+                  total:
+                    type: integer

@@ -1,0 +1,175 @@
+openapi: 3.0.3
+info:
+  title: Notification Service API
+  version: 1.0.0
+  description: |
+    Real-time notification system for MMOFPS RPG.
+    Handles in-game notifications, player communications, achievements, and system alerts.
+    BACKEND NOTE: WebSocket connections require worker pool. Expected load: 10k concurrent connections.
+    Memory per notification: ~256 bytes, cached notifications expire after 24h.
+
+servers:
+  - url: http://localhost:8080
+    description: Development server
+  - url: https://api.necpgame.com/notifications
+    description: Production server
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Notifications
+    description: Core notification operations
+  - name: History
+    description: Notification history and archives
+  - name: Settings
+    description: User notification preferences
+  - name: Real-time
+    description: WebSocket and real-time features
+
+paths:
+  /notifications/send:
+    $ref: "./paths/paths.yaml#/notifications/send"
+  /notifications:
+    $ref: "./paths/paths.yaml#/notifications"
+  /notifications/{notification_id}:
+    $ref: "./paths/paths.yaml#/notifications/{notification_id}"
+  /notifications/{notification_id}/read:
+    $ref: "./paths/paths.yaml#/notifications/{notification_id}/read"
+  /notifications/history:
+    $ref: "./paths/paths.yaml#/notifications/history"
+  /notifications/settings:
+    $ref: "./paths/paths.yaml#/notifications/settings"
+  /ws/notifications:
+    $ref: "./paths/paths.yaml#/ws/notifications"
+  /notifications/stats:
+    $ref: "./paths/paths.yaml#/notifications/stats"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token for player authentication
+
+  parameters:
+    Limit:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+      description: Number of items per page
+    Offset:
+      name: offset
+      in: query
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+      description: Number of items to skip
+
+  schemas:
+    # Core entities
+    Notification:
+      $ref: "./schemas/schemas.yaml#/Notification"
+    NotificationType:
+      $ref: "./schemas/schemas.yaml#/NotificationType"
+    NotificationAction:
+      $ref: "./schemas/schemas.yaml#/NotificationAction"
+    NotificationSettings:
+      $ref: "./schemas/schemas.yaml#/NotificationSettings"
+
+    # Request/Response objects
+    SendNotificationRequest:
+      $ref: "./schemas/schemas.yaml#/SendNotificationRequest"
+    UpdateNotificationRequest:
+      $ref: "./schemas/schemas.yaml#/UpdateNotificationRequest"
+    NotificationListResponse:
+      $ref: "./schemas/schemas.yaml#/NotificationListResponse"
+
+    # Settings types
+    NotificationPosition:
+      $ref: "./schemas/schemas.yaml#/NotificationPosition"
+    TypeSettings:
+      $ref: "./schemas/schemas.yaml#/TypeSettings"
+    PrioritySettings:
+      $ref: "./schemas/schemas.yaml#/PrioritySettings"
+    VisualPreset:
+      $ref: "./schemas/schemas.yaml#/VisualPreset"
+    AccessibilitySettings:
+      $ref: "./schemas/schemas.yaml#/AccessibilitySettings"
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "Invalid request parameters"
+              code:
+                type: string
+                example: "VALIDATION_ERROR"
+            required:
+              - error
+              - code
+
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "Authentication required"
+              code:
+                type: string
+                example: "UNAUTHORIZED"
+            required:
+              - error
+              - code
+
+    Forbidden:
+      description: Access denied
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "Insufficient permissions"
+              code:
+                type: string
+                example: "FORBIDDEN"
+            required:
+              - error
+              - code
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "Resource not found"
+              code:
+                type: string
+                example: "NOT_FOUND"
+            required:
+              - error
+              - code
+
+# Issue: #1912

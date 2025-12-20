@@ -7,8 +7,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/gc-lover/necpgame-monorepo/services/quest-core-service-go/pkg/api"
+	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 	"github.com/sirupsen/logrus"
 )
@@ -41,11 +41,12 @@ func getEnv(key, defaultValue string) string {
 	return defaultValue
 }
 
+// OPTIMIZATION: Struct field alignment (large → small) Issue #300
 type HTTPServer struct {
-	addr   string
-	router *http.ServeMux
-	logger *logrus.Logger
-	server *http.Server
+	server *http.Server   // 8 bytes (pointer)
+	router *http.ServeMux // 8 bytes (pointer)
+	logger *logrus.Logger // 8 bytes (pointer)
+	addr   string         // 16 bytes
 }
 
 func NewHTTPServer(addr string) *HTTPServer {
@@ -218,23 +219,3 @@ func getRequestID(ctx context.Context) string {
 	}
 	return ""
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

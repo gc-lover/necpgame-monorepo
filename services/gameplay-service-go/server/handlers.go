@@ -229,8 +229,8 @@ func (h *Handlers) setCachedSession(sessionID string, data *api.CombatSessionRes
 
 // GetCombatStats - получить боевые статистики игрока
 // func (h *Handlers) GetCombatStats(ctx context.Context, params api.GetCombatStatsParams) (api.GetCombatStatsRes, error) {
-// 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
-// 	defer cancel()
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
 
 // 	if h.mechanicsService == nil {
 // 		return &api.GetCombatStatsInternalServerError{}, nil
@@ -246,8 +246,8 @@ func (h *Handlers) setCachedSession(sessionID string, data *api.CombatSessionRes
 
 // ExecuteCombatAction - выполнить боевое действие
 // func (h *Handlers) ExecuteCombatAction(ctx context.Context, req *api.CombatActionReq, params api.ExecuteCombatActionParams) (api.ExecuteCombatActionRes, error) {
-// 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
-// 	defer cancel()
+	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+	defer cancel()
 
 // 	if h.mechanicsService == nil {
 // 		return &api.ExecuteCombatActionInternalServerError{}, nil

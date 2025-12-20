@@ -1,0 +1,505 @@
+CreateQueueResponse:
+  type: object
+  properties:
+    queue_name:
+      type: string
+    queue_type:
+      type: string
+    created_at:
+      type: integer
+      format: int64
+    message_count:
+      type: integer
+      minimum: 0
+    consumer_count:
+      type: integer
+      minimum: 0
+    settings:
+      $ref: '#/QueueSettings'
+  required:
+    - queue_name
+    - queue_type
+    - created_at
+
+UpdateQueueResponse:
+  type: object
+  properties:
+    queue_name:
+      type: string
+    updated_fields:
+      type: array
+      items:
+        type: string
+    updated_at:
+      type: integer
+      format: int64
+    settings:
+      $ref: '#/QueueSettings'
+  required:
+    - queue_name
+    - updated_at
+
+ListQueuesResponse:
+  type: object
+  properties:
+    queues:
+      type: array
+      items:
+        $ref: '#/QueueInfo'
+    total_count:
+      type: integer
+      minimum: 0
+  required:
+    - queues
+    - total_count
+
+GetQueueResponse:
+  type: object
+  properties:
+    queue:
+      $ref: '#/QueueDetails'
+  required:
+    - queue
+
+QueueInfo:
+  type: object
+  properties:
+    name:
+      type: string
+    type:
+      type: string
+    durable:
+      type: boolean
+    auto_delete:
+      type: boolean
+    message_count:
+      type: integer
+      minimum: 0
+    consumer_count:
+      type: integer
+      minimum: 0
+    created_at:
+      type: integer
+      format: int64
+  required:
+    - name
+    - type
+    - message_count
+    - consumer_count
+
+QueueDetails:
+  type: object
+  properties:
+    name:
+      type: string
+    type:
+      type: string
+    durable:
+      type: boolean
+    auto_delete:
+      type: boolean
+    message_count:
+      type: integer
+      minimum: 0
+    consumer_count:
+      type: integer
+      minimum: 0
+    memory_usage:
+      type: integer
+      format: int64
+      description: Memory usage in bytes
+    disk_usage:
+      type: integer
+      format: int64
+      description: Disk usage in bytes
+    publish_rate:
+      type: number
+      format: float
+      minimum: 0
+    deliver_rate:
+      type: number
+      format: float
+      minimum: 0
+    ack_rate:
+      type: number
+      format: float
+      minimum: 0
+    nack_rate:
+      type: number
+      format: float
+      minimum: 0
+    created_at:
+      type: integer
+      format: int64
+    settings:
+      $ref: '#/QueueSettings'
+    bindings:
+      type: array
+      items:
+        $ref: '#/QueueBinding'
+  required:
+    - name
+    - type
+    - message_count
+    - consumer_count
+
+QueueSettings:
+  type: object
+  properties:
+    max_length:
+      type: integer
+      minimum: 0
+    max_length_bytes:
+      type: integer
+      format: int64
+      minimum: 0
+    message_ttl:
+      type: integer
+      minimum: 0
+    dead_letter_exchange:
+      type: string
+    dead_letter_routing_key:
+      type: string
+    arguments:
+      type: object
+      additionalProperties: true
+
+QueueBinding:
+  type: object
+  properties:
+    exchange_name:
+      type: string
+    routing_key:
+      type: string
+    arguments:
+      type: object
+      additionalProperties: true
+  required:
+    - exchange_name
+
+PublishMessageResponse:
+  type: object
+  properties:
+    message_id:
+      type: string
+    correlation_id:
+      type: string
+    published_at:
+      type: integer
+      format: int64
+    routing_key:
+      type: string
+    exchange:
+      type: string
+    queue_name:
+      type: string
+  required:
+    - message_id
+    - published_at
+
+PublishBatchResponse:
+  type: object
+  properties:
+    published_count:
+      type: integer
+      minimum: 0
+    failed_count:
+      type: integer
+      minimum: 0
+    message_ids:
+      type: array
+      items:
+        type: string
+    failed_messages:
+      type: array
+      items:
+        $ref: '#/FailedMessage'
+    published_at:
+      type: integer
+      format: int64
+  required:
+    - published_count
+    - failed_count
+    - published_at
+
+FailedMessage:
+  type: object
+  properties:
+    index:
+      type: integer
+      minimum: 0
+    error:
+      type: string
+    message:
+      $ref: '#/PublishMessageRequest'
+  required:
+    - index
+    - error
+
+ConsumeMessagesResponse:
+  type: object
+  properties:
+    messages:
+      type: array
+      items:
+        $ref: '#/ConsumedMessage'
+    delivery_tag:
+      type: integer
+      format: int64
+    consumer_tag:
+      type: string
+    redelivered:
+      type: boolean
+  required:
+    - messages
+
+ConsumedMessage:
+  type: object
+  properties:
+    message_id:
+      type: string
+    correlation_id:
+      type: string
+    body:
+      type: string
+      description: JSON string containing the message payload
+    content_type:
+      type: string
+    headers:
+      type: object
+      additionalProperties:
+        type: string
+    routing_key:
+      type: string
+    exchange:
+      type: string
+    priority:
+      type: integer
+      minimum: 0
+      maximum: 255
+    timestamp:
+      type: integer
+      format: int64
+    user_id:
+      type: string
+    app_id:
+      type: string
+    delivery_mode:
+      type: integer
+      minimum: 1
+      maximum: 2
+  required:
+    - message_id
+    - body
+
+RegisterConsumerResponse:
+  type: object
+  properties:
+    consumer_id:
+      type: string
+    consumer_tag:
+      type: string
+    queue_name:
+      type: string
+    registered_at:
+      type: integer
+      format: int64
+    settings:
+      $ref: '#/ConsumerSettings'
+  required:
+    - consumer_id
+    - queue_name
+    - registered_at
+
+UpdateConsumerResponse:
+  type: object
+  properties:
+    consumer_id:
+      type: string
+    updated_fields:
+      type: array
+      items:
+        type: string
+    updated_at:
+      type: integer
+      format: int64
+    settings:
+      $ref: '#/ConsumerSettings'
+  required:
+    - consumer_id
+    - updated_at
+
+ListConsumersResponse:
+  type: object
+  properties:
+    consumers:
+      type: array
+      items:
+        $ref: '#/ConsumerInfo'
+    total_count:
+      type: integer
+      minimum: 0
+  required:
+    - consumers
+    - total_count
+
+ConsumerInfo:
+  type: object
+  properties:
+    consumer_id:
+      type: string
+    consumer_tag:
+      type: string
+    queue_name:
+      type: string
+    status:
+      type: string
+      enum: [active, paused, error]
+    connected_at:
+      type: integer
+      format: int64
+    prefetch_count:
+      type: integer
+      minimum: 0
+    ack_count:
+      type: integer
+      minimum: 0
+    nack_count:
+      type: integer
+      minimum: 0
+  required:
+    - consumer_id
+    - queue_name
+    - status
+
+ConsumerSettings:
+  type: object
+  properties:
+    prefetch_count:
+      type: integer
+      minimum: 0
+    auto_ack:
+      type: boolean
+    exclusive:
+      type: boolean
+    status:
+      type: string
+      enum: [active, paused]
+    arguments:
+      type: object
+      additionalProperties: true
+
+PublishEventResponse:
+  type: object
+  properties:
+    event_id:
+      type: string
+    event_type:
+      type: string
+    exchange:
+      type: string
+    routing_key:
+      type: string
+    published_at:
+      type: integer
+      format: int64
+    subscriber_count:
+      type: integer
+      minimum: 0
+    metadata:
+      type: object
+      additionalProperties: true
+  required:
+    - event_id
+    - event_type
+    - published_at
+
+CreateExchangeResponse:
+  type: object
+  properties:
+    exchange_name:
+      type: string
+    exchange_type:
+      type: string
+    created_at:
+      type: integer
+      format: int64
+    binding_count:
+      type: integer
+      minimum: 0
+    settings:
+      $ref: '#/ExchangeSettings'
+  required:
+    - exchange_name
+    - exchange_type
+    - created_at
+
+ListExchangesResponse:
+  type: object
+  properties:
+    exchanges:
+      type: array
+      items:
+        $ref: '#/ExchangeInfo'
+    total_count:
+      type: integer
+      minimum: 0
+  required:
+    - exchanges
+    - total_count
+
+ExchangeInfo:
+  type: object
+  properties:
+    name:
+      type: string
+    type:
+      type: string
+    durable:
+      type: boolean
+    auto_delete:
+      type: boolean
+    internal:
+      type: boolean
+    binding_count:
+      type: integer
+      minimum: 0
+    message_rate:
+      type: number
+      format: float
+      minimum: 0
+  required:
+    - name
+    - type
+
+ExchangeSettings:
+  type: object
+  properties:
+    type:
+      type: string
+      enum: [direct, topic, headers, fanout]
+    durable:
+      type: boolean
+    auto_delete:
+      type: boolean
+    internal:
+      type: boolean
+    arguments:
+      type: object
+      additionalProperties: true
+
+CreateBindingResponse:
+  type: object
+  properties:
+    exchange_name:
+      type: string
+    queue_name:
+      type: string
+    routing_key:
+      type: string
+    created_at:
+      type: integer
+      format: int64
+  required:
+    - exchange_name
+    - queue_name

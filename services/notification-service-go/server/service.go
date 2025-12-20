@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/go-chi/chi/v5"
@@ -18,24 +19,26 @@ import (
 
 // NotificationService содержит бизнес-логику уведомлений
 type NotificationService struct {
+	logger    *zap.Logger
 	repo      *NotificationRepository
 	wsManager *WebSocketManager
-	logger    *zap.Logger
+	// Memory pooling для оптимизации аллокаций
+	notificationPool *sync.Pool
 }
 
-// Notification представляет уведомление в системе
+// Notification представляет уведомление в системе (согласно OpenAPI спецификации)
 type Notification struct {
 	ID        string                 `json:"id" db:"id"`
 	UserID    string                 `json:"user_id" db:"user_id"`
-	Type      string                 `json:"type" db:"type"`
-	Title     string                 `json:"title" db:"title"`
-	Message   string                 `json:"message" db:"message"`
-	Data      map[string]interface{} `json:"data" db:"data"`
-	Priority  string                 `json:"priority" db:"priority"`
-	Status    string                 `json:"status" db:"status"`
-	ExpiresAt *time.Time             `json:"expires_at" db:"expires_at"`
 	CreatedAt time.Time              `json:"created_at" db:"created_at"`
 	UpdatedAt time.Time              `json:"updated_at" db:"updated_at"`
+	ExpiresAt *time.Time             `json:"expires_at" db:"expires_at"`
+	Data      map[string]interface{} `json:"data" db:"data"`
+	Type      string                 `json:"type" db:"type"` // enum: game, social, system, marketing, achievement
+	Title     string                 `json:"title" db:"title"`
+	Body      string                 `json:"body" db:"body"`         // переименовано из Message для соответствия API
+	Priority  string                 `json:"priority" db:"priority"` // enum: low, normal, high, urgent
+	Status    string                 `json:"status" db:"status"`     // enum: queued, sent, delivered, read, failed
 }
 
 // NewNotificationService создает новый сервис уведомлений
@@ -44,11 +47,16 @@ func NewNotificationService(db *sql.DB, wsManager *WebSocketManager, logger *zap
 		repo:      NewNotificationRepository(db, logger),
 		wsManager: wsManager,
 		logger:    logger,
+		notificationPool: &sync.Pool{
+			New: func() interface{} {
+				return &Notification{}
+			},
+		},
 	}
 }
 
 // CreateNotification создает новое уведомление
-func (s *NotificationService) CreateNotification(ctx context.Context, userID, notifType, title, message string, data map[string]interface{}, priority string, expiresAt *time.Time) (*Notification, error) {
+func (s *NotificationService) CreateNotification(ctx context.Context, userID, notifType, title, body string, data map[string]interface{}, priority string, expiresAt *time.Time) (*Notification, error) {
 	// Context timeout для предотвращения зависаний
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
@@ -63,10 +71,10 @@ func (s *NotificationService) CreateNotification(ctx context.Context, userID, no
 		UserID:    userID,
 		Type:      notifType,
 		Title:     title,
-		Message:   message,
+		Body:      body,
 		Data:      data,
 		Priority:  priority,
-		Status:    "unread",
+		Status:    "queued",
 		ExpiresAt: expiresAt,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
@@ -401,7 +409,7 @@ func (s *NotificationService) MarkBulkAsReadHandler(w http.ResponseWriter, r *ht
 	}
 
 	response := map[string]interface{}{
-		"success":        true,
+		"success":         true,
 		"processed_count": processedCount,
 	}
 

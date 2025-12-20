@@ -1,0 +1,63 @@
+# BACKEND NOTE: Struct field alignment optimized (large → small types)
+CombatParticipant:
+  type: object
+  properties:
+    character_id:   # string → 16 bytes (БОЛЬШОЕ)
+      type: string
+    team:           # string → 16 bytes
+      type: string
+    position:       # object → 12 bytes
+      $ref: './common.yaml#/Vector3'
+    status_effects: # array → 24 bytes
+      type: array
+      items:
+        $ref: './status-effects.yaml#/StatusEffect'
+    health:         # integer → 8 bytes (МАЛЕНЬКОЕ)
+      type: integer
+      minimum: 0
+    max_health:     # integer → 8 bytes
+      type: integer
+      minimum: 1
+    is_alive:       # boolean → 1 byte
+      type: boolean
+  required:
+    - character_id
+    - health
+    - max_health
+    - is_alive
+
+# BACKEND NOTE: Struct field alignment optimized (large → small types)
+CombatEvent:
+  type: object
+  properties:
+    event_id:   # string → 16 bytes (БОЛЬШОЕ)
+      type: string
+    event_type: # string → 16 bytes
+      type: string
+      enum: [DAMAGE, HEALING, STATUS_EFFECT, DEATH, VICTORY]
+    data:       # object → 12 bytes
+      type: object
+      additionalProperties: true
+    timestamp:  # integer → 8 bytes (МАЛЕНЬКОЕ)
+      type: integer
+      description: Unix timestamp
+  required:
+    - event_id
+    - event_type
+    - timestamp
+
+# BACKEND NOTE: Struct field alignment optimized (large → small types)
+LootItem:
+  type: object
+  properties:
+    item_id:  # string → 16 bytes (БОЛЬШОЕ)
+      type: string
+    rarity:   # string → 16 bytes
+      type: string
+      enum: [COMMON, UNCOMMON, RARE, EPIC, LEGENDARY]
+    quantity: # integer → 8 bytes (МАЛЕНЬКОЕ)
+      type: integer
+      minimum: 1
+  required:
+    - item_id
+    - quantity

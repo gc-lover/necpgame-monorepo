@@ -1,0 +1,172 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: quest-service-ingress
+  namespace: necpgame
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/rate-limit: "100"
+    nginx.ingress.kubernetes.io/rate-limit-window: "1m"
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      # Security headers
+      add_header X-Frame-Options "SAMEORIGIN" always;
+      add_header X-Content-Type-Options "nosniff" always;
+      add_header X-XSS-Protection "1; mode=block" always;
+      add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+
+      # CORS for WebSocket connections
+      more_set_headers "Access-Control-Allow-Origin: $http_origin";
+      more_set_headers "Access-Control-Allow-Credentials: true";
+      more_set_headers "Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS";
+      more_set_headers "Access-Control-Allow-Headers: Authorization,Content-Type,X-Requested-With";
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - api.necpgame.com
+    - ws.necpgame.com
+    secretName: necpgame-tls
+  rules:
+  # REST API
+  - host: api.necpgame.com
+    http:
+      paths:
+      - path: /gameplay/quests
+        pathType: Prefix
+        backend:
+          service:
+            name: gameplay-service-go
+            port:
+              number: 8083
+      - path: /health
+        pathType: Exact
+        backend:
+          service:
+            name: gameplay-service-go
+            port:
+              number: 8083
+
+  # WebSocket API
+  - host: ws.necpgame.com
+    http:
+      paths:
+      - path: /ws/quests
+        pathType: Prefix
+        backend:
+          service:
+            name: gameplay-service-go
+            port:
+              number: 8083
+      - path: /ws/quest-engine
+        pathType: Prefix
+        backend:
+          service:
+            name: quest-engine-websocket
+            port:
+              number: 8301
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: quest-engine-websocket
+  namespace: necpgame
+  labels:
+    app: quest-engine-websocket
+    prometheus: scrape
+spec:
+  type: ClusterIP
+  ports:
+  - name: websocket
+    port: 8301
+    targetPort: 8301
+    protocol: TCP
+  - name: metrics
+    port: 9301
+    targetPort: 9301
+    protocol: TCP
+  selector:
+    app: quest-engine-websocket
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: quest-engine-websocket
+  namespace: necpgame
+  labels:
+    app: quest-engine-websocket
+    version: v1
+    tier: backend
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: quest-engine-websocket
+  template:
+    metadata:
+      labels:
+        app: quest-engine-websocket
+        version: v1
+        tier: backend
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9301"
+        prometheus.io/path: "/metrics"
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+      containers:
+      - name: quest-engine-websocket
+        image: necpgame-quest-engine-websocket:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: websocket
+          containerPort: 8301
+          protocol: TCP
+        - name: metrics
+          containerPort: 9301
+          protocol: TCP
+        env:
+        - name: REDIS_URL
+          valueFrom:
+            secretKeyRef:
+              name: redis-secrets
+              key: url
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: database-secrets
+              key: url
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "50m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+        startupProbe:
+          tcpSocket:
+            port: 8301
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 12
+        livenessProbe:
+          tcpSocket:
+            port: 8301
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 3
+          failureThreshold: 3
+        readinessProbe:
+          tcpSocket:
+            port: 8301
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 3

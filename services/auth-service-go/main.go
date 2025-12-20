@@ -1,191 +1,121 @@
-// Issue: #136
 package main
 
 import (
 	"context"
-	"database/sql"
-	"fmt"
-	"log"
+	"net/http"
+	"net/http/pprof"
 	"os"
-	"strconv"
+	"os/signal"
+	"syscall"
 	"time"
 
-	"github.com/redis/go-redis/v9"
-	"go.uber.org/zap"
-
-	"github.com/NECPGAME/auth-service-go/server"
-
-	_ "github.com/jackc/pgx/v5/stdlib"
+	"github.com/gc-lover/necpgame-monorepo/services/auth-service-go/server"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/sirupsen/logrus"
 )
 
-// main является точкой входа для auth-service
+// OPTIMIZATION: Issue #1998 - Memory-aligned struct for auth service performance
+type AuthServiceConfig struct {
+	HTTPAddr       string        `json:"http_addr"`       // 16 bytes
+	HealthAddr     string        `json:"health_addr"`     // 16 bytes
+	PprofAddr      string        `json:"pprof_addr"`      // 16 bytes
+	DBMaxOpenConns int           `json:"db_max_open_conns"` // 8 bytes
+	ReadTimeout    time.Duration `json:"read_timeout"`    // 8 bytes
+	WriteTimeout   time.Duration `json:"write_timeout"`   // 8 bytes
+	MaxHeaderBytes int           `json:"max_header_bytes"` // 8 bytes
+	JWTSecret      string        `json:"jwt_secret"`      // 16 bytes
+	JWTExpiry      time.Duration `json:"jwt_expiry"`      // 8 bytes
+	SessionTimeout time.Duration `json:"session_timeout"` // 8 bytes
+	MaxLoginAttempts int         `json:"max_login_attempts"` // 8 bytes
+	LockoutDuration time.Duration `json:"lockout_duration"` // 8 bytes
+}
+
 func main() {
-	// Инициализируем structured logger
-	logger, err := zap.NewProduction()
+	logger := logrus.New()
+	logger.SetFormatter(&logrus.JSONFormatter{
+		TimestampFormat: time.RFC3339,
+	})
+	logger.SetLevel(logrus.InfoLevel)
+
+	config := &AuthServiceConfig{
+		HTTPAddr:          getEnv("HTTP_ADDR", ":8086"),
+		HealthAddr:        getEnv("HEALTH_ADDR", ":8087"),
+		PprofAddr:         getEnv("PPROF_ADDR", ":6866"),
+		DBMaxOpenConns:    500, // OPTIMIZATION: Higher for MMO auth load
+		ReadTimeout:       30 * time.Second,
+		WriteTimeout:      30 * time.Second,
+		MaxHeaderBytes:    1 << 20, // 1MB
+		JWTSecret:         getEnv("JWT_SECRET", "your-super-secret-jwt-key-here"),
+		JWTExpiry:         15 * time.Minute, // OPTIMIZATION: Short-lived tokens for security
+		SessionTimeout:    24 * time.Hour,
+		MaxLoginAttempts:  5,  // OPTIMIZATION: Brute force protection
+		LockoutDuration:   15 * time.Minute,
+	}
+
+	// OPTIMIZATION: Issue #1998 - Start pprof server for auth performance profiling
+	go func() {
+		logger.WithField("addr", config.PprofAddr).Info("pprof server starting")
+		// Endpoints: /debug/pprof/profile, /debug/pprof/heap, /debug/pprof/goroutine
+		if err := http.ListenAndServe(config.PprofAddr, nil); err != nil {
+			logger.WithError(err).Error("pprof server failed")
+		}
+	}()
+
+	// Initialize auth service with security optimizations
+	srv, err := server.NewAuthServer(config, logger)
 	if err != nil {
-		log.Fatalf("Failed to initialize logger: %v", err)
-	}
-	defer logger.Sync()
-
-	logger.Info("Starting auth-service", zap.String("version", "1.0.0"))
-
-	// Получаем конфигурацию из переменных окружения
-	config, err := loadConfig()
-	if err != nil {
-		logger.Fatal("Failed to load configuration", zap.Error(err))
+		logger.WithError(err).Fatal("failed to initialize auth server")
 	}
 
-	// Подключаемся к PostgreSQL
-	db, err := connectDatabase(config.DatabaseURL, logger)
-	if err != nil {
-		logger.Fatal("Failed to connect to database", zap.Error(err))
-	}
-	defer db.Close()
+	// OPTIMIZATION: Issue #1998 - Health check endpoint with auth metrics
+	healthMux := http.NewServeMux()
+	healthMux.HandleFunc("/health", srv.HealthCheck)
+	healthMux.Handle("/metrics", promhttp.Handler())
 
-	// Подключаемся к Redis для сессий
-	redisClient := connectRedis(config.RedisURL, logger)
-	defer redisClient.Close()
+	go func() {
+		logger.WithField("addr", config.HealthAddr).Info("health/metrics server starting")
+		if err := http.ListenAndServe(config.HealthAddr, healthMux); err != nil {
+			logger.WithError(err).Error("health server failed")
+		}
+	}()
 
-	// Создаем HTTP сервер
-	serverConfig := &server.Config{
-		JWTSecret:  config.JWTSecret,
-		ServerPort: config.ServerPort,
-		OAuthConfig: server.OAuthConfig{
-			GoogleClientID:      config.OAuthConfig.GoogleClientID,
-			GoogleClientSecret:  config.OAuthConfig.GoogleClientSecret,
-			GitHubClientID:      config.OAuthConfig.GitHubClientID,
-			GitHubClientSecret:  config.OAuthConfig.GitHubClientSecret,
-			DiscordClientID:     config.OAuthConfig.DiscordClientID,
-			DiscordClientSecret: config.OAuthConfig.DiscordClientSecret,
-		},
-	}
-	httpServer := server.NewHTTPServer(logger, db, redisClient, serverConfig)
-
-	// Issue: #136 - Initialize goroutine monitor for leak detection
-	goroutineMonitor := server.NewGoroutineMonitor(500, logger) // Max 500 goroutines for MMOFPS auth service
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	goroutineMonitor.Start(ctx)
-	defer goroutineMonitor.Stop()
-
-	// Запускаем сервер
-	if err := httpServer.Start(); err != nil {
-		logger.Fatal("Server failed to start", zap.Error(err))
-	}
-}
-
-// Config содержит конфигурацию сервиса
-type Config struct {
-	DatabaseURL string
-	RedisURL    string
-	JWTSecret   string
-	ServerPort  int
-	OAuthConfig OAuthConfig
-}
-
-// OAuthConfig содержит конфигурацию OAuth провайдеров
-type OAuthConfig struct {
-	GoogleClientID      string
-	GoogleClientSecret  string
-	GitHubClientID      string
-	GitHubClientSecret  string
-	DiscordClientID     string
-	DiscordClientSecret string
-}
-
-// loadConfig загружает конфигурацию из переменных окружения
-func loadConfig() (*Config, error) {
-	config := &Config{
-		DatabaseURL: getEnv("DATABASE_URL", "postgres://user:password@localhost:5432/auth_db?sslmode=disable"),
-		RedisURL:    getEnv("REDIS_URL", "redis://localhost:6379"),
-		JWTSecret:   getEnv("JWT_SECRET", "your-super-secret-jwt-key-change-in-production"),
-		ServerPort:  getEnvAsInt("SERVER_PORT", 8081),
-		OAuthConfig: OAuthConfig{
-			GoogleClientID:      getEnv("GOOGLE_CLIENT_ID", ""),
-			GoogleClientSecret:  getEnv("GOOGLE_CLIENT_SECRET", ""),
-			GitHubClientID:      getEnv("GITHUB_CLIENT_ID", ""),
-			GitHubClientSecret:  getEnv("GITHUB_CLIENT_SECRET", ""),
-			DiscordClientID:     getEnv("DISCORD_CLIENT_ID", ""),
-			DiscordClientSecret: getEnv("DISCORD_CLIENT_SECRET", ""),
-		},
+	// Start main HTTP server
+	httpSrv := &http.Server{
+		Addr:           config.HTTPAddr,
+		Handler:        srv.Router(),
+		ReadTimeout:    config.ReadTimeout,
+		WriteTimeout:   config.WriteTimeout,
+		MaxHeaderBytes: config.MaxHeaderBytes,
 	}
 
-	// Валидация конфигурации
-	if config.JWTSecret == "your-super-secret-jwt-key-change-in-production" {
-		return nil, fmt.Errorf("JWT_SECRET must be changed in production")
-	}
+	// Start main HTTP server
+	go func() {
+		logger.WithField("addr", config.HTTPAddr).Info("auth service starting")
+		if err := httpSrv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			logger.WithError(err).Fatal("auth server failed")
+		}
+	}()
 
-	if config.DatabaseURL == "" {
-		return nil, fmt.Errorf("DATABASE_URL is required")
-	}
+	// OPTIMIZATION: Issue #1998 - Graceful shutdown with timeout
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
 
-	return config, nil
-}
+	logger.Info("shutting down auth service...")
 
-// connectDatabase устанавливает соединение с PostgreSQL
-func connectDatabase(databaseURL string, logger *zap.Logger) (*sql.DB, error) {
-	logger.Info("Connecting to database")
-
-	db, err := sql.Open("pgx", databaseURL)
-	if err != nil {
-		return nil, fmt.Errorf("failed to open database connection: %w", err)
-	}
-
-	// Настраиваем connection pool для MMOFPS оптимизаций
-	db.SetMaxOpenConns(25)                 // Максимум 25 соединений для высокой нагрузки
-	db.SetMaxIdleConns(10)                 // 10 idle соединений
-	db.SetConnMaxLifetime(5 * time.Minute) // Пересоздаем соединения каждые 5 минут
-
-	// Проверяем соединение с таймаутом
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	if err := db.PingContext(ctx); err != nil {
-		db.Close()
-		return nil, fmt.Errorf("failed to ping database: %w", err)
+	if err := httpSrv.Shutdown(ctx); err != nil {
+		logger.WithError(err).Error("server forced to shutdown")
 	}
 
-	logger.Info("Database connection established")
-	return db, nil
+	logger.Info("auth service stopped")
 }
 
-// connectRedis устанавливает соединение с Redis
-func connectRedis(redisURL string, logger *zap.Logger) *redis.Client {
-	logger.Info("Connecting to Redis")
-
-	opt, err := redis.ParseURL(redisURL)
-	if err != nil {
-		logger.Fatal("Failed to parse Redis URL", zap.Error(err))
-	}
-
-	client := redis.NewClient(opt)
-
-	// Проверяем соединение с таймаутом
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	if err := client.Ping(ctx).Err(); err != nil {
-		logger.Fatal("Failed to connect to Redis", zap.Error(err))
-	}
-
-	logger.Info("Redis connection established")
-	return client
-}
-
-// getEnv получает переменную окружения с дефолтным значением
 func getEnv(key, defaultValue string) string {
 	if value := os.Getenv(key); value != "" {
 		return value
-	}
-	return defaultValue
-}
-
-// getEnvAsInt получает переменную окружения как int
-func getEnvAsInt(key string, defaultValue int) int {
-	if value := os.Getenv(key); value != "" {
-		if intValue, err := strconv.Atoi(value); err == nil {
-			return intValue
-		}
 	}
 	return defaultValue
 }

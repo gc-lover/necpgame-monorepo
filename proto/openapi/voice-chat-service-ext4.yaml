@@ -1,0 +1,314 @@
+
+    VoiceEvent:
+      type: object
+      description: Событие голосового чата
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID события
+        channelId:
+          type: string
+          format: uuid
+          description: ID канала
+        eventType:
+          type: string
+          enum: [joined, left, muted, deafened, speaking, quality_changed]
+          description: Тип события
+        participantId:
+          type: string
+          format: uuid
+          description: ID участника
+        data:
+          type: object
+          description: Дополнительные данные события
+          additionalProperties: true
+        timestamp:
+          type: string
+          format: date-time
+          description: Время события
+      required:
+        - id
+        - channelId
+        - eventType
+        - timestamp
+
+    PaginationInfo:
+      type: object
+      description: Информация о пагинации
+      properties:
+        limit:
+          type: integer
+          description: Размер страницы
+        offset:
+          type: integer
+          description: Смещение
+        hasNext:
+          type: boolean
+          description: Есть следующая страница
+        hasPrev:
+          type: boolean
+          description: Есть предыдущая страница
+      required:
+        - limit
+        - offset
+        - hasNext
+        - hasPrev
+
+    Error:
+      type: object
+      description: Описание ошибки
+      properties:
+        code:
+          type: string
+          description: Код ошибки
+        message:
+          type: string
+          description: Сообщение об ошибке
+        details:
+          type: object
+          description: Дополнительные детали ошибки
+          additionalProperties: true
+      required:
+        - code
+        - message
+
+  # Переиспользуемые ответы
+  responses:
+    BadRequest:
+      description: Неверный запрос
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+    Unauthorized:
+      description: Не авторизован
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+    NotFound:
+      description: Ресурс не найден
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+    InternalServerError:
+      description: Внутренняя ошибка сервера
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+  # Схемы безопасности
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT токен авторизации
+
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API ключ для сервер-сервер коммуникации
+
+# WebSocket спецификации (документация)
+x-websockets:
+  voice-channel-updates:
+    url: wss://api.necp.game/v1/social/voice/channels/{channelId}
+    description: |
+      WebSocket для обновлений состояния голосового канала в реальном времени.
+      Отправляет события о присоединении/выходе участников, изменении состояния.
+    parameters:
+      channelId:
+        type: string
+        format: uuid
+        description: ID канала
+    messages:
+      participant-joined:
+        type: object
+        properties:
+          type:
+            type: string
+            enum: [participant_joined]
+          data:
+            $ref: "#/components/schemas/VoiceParticipant"
+
+      participant-left:
+        type: object
+        properties:
+          type:
+            type: string
+            enum: [participant_left]
+          data:
+            type: object
+            properties:
+              participantId:
+                type: string
+                format: uuid
+              leftAt:
+                type: string
+                format: date-time
+
+      participant-state-changed:
+        type: object
+        properties:
+          type:
+            type: string
+            enum: [participant_state_changed]
+          data:
+            type: object
+            properties:
+              participantId:
+                type: string
+                format: uuid
+              oldState:
+                type: object
+                properties:
+                  isMuted:
+                    type: boolean
+                  isDeafened:
+                    type: boolean
+                  isSpeaking:
+                    type: boolean
+              newState:
+                type: object
+                properties:
+                  isMuted:
+                    type: boolean
+                  isDeafened:
+                    type: boolean
+                  isSpeaking:
+                    type: boolean
+
+  voice-quality-updates:
+    url: wss://api.necp.game/v1/social/voice/quality/{targetId}
+    description: |
+      WebSocket для обновлений качества звука в реальном времени.
+      Отправляет изменения качества и метрики соединения.
+    parameters:
+      targetId:
+        type: string
+        format: uuid
+        description: ID цели (канал или игрок)
+    messages:
+      quality-changed:
+        type: object
+        properties:
+          type:
+            type: string
+            enum: [quality_changed]
+          data:
+            $ref: "#/components/schemas/AudioQualityStatus"
+
+# Event Bus спецификации (документация)
+x-event-bus:
+  events:
+    voice.channel.created:
+      description: Канал создан
+      payload:
+        type: object
+        properties:
+          channelId:
+            type: string
+            format: uuid
+          channelType:
+            type: string
+            enum: [PARTY, GUILD, RAID, PROXIMITY]
+          ownerId:
+            type: string
+            format: uuid
+        required:
+          - channelId
+          - channelType
+
+    voice.participant.joined:
+      description: Участник присоединился к каналу
+      payload:
+        type: object
+        properties:
+          channelId:
+            type: string
+            format: uuid
+          participantId:
+            type: string
+            format: uuid
+          playerId:
+            type: string
+            format: uuid
+        required:
+          - channelId
+          - participantId
+          - playerId
+
+    voice.participant.left:
+      description: Участник покинул канал
+      payload:
+        type: object
+        properties:
+          channelId:
+            type: string
+            format: uuid
+          participantId:
+            type: string
+            format: uuid
+          playerId:
+            type: string
+            format: uuid
+          reason:
+            type: string
+            enum: [voluntary, kicked, channel_deleted, timeout]
+        required:
+          - channelId
+          - participantId
+          - playerId
+
+    voice.participant.muted:
+      description: Участник заглушен
+      payload:
+        type: object
+        properties:
+          channelId:
+            type: string
+            format: uuid
+          participantId:
+            type: string
+            format: uuid
+          mutedBy:
+            type: string
+            format: uuid
+        required:
+          - channelId
+          - participantId
+
+    voice.quality.adapted:
+      description: Качество звука адаптировано
+      payload:
+        type: object
+        properties:
+          targetType:
+            type: string
+            enum: [channel, player]
+          targetId:
+            type: string
+            format: uuid
+          oldQuality:
+            type: string
+            enum: [HIGH, MEDIUM, LOW]
+          newQuality:
+            type: string
+            enum: [HIGH, MEDIUM, LOW]
+          reason:
+            type: string
+            enum: [network_degradation, load_balancing, manual_override]
+        required:
+          - targetType
+          - targetId
+          - oldQuality
+          - newQuality
+# Issue: #244

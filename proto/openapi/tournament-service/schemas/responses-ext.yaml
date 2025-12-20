@@ -1,0 +1,413 @@
+PlayerInfo:
+  type: object
+  properties:
+    player_id:
+      type: string
+    display_name:
+      type: string
+    level:
+      type: integer
+    rank:
+      type: string
+    avatar_url:
+      type: string
+    team_name:
+      type: string
+    statistics:
+      type: object
+      additionalProperties: true
+  required:
+    - player_id
+
+UpdateMatchResultResponse:
+  type: object
+  properties:
+    match_id:
+      type: string
+    tournament_id:
+      type: string
+    winner_id:
+      type: string
+    loser_id:
+      type: string
+    updated_at:
+      type: integer
+      format: int64
+    next_match_scheduled:
+      type: boolean
+    tournament_progress_updated:
+      type: boolean
+  required:
+    - match_id
+    - tournament_id
+    - winner_id
+    - loser_id
+    - updated_at
+
+GetRankingsResponse:
+  type: object
+  properties:
+    leaderboard_type:
+      type: string
+    game_mode:
+      type: string
+    region:
+      type: string
+    rankings:
+      type: array
+      items:
+        $ref: '#/PlayerRanking'
+    total_count:
+      type: integer
+      minimum: 0
+    generated_at:
+      type: integer
+      format: int64
+  required:
+    - leaderboard_type
+    - rankings
+    - generated_at
+
+PlayerRanking:
+  type: object
+  properties:
+    rank:
+      type: integer
+      minimum: 1
+    player_id:
+      type: string
+    display_name:
+      type: string
+    rating:
+      type: integer
+      minimum: 0
+    wins:
+      type: integer
+      minimum: 0
+    losses:
+      type: integer
+      minimum: 0
+    win_rate:
+      type: number
+      format: float
+      minimum: 0.0
+      maximum: 1.0
+    streak:
+      type: integer
+    last_active:
+      type: integer
+      format: int64
+    achievements:
+      type: array
+      items:
+        type: string
+  required:
+    - rank
+    - player_id
+    - rating
+    - wins
+    - losses
+
+GetPlayerRankingResponse:
+  type: object
+  properties:
+    player_id:
+      type: string
+    rankings:
+      type: object
+      additionalProperties:
+        $ref: '#/PlayerRanking'
+    overall_stats:
+      $ref: '#/PlayerStats'
+  required:
+    - player_id
+    - rankings
+
+PlayerStats:
+  type: object
+  properties:
+    total_matches:
+      type: integer
+      minimum: 0
+    total_wins:
+      type: integer
+      minimum: 0
+    total_losses:
+      type: integer
+      minimum: 0
+    win_rate:
+      type: number
+      format: float
+      minimum: 0.0
+      maximum: 1.0
+    current_streak:
+      type: integer
+    longest_win_streak:
+      type: integer
+      minimum: 0
+    favorite_game_mode:
+      type: string
+    total_prizes_won:
+      type: integer
+      minimum: 0
+    total_earnings:
+      type: integer
+      minimum: 0
+    joined_at:
+      type: integer
+      format: int64
+  required:
+    - total_matches
+    - total_wins
+    - total_losses
+
+ListLeaguesResponse:
+  type: object
+  properties:
+    leagues:
+      type: array
+      items:
+        $ref: '#/LeagueSummary'
+    total_count:
+      type: integer
+      minimum: 0
+  required:
+    - leagues
+    - total_count
+
+LeagueSummary:
+  type: object
+  properties:
+    league_id:
+      type: string
+    name:
+      type: string
+    game_mode:
+      type: string
+    status:
+      type: string
+      enum: [active, completed, cancelled]
+    current_season:
+      type: integer
+      minimum: 1
+    team_count:
+      type: integer
+      minimum: 0
+    max_teams:
+      type: integer
+    season_end_time:
+      type: integer
+      format: int64
+    region:
+      type: string
+  required:
+    - league_id
+    - name
+    - game_mode
+    - status
+
+CreateLeagueResponse:
+  type: object
+  properties:
+    league_id:
+      type: string
+    name:
+      type: string
+    status:
+      type: string
+    current_season:
+      type: integer
+    created_at:
+      type: integer
+      format: int64
+  required:
+    - league_id
+    - name
+    - status
+    - current_season
+    - created_at
+
+JoinLeagueResponse:
+  type: object
+  properties:
+    league_id:
+      type: string
+    player_id:
+      type: string
+    team_id:
+      type: string
+    joined_at:
+      type: integer
+      format: int64
+    current_rank:
+      type: integer
+  required:
+    - league_id
+    - player_id
+    - joined_at
+
+GetTournamentRewardsResponse:
+  type: object
+  properties:
+    tournament_id:
+      type: string
+    player_id:
+      type: string
+    available_rewards:
+      type: array
+      items:
+        $ref: '#/Reward'
+    claimed_rewards:
+      type: array
+      items:
+        type: string
+        description: Claimed reward IDs
+  required:
+    - tournament_id
+    - player_id
+    - available_rewards
+
+Reward:
+  type: object
+  properties:
+    reward_id:
+      type: string
+    position:
+      type: integer
+    reward_type:
+      type: string
+    reward_value:
+      type: string
+    description:
+      type: string
+    claimed:
+      type: boolean
+    claim_deadline:
+      type: integer
+      format: int64
+  required:
+    - reward_id
+    - position
+    - reward_type
+    - reward_value
+    - claimed
+
+ClaimRewardsResponse:
+  type: object
+  properties:
+    tournament_id:
+      type: string
+    player_id:
+      type: string
+    claimed_rewards:
+      type: array
+      items:
+        type: string
+    total_value:
+      type: integer
+      minimum: 0
+    claimed_at:
+      type: integer
+      format: int64
+  required:
+    - tournament_id
+    - player_id
+    - claimed_rewards
+    - claimed_at
+
+GetTournamentStatisticsResponse:
+  type: object
+  properties:
+    tournament_id:
+      type: string
+    total_participants:
+      type: integer
+      minimum: 0
+    total_matches:
+      type: integer
+      minimum: 0
+    completed_matches:
+      type: integer
+      minimum: 0
+    average_match_duration:
+      type: integer
+      minimum: 0
+      description: Average match duration in seconds
+    total_spectators:
+      type: integer
+      minimum: 0
+    popular_game_modes:
+      type: array
+      items:
+        type: object
+        properties:
+          game_mode:
+            type: string
+          count:
+            type: integer
+            minimum: 0
+        required:
+          - game_mode
+          - count
+    region_distribution:
+      type: object
+      additionalProperties:
+        type: integer
+        minimum: 0
+  required:
+    - tournament_id
+    - total_participants
+    - total_matches
+    - completed_matches
+
+GetGlobalStatisticsResponse:
+  type: object
+  properties:
+    time_range:
+      type: string
+    total_tournaments:
+      type: integer
+      minimum: 0
+    active_tournaments:
+      type: integer
+      minimum: 0
+    total_participants:
+      type: integer
+      minimum: 0
+    total_matches_played:
+      type: integer
+      minimum: 0
+    average_tournament_size:
+      type: number
+      format: float
+      minimum: 0
+    popular_game_modes:
+      type: array
+      items:
+        type: object
+        properties:
+          game_mode:
+            type: string
+          tournaments_count:
+            type: integer
+            minimum: 0
+          participants_count:
+            type: integer
+            minimum: 0
+        required:
+          - game_mode
+          - tournaments_count
+    region_activity:
+      type: object
+      additionalProperties:
+        type: integer
+        minimum: 0
+    generated_at:
+      type: integer
+      format: int64
+  required:
+    - time_range
+    - total_tournaments
+    - total_participants
+    - total_matches_played
+    - generated_at

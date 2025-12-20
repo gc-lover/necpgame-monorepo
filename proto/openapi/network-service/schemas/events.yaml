@@ -1,0 +1,133 @@
+Event:
+  type: object
+  properties:
+    event_id:
+      type: string
+    event_type:
+      type: string
+      enum: [PLAYER_JOIN, PLAYER_LEAVE, COMBAT_START, COMBAT_END, QUEST_UPDATE, ACHIEVEMENT, SYSTEM_ANNOUNCEMENT, CUSTOM]
+    source:
+      type: string
+    target:
+      type: string
+    channel:
+      type: string
+    data:
+      type: object
+      additionalProperties: true
+    timestamp:
+      type: integer
+      format: int64
+    priority:
+      type: string
+      enum: [LOW, NORMAL, HIGH, URGENT]
+      default: NORMAL
+    ttl:
+      type: integer
+      description: Time to live in seconds
+    metadata:
+      type: object
+      additionalProperties: true
+  required:
+    - event_id
+    - event_type
+    - timestamp
+
+EventSubscription:
+  type: object
+  properties:
+    subscription_id:
+      type: string
+    subscriber_id:
+      type: string
+    event_types:
+      type: array
+      items:
+        type: string
+    channels:
+      type: array
+      items:
+        type: string
+    sources:
+      type: array
+      items:
+        type: string
+    filters:
+      type: object
+      additionalProperties: true
+    delivery_method:
+      type: string
+      enum: [WEBSOCKET, HTTP_CALLBACK, QUEUE]
+      default: WEBSOCKET
+    callback_url:
+      type: string
+    is_active:
+      type: boolean
+      default: true
+    created_at:
+      type: integer
+      format: int64
+    expires_at:
+      type: integer
+      format: int64
+  required:
+    - subscription_id
+    - subscriber_id
+    - event_types
+
+EventBatch:
+  type: object
+  properties:
+    batch_id:
+      type: string
+    events:
+      type: array
+      items:
+        $ref: '#/Event'
+    total_events:
+      type: integer
+      minimum: 0
+    compression_type:
+      type: string
+      enum: [NONE, GZIP, LZ4]
+      default: NONE
+    timestamp:
+      type: integer
+      format: int64
+  required:
+    - batch_id
+    - events
+    - total_events
+
+EventFilter:
+  type: object
+  properties:
+    event_types:
+      type: array
+      items:
+        type: string
+    sources:
+      type: array
+      items:
+        type: string
+    targets:
+      type: array
+      items:
+        type: string
+    channels:
+      type: array
+      items:
+        type: string
+    time_range:
+      type: object
+      properties:
+        from:
+          type: integer
+          format: int64
+        to:
+          type: integer
+          format: int64
+    custom_filters:
+      type: object
+      additionalProperties: true
+  required: []

@@ -1,0 +1,223 @@
+components:
+  schemas:
+    ModerationRule:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        type:
+          type: string
+          enum: [word_filter, spam_detection, toxicity_analysis]
+        pattern:
+          type: string
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+        active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CreateModerationRuleRequest:
+      type: object
+      required:
+        - name
+        - type
+        - severity
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+          enum: [word_filter, spam_detection, toxicity_analysis]
+        pattern:
+          type: string
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+
+    UpdateModerationRuleRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        pattern:
+          type: string
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+        active:
+          type: boolean
+
+    ModerationViolation:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        rule_id:
+          type: string
+          format: uuid
+        message_id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        channel_id:
+          type: string
+          format: uuid
+        content:
+          type: string
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+        status:
+          type: string
+          enum: [pending, resolved, dismissed]
+        detected_at:
+          type: string
+          format: date-time
+
+    ApplyModerationActionRequest:
+      type: object
+      required:
+        - action_type
+        - reason
+        - moderator_id
+      properties:
+        action_type:
+          type: string
+          enum: [warn, mute, ban, delete]
+        duration:
+          type: integer
+          description: Duration in seconds
+        reason:
+          type: string
+        moderator_id:
+          type: string
+          format: uuid
+
+    ModerationAction:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        violation_id:
+          type: string
+          format: uuid
+        action_type:
+          type: string
+          enum: [warn, mute, ban, delete]
+        moderator_id:
+          type: string
+          format: uuid
+        reason:
+          type: string
+        duration:
+          type: integer
+        applied_at:
+          type: string
+          format: date-time
+
+    ModerationLog:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        action_id:
+          type: string
+          format: uuid
+        moderator_id:
+          type: string
+          format: uuid
+        action_type:
+          type: string
+          enum: [warn, mute, ban, delete]
+        target_user_id:
+          type: string
+          format: uuid
+        details:
+          type: object
+        timestamp:
+          type: string
+          format: date-time
+
+    CheckMessageRequest:
+      type: object
+      required:
+        - content
+        - user_id
+        - channel_id
+      properties:
+        content:
+          type: string
+        user_id:
+          type: string
+          format: uuid
+        channel_id:
+          type: string
+          format: uuid
+        context:
+          type: object
+
+    CheckMessageResponse:
+      type: object
+      properties:
+        allowed:
+          type: boolean
+        violations:
+          type: array
+          items:
+            $ref: "#/components/schemas/ModerationViolation"
+        actions_required:
+          type: array
+          items:
+            type: string
+            enum: [warn, mute, ban, delete]
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: string
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: string
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: string

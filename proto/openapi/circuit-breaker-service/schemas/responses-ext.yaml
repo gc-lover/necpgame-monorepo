@@ -1,0 +1,290 @@
+    fairness:
+      type: boolean
+    metrics_enabled:
+      type: boolean
+
+BulkheadMetrics:
+  type: object
+  properties:
+    active_threads:
+      type: integer
+      minimum: 0
+    queued_requests:
+      type: integer
+      minimum: 0
+    rejected_requests:
+      type: integer
+      minimum: 0
+    completed_requests:
+      type: integer
+      minimum: 0
+    average_execution_time:
+      type: number
+      format: float
+      minimum: 0
+    max_execution_time:
+      type: number
+      format: float
+      minimum: 0
+  required:
+    - active_threads
+    - queued_requests
+    - rejected_requests
+    - completed_requests
+
+CreateTimeoutResponse:
+  type: object
+  properties:
+    timeout_id:
+      type: string
+    service_name:
+      type: string
+    endpoint:
+      type: string
+    created_at:
+      type: integer
+      format: int64
+    config:
+      $ref: '#/TimeoutConfig'
+  required:
+    - timeout_id
+    - service_name
+    - endpoint
+    - created_at
+
+ListTimeoutsResponse:
+  type: object
+  properties:
+    timeouts:
+      type: array
+      items:
+        $ref: '#/TimeoutSummary'
+    total_count:
+      type: integer
+      minimum: 0
+  required:
+    - timeouts
+    - total_count
+
+TimeoutSummary:
+  type: object
+  properties:
+    timeout_id:
+      type: string
+    service_name:
+      type: string
+    endpoint:
+      type: string
+    timeout_duration:
+      type: integer
+    timeout_strategy:
+      type: string
+    timeouts_triggered:
+      type: integer
+      minimum: 0
+    created_at:
+      type: integer
+      format: int64
+  required:
+    - timeout_id
+    - service_name
+    - endpoint
+
+TimeoutConfig:
+  type: object
+  properties:
+    timeout_duration:
+      type: integer
+    cancel_running_call:
+      type: boolean
+    timeout_strategy:
+      type: string
+    adaptive_timeout_config:
+      type: object
+      properties:
+        min_timeout:
+          type: integer
+        max_timeout:
+          type: integer
+        increase_factor:
+          type: number
+          format: float
+        decrease_factor:
+          type: number
+          format: float
+    metrics_enabled:
+      type: boolean
+
+CreateDegradationPolicyResponse:
+  type: object
+  properties:
+    policy_id:
+      type: string
+    service_name:
+      type: string
+    created_at:
+      type: integer
+      format: int64
+    status:
+      type: string
+      enum: [active, inactive]
+    config:
+      $ref: '#/DegradationPolicyConfig'
+  required:
+    - policy_id
+    - service_name
+    - created_at
+    - status
+
+ListDegradationPoliciesResponse:
+  type: object
+  properties:
+    policies:
+      type: array
+      items:
+        $ref: '#/DegradationPolicySummary'
+    total_count:
+      type: integer
+      minimum: 0
+  required:
+    - policies
+    - total_count
+
+DegradationPolicySummary:
+  type: object
+  properties:
+    policy_id:
+      type: string
+    service_name:
+      type: string
+    status:
+      type: string
+      enum: [active, inactive, degraded]
+    trigger_count:
+      type: integer
+      minimum: 0
+    recovery_count:
+      type: integer
+      minimum: 0
+    last_triggered_at:
+      type: integer
+      format: int64
+    created_at:
+      type: integer
+      format: int64
+  required:
+    - policy_id
+    - service_name
+    - status
+
+DegradationPolicyConfig:
+  type: object
+  properties:
+    trigger_conditions:
+      type: array
+      items:
+        type: object
+        properties:
+          metric:
+            type: string
+          operator:
+            type: string
+          threshold:
+            type: number
+            format: float
+          duration:
+            type: integer
+        required:
+          - metric
+          - operator
+          - threshold
+    degradation_actions:
+      type: array
+      items:
+        type: object
+        properties:
+          action_type:
+            type: string
+          priority:
+            type: integer
+          parameters:
+            type: object
+            additionalProperties: true
+        required:
+          - action_type
+    recovery_conditions:
+      type: array
+      items:
+        type: object
+        properties:
+          metric:
+            type: string
+          operator:
+            type: string
+          threshold:
+            type: number
+            format: float
+          duration:
+            type: integer
+        required:
+          - metric
+          - operator
+          - threshold
+    enabled:
+      type: boolean
+    monitoring_enabled:
+      type: boolean
+
+GetMetricsResponse:
+  type: object
+  properties:
+    circuits:
+      type: array
+      items:
+        $ref: '#/CircuitMetrics'
+    bulkheads:
+      type: array
+      items:
+        $ref: '#/BulkheadMetrics'
+    timeouts:
+      type: array
+      items:
+        type: object
+        properties:
+          timeout_id:
+            type: string
+          service_name:
+            type: string
+          timeouts_triggered:
+            type: integer
+            minimum: 0
+          average_response_time:
+            type: number
+            format: float
+            minimum: 0
+    degradation_policies:
+      type: array
+      items:
+        type: object
+        properties:
+          policy_id:
+            type: string
+          status:
+            type: string
+          trigger_count:
+            type: integer
+            minimum: 0
+          recovery_count:
+            type: integer
+            minimum: 0
+    time_range:
+      type: string
+    generated_at:
+      type: integer
+      format: int64
+  required:
+    - circuits
+    - bulkheads
+    - timeouts
+    - degradation_policies
+    - generated_at

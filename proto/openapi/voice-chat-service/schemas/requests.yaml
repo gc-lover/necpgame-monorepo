@@ -1,0 +1,265 @@
+CreateChannelRequest:
+  type: object
+  properties:
+    name:
+      type: string
+      minLength: 1
+      maxLength: 50
+    type:
+      type: string
+      enum: [global, guild, group, proximity, private]
+    description:
+      type: string
+      maxLength: 200
+    max_participants:
+      type: integer
+      minimum: 1
+      maximum: 100
+      default: 10
+    password:
+      type: string
+      minLength: 4
+      maxLength: 20
+    audio_settings:
+      $ref: '#/AudioSettings'
+    permissions:
+      type: object
+      properties:
+        allow_guests:
+          type: boolean
+          default: false
+        moderator_only:
+          type: boolean
+          default: false
+        record_enabled:
+          type: boolean
+          default: false
+  required:
+    - name
+    - type
+
+UpdateChannelRequest:
+  type: object
+  properties:
+    name:
+      type: string
+      minLength: 1
+      maxLength: 50
+    description:
+      type: string
+      maxLength: 200
+    max_participants:
+      type: integer
+      minimum: 1
+      maximum: 100
+    password:
+      type: string
+      minLength: 4
+      maxLength: 20
+    audio_settings:
+      $ref: '#/AudioSettings'
+    permissions:
+      type: object
+      properties:
+        allow_guests:
+          type: boolean
+        moderator_only:
+          type: boolean
+        record_enabled:
+          type: boolean
+
+AudioSettings:
+  type: object
+  properties:
+    sample_rate:
+      type: integer
+      enum: [8000, 16000, 22050, 44100, 48000]
+      default: 22050
+    channels:
+      type: integer
+      enum: [1, 2]
+      default: 1
+    bitrate:
+      type: integer
+      enum: [64000, 96000, 128000, 192000, 256000]
+      default: 128000
+    codec:
+      type: string
+      enum: [OPUS, SPEEX, PCM]
+      default: OPUS
+    noise_suppression:
+      type: boolean
+      default: true
+    echo_cancellation:
+      type: boolean
+      default: true
+    voice_activity_detection:
+      type: boolean
+      default: true
+    ducking_enabled:
+      type: boolean
+      default: true
+
+JoinChannelRequest:
+  type: object
+  properties:
+    password:
+      type: string
+    device_info:
+      $ref: '#/DeviceInfo'
+    audio_capabilities:
+      $ref: '#/AudioCapabilities'
+
+DeviceInfo:
+  type: object
+  properties:
+    device_type:
+      type: string
+      enum: [DESKTOP, MOBILE, TABLET, CONSOLE, WEB]
+    platform:
+      type: string
+    microphone_enabled:
+      type: boolean
+      default: true
+    speaker_enabled:
+      type: boolean
+      default: true
+    headphones_connected:
+      type: boolean
+      default: false
+  required:
+    - device_type
+
+AudioCapabilities:
+  type: object
+  properties:
+    supported_codecs:
+      type: array
+      items:
+        type: string
+        enum: [OPUS, SPEEX, PCM]
+    max_sample_rate:
+      type: integer
+      enum: [8000, 16000, 22050, 44100, 48000]
+    supports_stereo:
+      type: boolean
+    supports_noise_suppression:
+      type: boolean
+    supports_echo_cancellation:
+      type: boolean
+
+StartStreamRequest:
+  type: object
+  properties:
+    channel_id:
+      type: string
+    audio_format:
+      $ref: '#/AudioSettings'
+    stream_type:
+      type: string
+      enum: [voice, music, system]
+      default: voice
+    priority:
+      type: string
+      enum: [low, normal, high, urgent]
+      default: normal
+    metadata:
+      type: object
+      additionalProperties: true
+  required:
+    - channel_id
+
+TextToSpeechRequest:
+  type: object
+  properties:
+    text:
+      type: string
+      minLength: 1
+      maxLength: 1000
+    voice:
+      type: string
+      enum: [male_1, male_2, female_1, female_2, neutral]
+      default: neutral
+    language:
+      type: string
+      default: "en-US"
+    speed:
+      type: number
+      format: float
+      minimum: 0.5
+      maximum: 2.0
+      default: 1.0
+    pitch:
+      type: number
+      format: float
+      minimum: 0.5
+      maximum: 2.0
+      default: 1.0
+    volume:
+      type: number
+      format: float
+      minimum: 0.0
+      maximum: 1.0
+      default: 0.8
+    channel_id:
+      type: string
+    play_immediately:
+      type: boolean
+      default: true
+  required:
+    - text
+
+ReportAbuseRequest:
+  type: object
+  properties:
+    reported_user_id:
+      type: string
+    channel_id:
+      type: string
+    abuse_type:
+      type: string
+      enum: [harassment, spam, inappropriate_content, technical_abuse, griefing]
+    description:
+      type: string
+      maxLength: 500
+    evidence_urls:
+      type: array
+      items:
+        type: string
+    timestamp:
+      type: integer
+      format: int64
+    severity:
+      type: string
+      enum: [low, medium, high, critical]
+      default: medium
+  required:
+    - reported_user_id
+    - abuse_type
+    - description
+
+MuteUserRequest:
+  type: object
+  properties:
+    user_id:
+      type: string
+    channel_id:
+      type: string
+    mute_type:
+      type: string
+      enum: [voice, text, both]
+      default: voice
+    duration_minutes:
+      type: integer
+      minimum: 1
+      maximum: 1440
+      default: 60
+    reason:
+      type: string
+      maxLength: 200
+    evidence:
+      type: string
+      maxLength: 500
+  required:
+    - user_id
+    - reason

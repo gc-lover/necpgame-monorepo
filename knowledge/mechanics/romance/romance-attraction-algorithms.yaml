@@ -1,0 +1,266 @@
+metadata:
+  id: romance-attraction-algorithms
+  title: Алгоритмы романтического влечения NECPGAME
+  document_type: mechanics
+  category: romance
+  status: draft
+  version: '1.0.0'
+  last_updated: 2025-12-20T06:45:00Z
+  concept_approved: false
+  concept_reviewed_at: ''
+  owners:
+    - role: concept_director
+      contact: concept@necp.game
+  tags:
+    - romance
+    - attraction
+    - algorithms
+    - social
+  topics:
+    - relationship-mechanics
+    - character-interaction
+  related_systems:
+    - social-service
+    - character-service
+    - romance-service
+  related_documents:
+    - id: npc-relationships-system-detailed
+      relation: complements
+    - id: player-character-attributes
+      relation: references
+  source: shared/docs/knowledge/mechanics/romance/romance-attraction-algorithms.md
+  visibility: internal
+  audience:
+    - concept
+    - narrative
+    - systems
+  risk_level: medium
+review:
+  chain:
+    - role: concept_director
+      reviewer: ''
+      reviewed_at: ''
+      status: pending
+  next_actions: []
+summary:
+  problem: Алгоритмы определения романтического влечения не были формализованы и существовали только в виде концептуальных идей.
+  goal: Создать математические модели для расчета привлекательности между персонажами в киберпанк-мире.
+  essence: Документ определяет многофакторные алгоритмы влечения, учитывающие внешность, личность, социальный статус и игровые механики.
+  key_points:
+    - Базовая привлекательность рассчитывается по 5 основным категориям
+    - Динамические модификаторы учитывают контекст и развитие отношений
+    - Киберпанк-тематика влияет на алгоритмы через импланты и модификации
+content:
+  sections:
+    - id: overview
+      title: Назначение системы
+      body: |
+        Система романтического влечения определяет первоначальную привлекательность между персонажами в Night City. Алгоритм работает как черный ящик, принимающий характеристики двух персонажей и возвращающий коэффициент привлекательности, который затем используется для определения вероятности успешного взаимодействия.
+      mechanics_links:
+        - mechanics/romance/romance-relationship-progression.yaml
+      assets: []
+
+    - id: base_attraction_formula
+      title: Базовая формула привлекательности
+      body: |
+        Привлекательность рассчитывается как взвешенная сумма по пяти основным категориям:
+
+        ```
+        baseAttraction = (appearanceWeight * appearanceScore) +
+                         (personalityWeight * personalityScore) +
+                         (statusWeight * statusScore) +
+                         (sharedInterestsWeight * sharedInterestsScore) +
+                         (cyberpunkFactorWeight * cyberpunkFactorScore)
+        ```
+
+        Каждый вес лежит в диапазоне 0.1-0.3, сумма весов = 1.0.
+      mechanics_links:
+        - mechanics/social/reputation-formulas.yaml
+      assets: []
+
+    - id: appearance_calculation
+      title: Расчет внешней привлекательности
+      body: |
+        Внешность оценивается по шкале 1-100 и включает:
+
+        **Физические характеристики (40%):**
+        - Черты лица, фигура, стиль одежды
+        - Кибернетические модификации внешности
+        - Текущий уровень повреждений и имплантов
+
+        **Груминг и стиль (30%):**
+        - Качество одежды и аксессуаров
+        - Уровень ухоженности
+        - Соответствие моде Night City
+
+        **Общее впечатление (30%):**
+        - Осанка, манера поведения
+        - Визуальные эффекты имплантов
+        - Аура уверенности и харизмы
+      mechanics_links:
+        - mechanics/economy/cosmetics-core-1797.yaml
+      assets: []
+
+    - id: personality_matching
+      title: Сопоставление личностей
+      body: |
+        Личность рассчитывается по модели Большой Пятерки с киберпанк-модификаторами:
+
+        **Базовые черты:**
+        - Экстраверсия vs Интроверсия
+        - Доброжелательность vs Антагонизм
+        - Добросовестность vs Беспечность
+        - Эмоциональная стабильность vs Нейротизм
+        - Открытость опыту vs Консерватизм
+
+        **Киберпанк-модификаторы:**
+        - Нейроимпланты влияют на эмоциональную стабильность
+        - Боевые импланты снижают доброжелательность
+        - Хакерские импланты повышают открытость
+      mechanics_links:
+        - mechanics/progression/attributes.yaml
+      assets: []
+
+    - id: status_compatibility
+      title: Совместимость социального статуса
+      body: |
+        Статус рассчитывается как функция репутации, богатства и влияния:
+
+        ```
+        statusCompatibility = 1 - (abs(playerStatus - npcStatus) / maxStatus)
+        ```
+
+        **Модификаторы статуса:**
+        - Репутация в фракциях
+        - Экономическое положение
+        - Политическое влияние
+        - Уровень кибернетических модификаций
+
+        **Киберпанк-факторы:**
+        - Корпоративные vs Уличные персонажи
+        - Хакеры vs Нетраннеры
+        - Мерсенери vs Фиксеры
+      mechanics_links:
+        - mechanics/social/reputation-formulas.yaml
+      assets: []
+
+    - id: shared_interests_algorithm
+      title: Алгоритм общих интересов
+      body: |
+        Общие интересы рассчитываются через пересечение векторов интересов:
+
+        ```
+        sharedInterestsScore = (intersectionSize / unionSize) * compatibilityBonus
+        ```
+
+        **Категории интересов:**
+        - Профессиональные (хакерство, мерсенерство, нетраннинг)
+        - Хобби (уличные гонки, киберспорт, музыка)
+        - Жизненные ценности (свобода, власть, справедливость)
+        - Киберпанк-культура (модификации, бренды, субкультуры)
+
+        **Динамические интересы:**
+        - Меняются в зависимости от квестов
+        - Влияют на диалоговые ветки
+        - Определяют совместные активности
+      mechanics_links:
+        - mechanics/quests/quest-system.yaml
+      assets: []
+
+    - id: cyberpunk_attraction_modifiers
+      title: Киберпанк-модификаторы влечения
+      body: |
+        Специфические для Night City факторы привлекательности:
+
+        **Положительные модификаторы:**
+        - Совместимые импланты (+15-25%)
+        - Общие кибернетические бренды (+10-20%)
+        - Участие в одних хромовых бандах (+5-15%)
+
+        **Отрицательные модификаторы:**
+        - Конкурирующие корпорации (-20-30%)
+        - Противоположные субкультуры (-10-20%)
+        - Враждебные импланты (-5-15%)
+
+        **Нейтральные факторы:**
+        - Уровень хрома (высокий уровень может быть как привлекательным, так и отталкивающим)
+        - Тип модификаций (боевые vs социальные импланты)
+        - Стиль кибернетических модификаций
+      mechanics_links:
+        - mechanics/gear/gear-gravity-shift-implant-1785.yaml
+      assets: []
+
+    - id: context_dependent_modifiers
+      title: Контекстуальные модификаторы
+      body: |
+        Привлекательность меняется в зависимости от ситуации:
+
+        **Локационные модификаторы:**
+        - Клубы и бары Night City (+20%)
+        - Корпоративные зоны (-30%)
+        - Уличные районы (нейтрально)
+
+        **Ситуационные модификаторы:**
+        - Во время миссий (+10-15%)
+        - После совместного выживания (+25%)
+        - Во время романтических событий (+50%)
+
+        **Временные модификаторы:**
+        - Ночное время (+15%)
+        - Во время дождя/шума города (+10%)
+        - После употребления веществ (переменный эффект)
+      mechanics_links:
+        - mechanics/world/locations-night-city.yaml
+      assets: []
+
+    - id: algorithm_implementation
+      title: Реализация алгоритма
+      body: |
+        Алгоритм реализован в romance-service с следующим API:
+
+        **Входные параметры:**
+        - playerCharacter: объект персонажа игрока
+        - npcCharacter: объект NPC
+        - context: объект контекста взаимодействия
+
+        **Выходные значения:**
+        - baseAttraction: число от 0 до 100
+        - attractionBreakdown: объект с разбивкой по категориям
+        - recommendedActions: массив предлагаемых взаимодействий
+
+        **Производительность:**
+        - Время расчета: < 10ms
+        - Память: < 50KB на расчет
+        - Кэширование результатов на 5 минут
+      mechanics_links:
+        - mechanics/social/social-mechanics-overview.yaml
+      assets: []
+appendix:
+  glossary:
+    - term: "Хром"
+      definition: "Кибернетические импланты и модификации тела"
+    - term: "Нетраннинг"
+      definition: "Деятельность по очистке цифрового следа"
+    - term: "Фиксер"
+      definition: "Посредник, организующий сделки в подполье"
+  references:
+    - "Cyberpunk 2077: Phantom Liberty - Romance Mechanics"
+    - "Social Psychology Models for Digital Games"
+  decisions:
+    - date: 2025-12-20
+      decision: "Использовать модель Большой Пятерки для личностных черт"
+      rationale: "Стандартизированная и научно обоснованная модель"
+  implementation:
+    needs_task: true
+    github_issue: 82
+    queue_reference:
+      - shared/trackers/queues/concept/queued.yaml
+    blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-12-20
+    author: Idea Writer Agent
+    changes: Создан базовый алгоритм романтического влечения для киберпанк-сеттинга
+validation:
+  checksum: ''
+  schema_version: '1.0'

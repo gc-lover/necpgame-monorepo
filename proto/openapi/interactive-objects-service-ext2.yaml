@@ -1,0 +1,314 @@
+          type: boolean
+
+    MilitaryObjectsResponse:
+      type: object
+      properties:
+        base_id:
+          type: string
+          format: uuid
+        weapon_systems:
+          type: array
+          items:
+            $ref: "#/components/schemas/WeaponSystem"
+        ammo_depots:
+          type: array
+          items:
+            $ref: "#/components/schemas/AmmoDepot"
+        shield_generators:
+          type: array
+          items:
+            $ref: "#/components/schemas/ShieldGenerator"
+
+    WeaponSystem:
+      type: object
+      properties:
+        object_id:
+          type: string
+          format: uuid
+        weapon_type:
+          type: string
+          enum: [artillery, missile_launcher, turret, railgun]
+        damage_per_shot:
+          type: integer
+        rate_of_fire:
+          type: number
+          format: float
+        range:
+          type: number
+          format: float
+
+    AmmoDepot:
+      type: object
+      properties:
+        object_id:
+          type: string
+          format: uuid
+        ammo_type:
+          type: string
+          enum: [explosive, incendiary, emp, armor_piercing]
+        capacity:
+          type: integer
+        current_stock:
+          type: integer
+        explosion_risk:
+          type: number
+          minimum: 0
+          maximum: 1
+
+    ShieldGenerator:
+      type: object
+      properties:
+        object_id:
+          type: string
+          format: uuid
+        protection_radius:
+          type: number
+          format: float
+        energy_capacity:
+          type: integer
+        recharge_rate:
+          type: number
+          format: float
+        active:
+          type: boolean
+
+    MotelObjectsResponse:
+      type: object
+      properties:
+        motel_id:
+          type: string
+          format: uuid
+        safes:
+          type: array
+          items:
+            $ref: "#/components/schemas/MotelSafe"
+        listening_devices:
+          type: array
+          items:
+            $ref: "#/components/schemas/ListeningDevice"
+        black_markets:
+          type: array
+          items:
+            $ref: "#/components/schemas/BlackMarket"
+        emergency_exits:
+          type: array
+          items:
+            $ref: "#/components/schemas/EmergencyExit"
+
+    MotelSafe:
+      type: object
+      properties:
+        object_id:
+          type: string
+          format: uuid
+        safe_type:
+          type: string
+          enum: [wall_safe, floor_safe, hidden_compartment]
+        lock_difficulty:
+          type: integer
+          minimum: 1
+          maximum: 100
+        contents_value:
+          type: integer
+          description: Credit value of contents
+
+    ListeningDevice:
+      type: object
+      properties:
+        object_id:
+          type: string
+          format: uuid
+        device_type:
+          type: string
+          enum: [microphone, camera, both]
+        recording_quality:
+          type: string
+          enum: [poor, good, excellent]
+        active_recording:
+          type: boolean
+
+    BlackMarket:
+      type: object
+      properties:
+        object_id:
+          type: string
+          format: uuid
+        merchant_type:
+          type: string
+          enum: [weapons, implants, information, contraband]
+        inventory_slots:
+          type: integer
+        current_stock:
+          type: integer
+        raid_probability:
+          type: number
+          minimum: 0
+          maximum: 1
+
+    EmergencyExit:
+      type: object
+      properties:
+        object_id:
+          type: string
+          format: uuid
+        exit_type:
+          type: string
+          enum: [fire_escape, service_door, ventilation_shaft, sewer_access]
+        destination_zone:
+          type: string
+          format: uuid
+        alarm_triggered:
+          type: boolean
+        locked:
+          type: boolean
+
+    LabObjectsResponse:
+      type: object
+      properties:
+        lab_id:
+          type: string
+          format: uuid
+        experimental_samples:
+          type: array
+          items:
+            $ref: "#/components/schemas/ExperimentalSample"
+        ai_terminals:
+          type: array
+          items:
+            $ref: "#/components/schemas/AITerminal"
+        chemical_synthesizers:
+          type: array
+          items:
+            $ref: "#/components/schemas/ChemicalSynthesizer"
+        cryo_chambers:
+          type: array
+          items:
+            $ref: "#/components/schemas/CryoChamber"
+
+    ExperimentalSample:
+      type: object
+      properties:
+        object_id:
+          type: string
+          format: uuid
+        sample_type:
+          type: string
+          enum: [dna, virus, nanites, chemical_compound]
+        containment_level:
+          type: string
+          enum: [low, medium, high, extreme]
+        research_value:
+          type: integer
+        infection_risk:
+          type: number
+          minimum: 0
+          maximum: 1
+
+    AITerminal:
+      type: object
+      properties:
+        object_id:
+          type: string
+          format: uuid
+        ai_type:
+          type: string
+          enum: [research_ai, security_ai, experimental_ai]
+        access_level:
+          type: string
+          enum: [public, restricted, classified, top_secret]
+        data_value:
+          type: integer
+        ice_protection:
+          type: boolean
+
+    ChemicalSynthesizer:
+      type: object
+      properties:
+        object_id:
+          type: string
+          format: uuid
+        synthesizer_type:
+          type: string
+          enum: [basic, advanced, experimental]
+        available_reagents:
+          type: array
+          items:
+            type: string
+        explosion_risk:
+          type: number
+          minimum: 0
+          maximum: 1
+        output_quality:
+          type: string
+          enum: [low, medium, high, perfect]
+
+    CryoChamber:
+      type: object
+      properties:
+        object_id:
+          type: string
+          format: uuid
+        subject_type:
+          type: string
+          enum: [human, cyberpsycho, mutant, experimental]
+        chamber_status:
+          type: string
+          enum: [active, inactive, breached, destroyed]
+
+    ReloadContentRequest:
+      type: object
+      required:
+        - content_id
+        - yaml_content
+      properties:
+        content_id:
+          type: string
+          description: Unique identifier for the content batch
+        yaml_content:
+          type: object
+          description: YAML content data as parsed JSON object
+          additionalProperties: true
+
+    ReloadContentResponse:
+      type: object
+      properties:
+        content_id:
+          type: string
+        message:
+          type: string
+        imported_at:
+          type: string
+          format: date-time
+        objects_count:
+          type: integer
+          description: Number of objects processed
+        awakening_difficulty:
+          type: integer
+          minimum: 1
+          maximum: 100
+
+    TelemetryResponse:
+      type: object
+      properties:
+        metric:
+          type: string
+        zone_type:
+          $ref: "#/components/schemas/ZoneType"
+        timeframe:
+          type: string
+        data_points:
+          type: array
+          items:
+            type: object
+            properties:
+              timestamp:
+                type: string
+                format: date-time
+              value:
+                type: number
+        average:
+          type: number
+        peak:
+          type: number
+        total:
+          type: number

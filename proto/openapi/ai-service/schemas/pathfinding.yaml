@@ -1,0 +1,78 @@
+Path:
+  type: object
+  properties:
+    path_id:
+      type: string
+    waypoints:
+      type: array
+      items:
+        $ref: '../common.yaml#/Vector3'
+    total_distance:
+      type: number
+      format: float
+    estimated_time:
+      type: integer
+      description: Estimated time in milliseconds
+    path_type:
+      type: string
+      enum: [DIRECT, AVOID_THREATS, STEALTH, FASTEST]
+    obstacles_avoided:
+      type: array
+      items:
+        $ref: '#/PathObstacle'
+    calculation_time_ms:
+      type: integer
+      minimum: 0
+  required:
+    - path_id
+    - waypoints
+    - total_distance
+
+PathObstacle:
+  type: object
+  properties:
+    obstacle_id:
+      type: string
+    obstacle_type:
+      type: string
+      enum: [WALL, ENTITY, HAZARD, TERRAIN]
+    position:
+      $ref: '../common.yaml#/Vector3'
+    bounding_box:
+      $ref: '../common.yaml#/BoundingBox'
+    threat_level:
+      type: integer
+      minimum: 0
+      maximum: 100
+  required:
+    - obstacle_id
+    - obstacle_type
+    - position
+
+PathfindingRequest:
+  type: object
+  properties:
+    start_position:
+      $ref: '../common.yaml#/Vector3'
+    end_position:
+      $ref: '../common.yaml#/Vector3'
+    path_type:
+      type: string
+      enum: [DIRECT, AVOID_THREATS, STEALTH, FASTEST]
+      default: DIRECT
+    max_distance:
+      type: number
+      format: float
+    avoid_entities:
+      type: boolean
+      default: true
+    avoid_hazards:
+      type: boolean
+      default: true
+    movement_type:
+      type: string
+      enum: [GROUND, FLYING, TELEPORT]
+      default: GROUND
+  required:
+    - start_position
+    - end_position

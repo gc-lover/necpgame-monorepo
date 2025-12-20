@@ -1,0 +1,400 @@
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Предметы нельзя объединить
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # Разделение стека предметов
+  /inventory/items/{itemId}/split:
+    post:
+      tags:
+      - Items
+      summary: Разделить стек предметов
+      operationId: splitItemStack
+      parameters:
+      - name: itemId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SplitItemRequest'
+      responses:
+        '200':
+          description: Стек разделен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SplitItemResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Стек нельзя разделить
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # Поиск предметов
+  /characters/{characterId}/inventory/search:
+    get:
+      tags:
+      - Inventory
+      summary: Поиск предметов в инвентаре
+      operationId: searchInventory
+      parameters:
+      - name: characterId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: query
+        in: query
+        schema:
+          type: string
+          description: Поисковый запрос
+      - name: category
+        in: query
+        schema:
+          type: string
+          enum: [weapon, armor, consumable, cyberware, miscellaneous]
+      - name: rarity
+        in: query
+        schema:
+          type: string
+          enum: [common, uncommon, rare, epic, legendary]
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+      responses:
+        '200':
+          description: Результаты поиска
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchResultsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # Банк персонажа
+  /characters/{characterId}/bank:
+    get:
+      tags:
+      - Bank
+      summary: Получить содержимое банка персонажа
+      operationId: getCharacterBank
+      parameters:
+      - name: characterId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Содержимое банка
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CharacterBankResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # Перемещение в банк
+  /inventory/items/{itemId}/to-bank:
+    post:
+      tags:
+      - Bank
+      summary: Переместить предмет в банк
+      operationId: moveItemToBank
+      parameters:
+      - name: itemId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Предмет перемещен в банк
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Недостаточно места в банке
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # Перемещение из банка
+  /bank/items/{itemId}/to-inventory:
+    post:
+      tags:
+      - Bank
+      summary: Переместить предмет из банка в инвентарь
+      operationId: moveItemFromBank
+      parameters:
+      - name: itemId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Предмет перемещен в инвентарь
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Недостаточно места в инвентаре
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    # Запросы
+    AddItemRequest:
+      type: object
+      required:
+      - itemTemplateId
+      - quantity
+      properties:
+        itemTemplateId:
+          type: string
+          format: uuid
+          description: ID шаблона предмета
+        quantity:
+          type: integer
+          minimum: 1
+          description: Количество предметов
+        durability:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: Прочность предмета (для брони/оружия)
+        modifiers:
+          type: object
+          description: Модификаторы предмета
+        boundToCharacter:
+          type: boolean
+          default: false
+          description: Привязан ли предмет к персонажу
+
+    UpdateItemRequest:
+      type: object
+      properties:
+        quantity:
+          type: integer
+          minimum: 1
+          description: Новое количество
+        durability:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: Новая прочность
+        modifiers:
+          type: object
+          description: Новые модификаторы
+
+    RemoveItemRequest:
+      type: object
+      required:
+      - quantity
+      properties:
+        quantity:
+          type: integer
+          minimum: 1
+          description: Количество для удаления
+
+    MoveItemRequest:
+      type: object
+      required:
+      - targetSlot
+      properties:
+        targetSlot:
+          type: integer
+          minimum: 0
+          maximum: 49
+          description: Целевой слот (0-49 для инвентаря)
+
+    EquipItemRequest:
+      type: object
+      required:
+      - itemId
+      - slot
+      properties:
+        itemId:
+          type: string
+          format: uuid
+          description: ID предмета для экипировки
+        slot:
+          type: string
+          enum: [head, chest, arms, legs, feet, weapon_primary, weapon_secondary, cyberware_1, cyberware_2, cyberware_3]
+          description: Слот экипировки
+
+    TransferItemRequest:
+      type: object
+      required:
+      - targetCharacterId
+      - quantity
+      properties:
+        targetCharacterId:
+          type: string
+          format: uuid
+          description: ID персонажа-получателя
+        quantity:
+          type: integer
+          minimum: 1
+          description: Количество для передачи
+
+    StackItemsRequest:
+      type: object
+      required:
+      - sourceItemId
+      - targetItemId
+      properties:
+        sourceItemId:
+          type: string
+          format: uuid
+          description: ID исходного предмета
+        targetItemId:
+          type: string
+          format: uuid
+          description: ID целевого предмета
+
+    SplitItemRequest:
+      type: object
+      required:
+      - quantity
+      properties:
+        quantity:
+          type: integer
+          minimum: 1
+          description: Количество для отделения
+
+    # Ответы
+    CharacterInventoryResponse:
+      type: object
+      properties:
+        characterId:
+          type: string
+          format: uuid
+        inventory:
+          $ref: '#/components/schemas/Inventory'
+        equipment:
+          $ref: '#/components/schemas/Equipment'
+        bank:
+          $ref: '#/components/schemas/Bank'
+        totalWeight:
+          type: number
+          description: Общий вес инвентаря
+        maxWeight:
+          type: number
+          description: Максимальный вес
+
+    InventoryItemResponse:
+      type: object
+      properties:
+        item:
+          $ref: '#/components/schemas/InventoryItem'
+
+    EquipmentResponse:
+      type: object
+      properties:
+        characterId:
+          type: string
+          format: uuid
+        slot:
+          type: string
+        equippedItem:
+          $ref: '#/components/schemas/InventoryItem'
+
+    CharacterEquipmentResponse:
+      type: object
+      properties:
+        characterId:
+          type: string
+          format: uuid
+        equipment:
+          $ref: '#/components/schemas/Equipment'
+
+    CharacterBankResponse:
+      type: object
+      properties:
+        characterId:
+          type: string
+          format: uuid
+        bank:
+          $ref: '#/components/schemas/Bank'
+
+    StackItemsResponse:
+      type: object
+      properties:
+        sourceItem:
+          $ref: '#/components/schemas/InventoryItem'
+        targetItem:
+          $ref: '#/components/schemas/InventoryItem'
+        mergedQuantity:
+          type: integer
+
+    SplitItemResponse:
+      type: object
+      properties:
+        originalItem:
+          $ref: '#/components/schemas/InventoryItem'
+        newItem:
+          $ref: '#/components/schemas/InventoryItem'
+
+    SearchResultsResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/InventoryItem'
+        totalCount:

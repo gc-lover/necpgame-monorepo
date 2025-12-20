@@ -1,0 +1,363 @@
+openapi: 3.0.3
+info:
+  title: Network Service API
+  version: 1.0.0
+  description: |
+    API for real-time messaging and WebSocket communication in MMOFPS RPG.
+    Handles WebSocket clusters, message routing, presence systems, and real-time events.
+    Optimized for MMO performance with 5000+ concurrent connections.
+
+servers:
+  - url: http://localhost:8080
+    description: Development server
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: WebSocket
+    description: WebSocket connection management and real-time messaging
+  - name: Messaging
+    description: Message routing and delivery operations
+  - name: Presence
+    description: User presence and online status management
+  - name: Events
+    description: Real-time event broadcasting and subscriptions
+  - name: Clusters
+    description: WebSocket cluster management and load balancing
+
+paths:
+  /network/health:
+    get:
+      tags:
+        - WebSocket
+      summary: Health check for Network Service
+      operationId: healthCheck
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "healthy"
+
+  /network/ws:
+    get:
+      tags:
+        - WebSocket
+      summary: Establish WebSocket connection
+      operationId: websocketConnect
+      parameters:
+        - name: token
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Authentication token
+        - name: client_id
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Client identifier
+        - name: client_version
+          in: query
+          schema:
+            type: string
+            default: "1.0.0"
+          description: Client version for compatibility
+      responses:
+        '101':
+          description: WebSocket connection established
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Too many connections
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /network/messages/broadcast:
+    post:
+      tags:
+        - Messaging
+      summary: Broadcast message to all connected clients
+      operationId: broadcastMessage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/schemas/requests.yaml#/BroadcastMessageRequest'
+      responses:
+        '200':
+          description: Message broadcasted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/schemas/responses.yaml#/BroadcastMessageResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /network/messages/{channel}:
+    post:
+      tags:
+        - Messaging
+      summary: Send message to specific channel
+      operationId: sendChannelMessage
+      parameters:
+        - name: channel
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Channel identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/schemas/requests.yaml#/ChannelMessageRequest'
+      responses:
+        '200':
+          description: Message sent successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/schemas/responses.yaml#/ChannelMessageResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          description: Channel not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /network/presence/{userId}:
+    get:
+      tags:
+        - Presence
+      summary: Get user presence status
+      operationId: getUserPresence
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: User identifier
+      responses:
+        '200':
+          description: Presence status retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/schemas/responses.yaml#/GetPresenceResponse'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    put:
+      tags:
+        - Presence
+      summary: Update user presence status
+      operationId: updateUserPresence
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: User identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/schemas/requests.yaml#/UpdatePresenceRequest'
+      responses:
+        '200':
+          description: Presence status updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/schemas/responses.yaml#/UpdatePresenceResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /network/events/subscribe:
+    post:
+      tags:
+        - Events
+      summary: Subscribe to real-time events
+      operationId: subscribeToEvents
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/schemas/requests.yaml#/SubscribeEventsRequest'
+      responses:
+        '200':
+          description: Subscription created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/schemas/responses.yaml#/SubscribeEventsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /network/events/publish:
+    post:
+      tags:
+        - Events
+      summary: Publish real-time event
+      operationId: publishEvent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/schemas/requests.yaml#/PublishEventRequest'
+      responses:
+        '200':
+          description: Event published successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/schemas/responses.yaml#/PublishEventResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /network/clusters/status:
+    get:
+      tags:
+        - Clusters
+      summary: Get cluster status and node information
+      operationId: getClusterStatus
+      responses:
+        '200':
+          description: Cluster status retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/schemas/responses.yaml#/GetClusterStatusResponse'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    InternalError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+        message:
+          type: string
+      required:
+        - code
+        - message
+
+    # Common schemas
+    Message:
+      $ref: './schemas/messages.yaml#/Message'
+
+    Presence:
+      $ref: './schemas/presence.yaml#/Presence'
+
+    Event:
+      $ref: './schemas/events.yaml#/Event'
+
+    ClusterNode:
+      $ref: './schemas/clusters.yaml#/ClusterNode'
+
+    # Request/Response schemas
+    BroadcastMessageRequest:
+      $ref: './schemas/requests.yaml#/BroadcastMessageRequest'
+
+    BroadcastMessageResponse:
+      $ref: './schemas/responses.yaml#/BroadcastMessageResponse'
+
+    ChannelMessageRequest:
+      $ref: './schemas/requests.yaml#/ChannelMessageRequest'
+
+    ChannelMessageResponse:
+      $ref: './schemas/responses.yaml#/ChannelMessageResponse'
+
+    GetPresenceResponse:
+      $ref: './schemas/responses.yaml#/GetPresenceResponse'
+
+    UpdatePresenceRequest:
+      $ref: './schemas/requests.yaml#/UpdatePresenceRequest'
+
+    UpdatePresenceResponse:
+      $ref: './schemas/responses.yaml#/UpdatePresenceResponse'
+
+    SubscribeEventsRequest:
+      $ref: './schemas/requests.yaml#/SubscribeEventsRequest'
+
+    SubscribeEventsResponse:
+      $ref: './schemas/responses.yaml#/SubscribeEventsResponse'
+
+    PublishEventRequest:
+      $ref: './schemas/requests.yaml#/PublishEventRequest'
+
+    PublishEventResponse:
+      $ref: './schemas/responses.yaml#/PublishEventResponse'
+
+    GetClusterStatusResponse:
+      $ref: './schemas/responses.yaml#/GetClusterStatusResponse'

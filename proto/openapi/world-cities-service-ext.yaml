@@ -1,0 +1,392 @@
+                    items:
+                      $ref: "#/components/schemas/City"
+                  total:
+                    type: integer
+                required:
+                  - results
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT токен авторизации
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API ключ для сервер-сервер коммуникации
+
+  schemas:
+    City:
+      type: object
+      description: Информация о городе
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Уникальный ID города
+        name:
+          type: string
+          maxLength: 100
+          description: Название города
+        country:
+          type: string
+          maxLength: 100
+          description: Страна
+        region:
+          type: string
+          enum: [North_America, South_America, Europe, Asia, Africa, Oceania, Antarctica]
+          description: Регион мира
+        coordinates:
+          type: object
+          description: Географические координаты
+          properties:
+            latitude:
+              type: number
+              format: float
+              minimum: -90
+              maximum: 90
+              description: Широта
+            longitude:
+              type: number
+              format: float
+              minimum: -180
+              maximum: 180
+              description: Долгота
+          required:
+            - latitude
+            - longitude
+        population:
+          type: integer
+          minimum: 0
+          description: Население города
+        development_level:
+          type: string
+          enum: [undeveloped, developing, developed, megacity]
+          description: Уровень развития
+        description:
+          type: string
+          maxLength: 1000
+          description: Описание города
+        landmarks:
+          type: array
+          items:
+            type: string
+            maxLength: 200
+          description: Известные достопримечательности
+        economic_data:
+          type: object
+          description: Экономические показатели
+          properties:
+            gdp_per_capita:
+              type: number
+              format: float
+              description: ВВП на душу населения
+            unemployment_rate:
+              type: number
+              format: float
+              minimum: 0
+              maximum: 100
+              description: Уровень безработицы (%)
+            cost_of_living_index:
+              type: number
+              format: float
+              description: Индекс стоимости жизни
+        social_data:
+          type: object
+          description: Социальные показатели
+          properties:
+            education_index:
+              type: number
+              format: float
+              minimum: 0
+              maximum: 1
+              description: Индекс образования
+            healthcare_index:
+              type: number
+              format: float
+              minimum: 0
+              maximum: 1
+              description: Индекс здравоохранения
+            crime_rate:
+              type: number
+              format: float
+              minimum: 0
+              description: Уровень преступности
+        timeline_year:
+          type: integer
+          minimum: 2020
+          maximum: 2093
+          description: Год в таймлайне игры
+        is_active:
+          type: boolean
+          default: true
+          description: Активен ли город в игре
+        created_at:
+          type: string
+          format: date-time
+          description: Время создания
+        updated_at:
+          type: string
+          format: date-time
+          description: Время последнего обновления
+      required:
+        - id
+        - name
+        - country
+        - region
+        - coordinates
+        - population
+        - development_level
+        - timeline_year
+
+    CreateCityRequest:
+      type: object
+      description: Запрос на создание города
+      required:
+        - name
+        - country
+        - region
+        - coordinates
+        - population
+        - development_level
+        - timeline_year
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        country:
+          type: string
+          maxLength: 100
+        region:
+          type: string
+          enum: [North_America, South_America, Europe, Asia, Africa, Oceania, Antarctica]
+        coordinates:
+          $ref: "#/components/schemas/Coordinates"
+        population:
+          type: integer
+          minimum: 0
+        development_level:
+          type: string
+          enum: [undeveloped, developing, developed, megacity]
+        description:
+          type: string
+          maxLength: 1000
+        landmarks:
+          type: array
+          items:
+            type: string
+            maxLength: 200
+        economic_data:
+          $ref: "#/components/schemas/EconomicData"
+        social_data:
+          $ref: "#/components/schemas/SocialData"
+        timeline_year:
+          type: integer
+          minimum: 2020
+          maximum: 2093
+
+    UpdateCityRequest:
+      type: object
+      description: Запрос на обновление города
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        population:
+          type: integer
+          minimum: 0
+        development_level:
+          type: string
+          enum: [undeveloped, developing, developed, megacity]
+        description:
+          type: string
+          maxLength: 1000
+        landmarks:
+          type: array
+          items:
+            type: string
+            maxLength: 200
+        economic_data:
+          $ref: "#/components/schemas/EconomicData"
+        social_data:
+          $ref: "#/components/schemas/SocialData"
+        is_active:
+          type: boolean
+
+    Coordinates:
+      type: object
+      properties:
+        latitude:
+          type: number
+          format: float
+          minimum: -90
+          maximum: 90
+        longitude:
+          type: number
+          format: float
+          minimum: -180
+          maximum: 180
+      required:
+        - latitude
+        - longitude
+
+    EconomicData:
+      type: object
+      properties:
+        gdp_per_capita:
+          type: number
+          format: float
+        unemployment_rate:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+        cost_of_living_index:
+          type: number
+          format: float
+
+    SocialData:
+      type: object
+      properties:
+        education_index:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        healthcare_index:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        crime_rate:
+          type: number
+          format: float
+          minimum: 0
+
+    Region:
+      type: object
+      properties:
+        id:
+          type: string
+          enum: [North_America, South_America, Europe, Asia, Africa, Oceania, Antarctica]
+        name:
+          type: string
+        description:
+          type: string
+        city_count:
+          type: integer
+      required:
+        - id
+        - name
+
+    PaginationInfo:
+      type: object
+      properties:
+        page:
+          type: integer
+          minimum: 1
+        page_size:
+          type: integer
+          minimum: 1
+        total_pages:
+          type: integer
+          minimum: 0
+        has_next:
+          type: boolean
+        has_prev:
+          type: boolean
+      required:
+        - page
+        - page_size
+        - total_pages
+        - has_next
+        - has_prev
+
+    CitiesStats:
+      type: object
+      description: Статистика по городам мира
+      properties:
+        total_cities:
+          type: integer
+          description: Общее количество городов
+        total_population:
+          type: integer
+          description: Общее население всех городов
+        average_population:
+          type: number
+          format: float
+          description: Среднее население города
+        cities_by_region:
+          type: object
+          description: Города по регионам
+          additionalProperties:
+            type: integer
+        cities_by_development:
+          type: object
+          description: Города по уровню развития
+          additionalProperties:
+            type: integer
+        largest_cities:
+          type: array
+          items:
+            $ref: "#/components/schemas/City"
+          maxItems: 10
+          description: 10 крупнейших городов
+      required:
+        - total_cities
+        - total_population
+        - average_population
+
+  responses:
+    BadRequest:
+      description: Неверный запрос
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: string
+              details:
+                type: object
+
+    Forbidden:
+      description: Доступ запрещен
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: string
+
+    NotFound:
+      description: Ресурс не найден
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: string
+
+    InternalServerError:
+      description: Внутренняя ошибка сервера
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: string

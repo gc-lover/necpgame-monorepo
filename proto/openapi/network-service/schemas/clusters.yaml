@@ -1,0 +1,177 @@
+ClusterNode:
+  type: object
+  properties:
+    node_id:
+      type: string
+    node_type:
+      type: string
+      enum: [WEBSOCKET_SERVER, MESSAGE_ROUTER, PRESENCE_MANAGER, EVENT_DISPATCHER]
+    host:
+      type: string
+    port:
+      type: integer
+      minimum: 1
+      maximum: 65535
+    region:
+      type: string
+    zone:
+      type: string
+    status:
+      type: string
+      enum: [ACTIVE, INACTIVE, MAINTENANCE, OVERLOADED]
+    connections:
+      type: integer
+      minimum: 0
+    max_connections:
+      type: integer
+      minimum: 0
+    cpu_usage:
+      type: number
+      format: float
+      minimum: 0.0
+      maximum: 100.0
+    memory_usage:
+      type: number
+      format: float
+      minimum: 0.0
+      maximum: 100.0
+    uptime:
+      type: integer
+      format: int64
+    last_heartbeat:
+      type: integer
+      format: int64
+    metadata:
+      type: object
+      additionalProperties: true
+  required:
+    - node_id
+    - node_type
+    - host
+    - port
+    - status
+
+ClusterShard:
+  type: object
+  properties:
+    shard_id:
+      type: string
+    shard_type:
+      type: string
+      enum: [USER_SHARD, CHANNEL_SHARD, REGION_SHARD]
+    range_start:
+      type: string
+    range_end:
+      type: string
+    nodes:
+      type: array
+      items:
+        type: string
+    primary_node:
+      type: string
+    backup_nodes:
+      type: array
+      items:
+        type: string
+    status:
+      type: string
+      enum: [HEALTHY, DEGRADED, FAILED]
+    load_factor:
+      type: number
+      format: float
+      minimum: 0.0
+      maximum: 1.0
+    last_rebalanced:
+      type: integer
+      format: int64
+  required:
+    - shard_id
+    - shard_type
+    - nodes
+    - status
+
+ClusterMetrics:
+  type: object
+  properties:
+    total_nodes:
+      type: integer
+      minimum: 0
+    active_nodes:
+      type: integer
+      minimum: 0
+    total_connections:
+      type: integer
+      minimum: 0
+    max_connections:
+      type: integer
+      minimum: 0
+    messages_per_second:
+      type: number
+      format: float
+    average_latency:
+      type: number
+      format: float
+    error_rate:
+      type: number
+      format: float
+    uptime_average:
+      type: integer
+      format: int64
+    regions:
+      type: object
+      additionalProperties:
+        $ref: '#/RegionMetrics'
+  required:
+    - total_nodes
+    - active_nodes
+
+RegionMetrics:
+  type: object
+  properties:
+    region_name:
+      type: string
+    node_count:
+      type: integer
+      minimum: 0
+    connection_count:
+      type: integer
+      minimum: 0
+    average_latency:
+      type: number
+      format: float
+    message_rate:
+      type: number
+      format: float
+  required:
+    - region_name
+    - node_count
+
+LoadBalancerConfig:
+  type: object
+  properties:
+    algorithm:
+      type: string
+      enum: [ROUND_ROBIN, LEAST_CONNECTIONS, WEIGHTED, GEOGRAPHIC]
+      default: ROUND_ROBIN
+    health_check_interval:
+      type: integer
+      minimum: 1000
+      maximum: 60000
+      default: 5000
+    max_connections_per_node:
+      type: integer
+      minimum: 1
+      default: 10000
+    failover_enabled:
+      type: boolean
+      default: true
+    session_stickiness:
+      type: boolean
+      default: false
+    geo_distribution:
+      type: object
+      additionalProperties:
+        type: number
+        format: float
+  required:
+    - algorithm

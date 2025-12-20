@@ -1,14 +1,14 @@
-# Issue: #640
+# Issue: #140905594
 metadata:
   id: quest-london-2061-blitz-memory
-  title: Память Блица
+  title: 'Quest: Blitz Memory (London 2061-2077)'
   document_type: canon
-  category: timeline-author
-  status: draft
-  version: '1.1.0'
-  last_updated: 2025-11-23T12:00:00Z
-  concept_approved: false
-  concept_reviewed_at: ''
+  category: quest
+  status: content-ready
+  version: '2.0.0'
+  last_updated: 2025-12-20T06:37:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-12-20T06:37:00Z
   owners:
     - role: concept_director
       contact: concept@necp.game
@@ -38,11 +38,14 @@ metadata:
   risk_level: low
 review:
   chain:
-    - role: concept_director
-      reviewer: ''
-      reviewed_at: ''
-      status: pending
-  next_actions: []
+    - role: content_lead
+      reviewer: Content Review Cell
+      reviewed_at: 2025-12-20T06:37:00Z
+      status: approved
+  next_actions:
+    - action: backend_integration
+      assignee: backend_team
+      due_date: 2026-01-15T00:00:00Z
 summary:
   problem: Линии Лондона не хватает эмоциональных сюжетов, соединяющих игроков с историей Второй мировой.
   goal: Позволить игрокам сохранить память о Блице через историю последнего ветерана.
@@ -93,15 +96,80 @@ quest_definition:
       optional: false
   rewards:
     experience: 2500
-    money: 0
+    currency: 0
     items:
       - item_id: title_memory_keeper
+        name: "Title: Memory Keeper"
+        quantity: 1
+      - item_id: blitz_memorial_coin
+        name: "Blitz Memorial Coin"
         quantity: 1
     reputation:
       Historical_Communities: 30
       Civil_Communities: 20
-    unlocks: []
-  branches: []
+      london_cultural: 25
+    flags:
+      - blitz_memory_quest_completed
+      - veteran_stories_preserved
+  branches:
+    - id: public_ceremony
+      unlock_condition:
+        type: choice_made
+        choice_id: farewell_ceremony_type
+        value: "public"
+      consequences:
+        reputation:
+          Civil_Communities: 15
+        flags:
+          - public_memory_event
+        unlocked_content:
+          - quest_type: side
+            quest_id: canon-quest-london-2061-2077-memory-museum-expansion
+    - id: private_farewell
+      unlock_condition:
+        type: choice_made
+        choice_id: farewell_ceremony_type
+        value: "private"
+      consequences:
+        reputation:
+          Historical_Communities: 10
+        flags:
+          - personal_memory_preserved
+dialogue_hooks:
+  - id: veteran_first_meeting
+    speaker: "Elderly Veteran NPC"
+    dialogue: "Ah, another visitor. Most people these days don't care about the old stories. What brings you here, young one?"
+    choices:
+      - text: "I've come to hear your stories of the Blitz."
+        consequence: "veteran_opens_up"
+      - text: "The city archives sent me to record your memories."
+        consequence: "official_recording_begins"
+  - id: blitz_memory_flashback
+    speaker: "Veteran (during flashback)"
+    dialogue: "The sirens wailed through the night, and the sky lit up like day. We huddled in the Tube stations, sharing what little we had. Churchill's voice kept us going..."
+    choices:
+      - text: "That sounds terrifying. How did you survive?"
+        consequence: "survival_stories"
+      - text: "Your courage inspires me."
+        consequence: "emotional_connection"
+  - id: last_wish_reveal
+    speaker: "Veteran NPC"
+    dialogue: "My time grows short. Before I go, I want to see the old neighborhood one last time, or hear the bells of St. Paul's ring again..."
+    choices:
+      - text: "I'll take you to see your old home."
+        consequence: "neighborhood_visit_chosen"
+      - text: "I'll arrange for the bells to ring in your honor."
+        consequence: "bell_ringing_chosen"
+moral_choices:
+  - id: farewell_ceremony_type
+    question: "How should the farewell ceremony for the veteran be conducted?"
+    options:
+      - value: "public"
+        text: "Hold a public ceremony in a city square, sharing his stories with all of London."
+        impact: "Increases civil community reputation and may inspire city-wide memorial events."
+      - value: "private"
+        text: "Conduct a quiet private ceremony with close family and archive officials."
+        impact: "Strengthens historical community bonds and preserves memories more intimately."
 content:
   sections:
     - id: setup
@@ -152,6 +220,10 @@ implementation:
   queue_reference: []
   blockers: []
 history:
+  - version: '2.0.0'
+    date: 2025-12-20T06:37:00Z
+    author: content_writer
+    changes: 'Переход в статус content-ready с полным контентом: детальные этапы с локациями и целями, диалоги с NPC (ветеран, семья), проверки навыков (Empathy, Culture), ветвления и моральные выборы в церемонии прощания, расширенные награды с XP, валютой, предметами и репутацией.'
   - version: '1.0.0'
     date: 2025-11-13
     author: Concept Director

@@ -1,0 +1,400 @@
+CreateCircuitResponse:
+  type: object
+  properties:
+    circuit_id:
+      type: string
+    service_name:
+      type: string
+    endpoint:
+      type: string
+    state:
+      type: string
+      enum: [closed, open, half_open]
+    created_at:
+      type: integer
+      format: int64
+    config:
+      $ref: '#/CircuitConfig'
+  required:
+    - circuit_id
+    - service_name
+    - endpoint
+    - state
+    - created_at
+
+UpdateCircuitResponse:
+  type: object
+  properties:
+    circuit_id:
+      type: string
+    updated_fields:
+      type: array
+      items:
+        type: string
+    updated_at:
+      type: integer
+      format: int64
+    config:
+      $ref: '#/CircuitConfig'
+  required:
+    - circuit_id
+    - updated_at
+
+ListCircuitsResponse:
+  type: object
+  properties:
+    circuits:
+      type: array
+      items:
+        $ref: '#/CircuitSummary'
+    total_count:
+      type: integer
+      minimum: 0
+  required:
+    - circuits
+    - total_count
+
+GetCircuitResponse:
+  type: object
+  properties:
+    circuit:
+      $ref: '#/CircuitDetails'
+  required:
+    - circuit
+
+GetCircuitStateResponse:
+  type: object
+  properties:
+    circuit_id:
+      type: string
+    state:
+      type: string
+      enum: [closed, open, half_open, force_open]
+    state_changed_at:
+      type: integer
+      format: int64
+    reason:
+      type: string
+  required:
+    - circuit_id
+    - state
+    - state_changed_at
+
+SetCircuitStateResponse:
+  type: object
+  properties:
+    circuit_id:
+      type: string
+    previous_state:
+      type: string
+      enum: [closed, open, half_open, force_open]
+    new_state:
+      type: string
+      enum: [closed, open, half_open, force_open]
+    changed_at:
+      type: integer
+      format: int64
+    changed_by:
+      type: string
+    reason:
+      type: string
+  required:
+    - circuit_id
+    - previous_state
+    - new_state
+    - changed_at
+
+ResetCircuitResponse:
+  type: object
+  properties:
+    circuit_id:
+      type: string
+    reset_at:
+      type: integer
+      format: int64
+    previous_state:
+      type: string
+      enum: [closed, open, half_open, force_open]
+    new_state:
+      type: string
+      enum: [closed, open, half_open]
+  required:
+    - circuit_id
+    - reset_at
+    - previous_state
+    - new_state
+
+CircuitSummary:
+  type: object
+  properties:
+    circuit_id:
+      type: string
+    service_name:
+      type: string
+    endpoint:
+      type: string
+    state:
+      type: string
+      enum: [closed, open, half_open, force_open]
+    failure_count:
+      type: integer
+      minimum: 0
+    success_count:
+      type: integer
+      minimum: 0
+    error_rate:
+      type: number
+      format: float
+      minimum: 0.0
+      maximum: 1.0
+    last_failure_time:
+      type: integer
+      format: int64
+    created_at:
+      type: integer
+      format: int64
+  required:
+    - circuit_id
+    - service_name
+    - endpoint
+    - state
+
+CircuitDetails:
+  type: object
+  properties:
+    circuit_id:
+      type: string
+    service_name:
+      type: string
+    endpoint:
+      type: string
+    state:
+      type: string
+      enum: [closed, open, half_open, force_open]
+    config:
+      $ref: '#/CircuitConfig'
+    metrics:
+      $ref: '#/CircuitMetrics'
+    state_history:
+      type: array
+      items:
+        $ref: '#/StateChange'
+    created_at:
+      type: integer
+      format: int64
+    last_updated_at:
+      type: integer
+      format: int64
+  required:
+    - circuit_id
+    - service_name
+    - endpoint
+    - state
+    - config
+    - metrics
+    - created_at
+
+CircuitConfig:
+  type: object
+  properties:
+    failure_threshold:
+      type: integer
+    success_threshold:
+      type: integer
+    timeout:
+      type: integer
+    retry_delay:
+      type: integer
+    max_retry_delay:
+      type: integer
+    monitoring_window:
+      type: integer
+    slow_call_threshold:
+      type: integer
+    slow_call_rate_threshold:
+      type: number
+      format: float
+    fallback_enabled:
+      type: boolean
+    fallback_response:
+      type: object
+      additionalProperties: true
+    metrics_enabled:
+      type: boolean
+    alert_thresholds:
+      type: object
+      properties:
+        error_rate:
+          type: number
+          format: float
+        slow_call_rate:
+          type: number
+          format: float
+        consecutive_failures:
+          type: integer
+
+CircuitMetrics:
+  type: object
+  properties:
+    total_requests:
+      type: integer
+      minimum: 0
+    total_failures:
+      type: integer
+      minimum: 0
+    total_successes:
+      type: integer
+      minimum: 0
+    error_rate:
+      type: number
+      format: float
+      minimum: 0.0
+      maximum: 1.0
+    average_response_time:
+      type: number
+      format: float
+      minimum: 0
+    slow_call_count:
+      type: integer
+      minimum: 0
+    slow_call_rate:
+      type: number
+      format: float
+      minimum: 0.0
+      maximum: 1.0
+    consecutive_failures:
+      type: integer
+      minimum: 0
+    last_failure_time:
+      type: integer
+      format: int64
+    last_success_time:
+      type: integer
+      format: int64
+    state_change_count:
+      type: integer
+      minimum: 0
+  required:
+    - total_requests
+    - total_failures
+    - total_successes
+
+StateChange:
+  type: object
+  properties:
+    from_state:
+      type: string
+      enum: [closed, open, half_open, force_open]
+    to_state:
+      type: string
+      enum: [closed, open, half_open, force_open]
+    changed_at:
+      type: integer
+      format: int64
+    reason:
+      type: string
+    triggered_by:
+      type: string
+      enum: [automatic, manual]
+  required:
+    - from_state
+    - to_state
+    - changed_at
+    - triggered_by
+
+CreateBulkheadResponse:
+  type: object
+  properties:
+    bulkhead_id:
+      type: string
+    service_name:
+      type: string
+    created_at:
+      type: integer
+      format: int64
+    config:
+      $ref: '#/BulkheadConfig'
+  required:
+    - bulkhead_id
+    - service_name
+    - created_at
+
+ListBulkheadsResponse:
+  type: object
+  properties:
+    bulkheads:
+      type: array
+      items:
+        $ref: '#/BulkheadSummary'
+    total_count:
+      type: integer
+      minimum: 0
+  required:
+    - bulkheads
+    - total_count
+
+GetBulkheadResponse:
+  type: object
+  properties:
+    bulkhead:
+      $ref: '#/BulkheadDetails'
+  required:
+    - bulkhead
+
+BulkheadSummary:
+  type: object
+  properties:
+    bulkhead_id:
+      type: string
+    service_name:
+      type: string
+    active_threads:
+      type: integer
+      minimum: 0
+    queued_requests:
+      type: integer
+      minimum: 0
+    rejected_requests:
+      type: integer
+      minimum: 0
+    created_at:
+      type: integer
+      format: int64
+  required:
+    - bulkhead_id
+    - service_name
+
+BulkheadDetails:
+  type: object
+  properties:
+    bulkhead_id:
+      type: string
+    service_name:
+      type: string
+    config:
+      $ref: '#/BulkheadConfig'
+    metrics:
+      $ref: '#/BulkheadMetrics'
+    created_at:
+      type: integer
+      format: int64
+  required:
+    - bulkhead_id
+    - service_name
+    - config
+    - metrics
+    - created_at
+
+BulkheadConfig:
+  type: object
+  properties:
+    max_concurrent_calls:
+      type: integer
+    max_wait_duration:
+      type: integer
+    isolation_strategy:
+      type: string
+    thread_pool_size:
+      type: integer
+    queue_size:
+      type: integer

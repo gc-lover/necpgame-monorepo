@@ -1,0 +1,235 @@
+get:
+  get:
+    tags:
+      - Inventory
+    summary: Get character inventory
+    operationId: getInventory
+    parameters:
+      - name: characterId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Character identifier
+    responses:
+      '200':
+        description: Inventory retrieved successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/responses.yaml#/GetInventoryResponse'
+      '404':
+        $ref: '../main.yaml#/components/responses/NotFound'
+      '500':
+        $ref: '../main.yaml#/components/responses/InternalError'
+
+list-items:
+  get:
+    tags:
+      - Inventory
+    summary: List items in character inventory
+    operationId: listInventoryItems
+    parameters:
+      - name: characterId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Character identifier
+      - name: container
+        in: query
+        schema:
+          type: string
+          default: "main"
+        description: Container name
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+        description: Maximum number of items to return
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+        description: Number of items to skip
+    responses:
+      '200':
+        description: Items listed successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/responses.yaml#/ListItemsResponse'
+      '404':
+        $ref: '../main.yaml#/components/responses/NotFound'
+      '500':
+        $ref: '../main.yaml#/components/responses/InternalError'
+
+move-item:
+  post:
+    tags:
+      - Inventory
+    summary: Move item within or between containers
+    operationId: moveItem
+    parameters:
+      - name: characterId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Character identifier
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/requests.yaml#/MoveItemRequest'
+    responses:
+      '200':
+        description: Item moved successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/responses.yaml#/MoveItemResponse'
+      '400':
+        $ref: '../main.yaml#/components/responses/BadRequest'
+      '404':
+        $ref: '../main.yaml#/components/responses/NotFound'
+      '500':
+        $ref: '../main.yaml#/components/responses/InternalError'
+
+equip-item:
+  post:
+    tags:
+      - Equipment
+    summary: Equip item to character
+    operationId: equipItem
+    parameters:
+      - name: characterId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Character identifier
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/requests.yaml#/EquipItemRequest'
+    responses:
+      '200':
+        description: Item equipped successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/responses.yaml#/EquipItemResponse'
+      '400':
+        $ref: '../main.yaml#/components/responses/BadRequest'
+      '404':
+        $ref: '../main.yaml#/components/responses/NotFound'
+      '500':
+        $ref: '../main.yaml#/components/responses/InternalError'
+
+unequip-item:
+  post:
+    tags:
+      - Equipment
+    summary: Unequip item from character
+    operationId: unequipItem
+    parameters:
+      - name: characterId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Character identifier
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/requests.yaml#/UnequipItemRequest'
+    responses:
+      '200':
+        description: Item unequipped successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/responses.yaml#/UnequipItemResponse'
+      '400':
+        $ref: '../main.yaml#/components/responses/BadRequest'
+      '404':
+        $ref: '../main.yaml#/components/responses/NotFound'
+      '500':
+        $ref: '../main.yaml#/components/responses/InternalError'
+
+use-item:
+  post:
+    tags:
+      - Items
+    summary: Use consumable item
+    operationId: useItem
+    parameters:
+      - name: characterId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Character identifier
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/requests.yaml#/UseItemRequest'
+    responses:
+      '200':
+        description: Item used successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/responses.yaml#/UseItemResponse'
+      '400':
+        $ref: '../main.yaml#/components/responses/BadRequest'
+      '404':
+        $ref: '../main.yaml#/components/responses/NotFound'
+      '500':
+        $ref: '../main.yaml#/components/responses/InternalError'
+
+drop-item:
+  post:
+    tags:
+      - Inventory
+    summary: Drop item from inventory
+    operationId: dropItem
+    parameters:
+      - name: characterId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Character identifier
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/requests.yaml#/DropItemRequest'
+    responses:
+      '200':
+        description: Item dropped successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/responses.yaml#/DropItemResponse'
+      '400':
+        $ref: '../main.yaml#/components/responses/BadRequest'
+      '404':
+        $ref: '../main.yaml#/components/responses/NotFound'
+      '500':
+        $ref: '../main.yaml#/components/responses/InternalError'

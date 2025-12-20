@@ -1,0 +1,127 @@
+InitiateCombatResponse:
+  type: object
+  properties:
+    combat_id:
+      type: string
+    status:
+      type: string
+      enum: [INITIATED, IN_PROGRESS]
+    participants:
+      type: array
+      items:
+        $ref: './combat.yaml#/CombatParticipant'
+  required:
+    - combat_id
+    - status
+
+CombatStatusResponse:
+  type: object
+  properties:
+    combat_id:
+      type: string
+    status:
+      type: string
+      enum: [INITIATED, IN_PROGRESS, COMPLETED, CANCELLED]
+    participants:
+      type: array
+      items:
+        $ref: './combat.yaml#/CombatParticipant'
+    current_turn:
+      type: string
+    time_remaining:
+      type: integer
+    events:
+      type: array
+      items:
+        $ref: './combat.yaml#/CombatEvent'
+  required:
+    - combat_id
+    - status
+
+CombatActionResponse:
+  type: object
+  properties:
+    action_id:
+      type: string
+    success:
+      type: boolean
+    damage:
+      $ref: './damage.yaml#/DamageResult'
+    status_effects:
+      type: array
+      items:
+        $ref: './status-effects.yaml#/StatusEffect'
+    cooldown:
+      type: integer
+  required:
+    - action_id
+    - success
+
+EndCombatResponse:
+  type: object
+  properties:
+    combat_id:
+      type: string
+    winner:
+      type: string
+    duration:
+      type: integer
+    experience_gained:
+      type: integer
+      minimum: 0
+    loot:
+      type: array
+      items:
+        $ref: './combat.yaml#/LootItem'
+  required:
+    - combat_id
+
+StatusEffectsResponse:
+  type: object
+  properties:
+    character_id:
+      type: string
+    effects:
+      type: array
+      items:
+        $ref: './status-effects.yaml#/StatusEffect'
+  required:
+    - character_id
+
+ApplyStatusEffectResponse:
+  type: object
+  properties:
+    effect_id:
+      type: string
+    applied:
+      type: boolean
+    duration:
+      type: integer
+    message:
+      type: string
+  required:
+    - effect_id
+    - applied
+
+DamageCalculationResponse:
+  type: object
+  properties:
+    final_damage:
+      type: integer
+      minimum: 0
+    damage_type:
+      type: string
+      enum: [PHYSICAL, ENERGY, CHEMICAL, THERMAL]
+    critical_multiplier:
+      type: number
+      minimum: 1.0
+    armor_reduction:
+      type: integer
+      minimum: 0
+    modifiers_applied:
+      type: array
+      items:
+        $ref: './damage.yaml#/DamageModifier'
+  required:
+    - final_damage
+    - damage_type

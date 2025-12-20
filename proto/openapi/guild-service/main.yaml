@@ -1,0 +1,400 @@
+openapi: 3.0.3
+info:
+  title: Guild Service API
+  version: 1.0.0
+  description: |
+    API for managing guilds, clans, and social organizations in MMO environments.
+    Supports guild creation, membership management, hierarchy, territories, wars,
+    alliances, and cooperative gameplay mechanics for thousands of concurrent players.
+
+servers:
+  - url: http://localhost:8080
+    description: Development server
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Guilds
+    description: Guild management and operations
+  - name: Members
+    description: Guild membership and roles
+  - name: Territories
+    description: Guild territory control and management
+  - name: Wars
+    description: Guild wars and PvP conflicts
+  - name: Alliances
+    description: Inter-guild alliances and diplomacy
+  - name: Contracts
+    description: Guild contracts and job board
+  - name: Statistics
+    description: Guild statistics and analytics
+
+paths:
+  /guild/health:
+    get:
+      tags:
+        - Guilds
+      summary: Health check for Guild Service
+      operationId: healthCheck
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "healthy"
+
+  /guild/guilds:
+    get:
+      tags:
+        - Guilds
+      summary: List guilds
+      operationId: listGuilds
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: name
+          in: query
+          schema:
+            type: string
+            description: Filter by guild name (partial match)
+        - name: leader_id
+          in: query
+          schema:
+            type: string
+            description: Filter by leader player ID
+        - name: min_level
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            description: Minimum guild level
+        - name: max_level
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            description: Maximum guild level
+        - name: faction
+          in: query
+          schema:
+            type: string
+            description: Filter by faction alignment
+        - name: region
+          in: query
+          schema:
+            type: string
+            description: Filter by region
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, inactive, disbanded]
+            default: active
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Guilds retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/schemas/responses.yaml#/ListGuildsResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      tags:
+        - Guilds
+      summary: Create a new guild
+      operationId: createGuild
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/schemas/requests.yaml#/CreateGuildRequest'
+      responses:
+        '201':
+          description: Guild created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/schemas/responses.yaml#/CreateGuildResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Guild name already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /guild/guilds/{guildId}:
+    get:
+      tags:
+        - Guilds
+      summary: Get guild details
+      operationId: getGuild
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Guild details retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/schemas/responses.yaml#/GetGuildResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Guild not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    put:
+      tags:
+        - Guilds
+      summary: Update guild configuration
+      operationId: updateGuild
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/schemas/requests.yaml#/UpdateGuildRequest'
+      responses:
+        '200':
+          description: Guild updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/schemas/responses.yaml#/UpdateGuildResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Guild not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      tags:
+        - Guilds
+      summary: Disband guild
+      operationId: disbandGuild
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Guild disbanded successfully
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Insufficient permissions (only leader can disband)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Guild not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /guild/guilds/{guildId}/join:
+    post:
+      tags:
+        - Guilds
+      summary: Request to join guild
+      operationId: requestJoinGuild
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/schemas/requests.yaml#/JoinGuildRequest'
+      responses:
+        '200':
+          description: Join request submitted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/schemas/responses.yaml#/JoinGuildResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Guild not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Already a member or pending request exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /guild/guilds/{guildId}/leave:
+    post:
+      tags:
+        - Guilds
+      summary: Leave guild
+      operationId: leaveGuild
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successfully left guild
+          content:
+            application/json:
+              schema:
+                $ref: '#/schemas/responses.yaml#/LeaveGuildResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Cannot leave as guild leader
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Guild not found or not a member
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /guild/guilds/{guildId}/members:
+    get:
+      tags:
+        - Members
+      summary: Get guild members
+      operationId: getGuildMembers
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: guildId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: role
+          in: query
+          schema:
+            type: string
+            enum: [leader, officer, member, recruit]
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, inactive, suspended]
+            default: active
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 200
+            default: 100
+        - name: offset
+          in: query

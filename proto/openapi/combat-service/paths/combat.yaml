@@ -1,0 +1,106 @@
+initiate:
+  post:
+    tags:
+      - Combat
+    summary: Initiate combat session
+    operationId: initiateCombat
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/requests.yaml#/InitiateCombatRequest'
+    responses:
+      '200':
+        description: Combat session initiated
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/responses.yaml#/InitiateCombatResponse'
+      '400':
+        $ref: '../main.yaml#/components/responses/BadRequest'
+      '500':
+        $ref: '../main.yaml#/components/responses/InternalError'
+
+status:
+  get:
+    tags:
+      - Combat
+    summary: Get current combat status
+    operationId: getCombatStatus
+    parameters:
+      - name: combatId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Unique combat session identifier
+    responses:
+      '200':
+        description: Combat status retrieved
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/responses.yaml#/CombatStatusResponse'
+      '404':
+        description: Combat session not found
+      '500':
+        $ref: '../main.yaml#/components/responses/InternalError'
+
+action:
+  post:
+    tags:
+      - Combat
+    summary: Execute combat action (attack, ability, item use)
+    operationId: executeCombatAction
+    parameters:
+      - name: combatId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Unique combat session identifier
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/requests.yaml#/CombatActionRequest'
+    responses:
+      '200':
+        description: Action executed successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/responses.yaml#/CombatActionResponse'
+      '400':
+        $ref: '../main.yaml#/components/responses/BadRequest'
+      '404':
+        description: Combat session not found
+      '500':
+        $ref: '../main.yaml#/components/responses/InternalError'
+
+end:
+  post:
+    tags:
+      - Combat
+    summary: End combat session
+    operationId: endCombat
+    parameters:
+      - name: combatId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Unique combat session identifier
+    responses:
+      '200':
+        description: Combat ended successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/responses.yaml#/EndCombatResponse'
+      '404':
+        description: Combat session not found
+      '500':
+        $ref: '../main.yaml#/components/responses/InternalError'

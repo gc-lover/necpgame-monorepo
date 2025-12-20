@@ -1,0 +1,86 @@
+ExecuteBehaviorRequest:
+  type: object
+  properties:
+    behavior_tree_id:
+      type: string
+    context_variables:
+      type: object
+      additionalProperties: true
+    timeout_ms:
+      type: integer
+      minimum: 100
+      maximum: 5000
+      default: 1000
+  required:
+    - behavior_tree_id
+
+CalculatePathRequest:
+  type: object
+  properties:
+    start_position:
+      $ref: './common.yaml#/Vector3'
+    end_position:
+      $ref: './common.yaml#/Vector3'
+    path_type:
+      type: string
+      enum: [DIRECT, AVOID_THREATS, STEALTH, FASTEST]
+      default: DIRECT
+    max_distance:
+      type: number
+      format: float
+    avoid_entities:
+      type: boolean
+      default: true
+    avoid_hazards:
+      type: boolean
+      default: true
+    movement_type:
+      type: string
+      enum: [GROUND, FLYING, TELEPORT]
+      default: GROUND
+  required:
+    - start_position
+    - end_position
+
+MakeDecisionRequest:
+  type: object
+  properties:
+    decision_context:
+      $ref: './decision.yaml#/DecisionContext'
+    available_actions:
+      type: array
+      items:
+        $ref: './decision.yaml#/DecisionAction'
+    time_limit_ms:
+      type: integer
+      minimum: 50
+      maximum: 1000
+      default: 200
+    risk_threshold:
+      type: integer
+      minimum: 0
+      maximum: 100
+      default: 50
+  required:
+    - decision_context
+
+ExecuteBehaviorTreeRequest:
+  type: object
+  properties:
+    npc_id:
+      type: string
+    context_variables:
+      type: object
+      additionalProperties: true
+    max_depth:
+      type: integer
+      minimum: 1
+      maximum: 50
+      default: 10
+    timeout_ms:
+      type: integer
+      minimum: 100
+      maximum: 10000
+      default: 2000
+  required:
+    - npc_id

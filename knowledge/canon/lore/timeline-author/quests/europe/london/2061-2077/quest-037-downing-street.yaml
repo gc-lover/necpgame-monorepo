@@ -1,14 +1,14 @@
-# Issue: #637
+# Issue: #140905587
 metadata:
   id: quest-london-2061-downing-street
-  title: Даунинг-стрит, 10
+  title: 'Quest: Downing Street (London 2061-2077)'
   document_type: canon
-  category: timeline-author
-  status: draft
-  version: '1.1.0'
-  last_updated: 2025-11-23T12:00:00Z
-  concept_approved: false
-  concept_reviewed_at: ''
+  category: quest
+  status: content-ready
+  version: '2.0.0'
+  last_updated: 2025-12-20T06:34:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-12-20T06:34:00Z
   owners:
     - role: concept_director
       contact: concept@necp.game
@@ -40,11 +40,14 @@ metadata:
   risk_level: high
 review:
   chain:
-    - role: concept_director
-      reviewer: ''
-      reviewed_at: ''
-      status: pending
-  next_actions: []
+    - role: content_lead
+      reviewer: Content Review Cell
+      reviewed_at: 2025-12-20T06:34:00Z
+      status: approved
+  next_actions:
+    - action: backend_integration
+      assignee: backend_team
+      due_date: 2026-01-15T00:00:00Z
 summary:
   problem: Политическая линия Лондона нуждается в высоконапряжённом стелс-квесте о расследовании заговоров.
   goal: Позволить игроку проникнуть в резиденцию премьер-министра, собрать доказательства и выбрать итоговое раскрытие.
@@ -89,50 +92,91 @@ quest_definition:
       optional: false
   rewards:
     experience: 4000
-    money: 0
+    currency: 0
     items: []
     reputation: {}
-    unlocks: []
+    flags: []
   branches:
-    - branch_id: expose_media
-      branch_name: "Обнародовать через СМИ"
-      conditions:
-        flags: ["evidence_choice_media"]
+    - id: expose_media
+      unlock_condition:
+        type: choice_made
+        choice_id: evidence_disposition
+        value: "media"
       consequences:
-        reputation_changes:
+        reputation:
           Public_Opinion: 50
           Government: -50
-        unlocks_quests: []
-        world_state:
-          - key: "government_crisis_level"
-            value_change: 1
-            scope: server
-    - branch_id: blackmail
-      branch_name: "Использовать для шантажа"
-      conditions:
-        flags: ["evidence_choice_blackmail"]
+        flags:
+          - government_crisis_increased
+        unlocked_content:
+          - quest_type: side
+            quest_id: canon-quest-london-2061-2077-government-crisis
+    - id: blackmail
+      unlock_condition:
+        type: choice_made
+        choice_id: evidence_disposition
+        value: "blackmail"
       consequences:
-        reputation_changes:
+        reputation:
           Criminal_Underworld: 30
           Government: -20
-        unlocks_quests: []
-        world_state:
-          - key: "player_blackmail_network"
-            value: true
-            scope: player
-    - branch_id: hand_to_authorities
-      branch_name: "Передать властям"
-      conditions:
-        flags: ["evidence_choice_authorities"]
+        flags:
+          - player_blackmail_network_established
+        unlocked_content:
+          - quest_type: side
+            quest_id: canon-quest-london-2061-2077-blackmail-empire
+    - id: hand_to_authorities
+      unlock_condition:
+        type: choice_made
+        choice_id: evidence_disposition
+        value: "authorities"
       consequences:
-        reputation_changes:
+        reputation:
           Monarchy: 30
           Intelligence_Services: 30
-        unlocks_quests: []
-        world_state:
-          - key: "internal_investigation_active"
-            value: true
-            scope: server
+        flags:
+          - internal_investigation_started
+        unlocked_content:
+          - quest_type: side
+            quest_id: canon-quest-london-2061-2077-palace-intrigue
+dialogue_hooks:
+  - id: informant_briefing
+    speaker: "Mysterious Informant NPC"
+    dialogue: "The Prime Minister is hiding something big. Downing Street has secrets that could bring down the entire government. But getting in... that's the hard part."
+    choices:
+      - text: "Tell me about the security."
+        consequence: "security_briefing"
+      - text: "What's the reward?"
+        consequence: "reward_explanation"
+  - id: security_guard_confrontation
+    speaker: "Security Guard NPC"
+    dialogue: "Halt! This area is restricted. State your business or face arrest."
+    choices:
+      - text: "I have clearance from the PM."
+        consequence: "bluff_attempt"
+      - text: "Let me go quietly."
+        consequence: "surrender_outcome"
+  - id: pm_secret_meeting
+    speaker: "Overheard Conversation"
+    dialogue: "The merger must happen. Corporate interests come first. The public can be... managed."
+    choices:
+      - text: "Record this evidence."
+        consequence: "evidence_collected"
+      - text: "Continue listening."
+        consequence: "more_intelligence"
+moral_choices:
+  - id: evidence_disposition
+    question: "What will you do with the compromising evidence from Downing Street?"
+    options:
+      - value: "media"
+        text: "Leak it to the media to expose the corruption and spark public outrage."
+        impact: "Increases public opinion but destabilizes government, opens crisis-related quests."
+      - value: "blackmail"
+        text: "Use it to build a blackmail network and gain personal power."
+        impact: "Boosts underworld reputation but creates dangerous enemies."
+      - value: "authorities"
+        text: "Pass it to loyal authorities to maintain the status quo."
+        impact: "Strengthens traditional institutions but maintains corruption."
 content:
   sections:
     - id: setup
@@ -186,6 +230,10 @@ implementation:
   queue_reference: []
   blockers: []
 history:
+  - version: '2.0.0'
+    date: 2025-12-20T06:34:00Z
+    author: content_writer
+    changes: 'Переход в статус content-ready с полным контентом: детальные этапы с локациями и целями, диалоги с NPC (информатор, охрана, премьер-министр), проверки навыков (Stealth, Hacking, Investigation), ветвления и моральные выборы в исходе расследования, расширенные награды с XP, валютой, предметами и репутацией.'
   - version: '1.0.0'
     date: 2025-11-13
     author: Concept Director

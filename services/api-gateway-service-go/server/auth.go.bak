@@ -1,0 +1,218 @@
+// Issue: #146073424
+package server
+
+import (
+	"context"
+	"net/http"
+	"strings"
+	"time"
+
+	"github.com/golang-jwt/jwt/v5"
+	"go.uber.org/zap"
+)
+
+// AuthMiddleware реализует JWT аутентификацию для API Gateway
+type AuthMiddleware struct {
+	jwtSecret []byte
+	logger    *zap.Logger
+}
+
+// NewAuthMiddleware создает новый auth middleware
+func NewAuthMiddleware(jwtSecret string, logger *zap.Logger) *AuthMiddleware {
+	return &AuthMiddleware{
+		jwtSecret: []byte(jwtSecret),
+		logger:    logger,
+	}
+}
+
+// JWTAuth middleware для проверки JWT токенов
+func (am *AuthMiddleware) JWTAuth(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Извлекаем токен из заголовка Authorization
+		authHeader := r.Header.Get("Authorization")
+		if authHeader == "" {
+			am.logger.Warn("Missing authorization header",
+				zap.String("path", r.URL.Path),
+				zap.String("method", r.Method),
+				zap.String("remote_addr", r.RemoteAddr))
+			w.Header().Set("WWW-Authenticate", `Bearer realm="api"`)
+			http.Error(w, "Missing authorization header", http.StatusUnauthorized)
+			return
+		}
+
+		// Проверяем формат Bearer token
+		tokenParts := strings.SplitN(authHeader, " ", 2)
+		if len(tokenParts) != 2 || tokenParts[0] != "Bearer" {
+			am.logger.Warn("Invalid authorization header format",
+				zap.String("path", r.URL.Path),
+				zap.String("auth_header", authHeader[:min(20, len(authHeader))]+"..."))
+			http.Error(w, "Invalid authorization header format", http.StatusUnauthorized)
+			return
+		}
+
+		tokenString := tokenParts[1]
+
+		// Валидируем токен
+		claims, err := am.validateAccessToken(tokenString)
+		if err != nil {
+			am.logger.Warn("Invalid JWT token",
+				zap.String("path", r.URL.Path),
+				zap.Error(err))
+			http.Error(w, "Invalid token", http.StatusUnauthorized)
+			return
+		}
+
+		// Добавляем информацию о пользователе в контекст
+		ctx := context.WithValue(r.Context(), "user_id", claims.UserID)
+		ctx = context.WithValue(ctx, "user_role", claims.Role)
+		ctx = context.WithValue(ctx, "user_email", claims.Email)
+		ctx = context.WithValue(ctx, "token_issued_at", claims.IssuedAt)
+		ctx = context.WithValue(ctx, "token_expires_at", claims.ExpiresAt)
+
+		am.logger.Debug("JWT authentication successful",
+			zap.String("user_id", claims.UserID),
+			zap.String("path", r.URL.Path))
+
+		// Передаем запрос дальше с обновленным контекстом
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+// validateAccessToken валидирует access токен
+func (am *AuthMiddleware) validateAccessToken(tokenString string) (*TokenClaims, error) {
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		// Проверяем метод подписи
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, jwt.ErrSignatureInvalid
+		}
+		return am.jwtSecret, nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	// Проверяем валидность токена
+	if !token.Valid {
+		return nil, jwt.ErrTokenNotValidYet
+	}
+
+	// Извлекаем claims
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return nil, jwt.ErrTokenInvalidClaims
+	}
+
+	// Проверяем обязательные поля
+	userID, ok := claims["user_id"].(string)
+	if !ok || userID == "" {
+		return nil, jwt.ErrTokenInvalidClaims
+	}
+
+	role, _ := claims["role"].(string)
+	email, _ := claims["email"].(string)
+
+	// Извлекаем временные метки
+	var issuedAt, expiresAt *time.Time
+	if iat, ok := claims["iat"].(float64); ok {
+		t := time.Unix(int64(iat), 0)
+		issuedAt = &t
+	}
+
+	if exp, ok := claims["exp"].(float64); ok {
+		t := time.Unix(int64(exp), 0)
+		expiresAt = &t
+	}
+
+	tokenClaims := &TokenClaims{
+		UserID:    userID,
+		Role:      role,
+		Email:     email,
+		IssuedAt:  issuedAt,
+		ExpiresAt: expiresAt,
+	}
+
+	return tokenClaims, nil
+}
+
+// TokenClaims представляет claims токена
+type TokenClaims struct {
+	UserID    string
+	Role      string
+	Email     string
+	IssuedAt  *time.Time
+	ExpiresAt *time.Time
+}
+
+// GenerateToken генерирует новый JWT токен (для тестирования)
+func (am *AuthMiddleware) GenerateToken(userID, role, email string, duration time.Duration) (string, error) {
+	now := time.Now()
+	claims := jwt.MapClaims{
+		"user_id": userID,
+		"role":    role,
+		"email":   email,
+		"iat":     now.Unix(),
+		"exp":     now.Add(duration).Unix(),
+		"type":    "access",
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	tokenString, err := token.SignedString(am.jwtSecret)
+	if err != nil {
+		return "", err
+	}
+
+	return tokenString, nil
+}
+
+// ValidateToken валидирует токен и возвращает claims
+func (am *AuthMiddleware) ValidateToken(tokenString string) (*TokenClaims, error) {
+	return am.validateAccessToken(tokenString)
+}
+
+// RefreshToken обновляет токен (простая реализация)
+func (am *AuthMiddleware) RefreshToken(oldTokenString string) (string, error) {
+	// Валидируем старый токен
+	oldClaims, err := am.validateAccessToken(oldTokenString)
+	if err != nil {
+		return "", err
+	}
+
+	// Генерируем новый токен с обновленным временем
+	return am.GenerateToken(oldClaims.UserID, oldClaims.Role, oldClaims.Email, 24*time.Hour)
+}
+
+// GetUserFromContext извлекает информацию о пользователе из контекста
+func (am *AuthMiddleware) GetUserFromContext(ctx context.Context) (*TokenClaims, bool) {
+	userID, ok := ctx.Value("user_id").(string)
+	if !ok {
+		return nil, false
+	}
+
+	role, _ := ctx.Value("user_role").(string)
+	email, _ := ctx.Value("user_email").(string)
+
+	var issuedAt, expiresAt *time.Time
+	if iat, ok := ctx.Value("token_issued_at").(*time.Time); ok {
+		issuedAt = iat
+	}
+	if exp, ok := ctx.Value("token_expires_at").(*time.Time); ok {
+		expiresAt = exp
+	}
+
+	return &TokenClaims{
+		UserID:    userID,
+		Role:      role,
+		Email:     email,
+		IssuedAt:  issuedAt,
+		ExpiresAt: expiresAt,
+	}, true
+}
+
+// min вспомогательная функция
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
+}

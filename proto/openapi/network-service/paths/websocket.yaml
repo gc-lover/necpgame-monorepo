@@ -1,0 +1,74 @@
+connect:
+  get:
+    tags:
+      - WebSocket
+    summary: Establish WebSocket connection for real-time communication
+    operationId: websocketConnect
+    description: |
+      Establishes a WebSocket connection for real-time messaging and events.
+      Supports authentication, heartbeat, and automatic reconnection.
+    parameters:
+      - name: token
+        in: query
+        required: true
+        schema:
+          type: string
+        description: JWT authentication token
+      - name: client_id
+        in: query
+        required: true
+        schema:
+          type: string
+        description: Unique client identifier
+      - name: client_version
+        in: query
+        schema:
+          type: string
+          default: "1.0.0"
+        description: Client version for protocol compatibility
+      - name: compress
+        in: query
+        schema:
+          type: boolean
+          default: true
+        description: Enable message compression
+    responses:
+      '101':
+        description: WebSocket connection established successfully
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                connection_id:
+                  type: string
+                server_time:
+                  type: integer
+                  format: int64
+                heartbeat_interval:
+                  type: integer
+                  default: 30000
+      '400':
+        $ref: '../main.yaml#/components/responses/BadRequest'
+      '401':
+        description: Authentication failed
+        content:
+          application/json:
+            schema:
+              $ref: '../main.yaml#/components/schemas/Error'
+      '429':
+        description: Connection limit exceeded
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                code:
+                  type: integer
+                  example: 429
+                message:
+                  type: string
+                  example: "Connection limit exceeded"
+                retry_after:
+                  type: integer
+                  description: Seconds to wait before retrying

@@ -17,9 +17,9 @@ type Config struct {
 	ReadTimeout time.Duration `json:"read_timeout"`
 
 	// Database configuration
-	DatabaseURL string        `json:"database_url"`
-	MaxConns    int32         `json:"max_conns"`
-	MinConns    int32         `json:"min_conns"`
+	DatabaseURL     string        `json:"database_url"`
+	MaxConns        int32         `json:"max_conns"`
+	MinConns        int32         `json:"min_conns"`
 	MaxConnLifetime time.Duration `json:"max_conn_lifetime"`
 	MaxConnIdleTime time.Duration `json:"max_conn_idle_time"`
 
@@ -27,20 +27,20 @@ type Config struct {
 	RedisURL string `json:"redis_url"`
 
 	// Service configuration
-	ServiceName string        `json:"service_name"`
-	Environment string        `json:"environment"`
-	Version     string        `json:"version"`
+	ServiceName string `json:"service_name"`
+	Environment string `json:"environment"`
+	Version     string `json:"version"`
 
 	// Moderation configuration
-	MaxMessageLength    int           `json:"max_message_length"`
-	ProcessingTimeout   time.Duration `json:"processing_timeout"`
-	CacheTTL            time.Duration `json:"cache_ttl"`
-	RateLimitPerSecond  int           `json:"rate_limit_per_second"`
+	MaxMessageLength   int           `json:"max_message_length"`
+	ProcessingTimeout  time.Duration `json:"processing_timeout"`
+	CacheTTL           time.Duration `json:"cache_ttl"`
+	RateLimitPerSecond int           `json:"rate_limit_per_second"`
 
 	// Monitoring
-	EnablePprof         bool   `json:"enable_pprof"`
-	PprofAddr           string `json:"pprof_addr"`
-	MetricsAddr         string `json:"metrics_addr"`
+	EnablePprof         bool          `json:"enable_pprof"`
+	PprofAddr           string        `json:"pprof_addr"`
+	MetricsAddr         string        `json:"metrics_addr"`
 	HealthCheckInterval time.Duration `json:"health_check_interval"`
 
 	// Logger
@@ -56,11 +56,11 @@ func Load() (*Config, error) {
 		ReadTimeout: getEnvDuration("READ_TIMEOUT", 30*time.Second),
 
 		// Database defaults (optimized for MMOFPS)
-		DatabaseURL:       getEnv("DATABASE_URL", "postgres://necpgame:necpgame@localhost:5432/necpgame?sslmode=disable"),
-		MaxConns:          getEnvInt32("DB_MAX_CONNS", 50),
-		MinConns:          getEnvInt32("DB_MIN_CONNS", 10),
-		MaxConnLifetime:   getEnvDuration("DB_MAX_CONN_LIFETIME", 5*time.Minute),
-		MaxConnIdleTime:   getEnvDuration("DB_MAX_CONN_IDLE_TIME", 10*time.Minute),
+		DatabaseURL:     getEnv("DATABASE_URL", "postgres://necpgame:necpgame@localhost:5432/necpgame?sslmode=disable"),
+		MaxConns:        getEnvInt32("DB_MAX_CONNS", 50),
+		MinConns:        getEnvInt32("DB_MIN_CONNS", 10),
+		MaxConnLifetime: getEnvDuration("DB_MAX_CONN_LIFETIME", 5*time.Minute),
+		MaxConnIdleTime: getEnvDuration("DB_MAX_CONN_IDLE_TIME", 10*time.Minute),
 
 		// Redis defaults
 		RedisURL: getEnv("REDIS_URL", "redis://localhost:6379"),
@@ -77,9 +77,9 @@ func Load() (*Config, error) {
 		RateLimitPerSecond: getEnvInt("RATE_LIMIT_PER_SECOND", 10),
 
 		// Monitoring defaults
-		EnablePprof:        getEnvBool("ENABLE_PPROF", true),
-		PprofAddr:          getEnv("PPROF_ADDR", "localhost:6061"),
-		MetricsAddr:        getEnv("METRICS_ADDR", ":9093"),
+		EnablePprof:         getEnvBool("ENABLE_PPROF", true),
+		PprofAddr:           getEnv("PPROF_ADDR", "localhost:6061"),
+		MetricsAddr:         getEnv("METRICS_ADDR", ":9093"),
 		HealthCheckInterval: getEnvDuration("HEALTH_CHECK_INTERVAL", 30*time.Second),
 	}
 

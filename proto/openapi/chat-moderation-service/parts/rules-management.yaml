@@ -1,0 +1,162 @@
+paths:
+  # Moderation Rules Management
+  /api/v1/moderation/rules:
+    get:
+      summary: Get moderation rules
+      description: Retrieve all active moderation rules
+      operationId: getModerationRules
+      tags: [Moderation Rules]
+      parameters:
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [word_filter, spam_detection, toxicity_analysis]
+          description: Filter by rule type
+        - name: active
+          in: query
+          schema:
+            type: boolean
+            default: true
+          description: Filter by active status
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+          description: Maximum number of rules to return
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          description: Number of rules to skip
+      responses:
+        "200":
+          description: List of moderation rules
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  rules:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ModerationRule"
+                  total:
+                    type: integer
+                    description: Total number of rules
+                  limit:
+                    type: integer
+                  offset:
+                    type: integer
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+    post:
+      summary: Create moderation rule
+      description: Create a new moderation rule
+      operationId: createModerationRule
+      tags: [Moderation Rules]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateModerationRuleRequest"
+      responses:
+        "201":
+          description: Moderation rule created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ModerationRule"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /api/v1/moderation/rules/{rule_id}:
+    get:
+      summary: Get moderation rule by ID
+      description: Retrieve a specific moderation rule
+      operationId: getModerationRule
+      tags: [Moderation Rules]
+      parameters:
+        - name: rule_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Moderation rule ID
+      responses:
+        "200":
+          description: Moderation rule details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ModerationRule"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+    put:
+      summary: Update moderation rule
+      description: Update an existing moderation rule
+      operationId: updateModerationRule
+      tags: [Moderation Rules]
+      parameters:
+        - name: rule_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Moderation rule ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateModerationRuleRequest"
+      responses:
+        "200":
+          description: Moderation rule updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ModerationRule"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+    delete:
+      summary: Delete moderation rule
+      description: Delete a moderation rule
+      operationId: deleteModerationRule
+      tags: [Moderation Rules]
+      parameters:
+        - name: rule_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Moderation rule ID
+      responses:
+        "204":
+          description: Moderation rule deleted
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"

@@ -1,138 +1,106 @@
-// Issue: #1581 - ogen migration + full optimizations, #1584 - pprof profiling
 package main
 
 import (
 	"context"
-	"log"
 	"net/http"
-	_ "net/http/pprof" // OPTIMIZATION: Issue #1584 - profiling endpoints
+	"net/http/pprof"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
-	"github.com/go-redis/redis/v8"
 	"github.com/gc-lover/necpgame-monorepo/services/inventory-service-go/server"
-	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/grafana/pyroscope-go" // Issue: #1611 - Continuous Profiling
+	"github.com/sirupsen/logrus"
 )
 
+// OPTIMIZATION: Issue #1950 - Memory-aligned struct for performance
+type InventoryServiceConfig struct {
+	HTTPAddr       string        `json:"http_addr"`       // 16 bytes
+	HealthAddr     string        `json:"health_addr"`     // 16 bytes
+	PprofAddr      string        `json:"pprof_addr"`      // 16 bytes
+	DBMaxOpenConns int           `json:"db_max_open_conns"` // 8 bytes
+	ReadTimeout    time.Duration `json:"read_timeout"`    // 8 bytes
+	WriteTimeout   time.Duration `json:"write_timeout"`   // 8 bytes
+	MaxHeaderBytes int           `json:"max_header_bytes"` // 8 bytes
+}
+
 func main() {
-	// Issue: #1611 - Continuous Profiling (Pyroscope)
-	pyroscope.Start(pyroscope.Config{
-		ApplicationName: "necpgame.inventory",
-		ServerAddress:   getEnv("PYROSCOPE_SERVER", "http://pyroscope:4040"),
-		ProfileTypes: []pyroscope.ProfileType{
-			pyroscope.ProfileCPU,
-			pyroscope.ProfileAllocObjects,
-			pyroscope.ProfileAllocSpace,
-			pyroscope.ProfileInuseObjects,
-			pyroscope.ProfileInuseSpace,
-		},
-		Tags: map[string]string{
-			"environment": getEnv("ENV", "development"),
-			"version":     getEnv("VERSION", "unknown"),
-		},
-		UploadRate: 10 * time.Second, // 10 seconds
+	logger := logrus.New()
+	logger.SetFormatter(&logrus.JSONFormatter{
+		TimestampFormat: time.RFC3339,
 	})
+	logger.SetLevel(logrus.InfoLevel)
 
-	logger := server.GetLogger()
-	logger.Info("Inventory Service (Go) starting...")
-	logger.Info("OK Pyroscope continuous profiling started")
-
-	addr := getEnv("ADDR", "0.0.0.0:8085")
-	metricsAddr := getEnv("METRICS_ADDR", ":9090")
-	
-	dbURL := getEnv("DATABASE_URL", "postgresql://necpgame:necpgame@localhost:5432/necpgame?sslmode=disable")
-	redisAddr := getEnv("REDIS_ADDR", "localhost:6379")
-
-	// Database connection with pgxpool
-	config, err := pgxpool.ParseConfig(dbURL)
-	if err != nil {
-		log.Fatalf("Failed to parse database URL: %v", err)
-	}
-	// CRITICAL: Configure DB pool (hot path - 10k RPS)
-	config.MaxConns = 50
-	config.MinConns = 10
-	config.MaxConnLifetime = 5 * time.Minute
-	config.MaxConnIdleTime = 10 * time.Minute
-	
-	db, err := pgxpool.NewWithConfig(context.Background(), config)
-	if err != nil {
-		log.Fatalf("Failed to connect to database: %v", err)
-	}
-	defer db.Close()
-
-	// Redis client for caching
-	redisClient := redis.NewClient(&redis.Options{
-		Addr: redisAddr,
-	})
-
-	// Create optimized service with 3-tier caching
-	repo := server.NewInventoryRepository(db)
-	repoAdapter := server.NewRepositoryAdapter(repo)
-	optimizedService := server.NewOptimizedInventoryService(redisClient, repoAdapter)
-
-	// Create ogen server
-	httpServer := server.NewHTTPServerOgen(addr, optimizedService)
-
-	metricsMux := http.NewServeMux()
-	metricsMux.Handle("/metrics", promhttp.Handler())
-
-	metricsServer := &http.Server{
-		Addr:         metricsAddr,
-		Handler:      metricsMux,
-		ReadTimeout:  10 * time.Second,
-		WriteTimeout: 10 * time.Second,
+	config := &InventoryServiceConfig{
+		HTTPAddr:       getEnv("HTTP_ADDR", ":8082"),
+		HealthAddr:     getEnv("HEALTH_ADDR", ":8083"),
+		PprofAddr:      getEnv("PPROF_ADDR", ":6863"),
+		DBMaxOpenConns: 50, // OPTIMIZATION: Higher connection pool for MMO load
+		ReadTimeout:    15 * time.Second,
+		WriteTimeout:   15 * time.Second,
+		MaxHeaderBytes: 1 << 20, // 1MB
 	}
 
+	// OPTIMIZATION: Issue #1950 - Start pprof server for profiling
 	go func() {
-		logger.WithField("addr", metricsAddr).Info("Metrics server starting")
-		if err := metricsServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			logger.WithError(err).Fatal("Metrics server failed")
-		}
-	}()
-
-	// OPTIMIZATION: Issue #1584 - Start pprof server for profiling
-	go func() {
-		pprofAddr := getEnv("PPROF_ADDR", "localhost:6819")
-		logger.WithField("addr", pprofAddr).Info("pprof server starting")
+		logger.WithField("addr", config.PprofAddr).Info("pprof server starting")
 		// Endpoints: /debug/pprof/profile, /debug/pprof/heap, /debug/pprof/goroutine
-		if err := http.ListenAndServe(pprofAddr, nil); err != nil {
+		if err := http.ListenAndServe(config.PprofAddr, nil); err != nil {
 			logger.WithError(err).Error("pprof server failed")
 		}
 	}()
 
-	// Issue: #1585 - Runtime Goroutine Monitoring (CRITICAL - 10k+ RPS!)
-	monitor := server.NewGoroutineMonitor(1200) // Max 1200 goroutines for inventory (high concurrency)
-	go monitor.Start()
-	defer monitor.Stop()
-	logger.Info("OK Goroutine monitor started")
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
-
-	go func() {
-		<-sigChan
-		logger.Info("Shutting down server...")
-		cancel()
-
-		shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer shutdownCancel()
-		metricsServer.Shutdown(shutdownCtx)
-		httpServer.Shutdown(shutdownCtx)
-	}()
-
-	logger.WithField("addr", addr).Info("HTTP server starting")
-	if err := httpServer.Start(ctx); err != nil && err != http.ErrServerClosed {
-		logger.WithError(err).Fatal("Server error")
+	// Initialize service with performance optimizations
+	srv, err := server.NewInventoryServer(config, logger)
+	if err != nil {
+		logger.WithError(err).Fatal("failed to initialize inventory server")
 	}
 
-	logger.Info("Server stopped")
+	// OPTIMIZATION: Issue #1952 - Health check endpoint with metrics
+	healthMux := http.NewServeMux()
+	healthMux.HandleFunc("/health", srv.HealthCheck)
+	healthMux.Handle("/metrics", promhttp.Handler())
+
+	go func() {
+		logger.WithField("addr", config.HealthAddr).Info("health/metrics server starting")
+		if err := http.ListenAndServe(config.HealthAddr, healthMux); err != nil {
+			logger.WithError(err).Error("health server failed")
+		}
+	}()
+
+	// Start main HTTP server
+	httpSrv := &http.Server{
+		Addr:           config.HTTPAddr,
+		Handler:        srv.Router(),
+		ReadTimeout:    config.ReadTimeout,
+		WriteTimeout:   config.WriteTimeout,
+		MaxHeaderBytes: config.MaxHeaderBytes,
+	}
+
+	// Graceful shutdown
+	go func() {
+		logger.WithField("addr", config.HTTPAddr).Info("inventory service starting")
+		if err := httpSrv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			logger.WithError(err).Fatal("inventory server failed")
+		}
+	}()
+
+	// OPTIMIZATION: Issue #1952 - Graceful shutdown with timeout
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+
+	logger.Info("shutting down inventory service...")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	if err := httpSrv.Shutdown(ctx); err != nil {
+		logger.WithError(err).Error("server forced to shutdown")
+	}
+
+	logger.Info("inventory service stopped")
 }
 
 func getEnv(key, defaultValue string) string {

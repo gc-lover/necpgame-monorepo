@@ -16,32 +16,28 @@ import (
 )
 
 // QuestCache - 3-tier caching (Memory → Redis → DB)
+// OPTIMIZATION: Struct field alignment (large → small) Issue #300
 type QuestCache struct {
-	// L1: In-memory cache (fastest, but limited size)
-	memoryCache sync.Map // questID -> *CachedQuestInstance
-	
-	// L2: Redis (shared across instances)
-	redis *redis.Client
-	
-	// L3: Database (fallback)
-	repo *Repository
-	
-	// Cache TTL
-	memoryTTL time.Duration // 30 seconds
-	redisTTL  time.Duration // 5 minutes
+	memoryCache sync.Map      // sync.Map first (may help alignment)
+	memoryTTL   time.Duration // 8 bytes
+	redisTTL    time.Duration // 8 bytes
+	redis       *redis.Client // 8 bytes (pointer)
+	repo        *Repository   // 8 bytes (pointer)
 }
 
 // CachedQuestInstance wraps quest instance with metadata
+// OPTIMIZATION: Struct field alignment (large → small) Issue #300
 type CachedQuestInstance struct {
-	QuestInstance *api.QuestInstance
-	LoadedAt      time.Time
-	Version       int64 // For optimistic locking
+	QuestInstance *api.QuestInstance // 8 bytes (pointer)
+	LoadedAt      time.Time          // 12 bytes (time.Time has int64 + int32)
+	Version       int64              // 8 bytes
 }
 
 // CachedQuestList wraps quest list with metadata
+// OPTIMIZATION: Struct field alignment (large → small) Issue #300
 type CachedQuestList struct {
-	Quests  []api.QuestInstance
-	LoadedAt time.Time
+	Quests   []api.QuestInstance // 24 bytes (slice header)
+	LoadedAt time.Time           // 12 bytes (time.Time)
 }
 
 // NewQuestCache creates 3-tier cache
@@ -60,7 +56,7 @@ func (c *QuestCache) GetQuest(ctx context.Context, questID uuid.UUID) (*api.Ques
 	if cached, ok := c.tryMemoryCacheQuest(questID); ok {
 		return cached.QuestInstance, nil
 	}
-	
+
 	// L2: Try Redis cache
 	if c.redis != nil {
 		if quest, err := c.tryRedisCacheQuest(ctx, questID); err == nil {
@@ -69,7 +65,7 @@ func (c *QuestCache) GetQuest(ctx context.Context, questID uuid.UUID) (*api.Ques
 			return quest, nil
 		}
 	}
-	
+
 	// L3: Load from DB (cache miss)
 	// Note: Repository is currently empty, so return nil for now
 	// When repository is implemented, uncomment:
@@ -77,7 +73,7 @@ func (c *QuestCache) GetQuest(ctx context.Context, questID uuid.UUID) (*api.Ques
 	// if err != nil {
 	// 	return nil, fmt.Errorf("failed to load quest: %w", err)
 	// }
-	
+
 	// For now, return nil (will be handled by service layer)
 	return nil, nil
 }
@@ -85,7 +81,7 @@ func (c *QuestCache) GetQuest(ctx context.Context, questID uuid.UUID) (*api.Ques
 // GetPlayerQuests returns player quests from cache or DB (3-tier cascade)
 func (c *QuestCache) GetPlayerQuests(ctx context.Context, playerID uuid.UUID) ([]api.QuestInstance, error) {
 	cacheKey := fmt.Sprintf("quests:player:%s", playerID.String())
-	
+
 	// L1: Try memory cache
 	if cached, ok := c.memoryCache.Load(cacheKey); ok {
 		questList := cached.(*CachedQuestList)
@@ -93,7 +89,7 @@ func (c *QuestCache) GetPlayerQuests(ctx context.Context, playerID uuid.UUID) ([
 			return questList.Quests, nil
 		}
 	}
-	
+
 	// L2: Try Redis cache
 	if c.redis != nil {
 		if data, err := c.redis.Get(ctx, cacheKey).Bytes(); err == nil {
@@ -104,7 +100,7 @@ func (c *QuestCache) GetPlayerQuests(ctx context.Context, playerID uuid.UUID) ([
 			}
 		}
 	}
-	
+
 	// L3: Load from DB (cache miss)
 	// Note: Repository is currently empty, so return empty for now
 	// When repository is implemented, uncomment:
@@ -112,7 +108,7 @@ func (c *QuestCache) GetPlayerQuests(ctx context.Context, playerID uuid.UUID) ([
 	// if err != nil {
 	// 	return nil, fmt.Errorf("failed to load player quests: %w", err)
 	// }
-	
+
 	// For now, return empty (will be handled by service layer)
 	return []api.QuestInstance{}, nil
 }
@@ -141,32 +137,32 @@ func (c *QuestCache) tryMemoryCacheQuest(questID uuid.UUID) (*CachedQuestInstanc
 	if !ok {
 		return nil, false
 	}
-	
+
 	cached := value.(*CachedQuestInstance)
-	
+
 	// Check TTL
 	if time.Since(cached.LoadedAt) > c.memoryTTL {
 		c.memoryCache.Delete(questID.String()) // Evict stale
 		return nil, false
 	}
-	
+
 	return cached, true
 }
 
 // tryRedisCacheQuest attempts L2 cache lookup
 func (c *QuestCache) tryRedisCacheQuest(ctx context.Context, questID uuid.UUID) (*api.QuestInstance, error) {
 	key := fmt.Sprintf("quest:%s", questID.String())
-	
+
 	data, err := c.redis.Get(ctx, key).Bytes()
 	if err != nil {
 		return nil, err
 	}
-	
+
 	var quest api.QuestInstance
 	if err := json.Unmarshal(data, &quest); err != nil {
 		return nil, err
 	}
-	
+
 	return &quest, nil
 }
 
@@ -193,12 +189,12 @@ func (c *QuestCache) storeInRedisQuest(ctx context.Context, questID uuid.UUID, q
 		return
 	}
 	key := fmt.Sprintf("quest:%s", questID.String())
-	
+
 	data, err := json.Marshal(quest)
 	if err != nil {
 		return // Silently fail caching
 	}
-	
+
 	c.redis.Set(ctx, key, data, c.redisTTL)
 }
 
@@ -208,12 +204,11 @@ func (c *QuestCache) storeInRedisPlayerQuests(ctx context.Context, playerID uuid
 		return
 	}
 	cacheKey := fmt.Sprintf("quests:player:%s", playerID.String())
-	
+
 	data, err := json.Marshal(quests)
 	if err != nil {
 		return // Silently fail caching
 	}
-	
+
 	c.redis.Set(ctx, cacheKey, data, c.redisTTL)
 }
-

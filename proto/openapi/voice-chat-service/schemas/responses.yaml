@@ -1,0 +1,514 @@
+CreateChannelResponse:
+  type: object
+  properties:
+    channel_id:
+      type: string
+    name:
+      type: string
+    type:
+      type: string
+    created_at:
+      type: integer
+      format: int64
+    creator_id:
+      type: string
+    invite_code:
+      type: string
+    websocket_url:
+      type: string
+    settings:
+      $ref: '#/ChannelSettings'
+  required:
+    - channel_id
+    - name
+    - type
+    - created_at
+    - creator_id
+
+GetChannelsResponse:
+  type: object
+  properties:
+    channels:
+      type: array
+      items:
+        $ref: '#/ChannelSummary'
+    total_count:
+      type: integer
+      minimum: 0
+    page:
+      type: integer
+      minimum: 1
+      default: 1
+    page_size:
+      type: integer
+      minimum: 1
+      maximum: 100
+  required:
+    - channels
+    - total_count
+
+ChannelSummary:
+  type: object
+  properties:
+    channel_id:
+      type: string
+    name:
+      type: string
+    type:
+      type: string
+    participant_count:
+      type: integer
+      minimum: 0
+    max_participants:
+      type: integer
+      minimum: 0
+    is_private:
+      type: boolean
+    creator_name:
+      type: string
+    created_at:
+      type: integer
+      format: int64
+    last_activity:
+      type: integer
+      format: int64
+  required:
+    - channel_id
+    - name
+    - type
+    - participant_count
+    - max_participants
+
+GetChannelResponse:
+  type: object
+  properties:
+    channel:
+      $ref: '#/ChannelDetails'
+    participants:
+      type: array
+      items:
+        $ref: '#/ChannelParticipant'
+    is_participant:
+      type: boolean
+    can_join:
+      type: boolean
+    permissions:
+      $ref: '#/UserPermissions'
+  required:
+    - channel
+    - participants
+
+ChannelDetails:
+  type: object
+  properties:
+    channel_id:
+      type: string
+    name:
+      type: string
+    type:
+      type: string
+    description:
+      type: string
+    participant_count:
+      type: integer
+      minimum: 0
+    max_participants:
+      type: integer
+      minimum: 0
+    is_private:
+      type: boolean
+    creator_id:
+      type: string
+    creator_name:
+      type: string
+    created_at:
+      type: integer
+      format: int64
+    last_activity:
+      type: integer
+      format: int64
+    settings:
+      $ref: '#/ChannelSettings'
+    statistics:
+      $ref: '#/ChannelStatistics'
+  required:
+    - channel_id
+    - name
+    - type
+    - participant_count
+    - max_participants
+    - creator_id
+
+ChannelSettings:
+  type: object
+  properties:
+    audio_quality:
+      type: string
+      enum: [low, medium, high, ultra]
+      default: medium
+    noise_suppression:
+      type: boolean
+      default: true
+    echo_cancellation:
+      type: boolean
+      default: true
+    voice_activation:
+      type: boolean
+      default: true
+    push_to_talk:
+      type: boolean
+      default: false
+    recording_allowed:
+      type: boolean
+      default: false
+    transcription_enabled:
+      type: boolean
+      default: false
+
+ChannelStatistics:
+  type: object
+  properties:
+    total_messages:
+      type: integer
+      minimum: 0
+    total_participants_ever:
+      type: integer
+      minimum: 0
+    average_session_length:
+      type: number
+      format: float
+    peak_concurrent_users:
+      type: integer
+      minimum: 0
+    uptime_percentage:
+      type: number
+      format: float
+      minimum: 0.0
+      maximum: 100.0
+
+ChannelParticipant:
+  type: object
+  properties:
+    user_id:
+      type: string
+    username:
+      type: string
+    display_name:
+      type: string
+    avatar_url:
+      type: string
+    joined_at:
+      type: integer
+      format: int64
+    is_muted:
+      type: boolean
+    is_deafened:
+      type: boolean
+    speaking:
+      type: boolean
+    volume_level:
+      type: number
+      format: float
+      minimum: 0.0
+      maximum: 1.0
+    role:
+      type: string
+      enum: [participant, moderator, admin]
+  required:
+    - user_id
+    - username
+    - joined_at
+
+UserPermissions:
+  type: object
+  properties:
+    can_speak:
+      type: boolean
+    can_mute_others:
+      type: boolean
+    can_kick_users:
+      type: boolean
+    can_change_settings:
+      type: boolean
+    can_delete_channel:
+      type: boolean
+    can_invite_users:
+      type: boolean
+  required:
+    - can_speak
+
+UpdateChannelResponse:
+  type: object
+  properties:
+    channel_id:
+      type: string
+    updated_fields:
+      type: array
+      items:
+        type: string
+    updated_at:
+      type: integer
+      format: int64
+    updated_by:
+      type: string
+  required:
+    - channel_id
+    - updated_at
+
+JoinChannelResponse:
+  type: object
+  properties:
+    channel_id:
+      type: string
+    websocket_url:
+      type: string
+    session_token:
+      type: string
+    audio_config:
+      $ref: '#/AudioConfig'
+    channel_info:
+      $ref: '#/ChannelDetails'
+    joined_at:
+      type: integer
+      format: int64
+  required:
+    - channel_id
+    - websocket_url
+    - session_token
+
+LeaveChannelResponse:
+  type: object
+  properties:
+    channel_id:
+      type: string
+    left_at:
+      type: integer
+      format: int64
+    session_duration:
+      type: integer
+      description: Session duration in seconds
+  required:
+    - channel_id
+    - left_at
+
+AudioConfig:
+  type: object
+  properties:
+    sample_rate:
+      type: integer
+    channels:
+      type: integer
+    codec:
+      type: string
+    bitrate:
+      type: integer
+    buffer_size:
+      type: integer
+    ice_servers:
+      type: array
+      items:
+        type: string
+  required:
+    - sample_rate
+    - channels
+    - codec
+
+StartStreamResponse:
+  type: object
+  properties:
+    stream_id:
+      type: string
+    channel_id:
+      type: string
+    websocket_url:
+      type: string
+    audio_config:
+      $ref: '#/AudioConfig'
+    started_at:
+      type: integer
+      format: int64
+    estimated_bitrate:
+      type: integer
+  required:
+    - stream_id
+    - channel_id
+    - websocket_url
+    - started_at
+
+StopStreamResponse:
+  type: object
+  properties:
+    stream_id:
+      type: string
+    stopped_at:
+      type: integer
+      format: int64
+    total_bytes:
+      type: integer
+      format: int64
+    duration_seconds:
+      type: number
+      format: float
+  required:
+    - stream_id
+    - stopped_at
+
+GetProximityResponse:
+  type: object
+  properties:
+    location:
+      type: string
+    radius:
+      type: number
+      format: float
+    nearby_players:
+      type: array
+      items:
+        $ref: '#/NearbyPlayer'
+    audio_settings:
+      $ref: '#/ProximityAudioSettings'
+    updated_at:
+      type: integer
+      format: int64
+  required:
+    - location
+    - radius
+    - nearby_players
+
+NearbyPlayer:
+  type: object
+  properties:
+    user_id:
+      type: string
+    username:
+      type: string
+    distance:
+      type: number
+      format: float
+    volume_multiplier:
+      type: number
+      format: float
+      minimum: 0.0
+      maximum: 1.0
+    direction_vector:
+      type: array
+      items:
+        type: number
+        format: float
+      minItems: 3
+      maxItems: 3
+    speaking:
+      type: boolean
+    last_heard:
+      type: integer
+      format: int64
+  required:
+    - user_id
+    - username
+    - distance
+    - volume_multiplier
+
+ProximityAudioSettings:
+  type: object
+  properties:
+    max_distance:
+      type: number
+      format: float
+      default: 25.0
+    min_volume:
+      type: number
+      format: float
+      minimum: 0.0
+      maximum: 1.0
+      default: 0.1
+    rolloff_factor:
+      type: number
+      format: float
+      default: 1.0
+    directional_audio:
+      type: boolean
+      default: true
+    environmental_effects:
+      type: boolean
+      default: false
+
+TextToSpeechResponse:
+  type: object
+  properties:
+    request_id:
+      type: string
+    audio_url:
+      type: string
+    duration_seconds:
+      type: number
+      format: float
+    text_length:
+      type: integer
+    voice_used:
+      type: string
+    generated_at:
+      type: integer
+      format: int64
+    expires_at:
+      type: integer
+      format: int64
+  required:
+    - request_id
+    - audio_url
+    - duration_seconds
+    - generated_at
+
+ReportAbuseResponse:
+  type: object
+  properties:
+    report_id:
+      type: string
+    reported_user_id:
+      type: string
+    channel_id:
+      type: string
+    abuse_type:
+      type: string
+    status:
+      type: string
+      enum: [submitted, under_review, resolved, dismissed]
+      default: submitted
+    submitted_at:
+      type: integer
+      format: int64
+    estimated_review_time:
+      type: string
+  required:
+    - report_id
+    - reported_user_id
+    - abuse_type
+    - status
+    - submitted_at
+
+MuteUserResponse:
+  type: object
+  properties:
+    user_id:
+      type: string
+    channel_id:
+      type: string
+    mute_type:
+      type: string
+    duration_minutes:
+      type: integer
+    muted_by:
+      type: string
+    muted_at:
+      type: integer
+      format: int64
+    expires_at:
+      type: integer
+      format: int64
+    reason:
+      type: string
+  required:
+    - user_id
+    - mute_type
+    - muted_by
+    - muted_at
+    - expires_at

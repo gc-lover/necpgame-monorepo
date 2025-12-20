@@ -26,7 +26,7 @@ var (
 
 // ReloadQuestContentRequest - request for importing quest from YAML
 type ReloadQuestContentRequest struct {
-	QuestID    string `json:"quest_id"`
+	QuestID     string `json:"quest_id"`
 	YamlContent string `json:"yaml_content"`
 }
 
@@ -37,17 +37,18 @@ type ReloadQuestContentResponse struct {
 }
 
 // QuestDefinition represents a quest definition for import
+// OPTIMIZATION: Struct field alignment (large → small) Issue #300
 type QuestDefinition struct {
-	QuestID      string
-	Title        string
-	QuestType    string
-	LevelMin     int
-	LevelMax     int
-	Requirements string // JSON
-	Objectives   string // JSON
-	Rewards      string // JSON
-	ContentData  string // Full YAML as JSON
-	IsActive     bool
+	QuestID      string // 16 bytes
+	Title        string // 16 bytes
+	QuestType    string // 16 bytes
+	Requirements string // JSON - 16 bytes
+	Objectives   string // JSON - 16 bytes
+	Rewards      string // JSON - 16 bytes
+	ContentData  string // Full YAML as JSON - 16 bytes
+	LevelMin     int    // 8 bytes
+	LevelMax     int    // 8 bytes
+	IsActive     bool   // 1 byte
 }
 
 // Handlers implements api.Handler interface (ogen typed handlers!)
@@ -231,16 +232,16 @@ func (h *Handlers) parseQuestYAML(yamlContent string) (*QuestDefinition, error) 
 
 	// Create QuestDefinition
 	questDef := &QuestDefinition{
-		QuestID:     questID,
-		Title:       title,
-		QuestType:   questType,
-		LevelMin:    int(levelMin),
-		LevelMax:    int(levelMax),
+		QuestID:      questID,
+		Title:        title,
+		QuestType:    questType,
+		LevelMin:     int(levelMin),
+		LevelMax:     int(levelMax),
 		Requirements: string(requirementsJSON),
 		Objectives:   string(objectivesJSON),
-		Rewards:     string(rewardsJSON),
-		ContentData: "{}", // Will be populated from yamlContent
-		IsActive:    true,
+		Rewards:      string(rewardsJSON),
+		ContentData:  "{}", // Will be populated from yamlContent
+		IsActive:     true,
 	}
 
 	// Convert full content to JSON for ContentData

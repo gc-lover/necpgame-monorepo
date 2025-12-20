@@ -1,0 +1,238 @@
+# Issue: #???
+metadata:
+  id: mechanics-economy-dynamic-pricing-auction-house
+  title: 'Economy Mechanics: Dynamic Pricing Auction House'
+  document_type: mechanics
+  category: economy
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-12-20T00:00:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-12-20T00:00:00Z
+  owners:
+    - role: game_design_director
+      contact: gamedesign@necp.game
+  tags:
+    - economy
+    - auction-house
+    - dynamic-pricing
+    - market-mechanics
+  topics:
+    - economy-mechanics
+    - player-driven-markets
+    - supply-demand
+    - market-fluctuations
+  related_systems:
+    - economy-service
+    - market-service
+    - analytics-service
+  related_documents:
+    - id: mechanics-economy-auction-house-mechanics
+      relation: extends
+    - id: mechanics-economy-supply-demand-system
+      relation: references
+    - id: mechanics-economy-market-analytics
+      relation: references
+  source: shared/docs/knowledge/mechanics/economy/dynamic-pricing-auction-house.md
+  visibility: internal
+  audience:
+    - game-design
+    - economy-balance
+    - backend
+    - qa
+  risk_level: medium
+review:
+  chain:
+    - role: game_design_director
+      reviewer: Economy Balance Review Cell
+      reviewed_at: 2025-12-20T00:00:00Z
+      status: approved
+  next_actions: []
+summary:
+  problem: Статичные цены аукционного дома не отражали реальную экономику игры, что приводило к эксплойтам и несбалансированности.
+  goal: Реализовать динамическую систему ценообразования на основе спроса, предложения и рыночных трендов.
+  essence: Система анализирует тысячи транзакций в реальном времени, корректируя цены предметов на основе глобальных и локальных факторов.
+  key_points:
+    - Real-time price calculation based on supply/demand
+    - Market trend analysis with historical data
+    - Regional price variations
+    - Anti-exploit measures and market stabilization
+    - Integration with global economy events
+content:
+  sections:
+    - id: core_mechanics
+      title: Основные механики динамического ценообразования
+      body: |
+        **Базовый алгоритм ценообразования:**
+        ```
+        Final Price = Base Price × (1 + Demand Multiplier) × (1 - Supply Multiplier) × Trend Factor × Regional Modifier
+        ```
+
+        **Demand Multiplier:** Рассчитывается по количеству покупателей и средней цене запросов
+        **Supply Multiplier:** Основан на количестве продавцов и объеме товаров
+        **Trend Factor:** Анализирует исторические данные за последние 24-168 часов
+        **Regional Modifier:** Учитывает локальные экономические условия
+
+    - id: data_sources
+      title: Источники данных для анализа
+      body: |
+        **Transaction Data:**
+        - Completed auction sales (last 30 days)
+        - Failed auctions and their reserve prices
+        - Bid patterns and timing
+        - Volume of trades per item category
+
+        **Market Indicators:**
+        - Global supply/demand ratios
+        - Player population changes
+        - Economic events (wars, disasters)
+        - Seasonal content releases
+
+        **External Factors:**
+        - Real-world economic trends (optional)
+        - Server population metrics
+        - Cross-region trade data
+
+    - id: price_calculation
+      title: Расчет цен по категориям
+      body: |
+        **Обычные предметы (Common Items):**
+        - Update frequency: Every 15 minutes
+        - Volatility: Low (±5% from baseline)
+        - Influenced by: Local supply/demand only
+
+        **Редкие предметы (Rare Items):**
+        - Update frequency: Every 5 minutes
+        - Volatility: Medium (±15% from baseline)
+        - Influenced by: Regional and global factors
+
+        **Легендарные предметы (Legendary Items):**
+        - Update frequency: Real-time
+        - Volatility: High (±50% from baseline)
+        - Influenced by: All market factors + player events
+
+        **Уникальные предметы (Unique Items):**
+        - Update frequency: Per transaction
+        - Volatility: Extreme (no limits)
+        - Influenced by: Auction-specific bidding wars
+
+    - id: market_stabilization
+      title: Стабилизация рынка
+      body: |
+        **Price Floors and Ceilings:**
+        - Minimum prices prevent exploitation
+        - Maximum prices prevent inflation spirals
+        - Emergency circuit breakers for extreme events
+
+        **Damping Factors:**
+        - Gradual price changes (max 10% per update)
+        - Trend smoothing algorithms
+        - Outlier filtering for anomalous transactions
+
+        **Market Interventions:**
+        - NPC buy/sell orders during imbalances
+        - Price stabilization events
+        - Emergency economic measures
+
+    - id: regional_variations
+      title: Региональные вариации
+      body: |
+        **Night City Districts:**
+        - Downtown: Premium prices (+20%)
+        - Watson: Balanced market (baseline)
+        - Heywood: Discount district (-15%)
+        - Westbrook: Luxury goods (+35%)
+
+        **World Cities:**
+        - Local specialties with price premiums
+        - Transportation costs affect pricing
+        - Cultural preferences influence demand
+
+    - id: player_experience
+      title: Игровой опыт
+      body: |
+        **Price Predictions:**
+        - Estimated value ranges in UI
+        - Trend indicators (rising/falling/stable)
+        - Historical price charts
+
+        **Trading Tools:**
+        - Price alerts for watched items
+        - Automated buy/sell orders
+        - Portfolio tracking
+
+        **Market Events:**
+        - Price crashes and booms
+        - Market manipulation opportunities
+        - Economic quests and challenges
+
+    - id: anti_exploit_measures
+      title: Меры против эксплойтов
+      body: |
+        **Shill Bidding Detection:**
+        - Pattern analysis for fake bids
+        - Account linking detection
+        - Suspicious activity flags
+
+        **Wash Trading Prevention:**
+        - Self-trading detection
+        - Circular trading pattern analysis
+        - Volume manipulation monitoring
+
+        **Market Manipulation:**
+        - Coordinated buying/selling detection
+        - Price manipulation penalties
+        - Account restrictions for violations
+
+    - id: technical_architecture
+      title: Техническая архитектура
+      body: |
+        **Data Pipeline:**
+        - Real-time transaction ingestion
+        - Batch processing for trend analysis
+        - Distributed caching for performance
+
+        **Machine Learning:**
+        - Price prediction models
+        - Anomaly detection algorithms
+        - Market trend forecasting
+
+        **Scalability:**
+        - Horizontal scaling for high-volume periods
+        - Data partitioning by region/item type
+        - Efficient query optimization
+
+appendix:
+  glossary:
+    - term: Demand Multiplier
+      definition: Коэффициент, отражающий спрос на предмет (выше 1 = повышенный спрос)
+    - term: Supply Multiplier
+      definition: Коэффициент, отражающий предложение предмета (выше 1 = избыток предложения)
+    - term: Trend Factor
+      definition: Множитель, основанный на исторических рыночных трендах
+    - term: Regional Modifier
+      definition: Коэффициент, учитывающий локальные экономические условия
+    - term: Price Volatility
+      definition: Степень колебаний цены вокруг базового значения
+  references:
+    - title: Auction House Base Mechanics
+      link: ../../../mechanics/economy/auction-house-mechanics.yaml
+    - title: Supply Demand System
+      link: ../../../mechanics/economy/supply-demand-system.yaml
+    - title: Market Analytics Framework
+      link: ../../../mechanics/economy/market-analytics-framework.yaml
+  decisions: []
+implementation:
+  github_issue: ???
+  needs_task: false
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-12-20
+    author: game_design_director
+    changes: Создана система динамического ценообразования для аукционного дома с анализом рынка и анти-эксплойт мерами.
+validation:
+  checksum: ''
+  schema_version: '1.0'

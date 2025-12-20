@@ -1,0 +1,154 @@
+openapi: 3.0.3
+info:
+  title: Voice Chat Service API
+  version: 1.0.0
+  description: |
+    API for real-time voice communication in MMOFPS RPG.
+    Handles proximity audio, group channels, text-to-speech, and voice moderation.
+    Optimized for MMO performance with 5000+ concurrent voice connections.
+
+servers:
+  - url: http://localhost:8080
+    description: Development server
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Voice Channels
+    description: Voice channel management and operations
+  - name: Audio Streaming
+    description: Real-time audio streaming and processing
+  - name: Proximity Audio
+    description: Location-based audio attenuation and effects
+  - name: Text-to-Speech
+    description: TTS conversion and voice synthesis
+  - name: Moderation
+    description: Voice chat moderation and content filtering
+
+paths:
+  /voice/health:
+    get:
+      tags:
+        - Voice Channels
+      summary: Health check for Voice Chat Service
+      operationId: healthCheck
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "healthy"
+
+# Voice Channels API
+paths:
+  $ref: './paths/voice-channels.yaml'
+
+# Audio Streaming API
+paths:
+  $ref: './paths/audio-streaming.yaml'
+
+# Text-to-Speech API
+paths:
+  $ref: './paths/tts.yaml'
+
+# Moderation API
+paths:
+  $ref: './paths/moderation.yaml'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    InternalError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+        message:
+          type: string
+      required:
+        - code
+        - message
+
+    # Request/Response schemas
+    CreateChannelRequest:
+      $ref: './schemas/requests.yaml#/CreateChannelRequest'
+
+    CreateChannelResponse:
+      $ref: './schemas/responses.yaml#/CreateChannelResponse'
+
+    GetChannelsResponse:
+      $ref: './schemas/responses.yaml#/GetChannelsResponse'
+
+    GetChannelResponse:
+      $ref: './schemas/responses.yaml#/GetChannelResponse'
+
+    UpdateChannelRequest:
+      $ref: './schemas/requests.yaml#/UpdateChannelRequest'
+
+    UpdateChannelResponse:
+      $ref: './schemas/responses.yaml#/UpdateChannelResponse'
+
+    JoinChannelRequest:
+      $ref: './schemas/requests.yaml#/JoinChannelRequest'
+
+    JoinChannelResponse:
+      $ref: './schemas/responses.yaml#/JoinChannelResponse'
+
+    LeaveChannelResponse:
+      $ref: './schemas/responses.yaml#/LeaveChannelResponse'
+
+    StartStreamRequest:
+      $ref: './schemas/requests.yaml#/StartStreamRequest'
+
+    StartStreamResponse:
+      $ref: './schemas/responses.yaml#/StartStreamResponse'
+
+    StopStreamResponse:
+      $ref: './schemas/responses.yaml#/StopStreamResponse'
+
+    GetProximityResponse:
+      $ref: './schemas/responses.yaml#/GetProximityResponse'
+
+    TextToSpeechRequest:
+      $ref: './schemas/requests.yaml#/TextToSpeechRequest'
+
+    TextToSpeechResponse:
+      $ref: './schemas/responses.yaml#/TextToSpeechResponse'
+
+    ReportAbuseRequest:
+      $ref: './schemas/requests.yaml#/ReportAbuseRequest'
+
+    ReportAbuseResponse:
+      $ref: './schemas/responses.yaml#/ReportAbuseResponse'
+
+    MuteUserRequest:
+      $ref: './schemas/requests.yaml#/MuteUserRequest'
+
+    MuteUserResponse:
+      $ref: './schemas/responses.yaml#/MuteUserResponse'

@@ -1,0 +1,108 @@
+/voice/stream/start:
+  post:
+    tags:
+      - Audio Streaming
+    summary: Start audio streaming session
+    operationId: startAudioStream
+    security:
+      - BearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/requests.yaml#/StartStreamRequest'
+    responses:
+      '200':
+        description: Audio streaming started successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/responses.yaml#/StartStreamResponse'
+      '400':
+        $ref: '../components/responses/BadRequest'
+      '401':
+        description: Unauthorized
+        content:
+          application/json:
+            schema:
+              $ref: '../components/schemas/Error'
+      '429':
+        description: Too many active streams
+        content:
+          application/json:
+            schema:
+              $ref: '../components/schemas/Error'
+      '500':
+        $ref: '../components/responses/InternalError'
+
+/voice/stream/stop:
+  post:
+    tags:
+      - Audio Streaming
+    summary: Stop audio streaming session
+    operationId: stopAudioStream
+    security:
+      - BearerAuth: []
+    responses:
+      '200':
+        description: Audio streaming stopped successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/responses.yaml#/StopStreamResponse'
+      '401':
+        description: Unauthorized
+        content:
+          application/json:
+            schema:
+              $ref: '../components/schemas/Error'
+      '404':
+        description: No active stream found
+        content:
+          application/json:
+            schema:
+              $ref: '../components/schemas/Error'
+      '500':
+        $ref: '../components/responses/InternalError'
+
+/voice/proximity:
+  get:
+    tags:
+      - Proximity Audio
+    summary: Get proximity audio settings and nearby players
+    operationId: getProximityAudio
+    security:
+      - BearerAuth: []
+    parameters:
+      - name: location
+        in: query
+        required: true
+        schema:
+          type: string
+          description: Player location coordinates (x,y,z)
+      - name: radius
+        in: query
+        schema:
+          type: number
+          format: float
+          minimum: 1.0
+          maximum: 100.0
+          default: 25.0
+    responses:
+      '200':
+        description: Proximity audio data retrieved successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/responses.yaml#/GetProximityResponse'
+      '400':
+        $ref: '../components/responses/BadRequest'
+      '401':
+        description: Unauthorized
+        content:
+          application/json:
+            schema:
+              $ref: '../components/schemas/Error'
+      '500':
+        $ref: '../components/responses/InternalError'

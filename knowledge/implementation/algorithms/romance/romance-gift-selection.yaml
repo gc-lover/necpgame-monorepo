@@ -1,0 +1,280 @@
+metadata:
+  id: implementation-romance-gift-selection
+  title: 'Romance Gift & Gesture Engine — Выбор подарков и жестов'
+  document_type: implementation
+  category: algorithms
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-12-20T00:00:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-12-20T00:00:00Z
+  owners:
+    - role: concept_director
+      contact: concept@necp.game
+  tags:
+    - romance
+    - gifts
+    - gestures
+    - personalization
+  topics:
+    - romance-system
+    - player-choice
+    - npc-preferences
+  related_systems:
+    - romance-service
+    - inventory-service
+    - economy-service
+  related_documents:
+    - id: implementation-romance-engine-scoring
+      relation: references
+    - id: implementation-romance-relationship
+      relation: complements
+  source: shared/docs/knowledge/implementation/algorithms/romance/romance-gift-selection.md
+  visibility: internal
+  audience:
+    - concept
+    - backend
+    - game-design
+  risk_level: medium
+review:
+  chain:
+    - role: concept_director
+      reviewer: Romance System Review Cell
+      reviewed_at: 2025-12-20T00:00:00Z
+      status: approved
+  next_actions: []
+summary:
+  problem: Система выбора подарков и романтических жестов отсутствовала в алгоритмах романтики.
+  goal: Создать интеллектуальную систему подбора подарков на основе предпочтений NPC, стадии отношений и культурного контекста.
+  essence: Алгоритм анализирует профиль NPC, историю отношений и доступные предметы для предложения наиболее подходящих романтических жестов.
+  key_points:
+    - Анализ профиля NPC: предпочтения, аллергии, культурный фон, текущие отношения
+    - Система весов: качество предмета, личные предпочтения, стадия отношений, бюджет
+    - Динамические предложения: от простых жестов до роскошных подарков
+    - Обратная связь: адаптация предпочтений на основе реакции NPC
+content:
+  sections:
+    - id: gift_scoring_algorithm
+      title: Алгоритм оценки подарков
+      body: |
+        **GiftScore = BaseValue × PersonalMultiplier × RelationshipMultiplier × ContextMultiplier × RandomFactor**
+
+        Где:
+        - **BaseValue**: Базовая стоимость предмета в ED (экономический вес)
+        - **PersonalMultiplier**: Личный коэффициент предпочтений NPC (0.1 - 3.0)
+        - **RelationshipMultiplier**: Множитель стадии отношений (1.0 - 2.5)
+        - **ContextMultiplier**: Контекстный множитель (0.5 - 1.5)
+        - **RandomFactor**: Случайный элемент для разнообразия (0.8 - 1.2)
+
+    - id: personal_preferences
+      title: Личные предпочтения NPC
+      body: |
+        **Категории предпочтений:**
+
+        1. **Материальные ценности**
+           - Tech: Нейроимпланты, гаджеты, софт
+           - Luxury: Драгоценности, одежда, аксессуары
+           - Practical: Инструменты, оружие, полезные предметы
+
+        2. **Ценности и мировоззрение**
+           - Street: Уличные артефакты, подпольные товары
+           - Corporate: Роскошные бренды, статусные предметы
+           - Nomad: Рукоделие, природные материалы, культура кочевников
+
+        3. **Личные вкусы**
+           - Colors: Любимые цвета (адаптация под цветовую схему)
+           - Styles: Визуальный стиль (cyberpunk, street, elegant)
+           - Origins: Культурные корни (азиатские, европейские, американские мотивы)
+
+        **Пример профиля Claire (Afterlife bartender):**
+        ```yaml
+        preferences:
+          tech: 0.8
+          luxury: 0.6
+          practical: 0.9
+          street: 0.9
+          corporate: 0.3
+          nomad: 0.7
+        favorites:
+          colors: ["neon_blue", "silver"]
+          styles: ["street", "cyberpunk"]
+          origins: ["american", "mixed"]
+        dislikes:
+          - "cheap_synths"
+          - "corporate_brands"
+        ```
+
+    - id: relationship_stages
+      title: Стадии отношений и множители
+      body: |
+        **Стадии отношений и соответствующие множители:**
+
+        | Стадия | Уровень доверия | RelationshipMultiplier | Подходящие подарки |
+        |--------|----------------|----------------------|-------------------|
+        | Acquaintance | 0-20 | 1.0 | Простые жесты, напитки, casual gifts |
+        | Interest | 21-40 | 1.2 | Личные предметы, внимание к предпочтениям |
+        | Attraction | 41-60 | 1.4 | Значимые подарки, жесты привязанности |
+        | Romance | 61-80 | 1.8 | Роскошные подарки, символические предметы |
+        | Commitment | 81-100 | 2.2 | Крупные инвестиции, семейные символы |
+
+        **Динамика множителя:**
+        - Увеличивается с прогрессом отношений
+        - Уменьшается при негативных событиях
+        - Может быть временно повышен специальными событиями
+
+    - id: context_modifiers
+      title: Контекстные модификаторы
+      body: |
+        **Временные факторы:**
+        - **Праздники**: +0.3 (рождество, новый год, корпоративные праздники)
+        - **Юбилеи**: +0.4 (годовщина знакомства, важные даты)
+        - **Кризисы**: +0.2 (поддержка во время трудностей)
+
+        **Ситуационные бонусы:**
+        - **После успешного квеста**: +0.2 (празднование победы)
+        - **После конфликта**: +0.3 (заглаживание вины)
+        - **Спонтанно**: +0.1 (неожиданные жесты)
+
+        **Штрафы:**
+        - **Не вовремя**: -0.3 (неподходящий момент)
+        - **Повторяющиеся подарки**: -0.2 (потеря оригинальности)
+        - **Игнорирование предпочтений**: -0.4 (плохой выбор)
+
+    - id: gift_suggestions_engine
+      title: Движок предложений подарков
+      body: |
+        **Алгоритм генерации предложений:**
+
+        1. **Фильтрация доступных предметов**
+           - По инвентарю игрока
+           - По бюджету (максимум 20% от текущих ED)
+           - По доступности (магазины, черный рынок, квестовые награды)
+
+        2. **Оценка и ранжирование**
+           - Расчет GiftScore для каждого предмета
+           - Сортировка по убыванию оценки
+           - Выбор топ-5 кандидатов
+
+        3. **Диверсификация**
+           - Обеспечение разнообразия типов подарков
+           - Избегание повторений в недавней истории
+           - Добавление "диких карт" (неожиданные, но подходящие варианты)
+
+        4. **Персонализация**
+           - Адаптация под текущие события в отношениях
+           - Учет недавних разговоров и предпочтений
+           - Тематическая привязка к текущему лору
+
+    - id: gesture_system
+      title: Система романтических жестов
+      body: |
+        **Типы жестов:**
+
+        1. **Словесные (бесплатные)**
+           - Комплименты, признания, обещания
+           - Адаптируются под личность NPC
+
+        2. **Физические**
+           - Касания, объятия, поцелуи
+           - Зависят от стадии отношений и предпочтений
+
+        3. **Символические**
+           - Совместные активности, планы на будущее
+           - Создание воспоминаний
+
+        **Gesture Scoring:**
+        ```
+        GestureValue = BaseAppeal × RelationshipFit × TimingBonus × PersonalityMatch
+        ```
+
+        **Примеры жестов:**
+        - **Claire**: "Я приготовил твой любимый коктейль" (+0.8 за персонализацию)
+        - **Panam**: "Давай прокатимся на байке под звездами" (+0.9 за совместную активность)
+        - **Judy**: "Я нашел редкий braindance для нас двоих" (+0.7 за общие интересы)
+
+    - id: feedback_adaptation
+      title: Адаптация на основе обратной связи
+      body: |
+        **Механизм обучения:**
+
+        1. **Отслеживание реакций**
+           - Положительная: +10% к предпочтению категории
+           - Нейтральная: без изменений
+           - Отрицательная: -15% к конкретному предмету/типу
+
+        2. **Долгосрочная адаптация**
+           - Обновление профиля предпочтений каждые 5 взаимодействий
+           - Сезонные корректировки (праздники, юбилеи)
+           - Эволюция вкусов со временем
+
+        3. **Избегание повторений**
+           - Отслеживание последних 10 подарков
+           - Штраф за повторения (-20% к оценке)
+           - Поощрение разнообразия (+5% за новые категории)
+
+    - id: api_integration
+      title: API интеграция
+      body: |
+        **Основные эндпоинты:**
+
+        ```
+        POST /romance/gifts/suggest
+        - Получить предложения подарков для NPC
+
+        POST /romance/gestures/suggest
+        - Получить предложения жестов
+
+        POST /romance/gifts/give
+        - Совершить дарение подарка
+
+        GET /romance/preferences/{npc_id}
+        - Получить профиль предпочтений NPC
+        ```
+
+        **Data Models:**
+        ```yaml
+        GiftSuggestion:
+          item_id: string
+          score: number
+          reasoning: string[]
+          estimated_reaction: "positive" | "neutral" | "negative"
+
+        GestureSuggestion:
+          type: "verbal" | "physical" | "symbolic"
+          content: string
+          score: number
+          context_appropriate: boolean
+        ```
+
+appendix:
+  glossary:
+    - term: GiftScore
+      definition: Композитная оценка подходящести подарка, учитывающая все факторы
+    - term: PersonalMultiplier
+      definition: Коэффициент, отражающий личные предпочтения NPC
+    - term: RelationshipMultiplier
+      definition: Множитель, зависящий от текущей стадии отношений
+    - term: ContextMultiplier
+      definition: Бонус/штраф за временные и ситуационные факторы
+  references:
+    - title: Romance Engine Scoring
+      link: romance-engine-scoring.yaml
+    - title: Romance Relationship States
+      link: romance-relationship.yaml
+    - title: Romance Triggers
+      link: romance-triggers.yaml
+  decisions: []
+implementation:
+  github_issue: ???
+  needs_task: false
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-12-20
+    author: concept_director
+    changes: Создан алгоритм выбора подарков и романтических жестов для системы романтики.
+validation:
+  checksum: ''
+  schema_version: '1.0'

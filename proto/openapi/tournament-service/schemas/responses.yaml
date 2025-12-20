@@ -1,0 +1,400 @@
+CreateTournamentResponse:
+  type: object
+  properties:
+    tournament_id:
+      type: string
+    name:
+      type: string
+    status:
+      type: string
+      enum: [draft, registration_open, in_progress, completed, cancelled]
+    created_at:
+      type: integer
+      format: int64
+    registration_deadline:
+      type: integer
+      format: int64
+    start_time:
+      type: integer
+      format: int64
+  required:
+    - tournament_id
+    - name
+    - status
+    - created_at
+
+UpdateTournamentResponse:
+  type: object
+  properties:
+    tournament_id:
+      type: string
+    updated_fields:
+      type: array
+      items:
+        type: string
+    updated_at:
+      type: integer
+      format: int64
+  required:
+    - tournament_id
+    - updated_at
+
+ListTournamentsResponse:
+  type: object
+  properties:
+    tournaments:
+      type: array
+      items:
+        $ref: '#/TournamentSummary'
+    total_count:
+      type: integer
+      minimum: 0
+  required:
+    - tournaments
+    - total_count
+
+GetTournamentResponse:
+  type: object
+  properties:
+    tournament:
+      $ref: '#/TournamentDetails'
+  required:
+    - tournament
+
+TournamentSummary:
+  type: object
+  properties:
+    tournament_id:
+      type: string
+    name:
+      type: string
+    game_mode:
+      type: string
+    status:
+      type: string
+      enum: [draft, registration_open, in_progress, completed, cancelled]
+    participant_count:
+      type: integer
+      minimum: 0
+    max_participants:
+      type: integer
+      minimum: 0
+    start_time:
+      type: integer
+      format: int64
+    end_time:
+      type: integer
+      format: int64
+    region_restrictions:
+      type: array
+      items:
+        type: string
+    created_at:
+      type: integer
+      format: int64
+  required:
+    - tournament_id
+    - name
+    - game_mode
+    - status
+    - participant_count
+    - max_participants
+
+TournamentDetails:
+  type: object
+  properties:
+    tournament_id:
+      type: string
+    name:
+      type: string
+    description:
+      type: string
+    game_mode:
+      type: string
+    tournament_format:
+      type: string
+    status:
+      type: string
+      enum: [draft, registration_open, in_progress, completed, cancelled]
+    participant_count:
+      type: integer
+      minimum: 0
+    max_participants:
+      type: integer
+    min_participants:
+      type: integer
+    registration_start_time:
+      type: integer
+      format: int64
+    registration_end_time:
+      type: integer
+      format: int64
+    start_time:
+      type: integer
+      format: int64
+    end_time:
+      type: integer
+      format: int64
+    rules:
+      type: object
+      additionalProperties: true
+    prizes:
+      type: array
+      items:
+        $ref: '#/Prize'
+    entry_fee:
+      $ref: '#/EntryFee'
+    visibility:
+      type: string
+    region_restrictions:
+      type: array
+      items:
+        type: string
+    skill_requirements:
+      $ref: '#/SkillRequirements'
+    auto_progression:
+      type: boolean
+    match_timeout:
+      type: integer
+    allow_spectators:
+      type: boolean
+    streaming_enabled:
+      type: boolean
+    current_round:
+      type: integer
+      minimum: 0
+    total_rounds:
+      type: integer
+      minimum: 0
+    created_at:
+      type: integer
+      format: int64
+    updated_at:
+      type: integer
+      format: int64
+  required:
+    - tournament_id
+    - name
+    - game_mode
+    - tournament_format
+    - status
+    - participant_count
+    - max_participants
+
+Prize:
+  type: object
+  properties:
+    position:
+      type: integer
+    reward_type:
+      type: string
+    reward_value:
+      type: string
+    description:
+      type: string
+  required:
+    - position
+    - reward_type
+    - reward_value
+
+EntryFee:
+  type: object
+  properties:
+    currency_type:
+      type: string
+    amount:
+      type: integer
+    item_id:
+      type: string
+
+SkillRequirements:
+  type: object
+  properties:
+    min_level:
+      type: integer
+    max_level:
+      type: integer
+    min_rank:
+      type: string
+    max_rank:
+      type: string
+    required_achievements:
+      type: array
+      items:
+        type: string
+
+RegisterTournamentResponse:
+  type: object
+  properties:
+    tournament_id:
+      type: string
+    player_id:
+      type: string
+    registration_id:
+      type: string
+    registered_at:
+      type: integer
+      format: int64
+    position_in_queue:
+      type: integer
+      minimum: 0
+  required:
+    - tournament_id
+    - player_id
+    - registration_id
+    - registered_at
+
+UnregisterTournamentResponse:
+  type: object
+  properties:
+    tournament_id:
+      type: string
+    player_id:
+      type: string
+    unregistered_at:
+      type: integer
+      format: int64
+    refund_processed:
+      type: boolean
+  required:
+    - tournament_id
+    - player_id
+    - unregistered_at
+
+GetTournamentBracketResponse:
+  type: object
+  properties:
+    tournament_id:
+      type: string
+    current_round:
+      type: integer
+    total_rounds:
+      type: integer
+    matches:
+      type: array
+      items:
+        $ref: '#/Match'
+    bye_players:
+      type: array
+      items:
+        type: string
+        description: Player IDs with bye rounds
+  required:
+    - tournament_id
+    - matches
+
+Match:
+  type: object
+  properties:
+    match_id:
+      type: string
+    round:
+      type: integer
+    position:
+      type: integer
+    player1_id:
+      type: string
+    player2_id:
+      type: string
+    winner_id:
+      type: string
+    status:
+      type: string
+      enum: [scheduled, in_progress, completed, bye]
+    scheduled_time:
+      type: integer
+      format: int64
+    completed_time:
+      type: integer
+      format: int64
+    score:
+      $ref: '#/MatchScore'
+  required:
+    - match_id
+    - round
+    - player1_id
+    - status
+
+MatchScore:
+  type: object
+  properties:
+    player1_score:
+      type: integer
+      minimum: 0
+    player2_score:
+      type: integer
+      minimum: 0
+    winner_id:
+      type: string
+    match_duration:
+      type: integer
+      minimum: 0
+    statistics:
+      type: object
+      additionalProperties: true
+
+ListMatchesResponse:
+  type: object
+  properties:
+    matches:
+      type: array
+      items:
+        $ref: '#/Match'
+    total_count:
+      type: integer
+      minimum: 0
+  required:
+    - matches
+    - total_count
+
+GetMatchResponse:
+  type: object
+  properties:
+    match:
+      $ref: '#/MatchDetails'
+  required:
+    - match
+
+MatchDetails:
+  type: object
+  properties:
+    match_id:
+      type: string
+    tournament_id:
+      type: string
+    round:
+      type: integer
+    player1:
+      $ref: '#/PlayerInfo'
+    player2:
+      $ref: '#/PlayerInfo'
+    winner:
+      $ref: '#/PlayerInfo'
+    status:
+      type: string
+    scheduled_time:
+      type: integer
+      format: int64
+    started_time:
+      type: integer
+      format: int64
+    completed_time:
+      type: integer
+      format: int64
+    score:
+      $ref: '#/MatchScore'
+    spectators_count:
+      type: integer
+      minimum: 0
+    streaming_url:
+      type: string
+    metadata:
+      type: object
+      additionalProperties: true
+  required:
+    - match_id
+    - tournament_id
+    - round
+    - player1
+    - status
+

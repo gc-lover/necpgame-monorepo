@@ -3,10 +3,12 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	_ "net/http/pprof" // OPTIMIZATION: Issue #1584 - profiling endpoints
 	"os"
 	"os/signal"
+	"runtime"
 	"syscall"
 	"time"
 
@@ -16,6 +18,8 @@ import (
 )
 
 func main() {
+	startTime := time.Now() // For metrics endpoint
+
 	logger := logrus.New()
 	logger.SetFormatter(&logrus.JSONFormatter{})
 	logger.SetLevel(logrus.InfoLevel)
@@ -74,6 +78,29 @@ func main() {
 		affixScheduler.Start()
 		defer affixScheduler.Stop()
 	}
+
+	// Issue: #1605 - Health endpoint
+	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"status":"ok","service":"gameplay-service","timestamp":"` + time.Now().Format(time.RFC3339) + `"}`))
+	})
+
+	// Issue: #1605 - Metrics endpoint
+	http.HandleFunc("/metrics", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"uptime":"` + time.Since(startTime).String() + `","goroutines":` + fmt.Sprintf("%d", runtime.NumGoroutine()) + `}`))
+	})
+
+	// Start metrics/health server on separate port
+	go func() {
+		metricsAddr := getEnv("METRICS_ADDR", ":9226")
+		logger.WithField("address", metricsAddr).Info("Starting metrics/health server")
+		if err := http.ListenAndServe(metricsAddr, nil); err != nil {
+			logger.WithError(err).Error("Metrics server failed")
+		}
+	}()
 
 	go func() {
 		logger.Info("HTTP server listening on ", addr)

@@ -1,0 +1,85 @@
+BroadcastMessageRequest:
+  type: object
+  properties:
+    message:
+      $ref: './messages.yaml#/Message'
+    exclude_users:
+      type: array
+      items:
+        type: string
+    compress:
+      type: boolean
+      default: true
+    priority_delivery:
+      type: boolean
+      default: false
+  required:
+    - message
+
+ChannelMessageRequest:
+  type: object
+  properties:
+    message:
+      $ref: './messages.yaml#/Message'
+    channel_permissions:
+      type: object
+      additionalProperties: true
+    deliver_offline:
+      type: boolean
+      default: false
+  required:
+    - message
+
+UpdatePresenceRequest:
+  type: object
+  properties:
+    status:
+      type: string
+      enum: [ONLINE, AWAY, BUSY, INVISIBLE, OFFLINE]
+    status_message:
+      type: string
+    activity:
+      type: string
+      enum: [IDLE, PLAYING, IN_COMBAT, IN_QUEST, SOCIALIZING, TRADING]
+    location:
+      type: string
+    game_mode:
+      type: string
+    custom_fields:
+      type: object
+      additionalProperties: true
+  required:
+    - status
+
+SubscribeEventsRequest:
+  type: object
+  properties:
+    subscription:
+      $ref: './events.yaml#/EventSubscription'
+    initial_events:
+      type: boolean
+      default: false
+    event_history_count:
+      type: integer
+      minimum: 0
+      maximum: 100
+      default: 0
+  required:
+    - subscription
+
+PublishEventRequest:
+  type: object
+  properties:
+    event:
+      $ref: './events.yaml#/Event'
+    routing_strategy:
+      type: string
+      enum: [BROADCAST, DIRECT, CHANNEL, CONDITIONAL]
+      default: BROADCAST
+    routing_criteria:
+      type: object
+      additionalProperties: true
+    deduplication_key:
+      type: string
+  required:
+    - event

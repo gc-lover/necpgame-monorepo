@@ -1,65 +1,100 @@
-﻿// Issue: Performance benchmarks
+﻿// Issue: #1919 - Performance benchmarks for MMOFPS quest service
 package server
 
 import (
 	"context"
 	"testing"
 
-	api "github.com/gc-lover/necpgame-monorepo/services/quest-core-service-go/pkg/api"
 	"github.com/google/uuid"
+	"github.com/gc-lover/necpgame-monorepo/services/quest-core-service-go/pkg/api"
 )
 
-// BenchmarkStartQuest benchmarks StartQuest handler
-// Target: <100μs per operation, minimal allocs
 func BenchmarkStartQuest(b *testing.B) {
-	handlers := NewHandlers(nil)
+	// Setup test service
+	service := NewService(nil, nil) // Using nil for benchmark (no actual DB calls)
 
-	ctx := context.Background()
+	questID := uuid.New()
 	req := &api.StartQuestRequest{
-		QuestID: uuid.New(),
+		QuestID: questID,
 	}
-
-	b.ReportAllocs()
-	b.ResetTimer()
-
-	for i := 0; i < b.N; i++ {
-		_, _ = handlers.StartQuest(ctx, req)
-	}
-}
-
-// BenchmarkGetQuest benchmarks GetQuest handler
-// Target: <100μs per operation, minimal allocs
-func BenchmarkGetQuest(b *testing.B) {
-	handlers := NewHandlers(nil)
 
 	ctx := context.Background()
-	params := api.GetQuestParams{
-		QuestID: uuid.New(),
-	}
 
-	b.ReportAllocs()
 	b.ResetTimer()
+	b.ReportAllocs()
 
 	for i := 0; i < b.N; i++ {
-		_, _ = handlers.GetQuest(ctx, params)
+		_, _ = service.StartQuest(ctx, req)
 	}
 }
 
-// BenchmarkGetPlayerQuests benchmarks GetPlayerQuests handler
-// Target: <100μs per operation, minimal allocs
-func BenchmarkGetPlayerQuests(b *testing.B) {
-	handlers := NewHandlers(nil)
+func BenchmarkCompleteQuest(b *testing.B) {
+	// Setup test service
+	service := NewService(nil, nil)
+
+	questInstanceID := uuid.New()
+	req := &api.CompleteQuestRequest{}
 
 	ctx := context.Background()
-	params := api.GetPlayerQuestsParams{
-		PlayerID: uuid.New(),
-	}
 
-	b.ReportAllocs()
 	b.ResetTimer()
+	b.ReportAllocs()
 
 	for i := 0; i < b.N; i++ {
-		_, _ = handlers.GetPlayerQuests(ctx, params)
+		_, _ = service.CompleteQuest(ctx, questInstanceID, req)
 	}
 }
 
+// Memory pooling benchmarks
+func BenchmarkMemoryPooling_StartQuest(b *testing.B) {
+	service := NewService(nil, nil)
+
+	questID := uuid.New()
+	req := &api.StartQuestRequest{
+		QuestID: questID,
+	}
+
+	ctx := context.Background()
+
+	b.ResetTimer()
+	b.ReportAllocs()
+
+	for i := 0; i < b.N; i++ {
+		_, _ = service.StartQuest(ctx, req)
+		// In real implementation, response would be returned to memory pool
+	}
+}
+
+// Zero allocations target: < 0.01 allocs/op for hot paths
+func TestZeroAllocationsHotPath(t *testing.T) {
+	service := NewService(nil, nil)
+
+	questID := uuid.New()
+	req := &api.StartQuestRequest{
+		QuestID: questID,
+	}
+
+	ctx := context.Background()
+
+	// Run benchmark and check allocations
+	result := testing.Benchmark(func(b *testing.B) {
+		b.ResetTimer()
+		b.ReportAllocs()
+
+		for i := 0; i < b.N; i++ {
+			_, _ = service.StartQuest(ctx, req)
+		}
+	})
+
+	// Target: < 0.01 allocs/op for hot path operations
+	allocsPerOp := float64(result.AllocsPerOp())
+	if allocsPerOp > 0.01 {
+		t.Errorf("StartQuest allocates too much: %.2f allocs/op (target: < 0.01)", allocsPerOp)
+	}
+
+	// Target: < 50ns/op for hot path operations
+	nsPerOp := float64(result.NsPerOp())
+	if nsPerOp > 50 {
+		t.Errorf("StartQuest too slow: %.2f ns/op (target: < 50ns)", nsPerOp)
+	}
+}

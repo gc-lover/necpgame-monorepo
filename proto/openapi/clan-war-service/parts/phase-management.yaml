@@ -1,0 +1,111 @@
+paths:
+  # Управление фазами
+  /world/clan-war/{warId}/phase:
+    get:
+      summary: Получить текущую фазу войны
+      description: Возвращает информацию о текущей фазе клановой войны
+      operationId: getWarPhase
+      tags:
+        - War Phases
+      parameters:
+        - name: warId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID войны
+      responses:
+        "200":
+          description: Успешный ответ с информацией о фазе
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  warId:
+                    type: string
+                    format: uuid
+                    description: ID войны
+                  currentPhase:
+                    type: string
+                    enum: [PREPARATION, ACTIVE, ENDING]
+                    description: Текущая фаза
+                  phaseStartedAt:
+                    type: string
+                    format: date-time
+                    description: Время начала текущей фазы
+                  phaseEndsAt:
+                    type: string
+                    format: date-time
+                    description: Время окончания текущей фазе
+                  timeRemaining:
+                    type: integer
+                    description: Оставшееся время в секундах
+                required:
+                  - warId
+                  - currentPhase
+                  - phaseStartedAt
+                  - phaseEndsAt
+                  - timeRemaining
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+    post:
+      summary: Перейти к следующей фазе войны (admin)
+      description: |
+        Принудительно переводит войну к следующей фазе.
+        Доступно только администраторам для тестирования и аварийных ситуаций.
+      operationId: transitionWarPhase
+      tags:
+        - War Phases
+      parameters:
+        - name: warId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID войны
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - targetPhase
+              properties:
+                targetPhase:
+                  type: string
+                  enum: [PREPARATION, ACTIVE, ENDING, ENDED]
+                  description: Целевая фаза для перехода
+                reason:
+                  type: string
+                  maxLength: 255
+                  description: Причина принудительного перехода
+      responses:
+        "200":
+          description: Фаза войны изменена
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClanWar"
+        "403":
+          description: Недостаточно прав для изменения фазы
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Переход к указанной фазе невозможен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"

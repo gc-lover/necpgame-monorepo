@@ -1,0 +1,107 @@
+RegisterRequest:
+  type: object
+  properties:
+    username:
+      type: string
+      minLength: 3
+      maxLength: 50
+      pattern: '^[a-zA-Z0-9_-]+$'
+    email:
+      type: string
+      format: email
+    password:
+      type: string
+      minLength: 8
+      maxLength: 128
+    confirm_password:
+      type: string
+    display_name:
+      type: string
+      minLength: 1
+      maxLength: 100
+    accept_terms:
+      type: boolean
+    captcha_token:
+      type: string
+    referral_code:
+      type: string
+  required:
+    - username
+    - email
+    - password
+    - confirm_password
+    - accept_terms
+
+LoginRequest:
+  type: object
+  properties:
+    username:
+      type: string
+    password:
+      type: string
+    remember_me:
+      type: boolean
+      default: false
+    device_info:
+      $ref: '#/DeviceInfo'
+  required:
+    - username
+    - password
+
+RefreshTokenRequest:
+  type: object
+  properties:
+    refresh_token:
+      type: string
+    device_info:
+      $ref: '#/DeviceInfo'
+  required:
+    - refresh_token
+
+PasswordResetRequest:
+  type: object
+  properties:
+    email:
+      type: string
+      format: email
+    captcha_token:
+      type: string
+  required:
+    - email
+
+ConfirmPasswordResetRequest:
+  type: object
+  properties:
+    reset_token:
+      type: string
+    new_password:
+      type: string
+      minLength: 8
+      maxLength: 128
+    confirm_password:
+      type: string
+  required:
+    - reset_token
+    - new_password
+    - confirm_password
+
+DeviceInfo:
+  type: object
+  properties:
+    device_type:
+      type: string
+      enum: [DESKTOP, MOBILE, TABLET, CONSOLE, WEB]
+    platform:
+      type: string
+    browser:
+      type: string
+    os:
+      type: string
+    ip_address:
+      type: string
+    user_agent:
+      type: string
+    fingerprint:
+      type: string
+  required:
+    - device_type

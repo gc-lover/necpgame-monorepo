@@ -1,0 +1,202 @@
+// Issue: #146073424
+package server
+
+import (
+	"encoding/json"
+	"sync"
+	"time"
+
+	"go.uber.org/zap"
+)
+
+// MetricsCollector собирает метрики API Gateway
+type MetricsCollector struct {
+	requestCount  map[string]int64
+	responseTimes map[string][]time.Duration
+	errorCount    map[string]int64
+	mutex         sync.RWMutex
+	logger        *zap.Logger
+}
+
+// RequestMetrics метрики запроса
+type RequestMetrics struct {
+	Method    string        `json:"method"`
+	Path      string        `json:"path"`
+	Status    int           `json:"status"`
+	Duration  time.Duration `json:"duration"`
+	Timestamp time.Time     `json:"timestamp"`
+}
+
+// NewMetricsCollector создает новый сборщик метрик
+func NewMetricsCollector(logger *zap.Logger) *MetricsCollector {
+	return &MetricsCollector{
+		requestCount:  make(map[string]int64),
+		responseTimes: make(map[string][]time.Duration),
+		errorCount:    make(map[string]int64),
+		logger:        logger,
+	}
+}
+
+// RecordRequest записывает метрики запроса
+func (mc *MetricsCollector) RecordRequest(method, path string, status int, duration time.Duration) {
+	mc.mutex.Lock()
+	defer mc.mutex.Unlock()
+
+	key := method + " " + path
+
+	// Увеличиваем счетчик запросов
+	mc.requestCount[key]++
+
+	// Записываем время ответа
+	if mc.responseTimes[key] == nil {
+		mc.responseTimes[key] = make([]time.Duration, 0, 1000)
+	}
+	mc.responseTimes[key] = append(mc.responseTimes[key], duration)
+
+	// Ограничиваем размер массива (последние 1000 измерений)
+	if len(mc.responseTimes[key]) > 1000 {
+		mc.responseTimes[key] = mc.responseTimes[key][len(mc.responseTimes[key])-1000:]
+	}
+
+	// Увеличиваем счетчик ошибок для статусов >= 400
+	if status >= 400 {
+		mc.errorCount[key]++
+	}
+
+	// Логируем метрики для debugging
+	if status >= 500 {
+		mc.logger.Warn("High error rate detected",
+			zap.String("method", method),
+			zap.String("path", path),
+			zap.Int("status", status),
+			zap.Duration("duration", duration))
+	}
+}
+
+// GetMetrics возвращает текущие метрики в формате JSON
+func (mc *MetricsCollector) GetMetrics() []byte {
+	mc.mutex.RLock()
+	defer mc.mutex.RUnlock()
+
+	metrics := map[string]interface{}{
+		"timestamp": time.Now().UTC(),
+		"endpoints": make(map[string]interface{}),
+	}
+
+	endpoints := metrics["endpoints"].(map[string]interface{})
+
+	for key := range mc.requestCount {
+		endpointMetrics := map[string]interface{}{
+			"total_requests": mc.requestCount[key],
+			"error_count":    mc.errorCount[key],
+		}
+
+		// Вычисляем среднее время ответа
+		if times := mc.responseTimes[key]; len(times) > 0 {
+			total := time.Duration(0)
+			min := times[0]
+			max := times[0]
+
+			for _, t := range times {
+				total += t
+				if t < min {
+					min = t
+				}
+				if t > max {
+					max = t
+				}
+			}
+
+			avg := total / time.Duration(len(times))
+
+			endpointMetrics["avg_response_time"] = avg.String()
+			endpointMetrics["min_response_time"] = min.String()
+			endpointMetrics["max_response_time"] = max.String()
+			endpointMetrics["response_samples"] = len(times)
+		}
+
+		endpoints[key] = endpointMetrics
+	}
+
+	// Общие метрики
+	totalRequests := int64(0)
+	totalErrors := int64(0)
+
+	for _, count := range mc.requestCount {
+		totalRequests += count
+	}
+	for _, count := range mc.errorCount {
+		totalErrors += count
+	}
+
+	metrics["summary"] = map[string]interface{}{
+		"total_requests":  totalRequests,
+		"total_errors":    totalErrors,
+		"error_rate":      float64(totalErrors) / float64(totalRequests) * 100,
+		"endpoints_count": len(mc.requestCount),
+	}
+
+	data, err := json.Marshal(metrics)
+	if err != nil {
+		mc.logger.Error("Failed to marshal metrics", zap.Error(err))
+		return []byte(`{"error": "failed to marshal metrics"}`)
+	}
+
+	return data
+}
+
+// ResetMetrics сбрасывает все метрики
+func (mc *MetricsCollector) ResetMetrics() {
+	mc.mutex.Lock()
+	defer mc.mutex.Unlock()
+
+	mc.requestCount = make(map[string]int64)
+	mc.responseTimes = make(map[string][]time.Duration)
+	mc.errorCount = make(map[string]int64)
+
+	mc.logger.Info("Metrics reset")
+}
+
+// GetEndpointStats возвращает статистику для конкретного endpoint
+func (mc *MetricsCollector) GetEndpointStats(method, path string) map[string]interface{} {
+	mc.mutex.RLock()
+	defer mc.mutex.RUnlock()
+
+	key := method + " " + path
+
+	stats := map[string]interface{}{
+		"endpoint": key,
+		"found":    false,
+	}
+
+	if count, exists := mc.requestCount[key]; exists {
+		stats["found"] = true
+		stats["total_requests"] = count
+		stats["error_count"] = mc.errorCount[key]
+
+		if times := mc.responseTimes[key]; len(times) > 0 {
+			total := time.Duration(0)
+			min := times[0]
+			max := times[0]
+
+			for _, t := range times {
+				total += t
+				if t < min {
+					min = t
+				}
+				if t > max {
+					max = t
+				}
+			}
+
+			avg := total / time.Duration(len(times))
+
+			stats["avg_response_time"] = avg.String()
+			stats["min_response_time"] = min.String()
+			stats["max_response_time"] = max.String()
+			stats["response_samples"] = len(times)
+		}
+	}
+
+	return stats
+}

@@ -1,0 +1,263 @@
+// Issue: #146073424
+package server
+
+import (
+	"bytes"
+	"context"
+	"fmt"
+	"io"
+	"net/http"
+	"net/url"
+	"strings"
+	"time"
+
+	"go.uber.org/zap"
+)
+
+// NewServiceProxy создает новый service proxy
+func NewServiceProxy(serviceEndpoints map[string]string, logger *zap.Logger) *ServiceProxy {
+	clients := make(map[string]*http.Client)
+
+	// Создаем HTTP клиенты для каждого сервиса с оптимизациями
+	for serviceName, endpoint := range serviceEndpoints {
+		clients[serviceName] = &http.Client{
+			Timeout: 30 * time.Second,
+			Transport: &http.Transport{
+				MaxIdleConns:        100,
+				MaxIdleConnsPerHost: 10,
+				IdleConnTimeout:     90 * time.Second,
+			},
+		}
+
+		logger.Info("Configured service endpoint",
+			zap.String("service", serviceName),
+			zap.String("endpoint", endpoint))
+	}
+
+	return &ServiceProxy{
+		clients: clients,
+		logger:  logger,
+	}
+}
+
+// Proxy возвращает handler для проксирования запросов к сервису
+func (sp *ServiceProxy) Proxy(serviceName string) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Получаем endpoint для сервиса
+		targetURL, err := sp.getServiceURL(serviceName, r)
+		if err != nil {
+			sp.logger.Error("Failed to get service URL",
+				zap.String("service", serviceName),
+				zap.Error(err))
+			http.Error(w, "Service configuration error", http.StatusInternalServerError)
+			return
+		}
+
+		// Создаем новый запрос к целевому сервису
+		targetReq, err := sp.createTargetRequest(r, targetURL)
+		if err != nil {
+			sp.logger.Error("Failed to create target request",
+				zap.String("service", serviceName),
+				zap.String("target_url", targetURL.String()),
+				zap.Error(err))
+			http.Error(w, "Request processing error", http.StatusInternalServerError)
+			return
+		}
+
+		// Добавляем tracing headers
+		sp.addTracingHeaders(targetReq, r)
+
+		// Отправляем запрос к целевому сервису
+		start := time.Now()
+		client := sp.clients[serviceName]
+		resp, err := client.Do(targetReq)
+		duration := time.Since(start)
+
+		if err != nil {
+			sp.logger.Error("Failed to proxy request",
+				zap.String("service", serviceName),
+				zap.String("method", r.Method),
+				zap.String("path", r.URL.Path),
+				zap.Duration("duration", duration),
+				zap.Error(err))
+			http.Error(w, "Service unavailable", http.StatusBadGateway)
+			return
+		}
+		defer resp.Body.Close()
+
+		// Логируем успешный запрос
+		sp.logger.Info("Proxied request",
+			zap.String("service", serviceName),
+			zap.String("method", r.Method),
+			zap.String("path", r.URL.Path),
+			zap.Int("status", resp.StatusCode),
+			zap.Duration("duration", duration))
+
+		// Копируем заголовки ответа
+		sp.copyResponseHeaders(w, resp)
+
+		// Устанавливаем статус код
+		w.WriteHeader(resp.StatusCode)
+
+		// Копируем тело ответа
+		io.Copy(w, resp.Body)
+	})
+}
+
+// getServiceURL формирует URL для запроса к сервису
+func (sp *ServiceProxy) getServiceURL(serviceName string, r *http.Request) (*url.URL, error) {
+	sp.mutex.RLock()
+	endpoint, exists := sp.serviceEndpoints[serviceName]
+	sp.mutex.RUnlock()
+
+	if !exists {
+		return nil, fmt.Errorf("service %s not configured", serviceName)
+	}
+
+	// Парсим базовый URL сервиса
+	baseURL, err := url.Parse(endpoint)
+	if err != nil {
+		return nil, fmt.Errorf("invalid service URL %s: %w", endpoint, err)
+	}
+
+	// Формируем путь запроса
+	path := strings.TrimPrefix(r.URL.Path, fmt.Sprintf("/api/v1/%s", serviceName))
+	if !strings.HasPrefix(path, "/") {
+		path = "/" + path
+	}
+
+	// Добавляем query параметры
+	targetURL := &url.URL{
+		Scheme:   baseURL.Scheme,
+		Host:     baseURL.Host,
+		Path:     path,
+		RawQuery: r.URL.RawQuery,
+	}
+
+	return targetURL, nil
+}
+
+// createTargetRequest создает запрос к целевому сервису
+func (sp *ServiceProxy) createTargetRequest(r *http.Request, targetURL *url.URL) (*http.Request, error) {
+	// Копируем тело запроса если есть
+	var body io.Reader
+	if r.Body != nil {
+		bodyBytes, err := io.ReadAll(r.Body)
+		if err != nil {
+			return nil, err
+		}
+		body = bytes.NewReader(bodyBytes)
+		r.Body = io.NopCloser(bytes.NewReader(bodyBytes)) // Восстанавливаем тело для оригинального запроса
+	}
+
+	// Создаем новый запрос
+	targetReq, err := http.NewRequestWithContext(r.Context(), r.Method, targetURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	// Копируем важные заголовки (исключая hop-by-hop headers)
+	headersToCopy := []string{
+		"Authorization",
+		"Content-Type",
+		"Accept",
+		"Accept-Language",
+		"Cache-Control",
+		"User-Agent",
+	}
+
+	for _, header := range headersToCopy {
+		if value := r.Header.Get(header); value != "" {
+			targetReq.Header.Set(header, value)
+		}
+	}
+
+	// Добавляем информацию о gateway
+	targetReq.Header.Set("X-API-Gateway", "necpgame-gateway")
+	targetReq.Header.Set("X-Forwarded-Host", r.Host)
+	targetReq.Header.Set("X-Forwarded-Proto", sp.getProto(r))
+	targetReq.Header.Set("X-Forwarded-For", r.RemoteAddr)
+
+	return targetReq, nil
+}
+
+// addTracingHeaders добавляет заголовки для трассировки
+func (sp *ServiceProxy) addTracingHeaders(targetReq *http.Request, originalReq *http.Request) {
+	// Копируем request ID для трассировки
+	if requestID := originalReq.Header.Get("X-Request-ID"); requestID != "" {
+		targetReq.Header.Set("X-Request-ID", requestID)
+	}
+
+	// Добавляем timestamp
+	targetReq.Header.Set("X-Gateway-Timestamp", time.Now().Format(time.RFC3339))
+}
+
+// copyResponseHeaders копирует заголовки ответа
+func (sp *ServiceProxy) copyResponseHeaders(w http.ResponseWriter, resp *http.Response) {
+	// Копируем все заголовки кроме hop-by-hop
+	headersToCopy := make(map[string][]string)
+
+	for name, values := range resp.Header {
+		lowerName := strings.ToLower(name)
+
+		// Пропускаем hop-by-hop заголовки
+		if lowerName == "connection" ||
+			lowerName == "keep-alive" ||
+			lowerName == "proxy-authenticate" ||
+			lowerName == "proxy-authorization" ||
+			lowerName == "te" ||
+			lowerName == "trailers" ||
+			lowerName == "transfer-encoding" ||
+			lowerName == "upgrade" {
+			continue
+		}
+
+		headersToCopy[name] = values
+	}
+
+	// Устанавливаем заголовки
+	for name, values := range headersToCopy {
+		for _, value := range values {
+			w.Header().Add(name, value)
+		}
+	}
+}
+
+// getProto определяет протокол запроса
+func (sp *ServiceProxy) getProto(r *http.Request) string {
+	if r.TLS != nil {
+		return "https"
+	}
+	return "http"
+}
+
+// HealthCheck проверяет здоровье всех сервисов
+func (sp *ServiceProxy) HealthCheck(ctx context.Context) map[string]bool {
+	sp.mutex.RLock()
+	defer sp.mutex.RUnlock()
+
+	results := make(map[string]bool)
+
+	for serviceName, client := range sp.clients {
+		if endpoint, exists := sp.serviceEndpoints[serviceName]; exists {
+			healthURL := strings.TrimSuffix(endpoint, "/") + "/health"
+
+			req, err := http.NewRequestWithContext(ctx, "GET", healthURL, nil)
+			if err != nil {
+				results[serviceName] = false
+				continue
+			}
+
+			resp, err := client.Do(req)
+			if err != nil {
+				results[serviceName] = false
+				continue
+			}
+			resp.Body.Close()
+
+			results[serviceName] = resp.StatusCode == http.StatusOK
+		}
+	}
+
+	return results
+}

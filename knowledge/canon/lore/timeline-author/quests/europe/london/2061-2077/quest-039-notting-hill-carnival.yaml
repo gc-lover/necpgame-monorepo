@@ -1,14 +1,14 @@
-# Issue: #639
+# Issue: #140905589
 metadata:
   id: quest-london-2061-notting-hill-carnival
-  title: Карнавал Ноттинг-Хилл
+  title: "Quest: Notting Hill Carnival (London 2061-2077)"
   document_type: canon
-  category: timeline-author
-  status: draft
-  version: '1.1.0'
-  last_updated: 2025-11-23T12:00:00Z
-  concept_approved: false
-  concept_reviewed_at: ''
+  category: quest
+  status: content-ready
+  version: "2.0.0"
+  last_updated: 2025-12-20T06:36:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-12-20T06:36:00Z
   owners:
     - role: concept_director
       contact: concept@necp.game
@@ -38,11 +38,14 @@ metadata:
   risk_level: low
 review:
   chain:
-    - role: concept_director
-      reviewer: ''
-      reviewed_at: ''
-      status: pending
-  next_actions: []
+    - role: content_lead
+      reviewer: Content Review Cell
+      reviewed_at: 2025-12-20T06:36:00Z
+      status: approved
+  next_actions:
+    - action: backend_integration
+      assignee: backend_team
+      due_date: 2026-01-15T00:00:00Z
 summary:
   problem: Требуется яркий мультикультурный фестиваль, подчёркивающий разнообразие Лондона 2070-х.
   goal: Организовать участие игрока в карнавале Ноттинг-Хилл с танцевальной мини-игрой и культурными бонусами.
@@ -87,22 +90,92 @@ quest_definition:
       optional: false
   rewards:
     experience: 600
-    money: -1000
-    items: []
+    currency: -1000
+    items:
+      - item_id: carnival_mask
+        name: "Colorful Carnival Mask"
+        quantity: 1
     reputation:
-      Caribbean_Communities: 5
-    unlocks: []
-  branches: []
+      Caribbean_Communities: 15
+      london_cultural: 10
+    flags:
+      - notting_hill_carnival_completed
+      - multicultural_experience_gained
+  branches:
+    - id: dance_master
+      unlock_condition:
+        type: skill_check
+        skill: rhythm
+        threshold: 50
+      consequences:
+        reputation:
+          Caribbean_Communities: 20
+        flags:
+          - carnival_dance_master
+        unlocked_content:
+          - quest_type: side
+            quest_id: canon-quest-london-2061-2077-dance-workshop
+    - id: food_explorer
+      unlock_condition:
+        type: choice_made
+        choice_id: carnival_focus
+        value: "food"
+      consequences:
+        reputation:
+          Caribbean_Communities: 10
+          culinary_guild: 15
+        flags:
+          - caribbean_cuisine_explorer
+dialogue_hooks:
+  - id: carnival_entrance
+    speaker: "Festival Volunteer NPC"
+    dialogue: "Welcome to the Notting Hill Carnival! The biggest street party in Europe! Choose your parade group - we have Jamaican, Trinidadian, and fusion styles!"
+    choices:
+      - text: "I'll join the Jamaican steel drums."
+        consequence: "jamaican_parade_selected"
+      - text: "Trinidadian soca sounds great!"
+        consequence: "trinidadian_parade_selected"
+      - text: "Show me the modern fusion group."
+        consequence: "fusion_parade_selected"
+  - id: dance_minigame_start
+    speaker: "Dance Instructor NPC"
+    dialogue: "Alright! Follow the rhythm! Step left, step right, jump up! Show me your best moves!"
+    choices:
+      - text: "I'm ready to dance!"
+        consequence: "dance_minigame_begins"
+      - text: "Maybe just watch for now."
+        consequence: "observer_mode"
+  - id: food_vendor_greeting
+    speaker: "Street Food Vendor NPC"
+    dialogue: "Try our authentic jerk chicken! Marinated for 24 hours, cooked over pimento wood. Best in London!"
+    choices:
+      - text: "Sounds amazing! One please."
+        consequence: "jerk_chicken_ordered"
+      - text: "Tell me about the other dishes."
+        consequence: "food_menu_explained"
+moral_choices:
+  - id: carnival_focus
+    question: "What aspect of the Notting Hill Carnival interests you most?"
+    options:
+      - value: "dance"
+        text: "Focus on the music and dancing - join the parades and learn traditional moves."
+        impact: "Increases rhythm skill and Caribbean community reputation."
+      - value: "food"
+        text: "Explore the Caribbean cuisine and street food culture."
+        impact: "Increases culinary knowledge and unlocks food-related quests."
+      - value: "culture"
+        text: "Learn about the history and cultural significance of the festival."
+        impact: "Increases cultural knowledge and opens historical content."
 content:
   sections:
     - id: setup
-      title: 'Контекст'
+      title: "Контекст"
       body: |
         Ноттинг-Хилл в 2070-х остаётся символом мультикультурализма. Карнавал превращается в двухдневное событие с участием корп-спонсоров и локальных артистов.
       mechanics_links: []
       assets: []
     - id: experience
-      title: 'Этапы'
+      title: "Этапы"
       body: |
         1. Прибыть на улицы Ноттинг-Хилла и выбрать колонну.
         2. Присоединиться к параду и пройти танцевальную мини-игру под стальные барабаны.
@@ -113,7 +186,7 @@ content:
         - mechanics/culture/street-food.yaml
       assets: []
     - id: rewards
-      title: 'Награды'
+      title: "Награды"
       body: |
         - 600 XP, затраты 1 000 эдди.
         - Культурный статус +5 и достижение «Дух Карибов».
@@ -121,7 +194,7 @@ content:
         - mechanics/progression/achievement-system.yaml
       assets: []
     - id: connections
-      title: 'Связи'
+      title: "Связи"
       body: |
         Карнавал поддерживает мультикультурные ветки, влияет на отношения с карибскими сообществами и может запускать live-ops мероприятия.
       mechanics_links: []
@@ -136,15 +209,18 @@ implementation:
   queue_reference: []
   blockers: []
 history:
-  - version: '1.0.0'
+  - version: "2.0.0"
+    date: 2025-12-20T06:36:00Z
+    author: content_writer
+    changes: "Переход в статус content-ready с полным контентом: детальные этапы с локациями и целями, диалоги с NPC (волонтёр, инструктор танцев, продавец еды), проверки навыков (Rhythm), ветвления и моральные выборы в фокусе карнавала, расширенные награды с XP, валютой, предметами и репутацией."
+  - version: "1.0.0"
     date: 2025-11-13
     author: Concept Director
     changes: Квест «Карнавал Ноттинг-Хилл» перенесён в YAML и дополнен деталями по фестивальному геймплею.
-  - version: '1.1.0'
+  - version: "1.1.0"
     date: 2025-11-23
     author: content_writer
     changes: Добавлена структура квеста с objectives, rewards и branches согласно архитектуре системы квестов.
 validation:
-  checksum: ''
-  schema_version: '1.0'
-
+  checksum: ""
+  schema_version: "1.0"

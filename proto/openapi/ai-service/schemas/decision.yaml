@@ -1,0 +1,91 @@
+DecisionContext:
+  type: object
+  properties:
+    npc_id:
+      type: string
+    current_state:
+      $ref: './ai.yaml#/AIState'
+    available_actions:
+      type: array
+      items:
+        $ref: '#/DecisionAction'
+    environmental_factors:
+      type: object
+      additionalProperties: true
+    npc_personality:
+      $ref: '#/NPCPersonality'
+    time_pressure:
+      type: integer
+      minimum: 0
+      maximum: 100
+    risk_tolerance:
+      type: integer
+      minimum: 0
+      maximum: 100
+  required:
+    - npc_id
+    - current_state
+
+DecisionAction:
+  type: object
+  properties:
+    action_id:
+      type: string
+    action_type:
+      type: string
+      enum: [ATTACK, DEFEND, FLEE, PURSUE, PATROL, HIDE, HELP_ALLY]
+    priority_score:
+      type: integer
+      minimum: 0
+      maximum: 100
+    risk_level:
+      type: integer
+      minimum: 0
+      maximum: 100
+    expected_outcome:
+      type: string
+    success_probability:
+      type: number
+      format: float
+      minimum: 0.0
+      maximum: 1.0
+    resource_cost:
+      type: object
+      additionalProperties:
+        type: number
+  required:
+    - action_id
+    - action_type
+    - priority_score
+
+NPCPersonality:
+  type: object
+  properties:
+    aggression:
+      type: integer
+      minimum: 0
+      maximum: 100
+      description: How aggressive the NPC is
+    caution:
+      type: integer
+      minimum: 0
+      maximum: 100
+      description: How cautious the NPC is
+    social:
+      type: integer
+      minimum: 0
+      maximum: 100
+      description: How social/interactive the NPC is
+    curiosity:
+      type: integer
+      minimum: 0
+      maximum: 100
+      description: How curious/explorative the NPC is
+    loyalty:
+      type: integer
+      minimum: 0
+      maximum: 100
+      description: How loyal to allies/faction the NPC is
+  required:
+    - aggression
+    - caution

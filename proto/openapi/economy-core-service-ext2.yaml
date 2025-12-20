@@ -1,0 +1,289 @@
+      required: [page_id, page_number, slots]
+      properties:
+        page_id:
+          type: string
+          format: uuid
+        page_number:
+          type: integer
+          minimum: 1
+        slots:
+          type: array
+          items:
+            $ref: "#/components/schemas/InventorySlot"
+        is_unlocked:
+          type: boolean
+        unlock_cost:
+          type: integer
+
+    StashTransferRequest:
+      type: object
+      required: [direction, item_id, quantity]
+      properties:
+        direction:
+          type: string
+          enum: [to_stash, from_stash]
+        item_id:
+          type: string
+          format: uuid
+        quantity:
+          type: integer
+          minimum: 1
+        stash_page:
+          type: integer
+          minimum: 1
+        stash_slot_x:
+          type: integer
+          minimum: 0
+        stash_slot_y:
+          type: integer
+          minimum: 0
+
+    StashTransferResult:
+      type: object
+      required: [success, direction, transferred_quantity]
+      properties:
+        success:
+          type: boolean
+        direction:
+          type: string
+        transferred_quantity:
+          type: integer
+        stash_fee:
+          type: integer
+          minimum: 0
+        inventory_slot:
+          $ref: "#/components/schemas/InventorySlot"
+        stash_slot:
+          $ref: "#/components/schemas/InventorySlot"
+
+    # ============================================================================
+    # TRADE SCHEMAS
+    # ============================================================================
+
+    CreateTradeSessionRequest:
+      type: object
+      required: [initiator_id, target_id, initiator_items, target_items]
+      properties:
+        initiator_id:
+          type: string
+          format: uuid
+        target_id:
+          type: string
+          format: uuid
+        initiator_items:
+          type: array
+          items:
+            $ref: "#/components/schemas/TradeItem"
+        target_items:
+          type: array
+          items:
+            $ref: "#/components/schemas/TradeItem"
+        initiator_credits:
+          type: integer
+          minimum: 0
+          default: 0
+        target_credits:
+          type: integer
+          minimum: 0
+          default: 0
+        timeout_seconds:
+          type: integer
+          minimum: 30
+          maximum: 300
+          default: 120
+
+    TradeSession:
+      type: object
+      required: [session_id, initiator_id, target_id, status, created_at]
+      properties:
+        session_id:
+          type: string
+          format: uuid
+        initiator_id:
+          type: string
+          format: uuid
+        target_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum:
+            [
+              pending,
+              active,
+              confirmed_by_initiator,
+              confirmed_by_target,
+              completed,
+              cancelled,
+              timed_out,
+            ]
+        initiator_items:
+          type: array
+          items:
+            $ref: "#/components/schemas/TradeItem"
+        target_items:
+          type: array
+          items:
+            $ref: "#/components/schemas/TradeItem"
+        initiator_credits:
+          type: integer
+          minimum: 0
+        target_credits:
+          type: integer
+          minimum: 0
+        timeout_seconds:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+        confirmed_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+
+    TradeItem:
+      type: object
+      required: [item_id, quantity]
+      properties:
+        item_id:
+          type: string
+          format: uuid
+        quantity:
+          type: integer
+          minimum: 1
+
+    AddOfferRequest:
+      type: object
+      required: [participant_id, items, credits]
+      properties:
+        participant_id:
+          type: string
+          format: uuid
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/TradeItem"
+        credits:
+          type: integer
+          minimum: 0
+
+    TradeOffer:
+      type: object
+      required: [offer_id, participant_id, items, credits, offered_at]
+      properties:
+        offer_id:
+          type: string
+          format: uuid
+        participant_id:
+          type: string
+          format: uuid
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/TradeItem"
+        credits:
+          type: integer
+          minimum: 0
+        offered_at:
+          type: string
+          format: date-time
+
+    CancelTradeRequest:
+      type: object
+      required: [reason]
+      properties:
+        reason:
+          type: string
+          enum: [user_cancelled, timeout, fraud_detected, system_error]
+        participant_id:
+          type: string
+          format: uuid
+
+    ConfirmTradeRequest:
+      type: object
+      required: [participant_id]
+      properties:
+        participant_id:
+          type: string
+          format: uuid
+        anti_fraud_token:
+          type: string
+
+    TradeResult:
+      type: object
+      required:
+        [
+          session_id,
+          success,
+          initiator_items_transferred,
+          target_items_transferred,
+        ]
+      properties:
+        session_id:
+          type: string
+          format: uuid
+        success:
+          type: boolean
+        initiator_items_transferred:
+          type: array
+          items:
+            $ref: "#/components/schemas/TradeItem"
+        target_items_transferred:
+          type: array
+          items:
+            $ref: "#/components/schemas/TradeItem"
+        initiator_credits_transferred:
+          type: integer
+        target_credits_transferred:
+          type: integer
+        completed_at:
+          type: string
+          format: date-time
+        trade_fee:
+          type: integer
+
+    TradeHistoryEntry:
+      type: object
+      required:
+        [
+          session_id,
+          character_id,
+          partner_id,
+          items_given,
+          items_received,
+          credits_given,
+          credits_received,
+          completed_at,
+        ]
+      properties:
+        session_id:
+          type: string
+          format: uuid
+        character_id:
+          type: string
+          format: uuid
+        partner_id:
+          type: string
+          format: uuid
+        items_given:
+          type: array
+          items:
+            $ref: "#/components/schemas/TradeItem"
+        items_received:
+          type: array
+          items:
+            $ref: "#/components/schemas/TradeItem"
+        credits_given:
+          type: integer
+        credits_received:
+          type: integer
+        completed_at:
+          type: string
+          format: date-time
+        trade_fee:
+          type: integer

@@ -1,0 +1,62 @@
+paths:
+  # Moderation Violations Management
+  /api/v1/moderation/violations:
+    get:
+      summary: Get moderation violations
+      description: Retrieve moderation violations with filtering
+      operationId: getModerationViolations
+      tags: [Moderation Violations]
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, resolved, dismissed]
+          description: Filter by violation status
+        - name: rule_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by rule ID
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+      responses:
+        "200":
+          description: List of moderation violations
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  violations:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ModerationViolation"
+                  total:
+                    type: integer
+
+  /api/v1/moderation/violations/{violation_id}:
+    get:
+      summary: Get violation by ID
+      operationId: getModerationViolation
+      tags: [Moderation Violations]
+      parameters:
+        - name: violation_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Violation details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ModerationViolation"

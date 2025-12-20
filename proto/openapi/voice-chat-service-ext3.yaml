@@ -1,0 +1,400 @@
+      parameters:
+        - name: timeRange
+          in: query
+          schema:
+            type: string
+            enum: [1h, 24h, 7d, 30d]
+            default: 24h
+          description: Временной диапазон статистики
+      responses:
+        "200":
+          description: Статистика участников получена
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timeRange:
+                    type: string
+                    description: Временной диапазон
+                  totalParticipants:
+                    type: integer
+                    description: Общее количество участников
+                  uniqueParticipants:
+                    type: integer
+                    description: Уникальных участников
+                  averageSessionDuration:
+                    type: number
+                    format: float
+                    description: Средняя длительность сессии в минутах
+                  peakConcurrentParticipants:
+                    type: integer
+                    description: Пиковое количество одновременных участников
+                  participantsByChannelType:
+                    type: object
+                    description: Участники по типам каналов
+                    additionalProperties:
+                      type: integer
+                required:
+                  - timeRange
+                  - totalParticipants
+                  - uniqueParticipants
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /social/voice/stats/quality:
+    get:
+      summary: Статистика качества звука
+      description: Возвращает статистику качества голосового соединения
+      operationId: getQualityStats
+      tags:
+        - Statistics
+      parameters:
+        - name: timeRange
+          in: query
+          schema:
+            type: string
+            enum: [1h, 24h, 7d, 30d]
+            default: 24h
+          description: Временной диапазон статистики
+      responses:
+        "200":
+          description: Статистика качества получена
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  timeRange:
+                    type: string
+                    description: Временной диапазон
+                  averageLatency:
+                    type: number
+                    format: float
+                    description: Средняя задержка в мс
+                  averagePacketLoss:
+                    type: number
+                    format: float
+                    description: Средняя потеря пакетов в процентах
+                  qualityDistribution:
+                    type: object
+                    description: Распределение по качеству
+                    properties:
+                      high:
+                        type: number
+                        format: float
+                        description: Доля соединений с высоким качеством
+                      medium:
+                        type: number
+                        format: float
+                        description: Доля соединений со средним качеством
+                      low:
+                        type: number
+                        format: float
+                        description: Доля соединений с низким качеством
+                    required:
+                      - high
+                      - medium
+                      - low
+                  reconnections:
+                    type: integer
+                    description: Количество переподключений
+                required:
+                  - timeRange
+                  - averageLatency
+                  - qualityDistribution
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+components:
+  schemas:
+    # Основные сущности
+    VoiceChannel:
+      type: object
+      description: Голосовой канал
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Уникальный ID канала
+        channelType:
+          type: string
+          enum: [PARTY, GUILD, RAID, PROXIMITY]
+          description: Тип канала
+        name:
+          type: string
+          description: Название канала
+        ownerId:
+          type: string
+          format: uuid
+          description: ID владельца канала
+        maxParticipants:
+          type: integer
+          description: Максимальное количество участников
+        currentParticipants:
+          type: integer
+          description: Текущее количество участников
+        qualityPreset:
+          type: string
+          enum: [HIGH, MEDIUM, LOW, ADAPTIVE]
+          description: Пресет качества
+        isActive:
+          type: boolean
+          description: Активен ли канал
+        associatedEntityId:
+          type: string
+          format: uuid
+          description: ID связанной сущности (party/guild/raid)
+        createdAt:
+          type: string
+          format: date-time
+          description: Время создания
+        updatedAt:
+          type: string
+          format: date-time
+          description: Время последнего обновления
+      required:
+        - id
+        - channelType
+        - name
+        - maxParticipants
+        - qualityPreset
+        - isActive
+        - createdAt
+
+    VoiceParticipant:
+      type: object
+      description: Участник голосового канала
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID участника
+        channelId:
+          type: string
+          format: uuid
+          description: ID канала
+        playerId:
+          type: string
+          format: uuid
+          description: ID игрока
+        webrtcToken:
+          type: string
+          description: WebRTC токен
+        isMuted:
+          type: boolean
+          description: Заглушен ли участник
+        isDeafened:
+          type: boolean
+          description: Оглохшен ли участник
+        isSpeaking:
+          type: boolean
+          description: Говорит ли участник
+        position:
+          $ref: "#/components/schemas/Vector3D"
+          description: Позиция (для proximity)
+        joinedAt:
+          type: string
+          format: date-time
+          description: Время присоединения
+        lastActivityAt:
+          type: string
+          format: date-time
+          description: Последняя активность
+      required:
+        - id
+        - channelId
+        - playerId
+        - isMuted
+        - isDeafened
+        - isSpeaking
+        - joinedAt
+
+    Vector3D:
+      type: object
+      description: 3D вектор позиции
+      properties:
+        x:
+          type: number
+          format: float
+          description: Координата X
+        y:
+          type: number
+          format: float
+          description: Координата Y
+        z:
+          type: number
+          format: float
+          description: Координата Z
+      required:
+        - x
+        - y
+        - z
+
+    AudioEffect:
+      type: object
+      description: Аудио эффект
+      properties:
+        type:
+          type: string
+          enum: [echo, reverb, distortion, compression]
+          description: Тип эффекта
+        parameters:
+          type: object
+          description: Параметры эффекта
+          additionalProperties:
+            type: number
+      required:
+        - type
+
+    AudioMixerConfig:
+      type: object
+      description: Конфигурация аудио микшера
+      properties:
+        channelId:
+          type: string
+          format: uuid
+          description: ID канала
+        volumeSettings:
+          type: object
+          description: Настройки громкости
+          additionalProperties:
+            type: number
+        effects:
+          type: array
+          items:
+            $ref: "#/components/schemas/AudioEffect"
+          description: Активные эффекты
+        routing:
+          type: object
+          description: Маршрутизация аудио
+          additionalProperties:
+            type: array
+            items:
+              type: string
+              format: uuid
+      required:
+        - channelId
+
+    AudioMixerStatus:
+      type: object
+      description: Статус аудио микшера
+      properties:
+        channelId:
+          type: string
+          format: uuid
+          description: ID канала
+        isActive:
+          type: boolean
+          description: Активен ли микшер
+        currentLoad:
+          type: number
+          format: float
+          description: Текущая нагрузка (0-1)
+        activeEffects:
+          type: array
+          items:
+            $ref: "#/components/schemas/AudioEffect"
+          description: Активные эффекты
+        lastUpdated:
+          type: string
+          format: date-time
+          description: Последнее обновление
+      required:
+        - channelId
+        - isActive
+        - currentLoad
+
+    QualityPreset:
+      type: object
+      description: Пресет качества звука
+      properties:
+        name:
+          type: string
+          enum: [HIGH, MEDIUM, LOW, ADAPTIVE]
+          description: Название пресета
+        sampleRate:
+          type: integer
+          description: Частота дискретизации в Гц
+        channels:
+          type: integer
+          enum: [1, 2]
+          description: Количество каналов
+        bitrate:
+          type: integer
+          description: Битрейт в кбит/с
+        description:
+          type: string
+          description: Описание пресета
+      required:
+        - name
+        - sampleRate
+        - channels
+        - bitrate
+
+    AudioQualitySettings:
+      type: object
+      description: Настройки качества звука
+      properties:
+        sampleRate:
+          type: integer
+          minimum: 8000
+          maximum: 48000
+          description: Частота дискретизации в Гц
+        channels:
+          type: integer
+          enum: [1, 2]
+          description: Количество каналов
+        bitrate:
+          type: integer
+          minimum: 16
+          maximum: 256
+          description: Битрейт в кбит/с
+        adaptive:
+          type: boolean
+          description: Адаптивное качество
+        maxLatency:
+          type: integer
+          description: Максимальная задержка в мс
+      required:
+        - sampleRate
+        - channels
+        - bitrate
+
+    AudioQualityStatus:
+      type: object
+      description: Статус качества звука
+      properties:
+        targetType:
+          type: string
+          enum: [channel, player]
+          description: Тип цели
+        targetId:
+          type: string
+          format: uuid
+          description: ID цели
+        currentSettings:
+          $ref: "#/components/schemas/AudioQualitySettings"
+          description: Текущие настройки
+        measuredLatency:
+          type: integer
+          description: Измеренная задержка в мс
+        packetLossPercent:
+          type: number
+          format: float
+          description: Потеря пакетов в процентах
+        qualityScore:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Общий score качества (0-1)
+        lastUpdated:
+          type: string
+          format: date-time
+          description: Последнее обновление
+      required:
+        - targetType
+        - targetId
+        - currentSettings
+        - qualityScore

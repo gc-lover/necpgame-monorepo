@@ -5,6 +5,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"time"
 
 	_ "github.com/lib/pq"
 )
@@ -30,9 +31,13 @@ func NewRepository() *Repository {
 		return &Repository{db: nil}
 	}
 
+	// OPTIMIZATION: Database connection pool configuration (Issue #300)
+	db.SetMaxOpenConns(25)           // Max 25 concurrent connections for quest service
+	db.SetMaxIdleConns(5)            // Keep 5 idle connections
+	db.SetConnMaxLifetime(time.Hour) // Connection lifetime
+
 	return &Repository{db: db}
 }
-
 
 // GetQuestDefinitionByID retrieves quest definition by quest_id
 func (r *Repository) GetQuestDefinitionByID(ctx context.Context, questID string) (*QuestDefinition, error) {
@@ -145,4 +150,3 @@ func (r *Repository) UpdateQuestDefinition(ctx context.Context, questDef *QuestD
 
 	return nil
 }
-

@@ -1,0 +1,156 @@
+paths:
+  # Управление территориями
+  /world/clan-war/territories:
+    get:
+      summary: Получить список территорий
+      description: |
+        Возвращает список всех территорий доступных для клановых войн.
+        Поддерживает фильтрацию по владельцу и статусу.
+      operationId: getTerritories
+      tags:
+        - Territories
+      parameters:
+        - name: ownerClanId
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Фильтр по владельцу территории
+        - name: isActive
+          in: query
+          schema:
+            type: boolean
+            default: true
+          description: Показывать только активные территории
+        - name: resourceType
+          in: query
+          schema:
+            type: string
+            enum: [ORE, ENERGY, DATA, MIXED]
+          description: Фильтр по типу ресурсов
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+          description: Количество элементов на страницу
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          description: Смещение для пагинации
+      responses:
+        "200":
+          description: Успешный ответ со списком территорий
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  territories:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Territory"
+                  pagination:
+                    $ref: "#/components/schemas/PaginationInfo"
+                  total:
+                    type: integer
+                    description: Общее количество территорий
+                required:
+                  - territories
+                  - total
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /world/clan-war/territories/{territoryId}:
+    get:
+      summary: Получить информацию о территории
+      description: Возвращает подробную информацию о территории
+      operationId: getTerritory
+      tags:
+        - Territories
+      parameters:
+        - name: territoryId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID территории
+      responses:
+        "200":
+          description: Успешный ответ с информацией о территории
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Territory"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+    post:
+      summary: Передать территорию (admin)
+      description: |
+        Передаёт территорию новому владельцу после победы в войне.
+        Доступно только для автоматической передачи системой.
+      operationId: transferTerritory
+      tags:
+        - Territories
+      parameters:
+        - name: territoryId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID территории
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - newOwnerClanId
+              properties:
+                newOwnerClanId:
+                  type: string
+                  format: uuid
+                  description: ID нового владельца
+                transferReason:
+                  type: string
+                  enum: [WAR_VICTORY, ADMIN_OVERRIDE]
+                  default: WAR_VICTORY
+                  description: Причина передачи
+                warId:
+                  type: string
+                  format: uuid
+                  description: ID войны (для WAR_VICTORY)
+      responses:
+        "200":
+          description: Территория передана
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Territory"
+        "403":
+          description: Недостаточно прав для передачи территории
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          description: Территорию нельзя передать в текущем состоянии
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          $ref: "#/components/responses/InternalServerError"

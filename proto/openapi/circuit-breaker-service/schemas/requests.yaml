@@ -1,0 +1,378 @@
+CreateCircuitRequest:
+  type: object
+  properties:
+    circuit_id:
+      type: string
+      minLength: 1
+      maxLength: 255
+      pattern: '^[a-zA-Z0-9._-]+$'
+    service_name:
+      type: string
+      minLength: 1
+      maxLength: 255
+    endpoint:
+      type: string
+      minLength: 1
+      maxLength: 500
+      description: API endpoint or service method
+    failure_threshold:
+      type: integer
+      minimum: 1
+      maximum: 1000
+      default: 5
+      description: Number of failures to open circuit
+    success_threshold:
+      type: integer
+      minimum: 1
+      maximum: 1000
+      default: 3
+      description: Number of successes to close circuit
+    timeout:
+      type: integer
+      minimum: 100
+      maximum: 300000
+      default: 5000
+      description: Timeout in milliseconds
+    retry_delay:
+      type: integer
+      minimum: 100
+      maximum: 300000
+      default: 1000
+      description: Delay between retries in milliseconds
+    max_retry_delay:
+      type: integer
+      minimum: 100
+      maximum: 300000
+      default: 30000
+      description: Maximum retry delay in milliseconds
+    monitoring_window:
+      type: integer
+      minimum: 1000
+      maximum: 3600000
+      default: 60000
+      description: Monitoring window in milliseconds
+    slow_call_threshold:
+      type: integer
+      minimum: 100
+      maximum: 300000
+      default: 3000
+      description: Slow call threshold in milliseconds
+    slow_call_rate_threshold:
+      type: number
+      format: float
+      minimum: 0.0
+      maximum: 1.0
+      default: 0.5
+      description: Slow call rate threshold (0.0-1.0)
+    fallback_enabled:
+      type: boolean
+      default: true
+    fallback_response:
+      type: object
+      additionalProperties: true
+      description: Default response when circuit is open
+    metrics_enabled:
+      type: boolean
+      default: true
+    alert_thresholds:
+      type: object
+      properties:
+        error_rate:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          default: 0.5
+        slow_call_rate:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          default: 0.5
+        consecutive_failures:
+          type: integer
+          minimum: 1
+          maximum: 1000
+          default: 10
+  required:
+    - circuit_id
+    - service_name
+    - endpoint
+
+UpdateCircuitRequest:
+  type: object
+  properties:
+    failure_threshold:
+      type: integer
+      minimum: 1
+      maximum: 1000
+    success_threshold:
+      type: integer
+      minimum: 1
+      maximum: 1000
+    timeout:
+      type: integer
+      minimum: 100
+      maximum: 300000
+    retry_delay:
+      type: integer
+      minimum: 100
+      maximum: 300000
+    max_retry_delay:
+      type: integer
+      minimum: 100
+      maximum: 300000
+    monitoring_window:
+      type: integer
+      minimum: 1000
+      maximum: 3600000
+    slow_call_threshold:
+      type: integer
+      minimum: 100
+      maximum: 300000
+    slow_call_rate_threshold:
+      type: number
+      format: float
+      minimum: 0.0
+      maximum: 1.0
+    fallback_enabled:
+      type: boolean
+    fallback_response:
+      type: object
+      additionalProperties: true
+    metrics_enabled:
+      type: boolean
+    alert_thresholds:
+      type: object
+      properties:
+        error_rate:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+        slow_call_rate:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+        consecutive_failures:
+          type: integer
+          minimum: 1
+          maximum: 1000
+
+SetCircuitStateRequest:
+  type: object
+  properties:
+    state:
+      type: string
+      enum: [closed, open, half_open, force_open]
+    reason:
+      type: string
+      maxLength: 500
+      description: Reason for manual state change
+  required:
+    - state
+
+CreateBulkheadRequest:
+  type: object
+  properties:
+    bulkhead_id:
+      type: string
+      minLength: 1
+      maxLength: 255
+      pattern: '^[a-zA-Z0-9._-]+$'
+    service_name:
+      type: string
+      minLength: 1
+      maxLength: 255
+    max_concurrent_calls:
+      type: integer
+      minimum: 1
+      maximum: 10000
+      default: 10
+    max_wait_duration:
+      type: integer
+      minimum: 100
+      maximum: 300000
+      default: 5000
+      description: Max wait time in milliseconds
+    isolation_strategy:
+      type: string
+      enum: [thread_pool, semaphore]
+      default: semaphore
+    thread_pool_size:
+      type: integer
+      minimum: 1
+      maximum: 1000
+      default: 10
+      description: Thread pool size (for thread_pool strategy)
+    queue_size:
+      type: integer
+      minimum: 0
+      maximum: 10000
+      default: 100
+    fairness:
+      type: boolean
+      default: true
+    metrics_enabled:
+      type: boolean
+      default: true
+  required:
+    - bulkhead_id
+    - service_name
+
+CreateTimeoutRequest:
+  type: object
+  properties:
+    timeout_id:
+      type: string
+      minLength: 1
+      maxLength: 255
+      pattern: '^[a-zA-Z0-9._-]+$'
+    service_name:
+      type: string
+      minLength: 1
+      maxLength: 255
+    endpoint:
+      type: string
+      minLength: 1
+      maxLength: 500
+    timeout_duration:
+      type: integer
+      minimum: 100
+      maximum: 300000
+      default: 5000
+      description: Timeout in milliseconds
+    cancel_running_call:
+      type: boolean
+      default: true
+    timeout_strategy:
+      type: string
+      enum: [fixed, adaptive]
+      default: fixed
+    adaptive_timeout_config:
+      type: object
+      properties:
+        min_timeout:
+          type: integer
+          minimum: 100
+          maximum: 300000
+          default: 1000
+        max_timeout:
+          type: integer
+          minimum: 100
+          maximum: 300000
+          default: 30000
+        increase_factor:
+          type: number
+          format: float
+          minimum: 1.0
+          maximum: 5.0
+          default: 1.5
+        decrease_factor:
+          type: number
+          format: float
+          minimum: 0.1
+          maximum: 1.0
+          default: 0.8
+    metrics_enabled:
+      type: boolean
+      default: true
+  required:
+    - timeout_id
+    - service_name
+    - endpoint
+
+CreateDegradationPolicyRequest:
+  type: object
+  properties:
+    policy_id:
+      type: string
+      minLength: 1
+      maxLength: 255
+      pattern: '^[a-zA-Z0-9._-]+$'
+    service_name:
+      type: string
+      minLength: 1
+      maxLength: 255
+    trigger_conditions:
+      type: array
+      items:
+        type: object
+        properties:
+          metric:
+            type: string
+            enum: [error_rate, response_time, cpu_usage, memory_usage, concurrent_requests]
+          operator:
+            type: string
+            enum: [gt, lt, gte, lte, eq]
+          threshold:
+            type: number
+            format: float
+          duration:
+            type: integer
+            minimum: 1000
+            maximum: 3600000
+            default: 60000
+            description: Duration in milliseconds to maintain condition
+        required:
+          - metric
+          - operator
+          - threshold
+      minItems: 1
+    degradation_actions:
+      type: array
+      items:
+        type: object
+        properties:
+          action_type:
+            type: string
+            enum: [reduce_features, return_cached_data, limit_rate, disable_endpoint, use_fallback]
+          priority:
+            type: integer
+            minimum: 1
+            maximum: 10
+            default: 5
+          parameters:
+            type: object
+            additionalProperties: true
+        required:
+          - action_type
+      minItems: 1
+    recovery_conditions:
+      type: array
+      items:
+        type: object
+        properties:
+          metric:
+            type: string
+            enum: [error_rate, response_time, cpu_usage, memory_usage, concurrent_requests]
+          operator:
+            type: string
+            enum: [gt, lt, gte, lte, eq]
+          threshold:
+            type: number
+            format: float
+          duration:
+            type: integer
+            minimum: 1000
+            maximum: 3600000
+            default: 300000
+            description: Duration in milliseconds to maintain condition
+        required:
+          - metric
+          - operator
+          - threshold
+      minItems: 1
+    enabled:
+      type: boolean
+      default: true
+    monitoring_enabled:
+      type: boolean
+      default: true
+  required:
+    - policy_id
+    - service_name
+    - trigger_conditions
+    - degradation_actions
+    - recovery_conditions

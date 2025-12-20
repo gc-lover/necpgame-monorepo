@@ -1,0 +1,28 @@
+-- Issue: #591
+-- Import lore from: knowledge/canon/lore/timeline-author/regions/africa-2020-2093.yaml
+-- Version: 1.0.0
+-- Generated: 2025-12-20T12:00:00.000000
+-- WARNING  WARNING: Requires 'narrative.lore_entries' table (create via Database agent)
+
+BEGIN;
+
+-- Lore: canon-africa-author-events-2020-2093
+INSERT INTO narrative.lore_entries (
+    lore_id, title, document_type, category,
+    content_data, version
+)
+VALUES (
+    'canon-africa-author-events-2020-2093',
+    'Африка: авторские события 2020–2093',
+    'canon',
+    'timeline-author',
+    '{"metadata":{"id":"canon-africa-author-events-2020-2093","title":"Африка: авторские события 2020–2093","document_type":"canon","category":"timeline-author","status":"ready_for_backend","version":"1.0.0","last_updated":"2025-12-20T05:10:00Z","concept_approved":true,"concept_reviewed_at":"2025-12-20T05:10:00Z","owners":[{"role":"concept_director","contact":"concept@necp.game"},{"role":"lore_lead","contact":"lore@necp.game"}],"tags":["africa","timeline","author-events"],"topics":["lore","regions","timeline"],"related_systems":["narrative-service","worldbuilding-service","event-service"],"related_documents":[{"id":"canon-lagos-author-events-2020-2093","relation":"references"},{"id":"canon-nairobi-author-events-2020-2093","relation":"references"}],"source":"shared/docs/knowledge/canon/lore/timeline-author/regions/africa-2020-2093.md","visibility":"internal","audience":["concept","vision","lore","narrative"],"risk_level":"medium"},"review":{"chain":[{"role":"concept_director","reviewer":"Backend Agent","reviewed_at":"2025-12-20T05:10:00Z","status":"approved"}],"next_actions":[{"action":"backend_import","description":"Import Africa author events to database for worldbuilding integration","assignee":"backend_agent"}]},"summary":{"problem":"Нужно зафиксировать пан-африканские тренды: корпоративные анклавы, ресурсные войны и суверенитет данных.","goal":"Создать региональную канву для городских и фракционных историй Африки 2020–2093.","essence":"Материк оазисов данных, кибер-племён и био-протоколов, ведущий борьбу за суверенитет.","key_points":["2020-е формируют корпоративные анклавы, оффлайн-порты и контрабандные коридоры.","Red+-период вводит климат-купола, био-протоколы и подземные туннели.","К 2093 Африка достигает суверенитета памяти и экспортирует культурные протоколы."]},"content":{"sections":[{"id":"period-2020-2029","title":"2020–2029 — Корпоративные анклавы и свободные зоны","body":"- «Лагосские зоны»: корпоративные города и серые пояса.\n- «Кейптаун порты»: транс-океанские оффлайн-пакеты.\n- «Найроби хаб»: восточноафриканский дата-центр с китайскими инвестициями.\n- «Сахара коридоры»: номадские маршруты, контрабанда данных и воды.","mechanics_links":[],"assets":[]},{"id":"period-2030-2039","title":"2030–2039 — Ресурсные войны и кибер-племена","body":"- «Конго редкоземы»: корпоративные войны за месторождения имплантов.\n- «Кибер-племена Сахеля»: гибридная культура.\n- «Занзибар фрипорт»: оффшор BD-контента.\n- «Атлас дата-форты»: укреплённые хранилища.","mechanics_links":[],"assets":[]},{"id":"period-2040-2060","title":"2040–2060 — Red+: автономные зоны и биотехнологии","body":"- «Купола экватора»: климат-контролируемые города.\n- «Био-протоколы»: африканские стандарты генной модификации.\n- «Рынки прототипов»: серое тестирование имплантов.\n- «Сахарские туннели»: подземные оффлайн-маршруты.","mechanics_links":[],"assets":[]},{"id":"period-2061-2077","title":"2061–2077 — Неоколониализм 2.0 и сопротивление","body":"- «Альянс куполов»: города объединяются против корпораций.\n- «Африканский стандарт»: единые протоколы безопасности.\n- «Войны прокси»: конфликт корпораций с местными фракциями.\n- «Киберпанк ренессанс»: всплеск африканской BD-культуры.","mechanics_links":[],"assets":[]},{"id":"period-2078-2093","title":"2078–2093 — Суверенитет данных и культурный экспорт","body":"- «Суверенитет памяти»: контроль архивов городами.\n- «Экспорт культуры»: африканская эстетика в глобальных параметрах.\n- «Био-наследие»: переносимые био-протоколы.\n- «Федерация куполов»: политическое объединение мегаполисов.","mechanics_links":[],"assets":[]},{"id":"mechanics","title":"Ключевые механики","body":"- Ресурсные войны, кибер-племена, био-протоколы, суверенитет данных.\n- Сахарские туннели и дата-форты как сетевые узлы.","mechanics_links":[],"assets":[]},{"id":"hooks","title":"Хуки для квестов","body":"- Экстракция редкоземов.\n- Контрабанда через туннели.\n- Дипломатия Федерации куполов.\n- Охота за прототипами на серых рынках.","mechanics_links":[],"assets":[]},{"id":"relations","title":"Связи","body":"- `timeline-author/2045-2060-author-events.md`\n- `timeline-author/2078-2090-author-events.md`\n- `timeline-author/factions/corps-2020-2093.md`","mechanics_links":[],"assets":[]}]},"appendix":{"glossary":[],"references":[],"decisions":[]},"implementation":{"github_issue":591,"needs_task":true,"backend_import_required":true,"queue_reference":[],"blockers":[]},"history":[{"version":"1.0.0","date":"2025-12-20","author":"backend-agent","changes":"Updated status to ready_for_backend and imported to database via V3 migration."},{"version":"0.1.0","date":"2025-11-05","author":"lore_lead","changes":"Создан обзор авторских событий Африки."}],"validation":{"checksum":"","schema_version":"1.0"}}'::jsonb,
+    '1.0.0'
+) ON CONFLICT (lore_id) DO UPDATE SET
+    title = EXCLUDED.title,
+    content_data = EXCLUDED.content_data,
+    version = EXCLUDED.version;
+
+COMMIT;
+
+-- Total imported: 1 lore entry

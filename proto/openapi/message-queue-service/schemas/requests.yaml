@@ -1,0 +1,318 @@
+CreateQueueRequest:
+  type: object
+  properties:
+    name:
+      type: string
+      minLength: 1
+      maxLength: 255
+      pattern: '^[a-zA-Z0-9._-]+$'
+    type:
+      type: string
+      enum: [classic, quorum, stream]
+      default: classic
+    durable:
+      type: boolean
+      default: true
+    auto_delete:
+      type: boolean
+      default: false
+    max_length:
+      type: integer
+      minimum: 1
+      maximum: 10000000
+    max_length_bytes:
+      type: integer
+      minimum: 1
+      maximum: 1073741824
+    message_ttl:
+      type: integer
+      minimum: 1000
+      maximum: 86400000
+      description: Message time-to-live in milliseconds
+    dead_letter_exchange:
+      type: string
+      maxLength: 255
+    dead_letter_routing_key:
+      type: string
+      maxLength: 255
+    arguments:
+      type: object
+      additionalProperties: true
+  required:
+    - name
+
+UpdateQueueRequest:
+  type: object
+  properties:
+    max_length:
+      type: integer
+      minimum: 1
+      maximum: 10000000
+    max_length_bytes:
+      type: integer
+      minimum: 1
+      maximum: 1073741824
+    message_ttl:
+      type: integer
+      minimum: 1000
+      maximum: 86400000
+    dead_letter_exchange:
+      type: string
+      maxLength: 255
+    dead_letter_routing_key:
+      type: string
+      maxLength: 255
+    arguments:
+      type: object
+      additionalProperties: true
+
+PublishMessageRequest:
+  type: object
+  properties:
+    queue_name:
+      type: string
+      minLength: 1
+      maxLength: 255
+    routing_key:
+      type: string
+      maxLength: 255
+      default: ""
+    exchange:
+      type: string
+      maxLength: 255
+      default: ""
+    message_body:
+      type: string
+      description: JSON string containing the message payload
+    content_type:
+      type: string
+      default: "application/json"
+    headers:
+      type: object
+      additionalProperties:
+        type: string
+    priority:
+      type: integer
+      minimum: 0
+      maximum: 255
+      default: 0
+    persistent:
+      type: boolean
+      default: true
+    expiration:
+      type: integer
+      minimum: 1000
+      maximum: 86400000
+      description: Message expiration in milliseconds
+    user_id:
+      type: string
+      maxLength: 255
+    app_id:
+      type: string
+      maxLength: 255
+    correlation_id:
+      type: string
+      maxLength: 255
+    reply_to:
+      type: string
+      maxLength: 255
+    message_id:
+      type: string
+      maxLength: 255
+  required:
+    - queue_name
+    - message_body
+
+PublishBatchRequest:
+  type: object
+  properties:
+    messages:
+      type: array
+      items:
+        $ref: '#/PublishMessageRequest'
+      minItems: 1
+      maxItems: 1000
+  required:
+    - messages
+
+ConsumeMessagesRequest:
+  type: object
+  properties:
+    queue_name:
+      type: string
+      minLength: 1
+      maxLength: 255
+    max_messages:
+      type: integer
+      minimum: 1
+      maximum: 100
+      default: 10
+    auto_ack:
+      type: boolean
+      default: false
+    consumer_tag:
+      type: string
+      maxLength: 255
+    no_wait:
+      type: boolean
+      default: false
+    exclusive:
+      type: boolean
+      default: false
+  required:
+    - queue_name
+
+RegisterConsumerRequest:
+  type: object
+  properties:
+    consumer_id:
+      type: string
+      minLength: 1
+      maxLength: 255
+      pattern: '^[a-zA-Z0-9._-]+$'
+    queue_name:
+      type: string
+      minLength: 1
+      maxLength: 255
+    consumer_tag:
+      type: string
+      maxLength: 255
+    prefetch_count:
+      type: integer
+      minimum: 1
+      maximum: 1000
+      default: 100
+    auto_ack:
+      type: boolean
+      default: false
+    exclusive:
+      type: boolean
+      default: false
+    no_local:
+      type: boolean
+      default: false
+    no_wait:
+      type: boolean
+      default: false
+    arguments:
+      type: object
+      additionalProperties: true
+  required:
+    - consumer_id
+    - queue_name
+
+UpdateConsumerRequest:
+  type: object
+  properties:
+    prefetch_count:
+      type: integer
+      minimum: 1
+      maximum: 1000
+    status:
+      type: string
+      enum: [active, paused]
+    arguments:
+      type: object
+      additionalProperties: true
+
+PublishEventRequest:
+  type: object
+  properties:
+    event_type:
+      type: string
+      minLength: 1
+      maxLength: 255
+    exchange:
+      type: string
+      maxLength: 255
+      default: "events"
+    routing_key:
+      type: string
+      maxLength: 255
+    event_data:
+      type: object
+      additionalProperties: true
+    metadata:
+      type: object
+      properties:
+        source:
+          type: string
+          maxLength: 255
+        version:
+          type: string
+          maxLength: 50
+        timestamp:
+          type: integer
+          format: int64
+        correlation_id:
+          type: string
+          maxLength: 255
+        user_id:
+          type: string
+          maxLength: 255
+        session_id:
+          type: string
+          maxLength: 255
+      additionalProperties: true
+    headers:
+      type: object
+      additionalProperties:
+        type: string
+  required:
+    - event_type
+    - event_data
+
+CreateExchangeRequest:
+  type: object
+  properties:
+    name:
+      type: string
+      minLength: 1
+      maxLength: 255
+      pattern: '^[a-zA-Z0-9._-]+$'
+    type:
+      type: string
+      enum: [direct, topic, headers, fanout]
+      default: topic
+    durable:
+      type: boolean
+      default: true
+    auto_delete:
+      type: boolean
+      default: false
+    internal:
+      type: boolean
+      default: false
+    no_wait:
+      type: boolean
+      default: false
+    arguments:
+      type: object
+      additionalProperties: true
+  required:
+    - name
+
+CreateBindingRequest:
+  type: object
+  properties:
+    exchange_name:
+      type: string
+      minLength: 1
+      maxLength: 255
+    queue_name:
+      type: string
+      minLength: 1
+      maxLength: 255
+    routing_key:
+      type: string
+      maxLength: 255
+      default: ""
+    no_wait:
+      type: boolean
+      default: false
+    arguments:
+      type: object
+      additionalProperties: true
+  required:
+    - exchange_name
+    - queue_name

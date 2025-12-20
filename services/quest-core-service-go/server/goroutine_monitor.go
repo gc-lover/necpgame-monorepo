@@ -25,11 +25,12 @@ func init() {
 
 // GoroutineMonitor monitors goroutine count and detects leaks
 // Issue: #1585 - Uses context cancellation for proper cleanup
+// OPTIMIZATION: Struct field alignment (large → small) Issue #300
 type GoroutineMonitor struct {
-	maxGoroutines int
-	logger        *logrus.Logger
-	ctx           context.Context
-	cancel        context.CancelFunc
+	logger        *logrus.Logger     // 8 bytes (pointer)
+	ctx           context.Context    // 16 bytes (interface)
+	cancel        context.CancelFunc // 16 bytes (interface)
+	maxGoroutines int                // 8 bytes
 }
 
 // NewGoroutineMonitor creates a new goroutine monitor
@@ -79,4 +80,3 @@ func (gm *GoroutineMonitor) Start() {
 func (gm *GoroutineMonitor) Stop() {
 	gm.cancel()
 }
-

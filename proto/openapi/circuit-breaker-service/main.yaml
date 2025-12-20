@@ -1,0 +1,400 @@
+openapi: 3.0.3
+info:
+  title: Circuit Breaker Service API
+  version: 1.0.0
+  description: |
+    API for fault tolerance and service resilience in microservices architecture.
+    Implements circuit breaker pattern, bulkhead isolation, timeout management,
+    and graceful degradation for MMO-scale distributed systems.
+
+servers:
+  - url: http://localhost:8080
+    description: Development server
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Circuit Breakers
+    description: Circuit breaker management and monitoring
+  - name: Bulkheads
+    description: Bulkhead isolation and resource management
+  - name: Timeouts
+    description: Timeout configuration and monitoring
+  - name: Metrics
+    description: Circuit breaker metrics and health monitoring
+  - name: Degradation
+    description: Graceful degradation policies and fallbacks
+
+paths:
+  /cb/health:
+    get:
+      tags:
+        - Circuit Breakers
+      summary: Health check for Circuit Breaker Service
+      operationId: healthCheck
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "healthy"
+
+  /cb/circuits:
+    get:
+      tags:
+        - Circuit Breakers
+      summary: List all circuit breakers
+      operationId: listCircuits
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: service
+          in: query
+          schema:
+            type: string
+            description: Filter by service name
+        - name: state
+          in: query
+          schema:
+            type: string
+            enum: [closed, open, half_open]
+            description: Filter by circuit state
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+      responses:
+        '200':
+          description: Circuit breakers retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/schemas/responses.yaml#/ListCircuitsResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    post:
+      tags:
+        - Circuit Breakers
+      summary: Create a new circuit breaker
+      operationId: createCircuit
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/schemas/requests.yaml#/CreateCircuitRequest'
+      responses:
+        '201':
+          description: Circuit breaker created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/schemas/responses.yaml#/CreateCircuitResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Circuit breaker already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /cb/circuits/{circuitId}:
+    get:
+      tags:
+        - Circuit Breakers
+      summary: Get circuit breaker details and metrics
+      operationId: getCircuit
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: circuitId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Circuit breaker details retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/schemas/responses.yaml#/GetCircuitResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Circuit breaker not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    put:
+      tags:
+        - Circuit Breakers
+      summary: Update circuit breaker configuration
+      operationId: updateCircuit
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: circuitId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/schemas/requests.yaml#/UpdateCircuitRequest'
+      responses:
+        '200':
+          description: Circuit breaker updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/schemas/responses.yaml#/UpdateCircuitResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Circuit breaker not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    delete:
+      tags:
+        - Circuit Breakers
+      summary: Delete a circuit breaker
+      operationId: deleteCircuit
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: circuitId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Circuit breaker deleted successfully
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Circuit breaker not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /cb/circuits/{circuitId}/state:
+    get:
+      tags:
+        - Circuit Breakers
+      summary: Get current circuit breaker state
+      operationId: getCircuitState
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: circuitId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Circuit state retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/schemas/responses.yaml#/GetCircuitStateResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Circuit breaker not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    post:
+      tags:
+        - Circuit Breakers
+      summary: Manually change circuit breaker state
+      operationId: setCircuitState
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: circuitId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/schemas/requests.yaml#/SetCircuitStateRequest'
+      responses:
+        '200':
+          description: Circuit state changed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/schemas/responses.yaml#/SetCircuitStateResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Circuit breaker not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /cb/circuits/{circuitId}/reset:
+    post:
+      tags:
+        - Circuit Breakers
+      summary: Manually reset circuit breaker
+      operationId: resetCircuit
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: circuitId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Circuit breaker reset successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/schemas/responses.yaml#/ResetCircuitResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Circuit breaker not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /cb/bulkheads:
+    get:
+      tags:
+        - Bulkheads
+      summary: List all bulkhead partitions
+      operationId: listBulkheads
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: service
+          in: query
+          schema:
+            type: string
+            description: Filter by service name
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+      responses:
+        '200':
+          description: Bulkheads retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/schemas/responses.yaml#/ListBulkheadsResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    post:
+      tags:
+        - Bulkheads
+      summary: Create a new bulkhead partition
+      operationId: createBulkhead
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:

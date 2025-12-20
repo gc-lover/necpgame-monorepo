@@ -1,34 +1,27 @@
 package server
 
 import (
-	"os"
-
 	"github.com/sirupsen/logrus"
 )
 
-var logger *logrus.Logger
-
-func init() {
-	logger = logrus.New()
+// OPTIMIZATION: Issue #1950 - Structured JSON logging for MMO performance monitoring
+func NewLogger() *logrus.Logger {
+	logger := logrus.New()
 	logger.SetFormatter(&logrus.JSONFormatter{
 		TimestampFormat: "2006-01-02T15:04:05.000Z07:00",
+		FieldMap: logrus.FieldMap{
+			logrus.FieldKeyTime:  "timestamp",
+			logrus.FieldKeyLevel: "level",
+			logrus.FieldKeyMsg:   "message",
+			logrus.FieldKeyFunc:  "caller",
+		},
 	})
-	logger.SetOutput(os.Stdout)
 
-	level := os.Getenv("LOG_LEVEL")
-	if level == "" {
-		level = "info"
-	}
+	// OPTIMIZATION: Issue #1949 - Info level for production, can be configured
+	logger.SetLevel(logrus.InfoLevel)
 
-	logLevel, err := logrus.ParseLevel(level)
-	if err != nil {
-		logLevel = logrus.InfoLevel
-	}
-	logger.SetLevel(logLevel)
-}
+	// OPTIMIZATION: Issue #1950 - Enable caller info for debugging
+	logger.SetReportCaller(true)
 
-func GetLogger() *logrus.Logger {
 	return logger
 }
-
-

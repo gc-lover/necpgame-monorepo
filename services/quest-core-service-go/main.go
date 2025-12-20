@@ -6,8 +6,6 @@ import (
 	"net/http"
 	_ "net/http/pprof" // OPTIMIZATION: Issue #1584
 	"os"
-	"os/signal"
-	"syscall"
 	"time"
 
 	"github.com/gc-lover/necpgame-monorepo/services/quest-core-service-go/server"
@@ -94,17 +92,3 @@ func getEnv(key, defaultValue string) string {
 	}
 	return defaultValue
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-

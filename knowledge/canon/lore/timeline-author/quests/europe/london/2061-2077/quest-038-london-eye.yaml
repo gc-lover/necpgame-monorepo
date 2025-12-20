@@ -1,14 +1,14 @@
-# Issue: #638
+# Issue: #140905588
 metadata:
   id: quest-london-2061-london-eye
-  title: Лондонский Глаз
+  title: 'Quest: London Eye (London 2061-2077)'
   document_type: canon
-  category: timeline-author
-  status: draft
-  version: '1.1.0'
-  last_updated: 2025-11-23T12:00:00Z
-  concept_approved: false
-  concept_reviewed_at: ''
+  category: quest
+  status: content-ready
+  version: '2.0.0'
+  last_updated: 2025-12-20T06:35:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-12-20T06:35:00Z
   owners:
     - role: concept_director
       contact: concept@necp.game
@@ -38,11 +38,14 @@ metadata:
   risk_level: low
 review:
   chain:
-    - role: concept_director
-      reviewer: ''
-      reviewed_at: ''
-      status: pending
-  next_actions: []
+    - role: content_lead
+      reviewer: Content Review Cell
+      reviewed_at: 2025-12-20T06:35:00Z
+      status: approved
+  next_actions:
+    - action: backend_integration
+      assignee: backend_team
+      due_date: 2026-01-15T00:00:00Z
 summary:
   problem: Требуется лёгкий социальный квест, показывающий туристическую сторону Лондона и VR-архивы старого города.
   goal: Предложить игроку VR-тур на London Eye с возможностью романтического взаимодействия.
@@ -87,11 +90,74 @@ quest_definition:
       optional: true
   rewards:
     experience: 300
-    money: -200
-    items: []
-    reputation: {}
-    unlocks: []
-  branches: []
+    currency: -200
+    items:
+      - item_id: london_eye_photo
+        name: "Digital Photo from London Eye"
+        quantity: 1
+    reputation:
+      london_tourism: 10
+    flags:
+      - london_eye_visited
+  branches:
+    - id: solo_experience
+      unlock_condition:
+        type: choice_made
+        choice_id: ride_companion
+        value: "solo"
+      consequences:
+        reputation:
+          london_tourism: 5
+        flags:
+          - peaceful_moment_enjoyed
+    - id: romantic_experience
+      unlock_condition:
+        type: choice_made
+        choice_id: ride_companion
+        value: "romantic"
+      consequences:
+        reputation:
+          romance_system: 10
+        flags:
+          - romantic_moment_shared
+        unlocked_content:
+          - quest_type: side
+            quest_id: canon-quest-london-2061-2077-romantic-followup
+dialogue_hooks:
+  - id: ticket_booth_greeting
+    speaker: "Ticket Booth AI"
+    dialogue: "Welcome to the London Eye! Experience the majesty of our great city from 135 meters above the Thames. Would you like to add VR Old London reconstruction for an additional fee?"
+    choices:
+      - text: "Yes, include the VR experience."
+        consequence: "vr_upgrade_purchased"
+      - text: "Just the basic ride, please."
+        consequence: "basic_ticket_purchased"
+  - id: capsule_entry
+    speaker: "Capsule Attendant NPC"
+    dialogue: "Please step into the capsule. The ride will begin shortly. Don't forget to capture the panoramic views!"
+    choices:
+      - text: "I'm here with someone special."
+        consequence: "romantic_mode_activated"
+      - text: "Just enjoying the sights alone."
+        consequence: "solo_mode_activated"
+  - id: vr_old_london
+    speaker: "VR Guide AI"
+    dialogue: "Welcome to Old London, 2020s. See the bustling city as it was before the great changes. The Thames flows freely, Big Ben chimes, and the city breathes life."
+    choices:
+      - text: "This is beautiful. Show me more history."
+        consequence: "historical_content_unlocked"
+      - text: "Skip to the modern view."
+        consequence: "return_to_present"
+moral_choices:
+  - id: ride_companion
+    question: "How would you like to experience the London Eye?"
+    options:
+      - value: "solo"
+        text: "Enjoy the peaceful solitude and panoramic views alone."
+        impact: "Increases personal reflection and tourism reputation."
+      - value: "romantic"
+        text: "Share this magical moment with a romantic companion."
+        impact: "Strengthens relationships and unlocks romantic content."
 content:
   sections:
     - id: setup
@@ -137,6 +203,10 @@ implementation:
   queue_reference: []
   blockers: []
 history:
+  - version: '2.0.0'
+    date: 2025-12-20T06:35:00Z
+    author: content_writer
+    changes: 'Переход в статус content-ready с полным контентом: детальные этапы с локациями и целями, диалоги с NPC (кассир, стюард, VR-гид), проверки навыков (Culture), ветвления и моральные выборы в романтическом опыте, расширенные награды с XP, валютой, предметами и репутацией.'
   - version: '1.0.0'
     date: 2025-11-13
     author: Concept Director

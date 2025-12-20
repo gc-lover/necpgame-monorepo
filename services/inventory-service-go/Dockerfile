@@ -1,43 +1,51 @@
-FROM golang:1.24-alpine AS builder
+# OPTIMIZATION: Issue #1951 - Multi-stage build for security and minimal image size
+FROM golang:1.21-alpine AS builder
 
-WORKDIR /app
+# Install build dependencies
+RUN apk add --no-cache git ca-certificates tzdata
 
-RUN apk add --no-cache make nodejs npm git ca-certificates tzdata
+# Set working directory
+WORKDIR /build
 
-COPY services/inventory-service-go/go.mod services/inventory-service-go/go.sum ./
-RUN go mod download
+# Copy go mod files
+COPY go.mod go.sum ./
 
-RUN go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest
+# Download dependencies
+RUN go mod download && go mod verify
 
-COPY services/inventory-service-go ./services/inventory-service-go
-COPY proto ./proto
+# Copy source code
+COPY . .
 
-WORKDIR /app/services/inventory-service-go
+# Build the binary with optimizations
+ARG VERSION=dev
+ARG BUILD_TIME
+ARG GIT_COMMIT
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
+    -trimpath \
+    -mod=readonly \
+    -ldflags "-X main.version=${VERSION} -X main.buildTime=${BUILD_TIME} -X main.gitCommit=${GIT_COMMIT} -s -w" \
+    -o inventory-service \
+    ./main.go
 
-RUN make generate-api || true
+# Final stage - minimal runtime image
+FROM scratch
 
-RUN go mod tidy
-RUN CGO_ENABLED=0 GOOS=linux go build -o inventory-service -ldflags="-w -s -extldflags '-static'" .
-
-FROM alpine:latest
-
-RUN apk --no-cache add ca-certificates tzdata
-
-WORKDIR /app
-
-RUN addgroup -g 1000 appuser && \
-    adduser -D -u 1000 -G appuser appuser
-
-COPY --from=builder /app/services/inventory-service-go/inventory-service /app/
+# OPTIMIZATION: Issue #1952 - Copy CA certificates for HTTPS
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
 
-RUN chown -R appuser:appuser /app
+# Copy the binary
+COPY --from=builder /build/inventory-service /inventory-service
 
-USER appuser
+# Create non-root user for security
+USER 1000:1000
 
-EXPOSE 8085/tcp 9090
+# Expose ports
+EXPOSE 8082 8083 6863
 
+# Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:9090/metrics || exit 1
+    CMD ["/inventory-service", "--health-check"] || exit 1
 
-ENTRYPOINT ["/app/inventory-service"]
+# Run the binary
+ENTRYPOINT ["/inventory-service"]

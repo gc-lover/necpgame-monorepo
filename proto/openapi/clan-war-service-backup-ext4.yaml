@@ -1,0 +1,400 @@
+
+    WarBattle:
+      type: object
+      description: Битва в войне
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Уникальный ID битвы
+        warId:
+          type: string
+          format: uuid
+          description: ID войны
+        battleType:
+          type: string
+          enum: [TERRITORY_BATTLE, SIEGE, OPEN_WORLD_PVP]
+          description: Тип битвы
+        territoryId:
+          type: string
+          format: uuid
+          description: ID территории
+        status:
+          type: string
+          enum: [CREATED, ACTIVE, ENDED]
+          description: Статус битвы
+        attackerScore:
+          type: integer
+          description: Очки атакующего
+        defenderScore:
+          type: integer
+          description: Очки защищающегося
+        startedAt:
+          type: string
+          format: date-time
+          description: Время начала
+        endedAt:
+          type: string
+          format: date-time
+          description: Время окончания
+        createdAt:
+          type: string
+          format: date-time
+          description: Время создания
+      required:
+        - id
+        - warId
+        - battleType
+        - status
+        - attackerScore
+        - defenderScore
+        - createdAt
+
+    Reward:
+      type: object
+      description: Награда
+      properties:
+        type:
+          type: string
+          enum: [CURRENCY, ITEM, TITLE, EXPERIENCE, RESOURCE]
+          description: Тип награды
+        amount:
+          type: integer
+          description: Количество
+        itemId:
+          type: string
+          format: uuid
+          description: ID предмета (для ITEM)
+        title:
+          type: string
+          description: Название титула (для TITLE)
+        description:
+          type: string
+          description: Описание награды
+      required:
+        - type
+
+    WarEvent:
+      type: object
+      description: Событие войны
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: ID события
+        warId:
+          type: string
+          format: uuid
+          description: ID войны
+        eventType:
+          type: string
+          enum:
+            [
+              declared,
+              phase-changed,
+              battle-started,
+              battle-ended,
+              territory-captured,
+              ended,
+              rewards-distributed,
+            ]
+          description: Тип события
+        data:
+          type: object
+          description: Данные события
+          additionalProperties: true
+        timestamp:
+          type: string
+          format: date-time
+          description: Время события
+      required:
+        - id
+        - warId
+        - eventType
+        - timestamp
+
+    PaginationInfo:
+      type: object
+      description: Информация о пагинации
+      properties:
+        limit:
+          type: integer
+          description: Размер страницы
+        offset:
+          type: integer
+          description: Смещение
+        hasNext:
+          type: boolean
+          description: Есть следующая страница
+        hasPrev:
+          type: boolean
+          description: Есть предыдущая страница
+      required:
+        - limit
+        - offset
+        - hasNext
+        - hasPrev
+
+    Error:
+      type: object
+      description: Описание ошибки
+      properties:
+        code:
+          type: string
+          description: Код ошибки
+        message:
+          type: string
+          description: Сообщение об ошибке
+        details:
+          type: object
+          description: Дополнительные детали ошибки
+          additionalProperties: true
+      required:
+        - code
+        - message
+
+  # Переиспользуемые ответы
+  responses:
+    BadRequest:
+      description: Неверный запрос
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+    Unauthorized:
+      description: Не авторизован
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+    NotFound:
+      description: Ресурс не найден
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+    InternalServerError:
+      description: Внутренняя ошибка сервера
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+  # Схемы безопасности
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT токен авторизации
+
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API ключ для сервер-сервер коммуникации
+
+# WebSocket спецификации (документация)
+x-websockets:
+  clan-war-updates:
+    url: wss://api.necp.game/v1/world/clan-war/{warId}
+    description: |
+      WebSocket для обновлений состояния клановой войны в реальном времени.
+      Отправляет события о фазах, битвах, очках и событиях войны.
+    parameters:
+      warId:
+        type: string
+        format: uuid
+        description: ID войны
+    messages:
+      war-phase-changed:
+        type: object
+        properties:
+          type:
+            type: string
+            enum: [war_phase_changed]
+          data:
+            type: object
+            properties:
+              warId:
+                type: string
+                format: uuid
+              oldPhase:
+                type: string
+                enum: [PREPARATION, ACTIVE, ENDING]
+              newPhase:
+                type: string
+                enum: [PREPARATION, ACTIVE, ENDING, ENDED]
+              changedAt:
+                type: string
+                format: date-time
+
+      battle-started:
+        type: object
+        properties:
+          type:
+            type: string
+            enum: [battle_started]
+          data:
+            $ref: "#/components/schemas/WarBattle"
+
+      scores-updated:
+        type: object
+        properties:
+          type:
+            type: string
+            enum: [scores_updated]
+          data:
+            type: object
+            properties:
+              warId:
+                type: string
+                format: uuid
+              clanScores:
+                type: object
+                additionalProperties:
+                  type: integer
+                description: Обновленные очки по кланам
+
+      territory-captured:
+        type: object
+        properties:
+          type:
+            type: string
+            enum: [territory_captured]
+          data:
+            type: object
+            properties:
+              territoryId:
+                type: string
+                format: uuid
+              newOwnerClanId:
+                type: string
+                format: uuid
+              capturedAt:
+                type: string
+                format: date-time
+
+# Event Bus спецификации (документация)
+x-event-bus:
+  events:
+    clan-war:declared:
+      description: Война объявлена
+      payload:
+        type: object
+        properties:
+          warId:
+            type: string
+            format: uuid
+          attackerClanId:
+            type: string
+            format: uuid
+          defenderClanId:
+            type: string
+            format: uuid
+          alliesAttacker:
+            type: array
+            items:
+              type: string
+              format: uuid
+          alliesDefender:
+            type: array
+            items:
+              type: string
+              format: uuid
+        required:
+          - warId
+          - attackerClanId
+          - defenderClanId
+
+    clan-war:phase-changed:
+      description: Фаза войны изменена
+      payload:
+        type: object
+        properties:
+          warId:
+            type: string
+            format: uuid
+          oldPhase:
+            type: string
+            enum: [PREPARATION, ACTIVE, ENDING]
+          newPhase:
+            type: string
+            enum: [PREPARATION, ACTIVE, ENDING, ENDED]
+          changedAt:
+            type: string
+            format: date-time
+        required:
+          - warId
+          - oldPhase
+          - newPhase
+
+    clan-war:battle-started:
+      description: Битва началась
+      payload:
+        type: object
+        properties:
+          battleId:
+            type: string
+            format: uuid
+          warId:
+            type: string
+            format: uuid
+          battleType:
+            type: string
+            enum: [TERRITORY_BATTLE, SIEGE, OPEN_WORLD_PVP]
+          participants:
+            type: array
+            items:
+              type: string
+              format: uuid
+        required:
+          - battleId
+          - warId
+          - battleType
+
+    clan-war:battle-ended:
+      description: Битва завершена
+      payload:
+        type: object
+        properties:
+          battleId:
+            type: string
+            format: uuid
+          warId:
+            type: string
+            format: uuid
+          winnerClanId:
+            type: string
+            format: uuid
+          finalScores:
+            type: object
+            additionalProperties:
+              type: integer
+        required:
+          - battleId
+          - warId
+
+    clan-war:territory-captured:
+      description: Территория захвачена
+      payload:
+        type: object
+        properties:
+          territoryId:
+            type: string
+            format: uuid
+          warId:
+            type: string
+            format: uuid
+          newOwnerClanId:
+            type: string
+            format: uuid
+          capturedAt:
+            type: string
+            format: date-time
+        required:
+          - territoryId
+          - newOwnerClanId

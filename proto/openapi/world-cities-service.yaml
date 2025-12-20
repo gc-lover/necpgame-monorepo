@@ -1,0 +1,400 @@
+openapi: 3.0.3
+info:
+  title: World Cities Service API
+  description: |
+    API для управления мировыми городами в NECPGAME MMOFPS.
+    Управляет информацией о городах, их характеристиками, событиями и связями.
+
+    **BACKEND NOTE**: Служба оптимизирована для быстрого поиска ближайших городов.
+    Использует гео-индексы и кеширование для производительности.
+
+    **PERFORMANCE**: Ожидаемая нагрузка - 100k запросов/сек во время пиковых сессий.
+    Время отклика < 50ms для основных операций.
+
+    **SCALING**: Горизонтальное масштабирование с read replicas для гео-запросов.
+  version: 1.0.0
+  contact:
+    name: Backend Team
+    email: backend@necp.game
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production server
+  - url: https://staging-api.necp.game/v1
+    description: Staging server
+  - url: http://localhost:8089/v1
+    description: Local development
+
+security:
+  - BearerAuth: []
+  - ApiKeyAuth: []
+
+paths:
+  # Основные операции с городами
+  /api/v1/cities:
+    get:
+      summary: Получить список городов с фильтрацией
+      description: |
+        Возвращает города с возможностью фильтрации по региону, стране,
+        населению, уровню развития и географическим координатам.
+      operationId: getCities
+      tags: [Cities]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: region
+          in: query
+          schema:
+            type: string
+          description: Фильтр по региону (Americas, Europe, Asia, etc.)
+        - name: country
+          in: query
+          schema:
+            type: string
+          description: Фильтр по стране
+        - name: min_population
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+          description: Минимальное население
+        - name: max_population
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+          description: Максимальное население
+        - name: development_level
+          in: query
+          schema:
+            type: string
+            enum: [undeveloped, developing, developed, megacity]
+          description: Уровень развития города
+        - name: latitude
+          in: query
+          schema:
+            type: number
+            format: float
+            minimum: -90
+            maximum: 90
+          description: Широта для гео-поиска
+        - name: longitude
+          in: query
+          schema:
+            type: number
+            format: float
+            minimum: -180
+            maximum: 180
+          description: Долгота для гео-поиска
+        - name: radius_km
+          in: query
+          schema:
+            type: number
+            format: float
+            minimum: 0
+            maximum: 1000
+            default: 50
+          description: Радиус поиска в километрах
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Количество результатов на страницу
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          description: Смещение для пагинации
+      responses:
+        "200":
+          description: Список городов
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  cities:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/City"
+                  total:
+                    type: integer
+                    description: Общее количество городов
+                  pagination:
+                    $ref: "#/components/schemas/PaginationInfo"
+                required:
+                  - cities
+                  - total
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+    post:
+      summary: Создать новый город
+      description: Создает новый город в игровом мире (только для админов)
+      operationId: createCity
+      tags: [Cities]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCityRequest"
+      responses:
+        "201":
+          description: Город создан
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/City"
+          headers:
+            Location:
+              schema:
+                type: string
+                format: uri
+              description: URL созданного города
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /api/v1/cities/{city_id}:
+    get:
+      summary: Получить город по ID
+      operationId: getCity
+      tags: [Cities]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: city_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Детали города
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/City"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    put:
+      summary: Обновить город
+      description: Обновляет информацию о городе (только для админов)
+      operationId: updateCity
+      tags: [Cities]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: city_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCityRequest"
+      responses:
+        "200":
+          description: Город обновлен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/City"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    delete:
+      summary: Удалить город
+      description: Удаляет город из игрового мира (только для админов)
+      operationId: deleteCity
+      tags: [Cities]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: city_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Город удален
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  # Географические операции
+  /api/v1/cities/nearby:
+    get:
+      summary: Найти ближайшие города
+      description: |
+        Находит города в заданном радиусе от указанной точки.
+        Оптимизировано для поиска ближайших локаций для игроков.
+      operationId: getNearbyCities
+      tags: [Geography]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: latitude
+          in: query
+          required: true
+          schema:
+            type: number
+            format: float
+            minimum: -90
+            maximum: 90
+          description: Широта центра поиска
+        - name: longitude
+          in: query
+          required: true
+          schema:
+            type: number
+            format: float
+            minimum: -180
+            maximum: 180
+          description: Долгота центра поиска
+        - name: radius_km
+          in: query
+          schema:
+            type: number
+            format: float
+            minimum: 0
+            maximum: 500
+            default: 100
+          description: Радиус поиска в километрах
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 10
+          description: Максимальное количество результатов
+      responses:
+        "200":
+          description: Ближайшие города
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  cities:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        city:
+                          $ref: "#/components/schemas/City"
+                        distance_km:
+                          type: number
+                          format: float
+                          description: Расстояние в километрах
+                      required:
+                        - city
+                        - distance_km
+                  total:
+                    type: integer
+                required:
+                  - cities
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /api/v1/cities/regions:
+    get:
+      summary: Получить список регионов
+      description: Возвращает все доступные регионы мира
+      operationId: getRegions
+      tags: [Geography]
+      responses:
+        "200":
+          description: Список регионов
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  regions:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Region"
+                required:
+                  - regions
+
+  # Статистика и аналитика
+  /api/v1/cities/stats:
+    get:
+      summary: Статистика городов
+      description: Возвращает статистику по городам (население, развитие, распределение)
+      operationId: getCitiesStats
+      tags: [Analytics]
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Статистика городов
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CitiesStats"
+
+  # Поиск и автодополнение
+  /api/v1/cities/search:
+    get:
+      summary: Поиск городов
+      description: |
+        Полнотекстовый поиск городов по названию, стране, описанию.
+        Поддерживает fuzzy search и автодополнение.
+      operationId: searchCities
+      tags: [Search]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: query
+          in: query
+          required: true
+          schema:
+            type: string
+            minLength: 2
+            maxLength: 100
+          description: Поисковый запрос
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 20
+            default: 10
+          description: Максимальное количество результатов
+      responses:
+        "200":
+          description: Результаты поиска
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array

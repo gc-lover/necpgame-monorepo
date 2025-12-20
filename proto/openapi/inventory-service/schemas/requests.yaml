@@ -1,0 +1,104 @@
+MoveItemRequest:
+  type: object
+  properties:
+    inventory_item_id:
+      type: string
+    from_container:
+      type: string
+    to_container:
+      type: string
+    to_slot_x:
+      type: integer
+      minimum: 0
+    to_slot_y:
+      type: integer
+      minimum: 0
+    quantity:
+      type: integer
+      minimum: 1
+  required:
+    - inventory_item_id
+    - to_container
+    - to_slot_x
+    - to_slot_y
+
+EquipItemRequest:
+  type: object
+  properties:
+    inventory_item_id:
+      type: string
+    slot_type:
+      type: string
+      enum: [HEAD, NECK, SHOULDERS, CHEST, HANDS, WAIST, LEGS, FEET, MAIN_HAND, OFF_HAND, RANGED, AMMO]
+  required:
+    - inventory_item_id
+    - slot_type
+
+UnequipItemRequest:
+  type: object
+  properties:
+    slot_type:
+      type: string
+      enum: [HEAD, NECK, SHOULDERS, CHEST, HANDS, WAIST, LEGS, FEET, MAIN_HAND, OFF_HAND, RANGED, AMMO]
+    target_container:
+      type: string
+      default: "main"
+  required:
+    - slot_type
+
+UseItemRequest:
+  type: object
+  properties:
+    inventory_item_id:
+      type: string
+    target_character_id:
+      type: string
+    quantity:
+      type: integer
+      minimum: 1
+      default: 1
+  required:
+    - inventory_item_id
+
+DropItemRequest:
+  type: object
+  properties:
+    inventory_item_id:
+      type: string
+    quantity:
+      type: integer
+      minimum: 1
+    position:
+      $ref: '../schemas/common.yaml#/Vector3'
+  required:
+    - inventory_item_id
+    - quantity
+
+SearchItemsRequest:
+  type: object
+  properties:
+    query:
+      type: string
+    item_type:
+      type: string
+      enum: [WEAPON, ARMOR, CONSUMABLE, MATERIAL, QUEST_ITEM, COSMETIC]
+    rarity:
+      type: string
+      enum: [COMMON, UNCOMMON, RARE, EPIC, LEGENDARY, MYTHIC]
+    min_level:
+      type: integer
+      minimum: 0
+    max_level:
+      type: integer
+      minimum: 0
+    limit:
+      type: integer
+      minimum: 1
+      maximum: 100
+      default: 50
+    offset:
+      type: integer
+      minimum: 0
+      default: 0
+  required:
+    - query

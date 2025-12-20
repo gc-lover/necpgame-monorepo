@@ -11,20 +11,20 @@ import (
 type RuleType string
 
 const (
-	RuleTypeWordFilter       RuleType = "word_filter"
-	RuleTypeSpamPattern      RuleType = "spam_pattern"
+	RuleTypeWordFilter        RuleType = "word_filter"
+	RuleTypeSpamPattern       RuleType = "spam_pattern"
 	RuleTypeToxicityThreshold RuleType = "toxicity_threshold"
-	RuleTypeRateLimit        RuleType = "rate_limit"
+	RuleTypeRateLimit         RuleType = "rate_limit"
 )
 
 // ViolationType represents types of violations
 type ViolationType string
 
 const (
-	ViolationTypeSpam          ViolationType = "spam"
-	ViolationTypeToxicity      ViolationType = "toxicity"
-	ViolationTypeHarassment    ViolationType = "harassment"
-	ViolationTypeForbiddenWords ViolationType = "forbidden_words"
+	ViolationTypeSpam              ViolationType = "spam"
+	ViolationTypeToxicity          ViolationType = "toxicity"
+	ViolationTypeHarassment        ViolationType = "harassment"
+	ViolationTypeForbiddenWords    ViolationType = "forbidden_words"
 	ViolationTypeRateLimitExceeded ViolationType = "rate_limit_exceeded"
 )
 
@@ -42,12 +42,12 @@ const (
 type ActionType string
 
 const (
-	ActionTypeWarning       ActionType = "warning"
-	ActionTypeMute          ActionType = "mute"
-	ActionTypeBan           ActionType = "ban"
-	ActionTypeMessageDelete ActionType = "message_delete"
+	ActionTypeWarning        ActionType = "warning"
+	ActionTypeMute           ActionType = "mute"
+	ActionTypeBan            ActionType = "ban"
+	ActionTypeMessageDelete  ActionType = "message_delete"
 	ActionTypeAccountSuspend ActionType = "account_suspend"
-	ActionTypeDismiss       ActionType = "dismiss"
+	ActionTypeDismiss        ActionType = "dismiss"
 )
 
 // Severity level for violations
@@ -64,12 +64,12 @@ const (
 type ChannelType string
 
 const (
-	ChannelTypeGlobal  ChannelType = "global"
-	ChannelTypeTeam    ChannelType = "team"
-	ChannelTypeParty   ChannelType = "party"
-	ChannelTypeWhisper ChannelType = "whisper"
-	ChannelTypeTrade   ChannelType = "trade"
-	ChannelTypeGuild   ChannelType = "guild"
+	ChannelTypeGlobal   ChannelType = "global"
+	ChannelTypeTeam     ChannelType = "team"
+	ChannelTypeParty    ChannelType = "party"
+	ChannelTypeWhisper  ChannelType = "whisper"
+	ChannelTypeTrade    ChannelType = "trade"
+	ChannelTypeGuild    ChannelType = "guild"
 	ChannelTypeAlliance ChannelType = "alliance"
 )
 
@@ -77,24 +77,24 @@ const (
 // OPTIMIZATION: Field alignment - large fields first
 type ModerationRule struct {
 	// Large fields first for memory alignment
-	Metadata   map[string]interface{} `json:"metadata" db:"metadata"`         // 24 bytes (map header)
-	Pattern    string                 `json:"pattern" db:"pattern"`           // 16 bytes (string header)
-	Name       string                 `json:"name" db:"name"`                 // 16 bytes (string header)
-	ID         uuid.UUID              `json:"id" db:"id"`                     // 16 bytes (uuid.UUID)
-	CreatedBy  uuid.UUID              `json:"created_by" db:"created_by"`     // 16 bytes (uuid.UUID)
-	CreatedAt  time.Time              `json:"created_at" db:"created_at"`     // 24 bytes (time.Time)
-	UpdatedAt  time.Time              `json:"updated_at" db:"updated_at"`     // 24 bytes (time.Time)
-	RuleType   RuleType               `json:"rule_type" db:"rule_type"`       // 16 bytes (string)
-	Severity   SeverityLevel          `json:"severity" db:"severity"`         // 16 bytes (string)
-	Action     ActionType             `json:"action" db:"action"`             // 16 bytes (string)
-	IsActive   bool                   `json:"is_active" db:"is_active"`       // 1 byte (bool)
+	Metadata  map[string]interface{} `json:"metadata" db:"metadata"`     // 24 bytes (map header)
+	Pattern   string                 `json:"pattern" db:"pattern"`       // 16 bytes (string header)
+	Name      string                 `json:"name" db:"name"`             // 16 bytes (string header)
+	ID        uuid.UUID              `json:"id" db:"id"`                 // 16 bytes (uuid.UUID)
+	CreatedBy uuid.UUID              `json:"created_by" db:"created_by"` // 16 bytes (uuid.UUID)
+	CreatedAt time.Time              `json:"created_at" db:"created_at"` // 24 bytes (time.Time)
+	UpdatedAt time.Time              `json:"updated_at" db:"updated_at"` // 24 bytes (time.Time)
+	RuleType  RuleType               `json:"rule_type" db:"rule_type"`   // 16 bytes (string)
+	Severity  SeverityLevel          `json:"severity" db:"severity"`     // 16 bytes (string)
+	Action    ActionType             `json:"action" db:"action"`         // 16 bytes (string)
+	IsActive  bool                   `json:"is_active" db:"is_active"`   // 1 byte (bool)
 }
 
 // ModerationViolation represents a detected violation
 // OPTIMIZATION: Field alignment - large fields first
 type ModerationViolation struct {
 	// Large fields first for memory alignment
-	Metadata       map[string]interface{} `json:"metadata" db:"metadata"`               // 24 bytes (map header)
+	Metadata       map[string]interface{} `json:"metadata" db:"metadata"`                 // 24 bytes (map header)
 	PlayerInfo     map[string]interface{} `json:"player_info" db:"player_info"`           // 24 bytes (map header)
 	MessageContent string                 `json:"message_content" db:"message_content"`   // 16 bytes (string header)
 	ID             uuid.UUID              `json:"id" db:"id"`                             // 16 bytes (uuid.UUID)
@@ -113,30 +113,30 @@ type ModerationViolation struct {
 // OPTIMIZATION: Field alignment - large fields first
 type ModerationAction struct {
 	// Large fields first for memory alignment
-	Metadata    map[string]interface{} `json:"metadata" db:"metadata"`           // 24 bytes (map header)
-	Reason      string                 `json:"reason" db:"reason"`               // 16 bytes (string header)
-	ID          uuid.UUID              `json:"id" db:"id"`                       // 16 bytes (uuid.UUID)
-	ViolationID uuid.UUID              `json:"violation_id" db:"violation_id"`   // 16 bytes (uuid.UUID)
-	ModeratorID *uuid.UUID             `json:"moderator_id" db:"moderator_id"`   // 8 bytes (pointer)
-	AppliedAt   time.Time              `json:"applied_at" db:"applied_at"`       // 24 bytes (time.Time)
+	Metadata    map[string]interface{} `json:"metadata" db:"metadata"`               // 24 bytes (map header)
+	Reason      string                 `json:"reason" db:"reason"`                   // 16 bytes (string header)
+	ID          uuid.UUID              `json:"id" db:"id"`                           // 16 bytes (uuid.UUID)
+	ViolationID uuid.UUID              `json:"violation_id" db:"violation_id"`       // 16 bytes (uuid.UUID)
+	ModeratorID *uuid.UUID             `json:"moderator_id" db:"moderator_id"`       // 8 bytes (pointer)
+	AppliedAt   time.Time              `json:"applied_at" db:"applied_at"`           // 24 bytes (time.Time)
 	ExpiresAt   *time.Time             `json:"expires_at,omitempty" db:"expires_at"` // 8 bytes (pointer)
-	ActionType  ActionType             `json:"action_type" db:"action_type"`     // 16 bytes (string)
-	Duration    string                 `json:"duration" db:"duration"`           // 16 bytes (string header)
+	ActionType  ActionType             `json:"action_type" db:"action_type"`         // 16 bytes (string)
+	Duration    string                 `json:"duration" db:"duration"`               // 16 bytes (string header)
 }
 
 // ModerationLog represents audit log entry
 // OPTIMIZATION: Field alignment - large fields first
 type ModerationLog struct {
 	// Large fields first for memory alignment
-	Details    map[string]interface{} `json:"details" db:"details"`             // 24 bytes (map header)
-	Action     string                 `json:"action" db:"action"`               // 16 bytes (string header)
-	UserAgent  string                 `json:"user_agent" db:"user_agent"`       // 16 bytes (string header)
-	IPAddress  string                 `json:"ip_address" db:"ip_address"`       // 16 bytes (string header)
-	ID         uuid.UUID              `json:"id" db:"id"`                       // 16 bytes (uuid.UUID)
-	PlayerID   uuid.UUID              `json:"player_id" db:"player_id"`         // 16 bytes (uuid.UUID)
-	ModeratorID *uuid.UUID            `json:"moderator_id" db:"moderator_id"`   // 8 bytes (pointer)
-	CreatedAt  time.Time              `json:"created_at" db:"created_at"`       // 24 bytes (time.Time)
-	ActionType ActionType             `json:"action_type" db:"action_type"`     // 16 bytes (string)
+	Details     map[string]interface{} `json:"details" db:"details"`           // 24 bytes (map header)
+	Action      string                 `json:"action" db:"action"`             // 16 bytes (string header)
+	UserAgent   string                 `json:"user_agent" db:"user_agent"`     // 16 bytes (string header)
+	IPAddress   string                 `json:"ip_address" db:"ip_address"`     // 16 bytes (string header)
+	ID          uuid.UUID              `json:"id" db:"id"`                     // 16 bytes (uuid.UUID)
+	PlayerID    uuid.UUID              `json:"player_id" db:"player_id"`       // 16 bytes (uuid.UUID)
+	ModeratorID *uuid.UUID             `json:"moderator_id" db:"moderator_id"` // 8 bytes (pointer)
+	CreatedAt   time.Time              `json:"created_at" db:"created_at"`     // 24 bytes (time.Time)
+	ActionType  ActionType             `json:"action_type" db:"action_type"`   // 16 bytes (string)
 }
 
 // Request/Response models for API
@@ -151,14 +151,14 @@ type CheckMessageRequest struct {
 
 // CheckMessageResponse for validation result
 type CheckMessageResponse struct {
-	Allowed           bool        `json:"allowed"`
-	ViolationDetected bool        `json:"violation_detected"`
+	Allowed           bool          `json:"allowed"`
+	ViolationDetected bool          `json:"violation_detected"`
 	ViolationType     ViolationType `json:"violation_type,omitempty"`
-	SeverityScore     float64     `json:"severity_score"`
-	ActionRequired    bool        `json:"action_required"`
-	FilteredMessage   string      `json:"filtered_message,omitempty"`
-	RuleTriggered     *uuid.UUID  `json:"rule_triggered,omitempty"`
-	ProcessingTimeMs  float64     `json:"processing_time_ms"`
+	SeverityScore     float64       `json:"severity_score"`
+	ActionRequired    bool          `json:"action_required"`
+	FilteredMessage   string        `json:"filtered_message,omitempty"`
+	RuleTriggered     *uuid.UUID    `json:"rule_triggered,omitempty"`
+	ProcessingTimeMs  float64       `json:"processing_time_ms"`
 }
 
 // CreateModerationRuleRequest for creating rules
@@ -182,13 +182,13 @@ type ApplyModerationActionRequest struct {
 
 // HealthResponse for health check
 type HealthResponse struct {
-	Status              string    `json:"status"`
-	Timestamp           time.Time `json:"timestamp"`
-	Version             string    `json:"version"`
-	UptimeSeconds       int64     `json:"uptime_seconds"`
-	ActiveRules         int       `json:"active_rules"`
-	PendingViolations   int       `json:"pending_violations"`
-	TotalViolationsToday int      `json:"total_violations_today"`
+	Status               string    `json:"status"`
+	Timestamp            time.Time `json:"timestamp"`
+	Version              string    `json:"version"`
+	UptimeSeconds        int64     `json:"uptime_seconds"`
+	ActiveRules          int       `json:"active_rules"`
+	PendingViolations    int       `json:"pending_violations"`
+	TotalViolationsToday int       `json:"total_violations_today"`
 }
 
 // ModerationStatsResponse for statistics

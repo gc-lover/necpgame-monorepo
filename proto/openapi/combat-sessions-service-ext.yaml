@@ -1,0 +1,495 @@
+          format: int32
+          minimum: 0
+          description: Current number of participants
+        duration_seconds:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Session duration in seconds (for ended sessions)
+        # DateTime fields (8 bytes each)
+        created_at:
+          type: string
+          format: date-time
+          description: Session creation timestamp
+        started_at:
+          type: string
+          format: date-time
+          description: When combat actually started
+        ended_at:
+          type: string
+          format: date-time
+          description: When session ended (if applicable)
+        # Object fields (variable size)
+        settings:
+          type: object
+          description: Session-specific settings (JSON)
+        participants:
+          type: array
+          items:
+            $ref: "#/components/schemas/CombatParticipant"
+          description: Session participants
+    CombatParticipant:
+      type: object
+      description: |
+        BACKEND NOTE: Combat participant data.
+        Fields ordered for struct alignment (large → small).
+        Expected memory: ~88 bytes/instance.
+      required:
+        - id
+        - player_id
+        - character_id
+        - team
+        - status
+        - joined_at
+      properties:
+        # UUID fields first (16 bytes each)
+        id:
+          type: string
+          format: uuid
+          description: Participant record ID
+        player_id:
+          type: string
+          format: uuid
+          description: Player account ID
+        character_id:
+          type: string
+          format: uuid
+          description: Character ID
+        # String fields (16 bytes)
+        team:
+          type: string
+          enum: [red, blue, neutral]
+          description: Team assignment
+        status:
+          type: string
+          enum: [active, defeated, disconnected, spectator]
+          description: Current participant status
+        # Integer fields (8 bytes each)
+        health:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Current health points
+        max_health:
+          type: integer
+          format: int32
+          minimum: 1
+          description: Maximum health points
+        damage_dealt:
+          type: integer
+          format: int64
+          minimum: 0
+          description: Total damage dealt
+        damage_taken:
+          type: integer
+          format: int64
+          minimum: 0
+          description: Total damage taken
+        kills:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Number of kills
+        deaths:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Number of deaths
+        assists:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Number of assists
+        # DateTime fields (8 bytes each)
+        joined_at:
+          type: string
+          format: date-time
+          description: When participant joined
+        left_at:
+          type: string
+          format: date-time
+          description: When participant left (if applicable)
+    CombatActionRequest:
+      type: object
+      description: |
+        BACKEND NOTE: Combat action request.
+        Fields ordered for struct alignment (large → small).
+        Expected memory: ~72 bytes/instance.
+        Hot path - validated by anti-cheat.
+      required:
+        - action_type
+        - target_id
+      properties:
+        # String fields first (16 bytes)
+        action_type:
+          type: string
+          enum: [attack, ability, move, defend, reload, use_item]
+          description: Type of combat action
+        # UUID fields (16 bytes)
+        target_id:
+          type: string
+          format: uuid
+          description: Target participant/character ID
+        ability_id:
+          type: string
+          format: uuid
+          description: Ability ID (if action_type is ability)
+        item_id:
+          type: string
+          format: uuid
+          description: Item ID (if action_type is use_item)
+        # Position fields (12 bytes each via $ref)
+        position:
+          $ref: common.yaml#/components/schemas/Position3D
+        direction:
+          $ref: common.yaml#/components/schemas/Direction3D
+        # Integer fields (4 bytes)
+        sequence_number:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Client sequence number for ordering
+        timestamp:
+          type: integer
+          format: int64
+          description: Client timestamp in milliseconds
+    CombatActionResult:
+      type: object
+      description: |
+        BACKEND NOTE: Combat action execution result.
+        Fields ordered for struct alignment (large → small).
+        Expected memory: ~96 bytes/instance.
+      required:
+        - action_id
+        - success
+        - timestamp
+      properties:
+        # UUID fields first (16 bytes each)
+        action_id:
+          type: string
+          format: uuid
+          description: Unique action identifier
+        # Boolean field (1 byte)
+        success:
+          type: boolean
+          description: Whether action was successful
+        # Integer fields (8 bytes each)
+        damage:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Damage dealt (if applicable)
+        healing:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Healing applied (if applicable)
+        timestamp:
+          type: integer
+          format: int64
+          description: Server timestamp in milliseconds
+        # String fields (16 bytes)
+        status:
+          type: string
+          enum: [executed, blocked, missed, critical]
+          description: Action execution status
+        message:
+          type: string
+          description: Human-readable result message
+        # Array/Object fields (variable size)
+        effects:
+          type: array
+          items:
+            $ref: "#/components/schemas/CombatEffect"
+          description: Applied combat effects
+        rewards:
+          type: array
+          items:
+            $ref: "#/components/schemas/CombatReward"
+          description: Immediate rewards (if any)
+    CombatEffect:
+      type: object
+      description: Combat effect applied by action
+      required:
+        - effect_type
+        - duration_ms
+      properties:
+        effect_type:
+          type: string
+          enum: [stun, bleed, poison, buff, debuff, shield]
+        duration_ms:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Effect duration in milliseconds
+        magnitude:
+          type: number
+          format: float
+          description: Effect strength/magnitude
+        description:
+          type: string
+    CombatReward:
+      type: object
+      description: Immediate combat reward
+      required:
+        - reward_type
+        - amount
+      properties:
+        reward_type:
+          type: string
+          enum: [experience, currency, item]
+        amount:
+          type: integer
+          format: int32
+          minimum: 0
+        item_id:
+          type: string
+          format: uuid
+          description: Item ID (if reward_type is item)
+    CombatSessionState:
+      type: object
+      description: |
+        BACKEND NOTE: Realtime combat session state.
+        Fields ordered for struct alignment (large → small).
+        Expected memory: ~120 bytes/instance.
+        Hot path - cached in Redis.
+      required:
+        - session_id
+        - status
+        - participants
+        - current_turn
+        - last_action_at
+      properties:
+        # UUID fields first (16 bytes)
+        session_id:
+          type: string
+          format: uuid
+          description: Combat session ID
+        # String fields (16 bytes)
+        status:
+          type: string
+          enum: [waiting, active, paused, ended]
+          description: Current session status
+        current_turn:
+          type: string
+          format: uuid
+          description: ID of participant whose turn it is
+        # Integer fields (8 bytes)
+        turn_number:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Current turn number
+        last_action_at:
+          type: integer
+          format: int64
+          description: Timestamp of last action in milliseconds
+        # Array fields (participants)
+        participants:
+          type: array
+          items:
+            $ref: "#/components/schemas/CombatParticipant"
+          description: All session participants
+        active_effects:
+          type: array
+          items:
+            $ref: "#/components/schemas/CombatEffect"
+          description: Currently active effects
+    CombatLogsResponse:
+      type: object
+      description: Paginated combat logs response
+      required:
+        - logs
+        - total_count
+        - has_more
+      properties:
+        logs:
+          type: array
+          items:
+            $ref: "#/components/schemas/CombatLog"
+          description: Combat log entries
+        total_count:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Total number of log entries
+        has_more:
+          type: boolean
+          description: Whether there are more entries available
+        next_offset:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Offset for next page
+    CombatLog:
+      type: object
+      description: |
+        BACKEND NOTE: Combat log entry for analytics.
+        Fields ordered for struct alignment (large → small).
+        Expected memory: ~104 bytes/instance.
+      required:
+        - id
+        - session_id
+        - event_type
+        - actor_id
+        - timestamp
+        - sequence_number
+      properties:
+        # UUID fields first (16 bytes each)
+        id:
+          type: string
+          format: uuid
+          description: Log entry ID
+        session_id:
+          type: string
+          format: uuid
+          description: Combat session ID
+        actor_id:
+          type: string
+          format: uuid
+          description: Actor participant ID
+        target_id:
+          type: string
+          format: uuid
+          description: Target participant ID (if applicable)
+        # String fields (16 bytes)
+        event_type:
+          type: string
+          enum:
+            [
+              action_executed,
+              participant_joined,
+              participant_left,
+              session_started,
+              session_ended,
+              effect_applied,
+              effect_expired,
+            ]
+          description: Type of logged event
+        # Integer fields (8 bytes each)
+        timestamp:
+          type: integer
+          format: int64
+          description: Event timestamp in milliseconds
+        sequence_number:
+          type: integer
+          format: int64
+          description: Sequential event number in session
+        damage:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Damage dealt (if applicable)
+        # Object fields (variable size)
+        action_data:
+          type: object
+          description: Action-specific data (JSON)
+        result_data:
+          type: object
+          description: Result-specific data (JSON)
+    CombatSessionStats:
+      type: object
+      description: |
+        BACKEND NOTE: Aggregated combat session statistics.
+        Fields ordered for struct alignment (large → small).
+        Expected memory: ~144 bytes/instance.
+      required:
+        - session_id
+        - duration_seconds
+        - total_participants
+        - total_actions
+      properties:
+        # UUID field first (16 bytes)
+        session_id:
+          type: string
+          format: uuid
+          description: Combat session ID
+        # Integer fields (8 bytes each)
+        duration_seconds:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Session duration in seconds
+        total_participants:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Total number of participants
+        total_actions:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Total number of actions executed
+        total_damage_dealt:
+          type: integer
+          format: int64
+          minimum: 0
+          description: Total damage dealt in session
+        total_healing:
+          type: integer
+          format: int64
+          minimum: 0
+          description: Total healing applied in session
+        # String fields (16 bytes)
+        winner_team:
+          type: string
+          enum: [red, blue, neutral, draw]
+          description: Winning team (if applicable)
+        # Object fields
+        participant_stats:
+          type: array
+          items:
+            $ref: "#/components/schemas/ParticipantStats"
+          description: Per-participant statistics
+        action_breakdown:
+          type: object
+          additionalProperties:
+            type: integer
+            format: int32
+          description: Count of each action type
+    ParticipantStats:
+      type: object
+      description: Individual participant statistics
+      required:
+        - participant_id
+        - damage_dealt
+        - damage_taken
+        - kills
+        - deaths
+      properties:
+        participant_id:
+          type: string
+          format: uuid
+        damage_dealt:
+          type: integer
+          format: int64
+          minimum: 0
+        damage_taken:
+          type: integer
+          format: int64
+          minimum: 0
+        kills:
+          type: integer
+          format: int32
+          minimum: 0
+        deaths:
+          type: integer
+          format: int32
+          minimum: 0
+        assists:
+          type: integer
+          format: int32
+          minimum: 0
+        accuracy:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Action success rate (0.0 to 1.0)
+
+  securitySchemes:
+    $ref: common.yaml#/components/securitySchemes
+  responses:
+    $ref: common.yaml#/components/responses
+security:
+  - BearerAuth: []

@@ -1,0 +1,115 @@
+Message:
+  type: object
+  properties:
+    message_id:
+      type: string
+    message_type:
+      type: string
+      enum: [CHAT, SYSTEM, COMBAT, QUEST, SOCIAL, ADMIN]
+    sender_id:
+      type: string
+    sender_name:
+      type: string
+    recipient_id:
+      type: string
+    recipient_type:
+      type: string
+      enum: [USER, CHANNEL, GROUP, ALL]
+    channel:
+      type: string
+    content:
+      type: string
+    content_type:
+      type: string
+      enum: [TEXT, JSON, BINARY]
+      default: TEXT
+    priority:
+      type: string
+      enum: [LOW, NORMAL, HIGH, URGENT]
+      default: NORMAL
+    metadata:
+      type: object
+      additionalProperties: true
+    timestamp:
+      type: integer
+      format: int64
+    ttl:
+      type: integer
+      description: Time to live in seconds
+  required:
+    - message_id
+    - message_type
+    - sender_id
+    - content
+    - timestamp
+
+Channel:
+  type: object
+  properties:
+    channel_id:
+      type: string
+    channel_type:
+      type: string
+      enum: [PUBLIC, PRIVATE, GROUP, SYSTEM]
+    name:
+      type: string
+    description:
+      type: string
+    owner_id:
+      type: string
+    member_count:
+      type: integer
+      minimum: 0
+    max_members:
+      type: integer
+      minimum: 1
+    is_temporary:
+      type: boolean
+      default: false
+    created_at:
+      type: integer
+      format: int64
+    settings:
+      type: object
+      additionalProperties: true
+  required:
+    - channel_id
+    - channel_type
+    - name
+    - owner_id
+
+MessageFilter:
+  type: object
+  properties:
+    message_types:
+      type: array
+      items:
+        type: string
+        enum: [CHAT, SYSTEM, COMBAT, QUEST, SOCIAL, ADMIN]
+    sender_ids:
+      type: array
+      items:
+        type: string
+    channels:
+      type: array
+      items:
+        type: string
+    priorities:
+      type: array
+      items:
+        type: string
+        enum: [LOW, NORMAL, HIGH, URGENT]
+    time_range:
+      type: object
+      properties:
+        from:
+          type: integer
+          format: int64
+        to:
+          type: integer
+          format: int64
+    keywords:
+      type: array
+      items:
+        type: string
+  required: []

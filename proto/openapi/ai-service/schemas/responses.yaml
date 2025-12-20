@@ -1,0 +1,139 @@
+GetBehaviorResponse:
+  type: object
+  properties:
+    npc_id:
+      type: string
+    current_behavior:
+      type: string
+    behavior_state:
+      $ref: './ai.yaml#/AIState'
+    active_actions:
+      type: array
+      items:
+        $ref: './behavior.yaml#/BehaviorAction'
+    next_decision_time:
+      type: string
+      format: date-time
+  required:
+    - npc_id
+
+ExecuteBehaviorResponse:
+  type: object
+  properties:
+    npc_id:
+      type: string
+    behavior_executed:
+      type: string
+    success:
+      type: boolean
+    actions_taken:
+      type: array
+      items:
+        $ref: './behavior.yaml#/BehaviorAction'
+    execution_time_ms:
+      type: integer
+      minimum: 0
+    new_state:
+      $ref: './ai.yaml#/AIState'
+    message:
+      type: string
+  required:
+    - npc_id
+    - success
+
+CalculatePathResponse:
+  type: object
+  properties:
+    npc_id:
+      type: string
+    path:
+      $ref: './pathfinding.yaml#/Path'
+    success:
+      type: boolean
+    error_message:
+      type: string
+    alternative_paths:
+      type: array
+      items:
+        $ref: './pathfinding.yaml#/Path'
+  required:
+    - npc_id
+    - success
+
+MakeDecisionResponse:
+  type: object
+  properties:
+    npc_id:
+      type: string
+    chosen_action:
+      $ref: './decision.yaml#/DecisionAction'
+    decision_reasoning:
+      type: string
+    confidence_score:
+      type: number
+      format: float
+      minimum: 0.0
+      maximum: 1.0
+    alternative_actions:
+      type: array
+      items:
+        $ref: './decision.yaml#/DecisionAction'
+    decision_time_ms:
+      type: integer
+      minimum: 0
+  required:
+    - npc_id
+
+ListBehaviorTreesResponse:
+  type: object
+  properties:
+    trees:
+      type: array
+      items:
+        $ref: './behavior.yaml#/BehaviorTree'
+    total_count:
+      type: integer
+      minimum: 0
+    limit:
+      type: integer
+    offset:
+      type: integer
+  required:
+    - trees
+    - total_count
+
+GetBehaviorTreeResponse:
+  type: object
+  properties:
+    tree:
+      $ref: './behavior.yaml#/BehaviorTree'
+  required:
+    - tree
+
+ExecuteBehaviorTreeResponse:
+  type: object
+  properties:
+    npc_id:
+      type: string
+    tree_id:
+      type: string
+    execution_result:
+      type: string
+      enum: [SUCCESS, FAILURE, RUNNING, ERROR]
+    final_node:
+      type: string
+    execution_path:
+      type: array
+      items:
+        type: string
+    execution_time_ms:
+      type: integer
+      minimum: 0
+    new_ai_state:
+      $ref: './ai.yaml#/AIState'
+    message:
+      type: string
+  required:
+    - npc_id
+    - tree_id
+    - execution_result

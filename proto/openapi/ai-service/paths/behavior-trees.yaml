@@ -1,0 +1,89 @@
+list:
+  get:
+    tags:
+      - Behavior Trees
+    summary: List available behavior trees
+    operationId: listBehaviorTrees
+    parameters:
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+        description: Maximum number of trees to return
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+        description: Number of trees to skip
+    responses:
+      '200':
+        description: Behavior trees listed successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/responses.yaml#/ListBehaviorTreesResponse'
+      '500':
+        $ref: '../main.yaml#/components/responses/InternalError'
+
+get:
+  get:
+    tags:
+      - Behavior Trees
+    summary: Get behavior tree by ID
+    operationId: getBehaviorTree
+    parameters:
+      - name: treeId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Behavior tree identifier
+    responses:
+      '200':
+        description: Behavior tree retrieved successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/responses.yaml#/GetBehaviorTreeResponse'
+      '404':
+        $ref: '../main.yaml#/components/responses/NotFound'
+      '500':
+        $ref: '../main.yaml#/components/responses/InternalError'
+
+execute:
+  post:
+    tags:
+      - Behavior Trees
+    summary: Execute behavior tree for NPC
+    operationId: executeBehaviorTree
+    parameters:
+      - name: treeId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Behavior tree identifier
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/requests.yaml#/ExecuteBehaviorTreeRequest'
+    responses:
+      '200':
+        description: Behavior tree executed successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/responses.yaml#/ExecuteBehaviorTreeResponse'
+      '400':
+        $ref: '../main.yaml#/components/responses/BadRequest'
+      '404':
+        $ref: '../main.yaml#/components/responses/NotFound'
+      '500':
+        $ref: '../main.yaml#/components/responses/InternalError'

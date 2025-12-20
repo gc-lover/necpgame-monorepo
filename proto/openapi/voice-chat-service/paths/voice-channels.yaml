@@ -1,0 +1,287 @@
+/voice/channels:
+  get:
+    tags:
+      - Voice Channels
+    summary: Get available voice channels
+    operationId: getChannels
+    security:
+      - BearerAuth: []
+    parameters:
+      - name: type
+        in: query
+        schema:
+          type: string
+          enum: [global, guild, group, proximity, private]
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+    responses:
+      '200':
+        description: Channels retrieved successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/responses.yaml#/GetChannelsResponse'
+      '401':
+        description: Unauthorized
+        content:
+          application/json:
+            schema:
+              $ref: '../components/schemas/Error'
+      '500':
+        $ref: '../components/responses/InternalError'
+
+  post:
+    tags:
+      - Voice Channels
+    summary: Create new voice channel
+    operationId: createChannel
+    security:
+      - BearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/requests.yaml#/CreateChannelRequest'
+    responses:
+      '201':
+        description: Channel created successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/responses.yaml#/CreateChannelResponse'
+      '400':
+        $ref: '../components/responses/BadRequest'
+      '401':
+        description: Unauthorized
+        content:
+          application/json:
+            schema:
+              $ref: '../components/schemas/Error'
+      '403':
+        description: Insufficient permissions
+        content:
+          application/json:
+            schema:
+              $ref: '../components/schemas/Error'
+      '500':
+        $ref: '../components/responses/InternalError'
+
+/voice/channels/{channelId}:
+  get:
+    tags:
+      - Voice Channels
+    summary: Get channel details and participants
+    operationId: getChannel
+    security:
+      - BearerAuth: []
+    parameters:
+      - name: channelId
+        in: path
+        required: true
+        schema:
+          type: string
+    responses:
+      '200':
+        description: Channel details retrieved successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/responses.yaml#/GetChannelResponse'
+      '401':
+        description: Unauthorized
+        content:
+          application/json:
+            schema:
+              $ref: '../components/schemas/Error'
+      '404':
+        description: Channel not found
+        content:
+          application/json:
+            schema:
+              $ref: '../components/schemas/Error'
+      '500':
+        $ref: '../components/responses/InternalError'
+
+  put:
+    tags:
+      - Voice Channels
+    summary: Update channel settings
+    operationId: updateChannel
+    security:
+      - BearerAuth: []
+    parameters:
+      - name: channelId
+        in: path
+        required: true
+        schema:
+          type: string
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/requests.yaml#/UpdateChannelRequest'
+    responses:
+      '200':
+        description: Channel updated successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/responses.yaml#/UpdateChannelResponse'
+      '400':
+        $ref: '../components/responses/BadRequest'
+      '401':
+        description: Unauthorized
+        content:
+          application/json:
+            schema:
+              $ref: '../components/schemas/Error'
+      '403':
+        description: Insufficient permissions
+        content:
+          application/json:
+            schema:
+              $ref: '../components/schemas/Error'
+      '404':
+        description: Channel not found
+        content:
+          application/json:
+            schema:
+              $ref: '../components/schemas/Error'
+      '500':
+        $ref: '../components/responses/InternalError'
+
+  delete:
+    tags:
+      - Voice Channels
+    summary: Delete voice channel
+    operationId: deleteChannel
+    security:
+      - BearerAuth: []
+    parameters:
+      - name: channelId
+        in: path
+        required: true
+        schema:
+          type: string
+    responses:
+      '204':
+        description: Channel deleted successfully
+      '401':
+        description: Unauthorized
+        content:
+          application/json:
+            schema:
+              $ref: '../components/schemas/Error'
+      '403':
+        description: Insufficient permissions
+        content:
+          application/json:
+            schema:
+              $ref: '../components/schemas/Error'
+      '404':
+        description: Channel not found
+        content:
+          application/json:
+            schema:
+              $ref: '../components/schemas/Error'
+      '500':
+        $ref: '../components/responses/InternalError'
+
+/voice/channels/{channelId}/join:
+  post:
+    tags:
+      - Voice Channels
+    summary: Join voice channel
+    operationId: joinChannel
+    security:
+      - BearerAuth: []
+    parameters:
+      - name: channelId
+        in: path
+        required: true
+        schema:
+          type: string
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/requests.yaml#/JoinChannelRequest'
+    responses:
+      '200':
+        description: Successfully joined channel
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/responses.yaml#/JoinChannelResponse'
+      '400':
+        $ref: '../components/responses/BadRequest'
+      '401':
+        description: Unauthorized
+        content:
+          application/json:
+            schema:
+              $ref: '../components/schemas/Error'
+      '403':
+        description: Access denied
+        content:
+          application/json:
+            schema:
+              $ref: '../components/schemas/Error'
+      '404':
+        description: Channel not found
+        content:
+          application/json:
+            schema:
+              $ref: '../components/schemas/Error'
+      '429':
+        description: Channel full
+        content:
+          application/json:
+            schema:
+              $ref: '../components/schemas/Error'
+      '500':
+        $ref: '../components/responses/InternalError'
+
+/voice/channels/{channelId}/leave:
+  post:
+    tags:
+      - Voice Channels
+    summary: Leave voice channel
+    operationId: leaveChannel
+    security:
+      - BearerAuth: []
+    parameters:
+      - name: channelId
+        in: path
+        required: true
+        schema:
+          type: string
+    responses:
+      '200':
+        description: Successfully left channel
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/responses.yaml#/LeaveChannelResponse'
+      '401':
+        description: Unauthorized
+        content:
+          application/json:
+            schema:
+              $ref: '../components/schemas/Error'
+      '404':
+        description: Channel not found or not a member
+        content:
+          application/json:
+            schema:
+              $ref: '../components/schemas/Error'
+      '500':
+        $ref: '../components/responses/InternalError'

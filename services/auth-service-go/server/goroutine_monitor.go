@@ -1,89 +1,105 @@
-// Issue: #136 - Runtime Goroutine Leak Monitoring for Auth Service
 package server
 
 import (
-	"context"
 	"runtime"
+	"sync/atomic"
 	"time"
 
-	"github.com/prometheus/client_golang/prometheus"
-	"go.uber.org/zap"
+	"github.com/sirupsen/logrus"
 )
 
-var (
-	// goroutineCount is a Prometheus gauge for current goroutine count
-	// Note: Using custom name to avoid conflict with standard go_goroutines metric
-	goroutineCount = prometheus.NewGauge(prometheus.GaugeOpts{
-		Name: "necpgame_auth_goroutines",
-		Help: "Current number of goroutines in auth service (custom metric)",
-	})
-)
-
-func init() {
-	prometheus.MustRegister(goroutineCount)
-}
-
-// GoroutineMonitor monitors goroutine count and detects leaks
-// Issue: #136 - Uses context cancellation for proper cleanup
+// OPTIMIZATION: Issue #1585 - Runtime Goroutine Monitoring for auth stability
 type GoroutineMonitor struct {
-	maxGoroutines int
-	logger        *zap.Logger
-	stopChan      chan struct{}
+	maxGoroutines int64
+	logger        *logrus.Logger
+	running       int64
+	stopCh        chan struct{}
 }
 
-// NewGoroutineMonitor creates a new goroutine monitor
-func NewGoroutineMonitor(maxGoroutines int, logger *zap.Logger) *GoroutineMonitor {
+// OPTIMIZATION: Issue #1998 - Memory-aligned struct
+type GoroutineStats struct {
+	CurrentCount int64     `json:"current_count"` // 8 bytes
+	MaxAllowed   int64     `json:"max_allowed"`   // 8 bytes
+	Timestamp    time.Time `json:"timestamp"`     // 24 bytes
+	IsOverLimit  bool      `json:"is_over_limit"` // 1 byte
+}
+
+func NewGoroutineMonitor(maxGoroutines int64, logger *logrus.Logger) *GoroutineMonitor {
 	return &GoroutineMonitor{
 		maxGoroutines: maxGoroutines,
 		logger:        logger,
-		stopChan:      make(chan struct{}),
+		stopCh:        make(chan struct{}),
 	}
 }
 
-// Start begins monitoring goroutines
-func (gm *GoroutineMonitor) Start(ctx context.Context) {
+func (gm *GoroutineMonitor) Start() {
+	atomic.StoreInt64(&gm.running, 1)
+
 	go func() {
-		ticker := time.NewTicker(30 * time.Second) // Check every 30 seconds for MMOFPS performance
+		ticker := time.NewTicker(30 * time.Second) // OPTIMIZATION: Check every 30s for auth operations
 		defer ticker.Stop()
 
 		for {
 			select {
-			case <-ctx.Done():
-				gm.logger.Info("Goroutine monitor stopped", zap.Error(ctx.Err()))
-				return
-			case <-gm.stopChan:
-				gm.logger.Info("Goroutine monitor stopped")
+			case <-gm.stopCh:
+				atomic.StoreInt64(&gm.running, 0)
 				return
 			case <-ticker.C:
 				gm.checkGoroutines()
 			}
 		}
 	}()
+
+	gm.logger.WithField("max_goroutines", gm.maxGoroutines).Info("goroutine monitor started")
 }
 
-// Stop stops the goroutine monitor
 func (gm *GoroutineMonitor) Stop() {
-	close(gm.stopChan)
+	if atomic.LoadInt64(&gm.running) == 1 {
+		close(gm.stopCh)
+		// Wait for monitor to stop
+		for atomic.LoadInt64(&gm.running) == 1 {
+			time.Sleep(100 * time.Millisecond)
+		}
+		gm.logger.Info("goroutine monitor stopped")
+	}
 }
 
-// checkGoroutines checks current goroutine count and logs warnings if too high
 func (gm *GoroutineMonitor) checkGoroutines() {
-	count := runtime.NumGoroutine()
-	goroutineCount.Set(float64(count))
+	current := int64(runtime.NumGoroutine())
+	maxAllowed := atomic.LoadInt64(&gm.maxGoroutines)
 
-	if count > gm.maxGoroutines {
-		gm.logger.Warn("High goroutine count detected",
-			zap.Int("current", count),
-			zap.Int("max_allowed", gm.maxGoroutines),
-			zap.String("service", "auth-service"),
-		)
+	stats := &GoroutineStats{
+		CurrentCount: current,
+		MaxAllowed:   maxAllowed,
+		Timestamp:    time.Now(),
+		IsOverLimit:  current > maxAllowed,
 	}
 
-	// Log goroutine count for monitoring (every 5 minutes)
-	if count > 100 { // Only log if significant number
-		gm.logger.Debug("Goroutine count",
-			zap.Int("count", count),
-			zap.String("service", "auth-service"),
-		)
+	if stats.IsOverLimit {
+		// OPTIMIZATION: Issue #1998 - Alert on excessive goroutines for auth
+		gm.logger.WithFields(logrus.Fields{
+			"current_goroutines": stats.CurrentCount,
+			"max_allowed":        stats.MaxAllowed,
+			"over_limit_by":      stats.CurrentCount - stats.MaxAllowed,
+		}).Warn("Auth goroutine count exceeded maximum allowed - possible auth processing overload")
+
+		// Force garbage collection as emergency measure for auth
+		runtime.GC()
+		runtime.ForceGC()
+	} else {
+		// Log normal stats at debug level
+		gm.logger.WithFields(logrus.Fields{
+			"current_goroutines": stats.CurrentCount,
+			"max_allowed":        stats.MaxAllowed,
+		}).Debug("Auth goroutine count within limits")
+	}
+}
+
+func (gm *GoroutineMonitor) GetStats() *GoroutineStats {
+	return &GoroutineStats{
+		CurrentCount: int64(runtime.NumGoroutine()),
+		MaxAllowed:   atomic.LoadInt64(&gm.maxGoroutines),
+		Timestamp:    time.Now(),
+		IsOverLimit:  int64(runtime.NumGoroutine()) > atomic.LoadInt64(&gm.maxGoroutines),
 	}
 }

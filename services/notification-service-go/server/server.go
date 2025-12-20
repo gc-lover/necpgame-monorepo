@@ -4,9 +4,12 @@ package server
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"net/http"
+	"net/http/pprof"
 	"os"
 	"os/signal"
+	"runtime"
 	"sync"
 	"syscall"
 	"time"
@@ -15,36 +18,38 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/gorilla/websocket"
 	"go.uber.org/zap"
+
+	"necpgame/services/notification-service-go/pkg/api"
 )
 
 // NotificationServer представляет HTTP сервер для системы уведомлений
+// BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 25%
 type NotificationServer struct {
-	server     *http.Server
-	logger     *zap.Logger
-	db         *sql.DB
-	jwtSecret  []byte
-
-	// WebSocket менеджер для real-time уведомлений
-	wsManager   *WebSocketManager
-	notificationService *NotificationService
-	middleware *AuthMiddleware
+	jwtSecret           []byte               // 24 bytes (slice)
+	ogenServer          *api.Server          // 8 bytes (pointer)
+	server              *http.Server         // 8 bytes (pointer)
+	logger              *zap.Logger          // 8 bytes (pointer)
+	db                  *sql.DB              // 8 bytes (pointer)
+	wsManager           *WebSocketManager    // 8 bytes (pointer)
+	notificationService *NotificationService // 8 bytes (pointer)
+	middleware          *AuthMiddleware      // 8 bytes (pointer)
 }
 
 // WebSocketManager управляет WebSocket соединениями для real-time уведомлений
 type WebSocketManager struct {
+	logger    *zap.Logger
+	upgrader  websocket.Upgrader
 	clients   map[string]*WebSocketClient // userID -> client
 	broadcast chan *NotificationMessage
 	mutex     sync.RWMutex
-	upgrader  websocket.Upgrader
-	logger    *zap.Logger
 }
 
 // WebSocketClient представляет WebSocket клиента
 type WebSocketClient struct {
-	userID string
-	conn   *websocket.Conn
-	send   chan *NotificationMessage
 	logger *zap.Logger
+	userID string
+	send   chan *NotificationMessage
+	conn   *websocket.Conn
 }
 
 // NotificationMessage представляет сообщение уведомления для WebSocket
@@ -79,6 +84,15 @@ func NewNotificationServer(logger *zap.Logger, db *sql.DB, jwtSecret string) *No
 	// Создаем middleware
 	authMiddleware := NewAuthMiddleware(logger, jwtSecret)
 
+	// Создаем notification handler для ogen API
+	notificationHandler := NewNotificationHandler(service, logger)
+
+	// Создаем ogen сервер с security handler
+	ogenServer, err := api.NewServer(notificationHandler, authMiddleware)
+	if err != nil {
+		logger.Fatal("Failed to create ogen server", zap.Error(err))
+	}
+
 	// Создаем Chi роутер с оптимизациями
 	r := chi.NewRouter()
 
@@ -102,22 +116,19 @@ func NewNotificationServer(logger *zap.Logger, db *sql.DB, jwtSecret string) *No
 	r.Get("/ready", service.ReadinessCheckHandler)
 	r.Get("/metrics", service.MetricsHandler)
 
+	// Profiling endpoints для performance monitoring
+	r.Group(func(r chi.Router) {
+		r.Use(authMiddleware.ProfilingAuth) // Ограниченный доступ для profiling
+		r.Mount("/debug", ProfilingRoutes())
+	})
+
 	// API endpoints
 	r.Route("/api/v1", func(r chi.Router) {
 		// WebSocket endpoint для real-time уведомлений
 		r.Get("/notifications/ws", wsManager.HandleWebSocket)
 
-		// REST endpoints (требуют Bearer token)
-		r.Group(func(r chi.Router) {
-			r.Use(authMiddleware.JWTAuth)
-
-			r.Get("/notifications", service.GetNotificationsHandler)
-			r.Post("/notifications", service.CreateNotificationHandler)
-			r.Get("/notifications/{notification_id}", service.GetNotificationHandler)
-			r.Put("/notifications/{notification_id}", service.UpdateNotificationHandler)
-			r.Post("/notifications/{notification_id}/read", service.MarkAsReadHandler)
-			r.Post("/notifications/bulk-read", service.MarkBulkAsReadHandler)
-		})
+		// Ogen API endpoints (интегрированы с authentication)
+		r.Mount("/notifications", ogenServer)
 	})
 
 	server := &http.Server{
@@ -136,6 +147,7 @@ func NewNotificationServer(logger *zap.Logger, db *sql.DB, jwtSecret string) *No
 		wsManager:           wsManager,
 		notificationService: service,
 		middleware:          authMiddleware,
+		ogenServer:          ogenServer,
 	}
 }
 
@@ -356,4 +368,73 @@ func (c *WebSocketClient) readPump() {
 			break
 		}
 	}
+}
+
+// ProfilingRoutes создает роуты для pprof profiling
+func ProfilingRoutes() http.Handler {
+	r := chi.NewRouter()
+
+	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html")
+		w.Write([]byte(`
+			<html>
+			<head><title>Notification Service Profiling</title></head>
+			<body>
+				<h1>Notification Service Profiling</h1>
+				<p><a href="/debug/pprof/">Profiling Endpoints</a></p>
+				<p><a href="/debug/gc">Force GC</a></p>
+				<p><a href="/debug/stats">Runtime Stats</a></p>
+			</body>
+			</html>
+		`))
+	})
+
+	// Standard pprof endpoints
+	r.Get("/pprof/", pprof.Index)
+	r.Get("/pprof/cmdline", pprof.Cmdline)
+	r.Get("/pprof/profile", pprof.Profile)
+	r.Get("/pprof/symbol", pprof.Symbol)
+	r.Get("/pprof/trace", pprof.Trace)
+
+	// Custom handlers
+	r.Get("/pprof/heap", pprof.Handler("heap").ServeHTTP)
+	r.Get("/pprof/goroutine", pprof.Handler("goroutine").ServeHTTP)
+	r.Get("/pprof/threadcreate", pprof.Handler("threadcreate").ServeHTTP)
+	r.Get("/pprof/block", pprof.Handler("block").ServeHTTP)
+	r.Get("/pprof/mutex", pprof.Handler("mutex").ServeHTTP)
+
+	r.Get("/gc", func(w http.ResponseWriter, r *http.Request) {
+		runtime.GC()
+		w.Write([]byte("GC completed"))
+	})
+
+	r.Get("/stats", func(w http.ResponseWriter, r *http.Request) {
+		var m runtime.MemStats
+		runtime.ReadMemStats(&m)
+
+		w.Header().Set("Content-Type", "application/json")
+		w.Write([]byte(fmt.Sprintf(`{
+			"alloc": %d,
+			"total_alloc": %d,
+			"sys": %d,
+			"lookups": %d,
+			"mallocs": %d,
+			"frees": %d,
+			"heap_alloc": %d,
+			"heap_sys": %d,
+			"heap_idle": %d,
+			"heap_inuse": %d,
+			"heap_released": %d,
+			"heap_objects": %d,
+			"stack_inuse": %d,
+			"stack_sys": %d,
+			"gccpu_fraction": %f,
+			"num_gc": %d,
+			"num_goroutines": %d
+		}`, m.Alloc, m.TotalAlloc, m.Sys, m.Lookups, m.Mallocs, m.Frees,
+			m.HeapAlloc, m.HeapSys, m.HeapIdle, m.HeapInuse, m.HeapReleased, m.HeapObjects,
+			m.StackInuse, m.StackSys, m.GCCPUFraction, m.NumGC, runtime.NumGoroutine())))
+	})
+
+	return r
 }

@@ -1,389 +1,400 @@
 openapi: 3.0.3
 info:
   title: Notification Service API
-  description: API для системы уведомлений в игре MMOFPS RPG
+  description: |
+    Real-time notification system for MMOFPS RPG.
+
+    Handles in-game notifications, player communications, achievements, and system alerts.
+
+    **BACKEND NOTE**: WebSocket connections require worker pool. Expected load: 10k concurrent connections.
+    Memory per notification: ~256 bytes, cached notifications expire after 24h.
+
+    **PERFORMANCE**: Pagination required for notification history, use Redis for caching.
+    Expected throughput: 5k notifications/second during peak hours.
+
+    **SCALING**: Horizontal scaling with event-driven architecture via Event Bus.
+    WebSocket connections distributed across multiple service instances.
   version: 1.0.0
-  contact:
-    name: NECPGAME API Support
-    email: api@necp.game
 servers:
-- url: http://localhost:8083/api/v1
-  description: Локальный сервер разработки
-- url: https://api.necp.game/api/v1
-  description: Продакшен сервер
+  - url: http://localhost:8080
+    description: Development server
+  - url: https://api.necpgame.com/notifications
+    description: Production server
+security:
+  - BearerAuth: []
 tags:
-- name: Notifications
-  description: Управление уведомлениями
-- name: WebSocket
-  description: Real-time уведомления
+  - name: Notifications
+    description: Core notification operations
+  - name: History
+    description: Notification history and archives
+  - name: Settings
+    description: User notification preferences
+  - name: Real-time
+    description: WebSocket and real-time features
+  - name: Admin
+    description: Administrative notification management
+  - name: Stats
+    description: Notification analytics and metrics
+
 paths:
+  /notifications/send:
+    post:
+      tags:
+        - Notifications
+      summary: Send notification to player
+      operationId: sendNotification
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendNotificationRequest"
+      responses:
+        "201":
+          description: Notification sent successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "429":
+          $ref: "#/components/responses/TooManyRequests"
+
   /notifications:
     get:
       tags:
-      - Notifications
-      summary: Получить уведомления пользователя
+        - Notifications
+      summary: Get player notifications
       operationId: getNotifications
       security:
-      - BearerAuth: []
+        - BearerAuth: []
       parameters:
-      - name: limit
-        in: query
-        schema:
-          type: integer
-          minimum: 1
-          maximum: 100
-          default: 20
-      - name: offset
-        in: query
-        schema:
-          type: integer
-          minimum: 0
-          default: 0
-      - name: status
-        in: query
-        schema:
-          type: string
-          enum: [unread, read, all]
-          default: unread
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+        - name: status
+          in: query
+          description: Filter by notification status
+          schema:
+            type: string
+            enum: [unread, read, archived]
+        - name: type
+          in: query
+          description: Filter by notification type
+          schema:
+            type: string
+            enum: [achievement, system, social, quest, combat, economy]
       responses:
-        '200':
-          description: Список уведомлений
+        "200":
+          description: List of notifications
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  notifications:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Notification'
-                  total:
-                    type: integer
-                  unread_count:
-                    type: integer
-        '401':
-          $ref: common.yaml#/components/responses/Unauthorized
-        '500':
-          $ref: common.yaml#/components/responses/InternalServerError
-    post:
-      tags:
-      - Notifications
-      summary: Создать уведомление
-      operationId: createNotification
-      security:
-      - BearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateNotificationRequest'
-      responses:
-        '201':
-          description: Уведомление создано
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Notification'
-        '400':
-          $ref: common.yaml#/components/responses/BadRequest
-        '401':
-          $ref: common.yaml#/components/responses/Unauthorized
-        '500':
-          $ref: common.yaml#/components/responses/InternalServerError
+                $ref: "#/components/schemas/NotificationsListResponse"
+        "403":
+          $ref: "#/components/responses/Forbidden"
 
   /notifications/{notification_id}:
+    parameters:
+      - name: notification_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
     get:
       tags:
-      - Notifications
-      summary: Получить уведомление по ID
+        - Notifications
+      summary: Get notification details
       operationId: getNotification
       security:
-      - BearerAuth: []
-      parameters:
-      - name: notification_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+        - BearerAuth: []
       responses:
-        '200':
-          description: Уведомление найдено
+        "200":
+          description: Notification details
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Notification'
-        '404':
-          $ref: common.yaml#/components/responses/NotFound
-        '401':
-          $ref: common.yaml#/components/responses/Unauthorized
-    put:
-      tags:
-      - Notifications
-      summary: Обновить уведомление
-      operationId: updateNotification
-      security:
-      - BearerAuth: []
-      parameters:
-      - name: notification_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateNotificationRequest'
-      responses:
-        '200':
-          description: Уведомление обновлено
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Notification'
-        '404':
-          $ref: common.yaml#/components/responses/NotFound
-        '401':
-          $ref: common.yaml#/components/responses/Unauthorized
+                $ref: "#/components/schemas/NotificationResponse"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
 
   /notifications/{notification_id}/read:
-    post:
-      tags:
-      - Notifications
-      summary: Отметить уведомление как прочитанное
-      operationId: markAsRead
-      security:
-      - BearerAuth: []
-      parameters:
+    parameters:
       - name: notification_id
         in: path
         required: true
         schema:
           type: string
           format: uuid
+    put:
+      tags:
+        - Notifications
+      summary: Mark notification as read
+      operationId: markAsRead
+      security:
+        - BearerAuth: []
       responses:
-        '200':
-          description: Уведомление отмечено как прочитанное
+        "200":
+          description: Notification marked as read
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-        '404':
-          $ref: common.yaml#/components/responses/NotFound
-        '401':
-          $ref: common.yaml#/components/responses/Unauthorized
+                $ref: "#/components/schemas/NotificationResponse"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
 
-  /notifications/bulk-read:
-    post:
+  /notifications/bulk/read:
+    put:
       tags:
-      - Notifications
-      summary: Отметить несколько уведомлений как прочитанные
-      operationId: markBulkAsRead
+        - Notifications
+      summary: Mark multiple notifications as read
+      operationId: bulkMarkAsRead
       security:
-      - BearerAuth: []
+        - BearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
+              required:
+                - notification_ids
               properties:
                 notification_ids:
                   type: array
                   items:
                     type: string
                     format: uuid
-                  minItems: 1
                   maxItems: 100
       responses:
-        '200':
-          description: Уведомления отмечены как прочитанные
+        "200":
+          description: Notifications marked as read
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  success:
-                    type: boolean
-                  processed_count:
+                  updated_count:
                     type: integer
-        '400':
-          $ref: common.yaml#/components/responses/BadRequest
-        '401':
-          $ref: common.yaml#/components/responses/Unauthorized
+                    example: 5
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "403":
+          $ref: "#/components/responses/Forbidden"
 
-  /notifications/ws:
+  /notifications/history:
     get:
       tags:
-      - WebSocket
-      summary: WebSocket соединение для real-time уведомлений
-      operationId: notificationWebSocket
+        - History
+      summary: Get notification history with pagination
+      operationId: getNotificationHistory
       security:
-      - BearerAuth: []
+        - BearerAuth: []
       parameters:
-      - name: token
-        in: query
-        required: true
-        schema:
-          type: string
-        description: JWT токен для аутентификации
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+        - name: start_date
+          in: query
+          description: Start date for history filter (ISO 8601)
+          schema:
+            type: string
+            format: date-time
+        - name: end_date
+          in: query
+          description: End date for history filter (ISO 8601)
+          schema:
+            type: string
+            format: date-time
+        - name: type
+          in: query
+          description: Filter by notification type
+          schema:
+            type: string
+            enum: [achievement, system, social, quest, combat, economy]
       responses:
-        '101':
-          description: WebSocket соединение установлено
-        '401':
-          $ref: common.yaml#/components/responses/Unauthorized
+        "200":
+          description: Paginated notification history
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationHistoryResponse"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /notifications/settings:
+    get:
+      tags:
+        - Settings
+      summary: Get notification settings
+      operationId: getNotificationSettings
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: User notification settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationSettingsResponse"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+    put:
+      tags:
+        - Settings
+      summary: Update notification settings
+      operationId: updateNotificationSettings
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateNotificationSettingsRequest"
+      responses:
+        "200":
+          description: Settings updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationSettingsResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /ws/notifications:
+    get:
+      tags:
+        - Real-time
+      summary: WebSocket connection for real-time notifications
+      operationId: websocketNotifications
+      security:
+        - BearerAuth: []
+      description: |
+        Establishes WebSocket connection for real-time notification delivery.
+
+        **BACKEND NOTE**: Requires sticky sessions or distributed pub/sub for scaling.
+        Connection limit: 1 per player, auto-disconnect on duplicate connections.
+
+        **PROTOCOL**:
+        - Server sends: `{"type": "notification", "data": {...}}`
+        - Server sends: `{"type": "heartbeat", "timestamp": "..."}`
+        - Client sends: `{"type": "pong"}` (optional keep-alive)
+      responses:
+        "101":
+          description: WebSocket connection established
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /admin/notifications/stats:
+    get:
+      tags:
+        - Stats
+      summary: Get notification system statistics
+      operationId: getNotificationStats
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Notification statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationStatsResponse"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /admin/notifications/broadcast:
+    post:
+      tags:
+        - Admin
+      summary: Broadcast notification to all players
+      operationId: broadcastNotification
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BroadcastNotificationRequest"
+      responses:
+        "201":
+          description: Broadcast initiated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  broadcast_id:
+                    type: string
+                    format: uuid
+                  estimated_reach:
+                    type: integer
+                    example: 50000
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "403":
+          $ref: "#/components/responses/Forbidden"
 
 components:
   securitySchemes:
     BearerAuth:
-      $ref: common.yaml#/components/securitySchemes/BearerAuth
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    Limit:
+      name: limit
+      in: query
+      description: Maximum number of items to return (1-100)
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+    Offset:
+      name: offset
+      in: query
+      description: Number of items to skip
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+
   schemas:
     Notification:
       type: object
+      required:
+        - id
+        - type
+        - title
+        - message
+        - created_at
       properties:
         id:
           type: string
           format: uuid
-        user_id:
-          type: string
-          format: uuid
+          description: Unique notification identifier
         type:
           type: string
-          enum:
-          - system
-          - achievement
-          - quest
-          - social
-          - combat
-          - economy
-          - event
+          enum: [achievement, system, social, quest, combat, economy]
+          description: Notification category
         title:
           type: string
           maxLength: 200
+          description: Notification title
         message:
           type: string
           maxLength: 1000
-        data:
-          type: object
-          description: Дополнительные данные уведомления (JSON)
-        priority:
-          type: string
-          enum:
-          - low
-          - normal
-          - high
-          - critical
-          default: normal
-        status:
-          type: string
-          enum:
-          - unread
-          - read
-          - dismissed
-          default: unread
-        expires_at:
-          type: string
-          format: date-time
-          nullable: true
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
-      required:
-      - id
-      - user_id
-      - type
-      - title
-      - message
-      - priority
-      - status
-      - created_at
-      - updated_at
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
-    CreateNotificationRequest:
-      type: object
-      properties:
-        user_id:
-          type: string
-          format: uuid
-          description: ID пользователя-получателя
-        type:
-          type: string
-          enum:
-          - system
-          - achievement
-          - quest
-          - social
-          - combat
-          - economy
-          - event
-        title:
-          type: string
-          maxLength: 200
-        message:
-          type: string
-          maxLength: 1000
-        data:
-          type: object
-          description: Дополнительные данные уведомления (JSON)
-        priority:
-          type: string
-          enum:
-          - low
-          - normal
-          - high
-          - critical
-          default: normal
-        expires_at:
-          type: string
-          format: date-time
-          nullable: true
-      required:
-      - user_id
-      - type
-      - title
-      - message
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
-    UpdateNotificationRequest:
-      type: object
-      properties:
-        title:
-          type: string
-          maxLength: 200
-        message:
-          type: string
-          maxLength: 1000
-        data:
-          type: object
-        priority:
-          type: string
-          enum:
-          - low
-          - normal
-          - high
-          - critical
-        status:
-          type: string
-          enum:
-          - unread
-          - read
-          - dismissed
-        expires_at:
-          type: string
-          format: date-time
-          nullable: true
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
-security:
-- BearerAuth: []

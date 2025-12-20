@@ -1,0 +1,50 @@
+openapi: 3.0.3
+info:
+  title: Clan War Service API
+  description: |
+    API для управления системой клановых войн в NECPGAME.
+    Обеспечивает объявление войн, управление фазами, территориями, сражениями и наградами.
+  version: 1.0.0
+  contact:
+    name: Clan War Team
+    email: clan-war@necp.game
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production server
+  - url: https://staging-api.necp.game/v1
+    description: Staging server
+  - url: http://localhost:8087/v1
+    description: Local development
+
+security:
+  - BearerAuth: []
+  - ApiKeyAuth: []
+
+paths:
+  # Import all endpoint definitions from separate files
+  $ref: './clan-war-service/parts/war-management.yaml#/paths'
+  $ref: './clan-war-service/parts/phase-management.yaml#/paths'
+  $ref: './clan-war-service/parts/territory-management.yaml#/paths'
+  # TODO: Add remaining parts when created
+  # $ref: './clan-war-service/parts/battle-management.yaml#/paths'
+  # $ref: './clan-war-service/parts/scoring-system.yaml#/paths'
+  # $ref: './clan-war-service/parts/rewards-system.yaml#/paths'
+  # $ref: './clan-war-service/parts/alliance-management.yaml#/paths'
+  # $ref: './clan-war-service/parts/events-system.yaml#/paths'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT токен авторизации
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API ключ для сервер-сервер коммуникации
+
+  # Import all schemas from separate file
+  $ref: './clan-war-service/parts/components.yaml#/components'

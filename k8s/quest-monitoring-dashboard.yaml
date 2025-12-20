@@ -1,0 +1,123 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: quest-monitoring-dashboard
+  namespace: necpgame
+  labels:
+    grafana_dashboard: "1"
+data:
+  quest-system-dashboard.json: |
+    {
+      "dashboard": {
+        "title": "Quest System Performance",
+        "tags": ["quest", "gameplay", "performance"],
+        "timezone": "UTC",
+        "panels": [
+          {
+            "title": "Quest API Response Time",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job=\"gameplay-service-go\", path=~\"/gameplay/quests.*\"}[5m]))",
+                "legendFormat": "95th percentile"
+              },
+              {
+                "expr": "histogram_quantile(0.50, rate(http_request_duration_seconds_bucket{job=\"gameplay-service-go\", path=~\"/gameplay/quests.*\"}[5m]))",
+                "legendFormat": "50th percentile"
+              }
+            ],
+            "yAxes": [
+              {
+                "unit": "seconds",
+                "min": 0
+              }
+            ]
+          },
+          {
+            "title": "Quest Database Queries",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "rate(quest_db_queries_total[5m])",
+                "legendFormat": "Queries/sec"
+              },
+              {
+                "expr": "rate(quest_db_query_duration_seconds_sum[5m]) / rate(quest_db_query_duration_seconds_count[5m])",
+                "legendFormat": "Avg Query Time"
+              }
+            ]
+          },
+          {
+            "title": "WebSocket Connections",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "quest_websocket_active_connections",
+                "legendFormat": "Active Connections"
+              },
+              {
+                "expr": "rate(quest_websocket_messages_received_total[5m])",
+                "legendFormat": "Messages Received/sec"
+              },
+              {
+                "expr": "rate(quest_websocket_messages_sent_total[5m])",
+                "legendFormat": "Messages Sent/sec"
+              }
+            ]
+          },
+          {
+            "title": "Quest Completion Rate",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "rate(quest_completed_total[1h])",
+                "legendFormat": "Completions/hour"
+              },
+              {
+                "expr": "rate(quest_started_total[1h])",
+                "legendFormat": "Starts/hour"
+              }
+            ]
+          },
+          {
+            "title": "Memory Usage",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "process_resident_memory_bytes{job=\"gameplay-service-go\"}",
+                "legendFormat": "RSS Memory"
+              },
+              {
+                "expr": "go_memstats_heap_alloc_bytes{job=\"gameplay-service-go\"}",
+                "legendFormat": "Heap Allocated"
+              }
+            ],
+            "yAxes": [
+              {
+                "unit": "bytes",
+                "min": 0
+              }
+            ]
+          },
+          {
+            "title": "Database Connection Pool",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "pg_stat_activity_count{datname=\"necpgame\", state=\"active\"}",
+                "legendFormat": "Active Connections"
+              },
+              {
+                "expr": "pg_stat_activity_count{datname=\"necpgame\", state=\"idle\"}",
+                "legendFormat": "Idle Connections"
+              }
+            ]
+          }
+        ],
+        "time": {
+          "from": "now-1h",
+          "to": "now"
+        },
+        "refresh": "30s"
+      }
+    }

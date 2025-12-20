@@ -1,0 +1,81 @@
+/voice/moderation/report:
+  post:
+    tags:
+      - Moderation
+    summary: Report voice chat abuse
+    operationId: reportVoiceAbuse
+    security:
+      - BearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/requests.yaml#/ReportAbuseRequest'
+    responses:
+      '201':
+        description: Report submitted successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/responses.yaml#/ReportAbuseResponse'
+      '400':
+        $ref: '../components/responses/BadRequest'
+      '401':
+        description: Unauthorized
+        content:
+          application/json:
+            schema:
+              $ref: '../components/schemas/Error'
+      '429':
+        description: Too many reports
+        content:
+          application/json:
+            schema:
+              $ref: '../components/schemas/Error'
+      '500':
+        $ref: '../components/responses/InternalError'
+
+/voice/moderation/mute:
+  post:
+    tags:
+      - Moderation
+    summary: Mute user in voice chat (moderator action)
+    operationId: muteUser
+    security:
+      - BearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../schemas/requests.yaml#/MuteUserRequest'
+    responses:
+      '200':
+        description: User muted successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/responses.yaml#/MuteUserResponse'
+      '400':
+        $ref: '../components/responses/BadRequest'
+      '401':
+        description: Unauthorized
+        content:
+          application/json:
+            schema:
+              $ref: '../components/schemas/Error'
+      '403':
+        description: Insufficient moderator permissions
+        content:
+          application/json:
+            schema:
+              $ref: '../components/schemas/Error'
+      '404':
+        description: User not found
+        content:
+          application/json:
+            schema:
+              $ref: '../components/schemas/Error'
+      '500':
+        $ref: '../components/responses/InternalError'

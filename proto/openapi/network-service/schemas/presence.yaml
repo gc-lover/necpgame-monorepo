@@ -1,0 +1,129 @@
+Presence:
+  type: object
+  properties:
+    user_id:
+      type: string
+    status:
+      type: string
+      enum: [ONLINE, AWAY, BUSY, INVISIBLE, OFFLINE]
+    status_message:
+      type: string
+    activity:
+      type: string
+      enum: [IDLE, PLAYING, IN_COMBAT, IN_QUEST, SOCIALIZING, TRADING]
+    location:
+      type: string
+    game_mode:
+      type: string
+    character_name:
+      type: string
+    character_level:
+      type: integer
+      minimum: 1
+    guild_name:
+      type: string
+    last_seen:
+      type: integer
+      format: int64
+    connected_at:
+      type: integer
+      format: int64
+    device_info:
+      $ref: '#/DeviceInfo'
+    custom_fields:
+      type: object
+      additionalProperties: true
+  required:
+    - user_id
+    - status
+
+DeviceInfo:
+  type: object
+  properties:
+    device_type:
+      type: string
+      enum: [DESKTOP, MOBILE, CONSOLE, WEB]
+    platform:
+      type: string
+    client_version:
+      type: string
+    connection_type:
+      type: string
+      enum: [WIRED, WIFI, MOBILE_DATA, UNKNOWN]
+    ip_address:
+      type: string
+    region:
+      type: string
+  required:
+    - device_type
+
+PresenceUpdate:
+  type: object
+  properties:
+    user_id:
+      type: string
+    previous_status:
+      type: string
+      enum: [ONLINE, AWAY, BUSY, INVISIBLE, OFFLINE]
+    new_status:
+      type: string
+      enum: [ONLINE, AWAY, BUSY, INVISIBLE, OFFLINE]
+    timestamp:
+      type: integer
+      format: int64
+    reason:
+      type: string
+      enum: [USER_ACTION, TIMEOUT, DISCONNECT, FORCE_LOGOUT]
+    metadata:
+      type: object
+      additionalProperties: true
+  required:
+    - user_id
+    - new_status
+    - timestamp
+
+PresenceSubscription:
+  type: object
+  properties:
+    subscriber_id:
+      type: string
+    target_users:
+      type: array
+      items:
+        type: string
+    filter_criteria:
+      type: object
+      properties:
+        statuses:
+          type: array
+          items:
+            type: string
+            enum: [ONLINE, AWAY, BUSY, INVISIBLE, OFFLINE]
+        activities:
+          type: array
+          items:
+            type: string
+            enum: [IDLE, PLAYING, IN_COMBAT, IN_QUEST, SOCIALIZING, TRADING]
+        guilds:
+          type: array
+          items:
+            type: string
+    notification_settings:
+      type: object
+      properties:
+        on_status_change:
+          type: boolean
+          default: true
+        on_activity_change:
+          type: boolean
+          default: true
+        batch_updates:
+          type: boolean
+          default: false
+        update_interval:
+          type: integer
+          minimum: 1000
+          maximum: 60000
+          default: 5000
+  required:
+    - subscriber_id

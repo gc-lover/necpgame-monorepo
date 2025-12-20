@@ -1,0 +1,362 @@
+            schema:
+              $ref: '#/schemas/requests.yaml#/CreateBulkheadRequest'
+      responses:
+        '201':
+          description: Bulkhead created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/schemas/responses.yaml#/CreateBulkheadResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Bulkhead already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /cb/bulkheads/{bulkheadId}:
+    get:
+      tags:
+        - Bulkheads
+      summary: Get bulkhead details and metrics
+      operationId: getBulkhead
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: bulkheadId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Bulkhead details retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/schemas/responses.yaml#/GetBulkheadResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Bulkhead not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    delete:
+      tags:
+        - Bulkheads
+      summary: Delete a bulkhead partition
+      operationId: deleteBulkhead
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: bulkheadId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Bulkhead deleted successfully
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Bulkhead not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /cb/timeouts:
+    get:
+      tags:
+        - Timeouts
+      summary: List all timeout configurations
+      operationId: listTimeouts
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: service
+          in: query
+          schema:
+            type: string
+            description: Filter by service name
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+      responses:
+        '200':
+          description: Timeouts retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/schemas/responses.yaml#/ListTimeoutsResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    post:
+      tags:
+        - Timeouts
+      summary: Create a timeout configuration
+      operationId: createTimeout
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/schemas/requests.yaml#/CreateTimeoutRequest'
+      responses:
+        '201':
+          description: Timeout configuration created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/schemas/responses.yaml#/CreateTimeoutResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Timeout configuration already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /cb/degradation:
+    get:
+      tags:
+        - Degradation
+      summary: List graceful degradation policies
+      operationId: listDegradationPolicies
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Degradation policies retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/schemas/responses.yaml#/ListDegradationPoliciesResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    post:
+      tags:
+        - Degradation
+      summary: Create a graceful degradation policy
+      operationId: createDegradationPolicy
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/schemas/requests.yaml#/CreateDegradationPolicyRequest'
+      responses:
+        '201':
+          description: Degradation policy created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/schemas/responses.yaml#/CreateDegradationPolicyResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Degradation policy already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /cb/metrics:
+    get:
+      tags:
+        - Metrics
+      summary: Get circuit breaker metrics
+      operationId: getMetrics
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: circuit_id
+          in: query
+          schema:
+            type: string
+            description: Filter by specific circuit breaker
+        - name: time_range
+          in: query
+          schema:
+            type: string
+            enum: [1h, 6h, 24h, 7d]
+            default: 1h
+            description: Time range for metrics
+      responses:
+        '200':
+          description: Metrics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/schemas/responses.yaml#/GetMetricsResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    InternalError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+        message:
+          type: string
+      required:
+        - code
+        - message
+
+    # Request/Response schemas
+    CreateCircuitRequest:
+      $ref: './schemas/requests.yaml#/CreateCircuitRequest'
+
+    CreateCircuitResponse:
+      $ref: './schemas/responses.yaml#/CreateCircuitResponse'
+
+    UpdateCircuitRequest:
+      $ref: './schemas/requests.yaml#/UpdateCircuitRequest'
+
+    UpdateCircuitResponse:
+      $ref: './schemas/responses.yaml#/UpdateCircuitResponse'
+
+    ListCircuitsResponse:
+      $ref: './schemas/responses.yaml#/ListCircuitsResponse'
+
+    GetCircuitResponse:
+      $ref: './schemas/responses.yaml#/GetCircuitResponse'
+
+    GetCircuitStateResponse:
+      $ref: './schemas/responses.yaml#/GetCircuitStateResponse'
+
+    SetCircuitStateRequest:
+      $ref: './schemas/requests.yaml#/SetCircuitStateRequest'
+
+    SetCircuitStateResponse:
+      $ref: './schemas/responses.yaml#/SetCircuitStateResponse'
+
+    ResetCircuitResponse:
+      $ref: './schemas/responses.yaml#/ResetCircuitResponse'
+
+    CreateBulkheadRequest:
+      $ref: './schemas/requests.yaml#/CreateBulkheadRequest'
+
+    CreateBulkheadResponse:
+      $ref: './schemas/responses.yaml#/CreateBulkheadResponse'
+
+    ListBulkheadsResponse:
+      $ref: './schemas/responses.yaml#/ListBulkheadsResponse'
+
+    GetBulkheadResponse:
+      $ref: './schemas/responses.yaml#/GetBulkheadResponse'
+
+    CreateTimeoutRequest:
+      $ref: './schemas/requests.yaml#/CreateTimeoutRequest'
+
+    CreateTimeoutResponse:
+      $ref: './schemas/responses.yaml#/CreateTimeoutResponse'
+
+    ListTimeoutsResponse:
+      $ref: './schemas/responses.yaml#/ListTimeoutsResponse'
+
+    CreateDegradationPolicyRequest:
+      $ref: './schemas/requests.yaml#/CreateDegradationPolicyRequest'
+
+    CreateDegradationPolicyResponse:
+      $ref: './schemas/responses.yaml#/CreateDegradationPolicyResponse'
+
+    ListDegradationPoliciesResponse:
+      $ref: './schemas/responses.yaml#/ListDegradationPoliciesResponse'
+
+    GetMetricsResponse:
+      $ref: './schemas/responses.yaml#/GetMetricsResponse'

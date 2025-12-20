@@ -1,0 +1,391 @@
+                $ref: "#/components/schemas/CharacterActivityResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    # Запросы
+    CreateCharacterRequest:
+      type: object
+      required:
+        - name
+        - characterClass
+        - origin
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 50
+          description: Имя персонажа
+        characterClass:
+          type: string
+          enum:
+            [
+              solo,
+              nomad,
+              corpo,
+              fixer,
+              netrunner,
+              techie,
+              media,
+              rockerboy,
+              edgerunner,
+            ]
+          description: Класс персонажа
+        origin:
+          type: string
+          enum: [nomad, corpo, street_kid, edgerunner, trauma_team]
+          description: Происхождение персонажа
+        appearance:
+          $ref: "#/components/schemas/CharacterAppearance"
+        attributes:
+          $ref: "#/components/schemas/CharacterAttributes"
+
+    UpdateCharacterRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 50
+          description: Новое имя персонажа
+        appearance:
+          $ref: "#/components/schemas/CharacterAppearance"
+
+    SwitchCharacterRequest:
+      type: object
+      required:
+        - characterId
+      properties:
+        characterId:
+          type: string
+          format: uuid
+          description: ID персонажа для активации
+
+    PurchaseSlotsRequest:
+      type: object
+      required:
+        - slotsCount
+      properties:
+        slotsCount:
+          type: integer
+          minimum: 1
+          maximum: 5
+          description: Количество слотов для покупки
+
+    # Ответы
+    CharacterListResponse:
+      type: object
+      properties:
+        characters:
+          type: array
+          items:
+            $ref: "#/components/schemas/Character"
+        totalCount:
+          type: integer
+        activeCharacterId:
+          type: string
+          format: uuid
+
+    CharacterResponse:
+      type: object
+      properties:
+        character:
+          $ref: "#/components/schemas/Character"
+
+    SwitchCharacterResponse:
+      type: object
+      properties:
+        previousCharacterId:
+          type: string
+          format: uuid
+        newCharacterId:
+          type: string
+          format: uuid
+        switchedAt:
+          type: string
+          format: date-time
+
+    PlayerSlotsResponse:
+      type: object
+      properties:
+        totalSlots:
+          type: integer
+          description: Общее количество слотов
+        usedSlots:
+          type: integer
+          description: Занятых слотов
+        availableSlots:
+          type: integer
+          description: Доступных слотов
+        canPurchaseMore:
+          type: boolean
+          description: Можно ли купить дополнительные слоты
+
+    PurchaseSlotsResponse:
+      type: object
+      properties:
+        newTotalSlots:
+          type: integer
+          description: Новое общее количество слотов
+        purchasedSlots:
+          type: integer
+          description: Купленных слотов
+        cost:
+          type: object
+          description: Стоимость покупки
+          properties:
+            currency:
+              type: string
+            amount:
+              type: number
+
+    CharacterStatsResponse:
+      type: object
+      properties:
+        characterId:
+          type: string
+          format: uuid
+        stats:
+          $ref: "#/components/schemas/CharacterStats"
+        recalculatedAt:
+          type: string
+          format: date-time
+
+    CharacterActivityResponse:
+      type: object
+      properties:
+        characterId:
+          type: string
+          format: uuid
+        activities:
+          type: array
+          items:
+            $ref: "#/components/schemas/CharacterActivity"
+        totalCount:
+          type: integer
+        hasMore:
+          type: boolean
+
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          default: true
+        message:
+          type: string
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        code:
+          type: string
+        details:
+          type: object
+
+    # Основные сущности
+    Character:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        playerId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        characterClass:
+          type: string
+        origin:
+          type: string
+        level:
+          type: integer
+          minimum: 1
+        experience:
+          type: integer
+          minimum: 0
+        appearance:
+          $ref: "#/components/schemas/CharacterAppearance"
+        stats:
+          $ref: "#/components/schemas/CharacterStats"
+        status:
+          type: string
+          enum: [active, deleted, dead]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        deletedAt:
+          type: string
+          format: date-time
+
+    CharacterAppearance:
+      type: object
+      properties:
+        gender:
+          type: string
+          enum: [male, female, other]
+        hairColor:
+          type: string
+        eyeColor:
+          type: string
+        skinTone:
+          type: string
+        cyberware:
+          type: array
+          items:
+            type: string
+        tattoos:
+          type: array
+          items:
+            type: string
+
+    CharacterAttributes:
+      type: object
+      properties:
+        intelligence:
+          type: integer
+          minimum: 1
+          maximum: 10
+        reflexes:
+          type: integer
+          minimum: 1
+          maximum: 10
+        dexterity:
+          type: integer
+          minimum: 1
+          maximum: 10
+        technology:
+          type: integer
+          minimum: 1
+          maximum: 10
+        cool:
+          type: integer
+          minimum: 1
+          maximum: 10
+        willpower:
+          type: integer
+          minimum: 1
+          maximum: 10
+        luck:
+          type: integer
+          minimum: 1
+          maximum: 10
+        movement:
+          type: integer
+          minimum: 1
+          maximum: 10
+        body:
+          type: integer
+          minimum: 1
+          maximum: 10
+        empathy:
+          type: integer
+          minimum: 1
+          maximum: 10
+
+    CharacterStats:
+      type: object
+      properties:
+        health:
+          type: integer
+        maxHealth:
+          type: integer
+        armor:
+          type: integer
+        actionPoints:
+          type: integer
+        humanity:
+          type: integer
+        maxHumanity:
+          type: integer
+        reputation:
+          type: integer
+        streetCred:
+          type: integer
+
+    CharacterActivity:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        characterId:
+          type: string
+          format: uuid
+        activityType:
+          type: string
+          enum: [login, logout, combat, quest, trade, crafting, leveling]
+        description:
+          type: string
+        location:
+          type: string
+        experienceGained:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+
+  responses:
+    BadRequest:
+      description: Неверный запрос
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
+    Unauthorized:
+      description: Не авторизован
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
+    Forbidden:
+      description: Доступ запрещен
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
+    NotFound:
+      description: Ресурс не найден
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
+    Conflict:
+      description: Конфликт данных
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
+    TooManyRequests:
+      description: Слишком много запросов
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
+    InternalServerError:
+      description: Внутренняя ошибка сервера
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"

@@ -1,324 +1,288 @@
-// Issue: #1581 - Benchmarks для inventory caching
 package server
 
 import (
-	"context"
+	"bytes"
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
 	"testing"
-	"time"
 
-	"github.com/gc-lover/necpgame-monorepo/services/inventory-service-go/pkg/api"
-	"github.com/gc-lover/necpgame-monorepo/services/inventory-service-go/models"
-	"github.com/go-redis/redis/v8"
-	"github.com/google/uuid"
+	"github.com/go-chi/chi/v5"
+	"github.com/sirupsen/logrus"
 )
 
-// Mock Repository for benchmarks
-type MockRepository struct{}
+// OPTIMIZATION: Issue #1950 - Benchmark tests for MMO performance validation
+func BenchmarkInventoryService_GetInventory(b *testing.B) {
+	logger := logrus.New()
+	logger.SetLevel(logrus.ErrorLevel)
 
-func (m *MockRepository) GetInventory(ctx context.Context, characterID uuid.UUID) (*models.InventoryResponse, error) {
-	return &models.InventoryResponse{
-		Inventory: models.Inventory{
-			ID:          uuid.New(),
-			CharacterID: characterID,
-			Capacity:    50,
-			UsedSlots:   0,
-			Weight:      0,
-			MaxWeight:   100.0,
-			CreatedAt:   time.Now(),
-			UpdatedAt:   time.Now(),
-		},
-		Items: []models.InventoryItem{},
-	}, nil
-}
+	metrics := &InventoryMetrics{}
+	service := NewInventoryService(logger, metrics)
 
-func (m *MockRepository) AddItem(ctx context.Context, characterID uuid.UUID, item *models.AddItemRequest) error {
-	return nil
-}
+	characterID := "player_123"
 
-func (m *MockRepository) RemoveItem(ctx context.Context, characterID, itemID uuid.UUID) error {
-	return nil
-}
-
-func (m *MockRepository) UpdateItem(ctx context.Context, characterID, itemID uuid.UUID, updateFn func() error) error {
-	return updateFn()
-}
-
-// Benchmark: Old service (no cache, direct DB)
-func BenchmarkInventory_NoCaching(b *testing.B) {
-	service, _ := NewInventoryService("", "")
-	if service == nil {
-		b.Skip("Service initialization failed")
-	}
-	ctx := context.Background()
-	playerID := uuid.New()
-	
 	b.ResetTimer()
 	b.ReportAllocs()
-	
+
 	for i := 0; i < b.N; i++ {
-		service.GetInventory(ctx, playerID)
+		req := httptest.NewRequest("GET", "/inventory/"+characterID, nil)
+		w := httptest.NewRecorder()
+
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("characterId", characterID)
+		req = req.WithContext(chi.NewRouteContext().WithRouteContext(req.Context(), rctx))
+
+		service.GetInventory(w, req)
+
+		if w.Code != http.StatusOK {
+			b.Fatalf("Expected status 200, got %d", w.Code)
+		}
 	}
 }
 
-// Benchmark: Optimized service (3-tier cache)
-func BenchmarkInventory_With3TierCache(b *testing.B) {
-	// Note: This will primarily hit L1 memory cache after first access
-	redis := redis.NewClient(&redis.Options{
-		Addr:         "localhost:6379",
-		DialTimeout:  1 * time.Second,
-		ReadTimeout:  1 * time.Second,
-		WriteTimeout: 1 * time.Second,
-		PoolTimeout:  1 * time.Second,
-	})
-	defer redis.Close()
-	
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-	defer cancel()
-	
-	// Check Redis availability
-	if err := redis.Ping(ctx).Err(); err != nil {
-		b.Skipf("Skipping benchmark due to Redis not available: %v", err)
-		return
-	}
-	
-	service := NewOptimizedInventoryService(redis, &MockRepository{})
-	playerID := uuid.New().String()
-	
-	// Prime cache
-	service.GetInventory(ctx, playerID)
-	
+func BenchmarkInventoryService_ListInventoryItems(b *testing.B) {
+	logger := logrus.New()
+	logger.SetLevel(logrus.ErrorLevel)
+
+	metrics := &InventoryMetrics{}
+	service := NewInventoryService(logger, metrics)
+
+	characterID := "player_123"
+
 	b.ResetTimer()
 	b.ReportAllocs()
-	
+
 	for i := 0; i < b.N; i++ {
-		service.GetInventory(ctx, playerID)
+		req := httptest.NewRequest("GET", "/inventory/"+characterID+"/items", nil)
+		w := httptest.NewRecorder()
+
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("characterId", characterID)
+		req = req.WithContext(chi.NewRouteContext().WithRouteContext(req.Context(), rctx))
+
+		service.ListInventoryItems(w, req)
+
+		if w.Code != http.StatusOK {
+			b.Fatalf("Expected status 200, got %d", w.Code)
+		}
 	}
 }
 
-// Benchmark: Diff updates vs Full inventory
-func BenchmarkInventory_DiffVsFull(b *testing.B) {
-	redis := redis.NewClient(&redis.Options{
-		Addr:         "localhost:6379",
-		DialTimeout:  1 * time.Second,
-		ReadTimeout:  1 * time.Second,
-		WriteTimeout: 1 * time.Second,
-		PoolTimeout:  1 * time.Second,
-	})
-	defer redis.Close()
-	
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-	defer cancel()
-	
-	// Check Redis availability
-	if err := redis.Ping(ctx).Err(); err != nil {
-		b.Skipf("Skipping benchmark due to Redis not available: %v", err)
-		return
+func BenchmarkInventoryService_MoveItem(b *testing.B) {
+	logger := logrus.New()
+	logger.SetLevel(logrus.ErrorLevel)
+
+	metrics := &InventoryMetrics{}
+	service := NewInventoryService(logger, metrics)
+
+	characterID := "player_123"
+
+	reqData := MoveItemRequest{
+		InventoryItemID: "item_123",
+		FromContainer:   "main",
+		ToContainer:     "main",
+		ToSlotX:         1,
+		ToSlotY:         2,
+		Quantity:        1,
 	}
-	
-	service := NewOptimizedInventoryService(redis, &MockRepository{}).(*OptimizedInventoryService)
-	playerID := uuid.New().String()
-	
-	// Prime cache
-	service.GetInventory(ctx, playerID)
-	
-	b.Run("FullInventory", func(b *testing.B) {
-		b.ReportAllocs()
-		for i := 0; i < b.N; i++ {
-			service.GetInventory(ctx, playerID)
+
+	reqBody, _ := json.Marshal(reqData)
+
+	b.ResetTimer()
+	b.ReportAllocs()
+
+	for i := 0; i < b.N; i++ {
+		req := httptest.NewRequest("POST", "/inventory/"+characterID+"/move", bytes.NewReader(reqBody))
+		w := httptest.NewRecorder()
+
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("characterId", characterID)
+		req = req.WithContext(chi.NewRouteContext().WithRouteContext(req.Context(), rctx))
+
+		service.MoveItem(w, req)
+
+		if w.Code != http.StatusOK {
+			b.Fatalf("Expected status 200, got %d", w.Code)
 		}
-	})
-	
-	b.Run("DiffOnly", func(b *testing.B) {
-		b.ReportAllocs()
-		for i := 0; i < b.N; i++ {
-			service.GetInventoryDiff(ctx, playerID)
-		}
-	})
+	}
 }
 
-// Benchmark: Batch operations vs Single
-func BenchmarkInventory_BatchVsSingle(b *testing.B) {
-	redis := redis.NewClient(&redis.Options{
-		Addr:         "localhost:6379",
-		DialTimeout:  1 * time.Second,
-		ReadTimeout:  1 * time.Second,
-		WriteTimeout: 1 * time.Second,
-		PoolTimeout:  1 * time.Second,
-	})
-	defer redis.Close()
-	
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-	defer cancel()
-	
-	// Check Redis availability
-	if err := redis.Ping(ctx).Err(); err != nil {
-		b.Skipf("Skipping benchmark due to Redis not available: %v", err)
-		return
+func BenchmarkInventoryService_EquipItem(b *testing.B) {
+	logger := logrus.New()
+	logger.SetLevel(logrus.ErrorLevel)
+
+	metrics := &InventoryMetrics{}
+	service := NewInventoryService(logger, metrics)
+
+	characterID := "player_123"
+
+	reqData := EquipItemRequest{
+		InventoryItemID: "item_123",
+		SlotType:        "MAIN_HAND",
 	}
-	
-	service := NewOptimizedInventoryService(redis, &MockRepository{}).(*OptimizedInventoryService)
-	playerID := uuid.New().String()
-	
-	items := make([]api.AddItemRequest, 10)
-	for i := range items {
-		items[i] = api.AddItemRequest{
-			ItemID:   uuid.New(),
-			Quantity: api.NewOptInt(1),
+
+	reqBody, _ := json.Marshal(reqData)
+
+	b.ResetTimer()
+	b.ReportAllocs()
+
+	for i := 0; i < b.N; i++ {
+		req := httptest.NewRequest("POST", "/inventory/"+characterID+"/equip", bytes.NewReader(reqBody))
+		w := httptest.NewRecorder()
+
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("characterId", characterID)
+		req = req.WithContext(chi.NewRouteContext().WithRouteContext(req.Context(), rctx))
+
+		service.EquipItem(w, req)
+
+		if w.Code != http.StatusOK {
+			b.Fatalf("Expected status 200, got %d", w.Code)
 		}
 	}
-	
-	b.Run("SingleAdds", func(b *testing.B) {
-		b.ReportAllocs()
-		for i := 0; i < b.N; i++ {
-			for _, item := range items {
-				service.AddItem(ctx, playerID, &item)
+}
+
+func BenchmarkInventoryService_GetItem(b *testing.B) {
+	logger := logrus.New()
+	logger.SetLevel(logrus.ErrorLevel)
+
+	metrics := &InventoryMetrics{}
+	service := NewInventoryService(logger, metrics)
+
+	itemID := "sword_001"
+
+	b.ResetTimer()
+	b.ReportAllocs()
+
+	for i := 0; i < b.N; i++ {
+		req := httptest.NewRequest("GET", "/items/"+itemID, nil)
+		w := httptest.NewRecorder()
+
+		rctx := chi.NewRouteContext()
+		rctx.URLParams.Add("itemId", itemID)
+		req = req.WithContext(chi.NewRouteContext().WithRouteContext(req.Context(), rctx))
+
+		service.GetItem(w, req)
+
+		if w.Code != http.StatusOK {
+			b.Fatalf("Expected status 200, got %d", w.Code)
+		}
+	}
+}
+
+func BenchmarkInventoryService_SearchItems(b *testing.B) {
+	logger := logrus.New()
+	logger.SetLevel(logrus.ErrorLevel)
+
+	metrics := &InventoryMetrics{}
+	service := NewInventoryService(logger, metrics)
+
+	reqData := SearchItemsRequest{
+		Query: "sword",
+		Limit: 50,
+	}
+
+	reqBody, _ := json.Marshal(reqData)
+
+	b.ResetTimer()
+	b.ReportAllocs()
+
+	for i := 0; i < b.N; i++ {
+		req := httptest.NewRequest("POST", "/items/search", bytes.NewReader(reqBody))
+		w := httptest.NewRecorder()
+
+		service.SearchItems(w, req)
+
+		if w.Code != http.StatusOK {
+			b.Fatalf("Expected status 200, got %d", w.Code)
+		}
+	}
+}
+
+// Memory allocation benchmark for concurrent load
+func BenchmarkInventoryService_ConcurrentLoad(b *testing.B) {
+	logger := logrus.New()
+	logger.SetLevel(logrus.ErrorLevel)
+
+	metrics := &InventoryMetrics{}
+	service := NewInventoryService(logger, metrics)
+
+	reqData := MoveItemRequest{
+		InventoryItemID: "item_123",
+		FromContainer:   "main",
+		ToContainer:     "main",
+		ToSlotX:         1,
+		ToSlotY:         2,
+		Quantity:        1,
+	}
+
+	reqBody, _ := json.Marshal(reqData)
+
+	b.ResetTimer()
+	b.ReportAllocs()
+
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			req := httptest.NewRequest("POST", "/inventory/player_123/move", bytes.NewReader(reqBody))
+			w := httptest.NewRecorder()
+
+			rctx := chi.NewRouteContext()
+			rctx.URLParams.Add("characterId", "player_123")
+			req = req.WithContext(chi.NewRouteContext().WithRouteContext(req.Context(), rctx))
+
+			service.MoveItem(w, req)
+
+			if w.Code != http.StatusOK {
+				b.Fatalf("Expected status 200, got %d", w.Code)
 			}
 		}
 	})
-	
-	b.Run("BatchAdd", func(b *testing.B) {
-		b.ReportAllocs()
+}
+
+// Performance target validation
+func TestInventoryService_PerformanceTargets(t *testing.T) {
+	logger := logrus.New()
+	logger.SetLevel(logrus.ErrorLevel)
+
+	metrics := &InventoryMetrics{}
+	service := NewInventoryService(logger, metrics)
+
+	characterID := "player_123"
+
+	// Test get inventory performance
+	req := httptest.NewRequest("GET", "/inventory/"+characterID, nil)
+	rctx := chi.NewRouteContext()
+	rctx.URLParams.Add("characterId", characterID)
+	req = req.WithContext(chi.NewRouteContext().WithRouteContext(req.Context(), rctx))
+
+	// Warm up
+	for i := 0; i < 100; i++ {
+		w := httptest.NewRecorder()
+		service.GetInventory(w, req)
+	}
+
+	// Benchmark for 1 second
+	result := testing.Benchmark(func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			service.BatchAddItems(ctx, playerID, items)
+			w := httptest.NewRecorder()
+			service.GetInventory(w, req)
 		}
 	})
+
+	// Calculate operations per second
+	opsPerSec := float64(result.N) / result.T.Seconds()
+
+	// Target: at least 2000 ops/sec for inventory operations
+	targetOpsPerSec := 2000.0
+
+	if opsPerSec < targetOpsPerSec {
+		t.Errorf("Performance target not met: %.2f ops/sec < %.2f ops/sec target", opsPerSec, targetOpsPerSec)
+	}
+
+	// Check memory allocations (should be low with pooling)
+	if result.AllocsPerOp() > 5 {
+		t.Errorf("Too many allocations: %.2f allocs/op > 5 allocs/op target", result.AllocsPerOp())
+	}
+
+	t.Logf("Performance: %.2f ops/sec, %.2f allocs/op", opsPerSec, result.AllocsPerOp())
 }
-
-// Load test: 10k RPS for 10 seconds
-func TestInventory_LoadTest_10kRPS(t *testing.T) {
-	if testing.Short() {
-		t.Skip("Skipping load test in short mode")
-	}
-	
-	// Add timeout for entire test to prevent hanging
-	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
-	defer cancel()
-	
-	// Redis client with fast timeouts
-	redis := redis.NewClient(&redis.Options{
-		Addr:         "localhost:6379",
-		DialTimeout:  1 * time.Second,
-		ReadTimeout:  1 * time.Second,
-		WriteTimeout: 1 * time.Second,
-		PoolTimeout:  1 * time.Second,
-	})
-	defer redis.Close()
-	
-	// Check Redis availability with timeout
-	pingCtx, pingCancel := context.WithTimeout(ctx, 1*time.Second)
-	defer pingCancel()
-	if err := redis.Ping(pingCtx).Err(); err != nil {
-		t.Skipf("Skipping load test due to Redis not available: %v", err)
-		return
-	}
-	
-	service := NewOptimizedInventoryService(redis, &MockRepository{})
-	
-	duration := 10 * time.Second
-	rps := 10000
-	totalRequests := rps * int(duration.Seconds())
-	
-	playerIDs := make([]string, 1000)
-	for i := range playerIDs {
-		playerIDs[i] = uuid.New().String()
-	}
-	
-	start := time.Now()
-	successCount := 0
-	
-	// Use context with timeout for each request
-	for i := 0; i < totalRequests; i++ {
-		// Check if context is cancelled (timeout)
-		select {
-		case <-ctx.Done():
-			t.Logf("Test timed out after %v", time.Since(start))
-			return
-		default:
-		}
-		
-		playerID := playerIDs[i%len(playerIDs)]
-		
-		// Use context with timeout for each GetInventory call
-		reqCtx, reqCancel := context.WithTimeout(ctx, 100*time.Millisecond)
-		_, err := service.GetInventory(reqCtx, playerID)
-		reqCancel()
-		
-		if err == nil {
-			successCount++
-		}
-		
-		// Rate limiting
-		if i%1000 == 0 {
-			select {
-			case <-ctx.Done():
-				return
-			case <-time.After(100 * time.Millisecond):
-			}
-		}
-	}
-	
-	elapsed := time.Since(start)
-	if elapsed.Seconds() > 0 {
-		actualRPS := float64(successCount) / elapsed.Seconds()
-		
-		t.Logf("Load Test Results:")
-		t.Logf("  Duration: %v", elapsed)
-		t.Logf("  Total Requests: %d", totalRequests)
-		t.Logf("  Successful: %d", successCount)
-		t.Logf("  Actual RPS: %.2f", actualRPS)
-		t.Logf("  P99 Latency: <30ms (target)")
-		
-		if actualRPS < float64(rps)*0.7 {
-			t.Errorf("RPS too low: %.2f < %d (expected)", actualRPS, rps)
-		}
-	}
-}
-
-// Benchmark memory usage
-func TestInventory_MemoryUsage(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	
-	// Redis client with fast timeouts
-	redis := redis.NewClient(&redis.Options{
-		Addr:         "localhost:6379",
-		DialTimeout:  1 * time.Second,
-		ReadTimeout:  1 * time.Second,
-		WriteTimeout: 1 * time.Second,
-		PoolTimeout:  1 * time.Second,
-	})
-	defer redis.Close()
-	
-	// Check Redis availability
-	pingCtx, pingCancel := context.WithTimeout(ctx, 1*time.Second)
-	defer pingCancel()
-	if err := redis.Ping(pingCtx).Err(); err != nil {
-		t.Skipf("Skipping test due to Redis not available: %v", err)
-		return
-	}
-	
-	service := NewOptimizedInventoryService(redis, &MockRepository{})
-	
-	// Load 1000 inventories into cache with timeout per request
-	for i := 0; i < 1000; i++ {
-		select {
-		case <-ctx.Done():
-			t.Logf("Test timed out after loading %d inventories", i)
-			return
-		default:
-		}
-		
-		playerID := uuid.New().String()
-		reqCtx, reqCancel := context.WithTimeout(ctx, 100*time.Millisecond)
-		service.GetInventory(reqCtx, playerID)
-		reqCancel()
-	}
-	
-	t.Log("Loaded 1000 inventories into cache")
-	t.Log("Expected memory: ~5-10 MB (L1 cache)")
-	t.Log("Redis memory: ~20-30 MB (L2 cache)")
-}
-
-
-
-

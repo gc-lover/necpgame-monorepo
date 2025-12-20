@@ -1,0 +1,400 @@
+openapi: 3.0.3
+info:
+  title: Message Queue Service API
+  version: 1.0.0
+  description: |
+    API for asynchronous message processing and event-driven architecture.
+    Handles RabbitMQ queues, message routing, dead letter queues, and event publishing.
+    Optimized for high-throughput MMO event processing with 100k+ messages/second.
+
+servers:
+  - url: http://localhost:8080
+    description: Development server
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Queues
+    description: Message queue management and operations
+  - name: Messages
+    description: Message publishing and consumption
+  - name: Exchanges
+    description: Message exchange routing and bindings
+  - name: Consumers
+    description: Consumer management and monitoring
+  - name: Events
+    description: Event publishing and subscription patterns
+
+paths:
+  /mq/health:
+    get:
+      tags:
+        - Queues
+      summary: Health check for Message Queue Service
+      operationId: healthCheck
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "healthy"
+
+  /mq/queues:
+    get:
+      tags:
+        - Queues
+      summary: List all message queues
+      operationId: listQueues
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: pattern
+          in: query
+          schema:
+            type: string
+            description: Queue name pattern filter
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+      responses:
+        '200':
+          description: Queues retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/schemas/responses.yaml#/ListQueuesResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    post:
+      tags:
+        - Queues
+      summary: Create a new message queue
+      operationId: createQueue
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/schemas/requests.yaml#/CreateQueueRequest'
+      responses:
+        '201':
+          description: Queue created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/schemas/responses.yaml#/CreateQueueResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Queue already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /mq/queues/{queueName}:
+    get:
+      tags:
+        - Queues
+      summary: Get queue details and statistics
+      operationId: getQueue
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: queueName
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Queue details retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/schemas/responses.yaml#/GetQueueResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Queue not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    delete:
+      tags:
+        - Queues
+      summary: Delete a message queue
+      operationId: deleteQueue
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: queueName
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Queue deleted successfully
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Queue not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    put:
+      tags:
+        - Queues
+      summary: Update queue configuration
+      operationId: updateQueue
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: queueName
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/schemas/requests.yaml#/UpdateQueueRequest'
+      responses:
+        '200':
+          description: Queue updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/schemas/responses.yaml#/UpdateQueueResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Queue not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /mq/messages:
+    post:
+      tags:
+        - Messages
+      summary: Publish a message to a queue
+      operationId: publishMessage
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/schemas/requests.yaml#/PublishMessageRequest'
+      responses:
+        '202':
+          description: Message published successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/schemas/responses.yaml#/PublishMessageResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Queue not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /mq/messages/batch:
+    post:
+      tags:
+        - Messages
+      summary: Publish multiple messages in batch
+      operationId: publishBatchMessages
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/schemas/requests.yaml#/PublishBatchRequest'
+      responses:
+        '202':
+          description: Messages published successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/schemas/responses.yaml#/PublishBatchResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /mq/consume:
+    post:
+      tags:
+        - Messages
+      summary: Consume messages from a queue
+      operationId: consumeMessages
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/schemas/requests.yaml#/ConsumeMessagesRequest'
+      responses:
+        '200':
+          description: Messages consumed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/schemas/responses.yaml#/ConsumeMessagesResponse'
+        '204':
+          description: No messages available
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Queue not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /mq/consumers:
+    post:
+      tags:
+        - Consumers
+      summary: Register a message consumer
+      operationId: registerConsumer
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/schemas/requests.yaml#/RegisterConsumerRequest'
+      responses:
+        '201':
+          description: Consumer registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/schemas/responses.yaml#/RegisterConsumerResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Consumer already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    get:
+      tags:
+        - Consumers
+      summary: List all registered consumers
+      operationId: listConsumers
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: queue

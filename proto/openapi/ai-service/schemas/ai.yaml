@@ -1,0 +1,159 @@
+AIState:
+  type: object
+  properties:
+    npc_id:
+      type: string
+    current_behavior:
+      type: string
+    behavior_tree_id:
+      type: string
+    state_variables:
+      type: object
+      additionalProperties: true
+    active_goals:
+      type: array
+      items:
+        $ref: '#/AIGoal'
+    sensory_data:
+      $ref: '#/AISensoryData'
+    decision_context:
+      $ref: '#/AIDecisionContext'
+    last_update:
+      type: string
+      format: date-time
+    processing_time_ms:
+      type: integer
+      minimum: 0
+  required:
+    - npc_id
+
+AIGoal:
+  type: object
+  properties:
+    goal_id:
+      type: string
+    goal_type:
+      type: string
+      enum: [PATROL, GUARD, ATTACK, DEFEND, ESCORT, COLLECT]
+    priority:
+      type: integer
+      minimum: 0
+      maximum: 100
+    target:
+      type: string
+    location:
+      $ref: '../common.yaml#/Vector3'
+    parameters:
+      type: object
+      additionalProperties: true
+    deadline:
+      type: string
+      format: date-time
+  required:
+    - goal_id
+    - goal_type
+    - priority
+
+AISensoryData:
+  type: object
+  properties:
+    visible_entities:
+      type: array
+      items:
+        $ref: '#/AIEntity'
+    audible_entities:
+      type: array
+      items:
+        $ref: '#/AIEntity'
+    threats:
+      type: array
+      items:
+        $ref: '#/AIThreat'
+    allies:
+      type: array
+      items:
+        $ref: '#/AIEntity'
+    environment_state:
+      type: object
+      additionalProperties: true
+  required:
+    - visible_entities
+
+AIEntity:
+  type: object
+  properties:
+    entity_id:
+      type: string
+    entity_type:
+      type: string
+      enum: [PLAYER, NPC, MONSTER, OBJECT]
+    position:
+      $ref: '../common.yaml#/Vector3'
+    distance:
+      type: number
+      format: float
+    health_percentage:
+      type: integer
+      minimum: 0
+      maximum: 100
+    threat_level:
+      type: integer
+      minimum: 0
+      maximum: 100
+  required:
+    - entity_id
+    - entity_type
+    - position
+    - distance
+
+AIThreat:
+  type: object
+  properties:
+    threat_id:
+      type: string
+    threat_level:
+      type: integer
+      minimum: 0
+      maximum: 100
+    threat_type:
+      type: string
+      enum: [COMBAT, PURSUIT, STEALTH, ENVIRONMENT]
+    source_entity_id:
+      type: string
+    position:
+      $ref: '../common.yaml#/Vector3'
+    last_seen:
+      type: string
+      format: date-time
+  required:
+    - threat_id
+    - threat_level
+    - threat_type
+
+AIDecisionContext:
+  type: object
+  properties:
+    current_time:
+      type: string
+      format: date-time
+    npc_health:
+      type: integer
+      minimum: 0
+      maximum: 100
+    npc_mana:
+      type: integer
+      minimum: 0
+      maximum: 100
+    combat_status:
+      type: string
+      enum: [PEACEFUL, IN_COMBAT, PURSUING, FLEEING]
+    group_status:
+      type: string
+      enum: [ALONE, WITH_ALLIES, LEADER, FOLLOWER]
+    environment_conditions:
+      type: object
+      additionalProperties: true
+  required:
+    - current_time
+    - npc_health
+    - combat_status

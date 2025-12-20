@@ -1,0 +1,515 @@
+openapi: 3.0.3
+info:
+  title: Authentication Service API
+  version: 1.0.0
+  description: |
+    API for user authentication and authorization in MMOFPS RPG.
+    Handles JWT tokens, OAuth2 flows, session management, and access control.
+    Optimized for MMO security with 10,000+ concurrent authenticated users.
+
+servers:
+  - url: http://localhost:8080
+    description: Development server
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Authentication
+    description: User login, registration, and authentication operations
+  - name: Authorization
+    description: Token validation, permissions, and access control
+  - name: Sessions
+    description: Session management and lifecycle operations
+  - name: OAuth2
+    description: OAuth2 flows and third-party authentication
+  - name: Tokens
+    description: JWT token operations and refresh mechanisms
+
+paths:
+  /auth/health:
+    get:
+      tags:
+        - Authentication
+      summary: Health check for Authentication Service
+      operationId: healthCheck
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "healthy"
+
+  /auth/register:
+    post:
+      tags:
+        - Authentication
+      summary: Register new user account
+      operationId: registerUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/schemas/requests.yaml#/RegisterRequest'
+      responses:
+        '201':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/schemas/responses.yaml#/RegisterResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          description: User already exists
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 409
+                  message:
+                    type: string
+                    example: "User already exists"
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: User login with credentials
+      operationId: loginUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/schemas/requests.yaml#/LoginRequest'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/schemas/responses.yaml#/LoginResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 401
+                  message:
+                    type: string
+                    example: "Invalid credentials"
+        '429':
+          description: Too many login attempts
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 429
+                  message:
+                    type: string
+                    example: "Too many login attempts"
+                  retry_after:
+                    type: integer
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /auth/logout:
+    post:
+      tags:
+        - Authentication
+      summary: User logout and session invalidation
+      operationId: logoutUser
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Logout successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/schemas/responses.yaml#/LogoutResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /auth/refresh:
+    post:
+      tags:
+        - Tokens
+      summary: Refresh JWT access token
+      operationId: refreshToken
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/schemas/requests.yaml#/RefreshTokenRequest'
+      responses:
+        '200':
+          description: Token refreshed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/schemas/responses.yaml#/RefreshTokenResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          description: Invalid or expired refresh token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /auth/validate:
+    post:
+      tags:
+        - Authorization
+      summary: Validate JWT token and return user info
+      operationId: validateToken
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Token is valid
+          content:
+            application/json:
+              schema:
+                $ref: '#/schemas/responses.yaml#/ValidateTokenResponse'
+        '401':
+          description: Invalid or expired token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /auth/sessions:
+    get:
+      tags:
+        - Sessions
+      summary: Get user active sessions
+      operationId: getUserSessions
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Sessions retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/schemas/responses.yaml#/GetSessionsResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    delete:
+      tags:
+        - Sessions
+      summary: Invalidate all user sessions
+      operationId: invalidateAllSessions
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: All sessions invalidated
+          content:
+            application/json:
+              schema:
+                $ref: '#/schemas/responses.yaml#/InvalidateSessionsResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /auth/sessions/{sessionId}:
+    delete:
+      tags:
+        - Sessions
+      summary: Invalidate specific session
+      operationId: invalidateSession
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Session identifier
+      responses:
+        '200':
+          description: Session invalidated
+          content:
+            application/json:
+              schema:
+                $ref: '#/schemas/responses.yaml#/InvalidateSessionResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Session not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /auth/oauth2/{provider}/authorize:
+    get:
+      tags:
+        - OAuth2
+      summary: Initiate OAuth2 authorization flow
+      operationId: oauth2Authorize
+      parameters:
+        - name: provider
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [google, discord, steam, epic_games]
+          description: OAuth2 provider
+      responses:
+        '302':
+          description: Redirect to OAuth2 provider
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /auth/oauth2/{provider}/callback:
+    get:
+      tags:
+        - OAuth2
+      summary: OAuth2 provider callback
+      operationId: oauth2Callback
+      parameters:
+        - name: provider
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [google, discord, steam, epic_games]
+          description: OAuth2 provider
+        - name: code
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Authorization code
+        - name: state
+          in: query
+          required: true
+          schema:
+            type: string
+          description: State parameter for CSRF protection
+      responses:
+        '200':
+          description: OAuth2 authentication successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/schemas/responses.yaml#/OAuth2CallbackResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          description: OAuth2 authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /auth/password/reset:
+    post:
+      tags:
+        - Authentication
+      summary: Request password reset
+      operationId: requestPasswordReset
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/schemas/requests.yaml#/PasswordResetRequest'
+      responses:
+        '200':
+          description: Password reset email sent
+          content:
+            application/json:
+              schema:
+                $ref: '#/schemas/responses.yaml#/PasswordResetResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '429':
+          description: Too many reset requests
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 429
+                  message:
+                    type: string
+                    example: "Too many reset requests"
+                  retry_after:
+                    type: integer
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /auth/password/reset/confirm:
+    post:
+      tags:
+        - Authentication
+      summary: Confirm password reset with token
+      operationId: confirmPasswordReset
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/schemas/requests.yaml#/ConfirmPasswordResetRequest'
+      responses:
+        '200':
+          description: Password reset successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/schemas/responses.yaml#/ConfirmPasswordResetResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          description: Invalid or expired reset token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    InternalError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+        message:
+          type: string
+      required:
+        - code
+        - message
+
+    # Request/Response schemas
+    RegisterRequest:
+      $ref: './schemas/requests.yaml#/RegisterRequest'
+
+    RegisterResponse:
+      $ref: './schemas/responses.yaml#/RegisterResponse'
+
+    LoginRequest:
+      $ref: './schemas/requests.yaml#/LoginRequest'
+
+    LoginResponse:
+      $ref: './schemas/responses.yaml#/LoginResponse'
+
+    LogoutResponse:
+      $ref: './schemas/responses.yaml#/LogoutResponse'
+
+    RefreshTokenRequest:
+      $ref: './schemas/requests.yaml#/RefreshTokenRequest'
+
+    RefreshTokenResponse:
+      $ref: './schemas/responses.yaml#/RefreshTokenResponse'
+
+    ValidateTokenResponse:
+      $ref: './schemas/responses.yaml#/ValidateTokenResponse'
+
+    GetSessionsResponse:
+      $ref: './schemas/responses.yaml#/GetSessionsResponse'
+
+    InvalidateSessionsResponse:
+      $ref: './schemas/responses.yaml#/InvalidateSessionsResponse'
+
+    InvalidateSessionResponse:
+      $ref: './schemas/responses.yaml#/InvalidateSessionResponse'
+
+    OAuth2CallbackResponse:
+      $ref: './schemas/responses.yaml#/OAuth2CallbackResponse'
+
+    PasswordResetRequest:
+      $ref: './schemas/requests.yaml#/PasswordResetRequest'
+
+    PasswordResetResponse:
+      $ref: './schemas/responses.yaml#/PasswordResetResponse'
+
+    ConfirmPasswordResetRequest:
+      $ref: './schemas/requests.yaml#/ConfirmPasswordResetRequest'
+
+    ConfirmPasswordResetResponse:
+      $ref: './schemas/responses.yaml#/ConfirmPasswordResetResponse'

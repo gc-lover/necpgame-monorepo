@@ -1,0 +1,158 @@
+openapi: 3.0.3
+info:
+  title: AI Service API
+  version: 1.0.0
+  description: |
+    API for managing NPC AI behaviors in MMOFPS RPG.
+    Handles behavioral trees, pathfinding, decision making, and AI state management.
+    Optimized for real-time AI processing with 1000+ concurrent NPCs.
+
+servers:
+  - url: http://localhost:8080
+    description: Development server
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: AI
+    description: AI behavior and decision making operations
+  - name: Pathfinding
+    description: Navigation and pathfinding operations
+  - name: Behavior Trees
+    description: Behavioral tree management
+  - name: Decision Making
+    description: AI decision making and state management
+
+paths:
+  /ai/health:
+    get:
+      tags:
+        - AI
+      summary: Health check for AI Service
+      operationId: healthCheck
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "healthy"
+
+  /ai/{npcId}/behavior:
+    $ref: './paths/behavior.yaml#/get'
+
+  /ai/{npcId}/behavior/execute:
+    $ref: './paths/behavior.yaml#/execute'
+
+  /ai/{npcId}/pathfind:
+    $ref: './paths/pathfinding.yaml#/calculate'
+
+  /ai/{npcId}/decision:
+    $ref: './paths/decision.yaml#/make'
+
+  /ai/behavior-trees:
+    $ref: './paths/behavior-trees.yaml#/list'
+
+  /ai/behavior-trees/{treeId}:
+    $ref: './paths/behavior-trees.yaml#/get'
+
+  /ai/behavior-trees/{treeId}/execute:
+    $ref: './paths/behavior-trees.yaml#/execute'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    InternalError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+        message:
+          type: string
+      required:
+        - code
+        - message
+
+    # Common schemas
+    Vector3:
+      $ref: './schemas/common.yaml#/Vector3'
+
+    BehaviorTree:
+      $ref: './schemas/behavior.yaml#/BehaviorTree'
+
+    BehaviorNode:
+      $ref: './schemas/behavior.yaml#/BehaviorNode'
+
+    Path:
+      $ref: './schemas/pathfinding.yaml#/Path'
+
+    AIState:
+      $ref: './schemas/ai.yaml#/AIState'
+
+    DecisionContext:
+      $ref: './schemas/decision.yaml#/DecisionContext'
+
+    # Request/Response schemas
+    GetBehaviorResponse:
+      $ref: './schemas/responses.yaml#/GetBehaviorResponse'
+
+    ExecuteBehaviorRequest:
+      $ref: './schemas/requests.yaml#/ExecuteBehaviorRequest'
+
+    ExecuteBehaviorResponse:
+      $ref: './schemas/responses.yaml#/ExecuteBehaviorResponse'
+
+    CalculatePathRequest:
+      $ref: './schemas/requests.yaml#/CalculatePathRequest'
+
+    CalculatePathResponse:
+      $ref: './schemas/responses.yaml#/CalculatePathResponse'
+
+    MakeDecisionRequest:
+      $ref: './schemas/requests.yaml#/MakeDecisionRequest'
+
+    MakeDecisionResponse:
+      $ref: './schemas/responses.yaml#/MakeDecisionResponse'
+
+    ListBehaviorTreesResponse:
+      $ref: './schemas/responses.yaml#/ListBehaviorTreesResponse'
+
+    GetBehaviorTreeResponse:
+      $ref: './schemas/responses.yaml#/GetBehaviorTreeResponse'
+
+    ExecuteBehaviorTreeRequest:
+      $ref: './schemas/requests.yaml#/ExecuteBehaviorTreeRequest'
+
+    ExecuteBehaviorTreeResponse:
+      $ref: './schemas/responses.yaml#/ExecuteBehaviorTreeResponse'

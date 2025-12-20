@@ -1,0 +1,94 @@
+BehaviorTree:
+  type: object
+  properties:
+    tree_id:
+      type: string
+    name:
+      type: string
+    description:
+      type: string
+    root_node:
+      $ref: '#/BehaviorNode'
+    variables:
+      type: object
+      additionalProperties: true
+    created_at:
+      type: string
+      format: date-time
+    updated_at:
+      type: string
+      format: date-time
+  required:
+    - tree_id
+    - name
+    - root_node
+
+BehaviorNode:
+  type: object
+  properties:
+    node_id:
+      type: string
+    node_type:
+      type: string
+      enum: [SEQUENCE, SELECTOR, DECORATOR, LEAF, COMPOSITE]
+    name:
+      type: string
+    description:
+      type: string
+    children:
+      type: array
+      items:
+        $ref: '#/BehaviorNode'
+    conditions:
+      type: array
+      items:
+        $ref: '#/BehaviorCondition'
+    actions:
+      type: array
+      items:
+        $ref: '#/BehaviorAction'
+    parameters:
+      type: object
+      additionalProperties: true
+  required:
+    - node_id
+    - node_type
+    - name
+
+BehaviorCondition:
+  type: object
+  properties:
+    condition_type:
+      type: string
+      enum: [DISTANCE, HEALTH, TIME, PLAYER_VISIBLE, IN_COMBAT]
+    operator:
+      type: string
+      enum: [EQUALS, NOT_EQUALS, GREATER_THAN, LESS_THAN, CONTAINS]
+    value:
+      oneOf:
+        - type: number
+        - type: string
+        - type: boolean
+    target:
+      type: string
+  required:
+    - condition_type
+    - operator
+    - value
+
+BehaviorAction:
+  type: object
+  properties:
+    action_type:
+      type: string
+      enum: [MOVE_TO, ATTACK, CAST_SPELL, USE_ITEM, TALK, IDLE, FLEE]
+    target:
+      type: string
+    parameters:
+      type: object
+      additionalProperties: true
+    duration:
+      type: integer
+      minimum: 0
+  required:
+    - action_type

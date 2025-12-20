@@ -9,12 +9,14 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"go.uber.org/zap"
+
+	"necpgame/services/notification-service-go/pkg/api"
 )
 
-// AuthMiddleware представляет middleware для аутентификации
+// AuthMiddleware представляет middleware для аутентификации и реализует api.SecurityHandler
 type AuthMiddleware struct {
-	logger    *zap.Logger
 	jwtSecret []byte
+	logger    *zap.Logger
 }
 
 // NewAuthMiddleware создает новый middleware для аутентификации
@@ -220,7 +222,62 @@ func (rw *responseWriter) WriteHeader(code int) {
 // TokenClaims представляет claims токена
 type TokenClaims struct {
 	UserID    string
-	Role      string
 	Email     string
+	Role      string
 	ExpiresAt time.Time
+}
+
+// ProfilingAuth middleware для ограничения доступа к profiling endpoints
+func (m *AuthMiddleware) ProfilingAuth(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// В production проверять специальные права на profiling
+		// Для development разрешаем с любым Bearer токеном
+		authHeader := r.Header.Get("Authorization")
+		if authHeader == "" {
+			m.logger.Warn("Missing authorization for profiling endpoint")
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+
+		// Проверяем Bearer token
+		tokenParts := strings.SplitN(authHeader, " ", 2)
+		if len(tokenParts) != 2 || tokenParts[0] != "Bearer" {
+			m.logger.Warn("Invalid authorization header format for profiling")
+			http.Error(w, "Invalid authorization format", http.StatusUnauthorized)
+			return
+		}
+
+		// Валидируем токен (базовая проверка)
+		_, err := m.validateAccessToken(tokenParts[1])
+		if err != nil {
+			m.logger.Warn("Invalid token for profiling access", zap.Error(err))
+			http.Error(w, "Invalid token", http.StatusUnauthorized)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
+
+// HandleBearerAuth реализует SecurityHandler интерфейс для ogen
+func (m *AuthMiddleware) HandleBearerAuth(ctx context.Context, operationName api.OperationName, t api.BearerAuth) (context.Context, error) {
+	// Валидируем токен
+	claims, err := m.validateAccessToken(t.Token)
+	if err != nil {
+		m.logger.Warn("Invalid Bearer token",
+			zap.String("operation", string(operationName)),
+			zap.Error(err))
+		return ctx, err
+	}
+
+	// Добавляем информацию о пользователе в контекст
+	ctx = context.WithValue(ctx, "user_id", claims.UserID)
+	ctx = context.WithValue(ctx, "user_role", claims.Role)
+	ctx = context.WithValue(ctx, "user_email", claims.Email)
+
+	m.logger.Debug("Bearer auth successful",
+		zap.String("operation", string(operationName)),
+		zap.String("user_id", claims.UserID))
+
+	return ctx, nil
 }

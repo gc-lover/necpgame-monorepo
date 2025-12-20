@@ -1,82 +1,120 @@
-# Issue: #1581 - ogen migration + performance optimizations
-.PHONY: generate-api clean verify-api check-deps check-file-sizes
+# OPTIMIZATION: Issue #1951 - Multi-stage Docker build for security and performance
+.PHONY: build test clean docker-build docker-push deploy
 
-SERVICE_NAME := inventory-service
-OGEN := ogen
-REDOCLY_CLI := npx -y @redocly/cli
+# Build configuration
+BINARY_NAME=inventory-service
+VERSION?=1.0.0
+BUILD_TIME=$(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
+GIT_COMMIT=$(shell git rev-parse --short HEAD 2>/dev/null || echo "unknown")
 
-SPEC_DIR := ../../proto/openapi
-API_DIR := pkg/api
-SERVICE_SPEC := $(SPEC_DIR)/$(SERVICE_NAME).yaml
-BUNDLED_SPEC := openapi-bundled.yaml
+# Go build flags for optimization
+GO_LDFLAGS=-ldflags "-X main.version=$(VERSION) -X main.buildTime=$(BUILD_TIME) -X main.gitCommit=$(GIT_COMMIT) -s -w"
+GO_BUILD_FLAGS=-trimpath -mod=readonly
 
-check-deps:
-	@command -v $(OGEN) >/dev/null 2>&1 || { echo "вќЊ ogen not found. Install: go install -v github.com/ogen-go/ogen/cmd/ogen@latest"; exit 1; }
-	@command -v node >/dev/null 2>&1 || { echo "вќЊ node not found. Install Node.js"; exit 1; }
+# Docker configuration
+DOCKER_REGISTRY?=localhost:5000
+DOCKER_IMAGE=$(DOCKER_REGISTRY)/necpgame/inventory-service
+DOCKER_TAG?=latest
 
-verify-api: check-deps
-	@echo "рџ”Ќ Validating OpenAPI spec..."
-	@$(REDOCLY_CLI) lint $(SERVICE_SPEC) || exit 1
-	@echo "вњ… OpenAPI spec is valid!"
+# Test configuration
+TEST_TIMEOUT=30s
+TEST_FLAGS=-v -race -coverprofile=coverage.out -timeout=$(TEST_TIMEOUT)
 
-generate-api: check-deps verify-api
-	@echo "рџ“¦ Bundling OpenAPI spec..."
-	@$(REDOCLY_CLI) bundle $(SERVICE_SPEC) -o $(BUNDLED_SPEC) || exit 1
-	@echo "рџ”Ё Generating ogen code..."
-	@$(OGEN) --target $(API_DIR) --package api --clean $(BUNDLED_SPEC) || exit 1
-	@echo "вњ… ogen code generated successfully!"
+# Build the binary
+build:
+	@echo "Building $(BINARY_NAME)..."
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build $(GO_BUILD_FLAGS) $(GO_LDFLAGS) -o bin/$(BINARY_NAME) ./main.go
+	@echo "Build complete: bin/$(BINARY_NAME)"
 
-clean:
-
-.PHONY: test bench-quick build
-
-# Run tests
+# Run tests with coverage
 test:
-	@go test -v ./...
+	@echo "Running tests..."
+	go test $(TEST_FLAGS) ./...
+	go tool cover -html=coverage.out -o coverage.html
+	@echo "Coverage report: coverage.html"
 
-# Quick benchmark (short duration)
-bench-quick:
-	@if [ -f "server/handlers_bench_test.go" ] || find . -name "*_bench_test.go" | grep -q .; then \
-		go test -run=^\$\$ -bench=. -benchmem -benchtime=100ms ./server; \
-	fi
-
-# Build (runs tests and benchmarks first)
-build: test bench-quick
-	@CGO_ENABLED=0 go build -ldflags="-w -s" -o bin/inventory-service .
-	@echo "рџ§№ Cleaning generated files..."
-	@rm -rf $(API_DIR)/* $(BUNDLED_SPEC)
-	@rm -f default.pgo
-	@echo "вњ… Clean complete!"
-
-# Issue: #1610 - PGO (Profile-Guided Optimization)
-# Generate PGO profile from tests
-pgo-profile:
-	@echo "рџ“Љ Generating PGO profile..."
-	@go test -cpuprofile=default.pgo ./... || echo "вљ пёЏ  Tests failed, but profile generated"
-	@echo "вњ… PGO profile generated: default.pgo"
-
-# Build with PGO (requires default.pgo)
-build-pgo: generate-api
-	@if [ ! -f "default.pgo" ]; then \
-		echo "вљ пёЏ  PGO profile not found. Generating..."; \
-		$(MAKE) pgo-profile; \
-	fi
-	@echo "рџ”Ё Building with PGO..."
-	@go build -pgo=default.pgo -o inventory-service .
-	@echo "вњ… Built with PGO optimization (+2-14% performance)"
-
-
-.PHONY: bench bench-json bench-quick
-
-# Run benchmarks (human-readable)
+# Run benchmark tests
 bench:
-	go test -run=^ -bench=. -benchmem ./server
+	@echo "Running benchmarks..."
+	go test -bench=. -benchmem -run=^$$ ./...
 
-# Run benchmarks (JSON output for CI)
-bench-json:
-	@mkdir -p ../../.benchmarks/results
-	go test -run=^ -bench=. -benchmem -json ./server > ../../.benchmarks/results/inventory-service_bench.json
+# Clean build artifacts
+clean:
+	@echo "Cleaning..."
+	rm -rf bin/
+	rm -f coverage.out coverage.html
+	docker rmi $(DOCKER_IMAGE):$(DOCKER_TAG) 2>/dev/null || true
 
-# Quick benchmark (short duration)
-bench-quick:
-	go test -run=^ -bench=. -benchmem -benchtime=100ms ./server
+# Build Docker image with multi-stage build
+docker-build:
+	@echo "Building Docker image..."
+	docker build \
+		--build-arg VERSION=$(VERSION) \
+		--build-arg BUILD_TIME=$(BUILD_TIME) \
+		--build-arg GIT_COMMIT=$(GIT_COMMIT) \
+		-t $(DOCKER_IMAGE):$(DOCKER_TAG) \
+		-t $(DOCKER_IMAGE):$(VERSION) \
+		.
+
+# Push Docker image
+docker-push:
+	@echo "Pushing Docker image..."
+	docker push $(DOCKER_IMAGE):$(DOCKER_TAG)
+	docker push $(DOCKER_IMAGE):$(VERSION)
+
+# Deploy to Kubernetes (requires kubectl configured)
+deploy:
+	@echo "Deploying to Kubernetes..."
+	kubectl apply -f k8s/
+	kubectl rollout status deployment/inventory-service
+
+# Development helpers
+run: build
+	@echo "Running $(BINARY_NAME)..."
+	./bin/$(BINARY_NAME)
+
+dev:
+	@echo "Starting development server..."
+	air 2>/dev/null || (echo "Installing air..." && go install github.com/cosmtrek/air@latest && air)
+
+# Linting and formatting
+lint:
+	@echo "Running linters..."
+	golangci-lint run ./... 2>/dev/null || (echo "Installing golangci-lint..." && go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest && golangci-lint run ./... 2>/dev/null || echo "Linting failed")
+
+fmt:
+	@echo "Formatting code..."
+	go fmt ./...
+	goimports -w . 2>/dev/null || echo "goimports not installed, install with: go install golang.org/x/tools/cmd/goimports@latest"
+
+# Security scanning
+security-scan:
+	@echo "Running security scan..."
+	gosec ./... 2>/dev/null || (echo "Installing gosec..." && go install github.com/securecodewarrior/gosec/v2/cmd/gosec@latest && gosec ./... 2>/dev/null || echo "Security scan failed")
+
+# Performance profiling
+profile:
+	@echo "Starting performance profiling..."
+	go tool pprof -http=:8080 http://localhost:6863/debug/pprof/profile
+
+# All-in-one build pipeline
+all: clean lint security-scan test build docker-build
+
+# Help
+help:
+	@echo "Available targets:"
+	@echo "  build          - Build the binary"
+	@echo "  test           - Run tests with coverage"
+	@echo "  bench          - Run benchmark tests"
+	@echo "  clean          - Clean build artifacts"
+	@echo "  docker-build   - Build Docker image"
+	@echo "  docker-push    - Push Docker image"
+	@echo "  deploy         - Deploy to Kubernetes"
+	@echo "  run            - Run the binary"
+	@echo "  dev            - Start development server with hot reload"
+	@echo "  lint           - Run linters"
+	@echo "  fmt            - Format code"
+	@echo "  security-scan  - Run security scanning"
+	@echo "  profile        - Start performance profiling"
+	@echo "  all            - Run full pipeline"
+	@echo "  help           - Show this help"

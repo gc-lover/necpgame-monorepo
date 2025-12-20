@@ -1,0 +1,153 @@
+openapi: 3.0.3
+info:
+  title: Combat Service API
+  version: 1.0.0
+  description: |
+    API for managing combat mechanics in MMOFPS RPG.
+    Handles real-time combat, damage calculations, status effects, and combat resolution.
+    Optimized for 60+ FPS with sub-50ms response times.
+
+servers:
+  - url: http://localhost:8080
+    description: Development server
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Combat
+    description: Combat operations and mechanics
+  - name: Status Effects
+    description: Status effects management
+  - name: Damage
+    description: Damage calculation and application
+
+paths:
+  /combat/health:
+    get:
+      tags:
+        - Combat
+      summary: Health check for Combat Service
+      operationId: healthCheck
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "healthy"
+
+  /combat/initiate:
+    $ref: './paths/combat.yaml#/initiate'
+
+  /combat/{combatId}/status:
+    $ref: './paths/combat.yaml#/status'
+
+  /combat/{combatId}/action:
+    $ref: './paths/combat.yaml#/action'
+
+  /combat/{combatId}/end:
+    $ref: './paths/combat.yaml#/end'
+
+  /status-effects/{characterId}:
+    $ref: './paths/status-effects.yaml#/get'
+
+  /status-effects/{characterId}/apply:
+    $ref: './paths/status-effects.yaml#/apply'
+
+  /damage/calculate:
+    $ref: './paths/damage.yaml#/calculate'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    InternalError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+        message:
+          type: string
+      required:
+        - code
+        - message
+
+    # Common schemas
+    Vector3:
+      $ref: './schemas/common.yaml#/Vector3'
+
+    StatusEffect:
+      $ref: './schemas/status-effects.yaml#/StatusEffect'
+
+    DamageResult:
+      $ref: './schemas/damage.yaml#/DamageResult'
+
+    CombatParticipant:
+      $ref: './schemas/combat.yaml#/CombatParticipant'
+
+    CombatEvent:
+      $ref: './schemas/combat.yaml#/CombatEvent'
+
+    LootItem:
+      $ref: './schemas/combat.yaml#/LootItem'
+
+    DamageModifier:
+      $ref: './schemas/damage.yaml#/DamageModifier'
+
+    # Request/Response schemas
+    InitiateCombatRequest:
+      $ref: './schemas/requests.yaml#/InitiateCombatRequest'
+
+    InitiateCombatResponse:
+      $ref: './schemas/responses.yaml#/InitiateCombatResponse'
+
+    CombatStatusResponse:
+      $ref: './schemas/responses.yaml#/CombatStatusResponse'
+
+    CombatActionRequest:
+      $ref: './schemas/requests.yaml#/CombatActionRequest'
+
+    CombatActionResponse:
+      $ref: './schemas/responses.yaml#/CombatActionResponse'
+
+    EndCombatResponse:
+      $ref: './schemas/responses.yaml#/EndCombatResponse'
+
+    StatusEffectsResponse:
+      $ref: './schemas/responses.yaml#/StatusEffectsResponse'
+
+    ApplyStatusEffectRequest:
+      $ref: './schemas/requests.yaml#/ApplyStatusEffectRequest'
+
+    ApplyStatusEffectResponse:
+      $ref: './schemas/responses.yaml#/ApplyStatusEffectResponse'
+
+    DamageCalculationRequest:
+      $ref: './schemas/requests.yaml#/DamageCalculationRequest'
+
+    DamageCalculationResponse:
+      $ref: './schemas/responses.yaml#/DamageCalculationResponse'

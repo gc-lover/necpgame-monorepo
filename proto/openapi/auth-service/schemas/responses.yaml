@@ -1,0 +1,272 @@
+RegisterResponse:
+  type: object
+  properties:
+    user_id:
+      type: string
+    username:
+      type: string
+    email:
+      type: string
+    display_name:
+      type: string
+    created_at:
+      type: integer
+      format: int64
+    email_verification_required:
+      type: boolean
+    welcome_message:
+      type: string
+  required:
+    - user_id
+    - username
+    - email
+    - created_at
+
+LoginResponse:
+  type: object
+  properties:
+    user:
+      $ref: '#/UserInfo'
+    access_token:
+      type: string
+    refresh_token:
+      type: string
+    token_type:
+      type: string
+      default: "Bearer"
+    expires_in:
+      type: integer
+      description: Access token expiration time in seconds
+    refresh_expires_in:
+      type: integer
+      description: Refresh token expiration time in seconds
+    session_id:
+      type: string
+    requires_password_change:
+      type: boolean
+      default: false
+    mfa_required:
+      type: boolean
+      default: false
+  required:
+    - user
+    - access_token
+    - refresh_token
+    - token_type
+    - expires_in
+    - refresh_expires_in
+    - session_id
+
+LogoutResponse:
+  type: object
+  properties:
+    message:
+      type: string
+      example: "Successfully logged out"
+    sessions_invalidated:
+      type: integer
+      minimum: 1
+  required:
+    - message
+
+RefreshTokenResponse:
+  type: object
+  properties:
+    access_token:
+      type: string
+    refresh_token:
+      type: string
+    token_type:
+      type: string
+      default: "Bearer"
+    expires_in:
+      type: integer
+    session_id:
+      type: string
+  required:
+    - access_token
+    - token_type
+    - expires_in
+
+ValidateTokenResponse:
+  type: object
+  properties:
+    valid:
+      type: boolean
+    user:
+      $ref: '#/UserInfo'
+    session_id:
+      type: string
+    expires_at:
+      type: integer
+      format: int64
+    permissions:
+      type: array
+      items:
+        type: string
+    roles:
+      type: array
+      items:
+        type: string
+  required:
+    - valid
+
+UserInfo:
+  type: object
+  properties:
+    user_id:
+      type: string
+    username:
+      type: string
+    email:
+      type: string
+    display_name:
+      type: string
+    avatar_url:
+      type: string
+    level:
+      type: integer
+      minimum: 1
+    experience:
+      type: integer
+      minimum: 0
+    guild_name:
+      type: string
+    last_login:
+      type: integer
+      format: int64
+    account_status:
+      type: string
+      enum: [ACTIVE, SUSPENDED, BANNED, PENDING_VERIFICATION]
+    created_at:
+      type: integer
+      format: int64
+  required:
+    - user_id
+    - username
+    - email
+    - account_status
+
+GetSessionsResponse:
+  type: object
+  properties:
+    sessions:
+      type: array
+      items:
+        $ref: '#/SessionInfo'
+    total_sessions:
+      type: integer
+      minimum: 0
+    active_sessions:
+      type: integer
+      minimum: 0
+  required:
+    - sessions
+    - total_sessions
+    - active_sessions
+
+SessionInfo:
+  type: object
+  properties:
+    session_id:
+      type: string
+    device_info:
+      $ref: '../requests.yaml#/DeviceInfo'
+    ip_address:
+      type: string
+    location:
+      type: string
+    created_at:
+      type: integer
+      format: int64
+    last_activity:
+      type: integer
+      format: int64
+    expires_at:
+      type: integer
+      format: int64
+    is_current:
+      type: boolean
+  required:
+    - session_id
+    - created_at
+    - last_activity
+    - expires_at
+
+InvalidateSessionsResponse:
+  type: object
+  properties:
+    message:
+      type: string
+      example: "All sessions invalidated"
+    sessions_invalidated:
+      type: integer
+      minimum: 0
+  required:
+    - message
+    - sessions_invalidated
+
+InvalidateSessionResponse:
+  type: object
+  properties:
+    message:
+      type: string
+      example: "Session invalidated"
+    session_id:
+      type: string
+  required:
+    - message
+    - session_id
+
+OAuth2CallbackResponse:
+  type: object
+  properties:
+    user:
+      $ref: '#/UserInfo'
+    access_token:
+      type: string
+    refresh_token:
+      type: string
+    token_type:
+      type: string
+      default: "Bearer"
+    expires_in:
+      type: integer
+    provider:
+      type: string
+      enum: [google, discord, steam, epic_games]
+    linked_accounts:
+      type: array
+      items:
+        type: string
+  required:
+    - user
+    - access_token
+    - provider
+
+PasswordResetResponse:
+  type: object
+  properties:
+    message:
+      type: string
+      example: "Password reset email sent"
+    email:
+      type: string
+    reset_token_expires_in:
+      type: integer
+      description: Token expiration time in seconds
+  required:
+    - message
+    - email
+
+ConfirmPasswordResetResponse:
+  type: object
+  properties:
+    message:
+      type: string
+      example: "Password reset successfully"
+    user_id:
+      type: string
+  required:
+    - message
+    - user_id

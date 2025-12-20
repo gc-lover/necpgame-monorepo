@@ -1,0 +1,233 @@
+// Issue: #146073424
+package server
+
+import (
+	"fmt"
+	"math/rand"
+	"net/http"
+	"sync"
+	"time"
+
+	"go.uber.org/zap"
+)
+
+// ServiceDiscovery управляет обнаружением микросервисов
+type ServiceDiscovery struct {
+	serviceRegistryURL string
+	services           map[string][]ServiceInstance
+	mutex              sync.RWMutex
+	logger             *zap.Logger
+	httpClient         *http.Client
+}
+
+// ServiceInstance представляет экземпляр микросервиса
+type ServiceInstance struct {
+	ID       string
+	Name     string
+	URL      string
+	Health   string
+	Status   string
+	LastSeen time.Time
+}
+
+// NewServiceDiscovery создает новый service discovery
+func NewServiceDiscovery(registryURL string, logger *zap.Logger) *ServiceDiscovery {
+	return &ServiceDiscovery{
+		serviceRegistryURL: registryURL,
+		services:           make(map[string][]ServiceInstance),
+		logger:             logger,
+		httpClient: &http.Client{
+			Timeout: 5 * time.Second,
+		},
+	}
+}
+
+// GetServiceURL возвращает URL здорового экземпляра сервиса
+func (sd *ServiceDiscovery) GetServiceURL(serviceName string) (string, error) {
+	sd.mutex.RLock()
+	instances, exists := sd.services[serviceName]
+	sd.mutex.RUnlock()
+
+	if !exists || len(instances) == 0 {
+		return "", fmt.Errorf("no instances found for service: %s", serviceName)
+	}
+
+	// Фильтруем только здоровые экземпляры
+	healthyInstances := make([]ServiceInstance, 0)
+	for _, instance := range instances {
+		if instance.Status == "healthy" {
+			healthyInstances = append(healthyInstances, instance)
+		}
+	}
+
+	if len(healthyInstances) == 0 {
+		return "", fmt.Errorf("no healthy instances found for service: %s", serviceName)
+	}
+
+	// Load balancing: round-robin (упрощенная версия)
+	selected := healthyInstances[rand.Intn(len(healthyInstances))]
+
+	sd.logger.Debug("Service instance selected",
+		zap.String("service", serviceName),
+		zap.String("instance_id", selected.ID),
+		zap.String("url", selected.URL))
+
+	return selected.URL, nil
+}
+
+// RegisterService регистрирует экземпляр сервиса
+func (sd *ServiceDiscovery) RegisterService(instance ServiceInstance) {
+	sd.mutex.Lock()
+	defer sd.mutex.Unlock()
+
+	instances := sd.services[instance.Name]
+	// Проверяем, существует ли уже такой экземпляр
+	for i, existing := range instances {
+		if existing.ID == instance.ID {
+			// Обновляем существуюший
+			instances[i] = instance
+			sd.logger.Info("Service instance updated",
+				zap.String("service", instance.Name),
+				zap.String("instance_id", instance.ID))
+			return
+		}
+	}
+
+	// Добавляем новый
+	sd.services[instance.Name] = append(instances, instance)
+	sd.logger.Info("Service instance registered",
+		zap.String("service", instance.Name),
+		zap.String("instance_id", instance.ID),
+		zap.String("url", instance.URL))
+}
+
+// DeregisterService удаляет экземпляр сервиса
+func (sd *ServiceDiscovery) DeregisterService(serviceName, instanceID string) {
+	sd.mutex.Lock()
+	defer sd.mutex.Unlock()
+
+	instances := sd.services[serviceName]
+	for i, instance := range instances {
+		if instance.ID == instanceID {
+			// Удаляем экземпляр
+			sd.services[serviceName] = append(instances[:i], instances[i+1:]...)
+			sd.logger.Info("Service instance deregistered",
+				zap.String("service", serviceName),
+				zap.String("instance_id", instanceID))
+			break
+		}
+	}
+}
+
+// CheckServiceHealth проверяет здоровье сервиса
+func (sd *ServiceDiscovery) CheckServiceHealth(serviceName string) error {
+	sd.mutex.RLock()
+	instances, exists := sd.services[serviceName]
+	sd.mutex.RUnlock()
+
+	if !exists || len(instances) == 0 {
+		return fmt.Errorf("service not found: %s", serviceName)
+	}
+
+	// Проверяем здоровье всех экземпляров
+	for _, instance := range instances {
+		if err := sd.checkInstanceHealth(instance); err != nil {
+			sd.logger.Warn("Service instance unhealthy",
+				zap.String("service", serviceName),
+				zap.String("instance_id", instance.ID),
+				zap.Error(err))
+
+			// Обновляем статус
+			sd.updateInstanceStatus(instance.Name, instance.ID, "unhealthy")
+		} else {
+			sd.updateInstanceStatus(instance.Name, instance.ID, "healthy")
+		}
+	}
+
+	return nil
+}
+
+// checkInstanceHealth проверяет здоровье конкретного экземпляра
+func (sd *ServiceDiscovery) checkInstanceHealth(instance ServiceInstance) error {
+	healthURL := instance.Health
+	if healthURL == "" {
+		healthURL = instance.URL + "/health"
+	}
+
+	resp, err := sd.httpClient.Get(healthURL)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("health check failed with status: %d", resp.StatusCode)
+	}
+
+	return nil
+}
+
+// updateInstanceStatus обновляет статус экземпляра
+func (sd *ServiceDiscovery) updateInstanceStatus(serviceName, instanceID, status string) {
+	sd.mutex.Lock()
+	defer sd.mutex.Unlock()
+
+	instances := sd.services[serviceName]
+	for i, instance := range instances {
+		if instance.ID == instanceID {
+			instances[i].Status = status
+			instances[i].LastSeen = time.Now()
+			break
+		}
+	}
+}
+
+// GetServiceInstances возвращает все экземпляры сервиса
+func (sd *ServiceDiscovery) GetServiceInstances(serviceName string) []ServiceInstance {
+	sd.mutex.RLock()
+	defer sd.mutex.RUnlock()
+
+	instances, exists := sd.services[serviceName]
+	if !exists {
+		return []ServiceInstance{}
+	}
+
+	// Возвращаем копию для безопасности
+	result := make([]ServiceInstance, len(instances))
+	copy(result, instances)
+	return result
+}
+
+// HealthCheck проверяет здоровье service discovery
+func (sd *ServiceDiscovery) HealthCheck() error {
+	// Проверяем подключение к registry (если используется Consul/Etcd)
+	// Пока просто возвращаем успех
+	return nil
+}
+
+// GetStats возвращает статистику service discovery
+func (sd *ServiceDiscovery) GetStats() map[string]interface{} {
+	sd.mutex.RLock()
+	defer sd.mutex.RUnlock()
+
+	totalInstances := 0
+	healthyInstances := 0
+
+	for _, instances := range sd.services {
+		totalInstances += len(instances)
+		for _, instance := range instances {
+			if instance.Status == "healthy" {
+				healthyInstances++
+			}
+		}
+	}
+
+	stats := map[string]interface{}{
+		"services_count":    len(sd.services),
+		"total_instances":   totalInstances,
+		"healthy_instances": healthyInstances,
+		"registry_url":      sd.serviceRegistryURL,
+	}
+
+	return stats
+}

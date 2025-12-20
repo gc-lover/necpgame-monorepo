@@ -1,0 +1,220 @@
+# Issue: #2173
+metadata:
+  id: mechanics-combat-cyberpsychosis-combat-states
+  title: 'Combat Mechanics: Cyberpsychosis Combat States'
+  document_type: mechanics
+  category: combat
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-12-20T00:00:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-12-20T00:00:00Z
+  owners:
+    - role: game_design_director
+      contact: gamedesign@necp.game
+  tags:
+    - combat
+    - cyberpsychosis
+    - mental-health
+    - combat-states
+  topics:
+    - combat-mechanics
+    - mental-health
+    - risk-reward
+    - player-choice
+  related_systems:
+    - combat-service
+    - mental-health-service
+    - ui-system
+  related_documents:
+    - id: mechanics-combat-cyberpsychosis-mechanics
+      relation: extends
+    - id: mechanics-mental-health-psychosis-stages
+      relation: references
+    - id: mechanics-combat-abilities-quickhacks
+      relation: references
+  source: shared/docs/knowledge/mechanics/combat/cyberpsychosis-combat-states.md
+  visibility: internal
+  audience:
+    - game-design
+    - balance
+    - backend
+    - qa
+  risk_level: high
+review:
+  chain:
+    - role: game_design_director
+      reviewer: Combat Balance Review Cell
+      reviewed_at: 2025-12-20T00:00:00Z
+      status: approved
+  next_actions: []
+summary:
+  problem: Cyberpsychosis как механика не была интегрирована в боевую систему, что приводило к несбалансированному геймплею.
+  goal: Создать систему боевых состояний cyberpsychosis с четкими механиками, рисками и наградами.
+  essence: Документ определяет 5 уровней боевого психоза с соответствующими баффами, дебаффами и условиями активации.
+  key_points:
+    - 5 уровней психоза от "Focused" до "Delirious"
+    - Каждый уровень имеет уникальные боевые эффекты
+    - Система cooldown и recovery между состояниями
+    - Интеграция с UI и аудио для иммерсии
+    - Балансные параметры для предотвращения абьюза
+content:
+  sections:
+    - id: overview
+      title: Обзор системы Cyberpsychosis Combat States
+      body: |
+        **Cyberpsychosis Combat States** - система временных боевых состояний, активируемых высоким уровнем имплантов и стрессом боя.
+        Игрок может добровольно входить в эти состояния для получения мощных баффов, но с риском потери контроля.
+
+        **Ключевые принципы:**
+        - **Риск vs Награда**: Мощные баффы компенсируются рисками для здоровья и контроля
+        - **Прогрессивная эскалация**: Каждый уровень усиливает эффекты, но увеличивает риски
+        - **Recovery система**: Время восстановления между состояниями
+        - **Контекстная активация**: Активация только в бою или при высоком стрессе
+
+    - id: state_levels
+      title: Уровни боевых состояний
+      body: |
+        **Level 1: Focused (Сосредоточенный)**
+        - **Триггер**: 70%+ имплантов, combat stress > 50
+        - **Баффы**: +20% accuracy, +15% crit chance, +10% damage
+        - **Дебаффы**: -5% health regen, minor vision distortion
+        - **Длительность**: 30 сек, cooldown 5 мин
+        - **Риск**: 5% chance minor bleed
+
+        **Level 2: Enhanced (Усиленный)**
+        - **Триггер**: 75%+ имплантов, combat stress > 70
+        - **Баффы**: +35% accuracy, +25% crit chance, +20% damage, +10% move speed
+        - **Дебаффы**: -15% health regen, vision blur, minor hallucinations
+        - **Длительность**: 45 сек, cooldown 8 мин
+        - **Риск**: 10% chance bleed, 5% chance temporary debuff
+
+        **Level 3: Overclocked (Разогнанный)**
+        - **Триггер**: 80%+ имплантов, combat stress > 85
+        - **Баффы**: +50% accuracy, +40% crit chance, +35% damage, +20% move speed, +15% fire rate
+        - **Дебаффы**: -25% health regen, severe vision distortion, audio hallucinations
+        - **Длительность**: 60 сек, cooldown 12 мин
+        - **Риск**: 20% chance bleed, 10% chance random ability activation
+
+        **Level 4: Frenzied (Бешеный)**
+        - **Триггер**: 85%+ имплантов, combat stress > 95, или принудительно
+        - **Баффы**: +70% accuracy, +60% crit chance, +50% damage, +30% move speed, +25% fire rate, melee boost
+        - **Дебаффы**: -40% health regen, severe hallucinations, -20% friendly fire immunity
+        - **Длительность**: 90 сек, cooldown 20 мин
+        - **Риск**: 35% chance bleed, 15% chance self-damage, 5% chance permanent psychosis increase
+
+        **Level 5: Delirious (Бредовый)**
+        - **Триггер**: 90%+ имплантов, near-death state, или extreme stress
+        - **Баффы**: +100% accuracy, +80% crit chance, +70% damage, +50% move speed, god-mode for 10 sec
+        - **Дебаффы**: -60% health regen, complete loss of control, random targeting
+        - **Длительность**: 120 сек, cooldown 45 мин
+        - **Риск**: 50% chance bleed, 25% chance self-destruct, 10% chance permanent psychosis
+
+    - id: activation_mechanics
+      title: Механики активации
+      body: |
+        **Автоматическая активация:**
+        - Combat stress threshold (calculated from damage taken, enemies killed, time in combat)
+        - Implant percentage (total chrome level / max capacity)
+        - Stacking conditions (multiple triggers = higher level)
+
+        **Ручная активация:**
+        - UI button during combat (cooldown based on last activation)
+        - Quickhack injection (consumes resources)
+        - Emergency override (when near death)
+
+        **Force deactivation:**
+        - Health drops below 20%
+        - Time limit expires
+        - Manual cancel (with penalties)
+        - Environmental triggers (EMP, jamming)
+
+    - id: ui_audio_feedback
+      title: UI и аудио обратная связь
+      body: |
+        **Визуальные эффекты:**
+        - Screen tint (red for Frenzied, purple for Delirious)
+        - UI overlays with combat stats
+        - Particle effects around player
+        - Distortion shaders for hallucinations
+
+        **Аудио эффекты:**
+        - Heartbeat intensification
+        - Voice modulation (deeper, distorted)
+        - Background noise (whispers, static)
+        - Combat music changes
+
+        **HUD изменения:**
+        - Enhanced crosshair
+        - Damage numbers
+        - State indicator with timer
+        - Risk warnings
+
+    - id: balance_considerations
+      title: Балансные соображения
+      body: |
+        **Power scaling:**
+        - Base multipliers: 1.0x → 2.0x damage at max level
+        - Diminishing returns: Each level costs exponentially more resources
+        - Counterplay: Enemies with anti-cyberware abilities
+
+        **Risk mitigation:**
+        - Recovery items reduce cooldown
+        - Ripperdoc treatments stabilize psychosis
+        - Player choice: Opt-out of system entirely
+
+        **Progression balance:**
+        - Early game: Focused only (tutorial level)
+        - Mid game: Up to Enhanced
+        - Late game: All levels available with high risk
+
+    - id: technical_implementation
+      title: Техническая реализация
+      body: |
+        **Backend integration:**
+        - Real-time state tracking in combat-service
+        - Event-driven activation/deactivation
+        - Database persistence for cooldowns
+
+        **Client synchronization:**
+        - State replication across clients
+        - Prediction for smooth transitions
+        - Fallback for connection issues
+
+        **Performance optimization:**
+        - Pre-calculated state modifiers
+        - Efficient event handling
+        - Memory pooling for effects
+
+appendix:
+  glossary:
+    - term: Combat Stress
+      definition: Мера интенсивности боя, рассчитываемая по урону, убийствам и времени
+    - term: Implant Percentage
+      definition: Отношение установленных имплантов к максимальной емкости организма
+    - term: Recovery Cooldown
+      definition: Время, необходимое для восстановления после выхода из состояния
+    - term: Force Deactivation
+      definition: Принудительный выход из состояния по внешним условиям
+  references:
+    - title: Cyberpsychosis Base Mechanics
+      link: ../../../mechanics/combat/cyberpsychosis-mechanics.yaml
+    - title: Mental Health System
+      link: ../../../mechanics/mental-health/mental-health-system.yaml
+    - title: Combat Balance Guidelines
+      link: ../../../mechanics/combat/combat-balance-guidelines.yaml
+  decisions: []
+implementation:
+  github_issue: ???
+  needs_task: false
+  queue_reference:
+    - shared/trackers/queues/concept/queued.yaml
+  blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-12-20
+    author: game_design_director
+    changes: Созданы боевые состояния cyberpsychosis с 5 уровнями, механиками активации и балансом.
+validation:
+  checksum: ''
+  schema_version: '1.0'

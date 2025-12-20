@@ -1,0 +1,400 @@
+openapi: 3.0.3
+info:
+  title: Clan War Service API
+  description: |
+    API для управления системой клановых войн в NECPGAME.
+    Обеспечивает объявление войн, управление фазами, территориями, сражениями и наградами.
+  version: 1.0.0
+  contact:
+    name: Clan War Team
+    email: clan-war@necp.game
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production server
+  - url: https://staging-api.necp.game/v1
+    description: Staging server
+  - url: http://localhost:8087/v1
+    description: Local development
+
+security:
+  - BearerAuth: []
+  - ApiKeyAuth: []
+
+paths:
+  # Управление войнами
+  /world/clan-war/declare:
+    post:
+      summary: Объявить клановую войну
+      description: |
+        Объявляет войну между двумя кланами.
+        Проверяет требования (размер кланов, cooldown) и создаёт запись войны.
+      operationId: declareClanWar
+      tags:
+        - War Management
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - attackerClanId
+                - defenderClanId
+              properties:
+                attackerClanId:
+                  type: string
+                  format: uuid
+                  description: ID атакующего клана
+                defenderClanId:
+                  type: string
+                  format: uuid
+                  description: ID защищающегося клана
+                alliesAttacker:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+                  description: Союзники атакующего
+                  maxItems: 3
+                alliesDefender:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+                  description: Союзники защищающегося
+                  maxItems: 3
+                preparationHours:
+                  type: integer
+                  minimum: 1
+                  maximum: 72
+                  default: 24
+                  description: Длительность фазы подготовки в часах
+                activeDays:
+                  type: integer
+                  minimum: 1
+                  maximum: 14
+                  default: 7
+                  description: Длительность активной фазы в днях
+      responses:
+        "201":
+          description: Война объявлена успешно
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClanWar"
+          headers:
+            Location:
+              schema:
+                type: string
+                format: uri
+              description: URL созданной войны
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "403":
+          description: Недостаточно прав для объявления войны
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Один из кланов уже участвует в войне или cooldown не истёк
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: Нарушены требования к войне (размер кланов и т.д.)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /world/clan-war/{warId}:
+    get:
+      summary: Получить информацию о клановой войне
+      description: Возвращает подробную информацию о клановой войне
+      operationId: getClanWar
+      tags:
+        - War Management
+      parameters:
+        - name: warId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID войны
+      responses:
+        "200":
+          description: Успешный ответ с информацией о войне
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClanWar"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+    delete:
+      summary: Отменить клановую войну
+      description: |
+        Отменяет клановую войну до начала активной фазы.
+        Доступно только участникам войны или администраторам.
+      operationId: cancelClanWar
+      tags:
+        - War Management
+      parameters:
+        - name: warId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID войны
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  maxLength: 500
+                  description: Причина отмены
+      responses:
+        "204":
+          description: Война отменена
+        "403":
+          description: Недостаточно прав для отмены войны
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Войну нельзя отменить (уже в активной фазе)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /world/clan-war/active:
+    get:
+      summary: Получить список активных клановых войн
+      description: |
+        Возвращает список активных клановых войн с фильтрацией.
+        Поддерживает пагинацию для больших списков.
+      operationId: getActiveClanWars
+      tags:
+        - War Management
+      parameters:
+        - name: clanId
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Фильтр по участию клана
+        - name: phase
+          in: query
+          schema:
+            type: string
+            enum: [PREPARATION, ACTIVE, ENDING]
+          description: Фильтр по фазе войны
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Количество элементов на страницу
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          description: Смещение для пагинации
+      responses:
+        "200":
+          description: Успешный ответ со списком активных войн
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  wars:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/ClanWar"
+                  pagination:
+                    $ref: "#/components/schemas/PaginationInfo"
+                  total:
+                    type: integer
+                    description: Общее количество активных войн
+                required:
+                  - wars
+                  - total
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  # Управление фазами
+  /world/clan-war/{warId}/phase:
+    get:
+      summary: Получить текущую фазу войны
+      description: Возвращает информацию о текущей фазе клановой войны
+      operationId: getWarPhase
+      tags:
+        - War Phases
+      parameters:
+        - name: warId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID войны
+      responses:
+        "200":
+          description: Успешный ответ с информацией о фазе
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  warId:
+                    type: string
+                    format: uuid
+                    description: ID войны
+                  currentPhase:
+                    type: string
+                    enum: [PREPARATION, ACTIVE, ENDING]
+                    description: Текущая фаза
+                  phaseStartedAt:
+                    type: string
+                    format: date-time
+                    description: Время начала текущей фазы
+                  phaseEndsAt:
+                    type: string
+                    format: date-time
+                    description: Время окончания текущей фазы
+                  timeRemaining:
+                    type: integer
+                    description: Оставшееся время в секундах
+                required:
+                  - warId
+                  - currentPhase
+                  - phaseStartedAt
+                  - phaseEndsAt
+                  - timeRemaining
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+    post:
+      summary: Перейти к следующей фазе войны (admin)
+      description: |
+        Принудительно переводит войну к следующей фазе.
+        Доступно только администраторам для тестирования и аварийных ситуаций.
+      operationId: transitionWarPhase
+      tags:
+        - War Phases
+      parameters:
+        - name: warId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID войны
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - targetPhase
+              properties:
+                targetPhase:
+                  type: string
+                  enum: [PREPARATION, ACTIVE, ENDING, ENDED]
+                  description: Целевая фаза для перехода
+                reason:
+                  type: string
+                  maxLength: 255
+                  description: Причина принудительного перехода
+      responses:
+        "200":
+          description: Фаза войны изменена
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClanWar"
+        "403":
+          description: Недостаточно прав для изменения фазы
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Переход к указанной фазе невозможен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  # Управление территориями
+  /world/clan-war/territories:
+    get:
+      summary: Получить список территорий
+      description: |
+        Возвращает список всех территорий доступных для клановых войн.
+        Поддерживает фильтрацию по владельцу и статусу.
+      operationId: getTerritories
+      tags:
+        - Territories
+      parameters:
+        - name: ownerClanId
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Фильтр по владельцу территории
+        - name: isActive
+          in: query
+          schema:
+            type: boolean
+            default: true
+          description: Показывать только активные территории
+        - name: resourceType
+          in: query
+          schema:
+            type: string
+            enum: [ORE, ENERGY, DATA, MIXED]
+          description: Фильтр по типу ресурсов
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+          description: Количество элементов на страницу
+        - name: offset
+          in: query
+          schema:
+            type: integer
