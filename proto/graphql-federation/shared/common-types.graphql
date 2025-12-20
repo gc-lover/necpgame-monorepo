@@ -1,0 +1,462 @@
+# Issue: #2038
+# Shared Common Types for GraphQL Federation
+# Common types used across all subgraphs
+
+# Scalar types
+scalar DateTime
+scalar UUID
+scalar JSON
+scalar BigInt
+
+# Common enums
+enum SortDirection {
+  ASC
+  DESC
+}
+
+enum Status {
+  ACTIVE
+  INACTIVE
+  PENDING
+  SUSPENDED
+  DELETED
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum Quality {
+  POOR
+  COMMON
+  GOOD
+  EXCELLENT
+  MASTERWORK
+  LEGENDARY
+}
+
+# Common input types
+input PaginationInput {
+  first: Int
+  after: String
+  last: Int
+  before: String
+}
+
+input SortingInput {
+  field: String!
+  direction: SortDirection!
+}
+
+input FilterInput {
+  field: String!
+  operator: FilterOperator!
+  value: String!
+}
+
+input DateRangeInput {
+  start: DateTime!
+  end: DateTime!
+}
+
+input IntRangeInput {
+  min: Int
+  max: Int
+}
+
+input FloatRangeInput {
+  min: Float
+  max: Float
+}
+
+enum FilterOperator {
+  EQ
+  NE
+  GT
+  GTE
+  LT
+  LTE
+  IN
+  NIN
+  CONTAINS
+  STARTS_WITH
+  ENDS_WITH
+  REGEX
+}
+
+# Common result types
+type PageInfo {
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  startCursor: String
+  endCursor: String
+}
+
+type ConnectionMeta {
+  totalCount: Int!
+  filteredCount: Int!
+  pageInfo: PageInfo!
+}
+
+# Common error types
+type Error {
+  code: String!
+  message: String!
+  field: String
+  details: JSON
+}
+
+type ValidationError {
+  field: String!
+  message: String!
+  code: String!
+  value: String
+}
+
+type Result {
+  success: Boolean!
+  errors: [Error!]
+  warnings: [String!]
+}
+
+# Common metadata types
+type Metadata {
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  createdBy: String
+  updatedBy: String
+  version: Int!
+  tags: [String!]
+}
+
+type AuditTrail {
+  createdAt: DateTime!
+  createdBy: String!
+  action: AuditAction!
+  details: JSON
+  ipAddress: String
+  userAgent: String
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  READ
+  EXECUTE
+  LOGIN
+  LOGOUT
+}
+
+# Common coordinate and spatial types
+type Vector2 {
+  x: Float!
+  y: Float!
+}
+
+type Vector3 {
+  x: Float!
+  y: Float!
+  z: Float!
+}
+
+type Coordinates {
+  latitude: Float!
+  longitude: Float!
+  altitude: Float
+}
+
+type BoundingBox {
+  min: Vector3!
+  max: Vector3!
+}
+
+type GeoPoint {
+  type: String! # "Point"
+  coordinates: [Float!]! # [longitude, latitude]
+}
+
+# Common ID types
+type IDReference {
+  id: ID!
+  type: String!
+  name: String
+}
+
+# Common time-related types
+type TimeRange {
+  start: DateTime!
+  end: DateTime!
+  duration: BigInt!
+}
+
+type Schedule {
+  cron: String
+  timezone: String
+  nextExecution: DateTime
+  enabled: Boolean!
+}
+
+# Common metric types
+type MetricValue {
+  timestamp: DateTime!
+  value: Float!
+  unit: String
+  tags: JSON
+}
+
+type MetricSeries {
+  name: String!
+  values: [MetricValue!]!
+  aggregation: MetricAggregation!
+}
+
+enum MetricAggregation {
+  SUM
+  AVG
+  MIN
+  MAX
+  COUNT
+  PERCENTILE_50
+  PERCENTILE_95
+  PERCENTILE_99
+}
+
+# Common configuration types
+type ConfigOption {
+  key: String!
+  value: String!
+  type: ConfigType!
+  required: Boolean!
+  description: String
+  validation: String
+}
+
+enum ConfigType {
+  STRING
+  INT
+  FLOAT
+  BOOLEAN
+  JSON
+  LIST
+  SECRET
+}
+
+# Common notification types
+type Notification {
+  id: ID!
+  type: NotificationType!
+  title: String!
+  message: String!
+  priority: Priority!
+  recipient: IDReference!
+  sender: IDReference
+  createdAt: DateTime!
+  expiresAt: DateTime
+  read: Boolean!
+  actions: [NotificationAction!]
+  metadata: JSON
+}
+
+enum NotificationType {
+  INFO
+  WARNING
+  ERROR
+  SUCCESS
+  SYSTEM
+  SOCIAL
+  GAME
+  COMMERCIAL
+}
+
+type NotificationAction {
+  label: String!
+  action: String!
+  url: String
+  data: JSON
+}
+
+# Common event types
+type Event {
+  id: ID!
+  type: String!
+  source: String!
+  timestamp: DateTime!
+  data: JSON!
+  metadata: EventMetadata!
+}
+
+type EventMetadata {
+  correlationId: String
+  causationId: String
+  userId: ID
+  sessionId: String
+  version: String
+  tags: [String!]
+}
+
+# Common permission types
+type Permission {
+  resource: String!
+  action: String!
+  conditions: JSON
+}
+
+type Role {
+  id: ID!
+  name: String!
+  description: String
+  permissions: [Permission!]!
+  inherits: [ID!]
+  metadata: Metadata!
+}
+
+# Common search types
+input SearchInput {
+  query: String!
+  fields: [String!]
+  filters: [FilterInput!]
+  sorting: [SortingInput!]
+  pagination: PaginationInput
+}
+
+type SearchResult {
+  items: [SearchResultItem!]!
+  facets: JSON
+  totalCount: Int!
+  took: Int!
+}
+
+type SearchResultItem {
+  id: ID!
+  type: String!
+  title: String!
+  description: String
+  score: Float!
+  highlights: JSON
+  metadata: JSON
+}
+
+# Common rate limiting types
+type RateLimit {
+  limit: Int!
+  remaining: Int!
+  resetTime: DateTime!
+  window: Int!
+}
+
+type ThrottleStatus {
+  throttled: Boolean!
+  reason: String
+  retryAfter: Int
+  limit: RateLimit
+}
+
+# Common health check types
+type HealthCheck {
+  name: String!
+  status: HealthStatus!
+  responseTime: BigInt!
+  message: String
+  timestamp: DateTime!
+  details: JSON
+}
+
+enum HealthStatus {
+  PASS
+  WARN
+  FAIL
+  UNKNOWN
+}
+
+type HealthSummary {
+  status: HealthStatus!
+  totalChecks: Int!
+  passedChecks: Int!
+  failedChecks: Int!
+  warningChecks: Int!
+  responseTime: BigInt!
+  timestamp: DateTime!
+}
+
+# Common cache types
+type CacheEntry {
+  key: String!
+  value: String!
+  ttl: Int
+  createdAt: DateTime!
+  accessedAt: DateTime!
+  hits: Int!
+}
+
+type CacheStats {
+  hits: BigInt!
+  misses: BigInt!
+  sets: BigInt!
+  deletes: BigInt!
+  hitRate: Float!
+  totalKeys: BigInt!
+  memoryUsage: BigInt!
+}
+
+# Common file types
+type FileInfo {
+  id: ID!
+  name: String!
+  path: String!
+  size: BigInt!
+  mimeType: String!
+  checksum: String!
+  uploadedAt: DateTime!
+  uploadedBy: IDReference!
+  metadata: JSON
+}
+
+type FileUploadResult {
+  file: FileInfo!
+  url: String!
+  thumbnailUrl: String
+  success: Boolean!
+  error: String
+}
+
+# Common localization types
+type LocalizedString {
+  key: String!
+  defaultValue: String!
+  translations: JSON!
+}
+
+type Locale {
+  code: String!
+  name: String!
+  nativeName: String!
+  enabled: Boolean!
+}
+
+# Common versioning types
+type Version {
+  major: Int!
+  minor: Int!
+  patch: Int!
+  preRelease: String
+  build: String
+  full: String!
+}
+
+type VersionHistory {
+  versions: [VersionInfo!]!
+  current: Version!
+  latest: Version!
+}
+
+type VersionInfo {
+  version: Version!
+  releasedAt: DateTime!
+  changelog: String
+  breaking: Boolean!
+  downloads: BigInt!
+}

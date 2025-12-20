@@ -1,0 +1,767 @@
+# Issue: #2038
+# Economy Domain Subgraph - GraphQL Federation
+# Handles trading, auctions, crafting, currencies, and economic systems
+
+type Query {
+  # Item and inventory queries
+  item(id: ID!): Item
+  items(filter: ItemFilter, pagination: PaginationInput): ItemConnection
+  userInventory(userId: ID!, filter: InventoryFilter): [InventoryItem]
+  itemTemplates(filter: ItemTemplateFilter): [ItemTemplate]
+
+  # Market queries
+  marketListings(filter: MarketListingFilter, pagination: PaginationInput): MarketListingConnection
+  marketOrders(userId: ID!, filter: MarketOrderFilter): [MarketOrder]
+  marketStats(timeframe: MarketTimeframe): MarketStats
+  priceHistory(itemId: ID!, timeframe: MarketTimeframe): [PricePoint]
+
+  # Auction queries
+  auctions(filter: AuctionFilter, pagination: PaginationInput): AuctionConnection
+  auction(id: ID!): Auction
+  userBids(userId: ID!): [AuctionBid]
+  auctionHistory(userId: ID!, filter: AuctionHistoryFilter): [AuctionResult]
+
+  # Trading queries
+  trades(userId: ID!, filter: TradeFilter, pagination: PaginationInput): TradeConnection
+  tradeOffers(userId: ID!): [TradeOffer]
+  tradeHistory(userId: ID!, timeframe: TradeTimeframe): [Trade]
+
+  # Currency queries
+  currencies: [Currency!]!
+  userBalances(userId: ID!): [CurrencyBalance!]!
+  currencyExchangeRates: [CurrencyExchange!]!
+
+  # Crafting queries
+  recipes(filter: RecipeFilter): [Recipe]
+  userRecipes(userId: ID!): [UserRecipe]
+  craftingQueue(userId: ID!): [CraftingJob]
+
+  # Economic analytics
+  economicDashboard(userId: ID!): EconomicDashboard
+  marketTrends(category: ItemCategory, timeframe: MarketTimeframe): MarketTrends
+}
+
+type Mutation {
+  # Item mutations
+  createItem(input: CreateItemInput!): Item!
+  updateItem(id: ID!, input: UpdateItemInput!): Item!
+  deleteItem(id: ID!): Boolean!
+  transferItem(fromUserId: ID!, toUserId: ID!, itemId: ID!, quantity: Int!): TransferResult!
+
+  # Market mutations
+  createMarketListing(input: CreateMarketListingInput!): MarketListing!
+  updateMarketListing(id: ID!, input: UpdateMarketListingInput!): MarketListing!
+  cancelMarketListing(id: ID!): Boolean!
+  purchaseMarketListing(listingId: ID!, buyerId: ID!, quantity: Int!): PurchaseResult!
+
+  # Auction mutations
+  createAuction(input: CreateAuctionInput!): Auction!
+  placeBid(auctionId: ID!, bidderId: ID!, amount: Int!): AuctionBid!
+  cancelAuction(id: ID!): Boolean!
+  endAuction(id: ID!): AuctionResult!
+
+  # Trading mutations
+  createTradeOffer(input: CreateTradeOfferInput!): TradeOffer!
+  acceptTradeOffer(offerId: ID!): TradeResult!
+  declineTradeOffer(offerId: ID!): Boolean!
+  cancelTradeOffer(offerId: ID!): Boolean!
+
+  # Currency mutations
+  transferCurrency(fromUserId: ID!, toUserId: ID!, currencyId: ID!, amount: Int!): CurrencyTransferResult!
+  exchangeCurrency(fromCurrencyId: ID!, toCurrencyId: ID!, amount: Int!, userId: ID!): CurrencyExchangeResult!
+
+  # Crafting mutations
+  startCrafting(recipeId: ID!, userId: ID!, quantity: Int!): CraftingJob!
+  cancelCrafting(jobId: ID!): Boolean!
+  collectCraftingResult(jobId: ID!): CraftingResult!
+
+  # Economic actions
+  createShop(userId: ID!, input: CreateShopInput!): Shop!
+  updateShop(shopId: ID!, input: UpdateShopInput!): Shop!
+  addShopItem(shopId: ID!, input: AddShopItemInput!): ShopItem!
+  removeShopItem(shopId: ID!, itemId: ID!): Boolean!
+}
+
+# Extended entities from federation
+type User @key(fields: "id") @key(fields: "email") {
+  id: ID! @external
+  email: String! @external
+  username: String! @external
+  createdAt: DateTime! @external
+  profile: UserProfile @external
+  stats: UserStats @external
+
+  # Economy extensions
+  inventory: [InventoryItem!]!
+  marketListings: [MarketListing!]!
+  auctions: [Auction!]!
+  trades: [Trade!]!
+  currencyBalances: [CurrencyBalance!]!
+  shops: [Shop!]!
+  craftingJobs: [CraftingJob!]!
+}
+
+type Item @key(fields: "id") {
+  id: ID!
+  template: ItemTemplate!
+  name: String!
+  type: ItemType!
+  rarity: ItemRarity!
+  level: Int!
+  stats: ItemStats!
+  enchantments: [Enchantment!]!
+  durability: Int!
+  maxDurability: Int!
+  owner: User
+  marketPrice: Int
+  createdAt: DateTime!
+  metadata: ItemMetadata
+}
+
+type ItemTemplate @key(fields: "id") {
+  id: ID!
+  name: String!
+  type: ItemType!
+  baseRarity: ItemRarity!
+  baseStats: ItemStats!
+  possibleEnchantments: [EnchantmentType!]!
+  craftable: Boolean!
+  recipe: Recipe
+  marketData: ItemMarketData!
+}
+
+# Economy-specific entities
+type InventoryItem @key(fields: "userId itemId") {
+  userId: ID!
+  itemId: ID!
+  item: Item!
+  quantity: Int!
+  acquiredAt: DateTime!
+  source: ItemSource!
+  equipped: Boolean!
+  slot: EquipmentSlot
+}
+
+type MarketListing @key(fields: "id") {
+  id: ID!
+  item: Item!
+  seller: User!
+  price: Int!
+  currency: Currency!
+  quantity: Int!
+  quantitySold: Int!
+  listedAt: DateTime!
+  expiresAt: DateTime
+  status: ListingStatus!
+  buyers: [MarketTransaction!]!
+}
+
+type MarketOrder @key(fields: "id") {
+  id: ID!
+  user: User!
+  itemTemplate: ItemTemplate!
+  orderType: OrderType!
+  price: Int!
+  quantity: Int!
+  quantityFilled: Int!
+  createdAt: DateTime!
+  expiresAt: DateTime
+  status: OrderStatus!
+  transactions: [MarketTransaction!]!
+}
+
+type Auction @key(fields: "id") {
+  id: ID!
+  item: Item!
+  seller: User!
+  startingPrice: Int!
+  currentPrice: Int!
+  currency: Currency!
+  bids: [AuctionBid!]!
+  highestBid: AuctionBid
+  startedAt: DateTime!
+  endsAt: DateTime!
+  status: AuctionStatus!
+  winner: User
+}
+
+type AuctionBid @key(fields: "id") {
+  id: ID!
+  auction: Auction!
+  bidder: User!
+  amount: Int!
+  bidAt: DateTime!
+  isWinning: Boolean!
+}
+
+type TradeOffer @key(fields: "id") {
+  id: ID!
+  initiator: User!
+  recipient: User!
+  offeredItems: [TradeItem!]!
+  requestedItems: [TradeItem!]!
+  currencyOffered: Int!
+  currencyRequested: Int!
+  message: String
+  createdAt: DateTime!
+  expiresAt: DateTime
+  status: TradeOfferStatus!
+}
+
+type Trade @key(fields: "id") {
+  id: ID!
+  participants: [User!]!
+  items: [TradeItem!]!
+  currencyTransferred: Int!
+  executedAt: DateTime!
+  tradeType: TradeType!
+  marketValue: Int!
+}
+
+type Currency @key(fields: "id") {
+  id: ID!
+  name: String!
+  symbol: String!
+  type: CurrencyType!
+  totalSupply: Int!
+  circulatingSupply: Int!
+  exchangeRates: [CurrencyExchange!]!
+}
+
+type CurrencyBalance @key(fields: "userId currencyId") {
+  userId: ID!
+  currencyId: ID!
+  currency: Currency!
+  balance: Int!
+  lastUpdated: DateTime!
+  transactions: [CurrencyTransaction!]!
+}
+
+type Recipe @key(fields: "id") {
+  id: ID!
+  name: String!
+  output: RecipeOutput!
+  ingredients: [RecipeIngredient!]!
+  craftingTime: Int!
+  levelRequired: Int!
+  skillRequired: String
+  successRate: Float!
+  category: RecipeCategory!
+}
+
+type CraftingJob @key(fields: "id") {
+  id: ID!
+  user: User!
+  recipe: Recipe!
+  quantity: Int!
+  startedAt: DateTime!
+  estimatedCompletion: DateTime!
+  status: CraftingStatus!
+  progress: Float!
+  result: CraftingResult
+}
+
+type Shop @key(fields: "id") {
+  id: ID!
+  owner: User!
+  name: String!
+  description: String
+  items: [ShopItem!]!
+  createdAt: DateTime!
+  status: ShopStatus!
+  reputation: Float!
+  totalSales: Int!
+}
+
+type ShopItem @key(fields: "shopId itemId") {
+  shopId: ID!
+  itemId: ID!
+  item: Item!
+  price: Int!
+  currency: Currency!
+  quantity: Int!
+  sold: Int!
+  listedAt: DateTime!
+}
+
+# Supporting types
+type ItemStats {
+  damage: Int
+  defense: Int
+  health: Int
+  speed: Float
+  criticalChance: Float
+  criticalDamage: Float
+  magicDamage: Int
+  magicDefense: Int
+}
+
+type Enchantment {
+  type: EnchantmentType!
+  level: Int!
+  value: Float!
+  duration: Int
+}
+
+type ItemMetadata {
+  customName: String
+  customDescription: String
+  tags: [String!]!
+  createdBy: String
+  edition: String
+}
+
+type ItemMarketData {
+  averagePrice: Int!
+  totalTraded: Int!
+  priceHistory: [PricePoint!]!
+  trend: PriceTrend!
+}
+
+type PricePoint {
+  timestamp: DateTime!
+  price: Int!
+  volume: Int!
+}
+
+type MarketStats {
+  totalListings: Int!
+  totalValue: Int!
+  mostTradedItems: [ItemMarketData!]!
+  marketActivity: MarketActivity!
+}
+
+type MarketTrends {
+  category: ItemCategory!
+  timeframe: MarketTimeframe!
+  averagePriceChange: Float!
+  volumeChange: Float!
+  topGainers: [ItemMarketData!]!
+  topLosers: [ItemMarketData!]!
+}
+
+type AuctionResult @key(fields: "id") {
+  id: ID!
+  auction: Auction!
+  winner: User!
+  finalPrice: Int!
+  completedAt: DateTime!
+  transaction: MarketTransaction!
+}
+
+type TradeItem {
+  item: Item!
+  quantity: Int!
+}
+
+type CurrencyExchange {
+  fromCurrency: Currency!
+  toCurrency: Currency!
+  rate: Float!
+  lastUpdated: DateTime!
+}
+
+type CurrencyTransaction @key(fields: "id") {
+  id: ID!
+  user: User!
+  currency: Currency!
+  amount: Int!
+  type: TransactionType!
+  description: String!
+  occurredAt: DateTime!
+  relatedTrade: Trade
+}
+
+type RecipeOutput {
+  itemTemplate: ItemTemplate!
+  quantity: Int!
+  quality: ItemQuality!
+}
+
+type RecipeIngredient {
+  itemTemplate: ItemTemplate!
+  quantity: Int!
+  quality: ItemQuality
+}
+
+type CraftingResult {
+  success: Boolean!
+  items: [Item!]!
+  experienceGained: Int!
+  failed: Boolean!
+  failureReason: String
+}
+
+type MarketTransaction @key(fields: "id") {
+  id: ID!
+  buyer: User!
+  seller: User!
+  item: Item!
+  quantity: Int!
+  price: Int!
+  currency: Currency!
+  executedAt: DateTime!
+  transactionType: TransactionType!
+}
+
+type EconomicDashboard @key(fields: "userId") {
+  userId: ID!
+  totalWealth: Int!
+  portfolioValue: Int!
+  recentTransactions: [CurrencyTransaction!]!
+  marketActivity: MarketActivity!
+  craftingProgress: [CraftingJob!]!
+}
+
+type MarketActivity {
+  recentTrades: Int!
+  activeAuctions: Int!
+  marketListings: Int!
+  priceVolatility: Float!
+}
+
+# Enums
+enum ItemType {
+  WEAPON
+  ARMOR
+  CONSUMABLE
+  MATERIAL
+  QUEST_ITEM
+  TOOL
+  ACCESSORY
+}
+
+enum ItemRarity {
+  COMMON
+  UNCOMMON
+  RARE
+  EPIC
+  LEGENDARY
+  MYTHIC
+}
+
+enum ItemCategory {
+  WEAPONS
+  ARMOR
+  CONSUMABLES
+  MATERIALS
+  TOOLS
+  ACCESSORIES
+}
+
+enum ItemQuality {
+  POOR
+  COMMON
+  GOOD
+  EXCELLENT
+  MASTERWORK
+  LEGENDARY
+}
+
+enum ItemSource {
+  CRAFTED
+  PURCHASED
+  LOOTED
+  REWARDED
+  TRADED
+  QUEST
+}
+
+enum EquipmentSlot {
+  HEAD
+  CHEST
+  LEGS
+  FEET
+  HANDS
+  WEAPON_MAIN
+  WEAPON_OFF
+  ACCESSORY_1
+  ACCESSORY_2
+  ACCESSORY_3
+}
+
+enum ListingStatus {
+  ACTIVE
+  SOLD_OUT
+  EXPIRED
+  CANCELLED
+}
+
+enum OrderType {
+  BUY
+  SELL
+}
+
+enum OrderStatus {
+  ACTIVE
+  PARTIALLY_FILLED
+  FILLED
+  CANCELLED
+  EXPIRED
+}
+
+enum AuctionStatus {
+  ACTIVE
+  ENDED
+  CANCELLED
+}
+
+enum TradeOfferStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  EXPIRED
+  CANCELLED
+}
+
+enum TradeType {
+  DIRECT
+  MARKET
+  AUCTION
+}
+
+enum CurrencyType {
+  FIAT
+  CRYPTO
+  INGAME
+  PREMIUM
+}
+
+enum TransactionType {
+  DEPOSIT
+  WITHDRAWAL
+  TRANSFER
+  TRADE
+  PURCHASE
+  SALE
+  REWARD
+  PENALTY
+}
+
+enum RecipeCategory {
+  WEAPONS
+  ARMOR
+  CONSUMABLES
+  MATERIALS
+  TOOLS
+  ACCESSORIES
+}
+
+enum CraftingStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum ShopStatus {
+  OPEN
+  CLOSED
+  MAINTENANCE
+}
+
+enum EnchantmentType {
+  DAMAGE_BOOST
+  DEFENSE_BOOST
+  SPEED_BOOST
+  HEALTH_BOOST
+  CRITICAL_CHANCE
+  CRITICAL_DAMAGE
+  MAGIC_DAMAGE
+  MAGIC_DEFENSE
+}
+
+enum PriceTrend {
+  RISING
+  FALLING
+  STABLE
+}
+
+enum MarketTimeframe {
+  HOUR
+  DAY
+  WEEK
+  MONTH
+  YEAR
+}
+
+enum TradeTimeframe {
+  DAY
+  WEEK
+  MONTH
+  YEAR
+  ALL_TIME
+}
+
+# Input types
+input ItemFilter {
+  type: ItemType
+  rarity: ItemRarity
+  level: IntRange
+  owner: ID
+  category: ItemCategory
+}
+
+input InventoryFilter {
+  type: ItemType
+  rarity: ItemRarity
+  equipped: Boolean
+  slot: EquipmentSlot
+}
+
+input ItemTemplateFilter {
+  type: ItemType
+  rarity: ItemRarity
+  craftable: Boolean
+  category: ItemCategory
+}
+
+input MarketListingFilter {
+  itemType: ItemType
+  rarity: ItemRarity
+  price: IntRange
+  seller: ID
+  status: ListingStatus
+}
+
+input MarketOrderFilter {
+  orderType: OrderType
+  status: OrderStatus
+  itemTemplate: ID
+}
+
+input AuctionFilter {
+  itemType: ItemType
+  rarity: ItemRarity
+  status: AuctionStatus
+  seller: ID
+  price: IntRange
+}
+
+input AuctionHistoryFilter {
+  timeframe: TradeTimeframe
+  wonOnly: Boolean
+  itemType: ItemType
+}
+
+input TradeFilter {
+  participant: ID
+  tradeType: TradeType
+  timeframe: TradeTimeframe
+  minValue: Int
+}
+
+input RecipeFilter {
+  category: RecipeCategory
+  levelRequired: IntRange
+  skillRequired: String
+}
+
+input CreateItemInput {
+  templateId: ID!
+  ownerId: ID!
+  quantity: Int!
+  metadata: ItemMetadataInput
+}
+
+input UpdateItemInput {
+  name: String
+  metadata: ItemMetadataInput
+  durability: Int
+}
+
+input ItemMetadataInput {
+  customName: String
+  customDescription: String
+  tags: [String!]
+}
+
+input CreateMarketListingInput {
+  itemId: ID!
+  sellerId: ID!
+  price: Int!
+  currencyId: ID!
+  quantity: Int!
+  expiresInHours: Int
+}
+
+input UpdateMarketListingInput {
+  price: Int
+  quantity: Int
+}
+
+input CreateAuctionInput {
+  itemId: ID!
+  sellerId: ID!
+  startingPrice: Int!
+  currencyId: ID!
+  durationHours: Int!
+}
+
+input CreateTradeOfferInput {
+  recipientId: ID!
+  offeredItemIds: [ID!]!
+  requestedItemIds: [ID!]!
+  currencyOffered: Int!
+  currencyRequested: Int!
+  message: String
+}
+
+input CreateShopInput {
+  name: String!
+  description: String
+}
+
+input UpdateShopInput {
+  name: String
+  description: String
+  status: ShopStatus
+}
+
+input AddShopItemInput {
+  itemId: ID!
+  price: Int!
+  currencyId: ID!
+  quantity: Int!
+}
+
+# Result types
+type TransferResult {
+  success: Boolean!
+  transferredQuantity: Int!
+  error: String
+}
+
+type PurchaseResult {
+  success: Boolean!
+  transaction: MarketTransaction!
+  error: String
+}
+
+type TradeResult {
+  success: Boolean!
+  trade: Trade!
+  error: String
+}
+
+type CurrencyTransferResult {
+  success: Boolean!
+  transaction: CurrencyTransaction!
+  error: String
+}
+
+type CurrencyExchangeResult {
+  success: Boolean!
+  fromTransaction: CurrencyTransaction!
+  toTransaction: CurrencyTransaction!
+  error: String
+}
+
+# Federation requirement
+extend type PlayerProfile @key(fields: "id") {
+  id: ID! @external
+  inventory: [InventoryItem!]!
+  currencyBalances: [CurrencyBalance!]!
+  recentTrades: [Trade!]!
+}

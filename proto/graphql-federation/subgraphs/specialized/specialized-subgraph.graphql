@@ -1,0 +1,864 @@
+# Issue: #2038
+# Specialized Domain Subgraph - GraphQL Federation
+# Handles combat, crafting, effects, interactive objects, mechanics
+
+type Query {
+  # Combat queries
+  combatSession(id: ID!): CombatSession
+  combatSessions(filter: CombatSessionFilter, pagination: PaginationInput): CombatSessionConnection
+  activeCombats(userId: ID!): [CombatSession]
+  combatStats(userId: ID!): CombatStats
+  combatHistory(userId: ID!, filter: CombatHistoryFilter): [CombatResult]
+
+  # Crafting queries
+  craftingRecipe(id: ID!): CraftingRecipe
+  craftingRecipes(filter: CraftingRecipeFilter): [CraftingRecipe]
+  userCraftingSkills(userId: ID!): [CraftingSkill]
+  craftingQueue(userId: ID!): [CraftingJob]
+  craftingStations(filter: CraftingStationFilter): [CraftingStation]
+
+  # Effects queries
+  statusEffects(userId: ID!): [StatusEffect]
+  activeEffects(userId: ID!): [ActiveEffect]
+  effectTemplates(filter: EffectTemplateFilter): [EffectTemplate]
+
+  # Interactive objects queries
+  interactiveObjects(filter: InteractiveObjectFilter): [InteractiveObject]
+  interactiveObject(id: ID!): InteractiveObject
+  objectInteractions(userId: ID!, objectId: ID!): [ObjectInteraction]
+
+  # Mechanics queries
+  gameMechanics: [GameMechanic!]!
+  mechanicState(userId: ID!, mechanicId: ID!): MechanicState
+  movementState(userId: ID!): MovementState
+  physicsState(userId: ID!): PhysicsState
+}
+
+type Mutation {
+  # Combat mutations
+  createCombatSession(input: CreateCombatSessionInput!): CombatSession!
+  joinCombatSession(sessionId: ID!, userId: ID!): CombatParticipant!
+  leaveCombatSession(sessionId: ID!, userId: ID!): Boolean!
+  updateCombatAction(sessionId: ID!, userId: ID!, action: CombatActionInput!): CombatActionResult!
+  endCombatSession(sessionId: ID!): CombatResult!
+
+  # Crafting mutations
+  startCrafting(recipeId: ID!, userId: ID!, stationId: ID): CraftingJob!
+  cancelCrafting(jobId: ID!): Boolean!
+  completeCrafting(jobId: ID!): CraftingResult!
+  upgradeCraftingSkill(userId: ID!, skillId: ID!, experience: Int!): CraftingSkill!
+
+  # Effects mutations
+  applyEffect(userId: ID!, effectId: ID!, duration: Int): ActiveEffect!
+  removeEffect(userId: ID!, effectId: ID!): Boolean!
+  modifyEffect(userId: ID!, effectId: ID!, modifier: EffectModifierInput!): ActiveEffect!
+
+  # Interactive objects mutations
+  interactWithObject(userId: ID!, objectId: ID!, action: InteractionAction!): InteractionResult!
+  createInteractiveObject(input: CreateInteractiveObjectInput!): InteractiveObject!
+  updateInteractiveObject(id: ID!, input: UpdateInteractiveObjectInput!): InteractiveObject!
+  destroyInteractiveObject(id: ID!): Boolean!
+
+  # Mechanics mutations
+  updateMovementState(userId: ID!, state: MovementStateInput!): MovementState!
+  updatePhysicsState(userId: ID!, state: PhysicsStateInput!): PhysicsState!
+  triggerMechanic(userId: ID!, mechanicId: ID!, parameters: MechanicParametersInput!): MechanicResult!
+}
+
+# Extended entities from federation
+type User @key(fields: "id") @key(fields: "email") {
+  id: ID! @external
+  email: String! @external
+  username: String! @external
+  createdAt: DateTime! @external
+  profile: UserProfile @external
+  stats: UserStats @external
+
+  # Specialized extensions
+  combatStats: CombatStats!
+  craftingSkills: [CraftingSkill!]!
+  activeEffects: [ActiveEffect!]!
+  movementState: MovementState!
+  physicsState: PhysicsState!
+}
+
+type CombatSession @key(fields: "id") {
+  id: ID!
+  gameMode: String!
+  mapId: ID!
+  status: CombatStatus!
+  participants: [CombatParticipant!]!
+  startedAt: DateTime
+  endedAt: DateTime
+  winner: Team
+  settings: CombatSettings!
+  events: [CombatEvent!]!
+  statistics: CombatSessionStats!
+}
+
+type CombatParticipant @key(fields: "userId sessionId") {
+  userId: ID!
+  sessionId: ID!
+  user: User!
+  team: Team!
+  score: Int!
+  kills: Int!
+  deaths: Int!
+  assists: Int!
+  damageDealt: Int!
+  damageTaken: Int!
+  healingDone: Int!
+  status: ParticipantStatus!
+  position: Vector3!
+  abilities: [ActiveAbility!]!
+}
+
+# Specialized domain entities
+type CombatStats @key(fields: "userId") {
+  userId: ID!
+  totalKills: Int!
+  totalDeaths: Int!
+  totalScore: Int!
+  winRate: Float!
+  averageKDA: Float!
+  favoriteWeapon: String
+  favoriteGameMode: String
+  playTime: Int!
+  achievements: [CombatAchievement!]!
+  weaponStats: [WeaponStats!]!
+  skillRatings: [SkillRating!]!
+}
+
+type CombatResult @key(fields: "id") {
+  id: ID!
+  session: CombatSession!
+  winner: Team
+  duration: Int!
+  participants: [CombatParticipant!]!
+  mvp: User
+  rewards: [CombatReward!]!
+}
+
+type CraftingRecipe @key(fields: "id") {
+  id: ID!
+  name: String!
+  description: String!
+  category: CraftingCategory!
+  level: Int!
+  skill: String!
+  ingredients: [CraftingIngredient!]!
+  output: CraftingOutput!
+  craftingTime: Int!
+  successRate: Float!
+  experienceGained: Int!
+  requiredTools: [String!]!
+  requiredStation: CraftingStation
+}
+
+type CraftingSkill @key(fields: "userId skillId") {
+  userId: ID!
+  skillId: ID!
+  level: Int!
+  experience: Int!
+  experienceToNext: Int!
+  specialty: String
+  unlockedRecipes: [CraftingRecipe!]!
+  craftingHistory: [CraftingJob!]!
+}
+
+type CraftingJob @key(fields: "id") {
+  id: ID!
+  user: User!
+  recipe: CraftingRecipe!
+  station: CraftingStation
+  startedAt: DateTime!
+  estimatedCompletion: DateTime!
+  progress: Float!
+  status: CraftingStatus!
+  quality: ItemQuality
+  result: CraftingResult
+}
+
+type CraftingStation @key(fields: "id") {
+  id: ID!
+  name: String!
+  type: StationType!
+  level: Int!
+  efficiency: Float!
+  durability: Int!
+  maxDurability: Int!
+  location: Vector3
+  owner: User
+  activeJobs: [CraftingJob!]!
+  upgrades: [StationUpgrade!]!
+}
+
+type StatusEffect @key(fields: "id") {
+  id: ID!
+  name: String!
+  description: String!
+  type: EffectType!
+  category: EffectCategory!
+  icon: String!
+  duration: Int
+  maxStacks: Int
+  isBeneficial: Boolean!
+  isDispellable: Boolean!
+  stats: EffectStats!
+}
+
+type ActiveEffect @key(fields: "userId effectId") {
+  userId: ID!
+  effectId: ID!
+  effect: StatusEffect!
+  stacks: Int!
+  remainingDuration: Int!
+  appliedAt: DateTime!
+  appliedBy: User
+  source: EffectSource!
+}
+
+type EffectTemplate @key(fields: "id") {
+  id: ID!
+  name: String!
+  baseEffect: StatusEffect!
+  modifiers: [EffectModifier!]!
+  triggers: [EffectTrigger!]!
+  scaling: EffectScaling!
+}
+
+type InteractiveObject @key(fields: "id") {
+  id: ID!
+  name: String!
+  type: ObjectType!
+  position: Vector3!
+  rotation: Vector3!
+  scale: Vector3!
+  health: Int
+  maxHealth: Int
+  state: ObjectState!
+  interactions: [ObjectInteraction!]!
+  properties: ObjectProperties!
+  owner: User
+  createdAt: DateTime!
+}
+
+type ObjectInteraction @key(fields: "id") {
+  id: ID!
+  user: User!
+  object: InteractiveObject!
+  action: InteractionAction!
+  timestamp: DateTime!
+  result: InteractionResult!
+  parameters: InteractionParameters!
+}
+
+type GameMechanic @key(fields: "id") {
+  id: ID!
+  name: String!
+  type: MechanicType!
+  description: String!
+  parameters: MechanicParameters!
+  state: MechanicState!
+  triggers: [MechanicTrigger!]!
+  effects: [MechanicEffect!]!
+}
+
+type MechanicState @key(fields: "userId mechanicId") {
+  userId: ID!
+  mechanicId: ID!
+  mechanic: GameMechanic!
+  enabled: Boolean!
+  parameters: MechanicParameters!
+  lastTriggered: DateTime
+  triggerCount: Int!
+}
+
+type MovementState @key(fields: "userId") {
+  userId: ID!
+  position: Vector3!
+  velocity: Vector3!
+  rotation: Vector3!
+  isGrounded: Boolean!
+  movementType: MovementType!
+  speed: Float!
+  stamina: Float!
+  maxStamina: Float!
+  lastUpdated: DateTime!
+}
+
+type PhysicsState @key(fields: "userId") {
+  userId: ID!
+  position: Vector3!
+  velocity: Vector3!
+  acceleration: Vector3!
+  mass: Float!
+  collisionBox: CollisionBox!
+  isColliding: Boolean!
+  surfaceNormal: Vector3
+  friction: Float!
+  gravity: Float!
+  lastUpdated: DateTime!
+}
+
+# Supporting types
+type Vector3 {
+  x: Float!
+  y: Float!
+  z: Float!
+}
+
+type CombatSettings {
+  maxParticipants: Int!
+  gameMode: String!
+  timeLimit: Int
+  scoreLimit: Int
+  friendlyFire: Boolean!
+  respawnEnabled: Boolean!
+  abilitiesEnabled: Boolean!
+}
+
+type CombatEvent @key(fields: "id") {
+  id: ID!
+  sessionId: ID!
+  type: CombatEventType!
+  timestamp: DateTime!
+  participant: User
+  target: User
+  position: Vector3
+  parameters: CombatEventParameters!
+}
+
+type CombatEventParameters {
+  damage: Int
+  weapon: String
+  ability: String
+  position: Vector3
+  team: Team
+}
+
+type CombatSessionStats {
+  totalDamage: Int!
+  totalHealing: Int!
+  totalKills: Int!
+  averageMatchTime: Float!
+  highestScore: Int!
+  mvp: User
+}
+
+type CombatAchievement @key(fields: "id") {
+  id: ID!
+  name: String!
+  description: String!
+  icon: String!
+  rarity: AchievementRarity!
+  unlockedAt: DateTime!
+  requirements: AchievementRequirements!
+}
+
+type WeaponStats {
+  weaponId: ID!
+  weaponName: String!
+  kills: Int!
+  accuracy: Float!
+  damageDealt: Int!
+  usageTime: Int!
+  favorite: Boolean!
+}
+
+type SkillRating {
+  skill: String!
+  rating: Float!
+  gamesPlayed: Int!
+  improvement: Float!
+}
+
+type CombatReward {
+  type: RewardType!
+  amount: Int!
+  item: Item
+  experience: Int!
+  achievement: CombatAchievement
+}
+
+type CraftingIngredient {
+  itemId: ID!
+  itemName: String!
+  quantity: Int!
+  quality: ItemQuality
+}
+
+type CraftingOutput {
+  itemId: ID!
+  itemName: String!
+  quantity: Int!
+  quality: ItemQuality!
+  bonusStats: ItemStats
+}
+
+type CraftingResult {
+  success: Boolean!
+  items: [Item!]!
+  experienceGained: Int!
+  quality: ItemQuality!
+  failureReason: String
+}
+
+type StationUpgrade {
+  type: UpgradeType!
+  level: Int!
+  effect: String!
+  cost: Int!
+}
+
+type EffectStats {
+  healthModifier: Int
+  damageModifier: Float
+  defenseModifier: Float
+  speedModifier: Float
+  criticalChanceModifier: Float
+  regenerationModifier: Float
+}
+
+type EffectModifier {
+  stat: String!
+  value: Float!
+  type: ModifierType!
+  duration: Int
+}
+
+type EffectTrigger {
+  type: TriggerType!
+  conditions: TriggerConditions!
+  effect: StatusEffect!
+}
+
+type EffectScaling {
+  level: Int!
+  power: Float!
+  duration: Float!
+}
+
+type ObjectProperties {
+  destructible: Boolean!
+  movable: Boolean!
+  interactive: Boolean!
+  respawnable: Boolean!
+  respawnTime: Int
+  maxInteractions: Int
+  currentInteractions: Int!
+}
+
+type InteractionParameters {
+  position: Vector3
+  force: Float
+  duration: Int
+  target: String
+}
+
+type InteractionResult {
+  success: Boolean!
+  message: String!
+  rewards: [InteractionReward!]!
+  effects: [StatusEffect!]!
+  objectStateChange: ObjectState
+}
+
+type MechanicParameters {
+  enabled: Boolean!
+  value: Float
+  stringValue: String
+  vectorValue: Vector3
+}
+
+type MechanicTrigger {
+  type: TriggerType!
+  conditions: TriggerConditions!
+  parameters: MechanicParameters!
+}
+
+type MechanicEffect {
+  type: EffectType!
+  parameters: MechanicParameters!
+  duration: Int
+}
+
+type CollisionBox {
+  center: Vector3!
+  size: Vector3!
+  type: CollisionType!
+}
+
+type InteractionReward {
+  type: RewardType!
+  amount: Int!
+  item: Item
+}
+
+type AchievementRequirements {
+  kills: Int
+  score: Int
+  winStreak: Int
+  playTime: Int
+  accuracy: Float
+}
+
+# Enums
+enum CombatStatus {
+  WAITING
+  ACTIVE
+  FINISHED
+  CANCELLED
+}
+
+enum Team {
+  BLUE
+  RED
+  GREEN
+  YELLOW
+}
+
+enum ParticipantStatus {
+  ACTIVE
+  DEAD
+  SPECTATING
+  DISCONNECTED
+}
+
+enum CombatEventType {
+  PLAYER_JOINED
+  PLAYER_LEFT
+  PLAYER_KILLED
+  DAMAGE_DEALT
+  ABILITY_USED
+  OBJECTIVE_COMPLETED
+  ROUND_STARTED
+  ROUND_ENDED
+}
+
+enum CombatHistoryFilter {
+  LAST_DAY
+  LAST_WEEK
+  LAST_MONTH
+  ALL_TIME
+}
+
+enum CraftingCategory {
+  WEAPONS
+  ARMOR
+  TOOLS
+  CONSUMABLES
+  MATERIALS
+  ACCESSORIES
+}
+
+enum StationType {
+  FORGE
+  WORKBENCH
+  CHEMICAL_LAB
+  ELECTRONICS_LAB
+  MAGIC_WORKSHOP
+  ALCHEMY_LAB
+}
+
+enum CraftingStatus {
+  QUEUED
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum ItemQuality {
+  POOR
+  COMMON
+  GOOD
+  EXCELLENT
+  MASTERWORK
+  LEGENDARY
+}
+
+enum EffectType {
+  BUFF
+  DEBUFF
+  DOT
+  HOT
+  STUN
+  SILENCE
+  ROOT
+  SLOW
+}
+
+enum EffectCategory {
+  COMBAT
+  MOVEMENT
+  REGENERATION
+  DAMAGE
+  DEFENSE
+  UTILITY
+}
+
+enum EffectSource {
+  ABILITY
+  ITEM
+  ENVIRONMENT
+  QUEST
+  SYSTEM
+}
+
+enum ModifierType {
+  FLAT
+  PERCENTAGE
+  MULTIPLY
+}
+
+enum TriggerType {
+  ON_DAMAGE
+  ON_HEAL
+  ON_KILL
+  ON_DEATH
+  ON_CAST
+  PERIODIC
+  ON_CONDITION
+}
+
+enum TriggerConditions {
+  HEALTH_BELOW_25
+  MANA_BELOW_50
+  HAS_BUFF
+  HAS_DEBUFF
+  IN_COMBAT
+  OUT_OF_COMBAT
+}
+
+enum ObjectType {
+  CHEST
+  DOOR
+  LEVER
+  BUTTON
+  CONTAINER
+  VEHICLE
+  TRAP
+  RESOURCE_NODE
+}
+
+enum ObjectState {
+  INTACT
+  DAMAGED
+  DESTROYED
+  ACTIVATED
+  DEACTIVATED
+  LOCKED
+  UNLOCKED
+}
+
+enum InteractionAction {
+  OPEN
+  CLOSE
+  ACTIVATE
+  DEACTIVATE
+  DESTROY
+  REPAIR
+  HARVEST
+  USE
+  EXAMINE
+}
+
+enum MechanicType {
+  MOVEMENT
+  COMBAT
+  CRAFTING
+  SOCIAL
+  ECONOMY
+  EXPLORATION
+}
+
+enum MovementType {
+  WALKING
+  RUNNING
+  SPRINTING
+  CROUCHING
+  JUMPING
+  FALLING
+  SWIMMING
+  FLYING
+}
+
+enum CollisionType {
+  BOX
+  SPHERE
+  CAPSULE
+  MESH
+}
+
+enum RewardType {
+  EXPERIENCE
+  CURRENCY
+  ITEM
+  ACHIEVEMENT
+}
+
+enum AchievementRarity {
+  COMMON
+  UNCOMMON
+  RARE
+  EPIC
+  LEGENDARY
+}
+
+enum UpgradeType {
+  EFFICIENCY
+  DURABILITY
+  SPEED
+  QUALITY
+  CAPACITY
+}
+
+# Input types
+input CombatSessionFilter {
+  gameMode: String
+  status: CombatStatus
+  participantCount: IntRange
+  startedAfter: DateTime
+}
+
+input CreateCombatSessionInput {
+  gameMode: String!
+  mapId: ID!
+  maxParticipants: Int!
+  settings: CombatSettingsInput
+}
+
+input CombatActionInput {
+  type: CombatActionType!
+  targetId: ID
+  position: Vector3
+  parameters: CombatActionParametersInput
+}
+
+input CombatActionParametersInput {
+  weaponId: ID
+  abilityId: ID
+  direction: Vector3
+  power: Float
+}
+
+input CraftingRecipeFilter {
+  category: CraftingCategory
+  level: IntRange
+  skill: String
+}
+
+input CraftingStationFilter {
+  type: StationType
+  level: IntRange
+  available: Boolean
+}
+
+input EffectTemplateFilter {
+  type: EffectType
+  category: EffectCategory
+  beneficial: Boolean
+}
+
+input InteractiveObjectFilter {
+  type: ObjectType
+  state: ObjectState
+  position: PositionFilter
+}
+
+input PositionFilter {
+  x: FloatRange
+  y: FloatRange
+  z: FloatRange
+}
+
+input CombatSettingsInput {
+  timeLimit: Int
+  scoreLimit: Int
+  friendlyFire: Boolean
+  respawnEnabled: Boolean
+  abilitiesEnabled: Boolean
+}
+
+input EffectModifierInput {
+  stat: String!
+  value: Float!
+  type: ModifierType!
+  duration: Int
+}
+
+input CreateInteractiveObjectInput {
+  name: String!
+  type: ObjectType!
+  position: Vector3!
+  properties: ObjectPropertiesInput
+}
+
+input UpdateInteractiveObjectInput {
+  position: Vector3
+  rotation: Vector3
+  scale: Vector3
+  health: Int
+  state: ObjectState
+  properties: ObjectPropertiesInput
+}
+
+input ObjectPropertiesInput {
+  destructible: Boolean
+  movable: Boolean
+  interactive: Boolean
+  respawnable: Boolean
+  respawnTime: Int
+  maxInteractions: Int
+}
+
+input MovementStateInput {
+  position: Vector3!
+  velocity: Vector3!
+  rotation: Vector3!
+  movementType: MovementType!
+}
+
+input PhysicsStateInput {
+  velocity: Vector3
+  acceleration: Vector3
+  mass: Float
+  friction: Float
+}
+
+input MechanicParametersInput {
+  enabled: Boolean
+  value: Float
+  stringValue: String
+  vectorValue: Vector3
+}
+
+input FloatRange {
+  min: Float
+  max: Float
+}
+
+# Result types
+type CombatActionResult {
+  success: Boolean!
+  actionId: ID!
+  damage: Int
+  effects: [ActiveEffect!]!
+  error: String
+}
+
+type MechanicResult {
+  success: Boolean!
+  state: MechanicState!
+  effects: [MechanicEffect!]!
+  error: String
+}
+
+# Federation requirement
+extend type PlayerProfile @key(fields: "id") {
+  id: ID! @external
+  combatStats: CombatStats!
+  activeEffects: [ActiveEffect!]!
+  movementState: MovementState!
+}

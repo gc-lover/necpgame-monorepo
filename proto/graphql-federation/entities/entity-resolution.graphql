@@ -1,0 +1,506 @@
+# Issue: #2038
+# Entity Resolution Configuration for Apollo Federation 2.0
+# Defines how entities are resolved across subgraphs
+
+# Entity Resolution Rules
+# Each entity type defines which subgraph owns it and how to resolve references
+
+# User Entity - Owned by Auth Subgraph
+# Primary keys: id, email
+# Extensions from: social, economy, specialized, system
+type User @key(fields: "id") @key(fields: "email") {
+  id: ID! @external
+  email: String! @external
+  username: String! @external
+  createdAt: DateTime! @external
+  lastLogin: DateTime @external
+
+  # Auth subgraph fields
+  profile: UserProfile
+  stats: UserStats
+
+  # Social subgraph extensions
+  friends: [User!]! @requires(fields: "id")
+  friendRequests: [FriendRequest!]! @requires(fields: "id")
+  blockedUsers: [User!]! @requires(fields: "id")
+  guilds: [Guild!]! @requires(fields: "id")
+  parties: [Party!]! @requires(fields: "id")
+  reputation: Reputation! @requires(fields: "id")
+  socialStats: SocialStats! @requires(fields: "id")
+
+  # Economy subgraph extensions
+  inventory: [InventoryItem!]! @requires(fields: "id")
+  marketListings: [MarketListing!]! @requires(fields: "id")
+  auctions: [Auction!]! @requires(fields: "id")
+  trades: [Trade!]! @requires(fields: "id")
+  currencyBalances: [CurrencyBalance!]! @requires(fields: "id")
+  shops: [Shop!]! @requires(fields: "id")
+  craftingJobs: [CraftingJob!]! @requires(fields: "id")
+
+  # Specialized subgraph extensions
+  combatStats: CombatStats! @requires(fields: "id")
+  craftingSkills: [CraftingSkill!]! @requires(fields: "id")
+  activeEffects: [ActiveEffect!]! @requires(fields: "id")
+  movementState: MovementState! @requires(fields: "id")
+  physicsState: PhysicsState! @requires(fields: "id")
+
+  # System subgraph extensions
+  websocketSubscriptions: [WebSocketSubscription!]! @requires(fields: "id")
+  rateLimitStatus: RateLimitStatus! @requires(fields: "id")
+  activeSessions: [UserSession!]! @requires(fields: "id")
+}
+
+# Guild Entity - Owned by Social Subgraph
+# Primary keys: id, name
+type Guild @key(fields: "id") @key(fields: "name") {
+  id: ID! @external
+  name: String! @external
+  description: String @external
+  leader: User! @external
+  members: [GuildMember!]! @external
+  level: Int! @external
+  reputation: Int! @external
+  createdAt: DateTime! @external
+
+  # Social subgraph fields
+  territories: [Territory!]!
+  settings: GuildSettings!
+  stats: GuildStats!
+  achievements: [GuildAchievement!]!
+}
+
+# Item Entity - Owned by Economy Subgraph
+# Primary keys: id
+type Item @key(fields: "id") {
+  id: ID! @external
+  template: ItemTemplate! @external
+  name: String! @external
+  type: ItemType! @external
+  rarity: ItemRarity! @external
+  level: Int! @external
+  stats: ItemStats! @external
+  durability: Int! @external
+  maxDurability: Int! @external
+  owner: User @external
+  marketPrice: Int @external
+  createdAt: DateTime! @external
+
+  # Economy subgraph extensions
+  enchantments: [Enchantment!]!
+  metadata: ItemMetadata
+}
+
+# Combat Session Entity - Owned by Specialized Subgraph
+# Primary keys: id
+type CombatSession @key(fields: "id") {
+  id: ID! @external
+  gameMode: String! @external
+  mapId: ID! @external
+  status: CombatStatus! @external
+  participants: [CombatParticipant!]! @external
+  startedAt: DateTime @external
+  endedAt: DateTime @external
+  winner: Team @external
+
+  # Specialized subgraph extensions
+  settings: CombatSettings!
+  events: [CombatEvent!]!
+  statistics: CombatSessionStats!
+}
+
+# World Entity - Owned by World Subgraph (assumed)
+# Primary keys: id
+type World @key(fields: "id") {
+  id: ID! @external
+  name: String! @external
+  type: WorldType! @external
+  regions: [Region!]! @external
+  activePlayers: Int! @external
+  status: WorldStatus! @external
+}
+
+# Cross-Service Entity Extensions
+# These extend entities with fields from multiple subgraphs
+
+# Player Profile - Composite entity across all domains
+type PlayerProfile @key(fields: "id") {
+  id: ID! @external
+
+  # User base data
+  user: User! @requires(fields: "id")
+
+  # Social data
+  guild: Guild @requires(fields: "id")
+  friendships: [Friendship!]! @requires(fields: "id")
+  parties: [Party!]! @requires(fields: "id")
+
+  # Economy data
+  inventory: [InventoryItem!]! @requires(fields: "id")
+  currencyBalances: [CurrencyBalance!]! @requires(fields: "id")
+  recentTrades: [Trade!]! @requires(fields: "id")
+
+  # Combat data
+  combatStats: CombatStats! @requires(fields: "id")
+  activeEffects: [ActiveEffect!]! @requires(fields: "id")
+  movementState: MovementState! @requires(fields: "id")
+
+  # System data
+  websocketSubscriptions: [WebSocketSubscription!]! @requires(fields: "id")
+  activeSessions: [UserSession!]! @requires(fields: "id")
+}
+
+# Supporting Entity Extensions
+type UserProfile @key(fields: "userId") {
+  userId: ID! @external
+  avatar: String @external
+  level: Int! @external
+  experience: Int! @external
+  reputation: Int! @external
+}
+
+type UserStats @key(fields: "userId") {
+  userId: ID! @external
+  totalPlayTime: Int! @external
+  gamesPlayed: Int! @external
+  winRate: Float! @external
+  favoriteWeapon: String @external
+}
+
+type GuildMember @key(fields: "userId guildId") {
+  userId: ID! @external
+  guildId: ID! @external
+  user: User! @requires(fields: "userId")
+  role: GuildRole! @external
+  joinedAt: DateTime! @external
+  contribution: Int! @external
+  lastActivity: DateTime @external
+  permissions: [GuildPermission!]! @external
+}
+
+type Territory @key(fields: "id") {
+  id: ID! @external
+  name: String! @external
+  coordinates: Coordinates! @external
+  controlLevel: Float! @external
+  controllingGuild: Guild @requires(fields: "id")
+  resources: [Resource!]! @external
+  defense: TerritoryDefense! @external
+}
+
+type CombatParticipant @key(fields: "userId sessionId") {
+  userId: ID! @external
+  sessionId: ID! @external
+  user: User! @requires(fields: "userId")
+  team: Team! @external
+  score: Int! @external
+  kills: Int! @external
+  deaths: Int! @external
+  status: ParticipantStatus! @external
+}
+
+type InventoryItem @key(fields: "userId itemId") {
+  userId: ID! @external
+  itemId: ID! @external
+  item: Item! @requires(fields: "itemId")
+  quantity: Int! @external
+  acquiredAt: DateTime! @external
+  source: ItemSource! @external
+}
+
+type CurrencyBalance @key(fields: "userId currencyId") {
+  userId: ID! @external
+  currencyId: ID! @external
+  currency: Currency! @requires(fields: "currencyId")
+  balance: Int! @external
+  lastUpdated: DateTime! @external
+}
+
+type ActiveEffect @key(fields: "userId effectId") {
+  userId: ID! @external
+  effectId: ID! @external
+  effect: StatusEffect! @requires(fields: "effectId")
+  stacks: Int! @external
+  remainingDuration: Int! @external
+  appliedAt: DateTime! @external
+}
+
+type WebSocketSubscription @key(fields: "id") {
+  id: ID! @external
+  userId: ID! @external
+  eventTypes: [String!]! @external
+  filters: SubscriptionFilters! @external
+  createdAt: DateTime! @external
+  status: SubscriptionStatus! @external
+}
+
+type CraftingSkill @key(fields: "userId skillId") {
+  userId: ID! @external
+  skillId: ID! @external
+  level: Int! @external
+  experience: Int! @external
+  experienceToNext: Int! @external
+  specialty: String @external
+}
+
+type Region @key(fields: "id") {
+  id: ID! @external
+  name: String! @external
+  worldId: ID! @external
+  coordinates: Coordinates! @external
+  type: RegionType! @external
+  dangerLevel: Int! @external
+}
+
+# Reference Entities (not owned by any subgraph, just referenced)
+type Friendship @key(fields: "id") {
+  id: ID!
+  user1: User!
+  user2: User!
+  createdAt: DateTime!
+  status: FriendshipStatus!
+  friendshipLevel: Int!
+  sharedActivities: [SharedActivity!]!
+}
+
+type FriendRequest @key(fields: "id") {
+  id: ID!
+  fromUser: User!
+  toUser: User!
+  message: String
+  createdAt: DateTime!
+  status: FriendRequestStatus!
+}
+
+type Party @key(fields: "id") {
+  id: ID!
+  name: String!
+  leader: User!
+  members: [PartyMember!]!
+  settings: PartySettings!
+  createdAt: DateTime!
+  status: PartyStatus!
+}
+
+type PartyMember @key(fields: "userId partyId") {
+  userId: ID!
+  partyId: ID!
+  user: User!
+  role: PartyRole!
+  joinedAt: DateTime!
+}
+
+type MarketListing @key(fields: "id") {
+  id: ID!
+  item: Item!
+  seller: User!
+  price: Int!
+  currency: Currency!
+  quantity: Int!
+  listedAt: DateTime!
+  status: ListingStatus!
+}
+
+type Auction @key(fields: "id") {
+  id: ID!
+  item: Item!
+  seller: User!
+  bids: [AuctionBid!]!
+  startedAt: DateTime!
+  status: AuctionStatus!
+}
+
+type Trade @key(fields: "id") {
+  id: ID!
+  participants: [User!]!
+  items: [TradeItem!]!
+  currencyTransferred: Int!
+  executedAt: DateTime!
+  tradeType: TradeType!
+}
+
+type TradeOffer @key(fields: "id") {
+  id: ID!
+  initiator: User!
+  recipient: User!
+  offeredItems: [TradeItem!]!
+  requestedItems: [TradeItem!]!
+  currencyOffered: Int!
+  currencyRequested: Int!
+  status: TradeOfferStatus!
+}
+
+type CraftingJob @key(fields: "id") {
+  id: ID!
+  user: User!
+  recipe: CraftingRecipe!
+  status: CraftingStatus!
+}
+
+type Shop @key(fields: "id") {
+  id: ID!
+  owner: User!
+  name: String!
+  items: [ShopItem!]!
+  createdAt: DateTime!
+  status: ShopStatus!
+}
+
+type CombatResult @key(fields: "id") {
+  id: ID!
+  session: CombatSession!
+  winner: Team
+  duration: Int!
+  participants: [CombatParticipant!]!
+  mvp: User
+  rewards: [CombatReward!]!
+}
+
+type GuildInvitation @key(fields: "id") {
+  id: ID!
+  guild: Guild!
+  invitee: User!
+  inviter: User!
+  status: InvitationStatus!
+}
+
+type PartyInvitation @key(fields: "id") {
+  id: ID!
+  party: Party!
+  invitee: User!
+  inviter: User!
+  status: InvitationStatus!
+}
+
+type TerritoryClaim @key(fields: "id") {
+  id: ID!
+  territory: Territory!
+  claimingGuild: Guild!
+  claimedAt: DateTime!
+}
+
+type CircuitBreaker @key(fields: "id") {
+  id: ID!
+  serviceId: ID!
+  state: CircuitBreakerState!
+  failureCount: Int!
+  lastFailureTime: DateTime
+}
+
+type RateLimiter @key(fields: "id") {
+  id: ID!
+  name: String!
+  type: RateLimiterType!
+  status: RateLimiterStatus!
+}
+
+type Service @key(fields: "id") {
+  id: ID!
+  name: String!
+  type: ServiceType!
+  endpoints: [ServiceEndpoint!]!
+  health: ServiceHealth!
+  status: ServiceStatus!
+}
+
+type SystemAlert @key(fields: "id") {
+  id: ID!
+  type: AlertType!
+  severity: AlertSeverity!
+  title: String!
+  message: String!
+  createdAt: DateTime!
+}
+
+type LogEntry @key(fields: "id") {
+  id: ID!
+  timestamp: DateTime!
+  level: LogLevel!
+  service: String!
+  message: String!
+}
+
+# Entity Resolution Reference
+# This file documents which subgraph owns each entity and how references are resolved:
+#
+# OWNERSHIP MATRIX:
+# ================
+#
+# Auth Subgraph (auth-expansion-domain):
+# - User (primary owner)
+# - UserProfile
+# - UserStats
+# - UserSession
+#
+# Social Subgraph (social-domain):
+# - Guild (primary owner)
+# - GuildMember
+# - Territory
+# - Friendship
+# - FriendRequest
+# - Party
+# - PartyMember
+# - Reputation
+# - SocialStats
+# - GuildInvitation
+# - PartyInvitation
+# - TerritoryClaim
+#
+# Economy Subgraph (economy-domain):
+# - Item (primary owner)
+# - ItemTemplate
+# - MarketListing
+# - Auction
+# - Trade
+# - TradeOffer
+# - Currency
+# - CurrencyBalance
+# - CraftingRecipe
+# - CraftingJob
+# - Shop
+# - ShopItem
+#
+# Specialized Subgraph (specialized-domain):
+# - CombatSession (primary owner)
+# - CombatParticipant
+# - CombatStats
+# - CombatResult
+# - CraftingSkill
+# - StatusEffect
+# - ActiveEffect
+# - InteractiveObject
+# - GameMechanic
+# - MovementState
+# - PhysicsState
+#
+# System Subgraph (system-domain):
+# - WebSocketConnection
+# - WebSocketSubscription
+# - CircuitBreaker
+# - RateLimiter
+# - Service
+# - SystemAlert
+# - LogEntry
+# - RateLimitStatus
+#
+# World Subgraph (world-domain):
+# - World (primary owner)
+# - Region
+#
+# RESOLUTION RULES:
+# =================
+#
+# 1. @key directive defines entity keys for federation
+# 2. @requires directive specifies fields needed for resolution
+# 3. @external directive marks fields owned by other subgraphs
+# 4. @provides directive indicates fields provided by this subgraph
+# 5. Gateway resolves entities by calling appropriate subgraph resolvers
+#
+# REFERENCE RESOLUTION:
+# ====================
+#
+# Gateway calls subgraph resolvers in this order:
+# 1. Primary owner subgraph (marked with @key)
+# 2. Extension subgraphs (marked with @requires)
+# 3. Reference resolution for nested entities
+#
+# This ensures data consistency and proper entity hydration across all services.

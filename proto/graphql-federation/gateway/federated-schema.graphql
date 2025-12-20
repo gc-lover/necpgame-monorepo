@@ -1,0 +1,499 @@
+# Issue: #2038
+# GraphQL Federation Schema - Main Gateway
+# Enterprise-grade federated GraphQL schema for NECPGAME MMOFPS RPG
+
+type Query {
+  # Health and system queries
+  _service: _Service!
+  _entities(representations: [_Any!]!): [_Entity]!
+
+  # User queries - resolved by auth subgraph
+  user(id: ID!): User
+  users(filter: UserFilter, pagination: PaginationInput): UserConnection
+
+  # Game world queries - resolved by world subgraph
+  world(id: ID!): World
+  worlds(filter: WorldFilter): [World]
+
+  # Guild queries - resolved by social subgraph
+  guild(id: ID!): Guild
+  guilds(filter: GuildFilter, pagination: PaginationInput): GuildConnection
+
+  # Combat queries - resolved by specialized subgraph
+  combatSession(id: ID!): CombatSession
+  combatSessions(filter: CombatSessionFilter): [CombatSession]
+
+  # Economy queries - resolved by economy subgraph
+  item(id: ID!): Item
+  marketItems(filter: MarketItemFilter, pagination: PaginationInput): MarketItemConnection
+
+  # Cross-domain aggregated queries
+  playerProfile(playerId: ID!): PlayerProfile
+  gameDashboard(playerId: ID!): GameDashboard
+}
+
+type Mutation {
+  # User mutations - resolved by auth subgraph
+  createUser(input: CreateUserInput!): User!
+  updateUser(id: ID!, input: UpdateUserInput!): User!
+
+  # Guild mutations - resolved by social subgraph
+  createGuild(input: CreateGuildInput!): Guild!
+  joinGuild(guildId: ID!, playerId: ID!): GuildMembership!
+
+  # Combat mutations - resolved by specialized subgraph
+  createCombatSession(input: CreateCombatSessionInput!): CombatSession!
+  joinCombatSession(sessionId: ID!, playerId: ID!): CombatSessionParticipant!
+
+  # Economy mutations - resolved by economy subgraph
+  createMarketOrder(input: CreateMarketOrderInput!): MarketOrder!
+  executeTrade(buyerId: ID!, sellerId: ID!, itemId: ID!): TradeResult!
+}
+
+# Federation directives
+directive @key(fields: _FieldSet!, resolvable: Boolean = true) on OBJECT | INTERFACE
+directive @requires(fields: _FieldSet!) on FIELD_DEFINITION
+directive @provides(fields: _FieldSet!) on FIELD_DEFINITION
+directive @external on FIELD_DEFINITION | OBJECT
+directive @extends on OBJECT | INTERFACE
+
+# Federation types
+type _Service {
+  sdl: String
+}
+
+scalar _FieldSet
+scalar _Any
+
+union _Entity = User | Guild | Item | CombatSession | World
+
+# Shared types
+type PlayerProfile @key(fields: "id") {
+  id: ID!
+  user: User!
+  guild: Guild
+  inventory: [Item]
+  combatStats: CombatStats
+  lastActivity: DateTime
+}
+
+type GameDashboard @key(fields: "playerId") {
+  playerId: ID!
+  user: User!
+  activeCombatSessions: [CombatSession]
+  recentTrades: [Trade]
+  guildActivity: GuildActivity
+  notifications: [Notification]
+}
+
+# User entity - owned by auth subgraph
+type User @key(fields: "id") @key(fields: "email") {
+  id: ID!
+  email: String!
+  username: String!
+  createdAt: DateTime!
+  lastLogin: DateTime
+  profile: UserProfile
+  stats: UserStats
+}
+
+type UserProfile @key(fields: "userId") {
+  userId: ID!
+  avatar: String
+  level: Int!
+  experience: Int!
+  reputation: Int!
+}
+
+type UserStats @key(fields: "userId") {
+  userId: ID!
+  totalPlayTime: Int!
+  gamesPlayed: Int!
+  winRate: Float!
+  favoriteWeapon: String
+}
+
+# Guild entity - owned by social subgraph
+type Guild @key(fields: "id") @key(fields: "name") {
+  id: ID!
+  name: String!
+  description: String
+  leader: User!
+  members: [GuildMember!]!
+  level: Int!
+  reputation: Int!
+  territories: [Territory]
+  createdAt: DateTime!
+}
+
+type GuildMember @key(fields: "userId guildId") {
+  userId: ID!
+  guildId: ID!
+  user: User!
+  role: GuildRole!
+  joinedAt: DateTime!
+  contribution: Int!
+}
+
+enum GuildRole {
+  LEADER
+  OFFICER
+  MEMBER
+  RECRUIT
+}
+
+# Combat entity - owned by specialized subgraph
+type CombatSession @key(fields: "id") {
+  id: ID!
+  gameMode: String!
+  mapId: ID!
+  status: CombatStatus!
+  participants: [CombatParticipant!]!
+  startedAt: DateTime
+  endedAt: DateTime
+  winner: Team
+}
+
+type CombatParticipant @key(fields: "userId sessionId") {
+  userId: ID!
+  sessionId: ID!
+  user: User!
+  team: Team!
+  score: Int!
+  kills: Int!
+  deaths: Int!
+}
+
+enum CombatStatus {
+  WAITING
+  ACTIVE
+  FINISHED
+  CANCELLED
+}
+
+enum Team {
+  BLUE
+  RED
+  GREEN
+  YELLOW
+}
+
+type CombatStats @key(fields: "userId") {
+  userId: ID!
+  totalKills: Int!
+  totalDeaths: Int!
+  totalScore: Int!
+  winRate: Float!
+  favoriteGameMode: String
+}
+
+# Item entity - owned by economy subgraph
+type Item @key(fields: "id") {
+  id: ID!
+  name: String!
+  type: ItemType!
+  rarity: ItemRarity!
+  level: Int!
+  stats: ItemStats
+  owner: User
+  marketPrice: Int
+}
+
+enum ItemType {
+  WEAPON
+  ARMOR
+  CONSUMABLE
+  MATERIAL
+  QUEST_ITEM
+}
+
+enum ItemRarity {
+  COMMON
+  UNCOMMON
+  RARE
+  EPIC
+  LEGENDARY
+  MYTHIC
+}
+
+type ItemStats {
+  damage: Int
+  defense: Int
+  health: Int
+  speed: Float
+}
+
+# World entity - owned by world subgraph
+type World @key(fields: "id") {
+  id: ID!
+  name: String!
+  type: WorldType!
+  regions: [Region!]!
+  activePlayers: Int!
+  status: WorldStatus!
+}
+
+enum WorldType {
+  CITY
+  WILDERNESS
+  DUNGEON
+  RAID
+}
+
+enum WorldStatus {
+  ACTIVE
+  MAINTENANCE
+  OFFLINE
+}
+
+type Region @key(fields: "id") {
+  id: ID!
+  name: String!
+  worldId: ID!
+  coordinates: Coordinates!
+  type: RegionType!
+  dangerLevel: Int!
+}
+
+type Coordinates {
+  x: Float!
+  y: Float!
+  z: Float!
+}
+
+enum RegionType {
+  URBAN
+  INDUSTRIAL
+  RESIDENTIAL
+  COMMERCIAL
+  WILDERNESS
+  DUNGEON
+}
+
+# Additional types for complex queries
+type Territory @key(fields: "id") {
+  id: ID!
+  name: String!
+  guildId: ID!
+  coordinates: Coordinates!
+  controlLevel: Float!
+  resources: [Resource!]!
+}
+
+type Resource {
+  type: String!
+  amount: Int!
+  regenerationRate: Float!
+}
+
+type Trade @key(fields: "id") {
+  id: ID!
+  buyer: User!
+  seller: User!
+  item: Item!
+  price: Int!
+  executedAt: DateTime!
+}
+
+type Notification @key(fields: "id") {
+  id: ID!
+  recipient: User!
+  type: NotificationType!
+  title: String!
+  message: String!
+  createdAt: DateTime!
+  read: Boolean!
+}
+
+enum NotificationType {
+  SYSTEM
+  GUILD
+  FRIEND
+  TRADE
+  COMBAT
+}
+
+type GuildActivity @key(fields: "guildId") {
+  guildId: ID!
+  recentMembers: [GuildMember!]!
+  activeTerritories: Int!
+  recentEvents: [GuildEvent!]!
+}
+
+type GuildEvent {
+  id: ID!
+  type: GuildEventType!
+  description: String!
+  occurredAt: DateTime!
+}
+
+enum GuildEventType {
+  MEMBER_JOINED
+  MEMBER_LEFT
+  TERRITORY_CONQUERED
+  TERRITORY_LOST
+  COMBAT_WON
+  COMBAT_LOST
+}
+
+# Input types
+input UserFilter {
+  username: String
+  level: IntRange
+  reputation: IntRange
+  lastLoginAfter: DateTime
+}
+
+input GuildFilter {
+  name: String
+  level: IntRange
+  reputation: IntRange
+  memberCount: IntRange
+}
+
+input CombatSessionFilter {
+  gameMode: String
+  status: CombatStatus
+  participantCount: IntRange
+  startedAfter: DateTime
+}
+
+input MarketItemFilter {
+  type: ItemType
+  rarity: ItemRarity
+  level: IntRange
+  price: IntRange
+  seller: ID
+}
+
+input WorldFilter {
+  type: WorldType
+  status: WorldStatus
+  activePlayers: IntRange
+}
+
+input PaginationInput {
+  first: Int
+  after: String
+  last: Int
+  before: String
+}
+
+input IntRange {
+  min: Int
+  max: Int
+}
+
+input CreateUserInput {
+  email: String!
+  username: String!
+  password: String!
+}
+
+input UpdateUserInput {
+  username: String
+  profile: UpdateUserProfileInput
+}
+
+input UpdateUserProfileInput {
+  avatar: String
+  level: Int
+  experience: Int
+}
+
+input CreateGuildInput {
+  name: String!
+  description: String
+  leaderId: ID!
+}
+
+input CreateCombatSessionInput {
+  gameMode: String!
+  mapId: ID!
+  maxParticipants: Int!
+}
+
+input CreateMarketOrderInput {
+  itemId: ID!
+  sellerId: ID!
+  price: Int!
+  quantity: Int!
+}
+
+# Connection types for pagination
+type UserConnection {
+  edges: [UserEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type UserEdge {
+  node: User!
+  cursor: String!
+}
+
+type GuildConnection {
+  edges: [GuildEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type GuildEdge {
+  node: Guild!
+  cursor: String!
+}
+
+type MarketItemConnection {
+  edges: [MarketItemEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type MarketItemEdge {
+  node: MarketItem!
+  cursor: String!
+}
+
+type MarketItem @key(fields: "id") {
+  id: ID!
+  item: Item!
+  seller: User!
+  price: Int!
+  quantity: Int!
+  listedAt: DateTime!
+}
+
+type MarketOrder @key(fields: "id") {
+  id: ID!
+  item: Item!
+  seller: User!
+  buyer: User
+  price: Int!
+  quantity: Int!
+  status: OrderStatus!
+  createdAt: DateTime!
+  executedAt: DateTime
+}
+
+enum OrderStatus {
+  ACTIVE
+  EXECUTED
+  CANCELLED
+  EXPIRED
+}
+
+type TradeResult {
+  success: Boolean!
+  trade: Trade
+  error: String
+}
+
+type PageInfo {
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  startCursor: String
+  endCursor: String
+}
+
+# Scalars
+scalar DateTime

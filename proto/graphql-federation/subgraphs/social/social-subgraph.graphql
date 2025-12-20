@@ -1,0 +1,567 @@
+# Issue: #2038
+# Social Domain Subgraph - GraphQL Federation
+# Handles guilds, friendships, parties, reputation, and social interactions
+
+type Query {
+  # Guild queries
+  guild(id: ID!): Guild
+  guilds(filter: GuildFilter, pagination: PaginationInput): GuildConnection
+  guildMembers(guildId: ID!, filter: GuildMemberFilter): [GuildMember]
+  guildTerritories(guildId: ID!): [Territory]
+
+  # Social relationships
+  friendships(userId: ID!): [Friendship]
+  friendRequests(userId: ID!): [FriendRequest]
+  blockedUsers(userId: ID!): [User]
+
+  # Parties and groups
+  parties(userId: ID!): [Party]
+  party(id: ID!): Party
+  partyInvitations(userId: ID!): [PartyInvitation]
+
+  # Reputation and social stats
+  reputation(userId: ID!): Reputation
+  socialStats(userId: ID!): SocialStats
+}
+
+type Mutation {
+  # Guild mutations
+  createGuild(input: CreateGuildInput!): Guild!
+  updateGuild(id: ID!, input: UpdateGuildInput!): Guild!
+  deleteGuild(id: ID!): Boolean!
+  joinGuild(guildId: ID!, userId: ID!): GuildMembership!
+  leaveGuild(guildId: ID!, userId: ID!): Boolean!
+  inviteToGuild(guildId: ID!, inviteeId: ID!, inviterId: ID!): GuildInvitation!
+  acceptGuildInvitation(invitationId: ID!): GuildMembership!
+  declineGuildInvitation(invitationId: ID!): Boolean!
+
+  # Territory management
+  claimTerritory(guildId: ID!, territoryId: ID!): TerritoryClaim!
+  releaseTerritory(guildId: ID!, territoryId: ID!): Boolean!
+  upgradeTerritory(guildId: ID!, territoryId: ID!, upgradeType: TerritoryUpgradeType!): Territory!
+
+  # Friendship mutations
+  sendFriendRequest(fromUserId: ID!, toUserId: ID!): FriendRequest!
+  acceptFriendRequest(requestId: ID!): Friendship!
+  declineFriendRequest(requestId: ID!): Boolean!
+  removeFriend(userId: ID!, friendId: ID!): Boolean!
+  blockUser(userId: ID!, blockedUserId: ID!): Boolean!
+  unblockUser(userId: ID!, blockedUserId: ID!): Boolean!
+
+  # Party mutations
+  createParty(input: CreatePartyInput!): Party!
+  joinParty(partyId: ID!, userId: ID!): PartyMembership!
+  leaveParty(partyId: ID!, userId: ID!): Boolean!
+  inviteToParty(partyId: ID!, inviteeId: ID!, inviterId: ID!): PartyInvitation!
+  acceptPartyInvitation(invitationId: ID!): PartyMembership!
+  declinePartyInvitation(invitationId: ID!): Boolean!
+  updatePartySettings(partyId: ID!, settings: PartySettingsInput!): Party!
+
+  # Social actions
+  sendMessage(fromUserId: ID!, toUserId: ID!, content: String!, channel: MessageChannel!): Message!
+  createChatChannel(participants: [ID!]!): ChatChannel!
+  leaveChatChannel(channelId: ID!, userId: ID!): Boolean!
+}
+
+# Extended entities from federation
+type User @key(fields: "id") @key(fields: "email") {
+  id: ID! @external
+  email: String! @external
+  username: String! @external
+  createdAt: DateTime! @external
+  lastLogin: DateTime @external
+  profile: UserProfile @external
+  stats: UserStats @external
+
+  # Social extensions
+  friends: [User!]!
+  friendRequests: [FriendRequest!]!
+  blockedUsers: [User!]!
+  guilds: [Guild!]!
+  parties: [Party!]!
+  reputation: Reputation!
+  socialStats: SocialStats!
+}
+
+type Guild @key(fields: "id") @key(fields: "name") {
+  id: ID!
+  name: String!
+  description: String
+  leader: User!
+  members: [GuildMember!]!
+  level: Int!
+  reputation: Int!
+  territories: [Territory!]!
+  createdAt: DateTime!
+  settings: GuildSettings!
+  stats: GuildStats!
+  achievements: [GuildAchievement!]!
+}
+
+type GuildMember @key(fields: "userId guildId") {
+  userId: ID!
+  guildId: ID!
+  user: User! @requires(fields: "id username profile stats")
+  role: GuildRole!
+  joinedAt: DateTime!
+  contribution: Int!
+  lastActivity: DateTime!
+  permissions: [GuildPermission!]!
+}
+
+type Territory @key(fields: "id") {
+  id: ID!
+  name: String!
+  coordinates: Coordinates!
+  type: TerritoryType!
+  controlLevel: Float!
+  controllingGuild: Guild
+  resources: [Resource!]!
+  defense: TerritoryDefense!
+  lastCaptured: DateTime
+  captureHistory: [TerritoryCapture!]!
+}
+
+# Social-specific entities
+type Friendship @key(fields: "id") {
+  id: ID!
+  user1: User!
+  user2: User!
+  createdAt: DateTime!
+  status: FriendshipStatus!
+  friendshipLevel: Int!
+  sharedActivities: [SharedActivity!]!
+}
+
+type FriendRequest @key(fields: "id") {
+  id: ID!
+  fromUser: User!
+  toUser: User!
+  message: String
+  createdAt: DateTime!
+  status: FriendRequestStatus!
+}
+
+type Party @key(fields: "id") {
+  id: ID!
+  name: String!
+  leader: User!
+  members: [PartyMember!]!
+  settings: PartySettings!
+  createdAt: DateTime!
+  status: PartyStatus!
+  currentActivity: PartyActivity
+}
+
+type PartyMember @key(fields: "userId partyId") {
+  userId: ID!
+  partyId: ID!
+  user: User!
+  role: PartyRole!
+  joinedAt: DateTime!
+  contribution: Int!
+}
+
+type Reputation @key(fields: "userId") {
+  userId: ID!
+  overallScore: Int!
+  breakdown: ReputationBreakdown!
+  achievements: [ReputationAchievement!]!
+  recentEvents: [ReputationEvent!]!
+}
+
+type SocialStats @key(fields: "userId") {
+  userId: ID!
+  friendsCount: Int!
+  guildMemberships: Int!
+  partiesCreated: Int!
+  messagesSent: Int!
+  territoriesCaptured: Int!
+  socialEventsParticipated: Int!
+  lastSocialActivity: DateTime
+}
+
+type Message @key(fields: "id") {
+  id: ID!
+  fromUser: User!
+  toUser: User
+  channel: ChatChannel
+  content: String!
+  type: MessageType!
+  createdAt: DateTime!
+  editedAt: DateTime
+  reactions: [MessageReaction!]!
+  attachments: [MessageAttachment!]!
+}
+
+type ChatChannel @key(fields: "id") {
+  id: ID!
+  name: String
+  participants: [User!]!
+  type: ChannelType!
+  createdAt: DateTime!
+  lastMessage: Message
+  settings: ChannelSettings!
+}
+
+type GuildInvitation @key(fields: "id") {
+  id: ID!
+  guild: Guild!
+  invitee: User!
+  inviter: User!
+  message: String
+  createdAt: DateTime!
+  expiresAt: DateTime
+  status: InvitationStatus!
+}
+
+type PartyInvitation @key(fields: "id") {
+  id: ID!
+  party: Party!
+  invitee: User!
+  inviter: User!
+  message: String
+  createdAt: DateTime!
+  expiresAt: DateTime
+  status: InvitationStatus!
+}
+
+type TerritoryClaim @key(fields: "id") {
+  id: ID!
+  territory: Territory!
+  claimingGuild: Guild!
+  claimedAt: DateTime!
+  claimStrength: Float!
+  defenders: [User!]!
+}
+
+type TerritoryDefense {
+  fortifications: [Fortification!]!
+  defenders: [User!]!
+  defenseStrength: Float!
+  lastUpgraded: DateTime
+}
+
+type TerritoryCapture @key(fields: "id") {
+  id: ID!
+  territory: Territory!
+  capturingGuild: Guild!
+  previousOwner: Guild
+  capturedAt: DateTime!
+  captureMethod: TerritoryCaptureMethod!
+}
+
+# Supporting types
+type GuildSettings {
+  isPublic: Boolean!
+  requiresApplication: Boolean!
+  autoApproveApplications: Boolean!
+  minimumLevel: Int!
+  maximumMembers: Int!
+  description: String
+}
+
+type GuildStats {
+  totalMembers: Int!
+  activeMembers: Int!
+  territoriesControlled: Int!
+  totalContribution: Int!
+  winRate: Float!
+  averageMemberLevel: Float!
+}
+
+type GuildAchievement @key(fields: "id") {
+  id: ID!
+  name: String!
+  description: String!
+  icon: String!
+  unlockedAt: DateTime!
+  rarity: AchievementRarity!
+}
+
+type GuildPermission {
+  type: GuildPermissionType!
+  granted: Boolean!
+}
+
+type PartySettings {
+  isPublic: Boolean!
+  maximumMembers: Int!
+  allowInvites: Boolean!
+  voiceChannelEnabled: Boolean!
+  activityType: PartyActivityType
+}
+
+type PartyActivity {
+  type: PartyActivityType!
+  target: String
+  startedAt: DateTime!
+  progress: Float
+}
+
+type ReputationBreakdown {
+  combat: Int!
+  social: Int!
+  economic: Int!
+  guild: Int!
+  exploration: Int!
+}
+
+type ReputationAchievement @key(fields: "id") {
+  id: ID!
+  name: String!
+  description: String!
+  points: Int!
+  unlockedAt: DateTime!
+  category: ReputationCategory!
+}
+
+type ReputationEvent @key(fields: "id") {
+  id: ID!
+  type: ReputationEventType!
+  points: Int!
+  description: String!
+  occurredAt: DateTime!
+  relatedEntity: String
+}
+
+type SharedActivity @key(fields: "id") {
+  id: ID!
+  type: ActivityType!
+  description: String!
+  occurredAt: DateTime!
+  participants: [User!]!
+}
+
+type MessageReaction {
+  emoji: String!
+  count: Int!
+  users: [User!]!
+}
+
+type MessageAttachment {
+  type: AttachmentType!
+  url: String!
+  name: String!
+  size: Int!
+}
+
+type ChannelSettings {
+  isModerated: Boolean!
+  slowMode: Int
+  maxParticipants: Int
+  allowInvites: Boolean!
+}
+
+type Fortification {
+  type: FortificationType!
+  level: Int!
+  health: Float!
+  position: Coordinates!
+}
+
+# Enums
+enum GuildRole {
+  LEADER
+  OFFICER
+  MEMBER
+  RECRUIT
+}
+
+enum GuildPermissionType {
+  INVITE_MEMBERS
+  KICK_MEMBERS
+  MANAGE_TERRITORIES
+  MANAGE_SETTINGS
+  VIEW_ANALYTICS
+  SEND_ANNOUNCEMENTS
+}
+
+enum TerritoryType {
+  COMMERCIAL
+  INDUSTRIAL
+  RESIDENTIAL
+  MILITARY
+  RESOURCE
+  STRATEGIC
+}
+
+enum TerritoryUpgradeType {
+  FORTIFICATIONS
+  RESOURCE_EXTRACTION
+  DEFENSE_SYSTEMS
+  UTILITIES
+}
+
+enum TerritoryCaptureMethod {
+  COMBAT
+  NEGOTIATION
+  ABANDONMENT
+  ADMIN_DECISION
+}
+
+enum FriendshipStatus {
+  PENDING
+  ACTIVE
+  BLOCKED
+}
+
+enum FriendRequestStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  EXPIRED
+}
+
+enum PartyRole {
+  LEADER
+  MEMBER
+}
+
+enum PartyStatus {
+  FORMING
+  ACTIVE
+  DISBANDED
+}
+
+enum PartyActivityType {
+  QUEST
+  RAID
+  EXPLORATION
+  TRADING
+  SOCIALIZING
+}
+
+enum ReputationCategory {
+  COMBAT
+  SOCIAL
+  ECONOMIC
+  GUILD
+  EXPLORATION
+}
+
+enum ReputationEventType {
+  COMBAT_WIN
+  GUILD_CONTRIBUTION
+  FRIEND_ADDED
+  TRADE_COMPLETED
+  QUEST_COMPLETED
+  TERRITORY_CAPTURED
+}
+
+enum ActivityType {
+  COMBAT
+  QUEST
+  TRADE
+  EXPLORATION
+  SOCIAL_EVENT
+}
+
+enum MessageType {
+  TEXT
+  SYSTEM
+  INVITATION
+  ACHIEVEMENT
+}
+
+enum MessageChannel {
+  DIRECT
+  GUILD
+  PARTY
+  GLOBAL
+}
+
+enum ChannelType {
+  DIRECT
+  GROUP
+  GUILD
+  PARTY
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  EXPIRED
+}
+
+enum AchievementRarity {
+  COMMON
+  UNCOMMON
+  RARE
+  EPIC
+  LEGENDARY
+}
+
+enum AttachmentType {
+  IMAGE
+  VIDEO
+  AUDIO
+  FILE
+  LINK
+}
+
+enum FortificationType {
+  WALL
+  TURRET
+  TRAP
+  BARRIER
+  SENSOR
+}
+
+# Input types
+input GuildFilter {
+  name: String
+  level: IntRange
+  reputation: IntRange
+  memberCount: IntRange
+  isPublic: Boolean
+}
+
+input GuildMemberFilter {
+  role: GuildRole
+  joinedAfter: DateTime
+  contribution: IntRange
+}
+
+input CreateGuildInput {
+  name: String!
+  description: String
+  leaderId: ID!
+  settings: GuildSettingsInput
+}
+
+input UpdateGuildInput {
+  name: String
+  description: String
+  settings: GuildSettingsInput
+}
+
+input GuildSettingsInput {
+  isPublic: Boolean
+  requiresApplication: Boolean
+  autoApproveApplications: Boolean
+  minimumLevel: Int
+  maximumMembers: Int
+}
+
+input CreatePartyInput {
+  name: String!
+  leaderId: ID!
+  settings: PartySettingsInput
+}
+
+input PartySettingsInput {
+  isPublic: Boolean
+  maximumMembers: Int
+  allowInvites: Boolean
+  voiceChannelEnabled: Boolean
+}
+
+# Federation requirement
+extend type PlayerProfile @key(fields: "id") {
+  id: ID! @external
+  guild: Guild
+  friendships: [Friendship!]!
+  parties: [Party!]!
+}

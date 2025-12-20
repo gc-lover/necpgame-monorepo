@@ -1,0 +1,816 @@
+# Issue: #2038
+# System Domain Subgraph - GraphQL Federation
+# Handles infrastructure services: WebSocket, Circuit Breaker, Rate Limiting, Service Mesh
+
+type Query {
+  # WebSocket queries
+  websocketConnections(filter: WebSocketConnectionFilter): [WebSocketConnection!]!
+  websocketStats: WebSocketStats!
+  websocketSubscriptions(userId: ID!): [WebSocketSubscription!]!
+  activeWebSocketStreams: [WebSocketStream!]!
+
+  # Circuit Breaker queries
+  circuitBreakers(filter: CircuitBreakerFilter): [CircuitBreaker!]!
+  circuitBreaker(id: ID!): CircuitBreaker!
+  circuitBreakerMetrics(timeframe: MetricTimeframe): CircuitBreakerMetrics!
+  circuitBreakerHistory(id: ID!, timeframe: MetricTimeframe): [CircuitBreakerEvent!]!
+
+  # Rate Limiting queries
+  rateLimiters(filter: RateLimiterFilter): [RateLimiter!]!
+  rateLimiter(id: ID!): RateLimiter!
+  rateLimitMetrics(timeframe: MetricTimeframe): RateLimitMetrics!
+  userRateLimitStatus(userId: ID!): RateLimitStatus!
+
+  # Service Mesh queries
+  services(filter: ServiceFilter): [Service!]!
+  service(id: ID!): Service!
+  serviceMeshTopology: ServiceMeshTopology!
+  serviceHealth: ServiceHealthOverview!
+  serviceDependencies(serviceId: ID!): [ServiceDependency!]!
+
+  # System monitoring
+  systemMetrics(timeframe: MetricTimeframe): SystemMetrics!
+  systemAlerts(filter: AlertFilter): [SystemAlert!]!
+  systemLogs(filter: LogFilter, pagination: PaginationInput): LogEntryConnection!
+}
+
+type Mutation {
+  # WebSocket mutations
+  createWebSocketSubscription(input: CreateWebSocketSubscriptionInput!): WebSocketSubscription!
+  updateWebSocketSubscription(id: ID!, input: UpdateWebSocketSubscriptionInput!): WebSocketSubscription!
+  deleteWebSocketSubscription(id: ID!): Boolean!
+  broadcastWebSocketMessage(input: BroadcastWebSocketMessageInput!): BroadcastResult!
+
+  # Circuit Breaker mutations
+  createCircuitBreaker(input: CreateCircuitBreakerInput!): CircuitBreaker!
+  updateCircuitBreaker(id: ID!, input: UpdateCircuitBreakerInput!): CircuitBreaker!
+  deleteCircuitBreaker(id: ID!): Boolean!
+  resetCircuitBreaker(id: ID!): CircuitBreaker!
+  toggleCircuitBreaker(id: ID!, state: CircuitBreakerState!): CircuitBreaker!
+
+  # Rate Limiting mutations
+  createRateLimiter(input: CreateRateLimiterInput!): RateLimiter!
+  updateRateLimiter(id: ID!, input: UpdateRateLimiterInput!): RateLimiter!
+  deleteRateLimiter(id: ID!): Boolean!
+  resetRateLimit(userId: ID!, limiterId: ID!): Boolean!
+
+  # Service Mesh mutations
+  registerService(input: RegisterServiceInput!): Service!
+  updateService(id: ID!, input: UpdateServiceInput!): Service!
+  unregisterService(id: ID!): Boolean!
+  updateServiceHealth(id: ID!, health: ServiceHealthInput!): Service!
+
+  # System operations
+  createSystemAlert(input: CreateSystemAlertInput!): SystemAlert!
+  acknowledgeSystemAlert(id: ID!): Boolean!
+  clearSystemLogs(filter: LogFilter): Int!
+}
+
+# Extended entities from federation
+type User @key(fields: "id") @key(fields: "email") {
+  id: ID! @external
+  email: String! @external
+  username: String! @external
+  createdAt: DateTime! @external
+  profile: UserProfile @external
+  stats: UserStats @external
+
+  # System extensions
+  websocketSubscriptions: [WebSocketSubscription!]!
+  rateLimitStatus: RateLimitStatus!
+  activeSessions: [UserSession!]!
+}
+
+# System domain entities
+type WebSocketConnection @key(fields: "id") {
+  id: ID!
+  userId: ID!
+  user: User!
+  connectionId: String!
+  connectedAt: DateTime!
+  lastHeartbeat: DateTime!
+  ipAddress: String!
+  userAgent: String!
+  subscriptions: [WebSocketSubscription!]!
+  messagesSent: Int!
+  messagesReceived: Int!
+  status: ConnectionStatus!
+  metadata: ConnectionMetadata!
+}
+
+type WebSocketSubscription @key(fields: "id") {
+  id: ID!
+  userId: ID!
+  user: User!
+  connectionId: ID!
+  eventTypes: [String!]!
+  filters: SubscriptionFilters!
+  createdAt: DateTime!
+  lastActivity: DateTime!
+  messageCount: Int!
+  status: SubscriptionStatus!
+}
+
+type WebSocketStream @key(fields: "id") {
+  id: ID!
+  name: String!
+  eventTypes: [String!]!
+  subscriberCount: Int!
+  messageRate: Float!
+  createdAt: DateTime!
+  status: StreamStatus!
+}
+
+type CircuitBreaker @key(fields: "id") {
+  id: ID!
+  serviceId: ID!
+  service: Service!
+  name: String!
+  state: CircuitBreakerState!
+  failureThreshold: Int!
+  recoveryTimeout: Int!
+  successThreshold: Int!
+  failureCount: Int!
+  successCount: Int!
+  lastFailureTime: DateTime
+  lastSuccessTime: DateTime
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  config: CircuitBreakerConfig!
+}
+
+type RateLimiter @key(fields: "id") {
+  id: ID!
+  name: String!
+  type: RateLimiterType!
+  target: RateLimitTarget!
+  limit: Int!
+  window: Int!
+  strategy: RateLimitStrategy!
+  status: RateLimiterStatus!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  metrics: RateLimiterMetrics!
+}
+
+type Service @key(fields: "id") {
+  id: ID!
+  name: String!
+  version: String!
+  type: ServiceType!
+  endpoints: [ServiceEndpoint!]!
+  dependencies: [ServiceDependency!]!
+  health: ServiceHealth!
+  metrics: ServiceMetrics!
+  config: ServiceConfig!
+  registeredAt: DateTime!
+  lastSeen: DateTime!
+  status: ServiceStatus!
+}
+
+type SystemAlert @key(fields: "id") {
+  id: ID!
+  type: AlertType!
+  severity: AlertSeverity!
+  title: String!
+  message: String!
+  source: String!
+  affectedServices: [String!]!
+  createdAt: DateTime!
+  acknowledgedAt: DateTime
+  resolvedAt: DateTime
+  acknowledgedBy: User
+  metadata: AlertMetadata!
+}
+
+type LogEntry @key(fields: "id") {
+  id: ID!
+  timestamp: DateTime!
+  level: LogLevel!
+  service: String!
+  message: String!
+  fields: LogFields!
+  traceId: String
+  spanId: String
+  userId: ID
+}
+
+# Supporting types
+type WebSocketStats {
+  totalConnections: Int!
+  activeConnections: Int!
+  totalSubscriptions: Int!
+  messagesPerSecond: Float!
+  averageConnectionTime: Float!
+  peakConnections: Int!
+  connectionByRegion: [RegionStats!]!
+  subscriptionByType: [SubscriptionTypeStats!]!
+}
+
+type CircuitBreakerMetrics {
+  totalBreakers: Int!
+  breakersByState: BreakerStateStats!
+  totalFailures: Int!
+  totalSuccesses: Int!
+  averageRecoveryTime: Float!
+  failureRate: Float!
+  events: [CircuitBreakerEvent!]!
+}
+
+type RateLimitMetrics {
+  totalRequests: Int!
+  blockedRequests: Int!
+  allowedRequests: Int!
+  averageRequestRate: Float!
+  peakRequestRate: Float!
+  throttleEvents: [ThrottleEvent!]!
+}
+
+type RateLimitStatus {
+  userId: ID!
+  limiters: [UserRateLimit!]!
+  isThrottled: Boolean!
+  nextReset: DateTime
+  remainingRequests: Int
+}
+
+type ServiceMeshTopology {
+  services: [Service!]!
+  connections: [ServiceConnection!]!
+  health: MeshHealth!
+  metrics: MeshMetrics!
+}
+
+type ServiceHealthOverview {
+  totalServices: Int!
+  healthyServices: Int!
+  unhealthyServices: Int!
+  degradedServices: Int!
+  overallHealth: HealthStatus!
+  serviceHealth: [ServiceHealth!]!
+}
+
+type SystemMetrics {
+  cpuUsage: Float!
+  memoryUsage: Float!
+  networkTraffic: NetworkTraffic!
+  diskUsage: DiskUsage!
+  uptime: Int!
+  activeUsers: Int!
+  requestRate: Float!
+  errorRate: Float!
+}
+
+type ConnectionMetadata {
+  clientVersion: String
+  platform: String
+  region: String
+  connectionType: String
+}
+
+type SubscriptionFilters {
+  eventTypes: [String!]
+  userIds: [ID!]
+  serviceIds: [ID!]
+  regions: [String!]
+  customFilters: CustomFilters
+}
+
+type CircuitBreakerConfig {
+  failureThreshold: Int!
+  recoveryTimeout: Int!
+  successThreshold: Int!
+  monitoringEnabled: Boolean!
+  alertThresholds: AlertThresholds!
+}
+
+type ServiceEndpoint {
+  path: String!
+  method: HttpMethod!
+  authenticated: Boolean!
+  rateLimited: Boolean!
+  cached: Boolean!
+}
+
+type ServiceDependency {
+  serviceId: ID!
+  service: Service!
+  type: DependencyType!
+  required: Boolean!
+  healthCheck: String
+}
+
+type ServiceHealth {
+  status: HealthStatus!
+  responseTime: Float!
+  uptime: Float!
+  lastCheck: DateTime!
+  checks: [HealthCheck!]!
+}
+
+type ServiceMetrics {
+  requestCount: Int!
+  errorCount: Int!
+  averageResponseTime: Float!
+  throughput: Float!
+  resourceUsage: ResourceUsage!
+}
+
+type ServiceConfig {
+  replicas: Int!
+  resources: ResourceLimits!
+  environment: [String!]!
+  features: [String!]!
+}
+
+type AlertMetadata {
+  component: String
+  errorCode: String
+  stackTrace: String
+  affectedUsers: Int
+  impact: String
+}
+
+type LogFields {
+  userId: ID
+  requestId: String
+  sessionId: String
+  ipAddress: String
+  userAgent: String
+  additional: CustomFields
+}
+
+type RegionStats {
+  region: String!
+  connections: Int!
+  averageLatency: Float!
+}
+
+type SubscriptionTypeStats {
+  eventType: String!
+  subscriptions: Int!
+  messageRate: Float!
+}
+
+type BreakerStateStats {
+  closed: Int!
+  open: Int!
+  halfOpen: Int!
+}
+
+type CircuitBreakerEvent {
+  id: ID!
+  breakerId: ID!
+  type: BreakerEventType!
+  timestamp: DateTime!
+  details: EventDetails!
+}
+
+type ThrottleEvent {
+  id: ID!
+  userId: ID!
+  limiterId: ID!
+  timestamp: DateTime!
+  reason: String!
+}
+
+type UserRateLimit {
+  limiterId: ID!
+  limiter: RateLimiter!
+  currentRequests: Int!
+  maxRequests: Int!
+  resetTime: DateTime!
+  isThrottled: Boolean!
+}
+
+type ServiceConnection {
+  from: Service!
+  to: Service!
+  type: ConnectionType!
+  latency: Float!
+  throughput: Float!
+  status: ConnectionStatus!
+}
+
+type MeshHealth {
+  overall: HealthStatus!
+  services: ServiceHealthOverview!
+  connections: ConnectionHealth!
+}
+
+type MeshMetrics {
+  totalRequests: Int!
+  averageLatency: Float!
+  errorRate: Float!
+  throughput: Float!
+}
+
+type NetworkTraffic {
+  inbound: Float!
+  outbound: Float!
+  total: Float!
+}
+
+type DiskUsage {
+  used: Float!
+  available: Float!
+  total: Float!
+}
+
+type CustomFilters {
+  jsonPath: String
+  regex: String
+  range: ValueRange
+}
+
+type AlertThresholds {
+  failureRate: Float!
+  responseTime: Float!
+  errorCount: Int!
+}
+
+type HttpMethod {
+  GET
+  POST
+  PUT
+  DELETE
+  PATCH
+  OPTIONS
+  HEAD
+}
+
+type HealthCheck {
+  name: String!
+  status: HealthStatus!
+  responseTime: Float!
+  details: String
+}
+
+type ResourceUsage {
+  cpu: Float!
+  memory: Float!
+  disk: Float!
+  network: Float!
+}
+
+type ResourceLimits {
+  cpu: String!
+  memory: String!
+  disk: String!
+}
+
+type CustomFields {
+  key: String!
+  value: String!
+}
+
+type EventDetails {
+  failureCount: Int
+  successCount: Int
+  reason: String
+  metadata: CustomFields
+}
+
+type ConnectionHealth {
+  healthy: Int!
+  degraded: Int!
+  unhealthy: Int!
+  total: Int!
+}
+
+type ValueRange {
+  min: Float
+  max: Float
+}
+
+type UserSession @key(fields: "id") {
+  id: ID!
+  userId: ID!
+  user: User!
+  sessionId: String!
+  createdAt: DateTime!
+  expiresAt: DateTime!
+  ipAddress: String!
+  userAgent: String!
+  isActive: Boolean!
+}
+
+# Enums
+enum ConnectionStatus {
+  CONNECTED
+  DISCONNECTED
+  RECONNECTING
+  FAILED
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  PAUSED
+  EXPIRED
+  FAILED
+}
+
+enum StreamStatus {
+  ACTIVE
+  PAUSED
+  STOPPED
+  ERROR
+}
+
+enum CircuitBreakerState {
+  CLOSED
+  OPEN
+  HALF_OPEN
+}
+
+enum RateLimiterType {
+  USER
+  SERVICE
+  ENDPOINT
+  GLOBAL
+}
+
+enum RateLimitTarget {
+  USER_ID
+  IP_ADDRESS
+  API_KEY
+  SERVICE
+  ENDPOINT
+}
+
+enum RateLimitStrategy {
+  FIXED_WINDOW
+  SLIDING_WINDOW
+  TOKEN_BUCKET
+  LEAKY_BUCKET
+}
+
+enum RateLimiterStatus {
+  ACTIVE
+  PAUSED
+  DISABLED
+}
+
+enum ServiceType {
+  API_GATEWAY
+  AUTH_SERVICE
+  GAME_SERVICE
+  SOCIAL_SERVICE
+  ECONOMY_SERVICE
+  COMBAT_SERVICE
+  INFRASTRUCTURE
+  MONITORING
+}
+
+enum ServiceStatus {
+  REGISTERED
+  ACTIVE
+  DEGRADED
+  UNHEALTHY
+  UNREGISTERED
+}
+
+enum AlertType {
+  SERVICE_DOWN
+  HIGH_ERROR_RATE
+  HIGH_LATENCY
+  RESOURCE_EXHAUSTED
+  SECURITY_BREACH
+  PERFORMANCE_DEGRADATION
+}
+
+enum AlertSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum LogLevel {
+  DEBUG
+  INFO
+  WARN
+  ERROR
+  FATAL
+}
+
+enum DependencyType {
+  HARD
+  SOFT
+  OPTIONAL
+}
+
+enum HealthStatus {
+  HEALTHY
+  DEGRADED
+  UNHEALTHY
+  UNKNOWN
+}
+
+enum BreakerEventType {
+  STATE_CHANGED
+  FAILURE_DETECTED
+  RECOVERY_ATTEMPT
+  SUCCESS_DETECTED
+  RESET
+}
+
+enum ConnectionType {
+  HTTP
+  GRPC
+  WEBSOCKET
+  DATABASE
+  CACHE
+  MESSAGE_QUEUE
+}
+
+enum MetricTimeframe {
+  MINUTE
+  HOUR
+  DAY
+  WEEK
+  MONTH
+}
+
+# Input types
+input WebSocketConnectionFilter {
+  status: ConnectionStatus
+  userId: ID
+  connectedAfter: DateTime
+  region: String
+}
+
+input CircuitBreakerFilter {
+  serviceId: ID
+  state: CircuitBreakerState
+  name: String
+}
+
+input RateLimiterFilter {
+  type: RateLimiterType
+  status: RateLimiterStatus
+  target: RateLimitTarget
+}
+
+input ServiceFilter {
+  type: ServiceType
+  status: ServiceStatus
+  name: String
+}
+
+input AlertFilter {
+  type: AlertType
+  severity: AlertSeverity
+  acknowledged: Boolean
+  createdAfter: DateTime
+}
+
+input LogFilter {
+  level: LogLevel
+  service: String
+  userId: ID
+  from: DateTime
+  to: DateTime
+}
+
+input CreateWebSocketSubscriptionInput {
+  userId: ID!
+  eventTypes: [String!]!
+  filters: SubscriptionFiltersInput
+}
+
+input UpdateWebSocketSubscriptionInput {
+  eventTypes: [String!]
+  filters: SubscriptionFiltersInput
+}
+
+input BroadcastWebSocketMessageInput {
+  eventType: String!
+  payload: String!
+  targetUserIds: [ID!]
+  filters: SubscriptionFiltersInput
+}
+
+input CreateCircuitBreakerInput {
+  serviceId: ID!
+  name: String!
+  failureThreshold: Int!
+  recoveryTimeout: Int!
+  successThreshold: Int!
+}
+
+input UpdateCircuitBreakerInput {
+  name: String
+  failureThreshold: Int
+  recoveryTimeout: Int
+  successThreshold: Int
+}
+
+input CreateRateLimiterInput {
+  name: String!
+  type: RateLimiterType!
+  target: RateLimitTarget!
+  limit: Int!
+  window: Int!
+  strategy: RateLimitStrategy!
+}
+
+input UpdateRateLimiterInput {
+  limit: Int
+  window: Int
+  strategy: RateLimitStrategy
+  status: RateLimiterStatus
+}
+
+input RegisterServiceInput {
+  name: String!
+  version: String!
+  type: ServiceType!
+  endpoints: [ServiceEndpointInput!]!
+}
+
+input UpdateServiceInput {
+  version: String
+  endpoints: [ServiceEndpointInput!]
+  config: ServiceConfigInput
+}
+
+input ServiceHealthInput {
+  status: HealthStatus!
+  responseTime: Float!
+  uptime: Float!
+}
+
+input CreateSystemAlertInput {
+  type: AlertType!
+  severity: AlertSeverity!
+  title: String!
+  message: String!
+  source: String!
+  affectedServices: [String!]!
+  metadata: AlertMetadataInput
+}
+
+input SubscriptionFiltersInput {
+  eventTypes: [String!]
+  userIds: [ID!]
+  serviceIds: [ID!]
+  regions: [String!]
+  customFilters: CustomFiltersInput
+}
+
+input ServiceEndpointInput {
+  path: String!
+  method: HttpMethod!
+  authenticated: Boolean!
+  rateLimited: Boolean!
+  cached: Boolean!
+}
+
+input ServiceConfigInput {
+  replicas: Int
+  resources: ResourceLimitsInput
+  environment: [String!]
+  features: [String!]
+}
+
+input AlertMetadataInput {
+  component: String
+  errorCode: String
+  stackTrace: String
+  affectedUsers: Int
+  impact: String
+}
+
+input ResourceLimitsInput {
+  cpu: String
+  memory: String
+  disk: String
+}
+
+input CustomFiltersInput {
+  jsonPath: String
+  regex: String
+  range: ValueRangeInput
+}
+
+input ValueRangeInput {
+  min: Float
+  max: Float
+}
+
+# Result types
+type BroadcastResult {
+  success: Boolean!
+  messageId: ID!
+  recipientCount: Int!
+  failedRecipients: Int!
+  error: String
+}
+
+# Federation requirement
+extend type PlayerProfile @key(fields: "id") {
+  id: ID! @external
+  websocketSubscriptions: [WebSocketSubscription!]!
+  activeSessions: [UserSession!]!
+}

@@ -1,0 +1,568 @@
+# Issue: #2038
+# Apollo Federation 2.0 Gateway Implementation
+# Complete gateway configuration for microservice federation
+
+# Federation 2.0 configuration
+type Query {
+  # Federation-required queries
+  _service: _Service!
+  _entities(representations: [_Any!]!): [_Entity]!
+
+  # Application queries (composed from subgraphs)
+  user(id: ID!): User
+  users(filter: UserFilter, pagination: PaginationInput): UserConnection
+
+  # Cross-service queries
+  playerDashboard(playerId: ID!): PlayerDashboard
+  gameOverview: GameOverview
+  systemHealth: SystemHealth
+}
+
+type Mutation {
+  # User mutations
+  createUser(input: CreateUserInput!): User!
+  updateUser(id: ID!, input: UpdateUserInput!): User!
+
+  # Cross-service mutations
+  performGameAction(playerId: ID!, action: GameActionInput!): GameActionResult!
+}
+
+# Federation 2.0 types
+type _Service {
+  sdl: String
+}
+
+scalar _FieldSet
+scalar _Any
+
+# Entity unions
+union _Entity = User | Guild | Item | CombatSession | World | PlayerProfile
+
+# Composed types (built from multiple subgraphs)
+type PlayerDashboard @key(fields: "playerId") {
+  playerId: ID!
+  user: User! @requires(fields: "id")
+  profile: UserProfile! @requires(fields: "id")
+  guild: Guild @requires(fields: "id")
+  inventory: [Item!]! @requires(fields: "id")
+  combatStats: CombatStats! @requires(fields: "id")
+  currencyBalances: [CurrencyBalance!]! @requires(fields: "id")
+  activeEffects: [ActiveEffect!]! @requires(fields: "id")
+  websocketSubscriptions: [WebSocketSubscription!]! @requires(fields: "id")
+  recentTrades: [Trade!]! @requires(fields: "id")
+  achievements: [Achievement!]! @requires(fields: "id")
+  notifications: [Notification!]! @requires(fields: "id")
+}
+
+type GameOverview @key(fields: "id") {
+  id: ID!
+  activePlayers: Int! @requires(fields: "id")
+  onlineGuilds: Int! @requires(fields: "id")
+  activeCombatSessions: Int! @requires(fields: "id")
+  marketVolume: Int! @requires(fields: "id")
+  systemHealth: HealthStatus! @requires(fields: "id")
+  topPlayers: [User!]! @requires(fields: "id")
+  recentEvents: [GameEvent!]! @requires(fields: "id")
+}
+
+type SystemHealth @key(fields: "timestamp") {
+  timestamp: DateTime!
+  overallStatus: HealthStatus!
+  services: [ServiceHealth!]!
+  infrastructure: InfrastructureHealth!
+  alerts: [SystemAlert!]!
+}
+
+# Gateway-specific types
+type GameActionResult {
+  success: Boolean!
+  player: PlayerDashboard!
+  rewards: [Reward!]!
+  effects: [ActiveEffect!]!
+  notifications: [Notification!]!
+  errors: [String!]
+}
+
+type Reward {
+  type: RewardType!
+  amount: Int!
+  item: Item
+  experience: Int!
+  currency: Currency
+}
+
+type GameEvent {
+  id: ID!
+  type: GameEventType!
+  timestamp: DateTime!
+  description: String!
+  players: [User!]!
+  location: Vector3
+  metadata: JSON
+}
+
+type InfrastructureHealth {
+  cpuUsage: Float!
+  memoryUsage: Float!
+  networkTraffic: NetworkTraffic!
+  activeConnections: Int!
+  websocketConnections: Int!
+  databaseConnections: Int!
+  cacheHitRate: Float!
+}
+
+# Enums for gateway
+enum GameEventType {
+  PLAYER_JOINED
+  PLAYER_LEFT
+  GUILD_CREATED
+  COMBAT_STARTED
+  COMBAT_ENDED
+  TRADE_COMPLETED
+  ACHIEVEMENT_UNLOCKED
+  QUEST_COMPLETED
+  ITEM_CRAFTED
+  LEVEL_UP
+}
+
+enum RewardType {
+  EXPERIENCE
+  CURRENCY
+  ITEM
+  ACHIEVEMENT
+  TITLE
+  COSMETIC
+}
+
+# Input types for gateway
+input GameActionInput {
+  actionType: GameActionType!
+  targetId: ID
+  parameters: JSON
+  location: Vector3
+}
+
+enum GameActionType {
+  MOVE
+  ATTACK
+  DEFEND
+  USE_ITEM
+  CAST_SPELL
+  INTERACT
+  TRADE
+  CRAFT
+  QUEST_ACTION
+}
+
+# Apollo Federation 2.0 configuration
+directive @key(fields: _FieldSet!, resolvable: Boolean = true) on OBJECT | INTERFACE
+directive @requires(fields: _FieldSet!) on FIELD_DEFINITION
+directive @provides(fields: _FieldSet!) on FIELD_DEFINITION
+directive @external on FIELD_DEFINITION | OBJECT
+directive @extends on OBJECT | INTERFACE
+directive @shareable on FIELD_DEFINITION | OBJECT
+directive @inaccessible on FIELD_DEFINITION | OBJECT
+directive @override(from: String!) on FIELD_DEFINITION
+directive @tag(name: String!) on FIELD_DEFINITION | OBJECT | INTERFACE | UNION | ENUM | INPUT_OBJECT | SCALAR
+
+# Entity definitions (extend from subgraphs)
+type User @key(fields: "id") @key(fields: "email") {
+  id: ID!
+  email: String!
+  username: String!
+  createdAt: DateTime!
+  lastLogin: DateTime
+  profile: UserProfile
+  stats: UserStats
+  # Extended from multiple subgraphs
+  friends: [User!]!
+  guild: Guild
+  inventory: [InventoryItem!]!
+  combatStats: CombatStats!
+  currencyBalances: [CurrencyBalance!]!
+  activeEffects: [ActiveEffect!]!
+  websocketSubscriptions: [WebSocketSubscription!]!
+  craftingSkills: [CraftingSkill!]!
+  achievements: [Achievement!]!
+}
+
+type Guild @key(fields: "id") @key(fields: "name") {
+  id: ID!
+  name: String!
+  description: String
+  leader: User!
+  members: [GuildMember!]!
+  level: Int!
+  reputation: Int!
+  territories: [Territory!]!
+  createdAt: DateTime!
+  stats: GuildStats!
+}
+
+type Item @key(fields: "id") {
+  id: ID!
+  name: String!
+  type: ItemType!
+  rarity: ItemRarity!
+  level: Int!
+  stats: ItemStats!
+  owner: User
+  marketPrice: Int
+}
+
+type CombatSession @key(fields: "id") {
+  id: ID!
+  gameMode: String!
+  mapId: ID!
+  status: CombatStatus!
+  participants: [CombatParticipant!]!
+  startedAt: DateTime
+  endedAt: DateTime
+  winner: Team
+}
+
+type World @key(fields: "id") {
+  id: ID!
+  name: String!
+  type: WorldType!
+  regions: [Region!]!
+  activePlayers: Int!
+  status: WorldStatus!
+}
+
+# Supporting entities
+type UserProfile @key(fields: "userId") {
+  userId: ID!
+  avatar: String
+  level: Int!
+  experience: Int!
+  reputation: Int!
+}
+
+type UserStats @key(fields: "userId") {
+  userId: ID!
+  totalPlayTime: Int!
+  gamesPlayed: Int!
+  winRate: Float!
+  favoriteWeapon: String
+}
+
+type GuildMember @key(fields: "userId guildId") {
+  userId: ID!
+  guildId: ID!
+  user: User!
+  role: GuildRole!
+  joinedAt: DateTime!
+  contribution: Int!
+}
+
+type Territory @key(fields: "id") {
+  id: ID!
+  name: String!
+  coordinates: Coordinates!
+  controlLevel: Float!
+  controllingGuild: Guild
+  resources: [Resource!]!
+}
+
+type CombatParticipant @key(fields: "userId sessionId") {
+  userId: ID!
+  sessionId: ID!
+  user: User!
+  team: Team!
+  score: Int!
+  kills: Int!
+  deaths: Int!
+}
+
+type InventoryItem @key(fields: "userId itemId") {
+  userId: ID!
+  itemId: ID!
+  item: Item!
+  quantity: Int!
+  acquiredAt: DateTime!
+}
+
+type CombatStats @key(fields: "userId") {
+  userId: ID!
+  totalKills: Int!
+  totalDeaths: Int!
+  totalScore: Int!
+  winRate: Float!
+  averageKDA: Float!
+}
+
+type CurrencyBalance @key(fields: "userId currencyId") {
+  userId: ID!
+  currencyId: ID!
+  currency: Currency!
+  balance: Int!
+  lastUpdated: DateTime!
+}
+
+type ActiveEffect @key(fields: "userId effectId") {
+  userId: ID!
+  effectId: ID!
+  effect: StatusEffect!
+  stacks: Int!
+  remainingDuration: Int!
+}
+
+type WebSocketSubscription @key(fields: "id") {
+  id: ID!
+  userId: ID!
+  eventTypes: [String!]!
+  createdAt: DateTime!
+  status: SubscriptionStatus!
+}
+
+type CraftingSkill @key(fields: "userId skillId") {
+  userId: ID!
+  skillId: ID!
+  level: Int!
+  experience: Int!
+}
+
+type Achievement @key(fields: "id") {
+  id: ID!
+  name: String!
+  description: String!
+  icon: String!
+  unlockedAt: DateTime!
+}
+
+type Region @key(fields: "id") {
+  id: ID!
+  name: String!
+  worldId: ID!
+  coordinates: Coordinates!
+  type: RegionType!
+  dangerLevel: Int!
+}
+
+type Resource {
+  type: String!
+  amount: Int!
+  regenerationRate: Float!
+}
+
+type StatusEffect @key(fields: "id") {
+  id: ID!
+  name: String!
+  type: EffectType!
+  duration: Int
+}
+
+type Currency @key(fields: "id") {
+  id: ID!
+  name: String!
+  symbol: String!
+  type: CurrencyType!
+}
+
+type ServiceHealth {
+  name: String!
+  status: HealthStatus!
+  responseTime: Float!
+  lastCheck: DateTime!
+}
+
+type SystemAlert @key(fields: "id") {
+  id: ID!
+  type: AlertType!
+  severity: AlertSeverity!
+  title: String!
+  message: String!
+  createdAt: DateTime!
+}
+
+# Shared enums (from common types)
+enum GuildRole {
+  LEADER
+  OFFICER
+  MEMBER
+  RECRUIT
+}
+
+enum Team {
+  BLUE
+  RED
+  GREEN
+  YELLOW
+}
+
+enum CombatStatus {
+  WAITING
+  ACTIVE
+  FINISHED
+  CANCELLED
+}
+
+enum ItemType {
+  WEAPON
+  ARMOR
+  CONSUMABLE
+  MATERIAL
+  QUEST_ITEM
+}
+
+enum ItemRarity {
+  COMMON
+  UNCOMMON
+  RARE
+  EPIC
+  LEGENDARY
+  MYTHIC
+}
+
+enum WorldType {
+  CITY
+  WILDERNESS
+  DUNGEON
+  RAID
+}
+
+enum WorldStatus {
+  ACTIVE
+  MAINTENANCE
+  OFFLINE
+}
+
+enum RegionType {
+  URBAN
+  INDUSTRIAL
+  RESIDENTIAL
+  COMMERCIAL
+  WILDERNESS
+  DUNGEON
+}
+
+enum EffectType {
+  BUFF
+  DEBUFF
+  DOT
+  HOT
+  STUN
+  SILENCE
+  ROOT
+  SLOW
+}
+
+enum CurrencyType {
+  FIAT
+  CRYPTO
+  INGAME
+  PREMIUM
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  PAUSED
+  EXPIRED
+}
+
+enum HealthStatus {
+  HEALTHY
+  DEGRADED
+  UNHEALTHY
+  UNKNOWN
+}
+
+enum AlertType {
+  SERVICE_DOWN
+  HIGH_ERROR_RATE
+  HIGH_LATENCY
+  RESOURCE_EXHAUSTED
+  SECURITY_BREACH
+  PERFORMANCE_DEGRADATION
+}
+
+enum AlertSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+# Input types
+input UserFilter {
+  username: String
+  level: IntRange
+  reputation: IntRange
+  lastLoginAfter: DateTime
+}
+
+input CreateUserInput {
+  email: String!
+  username: String!
+  password: String!
+}
+
+input UpdateUserInput {
+  username: String
+  profile: UpdateUserProfileInput
+}
+
+input UpdateUserProfileInput {
+  avatar: String
+  level: Int
+  experience: Int
+}
+
+input IntRange {
+  min: Int
+  max: Int
+}
+
+# Supporting types
+type UserConnection {
+  edges: [UserEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type UserEdge {
+  node: User!
+  cursor: String!
+}
+
+type PageInfo {
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  startCursor: String
+  endCursor: String
+}
+
+type GuildStats {
+  totalMembers: Int!
+  activeMembers: Int!
+  territoriesControlled: Int!
+  totalContribution: Int!
+  winRate: Float!
+  averageMemberLevel: Float!
+}
+
+type ItemStats {
+  damage: Int
+  defense: Int
+  health: Int
+  speed: Float
+}
+
+type NetworkTraffic {
+  inbound: Float!
+  outbound: Float!
+  total: Float!
+}
+
+type Coordinates {
+  latitude: Float!
+  longitude: Float!
+  altitude: Float
+}
+
+type Vector3 {
+  x: Float!
+  y: Float!
+  z: Float!
+}
