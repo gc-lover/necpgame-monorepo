@@ -34,7 +34,7 @@ log_success() {
     echo -e "${GREEN}OK $1${NC}"
 }
 
-# 1. Check file sizes (max 1500 lines, excluding generated code)
+# 1. Check file sizes (max 1000 lines, excluding generated files)
 echo ""
 echo "📏 Checking file sizes..."
 find . -name "*.yaml" -o -name "*.go" -o -name "*.sql" -o -name "*.md" | while read file; do
@@ -44,13 +44,13 @@ find . -name "*.yaml" -o -name "*.go" -o -name "*.sql" -o -name "*.md" | while r
     fi
 
     # Skip generated/bundled files
-    if [[ $file =~ oas_.*\.go$ ]] || [[ $file =~ /benchmarks/.*_test\.go$ ]] || [[ $file =~ \.bundled\.yaml$ ]] || [[ $file =~ changelog.*\.yaml$ ]] || [[ $file =~ readiness-tracker\.yaml$ ]]; then
+    if [[ $file =~ oas_.*\.go$ ]] || [[ $file =~ /benchmarks/.*_test\.go$ ]] || [[ $file =~ bundled\.yaml$ ]] || [[ $file =~ changelog.*\.yaml$ ]] || [[ $file =~ readiness-tracker\.yaml$ ]] || [[ $file =~ docker-compose\.yml$ ]] || [[ $file =~ _gen\.go$ ]] || [[ $file =~ \.pb\.go$ ]]; then
         continue
     fi
 
     lines=$(wc -l < "$file" 2>/dev/null || echo "0")
-    if [ "$lines" -gt 1500 ]; then
-        log_error "File $file exceeds 1500 lines ($lines lines)"
+    if [ "$lines" -gt 1000 ]; then
+        log_error "File $file exceeds 1000 lines ($lines lines)"
     fi
 done
 

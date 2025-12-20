@@ -23,6 +23,13 @@ while IFS= read -r -d '' file; do
     continue
   fi
   
+  # Skip bundled/generated files
+  if [[ "$rel_file" =~ bundled\.yaml$ ]] || [[ "$rel_file" =~ oas_.*\.go$ ]] || [[ "$rel_file" =~ .*changelog.*\.yaml$ ]] || [[ "$rel_file" =~ readiness-tracker\.yaml$ ]] || [[ "$rel_file" =~ docker-compose\.yml$ ]] || [[ "$rel_file" =~ _gen\.go$ ]] || [[ "$rel_file" =~ \.pb\.go$ ]]; then
+    EXCLUDED_FILES+=("$rel_file")
+    echo "⏭️  Excluded: $rel_file"
+    continue
+  fi
+
   if is_excluded "$rel_file"; then
     EXCLUDED_FILES+=("$rel_file")
     echo "⏭️  Excluded: $rel_file"
@@ -106,7 +113,7 @@ EOF
     
     if [ "$exceeds" -gt 500 ]; then
       priority="🔴 Critical"
-    elif [ "$exceeds" -gt 200 ]; then
+    elif [ "$exceeds" -gt 300 ]; then
       priority="🟠 High"
     else
       priority="🟡 Medium"

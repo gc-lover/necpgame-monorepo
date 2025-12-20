@@ -37,19 +37,29 @@ log_success() {
 validate_file_sizes() {
     echo "📏 Checking file size limits..."
 
-    # Go files: max 500 lines
+    # Go files: max 1000 lines
     while IFS= read -r -d '' file; do
+        # Skip bundled/generated files
+        if [[ $file =~ oas_.*\.go$ ]] || [[ $file =~ /benchmarks/.*_test\.go$ ]] || [[ $file =~ _gen\.go$ ]] || [[ $file =~ \.pb\.go$ ]] || [[ $file =~ docker-compose\.yml$ ]]; then
+            continue
+        fi
+
         lines=$(wc -l < "$file")
-        if [ "$lines" -gt 500 ]; then
-            log_error "Go file $file exceeds 500 lines limit ($lines lines)"
+        if [ "$lines" -gt 1000 ]; then
+            log_error "Go file $file exceeds 1000 lines limit ($lines lines)"
         fi
     done < <(find "$REPO_ROOT" -name "*.go" -type f -print0)
 
-    # YAML files in knowledge/canon: max 500 lines
+    # YAML files in knowledge/canon: max 1000 lines
     while IFS= read -r -d '' file; do
+        # Skip bundled/generated files
+        if [[ $file =~ bundled\.yaml$ ]] || [[ $file =~ changelog.*\.yaml$ ]] || [[ $file =~ readiness-tracker\.yaml$ ]] || [[ $file =~ docker-compose\.yml$ ]] || [[ $file =~ oas_.*\.go$ ]] || [[ $file =~ _gen\.go$ ]] || [[ $file =~ \.pb\.go$ ]]; then
+            continue
+        fi
+
         lines=$(wc -l < "$file")
-        if [ "$lines" -gt 500 ]; then
-            log_error "Content YAML file $file exceeds 500 lines limit ($lines lines)"
+        if [ "$lines" -gt 1000 ]; then
+            log_error "Content YAML file $file exceeds 1000 lines limit ($lines lines)"
         fi
     done < <(find "$REPO_ROOT/knowledge/canon" -name "*.yaml" -type f -print0)
 

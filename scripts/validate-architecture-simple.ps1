@@ -24,8 +24,7 @@ function Log-Success {
     Write-Host "🔍 Starting NECPGAME Architecture Validation..." -ForegroundColor Cyan
     Write-Host "Starting NECPGAME Architecture Validation..." -ForegroundColor Cyan
 
-    # 1. Check file sizes (max 600 lines)
-    # 1. Check file sizes (max 1500 lines - increased for complex specs)
+    # 1. Check file sizes (max 1000 lines - excludes generated files)
     Write-Host ""
     Write-Host "Checking file sizes..."
 
@@ -35,20 +34,20 @@ function Log-Success {
     foreach ($file in $filesToCheck) {
         try {
             $lines = (Get-Content $file.FullName -ErrorAction Stop | Measure-Object -Line).Lines
-            if ($lines -gt 1500) {
+            if ($lines -gt 1000) {
                 # Skip generated/bundled files and known large files
                 $isGenerated = $file.Name -match '^oas_.*\.go$' -or
                 ($file.Name -match '_test\.go$' -and $file.FullName -match '\\benchmarks\\') -or
-                $file.Name -match '\.bundled\.yaml$' -or
+                $file.Name -match 'bundled\.yaml$' -or
                 $file.Name -match 'changelog.*\.yaml$' -or
                 $file.Name -match 'readiness-tracker\.yaml$' -or
                 $file.Name -match '.*\.pb\.go$' -or
+                $file.Name -match '_gen\.go$' -or
                 $file.Name -match 'ai-enemies-quest-types-architecture\.yaml$' -or
-                $file.Name -match 'tournament-service-bundled\.yaml$' -or
-                $file.Name -match 'openapi-bundled\.yaml$'
+                $file.Name -eq 'docker-compose.yml'
 
                 if (-not $isGenerated) {
-                    Log-Error "File $($file.Name) exceeds 1500 lines ($lines lines)"
+                    Log-Error "File $($file.Name) exceeds 1000 lines ($lines lines)"
 
                     # 2. Check for basic structure
                     Write-Host ""

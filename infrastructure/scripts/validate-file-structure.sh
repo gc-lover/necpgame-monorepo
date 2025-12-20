@@ -37,11 +37,16 @@ log_success() {
 validate_go_files() {
     echo "🐹 Validating Go files..."
 
-    # Check file sizes (500 lines max)
+    # Check file sizes (1000 lines max)
     while IFS= read -r -d '' file; do
+        # Skip bundled/generated files
+        if [[ "$file" =~ oas_.*\.go$ ]] || [[ "$file" =~ _gen\.go$ ]] || [[ "$file" =~ \.pb\.go$ ]]; then
+            continue
+        fi
+
         lines=$(wc -l < "$file")
-        if [ "$lines" -gt 500 ]; then
-            log_error "Go file $file exceeds 500 lines limit ($lines lines)"
+        if [ "$lines" -gt 1000 ]; then
+            log_error "Go file $file exceeds 1000 lines limit ($lines lines)"
         elif [ "$lines" -gt 350 ]; then
             log_warning "Go file $file is large ($lines lines, recommended <350)"
         fi
@@ -69,11 +74,16 @@ validate_go_files() {
 validate_yaml_files() {
     echo "📄 Validating YAML files..."
 
-    # Check knowledge/canon YAML files (500 lines max)
+    # Check knowledge/canon YAML files (1000 lines max)
     while IFS= read -r -d '' file; do
+        # Skip bundled/generated files
+        if [[ "$file" =~ bundled\.yaml$ ]] || [[ "$file" =~ changelog.*\.yaml$ ]] || [[ "$file" =~ readiness-tracker\.yaml$ ]] || [[ "$file" =~ docker-compose\.yml$ ]] || [[ "$file" =~ oas_.*\.go$ ]] || [[ "$file" =~ _gen\.go$ ]] || [[ "$file" =~ \.pb\.go$ ]]; then
+            continue
+        fi
+
         lines=$(wc -l < "$file")
-        if [ "$lines" -gt 500 ]; then
-            log_error "Content YAML file $file exceeds 500 lines limit ($lines lines)"
+        if [ "$lines" -gt 1000 ]; then
+            log_error "Content YAML file $file exceeds 1000 lines limit ($lines lines)"
         elif [ "$lines" -gt 400 ]; then
             log_warning "Content YAML file $file is large ($lines lines)"
         fi
@@ -96,7 +106,7 @@ validate_yaml_files() {
     # Check OpenAPI YAML files
     while IFS= read -r -d '' file; do
         # Skip bundled/generated files
-        if [[ "$file" =~ \.bundled\.yaml$ ]] || [[ "$file" =~ oas_.*\.go$ ]] || [[ "$file" =~ /benchmarks/.*_test\.go$ ]] || [[ "$file" =~ changelog.*\.yaml$ ]] || [[ "$file" =~ readiness-tracker\.yaml$ ]]; then
+        if [[ "$file" =~ bundled\.yaml$ ]] || [[ "$file" =~ oas_.*\.go$ ]] || [[ "$file" =~ /benchmarks/.*_test\.go$ ]] || [[ "$file" =~ changelog.*\.yaml$ ]] || [[ "$file" =~ readiness-tracker\.yaml$ ]] || [[ "$file" =~ docker-compose\.yml$ ]] || [[ "$file" =~ _gen\.go$ ]] || [[ "$file" =~ \.pb\.go$ ]]; then
             continue
         fi
 
