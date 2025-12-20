@@ -51,7 +51,7 @@ func (r *repository) GetEventMetrics(ctx context.Context, eventID uuid.UUID) (*E
 		&metrics.EventID, &metrics.ParticipantCount, &metrics.CompletionRate,
 		&metrics.AverageDuration, &metrics.TotalRewards, &metrics.PlayerEngagement, &metrics.RecordedAt,
 	)
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
 	}
 	return metrics, err
@@ -75,7 +75,7 @@ func (r *repository) GetEventAnalytics(ctx context.Context, eventID uuid.UUID) (
 		&analytics.Metrics.AverageDuration, &analytics.Metrics.TotalRewards,
 		&analytics.Metrics.PlayerEngagement,
 	)
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
 	}
 	return analytics, err

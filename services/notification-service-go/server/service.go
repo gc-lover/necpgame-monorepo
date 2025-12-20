@@ -418,21 +418,21 @@ func (s *NotificationService) MarkBulkAsReadHandler(w http.ResponseWriter, r *ht
 }
 
 // HealthCheckHandler проверяет здоровье сервиса
-func (s *NotificationService) HealthCheckHandler(w http.ResponseWriter) {
+func (s *NotificationService) HealthCheckHandler(w http.ResponseWriter, request *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(`{"status": "healthy"}`))
 }
 
 // ReadinessCheckHandler проверяет готовность сервиса
-func (s *NotificationService) ReadinessCheckHandler(w http.ResponseWriter) {
+func (s *NotificationService) ReadinessCheckHandler(w http.ResponseWriter, request *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(`{"status": "ready"}`))
 }
 
 // MetricsHandler предоставляет метрики сервиса
-func (s *NotificationService) MetricsHandler(w http.ResponseWriter) {
+func (s *NotificationService) MetricsHandler(w http.ResponseWriter, request *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(`{"service": "notification-service", "version": "1.0.0"}`))

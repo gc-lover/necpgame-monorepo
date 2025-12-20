@@ -33,7 +33,7 @@ func (r *Repository) GetCurrentSeason(ctx context.Context) (*api.Season, error) 
 		&season.ID, &season.Name, &season.Description, &season.SeasonNumber,
 		&season.StartDate, &season.EndDate, &season.MaxLevel, &season.Theme, &season.Status,
 	)
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		return nil, ErrNotFound
 	}
 	if err != nil {
@@ -63,7 +63,7 @@ func (r *Repository) GetPlayerProgress(ctx context.Context, playerId string) (*a
 		&progress.HasPremium, &progress.PremiumPurchasedAt,
 		pq.Array(&progress.ClaimedLevelsFree), pq.Array(&progress.ClaimedLevelsPremium),
 	)
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		// Create initial progress
 		return r.CreatePlayerProgress(ctx, playerId, season.ID.String())
 	}
@@ -125,7 +125,7 @@ func (r *Repository) GetReward(ctx context.Context, seasonId string, level int, 
 	err := r.db.QueryRowContext(ctx, query, seasonId, level, track).Scan(
 		&reward.Level, &reward.Track, &reward.RewardType, &reward.RewardData,
 	)
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		return nil, ErrNotFound
 	}
 	if err != nil {
@@ -358,7 +358,7 @@ func (r *Repository) GetPlayerChallenge(ctx context.Context, playerId, challenge
 		&ch.ID, &ch.Title, &ch.Description, &ch.ObjectiveType, &ch.ObjectiveCount, &ch.XpReward,
 		&startDate, &endDate, &currentProgress, &completedAt, &claimedAt,
 	)
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		return nil, ErrNotFound
 	}
 	if err != nil {
@@ -400,7 +400,7 @@ func (r *Repository) GetChallengeDetails(ctx context.Context, challengeId string
 		&ch.XpReward, &startDate, &endDate,
 	)
 
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		return nil, ErrNotFound
 	}
 	if err != nil {

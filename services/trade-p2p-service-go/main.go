@@ -82,7 +82,7 @@ func main() {
 	// Issue: #1585 - Runtime Goroutine Monitoring
 	logger := log.New(os.Stdout, "[trade-p2p] ", log.LstdFlags)
 	monitor := server.NewGoroutineMonitor(150, logger) // Max 150 goroutines for trade-p2p service
-	go monitor.Start()
+	go monitor.Start(nil)
 	defer monitor.Stop()
 	logger.Println("OK Goroutine monitor started")
 

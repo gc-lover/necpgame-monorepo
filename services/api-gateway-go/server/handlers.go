@@ -8,7 +8,7 @@ import (
 )
 
 // healthCheckHandler проверяет здоровье API Gateway
-func (g *APIGateway) healthCheckHandler(w http.ResponseWriter) {
+func (g *APIGateway) healthCheckHandler(w http.ResponseWriter, request *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 
@@ -23,7 +23,7 @@ func (g *APIGateway) healthCheckHandler(w http.ResponseWriter) {
 }
 
 // readinessCheckHandler проверяет готовность API Gateway
-func (g *APIGateway) readinessCheckHandler(w http.ResponseWriter) {
+func (g *APIGateway) readinessCheckHandler(w http.ResponseWriter, request *http.Request) {
 	// Проверяем состояние circuit breakers
 	allHealthy := true
 	cbStatus := make(map[string]string)
@@ -59,7 +59,7 @@ func (g *APIGateway) readinessCheckHandler(w http.ResponseWriter) {
 }
 
 // metricsHandler предоставляет метрики API Gateway
-func (g *APIGateway) metricsHandler(w http.ResponseWriter) {
+func (g *APIGateway) metricsHandler(w http.ResponseWriter, request *http.Request) {
 	// Собираем метрики circuit breakers
 	cbMetrics := make(map[string]interface{})
 	for serviceName, cb := range g.circuitBreakers {

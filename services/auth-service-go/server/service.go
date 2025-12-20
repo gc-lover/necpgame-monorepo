@@ -76,7 +76,7 @@ func NewAuthService(logger *logrus.Logger, metrics *AuthMetrics, config *Config)
 }
 
 // HealthCheck Health check method
-func (s *AuthService) HealthCheck(w http.ResponseWriter) {
+func (s *AuthService) HealthCheck(w http.ResponseWriter, request *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(`{"status":"healthy","service":"auth-service","version":"1.0.0","active_users":42}`))

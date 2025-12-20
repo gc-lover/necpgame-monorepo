@@ -155,7 +155,7 @@ func (r *Repository) GetCharacter(ctx context.Context, characterID uuid.UUID) (*
 	)
 
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrCharacterNotFound
 		}
 		r.logger.Error("Failed to get character", zap.Error(err), zap.String("character_id", characterID.String()))
@@ -210,7 +210,7 @@ func (r *Repository) UpdateCharacter(ctx context.Context, characterID uuid.UUID,
 	)
 
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrCharacterNotFound
 		}
 		r.logger.Error("Failed to update character", zap.Error(err), zap.String("character_id", characterID.String()))
@@ -275,7 +275,7 @@ func (r *Repository) RestoreCharacter(ctx context.Context, characterID uuid.UUID
 	)
 
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrCharacterNotFound
 		}
 		r.logger.Error("Failed to restore character", zap.Error(err), zap.String("character_id", characterID.String()))
@@ -397,7 +397,7 @@ func (r *Repository) GetPlayerSlots(ctx context.Context, playerID uuid.UUID) (*P
 	var totalSlots int
 	err := r.db.QueryRowContext(ctx, query, playerID).Scan(&totalSlots)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			// Создаем запись игрока с базовыми слотами
 			totalSlots = 3
 			_, err := r.db.ExecContext(ctx, "INSERT INTO players (id) VALUES ($1)", playerID)

@@ -81,7 +81,7 @@ func (r *NotificationPreferencesRepository) GetByAccountID(ctx context.Context, 
 		&prefs.SystemEnabled, &prefs.FriendEnabled, &prefs.GuildEnabled, &prefs.TradeEnabled,
 		&prefs.CombatEnabled, &channelsJSON, &prefs.UpdatedAt)
 
-	if err == pgx.ErrNoRows {
+	if errors.Is(err, pgx.ErrNoRows) {
 		return r.createDefaultPreferences(ctx, accountID)
 	}
 	if err != nil {

@@ -20,7 +20,7 @@ type InventoryRepository struct {
 	logger *logrus.Logger
 }
 
-func NewInventoryRepository(db *pgxpool.Pool) *InventoryRepository {
+func NewInventoryRepository(db *pgxpool.Pool, GetLogger func() *logrus.Logger) *InventoryRepository {
 	return &InventoryRepository{
 		db:     db,
 		logger: GetLogger(),
@@ -36,7 +36,7 @@ func (r *InventoryRepository) GetInventoryByCharacterID(ctx context.Context, cha
 		characterID,
 	).Scan(&inv.ID, &inv.CharacterID, &inv.Capacity, &inv.UsedSlots, &inv.Weight, &inv.MaxWeight, &inv.CreatedAt, &inv.UpdatedAt)
 
-	if err == pgx.ErrNoRows {
+	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil
 	}
 	if err != nil {
@@ -281,7 +281,7 @@ func (r *InventoryRepository) GetItemTemplate(ctx context.Context, itemID string
 		&template.Weight, &template.CanEquip, &equipSlot, &requirementsJSON, &statsJSON, &metadataJSON,
 	)
 
-	if err == pgx.ErrNoRows {
+	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil
 	}
 	if err != nil {

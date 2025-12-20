@@ -303,7 +303,7 @@ func (s *SandevistanService) ApplyCounterplay(ctx context.Context, userID, count
 }
 
 // TrackTarget adds a target for temporal marks tracking
-func (s *SandevistanService) TrackTarget(ctx context.Context, userID, targetID, targetType string) error {
+func (s *SandevistanService) TrackTarget(userID, targetID, targetType string) error {
 	// Get current activation ID (simplified)
 	activationID := "current_activation_" + userID
 	return s.temporalMarksTracker.TrackTarget(activationID, targetID, targetType)
@@ -335,5 +335,5 @@ func (s *SandevistanService) ProcessActionBatch(ctx context.Context, userID stri
 		Processed: false,
 	}
 
-	return s.actionBudgetEngine.ProcessMicroTickWindow(ctx, window)
+	return s.actionBudgetEngine.ProcessMicroTickWindow(window)
 }

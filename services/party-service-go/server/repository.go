@@ -79,7 +79,7 @@ func (r *PartyRepository) GetParty(ctx context.Context, partyID string) (*Party,
 	)
 
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, fmt.Errorf("party not found")
 		}
 		return nil, fmt.Errorf("failed to get party: %w", err)
@@ -192,7 +192,7 @@ func (r *PartyRepository) GetPartyInvite(ctx context.Context, inviteID string) (
 	)
 
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, fmt.Errorf("party invite not found")
 		}
 		return nil, fmt.Errorf("failed to get party invite: %w", err)

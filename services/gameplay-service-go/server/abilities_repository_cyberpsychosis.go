@@ -4,6 +4,7 @@ package server
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"time"
 
 	"github.com/gc-lover/necpgame-monorepo/services/gameplay-service-go/pkg/api"
@@ -36,7 +37,7 @@ func (r *AbilityRepository) GetCyberpsychosisState(ctx context.Context, characte
 		&state.CurrentLevel, &lastUpdated, &state.CreatedAt,
 	)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			// Return default state
 			state.CharacterID = characterID
 			state.CurrentLevel = 0

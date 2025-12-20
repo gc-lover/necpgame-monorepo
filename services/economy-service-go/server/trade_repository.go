@@ -79,7 +79,7 @@ func (r *TradeRepository) GetByID(ctx context.Context, id uuid.UUID) (*models.Tr
 		&session.CompletedAt,
 	)
 
-	if err == pgx.ErrNoRows {
+	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil
 	}
 	if err != nil {

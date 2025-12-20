@@ -124,7 +124,7 @@ func (r *EngramRepository) GetEngramSlotBySlotID(ctx context.Context, characterI
 		&slot.InfluenceLevel, &slot.UsagePoints, &slot.IsActive, &slot.CreatedAt, &slot.UpdatedAt,
 	)
 
-	if err == pgx.ErrNoRows {
+	if errors.Is(err, pgx.ErrNoRows) {
 		return r.CreateEngramSlot(ctx, characterID, slotID)
 	}
 	if err != nil {

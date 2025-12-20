@@ -107,7 +107,7 @@ func (r *EngramCreationRepository) GetCreationLogByCreationID(ctx context.Contex
 		&creation.CreatedAt, &creation.UpdatedAt, &completedAt,
 	)
 
-	if err == pgx.ErrNoRows {
+	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil
 	}
 	if err != nil {
@@ -157,7 +157,7 @@ func (r *EngramCreationRepository) GetCreationLogByEngramID(ctx context.Context,
 		&creation.CreatedAt, &creation.UpdatedAt, &completedAt,
 	)
 
-	if err == pgx.ErrNoRows {
+	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil
 	}
 	if err != nil {

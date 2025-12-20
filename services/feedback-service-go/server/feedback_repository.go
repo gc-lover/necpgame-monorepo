@@ -73,7 +73,7 @@ func (r *FeedbackRepository) GetByID(ctx context.Context, id uuid.UUID) (*models
 		&feedback.CreatedAt, &feedback.UpdatedAt,
 	)
 
-	if err == pgx.ErrNoRows {
+	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil
 	}
 	if err != nil {

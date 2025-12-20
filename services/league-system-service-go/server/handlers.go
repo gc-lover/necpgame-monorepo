@@ -33,7 +33,7 @@ func (s *LeagueService) GetCurrentLeagueHandler(w http.ResponseWriter, r *http.R
 
 	league, err := s.repo.GetCurrentLeague(ctx)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			s.respondError(w, http.StatusNotFound, "No active league found")
 			return
 		}
@@ -59,7 +59,7 @@ func (s *LeagueService) GetLeagueStatisticsHandler(w http.ResponseWriter, r *htt
 
 	stats, err := s.repo.GetLeagueStatistics(ctx, leagueID)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			s.respondError(w, http.StatusNotFound, "League statistics not found")
 			return
 		}
@@ -229,7 +229,7 @@ func (s *LeagueService) GetPlayerLegacyProgressHandler(w http.ResponseWriter, r 
 
 	progress, err := s.repo.GetPlayerLegacyProgress(ctx, userUUID)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			// Return default progress for new players
 			defaultProgress := &models.PlayerLegacyProgress{
 				PlayerID:     userUUID,
@@ -346,7 +346,7 @@ func (s *LeagueService) PurchaseLegacyItemHandler(w http.ResponseWriter, r *http
 	// Get item details
 	item, err := s.repo.GetLegacyShopItem(ctx, req.ItemID)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			s.respondError(w, http.StatusNotFound, "Item not found")
 			return
 		}

@@ -191,7 +191,7 @@ func (s *Service) AddTradeOffer(ctx context.Context, sessionID string) (*api.Tra
 }
 
 // UpdateTradeOffer updates an existing trade offer
-func (s *Service) UpdateTradeOffer(ctx context.Context, sessionID string, offer *api.TradeOfferRequest) (*api.TradeSessionResponse, error) {
+func (s *Service) UpdateTradeOffer(ctx context.Context, sessionID string) (*api.TradeSessionResponse, error) {
 	// Same as AddTradeOffer for now
 	return s.AddTradeOffer(ctx, sessionID)
 }

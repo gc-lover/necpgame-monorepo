@@ -414,7 +414,7 @@ func (s *TournamentService) RateLimitMiddleware() func(http.Handler) http.Handle
 }
 
 // HealthCheck Health check method
-func (s *TournamentService) HealthCheck(w http.ResponseWriter) {
+func (s *TournamentService) HealthCheck(w http.ResponseWriter, request *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]interface{}{
@@ -429,7 +429,7 @@ func (s *TournamentService) HealthCheck(w http.ResponseWriter) {
 	})
 }
 
-// Tournament Management Handlers
+// CreateTournament Tournament Management Handlers
 func (s *TournamentService) CreateTournament(w http.ResponseWriter, r *http.Request) {
 	var req CreateTournamentRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {

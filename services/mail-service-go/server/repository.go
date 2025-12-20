@@ -152,7 +152,7 @@ func (r *PostgresRepository) GetMail(ctx context.Context, mailID uuid.UUID) (*Ma
 		&mail.SentAt, &mail.ReadAt, &mail.ExpiresAt, &mail.IsRead, &mail.IsClaimed,
 		&mail.CreatedAt, &mail.UpdatedAt,
 	)
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		return nil, errors.New("mail not found")
 	}
 	if err != nil {

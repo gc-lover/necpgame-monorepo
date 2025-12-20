@@ -134,7 +134,7 @@ func (r *EngramTransferRepository) GetTransferByID(ctx context.Context, transfer
 		&newEngramID, &transferredAt, &transfer.Metadata.CreatedAt, &transfer.Metadata.UpdatedAt,
 	)
 
-	if err == pgx.ErrNoRows {
+	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil
 	}
 	if err != nil {

@@ -378,37 +378,37 @@ func (s *CircuitBreakerService) ResetCircuit(w http.ResponseWriter, r *http.Requ
 }
 
 // ListBulkheads Bulkhead methods (TODO: implement)
-func (s *CircuitBreakerService) ListBulkheads(w http.ResponseWriter) {
+func (s *CircuitBreakerService) ListBulkheads(w http.ResponseWriter, request *http.Request) {
 	http.Error(w, "Not implemented", http.StatusNotImplemented)
 }
 
-func (s *CircuitBreakerService) CreateBulkhead(w http.ResponseWriter) {
+func (s *CircuitBreakerService) CreateBulkhead(w http.ResponseWriter, request *http.Request) {
 	http.Error(w, "Not implemented", http.StatusNotImplemented)
 }
 
-func (s *CircuitBreakerService) GetBulkhead(w http.ResponseWriter) {
+func (s *CircuitBreakerService) GetBulkhead(w http.ResponseWriter, request *http.Request) {
 	http.Error(w, "Not implemented", http.StatusNotImplemented)
 }
 
-func (s *CircuitBreakerService) DeleteBulkhead(w http.ResponseWriter) {
+func (s *CircuitBreakerService) DeleteBulkhead(w http.ResponseWriter, request *http.Request) {
 	http.Error(w, "Not implemented", http.StatusNotImplemented)
 }
 
 // ListTimeouts Timeout methods (TODO: implement)
-func (s *CircuitBreakerService) ListTimeouts(w http.ResponseWriter) {
+func (s *CircuitBreakerService) ListTimeouts(w http.ResponseWriter, request *http.Request) {
 	http.Error(w, "Not implemented", http.StatusNotImplemented)
 }
 
-func (s *CircuitBreakerService) CreateTimeout(w http.ResponseWriter) {
+func (s *CircuitBreakerService) CreateTimeout(w http.ResponseWriter, request *http.Request) {
 	http.Error(w, "Not implemented", http.StatusNotImplemented)
 }
 
 // CreateDegradationPolicy Degradation policy methods (TODO: implement)
-func (s *CircuitBreakerService) CreateDegradationPolicy(w http.ResponseWriter) {
+func (s *CircuitBreakerService) CreateDegradationPolicy(w http.ResponseWriter, request *http.Request) {
 	http.Error(w, "Not implemented", http.StatusNotImplemented)
 }
 
 // GetMetrics Metrics method (TODO: implement)
-func (s *CircuitBreakerService) GetMetrics(w http.ResponseWriter) {
+func (s *CircuitBreakerService) GetMetrics(w http.ResponseWriter, request *http.Request) {
 	http.Error(w, "Not implemented", http.StatusNotImplemented)
 }

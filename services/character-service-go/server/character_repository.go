@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/google/uuid"
@@ -34,7 +35,7 @@ func (r *CharacterRepository) GetAccountByID(ctx context.Context, accountID uuid
 		accountID,
 	).Scan(&account.ID, &externalID, &account.Nickname, &originCode, &account.CreatedAt, &account.UpdatedAt, &account.DeletedAt)
 
-	if err == pgx.ErrNoRows {
+	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil
 	}
 	if err != nil {
@@ -133,7 +134,7 @@ func (r *CharacterRepository) GetCharacterByID(ctx context.Context, characterID 
 	).Scan(&char.ID, &char.AccountID, &char.Name, &classCode, &factionCode,
 		&char.Level, &char.CreatedAt, &char.UpdatedAt, &char.DeletedAt)
 
-	if err == pgx.ErrNoRows {
+	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil
 	}
 	if err != nil {

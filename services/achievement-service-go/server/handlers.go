@@ -84,7 +84,7 @@ func (h *Handlers) GetPlayerTitles(ctx context.Context, _ api.GetPlayerTitlesPar
 	return result, nil
 }
 
-func (h *Handlers) SetActiveTitle(ctx context.Context, req *api.SetActiveTitleReq, params api.SetActiveTitleParams) (api.SetActiveTitleRes, error) {
+func (h *Handlers) SetActiveTitle(ctx context.Context, req *api.SetActiveTitleReq, _ api.SetActiveTitleParams) (api.SetActiveTitleRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 

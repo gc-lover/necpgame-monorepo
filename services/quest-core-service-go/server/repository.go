@@ -65,7 +65,7 @@ func (r *Repository) GetQuestDefinitionByID(ctx context.Context, questID string)
 		&questDef.IsActive,
 	)
 
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		return nil, fmt.Errorf("not found")
 	}
 	if err != nil {

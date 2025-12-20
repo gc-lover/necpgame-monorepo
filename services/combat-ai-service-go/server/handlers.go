@@ -52,7 +52,7 @@ func (h *Handlers) GetAIProfile(ctx context.Context, _ api.GetAIProfileParams) (
 	return result, nil
 }
 
-func (h *Handlers) GetAIProfileTelemetry(ctx context.Context, params api.GetAIProfileTelemetryParams) (api.GetAIProfileTelemetryRes, error) {
+func (h *Handlers) GetAIProfileTelemetry(ctx context.Context, _ api.GetAIProfileTelemetryParams) (api.GetAIProfileTelemetryRes, error) {
 	// Issue: #1588 - Load shedding (prevent overload)
 	if !h.loadShedder.Allow() {
 		err := api.GetAIProfileTelemetryInternalServerError(api.Error{
@@ -78,7 +78,7 @@ func (h *Handlers) GetAIProfileTelemetry(ctx context.Context, params api.GetAIPr
 	return result, nil
 }
 
-func (h *Handlers) ListAIProfiles(ctx context.Context, params api.ListAIProfilesParams) (api.ListAIProfilesRes, error) {
+func (h *Handlers) ListAIProfiles(ctx context.Context, _ api.ListAIProfilesParams) (api.ListAIProfilesRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 

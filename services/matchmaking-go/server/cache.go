@@ -5,6 +5,7 @@ package server
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 
@@ -52,7 +53,7 @@ func (c *CacheManager) CacheQueueEntry(ctx context.Context, entry *QueueEntry) e
 func (c *CacheManager) GetQueueStatus(ctx context.Context, queueID uuid.UUID) (*api.QueueStatusResponse, error) {
 	key := fmt.Sprintf("queue:status:%s", queueID)
 	data, err := c.client.Get(ctx, key).Bytes()
-	if err == redis.Nil {
+	if errors.Is(err, redis.Nil) {
 		return nil, nil // Cache miss
 	}
 	if err != nil {
@@ -92,7 +93,7 @@ func (c *CacheManager) RemoveQueueEntry(ctx context.Context, queueID uuid.UUID) 
 // Performance: <1ms on hit, 5min TTL
 func (c *CacheManager) GetLeaderboard(ctx context.Context, cacheKey string) (*api.LeaderboardResponse, error) {
 	data, err := c.client.Get(ctx, cacheKey).Bytes()
-	if err == redis.Nil {
+	if errors.Is(err, redis.Nil) {
 		return nil, nil // Cache miss
 	}
 	if err != nil {
@@ -121,7 +122,7 @@ func (c *CacheManager) CacheLeaderboard(ctx context.Context, cacheKey string, re
 func (c *CacheManager) GetCachedPlayerRating(ctx context.Context, playerID uuid.UUID, activityType string) (int, error) {
 	key := fmt.Sprintf("rating:%s:%s", playerID, activityType)
 	val, err := c.client.Get(ctx, key).Int()
-	if err == redis.Nil {
+	if errors.Is(err, redis.Nil) {
 		return 0, nil // Cache miss
 	}
 	return val, err

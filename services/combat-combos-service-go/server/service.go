@@ -362,7 +362,7 @@ func (s *Service) GetComboDetails(ctx context.Context, comboID string) (*api.Com
 }
 
 // ActivateCombo processes a combo activation request
-func (s *Service) ActivateCombo(ctx context.Context, req api.ActivateCombo) (*api.ActivateComboBadRequest, error) {
+func (s *Service) ActivateCombo(ctx context.Context, req api.ActivateCombo) (*api.ActivateComboNotFound, error) {
 	request := &models.ActivateComboRequest{
 		ComboID:      req.ComboID,
 		CharacterID:  req.CharacterID,
@@ -395,7 +395,7 @@ func (s *Service) ApplySynergy() (*api.SynergyApplicationResponse, error) {
 }
 
 // GetComboLoadout retrieves a character's combo loadout
-func (s *Service) GetComboLoadout(ctx context.Context, params string) (*api.GetComboLoadoutInternalServerError, error) {
+func (s *Service) GetComboLoadout(ctx context.Context, params string) (*api.ComboLoadout, error) {
 	characterID := params.CharacterID.String()
 	response, err := s.getComboLoadout(ctx, characterID)
 	if err != nil {
@@ -415,7 +415,7 @@ func (s *Service) GetComboLoadout(ctx context.Context, params string) (*api.GetC
 }
 
 // UpdateComboLoadout updates a character's combo loadout
-func (s *Service) UpdateComboLoadout(ctx context.Context, req api.UpdateComboLoadout) (*api.UpdateComboLoadoutInternalServerError, error) {
+func (s *Service) UpdateComboLoadout(ctx context.Context, req api.UpdateComboLoadout) (*api.ComboLoadout, error) {
 	characterID := req.CharacterID
 	request := &models.ComboLoadoutRequest{
 		ActiveCombos: req.ActiveCombos.Value,

@@ -162,7 +162,7 @@ func (s *WorldCitiesService) GetCity(w http.ResponseWriter, r *http.Request) {
 
 	city, err := s.repo.GetCityByID(ctx, cityID)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			http.Error(w, "City not found", http.StatusNotFound)
 			return
 		}
@@ -291,7 +291,7 @@ func (s *WorldCitiesService) UpdateCity(w http.ResponseWriter, r *http.Request) 
 	}
 
 	if err := s.repo.UpdateCity(ctx, cityID, updates); err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			http.Error(w, "City not found", http.StatusNotFound)
 			return
 		}
@@ -320,7 +320,7 @@ func (s *WorldCitiesService) DeleteCity(w http.ResponseWriter, r *http.Request) 
 	cityID := chi.URLParam(r, "cityID")
 
 	if err := s.repo.DeleteCity(ctx, cityID); err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			http.Error(w, "City not found", http.StatusNotFound)
 			return
 		}

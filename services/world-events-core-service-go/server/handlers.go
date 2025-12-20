@@ -26,7 +26,7 @@ type Handlers struct {
 	logger  *zap.Logger
 }
 
-func NewHandlers(service Service, logger *zap.Logger) *Handlers {
+func NewHandlers(service *service, logger *zap.Logger) *Handlers {
 	return &Handlers{service: service, logger: logger}
 }
 

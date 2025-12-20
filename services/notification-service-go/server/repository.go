@@ -193,7 +193,7 @@ func (r *NotificationRepository) GetNotificationByID(ctx context.Context, notifi
 	)
 
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, fmt.Errorf("notification not found")
 		}
 		return nil, fmt.Errorf("failed to get notification: %w", err)
@@ -264,7 +264,7 @@ func (r *NotificationRepository) UpdateNotification(ctx context.Context, notific
 	)
 
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, fmt.Errorf("notification not found")
 		}
 		return nil, fmt.Errorf("failed to update notification: %w", err)

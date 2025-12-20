@@ -38,7 +38,7 @@ func (r *CosmeticEquipmentRepository) GetEquippedCosmetics(ctx context.Context, 
 		&equipped.Emote2ID, &equipped.Emote3ID, &equipped.Emote4ID, &equipped.UpdatedAt,
 	)
 
-	if err == pgx.ErrNoRows {
+	if errors.Is(err, pgx.ErrNoRows) {
 		return &models.EquippedCosmetics{
 			PlayerID: playerID,
 		}, nil
@@ -215,7 +215,7 @@ func (r *CosmeticEquipmentRepository) getCosmeticItem(ctx context.Context, cosme
 		&item.IsActive, &item.CreatedAt, &item.UpdatedAt,
 	)
 
-	if err == pgx.ErrNoRows {
+	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, fmt.Errorf("cosmetic item not found: %s", cosmeticID)
 	}
 	if err != nil {

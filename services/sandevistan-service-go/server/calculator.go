@@ -16,7 +16,7 @@ func NewSandevistanCalculator() *SandevistanCalculator {
 }
 
 // calculateDuration calculates the duration of Sandevistan activation
-func (c *SandevistanCalculator) calculateDuration(level int, override *float64) float32 {
+func (c *SandevistanCalculator) calculateDuration(level int, override *float64) float64 {
 	if override != nil {
 		return *override
 	}
@@ -28,7 +28,7 @@ func (c *SandevistanCalculator) calculateDuration(level int, override *float64) 
 }
 
 // calculateCooldown calculates the cooldown time after Sandevistan deactivation
-func (c *SandevistanCalculator) calculateCooldown(level int) float32 {
+func (c *SandevistanCalculator) calculateCooldown(level int) float64 {
 	// Cooldown decreases with level (better upgrades)
 	baseCooldown := 60.0                     // 60 seconds base
 	levelReduction := float64(level-1) * 2.0 // -2 seconds per level
@@ -42,7 +42,7 @@ func (c *SandevistanCalculator) calculateCooldown(level int) float32 {
 }
 
 // calculateTimeDilation calculates the time dilation factor
-func (c *SandevistanCalculator) calculateTimeDilation(level int) float32 {
+func (c *SandevistanCalculator) calculateTimeDilation(level int) float64 {
 	// Time dilation increases with level
 	baseDilation := 0.25                  // 25% speed increase (4x speed)
 	levelBonus := float64(level-1) * 0.05 // +5% per level
@@ -83,7 +83,7 @@ func (c *SandevistanCalculator) calculateHeatDissipation(currentLevel float64) f
 }
 
 // calculateResistance calculates cyberpsychosis resistance
-func (c *SandevistanCalculator) calculateResistance(level int) float32 {
+func (c *SandevistanCalculator) calculateResistance(level int) float64 {
 	// Resistance increases with level
 	baseResistance := 10.0               // 10% base resistance
 	levelBonus := float64(level-1) * 5.0 // +5% per level
@@ -91,7 +91,7 @@ func (c *SandevistanCalculator) calculateResistance(level int) float32 {
 }
 
 // calculateDissipationRate calculates cyberpsychosis dissipation rate
-func (c *SandevistanCalculator) calculateDissipationRate(level int) float32 {
+func (c *SandevistanCalculator) calculateDissipationRate(level int) float64 {
 	// Dissipation rate increases with level
 	baseRate := 0.01                       // 1% per second base
 	levelBonus := float64(level-1) * 0.005 // +0.5% per level
@@ -158,7 +158,7 @@ func (c *SandevistanCalculator) calculateRecoveryTime(failureSeverity float64) t
 }
 
 // calculateOptimalActivationTime calculates the optimal activation duration
-func (c *SandevistanCalculator) calculateOptimalActivationTime(level int, currentCyberpsychosis float64) float64 {
+func (c *SandevistanCalculator) calculateOptimalActivationTime(level int, currentCyberpsychosis float64) float32 {
 	// Optimal time decreases as cyberpsychosis increases
 	baseOptimal := c.calculateDuration(level, nil) * 0.8 // 80% of max duration
 

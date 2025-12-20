@@ -49,7 +49,7 @@ func (r *SandevistanRepository) GetSandevistanState(ctx context.Context, userID 
 	)
 
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			// Создаем дефолтное состояние для нового пользователя
 			return &api.SandevistanState{
 				IsActive:            false,
@@ -91,7 +91,7 @@ func (r *SandevistanRepository) GetSandevistanStats(ctx context.Context, userID 
 	)
 
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			// Создаем дефолтную статистику для нового пользователя
 			return &api.SandevistanStats{
 				Level:                    0,
@@ -132,7 +132,7 @@ func (r *SandevistanRepository) GetSandevistanStatsInline(ctx context.Context, u
 	)
 
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			// Заполняем дефолтными значениями
 			stats.Level = 0
 			stats.MaxDuration = 8.0
@@ -277,7 +277,7 @@ func (r *SandevistanRepository) GetActionBudget(ctx context.Context, userID stri
 	)
 
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			// Создаем дефолтный бюджет
 			budget = ActionBudget{
 				UserID:         userID,

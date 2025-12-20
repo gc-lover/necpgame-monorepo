@@ -101,7 +101,7 @@ func (r *PartyRepository) GetByID(ctx context.Context, partyID uuid.UUID) (*mode
 		&party.CreatedAt, &party.UpdatedAt,
 	)
 	if err != nil {
-		if err == pgx.ErrNoRows {
+		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil
 		}
 		r.logger.WithError(err).WithField("party_id", partyID).Error("Failed to get party")
@@ -132,7 +132,7 @@ func (r *PartyRepository) GetByPlayerID(ctx context.Context, accountID uuid.UUID
 		&party.CreatedAt, &party.UpdatedAt,
 	)
 	if err != nil {
-		if err == pgx.ErrNoRows {
+		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil
 		}
 		r.logger.WithError(err).WithField("account_id", accountID).Error("Failed to get party by player")
@@ -193,7 +193,7 @@ func (r *PartyRepository) GetLeader(ctx context.Context, partyID uuid.UUID) (*mo
 		&member.CharacterID, &member.Role, &member.JoinedAt,
 	)
 	if err != nil {
-		if err == pgx.ErrNoRows {
+		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil
 		}
 		r.logger.WithError(err).WithField("party_id", partyID).Error("Failed to get party leader")

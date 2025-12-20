@@ -74,7 +74,7 @@ func (r *Repository) GetGuildBank(ctx context.Context, guildID uuid.UUID) (*Guil
 		&bank.GuildID, &bank.Balance, &bank.CreatedAt, &bank.UpdatedAt,
 	)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrGuildBankNotFound
 		}
 		return nil, err

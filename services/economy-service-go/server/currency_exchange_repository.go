@@ -5,6 +5,7 @@ package server
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"time"
 
@@ -97,7 +98,7 @@ func (r *CurrencyExchangeRepository) GetExchangeRate(ctx context.Context, pair s
 		&rate.Pair, &rate.Bid, &rate.Ask, &rate.Spread, &rate.UpdatedAt, &rate.IsActive,
 	)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
 		}
 		r.logger.WithError(err).Error("Failed to query exchange rate")
@@ -211,7 +212,7 @@ func (r *CurrencyExchangeRepository) GetOrder(ctx context.Context, orderID uuid.
 		&order.CreatedAt, &order.UpdatedAt, &filledAt, &expiresAt,
 	)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
 		}
 		r.logger.WithError(err).Error("Failed to get exchange order")

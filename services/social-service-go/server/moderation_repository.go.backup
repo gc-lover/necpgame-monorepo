@@ -80,7 +80,7 @@ func (r *ModerationRepository) GetActiveBan(ctx context.Context, characterID uui
 		&adminID, &expiresAt, &ban.CreatedAt, &ban.IsActive,
 	)
 
-	if err == pgx.ErrNoRows {
+	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil
 	}
 	if err != nil {
@@ -112,7 +112,7 @@ func (r *ModerationRepository) GetBanByID(ctx context.Context, banID uuid.UUID) 
 		&adminID, &expiresAt, &ban.CreatedAt, &ban.IsActive,
 	)
 
-	if err == pgx.ErrNoRows {
+	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil
 	}
 	if err != nil {
@@ -327,7 +327,7 @@ func (r *ModerationRepository) GetReportByID(ctx context.Context, reportID uuid.
 		&report.Reason, &report.Status, &adminID, &report.CreatedAt, &resolvedAt)
 
 	if err != nil {
-		if err == pgx.ErrNoRows {
+		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil
 		}
 		r.logger.WithError(err).Error("Failed to get chat report by ID")

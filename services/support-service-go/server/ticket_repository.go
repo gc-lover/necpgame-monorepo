@@ -67,7 +67,7 @@ func (r *TicketRepository) GetByID(ctx context.Context, id uuid.UUID) (*models.S
 		&ticket.SatisfactionRating,
 	)
 
-	if err == pgx.ErrNoRows {
+	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil
 	}
 	if err != nil {
@@ -96,7 +96,7 @@ func (r *TicketRepository) GetByNumber(ctx context.Context, number string) (*mod
 		&ticket.SatisfactionRating,
 	)
 
-	if err == pgx.ErrNoRows {
+	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil
 	}
 	if err != nil {

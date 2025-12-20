@@ -146,7 +146,7 @@ func (s *WorldEventsService) GetWorldEventHandler(w http.ResponseWriter, r *http
 
 	event, err := s.repo.GetWorldEvent(ctx, eventID)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			s.respondError(w, http.StatusNotFound, "World event not found")
 			return
 		}
@@ -178,7 +178,7 @@ func (s *WorldEventsService) UpdateWorldEventHandler(w http.ResponseWriter, r *h
 
 	event, err := s.repo.GetWorldEvent(ctx, eventID)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			s.respondError(w, http.StatusNotFound, "World event not found")
 			return
 		}
@@ -236,7 +236,7 @@ func (s *WorldEventsService) DeleteWorldEventHandler(w http.ResponseWriter, r *h
 
 	event, err := s.repo.GetWorldEvent(ctx, eventID)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			s.respondError(w, http.StatusNotFound, "World event not found")
 			return
 		}

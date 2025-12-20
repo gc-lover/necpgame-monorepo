@@ -10,7 +10,7 @@ import (
 )
 
 // HealthCheckHandler handles health check requests
-func (s *LeagueService) HealthCheckHandler(w http.ResponseWriter) {
+func (s *LeagueService) HealthCheckHandler(w http.ResponseWriter, request *http.Request) {
 	s.respondJSON(w, http.StatusOK, map[string]interface{}{
 		"status":    "ok",
 		"service":   "league-system-service",
@@ -39,7 +39,7 @@ func (s *LeagueService) ReadinessCheckHandler(w http.ResponseWriter, r *http.Req
 }
 
 // MetricsHandler handles metrics requests
-func (s *LeagueService) MetricsHandler(w http.ResponseWriter) {
+func (s *LeagueService) MetricsHandler(w http.ResponseWriter, request *http.Request) {
 	// Use memory pool for response
 	response := s.responsePool.Get().(map[string]interface{})
 	defer func() {

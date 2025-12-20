@@ -40,7 +40,7 @@ func (r *CosmeticShopRepository) GetDailyShop(ctx context.Context) (*models.Dail
 	var createdAt time.Time
 
 	err := r.db.QueryRow(ctx, query, today).Scan(&rotationID, &rotationDate, &createdAt)
-	if err == pgx.ErrNoRows {
+	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil
 	}
 	if err != nil {

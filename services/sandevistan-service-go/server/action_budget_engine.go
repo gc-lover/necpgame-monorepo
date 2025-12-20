@@ -89,7 +89,7 @@ func (e *ActionPriorityBudgetEngine) ConsumeAction(ctx context.Context, userID, 
 }
 
 // ProcessMicroTickWindow processes a batch of actions in a micro-tick window
-func (e *ActionPriorityBudgetEngine) ProcessMicroTickWindow(ctx context.Context, window *MicroTickWindow) error {
+func (e *ActionPriorityBudgetEngine) ProcessMicroTickWindow(window *MicroTickWindow) error {
 	if window.Processed {
 		return fmt.Errorf("window already processed")
 	}

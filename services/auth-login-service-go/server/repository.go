@@ -84,7 +84,7 @@ func (r *Repository) GetUserByEmail(ctx context.Context, email string) (*User, e
 	)
 
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, fmt.Errorf("user not found")
 		}
 		r.logger.Error("Failed to get user by email",
@@ -115,7 +115,7 @@ func (r *Repository) GetUserByID(ctx context.Context, userID string) (*User, err
 	)
 
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, fmt.Errorf("user not found")
 		}
 		r.logger.Error("Failed to get user by ID",
@@ -240,7 +240,7 @@ func (r *Repository) ValidateRefreshToken(ctx context.Context, token string) (*R
 	)
 
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, fmt.Errorf("token not found or expired")
 		}
 		r.logger.Error("Failed to validate refresh token",

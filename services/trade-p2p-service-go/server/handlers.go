@@ -93,7 +93,7 @@ func (h *Handlers) CancelTradeSession(ctx context.Context, req api.OptCancelTrad
 // Добавить предложение.
 //
 // POST /economy/trade/sessions/{sessionId}/offer
-func (h *Handlers) AddTradeOffer(ctx context.Context, req *api.TradeOfferRequest, params api.AddTradeOfferParams) (api.AddTradeOfferRes, error) {
+func (h *Handlers) AddTradeOffer(ctx context.Context, _ *api.TradeOfferRequest, params api.AddTradeOfferParams) (api.AddTradeOfferRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
@@ -129,7 +129,7 @@ func (h *Handlers) UpdateTradeOffer(ctx context.Context, req *api.TradeOfferRequ
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	session, err := h.service.UpdateTradeOffer(ctx, params.SessionId.String(), req)
+	session, err := h.service.UpdateTradeOffer(ctx, params.SessionId.String())
 	if err != nil {
 		return nil, err
 	}

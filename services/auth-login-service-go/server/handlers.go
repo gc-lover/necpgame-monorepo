@@ -291,7 +291,7 @@ func (h *authHandler) checkTokenNotRevoked(ctx context.Context, token string) er
 	query := `SELECT 1 FROM auth.revoked_tokens WHERE token = $1 AND expires_at > $2`
 	var exists int
 	err := h.db.QueryRowContext(ctx, query, token, time.Now()).Scan(&exists)
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		return nil // Токен не отозван
 	}
 	if err != nil {

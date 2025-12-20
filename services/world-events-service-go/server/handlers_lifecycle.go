@@ -56,7 +56,7 @@ func (s *WorldEventsService) AnnounceWorldEventHandler(w http.ResponseWriter, r 
 
 	event, err := s.repo.GetWorldEvent(ctx, eventID)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			s.respondError(w, http.StatusNotFound, "World event not found")
 			return
 		}
@@ -113,7 +113,7 @@ func (s *WorldEventsService) ActivateWorldEventHandler(w http.ResponseWriter, r 
 
 	event, err := s.repo.GetWorldEvent(ctx, eventID)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			s.respondError(w, http.StatusNotFound, "World event not found")
 			return
 		}
@@ -180,7 +180,7 @@ func (s *WorldEventsService) DeactivateWorldEventHandler(w http.ResponseWriter, 
 
 	event, err := s.repo.GetWorldEvent(ctx, eventID)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			s.respondError(w, http.StatusNotFound, "World event not found")
 			return
 		}

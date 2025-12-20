@@ -138,7 +138,7 @@ func (r *Repository) GetQueueEntry(ctx context.Context, queueID uuid.UUID) (*Que
 		&entry.EnteredAt,
 	)
 
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		return nil, ErrNotFound
 	}
 	if err != nil {
@@ -166,7 +166,7 @@ func (r *Repository) GetPlayerRating(ctx context.Context, playerID uuid.UUID, ac
 
 	var rating int
 	err := r.db.QueryRowContext(ctx, query, playerID, activityType).Scan(&rating)
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		return 1500, nil // Default MMR
 	}
 	if err != nil {

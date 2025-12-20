@@ -33,7 +33,7 @@ func (r *MovementRepository) GetPositionByCharacterID(ctx context.Context, chara
 	).Scan(&pos.ID, &pos.CharacterID, &pos.PositionX, &pos.PositionY, &pos.PositionZ, &pos.Yaw,
 		&pos.VelocityX, &pos.VelocityY, &pos.VelocityZ, &pos.UpdatedAt, &pos.CreatedAt)
 
-	if err == pgx.ErrNoRows {
+	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil
 	}
 	if err != nil {

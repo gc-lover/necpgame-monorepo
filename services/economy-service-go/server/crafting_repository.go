@@ -4,6 +4,7 @@ package server
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"time"
 
@@ -35,7 +36,7 @@ func (r *CraftingRepository) GetRecipeByID(ctx context.Context, recipeID string)
 		&recipe.Quality, &recipe.Duration, &recipe.SuccessRate, &recipe.CreatedAt, &recipe.UpdatedAt,
 	)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, fmt.Errorf("recipe not found: %s", recipeID)
 		}
 		return nil, fmt.Errorf("failed to get recipe: %w", err)
@@ -175,7 +176,7 @@ func (r *CraftingRepository) GetOrderByID(ctx context.Context, orderID string) (
 		&order.Status, &order.Quality, &order.CreatedAt, &startedAt, &completedAt,
 	)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, fmt.Errorf("order not found: %s", orderID)
 		}
 		return nil, fmt.Errorf("failed to get order: %w", err)
@@ -266,7 +267,7 @@ func (r *CraftingRepository) GetStationByID(ctx context.Context, stationID strin
 		&station.UsageStats.FailedOrders, &station.UsageStats.AverageQuality, &lastUsedAt,
 	)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, fmt.Errorf("station not found: %s", stationID)
 		}
 		return nil, fmt.Errorf("failed to get station: %w", err)
@@ -404,7 +405,7 @@ func (r *CraftingRepository) getRecipeRequirements(ctx context.Context, recipeID
 		&req.SkillLevel, &req.StationType, &specialTools, &prerequisites,
 	)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			// Возвращаем пустые требования по умолчанию
 			return &models.RecipeRequirements{}, nil
 		}
@@ -488,7 +489,7 @@ func (r *CraftingRepository) getCraftingResult(ctx context.Context, orderID stri
 		&result.ItemID, &result.Quantity, &result.Quality, &result.Success,
 	)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, fmt.Errorf("result not found")
 		}
 		return nil, err

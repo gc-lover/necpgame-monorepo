@@ -69,7 +69,7 @@ func (r *BattlePassRepository) GetCurrentSeason(ctx context.Context) (*BattlePas
 		&season.CreatedAt, &season.UpdatedAt,
 	)
 
-	if err == pgx.ErrNoRows {
+	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, fmt.Errorf("no active season found")
 	}
 	if err != nil {
@@ -100,7 +100,7 @@ func (r *BattlePassRepository) GetPlayerProgress(ctx context.Context, characterI
 		&progress.CreatedAt, &progress.UpdatedAt,
 	)
 
-	if err == pgx.ErrNoRows {
+	if errors.Is(err, pgx.ErrNoRows) {
 		// Create new progress entry
 		return r.CreatePlayerProgress(ctx, characterID, seasonID)
 	}

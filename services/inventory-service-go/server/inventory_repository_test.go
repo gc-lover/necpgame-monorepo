@@ -20,7 +20,7 @@ func setupTestRepository(t *testing.T) (*InventoryRepository, func()) {
 		return nil, nil
 	}
 
-	repo := NewInventoryRepository(dbPool)
+	repo := NewInventoryRepository(dbPool, nil)
 
 	cleanup := func() {
 		dbPool.Close()
@@ -38,7 +38,7 @@ func TestNewInventoryRepository(t *testing.T) {
 	}
 	defer dbPool.Close()
 
-	repo := NewInventoryRepository(dbPool)
+	repo := NewInventoryRepository(dbPool, nil)
 
 	assert.NotNil(t, repo)
 	assert.NotNil(t, repo.db)

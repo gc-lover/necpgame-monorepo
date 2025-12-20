@@ -25,7 +25,7 @@ func NewHandlers(service *Service) *Handlers {
 }
 
 // ActivateCombatImplant - TYPED response!
-func (h *Handlers) ActivateCombatImplant(ctx context.Context, req *api.CombatImplantActivationRequest) (api.ActivateCombatImplantRes, error) {
+func (h *Handlers) ActivateCombatImplant(ctx context.Context, _ *api.CombatImplantActivationRequest) (api.ActivateCombatImplantRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 

@@ -41,7 +41,7 @@ func (r *ParagonRepository) GetParagonLevels(ctx context.Context, characterID uu
 		&levels.ParagonPointsSpent, &levels.ParagonPointsAvailable,
 		&levels.ExperienceCurrent, &levels.ExperienceRequired, &levels.UpdatedAt)
 
-	if err == pgx.ErrNoRows {
+	if errors.Is(err, pgx.ErrNoRows) {
 		levels = ParagonLevels{
 			CharacterID:            characterID,
 			ParagonLevel:           0,
@@ -119,7 +119,7 @@ func (r *ParagonRepository) DistributeParagonPoints(ctx context.Context, charact
 		characterID,
 	).Scan(&pointsAvailable)
 
-	if err == pgx.ErrNoRows {
+	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, fmt.Errorf("paragon levels not found for character")
 	}
 	if err != nil {

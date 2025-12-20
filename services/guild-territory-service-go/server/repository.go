@@ -132,7 +132,7 @@ func (r *Repository) GetTerritoryByID(ctx context.Context, id uuid.UUID) (*Terri
 		&t.ID, &t.Name, &t.Type, &t.ControlType, &ownerGuildID, &t.Location, &t.Bonuses, &t.CreatedAt, &t.UpdatedAt,
 	)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrTerritoryNotFound
 		}
 		return nil, err

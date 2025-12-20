@@ -3,10 +3,6 @@
 
 package server
 
-import (
-	"github.com/kelseyhightower/envconfig"
-)
-
 // Config ServerConfig holds server-specific configuration
 type Config struct {
 	Addr           string `envconfig:"SERVER_ADDR" default:":8083"`
@@ -74,10 +70,3 @@ type Config struct {
 }
 
 // LoadConfig loads configuration from environment variables
-func LoadConfig() (*Config, error) {
-	cfg := &Config{}
-	if err := envconfig.Process("", cfg); err != nil {
-		return nil, err
-	}
-	return cfg, nil
-}

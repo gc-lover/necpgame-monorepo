@@ -201,7 +201,7 @@ func (r *leaderboardRepository) GetPlayerRank(ctx context.Context, characterID u
 	
 	var rank models.PlayerRank
 	err := r.db.GetContext(ctx, &rank, query+" AND character_id = $"+fmt.Sprintf("%d", len(args)+1), append(args, characterID)...)
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
 	}
 	if err != nil {
@@ -323,7 +323,7 @@ func (r *leaderboardRepository) GetLeaderboard(ctx context.Context, leaderboardI
 	var leaderboard models.Leaderboard
 	query := `SELECT id, type, metric, season_id, class_id, is_active, created_at, updated_at FROM leaderboards WHERE id = $1`
 	err := r.db.GetContext(ctx, &leaderboard, query, leaderboardID)
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
 	}
 	return &leaderboard, err
@@ -368,7 +368,7 @@ func (r *leaderboardRepository) GetLeaderboardPlayerRank(ctx context.Context, le
 	
 	var rank models.PlayerRank
 	err := r.db.GetContext(ctx, &rank, query, leaderboardID, playerID)
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
 	}
 	if err != nil {
@@ -435,7 +435,7 @@ func (r *leaderboardRepository) GetCharacterScore(ctx context.Context, character
 	var score models.LeaderboardScore
 	query := `SELECT id, leaderboard_id, character_id, score, metric, last_updated, created_at FROM leaderboard_scores WHERE character_id = $1 AND metric = $2 LIMIT 1`
 	err := r.db.GetContext(ctx, &score, query, characterID, metric)
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
 	}
 	return &score, err

@@ -258,7 +258,7 @@ func (s *AIService) MakeDecision(w http.ResponseWriter, r *http.Request) {
 	}).Debug("decision made successfully")
 }
 
-func (s *AIService) ListBehaviorTrees(w http.ResponseWriter) {
+func (s *AIService) ListBehaviorTrees(w http.ResponseWriter, request *http.Request) {
 	limit := 50 // Default limit
 	offset := 0 // Default offset
 
@@ -389,7 +389,7 @@ func (s *AIService) ExecuteBehaviorTree(w http.ResponseWriter, r *http.Request) 
 	}).Info("behavior tree executed successfully")
 }
 
-func (s *AIService) HealthCheck(w http.ResponseWriter) {
+func (s *AIService) HealthCheck(w http.ResponseWriter, request *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(`{"status":"healthy","service":"ai-service","active_ai":42}`))

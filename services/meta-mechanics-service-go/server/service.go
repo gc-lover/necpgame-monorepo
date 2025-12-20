@@ -159,7 +159,7 @@ type EventProgress struct {
 // HTTP Handlers
 
 // GetLeagues handles league listing
-func (s *Service) GetLeagues(w http.ResponseWriter) {
+func (s *Service) GetLeagues(w http.ResponseWriter, request *http.Request) {
 	// Get response from pool
 	resp := s.leagueResponsePool.Get().(*LeagueResponse)
 	defer s.leagueResponsePool.Put(resp)
@@ -176,7 +176,7 @@ func (s *Service) GetLeagues(w http.ResponseWriter) {
 }
 
 // CreateLeague handles league creation
-func (s *Service) CreateLeague(w http.ResponseWriter) {
+func (s *Service) CreateLeague(w http.ResponseWriter, request *http.Request) {
 	// TODO: Implement league creation
 	w.WriteHeader(http.StatusNotImplemented)
 }
@@ -191,7 +191,7 @@ func (s *Service) JoinLeague(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetLeagueRankings handles league rankings retrieval
-func (s *Service) GetLeagueRankings(w http.ResponseWriter) {
+func (s *Service) GetLeagueRankings(w http.ResponseWriter, request *http.Request) {
 	// Get response from pool
 	resp := s.rankingsResponsePool.Get().(*LeagueRankingsResponse)
 	defer s.rankingsResponsePool.Put(resp)
@@ -206,7 +206,7 @@ func (s *Service) GetLeagueRankings(w http.ResponseWriter) {
 }
 
 // GetPrestige handles prestige information
-func (s *Service) GetPrestige(w http.ResponseWriter) {
+func (s *Service) GetPrestige(w http.ResponseWriter, request *http.Request) {
 	// Get response from pool
 	resp := s.prestigeResponsePool.Get().(*PrestigeResponse)
 	defer s.prestigeResponsePool.Put(resp)
@@ -222,13 +222,13 @@ func (s *Service) GetPrestige(w http.ResponseWriter) {
 }
 
 // PrestigeReset handles prestige reset
-func (s *Service) PrestigeReset(w http.ResponseWriter) {
+func (s *Service) PrestigeReset(w http.ResponseWriter, request *http.Request) {
 	// TODO: Implement prestige reset
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
 // GetMetaEvents handles meta events retrieval
-func (s *Service) GetMetaEvents(w http.ResponseWriter) {
+func (s *Service) GetMetaEvents(w http.ResponseWriter, request *http.Request) {
 	// Get response from pool
 	resp := s.metaEventsResponsePool.Get().(*MetaEventsResponse)
 	defer s.metaEventsResponsePool.Put(resp)
@@ -250,13 +250,13 @@ func (s *Service) GetMetaEvents(w http.ResponseWriter) {
 }
 
 // CreateMetaEvent handles meta event creation
-func (s *Service) CreateMetaEvent(w http.ResponseWriter) {
+func (s *Service) CreateMetaEvent(w http.ResponseWriter, request *http.Request) {
 	// TODO: Implement meta event creation
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
 // GetGlobalRankings handles global rankings
-func (s *Service) GetGlobalRankings(w http.ResponseWriter) {
+func (s *Service) GetGlobalRankings(w http.ResponseWriter, request *http.Request) {
 	// TODO: Implement global rankings
 	w.WriteHeader(http.StatusNotImplemented)
 }

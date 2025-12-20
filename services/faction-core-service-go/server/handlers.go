@@ -167,7 +167,7 @@ func (h *Handlers) GetHierarchy(ctx context.Context, params api.GetHierarchyPara
 }
 
 // UpdateHierarchy implements updateHierarchy operation
-func (h *Handlers) UpdateHierarchy(ctx context.Context, req *api.UpdateHierarchyRequest, params api.UpdateHierarchyParams) (api.UpdateHierarchyRes, error) {
+func (h *Handlers) UpdateHierarchy(ctx context.Context, _ *api.UpdateHierarchyRequest, params api.UpdateHierarchyParams) (api.UpdateHierarchyRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 

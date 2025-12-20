@@ -100,7 +100,7 @@ func (r *MasteryRepository) GetMasteryProgress(ctx context.Context, characterID 
 		&progress.TotalExperienceEarned, &progress.CompletionsCount,
 	)
 
-	if err == pgx.ErrNoRows {
+	if errors.Is(err, pgx.ErrNoRows) {
 		progress.MasteryLevel = 0
 		progress.ExperienceCurrent = 0
 		progress.ExperienceRequired = 1000

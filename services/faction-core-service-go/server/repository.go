@@ -78,7 +78,7 @@ func (r *Repository) GetFactionByID(ctx context.Context, factionId string) (*api
 		&leaderClanIDStr, &status, &createdAt, &updatedAt,
 	)
 
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		return nil, ErrNotFound
 	}
 	if err != nil {

@@ -330,7 +330,7 @@ func (s *GuildService) CreateGuild(w http.ResponseWriter, r *http.Request) {
 	s.logger.WithField("guild_id", guild.GuildID).Info("guild created successfully")
 }
 
-func (s *GuildService) ListGuilds(w http.ResponseWriter) {
+func (s *GuildService) ListGuilds(w http.ResponseWriter, request *http.Request) {
 	// Implementation would include filtering and pagination
 	// For now, return basic response
 	resp := &ListGuildsResponse{
@@ -463,7 +463,7 @@ func (s *GuildService) GetGuildMembers(w http.ResponseWriter, r *http.Request) {
 }
 
 // HealthCheck Health check method
-func (s *GuildService) HealthCheck(w http.ResponseWriter) {
+func (s *GuildService) HealthCheck(w http.ResponseWriter, request *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(`{"status":"healthy","service":"guild-service","version":"1.0.0","active_guilds":500,"active_members":25000,"territories_controlled":150,"ongoing_wars":25,"active_alliances":30}`))

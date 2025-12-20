@@ -31,7 +31,7 @@ func NewGoroutineMonitor(max int, logger *zap.Logger) *GoroutineMonitor {
 }
 
 // Start starts monitoring goroutine count
-func (gm *GoroutineMonitor) Start() {
+func (gm *GoroutineMonitor) Start(context.Context) {
 	ticker := time.NewTicker(10 * time.Second)
 	defer ticker.Stop()
 

@@ -76,7 +76,7 @@ func (r *repository) GetScheduledEvent(ctx context.Context, id uuid.UUID) (*Sche
 		&event.ID, &event.EventID, &event.ScheduledAt, &event.CronPattern,
 		&event.TriggerType, &event.Enabled, &event.CreatedAt, &event.UpdatedAt,
 	)
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
 	}
 	return event, err

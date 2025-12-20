@@ -3,7 +3,6 @@
 package server
 
 import (
-	"context"
 	"sync"
 	"time"
 
@@ -53,7 +52,7 @@ func (s *Service) GetWeaponResources(weaponID string) (*api.WeaponResources, err
 }
 
 // ConsumeResource consumes resource (ammo/heat/energy)
-func (s *Service) ConsumeResource(ctx context.Context, weaponID string) (*api.WeaponResources, error) {
+func (s *Service) ConsumeResource(weaponID string) (*api.WeaponResources, error) {
 	// Business logic: validate, consume resource
 	resources, err := s.repo.ConsumeResource(weaponID)
 	if err != nil {
@@ -63,7 +62,7 @@ func (s *Service) ConsumeResource(ctx context.Context, weaponID string) (*api.We
 }
 
 // ApplyCooldown applies cooldown to weapon/ability
-func (s *Service) ApplyCooldown(ctx context.Context, weaponID string) (*api.WeaponResources, error) {
+func (s *Service) ApplyCooldown(weaponID string) (*api.WeaponResources, error) {
 	resources, err := s.repo.ApplyCooldown(weaponID)
 	if err != nil {
 		return nil, err
@@ -72,7 +71,7 @@ func (s *Service) ApplyCooldown(ctx context.Context, weaponID string) (*api.Weap
 }
 
 // ReloadWeapon reloads weapon ammunition
-func (s *Service) ReloadWeapon(ctx context.Context, weaponID string) (*api.WeaponResources, error) {
+func (s *Service) ReloadWeapon(weaponID string) (*api.WeaponResources, error) {
 	resources, err := s.repo.ReloadWeapon(weaponID)
 	if err != nil {
 		return nil, err

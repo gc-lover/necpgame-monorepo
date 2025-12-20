@@ -80,7 +80,7 @@ func (h *Handlers) ClaimTerritory(ctx context.Context, params api.ClaimTerritory
 }
 
 // GetTerritoryBonuses returns territory bonuses - TYPED response!
-func (h *Handlers) GetTerritoryBonuses(ctx context.Context, params api.GetTerritoryBonusesParams) (api.GetTerritoryBonusesRes, error) {
+func (h *Handlers) GetTerritoryBonuses(ctx context.Context) (api.GetTerritoryBonusesRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 

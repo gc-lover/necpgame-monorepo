@@ -81,7 +81,7 @@ func (r *ResetRepository) GetLastReset(ctx context.Context, resetType models.Res
 		&record.CompletedAt, &record.Error, &metadataJSON,
 	)
 
-	if err == pgx.ErrNoRows {
+	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil
 	}
 	if err != nil {

@@ -105,7 +105,7 @@ func (r *FriendRepository) GetFriend(ctx context.Context, characterID, friendID 
 		&f.InitiatorID, &f.CreatedAt, &f.UpdatedAt,
 	)
 	if err != nil {
-		if err == pgx.ErrNoRows {
+		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil
 		}
 		r.logger.WithError(err).WithFields(logrus.Fields{

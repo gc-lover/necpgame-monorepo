@@ -122,7 +122,7 @@ func (r *CombatCombosRepository) GetComboByID(ctx context.Context, comboID strin
 		&combo.Cooldown, &combo.ChainCompatible, &combo.CreatedAt,
 	)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
 		}
 		r.logger.Error("Failed to get combo by ID", zap.String("comboID", comboID), zap.Error(err))
@@ -198,7 +198,7 @@ func (r *CombatCombosRepository) GetComboLoadout(ctx context.Context, characterI
 		&preferencesJSON, &loadout.AutoActivate, &loadout.CreatedAt, &loadout.UpdatedAt,
 	)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			// Return default loadout
 			return &models.ComboLoadout{
 				ID:           uuid.New().String(),

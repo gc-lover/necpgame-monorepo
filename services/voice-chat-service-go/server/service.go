@@ -164,7 +164,7 @@ func (s *VoiceChatService) RateLimitMiddleware() func(http.Handler) http.Handler
 }
 
 // HealthCheck Health check method
-func (s *VoiceChatService) HealthCheck(w http.ResponseWriter) {
+func (s *VoiceChatService) HealthCheck(w http.ResponseWriter, request *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]interface{}{

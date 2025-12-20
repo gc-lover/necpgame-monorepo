@@ -70,7 +70,7 @@ func (r *Repository) GetUserByEmail(ctx context.Context, email string) (*User, e
 		&user.ID, &user.Email, &user.Username, &passwordHash, &user.EmailVerified, &user.CreatedAt, &user.LastLoginAt,
 	)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrUserNotFound
 		}
 		r.logger.Error("Failed to get user by email", zap.Error(err), zap.String("email", email))
@@ -94,7 +94,7 @@ func (r *Repository) GetUserByID(ctx context.Context, userID uuid.UUID) (*User, 
 		&user.ID, &user.Email, &user.Username, &user.EmailVerified, &user.CreatedAt, &user.LastLoginAt,
 	)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrUserNotFound
 		}
 		r.logger.Error("Failed to get user by ID", zap.Error(err), zap.String("user_id", userID.String()))
@@ -147,7 +147,7 @@ func (r *Repository) VerifyEmailToken(ctx context.Context, token string) (*uuid.
 	var userID uuid.UUID
 	err := r.db.QueryRowContext(ctx, query, time.Now(), token).Scan(&userID)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrInvalidToken
 		}
 		r.logger.Error("Failed to verify email token", zap.Error(err))
@@ -200,7 +200,7 @@ func (r *Repository) VerifyPasswordResetToken(ctx context.Context, token string)
 	var userID uuid.UUID
 	err := r.db.QueryRowContext(ctx, query, time.Now(), token).Scan(&userID)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrInvalidToken
 		}
 		r.logger.Error("Failed to verify password reset token", zap.Error(err))
@@ -333,7 +333,7 @@ func (r *Repository) GetUserByOAuthID(ctx context.Context, provider, oauthID str
 		&user.ID, &user.Email, &user.Username, &passwordHash, &user.EmailVerified, &user.CreatedAt, &user.LastLoginAt,
 	)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrUserNotFound
 		}
 		r.logger.Error("Failed to get user by OAuth ID", zap.Error(err))

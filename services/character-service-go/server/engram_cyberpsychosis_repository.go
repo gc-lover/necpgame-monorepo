@@ -83,7 +83,7 @@ func (r *EngramCyberpsychosisRepository) GetCyberpsychosisRisk(ctx context.Conte
 		&risk.LastUpdated, &risk.CreatedAt,
 	)
 
-	if err == pgx.ErrNoRows {
+	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil
 	}
 	if err != nil {

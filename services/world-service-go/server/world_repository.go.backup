@@ -70,7 +70,7 @@ func (r *worldRepository) GetResetExecution(ctx context.Context, id uuid.UUID) (
 		WHERE id = $1
 	`
 	err := r.db.GetContext(ctx, &execution, query, id)
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
 	}
 	return &execution, err
@@ -96,7 +96,7 @@ func (r *worldRepository) GetLastReset(ctx context.Context, resetType models.Res
 		WHERE reset_type = $1 AND status = $2
 	`
 	err := r.db.GetContext(ctx, &lastReset, query, resetType, models.ResetStatusCompleted)
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
 	}
 	return &lastReset, err
@@ -106,7 +106,7 @@ func (r *worldRepository) GetResetSchedule(ctx context.Context) (*models.ResetSc
 	var schedule models.ResetSchedule
 	query := `SELECT daily_time, daily_timezone, weekly_day, weekly_time, weekly_timezone FROM reset_schedule LIMIT 1`
 	err := r.db.GetContext(ctx, &schedule, query)
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		return &models.ResetSchedule{
 			DailyReset: models.DailyResetSchedule{
 				Time:     "00:00:00",
@@ -248,7 +248,7 @@ func (r *worldRepository) GetLoginStreak(ctx context.Context, playerID uuid.UUID
 		WHERE player_id = $1
 	`
 	err := r.db.GetContext(ctx, &streak, query, playerID)
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		return &models.LoginStreak{
 			PlayerID:      playerID,
 			StreakDays:    0,
@@ -356,7 +356,7 @@ func (r *worldRepository) GetTravelEvent(ctx context.Context, id uuid.UUID) (*mo
 		&event.Description, &event.BaseProbability, &event.CooldownHours,
 		&skillChecksJSON, &rewardsJSON, &penaltiesJSON,
 		&event.CreatedAt, &event.UpdatedAt)
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
 	}
 	if err != nil {
@@ -485,7 +485,7 @@ func (r *worldRepository) GetTravelEventInstance(ctx context.Context, id uuid.UU
 		WHERE id = $1
 	`
 	err := r.db.GetContext(ctx, &instance, query, id)
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
 	}
 	return &instance, err

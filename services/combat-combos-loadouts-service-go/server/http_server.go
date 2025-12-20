@@ -29,52 +29,6 @@ type Server struct {
 }
 
 // NewServer creates a new HTTP server instance
-func NewServer(cfg *Config) (*Server, error) {
-	// Initialize database connection
-	db, err := initDatabase(cfg)
-	if err != nil {
-		return nil, fmt.Errorf("failed to initialize database: %w", err)
-	}
-
-	// Initialize repository
-	repo := NewRepository(db)
-
-	// Initialize service
-	service := NewService(repo)
-
-	// Initialize handler
-	handler := NewHandler(service)
-
-	// Create router
-	r := chi.NewRouter()
-
-	// Setup middleware
-	setupMiddleware(r)
-
-	// Setup routes
-	setupRoutes(r, handler)
-
-	// Create HTTP server
-	httpServer := &http.Server{
-		Addr:         cfg.ServerAddr,
-		Handler:      r,
-		ReadTimeout:  time.Duration(cfg.ReadTimeout) * time.Second,
-		WriteTimeout: time.Duration(cfg.WriteTimeout) * time.Second,
-		IdleTimeout:  time.Duration(cfg.IdleTimeout) * time.Second,
-	}
-
-	server := &Server{
-		httpServer: httpServer,
-		router:     r,
-		config:     cfg,
-		db:         db,
-		handler:    handler,
-		service:    service,
-		repo:       repo,
-	}
-
-	return server, nil
-}
 
 // Start starts the HTTP server
 func (s *Server) Start() error {

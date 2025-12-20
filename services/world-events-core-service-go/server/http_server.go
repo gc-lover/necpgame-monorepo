@@ -17,7 +17,7 @@ type HTTPServer struct {
 	logger *zap.Logger
 }
 
-func NewHTTPServer(addr string, service Service, logger *zap.Logger) *HTTPServer {
+func NewHTTPServer(addr string, service *service, logger *zap.Logger) *HTTPServer {
 	mux := http.NewServeMux()
 
 	handlers := NewHandlers(service, logger)

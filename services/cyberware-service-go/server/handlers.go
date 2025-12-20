@@ -19,7 +19,7 @@ import (
 )
 
 // HealthCheckHandler handles health check requests
-func (s *CyberwareService) HealthCheckHandler(w http.ResponseWriter) {
+func (s *CyberwareService) HealthCheckHandler(w http.ResponseWriter, request *http.Request) {
 	s.respondJSON(w, http.StatusOK, map[string]string{"status": "healthy"})
 }
 
@@ -38,7 +38,7 @@ func (s *CyberwareService) ReadinessCheckHandler(w http.ResponseWriter, r *http.
 }
 
 // MetricsHandler handles metrics requests
-func (s *CyberwareService) MetricsHandler(w http.ResponseWriter) {
+func (s *CyberwareService) MetricsHandler(w http.ResponseWriter, request *http.Request) {
 	// Use memory pool for response
 	response := s.responsePool.Get().(map[string]interface{})
 	defer func() {
@@ -122,7 +122,7 @@ func (s *CyberwareService) GetImplantDetailHandler(w http.ResponseWriter, r *htt
 
 	implant, err := s.repo.GetImplantByID(ctx, implantID)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			s.respondError(w, http.StatusNotFound, "Implant not found")
 			return
 		}
@@ -221,7 +221,7 @@ func (s *CyberwareService) AcquireImplantHandler(w http.ResponseWriter, r *http.
 	// Validate implant exists
 	implant, err := s.repo.GetImplantByID(ctx, req.ImplantID)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			s.respondError(w, http.StatusNotFound, "Implant not found")
 			return
 		}
@@ -436,35 +436,35 @@ func (s *CyberwareService) checkSlotAvailability(limits *models.ImplantLimitsSta
 }
 
 // UninstallImplantHandler Placeholder implementations for remaining handlers
-func (s *CyberwareService) UninstallImplantHandler(w http.ResponseWriter) {
+func (s *CyberwareService) UninstallImplantHandler(w http.ResponseWriter, request *http.Request) {
 	s.respondJSON(w, http.StatusOK, map[string]interface{}{"success": true, "message": "Uninstall not implemented yet"})
 }
 
-func (s *CyberwareService) UpgradeImplantHandler(w http.ResponseWriter) {
+func (s *CyberwareService) UpgradeImplantHandler(w http.ResponseWriter, request *http.Request) {
 	s.respondJSON(w, http.StatusOK, map[string]interface{}{"success": true, "message": "Upgrade not implemented yet"})
 }
 
-func (s *CyberwareService) GetImplantLimitsHandler(w http.ResponseWriter) {
+func (s *CyberwareService) GetImplantLimitsHandler(w http.ResponseWriter, request *http.Request) {
 	s.respondJSON(w, http.StatusOK, map[string]interface{}{"message": "Limits not implemented yet"})
 }
 
-func (s *CyberwareService) CheckCompatibilityHandler(w http.ResponseWriter) {
+func (s *CyberwareService) CheckCompatibilityHandler(w http.ResponseWriter, request *http.Request) {
 	s.respondJSON(w, http.StatusOK, map[string]interface{}{"compatible": true, "message": "Compatibility check not implemented yet"})
 }
 
-func (s *CyberwareService) GetCyberpsychosisStateHandler(w http.ResponseWriter) {
+func (s *CyberwareService) GetCyberpsychosisStateHandler(w http.ResponseWriter, request *http.Request) {
 	s.respondJSON(w, http.StatusOK, map[string]interface{}{"current_level": 0, "message": "Cyberpsychosis not implemented yet"})
 }
 
-func (s *CyberwareService) GetActiveSynergiesHandler(w http.ResponseWriter) {
+func (s *CyberwareService) GetActiveSynergiesHandler(w http.ResponseWriter, request *http.Request) {
 	s.respondJSON(w, http.StatusOK, map[string]interface{}{"synergies": []interface{}{}, "message": "Synergies not implemented yet"})
 }
 
-func (s *CyberwareService) GetImplantVisualsHandler(w http.ResponseWriter) {
+func (s *CyberwareService) GetImplantVisualsHandler(w http.ResponseWriter, request *http.Request) {
 	s.respondJSON(w, http.StatusOK, map[string]interface{}{"implants": []interface{}{}, "message": "Visuals not implemented yet"})
 }
 
-func (s *CyberwareService) UpdateImplantVisualsHandler(w http.ResponseWriter) {
+func (s *CyberwareService) UpdateImplantVisualsHandler(w http.ResponseWriter, request *http.Request) {
 	s.respondJSON(w, http.StatusOK, map[string]interface{}{"success": true, "message": "Visuals update not implemented yet"})
 }
 

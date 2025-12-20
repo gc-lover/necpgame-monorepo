@@ -62,7 +62,7 @@ func (r *EngramSecurityRepository) GetProtection(ctx context.Context, engramID u
 		&protection.CreatedAt, &protection.UpdatedAt,
 	)
 
-	if err == pgx.ErrNoRows {
+	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil
 	}
 	if err != nil {

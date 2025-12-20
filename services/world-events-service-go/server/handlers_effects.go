@@ -115,7 +115,7 @@ func (s *WorldEventsService) UpdateWorldEventEffectHandler(w http.ResponseWriter
 
 	effect, err := s.repo.GetWorldEventEffect(ctx, effectID)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			s.respondError(w, http.StatusNotFound, "Event effect not found")
 			return
 		}
@@ -175,7 +175,7 @@ func (s *WorldEventsService) DeleteWorldEventEffectHandler(w http.ResponseWriter
 
 	effect, err := s.repo.GetWorldEventEffect(ctx, effectID)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			s.respondError(w, http.StatusNotFound, "Event effect not found")
 			return
 		}

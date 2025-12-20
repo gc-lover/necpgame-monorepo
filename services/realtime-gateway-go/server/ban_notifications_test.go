@@ -11,10 +11,6 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-type mockRedisPubSub struct {
-	mock.Mock
-}
-
 type mockSessionManager struct {
 	mock.Mock
 }

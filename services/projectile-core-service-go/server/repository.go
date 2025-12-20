@@ -120,7 +120,7 @@ func (r *ProjectileRepository) CheckCompatibilityByType(ctx context.Context, wea
 
 	var compatible bool
 	err := r.db.QueryRowContext(ctx, query, weaponType, formID).Scan(&compatible)
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		return false, nil
 	}
 	if err != nil {

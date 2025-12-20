@@ -37,7 +37,7 @@ func (r *PrestigeRepository) GetPrestigeInfo(ctx context.Context, characterID uu
 	).Scan(&info.CharacterID, &info.PrestigeLevel, &info.ResetCount, &bonusesJSON,
 		&lastResetAt, &info.UpdatedAt, &info.UpdatedAt)
 
-	if err == pgx.ErrNoRows {
+	if errors.Is(err, pgx.ErrNoRows) {
 		info = PrestigeInfo{
 			CharacterID:    characterID,
 			PrestigeLevel:  0,

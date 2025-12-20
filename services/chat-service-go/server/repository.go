@@ -68,7 +68,7 @@ func (r *Repository) GetChannel(ctx context.Context, channelID uuid.UUID) (*Chan
 		&ch.ID, &ch.OwnerID, &ch.Type, &ch.Name, &ch.Description, &ch.CreatedAt, &ch.UpdatedAt,
 		&ch.CooldownSeconds, &ch.MaxLength, &ch.IsActive,
 	)
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		return nil, ErrNotFound
 	}
 	if err != nil {
@@ -306,7 +306,7 @@ func (r *Repository) GetBan(ctx context.Context, banID uuid.UUID) (*Ban, error) 
 	err := r.db.QueryRowContext(ctx, query, banID).Scan(
 		&ban.ID, &ban.CharacterID, &ban.ChannelID, &ban.Reason, &ban.ExpiresAt, &ban.CreatedAt, &ban.IsActive,
 	)
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		return nil, ErrNotFound
 	}
 	if err != nil {

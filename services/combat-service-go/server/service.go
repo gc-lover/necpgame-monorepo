@@ -23,7 +23,7 @@ type CombatService struct {
 }
 
 // HealthCheck handler for health check endpoint
-func (s *CombatService) HealthCheck(w http.ResponseWriter) {
+func (s *CombatService) HealthCheck(w http.ResponseWriter, request *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(`{"status":"healthy","service":"combat-service","version":"1.0.0"}`))

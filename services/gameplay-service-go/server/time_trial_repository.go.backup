@@ -76,7 +76,7 @@ func (r *TimeTrialRepository) GetSession(ctx context.Context, sessionID uuid.UUI
 		&teamID, &session.StartTime, &endTime, &completionTimeMs, &session.Status,
 	)
 
-	if err == pgx.ErrNoRows {
+	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, errors.New("session not found")
 	}
 	if err != nil {
@@ -158,7 +158,7 @@ func (r *TimeTrialRepository) GetPersonalBest(ctx context.Context, playerID uuid
 		&teamID, &session.StartTime, &endTime, &completionTimeMs, &session.Status,
 	)
 
-	if err == pgx.ErrNoRows {
+	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil
 	}
 	if err != nil {
@@ -239,7 +239,7 @@ func (r *TimeTrialRepository) GetCurrentWeeklyChallenge(ctx context.Context) (*m
 		&challenge.ContentID, &challenge.TimeLimitMs, &conditionsJSON, &rewardsJSON, &challenge.CreatedAt,
 	)
 
-	if err == pgx.ErrNoRows {
+	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil
 	}
 	if err != nil {

@@ -88,7 +88,7 @@ func (r *TournamentRepository) GetTournament(ctx context.Context, tournamentID s
 		&tournament.PrizeDistribution,
 	)
 
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		return nil, fmt.Errorf("tournament not found")
 	}
 	if err != nil {

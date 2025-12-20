@@ -108,12 +108,12 @@ class ArchitectureValidator:
 
                         # Skip generated files entirely
                         file_name = str(file_path)
-        is_generated = any(pattern in file_name for pattern in [
-            '_gen.go', '.pb.go', 'bundled.yaml', 'changelog-content.yaml',
-            'oas_', 'housing-service-paths.yaml', 'clan-war-service-paths.yaml',
-            'api.gen.go', 'generated', 'docker-compose.yml',
-            '.bundled.yaml', 'openapi-bundled.yaml', 'tournament-service-bundled.yaml'
-        ])
+                        is_generated = any(pattern in file_name for pattern in [
+                            '_gen.go', '.pb.go', 'bundled.yaml', 'changelog-content.yaml',
+                            'oas_', 'housing-service-paths.yaml', 'clan-war-service-paths.yaml',
+                            'api.gen.go', 'generated', 'docker-compose.yml',
+                            '.bundled.yaml', 'openapi-bundled.yaml', 'tournament-service-bundled.yaml'
+                        ])
                         if is_generated:
                             continue
 

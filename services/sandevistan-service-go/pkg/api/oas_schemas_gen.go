@@ -177,7 +177,7 @@ func (s *ErrorDetails) init() ErrorDetails {
 }
 
 // NewOptFloat32 returns new OptFloat32 with value set to v.
-func NewOptFloat32(v float32) OptFloat32 {
+func NewOptFloat32(v float64) OptFloat32 {
 	return OptFloat32{
 		Value: v,
 		Set:   true,

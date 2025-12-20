@@ -24,7 +24,7 @@ func NewHandlers(service *Service) *Handlers {
 }
 
 // GetComboCatalog returns combo catalog - TYPED response!
-func (h *Handlers) GetComboCatalog(ctx context.Context, params api.GetComboCatalogParams) (api.GetComboCatalogRes, error) {
+func (h *Handlers) GetComboCatalog(ctx context.Context, _ api.GetComboCatalogParams) (api.GetComboCatalogRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
@@ -38,7 +38,7 @@ func (h *Handlers) GetComboCatalog(ctx context.Context, params api.GetComboCatal
 }
 
 // GetComboDetails - TYPED response!
-func (h *Handlers) GetComboDetails(ctx context.Context, params api.GetComboDetailsParams) (api.GetComboDetailsRes, error) {
+func (h *Handlers) GetComboDetails(ctx context.Context, _ api.GetComboDetailsParams) (api.GetComboDetailsRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 

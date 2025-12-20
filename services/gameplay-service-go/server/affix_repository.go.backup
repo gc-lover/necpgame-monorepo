@@ -52,7 +52,7 @@ func (r *AffixRepository) GetAffix(ctx context.Context, affixID uuid.UUID) (*mod
 		&affix.RewardModifier, &affix.DifficultyModifier, &affix.CreatedAt,
 	)
 
-	if err == pgx.ErrNoRows {
+	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, errors.New("affix not found")
 	}
 	if err != nil {
@@ -139,7 +139,7 @@ func (r *AffixRepository) GetRotationByWeek(ctx context.Context, weekStart time.
 		&seasonalAffixID, &rotation.CreatedAt,
 	)
 
-	if err == pgx.ErrNoRows {
+	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, errors.New("rotation not found")
 	}
 	if err != nil {

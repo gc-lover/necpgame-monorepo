@@ -70,7 +70,7 @@ func (m *mockInventoryRepository) GetItemTemplate(ctx context.Context, itemID st
 	return args.Get(0).(*models.ItemTemplate), args.Error(1)
 }
 
-func setupTestService() (*InventoryService, *mockInventoryRepository, *redis.Client) {
+func setupTestService(GetLogger func() *logrus.Logger) (*InventoryService, *mockInventoryRepository, *redis.Client) {
 	mockRepo := new(mockInventoryRepository)
 	redisClient := redis.NewClient(&redis.Options{
 		Addr:         "localhost:6379",
@@ -97,7 +97,7 @@ func setupTestService() (*InventoryService, *mockInventoryRepository, *redis.Cli
 }
 
 func TestInventoryService_GetInventory_Success(t *testing.T) {
-	service, mockRepo, redisClient := setupTestService()
+	service, mockRepo, redisClient := setupTestService(nil)
 	defer redisClient.Close()
 
 	characterID := uuid.New()
@@ -130,7 +130,7 @@ func TestInventoryService_GetInventory_Success(t *testing.T) {
 }
 
 func TestInventoryService_GetInventory_CreateNew(t *testing.T) {
-	service, mockRepo, redisClient := setupTestService()
+	service, mockRepo, redisClient := setupTestService(nil)
 	defer redisClient.Close()
 
 	characterID := uuid.New()
@@ -163,7 +163,7 @@ func TestInventoryService_GetInventory_CreateNew(t *testing.T) {
 }
 
 func TestInventoryService_GetInventory_Cache(t *testing.T) {
-	service, mockRepo, redisClient := setupTestService()
+	service, mockRepo, redisClient := setupTestService(nil)
 	defer redisClient.Close()
 
 	characterID := uuid.New()
@@ -206,7 +206,7 @@ func TestInventoryService_GetInventory_Cache(t *testing.T) {
 }
 
 func TestInventoryService_AddItem_Success(t *testing.T) {
-	service, mockRepo, redisClient := setupTestService()
+	service, mockRepo, redisClient := setupTestService(nil)
 	defer redisClient.Close()
 
 	characterID := uuid.New()
@@ -254,7 +254,7 @@ func TestInventoryService_AddItem_Success(t *testing.T) {
 }
 
 func TestInventoryService_AddItem_InventoryFull(t *testing.T) {
-	service, mockRepo, redisClient := setupTestService()
+	service, mockRepo, redisClient := setupTestService(nil)
 	defer redisClient.Close()
 
 	characterID := uuid.New()
@@ -298,7 +298,7 @@ func TestInventoryService_AddItem_InventoryFull(t *testing.T) {
 }
 
 func TestInventoryService_AddItem_ItemTemplateNotFound(t *testing.T) {
-	service, mockRepo, redisClient := setupTestService()
+	service, mockRepo, redisClient := setupTestService(nil)
 	defer redisClient.Close()
 
 	characterID := uuid.New()
@@ -332,7 +332,7 @@ func TestInventoryService_AddItem_ItemTemplateNotFound(t *testing.T) {
 }
 
 func TestInventoryService_AddItem_StackExisting(t *testing.T) {
-	service, mockRepo, redisClient := setupTestService()
+	service, mockRepo, redisClient := setupTestService(nil)
 	defer redisClient.Close()
 
 	characterID := uuid.New()
@@ -392,7 +392,7 @@ func TestInventoryService_AddItem_StackExisting(t *testing.T) {
 }
 
 func TestInventoryService_RemoveItem_Success(t *testing.T) {
-	service, mockRepo, redisClient := setupTestService()
+	service, mockRepo, redisClient := setupTestService(nil)
 	defer redisClient.Close()
 
 	characterID := uuid.New()
@@ -448,7 +448,7 @@ func TestInventoryService_RemoveItem_Success(t *testing.T) {
 }
 
 func TestInventoryService_RemoveItem_InventoryNotFound(t *testing.T) {
-	service, mockRepo, redisClient := setupTestService()
+	service, mockRepo, redisClient := setupTestService(nil)
 	defer redisClient.Close()
 
 	characterID := uuid.New()
@@ -465,7 +465,7 @@ func TestInventoryService_RemoveItem_InventoryNotFound(t *testing.T) {
 }
 
 func TestInventoryService_RemoveItem_ItemNotFound(t *testing.T) {
-	service, mockRepo, redisClient := setupTestService()
+	service, mockRepo, redisClient := setupTestService(nil)
 	defer redisClient.Close()
 
 	characterID := uuid.New()
@@ -497,7 +497,7 @@ func TestInventoryService_RemoveItem_ItemNotFound(t *testing.T) {
 }
 
 func TestInventoryService_EquipItem_Success(t *testing.T) {
-	service, mockRepo, redisClient := setupTestService()
+	service, mockRepo, redisClient := setupTestService(nil)
 	defer redisClient.Close()
 
 	characterID := uuid.New()
@@ -558,7 +558,7 @@ func TestInventoryService_EquipItem_Success(t *testing.T) {
 }
 
 func TestInventoryService_EquipItem_InventoryNotFound(t *testing.T) {
-	service, mockRepo, redisClient := setupTestService()
+	service, mockRepo, redisClient := setupTestService(nil)
 	defer redisClient.Close()
 
 	characterID := uuid.New()
@@ -579,7 +579,7 @@ func TestInventoryService_EquipItem_InventoryNotFound(t *testing.T) {
 }
 
 func TestInventoryService_EquipItem_ItemNotFound(t *testing.T) {
-	service, mockRepo, redisClient := setupTestService()
+	service, mockRepo, redisClient := setupTestService(nil)
 	defer redisClient.Close()
 
 	characterID := uuid.New()
@@ -615,7 +615,7 @@ func TestInventoryService_EquipItem_ItemNotFound(t *testing.T) {
 }
 
 func TestInventoryService_EquipItem_CannotEquip(t *testing.T) {
-	service, mockRepo, redisClient := setupTestService()
+	service, mockRepo, redisClient := setupTestService(nil)
 	defer redisClient.Close()
 
 	characterID := uuid.New()
@@ -675,7 +675,7 @@ func TestInventoryService_EquipItem_CannotEquip(t *testing.T) {
 }
 
 func TestInventoryService_UnequipItem_Success(t *testing.T) {
-	service, mockRepo, redisClient := setupTestService()
+	service, mockRepo, redisClient := setupTestService(nil)
 	defer redisClient.Close()
 
 	characterID := uuid.New()
@@ -720,7 +720,7 @@ func TestInventoryService_UnequipItem_Success(t *testing.T) {
 }
 
 func TestInventoryService_UnequipItem_InventoryNotFound(t *testing.T) {
-	service, mockRepo, redisClient := setupTestService()
+	service, mockRepo, redisClient := setupTestService(nil)
 	defer redisClient.Close()
 
 	characterID := uuid.New()
@@ -737,7 +737,7 @@ func TestInventoryService_UnequipItem_InventoryNotFound(t *testing.T) {
 }
 
 func TestInventoryService_UnequipItem_ItemNotFound(t *testing.T) {
-	service, mockRepo, redisClient := setupTestService()
+	service, mockRepo, redisClient := setupTestService(nil)
 	defer redisClient.Close()
 
 	characterID := uuid.New()
@@ -769,7 +769,7 @@ func TestInventoryService_UnequipItem_ItemNotFound(t *testing.T) {
 }
 
 func TestInventoryService_GetInventory_RepositoryError(t *testing.T) {
-	service, mockRepo, redisClient := setupTestService()
+	service, mockRepo, redisClient := setupTestService(nil)
 	defer redisClient.Close()
 
 	characterID := uuid.New()
@@ -810,7 +810,7 @@ func TestInventoryService_GetInventory_RepositoryError(t *testing.T) {
 }
 
 func TestInventoryService_AddItem_RepositoryError(t *testing.T) {
-	service, mockRepo, redisClient := setupTestService()
+	service, mockRepo, redisClient := setupTestService(nil)
 	defer redisClient.Close()
 
 	characterID := uuid.New()

@@ -47,7 +47,7 @@ func (r *worldStateRepository) GetStateByKey(ctx context.Context, key string) (*
 	row := r.db.QueryRowContext(ctx, query, key)
 	err := row.Scan(&state.Key, &state.Category, &valueJSON, &state.Version,
 		&state.SyncType, &state.CreatedAt, &state.UpdatedAt)
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
 	}
 	if err != nil {

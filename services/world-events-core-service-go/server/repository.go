@@ -86,7 +86,7 @@ func (r *repository) GetEvent(ctx context.Context, id uuid.UUID) (*WorldEvent, e
 		&event.ID, &event.Name, &event.Description, &event.Type, &event.Scale, &event.Frequency,
 		&event.Status, &startTime, &endTime, &event.CreatedAt, &event.UpdatedAt)
 
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		return nil, errors.New("event not found")
 	}
 	if err != nil {

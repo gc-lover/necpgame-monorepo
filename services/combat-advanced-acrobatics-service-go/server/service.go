@@ -90,7 +90,7 @@ func (s *Service) HandlePerformVault(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, state)
 }
 
-func (s *Service) HandleListVaultObstacles(w http.ResponseWriter) {
+func (s *Service) HandleListVaultObstacles(w http.ResponseWriter, request *http.Request) {
 	// Simple list; in a real service this would query spatial storage.
 	s.mu.RLock()
 	defer s.mu.RUnlock()

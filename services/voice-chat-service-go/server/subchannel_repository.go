@@ -81,7 +81,7 @@ func (r *SubchannelRepository) GetSubchannel(ctx context.Context, lobbyID, subch
 
 	subchannel.SubchannelType = models.SubchannelType(subchannelTypeStr)
 
-	if err == pgx.ErrNoRows {
+	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil
 	}
 	if err != nil {
@@ -216,7 +216,7 @@ func (r *SubchannelRepository) UpdateSubchannel(ctx context.Context, lobbyID, su
 		&subchannel.CreatedAt, &subchannel.UpdatedAt,
 	)
 
-	if err == pgx.ErrNoRows {
+	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil
 	}
 	if err != nil {

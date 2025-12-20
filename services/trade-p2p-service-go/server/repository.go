@@ -76,7 +76,7 @@ func (r *Repository) GetTradeSession(ctx context.Context, sessionID uuid.UUID) (
 		&session.CreatedAt,
 	)
 
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		return nil, ErrNotFound
 	}
 	if err != nil {

@@ -46,7 +46,7 @@ type service struct {
 }
 
 // NewService создает новый сервис
-func NewService(repo Repository, redis *redis.Client, kafkaWriter *kafka.Writer, logger *zap.Logger) Service {
+func NewService(repo Repository, redis *redis.Client, kafkaWriter *kafka.Writer, logger *zap.Logger) *service {
 	svc := &service{
 		repo:        repo,
 		redis:       redis,

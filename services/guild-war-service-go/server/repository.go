@@ -129,7 +129,7 @@ func (r *Repository) GetGuildWarByID(ctx context.Context, id uuid.UUID) (*GuildW
 		&w.ID, &w.AttackerID, &w.DefenderID, &w.Status, &startTime, &endTime, &winnerID, &w.AttackerScore, &w.DefenderScore, &w.CreatedAt,
 	)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrGuildWarNotFound
 		}
 		return nil, err

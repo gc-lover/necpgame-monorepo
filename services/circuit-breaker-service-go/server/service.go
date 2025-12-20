@@ -108,7 +108,7 @@ func (s *CircuitBreakerService) RateLimitMiddleware() func(http.Handler) http.Ha
 }
 
 // HealthCheck Health check method
-func (s *CircuitBreakerService) HealthCheck(w http.ResponseWriter) {
+func (s *CircuitBreakerService) HealthCheck(w http.ResponseWriter, request *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(`{"status":"healthy","service":"circuit-breaker-service","version":"1.0.0","active_circuits":15,"active_bulkheads":8,"degraded_services":2}`))

@@ -12,7 +12,7 @@ import (
 )
 
 // HealthCheckHandler handles health check requests
-func (s *WorldEventsService) HealthCheckHandler(w http.ResponseWriter) {
+func (s *WorldEventsService) HealthCheckHandler(w http.ResponseWriter, request *http.Request) {
 	s.respondJSON(w, http.StatusOK, map[string]interface{}{
 		"status":    "ok",
 		"service":   "world-events-service",
@@ -41,7 +41,7 @@ func (s *WorldEventsService) ReadinessCheckHandler(w http.ResponseWriter, r *htt
 }
 
 // MetricsHandler handles metrics requests
-func (s *WorldEventsService) MetricsHandler(w http.ResponseWriter) {
+func (s *WorldEventsService) MetricsHandler(w http.ResponseWriter, request *http.Request) {
 	// Basic metrics for world events service
 	metrics := map[string]interface{}{
 		"service": "world-events-service",

@@ -100,7 +100,7 @@ func (r *CyberwareRepository) GetImplantByID(ctx context.Context, implantID stri
 	)
 
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, fmt.Errorf("implant not found")
 		}
 		r.logger.Error("Failed to query implant by ID", zap.Error(err))
@@ -489,7 +489,7 @@ func (r *CyberwareRepository) GetCharacterLimits(ctx context.Context, characterI
 	)
 
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			// Return default limits for new characters
 			return &models.ImplantLimitsState{
 				CharacterID: characterID,

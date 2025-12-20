@@ -38,11 +38,11 @@ func (h *Handlers) APIV1WeaponsResourcesWeaponIdGet(ctx context.Context, params 
 }
 
 // APIV1WeaponsResourcesWeaponIdConsumePost - TYPED response!
-func (h *Handlers) APIV1WeaponsResourcesWeaponIdConsumePost(ctx context.Context, req *api.ConsumeResourceRequest, params api.APIV1WeaponsResourcesWeaponIdConsumePostParams) (api.APIV1WeaponsResourcesWeaponIdConsumePostRes, error) {
+func (h *Handlers) APIV1WeaponsResourcesWeaponIdConsumePost(ctx context.Context, _ *api.ConsumeResourceRequest, params api.APIV1WeaponsResourcesWeaponIdConsumePostParams) (api.APIV1WeaponsResourcesWeaponIdConsumePostRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	result, err := h.service.ConsumeResource(ctx, params.WeaponId.String())
+	result, err := h.service.ConsumeResource(params.WeaponId.String())
 	if err != nil {
 		return &api.APIV1WeaponsResourcesWeaponIdConsumePostInternalServerError{
 			Error:   "InternalServerError",
@@ -54,11 +54,11 @@ func (h *Handlers) APIV1WeaponsResourcesWeaponIdConsumePost(ctx context.Context,
 }
 
 // APIV1WeaponsResourcesWeaponIdCooldownPost - TYPED response!
-func (h *Handlers) APIV1WeaponsResourcesWeaponIdCooldownPost(ctx context.Context, req *api.ApplyCooldownRequest, params api.APIV1WeaponsResourcesWeaponIdCooldownPostParams) (api.APIV1WeaponsResourcesWeaponIdCooldownPostRes, error) {
+func (h *Handlers) APIV1WeaponsResourcesWeaponIdCooldownPost(ctx context.Context, _ *api.ApplyCooldownRequest, params api.APIV1WeaponsResourcesWeaponIdCooldownPostParams) (api.APIV1WeaponsResourcesWeaponIdCooldownPostRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	result, err := h.service.ApplyCooldown(ctx, params.WeaponId.String())
+	result, err := h.service.ApplyCooldown(params.WeaponId.String())
 	if err != nil {
 		return &api.APIV1WeaponsResourcesWeaponIdCooldownPostInternalServerError{
 			Error:   "InternalServerError",
@@ -70,11 +70,11 @@ func (h *Handlers) APIV1WeaponsResourcesWeaponIdCooldownPost(ctx context.Context
 }
 
 // APIV1WeaponsResourcesWeaponIdReloadPost - TYPED response!
-func (h *Handlers) APIV1WeaponsResourcesWeaponIdReloadPost(ctx context.Context, req *api.ReloadWeaponRequest, params api.APIV1WeaponsResourcesWeaponIdReloadPostParams) (api.APIV1WeaponsResourcesWeaponIdReloadPostRes, error) {
+func (h *Handlers) APIV1WeaponsResourcesWeaponIdReloadPost(ctx context.Context, _ *api.ReloadWeaponRequest, params api.APIV1WeaponsResourcesWeaponIdReloadPostParams) (api.APIV1WeaponsResourcesWeaponIdReloadPostRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	result, err := h.service.ReloadWeapon(ctx, params.WeaponId.String())
+	result, err := h.service.ReloadWeapon(params.WeaponId.String())
 	if err != nil {
 		return &api.APIV1WeaponsResourcesWeaponIdReloadPostInternalServerError{
 			Error:   "InternalServerError",

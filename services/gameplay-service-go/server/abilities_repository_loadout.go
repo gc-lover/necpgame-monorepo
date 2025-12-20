@@ -24,7 +24,7 @@ func (r *AbilityRepository) GetLoadout(ctx context.Context, characterID uuid.UUI
 		&loadout.CharacterID, &primaryID, &secondaryID, &tertiaryID, &quaternaryID, &updatedAt,
 	)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			// Return default loadout
 			loadout.CharacterID = characterID
 			loadout.UpdatedAt = time.Now()

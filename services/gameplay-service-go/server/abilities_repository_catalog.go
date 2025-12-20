@@ -5,6 +5,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 
@@ -133,7 +134,7 @@ func (r *AbilityRepository) GetAbility(ctx context.Context, abilityID uuid.UUID)
 		&requirements, &modifiers, &createdAt,
 	)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
 		}
 		return nil, err

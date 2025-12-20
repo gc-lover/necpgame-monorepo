@@ -52,7 +52,7 @@ func (r *referralRepository) GetReferralCode(ctx context.Context, playerID uuid.
 	var code models.ReferralCode
 	query := `SELECT id, player_id, code, is_active, created_at FROM referral_codes WHERE player_id = $1 AND is_active = true LIMIT 1`
 	err := r.db.GetContext(ctx, &code, query, playerID)
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
 	}
 	return &code, err
@@ -68,7 +68,7 @@ func (r *referralRepository) ValidateReferralCode(ctx context.Context, codeStr s
 	var code models.ReferralCode
 	query := `SELECT id, player_id, code, is_active, created_at FROM referral_codes WHERE code = $1 AND is_active = true LIMIT 1`
 	err := r.db.GetContext(ctx, &code, query, codeStr)
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		return nil, errors.New("referral code not found")
 	}
 	return &code, err
@@ -95,7 +95,7 @@ func (r *referralRepository) GetReferral(ctx context.Context, id uuid.UUID) (*mo
 		FROM referrals WHERE id = $1
 	`
 	err := r.db.GetContext(ctx, &referral, query, id)
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		return nil, nil
 	}
 	return &referral, err

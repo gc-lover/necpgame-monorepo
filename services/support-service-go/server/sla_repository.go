@@ -44,7 +44,7 @@ func (r *SLARepository) GetTicketSLAStatus(ctx context.Context, ticketID uuid.UU
 		&firstResponseAt, &resolvedAt, &closedAt,
 	)
 	if err != nil {
-		if err == pgx.ErrNoRows {
+		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, nil
 		}
 		r.logger.WithError(err).WithField("ticket_id", ticketID).Error("Failed to get ticket for SLA")

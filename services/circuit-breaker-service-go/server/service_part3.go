@@ -5,7 +5,7 @@ import (
 	"net/http"
 )
 
-func (s *CircuitBreakerService) ListDegradationPolicies(w http.ResponseWriter) {
+func (s *CircuitBreakerService) ListDegradationPolicies(w http.ResponseWriter, request *http.Request) {
 	var policies []*DegradationPolicySummary
 
 	s.degradationPolicies.Range(func(key, value interface{}) bool {

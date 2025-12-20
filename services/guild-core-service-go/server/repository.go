@@ -111,7 +111,7 @@ func (r *Repository) GetGuildByID(ctx context.Context, id uuid.UUID) (*Guild, er
 		&g.ID, &g.Name, &g.Tag, &desc, &g.LeaderID, &g.CreatedAt, &g.UpdatedAt,
 	)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrGuildNotFound
 		}
 		return nil, err
@@ -239,7 +239,7 @@ func (r *Repository) IsUserGuildLeader(ctx context.Context, guildID, userID uuid
 	var exists int
 	err := r.db.QueryRow(ctx, query, guildID, userID).Scan(&exists)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return false, nil
 		}
 		return false, err
@@ -255,7 +255,7 @@ func (r *Repository) IsUserInGuild(ctx context.Context, guildID, userID uuid.UUI
 	var exists int
 	err := r.db.QueryRow(ctx, query, guildID, userID).Scan(&exists)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return false, nil
 		}
 		return false, err

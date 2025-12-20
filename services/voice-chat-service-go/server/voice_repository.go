@@ -62,7 +62,7 @@ func (r *VoiceRepository) GetChannel(ctx context.Context, channelID uuid.UUID) (
 		&settingsJSON, &channel.CreatedAt, &channel.UpdatedAt,
 	)
 
-	if err == pgx.ErrNoRows {
+	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil
 	}
 	if err != nil {
@@ -188,7 +188,7 @@ func (r *VoiceRepository) GetParticipant(ctx context.Context, channelID, charact
 		&positionJSON, &statsJSON, &participant.JoinedAt, &participant.UpdatedAt,
 	)
 
-	if err == pgx.ErrNoRows {
+	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil
 	}
 	if err != nil {

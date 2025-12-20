@@ -126,7 +126,7 @@ func (r *EngramChipsRepository) GetChipTierByTier(ctx context.Context, tier int)
 		&chipTier.AvailableFromYear,
 	)
 
-	if err == pgx.ErrNoRows {
+	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil
 	}
 	if err != nil {
@@ -145,7 +145,7 @@ func (r *EngramChipsRepository) GetChipTierByChipID(ctx context.Context, chipID 
 		chipID,
 	).Scan(&tier)
 
-	if err == pgx.ErrNoRows {
+	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil
 	}
 	if err != nil {
@@ -176,7 +176,7 @@ func (r *EngramChipsRepository) GetChipDecay(ctx context.Context, chipID uuid.UU
 		&decayEffectsJSON, &decay.LastCheckedAt, &decay.CreatedAt, &decay.UpdatedAt,
 	)
 
-	if err == pgx.ErrNoRows {
+	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil
 	}
 	if err != nil {

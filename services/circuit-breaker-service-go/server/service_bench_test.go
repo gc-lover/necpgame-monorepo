@@ -129,7 +129,7 @@ func BenchmarkCircuitBreakerService_CreateBulkhead(b *testing.B) {
 		req.Header.Set("X-User-ID", "user_123")
 		w := httptest.NewRecorder()
 
-		service.CreateBulkhead(w)
+		service.CreateBulkhead(w, nil)
 
 		if w.Code != http.StatusCreated {
 			b.Fatalf("Expected status 201, got %d", w.Code)
@@ -166,7 +166,7 @@ func BenchmarkCircuitBreakerService_GetMetrics(b *testing.B) {
 		bulkheadHttpReq := httptest.NewRequest("POST", "/cb/bulkheads", bytes.NewReader(bulkheadBody))
 		bulkheadHttpReq.Header.Set("X-User-ID", "user_123")
 		bulkheadW := httptest.NewRecorder()
-		service.CreateBulkhead(bulkheadW)
+		service.CreateBulkhead(bulkheadW, nil)
 	}
 
 	b.ResetTimer()
@@ -177,7 +177,7 @@ func BenchmarkCircuitBreakerService_GetMetrics(b *testing.B) {
 		req.Header.Set("X-User-ID", "user_123")
 		w := httptest.NewRecorder()
 
-		service.GetMetrics(w)
+		service.GetMetrics(w, nil)
 
 		if w.Code != http.StatusOK {
 			b.Fatalf("Expected status 200, got %d", w.Code)

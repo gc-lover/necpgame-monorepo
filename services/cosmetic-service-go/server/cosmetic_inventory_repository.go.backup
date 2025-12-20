@@ -118,7 +118,7 @@ func (r *CosmeticInventoryRepository) CheckOwnership(ctx context.Context, player
 		&pc.ObtainedAt, &pc.TimesUsed, &pc.LastUsedAt, &pc.CreatedAt,
 	)
 
-	if err == pgx.ErrNoRows {
+	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil
 	}
 	if err != nil {
@@ -316,7 +316,7 @@ func (r *CosmeticInventoryRepository) getCosmeticItem(ctx context.Context, cosme
 		&item.IsActive, &item.CreatedAt, &item.UpdatedAt,
 	)
 
-	if err == pgx.ErrNoRows {
+	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, fmt.Errorf("cosmetic item not found: %s", cosmeticID)
 	}
 	if err != nil {

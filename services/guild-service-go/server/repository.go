@@ -80,7 +80,7 @@ func (r *Repository) GetGuild(ctx context.Context, guildID string) (*GuildDefini
 		&guild.IsActive,
 	)
 
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		return nil, fmt.Errorf("guild not found")
 	}
 	if err != nil {
