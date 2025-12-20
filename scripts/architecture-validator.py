@@ -351,18 +351,16 @@ class ArchitectureValidator:
             for category, violations in self.violations.items():
                 if violations:
                     print(f"\n{category.upper()} ISSUES:")
-                    for violation in violations[:10]:  # Limit output
+                    for violation in violations:  # Show all violations
                         print(f"   - {violation}")
-                    if len(violations) > 10:
-                        print(f"   ... and {len(violations) - 10} more {category} issues")
+                    print(f"   Total: {len(violations)} {category} violations found")
 
-        if total_warnings > 0 and total_warnings < 50:
+        if total_warnings > 0:
             print("\nWARNINGS:")
             print("-"*30)
-            for warning in self.warnings[:15]:
+            for warning in self.warnings:  # Show all warnings
                 print(f"   - {warning}")
-            if len(self.warnings) > 15:
-                print(f"   ... and {len(self.warnings) - 15} more warnings")
+            print(f"   Total: {len(self.warnings)} warnings found")
 
         print("\n" + "="*80)
 
