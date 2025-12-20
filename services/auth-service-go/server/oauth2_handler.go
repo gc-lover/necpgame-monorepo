@@ -4,9 +4,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
+
+	"necpgame/services/auth-service-go/pkg/api"
 )
 
 // OPTIMIZATION: Issue #1998 - OAuth2 authorization flow initiation
@@ -40,30 +44,27 @@ func (s *AuthService) OAuth2Callback(w http.ResponseWriter, r *http.Request) {
 	// TODO: Create or link user account
 
 	user := &User{
-		UserID:      generateUserID(),
-		Username:    "oauth_user",
-		Email:       "oauth@example.com",
-		DisplayName: "OAuth User",
-		Status:      "ACTIVE",
-		Level:       1,
-		Experience:  0,
+		ID:            uuid.New(),
+		Username:      "oauth_user",
+		Email:         "oauth@example.com",
+		EmailVerified: true,
+		CreatedAt:     time.Now(),
 	}
 
 	sessionID := generateSessionID()
 	accessToken, refreshToken, _ := s.generateTokens(user, &Session{SessionID: sessionID})
 
-	userInfo := &UserInfo{
-		UserID:       user.UserID,
-		Username:     user.Username,
-		Email:        user.Email,
-		DisplayName:  user.DisplayName,
-		Level:        user.Level,
-		Experience:   user.Experience,
-		AccountStatus: "ACTIVE",
+	userInfo := &api.UserInfo{
+		ID:            user.ID.String(),
+		Username:      user.Username,
+		Email:         user.Email,
+		EmailVerified: user.EmailVerified,
+		CreatedAt:     user.CreatedAt,
+		LastLoginAt:   &time.Time{}, // TODO: Update with actual last login
 	}
 
-	resp := &OAuth2CallbackResponse{
-		User:         userInfo,
+	resp := &api.OAuth2CallbackResponse{
+		User:         *userInfo,
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
 		TokenType:    "Bearer",
@@ -75,7 +76,7 @@ func (s *AuthService) OAuth2Callback(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(resp)
 
 	s.logger.WithFields(logrus.Fields{
-		"user_id":  user.UserID,
+		"user_id":  user.ID.String(),
 		"provider": provider,
 	}).Info("OAuth2 login successful")
 }

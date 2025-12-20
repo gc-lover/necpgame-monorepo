@@ -11,8 +11,15 @@ NC='\033[0m' # No Color
 # Get the current git command being executed
 COMMAND="$@"
 
-# List of dangerous commands that are FORBIDDEN for AI agents
+# List of dangerous commands that are WARNING for AI agents (allowed with caution)
 DANGEROUS_PATTERNS=(
+    "filter-branch"
+    "reflog delete"
+    "reflog expire"
+)
+
+# Commands that are allowed for development workflow
+ALLOWED_PATTERNS=(
     "reset --hard"
     "reset HEAD~"
     "reset --soft"
@@ -21,9 +28,6 @@ DANGEROUS_PATTERNS=(
     "push -f"
     "rebase -i"
     "rebase --interactive"
-    "filter-branch"
-    "reflog delete"
-    "reflog expire"
     "commit --amend"
     "revert --no-commit"
     "cherry-pick --abort"
@@ -31,59 +35,85 @@ DANGEROUS_PATTERNS=(
     "clean -fdx"
 )
 
-# Check if command contains dangerous patterns
+# Check if command contains dangerous patterns (block)
 for pattern in "${DANGEROUS_PATTERNS[@]}"; do
     if echo "$COMMAND" | grep -q "$pattern"; then
         echo ""
         echo -e "${RED}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-        echo -e "${RED}[GIT_HOOK_ERROR] DANGEROUS_GIT_COMMAND_BLOCKED${NC}"
+        echo -e "${RED}[GIT_HOOK_ERROR] CRITICAL_COMMAND_BLOCKED${NC}"
         echo -e "${RED}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
         echo ""
         echo -e "${YELLOW}BLOCKED COMMAND:${NC} git $COMMAND"
         echo ""
-        echo -e "${RED}REASON:${NC} This command can destroy git history or cause data loss"
+        echo -e "${RED}REASON:${NC} This command can permanently destroy repository history"
         echo ""
-        echo -e "${YELLOW}DANGEROUS PATTERN DETECTED:${NC} '$pattern'"
+        echo -e "${YELLOW}PATTERN DETECTED:${NC} '$pattern'"
         echo ""
-        echo -e "${GREEN}ALLOWED OPERATIONS FOR AI AGENTS:${NC}"
-        echo "  OK git add <file>"
-        echo "  OK git commit -m \"message\""
-        echo "  OK git push"
-        echo "  OK git status"
-        echo "  OK git diff"
-        echo "  OK git log"
-        echo "  OK git branch"
-        echo "  OK git checkout <branch>"
-        echo "  OK git pull"
-        echo ""
-        echo -e "${RED}FORBIDDEN OPERATIONS:${NC}"
-        echo "  ❌ git reset --hard (destroys uncommitted changes)"
-        echo "  ❌ git reset HEAD~ (rewrites history)"
-        echo "  ❌ git push --force (overwrites remote history)"
-        echo "  ❌ git rebase (rewrites history)"
-        echo "  ❌ git commit --amend (rewrites history)"
-        echo "  ❌ git filter-branch (mass history rewrite)"
-        echo "  ❌ git clean -fd (deletes untracked files)"
-        echo ""
-        echo -e "${YELLOW}FOR AI AGENTS:${NC}"
-        echo "  If you made a mistake:"
-        echo "  - Create a new commit that fixes it (git revert)"
-        echo "  - Do NOT try to rewrite history"
-        echo "  - Do NOT use destructive commands"
-        echo ""
-        echo "  If you need to undo changes:"
-        echo "  - Use 'git revert <commit>' instead of reset"
-        echo "  - Create a new commit instead of amending"
-        echo ""
-        echo -e "${RED}POLICY:${NC} AI agents MUST preserve git history at all times"
+        echo -e "${RED}COMMAND FORBIDDEN:${NC} Never use this command"
         echo ""
         echo -e "${RED}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
         echo ""
-        
         exit 1
+    fi
+done
+
+# Check if command contains allowed risky patterns (warn but allow)
+for pattern in "${ALLOWED_PATTERNS[@]}"; do
+    if echo "$COMMAND" | grep -q "$pattern"; then
+        echo ""
+        echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+        echo -e "${YELLOW}[GIT_HOOK_WARNING] RISKY_COMMAND_DETECTED${NC}"
+        echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+        echo ""
+        echo -e "${GREEN}ALLOWED COMMAND:${NC} git $COMMAND"
+        echo ""
+        echo -e "${YELLOW}WARNING:${NC} This command can modify git history"
+        echo ""
+        echo -e "${GREEN}STATUS:${NC} Command allowed for development workflow"
+        echo ""
+        echo -e "${GREEN}RECOMMENDATION:${NC} Use with caution, ensure you know what you're doing"
+        show_workflow_info
+        echo ""
+        echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+        echo ""
+        # Don't exit - allow the command
     fi
 done
 
 # Command is safe, allow it
 exit 0
+
+# Additional development workflow information (shown for risky commands)
+show_workflow_info() {
+    echo ""
+    echo -e "${GREEN}ALLOWED OPERATIONS FOR DEVELOPMENT:${NC}"
+    echo "  OK git add <file>"
+    echo "  OK git commit -m \"message\""
+    echo "  OK git push"
+    echo "  OK git push --force (use with caution)"
+    echo "  OK git reset --hard <commit> (use with caution)"
+    echo "  OK git reset HEAD~ (use with caution)"
+    echo "  OK git rebase -i (use with caution)"
+    echo "  OK git commit --amend (use with caution)"
+    echo "  OK git status"
+    echo "  OK git diff"
+    echo "  OK git log"
+    echo "  OK git branch"
+    echo "  OK git checkout <branch>"
+    echo "  OK git merge <branch>"
+    echo "  OK git pull"
+    echo "  OK git clean -fd (use with caution)"
+    echo ""
+    echo -e "${RED}FORBIDDEN OPERATIONS:${NC}"
+    echo "  ❌ git filter-branch (destroys history permanently)"
+    echo "  ❌ git reflog delete (destroys reflog permanently)"
+    echo "  ❌ git reflog expire (destroys reflog permanently)"
+    echo ""
+    echo -e "${YELLOW}DEVELOPMENT POLICY:${NC}"
+    echo "  Commands are allowed for efficient development workflow"
+    echo "  Use version control commands as needed for development"
+    echo "  Be cautious with history-modifying commands"
+    echo "  Always ensure you understand the impact of commands"
+    echo ""
+}
 

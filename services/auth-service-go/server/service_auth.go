@@ -13,17 +13,17 @@ import (
 )
 
 // Register регистрирует нового пользователя
-func (s *Service) Register(ctx context.Context, req *api.RegisterRequest) (*RegisterResponse, error) {
+func (s *Service) Register(ctx context.Context, req *api.RegisterRequest) (*api.RegisterResponse, error) {
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
 	// Validate input
 	if req.Email == "" || req.Username == "" || req.Password == "" {
-		return nil, &ValidationError{Field: "email/username/password", Message: "required fields missing"}
+		return nil, &api.ValidationError{Field: "email/username/password", Message: "required fields missing"}
 	}
 
 	if len(req.Password) < 8 {
-		return nil, &ValidationError{Field: "password", Message: "password must be at least 8 characters"}
+		return nil, &api.ValidationError{Field: "password", Message: "password must be at least 8 characters"}
 	}
 
 	// Check if user already exists
@@ -34,7 +34,7 @@ func (s *Service) Register(ctx context.Context, req *api.RegisterRequest) (*Regi
 	}
 
 	if exists {
-		return nil, &ConflictError{Message: "user with this email or username already exists"}
+		return nil, &api.ConflictError{Message: "user with this email or username already exists"}
 	}
 
 	// Hash password
@@ -49,13 +49,12 @@ func (s *Service) Register(ctx context.Context, req *api.RegisterRequest) (*Regi
 	now := time.Now()
 
 	user := &User{
-		ID:        userID,
-		Email:     req.Email,
-		Username:  req.Username,
-		Password:  string(hashedPassword),
-		Status:    "pending_verification",
-		CreatedAt: now,
-		UpdatedAt: now,
+		ID:            userID,
+		Email:         req.Email,
+		Username:      req.Username,
+		PasswordHash:  string(hashedPassword),
+		EmailVerified: false,
+		CreatedAt:     now,
 	}
 
 	if err := s.createUser(ctx, user); err != nil {
@@ -69,8 +68,8 @@ func (s *Service) Register(ctx context.Context, req *api.RegisterRequest) (*Regi
 		// Don't fail registration for role assignment failure
 	}
 
-	return &RegisterResponse{
-		UserId:               userID,
+	return &api.RegisterResponse{
+		UserID:               userID.String(),
 		Email:                req.Email,
 		Username:             req.Username,
 		VerificationRequired: true,
@@ -79,7 +78,7 @@ func (s *Service) Register(ctx context.Context, req *api.RegisterRequest) (*Regi
 }
 
 // Login аутентифицирует пользователя
-func (s *Service) Login(ctx context.Context, req *api.LoginRequest) (*LoginResponse, error) {
+func (s *Service) Login(ctx context.Context, req *api.LoginRequest) (*api.LoginResponse, error) {
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
@@ -87,16 +86,16 @@ func (s *Service) Login(ctx context.Context, req *api.LoginRequest) (*LoginRespo
 	user, err := s.getUserByEmail(ctx, req.Email)
 	if err != nil {
 		s.logger.Error("Failed to get user", zap.Error(err))
-		return nil, &AuthenticationError{Message: "invalid credentials"}
+		return nil, &api.AuthenticationError{Message: "invalid credentials"}
 	}
 
 	if user == nil {
-		return nil, &AuthenticationError{Message: "invalid credentials"}
+		return nil, &api.AuthenticationError{Message: "invalid credentials"}
 	}
 
 	// Check password
-	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
-		return nil, &AuthenticationError{Message: "invalid credentials"}
+	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.Password)); err != nil {
+		return nil, &api.AuthenticationError{Message: "invalid credentials"}
 	}
 
 	// Check user status

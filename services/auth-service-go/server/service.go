@@ -83,17 +83,6 @@ func (s *AuthService) HealthCheck(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(`{"status":"healthy","service":"auth-service","version":"1.0.0","active_users":42}`))
 }
 
-// TokenClaims represents JWT token claims
-type TokenClaims struct {
-	UserID      string `json:"user_id"`
-	Username    string `json:"username"`
-	Email       string `json:"email"`
-	DisplayName string `json:"display_name"`
-	Level       int    `json:"level"`
-	Experience  int    `json:"experience"`
-	SessionID   string `json:"session_id"`
-	jwt.RegisteredClaims
-}
 
 // Helper functions
 func generateUserID() string {

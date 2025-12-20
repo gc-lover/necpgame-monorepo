@@ -5,9 +5,12 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/bcrypt"
 	"golang.org/x/time/rate"
+
+	"necpgame/services/auth-service-go/pkg/api"
 )
 
 // OPTIMIZATION: Issue #1998 - Rate limiting middleware for brute force protection
@@ -30,7 +33,7 @@ func (s *AuthService) RateLimitMiddleware() func(http.Handler) http.Handler {
 
 // OPTIMIZATION: Issue #1998 - User registration with validation and security
 func (s *AuthService) RegisterUser(w http.ResponseWriter, r *http.Request) {
-	var req RegisterRequest
+	var req api.RegisterRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		s.logger.WithError(err).Error("failed to decode register request")
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
@@ -38,13 +41,8 @@ func (s *AuthService) RegisterUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Validate request
-	if req.Password != req.ConfirmPassword {
-		http.Error(w, "Passwords do not match", http.StatusBadRequest)
-		return
-	}
-
-	if !req.AcceptTerms {
-		http.Error(w, "Terms must be accepted", http.StatusBadRequest)
+	if req.Password == "" || req.Username == "" || req.Email == "" {
+		http.Error(w, "Missing required fields", http.StatusBadRequest)
 		return
 	}
 
@@ -57,24 +55,20 @@ func (s *AuthService) RegisterUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user := &User{
-		UserID:       generateUserID(),
-		Username:     req.Username,
-		Email:        req.Email,
-		PasswordHash: string(hashedPassword),
-		DisplayName:  req.DisplayName,
-		Status:       "ACTIVE",
-		CreatedAt:    time.Now(),
-		Level:        1,
-		Experience:   0,
+		ID:            uuid.New(),
+		Username:      req.Username,
+		Email:         req.Email,
+		PasswordHash:  string(hashedPassword),
+		EmailVerified: false,
+		CreatedAt:     time.Now(),
 	}
 
 	// TODO: Store user in database
 
-	resp := &RegisterResponse{
-		UserID:      user.UserID,
+	resp := &api.RegisterResponse{
+		UserID:      user.ID.String(),
 		Username:    user.Username,
 		Email:       user.Email,
-		DisplayName: user.DisplayName,
 		CreatedAt:   user.CreatedAt.Unix(),
 		EmailVerificationRequired: true,
 		WelcomeMessage:            "Welcome to NECP Game!",
@@ -93,7 +87,7 @@ func (s *AuthService) RegisterUser(w http.ResponseWriter, r *http.Request) {
 
 // OPTIMIZATION: Issue #1998 - User login with brute force protection
 func (s *AuthService) LoginUser(w http.ResponseWriter, r *http.Request) {
-	var req LoginRequest
+	var req api.LoginRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		s.logger.WithError(err).Error("failed to decode login request")
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
@@ -103,7 +97,7 @@ func (s *AuthService) LoginUser(w http.ResponseWriter, r *http.Request) {
 	s.metrics.LoginAttempts.Inc()
 
 	// Check failed attempts (brute force protection)
-	key := "login_attempts:" + req.Username
+	key := "login_attempts:" + req.Email
 	attempts, _ := s.failedAttempts.LoadOrStore(key, int64(0))
 
 	if attempts.(int64) >= int64(s.config.MaxLoginAttempts) {
@@ -113,14 +107,12 @@ func (s *AuthService) LoginUser(w http.ResponseWriter, r *http.Request) {
 
 	// TODO: Get user from database
 	user := &User{
-		UserID:       "user_123",
-		Username:     req.Username,
-		Email:        req.Username + "@example.com",
-		PasswordHash: "$2a$10$example.hash.here",
-		DisplayName:  "Test User",
-		Status:       "ACTIVE",
-		Level:        25,
-		Experience:   12500,
+		ID:            uuid.New(),
+		Username:      "testuser",
+		Email:         req.Email,
+		PasswordHash:  "$2a$10$example.hash.here",
+		EmailVerified: true,
+		CreatedAt:     time.Now(),
 	}
 
 	// Verify password
@@ -131,7 +123,7 @@ func (s *AuthService) LoginUser(w http.ResponseWriter, r *http.Request) {
 		// Lock account if too many failures
 		if attempts.(int64)+1 >= int64(s.config.MaxLoginAttempts) {
 			// TODO: Set account lockout in database
-			s.logger.WithField("username", req.Username).Warn("account locked due to failed attempts")
+			s.logger.WithField("email", req.Email).Warn("account locked due to failed attempts")
 		}
 
 		http.Error(w, "Invalid credentials", http.StatusUnauthorized)
@@ -146,8 +138,7 @@ func (s *AuthService) LoginUser(w http.ResponseWriter, r *http.Request) {
 	sessionID := generateSessionID()
 	session := &Session{
 		SessionID:    sessionID,
-		UserID:       user.UserID,
-		DeviceInfo:   req.DeviceInfo,
+		UserID:       user.ID.String(),
 		IPAddress:    r.RemoteAddr,
 		CreatedAt:    time.Now(),
 		LastActivity: time.Now(),
@@ -165,20 +156,17 @@ func (s *AuthService) LoginUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userInfo := &UserInfo{
-		UserID:       user.UserID,
-		Username:     user.Username,
-		Email:        user.Email,
-		DisplayName:  user.DisplayName,
-		Level:        user.Level,
-		Experience:   user.Experience,
-		LastLogin:    time.Now().Unix(),
-		AccountStatus: "ACTIVE",
-		CreatedAt:    user.CreatedAt.Unix(),
+	userInfo := &api.UserInfo{
+		ID:            user.ID.String(),
+		Username:      user.Username,
+		Email:         user.Email,
+		EmailVerified: user.EmailVerified,
+		CreatedAt:     user.CreatedAt,
+		LastLoginAt:   &time.Time{}, // TODO: Update with actual last login
 	}
 
-	resp := &LoginResponse{
-		User:             userInfo,
+	resp := &api.LoginResponse{
+		User:             *userInfo,
 		AccessToken:      accessToken,
 		RefreshToken:     refreshToken,
 		TokenType:        "Bearer",
@@ -199,7 +187,7 @@ func (s *AuthService) LoginUser(w http.ResponseWriter, r *http.Request) {
 
 // OPTIMIZATION: Issue #1998 - Password reset with secure token generation
 func (s *AuthService) RequestPasswordReset(w http.ResponseWriter, r *http.Request) {
-	var req PasswordResetRequest
+	var req api.PasswordResetRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		s.logger.WithError(err).Error("failed to decode password reset request")
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
@@ -210,7 +198,7 @@ func (s *AuthService) RequestPasswordReset(w http.ResponseWriter, r *http.Reques
 
 	// TODO: Generate reset token and send email
 
-	resp := &PasswordResetResponse{
+	resp := &api.PasswordResetResponse{
 		Message:              "Password reset email sent",
 		Email:                req.Email,
 		ResetTokenExpiresIn:  3600, // 1 hour
@@ -224,7 +212,7 @@ func (s *AuthService) RequestPasswordReset(w http.ResponseWriter, r *http.Reques
 
 // OPTIMIZATION: Issue #1998 - Password reset confirmation with validation
 func (s *AuthService) ConfirmPasswordReset(w http.ResponseWriter, r *http.Request) {
-	var req ConfirmPasswordResetRequest
+	var req api.ConfirmPasswordResetRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		s.logger.WithError(err).Error("failed to decode confirm password reset request")
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
@@ -239,7 +227,7 @@ func (s *AuthService) ConfirmPasswordReset(w http.ResponseWriter, r *http.Reques
 	// TODO: Validate reset token
 	// TODO: Update user password
 
-	resp := &ConfirmPasswordResetResponse{
+	resp := &api.ConfirmPasswordResetResponse{
 		Message: "Password reset successfully",
 		UserID:  "user_123",
 	}

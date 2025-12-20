@@ -5,45 +5,57 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
+
+	"necpgame/services/auth-service-go/pkg/api"
 )
 
 // OPTIMIZATION: Issue #1998 - Session management with concurrent access
 func (s *AuthService) GetUserSessions(w http.ResponseWriter, r *http.Request) {
 	// Get user from context
-	userID := r.Header.Get("X-User-ID")
-	if userID == "" {
+	userIDStr := r.Header.Get("X-User-ID")
+	if userIDStr == "" {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
 
-	var userSessions []*SessionInfo
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		http.Error(w, "Invalid user ID", http.StatusBadRequest)
+		return
+	}
+
+	var userSessions []*api.SessionInfo
 	totalSessions := 0
 	activeSessions := 0
 
 	s.sessions.Range(func(key, value interface{}) bool {
 		session := value.(*Session)
-		if session.UserID == userID {
+		sessionUserID, err := uuid.Parse(session.UserID)
+		if err != nil {
+			return true
+		}
+		if sessionUserID == userID {
 			totalSessions++
 			if session.IsActive {
 				activeSessions++
 			}
 
-			sessionInfo := &SessionInfo{
-				SessionID:   session.SessionID,
-				DeviceInfo:  session.DeviceInfo,
-				IPAddress:   session.IPAddress,
-				CreatedAt:   session.CreatedAt.Unix(),
-				LastActivity: session.LastActivity.Unix(),
-				ExpiresAt:   session.ExpiresAt.Unix(),
-				IsCurrent:   false, // TODO: Check if this is current session
+			sessionInfo := &api.SessionInfo{
+				SessionID:     session.SessionID,
+				IPAddress:     session.IPAddress,
+				CreatedAt:     session.CreatedAt.Unix(),
+				LastActivity:  session.LastActivity.Unix(),
+				ExpiresAt:     session.ExpiresAt.Unix(),
+				IsCurrent:     false, // TODO: Check if this is current session
 			}
 			userSessions = append(userSessions, sessionInfo)
 		}
 		return true
 	})
 
-	resp := &GetSessionsResponse{
+	resp := &api.GetSessionsResponse{
 		Sessions:       userSessions,
 		TotalSessions:  totalSessions,
 		ActiveSessions: activeSessions,
@@ -56,16 +68,26 @@ func (s *AuthService) GetUserSessions(w http.ResponseWriter, r *http.Request) {
 // OPTIMIZATION: Issue #1998 - Session invalidation with cleanup
 func (s *AuthService) InvalidateAllSessions(w http.ResponseWriter, r *http.Request) {
 	// Get user from context
-	userID := r.Header.Get("X-User-ID")
-	if userID == "" {
+	userIDStr := r.Header.Get("X-User-ID")
+	if userIDStr == "" {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		http.Error(w, "Invalid user ID", http.StatusBadRequest)
 		return
 	}
 
 	invalidated := 0
 	s.sessions.Range(func(key, value interface{}) bool {
 		session := value.(*Session)
-		if session.UserID == userID {
+		sessionUserID, err := uuid.Parse(session.UserID)
+		if err != nil {
+			return true
+		}
+		if sessionUserID == userID {
 			session.IsActive = false
 			s.sessions.Delete(key)
 			invalidated++
@@ -73,7 +95,7 @@ func (s *AuthService) InvalidateAllSessions(w http.ResponseWriter, r *http.Reque
 		return true
 	})
 
-	resp := &InvalidateSessionsResponse{
+	resp := &api.InvalidateSessionsResponse{
 		Message:             "All sessions invalidated",
 		SessionsInvalidated: invalidated,
 	}
@@ -92,9 +114,15 @@ func (s *AuthService) InvalidateSession(w http.ResponseWriter, r *http.Request) 
 	sessionID := chi.URLParam(r, "sessionId")
 
 	// Get user from context
-	userID := r.Header.Get("X-User-ID")
-	if userID == "" {
+	userIDStr := r.Header.Get("X-User-ID")
+	if userIDStr == "" {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		http.Error(w, "Invalid user ID", http.StatusBadRequest)
 		return
 	}
 
@@ -104,14 +132,15 @@ func (s *AuthService) InvalidateSession(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	if session.(*Session).UserID != userID {
+	sessionUserID, err := uuid.Parse(session.(*Session).UserID)
+	if err != nil || sessionUserID != userID {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
 
 	s.sessions.Delete(sessionID)
 
-	resp := &InvalidateSessionResponse{
+	resp := &api.InvalidateSessionResponse{
 		Message:   "Session invalidated",
 		SessionID: sessionID,
 	}

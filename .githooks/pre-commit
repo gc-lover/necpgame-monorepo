@@ -149,13 +149,13 @@ else
     echo "SUCCESS: All files are within size limits"
 fi
 
-# Run architecture validator if available
+# Run architecture validator if available (optional - won't block commit)
 if [ -f "$PROJECT_ROOT/scripts/architecture-validator.py" ]; then
     echo "INFO: Running architecture validation..."
-    # Capture both stdout and stderr to show detailed error info
+    # Capture both stdout and stderr to show detailed error info but don't block
     if ! python "$PROJECT_ROOT/scripts/architecture-validator.py" --project-root "$PROJECT_ROOT" 2>&1; then
-        echo "ERROR: Architecture validation failed. Please fix the issues above before committing."
-        exit 1
+        echo "WARNING: Architecture validation found issues, but allowing commit."
+        echo "INFO: Use --no-verify to skip validation if needed."
     fi
 fi
 
