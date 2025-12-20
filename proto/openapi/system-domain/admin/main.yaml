@@ -1,37 +1,59 @@
 paths:
-  # Core admin services
-  $ref: './admin-service.yaml#/paths'
-  $ref: './admin-dashboard-service.yaml#/paths'
+  /api/v1/admin/health:
+    get:
+      summary: Administrative functions health check
+      operationId: adminHealthCheck
+      tags:
+        - System
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
 
-  # Admin features
-  $ref: './admin-auth-service.yaml#/paths'
-  $ref: './admin-content-service.yaml#/paths'
-  $ref: './admin-economy-service.yaml#/paths'
-  $ref: './admin-moderation-service.yaml#/paths'
-  $ref: './admin-players-service.yaml#/paths'
-  $ref: './admin-roles-service.yaml#/paths'
-
-  # Admin analytics
-  $ref: './admin-analytics-service.yaml#/paths'
-
-  # Specialized admin
-  $ref: './maintenance-admin-service.yaml#/paths'
-  $ref: './stock-events-admin-service.yaml#/paths'
-  $ref: './stock-indices-admin-service.yaml#/paths'
+  /api/v1/admin/stats:
+    get:
+      summary: Get admin statistics
+      operationId: getAdminStats
+      tags:
+        - System
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Statistics retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminStats'
 
 components:
   schemas:
-    $ref: './admin-analytics-schemas.yaml#/components/schemas'
-    $ref: './admin-audit-schemas.yaml#/components/schemas'
-    $ref: './admin-moderation-schemas.yaml#/components/schemas'
-    $ref: './admin-players-schemas.yaml#/components/schemas'
-    $ref: './admin-roles-schemas.yaml#/components/schemas'
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: "healthy"
+        service:
+          type: string
+          example: "admin"
+        timestamp:
+          type: string
+          format: date-time
 
-components:
-  schemas:
-    $ref: './admin-analytics-schemas.yaml#/components/schemas'
-    $ref: './admin-audit-schemas.yaml#/components/schemas'
-    $ref: './admin-moderation-schemas.yaml#/components/schemas'
-    $ref: './admin-players-schemas.yaml#/components/schemas'
-    $ref: './admin-roles-schemas.yaml#/components/schemas'
-
+    AdminStats:
+      type: object
+      properties:
+        totalUsers:
+          type: integer
+          example: 10000
+        activeUsers:
+          type: integer
+          example: 1500
+        serverLoad:
+          type: number
+          format: float
+          example: 0.75
