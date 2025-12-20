@@ -1,0 +1,471 @@
+# Issue: #2068
+openapi: 3.0.3
+info:
+  title: System Domain - Circuit Breaker Management API
+  description: |
+    **Enterprise-Grade Circuit Breaker Management API** for NECPGAME MMOFPS RPG.
+
+    **Module Purpose:** Centralized circuit breaker management for resilient microservices architecture with 50+ services, automatic failure detection, graceful degradation, and recovery strategies.
+
+    **Architecture:** Event-driven circuit breaker management with distributed state synchronization, metrics collection, and automated recovery mechanisms.
+
+    **Core Features:**
+    - Circuit breaker lifecycle management (create/configure/monitor)
+    - Real-time state monitoring and alerting
+    - Failure threshold configuration and adaptive tuning
+    - Graceful degradation strategies and fallback management
+    - Recovery automation and health check integration
+    - Distributed state synchronization across service mesh
+    - Metrics collection and performance analytics
+    - Integration with service discovery and load balancing
+
+    **Performance Targets:**
+    - Circuit breaker evaluations: 1000+ per second, P99 <5ms
+    - State synchronization: <50ms propagation across 50 services
+    - Memory per circuit breaker: <1KB (optimized state storage)
+    - Recovery time: <30 seconds for service restoration
+    - False positive rate: <0.1% for failure detection
+
+    **BACKEND NOTE:** Circuit breaker state requires Redis clustering, metrics streaming to Kafka.
+    Failure patterns analysis for adaptive threshold tuning critical.
+  version: 1.0.0
+  contact:
+    name: NECPGAME Circuit Breaker API Support
+    url: https://necpgame.com/support
+    email: api@circuit-breaker.necpgame.com
+
+servers:
+  - url: http://localhost:8088/api/v1/system-domain/circuit-breakers
+    description: Circuit Breaker Management Service Development Server
+  - url: https://circuit-breaker.necpgame.com/api/v1
+    description: Circuit Breaker Management Service Production Server
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Circuit Breaker Management
+    description: Core circuit breaker CRUD operations
+  - name: Circuit Breaker Monitoring
+    description: Real-time monitoring and state tracking
+  - name: Failure Analysis
+    description: Failure pattern analysis and reporting
+  - name: Configuration Management
+    description: Thresholds and policy configuration
+  - name: Recovery Operations
+    description: Automated recovery and manual interventions
+  - name: System
+    description: Health checks and system operations
+
+paths:
+  # Health and system endpoints
+  /health:
+    get:
+      summary: Circuit breaker service health check
+      operationId: circuitBreakerHealth
+      tags:
+        - System
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/health-schemas.yaml#/components/schemas/HealthResponse'
+        '503':
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+
+  # Circuit breaker management
+  /circuit-breakers:
+    post:
+      summary: Create a new circuit breaker
+      description: |
+        Creates a new circuit breaker for service protection.
+
+        **BACKEND NOTE:** Validates service exists, initializes Redis state, registers with service mesh.
+        Circuit breaker starts in CLOSED state with configured thresholds.
+      operationId: createCircuitBreaker
+      tags:
+        - Circuit Breaker Management
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/circuit-breaker-schemas.yaml#/components/schemas/CreateCircuitBreakerRequest'
+      responses:
+        '201':
+          description: Circuit breaker created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/circuit-breaker-schemas.yaml#/components/schemas/CircuitBreaker'
+        '400':
+          description: Invalid circuit breaker configuration
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+        '409':
+          description: Circuit breaker with this ID already exists
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+
+    get:
+      summary: List circuit breakers
+      description: Retrieve a paginated list of circuit breakers with optional filtering
+      operationId: listCircuitBreakers
+      tags:
+        - Circuit Breaker Management
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: service_name
+          in: query
+          schema:
+            type: string
+          description: Filter by service name
+        - name: state
+          in: query
+          schema:
+            type: string
+            enum: [closed, open, half_open]
+          description: Filter by circuit breaker state
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of items per page
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          description: Number of items to skip
+      responses:
+        '200':
+          description: Circuit breakers retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/circuit-breaker-schemas.yaml#/components/schemas/CircuitBreakerListResponse'
+
+  /circuit-breakers/{circuit_breaker_id}:
+    get:
+      summary: Get circuit breaker details
+      description: Retrieve detailed information about a specific circuit breaker
+      operationId: getCircuitBreaker
+      tags:
+        - Circuit Breaker Management
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: circuit_breaker_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Circuit breaker unique identifier
+      responses:
+        '200':
+          description: Circuit breaker details retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/circuit-breaker-schemas.yaml#/components/schemas/CircuitBreaker'
+        '404':
+          description: Circuit breaker not found
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+
+    put:
+      summary: Update circuit breaker configuration
+      description: |
+        Updates circuit breaker configuration (thresholds, timeouts, etc.).
+
+        **BACKEND NOTE:** Validates new configuration, applies changes atomically.
+        May trigger state transition if thresholds are modified.
+      operationId: updateCircuitBreaker
+      tags:
+        - Circuit Breaker Management
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: circuit_breaker_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Circuit breaker unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/circuit-breaker-schemas.yaml#/components/schemas/UpdateCircuitBreakerRequest'
+      responses:
+        '200':
+          description: Circuit breaker updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/circuit-breaker-schemas.yaml#/components/schemas/CircuitBreaker'
+        '400':
+          description: Invalid configuration
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+        '404':
+          description: Circuit breaker not found
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+
+    delete:
+      summary: Delete circuit breaker
+      description: |
+        Removes a circuit breaker from the system.
+
+        **BACKEND NOTE:** Cleans up Redis state, unregisters from service mesh.
+        Use with caution - may expose service to cascading failures.
+      operationId: deleteCircuitBreaker
+      tags:
+        - Circuit Breaker Management
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: circuit_breaker_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Circuit breaker unique identifier
+      responses:
+        '204':
+          description: Circuit breaker deleted successfully
+        '404':
+          description: Circuit breaker not found
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+
+  # Manual state control
+  /circuit-breakers/{circuit_breaker_id}/state:
+    post:
+      summary: Manually control circuit breaker state
+      description: |
+        Manually force circuit breaker state transition (OPEN/CLOSE/RESET).
+
+        **BACKEND NOTE:** Administrative override for emergency situations.
+        Logs action for audit trail. Automatic recovery may override manual state.
+      operationId: controlCircuitBreakerState
+      tags:
+        - Circuit Breaker Management
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: circuit_breaker_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Circuit breaker unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/circuit-breaker-schemas.yaml#/components/schemas/StateControlRequest'
+      responses:
+        '200':
+          description: State control applied successfully
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/circuit-breaker-schemas.yaml#/components/schemas/CircuitBreaker'
+        '400':
+          description: Invalid state transition
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+        '403':
+          description: Not authorized for manual state control
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+        '404':
+          description: Circuit breaker not found
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+
+  # Monitoring and metrics
+  /circuit-breakers/{circuit_breaker_id}/metrics:
+    get:
+      summary: Get circuit breaker metrics
+      description: Retrieve performance metrics and failure statistics for a circuit breaker
+      operationId: getCircuitBreakerMetrics
+      tags:
+        - Circuit Breaker Monitoring
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: circuit_breaker_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Circuit breaker unique identifier
+        - name: timeframe
+          in: query
+          schema:
+            type: string
+            enum: [1h, 6h, 24h, 7d]
+            default: 1h
+          description: Timeframe for metrics
+      responses:
+        '200':
+          description: Metrics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/monitoring-schemas.yaml#/components/schemas/CircuitBreakerMetrics'
+        '404':
+          description: Circuit breaker not found
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+
+  # Bulk operations
+  /circuit-breakers/bulk/state:
+    post:
+      summary: Bulk state control for multiple circuit breakers
+      description: |
+        Apply state control to multiple circuit breakers simultaneously.
+
+        **BACKEND NOTE:** Atomic operation across all specified circuit breakers.
+        Useful for emergency maintenance windows or region-wide failures.
+      operationId: bulkStateControl
+      tags:
+        - Circuit Breaker Management
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/circuit-breaker-schemas.yaml#/components/schemas/BulkStateControlRequest'
+      responses:
+        '200':
+          description: Bulk operation completed
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/circuit-breaker-schemas.yaml#/components/schemas/BulkStateControlResponse'
+        '400':
+          description: Invalid bulk operation
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+        '403':
+          description: Not authorized for bulk operations
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+
+  # System-wide monitoring
+  /monitoring/summary:
+    get:
+      summary: Get system-wide circuit breaker summary
+      description: Retrieve aggregated statistics across all circuit breakers in the system
+      operationId: getSystemSummary
+      tags:
+        - Circuit Breaker Monitoring
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: System summary retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/monitoring-schemas.yaml#/components/schemas/SystemSummary'
+        '403':
+          description: Not authorized to view system summary
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+
+  # Failure analysis
+  /analysis/failures:
+    get:
+      summary: Analyze failure patterns
+      description: Retrieve failure pattern analysis and recommendations for circuit breaker tuning
+      operationId: analyzeFailures
+      tags:
+        - Failure Analysis
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: service_name
+          in: query
+          schema:
+            type: string
+          description: Filter analysis by service name
+        - name: timeframe
+          in: query
+          schema:
+            type: string
+            enum: [1h, 6h, 24h, 7d]
+            default: 24h
+          description: Analysis timeframe
+      responses:
+        '200':
+          description: Failure analysis completed
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/analysis-schemas.yaml#/components/schemas/FailureAnalysis'
+        '403':
+          description: Not authorized for failure analysis
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      description: JWT Bearer token authentication

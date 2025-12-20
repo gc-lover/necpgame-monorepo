@@ -1,0 +1,198 @@
+# Circuit breaker monitoring and metrics schemas
+# Issue: #2068
+
+components:
+  schemas:
+    # Circuit breaker metrics response
+    CircuitBreakerMetrics:
+      type: object
+      required:
+        - circuit_breaker_id
+        - timeframe
+        - total_requests
+        - successful_requests
+        - failed_requests
+        - state_transitions
+      properties:
+        circuit_breaker_id:
+          type: string
+          format: uuid
+          description: Circuit breaker identifier
+        timeframe:
+          type: string
+          enum: [1h, 6h, 24h, 7d]
+          description: Metrics timeframe
+        total_requests:
+          type: integer
+          minimum: 0
+          description: Total requests processed
+          example: 12500
+        successful_requests:
+          type: integer
+          minimum: 0
+          description: Successful requests
+          example: 12000
+        failed_requests:
+          type: integer
+          minimum: 0
+          description: Failed requests
+          example: 500
+        blocked_requests:
+          type: integer
+          minimum: 0
+          description: Requests blocked by open circuit
+          example: 150
+        state_transitions:
+          type: object
+          description: State transition counts
+          properties:
+            closed_to_open:
+              type: integer
+              minimum: 0
+              example: 3
+            open_to_half_open:
+              type: integer
+              minimum: 0
+              example: 3
+            half_open_to_closed:
+              type: integer
+              minimum: 0
+              example: 2
+            half_open_to_open:
+              type: integer
+              minimum: 0
+              example: 1
+        response_times:
+          type: object
+          description: Response time percentiles
+          properties:
+            p50_ms:
+              type: number
+              format: float
+              example: 45.5
+            p95_ms:
+              type: number
+              format: float
+              example: 125.0
+            p99_ms:
+              type: number
+              format: float
+              example: 250.0
+        failure_rate_percent:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Failure rate percentage
+          example: 4.0
+        uptime_percent:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Circuit breaker uptime percentage
+          example: 96.5
+        recovery_attempts:
+          type: integer
+          minimum: 0
+          description: Number of recovery attempts
+          example: 5
+        successful_recoveries:
+          type: integer
+          minimum: 0
+          description: Successful recovery count
+          example: 2
+
+    # System-wide summary
+    SystemSummary:
+      type: object
+      required:
+        - total_circuit_breakers
+        - active_circuit_breakers
+        - open_circuit_breakers
+        - half_open_circuit_breakers
+        - total_requests_protected
+        - system_failure_rate_percent
+        - average_response_time_ms
+      properties:
+        total_circuit_breakers:
+          type: integer
+          minimum: 0
+          description: Total number of configured circuit breakers
+          example: 47
+        active_circuit_breakers:
+          type: integer
+          minimum: 0
+          description: Number of active (non-deleted) circuit breakers
+          example: 45
+        open_circuit_breakers:
+          type: integer
+          minimum: 0
+          description: Circuit breakers currently in OPEN state
+          example: 3
+        half_open_circuit_breakers:
+          type: integer
+          minimum: 0
+          description: Circuit breakers currently in HALF_OPEN state
+          example: 1
+        closed_circuit_breakers:
+          type: integer
+          minimum: 0
+          description: Circuit breakers currently in CLOSED state
+          example: 41
+        total_requests_protected:
+          type: integer
+          minimum: 0
+          description: Total requests protected across all circuit breakers
+          example: 2500000
+        system_failure_rate_percent:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: System-wide failure rate
+          example: 2.5
+        average_response_time_ms:
+          type: number
+          format: float
+          description: System-wide average response time
+          example: 85.5
+        top_failing_services:
+          type: array
+          items:
+            type: object
+            properties:
+              service_name:
+                type: string
+              failure_rate_percent:
+                type: number
+                format: float
+              failure_count:
+                type: integer
+          maxItems: 10
+          description: Top 10 services by failure rate
+        state_distribution:
+          type: object
+          description: Circuit breaker count by state
+          properties:
+            closed: { type: integer, example: 41 }
+            open: { type: integer, example: 3 }
+            half_open: { type: integer, example: 1 }
+        regional_health:
+          type: object
+          description: Health summary by region
+          additionalProperties:
+            type: object
+            properties:
+              total: { type: integer }
+              healthy: { type: integer }
+              failing: { type: integer }
+          example:
+            "us-east-1":
+              total: 15
+              healthy: 13
+              failing: 2
+            "eu-west-1":
+              total: 12
+              healthy: 11
+              failing: 1
