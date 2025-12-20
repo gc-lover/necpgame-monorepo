@@ -453,7 +453,7 @@ def main():
     parser = argparse.ArgumentParser(description='NECPGAME Architecture Validator')
     parser.add_argument('--project-root', default='.', help='Project root directory')
     parser.add_argument('--strict', action='store_true', help='Fail on warnings too')
-    parser.add_argument('--category', choices=['solid', 'performance', 'security', 'structure', 'files'],
+    parser.add_argument('--category', choices=['solid', 'performance', 'security', 'structure', 'file_sizes'],
                         help='Check only specific category')
 
     args = parser.parse_args()
@@ -463,16 +463,19 @@ def main():
 
         if args.category:
             # Run specific category check
-            method_name = f'_validate_{args.category}_requirements'
-            if hasattr(validator, method_name):
-                getattr(validator, method_name)()
+            if args.category == 'file_sizes':
+                validator._validate_file_sizes()
             else:
-                method_name = f'_validate_{args.category}'
+                method_name = f'_validate_{args.category}_requirements'
                 if hasattr(validator, method_name):
                     getattr(validator, method_name)()
                 else:
-                    print(f"[ERROR] Unknown category: {args.category}")
-                    return 1
+                    method_name = f'_validate_{args.category}'
+                    if hasattr(validator, method_name):
+                        getattr(validator, method_name)()
+                    else:
+                        print(f"[ERROR] Unknown category: {args.category}")
+                        return 1
         else:
             # Run all checks
             if not validator.validate_all():
