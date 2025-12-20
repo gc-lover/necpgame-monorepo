@@ -1,0 +1,530 @@
+# Issue: #2053
+openapi: 3.0.3
+info:
+  title: System Domain - WebSocket Event Streaming API
+  description: |
+    **Enterprise-Grade WebSocket Event Streaming API** for NECPGAME MMOFPS RPG.
+
+    **Module Purpose:** Real-time event streaming infrastructure with WebSocket connections, subscription patterns, and live updates for 10k+ concurrent users.
+
+    **Architecture:** High-performance WebSocket server with event-driven architecture, supporting pub/sub patterns, subscription filtering, and scalable connection management.
+
+    **Core Features:**
+    - WebSocket connection management (10k+ concurrent connections)
+    - Event subscription and filtering system
+    - Real-time event streaming with guaranteed delivery
+    - Connection health monitoring and auto-reconnect
+    - Authentication and authorization per connection
+    - Rate limiting and abuse protection
+    - Multi-channel event routing
+    - Event persistence and replay capabilities
+
+    **Performance Targets:**
+    - Concurrent connections: 10k+ active WebSocket connections
+    - Message throughput: 5000+ events/sec per server instance
+    - Latency: P99 <50ms for event delivery
+    - Memory per connection: <100KB (optimized structs)
+    - CPU overhead: <5% for 10k connections
+    - Connection establishment: <100ms
+
+    **BACKEND NOTE:** WebSocket worker pools required. Event schemas optimized for 30-50% memory savings.
+    Connection pooling and heartbeat management critical for stability.
+  version: 1.0.0
+  contact:
+    name: NECPGAME WebSocket API Support
+    url: https://necpgame.com/support
+    email: api@websocket.necpgame.com
+
+servers:
+  - url: http://localhost:8087/api/v1/system-domain/websocket-streaming
+    description: WebSocket Streaming Service Development Server
+  - url: https://websocket.necpgame.com/api/v1
+    description: WebSocket Streaming Service Production Server
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Connection Management
+    description: WebSocket connection lifecycle and health
+  - name: Event Subscriptions
+    description: Event subscription and filtering management
+  - name: Event Streaming
+    description: Real-time event publishing and consumption
+  - name: System
+    description: Health checks and system operations
+
+paths:
+  # Health and system endpoints
+  /health:
+    get:
+      summary: WebSocket streaming service health check
+      operationId: websocketHealth
+      tags:
+        - System
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/health-schemas.yaml#/components/schemas/HealthResponse'
+        '503':
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+
+  /health/ws:
+    get:
+      summary: WebSocket health check endpoint
+      description: Test WebSocket connection health
+      operationId: websocketConnectionHealth
+      tags:
+        - System
+      responses:
+        '101':
+          description: WebSocket connection established for health monitoring
+
+  # Connection management endpoints
+  /connections:
+    get:
+      summary: Get active connection statistics
+      description: Retrieve statistics about active WebSocket connections
+      operationId: getConnectionStats
+      tags:
+        - Connection Management
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Connection statistics retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/connection-schemas.yaml#/components/schemas/ConnectionStatsResponse'
+        '403':
+          description: Not authorized to view connection statistics
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+
+  /connections/{connection_id}:
+    get:
+      summary: Get connection details
+      description: Retrieve details about a specific WebSocket connection
+      operationId: getConnectionDetails
+      tags:
+        - Connection Management
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: connection_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Connection unique identifier
+      responses:
+        '200':
+          description: Connection details retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/connection-schemas.yaml#/components/schemas/ConnectionDetails'
+        '404':
+          description: Connection not found
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+        '403':
+          description: Not authorized to view connection details
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+
+    delete:
+      summary: Force disconnect connection
+      description: Forcefully disconnect a WebSocket connection
+      operationId: disconnectConnection
+      tags:
+        - Connection Management
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: connection_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Connection unique identifier
+      responses:
+        '204':
+          description: Connection disconnected successfully
+        '404':
+          description: Connection not found
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+        '403':
+          description: Not authorized to disconnect connections
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+
+  # Event subscription management
+  /subscriptions:
+    post:
+      summary: Create event subscription
+      description: |
+        Create a new event subscription for real-time streaming.
+
+        **BACKEND NOTE:** Subscriptions are tied to WebSocket connections.
+        Multiple subscriptions per connection supported with filtering.
+      operationId: createSubscription
+      tags:
+        - Event Subscriptions
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/subscription-schemas.yaml#/components/schemas/CreateSubscriptionRequest'
+      responses:
+        '201':
+          description: Subscription created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/subscription-schemas.yaml#/components/schemas/Subscription'
+        '400':
+          description: Invalid subscription parameters
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+        '429':
+          description: Subscription rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+
+    get:
+      summary: List user subscriptions
+      description: Retrieve all active subscriptions for the authenticated user
+      operationId: listSubscriptions
+      tags:
+        - Event Subscriptions
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of subscriptions to return
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          description: Number of subscriptions to skip
+      responses:
+        '200':
+          description: Subscriptions retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/subscription-schemas.yaml#/components/schemas/SubscriptionListResponse'
+        '403':
+          description: Not authorized to view subscriptions
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+
+  /subscriptions/{subscription_id}:
+    get:
+      summary: Get subscription details
+      description: Retrieve details about a specific subscription
+      operationId: getSubscription
+      tags:
+        - Event Subscriptions
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: subscription_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Subscription unique identifier
+      responses:
+        '200':
+          description: Subscription details retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/subscription-schemas.yaml#/components/schemas/Subscription'
+        '404':
+          description: Subscription not found
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+        '403':
+          description: Not authorized to view this subscription
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+
+    put:
+      summary: Update subscription
+      description: Update subscription filters or settings
+      operationId: updateSubscription
+      tags:
+        - Event Subscriptions
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: subscription_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Subscription unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/subscription-schemas.yaml#/components/schemas/UpdateSubscriptionRequest'
+      responses:
+        '200':
+          description: Subscription updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/subscription-schemas.yaml#/components/schemas/Subscription'
+        '400':
+          description: Invalid update parameters
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+        '404':
+          description: Subscription not found
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+        '403':
+          description: Not authorized to update this subscription
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+
+    delete:
+      summary: Delete subscription
+      description: Remove an event subscription
+      operationId: deleteSubscription
+      tags:
+        - Event Subscriptions
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: subscription_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Subscription unique identifier
+      responses:
+        '204':
+          description: Subscription deleted successfully
+        '404':
+          description: Subscription not found
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+        '403':
+          description: Not authorized to delete this subscription
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+
+  # Event publishing endpoints
+  /events:
+    post:
+      summary: Publish event to subscribers
+      description: |
+        Publish an event to all matching subscriptions.
+
+        **BACKEND NOTE:** High-throughput endpoint (5000+ events/sec).
+        Events are routed to WebSocket connections based on subscription filters.
+        Guaranteed delivery with retry logic.
+      operationId: publishEvent
+      tags:
+        - Event Streaming
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/event-schemas.yaml#/components/schemas/PublishEventRequest'
+      responses:
+        '202':
+          description: Event accepted for publishing
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/event-schemas.yaml#/components/schemas/PublishEventResponse'
+        '400':
+          description: Invalid event data
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+        '429':
+          description: Event publishing rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+
+  /events/batch:
+    post:
+      summary: Publish multiple events
+      description: |
+        Publish multiple events in a single request.
+
+        **BACKEND NOTE:** Optimized for batch processing.
+        Reduces network overhead for high-frequency event publishing.
+      operationId: publishEventsBatch
+      tags:
+        - Event Streaming
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/event-schemas.yaml#/components/schemas/PublishEventsBatchRequest'
+      responses:
+        '202':
+          description: Events accepted for publishing
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/event-schemas.yaml#/components/schemas/PublishEventsBatchResponse'
+        '400':
+          description: Invalid event data
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+        '429':
+          description: Batch publishing rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+
+  # WebSocket endpoint for real-time event streaming
+  /ws/events:
+    get:
+      summary: WebSocket connection for real-time event streaming
+      description: |
+        Establish WebSocket connection for real-time event streaming.
+
+        **BACKEND NOTE:** Long-lived connection (10k+ concurrent).
+        Supports subscription-based event filtering.
+        Heartbeat every 30 seconds required.
+        Message format: JSON with event routing.
+      operationId: websocketEventStream
+      tags:
+        - Event Streaming
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: token
+          in: query
+          required: true
+          schema:
+            type: string
+          description: JWT authentication token
+        - name: subscriptions
+          in: query
+          schema:
+            type: string
+          description: Comma-separated list of subscription IDs
+        - name: client_version
+          in: query
+          schema:
+            type: string
+            default: "1.0.0"
+          description: Client application version
+      responses:
+        '101':
+          description: WebSocket connection established
+          headers:
+            Sec-WebSocket-Accept:
+              schema:
+                type: string
+              description: WebSocket handshake confirmation
+        '400':
+          description: Invalid connection parameters
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+        '401':
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+        '403':
+          description: Not authorized for event streaming
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+        '429':
+          description: Connection rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      description: JWT Bearer token authentication
