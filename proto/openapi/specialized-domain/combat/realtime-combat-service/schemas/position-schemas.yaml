@@ -1,155 +1,10 @@
-# Player position synchronization schemas
-# Issue: #2197
-
 components:
   schemas:
-    # Position update request - memory optimized
-    PositionUpdateRequest:
-      type: object
-      required:
-        - player_id
-        - position
-        - rotation
-        - velocity
-        - timestamp
-      properties:
-        # Large types first
-        player_id:
-          type: string
-          format: uuid
-          description: Player identifier
-          example: "550e8400-e29b-41d4-a716-446655440000"
-
-        # Position data
-        position:
-          type: object
-          required:
-            - x
-            - y
-            - z
-          properties:
-            x:
-              type: number
-              format: float
-              description: X coordinate
-              example: 1250.75
-            y:
-              type: number
-              format: float
-              description: Y coordinate
-              example: 890.25
-            z:
-              type: number
-              format: float
-              description: Z coordinate
-              example: 45.0
-
-        rotation:
-          type: object
-          required:
-            - yaw
-            - pitch
-            - roll
-          properties:
-            yaw:
-              type: number
-              format: float
-              minimum: -180
-              maximum: 180
-              description: Yaw rotation in degrees
-              example: 45.5
-            pitch:
-              type: number
-              format: float
-              minimum: -90
-              maximum: 90
-              description: Pitch rotation in degrees
-              example: -15.2
-            roll:
-              type: number
-              format: float
-              minimum: -180
-              maximum: 180
-              description: Roll rotation in degrees
-              example: 0.0
-
-        velocity:
-          type: object
-          required:
-            - x
-            - y
-            - z
-          properties:
-            x:
-              type: number
-              format: float
-              description: X velocity
-              example: 12.5
-            y:
-              type: number
-              format: float
-              description: Y velocity
-              example: 0.0
-            z:
-              type: number
-              format: float
-              description: Z velocity
-              example: 8.3
-
-        # Timing
-        timestamp:
-          type: integer
-          description: Client timestamp in milliseconds since epoch
-          example: 1734702600000
-
-        # Optional validation data
-        sequence_number:
-          type: integer
-          minimum: 0
-          description: Client sequence number for ordering
-          example: 12345
-
-        input_state:
-          type: object
-          description: Current input state for validation
-          properties:
-            forward:
-              type: boolean
-              description: Forward movement input
-            backward:
-              type: boolean
-              description: Backward movement input
-            left:
-              type: boolean
-              description: Left strafe input
-            right:
-              type: boolean
-              description: Right strafe input
-            jump:
-              type: boolean
-              description: Jump input
-            crouch:
-              type: boolean
-              description: Crouch input
-
-        ground_normal:
-          type: object
-          description: Ground normal vector for physics validation
-          required:
-            - x
-            - y
-            - z
-          properties:
-            x: { type: number, format: float, example: 0.0 }
-            y: { type: number, format: float, example: 1.0 }
-            z: { type: number, format: float, example: 0.0 }
-
-    # Position update response
     PositionUpdateResponse:
       type: object
       required:
-        - validated
-        - server_timestamp
+      - validated
+      - server_timestamp
       properties:
         validated:
           type: boolean
@@ -161,101 +16,18 @@ components:
           example: 1734702600050
         corrected_position:
           type: object
-          description: Optional: Server-corrected position if validation failed
+          description: 'Optional: Server-corrected position if validation failed'
           required:
-            - x
-            - y
-            - z
+          - x
+          - y
+          - z
           properties:
-            x: { type: number, format: float }
-            y: { type: number, format: float }
-            z: { type: number, format: float }
-        correction_reason:
-          type: string
-          enum: [speed_hack, wall_hack, teleport, lag_compensation]
-          description: Reason for position correction
-        ping:
-          type: integer
-          minimum: 0
-          description: Calculated ping in milliseconds
-          example: 45
-
-    # WebSocket position update message
-    PositionUpdateMessage:
-      type: object
-      required:
-        - type
-        - player_id
-        - position
-        - timestamp
-      properties:
-        type:
-          type: string
-          enum: [position_update]
-          example: "position_update"
-        player_id:
-          type: string
-          format: uuid
-          description: Player identifier
-        position:
-          type: object
-          required:
-            - x
-            - y
-            - z
-          properties:
-            x: { type: number, format: float }
-            y: { type: number, format: float }
-            z: { type: number, format: float }
-        rotation:
-          type: object
-          properties:
-            yaw: { type: number, format: float }
-            pitch: { type: number, format: float }
-            roll: { type: number, format: float }
-        velocity:
-          type: object
-          properties:
-            x: { type: number, format: float }
-            y: { type: number, format: float }
-            z: { type: number, format: float }
-        timestamp:
-          type: integer
-          description: Server timestamp
-        sequence_number:
-          type: integer
-          description: Sequence number for ordering
-
-    # Position validation result
-    PositionValidationResult:
-      type: object
-      required:
-        - player_id
-        - timestamp
-        - is_valid
-      properties:
-        player_id:
-          type: string
-          format: uuid
-          description: Player identifier
-        timestamp:
-          type: integer
-          description: Validation timestamp
-        is_valid:
-          type: boolean
-          description: Whether position passed validation
-        validation_score:
-          type: number
-          minimum: 0
-          maximum: 1
-          description: Confidence score of validation (0-1)
-        detected_anomalies:
-          type: array
-          items:
-            type: string
-            enum: [speed_anomaly, teleport, wall_penetration, lag_spike]
-          description: Detected cheating anomalies
-        recommended_action:
-          type: string
-          enum: [allow, correct_position, kick_player, ban_player]
-          description: Recommended server action
+            x:
+              type: number
+              format: float
+            y:
+              type: number
+              format: float
+            z:
+              type: number
+              format: float
