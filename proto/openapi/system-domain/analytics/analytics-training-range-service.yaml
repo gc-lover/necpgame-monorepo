@@ -1,0 +1,803 @@
+openapi: 3.0.3
+info:
+  title: System Domain - Analytics Training Range Service API
+  description: |
+    **Training Range Analytics Service** for NECPGAME MMOFPS RPG.
+
+    **Module Purpose:** Advanced training facility with comprehensive weapon and combat analytics.
+
+    **Core Features:**
+    - Multiple training modes (static, moving, TTK drills)
+    - Real-time metrics collection (recoil, accuracy, TTK, DPS)
+    - Performance recommendations (mods, implants)
+    - Session logging and telemetry
+
+    **Performance Targets:**
+    - Real-time metrics: <50ms latency
+    - Session data processing: <200ms per session
+    - Concurrent users: 500+ per server
+    - Storage per session: <1MB
+
+    **BACKEND NOTE:** Integration with combat-service for weapon data, progression-service for recommendations.
+  version: 1.0.0
+  contact:
+    name: NECPGAME Analytics API Support
+    email: analytics@necp.game
+
+servers:
+  - url: http://localhost:8096/api/v1/system-domain/analytics/training-range
+    description: Analytics Training Range Service Development Server
+  - url: https://analytics-training-range.necpgame.com/api/v1
+    description: Analytics Training Range Service Production Server
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Training Sessions
+    description: Training session management
+  - name: Range Modes
+    description: Different training modes and scenarios
+  - name: Performance Analytics
+    description: Metrics and recommendations
+  - name: Session Reports
+    description: Session logging and exports
+
+paths:
+  # Session management
+  /training-range/sessions:
+    post:
+      summary: Start new training session
+      description: |
+        Creates and starts a new training range session.
+
+        **BACKEND NOTE:** Validates permissions, initializes metrics collection.
+        High-frequency endpoint for training session starts.
+      operationId: startTrainingSession
+      tags:
+        - Training Sessions
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartSessionRequest'
+      responses:
+        '201':
+          description: Training session started successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StartSessionResponse'
+        '400':
+          description: Invalid session request
+          content:
+            application/json:
+              schema:
+                $ref: '../common.yaml#/components/schemas/ErrorResponse'
+
+    get:
+      summary: Get user's training sessions
+      description: |
+        Retrieves list of user's training sessions with pagination.
+
+        **BACKEND NOTE:** Cached endpoint, supports filtering by date/mode.
+      operationId: getTrainingSessions
+      tags:
+        - Training Sessions
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 20
+          description: Number of sessions to return
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          description: Pagination offset
+        - name: mode
+          in: query
+          schema:
+            type: string
+            enum: [static_targets, moving_targets, ttk_drills, all]
+          description: Filter by training mode
+      responses:
+        '200':
+          description: List of training sessions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrainingSessionsResponse'
+
+  /training-range/sessions/{session_id}:
+    get:
+      summary: Get training session details
+      description: |
+        Retrieves detailed information about a specific training session.
+
+        **BACKEND NOTE:** Includes complete metrics, recommendations, and telemetry data.
+      operationId: getTrainingSession
+      tags:
+        - Training Sessions
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Training session identifier
+      responses:
+        '200':
+          description: Training session details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrainingSessionDetails'
+        '404':
+          description: Training session not found
+          content:
+            application/json:
+              schema:
+                $ref: '../common.yaml#/components/schemas/ErrorResponse'
+
+    delete:
+      summary: End training session
+      description: |
+        Manually ends an active training session and generates final report.
+
+        **BACKEND NOTE:** Processes final metrics, generates recommendations, saves telemetry.
+      operationId: endTrainingSession
+      tags:
+        - Training Sessions
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Training session identifier
+      responses:
+        '200':
+          description: Session ended successfully with final report
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionEndReport'
+        '404':
+          description: Training session not found
+          content:
+            application/json:
+              schema:
+                $ref: '../common.yaml#/components/schemas/ErrorResponse'
+
+  # Real-time metrics
+  /training-range/sessions/{session_id}/metrics:
+    get:
+      summary: Stream real-time training metrics
+      description: |
+        WebSocket endpoint for real-time training metrics and feedback.
+
+        **BACKEND NOTE:** High-frequency updates (10-30 Hz) during active sessions.
+        Provides live feedback on accuracy, recoil patterns, etc.
+      operationId: streamTrainingMetrics
+      tags:
+        - Performance Analytics
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Training session identifier
+      responses:
+        '101':
+          description: WebSocket connection established for metrics streaming
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TrainingMetricsStream'
+
+  # Recommendations
+  /training-range/sessions/{session_id}/recommendations:
+    get:
+      summary: Get performance recommendations
+      description: |
+        Retrieves personalized recommendations based on session performance.
+
+        **BACKEND NOTE:** AI-powered recommendations for weapon mods and implants.
+        Cached for 5 minutes to avoid repeated calculations.
+      operationId: getPerformanceRecommendations
+      tags:
+        - Performance Analytics
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Training session identifier
+      responses:
+        '200':
+          description: Performance recommendations
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PerformanceRecommendations'
+        '404':
+          description: Training session not found
+          content:
+            application/json:
+              schema:
+                $ref: '../common.yaml#/components/schemas/ErrorResponse'
+
+  # Session reports
+  /training-range/sessions/{session_id}/report:
+    get:
+      summary: Export session report
+      description: |
+        Exports detailed session report in JSON or CSV format.
+
+        **BACKEND NOTE:** Heavy computation endpoint, cached for 1 hour.
+        Supports multiple export formats for analytics tools.
+      operationId: exportSessionReport
+      tags:
+        - Session Reports
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Training session identifier
+        - name: format
+          in: query
+          schema:
+            type: string
+            enum: [json, csv]
+            default: json
+          description: Export format
+      responses:
+        '200':
+          description: Session report exported
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionReport'
+            text/csv:
+              schema:
+                type: string
+                description: CSV formatted session report
+        '404':
+          description: Training session not found
+          content:
+            application/json:
+              schema:
+                $ref: '../common.yaml#/components/schemas/ErrorResponse'
+
+  # Telemetry collection
+  /training-range/telemetry:
+    post:
+      summary: Submit training telemetry data
+      description: |
+        Internal endpoint for collecting detailed training telemetry.
+
+        **BACKEND NOTE:** High-volume endpoint called by client during/after sessions.
+        Processes weapon usage, performance trends, improvement tracking.
+      operationId: submitTrainingTelemetry
+      tags:
+        - Session Reports
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TrainingTelemetryData'
+      responses:
+        '202':
+          description: Telemetry data accepted for processing
+        '400':
+          description: Invalid telemetry data
+          content:
+            application/json:
+              schema:
+                $ref: '../common.yaml#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    # Request/Response schemas
+    StartSessionRequest:
+      type: object
+      required:
+        - character_id
+        - mode
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: Character identifier
+        mode:
+          type: string
+          enum: [static_targets, moving_targets, ttk_drills]
+          description: Training mode
+        weapon_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          maxItems: 5
+          description: Weapons to test (optional, uses equipped if empty)
+        session_metadata:
+          type: object
+          description: Optional session metadata
+          additionalProperties: true
+
+    StartSessionResponse:
+      type: object
+      required:
+        - session_id
+        - started_at
+        - mode
+        - targets
+      properties:
+        session_id:
+          type: string
+          format: uuid
+          description: Training session identifier
+        started_at:
+          type: string
+          format: date-time
+          description: Session start timestamp
+        mode:
+          type: string
+          enum: [static_targets, moving_targets, ttk_drills]
+          description: Training mode
+        targets:
+          type: array
+          items:
+            $ref: '#/components/schemas/TrainingTarget'
+          description: Initial targets for the session
+
+    TrainingSessionsResponse:
+      type: object
+      required:
+        - total_count
+        - sessions
+      properties:
+        total_count:
+          type: integer
+          minimum: 0
+          description: Total number of training sessions
+        sessions:
+          type: array
+          items:
+            $ref: '#/components/schemas/TrainingSessionSummary'
+
+    TrainingSessionSummary:
+      type: object
+      required:
+        - session_id
+        - started_at
+        - mode
+        - duration_s
+        - status
+      properties:
+        session_id:
+          type: string
+          format: uuid
+          description: Training session identifier
+        started_at:
+          type: string
+          format: date-time
+          description: Session start timestamp
+        mode:
+          type: string
+          enum: [static_targets, moving_targets, ttk_drills]
+          description: Training mode
+        duration_s:
+          type: integer
+          minimum: 0
+          description: Session duration in seconds
+        status:
+          type: string
+          enum: [active, completed, aborted]
+          description: Session status
+        final_score:
+          type: integer
+          minimum: 0
+          description: Final session score (if completed)
+
+    TrainingSessionDetails:
+      type: object
+      required:
+        - session_id
+        - character_id
+        - mode
+        - started_at
+        - status
+        - metrics
+        - targets
+      properties:
+        session_id:
+          type: string
+          format: uuid
+          description: Training session identifier
+        character_id:
+          type: string
+          format: uuid
+          description: Character identifier
+        mode:
+          type: string
+          enum: [static_targets, moving_targets, ttk_drills]
+          description: Training mode
+        started_at:
+          type: string
+          format: date-time
+          description: Session start timestamp
+        ended_at:
+          type: string
+          format: date-time
+          description: Session end timestamp (if completed)
+        status:
+          type: string
+          enum: [active, completed, aborted]
+          description: Session status
+        metrics:
+          $ref: '#/components/schemas/TrainingMetrics'
+        targets:
+          type: array
+          items:
+            $ref: '#/components/schemas/TrainingTarget'
+        recommendations:
+          $ref: '#/components/schemas/PerformanceRecommendations'
+
+    TrainingTarget:
+      type: object
+      required:
+        - target_id
+        - type
+        - position
+        - health
+      properties:
+        target_id:
+          type: string
+          format: uuid
+          description: Target identifier
+        type:
+          type: string
+          enum: [static, moving, ttk_drill]
+          description: Target type
+        position:
+          type: object
+          required:
+            - x
+            - y
+            - z
+          properties:
+            x: { type: number, format: float }
+            y: { type: number, format: float }
+            z: { type: number, format: float }
+        health:
+          type: integer
+          minimum: 0
+          description: Target health points
+        movement_pattern:
+          type: string
+          enum: [stationary, linear, circular, random]
+          description: Movement pattern (for moving targets)
+
+    TrainingMetrics:
+      type: object
+      required:
+        - accuracy_pct
+        - avg_recoil_spread
+        - ttk_by_weapon
+        - total_shots
+        - total_hits
+      properties:
+        accuracy_pct:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Overall accuracy percentage
+        avg_recoil_spread:
+          type: number
+          format: float
+          minimum: 0
+          description: Average recoil spread in degrees
+        ttk_by_weapon:
+          type: object
+          description: Time To Kill by weapon (milliseconds)
+          additionalProperties:
+            type: number
+            minimum: 0
+        dps_avg:
+          type: number
+          format: float
+          minimum: 0
+          description: Average Damage Per Second
+        heat_over_time:
+          type: array
+          items:
+            type: object
+            required:
+              - timestamp
+              - heat_level
+            properties:
+              timestamp: { type: integer, description: "Timestamp (ms)" }
+              heat_level: { type: number, format: float, minimum: 0, maximum: 100 }
+          description: Heat levels over time for energy weapons
+        total_shots:
+          type: integer
+          minimum: 0
+          description: Total shots fired
+        total_hits:
+          type: integer
+          minimum: 0
+          description: Total shots that hit targets
+
+    TrainingMetricsStream:
+      type: object
+      description: WebSocket message format for real-time training updates
+      required:
+        - type
+        - session_id
+        - timestamp
+        - metrics
+        - current_target
+      properties:
+        type:
+          type: string
+          enum: [training_metrics_update]
+          example: "training_metrics_update"
+        session_id:
+          type: string
+          format: uuid
+          description: Training session identifier
+        timestamp:
+          type: integer
+          description: Update timestamp (milliseconds since epoch)
+        metrics:
+          $ref: '#/components/schemas/TrainingMetrics'
+        current_target:
+          $ref: '#/components/schemas/TrainingTarget'
+        feedback:
+          type: string
+          description: Real-time feedback message
+
+    PerformanceRecommendations:
+      type: object
+      required:
+        - weapon_mods
+        - implant_suggestions
+        - overall_assessment
+      properties:
+        weapon_mods:
+          type: array
+          items:
+            $ref: '#/components/schemas/WeaponModRecommendation'
+          description: Recommended weapon modifications
+        implant_suggestions:
+          type: array
+          items:
+            $ref: '#/components/schemas/ImplantRecommendation'
+          description: Suggested implant upgrades (cosmetic cues only)
+        overall_assessment:
+          type: string
+          enum: [excellent, good, average, needs_improvement, poor]
+          description: Overall performance assessment
+
+    WeaponModRecommendation:
+      type: object
+      required:
+        - mod_type
+        - expected_improvement
+        - priority
+      properties:
+        mod_type:
+          type: string
+          enum: [recoil_reducer, accuracy_booster, damage_increase, fire_rate_mod]
+          description: Type of weapon modification
+        expected_improvement:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Expected improvement percentage
+        priority:
+          type: string
+          enum: [high, medium, low]
+          description: Recommendation priority
+
+    ImplantRecommendation:
+      type: object
+      required:
+        - implant_type
+        - benefit_description
+      properties:
+        implant_type:
+          type: string
+          enum: [stability_implant, aim_assist, neural_accelerator]
+          description: Type of implant
+        benefit_description:
+          type: string
+          description: Description of expected benefits (cosmetic cues only)
+
+    SessionEndReport:
+      type: object
+      required:
+        - session_id
+        - final_metrics
+        - recommendations
+        - session_summary
+      properties:
+        session_id:
+          type: string
+          format: uuid
+          description: Training session identifier
+        final_metrics:
+          $ref: '#/components/schemas/TrainingMetrics'
+        recommendations:
+          $ref: '#/components/schemas/PerformanceRecommendations'
+        session_summary:
+          type: object
+          required:
+            - duration_s
+            - targets_destroyed
+            - best_accuracy_streak
+          properties:
+            duration_s: { type: integer, minimum: 0, description: "Session duration" }
+            targets_destroyed: { type: integer, minimum: 0, description: "Targets destroyed" }
+            best_accuracy_streak: { type: integer, minimum: 0, description: "Best accuracy streak" }
+
+    SessionReport:
+      type: object
+      description: Detailed session report for export
+      required:
+        - session_id
+        - metadata
+        - metrics_over_time
+        - target_hits
+        - recommendations
+      properties:
+        session_id:
+          type: string
+          format: uuid
+          description: Training session identifier
+        metadata:
+          type: object
+          required:
+            - character_id
+            - mode
+            - started_at
+            - duration_s
+          properties:
+            character_id: { type: string, format: uuid }
+            mode: { type: string, enum: [static_targets, moving_targets, ttk_drills] }
+            started_at: { type: string, format: date-time }
+            duration_s: { type: integer, minimum: 0 }
+        metrics_over_time:
+          type: array
+          items:
+            type: object
+            required:
+              - timestamp
+              - accuracy_pct
+              - recoil_spread
+            properties:
+              timestamp: { type: integer, description: "Timestamp (ms)" }
+              accuracy_pct: { type: number, format: float, minimum: 0, maximum: 100 }
+              recoil_spread: { type: number, format: float, minimum: 0 }
+        target_hits:
+          type: array
+          items:
+            $ref: '#/components/schemas/TargetHitData'
+        recommendations:
+          $ref: '#/components/schemas/PerformanceRecommendations'
+
+    TargetHitData:
+      type: object
+      required:
+        - target_id
+        - hit_timestamp
+        - hit_location
+        - damage_dealt
+        - was_kill
+      properties:
+        target_id:
+          type: string
+          format: uuid
+          description: Target identifier
+        hit_timestamp:
+          type: integer
+          description: Hit timestamp (milliseconds since epoch)
+        hit_location:
+          type: object
+          required:
+            - x
+            - y
+            - z
+          properties:
+            x: { type: number, format: float }
+            y: { type: number, format: float }
+            z: { type: number, format: float }
+        damage_dealt:
+          type: integer
+          minimum: 0
+          description: Damage dealt to target
+        was_kill:
+          type: boolean
+          description: Whether this hit killed the target
+
+    TrainingTelemetryData:
+      type: object
+      required:
+        - session_id
+        - character_id
+        - telemetry_events
+      properties:
+        session_id:
+          type: string
+          format: uuid
+          description: Training session identifier
+        character_id:
+          type: string
+          format: uuid
+          description: Character identifier
+        telemetry_events:
+          type: array
+          items:
+            $ref: '#/components/schemas/TrainingTelemetryEvent'
+          description: Array of telemetry events from the session
+
+    TrainingTelemetryEvent:
+      type: object
+      required:
+        - event_type
+        - timestamp
+        - data
+      properties:
+        event_type:
+          type: string
+          enum: [session_started, target_hit, target_destroyed, weapon_switched, mod_recommended, session_ended]
+          description: Type of telemetry event
+        timestamp:
+          type: integer
+          description: Event timestamp (milliseconds since epoch)
+        data:
+          type: object
+          description: Event-specific data
+          additionalProperties: true
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

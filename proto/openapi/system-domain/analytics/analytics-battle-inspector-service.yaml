@@ -1,0 +1,534 @@
+openapi: 3.0.3
+info:
+  title: System Domain - Analytics Battle Inspector Service API
+  description: |
+    **Battle Inspector Analytics Service** for NECPGAME MMOFPS RPG.
+
+    **Module Purpose:** Real-time combat analytics consumable providing battle intelligence to players.
+
+    **Core Features:**
+    - Battle inspector consumable activation and management
+    - Real-time metrics collection (TTK, accuracy, weakpoints)
+    - Analytics overlay data streaming
+    - Anti-abuse measures and telemetry
+
+    **Performance Targets:**
+    - Real-time metrics: <100ms latency
+    - Overlay updates: 30-60 Hz during active sessions
+    - Memory per active inspector: <10KB
+    - Concurrent inspectors: 1000+ per server
+
+    **BACKEND NOTE:** Integration with combat-service for real-time data, ui-service for overlay rendering.
+  version: 1.0.0
+  contact:
+    name: NECPGAME Analytics API Support
+    email: analytics@necp.game
+
+servers:
+  - url: http://localhost:8095/api/v1/system-domain/analytics/battle-inspector
+    description: Analytics Battle Inspector Service Development Server
+  - url: https://analytics-battle-inspector.necpgame.com/api/v1
+    description: Analytics Battle Inspector Service Production Server
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Battle Inspector Management
+    description: Core battle inspector operations
+  - name: Inspector Sessions
+    description: Active inspector session management
+  - name: Analytics Data
+    description: Real-time metrics and analytics
+
+paths:
+  # Inspector activation
+  /battle-inspector/activate:
+    post:
+      summary: Activate battle inspector consumable
+      description: |
+        Activates battle inspector consumable for 60 seconds of combat analytics.
+
+        **BACKEND NOTE:** Validates inventory, cooldowns, anti-abuse checks. Creates inspector session.
+        High-frequency endpoint (combat activation).
+      operationId: activateBattleInspector
+      tags:
+        - Battle Inspector Management
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ActivateInspectorRequest'
+      responses:
+        '201':
+          description: Inspector activated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActivateInspectorResponse'
+        '400':
+          description: Invalid activation request
+          content:
+            application/json:
+              schema:
+                $ref: '../common.yaml#/components/schemas/ErrorResponse'
+        '429':
+          description: Inspector on cooldown or rate limited
+          content:
+            application/json:
+              schema:
+                $ref: '../common.yaml#/components/schemas/ErrorResponse'
+
+  # Session management
+  /battle-inspector/sessions/{session_id}:
+    get:
+      summary: Get inspector session data
+      description: |
+        Retrieves current inspector session metrics and analytics data.
+
+        **BACKEND NOTE:** Real-time endpoint called by UI overlay (30-60 Hz).
+        Returns aggregated metrics for the active session.
+      operationId: getInspectorSession
+      tags:
+        - Inspector Sessions
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Inspector session identifier
+      responses:
+        '200':
+          description: Inspector session data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InspectorSessionData'
+        '404':
+          description: Inspector session not found or expired
+          content:
+            application/json:
+              schema:
+                $ref: '../common.yaml#/components/schemas/ErrorResponse'
+
+    delete:
+      summary: Deactivate inspector session
+      description: |
+        Manually deactivates an active inspector session.
+
+        **BACKEND NOTE:** Called when player manually stops inspector or on session expiry.
+      operationId: deactivateInspectorSession
+      tags:
+        - Inspector Sessions
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Inspector session identifier
+      responses:
+        '204':
+          description: Inspector session deactivated
+        '404':
+          description: Inspector session not found
+          content:
+            application/json:
+              schema:
+                $ref: '../common.yaml#/components/schemas/ErrorResponse'
+
+  # Analytics data streaming
+  /battle-inspector/sessions/{session_id}/metrics:
+    get:
+      summary: Stream real-time inspector metrics
+      description: |
+        WebSocket endpoint for real-time inspector metrics streaming.
+
+        **BACKEND NOTE:** WebSocket connection for live metrics updates.
+        30-60 Hz updates during active combat sessions.
+      operationId: streamInspectorMetrics
+      tags:
+        - Analytics Data
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Inspector session identifier
+      responses:
+        '101':
+          description: WebSocket connection established for metrics streaming
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InspectorMetricsStream'
+
+  # Historical analytics
+  /battle-inspector/history:
+    get:
+      summary: Get historical inspector usage and performance
+      description: |
+        Retrieves historical battle inspector usage statistics and performance metrics.
+
+        **BACKEND NOTE:** Analytics dashboard data, cached for performance.
+      operationId: getInspectorHistory
+      tags:
+        - Analytics Data
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of records to return
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          description: Pagination offset
+      responses:
+        '200':
+          description: Historical inspector data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InspectorHistoryResponse'
+
+  # Telemetry collection
+  /battle-inspector/telemetry:
+    post:
+      summary: Collect inspector telemetry data
+      description: |
+        Internal endpoint for collecting inspector usage telemetry.
+
+        **BACKEND NOTE:** Called by client after inspector session completion.
+        High-volume endpoint for analytics data collection.
+      operationId: collectInspectorTelemetry
+      tags:
+        - Analytics Data
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InspectorTelemetryData'
+      responses:
+        '202':
+          description: Telemetry data accepted for processing
+        '400':
+          description: Invalid telemetry data
+          content:
+            application/json:
+              schema:
+                $ref: '../common.yaml#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    # Request/Response schemas
+    ActivateInspectorRequest:
+      type: object
+      required:
+        - character_id
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: Character identifier
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        session_metadata:
+          type: object
+          description: Optional session metadata
+          additionalProperties: true
+          example: {"combat_type": "pvp", "enemy_type": "boss"}
+
+    ActivateInspectorResponse:
+      type: object
+      required:
+        - session_id
+        - activated_at
+        - expires_at
+        - initial_metrics
+      properties:
+        session_id:
+          type: string
+          format: uuid
+          description: Created inspector session identifier
+        activated_at:
+          type: string
+          format: date-time
+          description: Session activation timestamp
+        expires_at:
+          type: string
+          format: date-time
+          description: Session expiry timestamp
+        initial_metrics:
+          $ref: '#/components/schemas/InspectorMetrics'
+
+    InspectorSessionData:
+      type: object
+      required:
+        - session_id
+        - status
+        - activated_at
+        - expires_at
+        - metrics
+      properties:
+        session_id:
+          type: string
+          format: uuid
+          description: Inspector session identifier
+        status:
+          type: string
+          enum: [active, expired, deactivated]
+          description: Current session status
+        activated_at:
+          type: string
+          format: date-time
+          description: Session activation timestamp
+        expires_at:
+          type: string
+          format: date-time
+          description: Session expiry timestamp
+        metrics:
+          $ref: '#/components/schemas/InspectorMetrics'
+
+    InspectorMetrics:
+      type: object
+      required:
+        - ttk_avg_ms
+        - accuracy_pct
+        - metrics_confidence
+      properties:
+        ttk_avg_ms:
+          type: object
+          description: Average Time To Kill by enemy type (milliseconds)
+          additionalProperties:
+            type: number
+            minimum: 0
+          example: {"standard_enemy": 1250, "elite_enemy": 3200, "boss": 15000}
+        accuracy_pct:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Overall shot accuracy percentage
+          example: 78.5
+        weakspot_hint:
+          type: object
+          description: Weakest enemy body zones by damage taken
+          required:
+            - zone
+            - confidence_pct
+            - damage_multiplier
+          properties:
+            zone:
+              type: string
+              enum: [head, torso, limbs, weak_point]
+              description: Enemy body zone
+              example: "head"
+            confidence_pct:
+              type: number
+              format: float
+              minimum: 0
+              maximum: 100
+              description: Confidence in weakspot analysis
+              example: 85.3
+            damage_multiplier:
+              type: number
+              format: float
+              minimum: 1.0
+              description: Damage multiplier for this zone
+              example: 2.5
+        recoil_pattern_hint:
+          type: object
+          description: Recoil pattern analysis for current weapon
+          required:
+            - pattern_type
+            - severity
+          properties:
+            pattern_type:
+              type: string
+              enum: [linear, circular, random]
+              description: Type of recoil pattern
+              example: "circular"
+            severity:
+              type: string
+              enum: [low, medium, high]
+              description: Recoil severity level
+              example: "medium"
+        metrics_confidence:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Overall confidence in metrics (based on sample size)
+          example: 92.1
+        sample_size:
+          type: integer
+          minimum: 0
+          description: Number of shots/samples used for analysis
+          example: 47
+
+    InspectorMetricsStream:
+      type: object
+      description: WebSocket message format for real-time metrics updates
+      required:
+        - type
+        - session_id
+        - timestamp
+        - metrics
+      properties:
+        type:
+          type: string
+          enum: [inspector_metrics_update]
+          example: "inspector_metrics_update"
+        session_id:
+          type: string
+          format: uuid
+          description: Inspector session identifier
+        timestamp:
+          type: integer
+          description: Update timestamp (milliseconds since epoch)
+        metrics:
+          $ref: '#/components/schemas/InspectorMetrics'
+
+    InspectorHistoryResponse:
+      type: object
+      required:
+        - total_sessions
+        - sessions
+        - summary_stats
+      properties:
+        total_sessions:
+          type: integer
+          minimum: 0
+          description: Total number of inspector sessions
+        sessions:
+          type: array
+          items:
+            $ref: '#/components/schemas/InspectorSessionSummary'
+        summary_stats:
+          $ref: '#/components/schemas/InspectorSummaryStats'
+
+    InspectorSessionSummary:
+      type: object
+      required:
+        - session_id
+        - activated_at
+        - duration_s
+        - final_metrics
+      properties:
+        session_id:
+          type: string
+          format: uuid
+          description: Inspector session identifier
+        activated_at:
+          type: string
+          format: date-time
+          description: Session activation timestamp
+        duration_s:
+          type: integer
+          minimum: 0
+          maximum: 60
+          description: Actual session duration in seconds
+        final_metrics:
+          $ref: '#/components/schemas/InspectorMetrics'
+
+    InspectorSummaryStats:
+      type: object
+      required:
+        - total_sessions
+        - avg_accuracy_improvement
+        - avg_ttk_reduction
+        - winrate_after_use
+      properties:
+        total_sessions:
+          type: integer
+          minimum: 0
+          description: Total inspector sessions analyzed
+        avg_accuracy_improvement:
+          type: number
+          format: float
+          description: Average accuracy improvement after inspector use (%)
+          example: 12.5
+        avg_ttk_reduction:
+          type: number
+          format: float
+          description: Average TTK reduction after inspector use (%)
+          example: -8.3
+        winrate_after_use:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Win rate in sessions following inspector use (%)
+          example: 68.5
+
+    InspectorTelemetryData:
+      type: object
+      required:
+        - session_id
+        - character_id
+        - telemetry_events
+      properties:
+        session_id:
+          type: string
+          format: uuid
+          description: Inspector session identifier
+        character_id:
+          type: string
+          format: uuid
+          description: Character identifier
+        telemetry_events:
+          type: array
+          items:
+            $ref: '#/components/schemas/TelemetryEvent'
+          description: Array of telemetry events from the session
+
+    TelemetryEvent:
+      type: object
+      required:
+        - event_type
+        - timestamp
+        - data
+      properties:
+        event_type:
+          type: string
+          enum: [inspector_activated, metrics_viewed, weakspot_targeted, accuracy_improved, ttk_reduced, inspector_expired]
+          description: Type of telemetry event
+        timestamp:
+          type: integer
+          description: Event timestamp (milliseconds since epoch)
+        data:
+          type: object
+          description: Event-specific data
+          additionalProperties: true
+          example: {"accuracy_before": 65.2, "accuracy_after": 78.5}
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

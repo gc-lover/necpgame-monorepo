@@ -1,0 +1,721 @@
+openapi: 3.0.3
+info:
+  title: Specialized Domain - Extraction Thermostorm Service API
+  description: |
+    **Extraction Thermostorm Service** for NECPGAME MMOFPS RPG.
+
+    **Module Purpose:** Dynamic thermostorm mechanics for extraction zones with heat waves and risk-reward balance.
+
+    **Core Features:**
+    - Thermostorm prediction and tracking
+    - Heat wave progression and intensity
+    - Zone evacuation and safety mechanics
+    - Risk-reward calculations for overstaying
+    - Emergency extraction protocols
+
+    **Performance Targets:**
+    - Storm calculations: <100ms per zone update
+    - Real-time warnings: <50ms delivery
+    - Concurrent zones: 1000+ active zones
+    - Memory per zone: <5KB
+
+    **BACKEND NOTE:** Integration with world-service for zone management, combat-service for heat damage.
+  version: 1.0.0
+  contact:
+    name: NECPGAME Extraction API Support
+    email: extraction@necp.game
+
+servers:
+  - url: http://localhost:8050/api/v1/specialized-domain/extraction/thermostorm
+    description: Extraction Thermostorm Service Development Server
+  - url: https://extraction-thermostorm.necpgame.com/api/v1
+    description: Extraction Thermostorm Service Production Server
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Thermostorm Monitoring
+    description: Storm tracking and predictions
+  - name: Zone Management
+    description: Zone-specific storm data
+  - name: Emergency Protocols
+    description: Evacuation and safety systems
+  - name: Risk Assessment
+    description: Risk-reward calculations
+
+paths:
+  # Global thermostorm monitoring
+  /thermostorm/global:
+    get:
+      summary: Get global thermostorm status
+      description: |
+        Retrieves global thermostorm overview across all extraction zones.
+
+        **BACKEND NOTE:** Cached endpoint, updated every 30 seconds.
+        Shows active storms, predictions, and global heat levels.
+      operationId: getGlobalThermostormStatus
+      tags:
+        - Thermostorm Monitoring
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Global thermostorm status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlobalThermostormStatus'
+
+  # Zone-specific monitoring
+  /thermostorm/zones/{zone_id}:
+    get:
+      summary: Get thermostorm data for specific zone
+      description: |
+        Retrieves detailed thermostorm information for a specific extraction zone.
+
+        **BACKEND NOTE:** Real-time data with zone-specific calculations.
+        Critical for players currently in the zone.
+      operationId: getZoneThermostormData
+      tags:
+        - Zone Management
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: zone_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Extraction zone identifier
+      responses:
+        '200':
+          description: Zone thermostorm data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ZoneThermostormData'
+        '404':
+          description: Zone not found
+          content:
+            application/json:
+              schema:
+                $ref: '../common.yaml#/components/schemas/ErrorResponse'
+
+  # Real-time storm updates
+  /thermostorm/zones/{zone_id}/stream:
+    get:
+      summary: Stream real-time thermostorm updates
+      description: |
+        WebSocket endpoint for real-time thermostorm progression in a zone.
+
+        **BACKEND NOTE:** High-frequency updates (5-10 Hz) during active storms.
+        Critical for players to monitor heat levels and evacuation warnings.
+      operationId: streamZoneThermostormUpdates
+      tags:
+        - Zone Management
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: zone_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Extraction zone identifier
+      responses:
+        '101':
+          description: WebSocket connection established for storm updates
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ThermostormUpdateStream'
+
+  # Emergency evacuation
+  /thermostorm/zones/{zone_id}/evacuate:
+    post:
+      summary: Initiate emergency evacuation protocol
+      description: |
+        Triggers emergency evacuation for players in critical heat zones.
+
+        **BACKEND NOTE:** Called automatically when heat reaches critical levels.
+        Can also be triggered manually by zone admins.
+      operationId: initiateEmergencyEvacuation
+      tags:
+        - Emergency Protocols
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: zone_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Extraction zone identifier
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EvacuationRequest'
+      responses:
+        '202':
+          description: Emergency evacuation initiated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvacuationResponse'
+        '400':
+          description: Invalid evacuation request
+          content:
+            application/json:
+              schema:
+                $ref: '../common.yaml#/components/schemas/ErrorResponse'
+
+  # Risk assessment
+  /thermostorm/risk-assessment:
+    post:
+      summary: Calculate extraction risk-reward
+      description: |
+        Calculates risk-reward metrics for staying in zone during thermostorm.
+
+        **BACKEND NOTE:** Complex calculations based on heat levels, time remaining,
+        potential rewards, and player heat resistance.
+      operationId: calculateExtractionRisk
+      tags:
+        - Risk Assessment
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RiskAssessmentRequest'
+      responses:
+        '200':
+          description: Risk assessment results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RiskAssessmentResponse'
+
+  # Storm predictions
+  /thermostorm/predictions:
+    get:
+      summary: Get thermostorm predictions
+      description: |
+        Retrieves thermostorm predictions for upcoming extraction sessions.
+
+        **BACKEND NOTE:** AI-powered predictions based on historical data.
+        Helps players plan extraction timing.
+      operationId: getThermostormPredictions
+      tags:
+        - Thermostorm Monitoring
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: zone_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by specific zone
+        - name: hours_ahead
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 72
+            default: 24
+          description: Prediction timeframe in hours
+      responses:
+        '200':
+          description: Thermostorm predictions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ThermostormPredictions'
+
+  # Heat resistance management
+  /thermostorm/heat-resistance:
+    get:
+      summary: Get player's heat resistance status
+      description: |
+        Retrieves player's current heat resistance from equipment and implants.
+
+        **BACKEND NOTE:** Real-time calculation based on equipped items.
+        Affects damage taken from thermostorms.
+      operationId: getPlayerHeatResistance
+      tags:
+        - Risk Assessment
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Player heat resistance data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HeatResistanceStatus'
+
+components:
+  schemas:
+    # Global status schemas
+    GlobalThermostormStatus:
+      type: object
+      required:
+        - active_storms_count
+        - zones_at_risk
+        - global_heat_index
+        - predictions_summary
+      properties:
+        active_storms_count:
+          type: integer
+          minimum: 0
+          description: Number of zones currently in active thermostorm
+        zones_at_risk:
+          type: integer
+          minimum: 0
+          description: Number of zones at risk of storm in next 2 hours
+        global_heat_index:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Global heat index (0-100, higher = more active storms)
+        predictions_summary:
+          type: object
+          required:
+            - next_24h
+            - next_72h
+          properties:
+            next_24h:
+              $ref: '#/components/schemas/PredictionSummary'
+            next_72h:
+              $ref: '#/components/schemas/PredictionSummary'
+
+    PredictionSummary:
+      type: object
+      required:
+        - high_risk_zones
+        - medium_risk_zones
+        - low_risk_zones
+      properties:
+        high_risk_zones:
+          type: integer
+          minimum: 0
+          description: Zones with >80% storm probability
+        medium_risk_zones:
+          type: integer
+          minimum: 0
+          description: Zones with 50-80% storm probability
+        low_risk_zones:
+          type: integer
+          minimum: 0
+          description: Zones with 20-50% storm probability
+
+    # Zone-specific schemas
+    ZoneThermostormData:
+      type: object
+      required:
+        - zone_id
+        - current_heat_level
+        - storm_status
+        - time_to_next_wave
+        - evacuation_warnings
+        - active_players
+      properties:
+        zone_id:
+          type: string
+          format: uuid
+          description: Extraction zone identifier
+        current_heat_level:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Current heat level (0-100)
+        storm_status:
+          type: string
+          enum: [calm, building, active, critical, evacuating]
+          description: Current storm status
+        time_to_next_wave:
+          type: integer
+          minimum: 0
+          description: Seconds until next heat wave (0 if active)
+        evacuation_warnings:
+          type: array
+          items:
+            type: string
+            enum: [heat_rising, wave_approaching, critical_levels, immediate_evacuation]
+          description: Active evacuation warnings
+        active_players:
+          type: integer
+          minimum: 0
+          description: Number of players currently in zone
+        wave_progression:
+          type: array
+          items:
+            $ref: '#/components/schemas/HeatWave'
+          maxItems: 10
+          description: Recent heat waves in this storm cycle
+
+    HeatWave:
+      type: object
+      required:
+        - wave_id
+        - started_at
+        - peak_heat_level
+        - duration_s
+        - damage_multiplier
+      properties:
+        wave_id:
+          type: string
+          format: uuid
+          description: Unique wave identifier
+        started_at:
+          type: string
+          format: date-time
+          description: Wave start timestamp
+        peak_heat_level:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Peak heat level during wave
+        duration_s:
+          type: integer
+          minimum: 0
+          description: Wave duration in seconds
+        damage_multiplier:
+          type: number
+          format: float
+          minimum: 1.0
+          description: Damage multiplier during wave peak
+
+    # Real-time streaming
+    ThermostormUpdateStream:
+      type: object
+      description: WebSocket message format for real-time storm updates
+      required:
+        - type
+        - zone_id
+        - timestamp
+        - heat_level
+        - storm_status
+      properties:
+        type:
+          type: string
+          enum: [thermostorm_update]
+          example: "thermostorm_update"
+        zone_id:
+          type: string
+          format: uuid
+          description: Extraction zone identifier
+        timestamp:
+          type: integer
+          description: Update timestamp (milliseconds since epoch)
+        heat_level:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Current heat level
+        storm_status:
+          type: string
+          enum: [calm, building, active, critical, evacuating]
+          description: Current storm status
+        warnings:
+          type: array
+          items:
+            type: string
+          description: Active warnings for players
+        time_to_wave:
+          type: integer
+          minimum: 0
+          description: Seconds until next wave (0 if in wave)
+
+    # Emergency protocols
+    EvacuationRequest:
+      type: object
+      properties:
+        reason:
+          type: string
+          enum: [critical_heat, player_request, admin_override]
+          default: critical_heat
+          description: Reason for evacuation
+        force_evacuation:
+          type: boolean
+          default: false
+          description: Whether to force teleport all players
+        evacuation_message:
+          type: string
+          maxLength: 200
+          description: Custom evacuation message
+
+    EvacuationResponse:
+      type: object
+      required:
+        - evacuation_id
+        - initiated_at
+        - affected_players
+        - evacuation_status
+      properties:
+        evacuation_id:
+          type: string
+          format: uuid
+          description: Evacuation operation identifier
+        initiated_at:
+          type: string
+          format: date-time
+          description: Evacuation initiation timestamp
+        affected_players:
+          type: integer
+          minimum: 0
+          description: Number of players affected
+        evacuation_status:
+          type: string
+          enum: [initiated, in_progress, completed, failed]
+          description: Evacuation operation status
+        estimated_completion_s:
+          type: integer
+          minimum: 0
+          description: Estimated completion time in seconds
+
+    # Risk assessment
+    RiskAssessmentRequest:
+      type: object
+      required:
+        - zone_id
+        - character_id
+        - intended_stay_duration_s
+      properties:
+        zone_id:
+          type: string
+          format: uuid
+          description: Extraction zone identifier
+        character_id:
+          type: string
+          format: uuid
+          description: Character identifier
+        intended_stay_duration_s:
+          type: integer
+          minimum: 60
+          maximum: 3600
+          description: How long player plans to stay (seconds)
+        current_heat_resistance:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Current heat resistance factor (0-1)
+
+    RiskAssessmentResponse:
+      type: object
+      required:
+        - risk_level
+        - recommended_action
+        - potential_rewards
+        - danger_assessment
+        - survival_probability
+      properties:
+        risk_level:
+          type: string
+          enum: [low, medium, high, extreme]
+          description: Overall risk assessment
+        recommended_action:
+          type: string
+          enum: [stay, evacuate_soon, evacuate_now, abort_mission]
+          description: Recommended course of action
+        potential_rewards:
+          type: object
+          required:
+            - expected_yield
+            - bonus_multiplier
+          properties:
+            expected_yield:
+              type: number
+              format: float
+              minimum: 0
+              description: Expected resource yield multiplier
+            bonus_multiplier:
+              type: number
+              format: float
+              minimum: 1.0
+              description: Storm survival bonus multiplier
+        danger_assessment:
+          type: object
+          required:
+            - heat_damage_per_minute
+            - survival_time_s
+            - critical_threshold
+          properties:
+            heat_damage_per_minute:
+              type: number
+              format: float
+              minimum: 0
+              description: Heat damage per minute at current levels
+            survival_time_s:
+              type: integer
+              minimum: 0
+              description: Estimated survival time in seconds
+            critical_threshold:
+              type: number
+              format: float
+              minimum: 0
+              maximum: 100
+              description: Heat level at which evacuation becomes critical
+        survival_probability:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Probability of surviving intended stay duration
+
+    # Predictions
+    ThermostormPredictions:
+      type: object
+      required:
+        - prediction_timeframe
+        - zone_predictions
+        - global_trends
+      properties:
+        prediction_timeframe:
+          type: object
+          required:
+            - start_time
+            - end_time
+            - confidence_level
+          properties:
+            start_time: { type: string, format: date-time }
+            end_time: { type: string, format: date-time }
+            confidence_level: { type: number, format: float, minimum: 0, maximum: 1 }
+        zone_predictions:
+          type: array
+          items:
+            $ref: '#/components/schemas/ZonePrediction'
+        global_trends:
+          type: object
+          required:
+            - storm_frequency_trend
+            - average_intensity_trend
+            - predicted_active_zones
+          properties:
+            storm_frequency_trend:
+              type: string
+              enum: [increasing, stable, decreasing]
+            average_intensity_trend:
+              type: string
+              enum: [rising, stable, falling]
+            predicted_active_zones:
+              type: integer
+              minimum: 0
+
+    ZonePrediction:
+      type: object
+      required:
+        - zone_id
+        - storm_probability
+        - predicted_intensity
+        - predicted_duration_h
+        - safe_windows
+      properties:
+        zone_id:
+          type: string
+          format: uuid
+          description: Extraction zone identifier
+        storm_probability:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Probability of storm occurring (0-1)
+        predicted_intensity:
+          type: string
+          enum: [low, medium, high, extreme]
+          description: Predicted storm intensity
+        predicted_duration_h:
+          type: number
+          format: float
+          minimum: 0
+          description: Predicted storm duration in hours
+        safe_windows:
+          type: array
+          items:
+            type: object
+            required:
+              - start_time
+              - end_time
+            properties:
+              start_time: { type: string, format: date-time }
+              end_time: { type: string, format: date-time }
+
+    # Heat resistance
+    HeatResistanceStatus:
+      type: object
+      required:
+        - character_id
+        - total_resistance
+        - resistance_sources
+        - current_effectiveness
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: Character identifier
+        total_resistance:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Total heat resistance factor (0-1, higher = more resistant)
+        resistance_sources:
+          type: array
+          items:
+            $ref: '#/components/schemas/ResistanceSource'
+          description: Breakdown of resistance by source
+        current_effectiveness:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Current effectiveness considering equipment condition
+
+    ResistanceSource:
+      type: object
+      required:
+        - source_type
+        - source_id
+        - resistance_value
+        - effectiveness
+      properties:
+        source_type:
+          type: string
+          enum: [implant, armor, consumable, environmental]
+          description: Type of resistance source
+        source_id:
+          type: string
+          format: uuid
+          description: Source item/ability identifier
+        resistance_value:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Base resistance value from this source
+        effectiveness:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Current effectiveness (considering condition/durability)
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
