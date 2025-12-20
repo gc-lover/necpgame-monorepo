@@ -4,9 +4,9 @@ info:
   description: Guild territory and property management service
   version: 1.0.0
 servers:
-  - url: http://localhost:8087/api/v1
+- url: http://localhost:8087/api/v1
 security:
-  - BearerAuth: [ ]
+- BearerAuth: []
 paths:
   /territories:
     get:
@@ -15,29 +15,27 @@ paths:
       responses:
         '200':
           description: Territories list
-
   /territories/{territory_id}:
     parameters:
-      - name: territory_id
-        in: path
-        schema:
-          type: string
-          format: uuid
+    - name: territory_id
+      in: path
+      schema:
+        type: string
+        format: uuid
     get:
       operationId: getTerritory
       summary: Get territory
       responses:
         '200':
           description: Territory info
-
   /territories/{territory_id}/claim:
     parameters:
-      - name: territory_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+    - name: territory_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
     post:
       operationId: claimTerritory
       summary: Claim territory
@@ -49,41 +47,40 @@ paths:
       responses:
         '202':
           description: Claim started
+        '200':
+          description: Territory claimed
     delete:
       operationId: abandonTerritory
       summary: Abandon territory
       responses:
         '200':
           description: Territory abandoned
-
   /claim-processes/{process_id}:
     parameters:
-      - name: process_id
-        in: path
-        schema:
-          type: string
-          format: uuid
+    - name: process_id
+      in: path
+      schema:
+        type: string
+        format: uuid
     get:
       operationId: getClaimProcess
       summary: Get claim process
       responses:
         '200':
           description: Process status
-
   /guilds/{guild_id}/territories:
     parameters:
-      - name: guild_id
-        in: path
-        schema:
-          type: string
-          format: uuid
+    - name: guild_id
+      in: path
+      schema:
+        type: string
+        format: uuid
     get:
       operationId: getGuildTerritories
       summary: Get guild territories
       responses:
         '200':
           description: Guild territories
-
   /properties:
     get:
       operationId: listProperties
@@ -102,14 +99,13 @@ paths:
       responses:
         '201':
           description: Property created
-
   /properties/{property_id}:
     parameters:
-      - name: property_id
-        in: path
-        schema:
-          type: string
-          format: uuid
+    - name: property_id
+      in: path
+      schema:
+        type: string
+        format: uuid
     get:
       operationId: getProperty
       summary: Get property
@@ -128,37 +124,34 @@ paths:
       responses:
         '204':
           description: Property deleted
-
   /territories/{territory_id}/bonuses:
     parameters:
-      - name: territory_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+    - name: territory_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
     get:
       operationId: getTerritoryBonuses
       summary: Get territory bonuses
       responses:
         '200':
           description: Territory bonuses
-
   /guilds/{guild_id}/territory-bonuses:
     parameters:
-      - name: guild_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+    - name: guild_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
     get:
       operationId: getGuildTerritoryBonuses
       summary: Get guild territory bonuses
       responses:
         '200':
           description: Guild bonuses
-
   /territories/ws:
     get:
       operationId: territoryWebSocket
@@ -166,7 +159,6 @@ paths:
       responses:
         '101':
           description: WebSocket connection
-
 components:
   securitySchemes:
     BearerAuth:
@@ -176,14 +168,19 @@ components:
   schemas:
     ClaimTerritoryRequest:
       type: object
-      required: [ guild_id ]
+      required:
+      - guild_id
       properties:
         guild_id:
           type: string
           format: uuid
         priority:
           type: string
-          enum: [ low, medium, high, critical ]
+          enum:
+          - low
+          - medium
+          - high
+          - critical
           default: medium
         resources_allocated:
           type: object
@@ -192,17 +189,24 @@ components:
               type: integer
               minimum: 1
               maximum: 100
-
     CreatePropertyRequest:
       type: object
-      required: [ territory_id, type, name ]
+      required:
+      - territory_id
+      - type
+      - name
       properties:
         territory_id:
           type: string
           format: uuid
         type:
           type: string
-          enum: [ building, facility, outpost, stronghold, warehouse ]
+          enum:
+          - building
+          - facility
+          - outpost
+          - stronghold
+          - warehouse
         name:
           type: string
           maxLength: 50
@@ -214,7 +218,6 @@ components:
           minimum: 1
           maximum: 10
           default: 1
-
     Territory:
       type: object
       properties:
@@ -225,10 +228,19 @@ components:
           type: string
         type:
           type: string
-          enum: [ resource, strategic, commercial, residential, industrial ]
+          enum:
+          - resource
+          - strategic
+          - commercial
+          - residential
+          - industrial
         status:
           type: string
-          enum: [ neutral, claimed, contested, controlled ]
+          enum:
+          - neutral
+          - claimed
+          - contested
+          - controlled
         controlling_guild:
           $ref: '#/components/schemas/GuildSummary'
         bonuses:
@@ -236,7 +248,6 @@ components:
         created_at:
           type: string
           format: date-time
-
     Property:
       type: object
       properties:
@@ -248,17 +259,24 @@ components:
           format: uuid
         type:
           type: string
-          enum: [ building, facility, outpost, stronghold, warehouse ]
+          enum:
+          - building
+          - facility
+          - outpost
+          - stronghold
+          - warehouse
         name:
           type: string
         level:
           type: integer
         owner_guild:
           $ref: '#/components/schemas/GuildSummary'
-
     GuildSummary:
       type: object
-      required: [ guild_id, name, tag ]
+      required:
+      - guild_id
+      - name
+      - tag
       properties:
         guild_id:
           type: string
@@ -267,7 +285,6 @@ components:
           type: string
         tag:
           type: string
-
     TerritoryBonuses:
       type: object
       properties:
@@ -289,7 +306,6 @@ components:
               type: number
             detection_range:
               type: number
-
     Error:
       type: object
       properties:

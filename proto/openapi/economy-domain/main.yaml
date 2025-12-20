@@ -1,36 +1,34 @@
 openapi: 3.0.3
 info:
   title: Economy domain API
-  description: |
-    Consolidated economy domain Domain API for NECPGAME.
+  description: 'Consolidated economy domain Domain API for NECPGAME.
+
 
     This domain consolidates all economy functionality.
+
+    '
   version: 1.0.0
   contact:
     name: NECPGAME API Support
     url: https://necpgame.com/support
     email: api@necpgame.com
-
 servers:
-  - url: http://localhost:8080/api/v1
-    description: Development server
-  - url: https://api.necpgame.com/api/v1
-    description: Production server
-
+- url: http://localhost:8080/api/v1
+  description: Development server
+- url: https://api.necpgame.com/api/v1
+  description: Production server
 security:
-  - BearerAuth: []
-
+- BearerAuth: []
 tags:
-  - name: Economy domain
-    description: economy domain domain endpoints
-
+- name: Economy domain
+  description: economy domain domain endpoints
 paths:
   /api/v1/economy-domain/health:
     get:
       summary: economy domain domain health check
       operationId: economy-domainHealthCheck
       tags:
-        - Economy domain
+      - Economy domain
       responses:
         '200':
           description: OK
@@ -38,40 +36,128 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HealthResponse'
-
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: max-age=300, s-maxage=600
+            ETag:
+              schema:
+                type: string
+                example: '"-api-v1-economy-domain-health-v1.0"'
+            Content-Encoding:
+              schema:
+                type: string
+                enum:
+                - gzip
+                - deflate
+                - br
+  /api/v1/economy-domain/health/batch:
+    post:
+      summary: Batch health check for multiple domains
+      operationId: batchHealthCheck
+      tags:
+      - System
+      description: 'Performance optimization: Check multiple domain health in single
+        request'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - domains
+              properties:
+                domains:
+                  type: array
+                  items:
+                    type: string
+                  maxItems: 10
+      responses:
+        '200':
+          description: Batch health results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/HealthResponse'
+                  total_time_ms:
+                    type: integer
+                    description: Total processing time
+  /api/v1/economy-domain/health/ws:
+    get:
+      summary: Real-time health monitoring WebSocket
+      operationId: healthWebSocket
+      tags:
+      - System
+      description: Real-time health updates without polling
+      responses:
+        '101':
+          description: WebSocket connection established
 components:
   securitySchemes:
     BearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
-
   schemas:
     HealthResponse:
       type: object
       properties:
-        status:
-          type: string
-          example: "healthy"
-        domain:
-          type: string
-          example: "economy-domain"
         timestamp:
           type: string
           format: date-time
-
+          maxLength: 255
+        status:
+          type: string
+          example: healthy
+          maxLength: 255
+        domain:
+          type: string
+          example: economy-domain
+          maxLength: 255
     Error:
       type: object
       properties:
-        code:
-          type: integer
-          example: 500
         message:
           type: string
-          example: "Internal server error"
-        domain:
-          type: string
-          example: "economy-domain"
+          example: Internal server error
+          maxLength: 1000
         timestamp:
           type: string
           format: date-time
+          maxLength: 255
+        code:
+          type: integer
+          example: 500
+          format: int32
+          minimum: 100
+          maximum: 599
+        domain:
+          type: string
+          example: economy-domain
+          maxLength: 255
+    WebSocketHealthMessage:
+      type: object
+      required:
+      - type
+      - message_timestamp
+      - health
+      properties:
+        type:
+          type: string
+          enum:
+          - health_update
+          - health_alert
+          - service_down
+        message_timestamp:
+          type: string
+          format: date-time
+          description: Timestamp of the health message
+        health:
+          $ref: '#/components/schemas/HealthResponse'

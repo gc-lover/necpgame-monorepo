@@ -132,7 +132,8 @@
 - **Security** → `security-domain`
 
 ### Backend Developer
-- **Генерация кода:** `ogen --target pkg/api --package api --clean proto/openapi/{domain}/main.yaml`
+- **Генерация кода:** `python scripts/generate-all-domains-go.py` (генерирует все домены)
+- **Валидация:** `python scripts/validate-domains-openapi.py`
 - **Performance:** Следовать domain-specific оптимизациям
 - **Integration:** Использовать domain APIs для межсервисного взаимодействия
 

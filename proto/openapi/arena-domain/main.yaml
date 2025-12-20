@@ -1,53 +1,163 @@
 openapi: 3.0.3
 info:
-  title: Arena Domain API
-  description: |
-    Consolidated Arena Domain API for NECPGAME competitive gameplay systems.
+  title: Arena domain API
+  description: 'Consolidated arena domain Domain API for NECPGAME.
 
-    This API consolidates all arena and competitive functionality:
-    - Core arena gameplay and mechanics
-    - Player matchmaking and queue systems
-    - Tournament and competitive event management
-    - Ranking and leaderboard systems
 
-    All endpoints are organized into logical modules with $ref references.
+    This domain consolidates all arena functionality.
+
+    '
   version: 1.0.0
   contact:
     name: NECPGAME API Support
     url: https://necpgame.com/support
     email: api@necpgame.com
-
 servers:
-  - url: http://localhost:8080/api/v1
-    description: Development server
-  - url: https://api.necpgame.com/api/v1
-    description: Production server
-
+- url: http://localhost:8080/api/v1
+  description: Development server
+- url: https://api.necpgame.com/api/v1
+  description: Production server
 security:
-  - BearerAuth: []
-
+- BearerAuth: []
 tags:
-  - name: Arena Core
-    description: Core arena gameplay systems
-  - name: Arena Matchmaking
-    description: Player matchmaking and queues
-  - name: Arena Tournaments
-    description: Tournament management
-  - name: Arena Rankings
-    description: Competitive rankings
-
-# Import all arena modules
+- name: Arena domain
+  description: arena domain domain endpoints
 paths:
-  $ref: './core/main.yaml#/paths'
-  $ref: './matchmaking/main.yaml#/paths'
-
+  /api/v1/arena-domain/health:
+    get:
+      summary: arena domain domain health check
+      operationId: arena-domainHealthCheck
+      tags:
+      - Arena domain
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: max-age=300, s-maxage=600
+            ETag:
+              schema:
+                type: string
+                example: '"-api-v1-arena-domain-health-v1.0"'
+            Content-Encoding:
+              schema:
+                type: string
+                enum:
+                - gzip
+                - deflate
+                - br
+  /api/v1/arena-domain/health/batch:
+    post:
+      summary: Batch health check for multiple domains
+      operationId: batchHealthCheck
+      tags:
+      - System
+      description: 'Performance optimization: Check multiple domain health in single
+        request'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - domains
+              properties:
+                domains:
+                  type: array
+                  items:
+                    type: string
+                  maxItems: 10
+      responses:
+        '200':
+          description: Batch health results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/HealthResponse'
+                  total_time_ms:
+                    type: integer
+                    description: Total processing time
+  /api/v1/arena-domain/health/ws:
+    get:
+      summary: Real-time health monitoring WebSocket
+      operationId: healthWebSocket
+      tags:
+      - System
+      description: Real-time health updates without polling
+      responses:
+        '101':
+          description: WebSocket connection established
 components:
-  schemas:
-    $ref: './core/main.yaml#/components/schemas'
-    $ref: './matchmaking/main.yaml#/components/schemas'
-
   securitySchemes:
     BearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
+  schemas:
+    HealthResponse:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          maxLength: 255
+        status:
+          type: string
+          example: healthy
+          maxLength: 255
+        domain:
+          type: string
+          example: arena-domain
+          maxLength: 255
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+          example: Internal server error
+          maxLength: 1000
+        timestamp:
+          type: string
+          format: date-time
+          maxLength: 255
+        code:
+          type: integer
+          example: 500
+          format: int32
+          minimum: 100
+          maximum: 599
+        domain:
+          type: string
+          example: arena-domain
+          maxLength: 255
+    WebSocketHealthMessage:
+      type: object
+      required:
+      - type
+      - message_timestamp
+      - health
+      properties:
+        type:
+          type: string
+          enum:
+          - health_update
+          - health_alert
+          - service_down
+        message_timestamp:
+          type: string
+          format: date-time
+          description: Timestamp of the health message
+        health:
+          $ref: '#/components/schemas/HealthResponse'

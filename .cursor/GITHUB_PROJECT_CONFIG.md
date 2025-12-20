@@ -30,6 +30,12 @@ mcp_github_list_project_items({
 **Note:** Не используй `is:issue` в query - `list_project_items` работает только с issues. Не указывай `fields` -
 вернутся все поля.
 
+**Оптимизированные скрипты для агентов:**
+- `python scripts/validate-domains-openapi.py` - валидация OpenAPI доменов
+- `python scripts/generate-all-domains-go.py` - генерация enterprise-grade сервисов
+- `python scripts/reorder-openapi-fields.py` - оптимизация структур OpenAPI
+- `python scripts/reorder-liquibase-columns.py` - оптимизация колонок БД
+
 **Важно:** Если параметры проекта изменятся, обновить их здесь и во всех командах агентов.
 
 ## Field IDs

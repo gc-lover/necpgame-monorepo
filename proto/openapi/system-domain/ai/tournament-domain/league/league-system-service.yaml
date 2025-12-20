@@ -2,33 +2,34 @@ openapi: 3.0.3
 info:
   title: League System Service API
   version: 1.0.0
-  description: |
-    League System Service - управление сезонной системой лиг,
-    мета-прогрессом и глобальными сбросами
-servers:
-  - url: http://localhost:8093
-security:
-  - BearerAuth: [ ]
-tags:
-  - name: league
-    description: Управление лигами
-  - name: meta-progression
-    description: Мета-прогресс игрока
-  - name: hall-of-fame
-    description: Hall of Fame и рейтинги
-  - name: legacy-shop
-    description: Legacy Shop и награды
+  description: 'League System Service - управление сезонной системой лиг,
 
+    мета-прогрессом и глобальными сбросами
+
+    '
+servers:
+- url: http://localhost:8093
+security:
+- BearerAuth: []
+tags:
+- name: league
+  description: Управление лигами
+- name: meta-progression
+  description: Мета-прогресс игрока
+- name: hall-of-fame
+  description: Hall of Fame и рейтинги
+- name: legacy-shop
+  description: Legacy Shop и награды
 paths:
   /api/v1/league/current:
     get:
       tags:
-        - league
+      - league
       summary: Текущая лига
       description: Возвращает информацию о текущей активной лиге
       operationId: getCurrentLeague
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       responses:
         '200':
           description: Информация о текущей лиге
@@ -40,24 +41,23 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
   /api/v1/league/{leagueId}/statistics:
     get:
       tags:
-        - league
+      - league
       summary: Статистика лиги
       description: Возвращает статистику завершенной лиги
       operationId: getLeagueStatistics
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: leagueId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: ID лиги
+      - name: leagueId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: ID лиги
       responses:
         '200':
           description: Статистика лиги
@@ -69,16 +69,15 @@ paths:
           $ref: '#/components/responses/NotFound'
         '401':
           $ref: '#/components/responses/Unauthorized'
-
   /api/v1/league/countdown:
     get:
       tags:
-        - league
+      - league
       summary: Таймер до конца лиги
       description: Возвращает время до конца текущей лиги
       operationId: getLeagueCountdown
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       responses:
         '200':
           description: Таймер до конца лиги
@@ -88,16 +87,15 @@ paths:
                 $ref: '#/components/schemas/LeagueCountdown'
         '401':
           $ref: '#/components/responses/Unauthorized'
-
   /api/v1/league/phases:
     get:
       tags:
-        - league
+      - league
       summary: Фазы лиги
       description: Возвращает информацию о фазах текущей лиги
       operationId: getLeaguePhases
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       responses:
         '200':
           description: Фазы лиги
@@ -107,16 +105,15 @@ paths:
                 $ref: '#/components/schemas/LeaguePhases'
         '401':
           $ref: '#/components/responses/Unauthorized'
-
   /api/v1/league/end-event/register:
     post:
       tags:
-        - league
+      - league
       summary: Регистрация на финальный эвент
       description: Регистрирует игрока на финальный концерт лиги
       operationId: registerForEndEvent
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       responses:
         '200':
           description: Регистрация успешна
@@ -134,16 +131,15 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
-
   /api/v1/league/reset/trigger:
     post:
       tags:
-        - league
+      - league
       summary: Триггер сброса (Admin)
       description: Запускает глобальный сброс лиги (только для админов)
       operationId: triggerLeagueReset
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       responses:
         '202':
           description: Сброс запущен
@@ -161,16 +157,17 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '401':
           $ref: '#/components/responses/Unauthorized'
-
+        '200':
+          description: League reset triggered
   /api/v1/player/legacy-progress:
     get:
       tags:
-        - meta-progression
+      - meta-progression
       summary: Мета-прогресс игрока
       description: Возвращает мета-прогресс игрока (титулы, косметика, Legacy Items)
       operationId: getPlayerLegacyProgress
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       responses:
         '200':
           description: Мета-прогресс игрока
@@ -180,41 +177,45 @@ paths:
                 $ref: '#/components/schemas/PlayerLegacyProgress'
         '401':
           $ref: '#/components/responses/Unauthorized'
-
   /api/v1/league/hall-of-fame:
     get:
       tags:
-        - hall-of-fame
+      - hall-of-fame
       summary: Hall of Fame
       description: Возвращает Hall of Fame текущей и прошлых лиг
       operationId: getHallOfFame
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: league_id
-          in: query
-          required: false
-          schema:
-            type: string
-            format: uuid
-          description: ID лиги (если не указан, возвращает текущую)
-        - name: category
-          in: query
-          required: false
-          schema:
-            type: string
-            enum: [ STORY_COMPLETION, ECONOMY, PVP, ALTERNATIVE_MODES, ALL ]
-            default: ALL
-          description: Категория Hall of Fame
-        - name: limit
-          in: query
-          required: false
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 50
-          description: Количество записей
+      - name: league_id
+        in: query
+        required: false
+        schema:
+          type: string
+          format: uuid
+        description: ID лиги (если не указан, возвращает текущую)
+      - name: category
+        in: query
+        required: false
+        schema:
+          type: string
+          enum:
+          - STORY_COMPLETION
+          - ECONOMY
+          - PVP
+          - ALTERNATIVE_MODES
+          - ALL
+          default: ALL
+        description: Категория Hall of Fame
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+        description: Количество записей
       responses:
         '200':
           description: Hall of Fame
@@ -224,16 +225,15 @@ paths:
                 $ref: '#/components/schemas/HallOfFame'
         '401':
           $ref: '#/components/responses/Unauthorized'
-
   /api/v1/league/legacy-shop/items:
     get:
       tags:
-        - legacy-shop
+      - legacy-shop
       summary: Предметы Legacy Shop
       description: Возвращает доступные предметы в Legacy Shop
       operationId: getLegacyShopItems
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       responses:
         '200':
           description: Предметы Legacy Shop
@@ -245,16 +245,15 @@ paths:
                   $ref: '#/components/schemas/LegacyShopItem'
         '401':
           $ref: '#/components/responses/Unauthorized'
-
   /api/v1/league/legacy-shop/purchase:
     post:
       tags:
-        - legacy-shop
+      - legacy-shop
       summary: Покупка в Legacy Shop
       description: Совершает покупку предмета в Legacy Shop
       operationId: purchaseLegacyItem
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -262,7 +261,7 @@ paths:
             schema:
               type: object
               required:
-                - item_id
+              - item_id
               properties:
                 item_id:
                   type: string
@@ -291,7 +290,7 @@ paths:
               schema:
                 type: object
                 required:
-                  - error
+                - error
                 properties:
                   error:
                     type: string
@@ -303,7 +302,6 @@ paths:
           $ref: '#/components/responses/NotFound'
         '401':
           $ref: '#/components/responses/Unauthorized'
-
   /health:
     get:
       summary: Health check
@@ -317,11 +315,13 @@ paths:
               schema:
                 type: object
                 required:
-                  - status
+                - status
                 properties:
                   status:
                     type: string
-                    enum: [ ok, error ]
+                    enum:
+                    - ok
+                    - error
                   timestamp:
                     type: string
                     format: date-time
@@ -329,7 +329,6 @@ paths:
                     type: string
                   service:
                     type: string
-
   /ready:
     get:
       summary: Readiness check
@@ -343,11 +342,13 @@ paths:
               schema:
                 type: object
                 required:
-                  - status
+                - status
                 properties:
                   status:
                     type: string
-                    enum: [ ready, not_ready ]
+                    enum:
+                    - ready
+                    - not_ready
                   timestamp:
                     type: string
                     format: date-time
@@ -360,10 +361,11 @@ paths:
                           type: string
                         status:
                           type: string
-                          enum: [ pass, fail ]
+                          enum:
+                          - pass
+                          - fail
                         message:
                           type: string
-
   /metrics:
     get:
       summary: Service metrics
@@ -376,25 +378,23 @@ paths:
             text/plain:
               schema:
                 type: string
-
 components:
   securitySchemes:
     BearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
-
   schemas:
     League:
       type: object
       required:
-        - id
-        - name
-        - start_date
-        - end_date
-        - status
-        - phase
-        - seed
+      - id
+      - name
+      - start_date
+      - end_date
+      - status
+      - phase
+      - seed
       properties:
         id:
           type: string
@@ -403,7 +403,7 @@ components:
         name:
           type: string
           description: Название лиги
-          example: "League of Shadows #47"
+          example: 'League of Shadows #47'
         start_date:
           type: string
           format: date-time
@@ -414,7 +414,12 @@ components:
           description: Дата окончания лиги
         status:
           type: string
-          enum: [ PLANNED, ACTIVE, FINISHING, COMPLETED, ARCHIVED ]
+          enum:
+          - PLANNED
+          - ACTIVE
+          - FINISHING
+          - COMPLETED
+          - ARCHIVED
           description: Статус лиги
         phase:
           $ref: '#/components/schemas/LeaguePhase'
@@ -433,18 +438,22 @@ components:
           type: string
           format: date-time
           description: Время создания
-
     LeaguePhase:
       type: object
       required:
-        - name
-        - start_date
-        - end_date
-        - description
+      - name
+      - start_date
+      - end_date
+      - description
       properties:
         name:
           type: string
-          enum: [ START, RISE, CRISIS, ENDGAME, FINALE ]
+          enum:
+          - START
+          - RISE
+          - CRISIS
+          - ENDGAME
+          - FINALE
           description: Название фазы
         start_date:
           type: string
@@ -460,15 +469,14 @@ components:
         time_acceleration:
           type: number
           description: Ускорение времени для этой фазы
-
     LeagueCountdown:
       type: object
       required:
-        - total_seconds
-        - days
-        - hours
-        - minutes
-        - seconds
+      - total_seconds
+      - days
+      - hours
+      - minutes
+      - seconds
       properties:
         total_seconds:
           type: integer
@@ -490,14 +498,18 @@ components:
           description: Секунд до конца текущей фазы
         next_phase:
           type: string
-          enum: [ RISE, CRISIS, ENDGAME, FINALE, RESET ]
+          enum:
+          - RISE
+          - CRISIS
+          - ENDGAME
+          - FINALE
+          - RESET
           description: Следующая фаза
-
     LeaguePhases:
       type: object
       required:
-        - current_phase
-        - phases
+      - current_phase
+      - phases
       properties:
         current_phase:
           $ref: '#/components/schemas/LeaguePhase'
@@ -509,14 +521,13 @@ components:
         time_acceleration:
           type: number
           description: Текущее ускорение времени
-
     LeagueStatistics:
       type: object
       required:
-        - league_id
-        - player_count
-        - completion_rate
-        - average_level
+      - league_id
+      - player_count
+      - completion_rate
+      - average_level
       properties:
         league_id:
           type: string
@@ -554,14 +565,13 @@ components:
           additionalProperties:
             type: integer
           description: Распределение концовок
-
     TopPlayer:
       type: object
       required:
-        - player_id
-        - player_name
-        - score
-        - category
+      - player_id
+      - player_name
+      - score
+      - category
       properties:
         player_id:
           type: string
@@ -575,20 +585,23 @@ components:
           description: Очки в категории
         category:
           type: string
-          enum: [ STORY_COMPLETION, ECONOMY, PVP, ALTERNATIVE_MODES ]
+          enum:
+          - STORY_COMPLETION
+          - ECONOMY
+          - PVP
+          - ALTERNATIVE_MODES
           description: Категория достижения
         rank:
           type: integer
           description: Место в категории
-
     PlayerLegacyProgress:
       type: object
       required:
-        - player_id
-        - legacy_points
-        - titles
-        - cosmetics
-        - legacy_items
+      - player_id
+      - legacy_points
+      - titles
+      - cosmetics
+      - legacy_items
       properties:
         player_id:
           type: string
@@ -635,14 +648,13 @@ components:
           items:
             type: string
           description: Список достижений
-
     Title:
       type: object
       required:
-        - id
-        - name
-        - description
-        - rarity
+      - id
+      - name
+      - description
+      - rarity
       properties:
         id:
           type: string
@@ -656,7 +668,11 @@ components:
           description: Описание титула
         rarity:
           type: string
-          enum: [ COMMON, RARE, EPIC, LEGENDARY ]
+          enum:
+          - COMMON
+          - RARE
+          - EPIC
+          - LEGENDARY
           description: Редкость титула
         unlocked_at:
           type: string
@@ -665,14 +681,13 @@ components:
         is_active:
           type: boolean
           description: Активен ли сейчас
-
     Cosmetic:
       type: object
       required:
-        - id
-        - name
-        - type
-        - rarity
+      - id
+      - name
+      - type
+      - rarity
       properties:
         id:
           type: string
@@ -683,11 +698,20 @@ components:
           description: Название
         type:
           type: string
-          enum: [ SKIN, EMOTE, EFFECT, VOICE_PACK, WEAPON_SKIN ]
+          enum:
+          - SKIN
+          - EMOTE
+          - EFFECT
+          - VOICE_PACK
+          - WEAPON_SKIN
           description: Тип косметики
         rarity:
           type: string
-          enum: [ COMMON, RARE, EPIC, LEGENDARY ]
+          enum:
+          - COMMON
+          - RARE
+          - EPIC
+          - LEGENDARY
           description: Редкость
         unlocked_at:
           type: string
@@ -696,14 +720,13 @@ components:
         is_equipped:
           type: boolean
           description: Надет ли сейчас
-
     LegacyItem:
       type: object
       required:
-        - id
-        - name
-        - type
-        - power_level
+      - id
+      - name
+      - type
+      - power_level
       properties:
         id:
           type: string
@@ -714,7 +737,12 @@ components:
           description: Название
         type:
           type: string
-          enum: [ WEAPON, ARMOR, IMPLANT, VEHICLE, CURRENCY_MULTIPLIER ]
+          enum:
+          - WEAPON
+          - ARMOR
+          - IMPLANT
+          - VEHICLE
+          - CURRENCY_MULTIPLIER
           description: Тип предмета
         power_level:
           type: number
@@ -741,13 +769,12 @@ components:
           type: string
           format: date-time
           description: Когда истекает (конец лиги)
-
     HallOfFame:
       type: object
       required:
-        - league_id
-        - league_name
-        - entries
+      - league_id
+      - league_name
+      - entries
       properties:
         league_id:
           type: string
@@ -761,15 +788,14 @@ components:
           items:
             $ref: '#/components/schemas/HallOfFameEntry'
           description: Записи Hall of Fame
-
     HallOfFameEntry:
       type: object
       required:
-        - player_id
-        - player_name
-        - category
-        - achievement
-        - date
+      - player_id
+      - player_name
+      - category
+      - achievement
+      - date
       properties:
         player_id:
           type: string
@@ -780,7 +806,11 @@ components:
           description: Имя игрока
         category:
           type: string
-          enum: [ STORY_COMPLETION, ECONOMY, PVP, ALTERNATIVE_MODES ]
+          enum:
+          - STORY_COMPLETION
+          - ECONOMY
+          - PVP
+          - ALTERNATIVE_MODES
           description: Категория достижения
         achievement:
           type: string
@@ -795,15 +825,14 @@ components:
         reward_cosmetic:
           type: string
           description: Награда косметикой
-
     LegacyShopItem:
       type: object
       required:
-        - id
-        - name
-        - type
-        - cost
-        - available
+      - id
+      - name
+      - type
+      - cost
+      - available
       properties:
         id:
           type: string
@@ -817,7 +846,10 @@ components:
           description: Описание предмета
         type:
           type: string
-          enum: [ TITLE, COSMETIC, LEGACY_ITEM ]
+          enum:
+          - TITLE
+          - COSMETIC
+          - LEGACY_ITEM
           description: Тип предмета
         cost:
           type: integer
@@ -833,7 +865,6 @@ components:
           type: string
           format: date-time
           description: Когда истекает доступность
-
   responses:
     BadRequest:
       description: Неверный запрос
@@ -842,7 +873,7 @@ components:
           schema:
             type: object
             required:
-              - error
+            - error
             properties:
               error:
                 type: string
@@ -850,7 +881,6 @@ components:
               code:
                 type: string
                 description: Код ошибки
-
     Unauthorized:
       description: Не авторизован
       content:
@@ -858,7 +888,7 @@ components:
           schema:
             type: object
             required:
-              - error
+            - error
             properties:
               error:
                 type: string
@@ -866,7 +896,6 @@ components:
               code:
                 type: string
                 description: Код ошибки
-
     Forbidden:
       description: Доступ запрещен
       content:
@@ -874,7 +903,7 @@ components:
           schema:
             type: object
             required:
-              - error
+            - error
             properties:
               error:
                 type: string
@@ -882,7 +911,6 @@ components:
               code:
                 type: string
                 description: Код ошибки
-
     NotFound:
       description: Не найдено
       content:
@@ -890,7 +918,7 @@ components:
           schema:
             type: object
             required:
-              - error
+            - error
             properties:
               error:
                 type: string
@@ -898,7 +926,6 @@ components:
               code:
                 type: string
                 description: Код ошибки
-
     InternalServerError:
       description: Внутренняя ошибка сервера
       content:
@@ -906,7 +933,7 @@ components:
           schema:
             type: object
             required:
-              - error
+            - error
             properties:
               error:
                 type: string

@@ -38,10 +38,55 @@ tags:
 paths:
   # Note: Legacy services should not be used for new development
   # These are maintained only for backward compatibility
+  /api/v1/legacy/health:
+    get:
+      summary: Legacy domain health check (deprecated)
+      operationId: legacyHealthCheck
+      tags:
+        - Legacy Deprecated
+      deprecated: true
+      responses:
+        '200':
+          description: OK (legacy)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LegacyHealthResponse'
 
 components:
   schemas:
     # Legacy schemas - may be outdated or deprecated
+    LegacyHealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: "legacy_healthy"
+        deprecated:
+          type: boolean
+          example: true
+        version:
+          type: string
+          example: "legacy"
+        timestamp:
+          type: string
+          format: date-time
+
+    LegacyError:
+      type: object
+      properties:
+        code:
+          type: integer
+          example: 500
+        message:
+          type: string
+          example: "Legacy service error"
+        deprecated:
+          type: boolean
+          example: true
+        timestamp:
+          type: string
+          format: date-time
 
   securitySchemes:
     BearerAuth:

@@ -46,10 +46,16 @@ mcp_github_update_project_item({
 ### 3️⃣ РАБОТАТЬ
 
     - **НЕ МУСОРИТЬ В КОРНЕ ПРОЕКТА!**
-    - **OpenAPI:** `proto/openapi/{domain}/` (enterprise-grade домены!)
-    - **Go сервисы:** `services/{service}-go/`
-    - **Контент:** `knowledge/canon/` (YAML квесты, лор)
-    - **Скрипты:** `scripts/` (автоматизация)
+- **OpenAPI:** `proto/openapi/{domain}/` (enterprise-grade домены!)
+- **Go сервисы:** `services/{service}-go/`
+- **Контент:** `knowledge/canon/` (YAML квесты, лор)
+- **Скрипты:** `scripts/` (автоматизация, оптимизация)
+
+**Оптимизированные скрипты:**
+- `python scripts/validate-domains-openapi.py` - валидация OpenAPI доменов
+- `python scripts/generate-all-domains-go.py` - генерация enterprise-grade сервисов
+- `python scripts/reorder-openapi-fields.py` - оптимизация структур OpenAPI
+- `python scripts/reorder-liquibase-columns.py` - оптимизация колонок БД
     - Корень только для: `README.md`, `CHANGELOG*.md`, основные конфиги
     - НЕ создавать промежуточные/тестовые файлы в корне!
     - **OpenAPI ДОМЕНЫ (КРИТИЧНО! Новая enterprise-grade архитектура):**

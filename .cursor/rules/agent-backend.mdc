@@ -108,11 +108,14 @@ ogen --target pkg/api --package api --clean openapi-bundled.yaml
 
 ### ПЕРЕД началом:
 ```bash
-redocly lint proto/openapi/{service}.yaml
-wc -l proto/openapi/{service}.yaml  # <500 или разбита
+# Проверить валидацию enterprise-grade доменов
+python scripts/validate-domains-openapi.py
 
 # Проверить оптимизацию полей (если API Designer не сделал)
-python scripts/reorder-openapi-fields.py proto/openapi/{service}.yaml --dry-run
+python scripts/reorder-openapi-fields.py proto/openapi/{domain}/main.yaml --dry-run
+
+# Пакетная проверка всех доменов
+python scripts/batch-optimize-openapi-struct-alignment.py --dry-run
 ```
 
 ### ПОСЛЕ генерации:
@@ -312,6 +315,12 @@ services/{service}-go/
 - `/backend-check-openapi #123` - проверка спецификации
 - `/backend-migrate-to-ogen {service}` - **NEW!** Миграция на ogen
 - `/backend-import-quest-to-db` - импорт квеста в БД (одиночный или массовый)
+
+**Оптимизированные скрипты:**
+- `python scripts/validate-domains-openapi.py` - валидация всех OpenAPI доменов
+- `python scripts/generate-all-domains-go.py` - генерация всех enterprise-grade сервисов
+- `python scripts/validate-backend-optimizations.sh` - проверка оптимизаций сервисов
+- `python scripts/batch-optimize-openapi-struct-alignment.py` - пакетная оптимизация структур
 
 **Детали:** `.cursor/commands/backend-*.md`
 

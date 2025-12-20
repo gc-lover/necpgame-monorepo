@@ -43,6 +43,9 @@
 # Автоматическая проверка перед передачей:
 ./scripts/validate-backend-optimizations.sh services/{service}-go
 
+# Или для всех enterprise-grade сервисов:
+python scripts/generate-all-domains-go.py  # включает валидацию
+
 # Если хоть один BLOCKER → исправь и повтори
 # Передавай ТОЛЬКО после: OK All checks passed
 ```

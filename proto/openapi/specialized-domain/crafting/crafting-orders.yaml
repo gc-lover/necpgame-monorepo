@@ -1,56 +1,54 @@
-# Issue: #140890170 - Crafting Service API - Orders
 openapi: 3.0.3
 info:
   title: Crafting Service API - Orders
   version: 1.0.0
   description: Crafting order management endpoints
-
 servers:
-  - url: http://localhost:8210
-    description: Local development
-  - url: https://api.necpgame.com/v1
-    description: Production API
-
+- url: http://localhost:8210
+  description: Local development
+- url: https://api.necpgame.com/v1
+  description: Production API
 tags:
-  - name: orders
-    description: Production order management
-
+- name: orders
+  description: Production order management
 security:
-  - BearerAuth: [ ]
-
+- BearerAuth: []
 paths:
-  # ============================================================================
-  # CRAFTING ORDERS
-  # ============================================================================
-
   /api/v1/economy/crafting/orders:
     get:
-      tags: [ orders ]
+      tags:
+      - orders
       summary: Get player crafting orders
-      description: Retrieve active and completed crafting orders for the authenticated player
+      description: Retrieve active and completed crafting orders for the authenticated
+        player
       operationId: getPlayerOrders
       parameters:
-        - name: status
-          in: query
-          schema:
-            type: string
-            enum: [ pending, active, completed, failed, cancelled ]
-          description: Order status filter
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 20
-          description: Number of orders to return
-        - name: offset
-          in: query
-          schema:
-            type: integer
-            minimum: 0
-            default: 0
-          description: Pagination offset
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - pending
+          - active
+          - completed
+          - failed
+          - cancelled
+        description: Order status filter
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+        description: Number of orders to return
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+        description: Pagination offset
       responses:
         '200':
           description: Orders retrieved successfully
@@ -62,9 +60,9 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
     post:
-      tags: [ orders ]
+      tags:
+      - orders
       summary: Create crafting contract
       description: Create a new crafting contract for production services
       operationId: createCraftingContract
@@ -87,10 +85,10 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
   /api/v1/economy/crafting/start:
     post:
-      tags: [ orders ]
+      tags:
+      - orders
       summary: Start crafting order
       description: Start a new crafting order with specified recipe and quality settings
       operationId: startCraftingOrder
@@ -115,21 +113,23 @@ paths:
           $ref: '#/components/responses/Conflict'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
+        '201':
+          description: Crafting started
   /api/v1/economy/crafting/orders/{orderId}:
     get:
-      tags: [ orders ]
+      tags:
+      - orders
       summary: Get crafting order details
       description: Retrieve detailed information about a specific crafting order
       operationId: getCraftingOrder
       parameters:
-        - name: orderId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Order unique identifier
+      - name: orderId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Order unique identifier
       responses:
         '200':
           description: Order retrieved successfully
@@ -143,21 +143,21 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
   /api/v1/economy/crafting/orders/{orderId}/cancel:
     post:
-      tags: [ orders ]
+      tags:
+      - orders
       summary: Cancel crafting order
       description: Cancel an active crafting order with refund calculation
       operationId: cancelCraftingOrder
       parameters:
-        - name: orderId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Order unique identifier
+      - name: orderId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Order unique identifier
       requestBody:
         required: false
         content:
@@ -191,14 +191,12 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
 components:
   securitySchemes:
     BearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
-
   responses:
     BadRequest:
       description: Bad request
@@ -230,18 +228,16 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-
   schemas:
-    # Order schemas
     Order:
       type: object
       required:
-        - id
-        - player_id
-        - recipe_id
-        - status
-        - quality_target
-        - started_at
+      - id
+      - player_id
+      - recipe_id
+      - status
+      - quality_target
+      - started_at
       properties:
         id:
           type: string
@@ -261,7 +257,12 @@ components:
           description: Crafting station assigned
         status:
           type: string
-          enum: [ pending, active, completed, failed, cancelled ]
+          enum:
+          - pending
+          - active
+          - completed
+          - failed
+          - cancelled
           description: Current order status
         quality_target:
           type: integer
@@ -306,13 +307,12 @@ components:
           description: Reason for failure (if applicable)
         output_item:
           $ref: '#/components/schemas/OrderOutput'
-
     MaterialConsumption:
       type: object
       required:
-        - item_id
-        - quantity_used
-        - quality_used
+      - item_id
+      - quantity_used
+      - quality_used
       properties:
         item_id:
           type: string
@@ -327,17 +327,20 @@ components:
           minimum: 0
           maximum: 100
           description: Average quality of materials used
-
     CraftingBonus:
       type: object
       required:
-        - type
-        - value
-        - source
+      - type
+      - value
+      - source
       properties:
         type:
           type: string
-          enum: [ quality, speed, efficiency, luck ]
+          enum:
+          - quality
+          - speed
+          - efficiency
+          - luck
           description: Type of bonus applied
         value:
           type: number
@@ -346,13 +349,12 @@ components:
         source:
           type: string
           description: Source of the bonus (skill, equipment, station, etc.)
-
     OrderOutput:
       type: object
       required:
-        - item_id
-        - quantity
-        - quality
+      - item_id
+      - quantity
+      - quality
       properties:
         item_id:
           type: string
@@ -367,13 +369,12 @@ components:
           minimum: 0
           maximum: 100
           description: Quality of produced item
-
     StartCraftingRequest:
       type: object
       required:
-        - recipe_id
-        - station_id
-        - quality_target
+      - recipe_id
+      - station_id
+      - quality_target
       properties:
         recipe_id:
           type: string
@@ -391,7 +392,11 @@ components:
           description: Target quality percentage (1-100)
         priority:
           type: string
-          enum: [ low, normal, high, rush ]
+          enum:
+          - low
+          - normal
+          - high
+          - rush
           default: normal
           description: Crafting priority affecting queue position
         material_overrides:
@@ -404,12 +409,11 @@ components:
           items:
             $ref: '#/components/schemas/QualityModifier'
           description: Additional quality modifiers
-
     MaterialOverride:
       type: object
       required:
-        - original_item_id
-        - override_item_id
+      - original_item_id
+      - override_item_id
       properties:
         original_item_id:
           type: string
@@ -426,16 +430,19 @@ components:
           maximum: 2.0
           default: 1.0
           description: Quality adjustment multiplier
-
     QualityModifier:
       type: object
       required:
-        - type
-        - value
+      - type
+      - value
       properties:
         type:
           type: string
-          enum: [ skill_bonus, equipment_bonus, station_bonus, consumable_bonus ]
+          enum:
+          - skill_bonus
+          - equipment_bonus
+          - station_bonus
+          - consumable_bonus
           description: Type of quality modifier
         value:
           type: number
@@ -443,15 +450,14 @@ components:
           minimum: 0.5
           maximum: 2.0
           description: Quality multiplier
-
     CreateContractRequest:
       type: object
       required:
-        - client_id
-        - recipe_id
-        - quantity
-        - deadline
-        - payment_terms
+      - client_id
+      - recipe_id
+      - quantity
+      - deadline
+      - payment_terms
       properties:
         client_id:
           type: string
@@ -488,17 +494,18 @@ components:
           type: string
           maxLength: 1000
           description: Special requirements or notes
-
     PaymentTerms:
       type: object
       required:
-        - currency
-        - base_rate
-        - payment_schedule
+      - currency
+      - base_rate
+      - payment_schedule
       properties:
         currency:
           type: string
-          enum: [ eddies, eurobucks ]
+          enum:
+          - eddies
+          - eurobucks
           description: Payment currency
         base_rate:
           type: number
@@ -517,7 +524,10 @@ components:
           description: Penalty per quality point below minimum
         payment_schedule:
           type: string
-          enum: [ on_completion, on_delivery, milestone_based ]
+          enum:
+          - on_completion
+          - on_delivery
+          - milestone_based
           description: When payment is made
         deposit_required:
           type: number
@@ -525,18 +535,17 @@ components:
           minimum: 0
           maximum: 100
           description: Required deposit percentage
-
     Contract:
       type: object
       required:
-        - id
-        - client_id
-        - contractor_id
-        - recipe_id
-        - quantity
-        - status
-        - deadline
-        - created_at
+      - id
+      - client_id
+      - contractor_id
+      - recipe_id
+      - quantity
+      - status
+      - deadline
+      - created_at
       properties:
         id:
           type: string
@@ -560,7 +569,13 @@ components:
           description: Quantity to produce
         status:
           type: string
-          enum: [ pending, accepted, in_progress, completed, failed, cancelled ]
+          enum:
+          - pending
+          - accepted
+          - in_progress
+          - completed
+          - failed
+          - cancelled
           description: Contract status
         deadline:
           type: string
@@ -605,14 +620,13 @@ components:
           type: string
           format: date-time
           description: Contract acceptance timestamp
-
     OrderListResponse:
       type: object
       required:
-        - orders
-        - total_count
-        - limit
-        - offset
+      - orders
+      - total_count
+      - limit
+      - offset
       properties:
         orders:
           type: array
@@ -631,13 +645,12 @@ components:
           type: integer
           minimum: 0
           description: Requested offset
-
     Error:
       type: object
       required:
-        - error
-        - message
-        - timestamp
+      - error
+      - message
+      - timestamp
       properties:
         error:
           type: string

@@ -74,7 +74,8 @@ Issue: #{number}
 
 #### Сценарий C: Таблицы есть + >10 квестов (массовый импорт через миграции)
 
-- **Действие:** Генерация SQL миграций через `scripts/generate-content-migrations.sh`
+- **Действие:** Генерация SQL миграций через оптимизированные скрипты
+- **Скрипты:** `scripts/generate-content-migrations.sh` (Bash) или `scripts/generate-content-migrations.ps1` (PowerShell)
 - **Формат:** 1 файл YAML = 1 миграция (с версией из `metadata.version`)
 - **Миграции в enterprise-grade структуре:**
   - Квесты: `infrastructure/liquibase/migrations/data/quests/V*__data_quest_*.sql` (→ `specialized-domain`)

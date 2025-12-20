@@ -1,58 +1,163 @@
 openapi: 3.0.3
 info:
-  title: Integration Domain API
-  description: |
-    Consolidated Integration Domain API for NECPGAME external integrations and client systems.
+  title: Integration domain API
+  description: 'Consolidated integration domain Domain API for NECPGAME.
 
-    This API consolidates all external integrations and client-side functionality:
-    - Client-side effects and interactions
-    - External service integrations
-    - API integrations with third parties
-    - Client-specific services
 
-    All endpoints are organized into logical modules with $ref references.
+    This domain consolidates all integration functionality.
+
+    '
   version: 1.0.0
   contact:
     name: NECPGAME API Support
     url: https://necpgame.com/support
     email: api@necpgame.com
-
 servers:
-  - url: http://localhost:8080/api/v1
-    description: Development server
-  - url: https://api.necpgame.com/api/v1
-    description: Production server
-
+- url: http://localhost:8080/api/v1
+  description: Development server
+- url: https://api.necpgame.com/api/v1
+  description: Production server
 security:
-  - BearerAuth: []
-
+- BearerAuth: []
 tags:
-  - name: Integration Client
-    description: Client-side integrations
-  - name: Integration External
-    description: External service integrations
-  - name: Integration Services
-    description: Integration services
-  - name: Integration APIs
-    description: External API integrations
-
-# Import all integration modules
+- name: Integration domain
+  description: integration domain domain endpoints
 paths:
-  # Client integrations
-  $ref: './client/client-weapon-effects-service.yaml#/paths'
-
-  # External integrations
-  $ref: './external/cyberspace.yaml#/paths'
-  $ref: './external/cyberware-service.yaml#/paths'
-
+  /api/v1/integration-domain/health:
+    get:
+      summary: integration domain domain health check
+      operationId: integration-domainHealthCheck
+      tags:
+      - Integration domain
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: max-age=300, s-maxage=600
+            ETag:
+              schema:
+                type: string
+                example: '"-api-v1-integration-domain-health-v1.0"'
+            Content-Encoding:
+              schema:
+                type: string
+                enum:
+                - gzip
+                - deflate
+                - br
+  /api/v1/integration-domain/health/batch:
+    post:
+      summary: Batch health check for multiple domains
+      operationId: batchHealthCheck
+      tags:
+      - System
+      description: 'Performance optimization: Check multiple domain health in single
+        request'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - domains
+              properties:
+                domains:
+                  type: array
+                  items:
+                    type: string
+                  maxItems: 10
+      responses:
+        '200':
+          description: Batch health results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/HealthResponse'
+                  total_time_ms:
+                    type: integer
+                    description: Total processing time
+  /api/v1/integration-domain/health/ws:
+    get:
+      summary: Real-time health monitoring WebSocket
+      operationId: healthWebSocket
+      tags:
+      - System
+      description: Real-time health updates without polling
+      responses:
+        '101':
+          description: WebSocket connection established
 components:
-  schemas:
-    $ref: './client/client-weapon-effects-service.yaml#/components/schemas'
-    $ref: './external/cyberspace.yaml#/components/schemas'
-    $ref: './external/cyberware-service.yaml#/components/schemas'
-
   securitySchemes:
     BearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
+  schemas:
+    HealthResponse:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          maxLength: 255
+        status:
+          type: string
+          example: healthy
+          maxLength: 255
+        domain:
+          type: string
+          example: integration-domain
+          maxLength: 255
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+          example: Internal server error
+          maxLength: 1000
+        timestamp:
+          type: string
+          format: date-time
+          maxLength: 255
+        code:
+          type: integer
+          example: 500
+          format: int32
+          minimum: 100
+          maximum: 599
+        domain:
+          type: string
+          example: integration-domain
+          maxLength: 255
+    WebSocketHealthMessage:
+      type: object
+      required:
+      - type
+      - message_timestamp
+      - health
+      properties:
+        type:
+          type: string
+          enum:
+          - health_update
+          - health_alert
+          - service_down
+        message_timestamp:
+          type: string
+          format: date-time
+          description: Timestamp of the health message
+        health:
+          $ref: '#/components/schemas/HealthResponse'

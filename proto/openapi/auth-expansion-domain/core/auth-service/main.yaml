@@ -2,35 +2,34 @@ openapi: 3.0.3
 info:
   title: Authentication Service API
   version: 1.0.0
-  description: |
-    API for user authentication and authorization in MMOFPS RPG.
+  description: 'API for user authentication and authorization in MMOFPS RPG.
+
     Handles JWT tokens, OAuth2 flows, session management, and access control.
+
     Optimized for MMO security with 10,000+ concurrent authenticated users.
 
+    '
 servers:
-  - url: http://localhost:8080
-    description: Development server
-
+- url: http://localhost:8080
+  description: Development server
 security:
-  - BearerAuth: [ ]
-
+- BearerAuth: []
 tags:
-  - name: Authentication
-    description: User login, registration, and authentication operations
-  - name: Authorization
-    description: Token validation, permissions, and access control
-  - name: Sessions
-    description: Session management and lifecycle operations
-  - name: OAuth2
-    description: OAuth2 flows and third-party authentication
-  - name: Tokens
-    description: JWT token operations and refresh mechanisms
-
+- name: Authentication
+  description: User login, registration, and authentication operations
+- name: Authorization
+  description: Token validation, permissions, and access control
+- name: Sessions
+  description: Session management and lifecycle operations
+- name: OAuth2
+  description: OAuth2 flows and third-party authentication
+- name: Tokens
+  description: JWT token operations and refresh mechanisms
 paths:
   /auth/health:
     get:
       tags:
-        - Authentication
+      - Authentication
       summary: Health check for Authentication Service
       operationId: healthCheck
       responses:
@@ -43,12 +42,11 @@ paths:
                 properties:
                   status:
                     type: string
-                    example: "healthy"
-
+                    example: healthy
   /auth/register:
     post:
       tags:
-        - Authentication
+      - Authentication
       summary: Register new user account
       operationId: registerUser
       requestBody:
@@ -78,14 +76,13 @@ paths:
                     example: 409
                   message:
                     type: string
-                    example: "User already exists"
+                    example: User already exists
         '500':
           $ref: '#/components/responses/InternalError'
-
   /auth/login:
     post:
       tags:
-        - Authentication
+      - Authentication
       summary: User login with credentials
       operationId: loginUser
       requestBody:
@@ -115,7 +112,7 @@ paths:
                     example: 401
                   message:
                     type: string
-                    example: "Invalid credentials"
+                    example: Invalid credentials
         '429':
           description: Too many login attempts
           content:
@@ -128,20 +125,19 @@ paths:
                     example: 429
                   message:
                     type: string
-                    example: "Too many login attempts"
+                    example: Too many login attempts
                   retry_after:
                     type: integer
         '500':
           $ref: '#/components/responses/InternalError'
-
   /auth/logout:
     post:
       tags:
-        - Authentication
+      - Authentication
       summary: User logout and session invalidation
       operationId: logoutUser
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       responses:
         '200':
           description: Logout successful
@@ -157,11 +153,10 @@ paths:
                 $ref: '#/components/schemas/Error'
         '500':
           $ref: '#/components/responses/InternalError'
-
   /auth/refresh:
     post:
       tags:
-        - Tokens
+      - Tokens
       summary: Refresh JWT access token
       operationId: refreshToken
       requestBody:
@@ -187,15 +182,14 @@ paths:
                 $ref: '#/components/schemas/Error'
         '500':
           $ref: '#/components/responses/InternalError'
-
   /auth/validate:
     post:
       tags:
-        - Authorization
+      - Authorization
       summary: Validate JWT token and return user info
       operationId: validateToken
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       responses:
         '200':
           description: Token is valid
@@ -211,15 +205,14 @@ paths:
                 $ref: '#/components/schemas/Error'
         '500':
           $ref: '#/components/responses/InternalError'
-
   /auth/sessions:
     get:
       tags:
-        - Sessions
+      - Sessions
       summary: Get user active sessions
       operationId: getUserSessions
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       responses:
         '200':
           description: Sessions retrieved successfully
@@ -235,14 +228,13 @@ paths:
                 $ref: '#/components/schemas/Error'
         '500':
           $ref: '#/components/responses/InternalError'
-
     delete:
       tags:
-        - Sessions
+      - Sessions
       summary: Invalidate all user sessions
       operationId: invalidateAllSessions
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       responses:
         '200':
           description: All sessions invalidated
@@ -258,22 +250,21 @@ paths:
                 $ref: '#/components/schemas/Error'
         '500':
           $ref: '#/components/responses/InternalError'
-
   /auth/sessions/{sessionId}:
     delete:
       tags:
-        - Sessions
+      - Sessions
       summary: Invalidate specific session
       operationId: invalidateSession
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: sessionId
-          in: path
-          required: true
-          schema:
-            type: string
-          description: Session identifier
+      - name: sessionId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Session identifier
       responses:
         '200':
           description: Session invalidated
@@ -295,21 +286,24 @@ paths:
                 $ref: '#/components/schemas/Error'
         '500':
           $ref: '#/components/responses/InternalError'
-
   /auth/oauth2/{provider}/authorize:
     get:
       tags:
-        - OAuth2
+      - OAuth2
       summary: Initiate OAuth2 authorization flow
       operationId: oauth2Authorize
       parameters:
-        - name: provider
-          in: path
-          required: true
-          schema:
-            type: string
-            enum: [ google, discord, steam, epic_games ]
-          description: OAuth2 provider
+      - name: provider
+        in: path
+        required: true
+        schema:
+          type: string
+          enum:
+          - google
+          - discord
+          - steam
+          - epic_games
+        description: OAuth2 provider
       responses:
         '302':
           description: Redirect to OAuth2 provider
@@ -317,33 +311,38 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '500':
           $ref: '#/components/responses/InternalError'
-
+        '200':
+          description: OAuth2 authorization URL
   /auth/oauth2/{provider}/callback:
     get:
       tags:
-        - OAuth2
+      - OAuth2
       summary: OAuth2 provider callback
       operationId: oauth2Callback
       parameters:
-        - name: provider
-          in: path
-          required: true
-          schema:
-            type: string
-            enum: [ google, discord, steam, epic_games ]
-          description: OAuth2 provider
-        - name: code
-          in: query
-          required: true
-          schema:
-            type: string
-          description: Authorization code
-        - name: state
-          in: query
-          required: true
-          schema:
-            type: string
-          description: State parameter for CSRF protection
+      - name: provider
+        in: path
+        required: true
+        schema:
+          type: string
+          enum:
+          - google
+          - discord
+          - steam
+          - epic_games
+        description: OAuth2 provider
+      - name: code
+        in: query
+        required: true
+        schema:
+          type: string
+        description: Authorization code
+      - name: state
+        in: query
+        required: true
+        schema:
+          type: string
+        description: State parameter for CSRF protection
       responses:
         '200':
           description: OAuth2 authentication successful
@@ -361,11 +360,10 @@ paths:
                 $ref: '#/components/schemas/Error'
         '500':
           $ref: '#/components/responses/InternalError'
-
   /auth/password/reset:
     post:
       tags:
-        - Authentication
+      - Authentication
       summary: Request password reset
       operationId: requestPasswordReset
       requestBody:
@@ -395,16 +393,15 @@ paths:
                     example: 429
                   message:
                     type: string
-                    example: "Too many reset requests"
+                    example: Too many reset requests
                   retry_after:
                     type: integer
         '500':
           $ref: '#/components/responses/InternalError'
-
   /auth/password/reset/confirm:
     post:
       tags:
-        - Authentication
+      - Authentication
       summary: Confirm password reset with token
       operationId: confirmPasswordReset
       requestBody:
@@ -430,14 +427,12 @@ paths:
                 $ref: '#/components/schemas/Error'
         '500':
           $ref: '#/components/responses/InternalError'
-
 components:
   securitySchemes:
     BearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
-
   responses:
     BadRequest:
       description: Bad request
@@ -451,7 +446,6 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-
   schemas:
     Error:
       type: object
@@ -462,54 +456,37 @@ components:
         message:
           type: string
       required:
-        - code
-        - message
-
-    # Request/Response schemas
+      - code
+      - message
     RegisterRequest:
-      $ref: './schemas/requests.yaml#/RegisterRequest'
-
+      $ref: ./schemas/requests.yaml#/RegisterRequest
     RegisterResponse:
-      $ref: './schemas/responses.yaml#/RegisterResponse'
-
+      $ref: ./schemas/responses.yaml#/RegisterResponse
     LoginRequest:
-      $ref: './schemas/requests.yaml#/LoginRequest'
-
+      $ref: ./schemas/requests.yaml#/LoginRequest
     LoginResponse:
-      $ref: './schemas/responses.yaml#/LoginResponse'
-
+      $ref: ./schemas/responses.yaml#/LoginResponse
     LogoutResponse:
-      $ref: './schemas/responses.yaml#/LogoutResponse'
-
+      $ref: ./schemas/responses.yaml#/LogoutResponse
     RefreshTokenRequest:
-      $ref: './schemas/requests.yaml#/RefreshTokenRequest'
-
+      $ref: ./schemas/requests.yaml#/RefreshTokenRequest
     RefreshTokenResponse:
-      $ref: './schemas/responses.yaml#/RefreshTokenResponse'
-
+      $ref: ./schemas/responses.yaml#/RefreshTokenResponse
     ValidateTokenResponse:
-      $ref: './schemas/responses.yaml#/ValidateTokenResponse'
-
+      $ref: ./schemas/responses.yaml#/ValidateTokenResponse
     GetSessionsResponse:
-      $ref: './schemas/responses.yaml#/GetSessionsResponse'
-
+      $ref: ./schemas/responses.yaml#/GetSessionsResponse
     InvalidateSessionsResponse:
-      $ref: './schemas/responses.yaml#/InvalidateSessionsResponse'
-
+      $ref: ./schemas/responses.yaml#/InvalidateSessionsResponse
     InvalidateSessionResponse:
-      $ref: './schemas/responses.yaml#/InvalidateSessionResponse'
-
+      $ref: ./schemas/responses.yaml#/InvalidateSessionResponse
     OAuth2CallbackResponse:
-      $ref: './schemas/responses.yaml#/OAuth2CallbackResponse'
-
+      $ref: ./schemas/responses.yaml#/OAuth2CallbackResponse
     PasswordResetRequest:
-      $ref: './schemas/requests.yaml#/PasswordResetRequest'
-
+      $ref: ./schemas/requests.yaml#/PasswordResetRequest
     PasswordResetResponse:
-      $ref: './schemas/responses.yaml#/PasswordResetResponse'
-
+      $ref: ./schemas/responses.yaml#/PasswordResetResponse
     ConfirmPasswordResetRequest:
-      $ref: './schemas/requests.yaml#/ConfirmPasswordResetRequest'
-
+      $ref: ./schemas/requests.yaml#/ConfirmPasswordResetRequest
     ConfirmPasswordResetResponse:
-      $ref: './schemas/responses.yaml#/ConfirmPasswordResetResponse'
+      $ref: ./schemas/responses.yaml#/ConfirmPasswordResetResponse

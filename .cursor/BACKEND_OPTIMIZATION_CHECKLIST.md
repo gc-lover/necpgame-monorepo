@@ -70,8 +70,11 @@
 # ОБЯЗАТЕЛЬНО перед передачей задачи!
 /backend-validate-optimizations #123
 
-# Или вручную:
+# Или вручную для отдельных сервисов:
 ./scripts/validate-backend-optimizations.sh services/{service}-go
+
+# Или для генерации всех enterprise-grade сервисов:
+python scripts/generate-all-domains-go.py  # включает автоматическую валидацию
 ```
 
 **Output:**
