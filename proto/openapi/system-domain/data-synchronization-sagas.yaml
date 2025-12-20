@@ -1,0 +1,113 @@
+paths:
+  /sagas:
+    post:
+      tags: [saga-coordination]
+      summary: Start new saga
+      description: Initiate a new distributed transaction (saga)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SagaCreationRequest'
+      responses:
+        '201':
+          description: Saga created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SagaResponse'
+
+    get:
+      tags: [saga-coordination]
+      summary: Get active sagas
+      description: Retrieve list of currently active sagas
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, in_progress, compensating, completed, failed]
+        - name: initiatorService
+          in: query
+          schema:
+            type: string
+          description: Filter by service that initiated the saga
+      responses:
+        '200':
+          description: Active sagas retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SagasList'
+
+  /sagas/{sagaId}:
+    get:
+      tags: [saga-coordination]
+      summary: Get saga details
+      description: Retrieve detailed information about a specific saga
+      parameters:
+        - name: sagaId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Saga details retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SagaDetails'
+
+  /sagas/{sagaId}/compensate:
+    post:
+      tags: [saga-coordination]
+      summary: Trigger saga compensation
+      description: Initiate compensation (rollback) for a failed saga
+      parameters:
+        - name: sagaId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SagaCompensationRequest'
+      responses:
+        '202':
+          description: Compensation initiated
+        '400':
+          description: Saga cannot be compensated
+
+  /sagas/{sagaId}/steps/{stepId}/complete:
+    post:
+      tags: [saga-coordination]
+      summary: Complete saga step
+      description: Mark a saga step as completed
+      parameters:
+        - name: sagaId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: stepId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SagaStepCompletion'
+      responses:
+        '200':
+          description: Step completed successfully
+
+  # Data Consistency Checker
+  /consistency/check:

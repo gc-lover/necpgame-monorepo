@@ -1,0 +1,170 @@
+paths:
+      - subscription.removed
+openapi: 3.0.3
+info:
+  title: Data Synchronization and Consistency API
+  description: |
+    API for managing data synchronization between layers and game mechanics in MMORPG.
+    Provides event-driven architecture, conflict resolution, saga coordination, and state synchronization.
+
+    ## Key Features
+    - **Event-Driven Communication**: Asynchronous event publishing and subscription
+    - **State Synchronization**: Real-time synchronization between client, server, and database layers
+    - **Conflict Resolution**: Automatic conflict detection and resolution strategies
+    - **Saga Coordination**: Distributed transaction management across microservices
+    - **Data Consistency**: Monitoring and ensuring data consistency across systems
+  version: "1.0.0"
+  contact:
+    name: Architect Team
+    email: architect@necp.game
+  license:
+    name: MIT
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production server
+  - url: https://staging-api.necp.game/v1
+    description: Staging server
+  - url: http://localhost:8080/v1
+    description: Local development
+
+tags:
+  - name: state-sync
+    description: State synchronization management
+  - name: event-bus
+    description: Event publishing and subscription
+  - name: conflict-resolution
+    description: Conflict detection and resolution
+  - name: saga-coordination
+    description: Distributed transaction coordination
+  - name: consistency-check
+    description: Data consistency monitoring
+  - name: health-monitoring
+    description: System health and performance monitoring
+
+paths:
+  $ref: ./data-synchronization-state.yaml#/paths
+  $ref: ./data-synchronization-events.yaml#/paths
+  $ref: ./data-synchronization-conflicts.yaml#/paths
+  $ref: ./data-synchronization-sagas.yaml#/paths
+  $ref: ./data-synchronization-consistency.yaml#/paths
+
+  # Health and monitoring endpoints
+  /health/sync:
+    get:
+      tags: [state-sync]
+      summary: Get current synchronized state
+      description: Retrieve the current synchronized state for a specific entity
+      parameters:
+        - name: entityType
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [character, inventory, quest, combat, economy]
+          description: Type of game entity
+        - name: entityId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique identifier of the entity
+        - name: layer
+          in: query
+          schema:
+            type: string
+            enum: [client, server, database]
+            default: server
+          description: Data layer to retrieve from
+        - name: version
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+          description: Specific version to retrieve
+      responses:
+        '200':
+          description: Current synchronized state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SynchronizedState'
+        '404':
+          description: Entity not found
+        '409':
+          description: State conflict detected
+
+    put:
+      tags: [state-sync]
+      summary: Update synchronized state
+      description: Update the state of an entity with conflict resolution
+      parameters:
+        - name: entityType
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [character, inventory, quest, combat, economy]
+        - name: entityId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StateUpdateRequest'
+      responses:
+        '200':
+          description: State updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StateUpdateResponse'
+        '409':
+          description: Conflict detected, manual resolution required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConflictResolution'
+
+  /sync/state/{entityType}/{entityId}/versions:
+    get:
+      tags: [state-sync]
+      summary: Get state version history
+      description: Retrieve version history for conflict resolution and auditing
+      parameters:
+        - name: entityType
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [character, inventory, quest, combat, economy]
+        - name: entityId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+        - name: before
+          in: query
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: Version history retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StateVersionHistory'
+
+  /sync/state/batch:

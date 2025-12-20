@@ -1,0 +1,93 @@
+openapi: 3.0.3
+info:
+  title: Data Synchronization and Consistency API
+  description: |
+    API for managing data synchronization between layers and game mechanics in MMORPG.
+    Provides event-driven architecture, conflict resolution, saga coordination, and state synchronization.
+
+    ## Key Features
+    - **Event-Driven Communication**: Asynchronous event publishing and subscription
+    - **State Synchronization**: Real-time synchronization between client, server, and database layers
+    - **Conflict Resolution**: Automatic conflict detection and resolution strategies
+    - **Saga Coordination**: Distributed transaction management across microservices
+    - **Data Consistency**: Monitoring and ensuring data consistency across systems
+  version: "1.0.0"
+  contact:
+    name: Architect Team
+    email: architect@necp.game
+  license:
+    name: MIT
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production server
+  - url: https://staging-api.necp.game/v1
+    description: Staging server
+  - url: http://localhost:8080/v1
+    description: Local development
+
+tags:
+  - name: state-sync
+    description: State synchronization management
+  - name: event-bus
+    description: Event publishing and subscription
+  - name: conflict-resolution
+    description: Conflict detection and resolution
+  - name: saga-coordination
+    description: Distributed transaction coordination
+  - name: consistency-check
+    description: Data consistency monitoring
+  - name: health-monitoring
+    description: System health and performance monitoring
+
+
+paths:
+  $ref: ./data-synchronization-state.yaml#/paths
+  $ref: ./data-synchronization-events.yaml#/paths
+  $ref: ./data-synchronization-conflicts.yaml#/paths
+  $ref: ./data-synchronization-sagas.yaml#/paths
+  $ref: ./data-synchronization-consistency.yaml#/paths
+
+  # Health Monitoring
+  /health/sync:
+    get:
+      tags: [health-monitoring]
+      summary: Synchronization system health
+      description: Get health status of the synchronization system
+      responses:
+        '200':
+          description: System is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthStatus'
+        '503':
+          description: System is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthStatus'
+
+  /metrics/sync:
+    get:
+      tags: [health-monitoring]
+      summary: Synchronization metrics
+      description: Get performance and operational metrics
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [1m, 5m, 15m, 1h, 24h]
+            default: 5m
+      responses:
+        '200':
+          description: Metrics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SyncMetrics'
+
+components:
+  schemas:
+    $ref: ./data-synchronization-schemas.yaml#/components/schemas

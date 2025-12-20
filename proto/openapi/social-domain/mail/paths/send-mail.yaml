@@ -1,0 +1,80 @@
+# Issue: #2237 - Mail System API for Backend
+paths:
+  /send:
+    post:
+      summary: "Send a mail message to another player"
+      description: |
+        Send a personal mail message with optional attachments and COD.
+        Supports item trading, personal communications, and commerce.
+      operationId: sendMail
+      tags: ["Mail"]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/mail-schemas.yaml#/components/schemas/SendMailRequest'
+      responses:
+        '200':
+          description: "Mail sent successfully"
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/mail-schemas.yaml#/components/schemas/SendMailResponse'
+        '400':
+          $ref: '../../../common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: '../../../common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../../../common.yaml#/components/responses/Forbidden'
+        '422':
+          description: "Validation failed"
+          content:
+            application/json:
+              schema:
+                $ref: '../../../common.yaml#/components/schemas/ValidationError'
+        '500':
+          $ref: '../../../common.yaml#/components/responses/InternalServerError'
+      security:
+        - BearerAuth: []
+
+  /send-system:
+    post:
+      summary: "Send system mail to multiple players"
+      description: |
+        Send system notifications, rewards, or announcements to multiple players.
+        Used for server events, maintenance notices, and automated rewards.
+      operationId: sendSystemMail
+      tags: ["Mail", "Admin"]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/mail-schemas.yaml#/components/schemas/SystemMailRequest'
+      responses:
+        '200':
+          description: "System mail queued for delivery"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  queued_count:
+                    type: integer
+                    description: "Number of mails queued"
+                    example: 150
+                  estimated_delivery_time:
+                    type: string
+                    format: date-time
+                    description: "Estimated completion time"
+        '400':
+          $ref: '../../../common.yaml#/components/responses/BadRequest'
+        '401':
+          $ref: '../../../common.yaml#/components/responses/Unauthorized'
+        '403':
+          $ref: '../../../common.yaml#/components/responses/Forbidden'
+        '500':
+          $ref: '../../../common.yaml#/components/responses/InternalServerError'
+      security:
+        - BearerAuth: []

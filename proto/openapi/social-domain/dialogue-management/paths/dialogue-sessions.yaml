@@ -1,0 +1,283 @@
+# Issue: #140875182 - Dialogue Management API for Backend
+# Domain: social-domain/dialogue-management
+# Purpose: Paths for dialogue session management operations
+# Related: #140875182
+
+paths:
+  /api/v1/social/dialogue/sessions/start:
+    post:
+      summary: "Start dialogue session"
+      description: "Initiate a new dialogue session between player and NPC"
+      operationId: startDialogueSession
+      tags: ["Dialogue Management", "Sessions"]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/dialogue-management-schemas.yaml#/components/schemas/StartDialogueRequest'
+      responses:
+        '201':
+          description: "Dialogue session started successfully"
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/dialogue-management-schemas.yaml#/components/schemas/DialogueResponse'
+        '400':
+          $ref: '../../../../common.yaml#/components/responses/BadRequest'
+        '404':
+          description: "Dialogue tree or NPC not found"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "dialogue_tree_not_found"
+                  dialogue_tree_id:
+                    type: string
+                    format: uuid
+        '409':
+          description: "Dialogue session already active"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "session_already_active"
+                  existing_session_id:
+                    type: string
+                    format: uuid
+        '500':
+          $ref: '../../../../common.yaml#/components/responses/InternalServerError'
+      security:
+        - BearerAuth: []
+
+  /api/v1/social/dialogue/sessions/{sessionId}:
+    get:
+      summary: "Get dialogue session state"
+      description: "Retrieve current state of an active dialogue session"
+      operationId: getDialogueSession
+      tags: ["Dialogue Management", "Sessions"]
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: "Dialogue session ID"
+      responses:
+        '200':
+          description: "Session state retrieved successfully"
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/dialogue-management-schemas.yaml#/components/schemas/DialogueSession'
+        '404':
+          $ref: '../../../../common.yaml#/components/responses/NotFound'
+        '500':
+          $ref: '../../../../common.yaml#/components/responses/InternalServerError'
+      security:
+        - BearerAuth: []
+
+  /api/v1/social/dialogue/sessions/{sessionId}/choice:
+    post:
+      summary: "Make dialogue choice"
+      description: "Process a player's choice in an active dialogue session"
+      operationId: makeDialogueChoice
+      tags: ["Dialogue Management", "Sessions"]
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: "Dialogue session ID"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/dialogue-management-schemas.yaml#/components/schemas/MakeChoiceRequest'
+      responses:
+        '200':
+          description: "Choice processed successfully"
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/dialogue-management-schemas.yaml#/components/schemas/DialogueResponse'
+        '400':
+          $ref: '../../../../common.yaml#/components/responses/BadRequest'
+        '404':
+          description: "Session or choice not found"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "choice_not_found"
+                  choice_id:
+                    type: string
+        '409':
+          description: "Choice not available"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "choice_unavailable"
+                  reason:
+                    type: string
+                    example: "Choice conditions not met"
+        '410':
+          description: "Session has ended"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "session_ended"
+                  end_reason:
+                    type: string
+                    example: "completed"
+        '500':
+          $ref: '../../../../common.yaml#/components/responses/InternalServerError'
+      security:
+        - BearerAuth: []
+
+  /api/v1/social/dialogue/sessions/{sessionId}/end:
+    post:
+      summary: "End dialogue session"
+      description: "Terminate an active dialogue session"
+      operationId: endDialogueSession
+      tags: ["Dialogue Management", "Sessions"]
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: "Dialogue session ID"
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/dialogue-management-schemas.yaml#/components/schemas/EndDialogueRequest'
+      responses:
+        '200':
+          description: "Session ended successfully"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - session_id
+                  - ended_at
+                  - final_status
+                properties:
+                  session_id:
+                    type: string
+                    format: uuid
+                    description: "Ended session ID"
+                  ended_at:
+                    type: string
+                    format: date-time
+                    description: "Session end timestamp"
+                  final_status:
+                    type: string
+                    enum: ["completed", "abandoned", "timeout", "error"]
+                    description: "Final session status"
+                  summary:
+                    type: object
+                    properties:
+                      total_choices:
+                        type: integer
+                        description: "Total choices made"
+                      duration_seconds:
+                        type: integer
+                        description: "Session duration in seconds"
+                      actions_executed:
+                        type: integer
+                        description: "Number of actions executed"
+        '404':
+          $ref: '../../../../common.yaml#/components/responses/NotFound'
+        '409':
+          description: "Session already ended"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "session_already_ended"
+        '500':
+          $ref: '../../../../common.yaml#/components/responses/InternalServerError'
+      security:
+        - BearerAuth: []
+
+  /api/v1/social/dialogue/sessions/active:
+    get:
+      summary: "Get active dialogue sessions"
+      description: "Retrieve active dialogue sessions for a player or NPC"
+      operationId: getActiveDialogueSessions
+      tags: ["Dialogue Management", "Sessions"]
+      parameters:
+        - name: player_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: "Filter by player ID"
+        - name: npc_instance_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: "Filter by NPC instance ID"
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 20
+          description: "Number of results"
+      responses:
+        '200':
+          description: "Active sessions retrieved successfully"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - sessions
+                  - total_count
+                properties:
+                  sessions:
+                    type: array
+                    items:
+                      $ref: '../schemas/dialogue-management-schemas.yaml#/components/schemas/DialogueSession'
+                  total_count:
+                    type: integer
+                    description: "Total number of active sessions"
+                    example: 25
+        '400':
+          $ref: '../../../../common.yaml#/components/responses/BadRequest'
+        '500':
+          $ref: '../../../../common.yaml#/components/responses/InternalServerError'
+      security:
+        - BearerAuth: []

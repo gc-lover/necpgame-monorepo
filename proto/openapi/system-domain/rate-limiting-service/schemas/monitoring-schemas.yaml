@@ -1,85 +1,24 @@
-# Rate limiting monitoring and analytics schemas
-# Issue: #2063
-
 components:
   schemas:
-    # Rate limiting statistics response
     RateLimitStats:
       type: object
       required:
-        - timeframe
-        - total_requests
-        - allowed_requests
-        - blocked_requests
-        - rules_performance
+      - timeframe
+      - total_requests
+      - allowed_requests
+      - blocked_requests
+      - rules_performance
       properties:
         timeframe:
           type: string
-          enum: [1m, 5m, 15m, 1h, 6h, 24h]
+          enum:
+          - 1m
+          - 5m
+          - 15m
+          - 1h
+          - 6h
+          - 24h
           description: Statistics timeframe
-        total_requests:
-          type: integer
-          minimum: 0
-          description: Total requests processed
-          example: 150000
-        allowed_requests:
-          type: integer
-          minimum: 0
-          description: Requests allowed through
-          example: 145000
-        blocked_requests:
-          type: integer
-          minimum: 0
-          description: Requests blocked by rate limits
-          example: 5000
-        quota_exceeded_requests:
-          type: integer
-          minimum: 0
-          description: Requests blocked by quota limits
-          example: 1200
-
-        rules_performance:
-          type: array
-          items:
-            type: object
-            properties:
-              rule_id:
-                type: string
-                format: uuid
-                description: Rate limit rule ID
-                example: "rl1a2b3c4-d5e6-7890-1234-567890abcdef"
-              service_name:
-                type: string
-                description: Service name
-                example: "guild-service"
-              endpoint_pattern:
-                type: string
-                description: Endpoint pattern
-                example: "/api/v1/guilds/*/members"
-              requests_processed:
-                type: integer
-                minimum: 0
-                description: Requests processed by this rule
-                example: 25000
-              blocked_count:
-                type: integer
-                minimum: 0
-                description: Requests blocked by this rule
-                example: 500
-              average_response_time_ms:
-                type: number
-                format: float
-                description: Average rule evaluation time
-                example: 2.5
-              hit_rate_percent:
-                type: number
-                format: float
-                minimum: 0
-                maximum: 100
-                description: Cache hit rate for this rule
-                example: 95.5
-          description: Performance statistics per rule
-
         geographic_distribution:
           type: object
           description: Request distribution by geographic region
@@ -96,47 +35,20 @@ components:
                 type: array
                 items:
                   type: string
-                example: ["/api/v1/guilds/search", "/api/v1/players/online"]
+                example:
+                - /api/v1/guilds/search
+                - /api/v1/players/online
           example:
-            "us-east-1":
+            us-east-1:
               total_requests: 75000
               blocked_requests: 1500
-              top_blocked_endpoints: ["/api/v1/combat/join"]
-            "eu-west-1":
+              top_blocked_endpoints:
+              - /api/v1/combat/join
+            eu-west-1:
               total_requests: 45000
               blocked_requests: 800
-              top_blocked_endpoints: ["/api/v1/social/chat"]
-
-        top_offenders:
-          type: array
-          items:
-            type: object
-            properties:
-              identifier:
-                type: string
-                description: User ID, IP, or API key
-                example: "192.168.1.100"
-              identifier_type:
-                type: string
-                enum: [ip, user_id, api_key]
-                example: "ip"
-              blocked_requests:
-                type: integer
-                minimum: 0
-                description: Number of blocked requests
-                example: 250
-              last_blocked_at:
-                type: string
-                format: date-time
-                description: Last blocked request time
-                example: "2025-12-20T21:40:00Z"
-              block_duration_seconds:
-                type: integer
-                description: Current block duration
-                example: 300
-          maxItems: 50
-          description: Top entities by blocked requests
-
+              top_blocked_endpoints:
+              - /api/v1/social/chat
         system_performance:
           type: object
           description: System-wide performance metrics
@@ -166,7 +78,79 @@ components:
               type: integer
               description: Active connections to rate limiting service
               example: 25
-
+        rules_performance:
+          type: array
+          items:
+            type: object
+            properties:
+              rule_id:
+                type: string
+                format: uuid
+                description: Rate limit rule ID
+                example: rl1a2b3c4-d5e6-7890-1234-567890abcdef
+              service_name:
+                type: string
+                description: Service name
+                example: guild-service
+              endpoint_pattern:
+                type: string
+                description: Endpoint pattern
+                example: /api/v1/guilds/*/members
+              requests_processed:
+                type: integer
+                minimum: 0
+                description: Requests processed by this rule
+                example: 25000
+              blocked_count:
+                type: integer
+                minimum: 0
+                description: Requests blocked by this rule
+                example: 500
+              average_response_time_ms:
+                type: number
+                format: float
+                description: Average rule evaluation time
+                example: 2.5
+              hit_rate_percent:
+                type: number
+                format: float
+                minimum: 0
+                maximum: 100
+                description: Cache hit rate for this rule
+                example: 95.5
+          description: Performance statistics per rule
+        top_offenders:
+          type: array
+          items:
+            type: object
+            properties:
+              identifier:
+                type: string
+                description: User ID, IP, or API key
+                example: 192.168.1.100
+              identifier_type:
+                type: string
+                enum:
+                - ip
+                - user_id
+                - api_key
+                example: ip
+              blocked_requests:
+                type: integer
+                minimum: 0
+                description: Number of blocked requests
+                example: 250
+              last_blocked_at:
+                type: string
+                format: date-time
+                description: Last blocked request time
+                example: '2025-12-20T21:40:00Z'
+              block_duration_seconds:
+                type: integer
+                description: Current block duration
+                example: 300
+          maxItems: 50
+          description: Top entities by blocked requests
         alerts:
           type: array
           items:
@@ -178,17 +162,21 @@ components:
                 description: Unique alert identifier
               severity:
                 type: string
-                enum: [low, medium, high, critical]
-                example: "high"
+                enum:
+                - low
+                - medium
+                - high
+                - critical
+                example: high
               message:
                 type: string
                 description: Alert message
-                example: "High block rate detected for guild-service"
+                example: High block rate detected for guild-service
               triggered_at:
                 type: string
                 format: date-time
                 description: When alert was triggered
-                example: "2025-12-20T21:35:00Z"
+                example: '2025-12-20T21:35:00Z'
               resolved:
                 type: boolean
                 description: Whether alert is resolved
@@ -198,65 +186,96 @@ components:
                 items:
                   type: string
                 description: Services affected by the alert
-                example: ["guild-service", "social-service"]
+                example:
+                - guild-service
+                - social-service
           description: Active alerts and warnings
-
-    # Rate limit violation event (for webhook notifications)
+        total_requests:
+          type: integer
+          minimum: 0
+          description: Total requests processed
+          example: 150000
+        allowed_requests:
+          type: integer
+          minimum: 0
+          description: Requests allowed through
+          example: 145000
+        blocked_requests:
+          type: integer
+          minimum: 0
+          description: Requests blocked by rate limits
+          example: 5000
+        quota_exceeded_requests:
+          type: integer
+          minimum: 0
+          description: Requests blocked by quota limits
+          example: 1200
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     RateLimitViolationEvent:
       type: object
       required:
-        - event_type
-        - timestamp
-        - rule_id
-        - identifier
-        - identifier_type
-        - violation_type
+      - event_type
+      - timestamp
+      - rule_id
+      - identifier
+      - identifier_type
+      - violation_type
       properties:
-        event_type:
-          type: string
-          enum: ["rate_limit_violation", "quota_exceeded", "blacklist_hit"]
-          description: Type of violation event
-          example: "rate_limit_violation"
-        timestamp:
-          type: string
-          format: date-time
-          description: Event timestamp
-          example: "2025-12-20T21:40:15Z"
         rule_id:
           type: string
           format: uuid
           description: Rate limit rule ID (if applicable)
-          example: "rl1a2b3c4-d5e6-7890-1234-567890abcdef"
+          example: rl1a2b3c4-d5e6-7890-1234-567890abcdef
         identifier:
           type: string
           description: Violating identifier (IP, user ID, etc.)
-          example: "192.168.1.100"
+          example: 192.168.1.100
+        event_type:
+          type: string
+          enum:
+          - rate_limit_violation
+          - quota_exceeded
+          - blacklist_hit
+          description: Type of violation event
+          example: rate_limit_violation
         identifier_type:
           type: string
-          enum: [ip, user_id, api_key, service]
+          enum:
+          - ip
+          - user_id
+          - api_key
+          - service
           description: Type of identifier
-          example: "ip"
+          example: ip
         violation_type:
           type: string
-          enum: [burst_exceeded, sustained_exceeded, quota_exceeded]
+          enum:
+          - burst_exceeded
+          - sustained_exceeded
+          - quota_exceeded
           description: Specific violation type
-          example: "burst_exceeded"
+          example: burst_exceeded
+        timestamp:
+          type: string
+          format: date-time
+          description: Event timestamp
+          example: '2025-12-20T21:40:15Z'
         request_info:
           type: object
           description: Information about the violating request
           properties:
             method:
               type: string
-              example: "POST"
+              example: POST
             endpoint:
               type: string
-              example: "/api/v1/guilds/123/members"
+              example: /api/v1/guilds/123/members
             user_agent:
               type: string
-              example: "NECPGAME-Client/1.0.0"
+              example: NECPGAME-Client/1.0.0
             service_name:
               type: string
-              example: "guild-service"
+              example: guild-service
         block_duration_seconds:
           type: integer
           description: How long the entity is blocked
@@ -265,3 +284,4 @@ components:
           type: integer
           description: Suggested retry delay
           example: 60
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'

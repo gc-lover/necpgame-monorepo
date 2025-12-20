@@ -1,39 +1,50 @@
-# Issue: #2237 - NPC Import Paths
+# Issue: #1547 - Content Import API for Backend
+# Domain: system-domain/ai/content-domain/import
+# Purpose: Paths for NPC import operations
+# Related: #1547
+
 paths:
-  # NPC Import Operations
-  /import/npcs:
+  /api/v1/system-domain/ai/content-domain/import/npcs:
     post:
-      summary: "Bulk import NPC definitions from YAML"
-      operationId: importNpcs
-      tags: ["NPC Import"]
+      summary: Import NPC definitions from YAML
+      description: |
+        Import NPC definitions from YAML content. Supports validation and rollback on error.
+
+        BACKEND NOTE: Memory-aligned schemas for efficient NPC processing.
+        Expected throughput: 50 NPCs/minute with dialogue validation.
+      operationId: importNPCs
+      tags: ["Content Import"]
       requestBody:
         required: true
         content:
-          multipart/form-data:
+          application/json:
             schema:
-              type: object
-              properties:
-                files:
-                  type: array
-                  items:
-                    type: string
-                    format: binary
-                  minItems: 1
-                  maxItems: 100
-                validate_only:
-                  type: boolean
-                  default: false
-                rollback_on_error:
-                  type: boolean
-                  default: true
+              $ref: '../schemas/import-schemas.yaml#/components/schemas/NPCImportRequest'
       responses:
         '200':
-          $ref: '../schemas/import-schemas.yaml#/components/schemas/ImportResult'
+          description: "NPC imported successfully"
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/import-schemas.yaml#/components/schemas/NPCImportResponse'
         '400':
-          $ref: '../../../common.yaml#/components/responses/BadRequest'
+          $ref: '../../../../../../common.yaml#/components/responses/BadRequest'
         '422':
           description: "Validation failed"
           content:
             application/json:
               schema:
-                $ref: '../schemas/import-schemas.yaml#/components/schemas/ValidationError'
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "validation_failed"
+                  details:
+                    type: array
+                    items:
+                      type: string
+                    example: ["Missing required field: name", "Invalid dialogue reference"]
+        '500':
+          $ref: '../../../../../../common.yaml#/components/responses/InternalServerError'
+      security:
+        - BearerAuth: []

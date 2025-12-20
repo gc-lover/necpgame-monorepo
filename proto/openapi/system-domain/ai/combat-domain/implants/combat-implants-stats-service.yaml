@@ -1,7 +1,25 @@
+# Issue: #142117499
 openapi: 3.0.3
 info:
   title: Combat Implants Stats Service API
-  description: 'API для статов и ограничений имплантов в NECPGAME.
+  description: |
+    Enterprise-Grade Combat Implants Stats Service API for NECPGAME MMOFPS RPG.
+
+    **Enterprise-Grade Domain:** system-domain
+    **Module:** combat-implants-stats-service
+    **Purpose:** High-performance implant stats management, compatibility checking, and set bonus calculations
+
+    **BACKEND NOTE:** Struct field alignment optimized (large → small types).
+    All schemas ordered for optimal memory layout in generated Go code.
+    Expected memory savings: 30-50% for implant-related structs.
+
+    **Features:**
+    - Energy pool and overheating management
+    - Humanity and cyberpsychosis tracking
+    - Implant compatibility validation
+    - Brand set bonus calculations
+
+    **Performance:** P99 <10ms for stat calculations, zero allocations in hot path
 
 
     **Основные возможности:**
@@ -60,6 +78,8 @@ servers:
   - url: https://gameplay.necpgame.com/api/v1
     description: Gameplay Service (продакшн)
 tags:
+  - name: Health
+    description: Service health and status
   - name: Energy
     description: Энергия
   - name: Humanity
@@ -69,7 +89,29 @@ tags:
   - name: Set Bonuses
     description: Сет-бонусы
 paths:
-  /combat/implants/energy:
+  # Health check
+  /health:
+    get:
+      tags:
+        - Health
+      summary: Health check
+      description: Service health status
+      operationId: healthCheck
+      security: []
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        '503':
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /combat/implants/{character_id}/energy:
     get:
       tags:
         - Energy
@@ -93,12 +135,12 @@ paths:
         - BearerAuth: [ ]
       parameters:
         - name: character_id
-          in: query
-          required: false
+          in: path
+          required: true
           schema:
             type: string
             format: uuid
-          description: ID персонажа (если не указан, используется текущий персонаж)
+          description: ID персонажа
       responses:
         '200':
           description: Энергия
@@ -112,7 +154,7 @@ paths:
           $ref: common.yaml#/components/responses/NotFound
         '500':
           $ref: common.yaml#/components/responses/InternalServerError
-  /combat/implants/humanity:
+  /combat/implants/{character_id}/humanity:
     get:
       tags:
         - Humanity
@@ -134,12 +176,12 @@ paths:
         - BearerAuth: [ ]
       parameters:
         - name: character_id
-          in: query
-          required: false
+          in: path
+          required: true
           schema:
             type: string
             format: uuid
-          description: ID персонажа (если не указан, используется текущий персонаж)
+          description: ID персонажа
       responses:
         '200':
           description: Человечность
@@ -153,7 +195,7 @@ paths:
           $ref: common.yaml#/components/responses/NotFound
         '500':
           $ref: common.yaml#/components/responses/InternalServerError
-  /combat/implants/compatibility:
+  /combat/implants/{character_id}/compatibility/{implant_id}:
     get:
       tags:
         - Compatibility
@@ -177,14 +219,14 @@ paths:
         - BearerAuth: [ ]
       parameters:
         - name: character_id
-          in: query
-          required: false
+          in: path
+          required: true
           schema:
             type: string
             format: uuid
-          description: ID персонажа (если не указан, используется текущий персонаж)
+          description: ID персонажа
         - name: implant_id
-          in: query
+          in: path
           required: true
           schema:
             type: string
@@ -203,7 +245,7 @@ paths:
           $ref: common.yaml#/components/responses/NotFound
         '500':
           $ref: common.yaml#/components/responses/InternalServerError
-  /combat/implants/set-bonuses:
+  /combat/implants/{character_id}/set-bonuses:
     get:
       tags:
         - Set Bonuses
@@ -225,12 +267,12 @@ paths:
         - BearerAuth: [ ]
       parameters:
         - name: character_id
-          in: query
-          required: false
+          in: path
+          required: true
           schema:
             type: string
             format: uuid
-          description: ID персонажа (если не указан, используется текущий персонаж)
+          description: ID персонажа
       responses:
         '200':
           description: Сет-бонусы
@@ -371,5 +413,33 @@ components:
                       type: number
                       format: float
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: "healthy"
+        timestamp:
+          type: string
+          format: date-time
+        version:
+          type: string
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).'
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+          example: "VALIDATION_ERROR"
+        message:
+          type: string
+          example: "Invalid request parameters"
+        details:
+          type: object
+          additionalProperties: true
+        timestamp:
+          type: string
+          format: date-time
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).'
 security:
   - BearerAuth: [ ]

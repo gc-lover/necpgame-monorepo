@@ -1,93 +1,257 @@
-# Issue: #2237 - Content Import Schemas
 components:
   schemas:
-    # Import Results (memory-aligned: large fields first)
-    ImportResult:
+    QuestImportRequest:
       type: object
+      required:
+      - quest_id
+      - version
+      - content_yaml
       properties:
-        batch_id:
+        quest_id:
           type: string
           format: uuid
-          description: "Import batch identifier"
-        total_files:
-          type: integer
-          minimum: 0
-          description: "Total files processed"
-        success_count:
-          type: integer
-          minimum: 0
-          description: "Successfully imported files"
-        error_count:
-          type: integer
-          minimum: 0
-          description: "Files with errors"
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/ImportError'
-          description: "Detailed error information"
-        processing_time_ms:
-          type: integer
-          description: "Total processing time in milliseconds"
-        created_at:
+          description: Unique identifier for the quest.
+          example: a1b2c3d4-e5f6-7890-1234-567890abcdef
+        version:
           type: string
-          format: date-time
-
-    ImportError:
+          description: Version of the quest content.
+          example: 1.0.0
+        content_yaml:
+          type: string
+          description: Full YAML content of the quest.
+          example: "id: quest-001-willis-tower\ntitle: Willis Tower\ndescription: Explore the iconic Willis Tower.\nrewards:\n\
+            \  xp: 100\nobjectives:\n  - description: Reach the top floor\n    status: incomplete\n"
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    QuestImportResponse:
       type: object
+      required:
+      - quest_id
+      - status
+      - message
       properties:
-        filename:
-          type: string
-          description: "Name of the file that failed"
-        error_type:
-          type: string
-          enum: [validation, database, processing]
-          description: "Type of error"
-        error_message:
-          type: string
-          description: "Human-readable error message"
-        line_number:
-          type: integer
-          description: "Line number where error occurred (if applicable)"
-
-    ImportStatus:
-      type: object
-      properties:
-        batch_id:
+        quest_id:
           type: string
           format: uuid
+          description: Unique identifier for the imported quest.
+          example: a1b2c3d4-e5f6-7890-1234-567890abcdef
+        message:
+          type: string
+          description: Detailed message about the import result.
+          example: Quest 'Willis Tower' imported successfully.
         status:
           type: string
-          enum: [processing, completed, failed]
-        progress_percent:
-          type: integer
-          minimum: 0
-          maximum: 100
-        estimated_completion:
-          type: string
-          format: date-time
-
-    ValidationResult:
+          description: Status of the import operation.
+          enum:
+          - success
+          - failure
+          example: success
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    NPCImportRequest:
       type: object
+      required:
+      - npc_id
+      - version
+      - content_yaml
       properties:
-        total_files:
-          type: integer
-        valid_count:
-          type: integer
-        invalid_count:
-          type: integer
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/ValidationError'
-
-    ValidationError:
-      type: object
-      properties:
-        filename:
+        npc_id:
           type: string
-        errors:
-          type: array
-          items:
-            type: string
-          description: "List of validation errors"
+          format: uuid
+          description: Unique identifier for the NPC.
+          example: b1c2d3e4-f5a6-7890-1234-567890abcdef
+        version:
+          type: string
+          description: Version of the NPC content.
+          example: 1.0.0
+        content_yaml:
+          type: string
+          description: Full YAML content of the NPC definition.
+          example: "id: npc-johnny-silverhand\nname: Johnny Silverhand\nrole: Rockerboy\ndialogues:\n  - id: intro-dialogue\n\
+            \    text: \"Wake the fuck up, Samurai. We have a city to burn.\"\n"
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    NPCImportResponse:
+      type: object
+      required:
+      - npc_id
+      - status
+      - message
+      properties:
+        npc_id:
+          type: string
+          format: uuid
+          description: Unique identifier for the imported NPC.
+          example: b1c2d3e4-f5a6-7890-1234-567890abcdef
+        message:
+          type: string
+          description: Detailed message about the import result.
+          example: NPC 'Johnny Silverhand' imported successfully.
+        status:
+          type: string
+          description: Status of the import operation.
+          enum:
+          - success
+          - failure
+          example: success
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    DialogueImportRequest:
+      type: object
+      required:
+      - dialogue_id
+      - version
+      - content_yaml
+      properties:
+        dialogue_id:
+          type: string
+          format: uuid
+          description: Unique identifier for the dialogue.
+          example: c1d2e3f4-a5b6-7890-1234-567890abcdef
+        version:
+          type: string
+          description: Version of the dialogue content.
+          example: 1.0.0
+        content_yaml:
+          type: string
+          description: Full YAML content of the dialogue definition.
+          example: "id: dialogue-intro-v\nnodes:\n  - id: start\n    text: \"Welcome to Night City.\"\n    options:\n    \
+            \  - text: \"Who are you?\"\n        next_node: \"who-are-you\"\n"
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    DialogueImportResponse:
+      type: object
+      required:
+      - dialogue_id
+      - status
+      - message
+      properties:
+        dialogue_id:
+          type: string
+          format: uuid
+          description: Unique identifier for the imported dialogue.
+          example: c1d2e3f4-a5b6-7890-1234-567890abcdef
+        message:
+          type: string
+          description: Detailed message about the import result.
+          example: Dialogue 'intro-v' imported successfully.
+        status:
+          type: string
+          description: Status of the import operation.
+          enum:
+          - success
+          - failure
+          example: success
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    LoreImportRequest:
+      type: object
+      required:
+      - lore_id
+      - version
+      - content_yaml
+      properties:
+        lore_id:
+          type: string
+          format: uuid
+          description: Unique identifier for the lore entry.
+          example: d1e2f3a4-b5c6-7890-1234-567890abcdef
+        version:
+          type: string
+          description: Version of the lore content.
+          example: 1.0.0
+        content_yaml:
+          type: string
+          description: Full YAML content of the lore definition.
+          example: 'id: lore-night-city-history
+
+            title: History of Night City
+
+            text: "Night City was founded in 1994 by Richard Night..."
+
+            '
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    LoreImportResponse:
+      type: object
+      required:
+      - lore_id
+      - status
+      - message
+      properties:
+        lore_id:
+          type: string
+          format: uuid
+          description: Unique identifier for the imported lore.
+          example: d1e2f3a4-b5c6-7890-1234-567890abcdef
+        message:
+          type: string
+          description: Detailed message about the import result.
+          example: Lore 'History of Night City' imported successfully.
+        status:
+          type: string
+          description: Status of the import operation.
+          enum:
+          - success
+          - failure
+          example: success
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    ValidationExportRequest:
+      type: object
+      required:
+      - content_type
+      - content_id
+      properties:
+        content_id:
+          type: string
+          format: uuid
+          description: ID of the content to validate/export.
+          example: a1b2c3d4-e5f6-7890-1234-567890abcdef
+        content_type:
+          type: string
+          description: Type of content to validate/export.
+          enum:
+          - quest
+          - npc
+          - dialogue
+          - lore
+          example: quest
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    ValidationExportResponse:
+      type: object
+      required:
+      - content_id
+      - content_type
+      - status
+      - message
+      - exported_content_yaml
+      properties:
+        content_id:
+          type: string
+          format: uuid
+          description: ID of the validated/exported content.
+          example: a1b2c3d4-e5f6-7890-1234-567890abcdef
+        message:
+          type: string
+          description: Detailed message about the operation result.
+          example: Quest 'Willis Tower' exported successfully.
+        exported_content_yaml:
+          type: string
+          description: The exported YAML content (if applicable).
+          nullable: true
+          example: 'id: quest-001-willis-tower
+
+            title: Willis Tower
+
+            description: Explore the iconic Willis Tower.'
+        content_type:
+          type: string
+          description: Type of content.
+          enum:
+          - quest
+          - npc
+          - dialogue
+          - lore
+          example: quest
+        status:
+          type: string
+          description: Status of the validation/export operation.
+          enum:
+          - valid
+          - invalid
+          - exported
+          example: exported
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'

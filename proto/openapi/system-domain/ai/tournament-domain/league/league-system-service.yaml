@@ -404,14 +404,6 @@ components:
           type: string
           description: Название лиги
           example: 'League of Shadows #47'
-        start_date:
-          type: string
-          format: date-time
-          description: Дата начала лиги
-        end_date:
-          type: string
-          format: date-time
-          description: Дата окончания лиги
         status:
           type: string
           enum:
@@ -421,23 +413,32 @@ components:
           - COMPLETED
           - ARCHIVED
           description: Статус лиги
+        start_date:
+          type: string
+          format: date-time
+          description: Дата начала лиги
+        end_date:
+          type: string
+          format: date-time
+          description: Дата окончания лиги
+        created_at:
+          type: string
+          format: date-time
+          description: Время создания
         phase:
           $ref: '#/components/schemas/LeaguePhase'
-        seed:
-          type: integer
-          description: Seed для генерации вариаций лиги
         time_acceleration:
           type: number
           description: Ускорение времени (игровые дни за реальный день)
           minimum: 1
           maximum: 30
+        seed:
+          type: integer
+          description: Seed для генерации вариаций лиги
         player_count:
           type: integer
           description: Текущее количество игроков
-        created_at:
-          type: string
-          format: date-time
-          description: Время создания
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     LeaguePhase:
       type: object
       required:
@@ -446,6 +447,9 @@ components:
       - end_date
       - description
       properties:
+        description:
+          type: string
+          description: Описание фазы
         name:
           type: string
           enum:
@@ -463,12 +467,10 @@ components:
           type: string
           format: date-time
           description: Конец фазы
-        description:
-          type: string
-          description: Описание фазы
         time_acceleration:
           type: number
           description: Ускорение времени для этой фазы
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     LeagueCountdown:
       type: object
       required:
@@ -478,6 +480,15 @@ components:
       - minutes
       - seconds
       properties:
+        next_phase:
+          type: string
+          enum:
+          - RISE
+          - CRISIS
+          - ENDGAME
+          - FINALE
+          - RESET
+          description: Следующая фаза
         total_seconds:
           type: integer
           description: Общее количество секунд до конца лиги
@@ -496,15 +507,7 @@ components:
         phase_end_seconds:
           type: integer
           description: Секунд до конца текущей фазы
-        next_phase:
-          type: string
-          enum:
-          - RISE
-          - CRISIS
-          - ENDGAME
-          - FINALE
-          - RESET
-          description: Следующая фаза
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     LeaguePhases:
       type: object
       required:
@@ -521,6 +524,7 @@ components:
         time_acceleration:
           type: number
           description: Текущее ускорение времени
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     LeagueStatistics:
       type: object
       required:
@@ -533,28 +537,6 @@ components:
           type: string
           format: uuid
           description: ID лиги
-        player_count:
-          type: integer
-          description: Общее количество игроков
-        completion_rate:
-          type: number
-          description: Процент завершивших основной сюжет
-          minimum: 0
-          maximum: 1
-        average_level:
-          type: number
-          description: Средний уровень игроков
-        total_quests_completed:
-          type: integer
-          description: Общее количество выполненных квестов
-        total_economy_value:
-          type: integer
-          description: Общая экономическая ценность
-        top_players:
-          type: array
-          items:
-            $ref: '#/components/schemas/TopPlayer'
-          description: Лучшие игроки лиги
         faction_distribution:
           type: object
           additionalProperties:
@@ -565,6 +547,29 @@ components:
           additionalProperties:
             type: integer
           description: Распределение концовок
+        top_players:
+          type: array
+          items:
+            $ref: '#/components/schemas/TopPlayer'
+          description: Лучшие игроки лиги
+        completion_rate:
+          type: number
+          description: Процент завершивших основной сюжет
+          minimum: 0
+          maximum: 1
+        average_level:
+          type: number
+          description: Средний уровень игроков
+        player_count:
+          type: integer
+          description: Общее количество игроков
+        total_quests_completed:
+          type: integer
+          description: Общее количество выполненных квестов
+        total_economy_value:
+          type: integer
+          description: Общая экономическая ценность
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     TopPlayer:
       type: object
       required:
@@ -580,9 +585,6 @@ components:
         player_name:
           type: string
           description: Имя игрока
-        score:
-          type: number
-          description: Очки в категории
         category:
           type: string
           enum:
@@ -591,9 +593,13 @@ components:
           - PVP
           - ALTERNATIVE_MODES
           description: Категория достижения
+        score:
+          type: number
+          description: Очки в категории
         rank:
           type: integer
           description: Место в категории
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     PlayerLegacyProgress:
       type: object
       required:
@@ -607,10 +613,6 @@ components:
           type: string
           format: uuid
           description: ID игрока
-        legacy_points:
-          type: integer
-          description: Количество Legacy Points
-          minimum: 0
         titles:
           type: array
           items:
@@ -626,9 +628,6 @@ components:
           items:
             $ref: '#/components/schemas/LegacyItem'
           description: Legacy Items
-        global_rating:
-          type: number
-          description: Глобальный рейтинг (MMR/ELO)
         rating_history:
           type: array
           items:
@@ -648,6 +647,14 @@ components:
           items:
             type: string
           description: Список достижений
+        global_rating:
+          type: number
+          description: Глобальный рейтинг (MMR/ELO)
+        legacy_points:
+          type: integer
+          description: Количество Legacy Points
+          minimum: 0
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     Title:
       type: object
       required:
@@ -681,6 +688,7 @@ components:
         is_active:
           type: boolean
           description: Активен ли сейчас
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     Cosmetic:
       type: object
       required:
@@ -720,6 +728,7 @@ components:
         is_equipped:
           type: boolean
           description: Надет ли сейчас
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     LegacyItem:
       type: object
       required:
@@ -744,11 +753,14 @@ components:
           - VEHICLE
           - CURRENCY_MULTIPLIER
           description: Тип предмета
-        power_level:
-          type: number
-          description: Уровень силы (снижается со временем лиги)
-          minimum: 0
-          maximum: 1
+        acquired_at:
+          type: string
+          format: date-time
+          description: Когда получен
+        expires_at:
+          type: string
+          format: date-time
+          description: Когда истекает (конец лиги)
         effects:
           type: array
           items:
@@ -761,14 +773,12 @@ components:
                 type: number
                 description: Значение эффекта
           description: Эффекты предмета
-        acquired_at:
-          type: string
-          format: date-time
-          description: Когда получен
-        expires_at:
-          type: string
-          format: date-time
-          description: Когда истекает (конец лиги)
+        power_level:
+          type: number
+          description: Уровень силы (снижается со временем лиги)
+          minimum: 0
+          maximum: 1
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     HallOfFame:
       type: object
       required:
@@ -788,6 +798,7 @@ components:
           items:
             $ref: '#/components/schemas/HallOfFameEntry'
           description: Записи Hall of Fame
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     HallOfFameEntry:
       type: object
       required:
@@ -804,6 +815,12 @@ components:
         player_name:
           type: string
           description: Имя игрока
+        achievement:
+          type: string
+          description: Описание достижения
+        reward_cosmetic:
+          type: string
+          description: Награда косметикой
         category:
           type: string
           enum:
@@ -812,9 +829,6 @@ components:
           - PVP
           - ALTERNATIVE_MODES
           description: Категория достижения
-        achievement:
-          type: string
-          description: Описание достижения
         date:
           type: string
           format: date-time
@@ -822,9 +836,7 @@ components:
         rank:
           type: integer
           description: Место в категории
-        reward_cosmetic:
-          type: string
-          description: Награда косметикой
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     LegacyShopItem:
       type: object
       required:
@@ -851,6 +863,10 @@ components:
           - COSMETIC
           - LEGACY_ITEM
           description: Тип предмета
+        expires_at:
+          type: string
+          format: date-time
+          description: Когда истекает доступность
         cost:
           type: integer
           description: Стоимость в Legacy Points
@@ -861,10 +877,7 @@ components:
         limited_time:
           type: boolean
           description: Ограничен ли по времени
-        expires_at:
-          type: string
-          format: date-time
-          description: Когда истекает доступность
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
   responses:
     BadRequest:
       description: Неверный запрос

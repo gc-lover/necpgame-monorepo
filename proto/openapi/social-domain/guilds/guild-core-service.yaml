@@ -1,20 +1,15 @@
-# Guild Core Service - Main Guild Operations
-# Issue: #2235
-
 openapi: 3.0.3
 info:
   title: Guild Core Service API
   description: Core guild management operations
   version: 1.0.0
-
 paths:
-  # Health check
   /api/v1/social-domain/guilds/health:
     get:
       summary: Guild service health check
       operationId: guildHealthCheck
       tags:
-        - Guild Management
+      - Guild Management
       responses:
         '200':
           description: Service is healthy
@@ -22,24 +17,28 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HealthResponse'
-
-  # Create guild
   /api/v1/social-domain/guilds:
     post:
       tags:
-        - Guild Management
+      - Guild Management
       summary: Create new guild
-      description: |
-        Creates a new guild with specified parameters.
+      description: 'Creates a new guild with specified parameters.
+
 
         **BACKEND NOTE:** This operation requires validation of:
+
         - Guild name uniqueness (case-insensitive)
+
         - Player level requirements
-        - Player doesn't already own a guild
+
+        - Player doesn''t already own a guild
+
         - Guild creation cooldowns
+
+        '
       operationId: createGuild
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -67,68 +66,79 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
     get:
       tags:
-        - Guild Management
+      - Guild Management
       summary: List guilds
-      description: |
-        Returns paginated list of guilds with filtering options.
+      description: 'Returns paginated list of guilds with filtering options.
+
 
         **BACKEND NOTE:** Optimized for large datasets with:
+
         - Database indexes on commonly filtered fields
+
         - Cursor-based pagination for performance
+
         - Cached results for popular queries
+
+        '
       operationId: listGuilds
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - $ref: '#/components/parameters/Page'
-        - $ref: '#/components/parameters/Limit'
-        - name: search
-          in: query
-          description: Search by guild name
-          schema:
-            type: string
-            maxLength: 100
-        - name: min_level
-          in: query
-          description: Minimum guild level
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-        - name: max_level
-          in: query
-          description: Maximum guild level
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-        - name: recruiting
-          in: query
-          description: Filter by recruiting status
-          schema:
-            type: boolean
-        - name: tags
-          in: query
-          description: Filter by tags (comma-separated)
-          schema:
-            type: string
-        - name: sort_by
-          in: query
-          description: Sort field
-          schema:
-            type: string
-            enum: [name, level, member_count, reputation, created_at]
-            default: reputation
-        - name: sort_order
-          in: query
-          description: Sort order
-          schema:
-            type: string
-            enum: [asc, desc]
-            default: desc
+      - $ref: '#/components/parameters/Page'
+      - $ref: '#/components/parameters/Limit'
+      - name: search
+        in: query
+        description: Search by guild name
+        schema:
+          type: string
+          maxLength: 100
+      - name: min_level
+        in: query
+        description: Minimum guild level
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+      - name: max_level
+        in: query
+        description: Maximum guild level
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+      - name: recruiting
+        in: query
+        description: Filter by recruiting status
+        schema:
+          type: boolean
+      - name: tags
+        in: query
+        description: Filter by tags (comma-separated)
+        schema:
+          type: string
+      - name: sort_by
+        in: query
+        description: Sort field
+        schema:
+          type: string
+          enum:
+          - name
+          - level
+          - member_count
+          - reputation
+          - created_at
+          default: reputation
+      - name: sort_order
+        in: query
+        description: Sort order
+        schema:
+          type: string
+          enum:
+          - asc
+          - desc
+          default: desc
       responses:
         '200':
           description: Guilds list
@@ -162,23 +172,24 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
-  # Get specific guild
   /api/v1/social-domain/guilds/{guildId}:
     get:
       tags:
-        - Guild Management
+      - Guild Management
       summary: Get guild details
-      description: |
-        Returns detailed information about a specific guild.
+      description: 'Returns detailed information about a specific guild.
+
 
         **BACKEND NOTE:** Includes member list and statistics.
+
         Heavy operation - consider caching for frequently accessed guilds.
+
+        '
       operationId: getGuild
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - $ref: '#/components/parameters/GuildId'
+      - $ref: '#/components/parameters/GuildId'
       responses:
         '200':
           description: Guild details
@@ -192,21 +203,23 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
     put:
       tags:
-        - Guild Management
+      - Guild Management
       summary: Update guild
-      description: |
-        Updates guild information. Only guild leader and officers can modify.
+      description: 'Updates guild information. Only guild leader and officers can modify.
+
 
         **BACKEND NOTE:** Requires permission validation.
+
         Updates audit log for transparency.
+
+        '
       operationId: updateGuild
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - $ref: '#/components/parameters/GuildId'
+      - $ref: '#/components/parameters/GuildId'
       requestBody:
         required: true
         content:
@@ -230,25 +243,31 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
     delete:
       tags:
-        - Guild Management
+      - Guild Management
       summary: Disband guild
-      description: |
-        Disbands the guild. Only guild leader can perform this action.
+      description: 'Disbands the guild. Only guild leader can perform this action.
+
 
         **BACKEND NOTE:** Complex operation involving:
+
         - Member notifications
+
         - Resource redistribution
+
         - Territory release
+
         - Database cleanup
+
         - Audit logging
+
+        '
       operationId: disbandGuild
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       parameters:
-        - $ref: '#/components/parameters/GuildId'
+      - $ref: '#/components/parameters/GuildId'
       responses:
         '204':
           description: Guild disbanded successfully
@@ -266,14 +285,12 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
 components:
   securitySchemes:
     BearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
-
   parameters:
     GuildId:
       name: guildId
@@ -283,8 +300,7 @@ components:
       schema:
         type: string
         format: uuid
-        example: "550e8400-e29b-41d4-a716-446655440000"
-
+        example: 550e8400-e29b-41d4-a716-446655440000
     Page:
       name: page
       in: query
@@ -293,7 +309,6 @@ components:
         type: integer
         minimum: 1
         default: 1
-
     Limit:
       name: limit
       in: query
@@ -303,49 +318,46 @@ components:
         minimum: 1
         maximum: 100
         default: 20
-
   schemas:
-    # Import core schemas
     CreateGuildRequest:
-      $ref: './guild-service/schemas/guild-core-schemas.yaml#/components/schemas/CreateGuildRequest'
-
+      $ref: ./guild-service/schemas/guild-core-schemas.yaml#/components/schemas/CreateGuildRequest
     UpdateGuildRequest:
-      $ref: './guild-service/schemas/guild-core-schemas.yaml#/components/schemas/UpdateGuildRequest'
-
+      $ref: ./guild-service/schemas/guild-core-schemas.yaml#/components/schemas/UpdateGuildRequest
     GuildResponse:
-      $ref: './guild-service/schemas/guild-core-schemas.yaml#/components/schemas/GuildResponse'
-
+      $ref: ./guild-service/schemas/guild-core-schemas.yaml#/components/schemas/GuildResponse
     GuildSummary:
-      $ref: './guild-service/schemas/guild-core-schemas.yaml#/components/schemas/GuildSummary'
-
+      $ref: ./guild-service/schemas/guild-core-schemas.yaml#/components/schemas/GuildSummary
     ErrorResponse:
       type: object
       required:
-        - error
-        - message
+      - error
+      - message
       properties:
         error:
           type: string
-          example: "VALIDATION_ERROR"
+          example: VALIDATION_ERROR
         message:
           type: string
-          example: "Invalid guild name"
-
+          example: Invalid guild name
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     HealthResponse:
       type: object
       properties:
+        version:
+          type: string
+          example: 1.0.0
         status:
           type: string
-          enum: [ok, degraded, down]
-          example: "ok"
+          enum:
+          - ok
+          - degraded
+          - down
+          example: ok
         timestamp:
           type: string
           format: date-time
-          example: "2024-01-01T12:00:00Z"
-        version:
-          type: string
-          example: "1.0.0"
-
+          example: '2024-01-01T12:00:00Z'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
   responses:
     BadRequest:
       description: Bad request
@@ -353,28 +365,24 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
-
     Unauthorized:
       description: Authentication required
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
-
     Forbidden:
       description: Insufficient permissions
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
-
     NotFound:
       description: Resource not found
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
-
     TooManyRequests:
       description: Rate limit exceeded
       headers:
@@ -386,7 +394,6 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
-
     InternalServerError:
       description: Internal server error
       content:

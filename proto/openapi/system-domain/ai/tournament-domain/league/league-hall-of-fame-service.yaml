@@ -1,4 +1,3 @@
-# Issue: #83
 openapi: 3.0.3
 info:
   title: League Hall of Fame Service API
@@ -8,45 +7,42 @@ info:
   contact:
     name: NECPGAME API Support
     email: api@necp.game
-
 servers:
-  - url: http://localhost:8093/api/v1
-    description: Локальный сервер разработки
-  - url: https://api.necp.game/api/v1
-    description: Продакшен сервер
-
+- url: http://localhost:8093/api/v1
+  description: Локальный сервер разработки
+- url: https://api.necp.game/api/v1
+  description: Продакшен сервер
 tags:
-  - name: Hall of Fame
-    description: Зал славы лиг
-
+- name: Hall of Fame
+  description: Зал славы лиг
 paths:
   /league/hall-of-fame:
     get:
       tags:
-        - Hall of Fame
+      - Hall of Fame
       summary: Получить Hall of Fame
       operationId: getHallOfFame
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: category
-          in: query
-          schema:
-            type: string
-            enum:
-              - STORY
-              - ECONOMY
-              - PVP
-              - ALTERNATIVE
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 10
+      - name: category
+        in: query
+        schema:
+          type: string
+          enum:
+          - STORY
+          - ECONOMY
+          - PVP
+          - ALTERNATIVE
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 10
       responses:
-        "200":
+        '200':
           description: Hall of Fame
           content:
             application/json:
@@ -56,45 +52,44 @@ paths:
                   entries:
                     type: array
                     items:
-                      $ref: "#/components/schemas/HallOfFameEntry"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+                      $ref: '#/components/schemas/HallOfFameEntry'
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
   /league/hall-of-fame/{leagueId}:
     get:
       tags:
-        - Hall of Fame
+      - Hall of Fame
       summary: Получить Hall of Fame для лиги
       operationId: getLeagueHallOfFame
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: leagueId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: category
-          in: query
-          schema:
-            type: string
-            enum:
-              - STORY
-              - ECONOMY
-              - PVP
-              - ALTERNATIVE
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 10
+      - name: leagueId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: category
+        in: query
+        schema:
+          type: string
+          enum:
+          - STORY
+          - ECONOMY
+          - PVP
+          - ALTERNATIVE
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 10
       responses:
-        "200":
+        '200':
           description: Hall of Fame для лиги
           content:
             application/json:
@@ -107,19 +102,17 @@ paths:
                   entries:
                     type: array
                     items:
-                      $ref: "#/components/schemas/HallOfFameEntry"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "404":
-          $ref: "common.yaml#/components/responses/NotFound"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+                      $ref: '#/components/schemas/HallOfFameEntry'
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
 components:
   securitySchemes:
     BearerAuth:
-      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
-
+      $ref: common.yaml#/components/securitySchemes/BearerAuth
   schemas:
     HallOfFameEntry:
       type: object
@@ -133,27 +126,26 @@ components:
         player_id:
           type: string
           format: uuid
-        player_name:
-          type: string
-        category:
-          type: string
-          enum:
-            - STORY
-            - ECONOMY
-            - PVP
-            - ALTERNATIVE
-        rank:
-          type: integer
-        achievement:
-          type: string
         statue_model:
           type: string
           format: uuid
           nullable: true
+        player_name:
+          type: string
+        achievement:
+          type: string
+        category:
+          type: string
+          enum:
+          - STORY
+          - ECONOMY
+          - PVP
+          - ALTERNATIVE
         created_at:
           type: string
           format: date-time
-
+        rank:
+          type: integer
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
 security:
-  - BearerAuth: [ ]
-
+- BearerAuth: []

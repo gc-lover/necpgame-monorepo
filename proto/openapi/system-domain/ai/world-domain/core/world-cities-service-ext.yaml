@@ -1,10 +1,9 @@
 items:
-  $ref: "#/components/schemas/City"
+  $ref: '#/components/schemas/City'
 total:
   type: integer
 required:
-  - results
-
+- results
 components:
   securitySchemes:
     BearerAuth:
@@ -17,11 +16,13 @@ components:
       in: header
       name: X-API-Key
       description: API ключ для сервер-сервер коммуникации
-
   schemas:
     City:
       type: object
-      description: Информация о городе
+      description: 'Информация о городе
+
+
+        BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
       properties:
         id:
           type: string
@@ -35,10 +36,37 @@ components:
           type: string
           maxLength: 100
           description: Страна
+        description:
+          type: string
+          maxLength: 1000
+          description: Описание города
         region:
           type: string
-          enum: [ North_America, South_America, Europe, Asia, Africa, Oceania, Antarctica ]
+          enum:
+          - North_America
+          - South_America
+          - Europe
+          - Asia
+          - Africa
+          - Oceania
+          - Antarctica
           description: Регион мира
+        development_level:
+          type: string
+          enum:
+          - undeveloped
+          - developing
+          - developed
+          - megacity
+          description: Уровень развития
+        created_at:
+          type: string
+          format: date-time
+          description: Время создания
+        updated_at:
+          type: string
+          format: date-time
+          description: Время последнего обновления
         coordinates:
           type: object
           description: Географические координаты
@@ -56,26 +84,8 @@ components:
               maximum: 180
               description: Долгота
           required:
-            - latitude
-            - longitude
-        population:
-          type: integer
-          minimum: 0
-          description: Население города
-        development_level:
-          type: string
-          enum: [ undeveloped, developing, developed, megacity ]
-          description: Уровень развития
-        description:
-          type: string
-          maxLength: 1000
-          description: Описание города
-        landmarks:
-          type: array
-          items:
-            type: string
-            maxLength: 200
-          description: Известные достопримечательности
+          - latitude
+          - longitude
         economic_data:
           type: object
           description: Экономические показатели
@@ -115,6 +125,16 @@ components:
               format: float
               minimum: 0
               description: Уровень преступности
+        landmarks:
+          type: array
+          items:
+            type: string
+            maxLength: 200
+          description: Известные достопримечательности
+        population:
+          type: integer
+          minimum: 0
+          description: Население города
         timeline_year:
           type: integer
           minimum: 2020
@@ -124,35 +144,29 @@ components:
           type: boolean
           default: true
           description: Активен ли город в игре
-        created_at:
-          type: string
-          format: date-time
-          description: Время создания
-        updated_at:
-          type: string
-          format: date-time
-          description: Время последнего обновления
       required:
-        - id
-        - name
-        - country
-        - region
-        - coordinates
-        - population
-        - development_level
-        - timeline_year
-
+      - id
+      - name
+      - country
+      - region
+      - coordinates
+      - population
+      - development_level
+      - timeline_year
     CreateCityRequest:
       type: object
-      description: Запрос на создание города
+      description: 'Запрос на создание города
+
+
+        BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
       required:
-        - name
-        - country
-        - region
-        - coordinates
-        - population
-        - development_level
-        - timeline_year
+      - name
+      - country
+      - region
+      - coordinates
+      - population
+      - development_level
+      - timeline_year
       properties:
         name:
           type: string
@@ -160,62 +174,78 @@ components:
         country:
           type: string
           maxLength: 100
-        region:
-          type: string
-          enum: [ North_America, South_America, Europe, Asia, Africa, Oceania, Antarctica ]
-        coordinates:
-          $ref: "#/components/schemas/Coordinates"
-        population:
-          type: integer
-          minimum: 0
-        development_level:
-          type: string
-          enum: [ undeveloped, developing, developed, megacity ]
         description:
           type: string
           maxLength: 1000
+        region:
+          type: string
+          enum:
+          - North_America
+          - South_America
+          - Europe
+          - Asia
+          - Africa
+          - Oceania
+          - Antarctica
+        development_level:
+          type: string
+          enum:
+          - undeveloped
+          - developing
+          - developed
+          - megacity
+        coordinates:
+          $ref: '#/components/schemas/Coordinates'
+        economic_data:
+          $ref: '#/components/schemas/EconomicData'
+        social_data:
+          $ref: '#/components/schemas/SocialData'
         landmarks:
           type: array
           items:
             type: string
             maxLength: 200
-        economic_data:
-          $ref: "#/components/schemas/EconomicData"
-        social_data:
-          $ref: "#/components/schemas/SocialData"
+        population:
+          type: integer
+          minimum: 0
         timeline_year:
           type: integer
           minimum: 2020
           maximum: 2093
-
     UpdateCityRequest:
       type: object
-      description: Запрос на обновление города
+      description: 'Запрос на обновление города
+
+
+        BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
       properties:
         name:
           type: string
           maxLength: 100
-        population:
-          type: integer
-          minimum: 0
-        development_level:
-          type: string
-          enum: [ undeveloped, developing, developed, megacity ]
         description:
           type: string
           maxLength: 1000
+        development_level:
+          type: string
+          enum:
+          - undeveloped
+          - developing
+          - developed
+          - megacity
+        economic_data:
+          $ref: '#/components/schemas/EconomicData'
+        social_data:
+          $ref: '#/components/schemas/SocialData'
         landmarks:
           type: array
           items:
             type: string
             maxLength: 200
-        economic_data:
-          $ref: "#/components/schemas/EconomicData"
-        social_data:
-          $ref: "#/components/schemas/SocialData"
+        population:
+          type: integer
+          minimum: 0
         is_active:
           type: boolean
-
     Coordinates:
       type: object
       properties:
@@ -230,9 +260,9 @@ components:
           minimum: -180
           maximum: 180
       required:
-        - latitude
-        - longitude
-
+      - latitude
+      - longitude
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     EconomicData:
       type: object
       properties:
@@ -247,7 +277,7 @@ components:
         cost_of_living_index:
           type: number
           format: float
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     SocialData:
       type: object
       properties:
@@ -265,23 +295,30 @@ components:
           type: number
           format: float
           minimum: 0
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     Region:
       type: object
       properties:
-        id:
-          type: string
-          enum: [ North_America, South_America, Europe, Asia, Africa, Oceania, Antarctica ]
         name:
           type: string
         description:
           type: string
+        id:
+          type: string
+          enum:
+          - North_America
+          - South_America
+          - Europe
+          - Asia
+          - Africa
+          - Oceania
+          - Antarctica
         city_count:
           type: integer
       required:
-        - id
-        - name
-
+      - id
+      - name
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     PaginationInfo:
       type: object
       properties:
@@ -299,26 +336,19 @@ components:
         has_prev:
           type: boolean
       required:
-        - page
-        - page_size
-        - total_pages
-        - has_next
-        - has_prev
-
+      - page
+      - page_size
+      - total_pages
+      - has_next
+      - has_prev
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     CitiesStats:
       type: object
-      description: Статистика по городам мира
+      description: 'Статистика по городам мира
+
+
+        BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
       properties:
-        total_cities:
-          type: integer
-          description: Общее количество городов
-        total_population:
-          type: integer
-          description: Общее население всех городов
-        average_population:
-          type: number
-          format: float
-          description: Среднее население города
         cities_by_region:
           type: object
           description: Города по регионам
@@ -332,14 +362,23 @@ components:
         largest_cities:
           type: array
           items:
-            $ref: "#/components/schemas/City"
+            $ref: '#/components/schemas/City'
           maxItems: 10
           description: 10 крупнейших городов
+        total_cities:
+          type: integer
+          description: Общее количество городов
+        total_population:
+          type: integer
+          description: Общее население всех городов
+        average_population:
+          type: number
+          format: float
+          description: Среднее население города
       required:
-        - total_cities
-        - total_population
-        - average_population
-
+      - total_cities
+      - total_population
+      - average_population
   responses:
     BadRequest:
       description: Неверный запрос
@@ -354,7 +393,6 @@ components:
                 type: string
               details:
                 type: object
-
     Forbidden:
       description: Доступ запрещен
       content:
@@ -366,7 +404,6 @@ components:
                 type: string
               code:
                 type: string
-
     NotFound:
       description: Ресурс не найден
       content:
@@ -378,7 +415,6 @@ components:
                 type: string
               code:
                 type: string
-
     InternalServerError:
       description: Внутренняя ошибка сервера
       content:

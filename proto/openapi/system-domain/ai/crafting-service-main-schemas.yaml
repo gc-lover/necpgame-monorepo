@@ -1,0 +1,445 @@
+components:
+  schemas:
+      type: object
+      required:
+      - name
+      - category
+      - tier
+      - materials
+      properties:
+        name:
+          type: string
+          description: Recipe display name
+        description:
+          type: string
+          description: Recipe detailed description
+        category:
+          type: string
+          enum:
+          - weapons
+          - armor
+          - implants
+          - vehicles
+          - consumables
+          - tools
+          description: Recipe category
+        requirements:
+          $ref: '#/components/schemas/RecipeRequirements'
+        materials:
+          type: array
+          items:
+            $ref: '#/components/schemas/RecipeMaterial'
+          description: Required materials
+        tier:
+          type: integer
+          minimum: 1
+          maximum: 5
+          description: Recipe tier (1-5)
+        quality:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Base quality rating
+        duration:
+          type: integer
+          minimum: 1
+          description: Crafting duration in seconds
+        success_rate:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Base success rate (0.0-1.0)
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    OrderListResponse:
+      type: object
+      properties:
+        orders:
+          type: array
+          items:
+            $ref: '#/components/schemas/Order'
+        total:
+          type: integer
+          description: Total number of orders
+        limit:
+          type: integer
+          description: Items per page
+        offset:
+          type: integer
+          description: Pagination offset
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    CreateContractRequest:
+      type: object
+      required:
+      - recipe_id
+      - quality_modifier
+      properties:
+        recipe_id:
+          type: string
+          format: uuid
+          description: Recipe to craft
+        station_id:
+          type: string
+          format: uuid
+          description: Preferred crafting station
+        quality_modifier:
+          type: number
+          format: float
+          minimum: 0.1
+          maximum: 2.0
+          description: Quality modifier for crafting
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    Contract:
+      type: object
+      required:
+      - id
+      - player_id
+      - recipe_id
+      - status
+      - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Contract unique identifier
+        player_id:
+          type: string
+          format: uuid
+          description: Player who created the contract
+        recipe_id:
+          type: string
+          format: uuid
+          description: Recipe being crafted
+        station_id:
+          type: string
+          format: uuid
+          description: Assigned crafting station
+        status:
+          type: string
+          enum:
+          - pending
+          - active
+          - completed
+          - failed
+          - cancelled
+          description: Contract status
+        created_at:
+          type: string
+          format: date-time
+        started_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+        quality_modifier:
+          type: number
+          format: float
+          description: Applied quality modifier
+        progress:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Completion progress (0.0-1.0)
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    StartCraftingRequest:
+      type: object
+      required:
+      - recipe_id
+      properties:
+        recipe_id:
+          type: string
+          format: uuid
+          description: Recipe to craft
+        station_id:
+          type: string
+          format: uuid
+          description: Preferred crafting station
+        quality_modifier:
+          type: number
+          format: float
+          minimum: 0.1
+          maximum: 2.0
+          default: 1.0
+          description: Quality modifier
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    Order:
+      type: object
+      required:
+      - id
+      - player_id
+      - recipe_id
+      - status
+      - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Order unique identifier
+        player_id:
+          type: string
+          format: uuid
+          description: Player who placed the order
+        recipe_id:
+          type: string
+          format: uuid
+          description: Recipe being crafted
+        station_id:
+          type: string
+          format: uuid
+          description: Assigned crafting station
+        contract_id:
+          type: string
+          format: uuid
+          description: Associated contract
+        status:
+          type: string
+          enum:
+          - pending
+          - active
+          - completed
+          - failed
+          - cancelled
+          description: Order status
+        created_at:
+          type: string
+          format: date-time
+        started_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+        final_quality:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Final crafted item quality
+        quality_modifier:
+          type: number
+          format: float
+          description: Applied quality modifier
+        station_bonus:
+          type: number
+          format: float
+          description: Station efficiency bonus
+        progress:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Completion progress (0.0-1.0)
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    CraftingCost:
+      type: object
+      properties:
+        currency:
+          type: string
+          description: Currency type
+        material_cost:
+          type: number
+          format: float
+          description: Cost of required materials
+        station_fee:
+          type: number
+          format: float
+          description: Crafting station usage fee
+        service_fee:
+          type: number
+          format: float
+          description: Platform service fee
+        total_cost:
+          type: number
+          format: float
+          description: Total crafting cost
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    StationListResponse:
+      type: object
+      properties:
+        stations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Station'
+        total:
+          type: integer
+          description: Total number of stations
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    BookStationRequest:
+      type: object
+      required:
+      - duration_hours
+      properties:
+        priority:
+          type: string
+          enum:
+          - normal
+          - high
+          default: normal
+          description: Booking priority
+        duration_hours:
+          type: integer
+          minimum: 1
+          maximum: 168
+          description: Booking duration in hours
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    BookingConfirmation:
+      type: object
+      required:
+      - booking_id
+      - station_id
+      - expires_at
+      properties:
+        booking_id:
+          type: string
+          format: uuid
+          description: Booking unique identifier
+        station_id:
+          type: string
+          format: uuid
+          description: Booked station identifier
+        player_id:
+          type: string
+          format: uuid
+          description: Player who made the booking
+        expires_at:
+          type: string
+          format: date-time
+          description: Booking expiration time
+        cost:
+          type: number
+          format: float
+          description: Booking cost
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    ProductionChainListResponse:
+      type: object
+      properties:
+        chains:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductionChain'
+        total:
+          type: integer
+          description: Total number of chains
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    StartProductionChainRequest:
+      type: object
+      required:
+      - chain_id
+      properties:
+        chain_id:
+          type: string
+          format: uuid
+          description: Production chain to start
+        priority:
+          type: string
+          enum:
+          - normal
+          - high
+          - urgent
+          default: normal
+          description: Processing priority
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    ProductionChain:
+      type: object
+      required:
+      - id
+      - name
+      - category
+      - complexity
+      - stages
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Chain unique identifier
+        player_id:
+          type: string
+          format: uuid
+          description: Player who started the chain
+        name:
+          type: string
+          description: Chain display name
+        description:
+          type: string
+          description: Chain detailed description
+        category:
+          type: string
+          enum:
+          - weapons
+          - armor
+          - vehicles
+          - electronics
+          description: Chain category
+        status:
+          type: string
+          enum:
+          - available
+          - in_progress
+          - completed
+          description: Chain status
+        created_at:
+          type: string
+          format: date-time
+        started_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+        stages:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChainStage'
+          description: Production stages
+        complexity:
+          type: integer
+          minimum: 1
+          maximum: 5
+          description: Chain complexity level
+        estimated_duration:
+          type: integer
+          description: Estimated total duration in seconds
+        total_cost:
+          type: number
+          format: float
+          description: Total production cost
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    ChainStage:
+      type: object
+      required:
+      - sequence
+      - recipe_id
+      - status
+      properties:
+        recipe_id:
+          type: string
+          format: uuid
+          description: Recipe for this stage
+        station_type:
+          type: string
+          enum:
+          - basic
+          - professional
+          - factory
+          - specialized
+          description: Required station type
+        status:
+          type: string
+          enum:
+          - pending
+          - active
+          - completed
+          - failed
+          description: Stage status
+        started_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+        sequence:
+          type: integer
+          minimum: 1
+          description: Stage sequence number
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'

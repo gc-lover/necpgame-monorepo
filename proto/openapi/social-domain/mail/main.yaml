@@ -1,0 +1,112 @@
+# Issue: #2237 - Mail System API for Backend
+openapi: 3.0.3
+info:
+  title: "Social Mail Service API"
+  description: |
+    Enterprise-grade mail service for player-to-player and system communications.
+
+    Supports personal messages, attachments, COD transactions, and system notifications.
+    Handles 100k+ concurrent players with guaranteed delivery and anti-spam protection.
+
+    BACKEND NOTE: Memory-aligned schemas for efficient mail processing.
+    Expected throughput: 10k mails/minute with attachment validation.
+  version: 1.0.0
+  contact:
+    name: "Social Systems Team"
+
+servers:
+  - url: https://api.necp.game/v1/social/mail
+    description: Production server
+  - url: http://localhost:8080/api/v1/social/mail
+    description: Local development
+
+security:
+  - BearerAuth: []
+
+paths:
+  $ref: './paths/send-mail.yaml#/paths'
+  $ref: './paths/manage-mail.yaml#/paths'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    $ref: './schemas/mail-schemas.yaml#/components/schemas'
+
+  responses:
+    BadRequest:
+      description: "Invalid request parameters"
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: string
+              details:
+                type: object
+
+    Unauthorized:
+      description: "Authentication required"
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "unauthorized"
+              message:
+                type: string
+                example: "Valid authentication required"
+
+    Forbidden:
+      description: "Access denied"
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "forbidden"
+              message:
+                type: string
+                example: "Insufficient permissions"
+
+    NotFound:
+      description: "Resource not found"
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "not_found"
+              message:
+                type: string
+                example: "Requested resource does not exist"
+
+    InternalServerError:
+      description: "Internal server error"
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "internal_error"
+              message:
+                type: string
+                example: "An unexpected error occurred"
+              request_id:
+                type: string
+                example: "req-12345"

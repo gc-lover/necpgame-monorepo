@@ -7,24 +7,24 @@ info:
     name: NECPGAME API Support
     email: api@necp.game
 servers:
-  - url: http://localhost:8084/api/v1
-    description: Локальный сервер разработки
-  - url: https://api.necp.game/api/v1
-    description: Продакшен сервер
+- url: http://localhost:8084/api/v1
+  description: Локальный сервер разработки
+- url: https://api.necp.game/api/v1
+  description: Продакшен сервер
 tags:
-  - name: Sandevistan
-    description: Управление Sandevistan системой
-  - name: Combat
-    description: Боевые механики
+- name: Sandevistan
+  description: Управление Sandevistan системой
+- name: Combat
+  description: Боевые механики
 paths:
   /sandevistan/activate:
     post:
       tags:
-        - Sandevistan
+      - Sandevistan
       summary: Активировать Sandevistan
       operationId: activateSandevistan
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -50,15 +50,14 @@ paths:
           $ref: common.yaml#/components/responses/Unauthorized
         '500':
           $ref: common.yaml#/components/responses/InternalServerError
-
   /sandevistan/deactivate:
     post:
       tags:
-        - Sandevistan
+      - Sandevistan
       summary: Деактивировать Sandevistan
       operationId: deactivateSandevistan
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       responses:
         '200':
           description: Sandevistan деактивирован
@@ -70,15 +69,14 @@ paths:
           description: Sandevistan не активен
         '401':
           $ref: common.yaml#/components/responses/Unauthorized
-
   /sandevistan/state:
     get:
       tags:
-        - Sandevistan
+      - Sandevistan
       summary: Получить состояние Sandevistan
       operationId: getSandevistanState
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       responses:
         '200':
           description: Текущее состояние Sandevistan
@@ -88,15 +86,14 @@ paths:
                 $ref: '#/components/schemas/SandevistanState'
         '401':
           $ref: common.yaml#/components/responses/Unauthorized
-
   /sandevistan/upgrade:
     post:
       tags:
-        - Sandevistan
+      - Sandevistan
       summary: Улучшить Sandevistan
       operationId: upgradeSandevistan
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -118,15 +115,14 @@ paths:
           description: Недостаточно ресурсов
         '500':
           $ref: common.yaml#/components/responses/InternalServerError
-
   /sandevistan/stats:
     get:
       tags:
-        - Sandevistan
+      - Sandevistan
       summary: Получить статистику Sandevistan
       operationId: getSandevistanStats
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       responses:
         '200':
           description: Статистика Sandevistan
@@ -136,7 +132,6 @@ paths:
                 $ref: '#/components/schemas/SandevistanStats'
         '401':
           $ref: common.yaml#/components/responses/Unauthorized
-
 components:
   securitySchemes:
     BearerAuth:
@@ -152,12 +147,9 @@ components:
           minimum: 0.1
           maximum: 30.0
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     SandevistanState:
       type: object
       properties:
-        is_active:
-          type: boolean
         activation_time:
           type: string
           format: date-time
@@ -182,48 +174,48 @@ components:
           type: number
           format: float
           description: Уровень нагрева импланта
+        is_active:
+          type: boolean
       required:
-        - is_active
-        - time_dilation
-        - cooldown_remaining
-        - cyberpsychosis_level
-        - heat_level
+      - is_active
+      - time_dilation
+      - cooldown_remaining
+      - cyberpsychosis_level
+      - heat_level
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     CooldownError:
       type: object
       properties:
         error:
           type: string
+        message:
+          type: string
         cooldown_remaining:
           type: number
           format: float
-        message:
-          type: string
       required:
-        - error
-        - cooldown_remaining
-        - message
-
+      - error
+      - cooldown_remaining
+      - message
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     UpgradeSandevistanRequest:
       type: object
       properties:
         upgrade_type:
           type: string
           enum:
-            - duration
-            - cooldown
-            - cyberpsychosis_resistance
-            - heat_dissipation
+          - duration
+          - cooldown
+          - cyberpsychosis_resistance
+          - heat_dissipation
         level:
           type: integer
           minimum: 1
           maximum: 10
       required:
-        - upgrade_type
-        - level
+      - upgrade_type
+      - level
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     SandevistanStats:
       type: object
       properties:
@@ -231,6 +223,12 @@ components:
           type: integer
           minimum: 0
           maximum: 10
+        total_activations:
+          type: integer
+          description: Общее количество активаций
+        best_streak:
+          type: integer
+          description: Лучшая серия активаций
         max_duration:
           type: number
           format: float
@@ -251,32 +249,25 @@ components:
           type: number
           format: float
           description: Скорость охлаждения
-        total_activations:
-          type: integer
-          description: Общее количество активаций
         total_duration:
           type: number
           format: float
           description: Общее время использования (секунды)
-        best_streak:
-          type: integer
-          description: Лучшая серия активаций
         average_duration:
           type: number
           format: float
           description: Средняя длительность активации
       required:
-        - level
-        - max_duration
-        - cooldown_time
-        - time_dilation_base
-        - cyberpsychosis_resistance
-        - heat_dissipation_rate
-        - total_activations
-        - total_duration
-        - best_streak
-        - average_duration
+      - level
+      - max_duration
+      - cooldown_time
+      - time_dilation_base
+      - cyberpsychosis_resistance
+      - heat_dissipation_rate
+      - total_activations
+      - total_duration
+      - best_streak
+      - average_duration
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
 security:
-  - BearerAuth: [ ]
+- BearerAuth: []

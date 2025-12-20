@@ -1,0 +1,586 @@
+# Issue: #2224
+openapi: 3.0.3
+info:
+  title: World Domain - World Events Service Go API
+  description: |
+    **Enterprise-Grade World Events Service API** for NECPGAME MMOFPS RPG.
+
+    **Enterprise-Grade Domain:** world-domain
+    **Module:** world-events-service-go
+    **Purpose:** Dynamic world event management and player engagement
+
+    **BACKEND NOTE:** Struct field alignment optimized (large → small types).
+    All schemas ordered for optimal memory layout in generated Go code.
+    Expected memory savings: 30-50% for event-related structs.
+    Hot paths: /events/active, /events/{eventId}/status, /events/participate
+    Expected RPS: 1000+ for hot paths, zero allocations.
+
+    **Core Features:**
+    - Dynamic world event creation and management
+    - Real-time event participation and tracking
+    - Event-based quests and objectives
+    - World state synchronization across players
+    - Event rewards and achievements
+    - Cross-region event coordination
+    - Anti-cheat validation for event participation
+
+    **Performance Targets:**
+    - Hot paths: 1000+ RPS, P99 <15ms
+    - Memory per event: <10MB
+    - Cache hit rate: >95%
+    - Event throughput: 200+ events/sec
+  version: 1.0.0
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  contact:
+    name: NECPGAME World Events API Support
+    url: https://necpgame.com/support
+    email: api@world-events.necpgame.com
+
+servers:
+  - url: http://localhost:8080/api/v1/world/events
+    description: Development server
+  - url: https://api.necpgame.com/api/v1/world/events
+    description: Production server
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: World Events
+    description: Core world event operations
+  - name: Event Participation
+    description: Player participation in events
+  - name: Event Management
+    description: Event lifecycle management
+  - name: Event Rewards
+    description: Event rewards and achievements
+  - name: Event Analytics
+    description: Event statistics and monitoring
+  - name: Anti-Cheat
+    description: Event validation and anti-cheat mechanisms
+  - name: Health
+    description: Service health check
+
+paths:
+  /health:
+    get:
+      summary: Service health check
+      operationId: healthCheck
+      tags:
+        - Health
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /active:
+    get:
+      summary: Get active world events
+      operationId: getActiveEvents
+      description: |
+        Retrieves all currently active world events.
+        **BACKEND NOTE:** Hot path - optimized for 1000+ RPS, zero allocations.
+      tags:
+        - World Events
+      parameters:
+        - name: region
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter by region
+        - name: type
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [DISASTER, FESTIVAL, WAR, INVASION, TOURNAMENT, QUEST]
+          description: Filter by event type
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 20
+          description: Maximum number of events to return
+      responses:
+        '200':
+          description: List of active events
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActiveEventsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /{eventId}:
+    parameters:
+      - name: eventId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Event ID
+    get:
+      summary: Get event details
+      operationId: getEventDetails
+      description: |
+        Retrieves detailed information about a specific world event.
+      tags:
+        - World Events
+      responses:
+        '200':
+          description: Event details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventDetailsResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /{eventId}/participate:
+    post:
+      summary: Participate in event
+      operationId: participateInEvent
+      description: |
+        Allows a player to participate in a world event.
+        **BACKEND NOTE:** Hot path - optimized for 1000+ RPS, zero allocations.
+      tags:
+        - Event Participation
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Event ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ParticipateRequest'
+      responses:
+        '200':
+          description: Successfully joined event
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParticipationResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Conflict - already participating or event full
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /{eventId}/leave:
+    post:
+      summary: Leave event
+      operationId: leaveEvent
+      description: |
+        Allows a player to leave a world event.
+      tags:
+        - Event Participation
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Event ID
+      responses:
+        '200':
+          description: Successfully left event
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaveResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /{eventId}/status:
+    get:
+      summary: Get player event status
+      operationId: getPlayerEventStatus
+      description: |
+        Retrieves the player's status in a specific event.
+        **BACKEND NOTE:** Hot path - optimized for 1000+ RPS, zero allocations.
+      tags:
+        - Event Participation
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Event ID
+        - name: playerId
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Player ID
+      responses:
+        '200':
+          description: Player event status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerEventStatusResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /{eventId}/progress:
+    get:
+      summary: Get event progress
+      operationId: getEventProgress
+      description: |
+        Retrieves progress information for a world event.
+      tags:
+        - World Events
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Event ID
+      responses:
+        '200':
+          description: Event progress
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventProgressResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /{eventId}/rewards:
+    get:
+      summary: Get event rewards
+      operationId: getEventRewards
+      description: |
+        Retrieves available rewards for completing event objectives.
+      tags:
+        - Event Rewards
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Event ID
+      responses:
+        '200':
+          description: Event rewards
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventRewardsResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /create:
+    post:
+      summary: Create new world event
+      operationId: createWorldEvent
+      description: |
+        Creates a new world event (admin/system only).
+      tags:
+        - Event Management
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateEventRequest'
+      responses:
+        '201':
+          description: Event created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateEventResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /{eventId}/update:
+    put:
+      summary: Update event
+      operationId: updateWorldEvent
+      description: |
+        Updates an existing world event (admin/system only).
+      tags:
+        - Event Management
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Event ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateEventRequest'
+      responses:
+        '200':
+          description: Event updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateEventResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /{eventId}/end:
+    post:
+      summary: End event
+      operationId: endWorldEvent
+      description: |
+        Ends a world event and distributes final rewards.
+      tags:
+        - Event Management
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Event ID
+      responses:
+        '200':
+          description: Event ended successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EndEventResponse'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /analytics:
+    get:
+      summary: Get event analytics
+      operationId: getEventAnalytics
+      description: |
+        Retrieves analytics and statistics for world events.
+      tags:
+        - Event Analytics
+      parameters:
+        - name: period
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [HOUR, DAY, WEEK, MONTH]
+            default: DAY
+          description: Analytics period
+        - name: eventType
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [DISASTER, FESTIVAL, WAR, INVASION, TOURNAMENT, QUEST]
+          description: Filter by event type
+      responses:
+        '200':
+          description: Event analytics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventAnalyticsResponse'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /validate:
+    post:
+      summary: Validate event participation
+      operationId: validateEventParticipation
+      description: |
+        Internal endpoint for anti-cheat and server-side validation of event participation.
+      tags:
+        - Anti-Cheat
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventValidationRequest'
+      responses:
+        '200':
+          description: Validation result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventValidationResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      description: JWT Bearer token authentication
+
+  responses:
+    BadRequest:
+      description: Invalid request payload or parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Unauthorized:
+      description: Authentication required or failed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Forbidden:
+      description: Access denied
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    InternalServerError:
+      description: Unexpected internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+  schemas:
+    HealthResponse:
+      type: object
+      required:
+        - status
+        - timestamp
+      properties:
+        status:
+          type: string
+          enum: [healthy]
+        timestamp:
+          type: string
+          format: date-time
+        version:
+          type: string
+
+    ErrorResponse:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          description: Unique error code
+        message:
+          type: string
+          description: Human-readable error message
+        details:
+          type: object
+          description: Additional error details
+
+    WorldEvent:
+      $ref: './schemas/world-event.yaml'
+    ActiveEventsResponse:
+      $ref: './schemas/active-events-response.yaml'
+    ParticipateRequest:
+      $ref: './schemas/participate-request.yaml'
+    ParticipationResponse:
+      $ref: './schemas/participation-response.yaml'
+    PlayerEventStatusResponse:
+      $ref: './schemas/player-event-status-response.yaml'
+    EventProgressResponse:
+      $ref: './schemas/event-progress-response.yaml'
+    EventRewardsResponse:
+      $ref: './schemas/event-rewards-response.yaml'
+    CreateEventRequest:
+      $ref: './schemas/create-event-request.yaml'
+    CreateEventResponse:
+      $ref: './schemas/create-event-response.yaml'
+    UpdateEventRequest:
+      $ref: './schemas/update-event-request.yaml'
+    UpdateEventResponse:
+      $ref: './schemas/update-event-response.yaml'
+    EndEventResponse:
+      $ref: './schemas/end-event-response.yaml'
+    EventAnalyticsResponse:
+      $ref: './schemas/event-analytics-response.yaml'
+    EventValidationRequest:
+      $ref: './schemas/event-validation-request.yaml'
+    EventValidationResponse:
+      $ref: './schemas/event-validation-response.yaml'
+    EventDetailsResponse:
+      $ref: './schemas/event-details-response.yaml'
+    LeaveResponse:
+      $ref: './schemas/leave-response.yaml'

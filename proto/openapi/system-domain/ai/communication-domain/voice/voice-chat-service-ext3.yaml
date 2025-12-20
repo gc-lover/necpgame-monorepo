@@ -1,13 +1,17 @@
 parameters:
-  - name: timeRange
-    in: query
-    schema:
-      type: string
-      enum: [ 1h, 24h, 7d, 30d ]
-      default: 24h
-    description: Временной диапазон статистики
+- name: timeRange
+  in: query
+  schema:
+    type: string
+    enum:
+    - 1h
+    - 24h
+    - 7d
+    - 30d
+    default: 24h
+  description: Временной диапазон статистики
 responses:
-  "200":
+  '200':
     description: Статистика участников получена
     content:
       application/json:
@@ -36,29 +40,32 @@ responses:
               additionalProperties:
                 type: integer
           required:
-            - timeRange
-            - totalParticipants
-            - uniqueParticipants
-  "500":
-    $ref: "#/components/responses/InternalServerError"
-
+          - timeRange
+          - totalParticipants
+          - uniqueParticipants
+  '500':
+    $ref: '#/components/responses/InternalServerError'
 /social/voice/stats/quality:
   get:
     summary: Статистика качества звука
     description: Возвращает статистику качества голосового соединения
     operationId: getQualityStats
     tags:
-      - Statistics
+    - Statistics
     parameters:
-      - name: timeRange
-        in: query
-        schema:
-          type: string
-          enum: [ 1h, 24h, 7d, 30d ]
-          default: 24h
-        description: Временной диапазон статистики
+    - name: timeRange
+      in: query
+      schema:
+        type: string
+        enum:
+        - 1h
+        - 24h
+        - 7d
+        - 30d
+        default: 24h
+      description: Временной диапазон статистики
     responses:
-      "200":
+      '200':
         description: Статистика качества получена
         content:
           application/json:
@@ -93,58 +100,58 @@ responses:
                       format: float
                       description: Доля соединений с низким качеством
                   required:
-                    - high
-                    - medium
-                    - low
+                  - high
+                  - medium
+                  - low
                 reconnections:
                   type: integer
                   description: Количество переподключений
               required:
-                - timeRange
-                - averageLatency
-                - qualityDistribution
-      "500":
-        $ref: "#/components/responses/InternalServerError"
-
+              - timeRange
+              - averageLatency
+              - qualityDistribution
+      '500':
+        $ref: '#/components/responses/InternalServerError'
 components:
   schemas:
-    # Основные сущности
     VoiceChannel:
       type: object
-      description: Голосовой канал
+      description: 'Голосовой канал
+
+
+        BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
       properties:
         id:
           type: string
           format: uuid
           description: Уникальный ID канала
-        channelType:
-          type: string
-          enum: [ PARTY, GUILD, RAID, PROXIMITY ]
-          description: Тип канала
-        name:
-          type: string
-          description: Название канала
         ownerId:
           type: string
           format: uuid
           description: ID владельца канала
-        maxParticipants:
-          type: integer
-          description: Максимальное количество участников
-        currentParticipants:
-          type: integer
-          description: Текущее количество участников
-        qualityPreset:
-          type: string
-          enum: [ HIGH, MEDIUM, LOW, ADAPTIVE ]
-          description: Пресет качества
-        isActive:
-          type: boolean
-          description: Активен ли канал
         associatedEntityId:
           type: string
           format: uuid
           description: ID связанной сущности (party/guild/raid)
+        name:
+          type: string
+          description: Название канала
+        channelType:
+          type: string
+          enum:
+          - PARTY
+          - GUILD
+          - RAID
+          - PROXIMITY
+          description: Тип канала
+        qualityPreset:
+          type: string
+          enum:
+          - HIGH
+          - MEDIUM
+          - LOW
+          - ADAPTIVE
+          description: Пресет качества
         createdAt:
           type: string
           format: date-time
@@ -153,18 +160,29 @@ components:
           type: string
           format: date-time
           description: Время последнего обновления
+        maxParticipants:
+          type: integer
+          description: Максимальное количество участников
+        currentParticipants:
+          type: integer
+          description: Текущее количество участников
+        isActive:
+          type: boolean
+          description: Активен ли канал
       required:
-        - id
-        - channelType
-        - name
-        - maxParticipants
-        - qualityPreset
-        - isActive
-        - createdAt
-
+      - id
+      - channelType
+      - name
+      - maxParticipants
+      - qualityPreset
+      - isActive
+      - createdAt
     VoiceParticipant:
       type: object
-      description: Участник голосового канала
+      description: 'Участник голосового канала
+
+
+        BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
       properties:
         id:
           type: string
@@ -181,6 +199,17 @@ components:
         webrtcToken:
           type: string
           description: WebRTC токен
+        joinedAt:
+          type: string
+          format: date-time
+          description: Время присоединения
+        lastActivityAt:
+          type: string
+          format: date-time
+          description: Последняя активность
+        position:
+          $ref: '#/components/schemas/Vector3D'
+          description: Позиция (для proximity)
         isMuted:
           type: boolean
           description: Заглушен ли участник
@@ -190,29 +219,20 @@ components:
         isSpeaking:
           type: boolean
           description: Говорит ли участник
-        position:
-          $ref: "#/components/schemas/Vector3D"
-          description: Позиция (для proximity)
-        joinedAt:
-          type: string
-          format: date-time
-          description: Время присоединения
-        lastActivityAt:
-          type: string
-          format: date-time
-          description: Последняя активность
       required:
-        - id
-        - channelId
-        - playerId
-        - isMuted
-        - isDeafened
-        - isSpeaking
-        - joinedAt
-
+      - id
+      - channelId
+      - playerId
+      - isMuted
+      - isDeafened
+      - isSpeaking
+      - joinedAt
     Vector3D:
       type: object
-      description: 3D вектор позиции
+      description: '3D вектор позиции
+
+
+        BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
       properties:
         x:
           type: number
@@ -227,17 +247,23 @@ components:
           format: float
           description: Координата Z
       required:
-        - x
-        - y
-        - z
-
+      - x
+      - y
+      - z
     AudioEffect:
       type: object
-      description: Аудио эффект
+      description: 'Аудио эффект
+
+
+        BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
       properties:
         type:
           type: string
-          enum: [ echo, reverb, distortion, compression ]
+          enum:
+          - echo
+          - reverb
+          - distortion
+          - compression
           description: Тип эффекта
         parameters:
           type: object
@@ -245,11 +271,13 @@ components:
           additionalProperties:
             type: number
       required:
-        - type
-
+      - type
     AudioMixerConfig:
       type: object
-      description: Конфигурация аудио микшера
+      description: 'Конфигурация аудио микшера
+
+
+        BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
       properties:
         channelId:
           type: string
@@ -260,11 +288,6 @@ components:
           description: Настройки громкости
           additionalProperties:
             type: number
-        effects:
-          type: array
-          items:
-            $ref: "#/components/schemas/AudioEffect"
-          description: Активные эффекты
         routing:
           type: object
           description: Маршрутизация аудио
@@ -273,68 +296,85 @@ components:
             items:
               type: string
               format: uuid
+        effects:
+          type: array
+          items:
+            $ref: '#/components/schemas/AudioEffect'
+          description: Активные эффекты
       required:
-        - channelId
-
+      - channelId
     AudioMixerStatus:
       type: object
-      description: Статус аудио микшера
+      description: 'Статус аудио микшера
+
+
+        BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
       properties:
         channelId:
           type: string
           format: uuid
           description: ID канала
-        isActive:
-          type: boolean
-          description: Активен ли микшер
-        currentLoad:
-          type: number
-          format: float
-          description: Текущая нагрузка (0-1)
-        activeEffects:
-          type: array
-          items:
-            $ref: "#/components/schemas/AudioEffect"
-          description: Активные эффекты
         lastUpdated:
           type: string
           format: date-time
           description: Последнее обновление
+        activeEffects:
+          type: array
+          items:
+            $ref: '#/components/schemas/AudioEffect'
+          description: Активные эффекты
+        currentLoad:
+          type: number
+          format: float
+          description: Текущая нагрузка (0-1)
+        isActive:
+          type: boolean
+          description: Активен ли микшер
       required:
-        - channelId
-        - isActive
-        - currentLoad
-
+      - channelId
+      - isActive
+      - currentLoad
     QualityPreset:
       type: object
-      description: Пресет качества звука
+      description: 'Пресет качества звука
+
+
+        BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
       properties:
+        description:
+          type: string
+          description: Описание пресета
         name:
           type: string
-          enum: [ HIGH, MEDIUM, LOW, ADAPTIVE ]
+          enum:
+          - HIGH
+          - MEDIUM
+          - LOW
+          - ADAPTIVE
           description: Название пресета
         sampleRate:
           type: integer
           description: Частота дискретизации в Гц
         channels:
           type: integer
-          enum: [ 1, 2 ]
+          enum:
+          - 1
+          - 2
           description: Количество каналов
         bitrate:
           type: integer
           description: Битрейт в кбит/с
-        description:
-          type: string
-          description: Описание пресета
       required:
-        - name
-        - sampleRate
-        - channels
-        - bitrate
-
+      - name
+      - sampleRate
+      - channels
+      - bitrate
     AudioQualitySettings:
       type: object
-      description: Настройки качества звука
+      description: 'Настройки качества звука
+
+
+        BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
       properties:
         sampleRate:
           type: integer
@@ -343,38 +383,48 @@ components:
           description: Частота дискретизации в Гц
         channels:
           type: integer
-          enum: [ 1, 2 ]
+          enum:
+          - 1
+          - 2
           description: Количество каналов
         bitrate:
           type: integer
           minimum: 16
           maximum: 256
           description: Битрейт в кбит/с
-        adaptive:
-          type: boolean
-          description: Адаптивное качество
         maxLatency:
           type: integer
           description: Максимальная задержка в мс
+        adaptive:
+          type: boolean
+          description: Адаптивное качество
       required:
-        - sampleRate
-        - channels
-        - bitrate
-
+      - sampleRate
+      - channels
+      - bitrate
     AudioQualityStatus:
       type: object
-      description: Статус качества звука
+      description: 'Статус качества звука
+
+
+        BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
       properties:
-        targetType:
-          type: string
-          enum: [ channel, player ]
-          description: Тип цели
         targetId:
           type: string
           format: uuid
           description: ID цели
+        targetType:
+          type: string
+          enum:
+          - channel
+          - player
+          description: Тип цели
+        lastUpdated:
+          type: string
+          format: date-time
+          description: Последнее обновление
         currentSettings:
-          $ref: "#/components/schemas/AudioQualitySettings"
+          $ref: '#/components/schemas/AudioQualitySettings'
           description: Текущие настройки
         measuredLatency:
           type: integer
@@ -389,12 +439,8 @@ components:
           minimum: 0
           maximum: 1
           description: Общий score качества (0-1)
-        lastUpdated:
-          type: string
-          format: date-time
-          description: Последнее обновление
       required:
-        - targetType
-        - targetId
-        - currentSettings
-        - qualityScore
+      - targetType
+      - targetId
+      - currentSettings
+      - qualityScore

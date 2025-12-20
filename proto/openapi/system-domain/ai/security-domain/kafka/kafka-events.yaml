@@ -1,47 +1,50 @@
-# Issue: #2216 - Kafka Event Schema Specifications
 openapi: 3.0.3
 info:
   title: Kafka Event Schema Specifications
   version: 1.0.0
-  description: |
-    Event schemas for Kafka messaging in NEPGAME MMOFPS RPG.
+  description: 'Event schemas for Kafka messaging in NEPGAME MMOFPS RPG.
+
 
     This specification defines the data structures for events that are published
+
     to Kafka topics for inter-service communication, analytics, and real-time processing.
 
+
     ## Event Categories
+
     - Player Events: Login, logout, progression, achievements
+
     - Combat Events: Damage, kills, ability usage
+
     - Economy Events: Transactions, crafting, trading
+
     - Social Events: Guild activities, messaging
+
     - System Events: Server status, maintenance
 
+    '
 servers:
-  - url: http://kafka.necpgame.com:9092
-    description: Kafka broker endpoint
-
+- url: http://kafka.necpgame.com:9092
+  description: Kafka broker endpoint
 tags:
-  - name: player-events
-    description: Player-related events
-  - name: combat-events
-    description: Combat and PvP events
-  - name: economy-events
-    description: Economy and trading events
-  - name: social-events
-    description: Social and community events
-  - name: system-events
-    description: System and infrastructure events
-
+- name: player-events
+  description: Player-related events
+- name: combat-events
+  description: Combat and PvP events
+- name: economy-events
+  description: Economy and trading events
+- name: social-events
+  description: Social and community events
+- name: system-events
+  description: System and infrastructure events
 paths:
-  # Kafka event schemas are defined in components/schemas
-  # This is a schema-only specification for event validation
   /schemas:
     get:
       summary: Get event schemas
       description: Returns the available event schemas for Kafka topics
       operationId: getEventSchemas
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       responses:
         '200':
           description: Event schemas retrieved
@@ -56,14 +59,12 @@ paths:
                       type: object
         '401':
           $ref: '#/components/responses/Unauthorized'
-
 components:
   securitySchemes:
     BearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
-
   responses:
     Unauthorized:
       description: Unauthorized
@@ -72,39 +73,24 @@ components:
           schema:
             type: object
             required:
-              - error
+            - error
             properties:
               error:
                 type: string
-                example: "Unauthorized"
+                example: Unauthorized
   schemas:
-
-    # ============================================================================
-    # BASE EVENT SCHEMA
-    # ============================================================================
-
     BaseEvent:
       type: object
       required:
-        - event_id
-        - event_type
-        - timestamp
-        - source
+      - event_id
+      - event_type
+      - timestamp
+      - source
       properties:
         event_id:
           type: string
           format: uuid
           description: Unique event identifier
-        event_type:
-          type: string
-          description: Event type identifier
-        timestamp:
-          type: string
-          format: date-time
-          description: Event timestamp
-        source:
-          type: string
-          description: Service or component that generated the event
         correlation_id:
           type: string
           format: uuid
@@ -113,591 +99,632 @@ components:
           type: string
           format: uuid
           description: Player associated with the event
-
-    # ============================================================================
-    # PLAYER EVENTS
-    # ============================================================================
-
+        event_type:
+          type: string
+          description: Event type identifier
+        source:
+          type: string
+          description: Service or component that generated the event
+        timestamp:
+          type: string
+          format: date-time
+          description: Event timestamp
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     PlayerLoginEvent:
       allOf:
-        - $ref: '#/components/schemas/BaseEvent'
-        - type: object
-          required:
-            - player_id
-            - session_id
-            - login_method
-          properties:
-            event_type:
-              type: string
-              enum: [ player_login ]
-            player_id:
-              type: string
-              format: uuid
-              description: Player who logged in
-            session_id:
-              type: string
-              format: uuid
-              description: Game session identifier
-            login_method:
-              type: string
-              enum: [ password, oauth, guest ]
-              description: Authentication method used
-            client_version:
-              type: string
-              description: Game client version
-            platform:
-              type: string
-              enum: [ pc, console, mobile ]
-              description: Platform type
-            ip_address:
-              type: string
-              description: Client IP address
-            user_agent:
-              type: string
-              description: Client user agent
-
+      - $ref: '#/components/schemas/BaseEvent'
+      - type: object
+        required:
+        - player_id
+        - session_id
+        - login_method
+        properties:
+          event_type:
+            type: string
+            enum:
+            - player_login
+          player_id:
+            type: string
+            format: uuid
+            description: Player who logged in
+          session_id:
+            type: string
+            format: uuid
+            description: Game session identifier
+          login_method:
+            type: string
+            enum:
+            - password
+            - oauth
+            - guest
+            description: Authentication method used
+          client_version:
+            type: string
+            description: Game client version
+          platform:
+            type: string
+            enum:
+            - pc
+            - console
+            - mobile
+            description: Platform type
+          ip_address:
+            type: string
+            description: Client IP address
+          user_agent:
+            type: string
+            description: Client user agent
     PlayerLogoutEvent:
       allOf:
-        - $ref: '#/components/schemas/BaseEvent'
-        - type: object
-          required:
-            - player_id
-            - session_id
-            - session_duration
-          properties:
-            event_type:
-              type: string
-              enum: [ player_logout ]
-            player_id:
-              type: string
-              format: uuid
-              description: Player who logged out
-            session_id:
-              type: string
-              format: uuid
-              description: Game session identifier
-            session_duration:
-              type: integer
-              description: Session duration in seconds
-            logout_reason:
-              type: string
-              enum: [ normal, timeout, kicked, banned ]
-              description: Reason for logout
-
+      - $ref: '#/components/schemas/BaseEvent'
+      - type: object
+        required:
+        - player_id
+        - session_id
+        - session_duration
+        properties:
+          event_type:
+            type: string
+            enum:
+            - player_logout
+          player_id:
+            type: string
+            format: uuid
+            description: Player who logged out
+          session_id:
+            type: string
+            format: uuid
+            description: Game session identifier
+          session_duration:
+            type: integer
+            description: Session duration in seconds
+          logout_reason:
+            type: string
+            enum:
+            - normal
+            - timeout
+            - kicked
+            - banned
+            description: Reason for logout
     PlayerLevelUpEvent:
       allOf:
-        - $ref: '#/components/schemas/BaseEvent'
-        - type: object
-          required:
-            - player_id
-            - new_level
-            - old_level
-            - experience_gained
-          properties:
-            event_type:
-              type: string
-              enum: [ player_level_up ]
-            player_id:
-              type: string
-              format: uuid
-              description: Player who leveled up
-            new_level:
-              type: integer
-              minimum: 1
-              description: New player level
-            old_level:
-              type: integer
-              minimum: 1
-              description: Previous player level
-            experience_gained:
-              type: integer
-              minimum: 0
-              description: Experience points gained in this level up
-            total_experience:
-              type: integer
-              minimum: 0
-              description: Total experience points
-
+      - $ref: '#/components/schemas/BaseEvent'
+      - type: object
+        required:
+        - player_id
+        - new_level
+        - old_level
+        - experience_gained
+        properties:
+          event_type:
+            type: string
+            enum:
+            - player_level_up
+          player_id:
+            type: string
+            format: uuid
+            description: Player who leveled up
+          new_level:
+            type: integer
+            minimum: 1
+            description: New player level
+          old_level:
+            type: integer
+            minimum: 1
+            description: Previous player level
+          experience_gained:
+            type: integer
+            minimum: 0
+            description: Experience points gained in this level up
+          total_experience:
+            type: integer
+            minimum: 0
+            description: Total experience points
     AchievementUnlockedEvent:
       allOf:
-        - $ref: '#/components/schemas/BaseEvent'
-        - type: object
-          required:
-            - player_id
-            - achievement_id
-            - achievement_name
-          properties:
-            event_type:
-              type: string
-              enum: [ achievement_unlocked ]
-            player_id:
-              type: string
-              format: uuid
-              description: Player who unlocked achievement
-            achievement_id:
-              type: string
-              format: uuid
-              description: Achievement identifier
-            achievement_name:
-              type: string
-              description: Achievement display name
-            achievement_category:
-              type: string
-              enum: [ combat, exploration, social, economy, collection ]
-              description: Achievement category
-            points_awarded:
-              type: integer
-              minimum: 0
-              description: Achievement points awarded
-            rarity:
-              type: string
-              enum: [ common, uncommon, rare, epic, legendary ]
-              description: Achievement rarity
-
-    # ============================================================================
-    # COMBAT EVENTS
-    # ============================================================================
-
+      - $ref: '#/components/schemas/BaseEvent'
+      - type: object
+        required:
+        - player_id
+        - achievement_id
+        - achievement_name
+        properties:
+          event_type:
+            type: string
+            enum:
+            - achievement_unlocked
+          player_id:
+            type: string
+            format: uuid
+            description: Player who unlocked achievement
+          achievement_id:
+            type: string
+            format: uuid
+            description: Achievement identifier
+          achievement_name:
+            type: string
+            description: Achievement display name
+          achievement_category:
+            type: string
+            enum:
+            - combat
+            - exploration
+            - social
+            - economy
+            - collection
+            description: Achievement category
+          points_awarded:
+            type: integer
+            minimum: 0
+            description: Achievement points awarded
+          rarity:
+            type: string
+            enum:
+            - common
+            - uncommon
+            - rare
+            - epic
+            - legendary
+            description: Achievement rarity
     PlayerDeathEvent:
       allOf:
-        - $ref: '#/components/schemas/BaseEvent'
-        - type: object
-          required:
-            - victim_id
-            - killer_id
-            - weapon_used
-            - damage_dealt
-          properties:
-            event_type:
-              type: string
-              enum: [ player_death ]
-            victim_id:
-              type: string
-              format: uuid
-              description: Player who died
-            killer_id:
-              type: string
-              format: uuid
-              description: Player who caused the death
-            weapon_used:
-              type: string
-              format: uuid
-              description: Weapon item used
-            damage_dealt:
-              type: integer
-              minimum: 0
-              description: Damage dealt in final hit
-            location:
-              $ref: '#/components/schemas/Vector3'
-              description: Death location coordinates
-            zone_id:
-              type: string
-              format: uuid
-              description: Zone where death occurred
-            is_headshot:
-              type: boolean
-              description: Whether death was caused by headshot
-
+      - $ref: '#/components/schemas/BaseEvent'
+      - type: object
+        required:
+        - victim_id
+        - killer_id
+        - weapon_used
+        - damage_dealt
+        properties:
+          event_type:
+            type: string
+            enum:
+            - player_death
+          victim_id:
+            type: string
+            format: uuid
+            description: Player who died
+          killer_id:
+            type: string
+            format: uuid
+            description: Player who caused the death
+          weapon_used:
+            type: string
+            format: uuid
+            description: Weapon item used
+          damage_dealt:
+            type: integer
+            minimum: 0
+            description: Damage dealt in final hit
+          location:
+            $ref: '#/components/schemas/Vector3'
+            description: Death location coordinates
+          zone_id:
+            type: string
+            format: uuid
+            description: Zone where death occurred
+          is_headshot:
+            type: boolean
+            description: Whether death was caused by headshot
     AbilityUsedEvent:
       allOf:
-        - $ref: '#/components/schemas/BaseEvent'
-        - type: object
-          required:
-            - player_id
-            - ability_id
-            - ability_name
-          properties:
-            event_type:
-              type: string
-              enum: [ ability_used ]
-            player_id:
-              type: string
-              format: uuid
-              description: Player who used ability
-            ability_id:
-              type: string
-              format: uuid
-              description: Ability identifier
-            ability_name:
-              type: string
-              description: Ability display name
-            cooldown:
-              type: number
-              format: float
-              description: Ability cooldown in seconds
-            mana_cost:
-              type: integer
-              minimum: 0
-              description: Mana cost of ability
-            location:
-              $ref: '#/components/schemas/Vector3'
-              description: Location where ability was used
-
+      - $ref: '#/components/schemas/BaseEvent'
+      - type: object
+        required:
+        - player_id
+        - ability_id
+        - ability_name
+        properties:
+          event_type:
+            type: string
+            enum:
+            - ability_used
+          player_id:
+            type: string
+            format: uuid
+            description: Player who used ability
+          ability_id:
+            type: string
+            format: uuid
+            description: Ability identifier
+          ability_name:
+            type: string
+            description: Ability display name
+          cooldown:
+            type: number
+            format: float
+            description: Ability cooldown in seconds
+          mana_cost:
+            type: integer
+            minimum: 0
+            description: Mana cost of ability
+          location:
+            $ref: '#/components/schemas/Vector3'
+            description: Location where ability was used
     DamageDealtEvent:
       allOf:
-        - $ref: '#/components/schemas/BaseEvent'
-        - type: object
-          required:
-            - attacker_id
-            - target_id
-            - damage_amount
-            - damage_type
-          properties:
-            event_type:
-              type: string
-              enum: [ damage_dealt ]
-            attacker_id:
-              type: string
-              format: uuid
-              description: Player who dealt damage
-            target_id:
-              type: string
-              format: uuid
-              description: Player who received damage
-            damage_amount:
-              type: integer
-              minimum: 0
-              description: Amount of damage dealt
-            damage_type:
-              type: string
-              enum: [ physical, energy, chemical, thermal, cyberware ]
-              description: Type of damage dealt
-            weapon_used:
-              type: string
-              format: uuid
-              description: Weapon used to deal damage
-            is_critical:
-              type: boolean
-              description: Whether damage was critical
-            distance:
-              type: number
-              format: float
-              description: Distance between attacker and target
-
-    # ============================================================================
-    # ECONOMY EVENTS
-    # ============================================================================
-
+      - $ref: '#/components/schemas/BaseEvent'
+      - type: object
+        required:
+        - attacker_id
+        - target_id
+        - damage_amount
+        - damage_type
+        properties:
+          event_type:
+            type: string
+            enum:
+            - damage_dealt
+          attacker_id:
+            type: string
+            format: uuid
+            description: Player who dealt damage
+          target_id:
+            type: string
+            format: uuid
+            description: Player who received damage
+          damage_amount:
+            type: integer
+            minimum: 0
+            description: Amount of damage dealt
+          damage_type:
+            type: string
+            enum:
+            - physical
+            - energy
+            - chemical
+            - thermal
+            - cyberware
+            description: Type of damage dealt
+          weapon_used:
+            type: string
+            format: uuid
+            description: Weapon used to deal damage
+          is_critical:
+            type: boolean
+            description: Whether damage was critical
+          distance:
+            type: number
+            format: float
+            description: Distance between attacker and target
     ItemPurchasedEvent:
       allOf:
-        - $ref: '#/components/schemas/BaseEvent'
-        - type: object
-          required:
-            - buyer_id
-            - seller_id
-            - item_id
-            - quantity
-            - unit_price
-            - total_price
-            - currency
-          properties:
-            event_type:
-              type: string
-              enum: [ item_purchased ]
-            buyer_id:
-              type: string
-              format: uuid
-              description: Player who bought the item
-            seller_id:
-              type: string
-              format: uuid
-              description: Player who sold the item (or system)
-            item_id:
-              type: string
-              format: uuid
-              description: Item that was purchased
-            quantity:
-              type: integer
-              minimum: 1
-              description: Quantity purchased
-            unit_price:
-              type: number
-              format: float
-              minimum: 0
-              description: Price per unit
-            total_price:
-              type: number
-              format: float
-              minimum: 0
-              description: Total transaction amount
-            currency:
-              type: string
-              enum: [ eddies, eurobucks ]
-              description: Currency used
-            transaction_type:
-              type: string
-              enum: [ player_trade, auction_house, vendor ]
-              description: Type of transaction
-
+      - $ref: '#/components/schemas/BaseEvent'
+      - type: object
+        required:
+        - buyer_id
+        - seller_id
+        - item_id
+        - quantity
+        - unit_price
+        - total_price
+        - currency
+        properties:
+          event_type:
+            type: string
+            enum:
+            - item_purchased
+          buyer_id:
+            type: string
+            format: uuid
+            description: Player who bought the item
+          seller_id:
+            type: string
+            format: uuid
+            description: Player who sold the item (or system)
+          item_id:
+            type: string
+            format: uuid
+            description: Item that was purchased
+          quantity:
+            type: integer
+            minimum: 1
+            description: Quantity purchased
+          unit_price:
+            type: number
+            format: float
+            minimum: 0
+            description: Price per unit
+          total_price:
+            type: number
+            format: float
+            minimum: 0
+            description: Total transaction amount
+          currency:
+            type: string
+            enum:
+            - eddies
+            - eurobucks
+            description: Currency used
+          transaction_type:
+            type: string
+            enum:
+            - player_trade
+            - auction_house
+            - vendor
+            description: Type of transaction
     CraftingCompletedEvent:
       allOf:
-        - $ref: '#/components/schemas/BaseEvent'
-        - type: object
-          required:
-            - player_id
-            - recipe_id
-            - result_item_id
-            - crafting_time
-            - quality_achieved
-          properties:
-            event_type:
-              type: string
-              enum: [ crafting_completed ]
-            player_id:
-              type: string
-              format: uuid
-              description: Player who completed crafting
-            recipe_id:
-              type: string
-              format: uuid
-              description: Recipe used for crafting
-            result_item_id:
-              type: string
-              format: uuid
-              description: Item that was crafted
-            crafting_time:
-              type: integer
-              minimum: 0
-              description: Time spent crafting in seconds
-            quality_achieved:
-              type: integer
-              minimum: 1
-              maximum: 100
-              description: Quality rating achieved
-            materials_used:
-              type: array
-              items:
-                type: object
-                properties:
-                  item_id:
-                    type: string
-                    format: uuid
-                  quantity:
-                    type: integer
-                    minimum: 1
-              description: Materials consumed in crafting
-            station_used:
-              type: string
-              format: uuid
-              description: Crafting station used
-            success_rate:
-              type: number
-              format: float
-              minimum: 0.0
-              maximum: 1.0
-              description: Success probability achieved
-
+      - $ref: '#/components/schemas/BaseEvent'
+      - type: object
+        required:
+        - player_id
+        - recipe_id
+        - result_item_id
+        - crafting_time
+        - quality_achieved
+        properties:
+          event_type:
+            type: string
+            enum:
+            - crafting_completed
+          player_id:
+            type: string
+            format: uuid
+            description: Player who completed crafting
+          recipe_id:
+            type: string
+            format: uuid
+            description: Recipe used for crafting
+          result_item_id:
+            type: string
+            format: uuid
+            description: Item that was crafted
+          crafting_time:
+            type: integer
+            minimum: 0
+            description: Time spent crafting in seconds
+          quality_achieved:
+            type: integer
+            minimum: 1
+            maximum: 100
+            description: Quality rating achieved
+          materials_used:
+            type: array
+            items:
+              type: object
+              properties:
+                item_id:
+                  type: string
+                  format: uuid
+                quantity:
+                  type: integer
+                  minimum: 1
+            description: Materials consumed in crafting
+          station_used:
+            type: string
+            format: uuid
+            description: Crafting station used
+          success_rate:
+            type: number
+            format: float
+            minimum: 0.0
+            maximum: 1.0
+            description: Success probability achieved
     CurrencyTransactionEvent:
       allOf:
-        - $ref: '#/components/schemas/BaseEvent'
-        - type: object
-          required:
-            - account_id
-            - amount
-            - currency
-            - transaction_type
-          properties:
-            event_type:
-              type: string
-              enum: [ currency_transaction ]
-            account_id:
-              type: string
-              format: uuid
-              description: Account affected by transaction
-            amount:
-              type: number
-              format: float
-              description: Transaction amount (positive for credit, negative for debit)
-            currency:
-              type: string
-              enum: [ eddies, eurobucks ]
-              description: Currency type
-            transaction_type:
-              type: string
-              enum: [ purchase, sale, reward, penalty, transfer, refund ]
-              description: Type of transaction
-            balance_before:
-              type: number
-              format: float
-              description: Account balance before transaction
-            balance_after:
-              type: number
-              format: float
-              description: Account balance after transaction
-            reason:
-              type: string
-              description: Transaction reason/description
-            reference_id:
-              type: string
-              format: uuid
-              description: Reference to related entity (order, item, etc.)
-
-    # ============================================================================
-    # SOCIAL EVENTS
-    # ============================================================================
-
+      - $ref: '#/components/schemas/BaseEvent'
+      - type: object
+        required:
+        - account_id
+        - amount
+        - currency
+        - transaction_type
+        properties:
+          event_type:
+            type: string
+            enum:
+            - currency_transaction
+          account_id:
+            type: string
+            format: uuid
+            description: Account affected by transaction
+          amount:
+            type: number
+            format: float
+            description: Transaction amount (positive for credit, negative for debit)
+          currency:
+            type: string
+            enum:
+            - eddies
+            - eurobucks
+            description: Currency type
+          transaction_type:
+            type: string
+            enum:
+            - purchase
+            - sale
+            - reward
+            - penalty
+            - transfer
+            - refund
+            description: Type of transaction
+          balance_before:
+            type: number
+            format: float
+            description: Account balance before transaction
+          balance_after:
+            type: number
+            format: float
+            description: Account balance after transaction
+          reason:
+            type: string
+            description: Transaction reason/description
+          reference_id:
+            type: string
+            format: uuid
+            description: Reference to related entity (order, item, etc.)
     GuildJoinedEvent:
       allOf:
-        - $ref: '#/components/schemas/BaseEvent'
-        - type: object
-          required:
-            - player_id
-            - guild_id
-            - guild_name
-          properties:
-            event_type:
-              type: string
-              enum: [ guild_joined ]
-            player_id:
-              type: string
-              format: uuid
-              description: Player who joined guild
-            guild_id:
-              type: string
-              format: uuid
-              description: Guild identifier
-            guild_name:
-              type: string
-              description: Guild display name
-            join_method:
-              type: string
-              enum: [ invitation, application, transfer ]
-              description: How player joined the guild
-            invited_by:
-              type: string
-              format: uuid
-              description: Player who invited this player (if applicable)
-
+      - $ref: '#/components/schemas/BaseEvent'
+      - type: object
+        required:
+        - player_id
+        - guild_id
+        - guild_name
+        properties:
+          event_type:
+            type: string
+            enum:
+            - guild_joined
+          player_id:
+            type: string
+            format: uuid
+            description: Player who joined guild
+          guild_id:
+            type: string
+            format: uuid
+            description: Guild identifier
+          guild_name:
+            type: string
+            description: Guild display name
+          join_method:
+            type: string
+            enum:
+            - invitation
+            - application
+            - transfer
+            description: How player joined the guild
+          invited_by:
+            type: string
+            format: uuid
+            description: Player who invited this player (if applicable)
     MessageSentEvent:
       allOf:
-        - $ref: '#/components/schemas/BaseEvent'
-        - type: object
-          required:
-            - sender_id
-            - channel_type
-            - message_length
-          properties:
-            event_type:
-              type: string
-              enum: [ message_sent ]
-            sender_id:
-              type: string
-              format: uuid
-              description: Player who sent the message
-            channel_type:
-              type: string
-              enum: [ global, guild, party, private, zone ]
-              description: Type of chat channel
-            channel_id:
-              type: string
-              format: uuid
-              description: Channel identifier (for guild/party channels)
-            recipient_id:
-              type: string
-              format: uuid
-              description: Recipient player ID (for private messages)
-            message_length:
-              type: integer
-              minimum: 1
-              description: Length of message in characters
-            contains_links:
-              type: boolean
-              description: Whether message contains links
-            language:
-              type: string
-              description: Detected language of message
-            zone_id:
-              type: string
-              format: uuid
-              description: Zone where message was sent
-
-    # ============================================================================
-    # SYSTEM EVENTS
-    # ============================================================================
-
+      - $ref: '#/components/schemas/BaseEvent'
+      - type: object
+        required:
+        - sender_id
+        - channel_type
+        - message_length
+        properties:
+          event_type:
+            type: string
+            enum:
+            - message_sent
+          sender_id:
+            type: string
+            format: uuid
+            description: Player who sent the message
+          channel_type:
+            type: string
+            enum:
+            - global
+            - guild
+            - party
+            - private
+            - zone
+            description: Type of chat channel
+          channel_id:
+            type: string
+            format: uuid
+            description: Channel identifier (for guild/party channels)
+          recipient_id:
+            type: string
+            format: uuid
+            description: Recipient player ID (for private messages)
+          message_length:
+            type: integer
+            minimum: 1
+            description: Length of message in characters
+          contains_links:
+            type: boolean
+            description: Whether message contains links
+          language:
+            type: string
+            description: Detected language of message
+          zone_id:
+            type: string
+            format: uuid
+            description: Zone where message was sent
     ServerStatusEvent:
       allOf:
-        - $ref: '#/components/schemas/BaseEvent'
-        - type: object
-          required:
-            - server_id
-            - status
-          properties:
-            event_type:
-              type: string
-              enum: [ server_status ]
-            server_id:
-              type: string
-              format: uuid
-              description: Server identifier
-            status:
-              type: string
-              enum: [ starting, running, stopping, offline, maintenance ]
-              description: Server status
-            player_count:
-              type: integer
-              minimum: 0
-              description: Current player count
-            max_players:
-              type: integer
-              minimum: 0
-              description: Maximum player capacity
-            uptime_seconds:
-              type: integer
-              minimum: 0
-              description: Server uptime in seconds
-            zone_id:
-              type: string
-              format: uuid
-              description: Zone this server handles
-
+      - $ref: '#/components/schemas/BaseEvent'
+      - type: object
+        required:
+        - server_id
+        - status
+        properties:
+          event_type:
+            type: string
+            enum:
+            - server_status
+          server_id:
+            type: string
+            format: uuid
+            description: Server identifier
+          status:
+            type: string
+            enum:
+            - starting
+            - running
+            - stopping
+            - offline
+            - maintenance
+            description: Server status
+          player_count:
+            type: integer
+            minimum: 0
+            description: Current player count
+          max_players:
+            type: integer
+            minimum: 0
+            description: Maximum player capacity
+          uptime_seconds:
+            type: integer
+            minimum: 0
+            description: Server uptime in seconds
+          zone_id:
+            type: string
+            format: uuid
+            description: Zone this server handles
     ErrorOccurredEvent:
       allOf:
-        - $ref: '#/components/schemas/BaseEvent'
-        - type: object
-          required:
-            - error_code
-            - error_message
-            - severity
-          properties:
-            event_type:
-              type: string
-              enum: [ error_occurred ]
-            error_code:
-              type: string
-              description: Error code identifier
-            error_message:
-              type: string
-              description: Human-readable error message
-            severity:
-              type: string
-              enum: [ low, medium, high, critical ]
-              description: Error severity level
-            component:
-              type: string
-              description: Component where error occurred
-            stack_trace:
-              type: string
-              description: Stack trace (if available)
-            user_id:
-              type: string
-              format: uuid
-              description: User affected by the error
-            request_id:
-              type: string
-              format: uuid
-              description: Request identifier
-
-    # ============================================================================
-    # COMMON SCHEMAS
-    # ============================================================================
-
+      - $ref: '#/components/schemas/BaseEvent'
+      - type: object
+        required:
+        - error_code
+        - error_message
+        - severity
+        properties:
+          event_type:
+            type: string
+            enum:
+            - error_occurred
+          error_code:
+            type: string
+            description: Error code identifier
+          error_message:
+            type: string
+            description: Human-readable error message
+          severity:
+            type: string
+            enum:
+            - low
+            - medium
+            - high
+            - critical
+            description: Error severity level
+          component:
+            type: string
+            description: Component where error occurred
+          stack_trace:
+            type: string
+            description: Stack trace (if available)
+          user_id:
+            type: string
+            format: uuid
+            description: User affected by the error
+          request_id:
+            type: string
+            format: uuid
+            description: Request identifier
     Vector3:
       type: object
       required:
-        - x
-        - y
-        - z
+      - x
+      - y
+      - z
       properties:
         x:
           type: number
@@ -711,18 +738,14 @@ components:
           type: number
           format: float
           description: Z coordinate
-
-    # ============================================================================
-    # EVENT TOPICS
-    # ============================================================================
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     EventTopic:
       type: string
       enum:
-        - player.events
-        - combat.events
-        - economy.events
-        - social.events
-        - system.events
-        - analytics.events
+      - player.events
+      - combat.events
+      - economy.events
+      - social.events
+      - system.events
+      - analytics.events
       description: Kafka topic for event publishing

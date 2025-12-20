@@ -1,68 +1,66 @@
-# Issue: #2237 - Validation and Export Paths
+# Issue: #1547 - Content Import API for Backend
+# Domain: system-domain/ai/content-domain/import
+# Purpose: Paths for content validation and export operations
+# Related: #1547
+
 paths:
-  # Content Validation
-  /validate:
+  /api/v1/system-domain/ai/content-domain/import/validate-export:
     post:
-      summary: "Validate content files without importing"
-      operationId: validateContent
-      tags: ["Validation"]
+      summary: Validate and export content
+      description: |
+        Validate existing content and export it as YAML for backup or migration.
+
+        BACKEND NOTE: Optimized for bulk validation with parallel processing.
+        Expected throughput: 200 validations/minute with full export.
+      operationId: validateAndExportContent
+      tags: ["Content Import"]
       requestBody:
         required: true
         content:
-          multipart/form-data:
+          application/json:
             schema:
-              type: object
-              properties:
-                content_type:
-                  type: string
-                  enum: [quests, npcs, dialogues, lore]
-                  description: "Type of content to validate"
-                files:
-                  type: array
-                  items:
-                    type: string
-                    format: binary
-                  minItems: 1
-                  maxItems: 50
+              $ref: '../schemas/import-schemas.yaml#/components/schemas/ValidationExportRequest'
       responses:
         '200':
-          description: "Validation completed"
+          description: "Content validated and exported successfully"
           content:
             application/json:
               schema:
-                $ref: '../schemas/import-schemas.yaml#/components/schemas/ValidationResult'
-
-  # Content Export (for backup/migration)
-  /export/{content_type}:
-    get:
-      summary: "Export content as YAML files"
-      operationId: exportContent
-      tags: ["Export"]
-      parameters:
-        - name: content_type
-          in: path
-          required: true
-          schema:
-            type: string
-            enum: [quests, npcs, dialogues, lore]
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 1000
-            default: 100
-        - name: offset
-          in: query
-          schema:
-            type: integer
-            minimum: 0
-            default: 0
-      responses:
-        '200':
-          description: "Content exported"
+                $ref: '../schemas/import-schemas.yaml#/components/schemas/ValidationExportResponse'
+        '400':
+          $ref: '../../../../../../common.yaml#/components/responses/BadRequest'
+        '404':
+          description: "Content not found"
           content:
-            application/zip:
+            application/json:
               schema:
-                type: string
-                format: binary
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "content_not_found"
+                  content_type:
+                    type: string
+                    example: "quest"
+                  content_id:
+                    type: string
+                    format: uuid
+        '422':
+          description: "Validation failed"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "validation_failed"
+                  details:
+                    type: array
+                    items:
+                      type: string
+                    example: ["Invalid quest structure", "Missing required objectives"]
+        '500':
+          $ref: '../../../../../../common.yaml#/components/responses/InternalServerError'
+      security:
+        - BearerAuth: []

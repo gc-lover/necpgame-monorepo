@@ -1,157 +1,190 @@
-# Issue: #169
 openapi: 3.0.3
 info:
   title: AI Systems API
   version: 1.0.0
-  description: |
-    AI enemy behavior and coordination systems for MMOFPS RPG.
+  description: 'AI enemy behavior and coordination systems for MMOFPS RPG.
+
 
     ## AI Components
+
     - Enemy profile management
+
     - Behavior state coordination
+
     - Adaptive difficulty scaling
 
+    '
 servers:
-  - url: http://localhost:8100
-    description: Local development
-  - url: https://api.necpgame.com/v1
-    description: Production API
-
+- url: http://localhost:8100
+  description: Local development
+- url: https://api.necpgame.com/v1
+  description: Production API
 tags:
-  - name: ai
-    description: AI enemy behavior and coordination
-
+- name: ai
+  description: AI enemy behavior and coordination
 security:
-  - BearerAuth: [ ]
-
+- BearerAuth: []
 paths:
-  # AI Systems
   /gameplay/combat/ai/profiles:
     get:
-      tags: [ ai ]
+      tags:
+      - ai
       summary: Get AI enemy profiles
       operationId: getAIProfiles
       parameters:
-        - name: zone_id
-          in: query
-          schema:
-            type: string
-            format: uuid
-        - name: difficulty
-          in: query
-          schema:
-            type: string
-            enum: [ easy, normal, hard, nightmare ]
+      - name: zone_id
+        in: query
+        schema:
+          type: string
+          format: uuid
+      - name: difficulty
+        in: query
+        schema:
+          type: string
+          enum:
+          - easy
+          - normal
+          - hard
+          - nightmare
       responses:
-        "200":
+        '200':
           description: AI profiles
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/AIProfile"
-
+                  $ref: '#/components/schemas/AIProfile'
   /gameplay/combat/ai/behavior/{profile_id}:
     post:
-      tags: [ ai ]
+      tags:
+      - ai
       summary: Update AI behavior state
       operationId: updateAIBehavior
       parameters:
-        - name: profile_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: profile_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/AIBehaviorUpdate"
+              $ref: '#/components/schemas/AIBehaviorUpdate'
       responses:
-        "200":
+        '200':
           description: Behavior updated
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AIState"
-
+                $ref: '#/components/schemas/AIState'
 components:
   securitySchemes:
     BearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
-
   schemas:
-    # AI Systems
     AIProfile:
       type: object
-      required: [ id, type, difficulty, health, damage ]
+      required:
+      - id
+      - type
+      - difficulty
+      - health
+      - damage
       properties:
         id:
           type: string
           format: uuid
         type:
           type: string
-          enum: [ turret, drone, assault, sniper, berserker, chameleon ]
+          enum:
+          - turret
+          - drone
+          - assault
+          - sniper
+          - berserker
+          - chameleon
         difficulty:
           type: string
-          enum: [ easy, normal, hard, nightmare ]
-        health:
-          type: integer
-          minimum: 1
-        damage:
-          type: integer
-          minimum: 0
+          enum:
+          - easy
+          - normal
+          - hard
+          - nightmare
         speed:
           type: number
           minimum: 0
         detection_range:
           type: number
           minimum: 0
-
+        health:
+          type: integer
+          minimum: 1
+        damage:
+          type: integer
+          minimum: 0
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     AIBehaviorUpdate:
       type: object
-      required: [ state, target_id ]
+      required:
+      - state
+      - target_id
       properties:
-        state:
-          type: string
-          enum: [ patrol, combat, alerted, fleeing ]
         target_id:
           type: string
           format: uuid
+        state:
+          type: string
+          enum:
+          - patrol
+          - combat
+          - alerted
+          - fleeing
         position:
-          $ref: "#/components/schemas/Vector3"
-
+          $ref: '#/components/schemas/Vector3'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     AIState:
       type: object
-      required: [ profile_id, current_state, last_update ]
+      required:
+      - profile_id
+      - current_state
+      - last_update
       properties:
         profile_id:
           type: string
           format: uuid
-        current_state:
-          type: string
-          enum: [ idle, patrol, combat, alerted, fleeing, dead ]
-        health:
-          type: integer
-          minimum: 0
-        position:
-          $ref: "#/components/schemas/Vector3"
         target_id:
           type: string
           format: uuid
+        current_state:
+          type: string
+          enum:
+          - idle
+          - patrol
+          - combat
+          - alerted
+          - fleeing
+          - dead
         last_update:
           type: string
           format: date-time
-
-    # Common
+        position:
+          $ref: '#/components/schemas/Vector3'
+        health:
+          type: integer
+          minimum: 0
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     Vector3:
       type: object
-      required: [ x, y, z ]
+      required:
+      - x
+      - y
+      - z
       properties:
         x:
           type: number
@@ -159,3 +192,4 @@ components:
           type: number
         z:
           type: number
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'

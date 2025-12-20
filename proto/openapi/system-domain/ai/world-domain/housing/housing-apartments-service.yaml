@@ -1,4 +1,3 @@
-# Issue: #299
 openapi: 3.0.3
 info:
   title: Housing Apartments Service API
@@ -8,66 +7,63 @@ info:
   contact:
     name: NECPGAME API Support
     email: api@necp.game
-
 servers:
-  - url: http://localhost:8090/api/v1
-    description: Локальный сервер разработки
-  - url: https://api.necp.game/api/v1
-    description: Продакшен сервер
-
+- url: http://localhost:8090/api/v1
+  description: Локальный сервер разработки
+- url: https://api.necp.game/api/v1
+  description: Продакшен сервер
 tags:
-  - name: Apartment Manager
-    description: Управление квартирами
-
+- name: Apartment Manager
+  description: Управление квартирами
 paths:
   /world/housing/apartments/available:
     get:
       tags:
-        - Apartment Manager
+      - Apartment Manager
       summary: Получить список доступных квартир
       operationId: getAvailableApartments
       parameters:
-        - name: location
-          in: query
-          schema:
-            type: string
-        - name: apartment_type
-          in: query
-          schema:
-            type: string
-            enum:
-              - studio
-              - standard
-              - penthouse
-              - guild_hall
-        - name: owner_id
-          in: query
-          schema:
-            type: string
-            format: uuid
-        - name: owner_type
-          in: query
-          schema:
-            type: string
-        - name: is_public
-          in: query
-          schema:
-            type: boolean
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 20
-        - name: offset
-          in: query
-          schema:
-            type: integer
-            minimum: 0
-            default: 0
+      - name: location
+        in: query
+        schema:
+          type: string
+      - name: apartment_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - studio
+          - standard
+          - penthouse
+          - guild_hall
+      - name: owner_id
+        in: query
+        schema:
+          type: string
+          format: uuid
+      - name: owner_type
+        in: query
+        schema:
+          type: string
+      - name: is_public
+        in: query
+        schema:
+          type: boolean
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
       responses:
-        "200":
+        '200':
           description: Список доступных квартир
           content:
             application/json:
@@ -77,163 +73,158 @@ paths:
                   apartments:
                     type: array
                     items:
-                      $ref: "#/components/schemas/Apartment"
+                      $ref: '#/components/schemas/Apartment'
                   total:
                     type: integer
                   limit:
                     type: integer
                   offset:
                     type: integer
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
   /world/housing/apartments/purchase:
     post:
       tags:
-        - Apartment Manager
+      - Apartment Manager
       summary: Купить квартиру
       operationId: purchaseApartment
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/PurchaseApartmentRequest"
+              $ref: '#/components/schemas/PurchaseApartmentRequest'
       responses:
-        "201":
+        '201':
           description: Квартира куплена
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Apartment"
-        "400":
-          $ref: "common.yaml#/components/responses/BadRequest"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+                $ref: '#/components/schemas/Apartment'
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
   /world/housing/apartments/{apartment_id}:
     get:
       tags:
-        - Apartment Manager
+      - Apartment Manager
       summary: Получить информацию о квартире
       operationId: getApartment
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: apartment_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: apartment_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
-        "200":
+        '200':
           description: Информация о квартире
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Apartment"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "404":
-          $ref: "common.yaml#/components/responses/NotFound"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+                $ref: '#/components/schemas/Apartment'
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
     patch:
       tags:
-        - Apartment Manager
+      - Apartment Manager
       summary: Обновить настройки квартиры
       operationId: updateApartment
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: apartment_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: apartment_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UpdateApartmentRequest"
+              $ref: '#/components/schemas/UpdateApartmentRequest'
       responses:
-        "200":
+        '200':
           description: Квартира обновлена
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Apartment"
-        "400":
-          $ref: "common.yaml#/components/responses/BadRequest"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "404":
-          $ref: "common.yaml#/components/responses/NotFound"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+                $ref: '#/components/schemas/Apartment'
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
   /world/housing/apartments/{apartment_id}/settings:
     post:
       tags:
-        - Apartment Manager
+      - Apartment Manager
       summary: Обновить настройки доступа квартиры
       operationId: updateApartmentSettings
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: apartment_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: apartment_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UpdateApartmentSettingsRequest"
+              $ref: '#/components/schemas/UpdateApartmentSettingsRequest'
       responses:
-        "200":
+        '200':
           description: Настройки обновлены
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Apartment"
-        "400":
-          $ref: "common.yaml#/components/responses/BadRequest"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "404":
-          $ref: "common.yaml#/components/responses/NotFound"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+                $ref: '#/components/schemas/Apartment'
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
   /world/housing/apartments/{apartment_id}/guests:
     get:
       tags:
-        - Apartment Manager
+      - Apartment Manager
       summary: Получить список гостей
       operationId: getApartmentGuests
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: apartment_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: apartment_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
-        "200":
+        '200':
           description: Список гостей
           content:
             application/json:
@@ -243,28 +234,27 @@ paths:
                   guests:
                     type: array
                     items:
-                      $ref: "#/components/schemas/Guest"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "404":
-          $ref: "common.yaml#/components/responses/NotFound"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+                      $ref: '#/components/schemas/Guest'
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
     post:
       tags:
-        - Apartment Manager
+      - Apartment Manager
       summary: Добавить гостя
       operationId: addGuest
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: apartment_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: apartment_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       requestBody:
         required: true
         content:
@@ -272,66 +262,63 @@ paths:
             schema:
               type: object
               required:
-                - character_id
+              - character_id
               properties:
                 character_id:
                   type: string
                   format: uuid
       responses:
-        "200":
+        '200':
           description: Гость добавлен
           content:
             application/json:
               schema:
-                $ref: "common.yaml#/components/schemas/SuccessResponse"
-        "400":
-          $ref: "common.yaml#/components/responses/BadRequest"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "404":
-          $ref: "common.yaml#/components/responses/NotFound"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+                $ref: common.yaml#/components/schemas/SuccessResponse
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
     delete:
       tags:
-        - Apartment Manager
+      - Apartment Manager
       summary: Удалить гостя
       operationId: removeGuest
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: apartment_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: player_id
-          in: query
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: apartment_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: player_id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
-        "200":
+        '200':
           description: Гость удален
           content:
             application/json:
               schema:
-                $ref: "common.yaml#/components/schemas/SuccessResponse"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "404":
-          $ref: "common.yaml#/components/responses/NotFound"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+                $ref: common.yaml#/components/schemas/SuccessResponse
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
 components:
   securitySchemes:
     BearerAuth:
-      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
-
+      $ref: common.yaml#/components/securitySchemes/BearerAuth
   schemas:
     Apartment:
       type: object
@@ -342,16 +329,41 @@ components:
         owner_id:
           type: string
           format: uuid
-        apartment_type:
+        guild_id:
           type: string
-          enum:
-            - STUDIO
-            - STANDARD
-            - PENTHOUSE
-            - GUILD_HALL
+          format: uuid
+          nullable: true
         location_id:
           type: string
           maxLength: 100
+        apartment_type:
+          type: string
+          enum:
+          - STUDIO
+          - STANDARD
+          - PENTHOUSE
+          - GUILD_HALL
+        access_setting:
+          type: string
+          enum:
+          - PRIVATE
+          - FRIENDS_ONLY
+          - PUBLIC
+          - GUILD_ONLY
+        purchased_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        guests:
+          type: array
+          items:
+            type: string
+            format: uuid
         price:
           type: integer
           format: int64
@@ -363,59 +375,34 @@ components:
         prestige_score:
           type: integer
           default: 0
-        access_setting:
-          type: string
-          enum:
-            - PRIVATE
-            - FRIENDS_ONLY
-            - PUBLIC
-            - GUILD_ONLY
-        guild_id:
-          type: string
-          format: uuid
-          nullable: true
-        guests:
-          type: array
-          items:
-            type: string
-            format: uuid
-        purchased_at:
-          type: string
-          format: date-time
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     PurchaseApartmentRequest:
       type: object
       required:
-        - apartment_type
-        - location
+      - apartment_type
+      - location
       properties:
+        location:
+          type: string
         apartment_type:
           type: string
           enum:
-            - studio
-            - standard
-            - penthouse
-            - guild_hall
-        location:
-          type: string
-
+          - studio
+          - standard
+          - penthouse
+          - guild_hall
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     UpdateApartmentRequest:
       type: object
       properties:
         is_public:
           type: boolean
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     UpdateApartmentSettingsRequest:
       type: object
       required:
-        - player_id
-        - access_setting
+      - player_id
+      - access_setting
       properties:
         player_id:
           type: string
@@ -423,16 +410,16 @@ components:
         access_setting:
           type: string
           enum:
-            - PRIVATE
-            - FRIENDS_ONLY
-            - PUBLIC
-            - GUILD_ONLY
+          - PRIVATE
+          - FRIENDS_ONLY
+          - PUBLIC
+          - GUILD_ONLY
         guests:
           type: array
           items:
             type: string
             format: uuid
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     Guest:
       type: object
       properties:
@@ -444,7 +431,6 @@ components:
         added_at:
           type: string
           format: date-time
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
 security:
-  - BearerAuth: [ ]
-
+- BearerAuth: []

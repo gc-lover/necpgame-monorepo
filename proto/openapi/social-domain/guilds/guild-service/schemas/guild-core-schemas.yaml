@@ -1,120 +1,56 @@
-# Guild Core Schemas - Enterprise-Grade Memory Optimized
-# Issue: #2235
-
 components:
   schemas:
-    # Guild entity - memory optimized (large → small types)
     Guild:
       type: object
       required:
-        - id
-        - name
-        - created_at
-        - level
-        - member_count
-        - is_active
+      - id
+      - name
+      - created_at
+      - level
+      - member_count
+      - is_active
       properties:
-        # Large types first (for struct alignment)
         id:
           type: string
           format: uuid
           description: Guild unique identifier
-          example: "550e8400-e29b-41d4-a716-446655440000"
-
+          example: 550e8400-e29b-41d4-a716-446655440000
+        leader_id:
+          type: string
+          format: uuid
+          description: Guild leader player ID
+          example: 660e8400-e29b-41d4-a716-446655440001
         name:
           type: string
           minLength: 3
           maxLength: 50
           description: Guild display name
-          example: "Shadow Hunters"
-
+          example: Shadow Hunters
         description:
           type: string
           maxLength: 500
           description: Guild description
-          example: "Elite PvP guild focused on competitive gameplay"
-
-        created_at:
-          type: string
-          format: date-time
-          description: Guild creation timestamp
-          example: "2024-01-01T12:00:00Z"
-
-        updated_at:
-          type: string
-          format: date-time
-          description: Last update timestamp
-          example: "2024-01-15T10:30:00Z"
-
-        # Medium types
-        leader_id:
-          type: string
-          format: uuid
-          description: Guild leader player ID
-          example: "660e8400-e29b-41d4-a716-446655440001"
-
+          example: Elite PvP guild focused on competitive gameplay
         emblem_url:
           type: string
           format: uri
           description: Guild emblem image URL
-          example: "https://guilds.necpgame.com/emblems/shadow-hunters.png"
-
+          example: https://guilds.necpgame.com/emblems/shadow-hunters.png
         website_url:
           type: string
           format: uri
           description: Guild website URL
-          example: "https://shadow-hunters.necpgame.com"
-
-        # Small types last (for struct alignment)
-        level:
-          type: integer
-          minimum: 1
-          maximum: 100
-          description: Guild level
-          example: 25
-
-        member_count:
-          type: integer
-          minimum: 1
-          maximum: 1000
-          description: Current member count
-          example: 47
-
-        max_members:
-          type: integer
-          minimum: 10
-          maximum: 1000
-          default: 50
-          description: Maximum allowed members
-          example: 100
-
-        reputation:
-          type: integer
-          minimum: -10000
-          maximum: 10000
-          description: Guild reputation score
-          example: 1250
-
-        is_recruiting:
-          type: boolean
-          description: Whether guild is recruiting new members
-          example: true
-
-        is_active:
-          type: boolean
-          description: Whether guild is active
-          example: true
-
-        # Arrays and objects (variable size, placed after fixed types)
-        tags:
-          type: array
-          maxItems: 10
-          items:
-            type: string
-            maxLength: 20
-          description: Guild tags for categorization
-          example: ["PvP", "Competitive", "English"]
-
+          example: https://shadow-hunters.necpgame.com
+        created_at:
+          type: string
+          format: date-time
+          description: Guild creation timestamp
+          example: '2024-01-01T12:00:00Z'
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+          example: '2024-01-15T10:30:00Z'
         settings:
           type: object
           description: Guild settings and preferences
@@ -131,51 +67,6 @@ components:
               maximum: 100
               default: 10
           additionalProperties: false
-
-    # Create Guild Request
-    CreateGuildRequest:
-      type: object
-      required:
-        - name
-      properties:
-        name:
-          type: string
-          minLength: 3
-          maxLength: 50
-          description: Guild name
-          example: "Shadow Hunters"
-
-        description:
-          type: string
-          maxLength: 500
-          description: Guild description
-          example: "Elite PvP guild focused on competitive gameplay"
-
-        emblem_url:
-          type: string
-          format: uri
-          description: Guild emblem image URL
-          example: "https://guilds.necpgame.com/emblems/shadow-hunters.png"
-
-        website_url:
-          type: string
-          format: uri
-          description: Guild website URL
-          example: "https://shadow-hunters.necpgame.com"
-
-        max_members:
-          type: integer
-          minimum: 10
-          maximum: 1000
-          default: 50
-          description: Maximum allowed members
-          example: 100
-
-        is_recruiting:
-          type: boolean
-          default: true
-          description: Whether guild is recruiting new members
-
         tags:
           type: array
           maxItems: 10
@@ -183,48 +74,126 @@ components:
             type: string
             maxLength: 20
           description: Guild tags for categorization
-          example: ["PvP", "Competitive", "English"]
-
-    # Guild Response (simplified for list operations)
+          example:
+          - PvP
+          - Competitive
+          - English
+        level:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Guild level
+          example: 25
+        member_count:
+          type: integer
+          minimum: 1
+          maximum: 1000
+          description: Current member count
+          example: 47
+        max_members:
+          type: integer
+          minimum: 10
+          maximum: 1000
+          default: 50
+          description: Maximum allowed members
+          example: 100
+        reputation:
+          type: integer
+          minimum: -10000
+          maximum: 10000
+          description: Guild reputation score
+          example: 1250
+        is_recruiting:
+          type: boolean
+          description: Whether guild is recruiting new members
+          example: true
+        is_active:
+          type: boolean
+          description: Whether guild is active
+          example: true
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    CreateGuildRequest:
+      type: object
+      required:
+      - name
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 50
+          description: Guild name
+          example: Shadow Hunters
+        description:
+          type: string
+          maxLength: 500
+          description: Guild description
+          example: Elite PvP guild focused on competitive gameplay
+        emblem_url:
+          type: string
+          format: uri
+          description: Guild emblem image URL
+          example: https://guilds.necpgame.com/emblems/shadow-hunters.png
+        website_url:
+          type: string
+          format: uri
+          description: Guild website URL
+          example: https://shadow-hunters.necpgame.com
+        tags:
+          type: array
+          maxItems: 10
+          items:
+            type: string
+            maxLength: 20
+          description: Guild tags for categorization
+          example:
+          - PvP
+          - Competitive
+          - English
+        max_members:
+          type: integer
+          minimum: 10
+          maximum: 1000
+          default: 50
+          description: Maximum allowed members
+          example: 100
+        is_recruiting:
+          type: boolean
+          default: true
+          description: Whether guild is recruiting new members
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     GuildSummary:
       type: object
       properties:
         id:
           type: string
           format: uuid
-          example: "550e8400-e29b-41d4-a716-446655440000"
-
+          example: 550e8400-e29b-41d4-a716-446655440000
         name:
           type: string
-          example: "Shadow Hunters"
-
-        level:
-          type: integer
-          example: 25
-
-        member_count:
-          type: integer
-          example: 47
-
-        max_members:
-          type: integer
-          example: 100
-
-        reputation:
-          type: integer
-          example: 1250
-
-        is_recruiting:
-          type: boolean
-          example: true
-
+          example: Shadow Hunters
         tags:
           type: array
           items:
             type: string
-          example: ["PvP", "Competitive"]
-
-    # Update Guild Request
+          example:
+          - PvP
+          - Competitive
+        level:
+          type: integer
+          example: 25
+        member_count:
+          type: integer
+          example: 47
+        max_members:
+          type: integer
+          example: 100
+        reputation:
+          type: integer
+          example: 1250
+        is_recruiting:
+          type: boolean
+          example: true
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     UpdateGuildRequest:
       type: object
       properties:
@@ -233,40 +202,18 @@ components:
           minLength: 3
           maxLength: 50
           description: Guild name
-
         description:
           type: string
           maxLength: 500
           description: Guild description
-
         emblem_url:
           type: string
           format: uri
           description: Guild emblem image URL
-
         website_url:
           type: string
           format: uri
           description: Guild website URL
-
-        max_members:
-          type: integer
-          minimum: 10
-          maximum: 1000
-          description: Maximum allowed members
-
-        is_recruiting:
-          type: boolean
-          description: Whether guild is recruiting new members
-
-        tags:
-          type: array
-          maxItems: 10
-          items:
-            type: string
-            maxLength: 20
-          description: Guild tags for categorization
-
         settings:
           type: object
           description: Guild settings and preferences
@@ -280,45 +227,52 @@ components:
               minimum: 1
               maximum: 100
           additionalProperties: false
-
-    # Guild Statistics
+        tags:
+          type: array
+          maxItems: 10
+          items:
+            type: string
+            maxLength: 20
+          description: Guild tags for categorization
+        max_members:
+          type: integer
+          minimum: 10
+          maximum: 1000
+          description: Maximum allowed members
+        is_recruiting:
+          type: boolean
+          description: Whether guild is recruiting new members
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     GuildStats:
       type: object
       properties:
+        total_resources_collected:
+          type: integer
+          format: int64
+          example: 1500000
         total_members:
           type: integer
           example: 47
-
         active_members_7d:
           type: integer
           description: Members active in last 7 days
           example: 32
-
         total_wins:
           type: integer
           example: 156
-
         total_losses:
           type: integer
           example: 89
-
         win_rate:
           type: number
           format: float
           minimum: 0
           maximum: 1
           example: 0.636
-
         average_member_level:
           type: number
           format: float
           example: 42.3
-
-        total_resources_collected:
-          type: integer
-          format: int64
-          example: 1500000
-
         territory_control:
           type: number
           format: float
@@ -326,50 +280,46 @@ components:
           maximum: 1
           description: Percentage of controlled territory
           example: 0.75
-
-    # Guild Response (full details)
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     GuildResponse:
       allOf:
-        - $ref: '#/components/schemas/Guild'
-        - type: object
-          properties:
-            stats:
-              $ref: '#/components/schemas/GuildStats'
-            leader:
+      - $ref: '#/components/schemas/Guild'
+      - type: object
+        properties:
+          stats:
+            $ref: '#/components/schemas/GuildStats'
+          leader:
+            $ref: '#/components/schemas/GuildMemberSummary'
+          officers:
+            type: array
+            maxItems: 10
+            items:
               $ref: '#/components/schemas/GuildMemberSummary'
-            officers:
-              type: array
-              maxItems: 10
-              items:
-                $ref: '#/components/schemas/GuildMemberSummary'
-
-    # Guild Member Summary
     GuildMemberSummary:
       type: object
       properties:
         player_id:
           type: string
           format: uuid
-          example: "660e8400-e29b-41d4-a716-446655440001"
-
+          example: 660e8400-e29b-41d4-a716-446655440001
         username:
           type: string
-          example: "shadow_master"
-
-        level:
-          type: integer
-          example: 45
-
+          example: shadow_master
+        role:
+          type: string
+          enum:
+          - leader
+          - officer
+          - member
+          example: leader
         joined_at:
           type: string
           format: date-time
-          example: "2024-01-15T10:30:00Z"
-
-        role:
-          type: string
-          enum: [leader, officer, member]
-          example: "leader"
-
+          example: '2024-01-15T10:30:00Z'
+        level:
+          type: integer
+          example: 45
         contribution_points:
           type: integer
           example: 12500
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'

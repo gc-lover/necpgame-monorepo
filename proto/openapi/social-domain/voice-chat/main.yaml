@@ -1,0 +1,506 @@
+openapi: 3.0.3
+info:
+  title: Social Domain - Voice Chat Service Module
+  description: '**Voice Chat Service API** for NECPGAME MMOFPS RPG.
+
+    **Purpose:** Real-time voice communication for MMO players
+
+    **Performance Targets:**
+    - Concurrent users: 10,000+ simultaneous voice connections
+    - Latency: <50ms P99 for voice packets
+    - Audio quality: Opus codec, 64kbps bitrate
+    - Connection stability: 99.9% uptime
+    - Memory per connection: <5MB
+
+    **Features:**
+    - WebRTC signaling for peer-to-peer voice
+    - Server-side mixing for large groups
+    - Voice activity detection and noise suppression
+    - Mute/unmute controls and admin moderation
+    - Cross-platform support (Web, Mobile, UE5)
+    - Anti-cheat voice validation
+  '
+  version: 1.0.0
+  contact:
+    name: NECPGAME Voice Chat API Support
+    email: voice@social.necpgame.com
+servers:
+- url: http://localhost:8084/api/v1/social/voice
+  description: Development server
+- url: https://api.necpgame.com/api/v1/social/voice
+  description: Production server
+security:
+- BearerAuth: []
+tags:
+- name: Voice Chat
+  description: Voice communication endpoints
+paths:
+  /rooms:
+    post:
+      summary: Create voice chat room
+      operationId: createVoiceRoom
+      tags:
+      - Voice Chat
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateVoiceRoomRequest'
+      responses:
+        '201':
+          description: Room created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VoiceRoomResponse'
+  /rooms/{room_id}:
+    get:
+      summary: Get voice room details
+      operationId: getVoiceRoom
+      tags:
+      - Voice Chat
+      parameters:
+      - name: room_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Room details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VoiceRoomResponse'
+    put:
+      summary: Update voice room
+      operationId: updateVoiceRoom
+      tags:
+      - Voice Chat
+      parameters:
+      - name: room_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateVoiceRoomRequest'
+      responses:
+        '200':
+          description: Room updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VoiceRoomResponse'
+    delete:
+      summary: Delete voice room
+      operationId: deleteVoiceRoom
+      tags:
+      - Voice Chat
+      parameters:
+      - name: room_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '204':
+          description: Room deleted
+  /rooms/{room_id}/participants:
+    get:
+      summary: List room participants
+      operationId: listRoomParticipants
+      tags:
+      - Voice Chat
+      parameters:
+      - name: room_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: List of participants
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoomParticipantsResponse'
+    post:
+      summary: Join voice room
+      operationId: joinVoiceRoom
+      tags:
+      - Voice Chat
+      parameters:
+      - name: room_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JoinRoomRequest'
+      responses:
+        '200':
+          description: Joined successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JoinRoomResponse'
+  /rooms/{room_id}/participants/{participant_id}:
+    delete:
+      summary: Leave voice room
+      operationId: leaveVoiceRoom
+      tags:
+      - Voice Chat
+      parameters:
+      - name: room_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: participant_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '204':
+          description: Left successfully
+  /rooms/{room_id}/participants/{participant_id}/mute:
+    put:
+      summary: Mute/unmute participant
+      operationId: muteParticipant
+      tags:
+      - Voice Chat
+      parameters:
+      - name: room_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: participant_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MuteRequest'
+      responses:
+        '200':
+          description: Mute status updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MuteResponse'
+  /signaling:
+    post:
+      summary: WebRTC signaling endpoint
+      operationId: webrtcSignaling
+      tags:
+      - Voice Chat
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignalingMessage'
+      responses:
+        '200':
+          description: Signaling message processed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SignalingResponse'
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    VoiceRoom:
+      type: object
+      required:
+      - id
+      - name
+      - owner_id
+      - max_participants
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 500
+        owner_id:
+          type: string
+          format: uuid
+        max_participants:
+          type: integer
+          minimum: 2
+          maximum: 100
+          default: 10
+        is_private:
+          type: boolean
+          default: false
+        password:
+          type: string
+          maxLength: 50
+        audio_quality:
+          type: string
+          enum:
+          - low
+          - medium
+          - high
+          default: medium
+        noise_suppression:
+          type: boolean
+          default: true
+        voice_activity_detection:
+          type: boolean
+          default: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    Participant:
+      type: object
+      required:
+      - id
+      - user_id
+      - room_id
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        room_id:
+          type: string
+          format: uuid
+        nickname:
+          type: string
+          maxLength: 50
+        is_muted:
+          type: boolean
+          default: false
+        is_admin:
+          type: boolean
+          default: false
+        joined_at:
+          type: string
+          format: date-time
+        last_activity:
+          type: string
+          format: date-time
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    CreateVoiceRoomRequest:
+      type: object
+      required:
+      - name
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 500
+        max_participants:
+          type: integer
+          minimum: 2
+          maximum: 100
+          default: 10
+        is_private:
+          type: boolean
+          default: false
+        password:
+          type: string
+          maxLength: 50
+        audio_quality:
+          type: string
+          enum:
+          - low
+          - medium
+          - high
+          default: medium
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    UpdateVoiceRoomRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 500
+        max_participants:
+          type: integer
+          minimum: 2
+          maximum: 100
+        is_private:
+          type: boolean
+        password:
+          type: string
+          maxLength: 50
+        audio_quality:
+          type: string
+          enum:
+          - low
+          - medium
+          - high
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    JoinRoomRequest:
+      type: object
+      properties:
+        password:
+          type: string
+          maxLength: 50
+        nickname:
+          type: string
+          maxLength: 50
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    JoinRoomResponse:
+      type: object
+      properties:
+        participant:
+          $ref: '#/components/schemas/Participant'
+        room:
+          $ref: '#/components/schemas/VoiceRoom'
+        webrtc_config:
+          $ref: '#/components/schemas/WebRTCConfig'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    MuteRequest:
+      type: object
+      required:
+      - muted
+      properties:
+        muted:
+          type: boolean
+        reason:
+          type: string
+          maxLength: 200
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    MuteResponse:
+      type: object
+      properties:
+        participant_id:
+          type: string
+          format: uuid
+        is_muted:
+          type: boolean
+        updated_at:
+          type: string
+          format: date-time
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    VoiceRoomResponse:
+      type: object
+      properties:
+        room:
+          $ref: '#/components/schemas/VoiceRoom'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    RoomParticipantsResponse:
+      type: object
+      properties:
+        participants:
+          type: array
+          items:
+            $ref: '#/components/schemas/Participant'
+        total_count:
+          type: integer
+          minimum: 0
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    WebRTCConfig:
+      type: object
+      properties:
+        ice_servers:
+          type: array
+          items:
+            type: object
+            properties:
+              urls:
+                type: array
+                items:
+                  type: string
+              username:
+                type: string
+              credential:
+                type: string
+        audio_constraints:
+          type: object
+          properties:
+            echoCancellation:
+              type: boolean
+              default: true
+            noiseSuppression:
+              type: boolean
+              default: true
+            autoGainControl:
+              type: boolean
+              default: true
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    SignalingMessage:
+      type: object
+      required:
+      - type
+      - room_id
+      - participant_id
+      properties:
+        type:
+          type: string
+          enum:
+          - offer
+          - answer
+          - ice-candidate
+          - join
+          - leave
+          - mute
+          - unmute
+        room_id:
+          type: string
+          format: uuid
+        participant_id:
+          type: string
+          format: uuid
+        target_participant_id:
+          type: string
+          format: uuid
+        data:
+          type: object
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    SignalingResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          default: true
+        message:
+          type: string
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'

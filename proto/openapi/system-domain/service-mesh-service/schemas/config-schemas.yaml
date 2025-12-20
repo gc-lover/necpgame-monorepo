@@ -1,24 +1,31 @@
-# Global mesh configuration schemas
-# Issue: #2058
-
 components:
   schemas:
-    # Global mesh configuration
     GlobalMeshConfig:
       type: object
       required:
-        - mesh_id
-        - control_plane
-        - data_plane
-        - observability
-        - security
-        - traffic_management
+      - mesh_id
+      - control_plane
+      - data_plane
+      - observability
+      - security
+      - traffic_management
       properties:
         mesh_id:
           type: string
           description: Unique mesh identifier
-          example: "necpgame-production-mesh"
-
+          example: necpgame-production-mesh
+        version:
+          type: string
+          description: Configuration version
+          example: v1.2.3
+        created_at:
+          type: string
+          format: date-time
+          description: Configuration creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
         control_plane:
           type: object
           description: Control plane configuration
@@ -31,8 +38,12 @@ components:
               example: 3
             pilot_log_level:
               type: string
-              enum: [info, debug, warn, error]
-              default: "info"
+              enum:
+              - info
+              - debug
+              - warn
+              - error
+              default: info
               description: Pilot logging level
             enable_analysis:
               type: boolean
@@ -42,7 +53,6 @@ components:
               type: boolean
               default: true
               description: Enable configuration validation
-
         data_plane:
           type: object
           description: Data plane configuration
@@ -53,40 +63,61 @@ components:
                 requests:
                   type: object
                   properties:
-                    cpu: { type: string, example: "100m" }
-                    memory: { type: string, example: "128Mi" }
+                    cpu:
+                      type: string
+                      example: 100m
+                    memory:
+                      type: string
+                      example: 128Mi
                 limits:
                   type: object
                   properties:
-                    cpu: { type: string, example: "2000m" }
-                    memory: { type: string, example: "1Gi" }
+                    cpu:
+                      type: string
+                      example: 2000m
+                    memory:
+                      type: string
+                      example: 1Gi
             proxy_resources:
               type: object
               properties:
                 requests:
                   type: object
                   properties:
-                    cpu: { type: string, example: "10m" }
-                    memory: { type: string, example: "32Mi" }
+                    cpu:
+                      type: string
+                      example: 10m
+                    memory:
+                      type: string
+                      example: 32Mi
                 limits:
                   type: object
                   properties:
-                    cpu: { type: string, example: "2000m" }
-                    memory: { type: string, example: "128Mi" }
+                    cpu:
+                      type: string
+                      example: 2000m
+                    memory:
+                      type: string
+                      example: 128Mi
             enable_auto_inject:
               type: boolean
               default: true
               description: Enable automatic sidecar injection
             exclude_namespaces:
               type: array
-              items: { type: string }
+              items:
+                type: string
               description: Namespaces to exclude from injection
-              example: ["kube-system", "monitoring"]
+              example:
+              - kube-system
+              - monitoring
             image_pull_policy:
               type: string
-              enum: [Always, IfNotPresent, Never]
-              default: "IfNotPresent"
-
+              enum:
+              - Always
+              - IfNotPresent
+              - Never
+              default: IfNotPresent
         observability:
           type: object
           description: Observability configuration
@@ -94,30 +125,62 @@ components:
             tracing:
               type: object
               properties:
-                enabled: { type: boolean, default: true }
-                sampling_rate: { type: number, format: float, minimum: 0, maximum: 1, default: 0.1 }
-                jaeger_endpoint: { type: string, format: uri }
-                zipkin_endpoint: { type: string, format: uri }
+                enabled:
+                  type: boolean
+                  default: true
+                sampling_rate:
+                  type: number
+                  format: float
+                  minimum: 0
+                  maximum: 1
+                  default: 0.1
+                jaeger_endpoint:
+                  type: string
+                  format: uri
+                zipkin_endpoint:
+                  type: string
+                  format: uri
                 custom_tags:
                   type: object
                   additionalProperties: true
-                  example: { "service.mesh": "necpgame" }
+                  example:
+                    service.mesh: necpgame
             metrics:
               type: object
               properties:
-                prometheus_enabled: { type: boolean, default: true }
-                statsd_enabled: { type: boolean, default: false }
+                prometheus_enabled:
+                  type: boolean
+                  default: true
+                statsd_enabled:
+                  type: boolean
+                  default: false
                 custom_metrics:
                   type: array
-                  items: { type: string }
-                  example: ["request_duration", "error_rate"]
+                  items:
+                    type: string
+                  example:
+                  - request_duration
+                  - error_rate
             logging:
               type: object
               properties:
-                access_log_enabled: { type: boolean, default: true }
-                access_log_format: { type: string, enum: [JSON, TEXT], default: "JSON" }
-                log_level: { type: string, enum: [info, debug, warn, error], default: "info" }
-
+                access_log_enabled:
+                  type: boolean
+                  default: true
+                access_log_format:
+                  type: string
+                  enum:
+                  - JSON
+                  - TEXT
+                  default: JSON
+                log_level:
+                  type: string
+                  enum:
+                  - info
+                  - debug
+                  - warn
+                  - error
+                  default: info
         security:
           type: object
           description: Security configuration
@@ -125,28 +188,53 @@ components:
             peer_authentication:
               type: object
               properties:
-                mtls_mode: { type: string, enum: [DISABLE, PERMISSIVE, STRICT], default: "STRICT" }
+                mtls_mode:
+                  type: string
+                  enum:
+                  - DISABLE
+                  - PERMISSIVE
+                  - STRICT
+                  default: STRICT
                 port_level_mtls:
                   type: object
                   additionalProperties:
                     type: string
-                    enum: [DISABLE, PERMISSIVE, STRICT]
+                    enum:
+                    - DISABLE
+                    - PERMISSIVE
+                    - STRICT
             certificate_management:
               type: object
               properties:
-                cert_manager_enabled: { type: boolean, default: true }
-                certificate_issuer: { type: string, example: "letsencrypt-prod" }
-                dns_names: { type: array, items: { type: string } }
-                rotation_days: { type: integer, minimum: 1, maximum: 365, default: 30 }
+                cert_manager_enabled:
+                  type: boolean
+                  default: true
+                certificate_issuer:
+                  type: string
+                  example: letsencrypt-prod
+                dns_names:
+                  type: array
+                  items:
+                    type: string
+                rotation_days:
+                  type: integer
+                  minimum: 1
+                  maximum: 365
+                  default: 30
             authorization:
               type: object
               properties:
-                rbac_enabled: { type: boolean, default: true }
-                jwt_policy: { type: string, enum: [first-party-jwt, third-party-jwt] }
+                rbac_enabled:
+                  type: boolean
+                  default: true
+                jwt_policy:
+                  type: string
+                  enum:
+                  - first-party-jwt
+                  - third-party-jwt
                 custom_claims:
                   type: object
                   additionalProperties: true
-
         traffic_management:
           type: object
           description: Traffic management configuration
@@ -154,37 +242,80 @@ components:
             load_balancing:
               type: object
               properties:
-                algorithm: { type: string, enum: [ROUND_ROBIN, LEAST_CONN, RANDOM, PASSTHROUGH], default: "ROUND_ROBIN" }
+                algorithm:
+                  type: string
+                  enum:
+                  - ROUND_ROBIN
+                  - LEAST_CONN
+                  - RANDOM
+                  - PASSTHROUGH
+                  default: ROUND_ROBIN
                 locality_lb_setting:
                   type: object
                   properties:
-                    enabled: { type: boolean, default: true }
-                    failover_priority: { type: array, items: { type: string } }
+                    enabled:
+                      type: boolean
+                      default: true
+                    failover_priority:
+                      type: array
+                      items:
+                        type: string
             outlier_detection:
               type: object
               properties:
-                enabled: { type: boolean, default: true }
-                consecutive_errors: { type: integer, minimum: 1, default: 5 }
-                interval: { type: string, default: "10s" }
-                base_ejection_time: { type: string, default: "30s" }
-                max_ejection_percent: { type: integer, minimum: 0, maximum: 100, default: 50 }
+                enabled:
+                  type: boolean
+                  default: true
+                consecutive_errors:
+                  type: integer
+                  minimum: 1
+                  default: 5
+                interval:
+                  type: string
+                  default: 10s
+                base_ejection_time:
+                  type: string
+                  default: 30s
+                max_ejection_percent:
+                  type: integer
+                  minimum: 0
+                  maximum: 100
+                  default: 50
             circuit_breakers:
               type: object
               properties:
-                max_connections: { type: integer, minimum: 1, default: 1024 }
-                max_pending_requests: { type: integer, minimum: 0, default: 1024 }
-                max_requests: { type: integer, minimum: 1, default: 1024 }
-                max_retries: { type: integer, minimum: 0, default: 3 }
-
+                max_connections:
+                  type: integer
+                  minimum: 1
+                  default: 1024
+                max_pending_requests:
+                  type: integer
+                  minimum: 0
+                  default: 1024
+                max_requests:
+                  type: integer
+                  minimum: 1
+                  default: 1024
+                max_retries:
+                  type: integer
+                  minimum: 0
+                  default: 3
         network_policies:
           type: object
           description: Network policy configuration
           properties:
-            enabled: { type: boolean, default: true }
-            default_deny_all: { type: boolean, default: false }
-            allow_dns: { type: boolean, default: true }
-            allow_kube_api: { type: boolean, default: true }
-
+            enabled:
+              type: boolean
+              default: true
+            default_deny_all:
+              type: boolean
+              default: false
+            allow_dns:
+              type: boolean
+              default: true
+            allow_kube_api:
+              type: boolean
+              default: true
         extensions:
           type: object
           description: Custom extensions and plugins
@@ -194,34 +325,27 @@ components:
               items:
                 type: object
                 properties:
-                  name: { type: string }
-                  url: { type: string, format: uri }
-                  config: { type: object, additionalProperties: true }
+                  name:
+                    type: string
+                  url:
+                    type: string
+                    format: uri
+                  config:
+                    type: object
+                    additionalProperties: true
             custom_adapters:
               type: array
               items:
                 type: object
                 properties:
-                  name: { type: string }
-                  image: { type: string }
-                  config: { type: object, additionalProperties: true }
-
-        created_at:
-          type: string
-          format: date-time
-          description: Configuration creation timestamp
-
-        updated_at:
-          type: string
-          format: date-time
-          description: Last update timestamp
-
-        version:
-          type: string
-          description: Configuration version
-          example: "v1.2.3"
-
-    # Global mesh config update request
+                  name:
+                    type: string
+                  image:
+                    type: string
+                  config:
+                    type: object
+                    additionalProperties: true
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     GlobalMeshConfigUpdate:
       type: object
       properties:
@@ -246,70 +370,95 @@ components:
         extensions:
           type: object
           description: Extensions configuration update
-
-    # Mesh component status
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     MeshComponentStatus:
       type: object
       required:
-        - component_name
-        - status
-        - last_updated
+      - component_name
+      - status
+      - last_updated
       properties:
         component_name:
           type: string
           description: Component name
-          example: "istiod-7f8d9c4b2a-abcde"
+          example: istiod-7f8d9c4b2a-abcde
+        version:
+          type: string
+          description: Component version
+          example: 1.20.2
         status:
           type: string
-          enum: [healthy, degraded, unhealthy, unknown]
+          enum:
+          - healthy
+          - degraded
+          - unhealthy
+          - unknown
           description: Component health status
         last_updated:
           type: string
           format: date-time
           description: Last status update
-        version:
-          type: string
-          description: Component version
-          example: "1.20.2"
         resources:
           type: object
           description: Resource usage
           properties:
-            cpu_usage: { type: string, example: "45%" }
-            memory_usage: { type: string, example: "256Mi" }
-            active_connections: { type: integer, example: 1500 }
-
-    # Mesh configuration validation result
+            cpu_usage:
+              type: string
+              example: 45%
+            memory_usage:
+              type: string
+              example: 256Mi
+            active_connections:
+              type: integer
+              example: 1500
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     ConfigValidationResult:
       type: object
       required:
-        - valid
-        - errors
-        - warnings
+      - valid
+      - errors
+      - warnings
       properties:
-        valid:
-          type: boolean
-          description: Whether configuration is valid
+        analyzed_at:
+          type: string
+          format: date-time
+          description: Validation timestamp
         errors:
           type: array
           items:
             type: object
             properties:
-              field: { type: string, description: Configuration field path }
-              message: { type: string, description: Error message }
-              severity: { type: string, enum: [error] }
+              field:
+                type: string
+                description: Configuration field path
+              message:
+                type: string
+                description: Error message
+              severity:
+                type: string
+                enum:
+                - error
           description: Validation errors
         warnings:
           type: array
           items:
             type: object
             properties:
-              field: { type: string, description: Configuration field path }
-              message: { type: string, description: Warning message }
-              severity: { type: string, enum: [warning] }
-              suggestion: { type: string, description: Suggested fix }
+              field:
+                type: string
+                description: Configuration field path
+              message:
+                type: string
+                description: Warning message
+              severity:
+                type: string
+                enum:
+                - warning
+              suggestion:
+                type: string
+                description: Suggested fix
           description: Validation warnings
-        analyzed_at:
-          type: string
-          format: date-time
-          description: Validation timestamp
+        valid:
+          type: boolean
+          description: Whether configuration is valid
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'

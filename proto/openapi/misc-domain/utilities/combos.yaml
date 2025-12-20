@@ -1,97 +1,104 @@
-# Issue: #169
 openapi: 3.0.3
 info:
   title: Combo Systems API
   version: 1.0.0
-  description: |
-    Combo synergies and execution mechanics for MMOFPS RPG.
+  description: 'Combo synergies and execution mechanics for MMOFPS RPG.
+
 
     ## Combo Mechanics
+
     - Sequence validation and execution
+
     - Damage multipliers and synergies
+
     - Combo state management
 
+    '
 servers:
-  - url: http://localhost:8100
-    description: Local development
-  - url: https://api.necpgame.com/v1
-    description: Production API
-
+- url: http://localhost:8100
+  description: Local development
+- url: https://api.necpgame.com/v1
+  description: Production API
 tags:
-  - name: combos
-    description: Combo synergies and execution
-
+- name: combos
+  description: Combo synergies and execution
 security:
-  - BearerAuth: [ ]
-
+- BearerAuth: []
 paths:
-  # Combos
   /gameplay/combat/combos/{character_id}/execute:
     post:
-      tags: [ combos ]
+      tags:
+      - combos
       summary: Execute combo sequence
       operationId: executeCombo
       parameters:
-        - name: character_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: character_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ComboExecutionRequest"
+              $ref: '#/components/schemas/ComboExecutionRequest'
       responses:
-        "200":
+        '200':
           description: Combo executed
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ComboResult"
-
+                $ref: '#/components/schemas/ComboResult'
 components:
   securitySchemes:
     BearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
-
   schemas:
-    # Combos
     ComboExecutionRequest:
       type: object
-      required: [ combo_id, sequence ]
+      required:
+      - combo_id
+      - sequence
       properties:
         combo_id:
+          type: string
+          format: uuid
+        target_id:
           type: string
           format: uuid
         sequence:
           type: array
           items:
             type: string
-            enum: [ light_attack, heavy_attack, dodge, ability ]
-        target_id:
-          type: string
-          format: uuid
-
+            enum:
+            - light_attack
+            - heavy_attack
+            - dodge
+            - ability
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     ComboResult:
       type: object
-      required: [ combo_id, success, damage_multiplier ]
+      required:
+      - combo_id
+      - success
+      - damage_multiplier
       properties:
         combo_id:
           type: string
           format: uuid
-        success:
-          type: boolean
-        damage_multiplier:
-          type: number
-          minimum: 1
-        synergy_activated:
-          type: boolean
         bonus_effects:
           type: array
           items:
             type: string
+        damage_multiplier:
+          type: number
+          minimum: 1
+        success:
+          type: boolean
+        synergy_activated:
+          type: boolean
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'

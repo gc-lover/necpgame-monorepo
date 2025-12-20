@@ -1,0 +1,86 @@
+paths:
+  /conflicts:
+    get:
+      tags: [conflict-resolution]
+      summary: Get active conflicts
+      description: Retrieve list of unresolved data conflicts
+      parameters:
+        - name: entityType
+          in: query
+          schema:
+            type: string
+            enum: [character, inventory, quest, combat, economy]
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, in_progress, resolved]
+            default: pending
+        - name: priority
+          in: query
+          schema:
+            type: string
+            enum: [low, medium, high, critical]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: Conflicts retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConflictsList'
+
+  /conflicts/{conflictId}/resolve:
+    post:
+      tags: [conflict-resolution]
+      summary: Resolve conflict
+      description: Apply resolution strategy to a data conflict
+      parameters:
+        - name: conflictId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConflictResolutionRequest'
+      responses:
+        '200':
+          description: Conflict resolved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConflictResolutionResponse'
+        '400':
+          description: Invalid resolution strategy
+
+  /conflicts/{conflictId}/strategies:
+    get:
+      tags: [conflict-resolution]
+      summary: Get available resolution strategies
+      description: Retrieve available strategies for resolving a specific conflict
+      parameters:
+        - name: conflictId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Resolution strategies retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResolutionStrategies'
+
+  # Saga Coordination
+  /sagas:

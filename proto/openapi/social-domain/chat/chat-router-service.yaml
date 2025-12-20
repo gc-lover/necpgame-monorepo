@@ -1,18 +1,25 @@
-# Issue: #1849
 openapi: 3.0.3
 info:
   title: Chat Router Service API
-  description: |
-    API для маршрутизации сообщений чата в обновленной архитектуре 2025.
+  description: 'API для маршрутизации сообщений чата в обновленной архитектуре 2025.
+
 
     **Основные возможности:**
+
     - WebSocket connection management с health monitoring
+
     - Message routing по каналам с load balancing
+
     - Real-time broadcasting с оптимизацией
+
     - Rate limiting на уровне соединений
+
     - Cross-region message routing
 
+
     **Производительность:** P99 <50ms, 100k+ msg/sec
+
+    '
   version: 2.0.0
   license:
     name: MIT
@@ -21,218 +28,227 @@ info:
     name: NECPGAME API Support
     url: https://necpgame.com/support
     email: api@necp.game
-
 servers:
-  - url: http://localhost:8085/api/v1
-    description: Chat Router Service (локальная разработка)
-  - url: https://chat-router.necpgame.com/api/v1
-    description: Chat Router Service (продакшен)
-
+- url: http://localhost:8085/api/v1
+  description: Chat Router Service (локальная разработка)
+- url: https://chat-router.necpgame.com/api/v1
+  description: Chat Router Service (продакшен)
 tags:
-  - name: Connection Management
-    description: Управление WebSocket соединениями
-  - name: Message Routing
-    description: Маршрутизация сообщений
-  - name: Broadcasting
-    description: Широковещательная рассылка
-  - name: Health Monitoring
-    description: Мониторинг здоровья сервиса
-
+- name: Connection Management
+  description: Управление WebSocket соединениями
+- name: Message Routing
+  description: Маршрутизация сообщений
+- name: Broadcasting
+  description: Широковещательная рассылка
+- name: Health Monitoring
+  description: Мониторинг здоровья сервиса
 paths:
   /chat/ws:
     get:
       tags:
-        - Connection Management
+      - Connection Management
       summary: WebSocket соединение для чата
-      description: |
-        Устанавливает WebSocket соединение для real-time коммуникации.
+      description: 'Устанавливает WebSocket соединение для real-time коммуникации.
+
 
         **Протокол:**
+
         - JSON-RPC 2.0 over WebSocket
+
         - Heartbeat каждые 30 секунд
+
         - Automatic reconnection support
+
         - Message compression (gzip)
 
+
         **Rate Limits:**
+
         - 100 messages/minute per connection
+
         - Automatic throttling on overload
+
+        '
       operationId: websocketConnection
       parameters:
-        - name: token
-          in: query
-          required: true
-          schema:
-            type: string
-            description: JWT токен аутентификации
-        - name: client_version
-          in: query
-          required: true
-          schema:
-            type: string
-            description: Версия клиента (для совместимости)
-        - name: region
-          in: query
-          required: false
-          schema:
-            type: string
-            description: Предпочитаемый регион (auto-detected)
+      - name: token
+        in: query
+        required: true
+        schema:
+          type: string
+          description: JWT токен аутентификации
+      - name: client_version
+        in: query
+        required: true
+        schema:
+          type: string
+          description: Версия клиента (для совместимости)
+      - name: region
+        in: query
+        required: false
+        schema:
+          type: string
+          description: Предпочитаемый регион (auto-detected)
       responses:
-        "101":
+        '101':
           description: WebSocket upgrade successful
-        "400":
+        '400':
           $ref: common.yaml#/components/responses/BadRequest
-        "401":
+        '401':
           $ref: common.yaml#/components/responses/Unauthorized
-        "429":
+        '429':
           description: Rate limit exceeded
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/RateLimitError"
-
+                $ref: '#/components/schemas/RateLimitError'
   /chat/router/route:
     post:
       tags:
-        - Message Routing
+      - Message Routing
       summary: Маршрутизировать сообщение
-      description: |
-        Маршрутизирует сообщение в соответствующие каналы с учетом permissions,
+      description: 'Маршрутизирует сообщение в соответствующие каналы с учетом permissions,
+
         load balancing и cross-region delivery.
+
+        '
       operationId: routeMessage
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/RouteMessageRequest"
+              $ref: '#/components/schemas/RouteMessageRequest'
       responses:
-        "200":
+        '200':
           description: Сообщение маршрутизировано
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/RouteMessageResponse"
-        "400":
+                $ref: '#/components/schemas/RouteMessageResponse'
+        '400':
           $ref: common.yaml#/components/responses/BadRequest
-        "401":
+        '401':
           $ref: common.yaml#/components/responses/Unauthorized
-        "403":
+        '403':
           $ref: common.yaml#/components/responses/Forbidden
-        "429":
+        '429':
           description: Rate limit exceeded
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/RateLimitError"
-
+                $ref: '#/components/schemas/RateLimitError'
   /chat/router/broadcast:
     post:
       tags:
-        - Broadcasting
+      - Broadcasting
       summary: Глобальная широковещательная рассылка
-      description: |
-        Отправляет сообщение всем подключенным клиентам или группе клиентов.
+      description: 'Отправляет сообщение всем подключенным клиентам или группе клиентов.
+
         Используется для системных announcements и emergency broadcasts.
+
+        '
       operationId: broadcastMessage
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/BroadcastRequest"
+              $ref: '#/components/schemas/BroadcastRequest'
       responses:
-        "200":
+        '200':
           description: Broadcast отправлен
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/BroadcastResponse"
-        "400":
+                $ref: '#/components/schemas/BroadcastResponse'
+        '400':
           $ref: common.yaml#/components/responses/BadRequest
-        "401":
+        '401':
           $ref: common.yaml#/components/responses/Unauthorized
-        "403":
+        '403':
           $ref: common.yaml#/components/responses/Forbidden
-
   /chat/router/connections:
     get:
       tags:
-        - Connection Management
+      - Connection Management
       summary: Получить статистику соединений
       description: Возвращает статистику активных WebSocket соединений
       operationId: getConnectionStats
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       responses:
-        "200":
+        '200':
           description: Статистика соединений
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ConnectionStats"
-        "401":
+                $ref: '#/components/schemas/ConnectionStats'
+        '401':
           $ref: common.yaml#/components/responses/Unauthorized
-        "403":
+        '403':
           $ref: common.yaml#/components/responses/Forbidden
-
   /chat/health:
     get:
       tags:
-        - Health Monitoring
+      - Health Monitoring
       summary: Health check сервиса
-      description: |
-        Проверяет здоровье Chat Router Service и зависимостей.
+      description: 'Проверяет здоровье Chat Router Service и зависимостей.
+
         Используется Kubernetes liveness/readiness probes.
+
+        '
       operationId: healthCheck
       responses:
-        "200":
+        '200':
           description: Service healthy
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/HealthStatus"
-        "503":
+                $ref: '#/components/schemas/HealthStatus'
+        '503':
           description: Service unhealthy
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/HealthStatus"
-
+                $ref: '#/components/schemas/HealthStatus'
 components:
   securitySchemes:
     BearerAuth:
       $ref: common.yaml#/components/securitySchemes/BearerAuth
-
   schemas:
     RouteMessageRequest:
       type: object
       required:
-        - message
-        - channel_id
+      - message
+      - channel_id
       properties:
-        message:
-          $ref: "#/components/schemas/ChatMessage"
         channel_id:
           type: string
           format: uuid
           description: ID канала назначения
         priority:
           type: string
-          enum: [ low, normal, high, critical ]
+          enum:
+          - low
+          - normal
+          - high
+          - critical
           default: normal
           description: Приоритет доставки
+        message:
+          $ref: '#/components/schemas/ChatMessage'
         ttl_seconds:
           type: integer
           minimum: 1
           maximum: 3600
           default: 300
           description: Time-to-live в секундах
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     RouteMessageResponse:
       type: object
       properties:
@@ -244,28 +260,31 @@ components:
           type: string
           format: date-time
           description: Время маршрутизации
-        recipient_count:
-          type: integer
-          description: Количество получателей
         routing_regions:
           type: array
           items:
             type: string
           description: Регионы, куда отправлено сообщение
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
+        recipient_count:
+          type: integer
+          description: Количество получателей
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     BroadcastRequest:
       type: object
       required:
-        - message
-        - scope
+      - message
+      - scope
       properties:
-        message:
-          $ref: "#/components/schemas/ChatMessage"
         scope:
           type: string
-          enum: [ global, region, shard, channel ]
+          enum:
+          - global
+          - region
+          - shard
+          - channel
           description: Область вещания
+        message:
+          $ref: '#/components/schemas/ChatMessage'
         target_ids:
           type: array
           items:
@@ -278,8 +297,7 @@ components:
             type: string
             format: uuid
           description: IDs для исключения из broadcast
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     BroadcastResponse:
       type: object
       properties:
@@ -289,20 +307,19 @@ components:
         sent_at:
           type: string
           format: date-time
-        total_recipients:
-          type: integer
         regions_reached:
           type: array
           items:
             type: string
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
+        total_recipients:
+          type: integer
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     ChatMessage:
       type: object
       required:
-        - sender_id
-        - content
-        - message_type
+      - sender_id
+      - content
+      - message_type
       properties:
         sender_id:
           type: string
@@ -314,7 +331,11 @@ components:
           maxLength: 2000
         message_type:
           type: string
-          enum: [ text, emoji, system, command ]
+          enum:
+          - text
+          - emoji
+          - system
+          - command
         formatting:
           type: object
           properties:
@@ -347,6 +368,9 @@ components:
                     type: integer
                   end:
                     type: integer
+        metadata:
+          type: object
+          description: Дополнительные метаданные (translation, sentiment, etc.)
         mentions:
           type: array
           items:
@@ -359,18 +383,10 @@ components:
                 type: string
               position:
                 type: integer
-        metadata:
-          type: object
-          description: Дополнительные метаданные (translation, sentiment, etc.)
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     ConnectionStats:
       type: object
       properties:
-        total_connections:
-          type: integer
-        active_connections:
-          type: integer
         connections_by_region:
           type: object
           additionalProperties:
@@ -379,56 +395,70 @@ components:
           type: object
           additionalProperties:
             type: integer
+        total_connections:
+          type: integer
+        active_connections:
+          type: integer
+        peak_connections_last_hour:
+          type: integer
         average_connection_duration_seconds:
           type: number
           format: float
-        peak_connections_last_hour:
-          type: integer
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     HealthStatus:
       type: object
       properties:
-        status:
-          type: string
-          enum: [ healthy, degraded, unhealthy ]
         version:
           type: string
-        uptime_seconds:
-          type: integer
+        status:
+          type: string
+          enum:
+          - healthy
+          - degraded
+          - unhealthy
+        last_health_check:
+          type: string
+          format: date-time
         dependencies:
           type: object
           properties:
             redis:
               type: string
-              enum: [ up, down, degraded ]
+              enum:
+              - up
+              - down
+              - degraded
             kafka:
               type: string
-              enum: [ up, down, degraded ]
+              enum:
+              - up
+              - down
+              - degraded
             database:
               type: string
-              enum: [ up, down, degraded ]
-        last_health_check:
-          type: string
-          format: date-time
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
+              enum:
+              - up
+              - down
+              - degraded
+        uptime_seconds:
+          type: integer
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     RateLimitError:
       type: object
       properties:
         error:
           type: string
-          enum: [ rate_limit_exceeded ]
+          enum:
+          - rate_limit_exceeded
+        reset_at:
+          type: string
+          format: date-time
         retry_after_seconds:
           type: integer
         limit:
           type: integer
         remaining:
           type: integer
-        reset_at:
-          type: string
-          format: date-time
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
 security:
-  - BearerAuth: [ ]
+- BearerAuth: []

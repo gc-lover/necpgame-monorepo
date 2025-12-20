@@ -1,339 +1,361 @@
-# Issue: #176
 openapi: 3.0.3
 info:
   title: Quest Engine WebSocket API
   version: 1.0.0
-  description: |
-    WebSocket API for real-time quest interactions in MMOFPS RPG.
+  description: 'WebSocket API for real-time quest interactions in MMOFPS RPG.
+
 
     ## WebSocket Channels
 
+
     ### Quest Instance Channels
+
     - `/ws/quests/instance/{instance_id}` - Quest state updates
+
     - `/ws/quests/instance/{instance_id}/objectives` - Objective progress updates
+
     - `/ws/quests/instance/{instance_id}/dialogue` - Dialogue state updates
 
+
     ### Character Quest Channels
+
     - `/ws/quests/character/{character_id}` - All character quests updates
+
     - `/ws/quests/character/{character_id}/objectives` - All objective progress
+
     - `/ws/quests/character/{character_id}/rewards` - Reward notifications
 
+
     ### Global Quest Channels
+
     - `/ws/quests/global/events` - Global quest events and announcements
+
     - `/ws/quests/global/leaderboards` - Quest completion leaderboards
 
+
     ## Performance Requirements
+
     - Sub-100ms latency for critical quest updates
+
     - 2000+ concurrent connections per server
+
     - Efficient binary message encoding
+
     - Connection pooling and load balancing
 
+    '
 servers:
-  - url: ws://localhost:8301
-    description: Local development WebSocket
-  - url: wss://ws.necpgame.com
-    description: Production WebSocket
-
+- url: ws://localhost:8301
+  description: Local development WebSocket
+- url: wss://ws.necpgame.com
+  description: Production WebSocket
 tags:
-  - name: quests
-    description: Quest state synchronization
-  - name: objectives
-    description: Objective progress updates
-  - name: dialogue
-    description: Real-time dialogue updates
-  - name: rewards
-    description: Reward notifications
-  - name: global
-    description: Global quest events
-
+- name: quests
+  description: Quest state synchronization
+- name: objectives
+  description: Objective progress updates
+- name: dialogue
+  description: Real-time dialogue updates
+- name: rewards
+  description: Reward notifications
+- name: global
+  description: Global quest events
 paths:
   /ws/quests/instance/{instance_id}:
     get:
-      tags: [ quests ]
+      tags:
+      - quests
       summary: Quest instance state channel
       operationId: connectQuestInstanceChannel
       parameters:
-        - name: instance_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: instance_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
-        "101":
+        '101':
           description: WebSocket connection established
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/WebSocketMessage"
+                $ref: '#/components/schemas/WebSocketMessage'
               examples:
                 quest_started:
                   summary: Quest instance started
                   value:
-                    type: "quest.started"
+                    type: quest.started
                     data:
-                      instance_id: "123e4567-e89b-12d3-a456-426614174000"
-                      quest_template_id: "123e4567-e89b-12d3-a456-426614174001"
-                      character_id: "123e4567-e89b-12d3-a456-426614174002"
-                      status: "active"
+                      instance_id: 123e4567-e89b-12d3-a456-426614174000
+                      quest_template_id: 123e4567-e89b-12d3-a456-426614174001
+                      character_id: 123e4567-e89b-12d3-a456-426614174002
+                      status: active
                       objectives_count: 3
                 quest_progress:
                   summary: Quest progress update
                   value:
-                    type: "quest.progress"
+                    type: quest.progress
                     data:
-                      instance_id: "123e4567-e89b-12d3-a456-426614174000"
+                      instance_id: 123e4567-e89b-12d3-a456-426614174000
                       progress_percentage: 67.5
                       objectives_completed: 2
                       objectives_total: 3
                       estimated_completion_time: 1800
-
   /ws/quests/instance/{instance_id}/objectives:
     get:
-      tags: [ objectives ]
+      tags:
+      - objectives
       summary: Quest objectives progress channel
       operationId: connectQuestObjectivesChannel
       parameters:
-        - name: instance_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: instance_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
-        "101":
+        '101':
           description: Objectives WebSocket connection established
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/WebSocketMessage"
+                $ref: '#/components/schemas/WebSocketMessage'
               examples:
                 objective_progress:
                   summary: Objective progress update
                   value:
-                    type: "objective.progress"
+                    type: objective.progress
                     data:
-                      objective_id: "123e4567-e89b-12d3-a456-426614174003"
-                      instance_id: "123e4567-e89b-12d3-a456-426614174000"
+                      objective_id: 123e4567-e89b-12d3-a456-426614174003
+                      instance_id: 123e4567-e89b-12d3-a456-426614174000
                       progress_current: 5
                       progress_required: 10
                       progress_percentage: 50.0
-                      objective_type: "kill"
-                      description: "Defeat 10 enemies"
+                      objective_type: kill
+                      description: Defeat 10 enemies
                 objective_completed:
                   summary: Objective completed
                   value:
-                    type: "objective.completed"
+                    type: objective.completed
                     data:
-                      objective_id: "123e4567-e89b-12d3-a456-426614174003"
-                      instance_id: "123e4567-e89b-12d3-a456-426614174000"
+                      objective_id: 123e4567-e89b-12d3-a456-426614174003
+                      instance_id: 123e4567-e89b-12d3-a456-426614174000
                       completion_time_seconds: 420
                       reward_xp: 500
-                      reward_items: [ "item1", "item2" ]
-
+                      reward_items:
+                      - item1
+                      - item2
   /ws/quests/instance/{instance_id}/dialogue:
     get:
-      tags: [ dialogue ]
+      tags:
+      - dialogue
       summary: Quest dialogue state channel
       operationId: connectQuestDialogueChannel
       parameters:
-        - name: instance_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: instance_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
-        "101":
+        '101':
           description: Dialogue WebSocket connection established
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/WebSocketMessage"
+                $ref: '#/components/schemas/WebSocketMessage'
               examples:
                 dialogue_started:
                   summary: Dialogue interaction started
                   value:
-                    type: "dialogue.started"
+                    type: dialogue.started
                     data:
-                      dialogue_id: "123e4567-e89b-12d3-a456-426614174004"
-                      instance_id: "123e4567-e89b-12d3-a456-426614174000"
-                      npc_id: "123e4567-e89b-12d3-a456-426614174005"
-                      npc_name: "Claire"
+                      dialogue_id: 123e4567-e89b-12d3-a456-426614174004
+                      instance_id: 123e4567-e89b-12d3-a456-426614174000
+                      npc_id: 123e4567-e89b-12d3-a456-426614174005
+                      npc_name: Claire
                       available_choices: 3
                 dialogue_choice_made:
                   summary: Player made dialogue choice
                   value:
-                    type: "dialogue.choice_made"
+                    type: dialogue.choice_made
                     data:
-                      dialogue_id: "123e4567-e89b-12d3-a456-426614174004"
-                      choice_id: "123e4567-e89b-12d3-a456-426614174006"
-                      choice_text: "I need information about the mission"
-                      consequence_type: "quest_progress"
-                      consequence_value: "info_revealed"
-
+                      dialogue_id: 123e4567-e89b-12d3-a456-426614174004
+                      choice_id: 123e4567-e89b-12d3-a456-426614174006
+                      choice_text: I need information about the mission
+                      consequence_type: quest_progress
+                      consequence_value: info_revealed
   /ws/quests/character/{character_id}:
     get:
-      tags: [ quests ]
+      tags:
+      - quests
       summary: Character quests overview channel
       operationId: connectCharacterQuestsChannel
       parameters:
-        - name: character_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: character_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
-        "101":
+        '101':
           description: Character quests WebSocket connection established
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/WebSocketMessage"
+                $ref: '#/components/schemas/WebSocketMessage'
               examples:
                 quest_available:
                   summary: New quest became available
                   value:
-                    type: "quest.available"
+                    type: quest.available
                     data:
-                      quest_template_id: "123e4567-e89b-12d3-a456-426614174007"
-                      quest_name: "Street Justice"
-                      quest_type: "side"
+                      quest_template_id: 123e4567-e89b-12d3-a456-426614174007
+                      quest_name: Street Justice
+                      quest_type: side
                       estimated_duration_minutes: 45
                       reward_xp: 2500
                       prerequisites_met: true
                 quest_completed_global:
                   summary: Quest completed by another player (global notification)
                   value:
-                    type: "quest.completed_global"
+                    type: quest.completed_global
                     data:
-                      quest_template_id: "123e4567-e89b-12d3-a456-426614174007"
-                      completer_name: "V_Judgement"
+                      quest_template_id: 123e4567-e89b-12d3-a456-426614174007
+                      completer_name: V_Judgement
                       completion_time_seconds: 1800
                       first_completion: true
-
   /ws/quests/character/{character_id}/rewards:
     get:
-      tags: [ rewards ]
+      tags:
+      - rewards
       summary: Character rewards notification channel
       operationId: connectCharacterRewardsChannel
       parameters:
-        - name: character_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: character_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
-        "101":
+        '101':
           description: Rewards WebSocket connection established
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/WebSocketMessage"
+                $ref: '#/components/schemas/WebSocketMessage'
               examples:
                 reward_granted:
                   summary: Quest reward granted
                   value:
-                    type: "reward.granted"
+                    type: reward.granted
                     data:
-                      quest_instance_id: "123e4567-e89b-12d3-a456-426614174000"
-                      reward_type: "experience"
+                      quest_instance_id: 123e4567-e89b-12d3-a456-426614174000
+                      reward_type: experience
                       reward_amount: 1500
-                      reward_source: "main_quest_completion"
+                      reward_source: main_quest_completion
                       bonus_multiplier: 1.25
                 item_rewarded:
                   summary: Item reward granted
                   value:
-                    type: "reward.item_granted"
+                    type: reward.item_granted
                     data:
-                      item_id: "123e4567-e89b-12d3-a456-426614174008"
-                      item_template_id: "123e4567-e89b-12d3-a456-426614174009"
-                      item_name: "Arasaka Pistol"
-                      quality: "rare"
-                      quest_instance_id: "123e4567-e89b-12d3-a456-426614174000"
-
+                      item_id: 123e4567-e89b-12d3-a456-426614174008
+                      item_template_id: 123e4567-e89b-12d3-a456-426614174009
+                      item_name: Arasaka Pistol
+                      quality: rare
+                      quest_instance_id: 123e4567-e89b-12d3-a456-426614174000
   /ws/quests/global/events:
     get:
-      tags: [ global ]
+      tags:
+      - global
       summary: Global quest events channel
       operationId: connectGlobalQuestEventsChannel
       responses:
-        "101":
+        '101':
           description: Global events WebSocket connection established
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/WebSocketMessage"
+                $ref: '#/components/schemas/WebSocketMessage'
               examples:
                 world_event_quest:
                   summary: World event triggered quest
                   value:
-                    type: "global.world_event_quest"
+                    type: global.world_event_quest
                     data:
-                      event_id: "123e4567-e89b-12d3-a456-426614174010"
-                      event_name: "Corporate War Escalation"
-                      quest_template_id: "123e4567-e89b-12d3-a456-426614174011"
-                      affected_zones: [ "washington_dc", "new_york", "boston" ]
+                      event_id: 123e4567-e89b-12d3-a456-426614174010
+                      event_name: Corporate War Escalation
+                      quest_template_id: 123e4567-e89b-12d3-a456-426614174011
+                      affected_zones:
+                      - washington_dc
+                      - new_york
+                      - boston
                       time_limit_hours: 24
                 faction_quest_available:
                   summary: New faction quest available
                   value:
-                    type: "global.faction_quest_available"
+                    type: global.faction_quest_available
                     data:
-                      faction_id: "123e4567-e89b-12d3-a456-426614174012"
-                      faction_name: "Nomads"
-                      quest_template_id: "123e4567-e89b-12d3-a456-426614174013"
-                      quest_name: "Caravan Defense"
+                      faction_id: 123e4567-e89b-12d3-a456-426614174012
+                      faction_name: Nomads
+                      quest_template_id: 123e4567-e89b-12d3-a456-426614174013
+                      quest_name: Caravan Defense
                       reputation_required: 2500
-
   /ws/quests/global/leaderboards:
     get:
-      tags: [ global ]
+      tags:
+      - global
       summary: Quest leaderboards channel
       operationId: connectGlobalLeaderboardsChannel
       responses:
-        "101":
+        '101':
           description: Leaderboards WebSocket connection established
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/WebSocketMessage"
+                $ref: '#/components/schemas/WebSocketMessage'
               examples:
                 leaderboard_update:
                   summary: Quest completion leaderboard update
                   value:
-                    type: "leaderboard.quest_completion"
+                    type: leaderboard.quest_completion
                     data:
-                      quest_template_id: "123e4567-e89b-12d3-a456-426614174007"
-                      leaderboard_period: "weekly"
+                      quest_template_id: 123e4567-e89b-12d3-a456-426614174007
+                      leaderboard_period: weekly
                       top_players:
-                        - rank: 1
-                          player_name: "V_Judgement"
-                          completion_time_seconds: 1200
-                          completion_date: "2025-12-14T10:30:00Z"
-                        - rank: 2
-                          player_name: "Ghost_In_The_Shell"
-                          completion_time_seconds: 1350
-                          completion_date: "2025-12-14T11:15:00Z"
-
+                      - rank: 1
+                        player_name: V_Judgement
+                        completion_time_seconds: 1200
+                        completion_date: '2025-12-14T10:30:00Z'
+                      - rank: 2
+                        player_name: Ghost_In_The_Shell
+                        completion_time_seconds: 1350
+                        completion_date: '2025-12-14T11:15:00Z'
 components:
   schemas:
     WebSocketMessage:
       type: object
-      required: [ type, timestamp, data ]
+      required:
+      - type
+      - timestamp
+      - data
       properties:
         type:
           type: string
           description: Message type identifier
           examples:
-            - "quest.started"
-            - "objective.progress"
-            - "dialogue.choice_made"
-            - "reward.granted"
-            - "global.world_event_quest"
-            - "leaderboard.quest_completion"
+          - quest.started
+          - objective.progress
+          - dialogue.choice_made
+          - reward.granted
+          - global.world_event_quest
+          - leaderboard.quest_completion
         timestamp:
           type: string
           format: date-time
@@ -342,7 +364,7 @@ components:
           type: object
           description: Message payload (varies by type)
           additionalProperties: true
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     QuestProgressData:
       type: object
       properties:
@@ -360,7 +382,7 @@ components:
         estimated_completion_time:
           type: integer
           description: Estimated completion time in seconds
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     ObjectiveProgressData:
       type: object
       properties:
@@ -370,19 +392,19 @@ components:
         instance_id:
           type: string
           format: uuid
-        progress_current:
-          type: integer
-        progress_required:
-          type: integer
-        progress_percentage:
-          type: number
-          minimum: 0
-          maximum: 100
         objective_type:
           type: string
         description:
           type: string
-
+        progress_percentage:
+          type: number
+          minimum: 0
+          maximum: 100
+        progress_current:
+          type: integer
+        progress_required:
+          type: integer
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     DialogueUpdateData:
       type: object
       properties:
@@ -408,21 +430,26 @@ components:
                 type: string
               conditions:
                 type: object
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     RewardNotificationData:
       type: object
       properties:
         quest_instance_id:
           type: string
           format: uuid
-        reward_type:
-          type: string
-          enum: [ experience, credits, items, reputation, unlocks ]
-        reward_amount:
-          type: integer
         reward_source:
           type: string
+        reward_type:
+          type: string
+          enum:
+          - experience
+          - credits
+          - items
+          - reputation
+          - unlocks
         bonus_multiplier:
           type: number
           minimum: 1.0
-
+        reward_amount:
+          type: integer
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'

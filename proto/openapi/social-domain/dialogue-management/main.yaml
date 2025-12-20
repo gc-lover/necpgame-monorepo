@@ -1,0 +1,112 @@
+# Issue: #140875182 - Dialogue Management API for Backend
+openapi: 3.0.3
+info:
+  title: "Dialogue Management Service API"
+  description: |
+    Enterprise-grade dialogue management service for interactive NPC conversations.
+
+    Supports complex dialogue trees with branching, conditions, and state management.
+    Handles 1k+ concurrent dialogue sessions with real-time choice processing.
+
+    BACKEND NOTE: Memory-aligned schemas for efficient dialogue state management.
+    Expected throughput: 2k dialogue operations/minute with complex trees.
+  version: 1.0.0
+  contact:
+    name: "Social Systems Team"
+
+servers:
+  - url: https://api.necp.game/v1/social/dialogue
+    description: Production server
+  - url: http://localhost:8080/api/v1/social/dialogue
+    description: Local development
+
+security:
+  - BearerAuth: []
+
+paths:
+  $ref: './paths/dialogue-trees.yaml#/paths'
+  $ref: './paths/dialogue-sessions.yaml#/paths'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    $ref: './schemas/dialogue-management-schemas.yaml#/components/schemas'
+
+  responses:
+    BadRequest:
+      description: "Invalid request parameters"
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: string
+              details:
+                type: object
+
+    Unauthorized:
+      description: "Authentication required"
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "unauthorized"
+              message:
+                type: string
+                example: "Valid authentication required"
+
+    Forbidden:
+      description: "Access denied"
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "forbidden"
+              message:
+                type: string
+                example: "Insufficient permissions"
+
+    NotFound:
+      description: "Resource not found"
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "not_found"
+              message:
+                type: string
+                example: "Requested resource does not exist"
+
+    InternalServerError:
+      description: "Internal server error"
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: "internal_error"
+              message:
+                type: string
+                example: "An unexpected error occurred"
+              request_id:
+                type: string
+                example: "req-12345"

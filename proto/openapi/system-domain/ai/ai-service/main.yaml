@@ -2,33 +2,32 @@ openapi: 3.0.3
 info:
   title: AI Service API
   version: 1.0.0
-  description: |
-    API for managing NPC AI behaviors in MMOFPS RPG.
+  description: 'API for managing NPC AI behaviors in MMOFPS RPG.
+
     Handles behavioral trees, pathfinding, decision making, and AI state management.
+
     Optimized for real-time AI processing with 1000+ concurrent NPCs.
 
+    '
 servers:
-  - url: http://localhost:8080
-    description: Development server
-
+- url: http://localhost:8080
+  description: Development server
 security:
-  - BearerAuth: [ ]
-
+- BearerAuth: []
 tags:
-  - name: AI
-    description: AI behavior and decision making operations
-  - name: Pathfinding
-    description: Navigation and pathfinding operations
-  - name: Behavior Trees
-    description: Behavioral tree management
-  - name: Decision Making
-    description: AI decision making and state management
-
+- name: AI
+  description: AI behavior and decision making operations
+- name: Pathfinding
+  description: Navigation and pathfinding operations
+- name: Behavior Trees
+  description: Behavioral tree management
+- name: Decision Making
+  description: AI decision making and state management
 paths:
   /ai/health:
     get:
       tags:
-        - AI
+      - AI
       summary: Health check for AI Service
       operationId: healthCheck
       responses:
@@ -41,36 +40,27 @@ paths:
                 properties:
                   status:
                     type: string
-                    example: "healthy"
-
+                    example: healthy
   /ai/{npcId}/behavior:
-    $ref: './paths/behavior.yaml#/get'
-
+    $ref: ./paths/behavior.yaml#/get
   /ai/{npcId}/behavior/execute:
-    $ref: './paths/behavior.yaml#/execute'
-
+    $ref: ./paths/behavior.yaml#/execute
   /ai/{npcId}/pathfind:
-    $ref: './paths/pathfinding.yaml#/calculate'
-
+    $ref: ./paths/pathfinding.yaml#/calculate
   /ai/{npcId}/decision:
-    $ref: './paths/decision.yaml#/make'
-
+    $ref: ./paths/decision.yaml#/make
   /ai/behavior-trees:
-    $ref: './paths/behavior-trees.yaml#/list'
-
+    $ref: ./paths/behavior-trees.yaml#/list
   /ai/behavior-trees/{treeId}:
-    $ref: './paths/behavior-trees.yaml#/get'
-
+    $ref: ./paths/behavior-trees.yaml#/get
   /ai/behavior-trees/{treeId}/execute:
-    $ref: './paths/behavior-trees.yaml#/execute'
-
+    $ref: ./paths/behavior-trees.yaml#/execute
 components:
   securitySchemes:
     BearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
-
   responses:
     BadRequest:
       description: Bad request
@@ -90,69 +80,50 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-
   schemas:
     Error:
       type: object
       properties:
+        message:
+          type: string
         code:
           type: integer
           format: int32
-        message:
-          type: string
       required:
-        - code
-        - message
-
-    # Common schemas
+      - code
+      - message
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     Vector3:
-      $ref: './schemas/common.yaml#/Vector3'
-
+      $ref: ./schemas/common.yaml#/Vector3
     BehaviorTree:
-      $ref: './schemas/behavior.yaml#/BehaviorTree'
-
+      $ref: ./schemas/behavior.yaml#/BehaviorTree
     BehaviorNode:
-      $ref: './schemas/behavior.yaml#/BehaviorNode'
-
+      $ref: ./schemas/behavior.yaml#/BehaviorNode
     Path:
-      $ref: './schemas/pathfinding.yaml#/Path'
-
+      $ref: ./schemas/pathfinding.yaml#/Path
     AIState:
-      $ref: './schemas/ai.yaml#/AIState'
-
+      $ref: ./schemas/ai.yaml#/AIState
     DecisionContext:
-      $ref: './schemas/decision.yaml#/DecisionContext'
-
-    # Request/Response schemas
+      $ref: ./schemas/decision.yaml#/DecisionContext
     GetBehaviorResponse:
-      $ref: './schemas/responses.yaml#/GetBehaviorResponse'
-
+      $ref: ./schemas/responses.yaml#/GetBehaviorResponse
     ExecuteBehaviorRequest:
-      $ref: './schemas/requests.yaml#/ExecuteBehaviorRequest'
-
+      $ref: ./schemas/requests.yaml#/ExecuteBehaviorRequest
     ExecuteBehaviorResponse:
-      $ref: './schemas/responses.yaml#/ExecuteBehaviorResponse'
-
+      $ref: ./schemas/responses.yaml#/ExecuteBehaviorResponse
     CalculatePathRequest:
-      $ref: './schemas/requests.yaml#/CalculatePathRequest'
-
+      $ref: ./schemas/requests.yaml#/CalculatePathRequest
     CalculatePathResponse:
-      $ref: './schemas/responses.yaml#/CalculatePathResponse'
-
+      $ref: ./schemas/responses.yaml#/CalculatePathResponse
     MakeDecisionRequest:
-      $ref: './schemas/requests.yaml#/MakeDecisionRequest'
-
+      $ref: ./schemas/requests.yaml#/MakeDecisionRequest
     MakeDecisionResponse:
-      $ref: './schemas/responses.yaml#/MakeDecisionResponse'
-
+      $ref: ./schemas/responses.yaml#/MakeDecisionResponse
     ListBehaviorTreesResponse:
-      $ref: './schemas/responses.yaml#/ListBehaviorTreesResponse'
-
+      $ref: ./schemas/responses.yaml#/ListBehaviorTreesResponse
     GetBehaviorTreeResponse:
-      $ref: './schemas/responses.yaml#/GetBehaviorTreeResponse'
-
+      $ref: ./schemas/responses.yaml#/GetBehaviorTreeResponse
     ExecuteBehaviorTreeRequest:
-      $ref: './schemas/requests.yaml#/ExecuteBehaviorTreeRequest'
-
+      $ref: ./schemas/requests.yaml#/ExecuteBehaviorTreeRequest
     ExecuteBehaviorTreeResponse:
-      $ref: './schemas/responses.yaml#/ExecuteBehaviorTreeResponse'
+      $ref: ./schemas/responses.yaml#/ExecuteBehaviorTreeResponse

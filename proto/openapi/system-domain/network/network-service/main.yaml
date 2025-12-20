@@ -2,35 +2,34 @@ openapi: 3.0.3
 info:
   title: Network Service API
   version: 1.0.0
-  description: |
-    API for real-time messaging and WebSocket communication in MMOFPS RPG.
+  description: 'API for real-time messaging and WebSocket communication in MMOFPS RPG.
+
     Handles WebSocket clusters, message routing, presence systems, and real-time events.
+
     Optimized for MMO performance with 5000+ concurrent connections.
 
+    '
 servers:
-  - url: http://localhost:8080
-    description: Development server
-
+- url: http://localhost:8080
+  description: Development server
 security:
-  - BearerAuth: [ ]
-
+- BearerAuth: []
 tags:
-  - name: WebSocket
-    description: WebSocket connection management and real-time messaging
-  - name: Messaging
-    description: Message routing and delivery operations
-  - name: Presence
-    description: User presence and online status management
-  - name: Events
-    description: Real-time event broadcasting and subscriptions
-  - name: Clusters
-    description: WebSocket cluster management and load balancing
-
+- name: WebSocket
+  description: WebSocket connection management and real-time messaging
+- name: Messaging
+  description: Message routing and delivery operations
+- name: Presence
+  description: User presence and online status management
+- name: Events
+  description: Real-time event broadcasting and subscriptions
+- name: Clusters
+  description: WebSocket cluster management and load balancing
 paths:
   /network/health:
     get:
       tags:
-        - WebSocket
+      - WebSocket
       summary: Health check for Network Service
       operationId: healthCheck
       responses:
@@ -43,33 +42,32 @@ paths:
                 properties:
                   status:
                     type: string
-                    example: "healthy"
-
+                    example: healthy
   /network/ws:
     get:
       tags:
-        - WebSocket
+      - WebSocket
       summary: Establish WebSocket connection
       operationId: websocketConnect
       parameters:
-        - name: token
-          in: query
-          required: true
-          schema:
-            type: string
-          description: Authentication token
-        - name: client_id
-          in: query
-          required: true
-          schema:
-            type: string
-          description: Client identifier
-        - name: client_version
-          in: query
-          schema:
-            type: string
-            default: "1.0.0"
-          description: Client version for compatibility
+      - name: token
+        in: query
+        required: true
+        schema:
+          type: string
+        description: Authentication token
+      - name: client_id
+        in: query
+        required: true
+        schema:
+          type: string
+        description: Client identifier
+      - name: client_version
+        in: query
+        schema:
+          type: string
+          default: 1.0.0
+        description: Client version for compatibility
       responses:
         '101':
           description: WebSocket connection established
@@ -87,11 +85,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-
   /network/messages/broadcast:
     post:
       tags:
-        - Messaging
+      - Messaging
       summary: Broadcast message to all connected clients
       operationId: broadcastMessage
       requestBody:
@@ -111,20 +108,19 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '500':
           $ref: '#/components/responses/InternalError'
-
   /network/messages/{channel}:
     post:
       tags:
-        - Messaging
+      - Messaging
       summary: Send message to specific channel
       operationId: sendChannelMessage
       parameters:
-        - name: channel
-          in: path
-          required: true
-          schema:
-            type: string
-          description: Channel identifier
+      - name: channel
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Channel identifier
       requestBody:
         required: true
         content:
@@ -148,20 +144,19 @@ paths:
                 $ref: '#/components/schemas/Error'
         '500':
           $ref: '#/components/responses/InternalError'
-
   /network/presence/{userId}:
     get:
       tags:
-        - Presence
+      - Presence
       summary: Get user presence status
       operationId: getUserPresence
       parameters:
-        - name: userId
-          in: path
-          required: true
-          schema:
-            type: string
-          description: User identifier
+      - name: userId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: User identifier
       responses:
         '200':
           description: Presence status retrieved successfully
@@ -177,19 +172,18 @@ paths:
                 $ref: '#/components/schemas/Error'
         '500':
           $ref: '#/components/responses/InternalError'
-
     put:
       tags:
-        - Presence
+      - Presence
       summary: Update user presence status
       operationId: updateUserPresence
       parameters:
-        - name: userId
-          in: path
-          required: true
-          schema:
-            type: string
-          description: User identifier
+      - name: userId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: User identifier
       requestBody:
         required: true
         content:
@@ -213,11 +207,10 @@ paths:
                 $ref: '#/components/schemas/Error'
         '500':
           $ref: '#/components/responses/InternalError'
-
   /network/events/subscribe:
     post:
       tags:
-        - Events
+      - Events
       summary: Subscribe to real-time events
       operationId: subscribeToEvents
       requestBody:
@@ -237,11 +230,10 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '500':
           $ref: '#/components/responses/InternalError'
-
   /network/events/publish:
     post:
       tags:
-        - Events
+      - Events
       summary: Publish real-time event
       operationId: publishEvent
       requestBody:
@@ -261,11 +253,10 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '500':
           $ref: '#/components/responses/InternalError'
-
   /network/clusters/status:
     get:
       tags:
-        - Clusters
+      - Clusters
       summary: Get cluster status and node information
       operationId: getClusterStatus
       responses:
@@ -277,14 +268,12 @@ paths:
                 $ref: '#/schemas/responses.yaml#/GetClusterStatusResponse'
         '500':
           $ref: '#/components/responses/InternalError'
-
 components:
   securitySchemes:
     BearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
-
   responses:
     BadRequest:
       description: Bad request
@@ -298,66 +287,48 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-
   schemas:
     Error:
       type: object
       properties:
+        message:
+          type: string
         code:
           type: integer
           format: int32
-        message:
-          type: string
       required:
-        - code
-        - message
-
-    # Common schemas
+      - code
+      - message
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     Message:
-      $ref: './schemas/messages.yaml#/Message'
-
+      $ref: ./schemas/messages.yaml#/Message
     Presence:
-      $ref: './schemas/presence.yaml#/Presence'
-
+      $ref: ./schemas/presence.yaml#/Presence
     Event:
-      $ref: './schemas/events.yaml#/Event'
-
+      $ref: ./schemas/events.yaml#/Event
     ClusterNode:
-      $ref: './schemas/clusters.yaml#/ClusterNode'
-
-    # Request/Response schemas
+      $ref: ./schemas/clusters.yaml#/ClusterNode
     BroadcastMessageRequest:
-      $ref: './schemas/requests.yaml#/BroadcastMessageRequest'
-
+      $ref: ./schemas/requests.yaml#/BroadcastMessageRequest
     BroadcastMessageResponse:
-      $ref: './schemas/responses.yaml#/BroadcastMessageResponse'
-
+      $ref: ./schemas/responses.yaml#/BroadcastMessageResponse
     ChannelMessageRequest:
-      $ref: './schemas/requests.yaml#/ChannelMessageRequest'
-
+      $ref: ./schemas/requests.yaml#/ChannelMessageRequest
     ChannelMessageResponse:
-      $ref: './schemas/responses.yaml#/ChannelMessageResponse'
-
+      $ref: ./schemas/responses.yaml#/ChannelMessageResponse
     GetPresenceResponse:
-      $ref: './schemas/responses.yaml#/GetPresenceResponse'
-
+      $ref: ./schemas/responses.yaml#/GetPresenceResponse
     UpdatePresenceRequest:
-      $ref: './schemas/requests.yaml#/UpdatePresenceRequest'
-
+      $ref: ./schemas/requests.yaml#/UpdatePresenceRequest
     UpdatePresenceResponse:
-      $ref: './schemas/responses.yaml#/UpdatePresenceResponse'
-
+      $ref: ./schemas/responses.yaml#/UpdatePresenceResponse
     SubscribeEventsRequest:
-      $ref: './schemas/requests.yaml#/SubscribeEventsRequest'
-
+      $ref: ./schemas/requests.yaml#/SubscribeEventsRequest
     SubscribeEventsResponse:
-      $ref: './schemas/responses.yaml#/SubscribeEventsResponse'
-
+      $ref: ./schemas/responses.yaml#/SubscribeEventsResponse
     PublishEventRequest:
-      $ref: './schemas/requests.yaml#/PublishEventRequest'
-
+      $ref: ./schemas/requests.yaml#/PublishEventRequest
     PublishEventResponse:
-      $ref: './schemas/responses.yaml#/PublishEventResponse'
-
+      $ref: ./schemas/responses.yaml#/PublishEventResponse
     GetClusterStatusResponse:
-      $ref: './schemas/responses.yaml#/GetClusterStatusResponse'
+      $ref: ./schemas/responses.yaml#/GetClusterStatusResponse

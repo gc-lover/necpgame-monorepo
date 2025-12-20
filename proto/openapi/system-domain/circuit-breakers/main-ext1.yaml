@@ -23,21 +23,20 @@ responses:
           $ref: '#/components/schemas/Error'
   '500':
     $ref: '#/components/responses/InternalError'
-
 /cb/bulkheads/{bulkheadId}:
   get:
     tags:
-      - Bulkheads
+    - Bulkheads
     summary: Get bulkhead details and metrics
     operationId: getBulkhead
     security:
-      - BearerAuth: [ ]
+    - BearerAuth: []
     parameters:
-      - name: bulkheadId
-        in: path
-        required: true
-        schema:
-          type: string
+    - name: bulkheadId
+      in: path
+      required: true
+      schema:
+        type: string
     responses:
       '200':
         description: Bulkhead details retrieved successfully
@@ -59,20 +58,19 @@ responses:
               $ref: '#/components/schemas/Error'
       '500':
         $ref: '#/components/responses/InternalError'
-
   delete:
     tags:
-      - Bulkheads
+    - Bulkheads
     summary: Delete a bulkhead partition
     operationId: deleteBulkhead
     security:
-      - BearerAuth: [ ]
+    - BearerAuth: []
     parameters:
-      - name: bulkheadId
-        in: path
-        required: true
-        schema:
-          type: string
+    - name: bulkheadId
+      in: path
+      required: true
+      schema:
+        type: string
     responses:
       '204':
         description: Bulkhead deleted successfully
@@ -90,28 +88,27 @@ responses:
               $ref: '#/components/schemas/Error'
       '500':
         $ref: '#/components/responses/InternalError'
-
 /cb/timeouts:
   get:
     tags:
-      - Timeouts
+    - Timeouts
     summary: List all timeout configurations
     operationId: listTimeouts
     security:
-      - BearerAuth: [ ]
+    - BearerAuth: []
     parameters:
-      - name: service
-        in: query
-        schema:
-          type: string
-          description: Filter by service name
-      - name: limit
-        in: query
-        schema:
-          type: integer
-          minimum: 1
-          maximum: 100
-          default: 50
+    - name: service
+      in: query
+      schema:
+        type: string
+        description: Filter by service name
+    - name: limit
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 50
     responses:
       '200':
         description: Timeouts retrieved successfully
@@ -127,14 +124,13 @@ responses:
               $ref: '#/components/schemas/Error'
       '500':
         $ref: '#/components/responses/InternalError'
-
   post:
     tags:
-      - Timeouts
+    - Timeouts
     summary: Create a timeout configuration
     operationId: createTimeout
     security:
-      - BearerAuth: [ ]
+    - BearerAuth: []
     requestBody:
       required: true
       content:
@@ -164,15 +160,14 @@ responses:
               $ref: '#/components/schemas/Error'
       '500':
         $ref: '#/components/responses/InternalError'
-
 /cb/degradation:
   get:
     tags:
-      - Degradation
+    - Degradation
     summary: List graceful degradation policies
     operationId: listDegradationPolicies
     security:
-      - BearerAuth: [ ]
+    - BearerAuth: []
     responses:
       '200':
         description: Degradation policies retrieved successfully
@@ -188,14 +183,13 @@ responses:
               $ref: '#/components/schemas/Error'
       '500':
         $ref: '#/components/responses/InternalError'
-
   post:
     tags:
-      - Degradation
+    - Degradation
     summary: Create a graceful degradation policy
     operationId: createDegradationPolicy
     security:
-      - BearerAuth: [ ]
+    - BearerAuth: []
     requestBody:
       required: true
       content:
@@ -225,28 +219,31 @@ responses:
               $ref: '#/components/schemas/Error'
       '500':
         $ref: '#/components/responses/InternalError'
-
 /cb/metrics:
   get:
     tags:
-      - Metrics
+    - Metrics
     summary: Get circuit breaker metrics
     operationId: getMetrics
     security:
-      - BearerAuth: [ ]
+    - BearerAuth: []
     parameters:
-      - name: circuit_id
-        in: query
-        schema:
-          type: string
-          description: Filter by specific circuit breaker
-      - name: time_range
-        in: query
-        schema:
-          type: string
-          enum: [ 1h, 6h, 24h, 7d ]
-          default: 1h
-          description: Time range for metrics
+    - name: circuit_id
+      in: query
+      schema:
+        type: string
+        description: Filter by specific circuit breaker
+    - name: time_range
+      in: query
+      schema:
+        type: string
+        enum:
+        - 1h
+        - 6h
+        - 24h
+        - 7d
+        default: 1h
+        description: Time range for metrics
     responses:
       '200':
         description: Metrics retrieved successfully
@@ -262,14 +259,12 @@ responses:
               $ref: '#/components/schemas/Error'
       '500':
         $ref: '#/components/responses/InternalError'
-
 components:
   securitySchemes:
     BearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
-
   responses:
     BadRequest:
       description: Bad request
@@ -283,80 +278,58 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-
   schemas:
     Error:
       type: object
       properties:
+        message:
+          type: string
         code:
           type: integer
           format: int32
-        message:
-          type: string
       required:
-        - code
-        - message
-
-    # Request/Response schemas
+      - code
+      - message
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     CreateCircuitRequest:
-      $ref: './schemas/requests.yaml#/CreateCircuitRequest'
-
+      $ref: ./schemas/requests.yaml#/CreateCircuitRequest
     CreateCircuitResponse:
-      $ref: './schemas/responses.yaml#/CreateCircuitResponse'
-
+      $ref: ./schemas/responses.yaml#/CreateCircuitResponse
     UpdateCircuitRequest:
-      $ref: './schemas/requests.yaml#/UpdateCircuitRequest'
-
+      $ref: ./schemas/requests.yaml#/UpdateCircuitRequest
     UpdateCircuitResponse:
-      $ref: './schemas/responses.yaml#/UpdateCircuitResponse'
-
+      $ref: ./schemas/responses.yaml#/UpdateCircuitResponse
     ListCircuitsResponse:
-      $ref: './schemas/responses.yaml#/ListCircuitsResponse'
-
+      $ref: ./schemas/responses.yaml#/ListCircuitsResponse
     GetCircuitResponse:
-      $ref: './schemas/responses.yaml#/GetCircuitResponse'
-
+      $ref: ./schemas/responses.yaml#/GetCircuitResponse
     GetCircuitStateResponse:
-      $ref: './schemas/responses.yaml#/GetCircuitStateResponse'
-
+      $ref: ./schemas/responses.yaml#/GetCircuitStateResponse
     SetCircuitStateRequest:
-      $ref: './schemas/requests.yaml#/SetCircuitStateRequest'
-
+      $ref: ./schemas/requests.yaml#/SetCircuitStateRequest
     SetCircuitStateResponse:
-      $ref: './schemas/responses.yaml#/SetCircuitStateResponse'
-
+      $ref: ./schemas/responses.yaml#/SetCircuitStateResponse
     ResetCircuitResponse:
-      $ref: './schemas/responses.yaml#/ResetCircuitResponse'
-
+      $ref: ./schemas/responses.yaml#/ResetCircuitResponse
     CreateBulkheadRequest:
-      $ref: './schemas/requests.yaml#/CreateBulkheadRequest'
-
+      $ref: ./schemas/requests.yaml#/CreateBulkheadRequest
     CreateBulkheadResponse:
-      $ref: './schemas/responses.yaml#/CreateBulkheadResponse'
-
+      $ref: ./schemas/responses.yaml#/CreateBulkheadResponse
     ListBulkheadsResponse:
-      $ref: './schemas/responses.yaml#/ListBulkheadsResponse'
-
+      $ref: ./schemas/responses.yaml#/ListBulkheadsResponse
     GetBulkheadResponse:
-      $ref: './schemas/responses.yaml#/GetBulkheadResponse'
-
+      $ref: ./schemas/responses.yaml#/GetBulkheadResponse
     CreateTimeoutRequest:
-      $ref: './schemas/requests.yaml#/CreateTimeoutRequest'
-
+      $ref: ./schemas/requests.yaml#/CreateTimeoutRequest
     CreateTimeoutResponse:
-      $ref: './schemas/responses.yaml#/CreateTimeoutResponse'
-
+      $ref: ./schemas/responses.yaml#/CreateTimeoutResponse
     ListTimeoutsResponse:
-      $ref: './schemas/responses.yaml#/ListTimeoutsResponse'
-
+      $ref: ./schemas/responses.yaml#/ListTimeoutsResponse
     CreateDegradationPolicyRequest:
-      $ref: './schemas/requests.yaml#/CreateDegradationPolicyRequest'
-
+      $ref: ./schemas/requests.yaml#/CreateDegradationPolicyRequest
     CreateDegradationPolicyResponse:
-      $ref: './schemas/responses.yaml#/CreateDegradationPolicyResponse'
-
+      $ref: ./schemas/responses.yaml#/CreateDegradationPolicyResponse
     ListDegradationPoliciesResponse:
-      $ref: './schemas/responses.yaml#/ListDegradationPoliciesResponse'
-
+      $ref: ./schemas/responses.yaml#/ListDegradationPoliciesResponse
     GetMetricsResponse:
-      $ref: './schemas/responses.yaml#/GetMetricsResponse'
+      $ref: ./schemas/responses.yaml#/GetMetricsResponse

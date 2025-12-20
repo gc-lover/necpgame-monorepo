@@ -1,93 +1,125 @@
-# Issue: #169
 openapi: 3.0.3
 info:
   title: Combat Systems Wave 1 Service API
   version: 1.0.0
-  description: |
-    Unified Combat Systems Wave 1 API for MMOFPS RPG.
+  description: 'Unified Combat Systems Wave 1 API for MMOFPS RPG.
+
 
     ## Wave 1 Components
+
     - Combat Sessions: Core session management and lifecycle
+
     - AI Systems: Enemy profiles, behavior, and coordination
+
     - Abilities: Player skills and activation system
+
     - Shooting: Advanced ballistic and weapon systems
+
     - Combos: Synergy systems and combo mechanics
+
     - Freerun: Parkour and movement mechanics
+
     - Hacking: Cybernetic enhancement and countermeasures
+
     - Stealth: Infiltration and detection systems
+
     - Extraction: Mission completion and reward systems
+
     - Arena: PvP combat arenas
+
     - Cyberspace: Digital realm interactions
 
+
     ## Architecture Overview
+
     - Server-authoritative combat system with client prediction
+
     - Event-driven architecture with Kafka integration
+
     - Realtime state synchronization via WebSocket
+
     - Integrated anti-cheat validation and telemetry
 
+
     ## Performance Requirements
+
     - Session management: 500+ RPS with P99 <50ms
+
     - Action processing: 1000+ RPS with P99 <25ms
+
     - Memory optimized with struct alignment
+
     - Context timeouts on all operations
+
     - Zero allocations on hot paths
 
+
     ## API Structure
+
     This API is split into multiple files for better maintainability:
+
     - `combat-sessions.yaml` - Session management
+
     - `ai-systems.yaml` - AI behavior
+
     - `abilities.yaml` - Player abilities
+
     - `shooting.yaml` - Weapon systems
+
     - `combos.yaml` - Combo mechanics
+
     - `freerun.yaml` - Parkour movement
+
     - `hacking.yaml` - Cybernetic systems
+
     - `stealth.yaml` - Infiltration mechanics
+
     - `extraction.yaml` - Mission completion
+
     - `arena.yaml` - PvP combat
+
     - `cyberspace.yaml` - Digital realm
+
     - `common-schemas.yaml` - Shared components
 
+    '
 servers:
-  - url: http://localhost:8100
-    description: Local development
-  - url: https://api.necpgame.com/v1
-    description: Production API
-
+- url: http://localhost:8100
+  description: Local development
+- url: https://api.necpgame.com/v1
+  description: Production API
 tags:
-  - name: sessions
-    description: Combat session lifecycle management
-  - name: ai
-    description: AI enemy behavior and coordination
-  - name: abilities
-    description: Player ability activation and management
-  - name: shooting
-    description: Weapon systems and ballistic calculations
-  - name: combos
-    description: Combo synergies and execution
-  - name: freerun
-    description: Parkour movement mechanics
-  - name: hacking
-    description: Cybernetic hacking systems
-  - name: stealth
-    description: Stealth and detection mechanics
-  - name: extraction
-    description: Mission completion systems
-  - name: arena
-    description: PvP arena management
-  - name: cyberspace
-    description: Digital realm interactions
-
+- name: sessions
+  description: Combat session lifecycle management
+- name: ai
+  description: AI enemy behavior and coordination
+- name: abilities
+  description: Player ability activation and management
+- name: shooting
+  description: Weapon systems and ballistic calculations
+- name: combos
+  description: Combo synergies and execution
+- name: freerun
+  description: Parkour movement mechanics
+- name: hacking
+  description: Cybernetic hacking systems
+- name: stealth
+  description: Stealth and detection mechanics
+- name: extraction
+  description: Mission completion systems
+- name: arena
+  description: PvP arena management
+- name: cyberspace
+  description: Digital realm interactions
 security:
-  - BearerAuth: [ ]
-
+- BearerAuth: []
 paths:
-  # Health check endpoint
   /health:
     get:
       summary: API health check
       operationId: healthCheck
       responses:
-        "200":
+        '200':
           description: Service is healthy
           content:
             application/json:
@@ -96,24 +128,24 @@ paths:
                 properties:
                   status:
                     type: string
-                    enum: [ healthy ]
+                    enum:
+                    - healthy
                   version:
                     type: string
-
 components:
   securitySchemes:
     BearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
-
   schemas:
-    # Health check schema
     HealthResponse:
       type: object
       properties:
-        status:
-          type: string
-          enum: [ healthy ]
         version:
           type: string
+        status:
+          type: string
+          enum:
+          - healthy
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'

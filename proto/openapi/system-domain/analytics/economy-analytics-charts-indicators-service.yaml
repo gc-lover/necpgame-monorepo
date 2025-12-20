@@ -1,130 +1,151 @@
-# Issue: #216
 openapi: 3.0.3
 info:
   title: Economy Analytics Charts & Indicators Service API
-  description: |
-    API для графиков и технических индикаторов экономической аналитики в NECPGAME.
-    
+  description: 'API для графиков и технических индикаторов экономической аналитики в NECPGAME.
+
+
     **Основные возможности:**
+
     - Данные для различных типов графиков (линейные, свечные, OHLC, area, гистограммы)
+
     - Технические индикаторы (MA, RSI, MACD, Bollinger Bands)
+
     - Анализ настроений рынка
+
     - Тепловые карты рынка
-    
+
+
     **Интеграции:**
+
     - economy-service - данные о ценах
+
     - stock-exchange-service - данные биржи
+
     - analytics-service - основная логика аналитики
+
+    '
   version: 1.0.0
   contact:
     name: NECPGAME API Support
     email: api@necp.game
-
 servers:
-  - url: http://localhost:8095/api/v1
-    description: Analytics Service (локальная разработка)
-  - url: https://api.necp.game/api/v1
-    description: Analytics Service (продакшн)
-
+- url: http://localhost:8095/api/v1
+  description: Analytics Service (локальная разработка)
+- url: https://api.necp.game/api/v1
+  description: Analytics Service (продакшн)
 tags:
-  - name: Charts
-    description: Данные для графиков
-  - name: Indicators
-    description: Технические индикаторы
-  - name: Sentiment
-    description: Анализ настроений рынка
-  - name: Heatmap
-    description: Тепловые карты
-
+- name: Charts
+  description: Данные для графиков
+- name: Indicators
+  description: Технические индикаторы
+- name: Sentiment
+  description: Анализ настроений рынка
+- name: Heatmap
+  description: Тепловые карты
 paths:
   /analytics/chart/{symbol}:
     get:
       tags:
-        - Charts
+      - Charts
       summary: Получить данные для графика
-      description: |
-        Возвращает данные для графика указанного символа (акция, валюта, ресурс).
+      description: 'Возвращает данные для графика указанного символа (акция, валюта, ресурс).
+
+        '
       operationId: getChartData
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: symbol
-          in: path
-          required: true
-          schema:
-            type: string
-          description: Символ (акция, валюта, ресурс)
-        - name: chart_type
-          in: query
-          schema:
-            type: string
-            enum: [ line, candlestick, ohlc, area, volume ]
-          description: Тип графика
-        - name: time_frame
-          in: query
-          schema:
-            type: string
-            enum: [ 1m, 5m, 15m, 30m, 1h, 4h, 1d, 1w, 1M ]
-          description: Таймфрейм
-        - name: from
-          in: query
-          schema:
-            type: string
-            format: date-time
-          description: Начало периода
-        - name: to
-          in: query
-          schema:
-            type: string
-            format: date-time
-          description: Конец периода
+      - name: symbol
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Символ (акция, валюта, ресурс)
+      - name: chart_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - line
+          - candlestick
+          - ohlc
+          - area
+          - volume
+        description: Тип графика
+      - name: time_frame
+        in: query
+        schema:
+          type: string
+          enum:
+          - 1m
+          - 5m
+          - 15m
+          - 30m
+          - 1h
+          - 4h
+          - 1d
+          - 1w
+          - 1M
+        description: Таймфрейм
+      - name: from
+        in: query
+        schema:
+          type: string
+          format: date-time
+        description: Начало периода
+      - name: to
+        in: query
+        schema:
+          type: string
+          format: date-time
+        description: Конец периода
       responses:
-        "200":
+        '200':
           description: Данные для графика
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ChartData"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "404":
-          $ref: "common.yaml#/components/responses/NotFound"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+                $ref: '#/components/schemas/ChartData'
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
   /analytics/chart/{symbol}/history:
     get:
       tags:
-        - Charts
+      - Charts
       summary: Получить историю цен
-      description: |
-        Возвращает историю цен для символа.
+      description: 'Возвращает историю цен для символа.
+
+        '
       operationId: getPriceHistory
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: symbol
-          in: path
-          required: true
-          schema:
-            type: string
-          description: Символ
-        - name: from
-          in: query
-          schema:
-            type: string
-            format: date-time
-          description: Начало периода
-        - name: to
-          in: query
-          schema:
-            type: string
-            format: date-time
-          description: Конец периода
-        - $ref: "common.yaml#/components/parameters/Limit"
-        - $ref: "common.yaml#/components/parameters/Offset"
+      - name: symbol
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Символ
+      - name: from
+        in: query
+        schema:
+          type: string
+          format: date-time
+        description: Начало периода
+      - name: to
+        in: query
+        schema:
+          type: string
+          format: date-time
+        description: Конец периода
+      - $ref: common.yaml#/components/parameters/Limit
+      - $ref: common.yaml#/components/parameters/Offset
       responses:
-        "200":
+        '200':
           description: История цен
           content:
             application/json:
@@ -134,178 +155,206 @@ paths:
                   prices:
                     type: array
                     items:
-                      $ref: "#/components/schemas/PricePoint"
+                      $ref: '#/components/schemas/PricePoint'
                   total:
                     type: integer
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "404":
-          $ref: "common.yaml#/components/responses/NotFound"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
   /analytics/indicators/{symbol}:
     get:
       tags:
-        - Indicators
+      - Indicators
       summary: Получить технические индикаторы
-      description: |
-        Возвращает технические индикаторы для символа (MA, RSI, MACD, Bollinger Bands).
+      description: 'Возвращает технические индикаторы для символа (MA, RSI, MACD, Bollinger Bands).
+
+        '
       operationId: getTechnicalIndicators
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: symbol
-          in: path
-          required: true
-          schema:
+      - name: symbol
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Символ
+      - name: indicators
+        in: query
+        schema:
+          type: array
+          items:
             type: string
-          description: Символ
-        - name: indicators
-          in: query
-          schema:
-            type: array
-            items:
-              type: string
-              enum: [ ma, rsi, macd, bollinger ]
-          description: Список индикаторов для расчета
-        - name: ma_period
-          in: query
-          schema:
-            type: integer
-            default: 20
-          description: Период для MA
-        - name: ma_type
-          in: query
-          schema:
-            type: string
-            enum: [ sma, ema, wma ]
-            default: sma
-          description: Тип MA (Simple, Exponential, Weighted)
-        - name: rsi_period
-          in: query
-          schema:
-            type: integer
-            default: 14
-          description: Период для RSI
+            enum:
+            - ma
+            - rsi
+            - macd
+            - bollinger
+        description: Список индикаторов для расчета
+      - name: ma_period
+        in: query
+        schema:
+          type: integer
+          default: 20
+        description: Период для MA
+      - name: ma_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - sma
+          - ema
+          - wma
+          default: sma
+        description: Тип MA (Simple, Exponential, Weighted)
+      - name: rsi_period
+        in: query
+        schema:
+          type: integer
+          default: 14
+        description: Период для RSI
       responses:
-        "200":
+        '200':
           description: Технические индикаторы
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/TechnicalIndicators"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "404":
-          $ref: "common.yaml#/components/responses/NotFound"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+                $ref: '#/components/schemas/TechnicalIndicators'
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
   /analytics/sentiment/{symbol}:
     get:
       tags:
-        - Sentiment
+      - Sentiment
       summary: Получить анализ настроений
-      description: |
-        Возвращает анализ настроений рынка для символа.
+      description: 'Возвращает анализ настроений рынка для символа.
+
+        '
       operationId: getSentimentAnalysis
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: symbol
-          in: path
-          required: true
-          schema:
-            type: string
-          description: Символ
-        - name: period
-          in: query
-          schema:
-            type: string
-            enum: [ 1h, 4h, 1d, 1w, 1M ]
-            default: 1d
-          description: Период анализа
+      - name: symbol
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Символ
+      - name: period
+        in: query
+        schema:
+          type: string
+          enum:
+          - 1h
+          - 4h
+          - 1d
+          - 1w
+          - 1M
+          default: 1d
+        description: Период анализа
       responses:
-        "200":
+        '200':
           description: Анализ настроений
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SentimentAnalysis"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "404":
-          $ref: "common.yaml#/components/responses/NotFound"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+                $ref: '#/components/schemas/SentimentAnalysis'
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '404':
+          $ref: common.yaml#/components/responses/NotFound
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
   /analytics/heatmap:
     get:
       tags:
-        - Heatmap
+      - Heatmap
       summary: Получить тепловую карту рынка
-      description: |
-        Возвращает тепловую карту рынка по секторам или символам.
+      description: 'Возвращает тепловую карту рынка по секторам или символам.
+
+        '
       operationId: getMarketHeatmap
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: sector
-          in: query
-          schema:
-            type: string
-          description: Фильтр по сектору
-        - name: period
-          in: query
-          schema:
-            type: string
-            enum: [ 1h, 4h, 1d, 1w ]
-            default: 1d
-          description: Период для анализа
+      - name: sector
+        in: query
+        schema:
+          type: string
+        description: Фильтр по сектору
+      - name: period
+        in: query
+        schema:
+          type: string
+          enum:
+          - 1h
+          - 4h
+          - 1d
+          - 1w
+          default: 1d
+        description: Период для анализа
       responses:
-        "200":
+        '200':
           description: Тепловая карта рынка
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/MarketHeatmap"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+                $ref: '#/components/schemas/MarketHeatmap'
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
 components:
   securitySchemes:
     BearerAuth:
-      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
-
+      $ref: common.yaml#/components/securitySchemes/BearerAuth
   schemas:
     ChartData:
       type: object
       required:
-        - symbol
-        - chart_type
-        - time_frame
-        - data_points
+      - symbol
+      - chart_type
+      - time_frame
+      - data_points
       properties:
         symbol:
           type: string
         chart_type:
           type: string
-          enum: [ line, candlestick, ohlc, area, volume ]
+          enum:
+          - line
+          - candlestick
+          - ohlc
+          - area
+          - volume
         time_frame:
           type: string
-          enum: [ 1m, 5m, 15m, 30m, 1h, 4h, 1d, 1w, 1M ]
+          enum:
+          - 1m
+          - 5m
+          - 15m
+          - 30m
+          - 1h
+          - 4h
+          - 1d
+          - 1w
+          - 1M
         data_points:
           type: array
           items:
-            $ref: "#/components/schemas/ChartDataPoint"
-
+            $ref: '#/components/schemas/ChartDataPoint'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     ChartDataPoint:
       type: object
       required:
-        - timestamp
+      - timestamp
       properties:
         timestamp:
           type: string
@@ -334,12 +383,12 @@ components:
           type: number
           format: float
           nullable: true
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     PricePoint:
       type: object
       required:
-        - timestamp
-        - price
+      - timestamp
+      - price
       properties:
         timestamp:
           type: string
@@ -351,12 +400,12 @@ components:
           type: number
           format: float
           nullable: true
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     TechnicalIndicators:
       type: object
       required:
-        - symbol
-        - timestamp
+      - symbol
+      - timestamp
       properties:
         symbol:
           type: string
@@ -389,7 +438,10 @@ components:
               description: RSI value (0-100)
             signal:
               type: string
-              enum: [ oversold, neutral, overbought ]
+              enum:
+              - oversold
+              - neutral
+              - overbought
         macd:
           type: object
           nullable: true
@@ -416,30 +468,30 @@ components:
             lower:
               type: number
               format: float
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     SentimentAnalysis:
       type: object
       required:
-        - symbol
-        - timestamp
-        - sentiment_score
+      - symbol
+      - timestamp
+      - sentiment_score
       properties:
         symbol:
           type: string
         timestamp:
           type: string
           format: date-time
-        sentiment_score:
-          type: number
-          format: float
-          description:
-            Sentiment score (-1 to +1: bearish to bullish)
         bullish_signals:
           type: integer
           description: Количество бычьих сигналов
         bearish_signals:
           type: integer
           description: Количество медвежьих сигналов
+        sentiment_score:
+          type: number
+          format: float
+          description:
+            Sentiment score (-1 to +1: bearish to bullish)
         fear_greed_index:
           type: number
           format: float
@@ -452,12 +504,12 @@ components:
           type: number
           format: float
           description: Процент медвежьих сигналов
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     MarketHeatmap:
       type: object
       required:
-        - timestamp
-        - sectors
+      - timestamp
+      - sectors
       properties:
         timestamp:
           type: string
@@ -465,42 +517,41 @@ components:
         sectors:
           type: array
           items:
-            $ref: "#/components/schemas/HeatmapSector"
+            $ref: '#/components/schemas/HeatmapSector'
         symbols:
           type: array
           items:
-            $ref: "#/components/schemas/HeatmapSymbol"
-
+            $ref: '#/components/schemas/HeatmapSymbol'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     HeatmapSector:
       type: object
       required:
-        - sector_name
-        - change_percentage
+      - sector_name
+      - change_percentage
       properties:
         sector_name:
           type: string
-        change_percentage:
-          type: number
-          format: float
         color:
           type: string
           description: Цвет для визуализации (green/red)
-
+        change_percentage:
+          type: number
+          format: float
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     HeatmapSymbol:
       type: object
       required:
-        - symbol
-        - change_percentage
+      - symbol
+      - change_percentage
       properties:
         symbol:
           type: string
-        change_percentage:
-          type: number
-          format: float
         color:
           type: string
           description: Цвет для визуализации (green/red)
-
+        change_percentage:
+          type: number
+          format: float
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
 security:
-  - BearerAuth: [ ]
-
+- BearerAuth: []

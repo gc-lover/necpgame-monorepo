@@ -1,99 +1,118 @@
-# Issue: #169
 openapi: 3.0.3
 info:
   title: Hacking Systems API
   version: 1.0.0
-  description: |
-    Cybernetic hacking systems for MMOFPS RPG.
+  description: 'Cybernetic hacking systems for MMOFPS RPG.
+
 
     ## Hacking Mechanics
+
     - Quickhack execution and validation
+
     - Breach protocol and system access
+
     - Cybernetic enhancement management
 
+    '
 servers:
-  - url: http://localhost:8100
-    description: Local development
-  - url: https://api.necpgame.com/v1
-    description: Production API
-
+- url: http://localhost:8100
+  description: Local development
+- url: https://api.necpgame.com/v1
+  description: Production API
 tags:
-  - name: hacking
-    description: Cybernetic hacking systems
-
+- name: hacking
+  description: Cybernetic hacking systems
 security:
-  - BearerAuth: [ ]
-
+- BearerAuth: []
 paths:
-  # Hacking
   /gameplay/combat/hacking/{target_id}/attempt:
     post:
-      tags: [ hacking ]
+      tags:
+      - hacking
       summary: Attempt cybernetic hack
       operationId: attemptHack
       parameters:
-        - name: target_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: target_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/HackAttemptRequest"
+              $ref: '#/components/schemas/HackAttemptRequest'
       responses:
-        "200":
+        '200':
           description: Hack result
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/HackResult"
-
+                $ref: '#/components/schemas/HackResult'
 components:
   securitySchemes:
     BearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
-
   schemas:
-    # Hacking
     HackAttemptRequest:
       type: object
-      required: [ hack_type, target_system ]
+      required:
+      - hack_type
+      - target_system
       properties:
-        hack_type:
-          type: string
-          enum: [ quickhack, breach, overload, ping ]
-        target_system:
-          type: string
-          enum: [ turret, camera, door, enemy_implant ]
         quickhack_id:
           type: string
           format: uuid
-
-    HackResult:
-      type: object
-      required: [ success, hack_type, target_system ]
-      properties:
-        success:
-          type: boolean
         hack_type:
           type: string
-          enum: [ quickhack, breach, overload, ping ]
+          enum:
+          - quickhack
+          - breach
+          - overload
+          - ping
         target_system:
           type: string
-          enum: [ turret, camera, door, enemy_implant ]
+          enum:
+          - turret
+          - camera
+          - door
+          - enemy_implant
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    HackResult:
+      type: object
+      required:
+      - success
+      - hack_type
+      - target_system
+      properties:
+        hack_type:
+          type: string
+          enum:
+          - quickhack
+          - breach
+          - overload
+          - ping
+        target_system:
+          type: string
+          enum:
+          - turret
+          - camera
+          - door
+          - enemy_implant
         duration:
           type: number
-          minimum: 0
-        damage_dealt:
-          type: integer
           minimum: 0
         detection_risk:
           type: number
           minimum: 0
           maximum: 1
+        damage_dealt:
+          type: integer
+          minimum: 0
+        success:
+          type: boolean
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'

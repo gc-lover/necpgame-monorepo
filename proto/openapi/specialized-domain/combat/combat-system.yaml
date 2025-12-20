@@ -1,53 +1,62 @@
-# Issue: #2183 - Combat System API Specification
 openapi: 3.0.3
 info:
   title: Combat System API
   version: 1.0.0
-  description: |
-    Combat System API for MMOFPS RPG.
+  description: 'Combat System API for MMOFPS RPG.
+
 
     This API provides endpoints for managing combat sessions, player actions,
+
     weapon systems, damage calculations, and real-time combat state synchronization.
 
+
     ## Key Features
+
     - Real-time combat session management
+
     - Player action validation and processing
+
     - Weapon and ability systems
+
     - Damage calculation and effects
+
     - Anti-cheat validation
+
     - Performance monitoring
 
+
     ## Performance Requirements
+
     - Action processing: 1000+ RPS with P99 <25ms
+
     - Session management: 500+ RPS with P99 <50ms
+
     - Memory optimized with struct alignment
+
     - Context timeouts on all operations
 
+    '
 servers:
-  - url: http://localhost:8100
-    description: Local development
-  - url: https://api.necpgame.com/v1/combat
-    description: Production API
-
+- url: http://localhost:8100
+  description: Local development
+- url: https://api.necpgame.com/v1/combat
+  description: Production API
 tags:
-  - name: sessions
-    description: Combat session lifecycle management
-  - name: actions
-    description: Player combat actions and validation
-  - name: weapons
-    description: Weapon systems and configurations
-  - name: abilities
-    description: Player abilities and skills
-  - name: damage
-    description: Damage calculation and effects
-  - name: stats
-    description: Combat statistics and analytics
-
+- name: sessions
+  description: Combat session lifecycle management
+- name: actions
+  description: Player combat actions and validation
+- name: weapons
+  description: Weapon systems and configurations
+- name: abilities
+  description: Player abilities and skills
+- name: damage
+  description: Damage calculation and effects
+- name: stats
+  description: Combat statistics and analytics
 security:
-  - BearerAuth: [ ]
-
+- BearerAuth: []
 paths:
-  # Health check
   /health:
     get:
       summary: API health check
@@ -62,20 +71,20 @@ paths:
                 properties:
                   status:
                     type: string
-                    enum: [ healthy ]
+                    enum:
+                    - healthy
                   version:
                     type: string
         '401':
           $ref: '#/components/responses/Unauthorized'
-
-  # Combat Sessions
   /api/v1/combat/sessions:
     post:
       summary: Create new combat session
       operationId: createCombatSession
-      tags: [ sessions ]
+      tags:
+      - sessions
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -95,41 +104,45 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
     get:
       summary: List combat sessions
       operationId: listCombatSessions
-      tags: [ sessions ]
+      tags:
+      - sessions
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: player_id
-          in: query
-          schema:
-            type: string
-            format: uuid
-          description: Filter by player ID
-        - name: status
-          in: query
-          schema:
-            type: string
-            enum: [ active, paused, completed, failed ]
-          description: Filter by session status
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 20
-          description: Number of sessions to return
-        - name: offset
-          in: query
-          schema:
-            type: integer
-            minimum: 0
-            default: 0
-          description: Pagination offset
+      - name: player_id
+        in: query
+        schema:
+          type: string
+          format: uuid
+        description: Filter by player ID
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - active
+          - paused
+          - completed
+          - failed
+        description: Filter by session status
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+        description: Number of sessions to return
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+        description: Pagination offset
       responses:
         '200':
           description: Combat sessions retrieved
@@ -143,22 +156,22 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
   /api/v1/combat/sessions/{session_id}:
     get:
       summary: Get combat session details
       operationId: getCombatSession
-      tags: [ sessions ]
+      tags:
+      - sessions
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: session_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Combat session ID
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Combat session ID
       responses:
         '200':
           description: Combat session details
@@ -172,21 +185,21 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
     patch:
       summary: Update combat session
       operationId: updateCombatSession
-      tags: [ sessions ]
+      tags:
+      - sessions
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: session_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Combat session ID
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Combat session ID
       requestBody:
         required: true
         content:
@@ -208,22 +221,22 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
   /api/v1/combat/sessions/{session_id}/actions:
     post:
       summary: Execute combat action
       operationId: executeCombatAction
-      tags: [ actions ]
+      tags:
+      - actions
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: session_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Combat session ID
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Combat session ID
       requestBody:
         required: true
         content:
@@ -247,22 +260,22 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
   /api/v1/combat/sessions/{session_id}/state:
     get:
       summary: Get current combat state
       operationId: getCombatState
-      tags: [ sessions ]
+      tags:
+      - sessions
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: session_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Combat session ID
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Combat session ID
       responses:
         '200':
           description: Current combat state
@@ -276,44 +289,50 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
-  # Weapons
   /api/v1/combat/weapons:
     get:
       summary: List available weapons
       operationId: listWeapons
-      tags: [ weapons ]
+      tags:
+      - weapons
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: category
-          in: query
-          schema:
-            type: string
-            enum: [ pistol, shotgun, rifle, sniper, smg, launcher, melee ]
-          description: Filter by weapon category
-        - name: tier
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 5
-          description: Filter by weapon tier
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 20
-          description: Number of weapons to return
-        - name: offset
-          in: query
-          schema:
-            type: integer
-            minimum: 0
-            default: 0
-          description: Pagination offset
+      - name: category
+        in: query
+        schema:
+          type: string
+          enum:
+          - pistol
+          - shotgun
+          - rifle
+          - sniper
+          - smg
+          - launcher
+          - melee
+        description: Filter by weapon category
+      - name: tier
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 5
+        description: Filter by weapon tier
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+        description: Number of weapons to return
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+        description: Pagination offset
       responses:
         '200':
           description: Weapons retrieved
@@ -327,22 +346,22 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
   /api/v1/combat/weapons/{weapon_id}:
     get:
       summary: Get weapon details
       operationId: getWeapon
-      tags: [ weapons ]
+      tags:
+      - weapons
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: weapon_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Weapon ID
+      - name: weapon_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Weapon ID
       responses:
         '200':
           description: Weapon details
@@ -356,43 +375,46 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
-  # Abilities
   /api/v1/combat/abilities:
     get:
       summary: List player abilities
       operationId: listAbilities
-      tags: [ abilities ]
+      tags:
+      - abilities
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: player_id
-          in: query
-          schema:
-            type: string
-            format: uuid
-          description: Filter by player ID
-        - name: category
-          in: query
-          schema:
-            type: string
-            enum: [ offensive, defensive, mobility, utility ]
-          description: Filter by ability category
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 20
-          description: Number of abilities to return
-        - name: offset
-          in: query
-          schema:
-            type: integer
-            minimum: 0
-            default: 0
-          description: Pagination offset
+      - name: player_id
+        in: query
+        schema:
+          type: string
+          format: uuid
+        description: Filter by player ID
+      - name: category
+        in: query
+        schema:
+          type: string
+          enum:
+          - offensive
+          - defensive
+          - mobility
+          - utility
+        description: Filter by ability category
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+        description: Number of abilities to return
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+        description: Pagination offset
       responses:
         '200':
           description: Abilities retrieved
@@ -406,22 +428,22 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
   /api/v1/combat/abilities/{ability_id}/activate:
     post:
       summary: Activate ability
       operationId: activateAbility
-      tags: [ abilities ]
+      tags:
+      - abilities
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: ability_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Ability ID
+      - name: ability_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Ability ID
       requestBody:
         required: true
         content:
@@ -445,30 +467,33 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
-  # Combat Statistics
   /api/v1/combat/stats/player/{player_id}:
     get:
       summary: Get player combat statistics
       operationId: getPlayerCombatStats
-      tags: [ stats ]
+      tags:
+      - stats
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: player_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Player ID
-        - name: period
-          in: query
-          schema:
-            type: string
-            enum: [ day, week, month, all ]
-            default: all
-          description: Time period for statistics
+      - name: player_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Player ID
+      - name: period
+        in: query
+        schema:
+          type: string
+          enum:
+          - day
+          - week
+          - month
+          - all
+          default: all
+        description: Time period for statistics
       responses:
         '200':
           description: Player combat statistics
@@ -482,14 +507,12 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
 components:
   securitySchemes:
     BearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
-
   responses:
     BadRequest:
       description: Bad request
@@ -498,12 +521,11 @@ components:
           schema:
             type: object
             required:
-              - error
+            - error
             properties:
               error:
                 type: string
-                example: "Invalid request parameters"
-
+                example: Invalid request parameters
     Unauthorized:
       description: Unauthorized
       content:
@@ -511,12 +533,11 @@ components:
           schema:
             type: object
             required:
-              - error
+            - error
             properties:
               error:
                 type: string
-                example: "Authentication required"
-
+                example: Authentication required
     NotFound:
       description: Resource not found
       content:
@@ -524,12 +545,11 @@ components:
           schema:
             type: object
             required:
-              - error
+            - error
             properties:
               error:
                 type: string
-                example: "Resource not found"
-
+                example: Resource not found
     TooManyRequests:
       description: Too many requests
       content:
@@ -537,12 +557,11 @@ components:
           schema:
             type: object
             required:
-              - error
+            - error
             properties:
               error:
                 type: string
-                example: "Rate limit exceeded"
-
+                example: Rate limit exceeded
     InternalServerError:
       description: Internal server error
       content:
@@ -550,390 +569,10 @@ components:
           schema:
             type: object
             required:
-              - error
+            - error
             properties:
               error:
                 type: string
-                example: "Internal server error"
-
+                example: Internal server error
   schemas:
-
-    # ============================================================================
-    # COMBAT SESSION SCHEMAS
-    # ============================================================================
-
-    CombatSession:
-      type: object
-      required:
-        - id
-        - player_id
-        - status
-        - created_at
-      properties:
-        description:
-          type: string
-          description: Session description or mission name
-        session_config:
-          $ref: '#/components/schemas/CombatSessionConfig'
-        participants:
-          type: array
-          items:
-            $ref: '#/components/schemas/CombatParticipant'
-        combat_log:
-          type: array
-          items:
-            $ref: '#/components/schemas/CombatLogEntry'
-        rewards:
-          $ref: '#/components/schemas/CombatRewards'
-        statistics:
-          $ref: '#/components/schemas/CombatStatistics'
-        created_at:
-          type: string
-          format: date-time
-        started_at:
-          type: string
-          format: date-time
-        ended_at:
-          type: string
-          format: date-time
-        last_activity:
-          type: string
-          format: date-time
-        id:
-          type: string
-          format: uuid
-          description: Combat session unique identifier
-        player_id:
-          type: string
-          format: uuid
-          description: Primary player who initiated the session
-        zone_id:
-          type: string
-          format: uuid
-          description: Zone where combat takes place
-        mission_id:
-          type: string
-          format: uuid
-          description: Associated mission or quest
-        status:
-          type: string
-          enum: [ preparing, active, paused, completed, failed, terminated ]
-          description: Current session status
-        max_participants:
-          type: integer
-          minimum: 1
-          maximum: 50
-          description: Maximum number of participants
-        difficulty:
-          type: string
-          enum: [ easy, normal, hard, nightmare ]
-          description: Combat difficulty level
-        game_mode:
-          type: string
-          enum: [ solo, coop, pvp, arena ]
-          description: Combat game mode
-
-    CombatActionRequest:
-      type: object
-      required:
-        - action_type
-        - timestamp
-      properties:
-        action_type:
-          type: string
-          enum: [ move, attack, ability, reload, interact, surrender ]
-          description: Type of combat action
-        timestamp:
-          type: string
-          format: date-time
-          description: Client timestamp
-        target_position:
-          $ref: '#/components/schemas/Vector3'
-        target_id:
-          type: string
-          format: uuid
-          description: Target participant ID
-        weapon_id:
-          type: string
-          format: uuid
-          description: Weapon to use
-        ability_id:
-          type: string
-          format: uuid
-          description: Ability to activate
-        parameters:
-          type: object
-          description: Action-specific parameters
-
-    Vector3:
-      type: object
-      required:
-        - x
-        - y
-        - z
-      properties:
-        x:
-          type: number
-          format: float
-          description: X coordinate
-        y:
-          type: number
-          format: float
-          description: Y coordinate
-        z:
-          type: number
-          format: float
-          description: Z coordinate
-
-    # Placeholder schemas for complete API
-    CombatSessionConfig:
-      type: object
-      properties:
-        time_limit:
-          type: integer
-          minimum: 0
-        respawn_enabled:
-          type: boolean
-          default: true
-
-    CombatParticipant:
-      type: object
-      required:
-        - id
-        - type
-        - joined_at
-      properties:
-        id:
-          type: string
-          format: uuid
-        type:
-          type: string
-          enum: [ player, npc, enemy ]
-        name:
-          type: string
-        joined_at:
-          type: string
-          format: date-time
-
-    CombatLogEntry:
-      type: object
-      required:
-        - timestamp
-        - action_type
-        - participant_id
-      properties:
-        timestamp:
-          type: string
-          format: date-time
-        action_type:
-          type: string
-          enum: [ damage_dealt, damage_taken, ability_used ]
-        participant_id:
-          type: string
-          format: uuid
-
-    CombatRewards:
-      type: object
-      properties:
-        experience:
-          type: integer
-          minimum: 0
-
-    CombatStatistics:
-      type: object
-      properties:
-        duration_seconds:
-          type: integer
-          minimum: 0
-
-    CombatActionResult:
-      type: object
-      required:
-        - success
-        - timestamp
-      properties:
-        success:
-          type: boolean
-        timestamp:
-          type: string
-          format: date-time
-        action_id:
-          type: string
-          format: uuid
-
-    CombatState:
-      type: object
-      required:
-        - session_id
-        - timestamp
-        - participants
-      properties:
-        session_id:
-          type: string
-          format: uuid
-        timestamp:
-          type: string
-          format: date-time
-        status:
-          type: string
-          enum: [ preparing, active, paused ]
-        participants:
-          type: array
-          items:
-            $ref: '#/components/schemas/CombatParticipant'
-
-    CreateCombatSessionRequest:
-      type: object
-      required:
-        - player_id
-        - zone_id
-      properties:
-        player_id:
-          type: string
-          format: uuid
-        zone_id:
-          type: string
-          format: uuid
-        difficulty:
-          type: string
-          enum: [ easy, normal, hard, nightmare ]
-          default: normal
-        game_mode:
-          type: string
-          enum: [ solo, coop, pvp, arena ]
-          default: solo
-
-    UpdateCombatSessionRequest:
-      type: object
-      properties:
-        status:
-          type: string
-          enum: [ active, paused, terminated ]
-
-    CombatSessionListResponse:
-      type: object
-      required:
-        - sessions
-        - total
-      properties:
-        sessions:
-          type: array
-          items:
-            $ref: '#/components/schemas/CombatSession'
-        total:
-          type: integer
-          minimum: 0
-
-    WeaponListResponse:
-      type: object
-      required:
-        - weapons
-        - total
-      properties:
-        weapons:
-          type: array
-          items:
-            $ref: '#/components/schemas/Weapon'
-        total:
-          type: integer
-          minimum: 0
-
-    Weapon:
-      type: object
-      required:
-        - id
-        - name
-        - category
-        - tier
-      properties:
-        id:
-          type: string
-          format: uuid
-        name:
-          type: string
-        category:
-          type: string
-          enum: [ pistol, shotgun, rifle, sniper ]
-        tier:
-          type: integer
-          minimum: 1
-          maximum: 5
-
-    AbilityListResponse:
-      type: object
-      required:
-        - abilities
-        - total
-      properties:
-        abilities:
-          type: array
-          items:
-            $ref: '#/components/schemas/Ability'
-        total:
-          type: integer
-          minimum: 0
-
-    Ability:
-      type: object
-      required:
-        - id
-        - name
-        - category
-        - cooldown_ms
-      properties:
-        id:
-          type: string
-          format: uuid
-        name:
-          type: string
-        category:
-          type: string
-          enum: [ offensive, defensive, mobility, utility ]
-        cooldown_ms:
-          type: integer
-          minimum: 100
-
-    AbilityActivationRequest:
-      type: object
-      properties:
-        target_position:
-          $ref: '#/components/schemas/Vector3'
-        target_id:
-          type: string
-          format: uuid
-
-    AbilityActivationResult:
-      type: object
-      required:
-        - success
-        - timestamp
-      properties:
-        success:
-          type: boolean
-        timestamp:
-          type: string
-          format: date-time
-
-    PlayerCombatStats:
-      type: object
-      required:
-        - player_id
-        - period
-      properties:
-        player_id:
-          type: string
-          format: uuid
-        period:
-          type: string
-          enum: [ day, week, month, all ]
-        total_kills:
-          type: integer
-          minimum: 0
-        total_deaths:
-          type: integer
-          minimum: 0
-        accuracy_percentage:
-          type: number
-          format: float
-          minimum: 0.0
-          maximum: 100.0
+    $ref: ./combat-system-schemas.yaml#/components/schemas

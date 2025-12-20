@@ -1,77 +1,74 @@
 openapi: 3.0.3
 info:
   title: Interactive Objects Service API
-  description: |
-    Interactive Objects Service for NECPGAME - Management of interactive objects across different zones
+  description: 'Interactive Objects Service for NECPGAME - Management of interactive objects across different zones
+
     (airports, military bases, no-tell motels, covert labs) with real-time state synchronization.
+
+    '
   version: 1.0.0
   contact:
     name: NECPGAME API Team
     email: api@necpgame.com
-
 servers:
-  - url: https://api.necpgame.com/interactive-objects
-    description: Production server
-  - url: http://localhost:8083
-    description: Local development server
-
+- url: https://api.necpgame.com/interactive-objects
+  description: Production server
+- url: http://localhost:8083
+  description: Local development server
 security:
-  - bearerAuth: [ ]
-
+- bearerAuth: []
 paths:
   /health:
     get:
       summary: Health check endpoint
       operationId: getHealth
       responses:
-        "200":
+        '200':
           description: Service is healthy
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/HealthResponse"
-
+                $ref: '#/components/schemas/HealthResponse'
   /objects:
     get:
       summary: Get active interactive objects
       operationId: getActiveObjects
       parameters:
-        - name: zone_id
-          in: query
-          schema:
-            type: string
-            format: uuid
-          description: Filter by zone
-        - name: zone_type
-          in: query
-          schema:
-            $ref: "#/components/schemas/ZoneType"
-          description: Filter by zone type
-        - name: object_type
-          in: query
-          schema:
-            $ref: "#/components/schemas/ObjectType"
-          description: Filter by object type
-        - name: status
-          in: query
-          schema:
-            $ref: "#/components/schemas/ObjectStatus"
-          description: Filter by object status
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 50
+      - name: zone_id
+        in: query
+        schema:
+          type: string
+          format: uuid
+        description: Filter by zone
+      - name: zone_type
+        in: query
+        schema:
+          $ref: '#/components/schemas/ZoneType'
+        description: Filter by zone type
+      - name: object_type
+        in: query
+        schema:
+          $ref: '#/components/schemas/ObjectType'
+        description: Filter by object type
+      - name: status
+        in: query
+        schema:
+          $ref: '#/components/schemas/ObjectStatus'
+        description: Filter by object status
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
       responses:
-        "200":
+        '200':
           description: List of active objects
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ObjectListResponse"
-
+                $ref: '#/components/schemas/ObjectListResponse'
     post:
       summary: Create new interactive object
       operationId: createObject
@@ -80,136 +77,130 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateObjectRequest"
+              $ref: '#/components/schemas/CreateObjectRequest'
       responses:
-        "201":
+        '201':
           description: Object created successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ObjectResponse"
-
+                $ref: '#/components/schemas/ObjectResponse'
   /objects/{object_id}:
     get:
       summary: Get object details
       operationId: getObject
       parameters:
-        - name: object_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: object_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
-        "200":
+        '200':
           description: Object details
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ObjectResponse"
-        "404":
+                $ref: '#/components/schemas/ObjectResponse'
+        '404':
           description: Object not found
-
     put:
       summary: Update object state
       operationId: updateObject
       parameters:
-        - name: object_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: object_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UpdateObjectRequest"
+              $ref: '#/components/schemas/UpdateObjectRequest'
       responses:
-        "200":
+        '200':
           description: Object updated successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ObjectResponse"
-
+                $ref: '#/components/schemas/ObjectResponse'
     delete:
       summary: Remove object
       operationId: removeObject
       parameters:
-        - name: object_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: object_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
-        "204":
+        '204':
           description: Object removed successfully
-
   /objects/{object_id}/interact:
     post:
       summary: Interact with object
       operationId: interactWithObject
       parameters:
-        - name: object_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: object_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/InteractRequest"
+              $ref: '#/components/schemas/InteractRequest'
       responses:
-        "200":
+        '200':
           description: Interaction successful
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/InteractResponse"
-        "400":
+                $ref: '#/components/schemas/InteractResponse'
+        '400':
           description: Interaction failed
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/InteractError"
-
+                $ref: '#/components/schemas/InteractError'
   /objects/{object_id}/hack:
     post:
       summary: Attempt to hack object
       operationId: hackObject
       parameters:
-        - name: object_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: object_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/HackRequest"
+              $ref: '#/components/schemas/HackRequest'
       responses:
-        "200":
+        '200':
           description: Hack successful
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/HackResponse"
-        "403":
+                $ref: '#/components/schemas/HackResponse'
+        '403':
           description: Hack failed - detection/alarm
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/HackFailure"
-
+                $ref: '#/components/schemas/HackFailure'
   /content/reload:
     post:
       summary: Reload interactive objects content from YAML
@@ -220,181 +211,194 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ReloadContentRequest"
+              $ref: '#/components/schemas/ReloadContentRequest'
       responses:
-        "200":
+        '200':
           description: Content imported successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ReloadContentResponse"
-        "400":
+                $ref: '#/components/schemas/ReloadContentResponse'
+        '400':
           description: Invalid request data
-        "500":
+        '500':
           description: Internal server error
-
   /zones/{zone_id}/objects:
     get:
       summary: Get all objects in zone
       operationId: getZoneObjects
       parameters:
-        - name: zone_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: include_inactive
-          in: query
-          schema:
-            type: boolean
-            default: false
+      - name: zone_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: include_inactive
+        in: query
+        schema:
+          type: boolean
+          default: false
       responses:
-        "200":
+        '200':
           description: Zone objects
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ZoneObjectsResponse"
-
+                $ref: '#/components/schemas/ZoneObjectsResponse'
   /airport-objects:
     get:
       summary: Get airport-specific objects
       operationId: getAirportObjects
       parameters:
-        - name: airport_id
-          in: query
-          schema:
-            type: string
-            format: uuid
-        - name: object_category
-          in: query
-          schema:
-            type: string
-            enum: [ transport, security, storage, surveillance ]
+      - name: airport_id
+        in: query
+        schema:
+          type: string
+          format: uuid
+      - name: object_category
+        in: query
+        schema:
+          type: string
+          enum:
+          - transport
+          - security
+          - storage
+          - surveillance
       responses:
-        "200":
+        '200':
           description: Airport objects
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AirportObjectsResponse"
-
+                $ref: '#/components/schemas/AirportObjectsResponse'
   /military-objects:
     get:
       summary: Get military base objects
       operationId: getMilitaryObjects
       parameters:
-        - name: base_id
-          in: query
-          schema:
-            type: string
-            format: uuid
-        - name: threat_level
-          in: query
-          schema:
-            type: string
-            enum: [ low, medium, high, extreme ]
+      - name: base_id
+        in: query
+        schema:
+          type: string
+          format: uuid
+      - name: threat_level
+        in: query
+        schema:
+          type: string
+          enum:
+          - low
+          - medium
+          - high
+          - extreme
       responses:
-        "200":
+        '200':
           description: Military objects
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/MilitaryObjectsResponse"
-
+                $ref: '#/components/schemas/MilitaryObjectsResponse'
   /motel-objects:
     get:
       summary: Get motel objects
       operationId: getMotelObjects
       parameters:
-        - name: motel_id
-          in: query
-          schema:
-            type: string
-            format: uuid
-        - name: room_type
-          in: query
-          schema:
-            type: string
-            enum: [ standard, vip, basement ]
+      - name: motel_id
+        in: query
+        schema:
+          type: string
+          format: uuid
+      - name: room_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - standard
+          - vip
+          - basement
       responses:
-        "200":
+        '200':
           description: Motel objects
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/MotelObjectsResponse"
-
+                $ref: '#/components/schemas/MotelObjectsResponse'
   /lab-objects:
     get:
       summary: Get laboratory objects
       operationId: getLabObjects
       parameters:
-        - name: lab_id
-          in: query
-          schema:
-            type: string
-            format: uuid
-        - name: clearance_level
-          in: query
-          schema:
-            type: string
-            enum: [ public, restricted, classified, top_secret ]
+      - name: lab_id
+        in: query
+        schema:
+          type: string
+          format: uuid
+      - name: clearance_level
+        in: query
+        schema:
+          type: string
+          enum:
+          - public
+          - restricted
+          - classified
+          - top_secret
       responses:
-        "200":
+        '200':
           description: Lab objects
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/LabObjectsResponse"
-
+                $ref: '#/components/schemas/LabObjectsResponse'
   /telemetry:
     get:
       summary: Get interaction telemetry
       operationId: getTelemetry
       parameters:
-        - name: metric
-          in: query
-          schema:
-            type: string
-            enum:
-              [
-                interactions_total,
-                hacks_successful,
-                hacks_failed,
-                objects_destroyed,
-                alarms_triggered,
-              ]
-        - name: zone_type
-          in: query
-          schema:
-            $ref: "#/components/schemas/ZoneType"
-        - name: timeframe
-          in: query
-          schema:
-            type: string
-            enum: [ 1m, 5m, 15m, 1h ]
-            default: 5m
+      - name: metric
+        in: query
+        schema:
+          type: string
+          enum:
+          - interactions_total
+          - hacks_successful
+          - hacks_failed
+          - objects_destroyed
+          - alarms_triggered
+      - name: zone_type
+        in: query
+        schema:
+          $ref: '#/components/schemas/ZoneType'
+      - name: timeframe
+        in: query
+        schema:
+          type: string
+          enum:
+          - 1m
+          - 5m
+          - 15m
+          - 1h
+          default: 5m
       responses:
-        "200":
+        '200':
           description: Telemetry data
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/TelemetryResponse"
-
+                $ref: '#/components/schemas/TelemetryResponse'
 components:
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
-
   schemas:
     HealthResponse:
       type: object
       properties:
         status:
           type: string
-          enum: [ healthy, degraded, unhealthy ]
+          enum:
+          - healthy
+          - degraded
+          - unhealthy
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'

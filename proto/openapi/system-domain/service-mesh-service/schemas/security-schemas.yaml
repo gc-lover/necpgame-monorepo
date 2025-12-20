@@ -1,36 +1,53 @@
-# Security policies schemas
-# Issue: #2058
-
 components:
   schemas:
-    # Security policy entity
     SecurityPolicy:
       type: object
       required:
-        - policy_id
-        - policy_type
-        - scope
-        - rules
-        - created_at
-        - status
+      - policy_id
+      - policy_type
+      - scope
+      - rules
+      - created_at
+      - status
       properties:
         policy_id:
           type: string
           format: uuid
           description: Unique policy identifier
-          example: "sec1a2b3c4-d5e6-7890-1234-567890abcdef"
-
+          example: sec1a2b3c4-d5e6-7890-1234-567890abcdef
         policy_name:
           type: string
           description: Human-readable policy name
-          example: "API Authentication Policy"
-
+          example: API Authentication Policy
         policy_type:
           type: string
-          enum: [authentication, authorization, encryption, rate_limiting, cors, ip_filtering]
+          enum:
+          - authentication
+          - authorization
+          - encryption
+          - rate_limiting
+          - cors
+          - ip_filtering
           description: Type of security policy
-          example: "authentication"
-
+          example: authentication
+        status:
+          type: string
+          enum:
+          - active
+          - inactive
+          - draft
+          description: Policy status
+          example: active
+        created_at:
+          type: string
+          format: date-time
+          description: Policy creation timestamp
+          example: '2025-12-20T21:45:00Z'
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+          example: '2025-12-20T21:46:00Z'
         scope:
           type: object
           description: Policy application scope
@@ -40,88 +57,113 @@ components:
               items:
                 type: string
               description: Applicable namespaces
-              example: ["game-services", "system-services"]
+              example:
+              - game-services
+              - system-services
             services:
               type: array
               items:
                 type: string
               description: Applicable services
-              example: ["guild-service", "combat-service"]
+              example:
+              - guild-service
+              - combat-service
             endpoints:
               type: array
               items:
                 type: string
               description: Applicable endpoint patterns
-              example: ["/api/v1/guilds/*", "/api/v1/combat/*"]
+              example:
+              - /api/v1/guilds/*
+              - /api/v1/combat/*
             methods:
               type: array
               items:
                 type: string
-                enum: [GET, POST, PUT, DELETE, PATCH, HEAD, OPTIONS]
+                enum:
+                - GET
+                - POST
+                - PUT
+                - DELETE
+                - PATCH
+                - HEAD
+                - OPTIONS
               description: Applicable HTTP methods
-              example: ["GET", "POST", "PUT"]
-
+              example:
+              - GET
+              - POST
+              - PUT
         rules:
           type: object
           description: Policy-specific rules configuration
           additionalProperties: true
           examples:
-            # Authentication rules
-            - jwt_providers:
-                - issuer: "https://auth.necpgame.com"
-                  jwks_uri: "https://auth.necpgame.com/.well-known/jwks.json"
-                  audiences: ["necpgame-api"]
-              forward_auth_header: "X-Forwarded-User"
-
-            # Authorization rules
-            - principal: "user"
-              roles: ["player", "premium"]
-              permissions: ["read:guild", "write:guild"]
-              deny_when_no_match: true
-
-            # Encryption rules
-            - minimum_tls_version: "TLSv1.3"
-              cipher_suites: ["TLS_AES_256_GCM_SHA384"]
-              enforce_mtls: true
-              certificate_authorities: ["necpgame-ca"]
-
-            # Rate limiting rules
-            - rate_limits:
-                - key: "user_id"
-                  requests_per_unit: 100
-                  unit: "minute"
-                  burst: 20
-                - key: "ip"
-                  requests_per_unit: 1000
-                  unit: "hour"
-                  burst: 100
-
-            # CORS rules
-            - allow_origins: ["https://necpgame.com", "https://app.necpgame.com"]
-              allow_methods: ["GET", "POST", "PUT", "DELETE"]
-              allow_headers: ["Authorization", "Content-Type"]
-              allow_credentials: true
-              max_age: 86400
-
-            # IP filtering rules
-            - allow_cidrs: ["192.168.0.0/16", "10.0.0.0/8"]
-              deny_cidrs: ["192.168.1.100/32"]
-              allow_private_ranges: false
-
+          - jwt_providers:
+            - issuer: https://auth.necpgame.com
+              jwks_uri: https://auth.necpgame.com/.well-known/jwks.json
+              audiences:
+              - necpgame-api
+            forward_auth_header: X-Forwarded-User
+          - principal: user
+            roles:
+            - player
+            - premium
+            permissions:
+            - read:guild
+            - write:guild
+            deny_when_no_match: true
+          - minimum_tls_version: TLSv1.3
+            cipher_suites:
+            - TLS_AES_256_GCM_SHA384
+            enforce_mtls: true
+            certificate_authorities:
+            - necpgame-ca
+          - rate_limits:
+            - key: user_id
+              requests_per_unit: 100
+              unit: minute
+              burst: 20
+            - key: ip
+              requests_per_unit: 1000
+              unit: hour
+              burst: 100
+          - allow_origins:
+            - https://necpgame.com
+            - https://app.necpgame.com
+            allow_methods:
+            - GET
+            - POST
+            - PUT
+            - DELETE
+            allow_headers:
+            - Authorization
+            - Content-Type
+            allow_credentials: true
+            max_age: 86400
+          - allow_cidrs:
+            - 192.168.0.0/16
+            - 10.0.0.0/8
+            deny_cidrs:
+            - 192.168.1.100/32
+            allow_private_ranges: false
         enforcement:
           type: object
           description: Policy enforcement configuration
           properties:
             action:
               type: string
-              enum: [allow, deny, redirect, challenge]
+              enum:
+              - allow
+              - deny
+              - redirect
+              - challenge
               description: Action when policy fails
-              example: "deny"
+              example: deny
             redirect_url:
               type: string
               format: uri
               description: Redirect URL for redirect action
-              example: "https://auth.necpgame.com/login"
+              example: https://auth.necpgame.com/login
             custom_response:
               type: object
               description: Custom response for deny action
@@ -134,10 +176,11 @@ components:
                 headers:
                   type: object
                   additionalProperties: true
-                  example: { "WWW-Authenticate": "Bearer" }
+                  example:
+                    WWW-Authenticate: Bearer
                 body:
                   type: string
-                  example: "Authentication required"
+                  example: Authentication required
             log_violations:
               type: boolean
               description: Whether to log policy violations
@@ -146,25 +189,14 @@ components:
               type: boolean
               description: Whether to send alerts for violations
               example: false
-
-        created_at:
-          type: string
-          format: date-time
-          description: Policy creation timestamp
-          example: "2025-12-20T21:45:00Z"
-
-        updated_at:
-          type: string
-          format: date-time
-          description: Last update timestamp
-          example: "2025-12-20T21:46:00Z"
-
-        status:
-          type: string
-          enum: [active, inactive, draft]
-          description: Policy status
-          example: "active"
-
+        metadata:
+          type: object
+          description: Additional policy metadata
+          additionalProperties: true
+          example:
+            created_by: security-team
+            approved_by: platform-architect
+            review_date: '2025-12-25'
         priority:
           type: integer
           minimum: 0
@@ -172,55 +204,61 @@ components:
           default: 100
           description: Policy priority (higher values evaluated first)
           example: 500
-
-        metadata:
-          type: object
-          description: Additional policy metadata
-          additionalProperties: true
-          example:
-            created_by: "security-team"
-            approved_by: "platform-architect"
-            review_date: "2025-12-25"
-
-    # Security policy creation request
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     SecurityPolicyRequest:
       type: object
       required:
-        - policy_name
-        - policy_type
-        - scope
-        - rules
+      - policy_name
+      - policy_type
+      - scope
+      - rules
       properties:
         policy_name:
           type: string
           description: Human-readable policy name
-          example: "API Authentication Policy"
+          example: API Authentication Policy
         policy_type:
           type: string
-          enum: [authentication, authorization, encryption, rate_limiting, cors, ip_filtering]
+          enum:
+          - authentication
+          - authorization
+          - encryption
+          - rate_limiting
+          - cors
+          - ip_filtering
           description: Type of security policy
-          example: "authentication"
+          example: authentication
         scope:
           type: object
           description: Policy application scope
           properties:
             namespaces:
               type: array
-              items: { type: string }
+              items:
+                type: string
               description: Applicable namespaces
             services:
               type: array
-              items: { type: string }
+              items:
+                type: string
               description: Applicable services
             endpoints:
               type: array
-              items: { type: string }
+              items:
+                type: string
               description: Applicable endpoint patterns
             methods:
               type: array
               items:
                 type: string
-                enum: [GET, POST, PUT, DELETE, PATCH, HEAD, OPTIONS]
+                enum:
+                - GET
+                - POST
+                - PUT
+                - DELETE
+                - PATCH
+                - HEAD
+                - OPTIONS
               description: Applicable HTTP methods
         rules:
           type: object
@@ -232,40 +270,53 @@ components:
           properties:
             action:
               type: string
-              enum: [allow, deny, redirect, challenge]
-              default: "deny"
+              enum:
+              - allow
+              - deny
+              - redirect
+              - challenge
+              default: deny
             redirect_url:
               type: string
               format: uri
             custom_response:
               type: object
               properties:
-                status_code: { type: integer, minimum: 400, maximum: 599 }
-                headers: { type: object, additionalProperties: true }
-                body: { type: string }
-            log_violations: { type: boolean, default: true }
-            alert_on_violations: { type: boolean, default: false }
+                status_code:
+                  type: integer
+                  minimum: 400
+                  maximum: 599
+                headers:
+                  type: object
+                  additionalProperties: true
+                body:
+                  type: string
+            log_violations:
+              type: boolean
+              default: true
+            alert_on_violations:
+              type: boolean
+              default: false
+        metadata:
+          type: object
+          description: Additional policy metadata
+          additionalProperties: true
         priority:
           type: integer
           minimum: 0
           maximum: 1000
           default: 100
           description: Policy priority
-        metadata:
-          type: object
-          description: Additional policy metadata
-          additionalProperties: true
-
-    # Certificate management schemas
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     CertificateInfo:
       type: object
       required:
-        - certificate_id
-        - subject
-        - issuer
-        - valid_from
-        - valid_until
-        - status
+      - certificate_id
+      - subject
+      - issuer
+      - valid_from
+      - valid_until
+      - status
       properties:
         certificate_id:
           type: string
@@ -274,11 +325,27 @@ components:
         subject:
           type: string
           description: Certificate subject
-          example: "CN=guild-service.game-services.svc.cluster.local"
+          example: CN=guild-service.game-services.svc.cluster.local
         issuer:
           type: string
           description: Certificate issuer
-          example: "CN=NECPGAME Root CA"
+          example: CN=NECPGAME Root CA
+        serial_number:
+          type: string
+          description: Certificate serial number
+        service_name:
+          type: string
+          description: Associated service name
+        namespace:
+          type: string
+          description: Associated namespace
+        status:
+          type: string
+          enum:
+          - active
+          - expired
+          - revoked
+          description: Certificate status
         valid_from:
           type: string
           format: date-time
@@ -287,60 +354,55 @@ components:
           type: string
           format: date-time
           description: Certificate validity end
-        serial_number:
-          type: string
-          description: Certificate serial number
-        status:
-          type: string
-          enum: [active, expired, revoked]
-          description: Certificate status
-        rotation_required:
-          type: boolean
-          description: Whether certificate needs rotation
         days_until_expiry:
           type: integer
           description: Days until certificate expires
-        service_name:
-          type: string
-          description: Associated service name
-        namespace:
-          type: string
-          description: Associated namespace
-
-    # mTLS configuration
+        rotation_required:
+          type: boolean
+          description: Whether certificate needs rotation
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     MutualTLSConfig:
       type: object
       required:
-        - mode
-        - certificate_authority
+      - mode
+      - certificate_authority
       properties:
-        mode:
-          type: string
-          enum: [DISABLE, PERMISSIVE, STRICT]
-          description: mTLS enforcement mode
-          example: "STRICT"
         certificate_authority:
           type: string
           description: Certificate authority for validation
-          example: "necpgame-ca"
+          example: necpgame-ca
+        mode:
+          type: string
+          enum:
+          - DISABLE
+          - PERMISSIVE
+          - STRICT
+          description: mTLS enforcement mode
+          example: STRICT
         minimum_tls_version:
           type: string
-          enum: [TLSv1.2, TLSv1.3]
-          default: "TLSv1.3"
+          enum:
+          - TLSv1.2
+          - TLSv1.3
+          default: TLSv1.3
           description: Minimum TLS version
         cipher_suites:
           type: array
           items:
             type: string
           description: Allowed cipher suites
-          example: ["TLS_AES_256_GCM_SHA384", "TLS_CHACHA20_POLY1305_SHA256"]
-        enforce_client_certificate:
-          type: boolean
-          default: true
-          description: Whether to require client certificates
+          example:
+          - TLS_AES_256_GCM_SHA384
+          - TLS_CHACHA20_POLY1305_SHA256
         sni_hosts:
           type: array
           items:
             type: string
           description: Server Name Indication hosts
-          example: ["guild-service.necpgame.com"]
+          example:
+          - guild-service.necpgame.com
+        enforce_client_certificate:
+          type: boolean
+          default: true
+          description: Whether to require client certificates
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'

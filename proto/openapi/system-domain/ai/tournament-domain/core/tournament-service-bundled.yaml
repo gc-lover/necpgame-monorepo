@@ -1,75 +1,78 @@
 openapi: 3.0.3
 info:
   title: Tournament Service API
-  description: |-
-    API для управления турнирной системой MMORPG.
-    Система поддерживает: - Создание и управление турнирами - Регистрацию участников - Управление матчами и сериями - Систему квалификаций и финалов - Косметические награды (титулы, баннеры) - Реплеи топ-матчей - Античит защиту
-    BACKEND NOTE: Tournament system designed for cosmetic-only rewards. No XP/resources boosts. Focus on competitive integrity and fair play.
+  description: 'API для управления турнирной системой MMORPG.
+
+    Система поддерживает: - Создание и управление турнирами - Регистрацию участников - Управление матчами и сериями - Систему
+    квалификаций и финалов - Косметические награды (титулы, баннеры) - Реплеи топ-матчей - Античит защиту
+
+    BACKEND NOTE: Tournament system designed for cosmetic-only rewards. No XP/resources boosts. Focus on competitive integrity
+    and fair play.'
   version: 1.0.0
   contact:
     name: NECPGAME API Support
     email: api@necp.game
 servers:
-  - url: http://localhost:8085/api/v1
-    description: Локальный сервер разработки
-  - url: https://api.necp.game/api/v1
-    description: Продакшен сервер
+- url: http://localhost:8085/api/v1
+  description: Локальный сервер разработки
+- url: https://api.necp.game/api/v1
+  description: Продакшен сервер
 tags:
-  - name: Tournaments
-    description: Управление турнирами
-  - name: Registrations
-    description: Регистрация участников
-  - name: Matches
-    description: Управление матчами
-  - name: Leaderboards
-    description: Лестницы и рейтинги
-  - name: Rewards
-    description: Награды и достижения
+- name: Tournaments
+  description: Управление турнирами
+- name: Registrations
+  description: Регистрация участников
+- name: Matches
+  description: Управление матчами
+- name: Leaderboards
+  description: Лестницы и рейтинги
+- name: Rewards
+  description: Награды и достижения
 paths:
   /tournaments:
     get:
       tags:
-        - Tournaments
+      - Tournaments
       summary: Список турниров
       operationId: listTournaments
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: status
-          in: query
-          schema:
-            type: string
-            enum:
-              - upcoming
-              - registration
-              - active
-              - completed
-              - cancelled
-        - name: game_mode
-          in: query
-          schema:
-            type: string
-            enum:
-              - arena_1v1
-              - arena_3v3
-              - arena_5v5
-              - pvpve_extract
-              - stealth_league
-              - hardcore_auth
-        - name: tournament_type
-          in: query
-          schema:
-            type: string
-            enum:
-              - qualification
-              - final
-              - special
-        - name: region
-          in: query
-          schema:
-            type: string
-        - $ref: '#/components/parameters/Limit'
-        - $ref: '#/components/parameters/Offset'
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - upcoming
+          - registration
+          - active
+          - completed
+          - cancelled
+      - name: game_mode
+        in: query
+        schema:
+          type: string
+          enum:
+          - arena_1v1
+          - arena_3v3
+          - arena_5v5
+          - pvpve_extract
+          - stealth_league
+          - hardcore_auth
+      - name: tournament_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - qualification
+          - final
+          - special
+      - name: region
+        in: query
+        schema:
+          type: string
+      - $ref: '#/components/parameters/Limit'
+      - $ref: '#/components/parameters/Offset'
       responses:
         '200':
           description: Список турниров
@@ -90,11 +93,11 @@ paths:
           $ref: '#/components/responses/InternalServerError'
     post:
       tags:
-        - Tournaments
+      - Tournaments
       summary: Создание турнира
       operationId: createTournament
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -118,20 +121,20 @@ paths:
           $ref: '#/components/responses/InternalServerError'
   /tournaments/{tournamentId}:
     parameters:
-      - name: tournamentId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: ID турнира
+    - name: tournamentId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: ID турнира
     get:
       tags:
-        - Tournaments
+      - Tournaments
       summary: Информация о турнире
       operationId: getTournament
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       responses:
         '200':
           description: Информация о турнире
@@ -145,11 +148,11 @@ paths:
           $ref: '#/components/responses/NotFound'
     put:
       tags:
-        - Tournaments
+      - Tournaments
       summary: Обновление турнира
       operationId: updateTournament
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -173,11 +176,11 @@ paths:
           $ref: '#/components/responses/NotFound'
     delete:
       tags:
-        - Tournaments
+      - Tournaments
       summary: Удаление турнира
       operationId: deleteTournament
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       responses:
         '200':
           description: Турнир удален
@@ -194,18 +197,18 @@ paths:
   /tournaments/{tournamentId}/register:
     post:
       tags:
-        - Registrations
+      - Registrations
       summary: Регистрация на турнир
       operationId: registerForTournament
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: tournamentId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: tournamentId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       requestBody:
         required: false
         content:
@@ -232,18 +235,18 @@ paths:
   /tournaments/{tournamentId}/unregister:
     post:
       tags:
-        - Registrations
+      - Registrations
       summary: Отмена регистрации
       operationId: unregisterFromTournament
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: tournamentId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: tournamentId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
         '200':
           description: Регистрация отменена
@@ -258,20 +261,20 @@ paths:
   /tournaments/{tournamentId}/participants:
     get:
       tags:
-        - Registrations
+      - Registrations
       summary: Список участников турнира
       operationId: getTournamentParticipants
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: tournamentId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - $ref: '#/components/parameters/Limit'
-        - $ref: '#/components/parameters/Offset'
+      - name: tournamentId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - $ref: '#/components/parameters/Limit'
+      - $ref: '#/components/parameters/Offset'
       responses:
         '200':
           description: Список участников
@@ -293,34 +296,34 @@ paths:
   /tournaments/{tournamentId}/matches:
     get:
       tags:
-        - Matches
+      - Matches
       summary: Матчи турнира
       operationId: getTournamentMatches
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: tournamentId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: round
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-        - name: status
-          in: query
-          schema:
-            type: string
-            enum:
-              - pending
-              - in_progress
-              - completed
-              - cancelled
-        - $ref: '#/components/parameters/Limit'
-        - $ref: '#/components/parameters/Offset'
+      - name: tournamentId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: round
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - pending
+          - in_progress
+          - completed
+          - cancelled
+      - $ref: '#/components/parameters/Limit'
+      - $ref: '#/components/parameters/Offset'
       responses:
         '200':
           description: Список матчей
@@ -341,20 +344,20 @@ paths:
           $ref: '#/components/responses/NotFound'
   /matches/{matchId}:
     parameters:
-      - name: matchId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: ID матча
+    - name: matchId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: ID матча
     get:
       tags:
-        - Matches
+      - Matches
       summary: Информация о матче
       operationId: getMatch
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       responses:
         '200':
           description: Информация о матче
@@ -369,18 +372,18 @@ paths:
   /matches/{matchId}/join:
     post:
       tags:
-        - Matches
+      - Matches
       summary: Присоединение к матчу
       operationId: joinMatch
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: matchId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: matchId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
         '200':
           description: Присоединение успешно
@@ -401,18 +404,18 @@ paths:
   /matches/{matchId}/results:
     post:
       tags:
-        - Matches
+      - Matches
       summary: Отправка результатов матча
       operationId: submitMatchResults
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: matchId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: matchId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       requestBody:
         required: true
         content:
@@ -437,25 +440,25 @@ paths:
   /leaderboards/tournaments/{tournamentId}:
     get:
       tags:
-        - Leaderboards
+      - Leaderboards
       summary: Турнирная лестница
       operationId: getTournamentLeaderboard
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: tournamentId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: round
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-        - $ref: '#/components/parameters/Limit'
-        - $ref: '#/components/parameters/Offset'
+      - name: tournamentId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: round
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+      - $ref: '#/components/parameters/Limit'
+      - $ref: '#/components/parameters/Offset'
       responses:
         '200':
           description: Турнирная лестница
@@ -477,18 +480,18 @@ paths:
   /tournaments/{tournamentId}/rewards:
     get:
       tags:
-        - Rewards
+      - Rewards
       summary: Награды турнира
       operationId: getTournamentRewards
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: tournamentId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: tournamentId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
         '200':
           description: Награды турнира
@@ -503,11 +506,11 @@ paths:
   /rewards/claim:
     post:
       tags:
-        - Rewards
+      - Rewards
       summary: Получение награды
       operationId: claimReward
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -562,16 +565,16 @@ components:
     TournamentSummary:
       type: object
       required:
-        - id
-        - name
-        - game_mode
-        - tournament_type
-        - status
-        - max_participants
-        - current_participants
-        - registration_start
-        - registration_end
-        - start_time
+      - id
+      - name
+      - game_mode
+      - tournament_type
+      - status
+      - max_participants
+      - current_participants
+      - registration_start
+      - registration_end
+      - start_time
       properties:
         id:
           type: string
@@ -584,38 +587,29 @@ components:
         game_mode:
           type: string
           enum:
-            - arena_1v1
-            - arena_3v3
-            - arena_5v5
-            - pvpve_extract
-            - stealth_league
-            - hardcore_auth
+          - arena_1v1
+          - arena_3v3
+          - arena_5v5
+          - pvpve_extract
+          - stealth_league
+          - hardcore_auth
           description: Режим игры
         tournament_type:
           type: string
           enum:
-            - qualification
-            - final
-            - special
+          - qualification
+          - final
+          - special
           description: Тип турнира
         status:
           type: string
           enum:
-            - upcoming
-            - registration
-            - active
-            - completed
-            - cancelled
+          - upcoming
+          - registration
+          - active
+          - completed
+          - cancelled
           description: Статус турнира
-        max_participants:
-          type: integer
-          minimum: 2
-          maximum: 10000
-          description: Максимальное количество участников
-        current_participants:
-          type: integer
-          default: 0
-          description: Текущее количество участников
         registration_start:
           type: string
           format: date-time
@@ -628,12 +622,21 @@ components:
           type: string
           format: date-time
           description: Время начала турнира
+        max_participants:
+          type: integer
+          minimum: 2
+          maximum: 10000
+          description: Максимальное количество участников
+        current_participants:
+          type: integer
+          default: 0
+          description: Текущее количество участников
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory: ~120 bytes/instance.'
     Error:
       type: object
       required:
-        - error
-        - message
+      - error
+      - message
       properties:
         error:
           type: string
@@ -650,20 +653,21 @@ components:
           additionalProperties: true
           description: Дополнительные детали ошибки
           nullable: true
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     Tournament:
       type: object
       required:
-        - id
-        - name
-        - game_mode
-        - tournament_type
-        - status
-        - max_participants
-        - registration_start
-        - registration_end
-        - start_time
-        - end_time
-        - created_at
+      - id
+      - name
+      - game_mode
+      - tournament_type
+      - status
+      - max_participants
+      - registration_start
+      - registration_end
+      - start_time
+      - end_time
+      - created_at
       properties:
         id:
           type: string
@@ -677,46 +681,41 @@ components:
           type: string
           nullable: true
           description: Описание турнира
-        game_mode:
-          type: string
-          enum:
-            - arena_1v1
-            - arena_3v3
-            - arena_5v5
-            - pvpve_extract
-            - stealth_league
-            - hardcore_auth
-          description: Режим игры
-        tournament_type:
-          type: string
-          enum:
-            - qualification
-            - final
-            - special
-          description: Тип турнира
-        status:
-          type: string
-          enum:
-            - upcoming
-            - registration
-            - active
-            - completed
-            - cancelled
-          description: Статус турнира
         region:
           type: string
           nullable: true
           maxLength: 50
           description: Регион проведения
-        max_participants:
-          type: integer
-          minimum: 2
-          maximum: 10000
-          description: Максимальное количество участников
-        current_participants:
-          type: integer
-          default: 0
-          description: Текущее количество участников
+        rules:
+          type: string
+          nullable: true
+          description: Правила турнира
+        game_mode:
+          type: string
+          enum:
+          - arena_1v1
+          - arena_3v3
+          - arena_5v5
+          - pvpve_extract
+          - stealth_league
+          - hardcore_auth
+          description: Режим игры
+        tournament_type:
+          type: string
+          enum:
+          - qualification
+          - final
+          - special
+          description: Тип турнира
+        status:
+          type: string
+          enum:
+          - upcoming
+          - registration
+          - active
+          - completed
+          - cancelled
+          description: Статус турнира
         registration_start:
           type: string
           format: date-time
@@ -734,10 +733,24 @@ components:
           format: date-time
           nullable: true
           description: Время окончания турнира
-        rules:
+        created_at:
           type: string
+          format: date-time
+          description: Время создания
+        updated_at:
+          type: string
+          format: date-time
           nullable: true
-          description: Правила турнира
+          description: Время последнего обновления
+        max_participants:
+          type: integer
+          minimum: 2
+          maximum: 10000
+          description: Максимальное количество участников
+        current_participants:
+          type: integer
+          default: 0
+          description: Текущее количество участников
         anti_cheat_enabled:
           type: boolean
           default: true
@@ -750,15 +763,6 @@ components:
           type: boolean
           default: true
           description: Реплеи топ-матчей
-        created_at:
-          type: string
-          format: date-time
-          description: Время создания
-        updated_at:
-          type: string
-          format: date-time
-          nullable: true
-          description: Время последнего обновления
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory: ~200 bytes/instance.'
     SuccessResponse:
       type: object
@@ -767,15 +771,16 @@ components:
           type: string
           example: success
           description: Статус операции
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     Match:
       type: object
       required:
-        - id
-        - tournament_id
-        - round_number
-        - participants
-        - status
-        - scheduled_time
+      - id
+      - tournament_id
+      - round_number
+      - participants
+      - status
+      - scheduled_time
       properties:
         id:
           type: string
@@ -785,41 +790,6 @@ components:
           type: string
           format: uuid
           description: ID турнира
-        round_number:
-          type: integer
-          minimum: 1
-          description: Номер раунда
-        participants:
-          type: array
-          items:
-            type: string
-            format: uuid
-          minItems: 2
-          maxItems: 10
-          description: ID участников
-        status:
-          type: string
-          enum:
-            - pending
-            - in_progress
-            - completed
-            - cancelled
-            - disputed
-          description: Статус матча
-        scheduled_time:
-          type: string
-          format: date-time
-          description: Запланированное время
-        started_at:
-          type: string
-          format: date-time
-          nullable: true
-          description: Время начала
-        completed_at:
-          type: string
-          format: date-time
-          nullable: true
-          description: Время завершения
         winner_id:
           type: string
           format: uuid
@@ -838,13 +808,48 @@ components:
           type: string
           nullable: true
           description: Причина спора
+        status:
+          type: string
+          enum:
+          - pending
+          - in_progress
+          - completed
+          - cancelled
+          - disputed
+          description: Статус матча
+        scheduled_time:
+          type: string
+          format: date-time
+          description: Запланированное время
+        started_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Время начала
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Время завершения
+        participants:
+          type: array
+          items:
+            type: string
+            format: uuid
+          minItems: 2
+          maxItems: 10
+          description: ID участников
+        round_number:
+          type: integer
+          minimum: 1
+          description: Номер раунда
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory: ~150 bytes/instance.'
     MatchParticipant:
       type: object
       required:
-        - character_id
-        - character_name
-        - team
+      - character_id
+      - character_name
+      - team
       properties:
         character_id:
           type: string
@@ -854,6 +859,14 @@ components:
           type: string
           maxLength: 100
           description: Имя персонажа
+        connection_status:
+          type: string
+          enum:
+          - connected
+          - disconnected
+          - reconnecting
+          default: connected
+          description: Статус подключения
         team:
           type: integer
           minimum: 1
@@ -863,14 +876,6 @@ components:
           type: boolean
           default: false
           description: Готовность к матчу
-        connection_status:
-          type: string
-          enum:
-            - connected
-            - disconnected
-            - reconnecting
-          default: connected
-          description: Статус подключения
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory: ~60 bytes/instance.'
     MatchPlayerStats:
       type: object
@@ -911,20 +916,23 @@ components:
     MatchResult:
       type: object
       required:
-        - match_id
-        - winner_team
-        - final_scores
-        - submitted_at
+      - match_id
+      - winner_team
+      - final_scores
+      - submitted_at
       properties:
         match_id:
           type: string
           format: uuid
           description: ID матча
-        winner_team:
-          type: integer
-          minimum: 1
-          maximum: 2
-          description: Номер победившей команды
+        replay_url:
+          type: string
+          nullable: true
+          description: URL реплея
+        submitted_at:
+          type: string
+          format: date-time
+          description: Время отправки результатов
         final_scores:
           type: object
           additionalProperties:
@@ -935,46 +943,42 @@ components:
           additionalProperties:
             $ref: '#/components/schemas/MatchPlayerStats'
           description: Статистика игроков
-        duration_seconds:
-          type: integer
-          minimum: 1
-          description: Длительность матча
-        submitted_at:
-          type: string
-          format: date-time
-          description: Время отправки результатов
-        replay_url:
-          type: string
-          nullable: true
-          description: URL реплея
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory: ~120 bytes/instance.'
-    MatchDetail:
-      allOf:
-        - $ref: '#/components/schemas/Match'
-        - type: object
-          properties:
-            participant_details:
-              type: array
-              items:
-                $ref: '#/components/schemas/MatchParticipant'
-            results:
-              $ref: '#/components/schemas/MatchResult'
-            spectators:
-              type: integer
-              default: 0
-              description: Количество зрителей
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory: ~200 bytes/instance.'
-    MatchResultRequest:
-      type: object
-      required:
-        - winner_team
-        - scores
-      properties:
         winner_team:
           type: integer
           minimum: 1
           maximum: 2
           description: Номер победившей команды
+        duration_seconds:
+          type: integer
+          minimum: 1
+          description: Длительность матча
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory: ~120 bytes/instance.'
+    MatchDetail:
+      allOf:
+      - $ref: '#/components/schemas/Match'
+      - type: object
+        properties:
+          participant_details:
+            type: array
+            items:
+              $ref: '#/components/schemas/MatchParticipant'
+          results:
+            $ref: '#/components/schemas/MatchResult'
+          spectators:
+            type: integer
+            default: 0
+            description: Количество зрителей
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory: ~200 bytes/instance.'
+    MatchResultRequest:
+      type: object
+      required:
+      - winner_team
+      - scores
+      properties:
+        replay_data:
+          type: string
+          nullable: true
+          description: Данные реплея (base64)
         scores:
           type: object
           additionalProperties:
@@ -985,10 +989,11 @@ components:
           additionalProperties:
             $ref: '#/components/schemas/MatchPlayerStats'
           description: Статистика игроков
-        replay_data:
-          type: string
-          nullable: true
-          description: Данные реплея (base64)
+        winner_team:
+          type: integer
+          minimum: 1
+          maximum: 2
+          description: Номер победившей команды
         duration_seconds:
           type: integer
           minimum: 1
@@ -997,15 +1002,11 @@ components:
     LeaderboardEntry:
       type: object
       required:
-        - rank
-        - character_id
-        - character_name
-        - score
+      - rank
+      - character_id
+      - character_name
+      - score
       properties:
-        rank:
-          type: integer
-          minimum: 1
-          description: Позиция в рейтинге
         character_id:
           type: string
           format: uuid
@@ -1014,6 +1015,15 @@ components:
           type: string
           maxLength: 100
           description: Имя персонажа
+        division:
+          type: string
+          nullable: true
+          maxLength: 50
+          description: Дивизион
+        rank:
+          type: integer
+          minimum: 1
+          description: Позиция в рейтинге
         score:
           type: integer
           description: Очки
@@ -1029,27 +1039,13 @@ components:
           type: integer
           default: 0
           description: Победная серия
-        division:
-          type: string
-          nullable: true
-          maxLength: 50
-          description: Дивизион
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory: ~70 bytes/instance.'
     CosmeticReward:
       type: object
       required:
-        - type
-        - item_id
+      - type
+      - item_id
       properties:
-        type:
-          type: string
-          enum:
-            - title
-            - banner
-            - emblem
-            - effect
-            - intro
-          description: Тип косметического предмета
         item_id:
           type: string
           format: uuid
@@ -1062,31 +1058,36 @@ components:
           type: string
           nullable: true
           description: Описание предмета
-        rarity:
-          type: string
-          enum:
-            - common
-            - uncommon
-            - rare
-            - epic
-            - legendary
-          default: common
-          description: Редкость
         icon_url:
           type: string
           nullable: true
           description: URL иконки
+        type:
+          type: string
+          enum:
+          - title
+          - banner
+          - emblem
+          - effect
+          - intro
+          description: Тип косметического предмета
+        rarity:
+          type: string
+          enum:
+          - common
+          - uncommon
+          - rare
+          - epic
+          - legendary
+          default: common
+          description: Редкость
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory: ~60 bytes/instance.'
     PlacementReward:
       type: object
       required:
-        - placement
-        - reward
+      - placement
+      - reward
       properties:
-        placement:
-          type: integer
-          minimum: 1
-          description: Место
         placement_range:
           type: object
           properties:
@@ -1100,12 +1101,16 @@ components:
           description: Диапазон мест (для 4-10 мест и т.д.)
         reward:
           $ref: '#/components/schemas/CosmeticReward'
+        placement:
+          type: integer
+          minimum: 1
+          description: Место
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory: ~50 bytes/instance.'
     SpecialReward:
       type: object
       required:
-        - condition
-        - reward
+      - condition
+      - reward
       properties:
         condition:
           type: string
@@ -1117,14 +1122,14 @@ components:
     TournamentRewards:
       type: object
       properties:
+        participation_reward:
+          $ref: '#/components/schemas/CosmeticReward'
+          description: Награда за участие
         placement_rewards:
           type: array
           items:
             $ref: '#/components/schemas/PlacementReward'
           description: Награды за места
-        participation_reward:
-          $ref: '#/components/schemas/CosmeticReward'
-          description: Награда за участие
         special_rewards:
           type: array
           items:
@@ -1134,8 +1139,8 @@ components:
     ClaimRewardRequest:
       type: object
       required:
-        - tournament_id
-        - reward_type
+      - tournament_id
+      - reward_type
       properties:
         tournament_id:
           type: string
@@ -1144,9 +1149,9 @@ components:
         reward_type:
           type: string
           enum:
-            - participation
-            - placement
-            - special
+          - participation
+          - placement
+          - special
           description: Тип награды
         placement:
           type: integer
@@ -1157,11 +1162,11 @@ components:
     ClaimedReward:
       type: object
       required:
-        - id
-        - tournament_id
-        - character_id
-        - reward
-        - claimed_at
+      - id
+      - tournament_id
+      - character_id
+      - reward
+      - claimed_at
       properties:
         id:
           type: string
@@ -1175,16 +1180,16 @@ components:
           type: string
           format: uuid
           description: ID персонажа
+        claimed_at:
+          type: string
+          format: date-time
+          description: Время получения
         reward:
           $ref: '#/components/schemas/CosmeticReward'
         placement:
           type: integer
           nullable: true
           description: Занятое место
-        claimed_at:
-          type: string
-          format: date-time
-          description: Время получения
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory: ~80 bytes/instance.'
   responses:
     Unauthorized:

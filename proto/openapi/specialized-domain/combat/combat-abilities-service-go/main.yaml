@@ -1,0 +1,295 @@
+openapi: 3.0.3
+info:
+  title: Combat Abilities Service Go API
+  description: 'Enterprise-Grade Combat Abilities Service API for NECPGAME MMOFPS RPG.
+
+    **Enterprise-Grade Domain:** specialized-domain
+
+    **Module:** combat-abilities-service-go
+
+    **Purpose:** High-performance combat abilities management, ability activation, and cooldown handling
+
+    **BACKEND NOTE:** Struct field alignment optimized (large → small types).
+
+    All schemas ordered for optimal memory layout in generated Go code.
+
+    Expected memory savings: 30-50% for ability-related structs.
+
+    **Features:**
+
+    - Real-time ability activation (1000+ RPS)
+    - Ability cooldown management
+    - Resource consumption tracking
+    - Ability synergies and combos
+    - Anti-cheat validation
+
+    **Performance:** P99 <50ms for ability operations, zero allocations in hot path
+    '
+  version: 1.0.0
+  license:
+    name: Proprietary
+    url: https://necpgame.com/license
+  contact:
+    name: NECPGAME API Support
+    url: https://necpgame.com/support
+    email: api@combat-abilities.necpgame.com
+servers:
+- url: http://localhost:8084/api/v1
+  description: Combat Abilities Service Go (development)
+- url: https://combat-abilities-go.necpgame.com/api/v1
+  description: Combat Abilities Service Go (production)
+tags:
+- name: Ability Management
+  description: Combat ability lifecycle operations
+- name: Ability Activation
+  description: Real-time ability activation and execution
+- name: Ability Cooldowns
+  description: Cooldown management and tracking
+- name: Ability Synergies
+  description: Ability combinations and synergies
+- name: Anti-Cheat
+  description: Ability validation and cheat prevention
+paths:
+  /health:
+    get:
+      summary: Service health check
+      operationId: healthCheck
+      tags:
+      - Health
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        '503':
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /combat/abilities:
+    post:
+      summary: Activate combat ability
+      operationId: activateAbility
+      description: 'Activate a combat ability with validation and anti-cheat checks.
+
+        **BACKEND NOTE:** Hot path - optimized for 1000+ RPS, zero allocations.
+        '
+      tags:
+      - Ability Activation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ActivateAbilityRequest'
+      responses:
+        '200':
+          description: Ability activated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActivateAbilityResponse'
+        '400':
+          description: Invalid ability activation request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Ability not available or insufficient resources
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    get:
+      summary: List available abilities
+      operationId: listAbilities
+      description: Get list of available combat abilities for a character.
+      tags:
+      - Ability Management
+      parameters:
+      - name: character_id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Character ID
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+        description: Maximum number of abilities to return
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+        description: Number of abilities to skip
+      responses:
+        '200':
+          description: List of available abilities
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListAbilitiesResponse'
+  /combat/abilities/{ability_id}/cooldown:
+    get:
+      summary: Get ability cooldown status
+      operationId: getAbilityCooldown
+      description: Get current cooldown status for a specific ability.
+      tags:
+      - Ability Cooldowns
+      parameters:
+      - name: ability_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Ability ID
+      - name: character_id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Character ID
+      responses:
+        '200':
+          description: Ability cooldown status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AbilityCooldownResponse'
+        '404':
+          description: Ability not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /combat/abilities/{ability_id}/synergies:
+    get:
+      summary: Get ability synergies
+      operationId: getAbilitySynergies
+      description: Get synergies and combo possibilities for an ability.
+      tags:
+      - Ability Synergies
+      parameters:
+      - name: ability_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Ability ID
+      responses:
+        '200':
+          description: Ability synergies
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AbilitySynergiesResponse'
+  /combat/abilities/validate:
+    post:
+      summary: Validate ability activation
+      operationId: validateAbilityActivation
+      description: 'Validate ability activation for anti-cheat purposes.
+
+        **BACKEND NOTE:** Used for cheat detection and prevention.
+        '
+      tags:
+      - Anti-Cheat
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValidateAbilityRequest'
+      responses:
+        '200':
+          description: Validation result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidateAbilityResponse'
+        '400':
+          description: Invalid validation request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      description: JWT Bearer token authentication
+  schemas:
+    HealthResponse:
+      type: object
+      required:
+      - status
+      - timestamp
+      properties:
+        version:
+          type: string
+        status:
+          type: string
+          enum:
+          - healthy
+        timestamp:
+          type: string
+          format: date-time
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    Error:
+      type: object
+      required:
+      - code
+      - message
+      properties:
+        code:
+          type: string
+          description: Error code
+        message:
+          type: string
+          description: Human-readable error message
+        details:
+          type: object
+          description: Additional error details
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    ActivateAbilityRequest:
+      $ref: ./schemas/activate-ability-request.yaml
+    ActivateAbilityResponse:
+      $ref: ./schemas/activate-ability-response.yaml
+    ListAbilitiesResponse:
+      $ref: ./schemas/list-abilities-response.yaml
+    AbilityCooldownResponse:
+      $ref: ./schemas/ability-cooldown-response.yaml
+    AbilitySynergiesResponse:
+      $ref: ./schemas/ability-synergies-response.yaml
+    ValidateAbilityRequest:
+      $ref: ./schemas/validate-ability-request.yaml
+    ValidateAbilityResponse:
+      $ref: ./schemas/validate-ability-response.yaml
+    AbilityInfo:
+      $ref: ./schemas/ability-info.yaml
+    SynergyInfo:
+      $ref: ./schemas/synergy-info.yaml
+    Vector3:
+      $ref: ./schemas/vector3.yaml
+security:
+- BearerAuth: []

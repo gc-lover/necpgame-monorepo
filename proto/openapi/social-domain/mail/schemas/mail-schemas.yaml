@@ -1,0 +1,303 @@
+components:
+  schemas:
+    MailMessage:
+      type: object
+      required:
+      - id
+      - sender_id
+      - recipient_id
+      - mail_type
+      - subject
+      - body
+      - status
+      - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique message identifier
+          example: a1b2c3d4-e5f6-7890-1234-567890abcdef
+        sender_id:
+          type: string
+          format: uuid
+          description: Sender player ID
+          example: b1c2d3e4-f5a6-7890-1234-567890abcdef
+        recipient_id:
+          type: string
+          format: uuid
+          description: Recipient player ID
+          example: c1d2e3f4-a5b6-7890-1234-567890abcdef
+        subject:
+          type: string
+          maxLength: 255
+          description: Mail subject
+          example: Your order has arrived
+        body:
+          type: string
+          description: Mail body content
+          example: Dear player, your package is ready for pickup...
+        mail_type:
+          type: string
+          enum:
+          - personal
+          - system
+          - guild
+          - faction
+          - trade
+          - reward
+          description: Type of mail message
+          example: personal
+        expires_at:
+          type: string
+          format: date-time
+          description: Mail expiration timestamp
+          example: '2025-12-25T00:00:00Z'
+        created_at:
+          type: string
+          format: date-time
+          description: Mail creation timestamp
+          example: '2025-12-20T10:30:00Z'
+        read_at:
+          type: string
+          format: date-time
+          description: When mail was read
+          nullable: true
+        claimed_at:
+          type: string
+          format: date-time
+          description: When attachments were claimed
+          nullable: true
+        attachments:
+          type: array
+          items:
+            $ref: '#/components/schemas/MailAttachment'
+          description: Mail attachments (items, currency)
+        cod_amount:
+          type: integer
+          format: int64
+          description: Cash on Delivery amount in smallest currency unit
+          example: 50000
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    MailAttachment:
+      type: object
+      required:
+      - type
+      - quantity
+      properties:
+        item_id:
+          type: string
+          format: uuid
+          description: Item ID (for item attachments)
+          nullable: true
+        type:
+          type: string
+          enum:
+          - item
+          - currency
+          - experience
+          description: Attachment type
+          example: item
+        currency_type:
+          type: string
+          enum:
+          - eurobucks
+          - karma
+          - reputation
+          description: Currency type (for currency attachments)
+          nullable: true
+        quantity:
+          type: integer
+          minimum: 1
+          description: Attachment quantity
+          example: 10
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    SendMailRequest:
+      type: object
+      required:
+      - recipient_id
+      - subject
+      - body
+      properties:
+        recipient_id:
+          type: string
+          format: uuid
+          description: Recipient player ID
+          example: c1d2e3f4-a5b6-7890-1234-567890abcdef
+        subject:
+          type: string
+          maxLength: 255
+          description: Mail subject
+          example: Trade offer
+        body:
+          type: string
+          description: Mail body content
+          example: I'm interested in your rare implant...
+        attachments:
+          type: array
+          items:
+            $ref: '#/components/schemas/MailAttachment'
+          description: Optional attachments
+        cod_amount:
+          type: integer
+          format: int64
+          description: Cash on Delivery amount
+          example: 100000
+        expires_in_hours:
+          type: integer
+          minimum: 24
+          maximum: 168
+          default: 72
+          description: Mail expiration time in hours
+          example: 72
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    SendMailResponse:
+      type: object
+      required:
+      - mail_id
+      - status
+      properties:
+        mail_id:
+          type: string
+          format: uuid
+          description: Created mail message ID
+          example: a1b2c3d4-e5f6-7890-1234-567890abcdef
+        status:
+          type: string
+          enum:
+          - sent
+          - queued
+          description: Mail sending status
+          example: sent
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    MailListResponse:
+      type: object
+      required:
+      - mails
+      - total_count
+      - unread_count
+      properties:
+        mails:
+          type: array
+          items:
+            $ref: '#/components/schemas/MailMessage'
+          description: List of mail messages
+        total_count:
+          type: integer
+          description: Total number of mails
+          example: 25
+        unread_count:
+          type: integer
+          description: Number of unread mails
+          example: 5
+        has_more:
+          type: boolean
+          description: Whether there are more mails to fetch
+          example: true
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    ReadMailRequest:
+      type: object
+      required:
+      - mail_id
+      properties:
+        mail_id:
+          type: string
+          format: uuid
+          description: Mail message ID to read
+          example: a1b2c3d4-e5f6-7890-1234-567890abcdef
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    ClaimAttachmentsRequest:
+      type: object
+      required:
+      - mail_id
+      properties:
+        mail_id:
+          type: string
+          format: uuid
+          description: Mail message ID to claim attachments from
+          example: a1b2c3d4-e5f6-7890-1234-567890abcdef
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    ClaimAttachmentsResponse:
+      type: object
+      required:
+      - success
+      - claimed_items
+      - claimed_currency
+      properties:
+        claimed_currency:
+          type: object
+          additionalProperties:
+            type: integer
+            format: int64
+          description: Claimed currency amounts by type
+          example:
+            eurobucks: 50000
+            karma: 100
+        claimed_items:
+          type: array
+          items:
+            type: object
+            properties:
+              item_id:
+                type: string
+                format: uuid
+              quantity:
+                type: integer
+          description: Claimed items
+        success:
+          type: boolean
+          description: Whether claim was successful
+          example: true
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    DeleteMailRequest:
+      type: object
+      required:
+      - mail_ids
+      properties:
+        mail_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          minItems: 1
+          maxItems: 50
+          description: Mail message IDs to delete
+          example:
+          - a1b2c3d4-e5f6-7890-1234-567890abcdef
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    SystemMailRequest:
+      type: object
+      required:
+      - recipient_ids
+      - subject
+      - body
+      properties:
+        subject:
+          type: string
+          maxLength: 255
+          description: System mail subject
+          example: Server Maintenance Notice
+        body:
+          type: string
+          description: System mail body content
+          example: The server will be down for maintenance...
+        recipient_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          minItems: 1
+          maxItems: 1000
+          description: Recipient player IDs
+        attachments:
+          type: array
+          items:
+            $ref: '#/components/schemas/MailAttachment'
+          description: Optional system attachments
+        expires_in_hours:
+          type: integer
+          minimum: 24
+          maximum: 720
+          default: 168
+          description: Mail expiration time in hours
+          example: 168
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'

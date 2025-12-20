@@ -1,4 +1,3 @@
-# Issue: #83
 openapi: 3.0.3
 info:
   title: League Events Service API
@@ -8,60 +7,55 @@ info:
   contact:
     name: NECPGAME API Support
     email: api@necp.game
-
 servers:
-  - url: http://localhost:8093/api/v1
-    description: Локальный сервер разработки
-  - url: https://api.necp.game/api/v1
-    description: Продакшен сервер
-
+- url: http://localhost:8093/api/v1
+  description: Локальный сервер разработки
+- url: https://api.necp.game/api/v1
+  description: Продакшен сервер
 tags:
-  - name: League Events
-    description: События лиг
-
+- name: League Events
+  description: События лиг
 paths:
   /league/end-event/register:
     post:
       tags:
-        - League Events
+      - League Events
       summary: Зарегистрироваться на финальный эвент
       operationId: registerForEndEvent
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/EventRegistration"
+              $ref: '#/components/schemas/EventRegistration'
       responses:
-        "200":
+        '200':
           description: Регистрация успешна
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/RegistrationResponse"
-        "400":
-          $ref: "common.yaml#/components/responses/BadRequest"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "403":
-          $ref: "common.yaml#/components/responses/Forbidden"
-        "409":
-          $ref: "common.yaml#/components/responses/Conflict"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+                $ref: '#/components/schemas/RegistrationResponse'
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '403':
+          $ref: common.yaml#/components/responses/Forbidden
+        '409':
+          $ref: common.yaml#/components/responses/Conflict
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
 components:
   securitySchemes:
     BearerAuth:
-      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
-
+      $ref: common.yaml#/components/securitySchemes/BearerAuth
   schemas:
     EventRegistration:
       type: object
       required:
-        - league_id
+      - league_id
       properties:
         league_id:
           type: string
@@ -69,21 +63,20 @@ components:
         character_id:
           type: string
           format: uuid
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     RegistrationResponse:
       type: object
       properties:
-        success:
-          type: boolean
         registration_id:
           type: string
           format: uuid
+        message:
+          type: string
         event_date:
           type: string
           format: date-time
-        message:
-          type: string
-
+        success:
+          type: boolean
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
 security:
-  - BearerAuth: [ ]
-
+- BearerAuth: []

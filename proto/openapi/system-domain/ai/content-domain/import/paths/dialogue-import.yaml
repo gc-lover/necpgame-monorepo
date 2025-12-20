@@ -1,43 +1,50 @@
-# Issue: #2237 - Dialogue Import Paths
+# Issue: #1547 - Content Import API for Backend
+# Domain: system-domain/ai/content-domain/import
+# Purpose: Paths for dialogue import operations
+# Related: #1547
+
 paths:
-  # Dialogue Import Operations
-  /import/dialogues:
+  /api/v1/system-domain/ai/content-domain/import/dialogues:
     post:
-      summary: "Bulk import dialogue definitions from YAML"
+      summary: Import dialogue definitions from YAML
+      description: |
+        Import dialogue definitions from YAML content. Supports validation and rollback on error.
+
+        BACKEND NOTE: Memory-aligned schemas for efficient dialogue tree processing.
+        Expected throughput: 25 dialogues/minute with branching validation.
       operationId: importDialogues
-      tags: ["Dialogue Import"]
+      tags: ["Content Import"]
       requestBody:
         required: true
         content:
-          multipart/form-data:
+          application/json:
             schema:
-              type: object
-              properties:
-                files:
-                  type: array
-                  items:
-                    type: string
-                    format: binary
-                  minItems: 1
-                  maxItems: 100
-                validate_only:
-                  type: boolean
-                  default: false
-                rollback_on_error:
-                  type: boolean
-                  default: true
+              $ref: '../schemas/import-schemas.yaml#/components/schemas/DialogueImportRequest'
       responses:
         '200':
-          description: "Import completed successfully"
+          description: "Dialogue imported successfully"
           content:
             application/json:
               schema:
-                $ref: '../schemas/import-schemas.yaml#/components/schemas/ImportResult'
+                $ref: '../schemas/import-schemas.yaml#/components/schemas/DialogueImportResponse'
         '400':
-          $ref: '../../../common.yaml#/components/responses/BadRequest'
+          $ref: '../../../../../../common.yaml#/components/responses/BadRequest'
         '422':
           description: "Validation failed"
           content:
             application/json:
               schema:
-                $ref: '../schemas/import-schemas.yaml#/components/schemas/ValidationError'
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "validation_failed"
+                  details:
+                    type: array
+                    items:
+                      type: string
+                    example: ["Missing root node", "Circular reference detected", "Invalid choice structure"]
+        '500':
+          $ref: '../../../../../../common.yaml#/components/responses/InternalServerError'
+      security:
+        - BearerAuth: []

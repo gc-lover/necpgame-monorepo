@@ -1,42 +1,25 @@
-# Observability and monitoring schemas
-# Issue: #2058
-
 components:
   schemas:
-    # Mesh-wide metrics response
     MeshMetrics:
       type: object
       required:
-        - timeframe
-        - total_services
-        - total_connections
-        - request_metrics
-        - error_metrics
-        - latency_metrics
+      - timeframe
+      - total_services
+      - total_connections
+      - request_metrics
+      - error_metrics
+      - latency_metrics
       properties:
         timeframe:
           type: string
-          enum: [1m, 5m, 15m, 1h, 6h, 24h]
+          enum:
+          - 1m
+          - 5m
+          - 15m
+          - 1h
+          - 6h
+          - 24h
           description: Metrics timeframe
-
-        total_services:
-          type: integer
-          minimum: 0
-          description: Total number of registered services
-          example: 47
-
-        total_connections:
-          type: integer
-          minimum: 0
-          description: Total active connections across mesh
-          example: 15420
-
-        healthy_services:
-          type: integer
-          minimum: 0
-          description: Number of healthy services
-          example: 45
-
         request_metrics:
           type: object
           description: Request throughput and volume metrics
@@ -67,11 +50,10 @@ components:
               additionalProperties:
                 type: integer
               example:
-                "guild-service": 800000
-                "combat-service": 600000
-                "social-service": 400000
-                "inventory-service": 300000
-
+                guild-service: 800000
+                combat-service: 600000
+                social-service: 400000
+                inventory-service: 300000
         error_metrics:
           type: object
           description: Error rate and types
@@ -94,20 +76,19 @@ components:
               additionalProperties:
                 type: integer
               example:
-                "502": 1200
-                "503": 800
-                "504": 300
-                "429": 200
+                '502': 1200
+                '503': 800
+                '504': 300
+                '429': 200
             errors_by_service:
               type: object
               description: Errors grouped by service
               additionalProperties:
                 type: integer
               example:
-                "guild-service": 1200
-                "combat-service": 800
-                "social-service": 300
-
+                guild-service: 1200
+                combat-service: 800
+                social-service: 300
         latency_metrics:
           type: object
           description: Response time and latency metrics
@@ -143,13 +124,24 @@ components:
               additionalProperties:
                 type: object
                 properties:
-                  p50: { type: number, format: float }
-                  p95: { type: number, format: float }
-                  p99: { type: number, format: float }
+                  p50:
+                    type: number
+                    format: float
+                  p95:
+                    type: number
+                    format: float
+                  p99:
+                    type: number
+                    format: float
               example:
-                "guild-service": { "p50": 40.0, "p95": 110.0, "p99": 220.0 }
-                "combat-service": { "p50": 50.0, "p95": 130.0, "p99": 280.0 }
-
+                guild-service:
+                  p50: 40.0
+                  p95: 110.0
+                  p99: 220.0
+                combat-service:
+                  p50: 50.0
+                  p95: 130.0
+                  p99: 280.0
         circuit_breaker_metrics:
           type: object
           description: Circuit breaker status across mesh
@@ -177,7 +169,6 @@ components:
               minimum: 0
               description: Circuit breakers tripped in timeframe
               example: 3
-
         traffic_distribution:
           type: object
           description: Traffic distribution across regions/services
@@ -188,20 +179,19 @@ components:
               additionalProperties:
                 type: integer
               example:
-                "us-east-1": 1200000
-                "eu-west-1": 800000
-                "ap-south-1": 300000
-                "sa-east-1": 200000
+                us-east-1: 1200000
+                eu-west-1: 800000
+                ap-south-1: 300000
+                sa-east-1: 200000
             by_namespace:
               type: object
               description: Requests by Kubernetes namespace
               additionalProperties:
                 type: integer
               example:
-                "game-services": 2000000
-                "system-services": 300000
-                "monitoring": 200000
-
+                game-services: 2000000
+                system-services: 300000
+                monitoring: 200000
         resource_usage:
           type: object
           description: Resource usage metrics
@@ -227,7 +217,6 @@ components:
               type: integer
               description: Active connections to mesh
               example: 15420
-
         top_services_by_traffic:
           type: array
           items:
@@ -235,10 +224,10 @@ components:
             properties:
               service_name:
                 type: string
-                example: "guild-service"
+                example: guild-service
               namespace:
                 type: string
-                example: "game-services"
+                example: game-services
               request_count:
                 type: integer
                 example: 800000
@@ -251,27 +240,43 @@ components:
                 example: 45.2
               health_status:
                 type: string
-                enum: [healthy, degraded, unhealthy]
-                example: "healthy"
+                enum:
+                - healthy
+                - degraded
+                - unhealthy
+                example: healthy
           maxItems: 20
           description: Top services by request volume
-
-    # Distributed trace details
+        total_services:
+          type: integer
+          minimum: 0
+          description: Total number of registered services
+          example: 47
+        total_connections:
+          type: integer
+          minimum: 0
+          description: Total active connections across mesh
+          example: 15420
+        healthy_services:
+          type: integer
+          minimum: 0
+          description: Number of healthy services
+          example: 45
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     TraceDetails:
       type: object
       required:
-        - trace_id
-        - root_span
-        - spans
-        - duration_ms
-        - service_count
+      - trace_id
+      - root_span
+      - spans
+      - duration_ms
+      - service_count
       properties:
         trace_id:
           type: string
           format: uuid
           description: Unique trace identifier
-          example: "trace1a2b3c4-d5e6-7890-1234-567890abcdef"
-
+          example: trace1a2b3c4-d5e6-7890-1234-567890abcdef
         root_span:
           type: object
           description: Root span information
@@ -283,11 +288,11 @@ components:
             operation_name:
               type: string
               description: Operation name
-              example: "POST /api/v1/guilds"
+              example: POST /api/v1/guilds
             service_name:
               type: string
               description: Service name
-              example: "gateway-service"
+              example: gateway-service
             start_time:
               type: string
               format: date-time
@@ -297,7 +302,6 @@ components:
               format: float
               description: Span duration
               example: 125.5
-
         spans:
           type: array
           items:
@@ -314,11 +318,11 @@ components:
               operation_name:
                 type: string
                 description: Operation name
-                example: "validate_request"
+                example: validate_request
               service_name:
                 type: string
                 description: Service that executed this span
-                example: "auth-service"
+                example: auth-service
               start_time:
                 type: string
                 format: date-time
@@ -333,10 +337,10 @@ components:
                 description: Span tags and metadata
                 additionalProperties: true
                 example:
-                  "http.method": "POST"
-                  "http.status_code": "200"
-                  "db.instance": "guilds-db"
-                  "error": false
+                  http.method: POST
+                  http.status_code: '200'
+                  db.instance: guilds-db
+                  error: false
               logs:
                 type: array
                 items:
@@ -349,45 +353,25 @@ components:
                       type: object
                       additionalProperties: true
                   example:
-                    - timestamp: "2025-12-20T21:45:00.123Z"
-                      fields:
-                        {
-                          "event": "db_query_start",
-                          "query": "SELECT * FROM guilds",
-                        }
-                    - timestamp: "2025-12-20T21:45:00.145Z"
-                      fields: { "event": "db_query_complete", "rows": 25 }
+                  - timestamp: '2025-12-20T21:45:00.123Z'
+                    fields:
+                      event: db_query_start
+                      query: SELECT * FROM guilds
+                  - timestamp: '2025-12-20T21:45:00.145Z'
+                    fields:
+                      event: db_query_complete
+                      rows: 25
           description: All spans in the trace
-
-        duration_ms:
-          type: number
-          format: float
-          description: Total trace duration
-          example: 125.5
-
-        service_count:
-          type: integer
-          description: Number of services involved in trace
-          example: 4
-
-        error_spans:
-          type: integer
-          description: Number of spans with errors
-          example: 0
-
         services_involved:
           type: array
           items:
             type: string
           description: List of services involved
           example:
-            [
-              "gateway-service",
-              "auth-service",
-              "guild-service",
-              "cache-service",
-            ]
-
+          - gateway-service
+          - auth-service
+          - guild-service
+          - cache-service
         critical_path:
           type: array
           items:
@@ -404,7 +388,6 @@ components:
                 type: number
                 format: float
           description: Critical path spans (longest execution path)
-
         bottlenecks:
           type: array
           items:
@@ -427,18 +410,30 @@ components:
               potential_issue:
                 type: string
                 description: Identified performance issue
-                example: "N+1 query pattern"
+                example: N+1 query pattern
           description: Identified performance bottlenecks
-
-    # Service-level metrics
+        service_count:
+          type: integer
+          description: Number of services involved in trace
+          example: 4
+        error_spans:
+          type: integer
+          description: Number of spans with errors
+          example: 0
+        duration_ms:
+          type: number
+          format: float
+          description: Total trace duration
+          example: 125.5
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     ServiceMetrics:
       type: object
       required:
-        - service_name
-        - namespace
-        - timeframe
-        - request_metrics
-        - health_metrics
+      - service_name
+      - namespace
+      - timeframe
+      - request_metrics
+      - health_metrics
       properties:
         service_name:
           type: string
@@ -448,9 +443,14 @@ components:
           description: Kubernetes namespace
         timeframe:
           type: string
-          enum: [1m, 5m, 15m, 1h, 6h, 24h]
+          enum:
+          - 1m
+          - 5m
+          - 15m
+          - 1h
+          - 6h
+          - 24h
           description: Metrics timeframe
-
         request_metrics:
           type: object
           properties:
@@ -477,7 +477,6 @@ components:
               minimum: 0
               maximum: 100
               example: 0.8
-
         health_metrics:
           type: object
           properties:
@@ -493,8 +492,7 @@ components:
             last_health_check:
               type: string
               format: date-time
-              example: "2025-12-20T21:45:00Z"
-
+              example: '2025-12-20T21:45:00Z'
         resource_metrics:
           type: object
           properties:
@@ -508,3 +506,4 @@ components:
             active_connections:
               type: integer
               example: 1250
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'

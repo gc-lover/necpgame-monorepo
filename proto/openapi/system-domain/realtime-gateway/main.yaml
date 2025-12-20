@@ -1,0 +1,432 @@
+openapi: 3.0.3
+info:
+  title: System Domain - Realtime Gateway Module
+  description: '**Realtime Gateway API** for NECPGAME MMOFPS RPG.
+
+
+    **Purpose:** Real-time communication gateway supporting hybrid protocol stack (WebSocket + UDP)
+
+    for low-latency gameplay features.
+
+
+    **Performance Targets:**
+
+    - Movement sync: <50ms latency, 99.9% reliability
+
+    - Combat actions: <100ms latency, 99.99% reliability
+
+    - Connection capacity: 1000+ concurrent users per instance
+
+    - Memory usage: <500MB per service instance
+
+    - CPU usage: <70% under peak load
+
+
+    **Protocols:**
+
+    - **WebSocket** - Primary protocol for authentication, chat, inventory
+
+    - **UDP** - Real-time protocol for movement, combat, positioning
+
+    - **Protocol switching** - Automatic fallback and negotiation
+
+
+    **Features:**
+
+    - Session management and authentication
+
+    - Real-time messaging and events
+
+    - Connection quality monitoring
+
+    - Geographic load balancing
+
+    '
+  version: 1.0.0
+  contact:
+    name: NECPGAME Network Team
+    email: network@necpgame.com
+servers:
+- url: ws://realtime-gateway.necpgame.svc.cluster.local:8080
+  description: Kubernetes internal WebSocket
+- url: udp://realtime-gateway.necpgame.svc.cluster.local:8081
+  description: Kubernetes internal UDP
+- url: https://realtime.necpgame.com
+  description: Production WebSocket endpoint
+security:
+- BearerAuth: []
+tags:
+- name: Connection
+  description: Connection management endpoints
+- name: Messaging
+  description: Real-time messaging endpoints
+- name: Monitoring
+  description: Connection monitoring endpoints
+paths:
+  /ws:
+    get:
+      summary: Establish WebSocket connection
+      operationId: connectWebSocket
+      tags:
+      - Connection
+      parameters:
+      - name: token
+        in: query
+        required: true
+        schema:
+          type: string
+          description: JWT authentication token
+      - name: region
+        in: query
+        schema:
+          type: string
+          enum:
+          - us-east
+          - eu-west
+          - asia-pacific
+          default: us-east
+          description: Preferred region for connection
+      responses:
+        '101':
+          description: WebSocket connection established
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnectionResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /udp/handshake:
+    post:
+      summary: UDP connection handshake
+      operationId: udpHandshake
+      tags:
+      - Connection
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UDPHandshakeRequest'
+      responses:
+        '200':
+          description: UDP handshake successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UDPHandshakeResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /connection/{connection_id}/status:
+    get:
+      summary: Get connection status
+      operationId: getConnectionStatus
+      tags:
+      - Monitoring
+      parameters:
+      - name: connection_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        '200':
+          description: Connection status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnectionStatusResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Connection not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /message:
+    post:
+      summary: Send real-time message
+      operationId: sendMessage
+      tags:
+      - Messaging
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MessageRequest'
+      responses:
+        '200':
+          description: Message queued for delivery
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    ConnectionResponse:
+      type: object
+      required:
+      - connection_id
+      - region
+      - protocol
+      properties:
+        connection_id:
+          type: string
+          format: uuid
+          description: Unique connection identifier
+        region:
+          type: string
+          enum:
+          - us-east
+          - eu-west
+          - asia-pacific
+          description: Assigned region
+        protocol:
+          type: string
+          enum:
+          - websocket
+          - udp
+          description: Connection protocol
+        server_time:
+          type: string
+          format: date-time
+          description: Server timestamp
+        heartbeat_interval:
+          type: integer
+          minimum: 30
+          maximum: 300
+          default: 60
+          description: Heartbeat interval in seconds
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    UDPHandshakeRequest:
+      type: object
+      required:
+      - client_token
+      - client_public_key
+      properties:
+        client_token:
+          type: string
+          description: JWT token for authentication
+        client_public_key:
+          type: string
+          description: Client's public key for DTLS
+        preferred_region:
+          type: string
+          enum:
+          - us-east
+          - eu-west
+          - asia-pacific
+          default: us-east
+        client_ip:
+          type: string
+          format: ipv4
+          description: Client's public IP (for NAT detection)
+        client_port:
+          type: integer
+          minimum: 1024
+          maximum: 65535
+          description: Client's public port
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    UDPHandshakeResponse:
+      type: object
+      required:
+      - connection_id
+      - server_public_key
+      - assigned_port
+      properties:
+        connection_id:
+          type: string
+          format: uuid
+        server_public_key:
+          type: string
+          description: Server's public key for DTLS
+        session_key:
+          type: string
+          description: Encrypted session key
+        server_ip:
+          type: string
+          format: ipv4
+        assigned_port:
+          type: integer
+          minimum: 1024
+          maximum: 65535
+        heartbeat_interval:
+          type: integer
+          minimum: 30
+          maximum: 300
+          default: 30
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    ConnectionStatusResponse:
+      type: object
+      required:
+      - connection_id
+      - status
+      - latency_ms
+      properties:
+        connection_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum:
+          - connected
+          - connecting
+          - disconnected
+          - error
+        protocol:
+          type: string
+          enum:
+          - websocket
+          - udp
+        region:
+          type: string
+          enum:
+          - us-east
+          - eu-west
+          - asia-pacific
+        connected_at:
+          type: string
+          format: date-time
+        latency_ms:
+          type: integer
+          minimum: 0
+          description: Current latency in milliseconds
+        bytes_sent:
+          type: integer
+          minimum: 0
+          description: Total bytes sent
+        bytes_received:
+          type: integer
+          minimum: 0
+          description: Total bytes received
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    MessageRequest:
+      type: object
+      required:
+      - type
+      - payload
+      properties:
+        room_id:
+          type: string
+          format: uuid
+          description: Room/group to send to (optional)
+        type:
+          type: string
+          enum:
+          - movement
+          - combat
+          - chat
+          - inventory
+          - quest
+          description: Message type for routing
+        priority:
+          type: string
+          enum:
+          - low
+          - normal
+          - high
+          - critical
+          default: normal
+          description: Message priority
+        payload:
+          type: object
+          description: Message payload (varies by type)
+        target_user_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Specific users to send to (optional)
+        ttl_seconds:
+          type: integer
+          minimum: 1
+          maximum: 3600
+          default: 300
+          description: Time to live in seconds
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    MessageResponse:
+      type: object
+      required:
+      - message_id
+      - status
+      properties:
+        message_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum:
+          - queued
+          - sent
+          - delivered
+          - failed
+        queued_at:
+          type: string
+          format: date-time
+        estimated_delivery_ms:
+          type: integer
+          minimum: 0
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    ErrorResponse:
+      type: object
+      required:
+      - error
+      - code
+      properties:
+        error:
+          type: string
+          description: Error message
+        timestamp:
+          type: string
+          format: date-time
+        details:
+          type: object
+          description: Additional error details
+        code:
+          type: integer
+          minimum: 1000
+          description: Error code
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'

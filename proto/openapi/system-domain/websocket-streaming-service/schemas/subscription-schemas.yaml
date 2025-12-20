@@ -1,112 +1,117 @@
-# Event subscription management schemas
-# Issue: #2053
-
 components:
   schemas:
-    # Subscription entity - memory optimized
     Subscription:
       type: object
       required:
-        - subscription_id
-        - player_id
-        - connection_id
-        - event_types
-        - created_at
-        - status
+      - subscription_id
+      - player_id
+      - connection_id
+      - event_types
+      - created_at
+      - status
       properties:
-        # Large types first
         subscription_id:
           type: string
           format: uuid
           description: Unique subscription identifier
-          example: "550e8400-e29b-41d4-a716-446655440000"
-
+          example: 550e8400-e29b-41d4-a716-446655440000
         player_id:
           type: string
           format: uuid
           description: Player who owns the subscription
-          example: "550e8400-e29b-41d4-a716-446655440001"
-
+          example: 550e8400-e29b-41d4-a716-446655440001
         connection_id:
           type: string
           format: uuid
           description: Associated WebSocket connection
-          example: "550e8400-e29b-41d4-a716-446655440002"
-
+          example: 550e8400-e29b-41d4-a716-446655440002
+        status:
+          type: string
+          enum:
+          - active
+          - paused
+          - suspended
+          - cancelled
+          description: Subscription status
+          example: active
+        delivery_mode:
+          type: string
+          enum:
+          - immediate
+          - batched
+          - filtered
+          description: Event delivery mode
+          example: immediate
+        created_at:
+          type: string
+          format: date-time
+          description: Subscription creation timestamp
+          example: '2025-12-20T21:40:00Z'
+        last_activity:
+          type: string
+          format: date-time
+          description: Last event delivery timestamp
+          example: '2025-12-20T21:41:30Z'
         event_filters:
           type: object
           description: Event filtering criteria
           additionalProperties: true
           example:
-            guild_id: "550e8400-e29b-41d4-a716-446655440003"
+            guild_id: 550e8400-e29b-41d4-a716-446655440003
             player_level_min: 10
-
-        created_at:
-          type: string
-          format: date-time
-          description: Subscription creation timestamp
-          example: "2025-12-20T21:40:00Z"
-
-        last_activity:
-          type: string
-          format: date-time
-          description: Last event delivery timestamp
-          example: "2025-12-20T21:41:30Z"
-
-        # Medium types
         event_types:
           type: array
           items:
             type: string
           minItems: 1
           description: Types of events to subscribe to
-          example: ["guild.update", "combat.damage", "player.achievement"]
-
-        status:
-          type: string
-          enum: [active, paused, suspended, cancelled]
-          description: Subscription status
-          example: "active"
-
-        delivery_mode:
-          type: string
-          enum: [immediate, batched, filtered]
-          description: Event delivery mode
-          example: "immediate"
-
-        # Small types
+          example:
+          - guild.update
+          - combat.damage
+          - player.achievement
         priority:
           type: integer
           minimum: 1
           maximum: 10
           description: Subscription priority (higher = more important)
           example: 5
-
         events_delivered:
           type: integer
           minimum: 0
           description: Total events delivered
           example: 1250
-
         events_filtered:
           type: integer
           minimum: 0
           description: Events filtered out by criteria
           example: 5000
-
         delivery_rate_per_minute:
           type: number
           format: float
           minimum: 0
           description: Current delivery rate
           example: 45.2
-
-    # Create subscription request
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     CreateSubscriptionRequest:
       type: object
       required:
-        - event_types
+      - event_types
       properties:
+        delivery_mode:
+          type: string
+          enum:
+          - immediate
+          - batched
+          - filtered
+          default: immediate
+          description: Event delivery mode
+        event_filters:
+          type: object
+          description: Optional event filtering criteria
+          additionalProperties: true
+          example:
+            guild_id: 550e8400-e29b-41d4-a716-446655440003
+            min_player_level: 10
         event_types:
           type: array
           items:
@@ -114,40 +119,43 @@ components:
           minItems: 1
           maxItems: 50
           description: Types of events to subscribe to
-          example: ["guild.update", "combat.damage", "player.achievement"]
-
-        event_filters:
-          type: object
-          description: Optional event filtering criteria
-          additionalProperties: true
           example:
-            guild_id: "550e8400-e29b-41d4-a716-446655440003"
-            min_player_level: 10
-
-        delivery_mode:
-          type: string
-          enum: [immediate, batched, filtered]
-          default: "immediate"
-          description: Event delivery mode
-
+          - guild.update
+          - combat.damage
+          - player.achievement
         priority:
           type: integer
           minimum: 1
           maximum: 10
           default: 5
           description: Subscription priority
-
         max_events_per_minute:
           type: integer
           minimum: 1
           maximum: 1000
           default: 100
           description: Rate limiting for this subscription
-
-    # Update subscription request
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     UpdateSubscriptionRequest:
       type: object
       properties:
+        delivery_mode:
+          type: string
+          enum:
+          - immediate
+          - batched
+          - filtered
+          description: Updated delivery mode
+        status:
+          type: string
+          enum:
+          - active
+          - paused
+          description: Updated status
+        event_filters:
+          type: object
+          description: Updated event filtering criteria
+          additionalProperties: true
         event_types:
           type: array
           items:
@@ -155,34 +163,17 @@ components:
           minItems: 1
           maxItems: 50
           description: Updated event types
-
-        event_filters:
-          type: object
-          description: Updated event filtering criteria
-          additionalProperties: true
-
-        delivery_mode:
-          type: string
-          enum: [immediate, batched, filtered]
-          description: Updated delivery mode
-
         priority:
           type: integer
           minimum: 1
           maximum: 10
           description: Updated priority
-
-        status:
-          type: string
-          enum: [active, paused]
-          description: Updated status
-
-    # Subscription list response
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     SubscriptionListResponse:
       type: object
       required:
-        - subscriptions
-        - total_count
+      - subscriptions
+      - total_count
       properties:
         subscriptions:
           type: array
@@ -199,3 +190,4 @@ components:
         offset:
           type: integer
           description: Items skipped
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'

@@ -1,0 +1,811 @@
+components:
+  schemas:
+    # Common types
+    Timestamp:
+      type: string
+      format: date-time
+      description: ISO 8601 timestamp
+
+    UUID:
+      type: string
+      format: uuid
+      description: Universally unique identifier
+
+    EntityType:
+      type: string
+      enum: [character, inventory, quest, combat, economy]
+      description: Type of game entity
+
+    ConsistencyLevel:
+      type: string
+      enum: [strong, eventual]
+      description: Required consistency level
+
+    ConflictStrategy:
+      type: string
+      enum: [latest_wins, merge, manual, reject]
+      description: Strategy for resolving conflicts
+
+    # State Synchronization
+    SynchronizedState:
+      type: object
+      properties:
+        entityId:
+          $ref: '#/components/schemas/UUID'
+        entityType:
+          $ref: '#/components/schemas/EntityType'
+        version:
+          type: integer
+          minimum: 1
+        data:
+          type: object
+          description: Entity state data
+        lastModified:
+          $ref: '#/components/schemas/Timestamp'
+        checksum:
+          type: string
+          description: Data integrity checksum
+        layer:
+          type: string
+          enum: [client, server, database]
+      required: [entityId, entityType, version, data, lastModified]
+
+    StateUpdateRequest:
+      type: object
+      properties:
+        data:
+          type: object
+          description: Updated state data
+        expectedVersion:
+          type: integer
+          minimum: 1
+          description: Expected current version for optimistic locking
+        consistency:
+          $ref: '#/components/schemas/ConsistencyLevel'
+        force:
+          type: boolean
+          default: false
+          description: Force update ignoring conflicts
+      required: [data]
+
+    StateUpdateResponse:
+      type: object
+      properties:
+        entityId:
+          $ref: '#/components/schemas/UUID'
+        newVersion:
+          type: integer
+        appliedAt:
+          $ref: '#/components/schemas/Timestamp'
+        conflicts:
+          type: array
+          items:
+            $ref: '#/components/schemas/Conflict'
+      required: [entityId, newVersion, appliedAt]
+
+    StateVersionHistory:
+      type: object
+      properties:
+        entityId:
+          $ref: '#/components/schemas/UUID'
+        entityType:
+          $ref: '#/components/schemas/EntityType'
+        versions:
+          type: array
+          items:
+            $ref: '#/components/schemas/StateVersion'
+        totalCount:
+          type: integer
+      required: [entityId, entityType, versions]
+
+    StateVersion:
+      type: object
+      properties:
+        version:
+          type: integer
+        data:
+          type: object
+        modifiedBy:
+          type: string
+        modifiedAt:
+          $ref: '#/components/schemas/Timestamp'
+        changeReason:
+          type: string
+      required: [version, data, modifiedAt]
+
+    BatchStateSyncRequest:
+      type: object
+      properties:
+        entities:
+          type: array
+          items:
+            type: object
+            properties:
+              entityId:
+                $ref: '#/components/schemas/UUID'
+              entityType:
+                $ref: '#/components/schemas/EntityType'
+              data:
+                type: object
+              consistency:
+                $ref: '#/components/schemas/ConsistencyLevel'
+            required: [entityId, entityType, data]
+        transactionId:
+          $ref: '#/components/schemas/UUID'
+        atomic:
+          type: boolean
+          default: true
+          description: Whether all updates should be atomic
+      required: [entities]
+
+    BatchStateSyncResponse:
+      type: object
+      properties:
+        transactionId:
+          $ref: '#/components/schemas/UUID'
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/BatchSyncResult'
+        overallSuccess:
+          type: boolean
+        processedAt:
+          $ref: '#/components/schemas/Timestamp'
+      required: [transactionId, results, overallSuccess]
+
+    BatchSyncResult:
+      type: object
+      properties:
+        entityId:
+          $ref: '#/components/schemas/UUID'
+        success:
+          type: boolean
+        error:
+          type: string
+        newVersion:
+          type: integer
+      required: [entityId, success]
+
+    # Event Bus
+    EventPublishRequest:
+      type: object
+      properties:
+        eventType:
+          type: string
+          description: Type of event (e.g., 'CharacterLevelUp', 'ItemAdded')
+        aggregateId:
+          $ref: '#/components/schemas/UUID'
+          description: ID of the aggregate that produced the event
+        aggregateType:
+          $ref: '#/components/schemas/EntityType'
+        payload:
+          type: object
+          description: Event-specific data
+        correlationId:
+          $ref: '#/components/schemas/UUID'
+          description: Correlation ID for tracing
+        causationId:
+          $ref: '#/components/schemas/UUID'
+          description: ID of the event that caused this event
+        metadata:
+          type: object
+          description: Additional metadata
+      required: [eventType, aggregateId, aggregateType, payload]
+
+    EventPublishResponse:
+      type: object
+      properties:
+        eventId:
+          $ref: '#/components/schemas/UUID'
+        publishedAt:
+          $ref: '#/components/schemas/Timestamp'
+        partition:
+          type: string
+          description: Event bus partition/shard
+      required: [eventId, publishedAt]
+
+    EventSubscriptionRequest:
+      type: object
+      properties:
+        serviceId:
+          type: string
+          description: ID of the subscribing service
+        eventTypes:
+          type: array
+          items:
+            type: string
+          description: Types of events to subscribe to
+        filter:
+          type: object
+          description: Event filtering criteria
+        deliveryGuarantee:
+          type: string
+          enum: [at_least_once, exactly_once]
+          default: at_least_once
+        retryPolicy:
+          $ref: '#/components/schemas/RetryPolicy'
+      required: [serviceId, eventTypes]
+
+    EventSubscriptionResponse:
+      type: object
+      properties:
+        subscriptionId:
+          $ref: '#/components/schemas/UUID'
+        serviceId:
+          type: string
+        eventTypes:
+          type: array
+          items:
+            type: string
+        createdAt:
+          $ref: '#/components/schemas/Timestamp'
+      required: [subscriptionId, serviceId, eventTypes, createdAt]
+
+    EventSubscriptionsList:
+      type: object
+      properties:
+        subscriptions:
+          type: array
+          items:
+            $ref: '#/components/schemas/EventSubscriptionResponse'
+        totalCount:
+          type: integer
+      required: [subscriptions, totalCount]
+
+    EventAcknowledgment:
+      type: object
+      properties:
+        success:
+          type: boolean
+          default: true
+        error:
+          type: string
+          description: Error message if processing failed
+        retry:
+          type: boolean
+          default: false
+          description: Whether to retry processing
+      required: []
+
+    # Conflict Resolution
+    Conflict:
+      type: object
+      properties:
+        conflictId:
+          $ref: '#/components/schemas/UUID'
+        entityId:
+          $ref: '#/components/schemas/UUID'
+        entityType:
+          $ref: '#/components/schemas/EntityType'
+        conflictingVersions:
+          type: array
+          items:
+            $ref: '#/components/schemas/StateVersion'
+          minItems: 2
+        detectedAt:
+          $ref: '#/components/schemas/Timestamp'
+        priority:
+          type: string
+          enum: [low, medium, high, critical]
+        status:
+          type: string
+          enum: [pending, in_progress, resolved]
+      required: [conflictId, entityId, entityType, conflictingVersions, detectedAt]
+
+    ConflictsList:
+      type: object
+      properties:
+        conflicts:
+          type: array
+          items:
+            $ref: '#/components/schemas/Conflict'
+        totalCount:
+          type: integer
+        pagination:
+          $ref: '#/components/schemas/PaginationInfo'
+      required: [conflicts, totalCount]
+
+    ConflictResolutionRequest:
+      type: object
+      properties:
+        strategy:
+          $ref: '#/components/schemas/ConflictStrategy'
+        resolutionData:
+          type: object
+          description: Data needed for resolution (depends on strategy)
+        force:
+          type: boolean
+          default: false
+      required: [strategy]
+
+    ConflictResolutionResponse:
+      type: object
+      properties:
+        conflictId:
+          $ref: '#/components/schemas/UUID'
+        resolvedVersion:
+          type: integer
+        resolvedAt:
+          $ref: '#/components/schemas/Timestamp'
+        appliedStrategy:
+          $ref: '#/components/schemas/ConflictStrategy'
+      required: [conflictId, resolvedVersion, resolvedAt, appliedStrategy]
+
+    ResolutionStrategies:
+      type: object
+      properties:
+        conflictId:
+          $ref: '#/components/schemas/UUID'
+        availableStrategies:
+          type: array
+          items:
+            type: object
+            properties:
+              strategy:
+                $ref: '#/components/schemas/ConflictStrategy'
+              description:
+                type: string
+              recommended:
+                type: boolean
+                default: false
+            required: [strategy, description]
+      required: [conflictId, availableStrategies]
+
+    # Saga Coordination
+    SagaCreationRequest:
+      type: object
+      properties:
+        sagaType:
+          type: string
+          description: Type of saga (e.g., 'item_purchase', 'character_level_up')
+        initiatorService:
+          type: string
+          description: Service that initiated the saga
+        participants:
+          type: array
+          items:
+            type: string
+          description: Services participating in the saga
+        steps:
+          type: array
+          items:
+            $ref: '#/components/schemas/SagaStep'
+        timeout:
+          type: integer
+          minimum: 1
+          description: Timeout in seconds
+        compensationStrategy:
+          type: string
+          enum: [rollback, partial_compensation, manual]
+          default: rollback
+      required: [sagaType, initiatorService, participants, steps]
+
+    SagaStep:
+      type: object
+      properties:
+        stepId:
+          type: string
+          description: Unique step identifier within the saga
+        service:
+          type: string
+          description: Service responsible for this step
+        operation:
+          type: string
+          description: Operation to perform
+        payload:
+          type: object
+          description: Data for the operation
+        compensationOperation:
+          type: string
+          description: Operation to undo this step if needed
+        dependsOn:
+          type: array
+          items:
+            type: string
+          description: Step IDs this step depends on
+      required: [stepId, service, operation]
+
+    SagaResponse:
+      type: object
+      properties:
+        sagaId:
+          $ref: '#/components/schemas/UUID'
+        sagaType:
+          type: string
+        status:
+          type: string
+          enum: [pending, in_progress, compensating, completed, failed]
+        createdAt:
+          $ref: '#/components/schemas/Timestamp'
+        participants:
+          type: array
+          items:
+            type: string
+      required: [sagaId, sagaType, status, createdAt, participants]
+
+    SagaDetails:
+      type: object
+      properties:
+        sagaId:
+          $ref: '#/components/schemas/UUID'
+        sagaType:
+          type: string
+        status:
+          type: string
+          enum: [pending, in_progress, compensating, completed, failed]
+        initiatorService:
+          type: string
+        participants:
+          type: array
+          items:
+            type: string
+        steps:
+          type: array
+          items:
+            $ref: '#/components/schemas/SagaStepExecution'
+        createdAt:
+          $ref: '#/components/schemas/Timestamp'
+        completedAt:
+          $ref: '#/components/schemas/Timestamp'
+        timeoutAt:
+          $ref: '#/components/schemas/Timestamp'
+      required: [sagaId, sagaType, status, initiatorService, participants, steps, createdAt]
+
+    SagaStepExecution:
+      type: object
+      properties:
+        stepId:
+          type: string
+        service:
+          type: string
+        status:
+          type: string
+          enum: [pending, in_progress, completed, failed, compensated]
+        startedAt:
+          $ref: '#/components/schemas/Timestamp'
+        completedAt:
+          $ref: '#/components/schemas/Timestamp'
+        error:
+          type: string
+        compensationStatus:
+          type: string
+          enum: [not_needed, pending, in_progress, completed, failed]
+      required: [stepId, service, status]
+
+    SagasList:
+      type: object
+      properties:
+        sagas:
+          type: array
+          items:
+            $ref: '#/components/schemas/SagaResponse'
+        totalCount:
+          type: integer
+        pagination:
+          $ref: '#/components/schemas/PaginationInfo'
+      required: [sagas, totalCount]
+
+    SagaCompensationRequest:
+      type: object
+      properties:
+        reason:
+          type: string
+          description: Reason for compensation
+        failedStep:
+          type: string
+          description: ID of the step that failed
+        compensationData:
+          type: object
+          description: Additional data for compensation
+      required: [reason]
+
+    SagaStepCompletion:
+      type: object
+      properties:
+        success:
+          type: boolean
+          default: true
+        result:
+          type: object
+          description: Operation result data
+        error:
+          type: string
+          description: Error message if step failed
+      required: []
+
+    # Data Consistency
+    ConsistencyCheckRequest:
+      type: object
+      properties:
+        entityType:
+          $ref: '#/components/schemas/EntityType'
+        entityIds:
+          type: array
+          items:
+            $ref: '#/components/schemas/UUID'
+        checkType:
+          type: string
+          enum: [full, partial, custom]
+          default: full
+        rules:
+          type: array
+          items:
+            type: string
+          description: Specific consistency rules to check
+        timeout:
+          type: integer
+          minimum: 1
+          default: 30
+          description: Timeout in seconds
+      required: [entityType, entityIds]
+
+    ConsistencyCheckResponse:
+      type: object
+      properties:
+        checkId:
+          $ref: '#/components/schemas/UUID'
+        status:
+          type: string
+          enum: [completed, failed, timeout]
+        violations:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConsistencyViolation'
+        checkedEntities:
+          type: integer
+        duration:
+          type: integer
+          description: Duration in milliseconds
+        completedAt:
+          $ref: '#/components/schemas/Timestamp'
+      required: [checkId, status, violations, checkedEntities]
+
+    ConsistencyViolation:
+      type: object
+      properties:
+        entityId:
+          $ref: '#/components/schemas/UUID'
+        ruleId:
+          type: string
+        violationType:
+          type: string
+          enum: [missing_data, inconsistent_data, stale_data, orphaned_data]
+        description:
+          type: string
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+        detectedAt:
+          $ref: '#/components/schemas/Timestamp'
+      required: [entityId, ruleId, violationType, description, severity]
+
+    ConsistencyCheckResults:
+      type: object
+      properties:
+        checkId:
+          $ref: '#/components/schemas/UUID'
+        status:
+          type: string
+          enum: [pending, in_progress, completed, failed]
+        progress:
+          type: number
+          minimum: 0
+          maximum: 100
+        violations:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConsistencyViolation'
+        summary:
+          type: object
+          properties:
+            totalEntities:
+              type: integer
+            violationsCount:
+              type: integer
+            severityBreakdown:
+              type: object
+              properties:
+                low:
+                  type: integer
+                medium:
+                  type: integer
+                high:
+                  type: integer
+                critical:
+                  type: integer
+      required: [checkId, status, violations]
+
+    ConsistencyRule:
+      type: object
+      properties:
+        ruleId:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        entityType:
+          $ref: '#/components/schemas/EntityType'
+        checkType:
+          type: string
+          enum: [existence, referential_integrity, data_consistency, business_rules]
+        query:
+          type: string
+          description: SQL or validation query
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+        enabled:
+          type: boolean
+          default: true
+      required: [ruleId, name, entityType, checkType, severity]
+
+    ConsistencyRules:
+      type: object
+      properties:
+        rules:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConsistencyRule'
+        totalCount:
+          type: integer
+      required: [rules, totalCount]
+
+    # Health and Monitoring
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+        timestamp:
+          $ref: '#/components/schemas/Timestamp'
+        version:
+          type: string
+        services:
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              status:
+                type: string
+                enum: [up, down, degraded]
+              responseTime:
+                type: integer
+                description: Response time in milliseconds
+              lastCheck:
+                $ref: '#/components/schemas/Timestamp'
+        metrics:
+          type: object
+          description: Key health metrics
+      required: [status, timestamp]
+
+    SyncMetrics:
+      type: object
+      properties:
+        period:
+          type: string
+        syncOperations:
+          type: object
+          properties:
+            total:
+              type: integer
+            successful:
+              type: integer
+            failed:
+              type: integer
+            avgResponseTime:
+              type: integer
+        eventBus:
+          type: object
+          properties:
+            eventsPublished:
+              type: integer
+            eventsProcessed:
+              type: integer
+            failedDeliveries:
+              type: integer
+        conflicts:
+          type: object
+          properties:
+            detected:
+              type: integer
+            resolved:
+              type: integer
+            pending:
+              type: integer
+        sagas:
+          type: object
+          properties:
+            active:
+              type: integer
+            completed:
+              type: integer
+            failed:
+              type: integer
+            avgDuration:
+              type: integer
+        consistency:
+          type: object
+          properties:
+            checksPerformed:
+              type: integer
+            violationsFound:
+              type: integer
+            avgCheckDuration:
+              type: integer
+      required: [period]
+
+    # Common components
+    RetryPolicy:
+      type: object
+      properties:
+        maxAttempts:
+          type: integer
+          minimum: 1
+          default: 3
+        backoffMultiplier:
+          type: number
+          minimum: 1.0
+          default: 2.0
+        initialDelay:
+          type: integer
+          minimum: 0
+          default: 1000
+          description: Initial delay in milliseconds
+        maxDelay:
+          type: integer
+          minimum: 1000
+          default: 30000
+          description: Maximum delay in milliseconds
+      required: []
+
+    PaginationInfo:
+      type: object
+      properties:
+        page:
+          type: integer
+          minimum: 1
+        pageSize:
+          type: integer
+          minimum: 1
+        totalPages:
+          type: integer
+        totalItems:
+          type: integer
+        hasNext:
+          type: boolean
+        hasPrevious:
+          type: boolean
+      required: [page, pageSize, totalPages, totalItems, hasNext, hasPrevious]
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+
+security:
+  - BearerAuth: []
+  - ApiKeyAuth: []
+
+# WebSocket channels for real-time updates
+x-websockets:
+  /ws/sync:
+    description: Real-time synchronization events
+    events:
+      - state.updated
+      - conflict.detected
+      - saga.status.changed
+      - consistency.violation
+
+  /ws/events:
+    description: Real-time event streaming
+    events:
+      - event.published
+      - subscription.created
+      - subscription.removed

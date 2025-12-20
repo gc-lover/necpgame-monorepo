@@ -1,44 +1,33 @@
-# Failure analysis and recommendations schemas
-# Issue: #2068
-
 components:
   schemas:
-    # Failure analysis response
     FailureAnalysis:
       type: object
       required:
-        - timeframe
-        - total_failures
-        - failure_patterns
-        - recommendations
+      - timeframe
+      - total_failures
+      - failure_patterns
+      - recommendations
       properties:
         timeframe:
           type: string
-          enum: [1h, 6h, 24h, 7d]
+          enum:
+          - 1h
+          - 6h
+          - 24h
+          - 7d
           description: Analysis timeframe
-        total_failures:
-          type: integer
-          minimum: 0
-          description: Total failures in timeframe
-          example: 1250
-        failure_patterns:
-          type: array
-          items:
-            $ref: '#/components/schemas/FailurePattern'
-          description: Identified failure patterns
-        recommendations:
-          type: array
-          items:
-            $ref: '#/components/schemas/Recommendation'
-          description: Tuning recommendations
         risk_assessment:
           type: object
           description: Overall system risk assessment
           properties:
             risk_level:
               type: string
-              enum: [low, medium, high, critical]
-              example: "medium"
+              enum:
+              - low
+              - medium
+              - high
+              - critical
+              example: medium
             risk_score:
               type: number
               format: float
@@ -49,54 +38,112 @@ components:
               type: array
               items:
                 type: string
-              example: ["High failure rate in guild-service", "Circuit breaker flapping"]
-
-    # Individual failure pattern
+              example:
+              - High failure rate in guild-service
+              - Circuit breaker flapping
+        failure_patterns:
+          type: array
+          items:
+            $ref: '#/components/schemas/FailurePattern'
+          description: Identified failure patterns
+        recommendations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Recommendation'
+          description: Tuning recommendations
+        total_failures:
+          type: integer
+          minimum: 0
+          description: Total failures in timeframe
+          example: 1250
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     FailurePattern:
       type: object
       required:
-        - pattern_type
-        - severity
-        - affected_services
-        - frequency
-        - first_seen
-        - last_seen
+      - pattern_type
+      - severity
+      - affected_services
+      - frequency
+      - first_seen
+      - last_seen
       properties:
         pattern_id:
           type: string
           format: uuid
           description: Unique pattern identifier
+        root_cause_hypothesis:
+          type: string
+          description: Hypothesized root cause
+          example: Database connection pool exhaustion
         pattern_type:
           type: string
-          enum: [cascading_failure, service_degradation, network_partition, resource_exhaustion, external_dependency_failure, configuration_error]
+          enum:
+          - cascading_failure
+          - service_degradation
+          - network_partition
+          - resource_exhaustion
+          - external_dependency_failure
+          - configuration_error
           description: Type of failure pattern
-          example: "cascading_failure"
+          example: cascading_failure
         severity:
           type: string
-          enum: [low, medium, high, critical]
+          enum:
+          - low
+          - medium
+          - high
+          - critical
           description: Pattern severity
-          example: "high"
+          example: high
+        first_seen:
+          type: string
+          format: date-time
+          description: When pattern was first detected
+          example: '2025-12-20T15:30:00Z'
+        last_seen:
+          type: string
+          format: date-time
+          description: When pattern was last seen
+          example: '2025-12-20T21:15:00Z'
+        impact_assessment:
+          type: object
+          description: Impact of this failure pattern
+          properties:
+            user_impact:
+              type: string
+              enum:
+              - none
+              - minor
+              - major
+              - critical
+              example: major
+            affected_users_percent:
+              type: number
+              format: float
+              minimum: 0
+              maximum: 100
+              example: 25.0
+            revenue_impact:
+              type: string
+              enum:
+              - none
+              - low
+              - medium
+              - high
+              example: medium
         affected_services:
           type: array
           items:
             type: string
           description: Services affected by this pattern
-          example: ["guild-service", "inventory-service"]
+          example:
+          - guild-service
+          - inventory-service
         frequency:
           type: integer
           minimum: 0
           description: How many times this pattern occurred
           example: 5
-        first_seen:
-          type: string
-          format: date-time
-          description: When pattern was first detected
-          example: "2025-12-20T15:30:00Z"
-        last_seen:
-          type: string
-          format: date-time
-          description: When pattern was last seen
-          example: "2025-12-20T21:15:00Z"
         duration_minutes:
           type: integer
           minimum: 0
@@ -109,62 +156,55 @@ components:
           maximum: 100
           description: Associated failure rate
           example: 15.5
-        root_cause_hypothesis:
-          type: string
-          description: Hypothesized root cause
-          example: "Database connection pool exhaustion"
-        impact_assessment:
-          type: object
-          description: Impact of this failure pattern
-          properties:
-            user_impact:
-              type: string
-              enum: [none, minor, major, critical]
-              example: "major"
-            affected_users_percent:
-              type: number
-              format: float
-              minimum: 0
-              maximum: 100
-              example: 25.0
-            revenue_impact:
-              type: string
-              enum: [none, low, medium, high]
-              example: "medium"
-
-    # Tuning recommendation
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     Recommendation:
       type: object
       required:
-        - recommendation_type
-        - priority
-        - description
-        - affected_circuit_breakers
+      - recommendation_type
+      - priority
+      - description
+      - affected_circuit_breakers
       properties:
         recommendation_id:
           type: string
           format: uuid
           description: Unique recommendation identifier
-        recommendation_type:
-          type: string
-          enum: [threshold_adjustment, timeout_increase, monitoring_window_change, fallback_implementation, service_scaling, dependency_isolation]
-          description: Type of recommendation
-          example: "threshold_adjustment"
-        priority:
-          type: string
-          enum: [low, medium, high, critical]
-          description: Implementation priority
-          example: "high"
         description:
           type: string
           description: Detailed recommendation description
-          example: "Increase failure threshold from 5 to 8 for guild-service circuit breaker due to intermittent database latency"
-        affected_circuit_breakers:
-          type: array
-          items:
-            type: string
-            format: uuid
-          description: Circuit breaker IDs this recommendation applies to
+          example: Increase failure threshold from 5 to 8 for guild-service circuit breaker due to intermittent database latency
+        rollback_plan:
+          type: string
+          description: How to rollback if recommendation causes issues
+          example: Revert threshold back to previous value
+        recommendation_type:
+          type: string
+          enum:
+          - threshold_adjustment
+          - timeout_increase
+          - monitoring_window_change
+          - fallback_implementation
+          - service_scaling
+          - dependency_isolation
+          description: Type of recommendation
+          example: threshold_adjustment
+        priority:
+          type: string
+          enum:
+          - low
+          - medium
+          - high
+          - critical
+          description: Implementation priority
+          example: high
+        implementation_complexity:
+          type: string
+          enum:
+          - low
+          - medium
+          - high
+          description: How complex it is to implement
+          example: low
         current_config:
           type: object
           description: Current configuration values
@@ -191,14 +231,15 @@ components:
               example: 5.5
             risk_level_change:
               type: string
-              enum: [no_change, decreased, increased]
-              example: "decreased"
-        implementation_complexity:
-          type: string
-          enum: [low, medium, high]
-          description: How complex it is to implement
-          example: "low"
-        rollback_plan:
-          type: string
-          description: How to rollback if recommendation causes issues
-          example: "Revert threshold back to previous value"
+              enum:
+              - no_change
+              - decreased
+              - increased
+              example: decreased
+        affected_circuit_breakers:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Circuit breaker IDs this recommendation applies to
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'

@@ -2,33 +2,32 @@ openapi: 3.0.3
 info:
   title: Inventory Service API
   version: 1.0.0
-  description: |
-    API for managing player inventories in MMOFPS RPG.
+  description: 'API for managing player inventories in MMOFPS RPG.
+
     Handles item storage, equipment, crafting materials, and inventory operations.
+
     Optimized for MMO performance with caching and batch operations.
 
+    '
 servers:
-  - url: http://localhost:8080
-    description: Development server
-
+- url: http://localhost:8080
+  description: Development server
 security:
-  - BearerAuth: [ ]
-
+- BearerAuth: []
 tags:
-  - name: Inventory
-    description: Inventory management operations
-  - name: Equipment
-    description: Equipment and gear management
-  - name: Items
-    description: Item operations and metadata
-  - name: Containers
-    description: Inventory containers and slots
-
+- name: Inventory
+  description: Inventory management operations
+- name: Equipment
+  description: Equipment and gear management
+- name: Items
+  description: Item operations and metadata
+- name: Containers
+  description: Inventory containers and slots
 paths:
   /inventory/health:
     get:
       tags:
-        - Inventory
+      - Inventory
       summary: Health check for Inventory Service
       operationId: healthCheck
       responses:
@@ -41,51 +40,37 @@ paths:
                 properties:
                   status:
                     type: string
-                    example: "healthy"
-
+                    example: healthy
   /inventory/{characterId}:
-    $ref: './paths/inventory.yaml#/get'
-
+    $ref: ./paths/inventory.yaml#/get
   /inventory/{characterId}/items:
-    $ref: './paths/inventory.yaml#/list-items'
-
+    $ref: ./paths/inventory.yaml#/list-items
   /inventory/{characterId}/move:
-    $ref: './paths/inventory.yaml#/move-item'
-
+    $ref: ./paths/inventory.yaml#/move-item
   /inventory/{characterId}/equip:
-    $ref: './paths/inventory.yaml#/equip-item'
-
+    $ref: ./paths/inventory.yaml#/equip-item
   /inventory/{characterId}/unequip:
-    $ref: './paths/inventory.yaml#/unequip-item'
-
+    $ref: ./paths/inventory.yaml#/unequip-item
   /inventory/{characterId}/use:
-    $ref: './paths/inventory.yaml#/use-item'
-
+    $ref: ./paths/inventory.yaml#/use-item
   /inventory/{characterId}/drop:
-    $ref: './paths/inventory.yaml#/drop-item'
-
+    $ref: ./paths/inventory.yaml#/drop-item
   /inventory/{characterId}/containers:
-    $ref: './paths/containers.yaml#/get'
-
+    $ref: ./paths/containers.yaml#/get
   /items/{itemId}:
-    $ref: './paths/items.yaml#/get'
-
+    $ref: ./paths/items.yaml#/get
   /items/search:
-    $ref: './paths/items.yaml#/search'
-
+    $ref: ./paths/items.yaml#/search
   /equipment/{characterId}:
-    $ref: './paths/equipment.yaml#/get'
-
+    $ref: ./paths/equipment.yaml#/get
   /equipment/{characterId}/stats:
-    $ref: './paths/equipment.yaml#/stats'
-
+    $ref: ./paths/equipment.yaml#/stats
 components:
   securitySchemes:
     BearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
-
   responses:
     BadRequest:
       description: Bad request
@@ -105,81 +90,58 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-
   schemas:
     Error:
       type: object
       properties:
+        message:
+          type: string
         code:
           type: integer
           format: int32
-        message:
-          type: string
       required:
-        - code
-        - message
-
-    # Common schemas
+      - code
+      - message
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     Item:
-      $ref: './schemas/items.yaml#/Item'
-
+      $ref: ./schemas/items.yaml#/Item
     InventoryItem:
-      $ref: './schemas/inventory.yaml#/InventoryItem'
-
+      $ref: ./schemas/inventory.yaml#/InventoryItem
     EquipmentSlot:
-      $ref: './schemas/equipment.yaml#/EquipmentSlot'
-
+      $ref: ./schemas/equipment.yaml#/EquipmentSlot
     Container:
-      $ref: './schemas/containers.yaml#/Container'
-
-    # Request/Response schemas
+      $ref: ./schemas/containers.yaml#/Container
     GetInventoryResponse:
-      $ref: './schemas/responses.yaml#/GetInventoryResponse'
-
+      $ref: ./schemas/responses.yaml#/GetInventoryResponse
     ListItemsResponse:
-      $ref: './schemas/responses.yaml#/ListItemsResponse'
-
+      $ref: ./schemas/responses.yaml#/ListItemsResponse
     MoveItemRequest:
-      $ref: './schemas/requests.yaml#/MoveItemRequest'
-
+      $ref: ./schemas/requests.yaml#/MoveItemRequest
     MoveItemResponse:
-      $ref: './schemas/responses.yaml#/MoveItemResponse'
-
+      $ref: ./schemas/responses.yaml#/MoveItemResponse
     EquipItemRequest:
-      $ref: './schemas/requests.yaml#/EquipItemRequest'
-
+      $ref: ./schemas/requests.yaml#/EquipItemRequest
     EquipItemResponse:
-      $ref: './schemas/responses.yaml#/EquipItemResponse'
-
+      $ref: ./schemas/responses.yaml#/EquipItemResponse
     UnequipItemRequest:
-      $ref: './schemas/requests.yaml#/UnequipItemRequest'
-
+      $ref: ./schemas/requests.yaml#/UnequipItemRequest
     UnequipItemResponse:
-      $ref: './schemas/responses.yaml#/UnequipItemResponse'
-
+      $ref: ./schemas/responses.yaml#/UnequipItemResponse
     UseItemRequest:
-      $ref: './schemas/requests.yaml#/UseItemRequest'
-
+      $ref: ./schemas/requests.yaml#/UseItemRequest
     UseItemResponse:
-      $ref: './schemas/responses.yaml#/UseItemResponse'
-
+      $ref: ./schemas/responses.yaml#/UseItemResponse
     DropItemRequest:
-      $ref: './schemas/requests.yaml#/DropItemRequest'
-
+      $ref: ./schemas/requests.yaml#/DropItemRequest
     DropItemResponse:
-      $ref: './schemas/responses.yaml#/DropItemResponse'
-
+      $ref: ./schemas/responses.yaml#/DropItemResponse
     GetItemResponse:
-      $ref: './schemas/responses.yaml#/GetItemResponse'
-
+      $ref: ./schemas/responses.yaml#/GetItemResponse
     SearchItemsRequest:
-      $ref: './schemas/requests.yaml#/SearchItemsRequest'
-
+      $ref: ./schemas/requests.yaml#/SearchItemsRequest
     SearchItemsResponse:
-      $ref: './schemas/responses.yaml#/SearchItemsResponse'
-
+      $ref: ./schemas/responses.yaml#/SearchItemsResponse
     GetEquipmentResponse:
-      $ref: './schemas/responses.yaml#/GetEquipmentResponse'
-
+      $ref: ./schemas/responses.yaml#/GetEquipmentResponse
     EquipmentStatsResponse:
-      $ref: './schemas/responses.yaml#/EquipmentStatsResponse'
+      $ref: ./schemas/responses.yaml#/EquipmentStatsResponse

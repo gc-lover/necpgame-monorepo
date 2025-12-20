@@ -1,0 +1,304 @@
+# Issue: #140875135
+metadata:
+  id: analysis-network-architecture-mmofps-rpg-2025
+  title: 'Анализ сетевой архитектуры для MMOFPS RPG'
+  document_type: analysis
+  category: implementation
+  status: approved
+  version: '1.0.0'
+  last_updated: 2025-12-20T00:00:00Z
+  concept_approved: true
+  concept_reviewed_at: 2025-12-20T00:00:00Z
+  owners:
+    - role: network_architect
+      contact: network@necp.game
+  tags:
+    - network
+    - architecture
+    - mmofps
+    - real-time
+    - scalability
+    - performance
+  topics:
+    - networking
+    - infrastructure
+    - performance
+    - real-time-systems
+  related_systems:
+    - network-service
+    - realtime-gateway
+    - matchmaking-service
+    - movement-service
+  related_documents:
+    - id: implementation-api-realtime-protocols
+      relation: implements
+    - id: implementation-infrastructure-envoy-config
+      relation: references
+    - id: implementation-performance-network-optimization
+      relation: complements
+  source: shared/docs/knowledge/implementation/architecture/network-architecture-analysis-mmofps-rpg.md
+  visibility: internal
+  audience:
+    - backend
+    - network
+    - infrastructure
+    - performance
+  risk_level: high
+review:
+  chain:
+    - role: network_architect
+      reviewer: Network Architecture Team
+      reviewed_at: 2025-12-20T00:00:00Z
+      status: approved
+  next_actions:
+    - action: implement_protocols
+      description: Implement WebSocket and UDP protocols in realtime-gateway
+      priority: high
+    - action: setup_envoy
+      description: Configure Envoy proxy for protocol switching
+      priority: high
+    - action: performance_testing
+      description: Conduct latency and throughput testing
+      priority: medium
+summary:
+  title: 'Сетевая архитектура MMOFPS RPG'
+  description: |
+    Анализ и рекомендации по сетевой архитектуре для NECPGAME MMOFPS RPG с акцентом на:
+    - Низкую латентность (<50ms для critical operations)
+    - Высокую пропускную способность (1000+ concurrent users per region)
+    - Масштабируемость (horizontal scaling)
+    - Стабильность под нагрузкой
+  key_requirements:
+    - Latency: <50ms for movement, <100ms for combat
+    - Throughput: 1000+ users per region
+    - Packet loss tolerance: <1% critical operations
+    - Global distribution: Multiple regions
+  current_state: analysis_complete
+  recommendations:
+    - Hybrid protocol stack (WebSocket + UDP)
+    - Envoy proxy for load balancing
+    - Redis pub/sub for cross-region communication
+    - CDN for static assets
+content:
+  - id: requirements
+    title: Требования к сетевой архитектуре
+    body: |
+      **Latency Requirements:**
+      - Movement sync: <50ms (critical for FPS gameplay)
+      - Combat actions: <100ms (including server validation)
+      - World state updates: <200ms (non-critical)
+      - Chat messages: <500ms (social features)
+
+      **Throughput Requirements:**
+      - Concurrent users per region: 1000+
+      - Peak concurrent users: 5000+
+      - Messages per second: 10000+ per region
+      - Bandwidth per user: <100KB/s average
+
+      **Reliability Requirements:**
+      - Packet loss tolerance: <1% for critical operations
+      - Connection stability: 99.9% uptime
+      - Graceful degradation under load
+      - Automatic failover between regions
+
+      **Scalability Requirements:**
+      - Horizontal scaling (add servers dynamically)
+      - Geographic distribution (multiple regions)
+      - Load balancing based on region/player density
+      - Cost-effective scaling (pay per usage)
+    mechanics_links: []
+    assets: []
+
+  - id: protocol_analysis
+    title: Анализ сетевых протоколов
+    body: |
+      **Рекомендуемая гибридная архитектура:**
+
+      **WebSocket (Primary Protocol):**
+      - Для: Authentication, chat, inventory, quests
+      - Преимущества: Built-in browser support, reliable delivery
+      - Ограничения: Higher latency due to TCP overhead
+      - Использование: 80% of traffic (non-real-time)
+
+      **UDP (Real-time Protocol):**
+      - Для: Movement, combat, positioning
+      - Преимущества: Lower latency, custom reliability
+      - Ограничения: No built-in reliability, firewall issues
+      - Использование: 20% of traffic (real-time critical)
+
+      **Protocol Switching:**
+      - Envoy proxy handles protocol negotiation
+      - Automatic fallback WebSocket → UDP
+      - STUN/TURN servers for NAT traversal
+
+      **Message Format:**
+      - Binary protocol (MessagePack/Protobuf)
+      - Compressed payloads for bandwidth efficiency
+      - Message priorities (critical, normal, low)
+    mechanics_links: []
+    assets: []
+
+  - id: architecture_design
+    title: Архитектурное решение
+    body: |
+      **Multi-tier Architecture:**
+
+      **Edge Layer:**
+      - Envoy proxy clusters (global distribution)
+      - SSL termination and load balancing
+      - DDoS protection and rate limiting
+      - Protocol switching (WebSocket ↔ UDP)
+
+      **Application Layer:**
+      - Realtime Gateway (WebSocket/UDP handling)
+      - Game Services (movement, combat, social)
+      - Matchmaking Service (region assignment)
+      - Authentication Service (session management)
+
+      **Data Layer:**
+      - Redis (session storage, pub/sub)
+      - PostgreSQL (persistent data)
+      - CDN (static assets, patches)
+
+      **Infrastructure:**
+      - Kubernetes clusters per region
+      - Horizontal Pod Autoscaling (HPA)
+      - Multi-zone deployment for HA
+      - Monitoring (Prometheus + Grafana)
+
+      **Cross-region Communication:**
+      - Redis Cluster for global state
+      - Kafka for event streaming
+      - CDN for asset distribution
+    mechanics_links: []
+    assets: []
+
+  - id: performance_optimization
+    title: Оптимизации производительности
+    body: |
+      **Latency Optimization:**
+      - Edge servers in major regions (US East, EU West, Asia Pacific)
+      - TCP optimizations (BBR congestion control)
+      - UDP hole punching for direct connections
+      - Client-side prediction for movement
+
+      **Bandwidth Optimization:**
+      - Delta compression for state updates
+      - Interest management (only send relevant data)
+      - Adaptive quality based on connection
+      - Asset streaming and caching
+
+      **Scalability Optimization:**
+      - Shard-based world partitioning
+      - Load balancing by geographic proximity
+      - Dynamic server allocation
+      - Connection pooling and reuse
+
+      **Monitoring and Observability:**
+      - Real-time latency tracking per region
+      - Connection quality metrics
+      - Server utilization monitoring
+      - Automated scaling triggers
+    mechanics_links: []
+    assets: []
+
+  - id: security_considerations
+    title: Безопасность и защита
+    body: |
+      **Network Security:**
+      - TLS 1.3 for all WebSocket connections
+      - DTLS for UDP encryption
+      - Certificate pinning on clients
+      - API key authentication
+
+      **Anti-cheat Protection:**
+      - Server-side validation of all actions
+      - Movement prediction and reconciliation
+      - Statistical anomaly detection
+      - Rate limiting per connection
+
+      **DDoS Protection:**
+      - Cloudflare/ArvanCloud integration
+      - Rate limiting at edge
+      - Connection throttling
+      - Automated IP blocking
+
+      **Privacy Protection:**
+      - End-to-end encryption for sensitive data
+      - GDPR compliance for EU users
+      - Data minimization principles
+      - Audit logging for security events
+    mechanics_links: []
+    assets: []
+
+  - id: implementation_plan
+    title: План реализации
+    body: |
+      **Phase 1: Foundation (Week 1-2)**
+      - Setup Envoy proxy configuration
+      - Implement basic WebSocket server
+      - Authentication and session management
+      - Basic monitoring and logging
+
+      **Phase 2: Real-time Features (Week 3-4)**
+      - UDP protocol implementation
+      - Movement synchronization
+      - Combat action handling
+      - Client-side prediction
+
+      **Phase 3: Scaling (Week 5-6)**
+      - Load balancing configuration
+      - Multi-region deployment
+      - Performance testing
+      - Failover mechanisms
+
+      **Phase 4: Optimization (Week 7-8)**
+      - Bandwidth optimization
+      - Latency improvements
+      - Security hardening
+      - Production deployment
+
+      **Success Metrics:**
+      - Latency: <50ms average, <100ms 95th percentile
+      - Throughput: 1000+ concurrent users per region
+      - Uptime: 99.9% availability
+      - Player satisfaction: >95% positive feedback
+    mechanics_links: []
+    assets: []
+appendix:
+  glossary:
+    - term: MMOFPS
+      definition: Massively Multiplayer Online First Person Shooter
+    - term: WebRTC
+      definition: Web Real-Time Communication protocol
+    - term: STUN/TURN
+      definition: Protocols for NAT traversal in P2P connections
+    - term: CDN
+      definition: Content Delivery Network for asset distribution
+  references:
+    - title: Envoy Proxy Configuration
+      link: ../../../../infrastructure/envoy/envoy-hybrid-network.yaml
+    - title: Realtime Gateway Service
+      link: ../../../../services/realtime-gateway-go/
+    - title: Network Performance Benchmarks
+      link: ../../../../analysis/optimization/network-performance-benchmarks.yaml
+  decisions:
+    - decision: hybrid_protocol_stack
+      rationale: Balance between reliability (WebSocket) and performance (UDP)
+      alternatives_considered: Pure WebSocket, Pure UDP, WebRTC
+      impact: Improved latency while maintaining compatibility
+    - decision: envoy_proxy
+      rationale: Production-ready proxy with protocol switching capabilities
+      alternatives_considered: NGINX, HAProxy, Custom proxy
+      impact: Reduced development time and improved reliability
+  implementation:
+    github_issue: 140875135
+    needs_task: false
+    queue_reference:
+      - shared/trackers/queues/architecture/queued.yaml
+    blockers: []
+history:
+  - version: '1.0.0'
+    date: 2025-12-20
+    author: Network Architecture Team
+    changes: Initial analysis and recommendations

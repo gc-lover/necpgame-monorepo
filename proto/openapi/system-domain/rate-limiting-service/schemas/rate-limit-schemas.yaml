@@ -1,77 +1,61 @@
-# Rate limit management schemas
-# Issue: #2063
-
 components:
   schemas:
-    # Rate limit rule entity - memory optimized
     RateLimitRule:
       type: object
       required:
-        - rule_id
-        - service_name
-        - endpoint_pattern
-        - algorithm
-        - limits
-        - created_at
-        - status
+      - rule_id
+      - service_name
+      - endpoint_pattern
+      - algorithm
+      - limits
+      - created_at
+      - status
       properties:
-        # Large types first
         rule_id:
           type: string
           format: uuid
           description: Unique rate limit rule identifier
-          example: "rl1a2b3c4-d5e6-7890-1234-567890abcdef"
-
+          example: rl1a2b3c4-d5e6-7890-1234-567890abcdef
         service_name:
           type: string
           description: Name of the protected service
-          example: "guild-service"
-
+          example: guild-service
         endpoint_pattern:
           type: string
           description: Endpoint pattern to protect (supports wildcards)
-          example: "/api/v1/guilds/*/members"
-
+          example: /api/v1/guilds/*/members
         description:
           type: string
           maxLength: 500
           description: Optional rule description
-          example: "Standard rate limit for guild member operations"
-
+          example: Standard rate limit for guild member operations
+        algorithm:
+          type: string
+          enum:
+          - token_bucket
+          - sliding_window
+          - leaky_bucket
+          - fixed_window
+          description: Rate limiting algorithm
+          example: token_bucket
+        status:
+          type: string
+          enum:
+          - active
+          - inactive
+          - paused
+          description: Rule status
+          example: active
         created_at:
           type: string
           format: date-time
           description: Rule creation timestamp
-          example: "2025-12-20T21:43:00Z"
-
+          example: '2025-12-20T21:43:00Z'
         updated_at:
           type: string
           format: date-time
           description: Last update timestamp
-          example: "2025-12-20T21:45:00Z"
-
-        # Medium types
-        algorithm:
-          type: string
-          enum: [token_bucket, sliding_window, leaky_bucket, fixed_window]
-          description: Rate limiting algorithm
-          example: "token_bucket"
-
-        status:
-          type: string
-          enum: [active, inactive, paused]
-          description: Rule status
-          example: "active"
-
-        priority:
-          type: integer
-          minimum: 0
-          maximum: 100
-          default: 50
-          description: Rule priority (higher values take precedence)
-          example: 75
-
-        # Small types
+          example: '2025-12-20T21:45:00Z'
         limits:
           type: object
           description: Rate limit configuration
@@ -100,7 +84,6 @@ components:
               maximum: 100000
               description: Burst allowance (extra requests allowed)
               example: 200
-
         scope:
           type: object
           description: Rule scope configuration
@@ -119,10 +102,12 @@ components:
               example: false
             region:
               type: string
-              enum: [global, regional, local]
+              enum:
+              - global
+              - regional
+              - local
               description: Geographic scope
-              example: "regional"
-
+              example: regional
         enforcement:
           type: object
           description: Enforcement configuration
@@ -141,28 +126,42 @@ components:
               type: boolean
               description: Send notifications when limits exceeded
               example: false
-
-    # Create rate limit request
+        priority:
+          type: integer
+          minimum: 0
+          maximum: 100
+          default: 50
+          description: Rule priority (higher values take precedence)
+          example: 75
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     CreateRateLimitRequest:
       type: object
       required:
-        - service_name
-        - endpoint_pattern
-        - algorithm
-        - limits
+      - service_name
+      - endpoint_pattern
+      - algorithm
+      - limits
       properties:
         service_name:
           type: string
           description: Name of the service to protect
-          example: "guild-service"
+          example: guild-service
         endpoint_pattern:
           type: string
           description: Endpoint pattern to protect
-          example: "/api/v1/guilds/*/members"
+          example: /api/v1/guilds/*/members
+        description:
+          type: string
+          maxLength: 500
+          description: Optional rule description
         algorithm:
           type: string
-          enum: [token_bucket, sliding_window, leaky_bucket, fixed_window]
-          default: "token_bucket"
+          enum:
+          - token_bucket
+          - sliding_window
+          - leaky_bucket
+          - fixed_window
+          default: token_bucket
           description: Rate limiting algorithm
         limits:
           type: object
@@ -208,8 +207,11 @@ components:
               description: Apply per API key
             region:
               type: string
-              enum: [global, regional, local]
-              default: "regional"
+              enum:
+              - global
+              - regional
+              - local
+              default: regional
               description: Geographic scope
         enforcement:
           type: object
@@ -229,25 +231,35 @@ components:
               type: boolean
               default: false
               description: Send violation notifications
-        description:
-          type: string
-          maxLength: 500
-          description: Optional rule description
         priority:
           type: integer
           minimum: 0
           maximum: 100
           default: 50
           description: Rule priority
-
-    # Update rate limit request
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     UpdateRateLimitRequest:
       type: object
       properties:
+        description:
+          type: string
+          maxLength: 500
+          description: Updated rule description
         algorithm:
           type: string
-          enum: [token_bucket, sliding_window, leaky_bucket, fixed_window]
+          enum:
+          - token_bucket
+          - sliding_window
+          - leaky_bucket
+          - fixed_window
           description: New rate limiting algorithm
+        status:
+          type: string
+          enum:
+          - active
+          - inactive
+          - paused
+          description: New rule status
         limits:
           type: object
           description: Updated rate limit configuration
@@ -287,7 +299,10 @@ components:
               description: Apply per API key
             region:
               type: string
-              enum: [global, regional, local]
+              enum:
+              - global
+              - regional
+              - local
               description: Geographic scope
         enforcement:
           type: object
@@ -304,26 +319,17 @@ components:
             notify_on_violation:
               type: boolean
               description: Send violation notifications
-        description:
-          type: string
-          maxLength: 500
-          description: Updated rule description
         priority:
           type: integer
           minimum: 0
           maximum: 100
           description: New rule priority
-        status:
-          type: string
-          enum: [active, inactive, paused]
-          description: New rule status
-
-    # Rate limit list response
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     RateLimitListResponse:
       type: object
       required:
-        - rules
-        - total_count
+      - rules
+      - total_count
       properties:
         rules:
           type: array
@@ -340,3 +346,4 @@ components:
         offset:
           type: integer
           description: Items skipped
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'

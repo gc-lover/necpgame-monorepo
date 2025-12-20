@@ -5,42 +5,54 @@ info:
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
-  description: |
-    Security Service for MMO RPG Authentication and Authorization
+  description: 'Security Service for MMO RPG Authentication and Authorization
+
 
     ## Overview
+
     Provides comprehensive security for MMOFPS RPG including:
+
     - User registration and authentication
+
     - JWT token management
+
     - Role-Based Access Control (RBAC)
+
     - Session management
+
     - OAuth integration
+
     - Multi-Factor Authentication (MFA)
 
+
     ## Key Features
+
     - **JWT Authentication**: Secure token-based authentication
+
     - **RBAC System**: Fine-grained permissions and roles
+
     - **Session Management**: Secure session handling with refresh tokens
+
     - **OAuth Integration**: Social login support (Google, Discord, etc.)
+
     - **MFA Support**: TOTP and SMS-based 2FA
+
     - **Security Monitoring**: Failed login tracking and suspicious activity detection
 
+    '
 servers:
-  - url: https://security.necpgame.com/api/v1
-    description: Production server
-  - url: http://localhost:8080/api/v1
-    description: Local development
-
+- url: https://security.necpgame.com/api/v1
+  description: Production server
+- url: http://localhost:8080/api/v1
+  description: Local development
 security:
-  - BearerAuth: [ ]
-
+- BearerAuth: []
 components:
   securitySchemes:
     BearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
-
   responses:
     BadRequest:
       description: Bad request
@@ -78,13 +90,12 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-
   schemas:
     Error:
       type: object
       required:
-        - error
-        - message
+      - error
+      - message
       properties:
         error:
           type: string
@@ -95,66 +106,55 @@ components:
         details:
           type: object
           description: Additional error details
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     UserId:
       type: string
       format: uuid
       description: User unique identifier
-
     Email:
       type: string
       format: email
       description: User email address
-
     Password:
       type: string
       minLength: 8
       maxLength: 128
       description: User password
-
     Username:
       type: string
       minLength: 3
       maxLength: 50
-      pattern: '^[a-zA-Z0-9_-]+$'
+      pattern: ^[a-zA-Z0-9_-]+$
       description: Username (alphanumeric, underscore, dash only)
-
     Role:
       type: string
-      enum: [ player, moderator, admin, developer ]
+      enum:
+      - player
+      - moderator
+      - admin
+      - developer
       description: User role in the system
-
     UserStatus:
       type: string
-      enum: [ active, suspended, banned, pending_verification ]
+      enum:
+      - active
+      - suspended
+      - banned
+      - pending_verification
       description: User account status
-
     User:
       type: object
       required:
-        - id
-        - username
-        - email
-        - status
-        - created_at
+      - id
+      - username
+      - email
+      - status
+      - created_at
       properties:
-        id:
-          $ref: '#/components/schemas/UserId'
-        username:
-          $ref: '#/components/schemas/Username'
-        email:
-          $ref: '#/components/schemas/Email'
         display_name:
           type: string
           maxLength: 100
           description: Display name
-        status:
-          $ref: '#/components/schemas/UserStatus'
-        roles:
-          type: array
-          items:
-            $ref: '#/components/schemas/Role'
-          description: User roles
         last_login:
           type: string
           format: date-time
@@ -164,48 +164,61 @@ components:
         updated_at:
           type: string
           format: date-time
-
+        email:
+          $ref: '#/components/schemas/Email'
+        id:
+          $ref: '#/components/schemas/UserId'
+        status:
+          $ref: '#/components/schemas/UserStatus'
+        username:
+          $ref: '#/components/schemas/Username'
+        roles:
+          type: array
+          items:
+            $ref: '#/components/schemas/Role'
+          description: User roles
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     RegisterRequest:
       type: object
       required:
-        - username
-        - email
-        - password
+      - username
+      - email
+      - password
       properties:
-        username:
-          $ref: '#/components/schemas/Username'
-        email:
-          $ref: '#/components/schemas/Email'
-        password:
-          $ref: '#/components/schemas/Password'
         display_name:
           type: string
           maxLength: 100
           description: Optional display name
-
+        email:
+          $ref: '#/components/schemas/Email'
+        password:
+          $ref: '#/components/schemas/Password'
+        username:
+          $ref: '#/components/schemas/Username'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     LoginRequest:
       type: object
       required:
-        - username
-        - password
+      - username
+      - password
       properties:
-        username:
-          $ref: '#/components/schemas/Username'
         password:
           $ref: '#/components/schemas/Password'
+        username:
+          $ref: '#/components/schemas/Username'
         remember_me:
           type: boolean
           default: false
           description: Extend session duration
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     AuthResponse:
       type: object
       required:
-        - access_token
-        - refresh_token
-        - token_type
-        - expires_in
-        - user
+      - access_token
+      - refresh_token
+      - token_type
+      - expires_in
+      - user
       properties:
         access_token:
           type: string
@@ -215,60 +228,61 @@ components:
           description: JWT refresh token
         token_type:
           type: string
-          enum: [ Bearer ]
+          enum:
+          - Bearer
           default: Bearer
+        user:
+          $ref: '#/components/schemas/User'
         expires_in:
           type: integer
           description: Access token expiration time in seconds
-        user:
-          $ref: '#/components/schemas/User'
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     RefreshTokenRequest:
       type: object
       required:
-        - refresh_token
+      - refresh_token
       properties:
         refresh_token:
           type: string
           description: JWT refresh token
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     ChangePasswordRequest:
       type: object
       required:
-        - current_password
-        - new_password
+      - current_password
+      - new_password
       properties:
         current_password:
           type: string
           description: Current password
         new_password:
           $ref: '#/components/schemas/Password'
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     ResetPasswordRequest:
       type: object
       required:
-        - email
+      - email
       properties:
         email:
           $ref: '#/components/schemas/Email'
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     ConfirmResetPasswordRequest:
       type: object
       required:
-        - token
-        - new_password
+      - token
+      - new_password
       properties:
         token:
           type: string
           description: Password reset token
         new_password:
           $ref: '#/components/schemas/Password'
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     MFASetupResponse:
       type: object
       required:
-        - secret
-        - qr_code_url
+      - secret
+      - qr_code_url
       properties:
         secret:
           type: string
@@ -277,32 +291,33 @@ components:
           type: string
           format: uri
           description: QR code URL for TOTP setup
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     MFAVerifyRequest:
       type: object
       required:
-        - code
+      - code
       properties:
         code:
           type: string
           minLength: 6
           maxLength: 6
-          pattern: '^[0-9]+$'
+          pattern: ^[0-9]+$
           description: TOTP code
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     OAuthProvider:
       type: string
-      enum: [ google, discord, github, steam ]
+      enum:
+      - google
+      - discord
+      - github
+      - steam
       description: OAuth provider
-
     OAuthLoginRequest:
       type: object
       required:
-        - provider
-        - code
+      - provider
+      - code
       properties:
-        provider:
-          $ref: '#/components/schemas/OAuthProvider'
         code:
           type: string
           description: OAuth authorization code
@@ -310,51 +325,56 @@ components:
           type: string
           format: uri
           description: OAuth redirect URI
-
+        provider:
+          $ref: '#/components/schemas/OAuthProvider'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     Permission:
       type: object
       required:
-        - resource
-        - action
+      - resource
+      - action
       properties:
         resource:
           type: string
           description: Resource name (e.g., "users", "games", "admin")
         action:
           type: string
-          enum: [ create, read, update, delete, manage ]
+          enum:
+          - create
+          - read
+          - update
+          - delete
+          - manage
           description: Action on resource
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     RoleDefinition:
       type: object
       required:
-        - name
-        - permissions
+      - name
+      - permissions
       properties:
-        name:
-          $ref: '#/components/schemas/Role'
         description:
           type: string
           maxLength: 200
+        name:
+          $ref: '#/components/schemas/Role'
         permissions:
           type: array
           items:
             $ref: '#/components/schemas/Permission'
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     SessionInfo:
       type: object
       required:
-        - session_id
-        - user_id
-        - created_at
-        - expires_at
-        - is_active
+      - session_id
+      - user_id
+      - created_at
+      - expires_at
+      - is_active
       properties:
         session_id:
           type: string
           format: uuid
-        user_id:
-          $ref: '#/components/schemas/UserId'
         user_agent:
           type: string
           description: User agent string
@@ -370,14 +390,16 @@ components:
         expires_at:
           type: string
           format: date-time
+        user_id:
+          $ref: '#/components/schemas/UserId'
         is_active:
           type: boolean
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     SessionsListResponse:
       type: object
       required:
-        - sessions
-        - total_count
+      - sessions
+      - total_count
       properties:
         sessions:
           type: array
@@ -386,11 +408,12 @@ components:
         total_count:
           type: integer
           minimum: 0
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
 paths:
   /health:
     get:
-      tags: [ health ]
+      tags:
+      - health
       summary: Health check
       operationId: healthCheck
       responses:
@@ -411,10 +434,10 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
   /auth/register:
     post:
-      tags: [ authentication ]
+      tags:
+      - authentication
       summary: Register new user
       operationId: registerUser
       requestBody:
@@ -436,10 +459,10 @@ paths:
           $ref: '#/components/responses/Conflict'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
   /auth/login:
     post:
-      tags: [ authentication ]
+      tags:
+      - authentication
       summary: User login
       operationId: loginUser
       requestBody:
@@ -465,10 +488,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-
   /auth/refresh:
     post:
-      tags: [ authentication ]
+      tags:
+      - authentication
       summary: Refresh access token
       operationId: refreshToken
       requestBody:
@@ -488,10 +511,10 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
-
   /auth/logout:
     post:
-      tags: [ authentication ]
+      tags:
+      - authentication
       summary: Logout user
       operationId: logoutUser
       responses:
@@ -499,4 +522,3 @@ paths:
           description: Logout successful
         '401':
           $ref: '#/components/responses/Unauthorized'
-

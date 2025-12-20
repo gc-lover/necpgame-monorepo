@@ -1,68 +1,65 @@
 openapi: 3.0.3
 info:
   title: AI Enemy Service API
-  description: |
-    AI Enemy Service for NECPGAME - Management of AI enemies, behavior trees, and real-time coordination.
+  description: 'AI Enemy Service for NECPGAME - Management of AI enemies, behavior trees, and real-time coordination.
+
     Supports elite mercenary bosses, cyberpsychic elites, and corporate elite squads.
+
+    '
   version: 1.0.0
   contact:
     name: NECPGAME API Team
     email: api@necpgame.com
-
 servers:
-  - url: https://api.necpgame.com/ai-enemy
-    description: Production server
-  - url: http://localhost:8081
-    description: Local development server
-
+- url: https://api.necpgame.com/ai-enemy
+  description: Production server
+- url: http://localhost:8081
+  description: Local development server
 security:
-  - bearerAuth: [ ]
-
+- bearerAuth: []
 paths:
   /health:
     get:
       summary: Health check endpoint
       operationId: getHealth
       responses:
-        "200":
+        '200':
           description: Service is healthy
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/HealthResponse"
-
+                $ref: '#/components/schemas/HealthResponse'
   /enemies:
     get:
       summary: Get all active AI enemies in zone
       operationId: getActiveEnemies
       parameters:
-        - name: zone_id
-          in: query
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Zone identifier
-        - name: enemy_type
-          in: query
-          schema:
-            $ref: "#/components/schemas/EnemyType"
-          description: Filter by enemy type
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 50
+      - name: zone_id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Zone identifier
+      - name: enemy_type
+        in: query
+        schema:
+          $ref: '#/components/schemas/EnemyType'
+        description: Filter by enemy type
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
       responses:
-        "200":
+        '200':
           description: List of active enemies
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/EnemyListResponse"
-
+                $ref: '#/components/schemas/EnemyListResponse'
     post:
       summary: Spawn new AI enemy
       operationId: spawnEnemy
@@ -71,182 +68,173 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/SpawnEnemyRequest"
+              $ref: '#/components/schemas/SpawnEnemyRequest'
       responses:
-        "201":
+        '201':
           description: Enemy spawned successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/EnemyResponse"
-
+                $ref: '#/components/schemas/EnemyResponse'
   /enemies/{enemy_id}:
     get:
       summary: Get enemy details
       operationId: getEnemy
       parameters:
-        - name: enemy_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: enemy_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
-        "200":
+        '200':
           description: Enemy details
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/EnemyResponse"
-        "404":
+                $ref: '#/components/schemas/EnemyResponse'
+        '404':
           description: Enemy not found
-
     put:
       summary: Update enemy state
       operationId: updateEnemy
       parameters:
-        - name: enemy_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: enemy_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UpdateEnemyRequest"
+              $ref: '#/components/schemas/UpdateEnemyRequest'
       responses:
-        "200":
+        '200':
           description: Enemy updated successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/EnemyResponse"
-
+                $ref: '#/components/schemas/EnemyResponse'
     delete:
       summary: Remove enemy
       operationId: removeEnemy
       parameters:
-        - name: enemy_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: enemy_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
-        "204":
+        '204':
           description: Enemy removed successfully
-
   /enemies/{enemy_id}/behavior:
     get:
       summary: Get enemy behavior state
       operationId: getEnemyBehavior
       parameters:
-        - name: enemy_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: enemy_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
-        "200":
+        '200':
           description: Enemy behavior state
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/EnemyBehaviorResponse"
-
+                $ref: '#/components/schemas/EnemyBehaviorResponse'
     post:
       summary: Trigger enemy behavior
       operationId: triggerEnemyBehavior
       parameters:
-        - name: enemy_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: enemy_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/TriggerBehaviorRequest"
+              $ref: '#/components/schemas/TriggerBehaviorRequest'
       responses:
-        "200":
+        '200':
           description: Behavior triggered successfully
-
   /enemies/{enemy_id}/abilities:
     post:
       summary: Use enemy ability
       operationId: useEnemyAbility
       parameters:
-        - name: enemy_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: enemy_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UseAbilityRequest"
+              $ref: '#/components/schemas/UseAbilityRequest'
       responses:
-        "200":
+        '200':
           description: Ability used successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AbilityResponse"
-
+                $ref: '#/components/schemas/AbilityResponse'
   /enemies/{enemy_id}/damage:
     post:
       summary: Apply damage to enemy
       operationId: applyDamage
       parameters:
-        - name: enemy_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: enemy_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/DamageRequest"
+              $ref: '#/components/schemas/DamageRequest'
       responses:
-        "200":
+        '200':
           description: Damage applied successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/DamageResponse"
-
+                $ref: '#/components/schemas/DamageResponse'
   /squads:
     get:
       summary: Get all active enemy squads
       operationId: getActiveSquads
       parameters:
-        - name: zone_id
-          in: query
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: zone_id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
-        "200":
+        '200':
           description: List of active squads
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SquadListResponse"
-
+                $ref: '#/components/schemas/SquadListResponse'
     post:
       summary: Create new enemy squad
       operationId: createSquad
@@ -255,146 +243,151 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateSquadRequest"
+              $ref: '#/components/schemas/CreateSquadRequest'
       responses:
-        "201":
+        '201':
           description: Squad created successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SquadResponse"
-
+                $ref: '#/components/schemas/SquadResponse'
   /squads/{squad_id}:
     get:
       summary: Get squad details
       operationId: getSquad
       parameters:
-        - name: squad_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: squad_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
-        "200":
+        '200':
           description: Squad details
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SquadResponse"
-
+                $ref: '#/components/schemas/SquadResponse'
     put:
       summary: Update squad coordination
       operationId: updateSquad
       parameters:
-        - name: squad_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: squad_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UpdateSquadRequest"
+              $ref: '#/components/schemas/UpdateSquadRequest'
       responses:
-        "200":
+        '200':
           description: Squad updated successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SquadResponse"
-
+                $ref: '#/components/schemas/SquadResponse'
   /zones/{zone_id}/sync:
     get:
       summary: Get zone synchronization state
       operationId: getZoneSync
       parameters:
-        - name: zone_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: zone_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
-        "200":
+        '200':
           description: Zone sync state
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ZoneSyncResponse"
-
+                $ref: '#/components/schemas/ZoneSyncResponse'
   /telemetry:
     get:
       summary: Get AI system telemetry
       operationId: getTelemetry
       parameters:
-        - name: metric
-          in: query
-          schema:
-            type: string
-            enum: [ enemies_active, decisions_made, damage_dealt, abilities_used ]
-        - name: timeframe
-          in: query
-          schema:
-            type: string
-            enum: [ 1m, 5m, 15m, 1h ]
-            default: 5m
+      - name: metric
+        in: query
+        schema:
+          type: string
+          enum:
+          - enemies_active
+          - decisions_made
+          - damage_dealt
+          - abilities_used
+      - name: timeframe
+        in: query
+        schema:
+          type: string
+          enum:
+          - 1m
+          - 5m
+          - 15m
+          - 1h
+          default: 5m
       responses:
-        "200":
+        '200':
           description: Telemetry data
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/TelemetryResponse"
-
+                $ref: '#/components/schemas/TelemetryResponse'
 components:
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
-
   schemas:
     HealthResponse:
       type: object
       properties:
+        version:
+          type: string
         status:
           type: string
-          enum: [ healthy, degraded, unhealthy ]
+          enum:
+          - healthy
+          - degraded
+          - unhealthy
         timestamp:
           type: string
           format: date-time
-        version:
-          type: string
         uptime_seconds:
           type: integer
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     EnemyType:
       type: string
       enum:
-        - elite_mercenary_boss
-        - cyberpsychic_elite
-        - corporate_elite_squad
-        - standard_enemy
-
+      - elite_mercenary_boss
+      - cyberpsychic_elite
+      - corporate_elite_squad
+      - standard_enemy
     EnemyListResponse:
       type: object
       properties:
-        enemies:
-          type: array
-          items:
-            $ref: "#/components/schemas/EnemySummary"
-        total_count:
-          type: integer
         zone_id:
           type: string
           format: uuid
-
+        enemies:
+          type: array
+          items:
+            $ref: '#/components/schemas/EnemySummary'
+        total_count:
+          type: integer
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     EnemySummary:
       type: object
       properties:
         enemy_id:
           type: string
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'

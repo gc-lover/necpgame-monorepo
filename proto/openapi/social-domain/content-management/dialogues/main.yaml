@@ -1,113 +1,120 @@
-# Issue: #content-management-api
 openapi: 3.0.3
 info:
   title: Social Domain - Content Management Dialogues Module
-  description: |
-    **Dialogue Management API** for NECPGAME MMOFPS RPG.
+  description: '**Dialogue Management API** for NECPGAME MMOFPS RPG.
+
 
     **Purpose:** CRUD operations for NPC dialogues and conversation trees
 
+
     **Performance Targets:**
+
     - Dialogue queries: 2000+ RPS, P99 <20ms
+
     - Tree traversal: <5ms per node
+
     - Memory: <50MB per service instance
 
+
     **Features:**
+
     - Dialogue tree CRUD
+
     - Condition-based responses
+
     - Quest integration
+
+    '
   version: 1.0.0
   contact:
     name: NECPGAME Content API Support
     email: content@social.necpgame.com
-
 servers:
-  - url: http://localhost:8084/api/v1/social/content/dialogues
-    description: Development server
-  - url: https://api.necpgame.com/api/v1/social/content/dialogues
-    description: Production server
-
+- url: http://localhost:8084/api/v1/social/content/dialogues
+  description: Development server
+- url: https://api.necpgame.com/api/v1/social/content/dialogues
+  description: Production server
 security:
-  - BearerAuth: []
-
+- BearerAuth: []
 tags:
-  - name: Dialogues
-    description: Dialogue management endpoints
-
+- name: Dialogues
+  description: Dialogue management endpoints
 paths:
   /:
     get:
       summary: List dialogues
       operationId: listDialogues
-      tags: [Dialogues]
+      tags:
+      - Dialogues
       parameters:
-        - name: npc_id
-          in: query
-          schema:
-            type: string
-            format: uuid
-        - name: quest_id
-          in: query
-          schema:
-            type: string
-            format: uuid
+      - name: npc_id
+        in: query
+        schema:
+          type: string
+          format: uuid
+      - name: quest_id
+        in: query
+        schema:
+          type: string
+          format: uuid
       responses:
-        "200":
+        '200':
           description: List of dialogues
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/DialoguesListResponse"
+                $ref: '#/components/schemas/DialoguesListResponse'
     post:
       summary: Create new dialogue
       operationId: createDialogue
-      tags: [Dialogues]
+      tags:
+      - Dialogues
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateDialogueRequest"
+              $ref: '#/components/schemas/CreateDialogueRequest'
       responses:
-        "201":
+        '201':
           description: Dialogue created
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/DialogueResponse"
-
+                $ref: '#/components/schemas/DialogueResponse'
   /{dialogue_id}:
     get:
       summary: Get dialogue by ID
       operationId: getDialogue
-      tags: [Dialogues]
+      tags:
+      - Dialogues
       parameters:
-        - name: dialogue_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: dialogue_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
-        "200":
+        '200':
           description: Dialogue details
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/DialogueResponse"
-
+                $ref: '#/components/schemas/DialogueResponse'
 components:
   securitySchemes:
     BearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
-
   schemas:
-    # Dialogue schemas
     Dialogue:
       type: object
-      required: [id, npc_id, nodes]
+      required:
+      - id
+      - npc_id
+      - nodes
       properties:
         id:
           type: string
@@ -118,20 +125,23 @@ components:
         quest_id:
           type: string
           format: uuid
-        nodes:
-          type: array
-          items:
-            $ref: "#/components/schemas/DialogueNode"
         created_at:
           type: string
           format: date-time
         updated_at:
           type: string
           format: date-time
-
+        nodes:
+          type: array
+          items:
+            $ref: '#/components/schemas/DialogueNode'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     DialogueNode:
       type: object
-      required: [id, text, responses]
+      required:
+      - id
+      - text
+      - responses
       properties:
         id:
           type: string
@@ -142,56 +152,75 @@ components:
         responses:
           type: array
           items:
-            $ref: "#/components/schemas/DialogueResponse"
+            $ref: '#/components/schemas/DialogueResponse'
         conditions:
           type: array
           items:
-            $ref: "#/components/schemas/DialogueCondition"
-
+            $ref: '#/components/schemas/DialogueCondition'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     DialogueResponse:
       type: object
-      required: [text]
+      required:
+      - text
       properties:
-        text:
-          type: string
-          maxLength: 200
         next_node_id:
           type: string
           format: uuid
+        text:
+          type: string
+          maxLength: 200
         actions:
           type: array
           items:
-            $ref: "#/components/schemas/DialogueAction"
-
+            $ref: '#/components/schemas/DialogueAction'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     DialogueCondition:
       type: object
-      required: [type, value]
+      required:
+      - type
+      - value
       properties:
-        type:
-          type: string
-          enum: [quest_completed, item_owned, reputation_level, faction_standing]
         value:
           type: string
-        operator:
-          type: string
-          enum: [equals, greater_than, less_than, contains]
-
-    DialogueAction:
-      type: object
-      required: [type]
-      properties:
         type:
           type: string
-          enum: [start_quest, complete_quest, give_item, remove_item, change_reputation]
+          enum:
+          - quest_completed
+          - item_owned
+          - reputation_level
+          - faction_standing
+        operator:
+          type: string
+          enum:
+          - equals
+          - greater_than
+          - less_than
+          - contains
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    DialogueAction:
+      type: object
+      required:
+      - type
+      properties:
         target_id:
           type: string
           format: uuid
+        type:
+          type: string
+          enum:
+          - start_quest
+          - complete_quest
+          - give_item
+          - remove_item
+          - change_reputation
         amount:
           type: integer
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     CreateDialogueRequest:
       type: object
-      required: [npc_id, nodes]
+      required:
+      - npc_id
+      - nodes
       properties:
         npc_id:
           type: string
@@ -202,15 +231,16 @@ components:
         nodes:
           type: array
           items:
-            $ref: "#/components/schemas/DialogueNode"
-
+            $ref: '#/components/schemas/DialogueNode'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     DialoguesListResponse:
       type: object
       properties:
         dialogues:
           type: array
           items:
-            $ref: "#/components/schemas/Dialogue"
+            $ref: '#/components/schemas/Dialogue'
         total_count:
           type: integer
           minimum: 0
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'

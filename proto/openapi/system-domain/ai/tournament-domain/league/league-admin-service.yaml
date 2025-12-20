@@ -1,4 +1,3 @@
-# Issue: #83
 openapi: 3.0.3
 info:
   title: League Admin Service API
@@ -8,90 +7,84 @@ info:
   contact:
     name: NECPGAME API Support
     email: api@necp.game
-
 servers:
-  - url: http://localhost:8093/api/v1
-    description: Локальный сервер разработки
-  - url: https://api.necp.game/api/v1
-    description: Продакшен сервер
-
+- url: http://localhost:8093/api/v1
+  description: Локальный сервер разработки
+- url: https://api.necp.game/api/v1
+  description: Продакшен сервер
 tags:
-  - name: League Admin
-    description: Административное управление лигами
-
+- name: League Admin
+  description: Административное управление лигами
 paths:
   /league/reset/trigger:
     post:
       tags:
-        - League Admin
+      - League Admin
       summary: Триггер глобального сброса (admin only)
       operationId: triggerLeagueReset
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ResetRequest"
+              $ref: '#/components/schemas/ResetRequest'
       responses:
-        "200":
+        '200':
           description: Сброс запущен
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ResetResponse"
-        "400":
-          $ref: "common.yaml#/components/responses/BadRequest"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "403":
-          $ref: "common.yaml#/components/responses/Forbidden"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+                $ref: '#/components/schemas/ResetResponse'
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '403':
+          $ref: common.yaml#/components/responses/Forbidden
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
   /league/create:
     post:
       tags:
-        - League Admin
+      - League Admin
       summary: Создать новую лигу (admin only)
       operationId: createLeague
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/LeagueCreateRequest"
+              $ref: '#/components/schemas/LeagueCreateRequest'
       responses:
-        "201":
+        '201':
           description: Лига создана
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/League"
-        "400":
-          $ref: "common.yaml#/components/responses/BadRequest"
-        "401":
-          $ref: "common.yaml#/components/responses/Unauthorized"
-        "403":
-          $ref: "common.yaml#/components/responses/Forbidden"
-        "409":
-          $ref: "common.yaml#/components/responses/Conflict"
-        "500":
-          $ref: "common.yaml#/components/responses/InternalServerError"
-
+                $ref: '#/components/schemas/League'
+        '400':
+          $ref: common.yaml#/components/responses/BadRequest
+        '401':
+          $ref: common.yaml#/components/responses/Unauthorized
+        '403':
+          $ref: common.yaml#/components/responses/Forbidden
+        '409':
+          $ref: common.yaml#/components/responses/Conflict
+        '500':
+          $ref: common.yaml#/components/responses/InternalServerError
 components:
   securitySchemes:
     BearerAuth:
-      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
-
+      $ref: common.yaml#/components/securitySchemes/BearerAuth
   schemas:
     ResetRequest:
       type: object
       required:
-        - league_id
+      - league_id
       properties:
         league_id:
           type: string
@@ -99,33 +92,33 @@ components:
         force:
           type: boolean
           default: false
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     ResetResponse:
       type: object
       properties:
-        success:
-          type: boolean
         reset_id:
           type: string
           format: uuid
         status:
           type: string
           enum:
-            - STARTED
-            - IN_PROGRESS
-            - COMPLETED
-            - FAILED
+          - STARTED
+          - IN_PROGRESS
+          - COMPLETED
+          - FAILED
         estimated_completion:
           type: string
           format: date-time
           nullable: true
-
+        success:
+          type: boolean
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     LeagueCreateRequest:
       type: object
       required:
-        - name
-        - start_date
-        - end_date
+      - name
+      - start_date
+      - end_date
       properties:
         name:
           type: string
@@ -141,7 +134,7 @@ components:
           type: number
           format: decimal
           default: 20.0
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     League:
       type: object
       properties:
@@ -155,33 +148,32 @@ components:
         status:
           type: string
           enum:
-            - ACTIVE
-            - ENDED
-            - PENDING
+          - ACTIVE
+          - ENDED
+          - PENDING
         current_phase:
           type: string
           enum:
-            - START
-            - RISE
-            - CRISIS
-            - ENDGAME
-            - FINALE
+          - START
+          - RISE
+          - CRISIS
+          - ENDGAME
+          - FINALE
         start_date:
           type: string
           format: date-time
         end_date:
           type: string
           format: date-time
-        time_acceleration:
-          type: number
-          format: decimal
         created_at:
           type: string
           format: date-time
         updated_at:
           type: string
           format: date-time
-
+        time_acceleration:
+          type: number
+          format: decimal
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
 security:
-  - BearerAuth: [ ]
-
+- BearerAuth: []

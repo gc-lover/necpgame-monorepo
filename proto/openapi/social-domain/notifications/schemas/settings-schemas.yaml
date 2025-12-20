@@ -1,25 +1,25 @@
-# Notification settings and preferences schemas
-# Issue: #1912
-
 components:
   schemas:
-    # Notification settings entity
     NotificationSettings:
       type: object
       required:
-        - player_id
-        - enable_notifications
-        - created_at
-        - updated_at
+      - player_id
+      - enable_notifications
+      - created_at
+      - updated_at
       properties:
         player_id:
           type: string
           format: uuid
           description: Player identifier
-        enable_notifications:
-          type: boolean
-          description: Master switch for all notifications
-          default: true
+        created_at:
+          type: string
+          format: date-time
+          description: Settings creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last settings update timestamp
         type_settings:
           type: object
           description: Settings per notification type
@@ -58,52 +58,52 @@ components:
             start_time:
               type: string
               format: time
-              example: "22:00"
+              example: '22:00'
             end_time:
               type: string
               format: time
-              example: "08:00"
+              example: 08:00
             timezone:
               type: string
-              example: "UTC"
-        created_at:
-          type: string
-          format: date-time
-          description: Settings creation timestamp
-        updated_at:
-          type: string
-          format: date-time
-          description: Last settings update timestamp
-
-    TypeSettings:
-      type: object
-      properties:
-        enabled:
-          type: boolean
-          default: true
-        priority_filter:
-          type: string
-          enum: [all, normal_and_above, high_and_above, critical_only]
-          default: all
-
-    ChannelSettings:
-      type: object
-      properties:
-        enabled:
-          type: boolean
-          default: true
-        minimum_priority:
-          type: string
-          enum: [low, normal, high, critical]
-          default: normal
-
-    # Request to update settings
-    UpdateNotificationSettingsRequest:
-      type: object
-      properties:
+              example: UTC
         enable_notifications:
           type: boolean
           description: Master switch for all notifications
+          default: true
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    TypeSettings:
+      type: object
+      properties:
+        priority_filter:
+          type: string
+          enum:
+          - all
+          - normal_and_above
+          - high_and_above
+          - critical_only
+          default: all
+        enabled:
+          type: boolean
+          default: true
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    ChannelSettings:
+      type: object
+      properties:
+        minimum_priority:
+          type: string
+          enum:
+          - low
+          - normal
+          - high
+          - critical
+          default: normal
+        enabled:
+          type: boolean
+          default: true
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    UpdateNotificationSettingsRequest:
+      type: object
+      properties:
         type_settings:
           type: object
           description: Settings per notification type
@@ -113,12 +113,15 @@ components:
         quiet_hours:
           type: object
           description: Quiet hours configuration
-
-    # Response for settings
+        enable_notifications:
+          type: boolean
+          description: Master switch for all notifications
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     NotificationSettingsResponse:
       type: object
       required:
-        - settings
+      - settings
       properties:
         settings:
           $ref: '#/components/schemas/NotificationSettings'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'

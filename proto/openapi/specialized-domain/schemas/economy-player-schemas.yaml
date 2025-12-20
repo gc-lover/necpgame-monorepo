@@ -17,44 +17,47 @@ components:
         buyer_id:
           type: string
           format: uuid
-        items_offered:
-          type: array
-          items:
-            $ref: "#/components/schemas/TradeItem"
-        items_requested:
-          type: array
-          items:
-            $ref: "#/components/schemas/TradeItem"
         status:
           type: string
-          enum: [ pending, accepted, declined, cancelled, expired ]
+          enum:
+          - pending
+          - accepted
+          - declined
+          - cancelled
+          - expired
         created_at:
           type: string
           format: date-time
         expires_at:
           type: string
           format: date-time
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
+        items_offered:
+          type: array
+          items:
+            $ref: '#/components/schemas/TradeItem'
+        items_requested:
+          type: array
+          items:
+            $ref: '#/components/schemas/TradeItem'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     TradeItem:
       type: object
       required:
-        - item_id
-        - quantity
+      - item_id
+      - quantity
       properties:
         item_id:
           type: string
           format: uuid
-        quantity:
-          type: integer
-          minimum: 1
         condition:
           type: number
           minimum: 0
           maximum: 1
           description: Состояние предмета (0-1, где 1 - идеальное)
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
+        quantity:
+          type: integer
+          minimum: 1
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     MarketListing:
       type: object
       properties:
@@ -64,24 +67,28 @@ components:
         seller_id:
           type: string
           format: uuid
-        item:
-          $ref: "#/components/schemas/TradeItem"
-        price:
-          $ref: "#/components/schemas/Price"
         market_type:
           type: string
-          enum: [ player_market, npc_shop, black_market ]
+          enum:
+          - player_market
+          - npc_shop
+          - black_market
         listing_type:
           type: string
-          enum: [ sell, buy ]
+          enum:
+          - sell
+          - buy
         created_at:
           type: string
           format: date-time
         expires_at:
           type: string
           format: date-time
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
+        price:
+          $ref: '#/components/schemas/Price'
+        item:
+          $ref: '#/components/schemas/TradeItem'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     Auction:
       type: object
       properties:
@@ -91,40 +98,42 @@ components:
         seller_id:
           type: string
           format: uuid
-        item:
-          $ref: "#/components/schemas/TradeItem"
-        starting_price:
-          $ref: "#/components/schemas/Price"
-        current_bid:
-          $ref: "#/components/schemas/Price"
-        buyout_price:
-          $ref: "#/components/schemas/Price"
         highest_bidder_id:
           type: string
           format: uuid
-        bid_count:
-          type: integer
-          minimum: 0
+        winner_id:
+          type: string
+          format: uuid
         status:
           type: string
-          enum: [ active, ended, cancelled ]
+          enum:
+          - active
+          - ended
+          - cancelled
         created_at:
           type: string
           format: date-time
         ends_at:
           type: string
           format: date-time
-        winner_id:
-          type: string
-          format: uuid
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
+        starting_price:
+          $ref: '#/components/schemas/Price'
+        current_bid:
+          $ref: '#/components/schemas/Price'
+        buyout_price:
+          $ref: '#/components/schemas/Price'
+        item:
+          $ref: '#/components/schemas/TradeItem'
+        bid_count:
+          type: integer
+          minimum: 0
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     Bid:
       type: object
       required:
-        - auction_id
-        - bidder_id
-        - amount
+      - auction_id
+      - bidder_id
+      - amount
       properties:
         auction_id:
           type: string
@@ -132,35 +141,37 @@ components:
         bidder_id:
           type: string
           format: uuid
-        amount:
-          $ref: "#/components/schemas/Price"
         bid_time:
           type: string
           format: date-time
+        amount:
+          $ref: '#/components/schemas/Price'
         is_auto_bid:
           type: boolean
           default: false
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     Price:
       type: object
       required:
-        - currency
-        - amount
+      - currency
+      - amount
       properties:
         currency:
           type: string
-          enum: [ eurodollar, bitcoin, corporate_script, street_cred ]
-        amount:
-          type: integer
-          minimum: 0
+          enum:
+          - eurodollar
+          - bitcoin
+          - corporate_script
+          - street_cred
         bonus_percentage:
           type: number
           minimum: 0
           maximum: 100
           description: Бонусный процент от базовой цены
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
+        amount:
+          type: integer
+          minimum: 0
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     Transaction:
       type: object
       properties:
@@ -169,7 +180,16 @@ components:
           format: uuid
         type:
           type: string
-          enum: [ trade, market_purchase, auction_win, market_sell ]
+          enum:
+          - trade
+          - market_purchase
+          - auction_win
+          - market_sell
+        timestamp:
+          type: string
+          format: date-time
+        fees_paid:
+          $ref: '#/components/schemas/Price'
         participants:
           type: array
           items:
@@ -178,24 +198,18 @@ components:
         items_transferred:
           type: array
           items:
-            $ref: "#/components/schemas/TradeItem"
+            $ref: '#/components/schemas/TradeItem'
         payments:
           type: array
           items:
-            $ref: "#/components/schemas/Price"
-        timestamp:
-          type: string
-          format: date-time
-        fees_paid:
-          $ref: "#/components/schemas/Price"
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
+            $ref: '#/components/schemas/Price'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     CreateTradeRequest:
       type: object
       required:
-        - buyer_id
-        - items_offered
-        - items_requested
+      - buyer_id
+      - items_offered
+      - items_requested
       properties:
         buyer_id:
           type: string
@@ -203,98 +217,98 @@ components:
         items_offered:
           type: array
           items:
-            $ref: "#/components/schemas/TradeItem"
+            $ref: '#/components/schemas/TradeItem'
           minItems: 1
         items_requested:
           type: array
           items:
-            $ref: "#/components/schemas/TradeItem"
+            $ref: '#/components/schemas/TradeItem'
           minItems: 1
         expires_in_minutes:
           type: integer
           minimum: 5
           maximum: 1440
           default: 30
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     CreateMarketListingRequest:
       type: object
       required:
-        - item
-        - price
-        - market_type
+      - item
+      - price
+      - market_type
       properties:
-        item:
-          $ref: "#/components/schemas/TradeItem"
-        price:
-          $ref: "#/components/schemas/Price"
         market_type:
           type: string
-          enum: [ player_market, npc_shop, black_market ]
+          enum:
+          - player_market
+          - npc_shop
+          - black_market
           default: player_market
+        price:
+          $ref: '#/components/schemas/Price'
+        item:
+          $ref: '#/components/schemas/TradeItem'
         expires_in_hours:
           type: integer
           minimum: 1
           maximum: 168
           default: 24
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     CreateAuctionRequest:
       type: object
       required:
-        - item
-        - starting_price
+      - item
+      - starting_price
       properties:
-        item:
-          $ref: "#/components/schemas/TradeItem"
         starting_price:
-          $ref: "#/components/schemas/Price"
+          $ref: '#/components/schemas/Price'
         buyout_price:
-          $ref: "#/components/schemas/Price"
+          $ref: '#/components/schemas/Price'
+        item:
+          $ref: '#/components/schemas/TradeItem'
         duration_hours:
           type: integer
           minimum: 1
           maximum: 168
           default: 24
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     PlaceBidRequest:
       type: object
       required:
-        - auction_id
-        - amount
+      - auction_id
+      - amount
       properties:
         auction_id:
           type: string
           format: uuid
         amount:
-          $ref: "#/components/schemas/Price"
+          $ref: '#/components/schemas/Price'
         max_auto_bid:
-          $ref: "#/components/schemas/Price"
+          $ref: '#/components/schemas/Price'
           description: Максимальная сумма для автоматических ставок
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     MarketFilter:
       type: object
       properties:
-        item_type:
-          type: string
-          description: Фильтр по типу предмета
-        price_min:
-          type: integer
-          minimum: 0
-        price_max:
-          type: integer
-          minimum: 0
-        currency:
-          type: string
-          enum: [ eurodollar, bitcoin, corporate_script, street_cred ]
         seller_id:
           type: string
           format: uuid
+        item_type:
+          type: string
+          description: Фильтр по типу предмета
+        currency:
+          type: string
+          enum:
+          - eurodollar
+          - bitcoin
+          - corporate_script
+          - street_cred
         market_type:
           type: string
-          enum: [ player_market, npc_shop, black_market ]
+          enum:
+          - player_market
+          - npc_shop
+          - black_market
         condition_min:
           type: number
           minimum: 0
@@ -303,4 +317,10 @@ components:
           type: number
           minimum: 0
           maximum: 1
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+        price_min:
+          type: integer
+          minimum: 0
+        price_max:
+          type: integer
+          minimum: 0
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'

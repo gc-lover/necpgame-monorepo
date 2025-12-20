@@ -1,0 +1,99 @@
+paths:
+  /events/publish:
+    post:
+      tags: [event-bus]
+      summary: Publish event to event bus
+      description: Publish an event to the event-driven architecture system
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventPublishRequest'
+      responses:
+        '202':
+          description: Event published successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventPublishResponse'
+        '400':
+          description: Invalid event format
+
+  /events/subscribe:
+    post:
+      tags: [event-bus]
+      summary: Subscribe to events
+      description: Create a subscription for specific event types
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventSubscriptionRequest'
+      responses:
+        '201':
+          description: Subscription created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventSubscriptionResponse'
+
+    get:
+      tags: [event-bus]
+      summary: Get active subscriptions
+      description: Retrieve list of active event subscriptions for the current service
+      parameters:
+        - name: serviceId
+          in: query
+          schema:
+            type: string
+          description: Filter by service ID
+      responses:
+        '200':
+          description: Active subscriptions retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventSubscriptionsList'
+
+  /events/subscribe/{subscriptionId}:
+    delete:
+      tags: [event-bus]
+      summary: Unsubscribe from events
+      description: Remove an event subscription
+      parameters:
+        - name: subscriptionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Subscription removed successfully
+        '404':
+          description: Subscription not found
+
+  /events/{eventId}/acknowledge:
+    post:
+      tags: [event-bus]
+      summary: Acknowledge event processing
+      description: Confirm successful processing of an event
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventAcknowledgment'
+      responses:
+        '200':
+          description: Event acknowledged successfully
+
+  # Conflict Resolution Engine
+  /conflicts:

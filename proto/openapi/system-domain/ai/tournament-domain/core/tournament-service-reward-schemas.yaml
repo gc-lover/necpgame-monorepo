@@ -1,18 +1,13 @@
-# Issue: #1846 - Tournament Reward Schemas
 components:
   schemas:
     LeaderboardEntry:
       type: object
       required:
-        - rank
-        - character_id
-        - character_name
-        - score
+      - rank
+      - character_id
+      - character_name
+      - score
       properties:
-        rank:
-          type: integer
-          minimum: 1
-          description: Позиция в рейтинге
         character_id:
           type: string
           format: uuid
@@ -21,6 +16,15 @@ components:
           type: string
           maxLength: 100
           description: Имя персонажа
+        division:
+          type: string
+          nullable: true
+          maxLength: 50
+          description: Дивизион
+        rank:
+          type: integer
+          minimum: 1
+          description: Позиция в рейтинге
         score:
           type: integer
           description: Очки
@@ -36,39 +40,30 @@ components:
           type: integer
           default: 0
           description: Победная серия
-        division:
-          type: string
-          nullable: true
-          maxLength: 50
-          description: Дивизион
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory: ~70 bytes/instance."
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory: ~70 bytes/instance.'
     TournamentRewards:
       type: object
       properties:
+        participation_reward:
+          $ref: '#/components/schemas/CosmeticReward'
+          description: Награда за участие
         placement_rewards:
           type: array
           items:
-            $ref: "#/components/schemas/PlacementReward"
+            $ref: '#/components/schemas/PlacementReward'
           description: Награды за места
-        participation_reward:
-          $ref: "#/components/schemas/CosmeticReward"
-          description: Награда за участие
         special_rewards:
           type: array
           items:
-            $ref: "#/components/schemas/SpecialReward"
+            $ref: '#/components/schemas/SpecialReward'
           description: Специальные награды
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory: ~80 bytes/instance."
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory: ~80 bytes/instance.'
     PlacementReward:
       type: object
       required:
-        - placement
-        - reward
+      - placement
+      - reward
       properties:
-        placement:
-          type: integer
-          minimum: 1
-          description: Место
         placement_range:
           type: object
           properties:
@@ -81,36 +76,31 @@ components:
           nullable: true
           description: Диапазон мест (для 4-10 мест и т.д.)
         reward:
-          $ref: "#/components/schemas/CosmeticReward"
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory: ~50 bytes/instance."
+          $ref: '#/components/schemas/CosmeticReward'
+        placement:
+          type: integer
+          minimum: 1
+          description: Место
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory: ~50 bytes/instance.'
     SpecialReward:
       type: object
       required:
-        - condition
-        - reward
+      - condition
+      - reward
       properties:
         condition:
           type: string
           maxLength: 255
           description: Условие награды
         reward:
-          $ref: "#/components/schemas/CosmeticReward"
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory: ~40 bytes/instance."
+          $ref: '#/components/schemas/CosmeticReward'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory: ~40 bytes/instance.'
     CosmeticReward:
       type: object
       required:
-        - type
-        - item_id
+      - type
+      - item_id
       properties:
-        type:
-          type: string
-          enum:
-            - title
-            - banner
-            - emblem
-            - effect
-            - intro
-          description: Тип косметического предмета
         item_id:
           type: string
           format: uuid
@@ -123,26 +113,35 @@ components:
           type: string
           nullable: true
           description: Описание предмета
-        rarity:
-          type: string
-          enum:
-            - common
-            - uncommon
-            - rare
-            - epic
-            - legendary
-          default: common
-          description: Редкость
         icon_url:
           type: string
           nullable: true
           description: URL иконки
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory: ~60 bytes/instance."
+        type:
+          type: string
+          enum:
+          - title
+          - banner
+          - emblem
+          - effect
+          - intro
+          description: Тип косметического предмета
+        rarity:
+          type: string
+          enum:
+          - common
+          - uncommon
+          - rare
+          - epic
+          - legendary
+          default: common
+          description: Редкость
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory: ~60 bytes/instance.'
     ClaimRewardRequest:
       type: object
       required:
-        - tournament_id
-        - reward_type
+      - tournament_id
+      - reward_type
       properties:
         tournament_id:
           type: string
@@ -151,24 +150,24 @@ components:
         reward_type:
           type: string
           enum:
-            - participation
-            - placement
-            - special
+          - participation
+          - placement
+          - special
           description: Тип награды
         placement:
           type: integer
           nullable: true
           minimum: 1
           description: Место (для placement rewards)
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory: ~40 bytes/instance."
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory: ~40 bytes/instance.'
     ClaimedReward:
       type: object
       required:
-        - id
-        - tournament_id
-        - character_id
-        - reward
-        - claimed_at
+      - id
+      - tournament_id
+      - character_id
+      - reward
+      - claimed_at
       properties:
         id:
           type: string
@@ -182,14 +181,14 @@ components:
           type: string
           format: uuid
           description: ID персонажа
-        reward:
-          $ref: "#/components/schemas/CosmeticReward"
-        placement:
-          type: integer
-          nullable: true
-          description: Занятое место
         claimed_at:
           type: string
           format: date-time
           description: Время получения
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory: ~80 bytes/instance."
+        reward:
+          $ref: '#/components/schemas/CosmeticReward'
+        placement:
+          type: integer
+          nullable: true
+          description: Занятое место
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory: ~80 bytes/instance.'
