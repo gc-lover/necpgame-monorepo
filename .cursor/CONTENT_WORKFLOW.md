@@ -46,7 +46,14 @@ Issue: #{number}
 
 **Важно:** Content Writer НЕ передаёт в Database или QA напрямую. Backend решает способ импорта.
 
-### 2. Backend: Решение способа импорта
+### 2. Backend: Решение способа импорта (НОВАЯ ДОМЕННАЯ АРХИТЕКТУРА!)
+
+**Backend теперь работает с enterprise-grade доменами:**
+- `system-domain` (инфраструктура) - для системных сервисов
+- `specialized-domain` (механики) - для игровых механик
+- `social-domain` (социал) - для социальных функций
+- `economy-domain` (экономика) - для экономических систем
+- `world-domain` (мир) - для игрового мира
 
 **Backend проверяет:**
 
@@ -57,21 +64,26 @@ Issue: #{number}
 - **Status:** `Blocked` (текущая задача)
 - **После создания таблиц:** Database разблокирует задачу, Backend продолжает
 
-#### Сценарий B: Таблицы есть + 1-10 квестов (одиночный импорт)
+#### Сценарий B: Таблицы есть + 1-10 квестов (одиночный импорт через API домена)
 
-- **Действие:** Импорт через API `POST /api/v1/gameplay/quests/content/reload`
+- **Действие:** Импорт через API домена `POST /api/v1/gameplay/quests/content/reload`
+- **Используемый домен:** `specialized-domain` (механики квестов)
 - **Скрипт:** `scripts/import-quest.ps1` или `scripts/import-quest.sh`
-- **Валидация:** Проверить что квест в БД (SQL или API)
+- **Валидация:** Проверить что квест в БД через API домена
 - **Передача:** Status `Todo`, Agent `QA`
 
-#### Сценарий C: Таблицы есть + >10 квестов (массовый импорт)
+#### Сценарий C: Таблицы есть + >10 квестов (массовый импорт через миграции)
 
 - **Действие:** Генерация SQL миграций через `scripts/generate-content-migrations.sh`
 - **Формат:** 1 файл YAML = 1 миграция (с версией из `metadata.version`)
-- **Миграции:**
-    - Квесты: `infrastructure/liquibase/migrations/data/quests/V*__data_quest_*.sql`
-    - NPC: `infrastructure/liquibase/migrations/data/npcs/V*__data_npc_*.sql`
-    - Диалоги: `infrastructure/liquibase/migrations/data/dialogues/V*__data_dialogue_*.sql`
+- **Миграции в enterprise-grade структуре:**
+  - Квесты: `infrastructure/liquibase/migrations/data/quests/V*__data_quest_*.sql` (→ `specialized-domain`)
+  - NPC: `infrastructure/liquibase/migrations/data/npcs/V*__data_npc_*.sql` (→ `specialized-domain`)
+  - Диалоги: `infrastructure/liquibase/migrations/data/dialogues/V*__data_dialogue_*.sql` (→ `social-domain`)
+- **Связанные enterprise-grade домены:**
+  - Квесты → `specialized-domain` (gameplay mechanics)
+  - NPC → `specialized-domain` (NPC systems)
+  - Диалоги → `social-domain` (social interactions)
 - **Передача:** Status `Todo`, Agent `DB`
 
 **Комментарий (для Database):**
@@ -150,25 +162,31 @@ Issue: #{number}
 - Применение миграций данных (квесты, NPC, диалоги)
 - **Передача:** Database → QA
 
-## Таблицы и миграции
+## Таблицы и миграции (Enterprise-Grade Домены)
 
-### Квесты
+### Квесты → `specialized-domain` (Gameplay Mechanics)
 
 - **Таблица:** `gameplay.quest_definitions`
+- **Связанный домен:** `specialized-domain` (157 файлов, игровые механики)
 - **Схемная миграция:** `V1_46__quest_definitions_tables.sql`
 - **Данные миграции:** `V*__data_quest_*.sql` в `infrastructure/liquibase/migrations/data/quests/`
+- **API домена:** `proto/openapi/specialized-domain/main.yaml`
 
-### NPC
+### NPC → `specialized-domain` (NPC Systems)
 
 - **Таблица:** `narrative.npc_definitions`
+- **Связанный домен:** `specialized-domain` (NPC AI, поведение)
 - **Схемная миграция:** `V1_89__narrative_npc_dialogue_tables.sql`
 - **Данные миграции:** `V*__data_npc_*.sql` в `infrastructure/liquibase/migrations/data/npcs/`
+- **API домена:** `proto/openapi/specialized-domain/main.yaml`
 
-### Диалоги
+### Диалоги → `social-domain` (Social Interactions)
 
 - **Таблица:** `narrative.dialogue_nodes`
+- **Связанный домен:** `social-domain` (91 файл, социальные взаимодействия)
 - **Схемная миграция:** `V1_89__narrative_npc_dialogue_tables.sql`
 - **Данные миграции:** `V*__data_dialogue_*.sql` в `infrastructure/liquibase/migrations/data/dialogues/`
+- **API домена:** `proto/openapi/social-domain/main.yaml`
 
 ## Обновления квестов (после первого импорта)
 

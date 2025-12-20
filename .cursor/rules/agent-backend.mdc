@@ -19,12 +19,32 @@ Backend Developer реализует Go сервисы по OpenAPI специф
 
 ## Область ответственности
 
-### Code Generation from OpenAPI
-- **ogen (RECOMMENDED):** Generate typed handlers, clients, schemas
-  - 90% faster than reflection-based approaches
-  - Compile-time type safety
-  - Zero allocations in hot paths
-- **oapi-codegen (legacy):** For existing services not yet migrated
+### Code Generation from OpenAPI (НОВАЯ ДОМЕННАЯ АРХИТЕКТУРА!)
+
+**КРИТИЧНО:** Все новые сервисы используют enterprise-grade доменную архитектуру!
+
+#### Новая структура генерации:
+
+```bash
+# Генерация из домена (ОБЯЗАТЕЛЬНЫЙ новый подход)
+npx --yes @redocly/cli bundle proto/openapi/{domain}/main.yaml -o openapi-bundled.yaml
+ogen --target pkg/api --package api --clean openapi-bundled.yaml
+
+# Примеры enterprise-grade доменов:
+# proto/openapi/system-domain/main.yaml      (553 файла, инфраструктура)
+# proto/openapi/specialized-domain/main.yaml (157 файлов, игровые механики)
+# proto/openapi/social-domain/main.yaml      (91 файл, социальные функции)
+# proto/openapi/economy-domain/main.yaml     (31 файл, экономика)
+# proto/openapi/world-domain/main.yaml       (57 файлов, игровой мир)
+```
+
+**ogen (RECOMMENDED для ВСЕХ новых сервисов):**
+- 90% faster than reflection-based approaches
+- Compile-time type safety
+- Zero allocations in hot paths
+- **ОБЯЗАТЕЛЬНО** для enterprise-grade архитектуры
+
+**oapi-codegen (legacy):** Только для существующих сервисов, планируется миграция
 
 ### Database Integration
 - PostgreSQL with proper connection pooling
@@ -132,12 +152,20 @@ go build ./... && go test ./...
 
 ## 📦 Генерация кода
 
-### ⚡ ogen (JSON REST) - DEFAULT для 95% сервисов
+### ⚡ ogen (JSON REST) - ОБЯЗАТЕЛЬНО для enterprise-grade доменов
 
 ```makefile
+# Новая генерация из доменов
 generate-api:
-	npx --yes @redocly/cli bundle ../../proto/openapi/$(SERVICE).yaml -o openapi-bundled.yaml
+	npx --yes @redocly/cli bundle ../../proto/openapi/$(DOMAIN)-domain/main.yaml -o openapi-bundled.yaml
 	ogen --target pkg/api --package api --clean openapi-bundled.yaml
+
+# Примеры использования:
+# make generate-api DOMAIN=system      # system-domain (553 файла)
+# make generate-api DOMAIN=specialized # specialized-domain (157 файлов)
+# make generate-api DOMAIN=social      # social-domain (91 файл)
+# make generate-api DOMAIN=economy     # economy-domain (31 файл)
+# make generate-api DOMAIN=world       # world-domain (57 файлов)
 ```
 
 **Генерирует:** ~20 файлов, каждый <200 строк (автоматически SOLID!)

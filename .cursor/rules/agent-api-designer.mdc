@@ -64,13 +64,58 @@ Creates OpenAPI 3.0 specs for REST APIs, describes endpoints, defines data schem
 
 ```bash
 # 1. Lint
-redocly lint proto/openapi/{service}.yaml
+redocly lint proto/openapi/{domain}/{module}/main.yaml
 
-# 2. Размер (КРИТИЧНО!)
-wc -l proto/openapi/{service}.yaml
+# 2. Размер (КРИТИЧНО! Теперь 1000 строк лимит)
+wc -l proto/openapi/{domain}/{module}/main.yaml
 
-# Если >500 → РАЗБЕЙ на модули!
+# Если >1000 → РАЗБЕЙ на подмодули!
 ```
+
+## 🏗️ НОВАЯ СТРУКТУРА ДОМЕНОВ (ПОСЛЕ КОНСОЛИДАЦИИ)
+
+**КРИТИЧНО:** Все новые API создаются в enterprise-grade доменах:
+
+### System Domain (`system-domain/`) - 553 файла
+- **Назначение:** Инфраструктура, сервисы, коммуникации
+- **Модули:** `admin/`, `ai/`, `analytics/`, `circuit-breakers/`, `messaging/`, `network/`, `paths/`, `services/`, `support/`, `sync/`
+- **Примеры:** Health checks, metrics, logging, monitoring
+
+### Specialized Domain (`specialized-domain/`) - 157 файлов
+- **Назначение:** Игровые механики, продвинутые функции
+- **Модули:** `combat/`, `crafting/`, `effects/`, `interactive/`, `logistics/`, `mechanics/`, `meta/`, `misc/`, `movement/`, `npc/`, `schemas/`, `services/`
+- **Примеры:** Combat systems, crafting, movement, NPC AI
+
+### Social Domain (`social-domain/`) - 91 файл
+- **Назначение:** Социальные взаимодействия, группы
+- **Модули:** `chat/`, `guilds/`, `mentorship/`, `notifications/`, `orders/`, `parties/`, `relationships/`, `reputation/`, `social/`, `voice-lobby/`
+- **Примеры:** Parties, guilds, chat, relationships
+
+### Economy Domain (`economy-domain/`) - 31 файл
+- **Назначение:** Экономические системы
+- **Модули:** `advertising/`, `analytics/`, `auctions/`, `contracts/`, `dividends/`, `protection/`, `trading/`
+- **Примеры:** Trading, auctions, contracts, investments
+
+### World Domain (`world-domain/`) - 57 файлов
+- **Назначение:** Игровой мир, окружение
+- **Модули:** `advanced/`, `cities/`, `combat/`, `continents/`, `events/`, `planets/`, `politics/`, `sync/`
+- **Примеры:** Cities, continents, world events, politics
+
+### Остальные домены (10 специализированных):
+- `security-domain/` - Безопасность
+- `inventory-domain/` - Инвентарь
+- `tournament-domain/` - Турниры
+- `content-domain/` - Контент
+- `cyberpunk-domain/` - Киберпанковские механики
+- `faction-domain/` - Фракции
+- `auth-expansion-domain/` - Авторизация
+- `progression-domain/` - Прогрессия
+- `arena-domain/` - Арены
+- `referral-domain/` - Рефералы
+- `cosmetic-domain/` - Косметика
+- `legacy-domain/` - Устаревшие API
+- `misc-domain/` - Утилиты
+- `integration-domain/` - Интеграции
 
 **Чек-лист:**
 - [ ] Spec валидна (no errors)
@@ -96,20 +141,46 @@ wc -l proto/openapi/{service}.yaml
 - Splitting source spec if needed
 - NOT за generated files!
 
-## 📦 Splitting (если >1000 строк)
+## 📦 Структура модулей в доменах (ОБЯЗАТЕЛЬНА!)
 
 ```
-proto/openapi/
-├── {service}/
-│   ├── main.yaml
-│   ├── schemas/*.yaml     # <1000 каждый
-│   └── paths/*.yaml       # <1000 каждый
-└── {service}.yaml         # Главный с $ref
+proto/openapi/{domain}/
+├── main.yaml                    # Главный API домена (с $ref на модули)
+├── {module1}/
+│   └── main.yaml               # API модуля (специфичные endpoints)
+├── {module2}/
+│   └── main.yaml               # API модуля
+└── {moduleN}/
+    └── main.yaml               # API модуля
 ```
 
-**Примеры:**
-- voice-chat (2926) → channels, rooms, participants
-- housing (1869) → apartments, furniture, customization
+**Каждый модуль ДОЛЖЕН иметь main.yaml!**
+
+### Создание main.yaml для модуля:
+
+```yaml
+openapi: 3.0.3
+info:
+  title: "{Domain} {Module} Module API"
+  description: "API для модуля {module} в домене {domain}"
+  version: 1.0.0
+
+paths:
+  # Специфичные endpoints модуля
+  /api/v1/{domain}/{module}/{endpoint}: {...}
+
+components:
+  schemas:
+    # Специфичные схемы модуля
+    {Module}Entity: {...}
+```
+
+**Примеры модулей после консолидации:**
+- `system-domain/messaging/` (6 файлов) - message queues
+- `specialized-domain/combat/` (30 файлов) - combat systems
+- `social-domain/chat/` (10 файлов) - chat functionality
+- `economy-domain/trading/` (14 файлов) - trading systems
+- `world-domain/events/` (3 файла) - world events
 
 ## ⚡ Performance Optimization (для Backend!)
 
@@ -293,14 +364,14 @@ redocly bundle proto/openapi/{service}.yaml -o /tmp/bundled.yaml
 
 ## 🔧 File Size Limit Exemptions
 
-**Repository policy:** 600 lines max per file
+**Repository policy:** 1000 lines max per file
 
 **YOUR files (API Designer responsibility):**
-- OK Source OpenAPI YAML: **<500 lines** (split if larger)
-- OK Module YAMLs (schemas/, paths/): **<500 lines each**
+- OK Source OpenAPI YAML: **<1000 lines** (split if larger)
+- OK Module YAMLs (schemas/, paths/): **<1000 lines each**
 
 **Generated files (Backend/Tools, NOT your responsibility):**
-- WARNING `openapi-bundled.yaml`: May exceed 600 lines
+- WARNING `openapi-bundled.yaml`: May exceed 1000 lines
 - WARNING `oas_*_gen.go`: Often >1000 lines (ogen generated)
 - OK **Exempt:** Covered by `.githooks/pre-commit-exemptions.txt`
 
