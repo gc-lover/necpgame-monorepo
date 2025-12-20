@@ -29,7 +29,8 @@ func NewCraftingHandlers(craftingService *CraftingService) *CraftingHandlers {
 
 // GetRecipeHandler получает рецепт по ID
 func (h *CraftingHandlers) GetRecipeHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
+	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+	defer cancel()
 	vars := mux.Vars(r)
 	recipeID := vars["recipeId"]
 
@@ -50,7 +51,8 @@ func (h *CraftingHandlers) GetRecipeHandler(w http.ResponseWriter, r *http.Reque
 
 // GetRecipesByCategoryHandler получает рецепты по категории
 func (h *CraftingHandlers) GetRecipesByCategoryHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
+	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+	defer cancel()
 	category := r.URL.Query().Get("category")
 	if category == "" {
 		h.writeError(w, "category parameter is required", http.StatusBadRequest)
@@ -92,12 +94,13 @@ func (h *CraftingHandlers) GetRecipesByCategoryHandler(w http.ResponseWriter, r 
 
 // StartCraftingHandler начинает процесс крафта
 func (h *CraftingHandlers) StartCraftingHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
+	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+	defer cancel()
 
 	var req struct {
-		RecipeID   string                    `json:"recipe_id"`
-		StationID  string                    `json:"station_id"`
-		Materials  []models.UsedMaterial    `json:"materials"`
+		RecipeID  string                `json:"recipe_id"`
+		StationID string                `json:"station_id"`
+		Materials []models.UsedMaterial `json:"materials"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -128,7 +131,8 @@ func (h *CraftingHandlers) StartCraftingHandler(w http.ResponseWriter, r *http.R
 
 // GetPlayerOrdersHandler получает заказы игрока
 func (h *CraftingHandlers) GetPlayerOrdersHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
+	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+	defer cancel()
 
 	playerID := h.getPlayerIDFromContext(ctx)
 	if playerID == "" {
@@ -171,7 +175,8 @@ func (h *CraftingHandlers) GetPlayerOrdersHandler(w http.ResponseWriter, r *http
 
 // GetOrderHandler получает заказ по ID
 func (h *CraftingHandlers) GetOrderHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
+	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+	defer cancel()
 	vars := mux.Vars(r)
 	orderID := vars["orderId"]
 
@@ -204,7 +209,8 @@ func (h *CraftingHandlers) GetOrderHandler(w http.ResponseWriter, r *http.Reques
 
 // CancelOrderHandler отменяет заказ
 func (h *CraftingHandlers) CancelOrderHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
+	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+	defer cancel()
 	vars := mux.Vars(r)
 	orderID := vars["orderId"]
 
@@ -233,7 +239,8 @@ func (h *CraftingHandlers) CancelOrderHandler(w http.ResponseWriter, r *http.Req
 
 // CalculateCostHandler рассчитывает стоимость крафта
 func (h *CraftingHandlers) CalculateCostHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
+	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+	defer cancel()
 	vars := mux.Vars(r)
 	recipeID := vars["recipeId"]
 
@@ -258,14 +265,15 @@ func (h *CraftingHandlers) CalculateCostHandler(w http.ResponseWriter, r *http.R
 
 // CreateContractHandler создает контракт на крафт
 func (h *CraftingHandlers) CreateContractHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
+	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+	defer cancel()
 
 	var req struct {
-		Title       string    `json:"title"`
-		Description string    `json:"description"`
-		ClientID    string    `json:"client_id"`
-		CrafterID   string    `json:"crafter_id"`
-		RecipeID    string    `json:"recipe_id"`
+		Title       string `json:"title"`
+		Description string `json:"description"`
+		ClientID    string `json:"client_id"`
+		CrafterID   string `json:"crafter_id"`
+		RecipeID    string `json:"recipe_id"`
 		Reward      struct {
 			Currency string  `json:"currency"`
 			Amount   float64 `json:"amount"`
@@ -304,7 +312,8 @@ func (h *CraftingHandlers) CreateContractHandler(w http.ResponseWriter, r *http.
 
 // GetContractsHandler получает контракты по статусу
 func (h *CraftingHandlers) GetContractsHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
+	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+	defer cancel()
 
 	status := r.URL.Query().Get("status")
 	if status == "" {
@@ -362,8 +371,8 @@ func (h *CraftingHandlers) writeError(w http.ResponseWriter, message string, sta
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
 	json.NewEncoder(w).Encode(map[string]interface{}{
-		"error":   true,
-		"message": message,
+		"error":     true,
+		"message":   message,
 		"timestamp": time.Now().Unix(),
 	})
 }

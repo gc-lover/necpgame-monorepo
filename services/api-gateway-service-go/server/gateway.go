@@ -2,6 +2,7 @@
 package server
 
 import (
+	"context"
 	"crypto/tls"
 	"fmt"
 	"net/http"
@@ -323,6 +324,8 @@ func (g *APIGateway) Start() error {
 
 // healthCheckHandler проверяет здоровье gateway
 func (g *APIGateway) healthCheckHandler(w http.ResponseWriter, r *http.Request) {
+	_, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+	defer cancel()
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(`{"status": "healthy", "service": "api-gateway", "version": "1.0.0"}`))
@@ -330,6 +333,8 @@ func (g *APIGateway) healthCheckHandler(w http.ResponseWriter, r *http.Request) 
 
 // readinessCheckHandler проверяет готовность gateway
 func (g *APIGateway) readinessCheckHandler(w http.ResponseWriter, r *http.Request) {
+	_, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+	defer cancel()
 	// Проверяем основные компоненты
 	if g.rateLimiter == nil || g.circuitBreaker == nil || g.authMiddleware == nil {
 		w.WriteHeader(http.StatusServiceUnavailable)
@@ -344,6 +349,8 @@ func (g *APIGateway) readinessCheckHandler(w http.ResponseWriter, r *http.Reques
 
 // metricsHandler предоставляет метрики gateway
 func (g *APIGateway) metricsHandler(w http.ResponseWriter, r *http.Request) {
+	_, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+	defer cancel()
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 

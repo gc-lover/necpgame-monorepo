@@ -9,39 +9,53 @@ import (
 	"go.uber.org/zap"
 )
 
-// Config holds all configuration for the chat moderation service
-type Config struct {
-	// Server configuration
+// ServerConfig contains server-related configuration
+type ServerConfig struct {
 	Port        int           `json:"port"`
 	Host        string        `json:"host"`
 	ReadTimeout time.Duration `json:"read_timeout"`
+}
 
-	// Database configuration
+// DatabaseConfig contains database-related configuration
+type DatabaseConfig struct {
 	DatabaseURL     string        `json:"database_url"`
 	MaxConns        int32         `json:"max_conns"`
 	MinConns        int32         `json:"min_conns"`
 	MaxConnLifetime time.Duration `json:"max_conn_lifetime"`
 	MaxConnIdleTime time.Duration `json:"max_conn_idle_time"`
+}
 
-	// Redis configuration
-	RedisURL string `json:"redis_url"`
-
-	// Service configuration
+// ServiceConfig contains general service configuration
+type ServiceConfig struct {
 	ServiceName string `json:"service_name"`
 	Environment string `json:"environment"`
 	Version     string `json:"version"`
+	RedisURL    string `json:"redis_url"`
+}
 
-	// Moderation configuration
+// ModerationConfig contains moderation-specific configuration
+type ModerationConfig struct {
 	MaxMessageLength   int           `json:"max_message_length"`
 	ProcessingTimeout  time.Duration `json:"processing_timeout"`
 	CacheTTL           time.Duration `json:"cache_ttl"`
 	RateLimitPerSecond int           `json:"rate_limit_per_second"`
+}
 
-	// Monitoring
+// MonitoringConfig contains monitoring configuration
+type MonitoringConfig struct {
 	EnablePprof         bool          `json:"enable_pprof"`
 	PprofAddr           string        `json:"pprof_addr"`
 	MetricsAddr         string        `json:"metrics_addr"`
 	HealthCheckInterval time.Duration `json:"health_check_interval"`
+}
+
+// Config holds all configuration for the chat moderation service
+type Config struct {
+	ServerConfig
+	DatabaseConfig
+	ServiceConfig
+	ModerationConfig
+	MonitoringConfig
 
 	// Logger
 	Logger *zap.Logger `json:"-"` // Not serialized

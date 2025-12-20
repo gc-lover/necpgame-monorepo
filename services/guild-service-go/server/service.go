@@ -8,73 +8,81 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/time/rate"
 )
 
+// GuildServiceDependencies содержит базовую конфигурацию
+type GuildServiceDependencies struct {
+	Logger      *logrus.Logger
+	Metrics     *GuildMetrics
+	Config      *GuildServiceConfig
+	RedisClient *redis.Client
+}
+
+// GuildServiceStorage содержит хранилища данных
+type GuildServiceStorage struct {
+	Guilds       sync.Map
+	Members      sync.Map
+	Territories  sync.Map
+	Wars         sync.Map
+	Alliances    sync.Map
+	Contracts    sync.Map
+	RateLimiters sync.Map
+}
+
+// GuildServicePools содержит пулы памяти
+type GuildServicePools struct {
+	GuildResponsePool     sync.Pool
+	MemberResponsePool    sync.Pool
+	TerritoryResponsePool sync.Pool
+	WarResponsePool       sync.Pool
+}
+
 // OPTIMIZATION: Issue #2177 - Memory-aligned struct for guild service performance
 type GuildService struct {
-	logger          *logrus.Logger
-	metrics         *GuildMetrics
-	config          *GuildServiceConfig
-
-	// OPTIMIZATION: Issue #2177 - Redis for distributed guild state management
-	redisClient     *redis.Client
-
-	// OPTIMIZATION: Issue #2177 - Thread-safe storage for MMO guild management
-	guilds          sync.Map // OPTIMIZATION: Concurrent guild management
-	members         sync.Map // OPTIMIZATION: Concurrent member management
-	territories     sync.Map // OPTIMIZATION: Concurrent territory management
-	wars            sync.Map // OPTIMIZATION: Concurrent war management
-	alliances       sync.Map // OPTIMIZATION: Concurrent alliance management
-	contracts       sync.Map // OPTIMIZATION: Concurrent contract management
-	rateLimiters    sync.Map // OPTIMIZATION: Per-guild rate limiting
-
-	// OPTIMIZATION: Issue #2177 - Memory pooling for hot path structs (zero allocations target!)
-	guildResponsePool sync.Pool
-	memberResponsePool sync.Pool
-	territoryResponsePool sync.Pool
-	warResponsePool sync.Pool
+	GuildServiceDependencies
+	GuildServiceStorage
+	GuildServicePools
 }
 
 // OPTIMIZATION: Issue #2177 - Memory-aligned guild structs
 type Guild struct {
-	GuildID            string                 `json:"guild_id"`            // 16 bytes
-	Name               string                 `json:"name"`                // 16 bytes
-	Description        string                 `json:"description"`         // 16 bytes
-	Motto              string                 `json:"motto"`               // 16 bytes
-	Faction            string                 `json:"faction"`             // 16 bytes
-	LeaderID           string                 `json:"leader_id"`           // 16 bytes
-	Status             string                 `json:"status"`              // 16 bytes
-	Level              int                    `json:"level"`               // 8 bytes
-	Experience         int                    `json:"experience"`          // 8 bytes
-	Reputation         int                    `json:"reputation"`          // 8 bytes
-	Wealth             int                    `json:"wealth"`              // 8 bytes
-	MaxMembers         int                    `json:"max_members"`         // 8 bytes
-	CurrentMembers     int                    `json:"current_members"`     // 8 bytes
-	Region             string                 `json:"region"`              // 16 bytes
-	Headquarters       GuildLocation          `json:"headquarters"`        // ~48 bytes
-	Colors             GuildColors            `json:"colors"`              // ~64 bytes
-	Policies           GuildPolicies          `json:"policies"`            // ~16 bytes
-	RecruitmentOpen    bool                   `json:"recruitment_open"`    // 1 byte
-	ApplicationRequired bool                  `json:"application_required"` // 1 byte
-	MinLevelRequirement int                   `json:"min_level_requirement"` // 8 bytes
-	TerritoriesControlled int                 `json:"territories_controlled"` // 8 bytes
-	WarsActive         int                    `json:"wars_active"`         // 8 bytes
-	AlliancesActive    int                    `json:"alliances_active"`    // 8 bytes
-	CreatedAt          time.Time              `json:"created_at"`          // 24 bytes
-	UpdatedAt          time.Time              `json:"updated_at"`          // 24 bytes
-	LastActivity       time.Time              `json:"last_activity"`       // 24 bytes
+	GuildID               string        `json:"guild_id"`               // 16 bytes
+	Name                  string        `json:"name"`                   // 16 bytes
+	Description           string        `json:"description"`            // 16 bytes
+	Motto                 string        `json:"motto"`                  // 16 bytes
+	Faction               string        `json:"faction"`                // 16 bytes
+	LeaderID              string        `json:"leader_id"`              // 16 bytes
+	Status                string        `json:"status"`                 // 16 bytes
+	Level                 int           `json:"level"`                  // 8 bytes
+	Experience            int           `json:"experience"`             // 8 bytes
+	Reputation            int           `json:"reputation"`             // 8 bytes
+	Wealth                int           `json:"wealth"`                 // 8 bytes
+	MaxMembers            int           `json:"max_members"`            // 8 bytes
+	CurrentMembers        int           `json:"current_members"`        // 8 bytes
+	Region                string        `json:"region"`                 // 16 bytes
+	Headquarters          GuildLocation `json:"headquarters"`           // ~48 bytes
+	Colors                GuildColors   `json:"colors"`                 // ~64 bytes
+	Policies              GuildPolicies `json:"policies"`               // ~16 bytes
+	RecruitmentOpen       bool          `json:"recruitment_open"`       // 1 byte
+	ApplicationRequired   bool          `json:"application_required"`   // 1 byte
+	MinLevelRequirement   int           `json:"min_level_requirement"`  // 8 bytes
+	TerritoriesControlled int           `json:"territories_controlled"` // 8 bytes
+	WarsActive            int           `json:"wars_active"`            // 8 bytes
+	AlliancesActive       int           `json:"alliances_active"`       // 8 bytes
+	CreatedAt             time.Time     `json:"created_at"`             // 24 bytes
+	UpdatedAt             time.Time     `json:"updated_at"`             // 24 bytes
+	LastActivity          time.Time     `json:"last_activity"`          // 24 bytes
 }
 
 // OPTIMIZATION: Issue #2177 - Memory-aligned supporting structs
 type GuildLocation struct {
-	Zone   string  `json:"zone"`
-	X      float64 `json:"x"`
-	Y      float64 `json:"y"`
-	Z      float64 `json:"z"`
+	Zone string  `json:"zone"`
+	X    float64 `json:"x"`
+	Y    float64 `json:"y"`
+	Z    float64 `json:"z"`
 }
 
 type GuildColors struct {
@@ -84,33 +92,33 @@ type GuildColors struct {
 }
 
 type GuildPolicies struct {
-	PvPEnabled              bool    `json:"pvp_enabled"`
-	TerritoryClaimsEnabled  bool    `json:"territory_claims_enabled"`
-	WarParticipation        string  `json:"war_participation"`
-	ContractSharing         bool    `json:"contract_sharing"`
-	ResourceSharing         bool    `json:"resource_sharing"`
-	TaxRate                 float64 `json:"tax_rate"`
+	PvPEnabled             bool    `json:"pvp_enabled"`
+	TerritoryClaimsEnabled bool    `json:"territory_claims_enabled"`
+	WarParticipation       string  `json:"war_participation"`
+	ContractSharing        bool    `json:"contract_sharing"`
+	ResourceSharing        bool    `json:"resource_sharing"`
+	TaxRate                float64 `json:"tax_rate"`
 }
 
 type GuildMember struct {
-	GuildID      string    `json:"guild_id"`
-	PlayerID     string    `json:"player_id"`
-	Role         string    `json:"role"`
-	RankTitle    string    `json:"rank_title"`
-	JoinedAt     time.Time `json:"joined_at"`
-	LastActive   time.Time `json:"last_active"`
-	Status       string    `json:"status"`
-	Permissions  []string  `json:"permissions"`
+	GuildID       string              `json:"guild_id"`
+	PlayerID      string              `json:"player_id"`
+	Role          string              `json:"role"`
+	RankTitle     string              `json:"rank_title"`
+	JoinedAt      time.Time           `json:"joined_at"`
+	LastActive    time.Time           `json:"last_active"`
+	Status        string              `json:"status"`
+	Permissions   []string            `json:"permissions"`
 	Contributions MemberContributions `json:"contributions"`
 }
 
 type MemberContributions struct {
-	ContractsCompleted    int `json:"contracts_completed"`
-	WarsParticipated      int `json:"wars_participated"`
-	ResourcesContributed  int `json:"resources_contributed"`
-	CurrencyContributed   int `json:"currency_contributed"`
-	TerritoriesDefended   int `json:"territories_defended"`
-	ReputationGained      int `json:"reputation_gained"`
+	ContractsCompleted   int `json:"contracts_completed"`
+	WarsParticipated     int `json:"wars_participated"`
+	ResourcesContributed int `json:"resources_contributed"`
+	CurrencyContributed  int `json:"currency_contributed"`
+	TerritoriesDefended  int `json:"territories_defended"`
+	ReputationGained     int `json:"reputation_gained"`
 }
 
 func NewGuildService(logger *logrus.Logger, metrics *GuildMetrics, config *GuildServiceConfig) *GuildService {
@@ -281,12 +289,12 @@ func (s *GuildService) CreateGuild(w http.ResponseWriter, r *http.Request) {
 	}
 
 	resp := &CreateGuildResponse{
-		GuildID:      guild.GuildID,
-		Name:         guild.Name,
-		LeaderID:     guild.LeaderID,
-		Status:       guild.Status,
-		MemberCount:  guild.CurrentMembers,
-		CreatedAt:    guild.CreatedAt.Unix(),
+		GuildID:     guild.GuildID,
+		Name:        guild.Name,
+		LeaderID:    guild.LeaderID,
+		Status:      guild.Status,
+		MemberCount: guild.CurrentMembers,
+		CreatedAt:   guild.CreatedAt.Unix(),
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -320,17 +328,17 @@ func (s *GuildService) GetGuild(w http.ResponseWriter, r *http.Request) {
 	guild := guildValue.(*Guild)
 
 	details := &GuildDetails{
-		GuildID:          guild.GuildID,
-		Name:             guild.Name,
-		Description:      guild.Description,
-		Faction:          guild.Faction,
-		LeaderID:         guild.LeaderID,
-		MemberCount:      guild.CurrentMembers,
-		Level:            guild.Level,
-		Reputation:       guild.Reputation,
-		Status:           guild.Status,
-		CreatedAt:        guild.CreatedAt.Unix(),
-		LastUpdatedAt:    guild.UpdatedAt.Unix(),
+		GuildID:       guild.GuildID,
+		Name:          guild.Name,
+		Description:   guild.Description,
+		Faction:       guild.Faction,
+		LeaderID:      guild.LeaderID,
+		MemberCount:   guild.CurrentMembers,
+		Level:         guild.Level,
+		Reputation:    guild.Reputation,
+		Status:        guild.Status,
+		CreatedAt:     guild.CreatedAt.Unix(),
+		LastUpdatedAt: guild.UpdatedAt.Unix(),
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -374,10 +382,10 @@ func (s *GuildService) RequestJoinGuild(w http.ResponseWriter, r *http.Request) 
 	}
 
 	resp := &JoinGuildResponse{
-		GuildID:   guildID,
-		PlayerID:  req.PlayerID,
-		Status:    status,
-		JoinedAt:  time.Now().Unix(),
+		GuildID:  guildID,
+		PlayerID: req.PlayerID,
+		Status:   status,
+		JoinedAt: time.Now().Unix(),
 	}
 
 	if status == "accepted" {

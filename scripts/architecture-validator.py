@@ -19,7 +19,7 @@ class ArchitectureValidator:
     def __init__(self, project_root: str):
         self.project_root = Path(project_root)
         self.errors: List[str] = []
-        self.warnings: List[str] = []
+        self.warnings: Set[str] = set()  # Use set to deduplicate warnings
         self.violations: Dict[str, List[str]] = {
             'solid': [],
             'performance': [],
@@ -90,7 +90,7 @@ class ArchitectureValidator:
                                 f"exceeds {max_lines} lines ({lines} lines)"
                             )
                     except Exception as e:
-                        self.warnings.append(f"Could not check {file_path}: {e}")
+                        self.warnings.add(f"Could not check {file_path}: {e}")
                 # Debug: uncomment to see what files are being checked
                 # elif 'oas_' in str(file_path) or '_gen.go' in str(file_path):
                 #     pass  # Skip debug output for generated files
@@ -123,7 +123,7 @@ class ArchitectureValidator:
             # Check for proper error handling
             if 'func ' in content and 'error' in content:
                 if 'if err != nil' not in content:
-                    self.warnings.append(f"Function in {file_path.relative_to(self.project_root)} may lack error handling")
+                    self.warnings.add(f"Function in {file_path.relative_to(self.project_root)} may lack error handling")
 
             # Check struct alignment (large fields first)
             struct_matches = re.findall(r'type\s+\w+\s+struct\s*{([^}]*)}', content, re.DOTALL)
@@ -146,7 +146,7 @@ class ArchitectureValidator:
                         )
 
         except Exception as e:
-            self.warnings.append(f"Could not validate {file_path}: {e}")
+            self.warnings.add(f"Could not validate {file_path}: {e}")
 
     def _validate_solid_principles(self):
         """Check SOLID principles compliance"""
@@ -177,7 +177,7 @@ class ArchitectureValidator:
                             )
 
                 except Exception as e:
-                    self.warnings.append(f"Could not check SOLID for {go_file}: {e}")
+                    self.warnings.add(f"Could not check SOLID for {go_file}: {e}")
 
     def _validate_performance_requirements(self):
         """Check performance requirements"""
@@ -199,12 +199,12 @@ class ArchitectureValidator:
                     # Check for database connection pooling
                     if 'database/sql' in content:
                         if 'SetMaxOpenConns' not in content and 'SetMaxIdleConns' not in content:
-                            self.warnings.append(
+                            self.warnings.add(
                                 f"Database in {go_file.relative_to(self.project_root)} may lack connection pooling"
                             )
 
                 except Exception as e:
-                    self.warnings.append(f"Could not check performance for {go_file}: {e}")
+                    self.warnings.add(f"Could not check performance for {go_file}: {e}")
 
     def _validate_security_compliance(self):
         """Check security compliance"""
@@ -226,16 +226,24 @@ class ArchitectureValidator:
                     # Check for proper input validation
                     if 'http.' in content:
                         if 'validate' not in content.lower() and 'sanitize' not in content.lower():
-                            self.warnings.append(
+                            self.warnings.add(
                                 f"HTTP handler in {go_file.relative_to(self.project_root)} may lack input validation"
                             )
 
                 except Exception as e:
-                    self.warnings.append(f"Could not check security for {go_file}: {e}")
+                    self.warnings.add(f"Could not check security for {go_file}: {e}")
 
     def _validate_openapi_specs(self):
         """Validate OpenAPI specifications"""
         print("[INFO] Checking OpenAPI specifications...")
+
+        # Check if redocly is available once, not for each file
+        redocly_available = self._check_redocly_available()
+
+        if not redocly_available:
+            yaml_files = list(self.project_root.rglob('**/proto/openapi/*.yaml'))
+            self.warnings.add(f"redocly not found, skipping OpenAPI validation for {len(yaml_files)} spec files")
+            return
 
         for yaml_file in self.project_root.rglob('**/proto/openapi/*.yaml'):
             try:
@@ -249,13 +257,24 @@ class ArchitectureValidator:
 
                 if result.returncode != 0:
                     self.violations['structure'].append(
-                        f"OpenAPI spec {yaml_file.name} has validation errors: {result.stdout}"
+                        f"OpenAPI spec {yaml_file.relative_to(self.project_root)} has validation errors: {result.stdout.strip()[:200]}..."
                     )
 
-            except FileNotFoundError:
-                self.warnings.append("redocly not found, skipping OpenAPI validation")
             except Exception as e:
-                self.warnings.append(f"Could not validate {yaml_file}: {e}")
+                self.warnings.add(f"Could not validate {yaml_file.relative_to(self.project_root)}: {e}")
+
+    def _check_redocly_available(self):
+        """Check if redocly CLI tool is available"""
+        try:
+            result = subprocess.run(
+                ['redocly', '--version'],
+                capture_output=True,
+                text=True,
+                cwd=self.project_root
+            )
+            return result.returncode == 0
+        except (FileNotFoundError, OSError):
+            return False
 
     def _validate_dependencies(self):
         """Check for proper dependency management"""
@@ -269,10 +288,10 @@ class ArchitectureValidator:
 
                 # Check for replace directives (local deps)
                 if 'replace' in content:
-                    self.warnings.append("go.mod contains replace directives")
+                    self.warnings.add("go.mod contains replace directives")
 
             except Exception as e:
-                self.warnings.append(f"Could not check go.mod: {e}")
+                self.warnings.add(f"Could not check go.mod: {e}")
 
     def _validate_concern_separation(self):
         """Check separation of concerns"""
@@ -281,7 +300,7 @@ class ArchitectureValidator:
         # Check that business logic is separate from handlers
         for go_file in self.project_root.rglob('services/**/*.go'):
             if 'handler' in go_file.name.lower() and 'service' in go_file.name.lower():
-                self.warnings.append(
+                self.warnings.add(
                     f"File {go_file.name} may mix handler and service concerns"
                 )
 
@@ -358,9 +377,9 @@ class ArchitectureValidator:
         if total_warnings > 0:
             print("\nWARNINGS:")
             print("-"*30)
-            for warning in self.warnings:  # Show all warnings
+            for warning in sorted(self.warnings):  # Show all warnings, sorted
                 print(f"   - {warning}")
-            print(f"   Total: {len(self.warnings)} warnings found")
+            print(f"   Total: {len(self.warnings)} unique warnings found")
 
         print("\n" + "="*80)
 

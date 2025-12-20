@@ -30,7 +30,8 @@ func NewContractHandlers(contractService *ContractService) *ContractHandlers {
 
 // CreateContractHandler создает новый контракт
 func (h *ContractHandlers) CreateContractHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
+	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+	defer cancel()
 
 	// Извлекаем buyerID из JWT токена (предполагаем, что middleware уже проверил токен)
 	buyerID, ok := getUserIDFromContext(ctx)
@@ -57,7 +58,8 @@ func (h *ContractHandlers) CreateContractHandler(w http.ResponseWriter, r *http.
 
 // StartNegotiationHandler начинает переговоры по контракту
 func (h *ContractHandlers) StartNegotiationHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
+	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+	defer cancel()
 	vars := mux.Vars(r)
 	contractIDStr := vars["contractId"]
 
@@ -84,7 +86,8 @@ func (h *ContractHandlers) StartNegotiationHandler(w http.ResponseWriter, r *htt
 
 // UpdateContractTermsHandler обновляет условия контракта
 func (h *ContractHandlers) UpdateContractTermsHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
+	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+	defer cancel()
 	vars := mux.Vars(r)
 	contractIDStr := vars["contractId"]
 
@@ -117,7 +120,8 @@ func (h *ContractHandlers) UpdateContractTermsHandler(w http.ResponseWriter, r *
 
 // AcceptContractHandler принимает контракт
 func (h *ContractHandlers) AcceptContractHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
+	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+	defer cancel()
 	vars := mux.Vars(r)
 	contractIDStr := vars["contractId"]
 
@@ -144,7 +148,8 @@ func (h *ContractHandlers) AcceptContractHandler(w http.ResponseWriter, r *http.
 
 // DepositEscrowHandler вносит депозит в эскроу
 func (h *ContractHandlers) DepositEscrowHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
+	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+	defer cancel()
 	vars := mux.Vars(r)
 	contractIDStr := vars["contractId"]
 
@@ -177,7 +182,8 @@ func (h *ContractHandlers) DepositEscrowHandler(w http.ResponseWriter, r *http.R
 
 // CompleteContractHandler завершает контракт
 func (h *ContractHandlers) CompleteContractHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
+	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+	defer cancel()
 	vars := mux.Vars(r)
 	contractIDStr := vars["contractId"]
 
@@ -204,7 +210,8 @@ func (h *ContractHandlers) CompleteContractHandler(w http.ResponseWriter, r *htt
 
 // CancelContractHandler отменяет контракт
 func (h *ContractHandlers) CancelContractHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
+	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+	defer cancel()
 	vars := mux.Vars(r)
 	contractIDStr := vars["contractId"]
 
@@ -239,7 +246,8 @@ func (h *ContractHandlers) CancelContractHandler(w http.ResponseWriter, r *http.
 
 // CreateDisputeHandler создает диспут для контракта
 func (h *ContractHandlers) CreateDisputeHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
+	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+	defer cancel()
 	vars := mux.Vars(r)
 	contractIDStr := vars["contractId"]
 
@@ -272,7 +280,8 @@ func (h *ContractHandlers) CreateDisputeHandler(w http.ResponseWriter, r *http.R
 
 // ResolveDisputeHandler разрешает диспут (для арбитраторов)
 func (h *ContractHandlers) ResolveDisputeHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
+	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+	defer cancel()
 	vars := mux.Vars(r)
 	contractIDStr := vars["contractId"]
 
@@ -289,8 +298,8 @@ func (h *ContractHandlers) ResolveDisputeHandler(w http.ResponseWriter, r *http.
 	}
 
 	var req struct {
-		Decision string            `json:"decision"`
-		Penalty   map[string]int    `json:"penalty,omitempty"`
+		Decision string         `json:"decision"`
+		Penalty  map[string]int `json:"penalty,omitempty"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		h.writeError(w, "Invalid request body", http.StatusBadRequest)
@@ -308,7 +317,8 @@ func (h *ContractHandlers) ResolveDisputeHandler(w http.ResponseWriter, r *http.
 
 // GetContractHandler получает контракт по ID
 func (h *ContractHandlers) GetContractHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
+	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+	defer cancel()
 	vars := mux.Vars(r)
 	contractIDStr := vars["contractId"]
 
@@ -336,7 +346,8 @@ func (h *ContractHandlers) GetContractHandler(w http.ResponseWriter, r *http.Req
 
 // GetUserContractsHandler получает контракты пользователя
 func (h *ContractHandlers) GetUserContractsHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
+	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+	defer cancel()
 
 	userID, ok := getUserIDFromContext(ctx)
 	if !ok {
@@ -386,7 +397,8 @@ func (h *ContractHandlers) GetUserContractsHandler(w http.ResponseWriter, r *htt
 
 // GetContractHistoryHandler получает историю контракта
 func (h *ContractHandlers) GetContractHistoryHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
+	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+	defer cancel()
 	vars := mux.Vars(r)
 	contractIDStr := vars["contractId"]
 

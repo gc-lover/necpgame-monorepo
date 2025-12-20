@@ -4,79 +4,99 @@ package server
 
 // Tournament related models
 type TournamentSummary struct {
-	TournamentID      string `json:"tournament_id"`
-	Name              string `json:"name"`
-	GameMode          string `json:"game_mode"`
-	Status            string `json:"status"`
-	ParticipantCount  int    `json:"participant_count"`
-	MaxParticipants   int    `json:"max_participants"`
-	StartTime         int64  `json:"start_time"`
-	EndTime           int64  `json:"end_time"`
+	TournamentID       string   `json:"tournament_id"`
+	Name               string   `json:"name"`
+	GameMode           string   `json:"game_mode"`
+	Status             string   `json:"status"`
+	ParticipantCount   int      `json:"participant_count"`
+	MaxParticipants    int      `json:"max_participants"`
+	StartTime          int64    `json:"start_time"`
+	EndTime            int64    `json:"end_time"`
 	RegionRestrictions []string `json:"region_restrictions"`
-	CreatedAt         int64  `json:"created_at"`
+	CreatedAt          int64    `json:"created_at"`
+}
+
+// TournamentBasicInfo contains basic tournament information
+type TournamentBasicInfo struct {
+	TournamentID     string `json:"tournament_id"`
+	Name             string `json:"name"`
+	Description      string `json:"description"`
+	GameMode         string `json:"game_mode"`
+	TournamentFormat string `json:"tournament_format"`
+	Status           string `json:"status"`
+	Visibility       string `json:"visibility"`
+	CreatedAt        int64  `json:"created_at"`
+	UpdatedAt        int64  `json:"updated_at"`
+}
+
+// TournamentParticipants contains participant-related data
+type TournamentParticipants struct {
+	ParticipantCount   int                `json:"participant_count"`
+	MaxParticipants    int                `json:"max_participants"`
+	MinParticipants    int                `json:"min_participants"`
+	RegionRestrictions []string           `json:"region_restrictions"`
+	SkillRequirements  *SkillRequirements `json:"skill_requirements"`
+}
+
+// TournamentSchedule contains timing information
+type TournamentSchedule struct {
+	RegistrationStartTime int64 `json:"registration_start_time"`
+	RegistrationEndTime   int64 `json:"registration_end_time"`
+	StartTime             int64 `json:"start_time"`
+	EndTime               int64 `json:"end_time"`
+	CurrentRound          int   `json:"current_round"`
+	TotalRounds           int   `json:"total_rounds"`
+}
+
+// TournamentSettings contains tournament configuration
+type TournamentSettings struct {
+	Rules            map[string]string `json:"rules"`
+	Prizes           []Prize           `json:"prizes"`
+	EntryFee         *EntryFee         `json:"entry_fee"`
+	AutoProgression  bool              `json:"auto_progression"`
+	MatchTimeout     int               `json:"match_timeout"`
+	AllowSpectators  bool              `json:"allow_spectators"`
+	StreamingEnabled bool              `json:"streaming_enabled"`
 }
 
 type TournamentDetails struct {
-	TournamentID           string              `json:"tournament_id"`
-	Name                   string              `json:"name"`
-	Description            string              `json:"description"`
-	GameMode               string              `json:"game_mode"`
-	TournamentFormat       string              `json:"tournament_format"`
-	Status                 string              `json:"status"`
-	ParticipantCount       int                 `json:"participant_count"`
-	MaxParticipants        int                 `json:"max_participants"`
-	MinParticipants        int                 `json:"min_participants"`
-	RegistrationStartTime  int64               `json:"registration_start_time"`
-	RegistrationEndTime    int64               `json:"registration_end_time"`
-	StartTime              int64               `json:"start_time"`
-	EndTime                int64               `json:"end_time"`
-	Rules                  map[string]string   `json:"rules"`
-	Prizes                 []Prize             `json:"prizes"`
-	EntryFee               *EntryFee           `json:"entry_fee"`
-	Visibility             string              `json:"visibility"`
-	RegionRestrictions     []string            `json:"region_restrictions"`
-	SkillRequirements      *SkillRequirements `json:"skill_requirements"`
-	AutoProgression        bool                `json:"auto_progression"`
-	MatchTimeout           int                 `json:"match_timeout"`
-	AllowSpectators        bool                `json:"allow_spectators"`
-	StreamingEnabled       bool                `json:"streaming_enabled"`
-	CurrentRound           int                 `json:"current_round"`
-	TotalRounds            int                 `json:"total_rounds"`
-	CreatedAt              int64               `json:"created_at"`
-	UpdatedAt              int64               `json:"updated_at"`
+	TournamentBasicInfo
+	TournamentParticipants
+	TournamentSchedule
+	TournamentSettings
 }
 
 // Request models
 type CreateTournamentRequest struct {
-	TournamentID        string              `json:"tournament_id,omitempty"`
-	Name                string              `json:"name"`
-	Description         string              `json:"description,omitempty"`
-	GameMode            string              `json:"game_mode"`
-	TournamentFormat    string              `json:"tournament_format"`
-	MaxParticipants     int                 `json:"max_participants"`
-	MinParticipants     int                 `json:"min_participants,omitempty"`
+	TournamentID          string            `json:"tournament_id,omitempty"`
+	Name                  string            `json:"name"`
+	Description           string            `json:"description,omitempty"`
+	GameMode              string            `json:"game_mode"`
+	TournamentFormat      string            `json:"tournament_format"`
+	MaxParticipants       int               `json:"max_participants"`
+	MinParticipants       int               `json:"min_participants,omitempty"`
 	RegistrationStartTime int64             `json:"registration_start_time"`
-	RegistrationEndTime int64               `json:"registration_end_time"`
-	StartTime           int64               `json:"start_time"`
-	EndTime             int64               `json:"end_time"`
-	Rules               map[string]string   `json:"rules,omitempty"`
-	Prizes              []Prize             `json:"prizes,omitempty"`
-	EntryFee            EntryFee            `json:"entry_fee,omitempty"`
-	Visibility          string              `json:"visibility,omitempty"`
-	RegionRestrictions  []string            `json:"region_restrictions,omitempty"`
-	SkillRequirements   SkillRequirements   `json:"skill_requirements,omitempty"`
-	AutoProgression     bool                `json:"auto_progression,omitempty"`
-	MatchTimeout        int                 `json:"match_timeout,omitempty"`
-	AllowSpectators     bool                `json:"allow_spectators,omitempty"`
-	StreamingEnabled    bool                `json:"streaming_enabled,omitempty"`
+	RegistrationEndTime   int64             `json:"registration_end_time"`
+	StartTime             int64             `json:"start_time"`
+	EndTime               int64             `json:"end_time"`
+	Rules                 map[string]string `json:"rules,omitempty"`
+	Prizes                []Prize           `json:"prizes,omitempty"`
+	EntryFee              EntryFee          `json:"entry_fee,omitempty"`
+	Visibility            string            `json:"visibility,omitempty"`
+	RegionRestrictions    []string          `json:"region_restrictions,omitempty"`
+	SkillRequirements     SkillRequirements `json:"skill_requirements,omitempty"`
+	AutoProgression       bool              `json:"auto_progression,omitempty"`
+	MatchTimeout          int               `json:"match_timeout,omitempty"`
+	AllowSpectators       bool              `json:"allow_spectators,omitempty"`
+	StreamingEnabled      bool              `json:"streaming_enabled,omitempty"`
 }
 
 type UpdateTournamentRequest struct {
-	Name          string              `json:"name,omitempty"`
-	Description   string              `json:"description,omitempty"`
-	Status        string              `json:"status,omitempty"`
-	Rules         map[string]string   `json:"rules,omitempty"`
-	Prizes        []Prize             `json:"prizes,omitempty"`
+	Name        string            `json:"name,omitempty"`
+	Description string            `json:"description,omitempty"`
+	Status      string            `json:"status,omitempty"`
+	Rules       map[string]string `json:"rules,omitempty"`
+	Prizes      []Prize           `json:"prizes,omitempty"`
 }
 
 type RegisterTournamentRequest struct {
@@ -92,12 +112,12 @@ type UnregisterTournamentRequest struct {
 
 // Response models
 type CreateTournamentResponse struct {
-	TournamentID  string `json:"tournament_id"`
-	Name          string `json:"name"`
-	LeaderID      string `json:"leader_id,omitempty"`
-	Status        string `json:"status"`
-	MemberCount   int    `json:"member_count"`
-	CreatedAt     int64  `json:"created_at"`
+	TournamentID string `json:"tournament_id"`
+	Name         string `json:"name"`
+	LeaderID     string `json:"leader_id,omitempty"`
+	Status       string `json:"status"`
+	MemberCount  int    `json:"member_count"`
+	CreatedAt    int64  `json:"created_at"`
 }
 
 type ListTournamentsResponse struct {
@@ -124,9 +144,9 @@ type RegisterTournamentResponse struct {
 }
 
 type UnregisterTournamentResponse struct {
-	TournamentID   string `json:"tournament_id"`
-	PlayerID       string `json:"player_id"`
-	UnregisteredAt int64  `json:"unregistered_at"`
+	TournamentID    string `json:"tournament_id"`
+	PlayerID        string `json:"player_id"`
+	UnregisteredAt  int64  `json:"unregistered_at"`
 	RefundProcessed bool   `json:"refund_processed"`
 }
 
@@ -139,20 +159,20 @@ type GetTournamentBracketResponse struct {
 
 // Match related models
 type MatchDetail struct {
-	MatchID        string                 `json:"match_id"`
-	TournamentID   string                 `json:"tournament_id"`
-	Round          int                    `json:"round"`
-	Player1        *PlayerInfo            `json:"player1"`
-	Player2        *PlayerInfo            `json:"player2"`
-	Winner         *PlayerInfo            `json:"winner"`
-	Status         string                 `json:"status"`
-	ScheduledTime  int64                  `json:"scheduled_time"`
-	StartedTime    int64                  `json:"started_time"`
-	CompletedTime  int64                  `json:"completed_time"`
-	Score          *MatchScore            `json:"score"`
-	SpectatorsCount int                   `json:"spectators_count"`
-	StreamingURL   string                 `json:"streaming_url"`
-	Metadata       map[string]interface{} `json:"metadata"`
+	MatchID         string                 `json:"match_id"`
+	TournamentID    string                 `json:"tournament_id"`
+	Round           int                    `json:"round"`
+	Player1         *PlayerInfo            `json:"player1"`
+	Player2         *PlayerInfo            `json:"player2"`
+	Winner          *PlayerInfo            `json:"winner"`
+	Status          string                 `json:"status"`
+	ScheduledTime   int64                  `json:"scheduled_time"`
+	StartedTime     int64                  `json:"started_time"`
+	CompletedTime   int64                  `json:"completed_time"`
+	Score           *MatchScore            `json:"score"`
+	SpectatorsCount int                    `json:"spectators_count"`
+	StreamingURL    string                 `json:"streaming_url"`
+	Metadata        map[string]interface{} `json:"metadata"`
 }
 
 type PlayerInfo struct {
@@ -188,29 +208,29 @@ type UpdateMatchResultResponse struct {
 
 // Ranking related models
 type GetRankingsResponse struct {
-	LeaderboardType string          `json:"leaderboard_type"`
+	LeaderboardType string           `json:"leaderboard_type"`
 	Rankings        []*PlayerRanking `json:"rankings"`
-	TotalCount      int             `json:"total_count"`
-	GeneratedAt     int64           `json:"generated_at"`
+	TotalCount      int              `json:"total_count"`
+	GeneratedAt     int64            `json:"generated_at"`
 }
 
 type GetPlayerRankingResponse struct {
 	PlayerID     string                    `json:"player_id"`
 	Rankings     map[string]*PlayerRanking `json:"rankings"`
-	OverallStats *PlayerStats             `json:"overall_stats"`
+	OverallStats *PlayerStats              `json:"overall_stats"`
 }
 
 // League related models
 type LeagueSummary struct {
-	LeagueID       string `json:"league_id"`
-	Name           string `json:"name"`
-	GameMode       string `json:"game_mode"`
-	Status         string `json:"status"`
-	CurrentSeason  int    `json:"current_season"`
-	TeamCount      int    `json:"team_count"`
-	MaxTeams       int    `json:"max_teams"`
-	SeasonEndTime  int64  `json:"season_end_time"`
-	Region         string `json:"region"`
+	LeagueID      string `json:"league_id"`
+	Name          string `json:"name"`
+	GameMode      string `json:"game_mode"`
+	Status        string `json:"status"`
+	CurrentSeason int    `json:"current_season"`
+	TeamCount     int    `json:"team_count"`
+	MaxTeams      int    `json:"max_teams"`
+	SeasonEndTime int64  `json:"season_end_time"`
+	Region        string `json:"region"`
 }
 
 type ListLeaguesResponse struct {
@@ -219,15 +239,15 @@ type ListLeaguesResponse struct {
 }
 
 type CreateLeagueRequest struct {
-	Name            string              `json:"name"`
-	Description     string              `json:"description,omitempty"`
-	GameMode        string              `json:"game_mode"`
-	MaxTeams        int                 `json:"max_teams"`
-	SeasonStartTime int64               `json:"season_start_time"`
-	SeasonEndTime   int64               `json:"season_end_time"`
-	Rules           map[string]string   `json:"rules,omitempty"`
-	Prizes          []Prize             `json:"prizes,omitempty"`
-	Region          string              `json:"region,omitempty"`
+	Name            string            `json:"name"`
+	Description     string            `json:"description,omitempty"`
+	GameMode        string            `json:"game_mode"`
+	MaxTeams        int               `json:"max_teams"`
+	SeasonStartTime int64             `json:"season_start_time"`
+	SeasonEndTime   int64             `json:"season_end_time"`
+	Rules           map[string]string `json:"rules,omitempty"`
+	Prizes          []Prize           `json:"prizes,omitempty"`
+	Region          string            `json:"region,omitempty"`
 }
 
 type CreateLeagueResponse struct {
@@ -244,11 +264,11 @@ type JoinLeagueRequest struct {
 }
 
 type JoinLeagueResponse struct {
-	LeagueID   string `json:"league_id"`
-	PlayerID   string `json:"player_id"`
-	TeamID     string `json:"team_id"`
-	JoinedAt   int64  `json:"joined_at"`
-	CurrentRank int   `json:"current_rank"`
+	LeagueID    string `json:"league_id"`
+	PlayerID    string `json:"player_id"`
+	TeamID      string `json:"team_id"`
+	JoinedAt    int64  `json:"joined_at"`
+	CurrentRank int    `json:"current_rank"`
 }
 
 // Reward related models
@@ -263,10 +283,10 @@ type Reward struct {
 }
 
 type GetTournamentRewardsResponse struct {
-	TournamentID    string   `json:"tournament_id"`
-	PlayerID        string   `json:"player_id"`
+	TournamentID     string   `json:"tournament_id"`
+	PlayerID         string   `json:"player_id"`
 	AvailableRewards []Reward `json:"available_rewards"`
-	ClaimedRewards  []string `json:"claimed_rewards"`
+	ClaimedRewards   []string `json:"claimed_rewards"`
 }
 
 type ClaimRewardsRequest struct {
@@ -291,15 +311,15 @@ type GameModeStats struct {
 }
 
 type GetGlobalStatisticsResponse struct {
-	TimeRange           string                   `json:"time_range"`
-	TotalTournaments    int                      `json:"total_tournaments"`
-	ActiveTournaments   int                      `json:"active_tournaments"`
-	TotalParticipants   int                      `json:"total_participants"`
-	TotalMatchesPlayed  int                      `json:"total_matches_played"`
-	AverageTournamentSize float64                `json:"average_tournament_size"`
-	PopularGameModes    []GameModeStats          `json:"popular_game_modes"`
-	RegionActivity      map[string]int           `json:"region_activity"`
-	GeneratedAt         int64                    `json:"generated_at"`
+	TimeRange             string          `json:"time_range"`
+	TotalTournaments      int             `json:"total_tournaments"`
+	ActiveTournaments     int             `json:"active_tournaments"`
+	TotalParticipants     int             `json:"total_participants"`
+	TotalMatchesPlayed    int             `json:"total_matches_played"`
+	AverageTournamentSize float64         `json:"average_tournament_size"`
+	PopularGameModes      []GameModeStats `json:"popular_game_modes"`
+	RegionActivity        map[string]int  `json:"region_activity"`
+	GeneratedAt           int64           `json:"generated_at"`
 }
 
 // Error response model

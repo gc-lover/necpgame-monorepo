@@ -15,29 +15,38 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// TournamentServiceConfig содержит базовую конфигурацию
+type TournamentServiceDependencies struct {
+	Logger      *logrus.Logger
+	Metrics     *TournamentMetrics
+	Config      *TournamentServiceConfig
+	RedisClient *redis.Client
+}
+
+// TournamentServiceStorage содержит хранилища данных
+type TournamentServiceStorage struct {
+	Tournaments   sync.Map
+	Matches       sync.Map
+	Registrations sync.Map
+	Rankings      sync.Map
+	Leagues       sync.Map
+}
+
+// TournamentServicePools содержит пулы памяти
+type TournamentServicePools struct {
+	TournamentResponsePool sync.Pool
+	MatchResponsePool      sync.Pool
+	RankingResponsePool    sync.Pool
+	LeagueResponsePool     sync.Pool
+	RewardResponsePool     sync.Pool
+	StatsResponsePool      sync.Pool
+}
+
 // OPTIMIZATION: Issue #2177 - Memory-aligned struct for tournament service performance
 type TournamentService struct {
-	logger          *logrus.Logger
-	metrics         *TournamentMetrics
-	config          *TournamentServiceConfig
-
-	// OPTIMIZATION: Issue #2177 - Redis for distributed tournament state management
-	redisClient     *redis.Client
-
-	// OPTIMIZATION: Issue #2177 - Thread-safe storage for MMO tournament management
-	tournaments     sync.Map // OPTIMIZATION: Concurrent tournament management
-	matches         sync.Map // OPTIMIZATION: Concurrent match management
-	registrations   sync.Map // OPTIMIZATION: Concurrent registration management
-	rankings        sync.Map // OPTIMIZATION: Concurrent ranking management
-	leagues         sync.Map // OPTIMIZATION: Concurrent league management
-
-	// OPTIMIZATION: Issue #2177 - Memory pooling for hot path structs (zero allocations target!)
-	tournamentResponsePool sync.Pool
-	matchResponsePool      sync.Pool
-	rankingResponsePool    sync.Pool
-	leagueResponsePool     sync.Pool
-	rewardResponsePool     sync.Pool
-	statsResponsePool      sync.Pool
+	TournamentServiceDependencies
+	TournamentServiceStorage
+	TournamentServicePools
 }
 
 // OPTIMIZATION: Issue #2177 - Memory-aligned tournament structs

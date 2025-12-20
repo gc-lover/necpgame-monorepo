@@ -5,37 +5,49 @@ import (
 	"time"
 )
 
-// AuthServiceConfig содержит конфигурацию сервиса аутентификации
-type AuthServiceConfig struct {
-	// HTTP server settings
-	HTTPAddr       string        `json:"http_addr"`       // HTTP server address
-	HealthAddr     string        `json:"health_addr"`     // Health check address
-	ReadTimeout    time.Duration `json:"read_timeout"`    // HTTP read timeout
-	WriteTimeout   time.Duration `json:"write_timeout"`   // HTTP write timeout
-	MaxHeaderBytes int           `json:"max_header_bytes"` // Max header size
+// HTTPServerConfig содержит настройки HTTP сервера
+type HTTPServerConfig struct {
+	HTTPAddr       string        `json:"http_addr"`
+	HealthAddr     string        `json:"health_addr"`
+	ReadTimeout    time.Duration `json:"read_timeout"`
+	WriteTimeout   time.Duration `json:"write_timeout"`
+	MaxHeaderBytes int           `json:"max_header_bytes"`
+}
 
-	// JWT settings
-	JWTSecret      string        `json:"jwt_secret"`       // JWT signing secret
-	JWTExpiry      time.Duration `json:"jwt_expiry"`       // JWT token expiry
-	RefreshExpiry  time.Duration `json:"refresh_expiry"`   // Refresh token expiry
+// JWTConfig содержит настройки JWT
+type JWTConfig struct {
+	JWTSecret     string        `json:"jwt_secret"`
+	JWTExpiry     time.Duration `json:"jwt_expiry"`
+	RefreshExpiry time.Duration `json:"refresh_expiry"`
+}
 
-	// Session settings
-	SessionTimeout time.Duration `json:"session_timeout"`  // Session timeout
+// SecurityConfig содержит настройки безопасности
+type SecurityConfig struct {
+	SessionTimeout   time.Duration `json:"session_timeout"`
+	MaxLoginAttempts int           `json:"max_login_attempts"`
+}
 
-	// Security settings
-	MaxLoginAttempts int `json:"max_login_attempts"` // Max failed login attempts
+// DatabaseConfig содержит настройки баз данных
+type DatabaseConfig struct {
+	DatabaseURL string `json:"database_url"`
+	RedisURL    string `json:"redis_url"`
+}
 
-	// Database settings
-	DatabaseURL string `json:"database_url"` // PostgreSQL connection string
-
-	// Redis settings
-	RedisURL string `json:"redis_url"` // Redis connection string
-
-	// OAuth settings
+// OAuthConfig содержит настройки OAuth
+type OAuthConfig struct {
 	GoogleClientID     string `json:"google_client_id"`
 	GoogleClientSecret string `json:"google_client_secret"`
 	GoogleRedirectURI  string `json:"google_redirect_uri"`
+}
+
+// AuthServiceConfig содержит конфигурацию сервиса аутентификации
+type AuthServiceConfig struct {
+	HTTPServerConfig
+	JWTConfig
+	SecurityConfig
+	DatabaseConfig
+	OAuthConfig
 
 	// Metrics settings
-	MetricsAddr string `json:"metrics_addr"` // Prometheus metrics address
+	MetricsAddr string `json:"metrics_addr"`
 }

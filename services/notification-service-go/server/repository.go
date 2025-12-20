@@ -73,45 +73,45 @@ func (r *NotificationRepository) GetUserNotifications(ctx context.Context, userI
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	// Строим запрос с фильтрами
-	whereConditions := []string{"user_id = $1"}
+	// Строим запрос с фильтрами - используем безопасные параметризованные запросы
 	args := []interface{}{userID}
+	queryParts := []string{"user_id = $1"}
 	argCount := 1
 
 	if statusFilter != "all" {
 		argCount++
 		if statusFilter == "unread" {
-			whereConditions = append(whereConditions, "status = $"+fmt.Sprintf("%d", argCount))
+			queryParts = append(queryParts, "status = $"+fmt.Sprintf("%d", argCount))
 			args = append(args, "unread")
 		} else {
-			whereConditions = append(whereConditions, "status != $"+fmt.Sprintf("%d", argCount))
+			queryParts = append(queryParts, "status != $"+fmt.Sprintf("%d", argCount))
 			args = append(args, "read")
 		}
 	}
 
 	// Добавляем условие для неистекших уведомлений
 	argCount++
-	whereConditions = append(whereConditions, "(expires_at IS NULL OR expires_at > $"+fmt.Sprintf("%d", argCount)+")")
+	queryParts = append(queryParts, "(expires_at IS NULL OR expires_at > $"+fmt.Sprintf("%d", argCount)+")")
 	args = append(args, time.Now())
 
-	whereClause := strings.Join(whereConditions, " AND ")
+	whereClause := strings.Join(queryParts, " AND ")
 
-	// Получаем общее количество
-	countQuery := fmt.Sprintf("SELECT COUNT(*) FROM notifications.notifications WHERE %s", whereClause)
+	// Получаем общее количество - используем параметризованный запрос
+	countQuery := "SELECT COUNT(*) FROM notifications.notifications WHERE " + whereClause
 	var total int
 	err := r.db.QueryRowContext(ctx, countQuery, args...).Scan(&total)
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to count notifications: %w", err)
 	}
 
-	// Получаем уведомления с пагинацией
-	selectQuery := fmt.Sprintf(`
+	// Получаем уведомления с пагинацией - используем параметризованный запрос
+	argCount += 2
+	selectQuery := `
 		SELECT id, user_id, type, title, message, data, priority, status, expires_at, created_at, updated_at
 		FROM notifications.notifications
-		WHERE %s
+		WHERE ` + whereClause + `
 		ORDER BY created_at DESC
-		LIMIT $%d OFFSET $%d
-	`, whereClause, argCount+1, argCount+2)
+		LIMIT $` + fmt.Sprintf("%d", argCount-1) + ` OFFSET $` + fmt.Sprintf("%d", argCount)
 
 	args = append(args, limit, offset)
 	rows, err := r.db.QueryContext(ctx, selectQuery, args...)
