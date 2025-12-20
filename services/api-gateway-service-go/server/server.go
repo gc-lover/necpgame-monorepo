@@ -271,6 +271,8 @@ func (g *APIGatewayServer) Start() error {
 
 // HealthCheckHandler проверяет здоровье API Gateway
 func (g *APIGatewayServer) HealthCheckHandler(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+	defer cancel()
 	healthStatus := map[string]interface{}{
 		"status":    "healthy",
 		"service":   "api-gateway",

@@ -112,6 +112,8 @@ func (s *HTTPServer) Shutdown(ctx context.Context) error {
 }
 
 func (s *HTTPServer) healthCheck(w http.ResponseWriter, r *http.Request) {
+	_, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+	defer cancel()
 	s.respondJSON(w, http.StatusOK, map[string]string{"status": "healthy"})
 }
 

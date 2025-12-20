@@ -92,8 +92,8 @@ const (
 	TakeoverAssault TakeoverMethod = "assault"
 )
 
-// Interactive represents an interactive object in the world
-type Interactive struct {
+// BaseInteractive contains common fields for all interactive objects
+type BaseInteractive struct {
 	InteractiveID string              `json:"interactive_id"`
 	Version       int                 `json:"version"`
 	Name          string              `json:"name"`
@@ -114,38 +114,6 @@ type Interactive struct {
 	IsDestructible bool `json:"is_destructible"`
 	RespawnTimeSec int  `json:"respawn_time_sec"`
 
-	// Faction control properties
-	ControllingFaction   *string `json:"controlling_faction,omitempty"`
-	ControlRadiusMeters  *int    `json:"control_radius_meters,omitempty"`
-	PriceModifierPercent *int    `json:"price_modifier_percent,omitempty"`
-	AccessRequirement    *string `json:"access_requirement,omitempty"`
-
-	// Communication properties
-	SignalStrength    *int             `json:"signal_strength,omitempty"`
-	EncryptionLevel   *EncryptionLevel `json:"encryption_level,omitempty"`
-	JammingResistance *int             `json:"jamming_resistance,omitempty"`
-	BandwidthMbps     *int             `json:"bandwidth_mbps,omitempty"`
-
-	// Medical properties
-	HealingRatePerSec   *int  `json:"healing_rate_per_sec,omitempty"`
-	CyberwareRepair     *bool `json:"cyberware_repair,omitempty"`
-	TraumaTeamAvailable *bool `json:"trauma_team_available,omitempty"`
-
-	// Logistics properties
-	StorageCapacity *int           `json:"storage_capacity,omitempty"`
-	SecurityLevel   *SecurityLevel `json:"security_level,omitempty"`
-	LootQuality     *LootQuality   `json:"loot_quality,omitempty"`
-
-	// Control mechanics (for blockposts)
-	TakeoverMethod               *TakeoverMethod `json:"takeover_method,omitempty"`
-	TakeoverCostEddiesMin        *int            `json:"takeover_cost_eddies_min,omitempty"`
-	TakeoverCostEddiesMax        *int            `json:"takeover_cost_eddies_max,omitempty"`
-	TakeoverSuccessRateMin       *int            `json:"takeover_success_rate_min,omitempty"`
-	TakeoverSuccessRateMax       *int            `json:"takeover_success_rate_max,omitempty"`
-	TakeoverDetectionRiskPercent *int            `json:"takeover_detection_risk_percent,omitempty"`
-	TakeoverTimeSeconds          *int            `json:"takeover_time_seconds,omitempty"`
-	TakeoverAlarmProbability     *int            `json:"takeover_alarm_probability,omitempty"`
-
 	// Runtime state
 	IsActive        bool       `json:"is_active"`
 	LastInteraction *time.Time `json:"last_interaction,omitempty"`
@@ -157,6 +125,55 @@ type Interactive struct {
 
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
+}
+
+// FactionControlData contains faction control specific properties
+type FactionControlData struct {
+	ControllingFaction           *string         `json:"controlling_faction,omitempty"`
+	ControlRadiusMeters          *int            `json:"control_radius_meters,omitempty"`
+	PriceModifierPercent         *int            `json:"price_modifier_percent,omitempty"`
+	AccessRequirement            *string         `json:"access_requirement,omitempty"`
+	TakeoverMethod               *TakeoverMethod `json:"takeover_method,omitempty"`
+	TakeoverCostEddiesMin        *int            `json:"takeover_cost_eddies_min,omitempty"`
+	TakeoverCostEddiesMax        *int            `json:"takeover_cost_eddies_max,omitempty"`
+	TakeoverSuccessRateMin       *int            `json:"takeover_success_rate_min,omitempty"`
+	TakeoverSuccessRateMax       *int            `json:"takeover_success_rate_max,omitempty"`
+	TakeoverDetectionRiskPercent *int            `json:"takeover_detection_risk_percent,omitempty"`
+	TakeoverTimeSeconds          *int            `json:"takeover_time_seconds,omitempty"`
+	TakeoverAlarmProbability     *int            `json:"takeover_alarm_probability,omitempty"`
+}
+
+// CommunicationData contains communication specific properties
+type CommunicationData struct {
+	SignalStrength    *int             `json:"signal_strength,omitempty"`
+	EncryptionLevel   *EncryptionLevel `json:"encryption_level,omitempty"`
+	JammingResistance *int             `json:"jamming_resistance,omitempty"`
+	BandwidthMbps     *int             `json:"bandwidth_mbps,omitempty"`
+}
+
+// MedicalData contains medical specific properties
+type MedicalData struct {
+	HealingRatePerSec   *int  `json:"healing_rate_per_sec,omitempty"`
+	CyberwareRepair     *bool `json:"cyberware_repair,omitempty"`
+	TraumaTeamAvailable *bool `json:"trauma_team_available,omitempty"`
+}
+
+// LogisticsData contains logistics specific properties
+type LogisticsData struct {
+	StorageCapacity *int           `json:"storage_capacity,omitempty"`
+	SecurityLevel   *SecurityLevel `json:"security_level,omitempty"`
+	LootQuality     *LootQuality   `json:"loot_quality,omitempty"`
+}
+
+// Interactive represents an interactive object in the world
+type Interactive struct {
+	BaseInteractive
+
+	// Category-specific data
+	FactionControlData *FactionControlData `json:"faction_control_data,omitempty"`
+	CommunicationData  *CommunicationData  `json:"communication_data,omitempty"`
+	MedicalData        *MedicalData        `json:"medical_data,omitempty"`
+	LogisticsData      *LogisticsData      `json:"logistics_data,omitempty"`
 }
 
 // ListInteractivesRequest represents a request to list interactives

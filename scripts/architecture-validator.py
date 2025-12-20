@@ -117,13 +117,13 @@ class ArchitectureValidator:
             if 'http.' in content and 'HandleFunc' in content:
                 if 'context.WithTimeout' not in content and 'ctx,' not in content:
                     self.violations['performance'].append(
-                        f"HTTP handler in {file_path.name} missing context timeout"
+                        f"HTTP handler in {file_path.relative_to(self.project_root)} missing context timeout"
                     )
 
             # Check for proper error handling
             if 'func ' in content and 'error' in content:
                 if 'if err != nil' not in content:
-                    self.warnings.append(f"Function in {file_path.name} may lack error handling")
+                    self.warnings.append(f"Function in {file_path.relative_to(self.project_root)} may lack error handling")
 
             # Check struct alignment (large fields first)
             struct_matches = re.findall(r'type\s+\w+\s+struct\s*{([^}]*)}', content, re.DOTALL)
@@ -142,7 +142,7 @@ class ArchitectureValidator:
 
                     if large_fields and small_fields and large_fields[0] != lines[0]:
                         self.warnings.append(
-                            f"Struct in {file_path.name} may have suboptimal field alignment"
+                            f"Struct in {file_path.relative_to(self.project_root)} may have suboptimal field alignment"
                         )
 
         except Exception as e:
@@ -164,7 +164,7 @@ class ArchitectureValidator:
                         lines = len([line for line in func.split('\n') if line.strip()])
                         if lines > 50:
                             self.violations['solid'].append(
-                                f"Function in {go_file.name} exceeds 50 lines ({lines} lines)"
+                                f"Function in {go_file.relative_to(self.project_root)} exceeds 50 lines ({lines} lines)"
                             )
 
                     # Check for large structs (>15 fields)
@@ -173,7 +173,7 @@ class ArchitectureValidator:
                         fields = len([line for line in struct_def.split('\n') if ':' in line])
                         if fields > 15:
                             self.violations['solid'].append(
-                                f"Struct in {go_file.name} has too many fields ({fields})"
+                                f"Struct in {go_file.relative_to(self.project_root)} has too many fields ({fields})"
                             )
 
                 except Exception as e:
@@ -193,14 +193,14 @@ class ArchitectureValidator:
                     if 'go func' in content:
                         if 'defer' not in content and 'wg.Wait()' not in content:
                             self.violations['performance'].append(
-                                f"Potential goroutine leak in {go_file.name}"
+                                f"Potential goroutine leak in {go_file.relative_to(self.project_root)}"
                             )
 
                     # Check for database connection pooling
                     if 'database/sql' in content:
                         if 'SetMaxOpenConns' not in content and 'SetMaxIdleConns' not in content:
                             self.warnings.append(
-                                f"Database in {go_file.name} may lack connection pooling"
+                                f"Database in {go_file.relative_to(self.project_root)} may lack connection pooling"
                             )
 
                 except Exception as e:
@@ -220,14 +220,14 @@ class ArchitectureValidator:
                     if 'Query' in content or 'Exec' in content:
                         if '$' not in content and '?' not in content:
                             self.violations['security'].append(
-                                f"Potential SQL injection in {go_file.name}"
+                                f"Potential SQL injection in {go_file.relative_to(self.project_root)}"
                             )
 
                     # Check for proper input validation
                     if 'http.' in content:
                         if 'validate' not in content.lower() and 'sanitize' not in content.lower():
                             self.warnings.append(
-                                f"HTTP handler in {go_file.name} may lack input validation"
+                                f"HTTP handler in {go_file.relative_to(self.project_root)} may lack input validation"
                             )
 
                 except Exception as e:

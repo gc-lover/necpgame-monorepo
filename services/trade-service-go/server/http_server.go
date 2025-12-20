@@ -86,11 +86,15 @@ func (s *HTTPServer) Shutdown(ctx context.Context) error {
 }
 
 func healthCheck(w http.ResponseWriter, r *http.Request) {
+	_, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+	defer cancel()
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("OK"))
 }
 
 func metricsHandler(w http.ResponseWriter, r *http.Request) {
+	_, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+	defer cancel()
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("# HELP trade_service metrics\n"))
 }
