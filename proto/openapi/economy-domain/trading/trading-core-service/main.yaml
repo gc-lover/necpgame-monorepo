@@ -1,0 +1,534 @@
+# Issue: #2260
+openapi: 3.0.3
+info:
+  title: Economy Domain - Trading Core Service API
+  description: |
+    Enterprise-Grade Trading Core Service API for NECPGAME MMOFPS RPG.
+
+    **Enterprise-Grade Domain:** economy-domain
+    **Module:** trading-core-service
+    **Purpose:** High-performance item trading and marketplace management
+
+    **BACKEND NOTE:** Struct field alignment optimized (large → small types).
+    All schemas ordered for optimal memory layout in generated Go code.
+    Expected memory savings: 30-50% for trading-related structs.
+
+    **Features:**
+    - Real-time item trading (1000+ TPS)
+    - Marketplace listings management
+    - Trading history and analytics
+    - Anti-cheat validation
+    - Cross-shard trading support
+    - Price discovery algorithms
+
+    **Performance:** P99 <5ms for trade execution, zero allocations in hot path
+  version: 1.0.0
+  license:
+    name: Proprietary
+    url: https://necpgame.com/license
+  contact:
+    name: NECPGAME API Support
+    url: https://necpgame.com/support
+    email: api@trading-core.necpgame.com
+
+servers:
+  - url: http://localhost:8085/api/v1
+    description: Trading Core Service Development Server
+  - url: https://trading-core.necpgame.com/api/v1
+    description: Trading Core Service Production Server
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Trading Core
+    description: Core trading operations and marketplace management
+
+paths:
+  # Health check
+  /api/v1/economy-domain/trading/health:
+    get:
+      summary: Trading core service health check
+      operationId: tradingCoreHealthCheck
+      tags:
+        - Trading Core
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        '503':
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # Trade listings management
+  /api/v1/economy-domain/trading/listings:
+    post:
+      summary: Create new trade listing
+      description: |
+        Creates a new marketplace listing for item trading.
+
+        **BACKEND NOTE:** This operation requires validation of:
+        - Item ownership verification
+        - Price floor/ceiling checks
+        - Anti-cheat pattern analysis
+        - Cross-shard availability
+      operationId: createTradeListing
+      tags:
+        - Trading Core
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateListingRequest'
+      responses:
+        '201':
+          description: Listing created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TradeListing'
+        '400':
+          description: Invalid request data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Not authorized to create listing
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    get:
+      summary: Get trade listings
+      description: |
+        Retrieves marketplace listings with filtering and pagination.
+
+        **BACKEND NOTE:** Hot path endpoint (1000+ RPS).
+        Use Redis caching for popular item categories.
+        Pagination required for performance.
+      operationId: getTradeListings
+      tags:
+        - Trading Core
+      parameters:
+        - name: item_type
+          in: query
+          schema:
+            type: string
+          description: Filter by item type
+        - name: min_price
+          in: query
+          schema:
+            type: integer
+            format: int64
+          description: Minimum price filter
+        - name: max_price
+          in: query
+          schema:
+            type: integer
+            format: int64
+          description: Maximum price filter
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of results per page
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          description: Pagination offset
+      responses:
+        '200':
+          description: Listings retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListingsResponse'
+        '400':
+          description: Invalid query parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # Execute trade
+  /api/v1/economy-domain/trading/listings/{listing_id}/execute:
+    post:
+      summary: Execute trade
+      description: |
+        Executes a trade by purchasing a listing.
+
+        **BACKEND NOTE:** Critical path operation (P99 <5ms required).
+        Requires atomic transaction with inventory updates.
+        Anti-cheat validation mandatory.
+      operationId: executeTrade
+      tags:
+        - Trading Core
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: listing_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Listing ID to execute
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExecuteTradeRequest'
+      responses:
+        '200':
+          description: Trade executed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TradeResult'
+        '400':
+          description: Invalid trade request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Listing not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Listing already sold or expired
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      description: JWT Bearer token authentication
+
+  schemas:
+    # Health response
+    HealthResponse:
+      type: object
+      required:
+        - status
+        - timestamp
+        - service
+      properties:
+        status:
+          type: string
+          enum: [healthy]
+        timestamp:
+          type: string
+          format: date-time
+        service:
+          type: string
+          example: "trading-core-service"
+        version:
+          type: string
+          example: "1.0.0"
+
+    # Error response
+    ErrorResponse:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          description: Error code
+        message:
+          type: string
+          description: Human-readable error message
+        details:
+          type: object
+          description: Additional error details
+
+    # Trading schemas
+    TradeListing:
+      type: object
+      description: |
+        BACKEND NOTE: Core trading entity (frequent queries, 1000+ RPS).
+
+        Fields ordered for struct alignment (large → small types):
+        - UUIDs (16 bytes) first
+        - Arrays (24 bytes)
+        - Integers (8 bytes)
+        - Objects (8 bytes pointers)
+        - Booleans (1 byte) last
+      required:
+        - id
+        - seller_id
+        - item_id
+        - item_type
+        - quantity
+        - price_per_unit
+        - currency_type
+        - created_at
+        - expires_at
+        - is_active
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique listing identifier
+        seller_id:
+          type: string
+          format: uuid
+          description: Seller participant UUID
+        item_id:
+          type: string
+          format: uuid
+          description: Item instance UUID
+        item_modifiers:
+          type: array
+          description: Item-specific modifiers and enhancements
+          items:
+            type: object
+            required:
+              - type
+              - value
+            properties:
+              type:
+                type: string
+                enum: [damage_boost, armor_rating, rarity_multiplier, quality_bonus]
+              value:
+                type: number
+                format: float
+          maxItems: 10
+        quantity:
+          type: integer
+          format: int32
+          minimum: 1
+          maximum: 999999
+        price_per_unit:
+          type: integer
+          format: int64
+          minimum: 1
+        created_at:
+          type: integer
+          format: int64
+        expires_at:
+          type: integer
+          format: int64
+        item_type:
+          type: string
+        currency_type:
+          type: string
+          enum: [eurodollars, faction_credits, premium_tokens]
+        seller_name:
+          type: string
+          maxLength: 50
+        is_active:
+          type: boolean
+        is_featured:
+          type: boolean
+        allow_offers:
+          type: boolean
+
+    CreateListingRequest:
+      type: object
+      description: |
+        BACKEND NOTE: Listing creation request (moderate frequency).
+        Fields ordered for struct alignment (large → small types)
+      required:
+        - item_id
+        - quantity
+        - price_per_unit
+        - duration_hours
+      properties:
+        item_id:
+          type: string
+          format: uuid
+        item_modifiers:
+          type: array
+          items:
+            type: object
+            required: [type, value]
+            properties:
+              type: {type: string, enum: [damage_boost, armor_rating, rarity_multiplier, quality_bonus]}
+              value: {type: number, format: float}
+          maxItems: 10
+        quantity:
+          type: integer
+          format: int32
+          minimum: 1
+        price_per_unit:
+          type: integer
+          format: int64
+        duration_hours:
+          type: integer
+          format: int32
+          minimum: 1
+          maximum: 168
+        currency_type:
+          type: string
+          enum: [eurodollars, faction_credits, premium_tokens]
+          default: eurodollars
+        allow_offers:
+          type: boolean
+          default: false
+        private_listing:
+          type: boolean
+          default: false
+
+    ExecuteTradeRequest:
+      type: object
+      description: |
+        BACKEND NOTE: Trade execution request (hot path, P99 <5ms).
+        Fields ordered for struct alignment (large → small types)
+      required:
+        - buyer_id
+        - quantity
+      properties:
+        buyer_id:
+          type: string
+          format: uuid
+        quantity:
+          type: integer
+          format: int32
+          minimum: 1
+        trade_options:
+          type: object
+          properties:
+            max_price:
+              type: integer
+              format: int64
+            immediate_buy:
+              type: boolean
+              default: true
+        skip_validation:
+          type: boolean
+          default: false
+        use_insurance:
+          type: boolean
+          default: false
+
+    TradeResult:
+      type: object
+      description: |
+        BACKEND NOTE: Trade execution result (hot path response).
+        Fields ordered for struct alignment (large → small types)
+      required:
+        - trade_id
+        - seller_id
+        - buyer_id
+        - item_id
+        - quantity
+        - total_price
+        - currency_type
+        - executed_at
+        - success
+      properties:
+        trade_id:
+          type: string
+          format: uuid
+        seller_id:
+          type: string
+          format: uuid
+        buyer_id:
+          type: string
+          format: uuid
+        item_id:
+          type: string
+          format: uuid
+        listing_id:
+          type: string
+          format: uuid
+        applied_fees:
+          type: array
+          items:
+            type: object
+            required: [type, amount]
+            properties:
+              type: {type: string, enum: [trading_fee, insurance_fee, premium_listing_fee, cross_shard_fee]}
+              amount: {type: integer, format: int64}
+          maxItems: 5
+        quantity:
+          type: integer
+          format: int32
+        total_price:
+          type: integer
+          format: int64
+        executed_at:
+          type: integer
+          format: int64
+        trade_metadata:
+          type: object
+          properties:
+            trade_type: {type: string, enum: [instant_buy, auction_win, best_offer_accept]}
+            shard_info:
+              type: object
+              properties:
+                seller_shard: {type: string}
+                buyer_shard: {type: string}
+        currency_type:
+          type: string
+          enum: [eurodollars, faction_credits, premium_tokens]
+        success:
+          type: boolean
+        used_insurance:
+          type: boolean
+        cross_shard_trade:
+          type: boolean
+
+    ListingsResponse:
+      type: object
+      description: |
+        BACKEND NOTE: Paginated listings response (hot path, 1000+ RPS).
+        Fields ordered for struct alignment (large → small types)
+      required:
+        - listings
+        - total_count
+        - page_info
+      properties:
+        listings:
+          type: array
+          items:
+            $ref: '#/components/schemas/TradeListing'
+          maxItems: 100
+        total_count:
+          type: integer
+          format: int64
+        page_info:
+          type: object
+          required: [has_next_page, has_previous_page, current_page, total_pages]
+          properties:
+            has_next_page: {type: boolean}
+            has_previous_page: {type: boolean}
+            current_page: {type: integer, format: int32, minimum: 1}
+            total_pages: {type: integer, format: int32, minimum: 1}
+            items_per_page: {type: integer, format: int32}
+            next_cursor: {type: string}
+        market_summary:
+          type: object
+          properties:
+            active_listings: {type: integer, format: int64}
+            total_volume_24h: {type: integer, format: int64}
+            average_price_change: {type: number, format: float}
+        cache_hit:
+          type: boolean

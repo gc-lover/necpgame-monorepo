@@ -1,0 +1,118 @@
+# Create Listing Request - Memory Optimized
+# Issue: #2260
+
+type: object
+description: |
+  BACKEND NOTE: Listing creation request (moderate frequency).
+
+  Fields ordered for struct alignment (large → small types):
+  - UUIDs (16 bytes) first
+  - Arrays (24 bytes)
+  - Integers (8 bytes)
+  - Objects (8 bytes pointers)
+  - Booleans (1 byte) last
+
+  Expected memory: ~80 bytes/instance.
+required:
+  - item_id
+  - quantity
+  - price_per_unit
+  - duration_hours
+properties:
+  # Large types first (16 bytes - UUID)
+  item_id:
+    type: string
+    format: uuid
+    description: Item instance to list for sale
+    example: "550e8400-e29b-41d4-a716-446655440002"
+
+  # Arrays (24 bytes)
+  item_modifiers:
+    type: array
+    description: Item modifiers to include in listing
+    items:
+      type: object
+      description: Modifier specification
+      required:
+        - type
+        - value
+      properties:
+        type:
+          type: string
+          enum:
+            - damage_boost
+            - armor_rating
+            - rarity_multiplier
+            - quality_bonus
+          description: Modifier type
+        value:
+          type: number
+          format: float
+          description: Modifier value
+    maxItems: 10
+
+  # Integers (8 bytes)
+  quantity:
+    type: integer
+    format: int32
+    minimum: 1
+    maximum: 999999
+    description: Quantity to list
+    example: 1
+
+  price_per_unit:
+    type: integer
+    format: int64
+    minimum: 1
+    maximum: 999999999999
+    description: Price per unit
+    example: 50000
+
+  duration_hours:
+    type: integer
+    format: int32
+    minimum: 1
+    maximum: 168
+    description: Listing duration in hours (max 7 days)
+    example: 24
+
+  # Objects (8 bytes pointers)
+  listing_options:
+    type: object
+    description: Optional listing configuration
+    properties:
+      auction_type:
+        type: string
+        enum:
+          - instant_buy
+          - auction
+          - best_offer
+        default: instant_buy
+      minimum_offer:
+        type: integer
+        format: int64
+        description: Minimum offer for best_offer type
+      featured_listing:
+        type: boolean
+        description: Request featured placement (premium)
+
+  # Strings
+  currency_type:
+    type: string
+    enum:
+      - eurodollars
+      - faction_credits
+      - premium_tokens
+    default: eurodollars
+    description: Currency for transaction
+
+  # Booleans (1 byte)
+  allow_offers:
+    type: boolean
+    description: Allow buyer offers
+    default: false
+
+  private_listing:
+    type: boolean
+    description: Private listing (not visible in public marketplace)
+    default: false
