@@ -47,25 +47,11 @@ for file in $STAGED_FILES; do
 
         # Check size limits and collect failed files
         case $ext in
-            go|py|yaml|yml)
-                CHECKED_COUNT=$((CHECKED_COUNT + 1))
-                if [ "$lines" -gt 600 ]; then
-                    FAILED_FILES+=("$file:$lines:600")
-                    echo "FAIL: $file has $lines lines (max: 600)"
-                fi
-                ;;
-            md)
+            go|py|yaml|yml|md|sql|sh|ps1|js|ts|cpp|h|java|php|rb|rs|cs)
                 CHECKED_COUNT=$((CHECKED_COUNT + 1))
                 if [ "$lines" -gt 1000 ]; then
                     FAILED_FILES+=("$file:$lines:1000")
                     echo "FAIL: $file has $lines lines (max: 1000)"
-                fi
-                ;;
-            sql)
-                CHECKED_COUNT=$((CHECKED_COUNT + 1))
-                if [ "$lines" -gt 800 ]; then
-                    FAILED_FILES+=("$file:$lines:800")
-                    echo "FAIL: $file has $lines lines (max: 800)"
                 fi
                 ;;
         esac
@@ -85,9 +71,7 @@ if [ ${#FAILED_FILES[@]} -gt 0 ]; then
     echo "POLICY: Files must not exceed size limits by extension"
     echo ""
     echo "SIZE_LIMITS:"
-    echo "  - Go/Python/YAML files: 600 lines max"
-    echo "  - Markdown files: 1000 lines max"
-    echo "  - SQL files: 800 lines max"
+    echo "  - All text files: 1000 lines max"
     echo ""
     echo "VIOLATING_FILES:"
     for entry in "${FAILED_FILES[@]}"; do
