@@ -1,0 +1,189 @@
+# Issue: #2235
+openapi: 3.0.3
+info:
+  title: Social Domain - Guilds Module API
+  description: |
+    Guilds module API for NECPGAME MMOFPS RPG.
+
+    **Enterprise-Grade Domain:** social-domain
+    **Module:** guilds
+    **Purpose:** Complete guild management system
+
+    **BACKEND NOTE:** Struct field alignment optimized (large → small types).
+    All schemas ordered for optimal memory layout in generated Go code.
+    Expected memory savings: 30-50% for guild-related structs.
+
+    **Features:**
+    - Guild creation and management
+    - Member management and roles
+    - Guild bank and resources
+    - Guild territories and wars
+    - Guild tournaments and events
+  version: 1.0.0
+  license:
+    name: Proprietary
+  contact:
+    name: NECPGAME API Support
+    url: https://necpgame.com/support
+    email: api@guilds.necpgame.com
+
+servers:
+  - url: http://localhost:8084/api/v1
+    description: Guilds Service (development)
+  - url: https://guilds.necpgame.com/api/v1
+    description: Guilds Service (production)
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Guild Management
+    description: Core guild operations
+  - name: Member Management
+    description: Guild member operations
+  - name: Role Management
+    description: Guild roles and permissions
+  - name: Bank Management
+    description: Guild bank and resources
+  - name: Territory Management
+    description: Guild territories
+  - name: War Management
+    description: Guild wars and PvP
+
+# Include paths from sub-modules
+paths:
+  # Guild Core operations
+  $ref: './guild-core-service.yaml#/paths'
+
+  # Member management (will be created in next iteration)
+  # $ref: './guild-service/guild-members-paths.yaml#/paths'
+
+  # Bank operations (existing file)
+  $ref: './guild-bank-service.yaml#/paths'
+
+  # Territory operations (existing file)
+  $ref: './guild-territory-service.yaml#/paths'
+
+  # War operations (existing file)
+  $ref: './guild-war-service.yaml#/paths'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  # Common parameters
+  parameters:
+    GuildId:
+      name: guildId
+      in: path
+      required: true
+      description: Guild unique identifier
+      schema:
+        type: string
+        format: uuid
+        example: "550e8400-e29b-41d4-a716-446655440000"
+
+    Page:
+      name: page
+      in: query
+      description: Page number for pagination
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+
+    Limit:
+      name: limit
+      in: query
+      description: Number of items per page
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+
+  # Schemas (core schemas defined here, extended by sub-modules)
+  schemas:
+    # Common error responses
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          example: "VALIDATION_ERROR"
+        message:
+          type: string
+          example: "Invalid guild name"
+        details:
+          type: object
+          additionalProperties: true
+
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [ok, degraded, down]
+          example: "ok"
+        timestamp:
+          type: string
+          format: date-time
+          example: "2024-01-01T12:00:00Z"
+        version:
+          type: string
+          example: "1.0.0"
+
+  # Common responses
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    Forbidden:
+      description: Insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    TooManyRequests:
+      description: Rate limit exceeded
+      headers:
+        Retry-After:
+          schema:
+            type: integer
+            example: 60
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
