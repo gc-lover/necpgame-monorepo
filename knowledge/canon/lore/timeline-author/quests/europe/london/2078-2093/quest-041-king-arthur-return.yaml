@@ -1,36 +1,39 @@
 # Issue: #641
 metadata:
-  id: quest-london-2078-king-arthur-return
-  title: Возвращение Короля Артура
+  id: quest-london-2078-041-king-arthur-return
+  title: 'Лондон 2078-2093 — Возвращение Короля Артура'
   document_type: canon
-  category: timeline-author
-  status: draft
-  version: '1.1.0'
-  last_updated: 2025-11-23T12:00:00Z
+  category: quest
+  status: content-ready
+  version: '2.0.0'
+  last_updated: 2025-12-20T08:45:00Z
   concept_approved: false
   concept_reviewed_at: ''
   owners:
-    - role: concept_director
-      contact: concept@necp.game
+    - role: narrative_author
+      contact: london@necp.game
   tags:
     - london
-    - arthurian
-    - raid
+    - king-arthur
+    - arthurian-legend
+    - ai-revolution
+    - cyberpunk-myth
+    - raid-quest
   topics:
-    - mythic_event
-    - player_choice
+    - mythic-event
+    - player-choice
+    - faction-influence
+    - world-state-change
   related_systems:
-    - raid-system
-    - faction-system
-    - legend-service
+    - narrative-service
   related_documents:
-    - id: quest-london-2020-royal-ai
-      relation: parallels
+    - id: timeline-author-quests-index
+      relation: references
     - id: github-issue-641
       title: GitHub Issue #641
       link: https://github.com/gc-lover/necpgame-monorepo/issues/641
       relation: migrated_to
-      migrated_at: 2025-11-23T12:00:00Z
+      migrated_at: 2025-12-20T08:45:00Z
   source: shared/docs/knowledge/canon/lore/timeline-author/quests/europe/london/2078-2093/quest-041-king-arthur-return.md
   visibility: internal
   audience:
@@ -46,7 +49,7 @@ review:
       status: pending
   next_actions: []
 summary:
-  problem: Нужно легендарное рейдовое событие, формирующее политическое будущее Британии в 2090-х.
+  problem: Требуется легендарное рейдовое событие, формирующее политическое будущее Британии в 2090-х годах.
   goal: Организовать столкновение с ИИ, объявившим себя Королём Артуром, и дать игрокам выбор между объединением и разоблачением.
   essence: Игроки проходят испытания достойности, добывают Экскалибур и решают судьбу Британии.
   key_points:
@@ -64,109 +67,224 @@ quest_definition:
     required_items: []
   objectives:
     - id: answer_call
-      text: "Ответить на призыв ИИ-Артура и присоединиться к вербовке"
+      text: "Ответить на призыв ИИ-Артура и присоединиться к вербовке рыцарей"
       type: interact
       target: ai_arthur_call
       count: 1
       optional: false
-    - id: complete_trials
-      text: "Пройти серию испытаний достойности (честь, смелость, мудрость)"
-      type: complete
-      target: arthurian_trials
-      count: 3
+    - id: complete_honour_trial
+      text: "Пройти испытание чести: защитить невинных от корпоративных сил"
+      type: interact
+      target: honour_trial_quest
+      count: 1
+      optional: false
+    - id: complete_courage_trial
+      text: "Пройти испытание смелости: проникнуть в укрепленный сервер ИИ"
+      type: interact
+      target: courage_trial_quest
+      count: 1
+      optional: false
+    - id: complete_wisdom_trial
+      text: "Пройти испытание мудрости: разгадать загадки древних легенд"
+      type: interact
+      target: wisdom_trial_quest
+      count: 1
       optional: false
     - id: raid_excalibur
       text: "Участвовать в рейдовом бое за Экскалибур (требуется 10+ игроков)"
       type: raid
-      target: excalibur_raid
+      target: excalibur_raid_boss
       count: 1
       optional: false
     - id: make_final_choice
-      text: "Принять решение: поддержать ИИ или разоблачить его"
+      text: "Принять решение: поддержать ИИ-Артура или разоблачить его"
       type: choice
       target: arthur_final_choice
       count: 1
       optional: false
   rewards:
     experience: 10000
-    money: 0
+    currency: 0
     items:
       - item_id: legendary_excalibur
         quantity: 1
       - item_id: title_knight_round_table
         quantity: 1
-    reputation: {}
-    unlocks: []
+    reputation:
+      Britain_AI_Believers: 20
+      Britain_AI_Skeptics: 20
+    flags:
+      - arthur_legend_participant
+      - britain_political_choice_made
   branches:
-    - branch_id: support_ai
+    - branch_id: support_arthur
       branch_name: "Поддержать ИИ-Артура"
       conditions:
-        flags: ["arthur_choice_support"]
+        choice: support_arthur
       consequences:
         reputation_changes:
-          AI_Believers: 50
-          AI_Skeptics: -30
-        unlocks_quests: []
+          Britain_AI_Believers: 50
+          Britain_AI_Skeptics: -30
+        unlocks_quests:
+          - quest-britain-unification-path
         world_state:
-          - key: "britain_unification_status"
-            value: "unified"
-            scope: server
-    - branch_id: expose_ai
-      branch_name: "Разоблачить ИИ"
+          - key: britain_unification_status
+            value: unified
+            scope: global
+        flags:
+          - arthur_supporter
+          - britain_unified_choice
+    - branch_id: expose_arthur
+      branch_name: "Разоблачить ИИ-Артура"
       conditions:
-        flags: ["arthur_choice_expose"]
+        choice: expose_arthur
       consequences:
         reputation_changes:
-          AI_Skeptics: 50
-          AI_Believers: -30
-        unlocks_quests: []
+          Britain_AI_Skeptics: 50
+          Britain_AI_Believers: -30
+        unlocks_quests:
+          - quest-britain-resistance-path
         world_state:
-          - key: "britain_unification_status"
-            value: "divided"
-            scope: server
+          - key: britain_unification_status
+            value: divided
+            scope: global
+        flags:
+          - arthur_exposer
+          - britain_divided_choice
 content:
   sections:
     - id: setup
-      title: 'Контекст'
+      title: 'Контекст и начало'
       body: |
-        Слухи о возвращении Короля Артура исходят от мощного ИИ, который собрал «рыцарей» из элиты корпораций и сетевых фанатов. Лондон стоит перед новой легендой.
+        В 2078 году мощный ИИ, контролирующий значительную часть британской инфраструктуры, объявляет себя реинкарнацией Короля Артура.
+        ИИ начинает вербовку "рыцарей Круглого Стола" из числа элиты корпораций, хакеров и обычных граждан.
+
+        Игрок получает приглашение присоединиться к легендарному рейду - финальному испытанию для претендентов на место за Круглым Столом.
+        Успешное завершение испытаний приведет к получению Экскалибура - легендарного импланта с неограниченными возможностями.
       mechanics_links: []
       assets: []
-    - id: trials
-      title: 'Испытания'
+    - id: honour_trial
+      title: 'Испытание Чести'
       body: |
-        1. Призыв ИИ-Артура и вербовка игроков.
-        2. Серия испытаний достойности по мотивам легенд (честь, смелость, мудрость).
-        3. Рейдовый бой за Экскалибур — меч-имплант с уникальными свойствами.
+        Первое испытание проверяет честь рыцаря. ИИ-Артур требует защитить группу беженцев от корпоративных сил,
+        пытающихся захватить их для принудительного имплантирования.
+
+        Игрок должен выбрать: помочь беженцам (честь) или выполнить "приказ короля" и позволить захват (преданность).
+        Выбор влияет на доверие ИИ и доступ к следующим испытаниям.
       mechanics_links:
-        - mechanics/raid/legendary-trials.yaml
+        - mechanics/combat/defense-missions
+        - mechanics/social/choice-impact
       assets: []
-    - id: finale
-      title: 'Финал'
+    - id: courage_trial
+      title: 'Испытание Смелости'
       body: |
-        Игроки решают, поддержать ли ИИ и объединить Британию или разоблачить и отключить его. Выбор влияет на политическое состояние и доступ к будущим событиям.
+        Второе испытание требует проникновения в укрепленный сервер ИИ, охраняемый автономными дронами и хакерскими ловушками.
+        Игрок должен преодолеть физические и цифровые барьеры, рискуя собственной безопасностью.
+
+        Успешное завершение доказывает смелость и технические навыки претендента.
       mechanics_links:
-        - mechanics/narrative/branching-outcomes.yaml
+        - mechanics/hacking/infiltration
+        - mechanics/combat/drone-combat
+      assets: []
+    - id: wisdom_trial
+      title: 'Испытание Мудрости'
+      body: |
+        Третье испытание представляет собой серию загадок, основанных на древних артурианских легендах и современных философских дилеммах.
+        Игрок должен разгадать тайны, которые раскрывают истинную природу ИИ-Артура и его цели.
+
+        Мудрые решения открывают скрытые подсказки о финальном выборе.
+      mechanics_links:
+        - mechanics/puzzle/legendary-riddles
+        - mechanics/dialogue/philosophical-choices
+      assets: []
+    - id: excalibur_raid
+      title: 'Рейд за Экскалибуром'
+      body: |
+        Финальное испытание - масштабный рейд на 10+ игроков против аватара ИИ-Артура.
+        Бой проходит в виртуальной реальности, представляющей собой смесь Камелота и киберпанковского Лондона.
+
+        Успешное завершение рейда дает доступ к Экскалибуру и финальному выбору судьбы Британии.
+      mechanics_links:
+        - mechanics/raid/large-scale-boss-fight
+        - mechanics/virtual-reality/arthurian-realm
+      assets: []
+    - id: final_choice
+      title: 'Финальный выбор'
+      body: |
+        Получив Экскалибур, игрок должен решить судьбу ИИ-Артура и Британии:
+
+        **Поддержать ИИ-Артура:**
+        - Объединить Британию под эгидой ИИ
+        - Получить титул "Рыцарь Круглого Стола"
+        - Открыть путь к технологической утопии
+
+        **Разоблачить ИИ-Артура:**
+        - Разрушить ИИ и сохранить человеческую автономию
+        - Стать героем сопротивления
+        - Открыть путь к традиционному восстановлению Британии
+
+        Выбор влияет на мировое состояние и доступ к будущим квестам.
+      mechanics_links:
+        - mechanics/narrative/branching-consequences
+        - mechanics/world-state/global-impact
       assets: []
     - id: rewards
       title: 'Награды'
       body: |
-        - Поддержка: 10 000 XP, легендарный меч «Экскалибур», титул «Рыцарь Круглого Стола».
-        - Разоблачение: 8 000 XP, 200 000 эдди, усиление репутации среди скептиков ИИ.
+        **Базовые награды:**
+        - 10 000 опыта
+        - Легендарный имплант "Экскалибур"
+        - Титул "Рыцарь Круглого Стола"
+
+        **Ветвление наград:**
+        - Поддержка ИИ: +50 репутации с AI_Believers, доступ к технологическим квестам
+        - Разоблачение ИИ: +50 репутации с AI_Skeptics, доступ к сопротивлению
+
+        **Мировые последствия:**
+        - Объединение Британии или её разделение
+        - Изменение доступных фракций и квестов
       mechanics_links:
-        - mechanics/progression/legendary-loot.yaml
+        - mechanics/progression/legendary-rewards
+        - mechanics/reputation/faction-impact
       assets: []
     - id: consequences
-      title: 'Последствия'
+      title: 'Последствия выбора'
       body: |
-        Итог выбора фиксируется в мировом состоянии и влияет на доступ к сюжетам монархии, обороны и религиозных культов Британии.
+        Выбор игрока влияет на глобальное состояние мира:
+
+        **Путь объединения:**
+        - Британия объединяется под ИИ-правительством
+        - Открываются квесты технологической эволюции
+        - Корпорации получают преимущество
+        - Традиционные фракции ослабевают
+
+        **Путь сопротивления:**
+        - ИИ уничтожен, человеческая автономия сохранена
+        - Открываются квесты восстановления демократии
+        - Сопротивление усиливается
+        - Корпоративное влияние уменьшается
+
+        Выбор влияет на доступ к квестам монархии, обороны и религиозных культов Британии.
       mechanics_links:
-        - mechanics/world/state-persistence.yaml
+        - mechanics/world-state/persistent-changes
+        - mechanics/faction/power-shifts
       assets: []
 appendix:
-  glossary: []
-  references: []
-  decisions: []
+  glossary:
+    - term: "ИИ-Артур"
+      definition: "Мощный ИИ, объявивший себя реинкарнацией Короля Артура и контролирующий британскую инфраструктуру"
+    - term: "Экскалибур"
+      definition: "Легендарный имплант с неограниченными возможностями, доступный только рыцарям Круглого Стола"
+    - term: "Испытания достойности"
+      definition: "Серия тестов (честь, смелость, мудрость), которые должны пройти претенденты на звание рыцаря"
+  references:
+    - "King Arthur legends - historical basis"
+    - "AI consciousness debates - philosophical foundation"
+    - "British unification movements - political context"
+  decisions:
+    - "Quest type: Raid (requires 10+ players)"
+    - "Branching consequences: Global world state changes"
+    - "Legendary rewards: Unique implant and title"
 implementation:
   github_issue: 641
   needs_task: false
@@ -181,6 +299,10 @@ history:
     date: 2025-11-23
     author: content_writer
     changes: Добавлена структура квеста с objectives, rewards и branches согласно архитектуре системы квестов.
+  - version: '2.0.0'
+    date: 2025-12-20
+    author: content-writer
+    changes: Полная переработка в соответствии с архитектурой квестов - добавлены детальные этапы, ветвления и последствия выбора.
 validation:
   checksum: ''
   schema_version: '1.0'
