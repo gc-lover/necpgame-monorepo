@@ -1,0 +1,56 @@
+openapi: 3.0.3
+info:
+  title: Admin Common Components
+  description: Общие компоненты для admin API
+  version: 1.0.0
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT токен авторизации для admin API
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Код ошибки
+        message:
+          type: string
+          description: Описание ошибки
+        details:
+          type: object
+          description: Дополнительные детали ошибки
+          nullable: true
+      required:
+        - error
+        - message
+
+  responses:
+    Unauthorized:
+      description: Неавторизован
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "UNAUTHORIZED"
+            message: "Требуется авторизация"
+            details: null
+
+    BadRequest:
+      description: Неверный запрос
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: "BAD_REQUEST"
+            message: "Неверные параметры запроса"
+            details:
+              field: "parameter_name"
+              reason: "invalid format"
