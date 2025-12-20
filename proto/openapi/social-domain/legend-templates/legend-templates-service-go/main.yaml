@@ -423,36 +423,10 @@ components:
                 example: 1.0.0
 
     TemplatesListResponse:
-      description: List of story templates
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              templates:
-                type: array
-                items:
-                  $ref: '#/components/schemas/StoryTemplate'
-              total:
-                type: integer
-                minimum: 0
-              offset:
-                type: integer
-                minimum: 0
-              limit:
-                type: integer
-                minimum: 1
-                maximum: 100
+      $ref: './schemas/templates-list-response.yaml'
 
     TemplateResponse:
-      description: Single template response
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              template:
-                $ref: '#/components/schemas/StoryTemplate'
+      $ref: './schemas/template-response.yaml'
 
     TemplateVariantsResponse:
       description: Template variants response
@@ -512,28 +486,7 @@ components:
                 $ref: '#/components/schemas/VariableRule'
 
     GeneratedLegendResponse:
-      description: Generated legend story
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              story:
-                type: string
-                description: Generated story text
-              template_id:
-                type: string
-                format: uuid
-                description: Template used for generation
-              variant_id:
-                type: string
-                format: uuid
-                description: Variant used for generation
-              variables_used:
-                type: object
-                description: Variables substituted in the template
-                additionalProperties:
-                  type: string
+      $ref: './schemas/generated-legend-response.yaml'
 
     ActiveTemplatesResponse:
       description: Active templates for fast generation
@@ -629,43 +582,7 @@ components:
   schemas:
     # Template schemas
     StoryTemplate:
-      type: object
-      required: [id, type, category, base_template]
-      properties:
-        id:
-          type: string
-          format: uuid
-        type:
-          type: string
-          enum: [combat, social, economic, exploration]
-        category:
-          type: string
-          description: Event category
-        base_template:
-          type: string
-          description: Base template with {variable} placeholders
-        variables:
-          type: array
-          items:
-            type: string
-          description: Required variables for this template
-        conditions:
-          type: object
-          description: Activation conditions
-        variants:
-          type: array
-          items:
-            type: string
-          description: Alternative template formulations
-        active:
-          type: boolean
-          default: true
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
+      $ref: './schemas/story-template.yaml'
 
     CreateTemplateRequest:
       type: object
@@ -762,30 +679,7 @@ components:
 
     # Variable schemas
     VariableRule:
-      type: object
-      required: [id, type, name, rules]
-      properties:
-        id:
-          type: string
-          format: uuid
-        type:
-          type: string
-          enum: [player_name, action_verb, enemy_type, location, number, time_context, faction, emotion]
-        name:
-          type: string
-          description: Variable placeholder name
-        rules:
-          type: object
-          description: Substitution rules
-        active:
-          type: boolean
-          default: true
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
+      $ref: './schemas/variable-rule.yaml'
 
     CreateVariableRequest:
       type: object
@@ -814,24 +708,7 @@ components:
 
     # Generation schemas
     GenerateLegendRequest:
-      type: object
-      required: [event_type, event_data]
-      properties:
-        event_type:
-          type: string
-          enum: [combat, social, economic, exploration]
-        event_data:
-          type: object
-          description: Event data for variable substitution
-        context:
-          type: object
-          description: Additional context (faction, location, etc.)
-        variant_count:
-          type: integer
-          minimum: 1
-          maximum: 5
-          default: 1
-          description: Number of story variants to generate
+      $ref: './schemas/generate-legend-request.yaml'
 
     ActiveTemplate:
       type: object

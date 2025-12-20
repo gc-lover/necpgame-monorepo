@@ -1,0 +1,703 @@
+openapi: 3.0.3
+info:
+  title: Gameplay Restricted Modes Service API
+  description: |
+    API для системы режимов с ограничениями в MMORPG.
+
+    ## Описание системы
+
+    Система предоставляет экстремальные режимы сложности для хардкорных игроков:
+    - **Ironman Mode**: перманентная смерть при смерти персонажа
+    - **Hardcore Mode**: ограниченные ресурсы и снаряжение
+    - **Solo Challenge**: одиночное прохождение контента
+    - **No-Death Runs**: прохождение без смертей с бонусами
+
+    ## Архитектура
+
+    **Микросервис**: `gameplay-service-go`
+
+    **База данных**: PostgreSQL с таблицами:
+    - `player_restricted_modes` - статус режимов игрока
+    - `restricted_mode_sessions` - активные сессии режимов
+    - `restricted_mode_achievements` - достижения по режимам
+
+    **Интеграции**:
+    - `character-service` - обработка смертей
+    - `achievement-service` - выдача достижений
+    - `notification-service` - уведомления игроков
+  version: 1.0.0
+  contact:
+    name: Gameplay Team
+    email: gameplay@necpgame.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://api.necpgame.com/v1
+    description: Production server
+  - url: https://staging-api.necpgame.com/v1
+    description: Staging server
+  - url: http://localhost:8080/v1
+    description: Local development server
+
+security:
+  - BearerAuth: []
+
+paths:
+  /gameplay/restricted-modes/available:
+    get:
+      summary: Получить доступные режимы с ограничениями
+      description: |
+        Возвращает список всех доступных режимов с ограничениями для текущего игрока.
+        Учитывает уровень персонажа, достижения и текущий статус режимов.
+      operationId: getAvailableRestrictedModes
+      tags:
+        - Restricted Modes
+      responses:
+        '200':
+          description: Список доступных режимов
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  modes:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/RestrictedMode'
+                  player_eligibility:
+                    type: object
+                    properties:
+                      ironman_available:
+                        type: boolean
+                        description: Доступен ли Ironman режим
+                      hardcore_available:
+                        type: boolean
+                        description: Доступен ли Hardcore режим
+                      solo_available:
+                        type: boolean
+                        description: Доступен ли Solo режим
+                      nodeath_available:
+                        type: boolean
+                        description: Доступен ли No-Death режим
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/restricted-modes/status:
+    get:
+      summary: Получить статус активных режимов игрока
+      description: |
+        Возвращает информацию о текущих активных режимах с ограничениями для игрока.
+        Включает прогресс, ограничения и статистику.
+      operationId: getPlayerRestrictedModesStatus
+      tags:
+        - Restricted Modes
+      responses:
+        '200':
+          description: Статус режимов игрока
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  active_modes:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ActiveRestrictedMode'
+                  statistics:
+                    $ref: '#/components/schemas/PlayerModeStatistics'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/restricted-modes/select:
+    post:
+      summary: Выбрать режим с ограничениями
+      description: |
+        Активирует выбранный режим с ограничениями для игрока.
+        Проверяет элигибельность и создает новую сессию режима.
+      operationId: selectRestrictedMode
+      tags:
+        - Restricted Modes
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - mode_type
+                - character_id
+              properties:
+                mode_type:
+                  type: string
+                  enum: [ironman, hardcore, solo, nodeath]
+                  description: Тип режима
+                character_id:
+                  type: string
+                  format: uuid
+                  description: ID персонажа
+                content_type:
+                  type: string
+                  enum: [quest, dungeon, raid, pvp]
+                  description: Тип контента для Solo/No-Death режимов
+                difficulty:
+                  type: string
+                  enum: [normal, hard, mythic]
+                  description: Уровень сложности
+      responses:
+        '201':
+          description: Режим успешно активирован
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  session_id:
+                    type: string
+                    format: uuid
+                    description: ID созданной сессии
+                  mode:
+                    $ref: '#/components/schemas/ActiveRestrictedMode'
+                  restrictions_applied:
+                    type: array
+                    items:
+                      type: string
+                    description: Примененные ограничения
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          description: Режим недоступен для игрока
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "MODE_NOT_AVAILABLE"
+                  reason:
+                    type: string
+                    example: "Insufficient character level"
+        '409':
+          description: Игрок уже имеет активный режим
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "ACTIVE_MODE_EXISTS"
+                  current_mode:
+                    $ref: '#/components/schemas/ActiveRestrictedMode'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/restricted-modes/{sessionId}/complete:
+    post:
+      summary: Завершить сессию режима
+      description: |
+        Завершает активную сессию режима с ограничениями.
+        Вычисляет награды и обновляет достижения.
+      operationId: completeRestrictedModeSession
+      tags:
+        - Restricted Modes
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID сессии режима
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - success
+              properties:
+                success:
+                  type: boolean
+                  description: Успешно ли пройден режим
+                completion_time:
+                  type: integer
+                  format: int64
+                  description: Время прохождения в секундах
+                score:
+                  type: integer
+                  description: Очки за прохождение
+                notes:
+                  type: string
+                  maxLength: 1000
+                  description: Комментарии игрока
+      responses:
+        '200':
+          description: Сессия успешно завершена
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  session:
+                    $ref: '#/components/schemas/CompletedRestrictedModeSession'
+                  rewards:
+                    $ref: '#/components/schemas/ModeCompletionRewards'
+                  achievements_unlocked:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Achievement'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          description: Сессия не найдена
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/restricted-modes/{sessionId}/fail:
+    post:
+      summary: Завершить сессию режима с провалом
+      description: |
+        Принудительно завершает сессию режима при провале (смерть персонажа в Ironman режиме и т.д.).
+        Применяет штрафы и обновляет статистику.
+      operationId: failRestrictedModeSession
+      tags:
+        - Restricted Modes
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID сессии режима
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - failure_reason
+              properties:
+                failure_reason:
+                  type: string
+                  enum: [death, timeout, quit, violation]
+                  description: Причина провала
+                failure_details:
+                  type: object
+                  description: Детали провала
+      responses:
+        '200':
+          description: Сессия завершена с провалом
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  session:
+                    $ref: '#/components/schemas/FailedRestrictedModeSession'
+                  penalties_applied:
+                    type: array
+                    items:
+                      type: string
+                    description: Примененные штрафы
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          description: Сессия не найдена
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /gameplay/restricted-modes/leaderboard:
+    get:
+      summary: Получить таблицу лидеров по режимам
+      description: |
+        Возвращает таблицу лучших результатов по различным режимам с ограничениями.
+        Поддерживает фильтрацию по типу режима и временному периоду.
+      operationId: getRestrictedModesLeaderboard
+      tags:
+        - Restricted Modes
+      parameters:
+        - name: mode_type
+          in: query
+          schema:
+            type: string
+            enum: [ironman, hardcore, solo, nodeath]
+          description: Тип режима для фильтрации
+        - name: timeframe
+          in: query
+          schema:
+            type: string
+            enum: [daily, weekly, monthly, alltime]
+            default: alltime
+          description: Временной период
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+          description: Максимальное количество результатов
+      responses:
+        '200':
+          description: Таблица лидеров
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  leaderboard:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/LeaderboardEntry'
+                  mode_type:
+                    type: string
+                  timeframe:
+                    type: string
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  schemas:
+    RestrictedMode:
+      type: object
+      required:
+        - mode_type
+        - name
+        - description
+        - requirements
+        - rewards
+      properties:
+        mode_type:
+          type: string
+          enum: [ironman, hardcore, solo, nodeath]
+          description: Тип режима
+        name:
+          type: string
+          description: Название режима
+          example: "Ironman Mode"
+        description:
+          type: string
+          description: Описание режима
+        requirements:
+          $ref: '#/components/schemas/ModeRequirements'
+        rewards:
+          $ref: '#/components/schemas/ModeRewards'
+        statistics:
+          $ref: '#/components/schemas/ModeStatistics'
+
+    ActiveRestrictedMode:
+      type: object
+      required:
+        - session_id
+        - mode_type
+        - character_id
+        - started_at
+        - restrictions
+      properties:
+        session_id:
+          type: string
+          format: uuid
+          description: ID сессии
+        mode_type:
+          type: string
+          enum: [ironman, hardcore, solo, nodeath]
+        character_id:
+          type: string
+          format: uuid
+        started_at:
+          type: string
+          format: date-time
+        restrictions:
+          type: array
+          items:
+            type: string
+          description: Активные ограничения
+        progress:
+          type: object
+          description: Прогресс в режиме
+        time_elapsed:
+          type: integer
+          format: int64
+          description: Прошедшее время в секундах
+
+    PlayerModeStatistics:
+      type: object
+      properties:
+        total_sessions:
+          type: integer
+          description: Всего сессий
+        successful_sessions:
+          type: integer
+          description: Успешных сессий
+        failed_sessions:
+          type: integer
+          description: Проваленных сессий
+        best_scores:
+          type: object
+          additionalProperties:
+            type: integer
+          description: Лучшие результаты по режимам
+        achievements:
+          type: array
+          items:
+            type: string
+          description: Полученные достижения
+
+    ModeRequirements:
+      type: object
+      properties:
+        min_character_level:
+          type: integer
+          minimum: 1
+        required_achievements:
+          type: array
+          items:
+            type: string
+        cooldown_period:
+          type: integer
+          format: int64
+          description: Период кулдауна в секундах
+
+    ModeRewards:
+      type: object
+      properties:
+        base_xp_multiplier:
+          type: number
+          format: float
+          minimum: 1.0
+        item_drops_multiplier:
+          type: number
+          format: float
+          minimum: 1.0
+        unique_titles:
+          type: array
+          items:
+            type: string
+        exclusive_items:
+          type: array
+          items:
+            type: string
+        leaderboard_bonuses:
+          type: boolean
+
+    ModeStatistics:
+      type: object
+      properties:
+        total_players_attempted:
+          type: integer
+        total_players_completed:
+          type: integer
+        average_completion_time:
+          type: integer
+          format: int64
+        highest_score:
+          type: integer
+
+    CompletedRestrictedModeSession:
+      type: object
+      required:
+        - session_id
+        - mode_type
+        - completed_at
+        - success
+      properties:
+        session_id:
+          type: string
+          format: uuid
+        mode_type:
+          type: string
+          enum: [ironman, hardcore, solo, nodeath]
+        completed_at:
+          type: string
+          format: date-time
+        success:
+          type: boolean
+        completion_time:
+          type: integer
+          format: int64
+        final_score:
+          type: integer
+        rank_achieved:
+          type: integer
+
+    FailedRestrictedModeSession:
+      type: object
+      required:
+        - session_id
+        - mode_type
+        - failed_at
+        - failure_reason
+      properties:
+        session_id:
+          type: string
+          format: uuid
+        mode_type:
+          type: string
+          enum: [ironman, hardcore, solo, nodeath]
+        failed_at:
+          type: string
+          format: date-time
+        failure_reason:
+          type: string
+          enum: [death, timeout, quit, violation]
+        penalties_applied:
+          type: array
+          items:
+            type: string
+
+    ModeCompletionRewards:
+      type: object
+      properties:
+        experience_gained:
+          type: integer
+        items_granted:
+          type: array
+          items:
+            $ref: '#/components/schemas/Item'
+        titles_unlocked:
+          type: array
+          items:
+            type: string
+        achievements_unlocked:
+          type: array
+          items:
+            type: string
+
+    LeaderboardEntry:
+      type: object
+      required:
+        - player_id
+        - player_name
+        - score
+        - rank
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        player_name:
+          type: string
+        character_name:
+          type: string
+        score:
+          type: integer
+        rank:
+          type: integer
+        completion_time:
+          type: integer
+          format: int64
+        completed_at:
+          type: string
+          format: date-time
+
+    Achievement:
+      type: object
+      required:
+        - achievement_id
+        - name
+        - description
+      properties:
+        achievement_id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        icon_url:
+          type: string
+        rarity:
+          type: string
+          enum: [common, rare, epic, legendary]
+
+    Item:
+      type: object
+      required:
+        - item_id
+        - name
+        - quantity
+      properties:
+        item_id:
+          type: string
+        name:
+          type: string
+        quantity:
+          type: integer
+        rarity:
+          type: string
+
+  responses:
+    BadRequest:
+      description: Некорректный запрос
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - error
+            properties:
+              error:
+                type: string
+                example: "VALIDATION_ERROR"
+              message:
+                type: string
+                example: "Invalid request parameters"
+              details:
+                type: object
+
+    Unauthorized:
+      description: Не авторизован
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - error
+            properties:
+              error:
+                type: string
+                example: "UNAUTHORIZED"
+              message:
+                type: string
+                example: "Authentication required"
+
+    InternalServerError:
+      description: Внутренняя ошибка сервера
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - error
+            properties:
+              error:
+                type: string
+                example: "INTERNAL_ERROR"
+              message:
+                type: string
+                example: "Internal server error occurred"
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT токен авторизации
