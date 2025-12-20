@@ -1,0 +1,187 @@
+-- Issue: #40, #552, #558, #559, #560, #561, #562, #563, #564
+-- Import lore from: lore\_03-lore\timeline-author\regions\cis\cities\saint-petersburg-2020-2093.yaml
+-- Generated: 2025-12-21T02:15:39.455375
+
+BEGIN;
+
+-- Lore: canon-region-cis-saint-petersburg-2020-2093
+INSERT INTO narrative.lore_entries (
+    lore_id, title, document_type, category,
+    content_data, version
+)
+VALUES (
+    'canon-region-cis-saint-petersburg-2020-2093',
+    'Санкт-Петербург 2020-2093 — Хроника Неон-Невы',
+    'canon',
+    'timeline-author',
+    '{
+  "metadata": {
+    "id": "canon-region-cis-saint-petersburg-2020-2093",
+    "title": "Санкт-Петербург 2020-2093 — Хроника Неон-Невы",
+    "document_type": "canon",
+    "category": "timeline-author",
+    "status": "approved",
+    "version": "1.1.0",
+    "last_updated": "2025-11-23T04:05:00+00:00",
+    "concept_approved": true,
+    "concept_reviewed_at": "2025-11-12T00:45:00+00:00",
+    "owners": [
+      {
+        "role": "lore_analyst",
+        "contact": "lore@necp.game"
+      }
+    ],
+    "tags": [
+      "cis",
+      "saint-petersburg",
+      "maritime"
+    ],
+    "topics": [
+      "regional-history",
+      "cultural-shift",
+      "logistics"
+    ],
+    "related_systems": [
+      "narrative-service",
+      "economy-service",
+      "world-service"
+    ],
+    "related_documents": [
+      {
+        "id": "canon-region-cis-index",
+        "relation": "references"
+      },
+      {
+        "id": "github-issue-1258",
+        "title": "GitHub Issue",
+        "link": "https://github.com/gc-lover/necpgame-monorepo/issues/1258",
+        "relation": "migrated_to",
+        "migrated_at": "2025-11-23T04:05:00+00:00"
+      }
+    ],
+    "source": "shared/docs/knowledge/canon/lore/_03-lore/timeline-author/regions/cis/cities/saint-petersburg-2020-2093.md",
+    "visibility": "internal",
+    "audience": [
+      "lore",
+      "narrative",
+      "systems"
+    ],
+    "risk_level": "medium"
+  },
+  "review": {
+    "chain": [
+      {
+        "role": "narrative_lead",
+        "reviewer": "",
+        "reviewed_at": "",
+        "status": "pending"
+      }
+    ],
+    "next_actions": []
+  },
+  "summary": {
+    "problem": "Версия региона содержала эпохи и механики фрипорта в разбросанных заметках и не показывала связь между портовыми хартиями, DAO-пошлинами и морскими хуками.",
+    "goal": "Привести хронику 2020–2093 к шаблону 1.1.0, выделив юридические режимы, морскую инфраструктуру и конфликты за контроль северных маршрутов.",
+    "essence": "«Неоновая Нева — свободный порт, где автономные DAO и дроновые флотилии контролируют доступ к Балтике».",
+    "key_points": [
+      {
+        "Обновлены пять эпох": "от фрипорта до экспорта пакета СПб как стандарта для северных морских маршрутов."
+      },
+      {
+        "Добавлены системные крючки для economy/world": "DAO-пошлины, борьба с чёрными провайдерами, лицензии на плавающие хабы."
+      },
+      "Зафиксированы конфликты между корпорациями, пиратами и городским DAO, а также возможности для рейдов и экономических кампаний."
+    ]
+  },
+  "content": {
+    "sections": [
+      {
+        "id": "port_profile",
+        "title": "Параметры региона",
+        "body": "Санкт-Петербург — северный мегаполис (~7 млн) с гибридной архитектурой: исторический центр под куполами и сеть плавучих молов.\nКлимат умеренно-холодный, ветровые шторма с Балтики; логистика зависит от ледокольных караванов и беспилотных буксиров.\nЭкономика: DAO-пошлины на импорт/экспорт, сервисы конвоирования, легализованные черные рынки имплантов и меди.\n",
+        "mechanics_links": [],
+        "assets": []
+      },
+      {
+        "id": "timeline_eras",
+        "title": "Хронология 2020–2093",
+        "body": "2020–2029 — «Фрипорт»: открытие свободной зоны импорта, приватные охранные службы и динамическое тарифообразование DAO.\n2030–2039 — «Неоновые воды»: дрономаршалы патрулируют фарватеры, плавающие хабы обеспечивают оффлайн-вещание и крипто-курс.\n2040–2060 — «Балтийское кольцо»: оптоволоконные петли связывают северные порты, идёт охота за нелегальными шлюзами.\n2061–2077 — «Портовые хартии»: баланс корпораций, пиратов и городского DAO; кодексы безопасности регулируют рейды.\n2078–2093 — «Пакет СПб»: экспорт регламентов и протоколов безопасности в другие мегаполисы, город — эталон северной логистики.\n",
+        "mechanics_links": [],
+        "assets": []
+      },
+      {
+        "id": "systems_hooks",
+        "title": "Системные крючки",
+        "body": "economy-service: динамические DAO-пошлины, страховки конвоев, лицензии на плавающие рынки.\nworld-service: штормы Балтики как мировые события, ледовые блокировки, экологические риски от техно-хабов.\nnarrative-service: рейды против чёрных провайдеров, сопровождение конвоев, дипломатия между корпорациями и городским DAO.\n",
+        "mechanics_links": [],
+        "assets": []
+      },
+      {
+        "id": "faction_matrix",
+        "title": "Фракции и напряжение",
+        "body": "«Городское DAO» — регулирует тарифы и допускает/блокирует суда; торгуется с корпорациями.\n«Балтийское кольцо» — корпоративный синдикат, контролирующий оптоволоконную сеть.\n«Неоновые пиратские артели» — используют стелс-дроны и скрытые причалы, поставляют нелегальные грузы.\nКонфликтные узлы: контроль дроновых коридоров, борьба за крипто-контракт на обслуживание рейдов, саботаж портовых хартии.\n",
+        "mechanics_links": [],
+        "assets": []
+      },
+      {
+        "id": "content_opportunities",
+        "title": "Контентные возможности",
+        "body": "PvPvE-рейды на плавающие хабы, где требуется отключение DAO-пошлин или взлом дроновых патрулей.\nЭкономические кампании по захвату лицензий и торговых окон, расширяющие влияние игрока на северные маршруты.\nСоциальные сценарии внутри Портовых хартии: переговоры, шпионаж, кибератаки на систему распределения пошлин.\n",
+        "mechanics_links": [],
+        "assets": []
+      }
+    ]
+  },
+  "appendix": {
+    "glossary": [],
+    "references": [
+      {
+        "title": "Baltic Trade Routes",
+        "link": "../../timeline/detailed-events-2040-2060.yaml"
+      },
+      {
+        "title": "Maritime Systems Overview",
+        "link": "../../technology/blackwall-detailed-2023-2093.yaml"
+      }
+    ],
+    "decisions": []
+  },
+  "implementation": {
+    "github_issue": 1258,
+    "needs_task": false,
+    "queue_reference": [
+      "shared/trackers/queues/concept/queued.yaml"
+    ],
+    "blockers": []
+  },
+  "history": [
+    {
+      "version": "1.1.0",
+      "date": "2025-11-12",
+      "author": "narrative_team",
+      "changes": "Переведено в шаблон 1.1.0, добавлены портовые системы, фракционная матрица и контентные хуки."
+    },
+    {
+      "version": "0.2.0",
+      "date": "2025-11-11",
+      "author": "narrative_team",
+      "changes": "Конвертация событий Санкт-Петербурга в YAML и выделение портовых механик."
+    }
+  ],
+  "validation": {
+    "checksum": "",
+    "schema_version": "1.0"
+  }
+}'::jsonb,
+    1
+)
+ON CONFLICT (lore_id) DO UPDATE SET
+    title = EXCLUDED.title,
+    document_type = EXCLUDED.document_type,
+    category = EXCLUDED.category,
+    content_data = EXCLUDED.content_data,
+    version = EXCLUDED.version,
+    updated_at = CURRENT_TIMESTAMP;
+
+
+COMMIT;

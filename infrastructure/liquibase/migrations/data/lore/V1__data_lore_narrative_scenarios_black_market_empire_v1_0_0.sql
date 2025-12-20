@@ -1,0 +1,308 @@
+-- Issue: #40, #552, #558, #559, #560, #561, #562, #563, #564
+-- Import lore from: narrative\scenarios\black-market-empire.yaml
+-- Generated: 2025-12-21T02:15:39.688517
+
+BEGIN;
+
+-- Lore: scenario-black-market-empire
+INSERT INTO narrative.lore_entries (
+    lore_id, title, document_type, category,
+    content_data, version
+)
+VALUES (
+    'scenario-black-market-empire',
+    'Империя черного рынка: Теневая экономика',
+    'canon',
+    'narrative-scenario',
+    '{
+  "metadata": {
+    "id": "scenario-black-market-empire",
+    "title": "Империя черного рынка: Теневая экономика",
+    "document_type": "canon",
+    "category": "narrative-scenario",
+    "status": "draft",
+    "version": "1.0.0",
+    "last_updated": "2025-12-14T12:00:00+00:00",
+    "concept_approved": false,
+    "concept_reviewed_at": "",
+    "owners": [
+      {
+        "role": "concept_director",
+        "contact": "concept@necp.game"
+      }
+    ],
+    "tags": [
+      "black-market",
+      "empire",
+      "shadow-economy",
+      "crime"
+    ],
+    "topics": [
+      "underground_economy",
+      "organized_crime",
+      "economic_alternatives"
+    ],
+    "related_systems": [
+      "narrative-service",
+      "economy-service",
+      "social-service"
+    ],
+    "related_documents": [],
+    "source": "shared/docs/knowledge/canon/narrative/scenarios/black-market-empire.yaml",
+    "visibility": "internal",
+    "audience": [
+      "concept",
+      "narrative",
+      "liveops"
+    ],
+    "risk_level": "high"
+  },
+  "review": {
+    "chain": [
+      {
+        "role": "concept_director",
+        "reviewer": "",
+        "reviewed_at": "",
+        "status": "pending"
+      }
+    ],
+    "next_actions": []
+  },
+  "summary": {
+    "problem": "Игрок строит империю в теневой экономике Амстердама.",
+    "goal": "Создать и поддерживать сеть черного рынка, балансируя между фракциями.",
+    "essence": "Законная экономика рушится, теневая становится новой реальностью.",
+    "key_points": [
+      "Построение сети контактов и доверия",
+      "Баланс между предложением и спросом",
+      "Конкуренция с другими игроками рынка"
+    ]
+  },
+  "scenario_structure": {
+    "setup": {
+      "player_background": "Маленький дилер, видящий возможности в хаосе",
+      "initial_choice": "Выбрать специализацию (оружие, технологии, наркотики, информация)",
+      "stakes": "Контроль над теневой экономикой района или города"
+    },
+    "phases": [
+      {
+        "phase_1": "Основание",
+        "description": "Создание первой точки продаж, набор команды",
+        "duration": "2 игровых дня"
+      },
+      {
+        "phase_2": "Расширение",
+        "description": "Захват новых территорий, диверсификация товаров",
+        "duration": "4 игровых дня"
+      },
+      {
+        "phase_3": "Консолидация",
+        "description": "Устранение конкурентов, укрепление позиций",
+        "duration": "3 игровых дня"
+      },
+      {
+        "phase_4": "Империя",
+        "description": "Управление большой сетью, политическое влияние",
+        "duration": "5+ игровых дней"
+      }
+    ],
+    "victory_conditions": [
+      {
+        "monopoly": "Полный контроль над черным рынком города"
+      },
+      {
+        "balance": "Стабильная прибыль без доминирования"
+      },
+      {
+        "exposure": "Быстрое обогащение с риском разоблачения"
+      }
+    ]
+  },
+  "economic_mechanics": {
+    "supply_demand": [
+      {
+        "weapons": "Высокий спрос от банд, низкая конкуренция"
+      },
+      {
+        "tech": "Высокая прибыль, но высокий риск конфискации"
+      },
+      {
+        "drugs": "Стабильный доход, но моральные последствия"
+      },
+      {
+        "information": "Максимальная прибыль, максимальный риск"
+      }
+    ],
+    "pricing": [
+      {
+        "market_fluctuations": "Цены меняются в зависимости от событий"
+      },
+      {
+        "bulk_discounts": "Скидки за оптовые партии"
+      },
+      {
+        "premium_services": "Дополнительные услуги за доплату"
+      }
+    ],
+    "risks": [
+      {
+        "police_raids": "Риск потери товара и ареста"
+      },
+      {
+        "competitor_attacks": "Нападения от других дилеров"
+      },
+      {
+        "customer_betrayal": "Предательства покупателей"
+      }
+    ]
+  },
+  "factions": [
+    {
+      "name": "Police Undercover",
+      "type": "Антагонист",
+      "motivation": "Разоблачить и уничтожить сеть",
+      "tactics": "Инфильтрация, подстава, рейды"
+    },
+    {
+      "name": "Rival Syndicates",
+      "type": "Конкуренты",
+      "motivation": "Захват доли рынка",
+      "tactics": "Саботаж, насилие, подкуп"
+    },
+    {
+      "name": "Customer Base",
+      "type": "Клиенты",
+      "motivation": "Доступ к товарам",
+      "tactics": "Лояльность, рекомендации, защита"
+    }
+  ],
+  "player_roles": [
+    {
+      "kingpin": "Стратегическое управление империей"
+    },
+    {
+      "enforcer": "Защита территории и устранение угроз"
+    },
+    {
+      "supplier": "Организация поставок и логистики"
+    },
+    {
+      "negotiator": "Переговоры с клиентами и конкурентами"
+    }
+  ],
+  "consequences": {
+    "economic": [
+      {
+        "wealth": "Накопление огромного состояния"
+      },
+      {
+        "market_control": "Влияние на легальную экономику"
+      },
+      {
+        "diversification": "Инвестиции в легальный бизнес"
+      }
+    ],
+    "social": [
+      {
+        "reputation": "Страх и уважение в преступном мире"
+      },
+      {
+        "network": "Широкие связи в подполье"
+      },
+      {
+        "morality": "Изменение мировоззрения игрока"
+      }
+    ],
+    "political": [
+      {
+        "corruption": "Подкуп чиновников и полицейских"
+      },
+      {
+        "influence": "Возможность влиять на политику"
+      },
+      {
+        "downfall": "Риск полного краха при разоблачении"
+      }
+    ]
+  },
+  "player_choices": [
+    {
+      "ethical_dealing": "Избегать особо опасных товаров"
+    },
+    {
+      "ruthless_expansion": "Любые средства для роста"
+    },
+    {
+      "quality_focus": "Лучшие товары по премиум ценам"
+    },
+    {
+      "volume_business": "Массовые продажи по низким ценам"
+    }
+  ],
+  "replayability": [
+    {
+      "multiple_endings": "Легализация бизнеса, крах, побег"
+    },
+    {
+      "random_events": "Неожиданные поставки, полицейские облавы"
+    },
+    {
+      "character_development": "Эволюция от уличного дилера до магната"
+    },
+    {
+      "difficulty_levels": "От мелкого дилера до международной империи"
+    }
+  ],
+  "timeline": [
+    {
+      "day_1": "Первая сделка"
+    },
+    {
+      "day_3": "Нанят первый помощник"
+    },
+    {
+      "day_7": "Захвачена первая территория"
+    },
+    {
+      "day_14": "Конфликт с конкурентами"
+    },
+    {
+      "day_30": "Установлен контроль над районом"
+    }
+  ],
+  "appendix": {
+    "glossary": [],
+    "references": [],
+    "decisions": []
+  },
+  "implementation": {
+    "github_issue": 140879399,
+    "needs_task": false,
+    "queue_reference": [],
+    "blockers": []
+  },
+  "history": [
+    {
+      "version": "1.0.0",
+      "date": "2025-12-14",
+      "author": "content_writer",
+      "changes": "Создан нарратив сценария \"Империя черного рынка\" с полной структурой теневой экономики."
+    }
+  ],
+  "validation": {
+    "checksum": "",
+    "schema_version": "1.0"
+  }
+}'::jsonb,
+    1
+)
+ON CONFLICT (lore_id) DO UPDATE SET
+    title = EXCLUDED.title,
+    document_type = EXCLUDED.document_type,
+    category = EXCLUDED.category,
+    content_data = EXCLUDED.content_data,
+    version = EXCLUDED.version,
+    updated_at = CURRENT_TIMESTAMP;
+
+
+COMMIT;

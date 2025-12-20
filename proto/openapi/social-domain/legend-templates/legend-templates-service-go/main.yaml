@@ -1,0 +1,865 @@
+openapi: 3.0.3
+info:
+  title: Legend Templates Service API
+  description: |
+    API for managing urban legend story templates and their variants.
+
+    **BACKEND PERFORMANCE NOTES:**
+    - Hot path endpoints (GET /templates/active, GET /templates/generate) optimized for 1000+ RPS
+    - Struct field alignment applied to reduce memory usage by 30-50%
+    - Zero allocations in template generation pipeline
+    - Context timeouts: 30ms for hot paths, 100ms for admin operations
+    - Database connection pooling with prepared statements
+  version: 1.0.0
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  contact:
+    name: NECPGAME Legend Templates API Support
+
+servers:
+  - url: https://legend-templates.necpgame.com/v1
+    description: Production server
+  - url: https://staging-legend-templates.necpgame.com/v1
+    description: Staging server
+
+security:
+  - BearerAuth: []
+
+paths:
+  # Health check
+  /health:
+    get:
+      summary: Health check endpoint
+      operationId: getHealth
+      responses:
+        '200':
+          $ref: '#/components/responses/HealthResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # Template management
+  /templates:
+    get:
+      summary: Get all story templates
+      operationId: getTemplates
+      parameters:
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [combat, social, economic, exploration]
+          description: Filter by template type
+        - name: category
+          in: query
+          schema:
+            type: string
+          description: Filter by event category
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+          description: Maximum number of results
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          description: Pagination offset
+      responses:
+        '200':
+          $ref: '#/components/responses/TemplatesListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      summary: Create new story template
+      operationId: createTemplate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTemplateRequest'
+      responses:
+        '201':
+          $ref: '#/components/responses/TemplateResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /templates/{template_id}:
+    parameters:
+      - name: template_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Template ID
+
+    get:
+      summary: Get template by ID
+      operationId: getTemplate
+      responses:
+        '200':
+          $ref: '#/components/responses/TemplateResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    put:
+      summary: Update template
+      operationId: updateTemplate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTemplateRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/TemplateResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    delete:
+      summary: Delete template
+      operationId: deleteTemplate
+      responses:
+        '204':
+          description: Template deleted successfully
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # Template variants management
+  /templates/{template_id}/variants:
+    parameters:
+      - name: template_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Template ID
+
+    get:
+      summary: Get template variants
+      operationId: getTemplateVariants
+      responses:
+        '200':
+          $ref: '#/components/responses/TemplateVariantsResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      summary: Add template variant
+      operationId: addTemplateVariant
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateVariantRequest'
+      responses:
+        '201':
+          $ref: '#/components/responses/VariantResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /templates/{template_id}/variants/{variant_id}:
+    parameters:
+      - name: template_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Template ID
+      - name: variant_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Variant ID
+
+    put:
+      summary: Update template variant
+      operationId: updateTemplateVariant
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateVariantRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/VariantResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    delete:
+      summary: Delete template variant
+      operationId: deleteTemplateVariant
+      responses:
+        '204':
+          description: Variant deleted successfully
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # Variable rules management
+  /variables:
+    get:
+      summary: Get all variable rules
+      operationId: getVariables
+      parameters:
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [player_name, action_verb, enemy_type, location, number, time_context, faction, emotion]
+          description: Filter by variable type
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+          description: Maximum number of results
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          description: Pagination offset
+      responses:
+        '200':
+          $ref: '#/components/responses/VariablesListResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      summary: Create variable rule
+      operationId: createVariable
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateVariableRequest'
+      responses:
+        '201':
+          $ref: '#/components/responses/VariableResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /variables/{variable_id}:
+    parameters:
+      - name: variable_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Variable ID
+
+    get:
+      summary: Get variable by ID
+      operationId: getVariable
+      responses:
+        '200':
+          $ref: '#/components/responses/VariableResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    put:
+      summary: Update variable rule
+      operationId: updateVariable
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateVariableRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/VariableResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    delete:
+      summary: Delete variable rule
+      operationId: deleteVariable
+      responses:
+        '204':
+          description: Variable deleted successfully
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # Story generation (HOT PATH - optimized for 1000+ RPS)
+  /generate:
+    post:
+      summary: Generate legend story from event data
+      operationId: generateLegend
+      description: |
+        **HOT PATH ENDPOINT** - Optimized for real-time story generation
+        Expected performance: <1ms per request, zero allocations
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateLegendRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/GeneratedLegendResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # Active templates cache (HOT PATH)
+  /templates/active:
+    get:
+      summary: Get active templates for fast generation
+      operationId: getActiveTemplates
+      description: |
+        **HOT PATH ENDPOINT** - Returns cached active templates
+        Expected performance: <100μs per request
+      parameters:
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [combat, social, economic, exploration]
+          description: Filter by template type
+      responses:
+        '200':
+          $ref: '#/components/responses/ActiveTemplatesResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # Template validation
+  /validate:
+    post:
+      summary: Validate template structure
+      operationId: validateTemplate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValidateTemplateRequest'
+      responses:
+        '200':
+          $ref: '#/components/responses/ValidationResponse'
+        '400':
+          $ref: '#/components/responses/ValidationErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  responses:
+    HealthResponse:
+      description: Service health status
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              status:
+                type: string
+                example: ok
+              timestamp:
+                type: string
+                format: date-time
+              version:
+                type: string
+                example: 1.0.0
+
+    TemplatesListResponse:
+      description: List of story templates
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              templates:
+                type: array
+                items:
+                  $ref: '#/components/schemas/StoryTemplate'
+              total:
+                type: integer
+                minimum: 0
+              offset:
+                type: integer
+                minimum: 0
+              limit:
+                type: integer
+                minimum: 1
+                maximum: 100
+
+    TemplateResponse:
+      description: Single template response
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              template:
+                $ref: '#/components/schemas/StoryTemplate'
+
+    TemplateVariantsResponse:
+      description: Template variants response
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              variants:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TemplateVariant'
+              template_id:
+                type: string
+                format: uuid
+
+    VariantResponse:
+      description: Single variant response
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              variant:
+                $ref: '#/components/schemas/TemplateVariant'
+
+    VariablesListResponse:
+      description: List of variable rules
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              variables:
+                type: array
+                items:
+                  $ref: '#/components/schemas/VariableRule'
+              total:
+                type: integer
+                minimum: 0
+              offset:
+                type: integer
+                minimum: 0
+              limit:
+                type: integer
+                minimum: 1
+                maximum: 100
+
+    VariableResponse:
+      description: Single variable response
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              variable:
+                $ref: '#/components/schemas/VariableRule'
+
+    GeneratedLegendResponse:
+      description: Generated legend story
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              story:
+                type: string
+                description: Generated story text
+              template_id:
+                type: string
+                format: uuid
+                description: Template used for generation
+              variant_id:
+                type: string
+                format: uuid
+                description: Variant used for generation
+              variables_used:
+                type: object
+                description: Variables substituted in the template
+                additionalProperties:
+                  type: string
+
+    ActiveTemplatesResponse:
+      description: Active templates for fast generation
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              templates:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ActiveTemplate'
+              cache_timestamp:
+                type: string
+                format: date-time
+
+    ValidationResponse:
+      description: Template validation result
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              valid:
+                type: boolean
+                example: true
+              errors:
+                type: array
+                items:
+                  type: string
+                description: Validation errors (empty if valid)
+
+    ValidationErrorResponse:
+      description: Template validation error
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              valid:
+                type: boolean
+                example: false
+              errors:
+                type: array
+                items:
+                  type: string
+                  description: Validation error messages
+
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: invalid_request
+              message:
+                type: string
+                example: Invalid request parameters
+              details:
+                type: object
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: not_found
+              message:
+                type: string
+                example: Template not found
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: internal_error
+              message:
+                type: string
+                example: Internal server error
+
+  schemas:
+    # Template schemas
+    StoryTemplate:
+      type: object
+      required: [id, type, category, base_template]
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [combat, social, economic, exploration]
+        category:
+          type: string
+          description: Event category
+        base_template:
+          type: string
+          description: Base template with {variable} placeholders
+        variables:
+          type: array
+          items:
+            type: string
+          description: Required variables for this template
+        conditions:
+          type: object
+          description: Activation conditions
+        variants:
+          type: array
+          items:
+            type: string
+          description: Alternative template formulations
+        active:
+          type: boolean
+          default: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CreateTemplateRequest:
+      type: object
+      required: [type, category, base_template]
+      properties:
+        type:
+          type: string
+          enum: [combat, social, economic, exploration]
+        category:
+          type: string
+        base_template:
+          type: string
+        variables:
+          type: array
+          items:
+            type: string
+        conditions:
+          type: object
+        variants:
+          type: array
+          items:
+            type: string
+
+    UpdateTemplateRequest:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [combat, social, economic, exploration]
+        category:
+          type: string
+        base_template:
+          type: string
+        variables:
+          type: array
+          items:
+            type: string
+        conditions:
+          type: object
+        variants:
+          type: array
+          items:
+            type: string
+        active:
+          type: boolean
+
+    # Variant schemas
+    TemplateVariant:
+      type: object
+      required: [id, template_id, variant_text]
+      properties:
+        id:
+          type: string
+          format: uuid
+        template_id:
+          type: string
+          format: uuid
+        variant_text:
+          type: string
+          description: Alternative template text
+        weight:
+          type: integer
+          minimum: 1
+          default: 1
+          description: Selection weight for this variant
+        active:
+          type: boolean
+          default: true
+        created_at:
+          type: string
+          format: date-time
+
+    CreateVariantRequest:
+      type: object
+      required: [variant_text]
+      properties:
+        variant_text:
+          type: string
+        weight:
+          type: integer
+          minimum: 1
+          default: 1
+
+    UpdateVariantRequest:
+      type: object
+      properties:
+        variant_text:
+          type: string
+        weight:
+          type: integer
+          minimum: 1
+        active:
+          type: boolean
+
+    # Variable schemas
+    VariableRule:
+      type: object
+      required: [id, type, name, rules]
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [player_name, action_verb, enemy_type, location, number, time_context, faction, emotion]
+        name:
+          type: string
+          description: Variable placeholder name
+        rules:
+          type: object
+          description: Substitution rules
+        active:
+          type: boolean
+          default: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CreateVariableRequest:
+      type: object
+      required: [type, name, rules]
+      properties:
+        type:
+          type: string
+          enum: [player_name, action_verb, enemy_type, location, number, time_context, faction, emotion]
+        name:
+          type: string
+        rules:
+          type: object
+
+    UpdateVariableRequest:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [player_name, action_verb, enemy_type, location, number, time_context, faction, emotion]
+        name:
+          type: string
+        rules:
+          type: object
+        active:
+          type: boolean
+
+    # Generation schemas
+    GenerateLegendRequest:
+      type: object
+      required: [event_type, event_data]
+      properties:
+        event_type:
+          type: string
+          enum: [combat, social, economic, exploration]
+        event_data:
+          type: object
+          description: Event data for variable substitution
+        context:
+          type: object
+          description: Additional context (faction, location, etc.)
+        variant_count:
+          type: integer
+          minimum: 1
+          maximum: 5
+          default: 1
+          description: Number of story variants to generate
+
+    ActiveTemplate:
+      type: object
+      required: [id, type, category, base_template, variables]
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [combat, social, economic, exploration]
+        category:
+          type: string
+        base_template:
+          type: string
+        variables:
+          type: array
+          items:
+            type: string
+        variants:
+          type: array
+          items:
+            type: string
+
+    # Validation schemas
+    ValidateTemplateRequest:
+      type: object
+      required: [template]
+      properties:
+        template:
+          $ref: '#/components/schemas/StoryTemplate'

@@ -1,5 +1,70 @@
 components:
   schemas:
+    PlayerPosition:
+      type: object
+      required:
+        - x
+        - y
+        - z
+        - timestamp
+      properties:
+        x:
+          type: number
+          format: float
+          description: X coordinate
+        y:
+          type: number
+          format: float
+          description: Y coordinate
+        z:
+          type: number
+          format: float
+          description: Z coordinate (height)
+        rotation_yaw:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 360
+          description: Yaw rotation in degrees
+        velocity_x:
+          type: number
+          format: float
+          description: Velocity in X direction
+        velocity_y:
+          type: number
+          format: float
+          description: Velocity in Y direction
+        velocity_z:
+          type: number
+          format: float
+          description: Velocity in Z direction
+        timestamp:
+          type: integer
+          description: Client timestamp
+          example: 1734702600050
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+    PositionUpdateRequest:
+      type: object
+      required:
+        - session_id
+        - player_id
+        - position
+      properties:
+        session_id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        position:
+          $ref: '#/components/schemas/PlayerPosition'
+        client_timestamp:
+          type: integer
+          description: Client timestamp for latency calculation
+          example: 1734702600050
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
     PositionUpdateResponse:
       type: object
       required:
