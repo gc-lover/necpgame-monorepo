@@ -5,8 +5,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/google/uuid"
 	"github.com/gc-lover/necpgame-monorepo/services/battle-pass-service-go/pkg/api"
+	"github.com/google/uuid"
 )
 
 // BenchmarkGetCurrentSeason benchmarks GetCurrentSeason handler
@@ -64,4 +64,3 @@ func BenchmarkClaimReward(b *testing.B) {
 		_, _ = handlers.ClaimReward(ctx, req)
 	}
 }
-

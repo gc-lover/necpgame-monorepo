@@ -13,26 +13,26 @@ import (
 	"golang.org/x/time/rate"
 )
 
-// OPTIMIZATION: Issue #2156 - Memory-aligned struct for circuit breaker performance
+// CircuitBreakerService OPTIMIZATION: Issue #2156 - Memory-aligned struct for circuit breaker performance
 type CircuitBreakerService struct {
-	logger          *logrus.Logger
-	metrics         *CircuitBreakerMetrics
-	config          *CircuitBreakerServiceConfig
+	logger  *logrus.Logger
+	metrics *CircuitBreakerMetrics
+	config  *CircuitBreakerServiceConfig
 
 	// OPTIMIZATION: Issue #2156 - Redis for distributed state management
-	redisClient     *redis.Client
+	redisClient *redis.Client
 
 	// OPTIMIZATION: Issue #2156 - Thread-safe storage for MMO resilience management
-	circuits        sync.Map // OPTIMIZATION: Concurrent circuit breaker management
-	bulkheads       sync.Map // OPTIMIZATION: Concurrent bulkhead management
-	timeouts        sync.Map // OPTIMIZATION: Concurrent timeout management
+	circuits            sync.Map // OPTIMIZATION: Concurrent circuit breaker management
+	bulkheads           sync.Map // OPTIMIZATION: Concurrent bulkhead management
+	timeouts            sync.Map // OPTIMIZATION: Concurrent timeout management
 	degradationPolicies sync.Map // OPTIMIZATION: Concurrent degradation policy management
-	rateLimiters    sync.Map // OPTIMIZATION: Per-client rate limiting
+	rateLimiters        sync.Map // OPTIMIZATION: Per-client rate limiting
 
 	// OPTIMIZATION: Issue #2156 - Memory pooling for hot path structs (zero allocations target!)
-	circuitResponsePool sync.Pool
-	bulkheadResponsePool sync.Pool
-	timeoutResponsePool sync.Pool
+	circuitResponsePool     sync.Pool
+	bulkheadResponsePool    sync.Pool
+	timeoutResponsePool     sync.Pool
 	degradationResponsePool sync.Pool
 }
 
@@ -85,7 +85,7 @@ func NewCircuitBreakerService(logger *logrus.Logger, metrics *CircuitBreakerMetr
 	return s
 }
 
-// OPTIMIZATION: Issue #2156 - Rate limiting middleware for circuit breaker protection
+// RateLimitMiddleware OPTIMIZATION: Issue #2156 - Rate limiting middleware for circuit breaker protection
 func (s *CircuitBreakerService) RateLimitMiddleware() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -107,8 +107,8 @@ func (s *CircuitBreakerService) RateLimitMiddleware() func(http.Handler) http.Ha
 	}
 }
 
-// Health check method
-func (s *CircuitBreakerService) HealthCheck(w http.ResponseWriter, r *http.Request) {
+// HealthCheck Health check method
+func (s *CircuitBreakerService) HealthCheck(w http.ResponseWriter) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(`{"status":"healthy","service":"circuit-breaker-service","version":"1.0.0","active_circuits":15,"active_bulkheads":8,"degraded_services":2}`))
@@ -234,8 +234,8 @@ func (s *CircuitBreakerService) syncCircuitStates() {
 				// Merge states if needed
 				if remoteCircuit.State != circuit.State {
 					s.logger.WithFields(logrus.Fields{
-						"circuit_id": circuit.CircuitID,
-						"local_state": circuit.State,
+						"circuit_id":   circuit.CircuitID,
+						"local_state":  circuit.State,
 						"remote_state": remoteCircuit.State,
 					}).Info("circuit state synchronized from Redis")
 					circuit.State = remoteCircuit.State
@@ -279,8 +279,8 @@ func (s *CircuitBreakerService) cleanupExpiredBulkheads() {
 		bulkhead := value.(*Bulkhead)
 
 		if bulkhead.CreatedAt.Before(cutoff) &&
-		   bulkhead.ActiveThreads == 0 &&
-		   bulkhead.QueuedRequests == 0 {
+			bulkhead.ActiveThreads == 0 &&
+			bulkhead.QueuedRequests == 0 {
 			s.bulkheads.Delete(key)
 			s.metrics.ActiveBulkheads.Dec()
 			s.logger.WithField("bulkhead_id", bulkhead.BulkheadID).Info("inactive bulkhead cleaned up")

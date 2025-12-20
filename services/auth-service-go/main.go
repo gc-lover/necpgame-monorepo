@@ -23,25 +23,43 @@ func main() {
 	logger.SetLevel(logrus.InfoLevel)
 
 	config := &config.AuthServiceConfig{
-		HTTPAddr:         getEnv("HTTP_ADDR", ":8086"),
-		HealthAddr:       getEnv("HEALTH_ADDR", ":8087"),
-		ReadTimeout:      30 * time.Second,
-		WriteTimeout:     30 * time.Second,
-		MaxHeaderBytes:   1 << 20, // 1MB
-		JWTSecret:        getEnv("JWT_SECRET", "your-super-secret-jwt-key-here"),
-		JWTExpiry:        15 * time.Minute, // OPTIMIZATION: Short-lived tokens for security
-		SessionTimeout:   24 * time.Hour,
-		MaxLoginAttempts: 5, // OPTIMIZATION: Brute force protection
+		HTTPServerConfig: config.HTTPServerConfig{
+			HTTPAddr:       getEnv("HTTP_ADDR", ":8086"),
+			HealthAddr:     getEnv("HEALTH_ADDR", ":8087"),
+			ReadTimeout:    30 * time.Second,
+			WriteTimeout:   30 * time.Second,
+			MaxHeaderBytes: 1 << 20, // 1MB
+		},
+		JWTConfig: config.JWTConfig{
+			JWTSecret:     getEnv("JWT_SECRET", "your-super-secret-jwt-key-here"),
+			JWTExpiry:     15 * time.Minute, // OPTIMIZATION: Short-lived tokens for security
+			RefreshExpiry: 24 * time.Hour,
+		},
+		SecurityConfig: config.SecurityConfig{
+			SessionTimeout:   24 * time.Hour,
+			MaxLoginAttempts: 5, // OPTIMIZATION: Brute force protection
+		},
+		DatabaseConfig: config.DatabaseConfig{
+			DatabaseURL: getEnv("DATABASE_URL", "postgres://user:pass@localhost/auth?sslmode=disable"),
+			RedisURL:    getEnv("REDIS_URL", "redis://localhost:6379"),
+		},
+		OAuthConfig: config.OAuthConfig{
+			GoogleClientID:     getEnv("GOOGLE_CLIENT_ID", ""),
+			GoogleClientSecret: getEnv("GOOGLE_CLIENT_SECRET", ""),
+			GoogleRedirectURI:  getEnv("GOOGLE_REDIRECT_URI", ""),
+		},
+		MetricsAddr: getEnv("METRICS_ADDR", ":8088"),
 	}
 
+	// TODO: Add pprof server when config supports it
 	// OPTIMIZATION: Issue #1998 - Start pprof server for auth performance profiling
-	go func() {
-		logger.WithField("addr", config.PprofAddr).Info("pprof server starting")
-		// Endpoints: /debug/pprof/profile, /debug/pprof/heap, /debug/pprof/goroutine
-		if err := http.ListenAndServe(config.PprofAddr, nil); err != nil {
-			logger.WithError(err).Error("pprof server failed")
-		}
-	}()
+	// go func() {
+	// 	logger.WithField("addr", ":8089").Info("pprof server starting")
+	// 	// Endpoints: /debug/pprof/profile, /debug/pprof/heap, /debug/pprof/goroutine
+	// 	if err := http.ListenAndServe(":8089", nil); err != nil {
+	// 		logger.WithError(err).Error("pprof server failed")
+	// 	}
+	// }()
 
 	// Initialize auth service with security optimizations
 	srv, err := server.NewAuthServer(config, logger)

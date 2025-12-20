@@ -1,12 +1,12 @@
-// SQL queries use prepared statements with placeholders (, , ?) for safety
+// Package server SQL queries use prepared statements with placeholders (, , ?) for safety
 // Issue: #1591 - Repository adapter for InventoryRepository
 package server
 
 import (
 	"context"
 
-	"github.com/google/uuid"
 	"github.com/gc-lover/necpgame-monorepo/services/inventory-service-go/models"
+	"github.com/google/uuid"
 )
 
 // RepositoryAdapter adapts InventoryRepository to Repository interface
@@ -15,9 +15,6 @@ type RepositoryAdapter struct {
 }
 
 // NewRepositoryAdapter creates adapter
-func NewRepositoryAdapter(repo *InventoryRepository) Repository {
-	return &RepositoryAdapter{repo: repo}
-}
 
 // GetInventory implements Repository interface
 func (a *RepositoryAdapter) GetInventory(ctx context.Context, characterID uuid.UUID) (*models.InventoryResponse, error) {
@@ -72,13 +69,12 @@ func (a *RepositoryAdapter) AddItem(ctx context.Context, characterID uuid.UUID, 
 }
 
 // RemoveItem implements Repository interface
-func (a *RepositoryAdapter) RemoveItem(ctx context.Context, characterID, itemID uuid.UUID) error {
+func (a *RepositoryAdapter) RemoveItem(ctx context.Context, _, itemID uuid.UUID) error {
 	return a.repo.RemoveItem(ctx, itemID)
 }
 
 // UpdateItem implements Repository interface
-func (a *RepositoryAdapter) UpdateItem(ctx context.Context, characterID, itemID uuid.UUID, updateFn func() error) error {
+func (a *RepositoryAdapter) UpdateItem(_ context.Context, _, _ uuid.UUID, updateFn func() error) error {
 	// Execute update function
 	return updateFn()
 }
-

@@ -1,4 +1,4 @@
-// Issue: #75
+// Package server Issue: #75
 package server
 
 import (
@@ -468,7 +468,7 @@ func (h *Handlers) RecalculateCharacterStats(ctx context.Context, params api.Rec
 }
 
 // GetCharacterActivity получает активность персонажа
-func (h *Handlers) GetCharacterActivity(ctx context.Context, params api.GetCharacterActivityParams) (api.GetCharacterActivityRes, error) {
+func (h *Handlers) GetCharacterActivity(_ context.Context, params api.GetCharacterActivityParams) (api.GetCharacterActivityRes, error) {
 	h.logger.Info("Handling get character activity", zap.String("character_id", params.CharacterId))
 
 	characterID, err := uuid.Parse(params.CharacterId)

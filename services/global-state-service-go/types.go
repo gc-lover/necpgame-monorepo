@@ -41,20 +41,3 @@ type stateEvent struct {
 	CreatedAt     time.Time       `json:"createdAt"`
 	CorrelationID string          `json:"correlationId,omitempty"`
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

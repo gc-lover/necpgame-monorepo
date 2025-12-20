@@ -6,10 +6,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/gc-lover/necpgame-monorepo/services/voice-chat-service-go/models"
-	"github.com/redis/go-redis/v9"
+	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 )
 
@@ -27,45 +25,11 @@ type VoiceRepositoryInterface interface {
 }
 
 type VoiceService struct {
-	repo       VoiceRepositoryInterface
-	cache      *redis.Client
-	logger     *logrus.Logger
-	webrtcURL  string
-	webrtcKey  string
-}
-
-func NewVoiceService(dbURL, redisURL, webrtcURL, webrtcKey string) (*VoiceService, error) {
-	// Issue: #1605 - DB Connection Pool configuration
-	config, err := pgxpool.ParseConfig(dbURL)
-	if err != nil {
-		return nil, err
-	}
-	config.MaxConns = 50
-	config.MinConns = 10
-	config.MaxConnLifetime = 5 * time.Minute
-	config.MaxConnIdleTime = 1 * time.Minute
-	
-	dbPool, err := pgxpool.NewWithConfig(context.Background(), config)
-	if err != nil {
-		return nil, err
-	}
-
-	redisOpts, err := redis.ParseURL(redisURL)
-	if err != nil {
-		return nil, err
-	}
-
-	redisClient := redis.NewClient(redisOpts)
-
-	repo := NewVoiceRepository(dbPool)
-
-	return &VoiceService{
-		repo:      repo,
-		cache:     redisClient,
-		logger:    GetLogger(),
-		webrtcURL: webrtcURL,
-		webrtcKey: webrtcKey,
-	}, nil
+	repo      VoiceRepositoryInterface
+	cache     *redis.Client
+	logger    *logrus.Logger
+	webrtcURL string
+	webrtcKey string
 }
 
 func (s *VoiceService) CreateChannel(ctx context.Context, req *models.CreateChannelRequest) (*models.VoiceChannel, error) {
@@ -89,13 +53,13 @@ func (s *VoiceService) CreateChannel(ctx context.Context, req *models.CreateChan
 	}
 
 	channel := &models.VoiceChannel{
-		OwnerID:      req.CharacterID,
-		OwnerType:    "character",
-		Type:         req.Type,
-		Name:         req.Name,
-		MaxMembers:   maxMembers,
+		OwnerID:       req.CharacterID,
+		OwnerType:     "character",
+		Type:          req.Type,
+		Name:          req.Name,
+		MaxMembers:    maxMembers,
 		QualityPreset: qualityPreset,
-		Settings:     req.Settings,
+		Settings:      req.Settings,
 	}
 
 	if channel.Settings == nil {
@@ -160,7 +124,7 @@ func (s *VoiceService) JoinChannel(ctx context.Context, req *models.JoinChannelR
 		}, nil
 	}
 
-	token := s.generateWebRTCToken(req.CharacterID, req.ChannelID)
+	token := s.generateWebRTCToken()
 
 	participant := &models.VoiceParticipant{
 		ChannelID:   req.ChannelID,
@@ -253,7 +217,7 @@ func (s *VoiceService) GetChannelDetail(ctx context.Context, channelID uuid.UUID
 	}, nil
 }
 
-func (s *VoiceService) generateWebRTCToken(characterID, channelID uuid.UUID) string {
+func (s *VoiceService) generateWebRTCToken() string {
 	return uuid.New().String()
 }
 
@@ -303,4 +267,3 @@ func (s *VoiceService) publishParticipantLeftEvent(ctx context.Context, channelI
 	}
 	s.cache.Publish(ctx, "events:voice:participant-left", eventData)
 }
-

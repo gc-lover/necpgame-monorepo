@@ -5,6 +5,7 @@
 ## Структура
 
 ### Базовые ресурсы
+
 - `namespace.yaml` - Namespace `necpgame`
 - `configmap-common.yaml` - ConfigMap с общими настройками
 - `secrets-common.yaml` - Secrets для БД, Redis, JWT
@@ -17,6 +18,7 @@
 - `resource-quota.yaml` - ResourceQuota и LimitRange для управления ресурсами
 
 ### Observability (namespace: monitoring)
+
 - `monitoring-namespace.yaml` - Namespace для observability стека
 - `prometheus-deployment.yaml` - Prometheus для метрик
 - `loki-deployment.yaml` - Loki для логов
@@ -25,6 +27,7 @@
 - `promtail-daemonset.yaml` - Promtail для сбора логов с нод
 
 ### Сервисы
+
 - `character-service-go-deployment.yaml` - Character Service
 - `inventory-service-go-deployment.yaml` - Inventory Service
 - `movement-service-go-deployment.yaml` - Movement Service
@@ -87,6 +90,7 @@ kubectl apply -f promtail-daemonset.yaml
 ```
 
 **Примечание:** Для Grafana нужно создать Secret с паролем:
+
 ```bash
 kubectl create secret generic grafana-secrets \
   --from-literal=admin-password="ВАШ_ПАРОЛЬ" \
@@ -162,18 +166,21 @@ kubectl get services -n necpgame
 ### Health Checks
 
 Все сервисы используют `/metrics` endpoint для health checks:
+
 - `livenessProbe` - проверка каждые 30 секунд
 - `readinessProbe` - проверка каждые 10 секунд
 
 ### Ресурсы
 
 Настроены requests и limits для всех сервисов:
+
 - HTTP сервисы: Memory 128Mi requests, 512Mi limits; CPU 100m requests, 500m limits
 - Gateway сервисы: Memory 64Mi requests, 256Mi limits; CPU 100m requests, 500m limits
 
 ### Метрики
 
 Все сервисы экспортируют метрики через `/metrics` endpoint на разных портах:
+
 - character-service-go: 9092
 - inventory-service-go: 9090
 - movement-service-go: 9091
@@ -194,35 +201,35 @@ kubectl get services -n necpgame
 ### Автомасштабирование
 
 - **HPA (HorizontalPodAutoscaler)**: Автоматическое масштабирование на основе CPU/Memory
-  - character-service-go: 1-5 реплик
-  - realtime-gateway-go: 2-10 реплик
-  - ws-lobby-go: 2-10 реплик
+    - character-service-go: 1-5 реплик
+    - realtime-gateway-go: 2-10 реплик
+    - ws-lobby-go: 2-10 реплик
 
 ### Высокая доступность
 
 - **PDB (PodDisruptionBudget)**: Гарантирует минимальное количество доступных подов при обновлениях
-  - character-service-go: minAvailable 1
-  - realtime-gateway-go: minAvailable 1
-  - ws-lobby-go: minAvailable 1
+    - character-service-go: minAvailable 1
+    - realtime-gateway-go: minAvailable 1
+    - ws-lobby-go: minAvailable 1
 
 ### Управление ресурсами
 
 - **ResourceQuota**: Ограничивает общее использование ресурсов в namespace
-  - CPU: 10 requests, 20 limits
-  - Memory: 20Gi requests, 40Gi limits
+    - CPU: 10 requests, 20 limits
+    - Memory: 20Gi requests, 40Gi limits
 - **LimitRange**: Устанавливает дефолтные лимиты для контейнеров
-  - Default: 500m CPU, 512Mi Memory
-  - DefaultRequest: 100m CPU, 128Mi Memory
-  - Max: 2 CPU, 4Gi Memory
-  - Min: 50m CPU, 64Mi Memory
+    - Default: 500m CPU, 512Mi Memory
+    - DefaultRequest: 100m CPU, 128Mi Memory
+    - Max: 2 CPU, 4Gi Memory
+    - Min: 50m CPU, 64Mi Memory
 
 ### Безопасность
 
 - **RBAC**: ServiceAccount с минимальными правами доступа
-- **NetworkPolicy**: 
-  - default-deny-all: блокирует весь трафик по умолчанию
-  - allow-service-metrics: разрешает доступ к метрикам для Prometheus
-  - allow-ingress-traffic: разрешает входящий трафик от Ingress
+- **NetworkPolicy**:
+    - default-deny-all: блокирует весь трафик по умолчанию
+    - allow-service-metrics: разрешает доступ к метрикам для Prometheus
+    - allow-ingress-traffic: разрешает входящий трафик от Ingress
 - **Secrets**: Все секреты хранятся в Kubernetes Secrets (требуют заполнения перед деплоем)
 
 ### Логирование

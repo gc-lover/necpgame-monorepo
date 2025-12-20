@@ -15,31 +15,31 @@ import (
 // mockRepository implements Repository interface for tests
 type mockRepository struct{}
 
-func (m *mockRepository) CreateQueueEntry(ctx context.Context, playerID, activityType string, rating int) (string, error) {
+func (m *mockRepository) CreateQueueEntry(_ context.Context, _, _ string, _ int) (string, error) {
 	return "", nil
 }
 
-func (m *mockRepository) GetQueueEntry(ctx context.Context, queueID string) (interface{}, error) {
+func (m *mockRepository) GetQueueEntry(_ context.Context, _ string) (interface{}, error) {
 	return nil, nil
 }
 
-func (m *mockRepository) DeleteQueueEntry(ctx context.Context, queueID string) error {
+func (m *mockRepository) DeleteQueueEntry(_ context.Context, _ string) error {
 	return nil
 }
 
-func (m *mockRepository) GetPlayerRating(ctx context.Context, playerID string, activityType string) (int, error) {
+func (m *mockRepository) GetPlayerRating(_ context.Context, _ string, _ string) (int, error) {
 	return 1500, nil
 }
 
-func (m *mockRepository) UpdatePlayerRating(ctx context.Context, playerID string, activityType string, newRating int) error {
+func (m *mockRepository) UpdatePlayerRating(_ context.Context, _ string, _ string, _ int) error {
 	return nil
 }
 
-func (m *mockRepository) CreateMatch(ctx context.Context, players []string, activityType string) (string, error) {
+func (m *mockRepository) CreateMatch(_ context.Context, _ []string, _ string) (string, error) {
 	return "", nil
 }
 
-func (m *mockRepository) UpdateMatchStatus(ctx context.Context, matchID string, status string) error {
+func (m *mockRepository) UpdateMatchStatus(_ context.Context, _ string, _ string) error {
 	return nil
 }
 
@@ -91,7 +91,7 @@ func TestSkillBucketsNoLeaks(t *testing.T) {
 	)
 
 	queue := NewMatchmakingQueue()
-	
+
 	// Add 100 players to different skill buckets
 	for i := 0; i < 100; i++ {
 		entry := PlayerQueueEntry{
@@ -150,4 +150,3 @@ func TestConcurrentQueueOperationsNoLeaks(t *testing.T) {
 // - Ticker.Stop() for all time.Ticker
 // - Worker pool limits (bounded concurrency)
 // - Channel close for all event channels
-

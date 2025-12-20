@@ -17,26 +17,26 @@ type EngramCyberpsychosisServiceInterface interface {
 }
 
 type CyberpsychosisRiskResult struct {
-	CharacterID     uuid.UUID     `json:"character_id"`
-	BaseRisk        float64       `json:"base_risk"`
-	EngramRisk      float64       `json:"engram_risk"`
-	TotalRisk       float64       `json:"total_risk"`
-	BlockerReduction float64      `json:"blocker_reduction"`
-	RiskFactors     []*RiskFactor `json:"risk_factors"`
+	CharacterID      uuid.UUID     `json:"character_id"`
+	BaseRisk         float64       `json:"base_risk"`
+	EngramRisk       float64       `json:"engram_risk"`
+	TotalRisk        float64       `json:"total_risk"`
+	BlockerReduction float64       `json:"blocker_reduction"`
+	RiskFactors      []*RiskFactor `json:"risk_factors"`
 }
 
 type EngramBlockerInfo struct {
-	BlockerID         uuid.UUID          `json:"blocker_id"`
-	CharacterID       uuid.UUID          `json:"character_id"`
-	Tier              int                `json:"tier"`
-	RiskReduction     float64            `json:"risk_reduction"`
-	InfluenceReduction float64           `json:"influence_reduction"`
-	DurationDays      int                `json:"duration_days"`
-	Buffs             map[string]float64 `json:"buffs,omitempty"`
-	Debuffs           map[string]float64 `json:"debuffs,omitempty"`
-	InstalledAt       time.Time          `json:"installed_at"`
-	ExpiresAt         time.Time          `json:"expires_at"`
-	IsActive          bool               `json:"is_active"`
+	BlockerID          uuid.UUID          `json:"blocker_id"`
+	CharacterID        uuid.UUID          `json:"character_id"`
+	Tier               int                `json:"tier"`
+	RiskReduction      float64            `json:"risk_reduction"`
+	InfluenceReduction float64            `json:"influence_reduction"`
+	DurationDays       int                `json:"duration_days"`
+	Buffs              map[string]float64 `json:"buffs,omitempty"`
+	Debuffs            map[string]float64 `json:"debuffs,omitempty"`
+	InstalledAt        time.Time          `json:"installed_at"`
+	ExpiresAt          time.Time          `json:"expires_at"`
+	IsActive           bool               `json:"is_active"`
 }
 
 var tierBlockers = map[int]struct {
@@ -54,18 +54,18 @@ var tierBlockers = map[int]struct {
 }
 
 type EngramCyberpsychosisService struct {
-	repo         EngramCyberpsychosisRepositoryInterface
+	repo          EngramCyberpsychosisRepositoryInterface
 	engramService EngramServiceInterface
-	cache        *redis.Client
-	logger       *logrus.Logger
+	cache         *redis.Client
+	logger        *logrus.Logger
 }
 
 func NewEngramCyberpsychosisService(repo EngramCyberpsychosisRepositoryInterface, engramService EngramServiceInterface, cache *redis.Client) *EngramCyberpsychosisService {
 	return &EngramCyberpsychosisService{
-		repo:         repo,
+		repo:          repo,
 		engramService: engramService,
-		cache:        cache,
-		logger:       GetLogger(),
+		cache:         cache,
+		logger:        GetLogger(),
 	}
 }
 
@@ -241,6 +241,3 @@ func (s *EngramCyberpsychosisService) InstallBlocker(ctx context.Context, charac
 		IsActive:           blocker.IsActive,
 	}, nil
 }
-
-
-

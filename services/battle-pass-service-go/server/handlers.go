@@ -1,4 +1,4 @@
-// Issue: #1599 - ogen handlers (TYPED responses)
+// Package server Issue: #1599 - ogen handlers (TYPED responses)
 package server
 
 import (
@@ -8,10 +8,8 @@ import (
 	"github.com/gc-lover/necpgame-monorepo/services/battle-pass-service-go/pkg/api"
 )
 
-// Context timeout constants
 const (
-	DBTimeout    = 50 * time.Millisecond
-	CacheTimeout = 10 * time.Millisecond
+	DBTimeout = 50 * time.Millisecond
 )
 
 type Handlers struct {
@@ -99,7 +97,7 @@ func (h *Handlers) ClaimReward(ctx context.Context, req *api.ClaimRewardReq) (ap
 	}
 
 	// Convert result to ogen response
-	rewards := []api.Reward{}
+	var rewards []api.Reward
 	if rewardsData, ok := result["rewards"].([]api.Reward); ok {
 		rewards = rewardsData
 	}
@@ -139,7 +137,7 @@ func (h *Handlers) PurchasePremium(ctx context.Context, req *api.PurchasePremium
 	if premium, ok := result["is_premium"].(bool); ok {
 		premiumStatus = premium
 	}
-	retroactiveRewards := []api.Reward{}
+	var retroactiveRewards []api.Reward
 	if rewards, ok := result["retroactive_rewards"].([]api.Reward); ok {
 		retroactiveRewards = rewards
 	}
@@ -180,7 +178,7 @@ func (h *Handlers) GetSeasonChallenges(ctx context.Context, params api.GetSeason
 
 	playerID := params.PlayerID
 	seasonID := params.SeasonID
-	
+
 	response, err := h.service.GetSeasonChallenges(ctx, playerID.String(), seasonID)
 	if err != nil {
 		if err == ErrNotFound {
@@ -245,7 +243,7 @@ func (h *Handlers) AddXP(ctx context.Context, req *api.AddXPReq) (api.AddXPRes, 
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	result, err := h.service.AddXP(ctx, req.PlayerID.String(), req.XpAmount, req.Source)
+	result, err := h.service.AddXP(ctx, req.PlayerID.String(), req.XpAmount)
 	if err != nil {
 		return &api.AddXPInternalServerError{
 			Error:   "InternalServerError",
@@ -266,7 +264,7 @@ func (h *Handlers) AddXP(ctx context.Context, req *api.AddXPReq) (api.AddXPRes, 
 	if up, ok := result["level_up"].(bool); ok {
 		levelUp = up
 	}
-	rewardsUnlocked := []api.Reward{}
+	var rewardsUnlocked []api.Reward
 	if rewards, ok := result["rewards_unlocked"].([]api.Reward); ok {
 		rewardsUnlocked = rewards
 	}

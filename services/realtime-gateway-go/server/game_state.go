@@ -53,7 +53,7 @@ func (gsm *GameStateManager) UpdatePlayerInput(input *PlayerInputData) {
 	}
 
 	speed := float32(5.0)
-	dt := float32(1.0 / float32(gsm.tickRate))
+	dt := 1.0 / float32(gsm.tickRate)
 
 	moveX := DequantizeCoordinate(input.MoveX)
 	moveY := DequantizeCoordinate(input.MoveY)
@@ -99,4 +99,3 @@ func (gsm *GameStateManager) RemovePlayer(playerID string) {
 	defer gsm.mu.Unlock()
 	delete(gsm.players, playerID)
 }
-

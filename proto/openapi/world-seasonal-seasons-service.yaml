@@ -18,18 +18,18 @@ info:
     name: NECPGAME API Support
     email: api@necp.game
 servers:
-- url: http://localhost:8085/api/v1
-  description: Локальный сервер разработки
-- url: https://api.necp.game/api/v1
-  description: Продакшен сервер
+  - url: http://localhost:8085/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
 tags:
-- name: Seasons
-  description: Управление сезонами
+  - name: Seasons
+    description: Управление сезонами
 paths:
   /seasons/current:
     get:
       tags:
-      - Seasons
+        - Seasons
       summary: Получить текущий сезон
       description: 'Возвращает информацию о текущем активном сезоне,
 
@@ -38,7 +38,7 @@ paths:
         '
       operationId: getCurrentSeason
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       responses:
         '200':
           description: Информация о текущем сезоне
@@ -67,7 +67,7 @@ paths:
   /seasons/{seasonId}/challenges:
     get:
       tags:
-      - Seasons
+        - Seasons
       summary: Получить испытания сезона
       description: 'Возвращает список всех сезонных испытаний для указанного сезона
 
@@ -76,30 +76,30 @@ paths:
         '
       operationId: getSeasonChallenges
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       parameters:
-      - name: seasonId
-        in: path
-        required: true
-        description: ID сезона
-        schema:
-          type: string
-          format: uuid
-          example: aa0e8400-e29b-41d4-a716-446655440000
-      - name: challenge_type
-        in: query
-        required: false
-        description: Фильтр по типу испытания
-        schema:
-          type: string
-          example: raid
-      - name: active_only
-        in: query
-        required: false
-        description: Только активные испытания
-        schema:
-          type: boolean
-          default: false
+        - name: seasonId
+          in: path
+          required: true
+          description: ID сезона
+          schema:
+            type: string
+            format: uuid
+            example: aa0e8400-e29b-41d4-a716-446655440000
+        - name: challenge_type
+          in: query
+          required: false
+          description: Фильтр по типу испытания
+          schema:
+            type: string
+            example: raid
+        - name: active_only
+          in: query
+          required: false
+          description: Только активные испытания
+          schema:
+            type: boolean
+            default: false
       responses:
         '200':
           description: Список испытаний сезона
@@ -110,17 +110,17 @@ paths:
               example:
                 season_id: aa0e8400-e29b-41d4-a716-446655440000
                 challenges:
-                - challenge_id: cc0e8400-e29b-41d4-a716-446655440000
-                  challenge_type: raid
-                  content_id: dd0e8400-e29b-41d4-a716-446655440000
-                  name: Frostbite Raid
-                  conditions:
-                    min_level: 50
-                    max_players: 8
-                  rewards:
-                    currency: 1000
-                    items: []
-                  active: true
+                  - challenge_id: cc0e8400-e29b-41d4-a716-446655440000
+                    challenge_type: raid
+                    content_id: dd0e8400-e29b-41d4-a716-446655440000
+                    name: Frostbite Raid
+                    conditions:
+                      min_level: 50
+                      max_players: 8
+                    rewards:
+                      currency: 1000
+                      items: [ ]
+                    active: true
                 total: 10
         '401':
           $ref: common.yaml#/components/responses/Unauthorized
@@ -131,7 +131,7 @@ paths:
   /seasons/{seasonId}/rewards:
     get:
       tags:
-      - Seasons
+        - Seasons
       summary: Получить награды сезона
       description: 'Возвращает список всех доступных наград для указанного сезона,
 
@@ -140,23 +140,23 @@ paths:
         '
       operationId: getSeasonRewards
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       parameters:
-      - name: seasonId
-        in: path
-        required: true
-        description: ID сезона
-        schema:
-          type: string
-          format: uuid
-          example: aa0e8400-e29b-41d4-a716-446655440000
-      - name: category
-        in: query
-        required: false
-        description: Фильтр по категории награды
-        schema:
-          type: string
-          example: cosmetic
+        - name: seasonId
+          in: path
+          required: true
+          description: ID сезона
+          schema:
+            type: string
+            format: uuid
+            example: aa0e8400-e29b-41d4-a716-446655440000
+        - name: category
+          in: query
+          required: false
+          description: Фильтр по категории награды
+          schema:
+            type: string
+            example: cosmetic
       responses:
         '200':
           description: Список наград сезона
@@ -167,12 +167,12 @@ paths:
               example:
                 season_id: aa0e8400-e29b-41d4-a716-446655440000
                 rewards:
-                - reward_id: ee0e8400-e29b-41d4-a716-446655440000
-                  category: cosmetic
-                  item_id: ff0e8400-e29b-41d4-a716-446655440000
-                  name: Frostbite Armor Set
-                  currency_cost: 5000
-                  available: true
+                  - reward_id: ee0e8400-e29b-41d4-a716-446655440000
+                    category: cosmetic
+                    item_id: ff0e8400-e29b-41d4-a716-446655440000
+                    name: Frostbite Armor Set
+                    currency_cost: 5000
+                    available: true
                 total: 20
         '401':
           $ref: common.yaml#/components/responses/Unauthorized
@@ -188,19 +188,19 @@ components:
     SeasonStatus:
       type: string
       enum:
-      - upcoming
-      - active
-      - ended
+        - upcoming
+        - active
+        - ended
       description: Статус сезона
       example: active
     SeasonResponse:
       type: object
       required:
-      - season_id
-      - name
-      - start_date
-      - end_date
-      - status
+        - season_id
+        - name
+        - start_date
+        - end_date
+        - status
       properties:
         season_id:
           type: string
@@ -236,9 +236,9 @@ components:
     SeasonChallengesResponse:
       type: object
       required:
-      - season_id
-      - challenges
-      - total
+        - season_id
+        - challenges
+        - total
       properties:
         season_id:
           type: string
@@ -256,13 +256,13 @@ components:
     SeasonChallenge:
       type: object
       required:
-      - challenge_id
-      - challenge_type
-      - content_id
-      - name
-      - conditions
-      - rewards
-      - active
+        - challenge_id
+        - challenge_type
+        - content_id
+        - name
+        - conditions
+        - rewards
+        - active
       properties:
         challenge_id:
           type: string
@@ -301,7 +301,7 @@ components:
               items:
                 type: string
                 format: uuid
-              example: []
+              example: [ ]
           additionalProperties: false
         active:
           type: boolean
@@ -311,9 +311,9 @@ components:
     SeasonRewardsResponse:
       type: object
       required:
-      - season_id
-      - rewards
-      - total
+        - season_id
+        - rewards
+        - total
       properties:
         season_id:
           type: string
@@ -331,12 +331,12 @@ components:
     SeasonReward:
       type: object
       required:
-      - reward_id
-      - category
-      - item_id
-      - name
-      - currency_cost
-      - available
+        - reward_id
+        - category
+        - item_id
+        - name
+        - currency_cost
+        - available
       properties:
         reward_id:
           type: string

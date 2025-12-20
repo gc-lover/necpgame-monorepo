@@ -4,7 +4,7 @@
 .PHONY: generate-api clean
 
 SERVICE_NAME := stock-indices-service
-SPEC_DIR := ../../proto/openapi
+SPEC_DIR := ./
 BUNDLED_SPEC := openapi-bundled.yaml
 API_DIR := pkg/api
 

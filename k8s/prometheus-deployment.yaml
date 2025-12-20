@@ -10,21 +10,21 @@ kind: ClusterRole
 metadata:
   name: prometheus
 rules:
-- apiGroups: [""]
-  resources:
-  - nodes
-  - nodes/proxy
-  - services
-  - endpoints
-  - pods
-  verbs: ["get", "list", "watch"]
-- apiGroups:
-  - extensions
-  resources:
-  - ingresses
-  verbs: ["get", "list", "watch"]
-- nonResourceURLs: ["/metrics"]
-  verbs: ["get"]
+  - apiGroups: [ "" ]
+    resources:
+      - nodes
+      - nodes/proxy
+      - services
+      - endpoints
+      - pods
+    verbs: [ "get", "list", "watch" ]
+  - apiGroups:
+      - extensions
+    resources:
+      - ingresses
+    verbs: [ "get", "list", "watch" ]
+  - nonResourceURLs: [ "/metrics" ]
+    verbs: [ "get" ]
 
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -36,9 +36,9 @@ roleRef:
   kind: ClusterRole
   name: prometheus
 subjects:
-- kind: ServiceAccount
-  name: prometheus
-  namespace: monitoring
+  - kind: ServiceAccount
+    name: prometheus
+    namespace: monitoring
 
 ---
 apiVersion: apps/v1
@@ -60,39 +60,39 @@ spec:
     spec:
       serviceAccountName: prometheus
       containers:
-      - name: prometheus
-        image: prom/prometheus:latest
-               args:
-               - '--config.file=/etc/prometheus/prometheus.yml'
-               - '--storage.tsdb.path=/prometheus'
-               - '--storage.tsdb.retention.time=30d'
-               - '--alertmanager.url=http://alertmanager:9093'
-               - '--rules.alert.for-outage-tolerance=10m'
-               - '--rules.alert.for-grace-period=10m'
-        ports:
-        - name: http
-          containerPort: 9090
-        volumeMounts:
-        - name: prometheus-config
-          mountPath: /etc/prometheus
-        - name: prometheus-storage
-          mountPath: /prometheus
-        resources:
-          requests:
-            memory: "512Mi"
-            cpu: "500m"
-          limits:
-            memory: "2Gi"
-            cpu: "2000m"
-             volumes:
-             - name: prometheus-config
-               configMap:
-                 name: prometheus-config
-             - name: prometheus-rules
-               configMap:
-                 name: prometheus-rules
-             - name: prometheus-storage
-               emptyDir: {}
+        - name: prometheus
+          image: prom/prometheus:latest
+            args:
+              - '--config.file=/etc/prometheus/prometheus.yml'
+              - '--storage.tsdb.path=/prometheus'
+              - '--storage.tsdb.retention.time=30d'
+              - '--alertmanager.url=http://alertmanager:9093'
+              - '--rules.alert.for-outage-tolerance=10m'
+              - '--rules.alert.for-grace-period=10m'
+          ports:
+            - name: http
+              containerPort: 9090
+          volumeMounts:
+            - name: prometheus-config
+              mountPath: /etc/prometheus
+            - name: prometheus-storage
+              mountPath: /prometheus
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "500m"
+            limits:
+              memory: "2Gi"
+              cpu: "2000m"
+                volumes:
+                  - name: prometheus-config
+                    configMap:
+                      name: prometheus-config
+                  - name: prometheus-rules
+                    configMap:
+                      name: prometheus-rules
+                  - name: prometheus-storage
+                    emptyDir: { }
 
 ---
 apiVersion: v1
@@ -105,9 +105,9 @@ metadata:
 spec:
   type: ClusterIP
   ports:
-  - name: http
-    port: 9090
-    targetPort: 9090
+    - name: http
+      port: 9090
+      targetPort: 9090
   selector:
     app: prometheus
 
@@ -125,109 +125,109 @@ data:
       - job_name: 'envoy'
         metrics_path: /stats/prometheus
         static_configs:
-          - targets: ['envoy:9901']
+          - targets: [ 'envoy:9901' ]
       - job_name: 'prometheus'
         static_configs:
-          - targets: ['localhost:9090']
+          - targets: [ 'localhost:9090' ]
       - job_name: 'realtime-gateway-go'
         static_configs:
-          - targets: ['realtime-gateway-go.necpgame.svc.cluster.local:9090']
+          - targets: [ 'realtime-gateway-go.necpgame.svc.cluster.local:9090' ]
         labels:
           service: 'realtime-gateway-go'
         metrics_path: /metrics
       - job_name: 'ws-lobby-go'
         static_configs:
-          - targets: ['ws-lobby-go.necpgame.svc.cluster.local:9090']
+          - targets: [ 'ws-lobby-go.necpgame.svc.cluster.local:9090' ]
         labels:
           service: 'ws-lobby-go'
         metrics_path: /metrics
       - job_name: 'matchmaking-go'
         static_configs:
-          - targets: ['matchmaking-go.necpgame.svc.cluster.local:9090']
+          - targets: [ 'matchmaking-go.necpgame.svc.cluster.local:9090' ]
         labels:
           service: 'matchmaking-go'
         metrics_path: /metrics
       - job_name: 'character-service-go'
         static_configs:
-          - targets: ['character-service-go.necpgame.svc.cluster.local:9092']
+          - targets: [ 'character-service-go.necpgame.svc.cluster.local:9092' ]
         labels:
           service: 'character-service-go'
         metrics_path: /metrics
       - job_name: 'inventory-service-go'
         static_configs:
-          - targets: ['inventory-service-go.necpgame.svc.cluster.local:9090']
+          - targets: [ 'inventory-service-go.necpgame.svc.cluster.local:9090' ]
         labels:
           service: 'inventory-service-go'
         metrics_path: /metrics
       - job_name: 'movement-service-go'
         static_configs:
-          - targets: ['movement-service-go.necpgame.svc.cluster.local:9091']
+          - targets: [ 'movement-service-go.necpgame.svc.cluster.local:9091' ]
         labels:
           service: 'movement-service-go'
         metrics_path: /metrics
       - job_name: 'social-service-go'
         static_configs:
-          - targets: ['social-service-go.necpgame.svc.cluster.local:9094']
+          - targets: [ 'social-service-go.necpgame.svc.cluster.local:9094' ]
         labels:
           service: 'social-service-go'
         metrics_path: /metrics
       - job_name: 'achievement-service-go'
         static_configs:
-          - targets: ['achievement-service-go.necpgame.svc.cluster.local:9095']
+          - targets: [ 'achievement-service-go.necpgame.svc.cluster.local:9095' ]
         labels:
           service: 'achievement-service-go'
         metrics_path: /metrics
       - job_name: 'economy-service-go'
         static_configs:
-          - targets: ['economy-service-go.necpgame.svc.cluster.local:9096']
+          - targets: [ 'economy-service-go.necpgame.svc.cluster.local:9096' ]
         labels:
           service: 'economy-service-go'
         metrics_path: /metrics
       - job_name: 'support-service-go'
         static_configs:
-          - targets: ['support-service-go.necpgame.svc.cluster.local:9097']
+          - targets: [ 'support-service-go.necpgame.svc.cluster.local:9097' ]
         labels:
           service: 'support-service-go'
         metrics_path: /metrics
       - job_name: 'reset-service-go'
         static_configs:
-          - targets: ['reset-service-go.necpgame.svc.cluster.local:9098']
+          - targets: [ 'reset-service-go.necpgame.svc.cluster.local:9098' ]
         labels:
           service: 'reset-service-go'
         metrics_path: /metrics
       - job_name: 'gameplay-service-go'
         static_configs:
-          - targets: ['gameplay-service-go.necpgame.svc.cluster.local:9093']
+          - targets: [ 'gameplay-service-go.necpgame.svc.cluster.local:9093' ]
         labels:
           service: 'gameplay-service-go'
         metrics_path: /metrics
       - job_name: 'admin-service-go'
         static_configs:
-          - targets: ['admin-service-go.necpgame.svc.cluster.local:9100']
+          - targets: [ 'admin-service-go.necpgame.svc.cluster.local:9100' ]
         labels:
           service: 'admin-service-go'
         metrics_path: /metrics
       - job_name: 'clan-war-service-go'
         static_configs:
-          - targets: ['clan-war-service-go.necpgame.svc.cluster.local:9092']
+          - targets: [ 'clan-war-service-go.necpgame.svc.cluster.local:9092' ]
         labels:
           service: 'clan-war-service-go'
         metrics_path: /metrics
       - job_name: 'companion-service-go'
         static_configs:
-          - targets: ['companion-service-go.necpgame.svc.cluster.local:9099']
+          - targets: [ 'companion-service-go.necpgame.svc.cluster.local:9099' ]
         labels:
           service: 'companion-service-go'
         metrics_path: /metrics
       - job_name: 'voice-chat-service-go'
         static_configs:
-          - targets: ['voice-chat-service-go.necpgame.svc.cluster.local:9101']
+          - targets: [ 'voice-chat-service-go.necpgame.svc.cluster.local:9101' ]
         labels:
           service: 'voice-chat-service-go'
         metrics_path: /metrics
       - job_name: 'housing-service-go'
         static_configs:
-          - targets: ['housing-service-go.necpgame.svc.cluster.local:9093']
+          - targets: [ 'housing-service-go.necpgame.svc.cluster.local:9093' ]
         labels:
           service: 'housing-service-go'
         metrics_path: /metrics

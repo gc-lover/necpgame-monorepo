@@ -1,4 +1,4 @@
-// Issue: #1598
+// Package server Issue: #1598
 package server
 
 import (
@@ -48,7 +48,7 @@ func (r *Repository) CreateChannel(ctx context.Context, ownerID *uuid.UUID, chan
 	query := `INSERT INTO social.chat_channels (owner_id, type, name, description, created_at, updated_at)
 		VALUES ($1, $2, $3, $4, NOW(), NOW())
 		RETURNING id`
-	
+
 	err := r.db.QueryRowContext(ctx, query, ownerID, channelType, name, description).Scan(&id)
 	if err != nil {
 		return nil, err
@@ -63,7 +63,7 @@ func (r *Repository) GetChannel(ctx context.Context, channelID uuid.UUID) (*Chan
 		cooldown_seconds, max_length, is_active
 		FROM social.chat_channels
 		WHERE id = $1 AND deleted_at IS NULL`
-	
+
 	err := r.db.QueryRowContext(ctx, query, channelID).Scan(
 		&ch.ID, &ch.OwnerID, &ch.Type, &ch.Name, &ch.Description, &ch.CreatedAt, &ch.UpdatedAt,
 		&ch.CooldownSeconds, &ch.MaxLength, &ch.IsActive,
@@ -84,7 +84,7 @@ func (r *Repository) ListChannels(ctx context.Context) ([]Channel, error) {
 		FROM social.chat_channels
 		WHERE deleted_at IS NULL AND is_active = true
 		ORDER BY created_at`
-	
+
 	rows, err := r.db.QueryContext(ctx, query)
 	if err != nil {
 		return nil, err
@@ -113,7 +113,7 @@ func (r *Repository) UpdateChannel(ctx context.Context, channelID uuid.UUID, nam
 		    description = COALESCE($2, description),
 		    updated_at = NOW()
 		WHERE id = $3 AND deleted_at IS NULL`
-	
+
 	result, err := r.db.ExecContext(ctx, query, name, description, channelID)
 	if err != nil {
 		return err
@@ -133,7 +133,7 @@ func (r *Repository) DeleteChannel(ctx context.Context, channelID uuid.UUID) err
 	query := `UPDATE social.chat_channels
 		SET deleted_at = NOW(), is_active = false
 		WHERE id = $1 AND deleted_at IS NULL`
-	
+
 	result, err := r.db.ExecContext(ctx, query, channelID)
 	if err != nil {
 		return err
@@ -164,7 +164,7 @@ func (r *Repository) CreateMessage(ctx context.Context, channelID, senderID uuid
 	query := `INSERT INTO social.chat_messages (channel_id, sender_id, content, formatted, channel_type, sender_name, created_at)
 		VALUES ($1, $2, $3, $4, $5, $6, NOW())
 		RETURNING id`
-	
+
 	err := r.db.QueryRowContext(ctx, query, channelID, senderID, content, formatted, channelType, senderName).Scan(&id)
 	if err != nil {
 		return nil, err
@@ -176,7 +176,7 @@ func (r *Repository) CreateMessage(ctx context.Context, channelID, senderID uuid
 func (r *Repository) GetChannelMessages(ctx context.Context, channelID uuid.UUID, limit int, before, after *uuid.UUID) ([]Message, error) {
 	var query string
 	var args []interface{}
-	
+
 	if before != nil {
 		query = `SELECT id, channel_id, sender_id, content, formatted, channel_type, sender_name, created_at
 			FROM social.chat_messages
@@ -199,7 +199,7 @@ func (r *Repository) GetChannelMessages(ctx context.Context, channelID uuid.UUID
 			LIMIT $2`
 		args = []interface{}{channelID, limit}
 	}
-	
+
 	rows, err := r.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
@@ -226,7 +226,7 @@ func (r *Repository) DeleteMessage(ctx context.Context, messageID uuid.UUID) err
 	query := `UPDATE social.chat_messages
 		SET deleted_at = NOW()
 		WHERE id = $1 AND deleted_at IS NULL`
-	
+
 	result, err := r.db.ExecContext(ctx, query, messageID)
 	if err != nil {
 		return err
@@ -248,7 +248,7 @@ func (r *Repository) AddChannelMember(ctx context.Context, channelID, playerID u
 	query := `INSERT INTO social.chat_channel_members (channel_id, player_id, joined_at)
 		VALUES ($1, $2, NOW())
 		ON CONFLICT (channel_id, player_id) DO NOTHING`
-	
+
 	_, err := r.db.ExecContext(ctx, query, channelID, playerID)
 	return err
 }
@@ -257,7 +257,7 @@ func (r *Repository) AddChannelMember(ctx context.Context, channelID, playerID u
 func (r *Repository) RemoveChannelMember(ctx context.Context, channelID, playerID uuid.UUID) error {
 	query := `DELETE FROM social.chat_channel_members
 		WHERE channel_id = $1 AND player_id = $2`
-	
+
 	result, err := r.db.ExecContext(ctx, query, channelID, playerID)
 	if err != nil {
 		return err
@@ -288,7 +288,7 @@ func (r *Repository) CreateBan(ctx context.Context, characterID uuid.UUID, chann
 	query := `INSERT INTO social.chat_bans (character_id, channel_id, reason, expires_at, created_at, is_active)
 		VALUES ($1, $2, $3, $4, NOW(), true)
 		RETURNING id`
-	
+
 	err := r.db.QueryRowContext(ctx, query, characterID, channelID, reason, expiresAt).Scan(&id)
 	if err != nil {
 		return nil, err
@@ -302,7 +302,7 @@ func (r *Repository) GetBan(ctx context.Context, banID uuid.UUID) (*Ban, error) 
 	query := `SELECT id, character_id, channel_id, reason, expires_at, created_at, is_active
 		FROM social.chat_bans
 		WHERE id = $1 AND is_active = true`
-	
+
 	err := r.db.QueryRowContext(ctx, query, banID).Scan(
 		&ban.ID, &ban.CharacterID, &ban.ChannelID, &ban.Reason, &ban.ExpiresAt, &ban.CreatedAt, &ban.IsActive,
 	)
@@ -320,7 +320,7 @@ func (r *Repository) DeleteBan(ctx context.Context, banID uuid.UUID) error {
 	query := `UPDATE social.chat_bans
 		SET is_active = false
 		WHERE id = $1 AND is_active = true`
-	
+
 	result, err := r.db.ExecContext(ctx, query, banID)
 	if err != nil {
 		return err
@@ -339,7 +339,7 @@ func (r *Repository) DeleteBan(ctx context.Context, banID uuid.UUID) error {
 func (r *Repository) IsPlayerBanned(ctx context.Context, playerID uuid.UUID, channelID *uuid.UUID) (bool, error) {
 	var query string
 	var args []interface{}
-	
+
 	if channelID != nil {
 		query = `SELECT EXISTS(
 			SELECT 1 FROM social.chat_bans
@@ -357,7 +357,7 @@ func (r *Repository) IsPlayerBanned(ctx context.Context, playerID uuid.UUID, cha
 		)`
 		args = []interface{}{playerID}
 	}
-	
+
 	var exists bool
 	err := r.db.QueryRowContext(ctx, query, args...).Scan(&exists)
 	return exists, err
@@ -398,8 +398,3 @@ type Ban struct {
 	CreatedAt   time.Time
 	IsActive    bool
 }
-
-
-
-
-

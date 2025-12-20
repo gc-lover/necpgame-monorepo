@@ -32,9 +32,9 @@ RUN chown -R appuser:appuser /app
 
 USER appuser
 
-EXPOSE 8088/tcp 9098
+EXPOSE 8144/tcp 9244
 
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:9098/metrics || exit 1
+  CMD wget -q --spider http://localhost:9244/metrics || exit 1
 
 ENTRYPOINT ["/app/reset-service"]

@@ -1,4 +1,4 @@
-// Issue: #1612 - Adaptive Compression
+// Package server Issue: #1612 - Adaptive Compression
 // LZ4 для real-time (fast!), Zstandard для bulk data (best ratio)
 package server
 
@@ -17,23 +17,6 @@ type AdaptiveCompressor struct {
 }
 
 // NewAdaptiveCompressor создает новый adaptive compressor
-func NewAdaptiveCompressor() (*AdaptiveCompressor, error) {
-	zstdEncoder, err := zstd.NewWriter(nil, zstd.WithEncoderLevel(zstd.SpeedDefault))
-	if err != nil {
-		return nil, fmt.Errorf("failed to create zstd encoder: %w", err)
-	}
-
-	zstdDecoder, err := zstd.NewReader(nil)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create zstd decoder: %w", err)
-	}
-
-	return &AdaptiveCompressor{
-		zstdEncoder: zstdEncoder,
-		zstdDecoder: zstdDecoder,
-		threshold:   100, // <100 bytes: no compression (overhead > gain)
-	}, nil
-}
 
 // Compress сжимает данные адаптивно
 // Issue: #1612 - Adaptive compression (LZ4 для real-time, Zstandard для bulk)
@@ -84,4 +67,3 @@ func (ac *AdaptiveCompressor) Close() error {
 	ac.zstdDecoder.Close()
 	return nil
 }
-

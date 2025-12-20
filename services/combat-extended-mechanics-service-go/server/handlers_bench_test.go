@@ -61,4 +61,3 @@ func BenchmarkControlRecoil(b *testing.B) {
 		_, _ = handlers.ControlRecoil(ctx, req)
 	}
 }
-

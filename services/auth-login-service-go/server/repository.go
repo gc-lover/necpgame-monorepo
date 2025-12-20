@@ -1,4 +1,4 @@
-// Issue: #1
+// Package server Issue: #1
 package server
 
 import (
@@ -19,12 +19,6 @@ type Repository struct {
 }
 
 // NewRepository создает новый репозиторий
-func NewRepository(db *sql.DB, logger *zap.Logger) *Repository {
-	return &Repository{
-		db:     db,
-		logger: logger,
-	}
-}
 
 // User представляет модель пользователя в БД
 type User struct {

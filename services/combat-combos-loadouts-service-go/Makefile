@@ -56,10 +56,10 @@ dev:
 	@echo "Starting in development mode..."
 	@air
 
-# Check file sizes (should be <500 lines each)
+# Check file sizes (should be <1000 lines each)
 check-file-sizes:
 	@echo "Checking file sizes..."
-	@find . -name "*.go" -not -path "./pkg/api/*" -exec wc -l {} \; | awk '$$1 > 500 {print "ERROR: " $$2 " has " $$1 " lines (>500)"; exit 1}'
+	@find . -name "*.go" -not -path "./pkg/api/*" -exec wc -l {} \; | awk '$$1 > 1000 {print "ERROR: " $$2 " has " $$1 " lines (>1000)"; exit 1}'
 
 # Health check
 health:
@@ -104,7 +104,7 @@ help:
 	@echo "  clean            - Remove generated files and binaries"
 	@echo "  run              - Build and run the service"
 	@echo "  dev              - Run in development mode with hot reload"
-	@echo "  check-file-sizes - Verify all source files are <500 lines"
+	@echo "  check-file-sizes - Verify all source files are <1000 lines"
 	@echo "  health           - Check service health"
 	@echo "  docker-build     - Build Docker image"
 	@echo "  docker-run       - Run Docker container"

@@ -1,4 +1,4 @@
-// Issue: #1585 - Runtime Goroutine Monitoring
+// Package server Issue: #1585 - Runtime Goroutine Monitoring
 package server
 
 import (
@@ -63,7 +63,3 @@ func (gm *GoroutineMonitor) checkGoroutines() {
 		}).Debug("Goroutine count normal")
 	}
 }
-
-
-
-

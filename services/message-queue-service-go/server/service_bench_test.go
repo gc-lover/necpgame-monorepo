@@ -1,11 +1,11 @@
-package server
-
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/sirupsen/logrus"
 )
@@ -22,13 +22,13 @@ func BenchmarkMessageQueueService_PublishMessage(b *testing.B) {
 	service := NewMessageQueueService(logger, metrics, config)
 
 	reqData := PublishMessageRequest{
-		QueueName:    "test_queue",
-		MessageBody:  "test message for benchmarking",
-		ContentType:  "application/json",
-		Priority:     5,
-		Persistent:   true,
-		UserID:       "test_user",
-		AppID:        "test_app",
+		QueueName:     "test_queue",
+		MessageBody:   "test message for benchmarking",
+		ContentType:   "application/json",
+		Priority:      5,
+		Persistent:    true,
+		UserID:        "test_user",
+		AppID:         "test_app",
 		CorrelationID: "test_correlation",
 	}
 
@@ -60,7 +60,7 @@ func BenchmarkMessageQueueService_PublishBatchMessages(b *testing.B) {
 	}
 	service := NewMessageQueueService(logger, metrics, config)
 
-	messages := []PublishMessageRequest{}
+	var messages []PublishMessageRequest
 	for i := 0; i < 10; i++ {
 		messages = append(messages, PublishMessageRequest{
 			QueueName:   "batch_test_queue",
@@ -103,10 +103,10 @@ func BenchmarkMessageQueueService_ConsumeMessages(b *testing.B) {
 	service := NewMessageQueueService(logger, metrics, config)
 
 	reqData := ConsumeMessagesRequest{
-		QueueName:    "consume_test_queue",
-		MaxMessages:  5,
-		AutoAck:      true,
-		ConsumerTag:  "benchmark_consumer",
+		QueueName:   "consume_test_queue",
+		MaxMessages: 5,
+		AutoAck:     true,
+		ConsumerTag: "benchmark_consumer",
 	}
 
 	reqBody, _ := json.Marshal(reqData)
@@ -137,17 +137,17 @@ func BenchmarkMessageQueueService_PublishEvent(b *testing.B) {
 	service := NewMessageQueueService(logger, metrics, config)
 
 	reqData := PublishEventRequest{
-		EventType: "user.login",
-		Exchange:  "events",
+		EventType:  "user.login",
+		Exchange:   "events",
 		RoutingKey: "user.login.success",
 		EventData: map[string]interface{}{
-			"user_id": "user_123",
-			"timestamp": time.Now().Unix(),
+			"user_id":    "user_123",
+			"timestamp":  time.Now().Unix(),
 			"ip_address": "127.0.0.1",
 		},
 		Metadata: map[string]interface{}{
-			"source": "auth_service",
-			"version": "1.0.0",
+			"source":         "auth_service",
+			"version":        "1.0.0",
 			"correlation_id": "corr_123",
 		},
 	}
@@ -256,13 +256,13 @@ func TestMessageQueueService_PerformanceTargets(t *testing.T) {
 
 	// Test message publishing performance
 	reqData := PublishMessageRequest{
-		QueueName:    "perf_test_queue",
-		MessageBody:  "performance test message",
-		ContentType:  "application/json",
-		Priority:     5,
-		Persistent:   true,
-		UserID:       "perf_user",
-		AppID:        "perf_app",
+		QueueName:     "perf_test_queue",
+		MessageBody:   "performance test message",
+		ContentType:   "application/json",
+		Priority:      5,
+		Persistent:    true,
+		UserID:        "perf_user",
+		AppID:         "perf_app",
 		CorrelationID: "perf_corr",
 	}
 
@@ -396,7 +396,7 @@ func TestMessageQueueService_ReliabilityFeatures(t *testing.T) {
 
 	// Test event publishing
 	eventReq := PublishEventRequest{
-		EventType: "test.event",
+		EventType:  "test.event",
 		RoutingKey: "test.key",
 		EventData: map[string]interface{}{
 			"test_field": "test_value",

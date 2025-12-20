@@ -1,3 +1,4 @@
+// Package server provides business logic for chat moderation service.
 // Issue: #1911
 // Chat Moderation Service - Business logic with zero allocations target
 package server
@@ -18,7 +19,7 @@ import (
 // Common errors
 var (
 	ErrNotFound = errors.New("not found")
-	ErrConflict = errors.New("conflict")
+	_           = errors.New("conflict")
 )
 
 // Service implements business logic for chat moderation
@@ -73,13 +74,13 @@ func (s *Service) CreateModerationRule(ctx context.Context, req *api.CreateModer
 	rule := &api.ModerationRule{
 		ID:        uuid.New(),
 		Name:      req.Name,
-		Type:      req.Type,
+		Type:      api.ModerationRuleType(req.Type),
 		Pattern:   req.Pattern,
-		Severity:  req.Severity,
-		Action:    req.Action,
+		Severity:  api.ModerationRuleSeverity(req.Severity),
+		Action:    api.ModerationRuleAction(req.Action),
 		Active:    true,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
+		CreatedAt: api.NewOptDateTime(time.Now()),
+		UpdatedAt: api.NewOptDateTime(time.Now()),
 	}
 
 	err := s.repo.CreateModerationRule(ctx, rule)
@@ -106,18 +107,18 @@ func (s *Service) UpdateModerationRule(ctx context.Context, ruleID string, req *
 		rule.Name = req.Name.Value
 	}
 	if req.Pattern.IsSet() {
-		rule.Pattern = req.Pattern.Value
+		rule.Pattern = req.Pattern
 	}
 	if req.Severity.IsSet() {
-		rule.Severity = req.Severity.Value
+		rule.Severity = api.ModerationRuleSeverity(req.Severity.Value)
 	}
 	if req.Action.IsSet() {
-		rule.Action = req.Action.Value
+		rule.Action = api.ModerationRuleAction(req.Action.Value)
 	}
 	if req.Active.IsSet() {
 		rule.Active = req.Active.Value
 	}
-	rule.UpdatedAt = time.Now()
+	rule.UpdatedAt = api.NewOptDateTime(time.Now())
 
 	err = s.repo.UpdateModerationRule(ctx, rule)
 	if err != nil {
@@ -143,7 +144,7 @@ func (s *Service) GetModerationViolation(ctx context.Context, violationID string
 }
 
 // UpdateViolationStatus updates violation status
-func (s *Service) UpdateViolationStatus(ctx context.Context, violationID string, req *api.UpdateViolationStatusRequest) (*api.ModerationViolation, error) {
+func (s *Service) UpdateViolationStatus(ctx context.Context, violationID string, req *api.UpdateViolationStatusReq) (*api.ModerationViolation, error) {
 	return s.repo.UpdateViolationStatus(ctx, violationID, req)
 }
 
@@ -152,14 +153,14 @@ func (s *Service) ApplyModerationAction(ctx context.Context, violationID string,
 	action := &api.ModerationAction{
 		ID:          uuid.New(),
 		ViolationID: uuid.MustParse(violationID),
-		ActionType:  req.ActionType,
+		ActionType:  api.ModerationActionActionType(req.ActionType),
 		Reason:      req.Reason,
-		ModeratorID: uuid.MustParse(req.ModeratorID),
-		CreatedAt:   time.Now(),
+		ModeratorID: req.ModeratorID,
+		CreatedAt:   api.NewOptDateTime(time.Now()),
 	}
 
 	if req.Duration.IsSet() {
-		action.Duration = &req.Duration.Value
+		action.Duration = api.NewOptNilInt(req.Duration.Value)
 	}
 
 	// Get violation to populate player_id
@@ -200,7 +201,7 @@ func (s *Service) CheckMessage(ctx context.Context, req *api.CheckMessageRequest
 	resp.Allowed = true
 	resp.Violations = resp.Violations[:0] // Reset slice
 	resp.ActionRequired = false
-	resp.ProcessingTimeMs = 0
+	resp.ProcessingTimeMs = api.NewOptFloat64(0)
 
 	message := strings.ToLower(req.Message)
 	playerID := req.PlayerID.String()
@@ -219,30 +220,30 @@ func (s *Service) CheckMessage(ctx context.Context, req *api.CheckMessageRequest
 
 		switch rule.Type {
 		case api.ModerationRuleTypeWordFilter:
-			violated, description = s.checkWordFilter(message, rule.Pattern)
+			violated, description = s.checkWordFilter(message, rule.Pattern.Value)
 
 		case api.ModerationRuleTypeSpamDetection:
-			violated, description = s.checkSpamDetection(ctx, playerID, message, rule.Pattern)
+			violated, description = s.checkSpamDetection(message)
 
 		case api.ModerationRuleTypeToxicityAnalysis:
-			violated, description = s.checkToxicityAnalysis(message, rule.Pattern)
+			violated, description = s.checkToxicityAnalysis(message)
 		}
 
 		if violated {
 			resp.Allowed = false
 
 			violation := api.CheckMessageResponseViolationsItem{
-				RuleID:      rule.ID,
-				RuleType:    rule.Type,
-				Severity:    rule.Severity,
-				Description: description,
+				RuleID:      api.NewOptUUID(rule.ID),
+				RuleType:    api.NewOptCheckMessageResponseViolationsItemRuleType(api.CheckMessageResponseViolationsItemRuleType(rule.Type)),
+				Severity:    api.NewOptCheckMessageResponseViolationsItemSeverity(api.CheckMessageResponseViolationsItemSeverity(rule.Severity)),
+				Description: api.NewOptString(description),
 			}
 			violations = append(violations, violation)
 
 			// Create violation record asynchronously (don't block hot path)
 			go func() {
 				ctx := context.Background()
-				s.createViolationAsync(ctx, req, &rule, description)
+				s.createViolationAsync(ctx, req, &rule)
 			}()
 
 			// Check if action required based on severity
@@ -266,7 +267,7 @@ func (s *Service) checkWordFilter(message, pattern string) (bool, string) {
 }
 
 // checkSpamDetection - Basic spam detection logic
-func (s *Service) checkSpamDetection(ctx context.Context, playerID, message, pattern string) (bool, string) {
+func (s *Service) checkSpamDetection(message string) (bool, string) {
 	// Check for excessive caps
 	caps := 0
 	total := 0
@@ -300,7 +301,7 @@ func (s *Service) checkSpamDetection(ctx context.Context, playerID, message, pat
 }
 
 // checkToxicityAnalysis - Basic toxicity detection (placeholder for ML model)
-func (s *Service) checkToxicityAnalysis(message, pattern string) (bool, string) {
+func (s *Service) checkToxicityAnalysis(message string) (bool, string) {
 	toxicWords := []string{"toxic", "hate", "abuse", "insult"}
 
 	for _, word := range toxicWords {
@@ -313,18 +314,18 @@ func (s *Service) checkToxicityAnalysis(message, pattern string) (bool, string) 
 }
 
 // createViolationAsync - Create violation record asynchronously
-func (s *Service) createViolationAsync(ctx context.Context, req *api.CheckMessageRequest, rule *api.ModerationRule, description string) {
+func (s *Service) createViolationAsync(ctx context.Context, req *api.CheckMessageRequest, rule *api.ModerationRule) {
 	violation := &api.ModerationViolation{
 		ID:               uuid.New(),
 		PlayerID:         req.PlayerID,
 		RuleID:           rule.ID,
-		RuleType:         rule.Type,
-		Severity:         rule.Severity,
-		MessageContent:   req.Message,
-		ViolationDetails: map[string]interface{}{"description": description},
+		RuleType:         api.ModerationViolationRuleType(rule.Type),
+		Severity:         api.ModerationViolationSeverity(rule.Severity),
+		MessageContent:   api.NewOptString(req.Message),
+		ViolationDetails: &api.ModerationViolationViolationDetails{},
 		Status:           api.ModerationViolationStatusPending,
-		CreatedAt:        time.Now(),
-		UpdatedAt:        time.Now(),
+		CreatedAt:        api.NewOptDateTime(time.Now()),
+		UpdatedAt:        api.NewOptDateTime(time.Now()),
 	}
 
 	err := s.repo.CreateModerationViolation(ctx, violation)

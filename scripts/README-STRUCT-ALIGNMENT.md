@@ -13,6 +13,7 @@
 **Скрипт:** `scripts/reorder-openapi-fields.py`
 
 **Использование:**
+
 ```bash
 # Dry run (проверка без изменений)
 python scripts/reorder-openapi-fields.py proto/openapi/{service}.yaml --dry-run --verbose
@@ -22,11 +23,13 @@ python scripts/reorder-openapi-fields.py proto/openapi/{service}.yaml --verbose
 ```
 
 **Что делает:**
+
 - Сортирует `properties` в каждом schema по размеру типа (large → small)
 - Добавляет `BACKEND NOTE` с информацией об оптимизации
 - Сохраняет порядок `required` полей
 
 **Порядок типов:**
+
 1. `string`/`uuid` (16 bytes)
 2. `object`/`$ref` (8-24 bytes)
 3. `array` (24 bytes)
@@ -36,6 +39,7 @@ python scripts/reorder-openapi-fields.py proto/openapi/{service}.yaml --verbose
 7. `int8`/`boolean` (1 byte)
 
 **Пример:**
+
 ```yaml
 # До
 properties:
@@ -55,6 +59,7 @@ properties:
 **Скрипт:** `scripts/reorder-liquibase-columns.py`
 
 **Использование:**
+
 ```bash
 # Dry run (проверка без изменений)
 python scripts/reorder-liquibase-columns.py infrastructure/liquibase/migrations/{file}.sql --dry-run --verbose
@@ -64,11 +69,13 @@ python scripts/reorder-liquibase-columns.py infrastructure/liquibase/migrations/
 ```
 
 **Что делает:**
+
 - Сортирует колонки в `CREATE TABLE` по размеру типа (large → small)
 - Сохраняет `PRIMARY KEY` колонку первой
 - Сохраняет все constraints (FOREIGN KEY, UNIQUE, CHECK)
 
 **Порядок типов PostgreSQL:**
+
 1. `UUID` (16 bytes)
 2. `TEXT`/`VARCHAR` (variable, большой)
 3. `JSONB` (variable, большой)
@@ -79,6 +86,7 @@ python scripts/reorder-liquibase-columns.py infrastructure/liquibase/migrations/
 8. `BOOLEAN` (1 byte)
 
 **Пример:**
+
 ```sql
 -- До
 CREATE TABLE players (
@@ -102,17 +110,19 @@ CREATE TABLE IF NOT EXISTS players (
 ### OpenAPI
 
 Протестировано на:
+
 - OK `proto/openapi/progression-service.yaml`
-  - Изменено 3 schemas: `AwardExperienceRequest`, `ExperienceResponse`, `ProgressionState`
-  - Валидация: `redocly lint` - OK OK
+    - Изменено 3 schemas: `AwardExperienceRequest`, `ExperienceResponse`, `ProgressionState`
+    - Валидация: `redocly lint` - OK OK
 
 ### Liquibase
 
 Протестировано на:
+
 - OK `infrastructure/liquibase/migrations/V1_18__progression_tables.sql`
-  - Изменено 2 таблицы: `character_progression`, `skill_experience`
-  - PRIMARY KEY сохранены первыми
-  - Constraints сохранены
+    - Изменено 2 таблицы: `character_progression`, `skill_experience`
+    - PRIMARY KEY сохранены первыми
+    - Constraints сохранены
 
 ## 🔧 Требования
 
@@ -148,6 +158,7 @@ python scripts/reorder-liquibase-columns.py infrastructure/liquibase/migrations/
 ## 🆕 Обновления
 
 **Версия 2.0** - Добавлена поддержка всех типов данных:
+
 - OK Все OpenAPI 3.0 форматы (uuid, date-time, email, uri, binary, byte, etc.)
 - OK Все PostgreSQL типы (UUID, JSONB, TIMESTAMP, NUMERIC, ARRAY, spatial, network, etc.)
 - OK Улучшенная обработка сложных типов

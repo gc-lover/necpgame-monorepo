@@ -6,110 +6,110 @@ metadata:
 data:
   necpgame-alerts.yaml: |
     groups:
-    - name: necpgame.rules
-      interval: 30s
-      rules:
-      - alert: HighErrorRate
-        expr: |
-          sum(rate(http_requests_total{status=~"5.."}[5m])) by (service)
-          /
-          sum(rate(http_requests_total[5m])) by (service)
-          > 0.01
-        for: 5m
-        labels:
-          severity: critical
-        annotations:
-          summary: "High error rate detected"
-          description: "Service {{ $labels.service }} has error rate above 1% (current: {{ $value | humanizePercentage }})"
-
-      - alert: HighLatency
-        expr: |
-          histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le, service))
-          > 1
-        for: 5m
-        labels:
-          severity: warning
-        annotations:
-          summary: "High latency detected"
-          description: "Service {{ $labels.service }} has p95 latency above 1s (current: {{ $value }}s)"
-
-      - alert: PodCrashLooping
-        expr: |
-          rate(kube_pod_container_status_restarts_total[15m]) > 0
-        for: 5m
-        labels:
-          severity: critical
-        annotations:
-          summary: "Pod is crash looping"
-          description: "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} is crash looping"
-
-      - alert: PodNotReady
-        expr: |
-          kube_pod_status_ready{condition="false"} == 1
-        for: 10m
-        labels:
-          severity: warning
-        annotations:
-          summary: "Pod is not ready"
-          description: "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} has been not ready for more than 10 minutes"
-
-      - alert: HighMemoryUsage
-        expr: |
-          (container_memory_usage_bytes / container_spec_memory_limit_bytes) > 0.9
-        for: 5m
-        labels:
-          severity: warning
-        annotations:
-          summary: "High memory usage"
-          description: "Container {{ $labels.container }} in pod {{ $labels.pod }} is using {{ $value | humanizePercentage }} of memory"
-
-      - alert: HighCPUUsage
-        expr: |
-          rate(container_cpu_usage_seconds_total[5m]) > 0.8
-        for: 5m
-        labels:
-          severity: warning
-        annotations:
-          summary: "High CPU usage"
-          description: "Container {{ $labels.container }} in pod {{ $labels.pod }} is using {{ $value | humanizePercentage }} of CPU"
-
-      - alert: DatabaseConnectionFailure
-        expr: |
-          up{job=~".*database.*"} == 0
-        for: 2m
-        labels:
-          severity: critical
-        annotations:
-          summary: "Database connection failure"
-          description: "Cannot connect to database {{ $labels.instance }}"
-
-      - alert: RedisConnectionFailure
-        expr: |
-          up{job=~".*redis.*"} == 0
-        for: 2m
-        labels:
-          severity: critical
-        annotations:
-          summary: "Redis connection failure"
-          description: "Cannot connect to Redis {{ $labels.instance }}"
-
-      - alert: ServiceDown
-        expr: |
-          up{job=~"necpgame.*"} == 0
-        for: 5m
-        labels:
-          severity: critical
-        annotations:
-          summary: "Service is down"
-          description: "Service {{ $labels.job }} is down"
-
-      - alert: HighRequestRate
-        expr: |
-          sum(rate(http_requests_total[5m])) by (service) > 1000
-        for: 5m
-        labels:
-          severity: info
-        annotations:
-          summary: "High request rate"
-          description: "Service {{ $labels.service }} is receiving {{ $value }} requests per second"
+      - name: necpgame.rules
+        interval: 30s
+        rules:
+          - alert: HighErrorRate
+            expr: |
+              sum(rate(http_requests_total{status=~"5.."}[5m])) by (service)
+              /
+              sum(rate(http_requests_total[5m])) by (service)
+              > 0.01
+            for: 5m
+            labels:
+              severity: critical
+            annotations:
+              summary: "High error rate detected"
+              description: "Service {{ $labels.service }} has error rate above 1% (current: {{ $value | humanizePercentage }})"
+          
+          - alert: HighLatency
+            expr: |
+              histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le, service))
+              > 1
+            for: 5m
+            labels:
+              severity: warning
+            annotations:
+              summary: "High latency detected"
+              description: "Service {{ $labels.service }} has p95 latency above 1s (current: {{ $value }}s)"
+          
+          - alert: PodCrashLooping
+            expr: |
+              rate(kube_pod_container_status_restarts_total[15m]) > 0
+            for: 5m
+            labels:
+              severity: critical
+            annotations:
+              summary: "Pod is crash looping"
+              description: "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} is crash looping"
+          
+          - alert: PodNotReady
+            expr: |
+              kube_pod_status_ready{condition="false"} == 1
+            for: 10m
+            labels:
+              severity: warning
+            annotations:
+              summary: "Pod is not ready"
+              description: "Pod {{ $labels.pod }} in namespace {{ $labels.namespace }} has been not ready for more than 10 minutes"
+          
+          - alert: HighMemoryUsage
+            expr: |
+              (container_memory_usage_bytes / container_spec_memory_limit_bytes) > 0.9
+            for: 5m
+            labels:
+              severity: warning
+            annotations:
+              summary: "High memory usage"
+              description: "Container {{ $labels.container }} in pod {{ $labels.pod }} is using {{ $value | humanizePercentage }} of memory"
+          
+          - alert: HighCPUUsage
+            expr: |
+              rate(container_cpu_usage_seconds_total[5m]) > 0.8
+            for: 5m
+            labels:
+              severity: warning
+            annotations:
+              summary: "High CPU usage"
+              description: "Container {{ $labels.container }} in pod {{ $labels.pod }} is using {{ $value | humanizePercentage }} of CPU"
+          
+          - alert: DatabaseConnectionFailure
+            expr: |
+              up{job=~".*database.*"} == 0
+            for: 2m
+            labels:
+              severity: critical
+            annotations:
+              summary: "Database connection failure"
+              description: "Cannot connect to database {{ $labels.instance }}"
+          
+          - alert: RedisConnectionFailure
+            expr: |
+              up{job=~".*redis.*"} == 0
+            for: 2m
+            labels:
+              severity: critical
+            annotations:
+              summary: "Redis connection failure"
+              description: "Cannot connect to Redis {{ $labels.instance }}"
+          
+          - alert: ServiceDown
+            expr: |
+              up{job=~"necpgame.*"} == 0
+            for: 5m
+            labels:
+              severity: critical
+            annotations:
+              summary: "Service is down"
+              description: "Service {{ $labels.job }} is down"
+          
+          - alert: HighRequestRate
+            expr: |
+              sum(rate(http_requests_total[5m])) by (service) > 1000
+            for: 5m
+            labels:
+              severity: info
+            annotations:
+              summary: "High request rate"
+              description: "Service {{ $labels.service }} is receiving {{ $value }} requests per second"
 

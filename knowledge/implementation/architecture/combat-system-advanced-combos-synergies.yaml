@@ -1,0 +1,298 @@
+<!-- Issue: #2219 -->
+
+# Architecture: Advanced Combat System - Combos & Synergies
+
+## Performance Requirements
+
+**Load:** 1000+ concurrent players, P99 <10ms for combo calculations
+**Data Model (optimized):**
+- ComboState: 64 bytes (timing, multiplier, chain length)
+- WeaponSynergy: 32 bytes (weapon IDs, bonus multipliers)
+- PlayerCombat: 128 bytes (current combo, synergy state, implant effects)
+
+**Hot Path:** Combo execution (2000 RPS/player), synergy checks (500 RPS/player)
+**Backend optimizations:** Level 3 - Zero allocations, memory pooling, lock-free structures
+
+## System Architecture
+
+### Core Components
+
+```mermaid
+graph TB
+    subgraph "Client Layer (UE5)"
+        CS[Combat System]
+        UI[Combo UI]
+        FX[Visual Effects]
+    end
+
+    subgraph "Network Layer"
+        GS[Game Server]
+        PS[Player Session]
+        BS[Battle State Sync]
+    end
+
+    subgraph "Backend Services"
+        CCS[Combat Calculation Service]
+        WSS[Weapon Synergy Service]
+        CIS[Combo Integration Service]
+        CES[Combo Event Store]
+    end
+
+    subgraph "Data Layer"
+        PCD[Player Combat Data]
+        WSD[Weapon Synergy Data]
+        CED[Combo Events]
+    end
+
+    CS --> PS
+    PS --> GS
+    GS --> CCS
+    GS --> WSS
+    GS --> CIS
+    CCS --> CES
+    WSS --> CES
+    CIS --> CES
+    CES --> PCD
+    CES --> WSD
+    CES --> CED
+```
+
+### Microservice Architecture
+
+#### 1. Combat Calculation Service (CCS)
+**Purpose:** Real-time combo calculations, damage multipliers, timing validation
+**Technology:** Go microservice, Redis for hot data
+**Scaling:** 5 pods, auto-scaling based on active combat sessions
+
+**Key Endpoints:**
+- `POST /api/v1/combat/calculate-combo` - Combo damage calculation
+- `GET /api/v1/combat/validate-timing/{player_id}` - Timing window validation
+- `POST /api/v1/combat/apply-synergy` - Apply weapon synergy bonuses
+
+#### 2. Weapon Synergy Service (WSS)
+**Purpose:** Weapon compatibility matrix, synergy effects, fusion mechanics
+**Technology:** Go microservice with in-memory cache
+**Scaling:** 3 pods, read-heavy optimization
+
+**Key Endpoints:**
+- `GET /api/v1/synergy/matrix/{weapon1}/{weapon2}` - Synergy compatibility check
+- `POST /api/v1/synergy/activate-fusion` - Fusion mode activation
+- `GET /api/v1/synergy/recommend/{player_id}` - AI-powered synergy suggestions
+
+#### 3. Combo Integration Service (CIS)
+**Purpose:** Implant effects, environmental bonuses, combo persistence
+**Technology:** Go microservice with PostgreSQL
+**Scaling:** 3 pods, event-driven updates
+
+**Key Endpoints:**
+- `POST /api/v1/combo/integrate-implant` - Apply implant effects to combo
+- `GET /api/v1/combo/environmental-bonuses/{area_id}` - Environmental synergy calculation
+- `POST /api/v1/combo/save-progress` - Persist combo achievements
+
+#### 4. Combo Event Store (CES)
+**Purpose:** Event sourcing for combo history, replay, analytics
+**Technology:** EventStoreDB or PostgreSQL with event tables
+**Scaling:** 2 pods, append-only writes
+
+**Event Types:**
+- `ComboStarted` - Player initiated combo sequence
+- `ComboExtended` - Successful attack in combo chain
+- `SynergyActivated` - Weapon synergy triggered
+- `ComboCompleted` - Combo finished with final multiplier
+- `FusionActivated` - Ultimate fusion mode engaged
+
+## Data Synchronization Patterns
+
+### CQRS Implementation
+
+```yaml
+cqrs_patterns:
+  command_side:
+    - CreateComboSession
+    - ExtendComboChain
+    - ActivateSynergy
+    - CompleteCombo
+
+  query_side:
+    - GetPlayerComboState
+    - GetWeaponSynergies
+    - GetComboHistory
+    - GetSynergyRecommendations
+```
+
+### Event Sourcing for Combat
+
+```yaml
+event_sourcing:
+  aggregate: PlayerCombatSession
+  events:
+    - ComboInitiated: {player_id, weapon_id, timestamp}
+    - AttackExecuted: {combo_id, attack_type, timing_accuracy, damage_multiplier}
+    - SynergyTriggered: {weapon1_id, weapon2_id, synergy_type, bonus_multiplier}
+    - ImplantActivated: {implant_type, effect_duration, combo_extension}
+    - ComboFinalized: {total_damage, combo_rating, experience_gained}
+```
+
+## Performance Optimizations
+
+### Memory Management
+- **Object Pooling:** ComboState objects recycled between calculations
+- **Struct Alignment:** Fields ordered large→small for cache efficiency
+- **Zero Allocations:** Hot path uses pre-allocated buffers
+
+### Network Optimization
+- **Delta Compression:** Only changed combo state sent to clients
+- **Prediction:** Client-side combo timing prediction with server rollback
+- **Spatial Partitioning:** Combat calculations distributed by zone
+
+### Database Optimization
+- **Read Replicas:** Combo history queries use replicas
+- **Partitioning:** Events partitioned by player_id and time
+- **Caching:** Redis cache for active combat sessions
+
+## Scaling Strategy
+
+### Horizontal Scaling
+- **Zone-based Sharding:** Combat calculations sharded by game zone
+- **Player-based Routing:** Requests routed to appropriate pod by player ID
+- **Load Balancing:** Round-robin for read operations, sticky sessions for writes
+
+### Auto-scaling Triggers
+- **Active Players:** Scale up when >500 concurrent players in combat
+- **Combo Complexity:** Scale based on advanced combo usage patterns
+- **Event Volume:** Scale event store based on combat event throughput
+
+## Security Architecture
+
+### Anti-Cheat Measures
+- **Timing Validation:** Server-side combo timing verification
+- **Synergy Auditing:** Log all synergy activations for pattern analysis
+- **Implant Verification:** Validate implant effects against player inventory
+
+### Rate Limiting
+- **Combo Requests:** 50 requests/second per player
+- **Synergy Activations:** 10 activations/minute per player
+- **Fusion Mode:** 1 activation per 5 minutes per player
+
+## Monitoring & Observability
+
+### Key Metrics
+- **Combo Success Rate:** Percentage of completed combos
+- **Synergy Usage:** Frequency of weapon synergy activation
+- **Performance:** P95 combo calculation time
+- **Errors:** Failed combo validations
+
+### Health Checks
+- **Service Health:** All microservices respond within 100ms
+- **Database Health:** Event store write latency <10ms
+- **Cache Health:** Redis hit rate >95%
+
+## Implementation Roadmap
+
+### Phase 1: Core Combo System (Week 1-2)
+- Basic combo chain mechanics
+- Timing window validation
+- Damage multipliers
+- Client-server synchronization
+
+### Phase 2: Weapon Synergies (Week 3-4)
+- Synergy matrix implementation
+- Fusion mechanics
+- Weapon compatibility checks
+- Synergy bonus calculations
+
+### Phase 3: Advanced Features (Week 5-6)
+- Implant integration
+- Environmental bonuses
+- Custom combo trees
+- AI-powered recommendations
+
+### Phase 4: Performance & Scale (Week 7-8)
+- Memory optimization
+- Network compression
+- Database partitioning
+- Load testing
+
+### Phase 5: Balance & Polish (Week 9-10)
+- Extensive playtesting
+- Balance adjustments
+- Performance monitoring
+- Production deployment
+
+## Risk Assessment
+
+### Technical Risks
+- **High:** Combo calculation complexity may impact server performance
+- **Medium:** Event sourcing implementation complexity
+- **Low:** Weapon synergy matrix maintenance
+
+### Mitigation Strategies
+- **Performance:** Extensive profiling and optimization from day 1
+- **Complexity:** Modular design with clear interfaces
+- **Testing:** Comprehensive unit and integration tests
+
+## API Specifications (High Level)
+
+### Combat Calculation API
+```yaml
+paths:
+  /api/v1/combat/calculate-combo:
+    post:
+      summary: Calculate combo damage and multipliers
+      parameters:
+        - player_id: string
+        - combo_chain: array[attack]
+        - weapon_synergies: array[synergy]
+      response:
+        total_damage: number
+        multipliers: object
+        critical_chance: number
+
+  /api/v1/combat/validate-timing:
+    get:
+      summary: Validate combo timing windows
+      parameters:
+        - player_id: string
+        - attack_sequence: array[timing]
+      response:
+        valid_windows: array[boolean]
+        suggested_corrections: array[number]
+```
+
+### Weapon Synergy API
+```yaml
+paths:
+  /api/v1/synergy/compatibility:
+    get:
+      summary: Check weapon synergy compatibility
+      parameters:
+        - weapon1_id: string
+        - weapon2_id: string
+      response:
+        compatible: boolean
+        synergy_type: string
+        bonus_multiplier: number
+
+  /api/v1/synergy/activate-fusion:
+    post:
+      summary: Activate weapon fusion mode
+      parameters:
+        - player_id: string
+        - weapon_combo: array[string]
+        - fusion_duration: number
+      response:
+        fusion_id: string
+        special_effects: array[string]
+        resource_cost: object
+```
+
+## Next Steps
+
+This architecture provides the foundation for an advanced combat system that will deliver deep tactical gameplay while maintaining high performance standards. The modular design allows for incremental implementation and easy scaling as player base grows.
+
+**Handed off to:** Database Agent for schema design (#2210), API Designer for detailed specifications (#2197), Backend Agent for service implementation (#2220), Network Agent for real-time synchronization (#2199).
+
+---
+
+*Designed by Architect Agent for Advanced Combat System*
+*Issue: #2219*

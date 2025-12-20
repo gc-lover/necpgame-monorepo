@@ -1,4 +1,4 @@
-// Issue: #1525
+// Package server Issue: #1525
 package server
 
 import (
@@ -7,9 +7,9 @@ import (
 	"errors"
 	"time"
 
+	"github.com/gc-lover/necpgame-monorepo/services/gameplay-service-go/models"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/gc-lover/necpgame-monorepo/services/gameplay-service-go/models"
 )
 
 type ComboRepositoryInterface interface {
@@ -162,4 +162,3 @@ func (r *ComboRepository) GetAnalytics(ctx context.Context, comboID, characterID
 
 	return analytics, nil
 }
-

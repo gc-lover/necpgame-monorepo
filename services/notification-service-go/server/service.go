@@ -1,4 +1,4 @@
-// SQL queries use prepared statements with placeholders (, , ?) for safety
+// Package server SQL queries use prepared statements with placeholders (, , ?) for safety
 // Issue: #140874394
 package server
 
@@ -418,21 +418,21 @@ func (s *NotificationService) MarkBulkAsReadHandler(w http.ResponseWriter, r *ht
 }
 
 // HealthCheckHandler проверяет здоровье сервиса
-func (s *NotificationService) HealthCheckHandler(w http.ResponseWriter, r *http.Request) {
+func (s *NotificationService) HealthCheckHandler(w http.ResponseWriter) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(`{"status": "healthy"}`))
 }
 
 // ReadinessCheckHandler проверяет готовность сервиса
-func (s *NotificationService) ReadinessCheckHandler(w http.ResponseWriter, r *http.Request) {
+func (s *NotificationService) ReadinessCheckHandler(w http.ResponseWriter) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(`{"status": "ready"}`))
 }
 
 // MetricsHandler предоставляет метрики сервиса
-func (s *NotificationService) MetricsHandler(w http.ResponseWriter, r *http.Request) {
+func (s *NotificationService) MetricsHandler(w http.ResponseWriter) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(`{"service": "notification-service", "version": "1.0.0"}`))

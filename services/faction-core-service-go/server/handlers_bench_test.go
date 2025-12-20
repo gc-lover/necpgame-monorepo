@@ -36,8 +36,7 @@ func BenchmarkGetFaction(b *testing.B) {
 	handlers := NewHandlers(service)
 
 	ctx := context.Background()
-	params := api.GetFactionParams{
-	}
+	params := api.GetFactionParams{}
 
 	b.ReportAllocs()
 	b.ResetTimer()
@@ -67,4 +66,3 @@ func BenchmarkUpdateFaction(b *testing.B) {
 		_, _ = handlers.UpdateFaction(ctx, req, params)
 	}
 }
-

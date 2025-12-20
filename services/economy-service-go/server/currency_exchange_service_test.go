@@ -16,12 +16,14 @@ import (
 
 // MockCurrencyExchangeRepository is a mock for CurrencyExchangeRepositoryInterface
 type MockCurrencyExchangeRepository struct {
-	GetExchangeRatesFunc  func(ctx context.Context) ([]models.CurrencyExchangeRate, error)
-	GetExchangeRateFunc   func(ctx context.Context, pair string) (*models.CurrencyExchangeRate, error)
-	CreateOrderFunc       func(ctx context.Context, order *models.CurrencyExchangeOrder) (*models.CurrencyExchangeOrder, error)
-	GetOrderFunc          func(ctx context.Context, orderID uuid.UUID) (*models.CurrencyExchangeOrder, error)
-	UpdateOrderStatusFunc func(ctx context.Context, orderID uuid.UUID, status string) error
-	CreateTradeFunc       func(ctx context.Context, trade *models.CurrencyExchangeTrade) (*models.CurrencyExchangeTrade, error)
+	GetExchangeRatesFunc       func(ctx context.Context) ([]models.CurrencyExchangeRate, error)
+	GetExchangeRateFunc        func(ctx context.Context, pair string) (*models.CurrencyExchangeRate, error)
+	GetExchangeRateHistoryFunc func(ctx context.Context, pair string, limit int) ([]models.CurrencyExchangeRate, error)
+	UpdateExchangeRateFunc     func(ctx context.Context, rate *models.CurrencyExchangeRate) error
+	CreateOrderFunc            func(ctx context.Context, order *models.CurrencyExchangeOrder) (*models.CurrencyExchangeOrder, error)
+	GetOrderFunc               func(ctx context.Context, orderID uuid.UUID) (*models.CurrencyExchangeOrder, error)
+	UpdateOrderStatusFunc      func(ctx context.Context, orderID uuid.UUID, status string) error
+	CreateTradeFunc            func(ctx context.Context, trade *models.CurrencyExchangeTrade) (*models.CurrencyExchangeTrade, error)
 }
 
 func (m *MockCurrencyExchangeRepository) GetExchangeRates(ctx context.Context) ([]models.CurrencyExchangeRate, error) {
@@ -36,6 +38,20 @@ func (m *MockCurrencyExchangeRepository) GetExchangeRate(ctx context.Context, pa
 		return m.GetExchangeRateFunc(ctx, pair)
 	}
 	return nil, errors.New("not implemented")
+}
+
+func (m *MockCurrencyExchangeRepository) GetExchangeRateHistory(ctx context.Context, pair string, limit int) ([]models.CurrencyExchangeRate, error) {
+	if m.GetExchangeRateHistoryFunc != nil {
+		return m.GetExchangeRateHistoryFunc(ctx, pair, limit)
+	}
+	return nil, errors.New("not implemented")
+}
+
+func (m *MockCurrencyExchangeRepository) UpdateExchangeRate(ctx context.Context, rate *models.CurrencyExchangeRate) error {
+	if m.UpdateExchangeRateFunc != nil {
+		return m.UpdateExchangeRateFunc(ctx, rate)
+	}
+	return errors.New("not implemented")
 }
 
 func (m *MockCurrencyExchangeRepository) CreateOrder(ctx context.Context, order *models.CurrencyExchangeOrder) (*models.CurrencyExchangeOrder, error) {
@@ -63,7 +79,7 @@ func (m *MockCurrencyExchangeRepository) CancelOrder(ctx context.Context, orderI
 	return m.UpdateOrderStatus(ctx, orderID, "cancelled")
 }
 
-func (m *MockCurrencyExchangeRepository) ListOrders(ctx context.Context, filter models.OrderFilter) ([]models.CurrencyExchangeOrder, error) {
+func (m *MockCurrencyExchangeRepository) ListOrders(_ context.Context, _ models.OrderFilter) ([]models.CurrencyExchangeOrder, error) {
 	return nil, errors.New("not implemented")
 }
 
@@ -74,7 +90,7 @@ func (m *MockCurrencyExchangeRepository) CreateTrade(ctx context.Context, trade 
 	return nil, errors.New("not implemented")
 }
 
-func (m *MockCurrencyExchangeRepository) ListTrades(ctx context.Context, filter models.TradeFilter) ([]models.CurrencyExchangeTrade, error) {
+func (m *MockCurrencyExchangeRepository) ListTrades(_ context.Context, _ models.TradeFilter) ([]models.CurrencyExchangeTrade, error) {
 	return nil, errors.New("not implemented")
 }
 

@@ -5,7 +5,7 @@ import (
 	"context"
 	"testing"
 
-	api "github.com/gc-lover/necpgame-monorepo/services/world-events-scheduler-service-go/pkg/api"
+	"github.com/gc-lover/necpgame-monorepo/services/world-events-scheduler-service-go/pkg/api"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
@@ -53,23 +53,23 @@ func BenchmarkGetScheduledWorldEvents(b *testing.B) {
 // mockRepository is a minimal mock for benchmark tests
 type mockRepository struct{}
 
-func (m *mockRepository) GetScheduledEvents(ctx context.Context) ([]*ScheduledEvent, error) {
+func (m *mockRepository) GetScheduledEvents(_ context.Context) ([]*ScheduledEvent, error) {
 	return []*ScheduledEvent{}, nil
 }
 
-func (m *mockRepository) CreateScheduledEvent(ctx context.Context, event *ScheduledEvent) error {
+func (m *mockRepository) CreateScheduledEvent(_ context.Context, _ *ScheduledEvent) error {
 	return nil
 }
 
-func (m *mockRepository) GetScheduledEvent(ctx context.Context, id uuid.UUID) (*ScheduledEvent, error) {
+func (m *mockRepository) GetScheduledEvent(_ context.Context, _ uuid.UUID) (*ScheduledEvent, error) {
 	return nil, nil
 }
 
-func (m *mockRepository) UpdateScheduledEvent(ctx context.Context, event *ScheduledEvent) error {
+func (m *mockRepository) UpdateScheduledEvent(_ context.Context, _ *ScheduledEvent) error {
 	return nil
 }
 
-func (m *mockRepository) DeleteScheduledEvent(ctx context.Context, id uuid.UUID) error {
+func (m *mockRepository) DeleteScheduledEvent(_ context.Context, _ uuid.UUID) error {
 	return nil
 }
 
@@ -92,4 +92,3 @@ func BenchmarkTriggerScheduledWorldEvent(b *testing.B) {
 		_, _ = handlers.TriggerScheduledWorldEvent(ctx, params)
 	}
 }
-

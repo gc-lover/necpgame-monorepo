@@ -1,4 +1,4 @@
-// Issue: #131, #1604
+// Package server Issue: #131, #1604
 // ogen handlers - TYPED responses (no interface{} boxing!)
 package server
 
@@ -117,7 +117,7 @@ func (h *EconomyHandlers) CancelTrade(ctx context.Context, params api.CancelTrad
 }
 
 // CreateTradingGuild implements createTradingGuild operation (TYPED ogen response!)
-func (h *EconomyHandlers) CreateTradingGuild(ctx context.Context, req *api.CreateGuildRequest) (api.CreateTradingGuildRes, error) {
+func (h *EconomyHandlers) CreateTradingGuild(ctx context.Context, _ *api.CreateGuildRequest) (api.CreateTradingGuildRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
@@ -143,7 +143,7 @@ func (h *EconomyHandlers) GetCurrencies(ctx context.Context) (api.GetCurrenciesR
 }
 
 // GetCurrencyBalance implements getCurrencyBalance operation (TYPED ogen response!)
-func (h *EconomyHandlers) GetCurrencyBalance(ctx context.Context, params api.GetCurrencyBalanceParams) (api.GetCurrencyBalanceRes, error) {
+func (h *EconomyHandlers) GetCurrencyBalance(ctx context.Context, _ api.GetCurrencyBalanceParams) (api.GetCurrencyBalanceRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
@@ -182,7 +182,7 @@ func (h *EconomyHandlers) GetEconomyOverview(ctx context.Context) (api.GetEconom
 }
 
 // GetResourceById implements getResourceById operation (TYPED ogen response!)
-func (h *EconomyHandlers) GetResourceById(ctx context.Context, params api.GetResourceByIdParams) (api.GetResourceByIdRes, error) {
+func (h *EconomyHandlers) GetResourceById(ctx context.Context, _ api.GetResourceByIdParams) (api.GetResourceByIdRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
@@ -195,7 +195,7 @@ func (h *EconomyHandlers) GetResourceById(ctx context.Context, params api.GetRes
 }
 
 // GetResourcePrice implements getResourcePrice operation (TYPED ogen response!)
-func (h *EconomyHandlers) GetResourcePrice(ctx context.Context, params api.GetResourcePriceParams) (api.GetResourcePriceRes, error) {
+func (h *EconomyHandlers) GetResourcePrice(ctx context.Context, _ api.GetResourcePriceParams) (api.GetResourcePriceRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
@@ -208,7 +208,7 @@ func (h *EconomyHandlers) GetResourcePrice(ctx context.Context, params api.GetRe
 }
 
 // GetResources implements getResources operation (TYPED ogen response!)
-func (h *EconomyHandlers) GetResources(ctx context.Context, params api.GetResourcesParams) (api.GetResourcesRes, error) {
+func (h *EconomyHandlers) GetResources(ctx context.Context, _ api.GetResourcesParams) (api.GetResourcesRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
@@ -221,7 +221,7 @@ func (h *EconomyHandlers) GetResources(ctx context.Context, params api.GetResour
 }
 
 // GetResourcesByCategory implements getResourcesByCategory operation (TYPED ogen response!)
-func (h *EconomyHandlers) GetResourcesByCategory(ctx context.Context, params api.GetResourcesByCategoryParams) (api.GetResourcesByCategoryRes, error) {
+func (h *EconomyHandlers) GetResourcesByCategory(ctx context.Context, _ api.GetResourcesByCategoryParams) (api.GetResourcesByCategoryRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
@@ -234,7 +234,7 @@ func (h *EconomyHandlers) GetResourcesByCategory(ctx context.Context, params api
 }
 
 // GetResourcesByTier implements getResourcesByTier operation (TYPED ogen response!)
-func (h *EconomyHandlers) GetResourcesByTier(ctx context.Context, params api.GetResourcesByTierParams) (api.GetResourcesByTierRes, error) {
+func (h *EconomyHandlers) GetResourcesByTier(ctx context.Context, _ api.GetResourcesByTierParams) (api.GetResourcesByTierRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
@@ -247,7 +247,7 @@ func (h *EconomyHandlers) GetResourcesByTier(ctx context.Context, params api.Get
 }
 
 // GetTradingGuilds implements getTradingGuilds operation (TYPED ogen response!)
-func (h *EconomyHandlers) GetTradingGuilds(ctx context.Context, params api.GetTradingGuildsParams) (api.GetTradingGuildsRes, error) {
+func (h *EconomyHandlers) GetTradingGuilds(ctx context.Context, _ api.GetTradingGuildsParams) (api.GetTradingGuildsRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
@@ -260,7 +260,7 @@ func (h *EconomyHandlers) GetTradingGuilds(ctx context.Context, params api.GetTr
 }
 
 // GetWorldImpact implements getWorldImpact operation (TYPED ogen response!)
-func (h *EconomyHandlers) GetWorldImpact(ctx context.Context, params api.GetWorldImpactParams) (api.GetWorldImpactRes, error) {
+func (h *EconomyHandlers) GetWorldImpact(ctx context.Context, _ api.GetWorldImpactParams) (api.GetWorldImpactRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
@@ -273,7 +273,7 @@ func (h *EconomyHandlers) GetWorldImpact(ctx context.Context, params api.GetWorl
 }
 
 // JoinTradingGuild implements joinTradingGuild operation (TYPED ogen response!)
-func (h *EconomyHandlers) JoinTradingGuild(ctx context.Context, req *api.JoinTradingGuildReq, params api.JoinTradingGuildParams) (api.JoinTradingGuildRes, error) {
+func (h *EconomyHandlers) JoinTradingGuild(ctx context.Context, _ *api.JoinTradingGuildReq, _ api.JoinTradingGuildParams) (api.JoinTradingGuildRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 

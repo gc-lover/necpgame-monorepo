@@ -8,49 +8,13 @@ import (
 
 type ReferralStatus string
 
-const (
-	ReferralStatusPending   ReferralStatus = "PENDING"
-	ReferralStatusActive    ReferralStatus = "ACTIVE"
-	ReferralStatusCompleted ReferralStatus = "COMPLETED"
-	ReferralStatusInactive  ReferralStatus = "INACTIVE"
-)
-
 type ReferralMilestoneType string
-
-const (
-	MilestoneNone    ReferralMilestoneType = "NONE"
-	Milestone5       ReferralMilestoneType = "MILESTONE_5"
-	Milestone10      ReferralMilestoneType = "MILESTONE_10"
-	Milestone25      ReferralMilestoneType = "MILESTONE_25"
-	Milestone50      ReferralMilestoneType = "MILESTONE_50"
-	Milestone100     ReferralMilestoneType = "MILESTONE_100"
-)
 
 type ReferralRewardType string
 
-const (
-	RewardTypeWelcomeBonus   ReferralRewardType = "WELCOME_BONUS"
-	RewardTypeReferrerBonus  ReferralRewardType = "REFERRER_BONUS"
-	RewardTypeMilestoneBonus ReferralRewardType = "MILESTONE_BONUS"
-)
-
 type ReferralLeaderboardType string
 
-const (
-	LeaderboardTypeTopReferrers ReferralLeaderboardType = "TOP_REFERRERS"
-	LeaderboardTypeTopMilestone ReferralLeaderboardType = "TOP_MILESTONE"
-	LeaderboardTypeTopRewards   ReferralLeaderboardType = "TOP_REWARDS"
-)
-
 type ReferralEventType string
-
-const (
-	EventTypeCodeGenerated    ReferralEventType = "referral:code-generated"
-	EventTypeRegistered       ReferralEventType = "referral:registered"
-	EventTypeLevel10Reached   ReferralEventType = "referral:level-10-reached"
-	EventTypeMilestoneAchieved ReferralEventType = "referral:milestone-achieved"
-	EventTypeRewardDistributed ReferralEventType = "referral:reward-distributed"
-)
 
 type ReferralCode struct {
 	ID        uuid.UUID `json:"id" db:"id"`
@@ -61,59 +25,59 @@ type ReferralCode struct {
 }
 
 type Referral struct {
-	ID               uuid.UUID      `json:"id" db:"id"`
-	ReferrerID       uuid.UUID      `json:"referrer_id" db:"referrer_id"`
-	RefereeID        uuid.UUID      `json:"referee_id" db:"referee_id"`
-	ReferralCodeID   uuid.UUID      `json:"referral_code_id" db:"referral_code_id"`
-	RegisteredAt     time.Time      `json:"registered_at" db:"registered_at"`
-	Status           ReferralStatus `json:"status" db:"status"`
-	Level10Reached   bool           `json:"level_10_reached" db:"level_10_reached"`
-	Level10ReachedAt *time.Time     `json:"level_10_reached_at,omitempty" db:"level_10_reached_at"`
-	WelcomeBonusGiven bool          `json:"welcome_bonus_given" db:"welcome_bonus_given"`
-	ReferrerBonusGiven bool         `json:"referrer_bonus_given" db:"referrer_bonus_given"`
-	CreatedAt        time.Time      `json:"created_at" db:"created_at"`
-	UpdatedAt        time.Time      `json:"updated_at" db:"updated_at"`
+	ID                 uuid.UUID      `json:"id" db:"id"`
+	ReferrerID         uuid.UUID      `json:"referrer_id" db:"referrer_id"`
+	RefereeID          uuid.UUID      `json:"referee_id" db:"referee_id"`
+	ReferralCodeID     uuid.UUID      `json:"referral_code_id" db:"referral_code_id"`
+	RegisteredAt       time.Time      `json:"registered_at" db:"registered_at"`
+	Status             ReferralStatus `json:"status" db:"status"`
+	Level10Reached     bool           `json:"level_10_reached" db:"level_10_reached"`
+	Level10ReachedAt   *time.Time     `json:"level_10_reached_at,omitempty" db:"level_10_reached_at"`
+	WelcomeBonusGiven  bool           `json:"welcome_bonus_given" db:"welcome_bonus_given"`
+	ReferrerBonusGiven bool           `json:"referrer_bonus_given" db:"referrer_bonus_given"`
+	CreatedAt          time.Time      `json:"created_at" db:"created_at"`
+	UpdatedAt          time.Time      `json:"updated_at" db:"updated_at"`
 }
 
 type ReferralMilestone struct {
-	ID             uuid.UUID           `json:"id" db:"id"`
-	PlayerID       uuid.UUID           `json:"player_id" db:"player_id"`
-	MilestoneType  ReferralMilestoneType `json:"milestone_type" db:"milestone_type"`
-	MilestoneValue int                `json:"milestone_value" db:"milestone_value"`
-	AchievedAt     time.Time          `json:"achieved_at" db:"achieved_at"`
-	RewardClaimed  bool               `json:"reward_claimed" db:"reward_claimed"`
-	RewardClaimedAt *time.Time        `json:"reward_claimed_at,omitempty" db:"reward_claimed_at"`
+	ID              uuid.UUID             `json:"id" db:"id"`
+	PlayerID        uuid.UUID             `json:"player_id" db:"player_id"`
+	MilestoneType   ReferralMilestoneType `json:"milestone_type" db:"milestone_type"`
+	MilestoneValue  int                   `json:"milestone_value" db:"milestone_value"`
+	AchievedAt      time.Time             `json:"achieved_at" db:"achieved_at"`
+	RewardClaimed   bool                  `json:"reward_claimed" db:"reward_claimed"`
+	RewardClaimedAt *time.Time            `json:"reward_claimed_at,omitempty" db:"reward_claimed_at"`
 }
 
 type ReferralReward struct {
-	ID           uuid.UUID          `json:"id" db:"id"`
-	PlayerID     uuid.UUID          `json:"player_id" db:"player_id"`
-	ReferralID   *uuid.UUID         `json:"referral_id,omitempty" db:"referral_id"`
-	RewardType   ReferralRewardType `json:"reward_type" db:"reward_type"`
-	RewardAmount int64              `json:"reward_amount" db:"reward_amount"`
-	CurrencyType string             `json:"currency_type" db:"currency_type"`
-	DistributedAt time.Time         `json:"distributed_at" db:"distributed_at"`
+	ID            uuid.UUID          `json:"id" db:"id"`
+	PlayerID      uuid.UUID          `json:"player_id" db:"player_id"`
+	ReferralID    *uuid.UUID         `json:"referral_id,omitempty" db:"referral_id"`
+	RewardType    ReferralRewardType `json:"reward_type" db:"reward_type"`
+	RewardAmount  int64              `json:"reward_amount" db:"reward_amount"`
+	CurrencyType  string             `json:"currency_type" db:"currency_type"`
+	DistributedAt time.Time          `json:"distributed_at" db:"distributed_at"`
 }
 
 type ReferralStats struct {
-	PlayerID         uuid.UUID           `json:"player_id"`
-	TotalReferrals   int                 `json:"total_referrals"`
-	ActiveReferrals  int                 `json:"active_referrals"`
-	Level10Referrals int                 `json:"level_10_referrals"`
+	PlayerID         uuid.UUID              `json:"player_id"`
+	TotalReferrals   int                    `json:"total_referrals"`
+	ActiveReferrals  int                    `json:"active_referrals"`
+	Level10Referrals int                    `json:"level_10_referrals"`
 	CurrentMilestone *ReferralMilestoneType `json:"current_milestone,omitempty"`
-	TotalRewards     int64               `json:"total_rewards"`
-	LastUpdated      time.Time           `json:"last_updated"`
+	TotalRewards     int64                  `json:"total_rewards"`
+	LastUpdated      time.Time              `json:"last_updated"`
 }
 
 type ReferralLeaderboardEntry struct {
-	Rank            int                 `json:"rank"`
-	PlayerID        uuid.UUID           `json:"player_id"`
-	PlayerName      string              `json:"player_name"`
-	TotalReferrals  int                 `json:"total_referrals"`
-	ActiveReferrals int                 `json:"active_referrals"`
-	Level10Referrals int                `json:"level_10_referrals"`
+	Rank             int                    `json:"rank"`
+	PlayerID         uuid.UUID              `json:"player_id"`
+	PlayerName       string                 `json:"player_name"`
+	TotalReferrals   int                    `json:"total_referrals"`
+	ActiveReferrals  int                    `json:"active_referrals"`
+	Level10Referrals int                    `json:"level_10_referrals"`
 	CurrentMilestone *ReferralMilestoneType `json:"current_milestone,omitempty"`
-	TotalRewards    int64               `json:"total_rewards"`
+	TotalRewards     int64                  `json:"total_rewards"`
 }
 
 type ReferralEvent struct {
@@ -123,4 +87,3 @@ type ReferralEvent struct {
 	EventData map[string]interface{} `json:"event_data" db:"event_data"`
 	CreatedAt time.Time              `json:"created_at" db:"created_at"`
 }
-

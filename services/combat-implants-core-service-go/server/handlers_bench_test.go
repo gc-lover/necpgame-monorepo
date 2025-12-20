@@ -3,8 +3,9 @@ package server
 
 import (
 	"context"
-	"github.com/gc-lover/necpgame-monorepo/services/combat-implants-core-service-go/pkg/api"
 	"testing"
+
+	"github.com/gc-lover/necpgame-monorepo/services/combat-implants-core-service-go/pkg/api"
 
 	"github.com/google/uuid"
 )
@@ -15,8 +16,7 @@ func BenchmarkGetImplantCatalog(b *testing.B) {
 	handlers := NewHandlers()
 
 	ctx := context.Background()
-	params := api.GetImplantCatalogParams{
-	}
+	params := api.GetImplantCatalogParams{}
 
 	b.ReportAllocs()
 	b.ResetTimer()
@@ -61,4 +61,3 @@ func BenchmarkGetCharacterImplants(b *testing.B) {
 		_, _ = handlers.GetCharacterImplants(ctx, params)
 	}
 }
-

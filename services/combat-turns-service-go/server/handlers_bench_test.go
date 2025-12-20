@@ -16,8 +16,7 @@ func BenchmarkGetCurrentTurn(b *testing.B) {
 	handlers := NewHandlers(service)
 
 	ctx := context.Background()
-	params := api.GetCurrentTurnParams{
-	}
+	params := api.GetCurrentTurnParams{}
 
 	b.ReportAllocs()
 	b.ResetTimer()
@@ -35,8 +34,7 @@ func BenchmarkGetTurnOrder(b *testing.B) {
 	handlers := NewHandlers(service)
 
 	ctx := context.Background()
-	params := api.GetTurnOrderParams{
-	}
+	params := api.GetTurnOrderParams{}
 
 	b.ReportAllocs()
 	b.ResetTimer()
@@ -62,4 +60,3 @@ func BenchmarkNextTurn(b *testing.B) {
 		_, _ = handlers.NextTurn(ctx, params)
 	}
 }
-

@@ -3,6 +3,7 @@ package server
 import (
 	"encoding/json"
 	"net/http"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -18,13 +19,13 @@ func (s *CombatService) GetStatusEffects(w http.ResponseWriter, r *http.Request)
 	// TODO: Load from database/cache
 	effects := []*StatusEffect{
 		{
-			EffectID:   "regen_001",
-			EffectType: "BUFF",
-			Name:       "Health Regeneration",
+			EffectID:    "regen_001",
+			EffectType:  "BUFF",
+			Name:        "Health Regeneration",
 			Description: "Restores 5 HP per second",
-			Duration:   60,
-			Stacks:     1,
-			AppliedAt:  time.Now(),
+			Duration:    60,
+			Stacks:      1,
+			AppliedAt:   time.Now(),
 		},
 	}
 

@@ -1,4 +1,4 @@
-// Issue: #1607, ogen migration
+// Package server Issue: #1607, ogen migration
 package server
 
 import (
@@ -14,7 +14,7 @@ const (
 	DBTimeout = 50 * time.Millisecond
 )
 
-// Issue: #1607 - Memory pooling for hot path structs (Level 2 optimization)
+// Handlers Issue: #1607 - Memory pooling for hot path structs (Level 2 optimization)
 type Handlers struct {
 	logger *logrus.Logger
 
@@ -35,7 +35,7 @@ func NewHandlers(logger *logrus.Logger) *Handlers {
 	return h
 }
 
-// Issue: #1607 - Uses memory pooling for zero allocations
+// HealthCheck Issue: #1607 - Uses memory pooling for zero allocations
 func (h *Handlers) HealthCheck(ctx context.Context) (*api.HealthCheckOK, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()

@@ -56,7 +56,7 @@ type ErrorResponse struct {
 	Details map[string]interface{} `json:"details,omitempty"`
 }
 
-// Pagination parameters for list operations
+// PaginationParams Pagination parameters for list operations
 type PaginationParams struct {
 	Limit  int `json:"limit,omitempty"`
 	Offset int `json:"offset,omitempty"`

@@ -31,7 +31,7 @@ var (
 		[]string{"character_id"},
 	)
 
-	inventoryErrorsTotal = promauto.NewCounterVec(
+	_ = promauto.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "inventory_errors_total",
 			Help: "Total number of inventory errors",
@@ -51,9 +51,3 @@ func RecordRequestDuration(method, endpoint string, duration float64) {
 func SetInventoryItems(characterID string, count float64) {
 	inventoryItemsTotal.WithLabelValues(characterID).Set(count)
 }
-
-func RecordError(errorType string) {
-	inventoryErrorsTotal.WithLabelValues(errorType).Inc()
-}
-
-

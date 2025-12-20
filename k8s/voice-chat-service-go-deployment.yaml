@@ -30,90 +30,90 @@ spec:
         seccompProfile:
           type: RuntimeDefault
       containers:
-      - name: voice-chat-service-go
-        image: necpgame-voice-chat-service-go:latest
-        imagePullPolicy: IfNotPresent
-        securityContext:
-          allowPrivilegeEscalation: false
-          readOnlyRootFilesystem: true
-          capabilities:
-            drop:
-            - ALL
-        ports:
-        - name: http
-          containerPort: 8091
-          protocol: TCP
-        - name: metrics
-          containerPort: 9101
-          protocol: TCP
-        env:
-        - name: ADDR
-          value: "0.0.0.0:8091"
-        - name: METRICS_ADDR
-          value: ":9101"
-        - name: DATABASE_URL
-          valueFrom:
-            secretKeyRef:
-              name: database-secrets
-              key: url
-        - name: REDIS_URL
-          valueFrom:
-            secretKeyRef:
-              name: redis-secrets
-              key: url
-        - name: WEBRTC_URL
-          value: "wss://voice.necp.game"
-        - name: WEBRTC_KEY
-          value: ""
-        - name: KEYCLOAK_ISSUER
-          valueFrom:
-            configMapKeyRef:
-              name: common-config
-              key: keycloak-url
-        - name: JWKS_URL
-          value: "http://keycloak:8080/realms/necpgame/protocol/openid-connect/certs"
-        - name: AUTH_ENABLED
-          valueFrom:
-            configMapKeyRef:
-              name: common-config
-              key: auth-enabled
-        resources:
-          requests:
-            memory: "128Mi"
-            cpu: "100m"
-          limits:
-            memory: "512Mi"
-            cpu: "500m"
-        startupProbe:
-          httpGet:
-            path: /metrics
-            port: 9101
-          initialDelaySeconds: 5
-          periodSeconds: 5
-          timeoutSeconds: 3
-          failureThreshold: 30
-        livenessProbe:
-          httpGet:
-            path: /metrics
-            port: 9101
-          initialDelaySeconds: 30
-          periodSeconds: 30
-          timeoutSeconds: 3
-          failureThreshold: 3
-        readinessProbe:
-          httpGet:
-            path: /metrics
-            port: 9101
-          initialDelaySeconds: 5
-          periodSeconds: 10
-          timeoutSeconds: 3
-          failureThreshold: 3
-        volumeMounts:
-        - name: tmp
-          mountPath: /tmp
+        - name: voice-chat-service-go
+          image: necpgame-voice-chat-service-go:latest
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          ports:
+            - name: http
+              containerPort: 8091
+              protocol: TCP
+            - name: metrics
+              containerPort: 9101
+              protocol: TCP
+          env:
+            - name: ADDR
+              value: "0.0.0.0:8091"
+            - name: METRICS_ADDR
+              value: ":9101"
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: database-secrets
+                  key: url
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: redis-secrets
+                  key: url
+            - name: WEBRTC_URL
+              value: "wss://voice.necp.game"
+            - name: WEBRTC_KEY
+              value: ""
+            - name: KEYCLOAK_ISSUER
+              valueFrom:
+                configMapKeyRef:
+                  name: common-config
+                  key: keycloak-url
+            - name: JWKS_URL
+              value: "http://keycloak:8080/realms/necpgame/protocol/openid-connect/certs"
+            - name: AUTH_ENABLED
+              valueFrom:
+                configMapKeyRef:
+                  name: common-config
+                  key: auth-enabled
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          startupProbe:
+            httpGet:
+              path: /metrics
+              port: 9101
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 30
+          livenessProbe:
+            httpGet:
+              path: /metrics
+              port: 9101
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 3
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /metrics
+              port: 9101
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
       volumes:
-      - name: tmp
-        emptyDir: {}
+        - name: tmp
+          emptyDir: { }
 ---
 apiVersion: v1
 kind: Service
@@ -126,13 +126,13 @@ metadata:
 spec:
   type: ClusterIP
   ports:
-  - name: http
-    port: 8091
-    targetPort: 8091
-    protocol: TCP
-  - name: metrics
-    port: 9101
-    targetPort: 9101
-    protocol: TCP
+    - name: http
+      port: 8091
+      targetPort: 8091
+      protocol: TCP
+    - name: metrics
+      port: 9101
+      targetPort: 9101
+      protocol: TCP
   selector:
     app: voice-chat-service-go

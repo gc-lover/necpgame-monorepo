@@ -1,9 +1,8 @@
-// SQL queries use prepared statements with placeholders (, , ?) for safety
+// Package server SQL queries use prepared statements with placeholders (, , ?) for safety
 // Issue: #1578, #142715146
 package server
 
 import (
-	"context"
 	"errors"
 	"sync"
 
@@ -12,9 +11,9 @@ import (
 
 // Common errors
 var (
-	ErrNotFound            = errors.New("not found")
-	ErrRequirementsNotMet  = errors.New("requirements not met")
-	ErrSynergyUnavailable  = errors.New("synergy unavailable")
+	ErrNotFound           = errors.New("not found")
+	ErrRequirementsNotMet = errors.New("requirements not met")
+	ErrSynergyUnavailable = errors.New("synergy unavailable")
 )
 
 // Service implements business logic for combat combos
@@ -24,11 +23,11 @@ type Service struct {
 	repo *Repository
 
 	// Memory pooling for hot path structs (zero allocations target!)
-	catalogResponsePool      sync.Pool
-	activationResponsePool   sync.Pool
-	synergyResponsePool      sync.Pool
-	analyticsResponsePool    sync.Pool
-	scoreSubmissionPool      sync.Pool
+	catalogResponsePool    sync.Pool
+	activationResponsePool sync.Pool
+	synergyResponsePool    sync.Pool
+	analyticsResponsePool  sync.Pool
+	scoreSubmissionPool    sync.Pool
 }
 
 // NewService creates new service with dependency injection and memory pooling
@@ -67,8 +66,8 @@ func NewService(repo *Repository) *Service {
 
 // GetComboCatalog returns combo catalog with filtering
 // Issue: #142715146 - Uses memory pooling for zero allocations
-func (s *Service) GetComboCatalog(ctx context.Context, params api.GetComboCatalogParams) (*api.ComboCatalogResponse, error) {
-	combos, total, err := s.repo.GetComboCatalog(ctx, params)
+func (s *Service) GetComboCatalog() (*api.ComboCatalogResponse, error) {
+	combos, total, err := s.repo.GetComboCatalog()
 	if err != nil {
 		return nil, err
 	}
@@ -90,15 +89,15 @@ func (s *Service) GetComboCatalog(ctx context.Context, params api.GetComboCatalo
 }
 
 // GetComboDetails returns detailed combo information
-func (s *Service) GetComboDetails(ctx context.Context, comboId string) (*api.ComboDetails, error) {
-	return s.repo.GetComboDetails(ctx, comboId)
+func (s *Service) GetComboDetails() (*api.ComboDetails, error) {
+	return s.repo.GetComboDetails()
 }
 
 // ActivateCombo activates combo for character
 // Issue: #142715146 - Uses memory pooling for zero allocations
-func (s *Service) ActivateCombo(ctx context.Context, req *api.ActivateComboRequest) (*api.ComboActivationResponse, error) {
+func (s *Service) ActivateCombo(req *api.ActivateComboRequest) (*api.ComboActivationResponse, error) {
 	// Validate combo exists
-	combo, err := s.repo.GetComboByID(ctx, req.ComboID.String())
+	combo, err := s.repo.GetComboByID()
 	if err != nil {
 		return nil, ErrNotFound
 	}
@@ -108,7 +107,7 @@ func (s *Service) ActivateCombo(ctx context.Context, req *api.ActivateComboReque
 	_ = combo
 
 	// Create activation record
-	activation, err := s.repo.CreateActivation(ctx, req)
+	activation, err := s.repo.CreateActivation(req)
 	if err != nil {
 		return nil, err
 	}
@@ -131,15 +130,15 @@ func (s *Service) ActivateCombo(ctx context.Context, req *api.ActivateComboReque
 }
 
 // ApplySynergy applies synergy to activated combo
-func (s *Service) ApplySynergy(ctx context.Context, req *api.ApplySynergyRequest) (*api.SynergyApplicationResponse, error) {
+func (s *Service) ApplySynergy(req *api.ApplySynergyRequest) (*api.SynergyApplicationResponse, error) {
 	// Validate activation exists
-	activation, err := s.repo.GetActivation(ctx, req.ActivationID.String())
+	activation, err := s.repo.GetActivation(req.ActivationID.String())
 	if err != nil {
 		return nil, ErrNotFound
 	}
 
 	// Validate synergy exists
-	synergy, err := s.repo.GetSynergy(ctx, req.SynergyID.String())
+	synergy, err := s.repo.GetSynergy()
 	if err != nil {
 		return nil, ErrNotFound
 	}
@@ -149,7 +148,7 @@ func (s *Service) ApplySynergy(ctx context.Context, req *api.ApplySynergyRequest
 	_ = synergy
 
 	// Save synergy application
-	if err := s.repo.SaveSynergyApplication(ctx, req.ActivationID.String(), req.SynergyID.String()); err != nil {
+	if err := s.repo.SaveSynergyApplication(); err != nil {
 		return nil, err
 	}
 
@@ -166,20 +165,20 @@ func (s *Service) ApplySynergy(ctx context.Context, req *api.ApplySynergyRequest
 }
 
 // GetComboLoadout returns character's combo loadout
-func (s *Service) GetComboLoadout(ctx context.Context, characterId string) (*api.ComboLoadout, error) {
-	return s.repo.GetComboLoadout(ctx, characterId)
+func (s *Service) GetComboLoadout(characterId string) (*api.ComboLoadout, error) {
+	return s.repo.GetComboLoadout(characterId)
 }
 
 // UpdateComboLoadout updates character's combo loadout
-func (s *Service) UpdateComboLoadout(ctx context.Context, req *api.UpdateLoadoutRequest) (*api.ComboLoadout, error) {
+func (s *Service) UpdateComboLoadout(req *api.UpdateLoadoutRequest) (*api.ComboLoadout, error) {
 	// TODO: Validate combo IDs exist
-	return s.repo.UpdateComboLoadout(ctx, req)
+	return s.repo.UpdateComboLoadout(req)
 }
 
 // SubmitComboScore submits combo scoring results
-func (s *Service) SubmitComboScore(ctx context.Context, req *api.SubmitScoreRequest) (*api.ScoreSubmissionResponse, error) {
+func (s *Service) SubmitComboScore(req *api.SubmitScoreRequest) (*api.ScoreSubmissionResponse, error) {
 	// Validate activation exists
-	activation, err := s.repo.GetActivation(ctx, req.ActivationID.String())
+	activation, err := s.repo.GetActivation(req.ActivationID.String())
 	if err != nil {
 		return nil, ErrNotFound
 	}
@@ -189,7 +188,7 @@ func (s *Service) SubmitComboScore(ctx context.Context, req *api.SubmitScoreRequ
 	if req.TeamCoordination.IsSet() {
 		teamCoord = req.TeamCoordination.Value
 	}
-	
+
 	totalScore := int32(req.ExecutionDifficulty + req.DamageOutput +
 		req.VisualImpact + teamCoord)
 
@@ -217,7 +216,7 @@ func (s *Service) SubmitComboScore(ctx context.Context, req *api.SubmitScoreRequ
 		Category:            category,
 	}
 
-	if err := s.repo.SaveScore(ctx, scoreRecord); err != nil {
+	if err := s.repo.SaveScore(); err != nil {
 		return nil, err
 	}
 
@@ -235,8 +234,8 @@ func (s *Service) SubmitComboScore(ctx context.Context, req *api.SubmitScoreRequ
 
 // GetComboAnalytics returns combo effectiveness analytics
 // Issue: #142715146 - Uses memory pooling for zero allocations
-func (s *Service) GetComboAnalytics(ctx context.Context, params api.GetComboAnalyticsParams) (*api.AnalyticsResponse, error) {
-	analytics, err := s.repo.GetComboAnalytics(ctx, params)
+func (s *Service) GetComboAnalytics(params api.GetComboAnalyticsParams) (*api.AnalyticsResponse, error) {
+	analytics, err := s.repo.GetComboAnalytics()
 	if err != nil {
 		return nil, err
 	}
@@ -258,4 +257,3 @@ func (s *Service) GetComboAnalytics(ctx context.Context, params api.GetComboAnal
 	}
 	return result, nil
 }
-

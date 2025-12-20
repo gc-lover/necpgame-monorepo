@@ -19,53 +19,53 @@ info:
     email: api@necp.game
   x-microservice: logistics-service-go
 servers:
-- url: http://localhost:8088/api/v1
-  description: Локальный сервер разработки
-- url: https://api.necp.game/api/v1
-  description: Продакшен сервер
+  - url: http://localhost:8088/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
 tags:
-- name: Routes
-  description: Управление маршрутами
+  - name: Routes
+    description: Управление маршрутами
 paths:
   /logistics/routes:
     get:
       tags:
-      - Routes
+        - Routes
       summary: Получить список маршрутов
       description: Возвращает список доступных маршрутов с фильтрацией
       operationId: getRoutes
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       parameters:
-      - name: origin_location
-        in: query
-        schema:
-          type: string
-      - name: destination_location
-        in: query
-        schema:
-          type: string
-      - name: route_type
-        in: query
-        schema:
-          type: string
-          enum:
-          - LOCAL
-          - REGIONAL
-          - GLOBAL
-      - name: limit
-        in: query
-        schema:
-          type: integer
-          minimum: 1
-          maximum: 100
-          default: 20
-      - name: offset
-        in: query
-        schema:
-          type: integer
-          minimum: 0
-          default: 0
+        - name: origin_location
+          in: query
+          schema:
+            type: string
+        - name: destination_location
+          in: query
+          schema:
+            type: string
+        - name: route_type
+          in: query
+          schema:
+            type: string
+            enum:
+              - LOCAL
+              - REGIONAL
+              - GLOBAL
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
       responses:
         '200':
           description: Список маршрутов
@@ -82,19 +82,19 @@ paths:
   /logistics/routes/{route_id}:
     get:
       tags:
-      - Routes
+        - Routes
       summary: Получить маршрут
       description: Возвращает детальную информацию о маршруте
       operationId: getRoute
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       parameters:
-      - name: route_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+        - name: route_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
       responses:
         '200':
           description: Информация о маршруте
@@ -111,12 +111,12 @@ paths:
   /logistics/routes/calculate:
     post:
       tags:
-      - Routes
+        - Routes
       summary: Расчет маршрута
       description: Рассчитывает оптимальный маршрут между двумя локациями
       operationId: calculateRoute
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       requestBody:
         required: true
         content:
@@ -151,16 +151,16 @@ components:
         route_type:
           type: string
           enum:
-          - LOCAL
-          - REGIONAL
-          - GLOBAL
+            - LOCAL
+            - REGIONAL
+            - GLOBAL
         risk_level:
           type: string
           enum:
-          - LOW
-          - MEDIUM
-          - HIGH
-          - VERY_HIGH
+            - LOW
+            - MEDIUM
+            - HIGH
+            - VERY_HIGH
         created_at:
           type: string
           format: date-time
@@ -198,8 +198,8 @@ components:
     CalculateRouteRequest:
       type: object
       required:
-      - origin_location
-      - destination_location
+        - origin_location
+        - destination_location
       properties:
         origin_location:
           type: string
@@ -208,17 +208,17 @@ components:
         transport_type:
           type: string
           enum:
-          - GROUND
-          - AIR
-          - RAIL
-          - COURIER
-          - PLAYER_PICKUP
+            - GROUND
+            - AIR
+            - RAIL
+            - COURIER
+            - PLAYER_PICKUP
         optimize_for:
           type: string
           enum:
-          - TIME
-          - COST
-          - SAFETY
+            - TIME
+            - COST
+            - SAFETY
           default: TIME
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
   securitySchemes:

@@ -1,0 +1,203 @@
+<!-- Issue: #2079 -->
+# Microservice Orchestration and Service Mesh Architecture
+
+## Overview
+Архитектура оркестрации микросервисов с использованием service mesh для обеспечения надежной коммуникации, observability и безопасности в распределенной системе NECPGAME.
+
+## Performance Requirements
+
+**Load:** 10k req/sec, 100k concurrent users, P99 <100ms
+
+**Data Model (optimized):**
+- Service Registry: ~50 services, 200 instances
+- Service Mesh: Istio/Envoy proxy per pod
+- Expected struct size: ~128 bytes/instance
+
+**Hot Path:** Service discovery → 5k RPS (CRITICAL)
+
+**Backend optimizations required:**
+- gRPC streaming for real-time events
+- Circuit breaker patterns
+- Async communication with Kafka
+
+## Architecture Components
+
+### 1. Service Mesh Layer (Istio)
+```
+┌─────────────────┐    ┌─────────────────┐
+│   API Gateway   │────│ Service Mesh    │
+│   (Envoy)       │    │ (Istio Control) │
+└─────────────────┘    └─────────────────┘
+          │                       │
+          ▼                       ▼
+┌─────────────────┐    ┌─────────────────┐
+│ Game Services   │────│ Sidecar Proxies │
+│ (Go/K8s)       │    │ (Envoy)         │
+└─────────────────┘    └─────────────────┘
+```
+
+### 2. Orchestration Patterns
+
+#### Event-Driven Orchestration
+- **Saga Pattern:** Distributed transactions across services
+- **Event Sourcing:** Game state persistence via events
+- **CQRS:** Read/write separation for performance
+
+#### Service Communication
+- **Sync:** gRPC for low-latency operations (<50ms)
+- **Async:** Kafka for event streaming (combat, matchmaking)
+- **Hybrid:** HTTP/2 for external APIs
+
+### 3. Observability Stack
+```
+Prometheus → Grafana (Metrics)
+│
+Jaeger/OpenTelemetry (Tracing)
+│
+ELK Stack (Logs)
+```
+
+## Data Synchronization Patterns
+
+### Event Sourcing for Game State
+```yaml
+GameEvent:
+  id: uuid
+  type: "PLAYER_MOVE|COMBAT_START|ITEM_USE"
+  timestamp: datetime
+  player_id: uuid
+  data: jsonb
+  version: int
+```
+
+### CQRS Implementation
+```
+Command Side (Write):
+- Game Logic Services
+- Event Store (PostgreSQL)
+- Validation & Business Rules
+
+Query Side (Read):
+- Read Models (Redis)
+- Materialized Views
+- Cache Invalidation
+```
+
+## Security Architecture
+
+### Service-to-Service Authentication
+- mTLS between all services
+- SPIFFE/SPIRE for identity
+- JWT for external APIs
+
+### Authorization
+- Role-Based Access Control (RBAC)
+- Attribute-Based Access Control (ABAC)
+- Policy as Code (OPA/Rego)
+
+## Deployment Architecture
+
+### Kubernetes Multi-Cluster
+```
+Production Clusters:
+├── game-cluster-1 (US East)
+├── game-cluster-2 (EU West)
+└── game-cluster-3 (Asia Pacific)
+
+Service Mesh Federation:
+├── Cross-cluster service discovery
+├── Global load balancing
+└── Failover automation
+```
+
+### Service Mesh Configuration
+```yaml
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: game-gateway
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+  - port:
+      number: 443
+      name: https
+      protocol: HTTPS
+    tls:
+      mode: SIMPLE
+      credentialName: game-tls
+    hosts:
+    - "api.necpgame.com"
+```
+
+## Performance Optimizations
+
+### Level 3 Optimizations Required
+1. **Memory Pooling:** Reuse gRPC connections
+2. **Batch Operations:** Group events for processing
+3. **Zero Allocations:** Custom serializers
+4. **Circuit Breakers:** Prevent cascade failures
+5. **Adaptive Load Balancing:** Based on service health
+
+### Monitoring & Alerting
+```
+SLOs:
+- Service Availability: 99.9%
+- P95 Latency: <200ms
+- Error Rate: <0.1%
+
+Alerts:
+- Circuit breaker open
+- Service mesh failures
+- Cross-zone traffic spikes
+```
+
+## Implementation Roadmap
+
+### Phase 1: Core Infrastructure
+- [ ] Kubernetes multi-cluster setup
+- [ ] Istio service mesh deployment
+- [ ] Service registry implementation
+- [ ] Basic observability stack
+
+### Phase 2: Communication Patterns
+- [ ] gRPC service definitions
+- [ ] Kafka event streaming
+- [ ] CQRS read/write models
+- [ ] Event sourcing framework
+
+### Phase 3: Advanced Features
+- [ ] Cross-cluster federation
+- [ ] Service mesh security policies
+- [ ] Advanced routing rules
+- [ ] Chaos engineering setup
+
+### Phase 4: Production Optimization
+- [ ] Performance benchmarking
+- [ ] Load testing automation
+- [ ] Monitoring dashboards
+- [ ] Incident response playbooks
+
+## Risk Assessment
+- **Network Partition:** Service mesh federation handles cross-zone failures
+- **Service Discovery:** Consul/Istio provides resilient discovery
+- **Security:** Zero-trust with mTLS prevents lateral movement
+- **Performance:** CQRS + caching ensures sub-100ms responses
+
+## Dependencies
+- Kubernetes 1.28+
+- Istio 1.20+
+- Kafka 3.6+
+- PostgreSQL 15+
+- Redis Cluster 7+
+
+## Success Metrics
+- Service mesh adoption: 100% of services
+- Cross-cluster latency: <50ms P95
+- MTTR for incidents: <15 minutes
+- Error budget utilization: <5%
+
+---
+
+*Designed by Architect Agent for Issue #2079*

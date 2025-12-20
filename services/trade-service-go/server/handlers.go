@@ -1,4 +1,4 @@
-// Issue: #131, #1607
+// Package server Issue: #131, #1607
 // ogen handlers - TYPED responses (no interface{} boxing!)
 package server
 

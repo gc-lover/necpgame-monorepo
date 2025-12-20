@@ -9,7 +9,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// OPTIMIZATION: Issue #1978 - WebSocket connection handler with performance optimizations
+// WebSocketHandler OPTIMIZATION: Issue #1978 - WebSocket connection handler with performance optimizations
 func (s *NetworkService) WebSocketHandler(w http.ResponseWriter, r *http.Request) {
 	token := r.URL.Query().Get("token")
 	clientID := r.URL.Query().Get("client_id")

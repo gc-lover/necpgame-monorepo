@@ -47,4 +47,3 @@ func TestAnalyticsServiceNoLeaks(t *testing.T) {
 // - Timeout for all DB operations
 // - Redis connection management
 // - Proper channel management
-

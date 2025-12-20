@@ -9,7 +9,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/lib/pq v1.10.9
 	github.com/ogen-go/ogen v1.18.0
-	github.com/redis/go-redis/v9 v9.4.0
+	github.com/redis/go-redis/v9 v9.7.3
 	github.com/segmentio/kafka-go v0.4.47
 	github.com/sony/gobreaker v1.0.0 // Issue: #1588 - Circuit breaker
 	go.opentelemetry.io/otel v1.38.0

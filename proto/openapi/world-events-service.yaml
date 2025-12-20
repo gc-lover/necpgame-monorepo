@@ -1,0 +1,768 @@
+openapi: 3.0.3
+info:
+  title: World Events Service API
+  version: 1.0.0
+  description: |
+    World Events Service - управление жизненным циклом мировых событий,
+    координация эффектов и коммуникация с игроками
+servers:
+  - url: http://localhost:8086
+security:
+  - BearerAuth: [ ]
+tags:
+  - name: world-events
+    description: Управление мировыми событиями
+  - name: event-effects
+    description: Координация эффектов событий
+  - name: event-communication
+    description: Коммуникация с игроками
+
+paths:
+  /api/v1/world-events:
+    get:
+      tags:
+        - world-events
+      summary: Список мировых событий
+      description: Возвращает список мировых событий с фильтрацией и пагинацией
+      operationId: listWorldEvents
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [ PLANNED, ANNOUNCED, ACTIVE, COOLDOWN, ARCHIVED ]
+          description: Фильтр по статусу события
+        - name: type
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [ STORY, TECHNOLOGICAL, ECONOMIC, POLITICAL, MILITARY, SPORTS, ENVIRONMENTAL ]
+          description: Фильтр по типу события
+        - name: scale
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [ GLOBAL, REGIONAL, CITY, LOCAL ]
+          description: Фильтр по масштабу события
+        - name: frequency
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [ ONE_TIME, PERIODIC, REGULAR ]
+          description: Фильтр по частоте события
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Количество событий на страницу
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          description: Смещение для пагинации
+      responses:
+        '200':
+          description: Список событий
+          content:
+            application/json:
+              schema:
+                $ref: './world-events-service-schemas.yaml#/WorldEventsListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      tags:
+        - world-events
+      summary: Создать мировое событие
+      description: Создает новое мировое событие с указанными параметрами
+      operationId: createWorldEvent
+      security:
+        - BearerAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './world-events-service-schemas.yaml#/CreateWorldEventRequest'
+      responses:
+        '201':
+          description: Событие создано
+          content:
+            application/json:
+              schema:
+                $ref: './world-events-service-schemas.yaml#/WorldEvent'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /api/v1/world-events/{eventId}:
+    get:
+      tags:
+        - world-events
+      summary: Получить событие по ID
+      description: Возвращает детали конкретного мирового события
+      operationId: getWorldEvent
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID события
+      responses:
+        '200':
+          description: Детали события
+          content:
+            application/json:
+              schema:
+                $ref: './world-events-service-schemas.yaml#/WorldEvent'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    put:
+      tags:
+        - world-events
+      summary: Обновить событие
+      description: Обновляет параметры мирового события
+      operationId: updateWorldEvent
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID события
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './world-events-service-schemas.yaml#/UpdateWorldEventRequest'
+      responses:
+        '200':
+          description: Событие обновлено
+          content:
+            application/json:
+              schema:
+                $ref: './world-events-service-schemas.yaml#/WorldEvent'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+    delete:
+      tags:
+        - world-events
+      summary: Удалить событие
+      description: Удаляет мировое событие (только для PLANNED статуса)
+      operationId: deleteWorldEvent
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID события
+      responses:
+        '204':
+          description: Событие удалено
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /api/v1/world-events/{eventId}/announce:
+    post:
+      tags:
+        - world-events
+      summary: Анонсировать событие
+      description: Переводит событие в статус ANNOUNCED и отправляет уведомления игрокам
+      operationId: announceWorldEvent
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID события
+      responses:
+        '200':
+          description: Событие анонсировано
+          content:
+            application/json:
+              schema:
+                $ref: './world-events-service-schemas.yaml#/WorldEvent'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /api/v1/world-events/{eventId}/activate:
+    post:
+      tags:
+        - world-events
+      summary: Активировать событие
+      description: Переводит событие в статус ACTIVE и применяет эффекты
+      operationId: activateWorldEvent
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID события
+      responses:
+        '200':
+          description: Событие активировано
+          content:
+            application/json:
+              schema:
+                $ref: './world-events-service-schemas.yaml#/WorldEvent'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /api/v1/world-events/{eventId}/deactivate:
+    post:
+      tags:
+        - world-events
+      summary: Деактивировать событие
+      description: Переводит событие в статус COOLDOWN и откатывает эффекты
+      operationId: deactivateWorldEvent
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID события
+      responses:
+        '200':
+          description: Событие деактивировано
+          content:
+            application/json:
+              schema:
+                $ref: './world-events-service-schemas.yaml#/WorldEvent'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /api/v1/world-events/active:
+    get:
+      tags:
+        - world-events
+      summary: Активные события
+      description: Возвращает список всех активных мировых событий
+      operationId: getActiveWorldEvents
+      security:
+        - BearerAuth: [ ]
+      responses:
+        '200':
+          description: Активные события
+          content:
+            application/json:
+              schema:
+                $ref: './world-events-service-schemas.yaml#/WorldEventsListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/world-events/planned:
+    get:
+      tags:
+        - world-events
+      summary: Запланированные события
+      description: Возвращает список запланированных мировых событий
+      operationId: getPlannedWorldEvents
+      security:
+        - BearerAuth: [ ]
+      responses:
+        '200':
+          description: Запланированные события
+          content:
+            application/json:
+              schema:
+                $ref: './world-events-service-schemas.yaml#/WorldEventsListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/world-events/by-scale/{scale}:
+    get:
+      tags:
+        - world-events
+      summary: События по масштабу
+      description: Возвращает события определенного масштаба
+      operationId: getWorldEventsByScale
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: scale
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [ GLOBAL, REGIONAL, CITY, LOCAL ]
+          description: Масштаб события
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [ PLANNED, ANNOUNCED, ACTIVE, COOLDOWN, ARCHIVED ]
+          description: Фильтр по статусу
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: События по масштабу
+          content:
+            application/json:
+              schema:
+                $ref: './world-events-service-schemas.yaml#/WorldEventsListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/world-events/by-type/{type}:
+    get:
+      tags:
+        - world-events
+      summary: События по типу
+      description: Возвращает события определенного типа
+      operationId: getWorldEventsByType
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: type
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [ STORY, TECHNOLOGICAL, ECONOMIC, POLITICAL, MILITARY, SPORTS, ENVIRONMENTAL ]
+          description: Тип события
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [ PLANNED, ANNOUNCED, ACTIVE, COOLDOWN, ARCHIVED ]
+          description: Фильтр по статусу
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: События по типу
+          content:
+            application/json:
+              schema:
+                $ref: './world-events-service-schemas.yaml#/WorldEventsListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/world-events/by-frequency/{frequency}:
+    get:
+      tags:
+        - world-events
+      summary: События по частоте
+      description: Возвращает события определенной частоты
+      operationId: getWorldEventsByFrequency
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: frequency
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [ ONE_TIME, PERIODIC, REGULAR ]
+          description: Частота события
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [ PLANNED, ANNOUNCED, ACTIVE, COOLDOWN, ARCHIVED ]
+          description: Фильтр по статусу
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: События по частоте
+          content:
+            application/json:
+              schema:
+                $ref: './world-events-service-schemas.yaml#/WorldEventsListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/world-events/{eventId}/effects:
+    get:
+      tags:
+        - event-effects
+      summary: Эффекты события
+      description: Возвращает список эффектов конкретного события
+      operationId: getWorldEventEffects
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID события
+      responses:
+        '200':
+          description: Эффекты события
+          content:
+            application/json:
+              schema:
+                $ref: './world-events-service-schemas.yaml#/WorldEventEffectsResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      tags:
+        - event-effects
+      summary: Добавить эффект к событию
+      description: Добавляет новый эффект к мировому событию
+      operationId: addWorldEventEffect
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID события
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './world-events-service-schemas.yaml#/CreateEventEffectRequest'
+      responses:
+        '201':
+          description: Эффект добавлен
+          content:
+            application/json:
+              schema:
+                $ref: './world-events-service-schemas.yaml#/EventEffect'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /api/v1/world-events/{eventId}/effects/{effectId}:
+    put:
+      tags:
+        - event-effects
+      summary: Обновить эффект события
+      description: Обновляет параметры эффекта мирового события
+      operationId: updateWorldEventEffect
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID события
+        - name: effectId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID эффекта
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './world-events-service-schemas.yaml#/UpdateEventEffectRequest'
+      responses:
+        '200':
+          description: Эффект обновлен
+          content:
+            application/json:
+              schema:
+                $ref: './world-events-service-schemas.yaml#/EventEffect'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+    delete:
+      tags:
+        - event-effects
+      summary: Удалить эффект события
+      description: Удаляет эффект из мирового события
+      operationId: deleteWorldEventEffect
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID события
+        - name: effectId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID эффекта
+      responses:
+        '204':
+          description: Эффект удален
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /api/v1/world-events/{eventId}/announcements:
+    post:
+      tags:
+        - event-communication
+      summary: Создать объявление события
+      description: Создает объявление о мировом событии для игроков
+      operationId: createEventAnnouncement
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID события
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './world-events-service-schemas.yaml#/CreateAnnouncementRequest'
+      responses:
+        '201':
+          description: Объявление создано
+          content:
+            application/json:
+              schema:
+                $ref: './world-events-service-schemas.yaml#/EventAnnouncement'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /health:
+    get:
+      summary: Health check
+      description: Проверка здоровья сервиса
+      operationId: healthCheck
+      responses:
+        '200':
+          description: Сервис здоров
+          content:
+            application/json:
+              schema:
+                $ref: './world-events-service-schemas.yaml#/HealthResponse'
+
+  /ready:
+    get:
+      summary: Readiness check
+      description: Проверка готовности сервиса
+      operationId: readinessCheck
+      responses:
+        '200':
+          description: Сервис готов
+          content:
+            application/json:
+              schema:
+                $ref: './world-events-service-schemas.yaml#/HealthResponse'
+
+  /metrics:
+    get:
+      summary: Service metrics
+      description: Метрики производительности сервиса
+      operationId: getMetrics
+      responses:
+        '200':
+          description: Метрики
+          content:
+            text/plain:
+              schema:
+                type: string
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: './world-events-service-schemas.yaml#/Error'
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: './world-events-service-schemas.yaml#/Error'
+    Forbidden:
+      description: Insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: './world-events-service-schemas.yaml#/Error'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: './world-events-service-schemas.yaml#/Error'
+    Conflict:
+      description: Resource conflict
+      content:
+        application/json:
+          schema:
+            $ref: './world-events-service-schemas.yaml#/Error'
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: './world-events-service-schemas.yaml#/Error'

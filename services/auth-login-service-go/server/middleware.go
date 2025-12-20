@@ -1,4 +1,4 @@
-// Issue: #1
+// Package server Issue: #1
 package server
 
 import (

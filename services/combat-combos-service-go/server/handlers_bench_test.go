@@ -3,8 +3,9 @@ package server
 
 import (
 	"context"
-	"github.com/gc-lover/necpgame-monorepo/services/combat-combos-service-go/pkg/api"
 	"testing"
+
+	"github.com/gc-lover/necpgame-monorepo/services/combat-combos-service-go/pkg/api"
 )
 
 // BenchmarkGetComboCatalog benchmarks GetComboCatalog handler
@@ -14,8 +15,7 @@ func BenchmarkGetComboCatalog(b *testing.B) {
 	handlers := NewHandlers(service)
 
 	ctx := context.Background()
-	params := api.GetComboCatalogParams{
-	}
+	params := api.GetComboCatalogParams{}
 
 	b.ReportAllocs()
 	b.ResetTimer()
@@ -32,8 +32,7 @@ func BenchmarkGetComboDetails(b *testing.B) {
 	handlers := NewHandlers(service)
 
 	ctx := context.Background()
-	params := api.GetComboDetailsParams{
-	}
+	params := api.GetComboDetailsParams{}
 
 	b.ReportAllocs()
 	b.ResetTimer()
@@ -59,4 +58,3 @@ func BenchmarkActivateCombo(b *testing.B) {
 		_, _ = handlers.ActivateCombo(ctx, req)
 	}
 }
-

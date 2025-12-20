@@ -3,25 +3,25 @@ package server
 import "time"
 
 type ProductionChain struct {
-	ID             string  `json:"id"`
-	Name           string  `json:"name,omitempty"`
-	Description    string  `json:"description,omitempty"`
-	ItemType       string  `json:"item_type,omitempty"`
-	ItemTier       string  `json:"item_tier,omitempty"`
-	BaseCost       float64 `json:"base_cost,omitempty"`
-	StagesCount    int     `json:"stages_count,omitempty"`
-	EstimatedTime  int     `json:"estimated_time,omitempty"`
+	ID            string  `json:"id"`
+	Name          string  `json:"name,omitempty"`
+	Description   string  `json:"description,omitempty"`
+	ItemType      string  `json:"item_type,omitempty"`
+	ItemTier      string  `json:"item_tier,omitempty"`
+	BaseCost      float64 `json:"base_cost,omitempty"`
+	StagesCount   int     `json:"stages_count,omitempty"`
+	EstimatedTime int     `json:"estimated_time,omitempty"`
 }
 
 type ProductionStage struct {
-	ID                string               `json:"id"`
-	Name              string               `json:"name,omitempty"`
-	Description       string               `json:"description,omitempty"`
-	StageType         string               `json:"stage_type,omitempty"`
+	ID                string                `json:"id"`
+	Name              string                `json:"name,omitempty"`
+	Description       string                `json:"description,omitempty"`
+	StageType         string                `json:"stage_type,omitempty"`
 	RequiredResources []ResourceRequirement `json:"required_resources,omitempty"`
-	FailureChance     float64              `json:"failure_chance,omitempty"`
-	StageNumber       int                  `json:"stage_number,omitempty"`
-	EstimatedTime     int                  `json:"estimated_time,omitempty"`
+	FailureChance     float64               `json:"failure_chance,omitempty"`
+	StageNumber       int                   `json:"stage_number,omitempty"`
+	EstimatedTime     int                   `json:"estimated_time,omitempty"`
 }
 
 type ResourceRequirement struct {
@@ -79,27 +79,9 @@ type ProductionStageProgress struct {
 
 type ProductionOrderDetails struct {
 	ProductionOrder
-	Stages     []ProductionStageProgress `json:"stages,omitempty"`
-	StationID  string                    `json:"station_id,omitempty"`
-	StationName string                   `json:"station_name,omitempty"`
-	TotalCost  float64                   `json:"total_cost,omitempty"`
-	RushOrder  bool                      `json:"rush_order,omitempty"`
+	Stages      []ProductionStageProgress `json:"stages,omitempty"`
+	StationID   string                    `json:"station_id,omitempty"`
+	StationName string                    `json:"station_name,omitempty"`
+	TotalCost   float64                   `json:"total_cost,omitempty"`
+	RushOrder   bool                      `json:"rush_order,omitempty"`
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

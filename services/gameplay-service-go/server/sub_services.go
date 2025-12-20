@@ -1,13 +1,11 @@
-// SQL queries use prepared statements with placeholders (, , ?) for safety
+// Package server SQL queries use prepared statements with placeholders (, , ?) for safety
 // Issue: #104
 package server
 
 import (
-	"context"
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/gc-lover/necpgame-monorepo/services/gameplay-service-go/pkg/api"
 	"github.com/sirupsen/logrus"
 )
 
@@ -20,7 +18,7 @@ func NewCombatServiceImpl(logger *logrus.Logger) CombatService {
 	return &CombatServiceImpl{logger: logger}
 }
 
-func (s *CombatServiceImpl) GetPlayerCombatStats(ctx context.Context, playerID uuid.UUID) (*CombatStats, error) {
+func (s *CombatServiceImpl) GetPlayerCombatStats() (*CombatStats, error) {
 	// TODO: Integrate with combat-* services
 	return &CombatStats{
 		Health:    100,
@@ -30,13 +28,13 @@ func (s *CombatServiceImpl) GetPlayerCombatStats(ctx context.Context, playerID u
 	}, nil
 }
 
-func (s *CombatServiceImpl) ExecuteAction(ctx context.Context, playerID uuid.UUID, action *api.CombatAction) (*CombatResult, error) {
+func (s *CombatServiceImpl) ExecuteAction() (*CombatResult, error) {
 	// TODO: Integrate with combat-actions-service, combat-damage-service, etc.
 	return &CombatResult{
-		Success:         true,
-		DamageDealt:     25.5,
+		Success:          true,
+		DamageDealt:      25.5,
 		ExperienceGained: 10,
-		StatusEffects:   []string{},
+		StatusEffects:    []string{},
 	}, nil
 }
 
@@ -49,7 +47,7 @@ func NewProgressionServiceImpl(logger *logrus.Logger) ProgressionService {
 	return &ProgressionServiceImpl{logger: logger}
 }
 
-func (s *ProgressionServiceImpl) GetPlayerProgression(ctx context.Context, playerID uuid.UUID) (*ProgressionStats, error) {
+func (s *ProgressionServiceImpl) GetPlayerProgression() (*ProgressionStats, error) {
 	// TODO: Integrate with progression-* services
 	return &ProgressionStats{
 		Level:            1,
@@ -60,7 +58,7 @@ func (s *ProgressionServiceImpl) GetPlayerProgression(ctx context.Context, playe
 	}, nil
 }
 
-func (s *ProgressionServiceImpl) AddExperience(ctx context.Context, playerID uuid.UUID, exp int) (*ExperienceResult, error) {
+func (s *ProgressionServiceImpl) AddExperience(exp int) (*ExperienceResult, error) {
 	// TODO: Integrate with progression-experience-service
 	return &ExperienceResult{
 		NewLevel:         1,
@@ -78,7 +76,7 @@ func NewEconomyServiceImpl(logger *logrus.Logger) EconomyService {
 	return &EconomyServiceImpl{logger: logger}
 }
 
-func (s *EconomyServiceImpl) GetPlayerEconomy(ctx context.Context, playerID uuid.UUID) (*PlayerEconomy, error) {
+func (s *EconomyServiceImpl) GetPlayerEconomy() (*PlayerEconomy, error) {
 	// TODO: Integrate with economy-service, inventory-service
 	return &PlayerEconomy{
 		Balance:       map[string]float64{"eddies": 1000, "eurobucks": 500},
@@ -87,7 +85,7 @@ func (s *EconomyServiceImpl) GetPlayerEconomy(ctx context.Context, playerID uuid
 	}, nil
 }
 
-func (s *EconomyServiceImpl) ExecuteTrade(ctx context.Context, trade *api.TradeRequest) (*TradeResult, error) {
+func (s *EconomyServiceImpl) ExecuteTrade() (*TradeResult, error) {
 	// TODO: Integrate with trade-service, economy-service
 	return &TradeResult{
 		Success:       true,
@@ -105,7 +103,7 @@ func NewSocialServiceImpl(logger *logrus.Logger) SocialService {
 	return &SocialServiceImpl{logger: logger}
 }
 
-func (s *SocialServiceImpl) GetPlayerRelations(ctx context.Context, playerID uuid.UUID) (*SocialRelations, error) {
+func (s *SocialServiceImpl) GetPlayerRelations() (*SocialRelations, error) {
 	// TODO: Integrate with social-service, npc-relationship services
 	return &SocialRelations{
 		NpcRelations:    map[string]int{"jackie": 50, "misty": 75},
@@ -114,7 +112,7 @@ func (s *SocialServiceImpl) GetPlayerRelations(ctx context.Context, playerID uui
 	}, nil
 }
 
-func (s *SocialServiceImpl) UpdateNPCRelation(ctx context.Context, playerID uuid.UUID, npcID uuid.UUID, change int) error {
+func (s *SocialServiceImpl) UpdateNPCRelation(playerID uuid.UUID, npcID uuid.UUID, change int) error {
 	// TODO: Integrate with social-reputation-core-service
 	s.logger.WithFields(logrus.Fields{
 		"player_id": playerID,
@@ -133,7 +131,7 @@ func NewWorldServiceImpl(logger *logrus.Logger) WorldService {
 	return &WorldServiceImpl{logger: logger}
 }
 
-func (s *WorldServiceImpl) GetPlayerWorldState(ctx context.Context, playerID uuid.UUID) (*WorldState, error) {
+func (s *WorldServiceImpl) GetPlayerWorldState() (*WorldState, error) {
 	// TODO: Integrate with world-service, world-events-* services
 	return &WorldState{
 		ActiveEvents:   []string{"raid_1", "boss_spawn"},
@@ -142,7 +140,7 @@ func (s *WorldServiceImpl) GetPlayerWorldState(ctx context.Context, playerID uui
 	}, nil
 }
 
-func (s *WorldServiceImpl) TriggerEvent(ctx context.Context, eventID uuid.UUID) (*WorldEventResult, error) {
+func (s *WorldServiceImpl) TriggerEvent(eventID uuid.UUID) (*WorldEventResult, error) {
 	// TODO: Integrate with world-events-core-service
 	return &WorldEventResult{
 		EventID:      eventID,
@@ -151,8 +149,3 @@ func (s *WorldServiceImpl) TriggerEvent(ctx context.Context, eventID uuid.UUID) 
 		Rewards:      map[string]int{"experience": 100, "eddies": 500},
 	}, nil
 }
-
-
-
-
-

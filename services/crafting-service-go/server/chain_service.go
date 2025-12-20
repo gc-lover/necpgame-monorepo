@@ -1,4 +1,4 @@
-// Issue: #2203 - Production chain service implementation
+// Package server Issue: #2203 - Production chain service implementation
 package server
 
 import (
@@ -69,7 +69,7 @@ func (s *ChainService) CreateProductionChain(ctx context.Context, chain *Product
 		stage.Sequence = i + 1
 
 		// Check if recipe exists
-		if _, err := s.getRecipeByID(ctx, stage.OrderID); err != nil {
+		if _, err := s.getRecipeByID(stage.OrderID); err != nil {
 			return fmt.Errorf("recipe not found for stage %d: %w", i+1, err)
 		}
 	}
@@ -80,10 +80,10 @@ func (s *ChainService) CreateProductionChain(ctx context.Context, chain *Product
 	}
 
 	s.logger.WithFields(logrus.Fields{
-		"chain_id":   chain.ID,
-		"name":       chain.Name,
-		"stages":     len(chain.Stages),
-		"player_id":  chain.PlayerID,
+		"chain_id":  chain.ID,
+		"name":      chain.Name,
+		"stages":    len(chain.Stages),
+		"player_id": chain.PlayerID,
 	}).Info("Production chain created successfully")
 
 	return nil
@@ -236,7 +236,7 @@ func (s *ChainService) validateChain(chain *ProductionChain) error {
 }
 
 // getRecipeByID helper to get recipe (mock implementation)
-func (s *ChainService) getRecipeByID(ctx context.Context, recipeID uuid.UUID) (*Recipe, error) {
+func (s *ChainService) getRecipeByID(recipeID uuid.UUID) (*Recipe, error) {
 	// TODO: Get recipe from recipe service
 	// For now, return mock recipe
 	return &Recipe{ID: recipeID, Name: "Mock Recipe"}, nil

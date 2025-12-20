@@ -12,38 +12,38 @@ import (
 )
 
 type EngramCyberpsychosisRisk struct {
-	ID              uuid.UUID              `json:"id"`
-	CharacterID     uuid.UUID              `json:"character_id"`
-	BaseRisk        float64                `json:"base_risk"`
-	EngramRisk      float64                `json:"engram_risk"`
-	TotalRisk       float64                `json:"total_risk"`
-	BlockerReduction float64               `json:"blocker_reduction"`
-	RiskFactors     []*RiskFactor          `json:"risk_factors,omitempty"`
-	LastUpdated     time.Time              `json:"last_updated"`
-	CreatedAt       time.Time              `json:"created_at"`
+	ID               uuid.UUID     `json:"id"`
+	CharacterID      uuid.UUID     `json:"character_id"`
+	BaseRisk         float64       `json:"base_risk"`
+	EngramRisk       float64       `json:"engram_risk"`
+	TotalRisk        float64       `json:"total_risk"`
+	BlockerReduction float64       `json:"blocker_reduction"`
+	RiskFactors      []*RiskFactor `json:"risk_factors,omitempty"`
+	LastUpdated      time.Time     `json:"last_updated"`
+	CreatedAt        time.Time     `json:"created_at"`
 }
 
 type RiskFactor struct {
-	FactorType string    `json:"factor_type"`
-	RiskAmount float64   `json:"risk_amount"`
+	FactorType string     `json:"factor_type"`
+	RiskAmount float64    `json:"risk_amount"`
 	EngramID   *uuid.UUID `json:"engram_id,omitempty"`
 }
 
 type EngramBlocker struct {
-	ID                uuid.UUID              `json:"id"`
-	BlockerID         uuid.UUID              `json:"blocker_id"`
-	CharacterID       uuid.UUID              `json:"character_id"`
-	Tier              int                    `json:"tier"`
-	RiskReduction     float64                `json:"risk_reduction"`
-	InfluenceReduction float64               `json:"influence_reduction"`
-	DurationDays      int                    `json:"duration_days"`
-	Buffs             map[string]float64     `json:"buffs,omitempty"`
-	Debuffs           map[string]float64     `json:"debuffs,omitempty"`
-	InstalledAt       time.Time              `json:"installed_at"`
-	ExpiresAt         time.Time              `json:"expires_at"`
-	IsActive          bool                   `json:"is_active"`
-	CreatedAt         time.Time              `json:"created_at"`
-	UpdatedAt         time.Time              `json:"updated_at"`
+	ID                 uuid.UUID          `json:"id"`
+	BlockerID          uuid.UUID          `json:"blocker_id"`
+	CharacterID        uuid.UUID          `json:"character_id"`
+	Tier               int                `json:"tier"`
+	RiskReduction      float64            `json:"risk_reduction"`
+	InfluenceReduction float64            `json:"influence_reduction"`
+	DurationDays       int                `json:"duration_days"`
+	Buffs              map[string]float64 `json:"buffs,omitempty"`
+	Debuffs            map[string]float64 `json:"debuffs,omitempty"`
+	InstalledAt        time.Time          `json:"installed_at"`
+	ExpiresAt          time.Time          `json:"expires_at"`
+	IsActive           bool               `json:"is_active"`
+	CreatedAt          time.Time          `json:"created_at"`
+	UpdatedAt          time.Time          `json:"updated_at"`
 }
 
 type EngramCyberpsychosisRepositoryInterface interface {
@@ -270,6 +270,3 @@ func (r *EngramCyberpsychosisRepository) DeactivateExpiredBlockers(ctx context.C
 
 	return nil
 }
-
-
-

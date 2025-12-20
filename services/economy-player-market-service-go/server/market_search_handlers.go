@@ -1,4 +1,4 @@
-// Issue: #42 - economy-player-market ogen typed handlers with business logic
+// Package server Issue: #42 - economy-player-market ogen typed handlers with business logic
 package server
 
 import (
@@ -27,10 +27,10 @@ func (h *MarketHandlersOgen) SearchMarketListings(ctx context.Context, params ap
 		filters["quality"] = params.Quality.Value
 	}
 	if params.MinLevel.IsSet() {
-		filters["min_level"] = int(params.MinLevel.Value)
+		filters["min_level"] = params.MinLevel.Value
 	}
 	if params.MaxLevel.IsSet() {
-		filters["max_level"] = int(params.MaxLevel.Value)
+		filters["max_level"] = params.MaxLevel.Value
 	}
 	if params.MinPrice.IsSet() {
 		filters["min_price"] = params.MinPrice.Value
@@ -52,10 +52,10 @@ func (h *MarketHandlersOgen) SearchMarketListings(ctx context.Context, params ap
 	limit := 50
 	offset := 0
 	if params.Limit.IsSet() && params.Limit.Value > 0 && params.Limit.Value <= 100 {
-		limit = int(params.Limit.Value)
+		limit = params.Limit.Value
 	}
 	if params.Offset.IsSet() && params.Offset.Value >= 0 {
-		offset = int(params.Offset.Value)
+		offset = params.Offset.Value
 	}
 
 	// Get total count
@@ -120,4 +120,3 @@ func (h *MarketHandlersOgen) SearchMarketListings(ctx context.Context, params ap
 		Total:    api.NewOptInt(total),
 	}, nil
 }
-

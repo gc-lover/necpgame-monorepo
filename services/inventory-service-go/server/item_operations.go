@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/sirupsen/logrus"
 )
 
 // UseItem uses consumable item
@@ -161,8 +162,8 @@ func (s *InventoryService) SearchItems(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(resp)
 
 	s.logger.WithFields(logrus.Fields{
-		"query":         req.Query,
-		"results_count": len(resp.Items),
+		"query":          req.Query,
+		"results_count":  len(resp.Items),
 		"search_time_ms": resp.SearchTimeMs,
 	}).Debug("items searched successfully")
 }

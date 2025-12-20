@@ -1,4 +1,4 @@
-// Issue: #1928 - HTTP server for Meta Mechanics Service
+// Package server Issue: #1928 - HTTP server for Meta Mechanics Service
 // PERFORMANCE: Graceful shutdown, connection limits
 package server
 

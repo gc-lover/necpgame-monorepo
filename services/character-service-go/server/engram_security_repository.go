@@ -11,19 +11,19 @@ import (
 )
 
 type EngramProtection struct {
-	ID                      uuid.UUID              `json:"id"`
-	EngramID                uuid.UUID              `json:"engram_id"`
-	ProtectionTier          int                    `json:"protection_tier"`
-	ProtectionTierName      string                 `json:"protection_tier_name"`
-	RequiredNetrunnerLevel  int                    `json:"required_netrunner_level"`
-	CopyProtection          bool                   `json:"copy_protection"`
-	HackProtection          bool                   `json:"hack_protection"`
-	InstallProtection       bool                   `json:"install_protection"`
-	BoundCharacterID        *uuid.UUID             `json:"bound_character_id,omitempty"`
-	EncodedAt               time.Time              `json:"encoded_at"`
-	EncodedBy               uuid.UUID              `json:"encoded_by"`
-	CreatedAt               time.Time              `json:"created_at"`
-	UpdatedAt               time.Time              `json:"updated_at"`
+	ID                     uuid.UUID  `json:"id"`
+	EngramID               uuid.UUID  `json:"engram_id"`
+	ProtectionTier         int        `json:"protection_tier"`
+	ProtectionTierName     string     `json:"protection_tier_name"`
+	RequiredNetrunnerLevel int        `json:"required_netrunner_level"`
+	CopyProtection         bool       `json:"copy_protection"`
+	HackProtection         bool       `json:"hack_protection"`
+	InstallProtection      bool       `json:"install_protection"`
+	BoundCharacterID       *uuid.UUID `json:"bound_character_id,omitempty"`
+	EncodedAt              time.Time  `json:"encoded_at"`
+	EncodedBy              uuid.UUID  `json:"encoded_by"`
+	CreatedAt              time.Time  `json:"created_at"`
+	UpdatedAt              time.Time  `json:"updated_at"`
 }
 
 type EngramSecurityRepositoryInterface interface {
@@ -118,4 +118,3 @@ func (r *EngramSecurityRepository) UpdateProtection(ctx context.Context, protect
 
 	return nil
 }
-

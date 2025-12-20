@@ -1,11 +1,11 @@
-// Issue: #1601 - ogen handlers (TYPED responses)
+// Package server Issue: #1601 - ogen handlers (TYPED responses)
 package server
 
 import (
 	"context"
 	"time"
 
-	api "github.com/necpgame/stock-analytics-charts-service-go/pkg/api"
+	"github.com/necpgame/stock-analytics-charts-service-go/pkg/api"
 	"github.com/sirupsen/logrus"
 )
 
@@ -84,4 +84,3 @@ func (h *ChartsHandlers) GetIndicators(ctx context.Context, params api.GetIndica
 
 	return indicators, nil
 }
-

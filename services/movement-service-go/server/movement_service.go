@@ -6,10 +6,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/gc-lover/necpgame-monorepo/services/movement-service-go/models"
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/gc-lover/necpgame-monorepo/services/movement-service-go/models"
 	"github.com/redis/go-redis/v9"
 	"github.com/sirupsen/logrus"
 )
@@ -45,7 +45,7 @@ func NewMovementService(dbURL, redisURL, gatewayURL string, updateInterval time.
 	config.MinConns = 10
 	config.MaxConnLifetime = 5 * time.Minute
 	config.MaxConnIdleTime = 1 * time.Minute
-	
+
 	dbPool, err := pgxpool.NewWithConfig(context.Background(), config)
 	if err != nil {
 		return nil, err
@@ -88,7 +88,7 @@ func (s *MovementService) GetPosition(ctx context.Context, characterID uuid.UUID
 	return pos, nil
 }
 
-// Issue: #1431
+// SavePosition Issue: #1431
 func (s *MovementService) SavePosition(ctx context.Context, characterID uuid.UUID, req *models.SavePositionRequest) (*models.CharacterPosition, error) {
 	pos, err := s.repo.SavePosition(ctx, characterID, req)
 	if err != nil {

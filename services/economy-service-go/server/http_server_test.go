@@ -10,44 +10,44 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/gc-lover/necpgame-monorepo/services/economy-service-go/models"
+	"github.com/google/uuid"
 )
 
 type mockTradeService struct {
-	trades         map[uuid.UUID]*models.TradeSession
-	activeTrades   map[uuid.UUID][]models.TradeSession
-	tradeHistory   map[uuid.UUID]*models.TradeHistoryListResponse
-	createErr      error
-	getErr         error
-	updateErr      error
-	confirmErr     error
-	completeErr    error
-	cancelErr      error
+	trades       map[uuid.UUID]*models.TradeSession
+	activeTrades map[uuid.UUID][]models.TradeSession
+	tradeHistory map[uuid.UUID]*models.TradeHistoryListResponse
+	createErr    error
+	getErr       error
+	updateErr    error
+	confirmErr   error
+	completeErr  error
+	cancelErr    error
 }
 
-func (m *mockTradeService) CreateTrade(ctx context.Context, initiatorID uuid.UUID, req *models.CreateTradeRequest) (*models.TradeSession, error) {
+func (m *mockTradeService) CreateTrade(_ context.Context, initiatorID uuid.UUID, req *models.CreateTradeRequest) (*models.TradeSession, error) {
 	if m.createErr != nil {
 		return nil, m.createErr
 	}
 
 	session := &models.TradeSession{
-		ID:              uuid.New(),
-		InitiatorID:     initiatorID,
-		RecipientID:     req.RecipientID,
-		Status:          models.TradeStatusPending,
+		ID:                 uuid.New(),
+		InitiatorID:        initiatorID,
+		RecipientID:        req.RecipientID,
+		Status:             models.TradeStatusPending,
 		InitiatorConfirmed: false,
-		RecipientConfirmed:  false,
-		CreatedAt:       time.Now(),
-		UpdatedAt:       time.Now(),
-		ExpiresAt:       time.Now().Add(5 * time.Minute),
+		RecipientConfirmed: false,
+		CreatedAt:          time.Now(),
+		UpdatedAt:          time.Now(),
+		ExpiresAt:          time.Now().Add(5 * time.Minute),
 	}
 
 	m.trades[session.ID] = session
 	return session, nil
 }
 
-func (m *mockTradeService) GetTrade(ctx context.Context, id uuid.UUID) (*models.TradeSession, error) {
+func (m *mockTradeService) GetTrade(_ context.Context, id uuid.UUID) (*models.TradeSession, error) {
 	if m.getErr != nil {
 		return nil, m.getErr
 	}
@@ -60,7 +60,7 @@ func (m *mockTradeService) GetTrade(ctx context.Context, id uuid.UUID) (*models.
 	return session, nil
 }
 
-func (m *mockTradeService) GetActiveTrades(ctx context.Context, characterID uuid.UUID) ([]models.TradeSession, error) {
+func (m *mockTradeService) GetActiveTrades(_ context.Context, characterID uuid.UUID) ([]models.TradeSession, error) {
 	trades, ok := m.activeTrades[characterID]
 	if !ok {
 		return []models.TradeSession{}, nil
@@ -68,7 +68,7 @@ func (m *mockTradeService) GetActiveTrades(ctx context.Context, characterID uuid
 	return trades, nil
 }
 
-func (m *mockTradeService) UpdateOffer(ctx context.Context, sessionID, characterID uuid.UUID, req *models.UpdateTradeOfferRequest) (*models.TradeSession, error) {
+func (m *mockTradeService) UpdateOffer(_ context.Context, sessionID, characterID uuid.UUID, req *models.UpdateTradeOfferRequest) (*models.TradeSession, error) {
 	if m.updateErr != nil {
 		return nil, m.updateErr
 	}
@@ -96,7 +96,7 @@ func (m *mockTradeService) UpdateOffer(ctx context.Context, sessionID, character
 	return session, nil
 }
 
-func (m *mockTradeService) ConfirmTrade(ctx context.Context, sessionID, characterID uuid.UUID) (*models.TradeSession, error) {
+func (m *mockTradeService) ConfirmTrade(_ context.Context, sessionID, characterID uuid.UUID) (*models.TradeSession, error) {
 	if m.confirmErr != nil {
 		return nil, m.confirmErr
 	}
@@ -120,7 +120,7 @@ func (m *mockTradeService) ConfirmTrade(ctx context.Context, sessionID, characte
 	return session, nil
 }
 
-func (m *mockTradeService) CompleteTrade(ctx context.Context, sessionID uuid.UUID) error {
+func (m *mockTradeService) CompleteTrade(_ context.Context, sessionID uuid.UUID) error {
 	if m.completeErr != nil {
 		return m.completeErr
 	}
@@ -141,7 +141,7 @@ func (m *mockTradeService) CompleteTrade(ctx context.Context, sessionID uuid.UUI
 	return nil
 }
 
-func (m *mockTradeService) CancelTrade(ctx context.Context, sessionID, characterID uuid.UUID) error {
+func (m *mockTradeService) CancelTrade(_ context.Context, sessionID, characterID uuid.UUID) error {
 	if m.cancelErr != nil {
 		return m.cancelErr
 	}
@@ -160,7 +160,7 @@ func (m *mockTradeService) CancelTrade(ctx context.Context, sessionID, character
 	return nil
 }
 
-func (m *mockTradeService) GetTradeHistory(ctx context.Context, characterID uuid.UUID, limit, offset int) (*models.TradeHistoryListResponse, error) {
+func (m *mockTradeService) GetTradeHistory(_ context.Context, characterID uuid.UUID, _, _ int) (*models.TradeHistoryListResponse, error) {
 	history, ok := m.tradeHistory[characterID]
 	if !ok {
 		return &models.TradeHistoryListResponse{
@@ -185,7 +185,7 @@ func TestHTTPServer_CreateTrade(t *testing.T) {
 		tradeHistory: make(map[uuid.UUID]*models.TradeHistoryListResponse),
 	}
 
-	server := NewHTTPServer(":8080", mockService, nil, false, nil, nil, nil)
+	server := NewHTTPServer(":8080", mockService, nil, nil, false, nil, nil, nil, nil, nil)
 
 	initiatorID := uuid.New()
 	recipientID := uuid.New()
@@ -226,18 +226,18 @@ func TestHTTPServer_GetTrade(t *testing.T) {
 
 	tradeID := uuid.New()
 	session := &models.TradeSession{
-		ID:              tradeID,
-		InitiatorID:     uuid.New(),
-		RecipientID:     uuid.New(),
-		Status:          models.TradeStatusActive,
-		CreatedAt:       time.Now(),
-		UpdatedAt:       time.Now(),
-		ExpiresAt:       time.Now().Add(5 * time.Minute),
+		ID:          tradeID,
+		InitiatorID: uuid.New(),
+		RecipientID: uuid.New(),
+		Status:      models.TradeStatusActive,
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
+		ExpiresAt:   time.Now().Add(5 * time.Minute),
 	}
 
 	mockService.trades[tradeID] = session
 
-	server := NewHTTPServer(":8080", mockService, nil, false, nil, nil, nil)
+	server := NewHTTPServer(":8080", mockService, nil, nil, false, nil, nil, nil, nil, nil)
 
 	req := httptest.NewRequest("GET", "/api/v1/economy/trade/"+tradeID.String(), nil)
 	w := httptest.NewRecorder()
@@ -267,28 +267,28 @@ func TestHTTPServer_GetActiveTrades(t *testing.T) {
 
 	characterID := uuid.New()
 	trade1 := models.TradeSession{
-		ID:              uuid.New(),
-		InitiatorID:     characterID,
-		RecipientID:     uuid.New(),
-		Status:          models.TradeStatusActive,
-		CreatedAt:       time.Now(),
-		UpdatedAt:       time.Now(),
-		ExpiresAt:       time.Now().Add(5 * time.Minute),
+		ID:          uuid.New(),
+		InitiatorID: characterID,
+		RecipientID: uuid.New(),
+		Status:      models.TradeStatusActive,
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
+		ExpiresAt:   time.Now().Add(5 * time.Minute),
 	}
 
 	trade2 := models.TradeSession{
-		ID:              uuid.New(),
-		InitiatorID:     uuid.New(),
-		RecipientID:     characterID,
-		Status:          models.TradeStatusActive,
-		CreatedAt:       time.Now(),
-		UpdatedAt:       time.Now(),
-		ExpiresAt:       time.Now().Add(5 * time.Minute),
+		ID:          uuid.New(),
+		InitiatorID: uuid.New(),
+		RecipientID: characterID,
+		Status:      models.TradeStatusActive,
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
+		ExpiresAt:   time.Now().Add(5 * time.Minute),
 	}
 
 	mockService.activeTrades[characterID] = []models.TradeSession{trade1, trade2}
 
-	server := NewHTTPServer(":8080", mockService, nil, false, nil, nil, nil)
+	server := NewHTTPServer(":8080", mockService, nil, nil, false, nil, nil, nil, nil, nil)
 
 	req := createRequestWithUserID("GET", "/api/v1/economy/trade", nil, characterID)
 	w := httptest.NewRecorder()
@@ -320,18 +320,18 @@ func TestHTTPServer_UpdateOffer(t *testing.T) {
 	tradeID := uuid.New()
 	characterID := uuid.New()
 	session := &models.TradeSession{
-		ID:              tradeID,
-		InitiatorID:     characterID,
-		RecipientID:     uuid.New(),
-		Status:          models.TradeStatusActive,
-		CreatedAt:       time.Now(),
-		UpdatedAt:       time.Now(),
-		ExpiresAt:       time.Now().Add(5 * time.Minute),
+		ID:          tradeID,
+		InitiatorID: characterID,
+		RecipientID: uuid.New(),
+		Status:      models.TradeStatusActive,
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
+		ExpiresAt:   time.Now().Add(5 * time.Minute),
 	}
 
 	mockService.trades[tradeID] = session
 
-	server := NewHTTPServer(":8080", mockService, nil, false, nil, nil, nil)
+	server := NewHTTPServer(":8080", mockService, nil, nil, false, nil, nil, nil, nil, nil)
 
 	reqBody := models.UpdateTradeOfferRequest{
 		Items: []map[string]interface{}{
@@ -363,20 +363,20 @@ func TestHTTPServer_ConfirmTrade(t *testing.T) {
 	tradeID := uuid.New()
 	characterID := uuid.New()
 	session := &models.TradeSession{
-		ID:              tradeID,
-		InitiatorID:     characterID,
-		RecipientID:     uuid.New(),
-		Status:          models.TradeStatusActive,
+		ID:                 tradeID,
+		InitiatorID:        characterID,
+		RecipientID:        uuid.New(),
+		Status:             models.TradeStatusActive,
 		InitiatorConfirmed: false,
-		RecipientConfirmed:  false,
-		CreatedAt:       time.Now(),
-		UpdatedAt:       time.Now(),
-		ExpiresAt:       time.Now().Add(5 * time.Minute),
+		RecipientConfirmed: false,
+		CreatedAt:          time.Now(),
+		UpdatedAt:          time.Now(),
+		ExpiresAt:          time.Now().Add(5 * time.Minute),
 	}
 
 	mockService.trades[tradeID] = session
 
-	server := NewHTTPServer(":8080", mockService, nil, false, nil, nil, nil)
+	server := NewHTTPServer(":8080", mockService, nil, nil, false, nil, nil, nil, nil, nil)
 
 	req := createRequestWithUserID("POST", "/api/v1/economy/trade/"+tradeID.String()+"/confirm", nil, characterID)
 	w := httptest.NewRecorder()
@@ -397,20 +397,20 @@ func TestHTTPServer_CompleteTrade(t *testing.T) {
 
 	tradeID := uuid.New()
 	session := &models.TradeSession{
-		ID:              tradeID,
-		InitiatorID:     uuid.New(),
-		RecipientID:     uuid.New(),
-		Status:          models.TradeStatusConfirmed,
+		ID:                 tradeID,
+		InitiatorID:        uuid.New(),
+		RecipientID:        uuid.New(),
+		Status:             models.TradeStatusConfirmed,
 		InitiatorConfirmed: true,
-		RecipientConfirmed:  true,
-		CreatedAt:       time.Now(),
-		UpdatedAt:       time.Now(),
-		ExpiresAt:       time.Now().Add(5 * time.Minute),
+		RecipientConfirmed: true,
+		CreatedAt:          time.Now(),
+		UpdatedAt:          time.Now(),
+		ExpiresAt:          time.Now().Add(5 * time.Minute),
 	}
 
 	mockService.trades[tradeID] = session
 
-	server := NewHTTPServer(":8080", mockService, nil, false, nil, nil, nil)
+	server := NewHTTPServer(":8080", mockService, nil, nil, false, nil, nil, nil, nil, nil)
 
 	req := httptest.NewRequest("POST", "/api/v1/economy/trade/"+tradeID.String()+"/complete", nil)
 	w := httptest.NewRecorder()
@@ -432,18 +432,18 @@ func TestHTTPServer_CancelTrade(t *testing.T) {
 	tradeID := uuid.New()
 	characterID := uuid.New()
 	session := &models.TradeSession{
-		ID:              tradeID,
-		InitiatorID:     characterID,
-		RecipientID:     uuid.New(),
-		Status:          models.TradeStatusActive,
-		CreatedAt:       time.Now(),
-		UpdatedAt:       time.Now(),
-		ExpiresAt:       time.Now().Add(5 * time.Minute),
+		ID:          tradeID,
+		InitiatorID: characterID,
+		RecipientID: uuid.New(),
+		Status:      models.TradeStatusActive,
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
+		ExpiresAt:   time.Now().Add(5 * time.Minute),
 	}
 
 	mockService.trades[tradeID] = session
 
-	server := NewHTTPServer(":8080", mockService, nil, false, nil, nil, nil)
+	server := NewHTTPServer(":8080", mockService, nil, nil, false, nil, nil, nil, nil, nil)
 
 	req := createRequestWithUserID("POST", "/api/v1/economy/trade/"+tradeID.String()+"/cancel", nil, characterID)
 	w := httptest.NewRecorder()
@@ -480,7 +480,7 @@ func TestHTTPServer_GetTradeHistory(t *testing.T) {
 
 	mockService.tradeHistory[characterID] = history
 
-	server := NewHTTPServer(":8080", mockService, nil, false, nil, nil, nil)
+	server := NewHTTPServer(":8080", mockService, nil, nil, false, nil, nil, nil, nil, nil)
 
 	req := createRequestWithUserID("GET", "/api/v1/economy/trade/history", nil, characterID)
 	w := httptest.NewRecorder()
@@ -509,7 +509,7 @@ func TestHTTPServer_HealthCheck(t *testing.T) {
 		tradeHistory: make(map[uuid.UUID]*models.TradeHistoryListResponse),
 	}
 
-	server := NewHTTPServer(":8080", mockService, nil, false, nil, nil, nil)
+	server := NewHTTPServer(":8080", mockService, nil, nil, false, nil, nil, nil, nil, nil)
 
 	req := httptest.NewRequest("GET", "/health", nil)
 	w := httptest.NewRecorder()

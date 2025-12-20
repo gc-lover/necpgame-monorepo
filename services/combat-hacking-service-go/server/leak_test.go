@@ -35,4 +35,3 @@ func TestCombatHackingServiceNoLeaks(t *testing.T) {
 
 	// If goroutines leaked from combat hacking handlers, test FAILS
 }
-

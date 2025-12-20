@@ -1,4 +1,4 @@
-// Issue: #140874394
+// Package server Issue: #140874394
 package server
 
 import (
@@ -220,8 +220,8 @@ func (r *NotificationRepository) UpdateNotification(ctx context.Context, notific
 	defer cancel()
 
 	// Строим запрос обновления
-	setParts := []string{}
-	args := []interface{}{}
+	var setParts []string
+	var args []interface{}
 	argCount := 0
 
 	for field, value := range updates {

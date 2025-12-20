@@ -1,4 +1,4 @@
-// Issue: #1585 - Runtime Goroutine Leak Monitoring
+// Package server Issue: #1585 - Runtime Goroutine Leak Monitoring
 package server
 
 import (
@@ -58,4 +58,3 @@ func (gm *GoroutineMonitor) Start() {
 func (gm *GoroutineMonitor) Stop() {
 	gm.cancel()
 }
-

@@ -8,21 +8,6 @@ import (
 	"github.com/gc-lover/necpgame-monorepo/services/party-service-go/pkg/api"
 )
 
-// mockPartyService implements PartyService methods for benchmarks
-type mockPartyService struct{}
-
-func (m *mockPartyService) CreateParty(ctx context.Context, leaderID, name, lootMode string) (*Party, error) {
-	return nil, nil
-}
-
-func (m *mockPartyService) GetParty(ctx context.Context, partyID string) (*Party, error) {
-	return nil, nil
-}
-
-func (m *mockPartyService) DisbandParty(ctx context.Context, partyID string) error {
-	return nil
-}
-
 // BenchmarkCreateParty benchmarks CreateParty handler
 // Target: <100μs per operation, minimal allocs
 func BenchmarkCreateParty(b *testing.B) {
@@ -49,8 +34,7 @@ func BenchmarkGetParty(b *testing.B) {
 	handlers := NewHandlers(service)
 
 	ctx := context.Background()
-	params := api.GetPartyParams{
-	}
+	params := api.GetPartyParams{}
 
 	b.ReportAllocs()
 	b.ResetTimer()
@@ -77,4 +61,3 @@ func BenchmarkDisbandParty(b *testing.B) {
 		_, _ = handlers.DisbandParty(ctx, params)
 	}
 }
-

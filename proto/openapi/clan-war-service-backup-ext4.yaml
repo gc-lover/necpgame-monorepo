@@ -1,201 +1,200 @@
+WarBattle:
+  type: object
+  description: Битва в войне
+  properties:
+    id:
+      type: string
+      format: uuid
+      description: Уникальный ID битвы
+    warId:
+      type: string
+      format: uuid
+      description: ID войны
+    battleType:
+      type: string
+      enum: [ TERRITORY_BATTLE, SIEGE, OPEN_WORLD_PVP ]
+      description: Тип битвы
+    territoryId:
+      type: string
+      format: uuid
+      description: ID территории
+    status:
+      type: string
+      enum: [ CREATED, ACTIVE, ENDED ]
+      description: Статус битвы
+    attackerScore:
+      type: integer
+      description: Очки атакующего
+    defenderScore:
+      type: integer
+      description: Очки защищающегося
+    startedAt:
+      type: string
+      format: date-time
+      description: Время начала
+    endedAt:
+      type: string
+      format: date-time
+      description: Время окончания
+    createdAt:
+      type: string
+      format: date-time
+      description: Время создания
+  required:
+    - id
+    - warId
+    - battleType
+    - status
+    - attackerScore
+    - defenderScore
+    - createdAt
 
-    WarBattle:
+Reward:
+  type: object
+  description: Награда
+  properties:
+    type:
+      type: string
+      enum: [ CURRENCY, ITEM, TITLE, EXPERIENCE, RESOURCE ]
+      description: Тип награды
+    amount:
+      type: integer
+      description: Количество
+    itemId:
+      type: string
+      format: uuid
+      description: ID предмета (для ITEM)
+    title:
+      type: string
+      description: Название титула (для TITLE)
+    description:
+      type: string
+      description: Описание награды
+  required:
+    - type
+
+WarEvent:
+  type: object
+  description: Событие войны
+  properties:
+    id:
+      type: string
+      format: uuid
+      description: ID события
+    warId:
+      type: string
+      format: uuid
+      description: ID войны
+    eventType:
+      type: string
+      enum:
+        [
+          declared,
+          phase-changed,
+          battle-started,
+          battle-ended,
+          territory-captured,
+          ended,
+          rewards-distributed,
+        ]
+      description: Тип события
+    data:
       type: object
-      description: Битва в войне
-      properties:
-        id:
-          type: string
-          format: uuid
-          description: Уникальный ID битвы
-        warId:
-          type: string
-          format: uuid
-          description: ID войны
-        battleType:
-          type: string
-          enum: [TERRITORY_BATTLE, SIEGE, OPEN_WORLD_PVP]
-          description: Тип битвы
-        territoryId:
-          type: string
-          format: uuid
-          description: ID территории
-        status:
-          type: string
-          enum: [CREATED, ACTIVE, ENDED]
-          description: Статус битвы
-        attackerScore:
-          type: integer
-          description: Очки атакующего
-        defenderScore:
-          type: integer
-          description: Очки защищающегося
-        startedAt:
-          type: string
-          format: date-time
-          description: Время начала
-        endedAt:
-          type: string
-          format: date-time
-          description: Время окончания
-        createdAt:
-          type: string
-          format: date-time
-          description: Время создания
-      required:
-        - id
-        - warId
-        - battleType
-        - status
-        - attackerScore
-        - defenderScore
-        - createdAt
+      description: Данные события
+      additionalProperties: true
+    timestamp:
+      type: string
+      format: date-time
+      description: Время события
+  required:
+    - id
+    - warId
+    - eventType
+    - timestamp
 
-    Reward:
+PaginationInfo:
+  type: object
+  description: Информация о пагинации
+  properties:
+    limit:
+      type: integer
+      description: Размер страницы
+    offset:
+      type: integer
+      description: Смещение
+    hasNext:
+      type: boolean
+      description: Есть следующая страница
+    hasPrev:
+      type: boolean
+      description: Есть предыдущая страница
+  required:
+    - limit
+    - offset
+    - hasNext
+    - hasPrev
+
+Error:
+  type: object
+  description: Описание ошибки
+  properties:
+    code:
+      type: string
+      description: Код ошибки
+    message:
+      type: string
+      description: Сообщение об ошибке
+    details:
       type: object
-      description: Награда
-      properties:
-        type:
-          type: string
-          enum: [CURRENCY, ITEM, TITLE, EXPERIENCE, RESOURCE]
-          description: Тип награды
-        amount:
-          type: integer
-          description: Количество
-        itemId:
-          type: string
-          format: uuid
-          description: ID предмета (для ITEM)
-        title:
-          type: string
-          description: Название титула (для TITLE)
-        description:
-          type: string
-          description: Описание награды
-      required:
-        - type
+      description: Дополнительные детали ошибки
+      additionalProperties: true
+  required:
+    - code
+    - message
 
-    WarEvent:
-      type: object
-      description: Событие войны
-      properties:
-        id:
-          type: string
-          format: uuid
-          description: ID события
-        warId:
-          type: string
-          format: uuid
-          description: ID войны
-        eventType:
-          type: string
-          enum:
-            [
-              declared,
-              phase-changed,
-              battle-started,
-              battle-ended,
-              territory-captured,
-              ended,
-              rewards-distributed,
-            ]
-          description: Тип события
-        data:
-          type: object
-          description: Данные события
-          additionalProperties: true
-        timestamp:
-          type: string
-          format: date-time
-          description: Время события
-      required:
-        - id
-        - warId
-        - eventType
-        - timestamp
+# Переиспользуемые ответы
+responses:
+  BadRequest:
+    description: Неверный запрос
+    content:
+      application/json:
+        schema:
+          $ref: "#/components/schemas/Error"
 
-    PaginationInfo:
-      type: object
-      description: Информация о пагинации
-      properties:
-        limit:
-          type: integer
-          description: Размер страницы
-        offset:
-          type: integer
-          description: Смещение
-        hasNext:
-          type: boolean
-          description: Есть следующая страница
-        hasPrev:
-          type: boolean
-          description: Есть предыдущая страница
-      required:
-        - limit
-        - offset
-        - hasNext
-        - hasPrev
+  Unauthorized:
+    description: Не авторизован
+    content:
+      application/json:
+        schema:
+          $ref: "#/components/schemas/Error"
 
-    Error:
-      type: object
-      description: Описание ошибки
-      properties:
-        code:
-          type: string
-          description: Код ошибки
-        message:
-          type: string
-          description: Сообщение об ошибке
-        details:
-          type: object
-          description: Дополнительные детали ошибки
-          additionalProperties: true
-      required:
-        - code
-        - message
+  NotFound:
+    description: Ресурс не найден
+    content:
+      application/json:
+        schema:
+          $ref: "#/components/schemas/Error"
 
-  # Переиспользуемые ответы
-  responses:
-    BadRequest:
-      description: Неверный запрос
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/Error"
+  InternalServerError:
+    description: Внутренняя ошибка сервера
+    content:
+      application/json:
+        schema:
+          $ref: "#/components/schemas/Error"
 
-    Unauthorized:
-      description: Не авторизован
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/Error"
+# Схемы безопасности
+securitySchemes:
+  BearerAuth:
+    type: http
+    scheme: bearer
+    bearerFormat: JWT
+    description: JWT токен авторизации
 
-    NotFound:
-      description: Ресурс не найден
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/Error"
-
-    InternalServerError:
-      description: Внутренняя ошибка сервера
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/Error"
-
-  # Схемы безопасности
-  securitySchemes:
-    BearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
-      description: JWT токен авторизации
-
-    ApiKeyAuth:
-      type: apiKey
-      in: header
-      name: X-API-Key
-      description: API ключ для сервер-сервер коммуникации
+  ApiKeyAuth:
+    type: apiKey
+    in: header
+    name: X-API-Key
+    description: API ключ для сервер-сервер коммуникации
 
 # WebSocket спецификации (документация)
 x-websockets:
@@ -215,7 +214,7 @@ x-websockets:
         properties:
           type:
             type: string
-            enum: [war_phase_changed]
+            enum: [ war_phase_changed ]
           data:
             type: object
             properties:
@@ -224,10 +223,10 @@ x-websockets:
                 format: uuid
               oldPhase:
                 type: string
-                enum: [PREPARATION, ACTIVE, ENDING]
+                enum: [ PREPARATION, ACTIVE, ENDING ]
               newPhase:
                 type: string
-                enum: [PREPARATION, ACTIVE, ENDING, ENDED]
+                enum: [ PREPARATION, ACTIVE, ENDING, ENDED ]
               changedAt:
                 type: string
                 format: date-time
@@ -237,7 +236,7 @@ x-websockets:
         properties:
           type:
             type: string
-            enum: [battle_started]
+            enum: [ battle_started ]
           data:
             $ref: "#/components/schemas/WarBattle"
 
@@ -246,7 +245,7 @@ x-websockets:
         properties:
           type:
             type: string
-            enum: [scores_updated]
+            enum: [ scores_updated ]
           data:
             type: object
             properties:
@@ -264,7 +263,7 @@ x-websockets:
         properties:
           type:
             type: string
-            enum: [territory_captured]
+            enum: [ territory_captured ]
           data:
             type: object
             properties:
@@ -320,10 +319,10 @@ x-event-bus:
             format: uuid
           oldPhase:
             type: string
-            enum: [PREPARATION, ACTIVE, ENDING]
+            enum: [ PREPARATION, ACTIVE, ENDING ]
           newPhase:
             type: string
-            enum: [PREPARATION, ACTIVE, ENDING, ENDED]
+            enum: [ PREPARATION, ACTIVE, ENDING, ENDED ]
           changedAt:
             type: string
             format: date-time
@@ -345,7 +344,7 @@ x-event-bus:
             format: uuid
           battleType:
             type: string
-            enum: [TERRITORY_BATTLE, SIEGE, OPEN_WORLD_PVP]
+            enum: [ TERRITORY_BATTLE, SIEGE, OPEN_WORLD_PVP ]
           participants:
             type: array
             items:

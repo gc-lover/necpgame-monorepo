@@ -12,35 +12,35 @@ import (
 
 // VoiceChatServiceConfig holds configuration for the Voice Chat Service
 type VoiceChatServiceConfig struct {
-	Port                     string
-	ReadTimeout              time.Duration
-	WriteTimeout             time.Duration
-	MaxHeaderBytes           int
-	RedisAddr                string
-	WebSocketReadTimeout     time.Duration
-	WebSocketWriteTimeout    time.Duration
-	MaxVoiceConnections      int
-	ProximityUpdateInterval  time.Duration
+	Port                      string
+	ReadTimeout               time.Duration
+	WriteTimeout              time.Duration
+	MaxHeaderBytes            int
+	RedisAddr                 string
+	WebSocketReadTimeout      time.Duration
+	WebSocketWriteTimeout     time.Duration
+	MaxVoiceConnections       int
+	ProximityUpdateInterval   time.Duration
 	ConnectionCleanupInterval time.Duration
-	ChannelCleanupInterval   time.Duration
+	ChannelCleanupInterval    time.Duration
 }
 
 // VoiceChatMetrics holds Prometheus metrics for the Voice Chat Service
 type VoiceChatMetrics struct {
 	// Metrics implementation would go here
 	// For now, using placeholder counters
-	ActiveChannels      float64
-	ActiveConnections   float64
-	AudioStreams        float64
-	TTSSynthesizations  float64
-	ModerationReports   float64
-	Errors              float64
-	BytesSent           float64
-	BytesReceived       float64
-	WebSocketErrors     float64
+	ActiveChannels     float64
+	ActiveConnections  float64
+	AudioStreams       float64
+	TTSSynthesizations float64
+	ModerationReports  float64
+	Errors             float64
+	BytesSent          float64
+	BytesReceived      float64
+	WebSocketErrors    float64
 }
 
-// HTTP server for Voice Chat Service
+// HTTPServer HTTP server for Voice Chat Service
 type HTTPServer struct {
 	service *VoiceChatService
 	logger  *logrus.Logger
@@ -85,17 +85,17 @@ func (hs *HTTPServer) SetupRoutes() *chi.Mux {
 
 	// Voice channel management routes
 	r.Route("/voice-chat/channels", func(r chi.Router) {
-		r.Get("/", hs.service.ListChannels)     // List channels with filtering
-		r.Post("/", hs.service.CreateChannel)   // Create channel
+		r.Get("/", hs.service.ListChannels)   // List channels with filtering
+		r.Post("/", hs.service.CreateChannel) // Create channel
 
 		r.Route("/{channelId}", func(r chi.Router) {
-			r.Get("/", hs.service.GetChannel)         // Get channel details
-			r.Put("/", hs.service.UpdateChannel)      // Update channel settings
-			r.Delete("/", hs.service.DeleteChannel)   // Delete channel
+			r.Get("/", hs.service.GetChannel)       // Get channel details
+			r.Put("/", hs.service.UpdateChannel)    // Update channel settings
+			r.Delete("/", hs.service.DeleteChannel) // Delete channel
 
 			// Channel participation
-			r.Post("/join", hs.service.JoinChannel)     // Join channel
-			r.Post("/leave", hs.service.LeaveChannel)   // Leave channel
+			r.Post("/join", hs.service.JoinChannel)   // Join channel
+			r.Post("/leave", hs.service.LeaveChannel) // Leave channel
 		})
 	})
 

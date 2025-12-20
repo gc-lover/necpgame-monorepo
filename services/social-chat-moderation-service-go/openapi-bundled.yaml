@@ -12,7 +12,7 @@ servers:
   - url: https://api.necp.game/api/v1
     description: Продакшен сервер
 security:
-  - BearerAuth: []
+  - BearerAuth: [ ]
 tags:
   - name: Chat Moderation
     description: Модерация чата
@@ -24,7 +24,7 @@ paths:
       summary: Пожаловаться на сообщение
       operationId: reportChatMessage
       security:
-        - BearerAuth: []
+        - BearerAuth: [ ]
       requestBody:
         required: true
         content:
@@ -51,7 +51,7 @@ paths:
       summary: Забанить пользователя
       operationId: banChatUser
       security:
-        - BearerAuth: []
+        - BearerAuth: [ ]
       requestBody:
         required: true
         content:
@@ -78,7 +78,7 @@ paths:
       summary: Получить список банов
       operationId: getChatBans
       security:
-        - BearerAuth: []
+        - BearerAuth: [ ]
       parameters:
         - name: player_id
           in: query
@@ -105,7 +105,7 @@ paths:
       summary: Отменить бан
       operationId: revokeChatBan
       security:
-        - BearerAuth: []
+        - BearerAuth: [ ]
       parameters:
         - $ref: "#/components/parameters/BanId"
       requestBody:
@@ -136,7 +136,7 @@ paths:
       summary: Проверить сообщение на запрещенный контент
       operationId: filterChatMessage
       security:
-        - BearerAuth: []
+        - BearerAuth: [ ]
       requestBody:
         required: true
         content:
@@ -163,7 +163,7 @@ paths:
       summary: Выдать предупреждение пользователю
       operationId: warnChatUser
       security:
-        - BearerAuth: []
+        - BearerAuth: [ ]
       requestBody:
         required: true
         content:
@@ -189,7 +189,7 @@ paths:
       summary: Получить список предупреждений
       operationId: getChatWarnings
       security:
-        - BearerAuth: []
+        - BearerAuth: [ ]
       parameters:
         - name: player_id
           in: query
@@ -216,7 +216,7 @@ paths:
       summary: Автоматический бан за нарушения
       operationId: autoBanUser
       security:
-        - BearerAuth: []
+        - BearerAuth: [ ]
       requestBody:
         required: true
         content:
@@ -243,13 +243,13 @@ paths:
       summary: Получить список жалоб
       operationId: getChatReports
       security:
-        - BearerAuth: []
+        - BearerAuth: [ ]
       parameters:
         - name: status
           in: query
           schema:
             type: string
-            enum: [pending, resolved, dismissed]
+            enum: [ pending, resolved, dismissed ]
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Offset"
       responses:
@@ -270,7 +270,7 @@ paths:
       summary: Разрешить жалобу
       operationId: resolveChatReport
       security:
-        - BearerAuth: []
+        - BearerAuth: [ ]
       parameters:
         - $ref: "#/components/parameters/ReportId"
       requestBody:
@@ -304,7 +304,7 @@ components:
   schemas:
     ReportMessageRequest:
       type: object
-      required: [message_id, reason]
+      required: [ message_id, reason ]
       properties:
         message_id: { type: string, format: uuid }
         reason: { type: string, maxLength: 500 }
@@ -315,7 +315,7 @@ components:
         report_id: { type: string, format: uuid }
     BanUserRequest:
       type: object
-      required: [player_id, reason, duration_hours]
+      required: [ player_id, reason, duration_hours ]
       properties:
         player_id: { type: string, format: uuid }
         reason: { type: string, maxLength: 500 }
@@ -345,7 +345,7 @@ components:
         created_at: { type: string, format: date-time }
     RevokeBanRequest:
       type: object
-      required: [revoked_by]
+      required: [ revoked_by ]
       properties:
         revoked_by: { type: string, format: uuid }
     RevokeBanResponse:
@@ -355,7 +355,7 @@ components:
         ban_id: { type: string, format: uuid }
     FilterMessageRequest:
       type: object
-      required: [message, player_id]
+      required: [ message, player_id ]
       properties:
         message: { type: string, maxLength: 1000 }
         player_id: { type: string, format: uuid }
@@ -366,14 +366,14 @@ components:
         allowed: { type: boolean }
         filtered_message: { type: string, nullable: true }
         violations: { type: array, items: { type: string } }
-        severity: { type: string, enum: [low, medium, high, critical] }
+        severity: { type: string, enum: [ low, medium, high, critical ] }
     WarnUserRequest:
       type: object
-      required: [player_id, reason]
+      required: [ player_id, reason ]
       properties:
         player_id: { type: string, format: uuid }
         reason: { type: string, maxLength: 500 }
-        severity: { type: string, enum: [low, medium, high], default: medium }
+        severity: { type: string, enum: [ low, medium, high ], default: medium }
     WarnResponse:
       type: object
       properties:
@@ -394,18 +394,18 @@ components:
         id: { type: string, format: uuid }
         player_id: { type: string, format: uuid }
         reason: { type: string }
-        severity: { type: string, enum: [low, medium, high] }
+        severity: { type: string, enum: [ low, medium, high ] }
         issued_by: { type: string, format: uuid }
         created_at: { type: string, format: date-time }
         expires_at: { type: string, format: date-time, nullable: true }
     AutoBanRequest:
       type: object
-      required: [player_id, reason]
+      required: [ player_id, reason ]
       properties:
         player_id: { type: string, format: uuid }
         reason: { type: string, maxLength: 500 }
         trigger_type:
-          { type: string, enum: [spam, toxicity, harassment, cheating] }
+          { type: string, enum: [ spam, toxicity, harassment, cheating ] }
     AutoBanResponse:
       type: object
       properties:
@@ -429,15 +429,15 @@ components:
         player_id: { type: string, format: uuid }
         reported_by: { type: string, format: uuid }
         reason: { type: string }
-        status: { type: string, enum: [pending, resolved, dismissed] }
+        status: { type: string, enum: [ pending, resolved, dismissed ] }
         created_at: { type: string, format: date-time }
         resolved_at: { type: string, format: date-time, nullable: true }
         resolved_by: { type: string, format: uuid, nullable: true }
     ResolveReportRequest:
       type: object
-      required: [action]
+      required: [ action ]
       properties:
-        action: { type: string, enum: [ban, warn, dismiss] }
+        action: { type: string, enum: [ ban, warn, dismiss ] }
         ban_duration_hours: { type: integer, nullable: true }
         resolved_by: { type: string, format: uuid }
         notes: { type: string, maxLength: 1000 }
@@ -446,7 +446,7 @@ components:
       properties:
         success: { type: boolean }
         report_id: { type: string, format: uuid }
-        action_taken: { type: string, enum: [ban, warn, dismiss] }
+        action_taken: { type: string, enum: [ ban, warn, dismiss ] }
         ban_id: { type: string, format: uuid, nullable: true }
         warning_id: { type: string, format: uuid, nullable: true }
     Error:

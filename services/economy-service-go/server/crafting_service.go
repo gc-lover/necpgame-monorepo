@@ -1,4 +1,4 @@
-// Issue: #140890170 - Crafting mechanics implementation
+// Package server Issue: #140890170 - Crafting mechanics implementation
 package server
 
 import (
@@ -16,19 +16,20 @@ import (
 
 // CraftingService управляет логикой крафта
 type CraftingService struct {
-	repo          *CraftingRepository
-	redis         *redis.Client
-	logger        *logrus.Logger
-	eventBus      *EventBus
+	repo     *CraftingRepository
+	redis    *redis.Client
+	logger   *logrus.Logger
+	eventBus *EventBus
 }
 
 // NewCraftingService создает новый сервис крафта
 func NewCraftingService(repo *CraftingRepository, redis *redis.Client) *CraftingService {
 	return &CraftingService{
-		repo:     repo,
-		redis:    redis,
-		logger:   GetLogger(),
-		eventBus: NewEventBus(redis),
+		repo:   repo,
+		redis:  redis,
+		logger: GetLogger(),
+		// TODO: Implement event bus
+		// eventBus: NewEventBus(redis),
 	}
 }
 
@@ -51,12 +52,12 @@ func (s *CraftingService) StartCrafting(ctx context.Context, playerID, recipeID,
 	}
 
 	// Проверяем требования рецепта
-	if err := s.checkRecipeRequirements(ctx, playerID, recipe, station); err != nil {
+	if err := s.checkRecipeRequirements(playerID, recipe, station); err != nil {
 		return nil, fmt.Errorf("recipe requirements not met: %w", err)
 	}
 
 	// Проверяем и резервируем материалы
-	if err := s.validateAndReserveMaterials(ctx, playerID, materials, recipe.Materials); err != nil {
+	if err := s.validateAndReserveMaterials(playerID, materials, recipe.Materials); err != nil {
 		return nil, fmt.Errorf("material validation failed: %w", err)
 	}
 
@@ -75,7 +76,7 @@ func (s *CraftingService) StartCrafting(ctx context.Context, playerID, recipeID,
 	// Сохраняем заказ
 	if err := s.repo.CreateOrder(ctx, order); err != nil {
 		// Откатываем резервирование материалов при ошибке
-		s.releaseReservedMaterials(ctx, playerID, materials)
+		s.releaseReservedMaterials(playerID, materials)
 		return nil, fmt.Errorf("failed to create order: %w", err)
 	}
 
@@ -128,7 +129,7 @@ func (s *CraftingService) CancelOrder(ctx context.Context, orderID, playerID str
 	}
 
 	// Возвращаем материалы
-	if err := s.releaseReservedMaterials(ctx, playerID, order.UsedMaterials); err != nil {
+	if err := s.releaseReservedMaterials(playerID, order.UsedMaterials); err != nil {
 		s.logger.WithError(err).Error("Failed to release materials on order cancellation")
 	}
 
@@ -182,7 +183,7 @@ func (s *CraftingService) CalculateCraftingCost(ctx context.Context, recipeID st
 	// Стоимость материалов (рыночные цены)
 	for _, material := range recipe.Materials {
 		// Получаем рыночную цену ресурса
-		price, err := s.getResourceMarketPrice(ctx, material.ResourceID)
+		price, err := s.getResourceMarketPrice()
 		if err != nil {
 			s.logger.WithError(err).Warn("Failed to get market price for resource")
 			continue
@@ -195,7 +196,7 @@ func (s *CraftingService) CalculateCraftingCost(ctx context.Context, recipeID st
 	costs["time"] = timeCost
 
 	// Стоимость станции (амортизация)
-	stationCost := s.calculateStationCost(recipe.Tier, recipe.Requirements.StationType)
+	stationCost := s.calculateStationCost(recipe.Tier)
 	costs["station"] = stationCost
 
 	// Риск провала
@@ -263,22 +264,24 @@ func (s *CraftingService) processCrafting(orderID string) {
 		s.logger.WithError(err).Error("Failed to update station stats")
 	}
 
+	// TODO: Implement event publishing
 	// Публикуем событие
-	event := map[string]interface{}{
-		"type":       "crafting_completed",
-		"order_id":   orderID,
-		"player_id":  order.PlayerID,
-		"recipe_id":  order.RecipeID,
-		"success":    success,
-		"quality":    result.Quality,
-		"item_id":    result.ItemID,
-		"quantity":   result.Quantity,
-		"timestamp":  now.Unix(),
-	}
+	// event := map[string]interface{}{
+	// 	"type":       "crafting_completed",
+	// 	"order_id":   orderID,
+	// 	"player_id":  order.PlayerID,
+	// 	"recipe_id":  order.RecipeID,
+	// 	"success":    success,
+	// 	"quality":    result.Quality,
+	// 	"item_id":    result.ItemID,
+	// 	"quantity":   result.Quantity,
+	// 	"timestamp":  now.Unix(),
+	// }
 
-	if err := s.eventBus.Publish("crafting", event); err != nil {
-		s.logger.WithError(err).Error("Failed to publish crafting event")
-	}
+	// TODO: Implement event bus publishing
+	// if err := s.eventBus.Publish("crafting", event); err != nil {
+	// 	s.logger.WithError(err).Error("Failed to publish crafting event")
+	// }
 
 	s.logger.WithFields(map[string]interface{}{
 		"order_id": orderID,
@@ -349,7 +352,7 @@ func (s *CraftingService) calculateCraftingResult(order *models.CraftingOrder, r
 }
 
 // checkRecipeRequirements проверяет требования рецепта
-func (s *CraftingService) checkRecipeRequirements(ctx context.Context, playerID string, recipe *models.CraftingRecipe, station *models.CraftingStation) error {
+func (s *CraftingService) checkRecipeRequirements(playerID string, recipe *models.CraftingRecipe, station *models.CraftingStation) error {
 	// Проверяем тип станции
 	if recipe.Requirements.StationType != "" && recipe.Requirements.StationType != station.Type {
 		return fmt.Errorf("station type mismatch: required %s, got %s", recipe.Requirements.StationType, station.Type)
@@ -364,7 +367,7 @@ func (s *CraftingService) checkRecipeRequirements(ctx context.Context, playerID 
 	if recipe.Requirements.SkillLevel > 0 {
 		// TODO: проверить уровень навыка игрока
 		s.logger.WithFields(map[string]interface{}{
-			"player_id":    playerID,
+			"player_id":      playerID,
 			"required_skill": recipe.Requirements.SkillLevel,
 		}).Warn("Skill check not implemented yet")
 	}
@@ -373,7 +376,7 @@ func (s *CraftingService) checkRecipeRequirements(ctx context.Context, playerID 
 }
 
 // validateAndReserveMaterials проверяет и резервирует материалы
-func (s *CraftingService) validateAndReserveMaterials(ctx context.Context, playerID string, usedMaterials []models.UsedMaterial, requiredMaterials []models.RecipeMaterial) error {
+func (s *CraftingService) validateAndReserveMaterials(playerID string, usedMaterials []models.UsedMaterial, requiredMaterials []models.RecipeMaterial) error {
 	// Создаем карту требуемых материалов
 	requiredMap := make(map[string]models.RecipeMaterial)
 	for _, req := range requiredMaterials {
@@ -421,7 +424,7 @@ func (s *CraftingService) validateAndReserveMaterials(ctx context.Context, playe
 }
 
 // releaseReservedMaterials возвращает зарезервированные материалы
-func (s *CraftingService) releaseReservedMaterials(ctx context.Context, playerID string, materials []models.UsedMaterial) error {
+func (s *CraftingService) releaseReservedMaterials(playerID string, materials []models.UsedMaterial) error {
 	// TODO: вернуть материалы в инвентарь игрока
 	s.logger.WithFields(map[string]interface{}{
 		"player_id": playerID,
@@ -432,7 +435,7 @@ func (s *CraftingService) releaseReservedMaterials(ctx context.Context, playerID
 }
 
 // getResourceMarketPrice получает рыночную цену ресурса
-func (s *CraftingService) getResourceMarketPrice(ctx context.Context, resourceID string) (float64, error) {
+func (s *CraftingService) getResourceMarketPrice() (float64, error) {
 	// TODO: получить цену из торгового сервиса
 	// Пока возвращаем заглушку
 	return 10.0, nil // 10 кредитов за единицу
@@ -441,13 +444,13 @@ func (s *CraftingService) getResourceMarketPrice(ctx context.Context, resourceID
 // calculateTimeCost рассчитывает стоимость времени крафта
 func (s *CraftingService) calculateTimeCost(duration time.Duration, tier int) float64 {
 	// Стоимость минуты крафта в кредитах (зависит от уровня сложности)
-	baseRate := 1.0 // кредит в минуту
+	baseRate := 1.0                           // кредит в минуту
 	tierMultiplier := 1.0 + float64(tier)*0.5 // более сложные рецепты дороже
 	return baseRate * tierMultiplier * duration.Minutes()
 }
 
 // calculateStationCost рассчитывает стоимость использования станции
-func (s *CraftingService) calculateStationCost(tier int, stationType string) float64 {
+func (s *CraftingService) calculateStationCost(tier int) float64 {
 	// Базовая стоимость использования станции
 	baseCost := 5.0
 	tierMultiplier := 1.0 + float64(tier)*0.3

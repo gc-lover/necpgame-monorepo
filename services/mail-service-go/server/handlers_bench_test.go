@@ -11,23 +11,23 @@ import (
 // mockMailService implements Service interface for benchmarks
 type mockMailService struct{}
 
-func (m *mockMailService) GetInbox(ctx context.Context, params api.GetInboxParams) (*api.InboxResponse, error) {
+func (m *mockMailService) GetInbox(_ context.Context, _ api.GetInboxParams) (*api.InboxResponse, error) {
 	return nil, nil
 }
 
-func (m *mockMailService) GetMail(ctx context.Context, mailID string) (*api.MailDetailResponse, error) {
+func (m *mockMailService) GetMail(_ context.Context, _ string) (*api.MailDetailResponse, error) {
 	return nil, nil
 }
 
-func (m *mockMailService) DeleteMail(ctx context.Context, mailID string) error {
+func (m *mockMailService) DeleteMail(_ context.Context, _ string) error {
 	return nil
 }
 
-func (m *mockMailService) SendMail(ctx context.Context, req *api.SendMailRequest) (*api.SendMailResponse, error) {
+func (m *mockMailService) SendMail(_ context.Context, _ *api.SendMailRequest) (*api.SendMailResponse, error) {
 	return nil, nil
 }
 
-func (m *mockMailService) ClaimAttachments(ctx context.Context, mailID string) (*api.ClaimAttachmentsResponse, error) {
+func (m *mockMailService) ClaimAttachments(_ context.Context, _ string) (*api.ClaimAttachmentsResponse, error) {
 	return nil, nil
 }
 
@@ -38,8 +38,7 @@ func BenchmarkGetInbox(b *testing.B) {
 	handlers := NewHandlers(mockService)
 
 	ctx := context.Background()
-	params := api.GetInboxParams{
-	}
+	params := api.GetInboxParams{}
 
 	b.ReportAllocs()
 	b.ResetTimer()
@@ -56,8 +55,7 @@ func BenchmarkGetMail(b *testing.B) {
 	handlers := NewHandlers(mockService)
 
 	ctx := context.Background()
-	params := api.GetMailParams{
-	}
+	params := api.GetMailParams{}
 
 	b.ReportAllocs()
 	b.ResetTimer()
@@ -83,4 +81,3 @@ func BenchmarkDeleteMail(b *testing.B) {
 		_, _ = handlers.DeleteMail(ctx, params)
 	}
 }
-

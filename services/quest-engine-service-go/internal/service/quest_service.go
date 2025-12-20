@@ -20,13 +20,6 @@ type AtomicStatistics struct {
 	guildWarsActive int64
 }
 
-func NewQuestService(repo *repository.Repository) *QuestService {
-	return &QuestService{
-		repo:        repo,
-		atomicStats: &AtomicStatistics{},
-	}
-}
-
 func (s *QuestService) GetActiveQuests(ctx context.Context, playerID string) ([]*repository.Quest, error) {
 	return s.repo.GetActiveQuests(ctx, playerID)
 }
@@ -73,15 +66,15 @@ func (s *QuestService) CompleteQuest(ctx context.Context, questID, playerID stri
 	return nil
 }
 
-func (s *QuestService) GetTelemetry() *ServiceTelemetry {
-	return &ServiceTelemetry{
+func (s *QuestService) GetTelemetry() *Telemetry {
+	return &Telemetry{
 		ActiveQuests:    atomic.LoadInt64(&s.atomicStats.activeQuests),
 		QuestsCompleted: atomic.LoadInt64(&s.atomicStats.questsCompleted),
 		GuildWarsActive: atomic.LoadInt64(&s.atomicStats.guildWarsActive),
 	}
 }
 
-type ServiceTelemetry struct {
+type Telemetry struct {
 	ActiveQuests    int64 `json:"active_quests"`
 	QuestsCompleted int64 `json:"quests_completed"`
 	GuildWarsActive int64 `json:"guild_wars_active"`

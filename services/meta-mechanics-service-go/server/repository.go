@@ -1,4 +1,4 @@
-// Issue: #1928 - Repository for Meta Mechanics Service
+// Package server Issue: #1928 - Repository for Meta Mechanics Service
 // PERFORMANCE: Connection pooling, prepared statements, context timeouts
 package server
 
@@ -23,10 +23,10 @@ func NewRepository(connStr string) (*Repository, error) {
 	}
 
 	// OPTIMIZATION: Connection pool sizing for meta-mechanics
-	config.MaxConns = 25              // Max 25 concurrent connections
-	config.MinConns = 5               // Min 5 idle connections
-	config.MaxConnLifetime = 5 * 60   // 5 minutes max lifetime
-	config.MaxConnIdleTime = 2 * 60   // 2 minutes max idle time
+	config.MaxConns = 25            // Max 25 concurrent connections
+	config.MinConns = 5             // Min 5 idle connections
+	config.MaxConnLifetime = 5 * 60 // 5 minutes max lifetime
+	config.MaxConnIdleTime = 2 * 60 // 2 minutes max idle time
 
 	pool, err := pgxpool.NewWithConfig(context.Background(), config)
 	if err != nil {

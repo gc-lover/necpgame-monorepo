@@ -1,11 +1,10 @@
-// Issue: #1856
+// Package server Issue: #1856
 package server
 
 import (
 	"context"
 	"errors"
 	"sync"
-	"time"
 
 	"github.com/gc-lover/necpgame-monorepo/services/guild-bank-service-go/pkg/api"
 	"github.com/google/uuid"
@@ -86,7 +85,7 @@ func (s *Service) GetGuildBank(ctx context.Context, params api.GetGuildBankParam
 	defer s.bankResponsePool.Put(response)
 
 	// Convert internal model to API model
-	response.Balance.Set(int64(bank.Balance))
+	response.Balance.Set(bank.Balance)
 	response.UpdatedAt.Set(bank.UpdatedAt)
 
 	return response, nil
@@ -216,7 +215,7 @@ func (s *Service) ListBankTransactions(ctx context.Context, params api.ListBankT
 }
 
 // CollectGuildTax collects tax from guild members - BUSINESS LOGIC
-func (s *Service) CollectGuildTax(ctx context.Context, params api.CollectGuildTaxParams, req *api.TaxCollectionRequest) (*api.CollectGuildTaxOK, error) {
+func (s *Service) CollectGuildTax(ctx context.Context, req *api.TaxCollectionRequest) (*api.CollectGuildTaxOK, error) {
 	// Get user ID from context
 	userID, ok := ctx.Value("user_id").(uuid.UUID)
 	if !ok {
@@ -232,7 +231,7 @@ func (s *Service) CollectGuildTax(ctx context.Context, params api.CollectGuildTa
 	}
 
 	// Call repository
-	collectedAmount, err := s.repo.CollectGuildTax(ctx, params.GuildID, float64(req.TaxRate))
+	collectedAmount, err := s.repo.CollectGuildTax()
 	if err != nil {
 		return nil, err
 	}
@@ -273,9 +272,3 @@ func (s *Service) GrantGuildReward(ctx context.Context, params api.GrantGuildRew
 
 	return response, nil
 }
-
-// Context timeout constants
-const (
-	DBTimeout    = 50 * time.Millisecond
-	CacheTimeout = 10 * time.Millisecond
-)

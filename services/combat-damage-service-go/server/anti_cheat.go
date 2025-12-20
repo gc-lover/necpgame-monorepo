@@ -1,4 +1,4 @@
-// Issue: #1587 - Server-Side Validation & Anti-Cheat Integration
+// Package server Issue: #1587 - Server-Side Validation & Anti-Cheat Integration
 // CRITICAL for combat services - prevents aimbots, wallhacks, speed hacks
 package server
 
@@ -17,7 +17,7 @@ var (
 	ErrImpossibleShot = errors.New("shot distance exceeds weapon range")
 	ErrWallhack       = errors.New("line of sight blocked (wallhack)")
 	ErrImpossibleTurn = errors.New("impossible turn angle (aimbot)")
-	ErrSpeedHack      = errors.New("movement speed exceeds maximum")
+	_                 = errors.New("movement speed exceeds maximum")
 )
 
 // ActionValidator validates combat actions (shots, attacks)
@@ -51,7 +51,7 @@ func (av *ActionValidator) ValidateShot(playerID string, shot *ShotAction) error
 			logrus.WithFields(logrus.Fields{
 				"player_id":    playerID,
 				"weapon_type":  shot.WeaponType,
-				"time_since":    time.Since(lastAction.Timestamp),
+				"time_since":   time.Since(lastAction.Timestamp),
 				"min_interval": minInterval,
 			}).Warn("Shot rate too high (potential aimbot)")
 			return ErrTooFast // Potential aimbot/macro
@@ -70,7 +70,7 @@ func (av *ActionValidator) ValidateShot(playerID string, shot *ShotAction) error
 	}
 
 	// 3. Line of sight check (prevent wallhacks)
-	if !av.hasLineOfSight(shot.From, shot.To) {
+	if !av.hasLineOfSight() {
 		logrus.WithFields(logrus.Fields{
 			"player_id": playerID,
 			"from":      shot.From,
@@ -88,7 +88,7 @@ func (av *ActionValidator) ValidateShot(playerID string, shot *ShotAction) error
 			logrus.WithFields(logrus.Fields{
 				"player_id":  playerID,
 				"angle_diff": angleDiff,
-				"time_since":  time.Since(lastAction.Timestamp),
+				"time_since": time.Since(lastAction.Timestamp),
 			}).Warn("Impossible turn angle (potential aimbot)")
 			return ErrImpossibleTurn // Aimbot
 		}
@@ -116,12 +116,12 @@ type ShotAction struct {
 func (av *ActionValidator) getMinShotInterval(weaponType string) time.Duration {
 	// Rate limits per weapon type (shots per second)
 	rates := map[string]float64{
-		"pistol":      5.0,  // 5 shots/sec
-		"rifle":       10.0, // 10 shots/sec
-		"smg":         15.0, // 15 shots/sec
-		"sniper":      1.0,  // 1 shot/sec
-		"shotgun":     2.0,  // 2 shots/sec
-		"automatic":   10.0, // 10 shots/sec (default)
+		"pistol":    5.0,  // 5 shots/sec
+		"rifle":     10.0, // 10 shots/sec
+		"smg":       15.0, // 15 shots/sec
+		"sniper":    1.0,  // 1 shot/sec
+		"shotgun":   2.0,  // 2 shots/sec
+		"automatic": 10.0, // 10 shots/sec (default)
 	}
 
 	rate, ok := rates[weaponType]
@@ -153,7 +153,7 @@ func (av *ActionValidator) getWeaponRange(weaponType string) float32 {
 
 // hasLineOfSight checks if there's a clear line of sight between two points
 // TODO: Integrate with world service for actual raycast
-func (av *ActionValidator) hasLineOfSight(from, to Vec3) bool {
+func (av *ActionValidator) hasLineOfSight() bool {
 	// Simplified check - in production, use actual raycast from world service
 	// For now, assume line of sight is clear (will be enhanced with world service integration)
 	return true
@@ -202,7 +202,7 @@ func (ad *AnomalyDetector) RecordShot(playerID string, headshot bool, reactionTi
 
 	// Update average reaction time
 	currentAvg := stats.AvgReaction.Load()
-	newAvg := (currentAvg + int64(reactionTime.Microseconds())) / 2
+	newAvg := (currentAvg + reactionTime.Microseconds()) / 2
 	stats.AvgReaction.Store(newAvg)
 
 	// Check anomalies
@@ -241,12 +241,11 @@ func (ad *AnomalyDetector) getOrCreateStats(playerID string) *PlayerStats {
 // reportSuspicious reports suspicious player to anti-cheat service
 func (ad *AnomalyDetector) reportSuspicious(playerID string, headshotRate float64, avgReaction time.Duration) {
 	logrus.WithFields(logrus.Fields{
-		"player_id":    playerID,
+		"player_id":     playerID,
 		"headshot_rate": headshotRate,
-		"avg_reaction": avgReaction,
+		"avg_reaction":  avgReaction,
 	}).Warn("Suspicious player detected (anomaly detection)")
 
 	// TODO: Send to anti-cheat service
 	// ad.antiCheatService.FlagPlayer(playerID, "anomaly_detection")
 }
-

@@ -1,52 +1,14 @@
-// Issue: #1
-package main
+// Package server Issue: #1
+package server
 
 import (
-	"context"
-	"database/sql"
-	"fmt"
-	"log"
 	"os"
 	"strconv"
-	"time"
-
-	"go.uber.org/zap"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 // main является точкой входа для auth-login-service
-func main() {
-	// Инициализируем structured logger
-	logger, err := zap.NewProduction()
-	if err != nil {
-		log.Fatalf("Failed to initialize logger: %v", err)
-	}
-	defer logger.Sync()
-
-	logger.Info("Starting auth-login-service", zap.String("version", "1.0.0"))
-
-	// Получаем конфигурацию из переменных окружения
-	config, err := loadConfig()
-	if err != nil {
-		logger.Fatal("Failed to load configuration", zap.Error(err))
-	}
-
-	// Подключаемся к БД
-	db, err := connectDatabase(config.DatabaseURL, logger)
-	if err != nil {
-		logger.Fatal("Failed to connect to database", zap.Error(err))
-	}
-	defer db.Close()
-
-	// Создаем HTTP сервер
-	server := NewHTTPServer(logger, db, config.JWTSecret)
-
-	// Запускаем сервер
-	if err := server.Start(); err != nil {
-		logger.Fatal("Server failed to start", zap.Error(err))
-	}
-}
 
 // Config содержит конфигурацию сервиса
 type Config struct {
@@ -56,51 +18,8 @@ type Config struct {
 }
 
 // loadConfig загружает конфигурацию из переменных окружения
-func loadConfig() (*Config, error) {
-	config := &Config{
-		DatabaseURL: getEnv("DATABASE_URL", "postgres://user:password@localhost:5432/auth_db?sslmode=disable"),
-		JWTSecret:   getEnv("JWT_SECRET", "your-super-secret-jwt-key-change-in-production"),
-		ServerPort:  getEnvAsInt("SERVER_PORT", 8081),
-	}
-
-	// Валидация конфигурации
-	if config.JWTSecret == "your-super-secret-jwt-key-change-in-production" {
-		return nil, fmt.Errorf("JWT_SECRET must be changed in production")
-	}
-
-	if config.DatabaseURL == "" {
-		return nil, fmt.Errorf("DATABASE_URL is required")
-	}
-
-	return config, nil
-}
 
 // connectDatabase устанавливает соединение с PostgreSQL
-func connectDatabase(databaseURL string, logger *zap.Logger) (*sql.DB, error) {
-	logger.Info("Connecting to database")
-
-	db, err := sql.Open("pgx", databaseURL)
-	if err != nil {
-		return nil, fmt.Errorf("failed to open database connection: %w", err)
-	}
-
-	// Настраиваем connection pool для MMOFPS оптимизаций
-	db.SetMaxOpenConns(25)                 // Максимум 25 соединений для высокой нагрузки
-	db.SetMaxIdleConns(10)                 // 10 idle соединений
-	db.SetConnMaxLifetime(5 * time.Minute) // Пересоздаем соединения каждые 5 минут
-
-	// Проверяем соединение с таймаутом
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	if err := db.PingContext(ctx); err != nil {
-		db.Close()
-		return nil, fmt.Errorf("failed to ping database: %w", err)
-	}
-
-	logger.Info("Database connection established")
-	return db, nil
-}
 
 // getEnv получает переменную окружения с дефолтным значением
 func getEnv(key, defaultValue string) string {

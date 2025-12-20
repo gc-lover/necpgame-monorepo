@@ -1,103 +1,110 @@
 # Issue: #158
 openapi: 3.0.3
 info:
-  title: Combat Combos & Synergies Service API
-  description: |
-    Полный API для системы комбо и синергий.
-    
-    **Основные возможности:**
-    - Каталог комбо с фильтрацией
-    - Активация комбо и применение синергий
-    - Управление лоадаутами комбо
-    - Scoring и аналитика комбо
+  title: Combat Combos Service API
+  description: API for managing combat combos and synergies in the NECPGAME
   version: 1.0.0
   contact:
-    name: NECPGAME API Support
-    email: api@necp.game
+    name: Backend Team
+    email: backend@necp.game
 
 servers:
-  - url: http://localhost:8083/api/v1
-    description: Локальный сервер разработки
-  - url: https://api.necp.game/api/v1
-    description: Продакшен сервер
+  - url: http://localhost:8084/api/v1
+    description: Development server
+  - url: https://api.necp.game/combat/combos/v1
+    description: Production server
 
-tags:
-  - name: Combo Catalog
-    description: Каталог комбо
-  - name: Combo Activation
-    description: Активация комбо
-  - name: Combo Loadouts
-    description: Управление лоадаутами
-  - name: Combo Scoring
-    description: Оценка комбо
-  - name: Combo Analytics
-    description: Аналитика комбо
+security:
+  - bearerAuth: [ ]
 
 paths:
-  /gameplay/combat/combos/catalog:
+  /combat/combos/catalog:
     get:
-      tags: [Combo Catalog]
-      summary: Получить каталог комбо
-      operationId: getComboCatalog
-      security: [{BearerAuth: []}]
+      summary: Get combo catalog
+      description: Retrieve a paginated list of available combos with optional filtering
       parameters:
-        - name: combo_type
+        - name: type
           in: query
           schema:
-            $ref: '#/components/schemas/ComboType'
+            type: string
+            enum: [ solo, team, legendary ]
+          description: Filter by combo type
         - name: complexity
           in: query
           schema:
-            $ref: '#/components/schemas/ComboComplexity'
-        - $ref: 'common.yaml#/components/parameters/Limit'
-        - $ref: 'common.yaml#/components/parameters/Offset'
+            type: string
+            enum: [ Bronze, Silver, Gold, Platinum, Legendary ]
+          description: Filter by complexity level
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+          description: Number of items to return
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          description: Number of items to skip
       responses:
         '200':
-          description: Каталог комбо
+          description: Successful response
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ComboCatalogResponse'
         '400':
-          $ref: 'common.yaml#/components/responses/BadRequest'
-        '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
-  /gameplay/combat/combos/{comboId}:
+  /combat/combos/{comboId}:
     get:
-      tags: [Combo Catalog]
-      summary: Получить детали комбо
-      operationId: getComboDetails
-      security: [{BearerAuth: []}]
+      summary: Get combo details
+      description: Retrieve detailed information about a specific combo
       parameters:
         - name: comboId
           in: path
           required: true
           schema:
             type: string
-            format: uuid
+          description: Unique identifier of the combo
       responses:
         '200':
-          description: Детали комбо
+          description: Successful response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ComboDetails'
+                $ref: '#/components/schemas/ComboDetailResponse'
         '404':
-          $ref: 'common.yaml#/components/responses/NotFound'
-        '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          description: Combo not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
-  /gameplay/combat/combos/activate:
+  /combat/combos/activate:
     post:
-      tags: [Combo Activation]
-      summary: Активировать комбо
-      operationId: activateCombo
-      security: [{BearerAuth: []}]
+      summary: Activate combo
+      description: Activate a combo for a character
       requestBody:
         required: true
         content:
@@ -106,245 +113,439 @@ paths:
               $ref: '#/components/schemas/ActivateComboRequest'
       responses:
         '200':
-          description: Комбо активировано
+          description: Combo activated successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ComboActivationResponse'
+                $ref: '#/components/schemas/ActivateComboResponse'
         '400':
-          $ref: 'common.yaml#/components/responses/BadRequest'
-        '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
-        '404':
-          $ref: 'common.yaml#/components/responses/NotFound'
-        '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
-  /gameplay/combat/combos/synergy:
-    post:
-      tags: [Combo Activation]
-      summary: Применить синергию
-      operationId: applySynergy
-      security: [{BearerAuth: []}]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ApplySynergyRequest'
-      responses:
-        '200':
-          description: Синергия применена
+          description: Bad request or combo requirements not met
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SynergyApplicationResponse'
-        '400':
-          $ref: 'common.yaml#/components/responses/BadRequest'
+                $ref: '#/components/schemas/ErrorResponse'
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
-        '404':
-          $ref: 'common.yaml#/components/responses/NotFound'
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: Service overloaded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
-  /gameplay/combat/combos/loadout:
+  /combat/combos/loadout:
     get:
-      tags: [Combo Loadouts]
-      summary: Получить лоадаут комбо
-      operationId: getComboLoadout
-      security: [{BearerAuth: []}]
-      parameters:
-        - name: character_id
-          in: query
-          required: true
-          schema:
-            type: string
-            format: uuid
+      summary: Get combo loadout
+      description: Retrieve the current combo loadout for the authenticated character
       responses:
         '200':
-          description: Лоадаут комбо
+          description: Successful response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ComboLoadout'
+                $ref: '#/components/schemas/ComboLoadoutResponse'
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
-        '404':
-          $ref: 'common.yaml#/components/responses/NotFound'
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
     post:
-      tags: [Combo Loadouts]
-      summary: Обновить лоадаут комбо
-      operationId: updateComboLoadout
-      security: [{BearerAuth: []}]
+      summary: Update combo loadout
+      description: Update the combo loadout for the authenticated character
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateLoadoutRequest'
+              $ref: '#/components/schemas/ComboLoadoutRequest'
       responses:
         '200':
-          description: Лоадаут обновлен
+          description: Loadout updated successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ComboLoadout'
+                $ref: '#/components/schemas/ComboLoadoutResponse'
         '400':
-          $ref: 'common.yaml#/components/responses/BadRequest'
-        '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
-        '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
-  /gameplay/combat/combos/score:
-    post:
-      tags: [Combo Scoring]
-      summary: Отправить результаты scoring
-      operationId: submitComboScore
-      security: [{BearerAuth: []}]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/SubmitScoreRequest'
-      responses:
-        '200':
-          description: Score отправлен
+          description: Bad request
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ScoreSubmissionResponse'
-        '400':
-          $ref: 'common.yaml#/components/responses/BadRequest'
+                $ref: '#/components/schemas/ErrorResponse'
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
-        '404':
-          $ref: 'common.yaml#/components/responses/NotFound'
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
-  /gameplay/combat/combos/analytics:
+  /combat/combos/analytics:
     get:
-      tags: [Combo Analytics]
-      summary: Получить аналитику комбо
-      operationId: getComboAnalytics
-      security: [{BearerAuth: []}]
+      summary: Get combo analytics
+      description: Retrieve analytics data for combo usage
       parameters:
-        - name: combo_id
+        - name: days
           in: query
           schema:
-            type: string
-            format: uuid
-        - name: character_id
-          in: query
-          schema:
-            type: string
-            format: uuid
-        - name: period_start
-          in: query
-          schema:
-            type: string
-            format: date-time
-        - name: period_end
-          in: query
-          schema:
-            type: string
-            format: date-time
-        - $ref: 'common.yaml#/components/parameters/Limit'
-        - $ref: 'common.yaml#/components/parameters/Offset'
+            type: integer
+            minimum: 1
+            maximum: 90
+            default: 7
+          description: Number of days to look back
       responses:
         '200':
-          description: Аналитика комбо
+          description: Successful response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AnalyticsResponse'
-        '400':
-          $ref: 'common.yaml#/components/responses/BadRequest'
-        '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+                $ref: '#/components/schemas/ComboAnalyticsResponse'
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 
 components:
-  schemas:
-    # Enums
-    ComboType:
-      $ref: 'combat-combos-schemas.yaml#/components/schemas/ComboType'
-    ComboComplexity:
-      $ref: 'combat-combos-schemas.yaml#/components/schemas/ComboComplexity'
-    SynergyType:
-      $ref: 'combat-combos-schemas.yaml#/components/schemas/SynergyType'
-    
-    # Main schemas
-    Combo:
-      $ref: 'combat-combos-schemas.yaml#/components/schemas/Combo'
-    ComboDetails:
-      $ref: 'combat-combos-schemas.yaml#/components/schemas/ComboDetails'
-    Synergy:
-      $ref: 'combat-combos-schemas.yaml#/components/schemas/Synergy'
-    
-    # Request/Response schemas
-    ActivateComboRequest:
-      $ref: 'combat-combos-schemas.yaml#/components/schemas/ActivateComboRequest'
-    ComboActivationResponse:
-      $ref: 'combat-combos-schemas.yaml#/components/schemas/ComboActivationResponse'
-    ApplySynergyRequest:
-      $ref: 'combat-combos-schemas.yaml#/components/schemas/ApplySynergyRequest'
-    SynergyApplicationResponse:
-      $ref: 'combat-combos-schemas.yaml#/components/schemas/SynergyApplicationResponse'
-    ComboLoadout:
-      $ref: 'combat-combos-schemas.yaml#/components/schemas/ComboLoadout'
-    UpdateLoadoutRequest:
-      $ref: 'combat-combos-schemas.yaml#/components/schemas/UpdateLoadoutRequest'
-    SubmitScoreRequest:
-      $ref: 'combat-combos-schemas.yaml#/components/schemas/SubmitScoreRequest'
-    ScoreSubmissionResponse:
-      $ref: 'combat-combos-schemas.yaml#/components/schemas/ScoreSubmissionResponse'
-    AnalyticsResponse:
-      $ref: 'combat-combos-schemas.yaml#/components/schemas/AnalyticsResponse'
-    ComboCatalogResponse:
-      $ref: 'combat-combos-schemas.yaml#/components/schemas/ComboCatalogResponse'
-  
   securitySchemes:
-    BearerAuth:
-      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
 
-security:
-  - BearerAuth: []
+  schemas:
+    ComboType:
+      type: string
+      enum: [ solo, team, legendary ]
+      description: Type of combo
 
+    ComboComplexity:
+      type: string
+      enum: [ Bronze, Silver, Gold, Platinum, Legendary ]
+      description: Complexity level of the combo
 
+    SynergyType:
+      type: string
+      enum: [ ability, team, equipment, implant, timing ]
+      description: Type of synergy
 
+    Requirements:
+      type: object
+      properties:
+        min_level:
+          type: integer
+          minimum: 1
+          description: Minimum character level required
+        required_skills:
+          type: array
+          items:
+            type: string
+          description: Required skills
+        min_participants:
+          type: integer
+          minimum: 1
+          description: Minimum number of participants
+        max_participants:
+          type: integer
+          minimum: 1
+          description: Maximum number of participants
 
+    Bonuses:
+      type: object
+      properties:
+        damage_multiplier:
+          type: number
+          minimum: 1.0
+          description: Damage multiplier applied
+        cooldown_reduction:
+          type: integer
+          minimum: 0
+          description: Cooldown reduction in milliseconds
+        effect_bonuses:
+          type: object
+          additionalProperties:
+            type: number
+          description: Additional effect bonuses
+        special_effects:
+          type: array
+          items:
+            type: string
+          description: Special effects triggered
 
+    ComboCatalog:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier of the combo
+        name:
+          type: string
+          description: Display name of the combo
+        description:
+          type: string
+          description: Detailed description
+        combo_type:
+          $ref: '#/components/schemas/ComboType'
+        complexity:
+          $ref: '#/components/schemas/ComboComplexity'
+        requirements:
+          $ref: '#/components/schemas/Requirements'
+        sequence:
+          type: array
+          items:
+            type: string
+          description: Required sequence of actions
+        bonuses:
+          $ref: '#/components/schemas/Bonuses'
+        cooldown:
+          type: integer
+          minimum: 0
+          description: Cooldown in milliseconds
+        chain_compatible:
+          type: boolean
+          description: Whether combo can be chained
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
 
+    ComboSynergy:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier of the synergy
+        synergy_type:
+          $ref: '#/components/schemas/SynergyType'
+        combo_id:
+          type: string
+          description: Associated combo ID
+        ability_ids:
+          type: array
+          items:
+            type: string
+          description: Related ability IDs
+        equipment_ids:
+          type: array
+          items:
+            type: string
+          description: Related equipment IDs
+        implant_ids:
+          type: array
+          items:
+            type: string
+          description: Related implant IDs
+        team_size:
+          type: integer
+          minimum: 1
+          description: Required team size
+        timing_window:
+          type: integer
+          minimum: 0
+          description: Timing window in milliseconds
+        bonuses:
+          $ref: '#/components/schemas/Bonuses'
+        requirements:
+          $ref: '#/components/schemas/Requirements'
 
+    ComboCatalogResponse:
+      type: object
+      properties:
+        combos:
+          type: array
+          items:
+            $ref: '#/components/schemas/ComboCatalog'
+        total:
+          type: integer
+          minimum: 0
+          description: Total number of combos available
 
+    ComboDetailResponse:
+      type: object
+      properties:
+        combo:
+          $ref: '#/components/schemas/ComboCatalog'
+        synergies:
+          type: array
+          items:
+            $ref: '#/components/schemas/ComboSynergy'
 
+    ActivateComboRequest:
+      type: object
+      required:
+        - combo_id
+        - character_id
+      properties:
+        combo_id:
+          type: string
+          description: ID of the combo to activate
+        character_id:
+          type: string
+          description: ID of the character activating the combo
+        participants:
+          type: array
+          items:
+            type: string
+          description: IDs of all participants
+        context:
+          type: object
+          additionalProperties: true
+          description: Additional context for activation
 
+    ActivateComboResponse:
+      type: object
+      properties:
+        activation_id:
+          type: string
+          description: ID of the activation record
+        success:
+          type: boolean
+          description: Whether activation was successful
+        score:
+          type: integer
+          minimum: 0
+          description: Score achieved
+        bonuses:
+          $ref: '#/components/schemas/Bonuses'
 
+    ComboLoadout:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier of the loadout
+        character_id:
+          type: string
+          description: Character this loadout belongs to
+        active_combos:
+          type: array
+          items:
+            type: string
+          description: IDs of active combos
+        preferences:
+          type: object
+          additionalProperties: true
+          description: User preferences
+        auto_activate:
+          type: boolean
+          description: Whether to auto-activate combos
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
 
+    ComboLoadoutRequest:
+      type: object
+      properties:
+        active_combos:
+          type: array
+          items:
+            type: string
+          description: IDs of active combos
+        preferences:
+          type: object
+          additionalProperties: true
+          description: User preferences
+        auto_activate:
+          type: boolean
+          description: Whether to auto-activate combos
 
+    ComboLoadoutResponse:
+      type: object
+      properties:
+        loadout:
+          $ref: '#/components/schemas/ComboLoadout'
 
+    ComboAnalyticsResponse:
+      type: object
+      properties:
+        total_activations:
+          type: integer
+          minimum: 0
+          description: Total number of activations
+        success_rate:
+          type: number
+          minimum: 0.0
+          maximum: 1.0
+          description: Success rate of activations
+        popular_combos:
+          type: array
+          items:
+            $ref: '#/components/schemas/ComboPopularity'
+          description: Most popular combos
+        scoring_trends:
+          type: array
+          items:
+            $ref: '#/components/schemas/ScoringTrend'
+          description: Scoring trends over time
 
+    ComboPopularity:
+      type: object
+      properties:
+        combo_id:
+          type: string
+          description: Combo identifier
+        combo_name:
+          type: string
+          description: Combo display name
+        activations:
+          type: integer
+          minimum: 0
+          description: Number of activations
+        average_score:
+          type: number
+          description: Average score achieved
+        total_combos:
+          type: integer
+          minimum: 0
+          description: Total number of combos
 
+    ScoringTrend:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+          description: Date of the trend data
+        average_score:
+          type: number
+          description: Average score for the date
+        total_combos:
+          type: integer
+          minimum: 0
+          description: Total combos executed
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
+      required:
+        - error

@@ -1,4 +1,4 @@
-// Issue: #1
+// Package server Issue: #1
 package server
 
 import (
@@ -94,7 +94,7 @@ func (s *HTTPServer) Start() error {
 
 	// Запускаем сервер в горутине
 	go func() {
-			defer close(errChan)
+		defer close(errChan)
 		if err := s.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			s.logger.Fatal("Failed to start server", zap.Error(err))
 		}
@@ -137,7 +137,7 @@ func (s *Service) HealthCheckHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // ReadinessCheckHandler проверяет готовность сервиса
-func (s *Service) ReadinessCheckHandler(w http.ResponseWriter, r *http.Request) {
+func (s *Service) ReadinessCheckHandler(w http.ResponseWriter, _ *http.Request) {
 	// Проверяем подключение к БД
 	if err := s.db.Ping(); err != nil {
 		s.logger.Error("Readiness check failed", zap.Error(err))
@@ -151,7 +151,7 @@ func (s *Service) ReadinessCheckHandler(w http.ResponseWriter, r *http.Request) 
 }
 
 // MetricsHandler предоставляет метрики сервиса
-func (s *Service) MetricsHandler(w http.ResponseWriter, r *http.Request) {
+func (s *Service) MetricsHandler(w http.ResponseWriter, _ *http.Request) {
 	// Базовые метрики (в production использовать Prometheus)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
@@ -165,4 +165,3 @@ func (s *Service) MetricsHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Write([]byte(metrics))
 }
-

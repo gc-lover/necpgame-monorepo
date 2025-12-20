@@ -1,4 +1,4 @@
-// Issue: #1856
+// Package server Issue: #1856
 // ogen handlers - TYPED responses (no interface{} boxing!)
 package server
 
@@ -9,10 +9,8 @@ import (
 	"github.com/gc-lover/necpgame-monorepo/services/guild-core-service-go/pkg/api"
 )
 
-// Context timeout constants
 const (
-	DBTimeout    = 50 * time.Millisecond
-	CacheTimeout = 10 * time.Millisecond
+	DBTimeout = 50 * time.Millisecond
 )
 
 // Handlers implements api.Handler interface (ogen typed handlers!)
@@ -66,11 +64,11 @@ func (h *Handlers) CreateGuild(ctx context.Context, req api.CreateGuildRequest) 
 	if err != nil {
 		// Check for validation errors
 		if err.Error() == "guild name must be 3-50 characters" ||
-		   err.Error() == "guild tag must be 2-5 characters" {
+			err.Error() == "guild tag must be 2-5 characters" {
 			return &api.CreateGuildBadRequest{}, nil
 		}
 		if err.Error() == "guild name already taken" ||
-		   err.Error() == "guild tag already taken" {
+			err.Error() == "guild tag already taken" {
 			return &api.CreateGuildConflict{}, nil
 		}
 		if err.Error() == "user not authenticated" {
@@ -154,7 +152,3 @@ func (h *Handlers) GuildWebSocket(ctx context.Context, params api.GetGuildParams
 	// Return TYPED response (ogen will marshal directly!)
 	return result, nil
 }
-
-
-
-

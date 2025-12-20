@@ -30,89 +30,89 @@ spec:
         seccompProfile:
           type: RuntimeDefault
       containers:
-      - name: economy-service-go
-        image: necpgame-economy-service-go:latest
-        imagePullPolicy: IfNotPresent
-        securityContext:
-          allowPrivilegeEscalation: false
-          readOnlyRootFilesystem: true
-          capabilities:
-            drop:
-            - ALL
-        ports:
-        - name: http
-          containerPort: 8086
-          protocol: TCP
-        - name: metrics
-          containerPort: 9096
-          protocol: TCP
-        env:
-        - name: ADDR
-          value: "0.0.0.0:8086"
-        - name: METRICS_ADDR
-          value: ":9096"
-        - name: DATABASE_URL
-          valueFrom:
-            secretKeyRef:
-              name: database-secrets
-              key: url
-        - name: REDIS_URL
-          valueFrom:
-            secretKeyRef:
-              name: redis-secrets
-              key: url
-        - name: KEYCLOAK_URL
-          valueFrom:
-            configMapKeyRef:
-              name: common-config
-              key: keycloak-url
-        - name: KEYCLOAK_REALM
-          valueFrom:
-            configMapKeyRef:
-              name: common-config
-              key: keycloak-realm
-        - name: AUTH_ENABLED
-          valueFrom:
-            configMapKeyRef:
-              name: common-config
-              key: auth-enabled
-        resources:
-          requests:
-            memory: "128Mi"
-            cpu: "100m"
-          limits:
-            memory: "512Mi"
-            cpu: "500m"
-        startupProbe:
-          httpGet:
-            path: /metrics
-            port: 9096
-          initialDelaySeconds: 5
-          periodSeconds: 5
-          timeoutSeconds: 3
-          failureThreshold: 30
-        livenessProbe:
-          httpGet:
-            path: /metrics
-            port: 9096
-          initialDelaySeconds: 30
-          periodSeconds: 30
-          timeoutSeconds: 3
-          failureThreshold: 3
-        readinessProbe:
-          httpGet:
-            path: /metrics
-            port: 9096
-          initialDelaySeconds: 5
-          periodSeconds: 10
-          timeoutSeconds: 3
-          failureThreshold: 3
-        volumeMounts:
-        - name: tmp
-          mountPath: /tmp
+        - name: economy-service-go
+          image: necpgame-economy-service-go:latest
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          ports:
+            - name: http
+              containerPort: 8086
+              protocol: TCP
+            - name: metrics
+              containerPort: 9096
+              protocol: TCP
+          env:
+            - name: ADDR
+              value: "0.0.0.0:8086"
+            - name: METRICS_ADDR
+              value: ":9096"
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: database-secrets
+                  key: url
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: redis-secrets
+                  key: url
+            - name: KEYCLOAK_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: common-config
+                  key: keycloak-url
+            - name: KEYCLOAK_REALM
+              valueFrom:
+                configMapKeyRef:
+                  name: common-config
+                  key: keycloak-realm
+            - name: AUTH_ENABLED
+              valueFrom:
+                configMapKeyRef:
+                  name: common-config
+                  key: auth-enabled
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          startupProbe:
+            httpGet:
+              path: /metrics
+              port: 9096
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 30
+          livenessProbe:
+            httpGet:
+              path: /metrics
+              port: 9096
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 3
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /metrics
+              port: 9096
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
       volumes:
-      - name: tmp
-        emptyDir: {}
+        - name: tmp
+          emptyDir: { }
 ---
 apiVersion: v1
 kind: Service
@@ -125,13 +125,13 @@ metadata:
 spec:
   type: ClusterIP
   ports:
-  - name: http
-    port: 8086
-    targetPort: 8086
-    protocol: TCP
-  - name: metrics
-    port: 9096
-    targetPort: 9096
-    protocol: TCP
+    - name: http
+      port: 8086
+      targetPort: 8086
+      protocol: TCP
+    - name: metrics
+      port: 9096
+      targetPort: 9096
+      protocol: TCP
   selector:
     app: economy-service-go

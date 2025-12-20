@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	api "github.com/necpgame/stock-events-service-go/pkg/api"
+	"github.com/necpgame/stock-events-service-go/pkg/api"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
 )
@@ -55,6 +55,7 @@ func NewHTTPServer(addr string, logger *logrus.Logger) *HTTPServer {
 
 	router.Handle("/api/v1/", handler)
 
+	router.HandleFunc("/health", healthHandler)
 	router.Handle("/metrics", promhttp.Handler())
 
 	return &HTTPServer{
@@ -75,7 +76,7 @@ func (s *HTTPServer) Start(ctx context.Context) error {
 
 	errChan := make(chan error, 1)
 	go func() {
-			defer close(errChan)
+		defer close(errChan)
 		if err := s.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			errChan <- err
 		}
@@ -92,6 +93,12 @@ func (s *HTTPServer) Start(ctx context.Context) error {
 func (s *HTTPServer) Shutdown(ctx context.Context) error {
 	s.logger.Info("Shutting down HTTP server")
 	return s.server.Shutdown(ctx)
+}
+
+func healthHandler(w http.ResponseWriter, _ *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(`{"status":"healthy"}`))
 }
 
 func loggingMiddleware(logger *logrus.Logger) func(http.Handler) http.Handler {
@@ -154,13 +161,3 @@ func requestIDMiddleware(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
-
-
-
-
-
-
-
-
-
-

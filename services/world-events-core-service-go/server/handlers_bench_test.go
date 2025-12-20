@@ -5,51 +5,51 @@ import (
 	"context"
 	"testing"
 
+	"github.com/gc-lover/necpgame-monorepo/services/world-events-core-service-go/pkg/api"
 	"github.com/google/uuid"
-	api "github.com/gc-lover/necpgame-monorepo/services/world-events-core-service-go/pkg/api"
 	"go.uber.org/zap"
 )
 
 // mockRepository is a minimal mock for benchmark tests
 type mockRepository struct{}
 
-func (m *mockRepository) CreateEvent(ctx context.Context, event *WorldEvent) error {
+func (m *mockRepository) CreateEvent(_ context.Context, _ *WorldEvent) error {
 	return nil
 }
 
-func (m *mockRepository) GetEvent(ctx context.Context, id uuid.UUID) (*WorldEvent, error) {
+func (m *mockRepository) GetEvent(_ context.Context, _ uuid.UUID) (*WorldEvent, error) {
 	return nil, nil
 }
 
-func (m *mockRepository) GetEventByID(ctx context.Context, id uuid.UUID) (*WorldEvent, error) {
+func (m *mockRepository) GetEventByID(_ context.Context, _ uuid.UUID) (*WorldEvent, error) {
 	return nil, nil
 }
 
-func (m *mockRepository) UpdateEvent(ctx context.Context, event *WorldEvent) error {
+func (m *mockRepository) UpdateEvent(_ context.Context, _ *WorldEvent) error {
 	return nil
 }
 
-func (m *mockRepository) DeleteEvent(ctx context.Context, id uuid.UUID) error {
+func (m *mockRepository) DeleteEvent(_ context.Context, _ uuid.UUID) error {
 	return nil
 }
 
-func (m *mockRepository) ListEvents(ctx context.Context, filter EventFilter) ([]*WorldEvent, int, error) {
+func (m *mockRepository) ListEvents(_ context.Context, _ EventFilter) ([]*WorldEvent, int, error) {
 	return []*WorldEvent{}, 0, nil
 }
 
-func (m *mockRepository) GetActiveEvents(ctx context.Context) ([]*WorldEvent, error) {
+func (m *mockRepository) GetActiveEvents(_ context.Context) ([]*WorldEvent, error) {
 	return []*WorldEvent{}, nil
 }
 
-func (m *mockRepository) GetPlannedEvents(ctx context.Context) ([]*WorldEvent, error) {
+func (m *mockRepository) GetPlannedEvents(_ context.Context) ([]*WorldEvent, error) {
 	return []*WorldEvent{}, nil
 }
 
-func (m *mockRepository) RecordActivation(ctx context.Context, activation *EventActivation) error {
+func (m *mockRepository) RecordActivation(_ context.Context, _ *EventActivation) error {
 	return nil
 }
 
-func (m *mockRepository) RecordAnnouncement(ctx context.Context, announcement *EventAnnouncement) error {
+func (m *mockRepository) RecordAnnouncement(_ context.Context, _ *EventAnnouncement) error {
 	return nil
 }
 
@@ -83,8 +83,7 @@ func BenchmarkGetWorldEvent(b *testing.B) {
 	handlers := NewHandlers(service, logger)
 
 	ctx := context.Background()
-	params := api.GetWorldEventParams{
-	}
+	params := api.GetWorldEventParams{}
 
 	b.ReportAllocs()
 	b.ResetTimer()
@@ -119,4 +118,3 @@ func BenchmarkUpdateWorldEvent(b *testing.B) {
 		_, _ = handlers.UpdateWorldEvent(ctx, req, params)
 	}
 }
-

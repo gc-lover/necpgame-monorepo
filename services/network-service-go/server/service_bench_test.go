@@ -3,11 +3,14 @@ package server
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 )
 
@@ -144,10 +147,10 @@ func BenchmarkNetworkService_PublishEvent(b *testing.B) {
 			EventType: "PLAYER_LEVEL_UP",
 			Source:    "game_server",
 			Data: map[string]interface{}{
-				"player_id":   "user_123",
-				"old_level":   24,
-				"new_level":   25,
-				"experience":  12500,
+				"player_id":  "user_123",
+				"old_level":  24,
+				"new_level":  25,
+				"experience": 12500,
 			},
 			Timestamp: time.Now().Unix(),
 		},

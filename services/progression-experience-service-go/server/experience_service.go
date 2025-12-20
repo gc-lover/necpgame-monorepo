@@ -1,4 +1,4 @@
-// Issue: Progression Experience Service implementation
+// Package server Issue: Progression Experience Service implementation
 package server
 
 import (
@@ -31,7 +31,7 @@ func NewExperienceService(logger *logrus.Logger) ExperienceServiceInterface {
 }
 
 // AddExperience adds experience to player
-func (s *ExperienceService) AddExperience(ctx context.Context, playerID uuid.UUID, amount int, source string) (*api.CharacterProgression, error) {
+func (s *ExperienceService) AddExperience(_ context.Context, playerID uuid.UUID, amount int, _ string) (*api.CharacterProgression, error) {
 	// TODO: Implement database update and level calculation
 	progression := &api.CharacterProgression{
 		CharacterID:              api.NewOptUUID(playerID),
@@ -45,13 +45,13 @@ func (s *ExperienceService) AddExperience(ctx context.Context, playerID uuid.UUI
 }
 
 // CalculateExperience calculates experience with modifiers
-func (s *ExperienceService) CalculateExperience(ctx context.Context, baseXP int, modifiers map[string]float32) (*api.ExperienceCalculationResponse, error) {
+func (s *ExperienceService) CalculateExperience(_ context.Context, baseXP int, modifiers map[string]float32) (*api.ExperienceCalculationResponse, error) {
 	// TODO: Implement calculation logic
 	finalXP := float32(baseXP)
 	for _, mod := range modifiers {
-		finalXP *= (1.0 + mod)
+		finalXP *= 1.0 + mod
 	}
-	
+
 	response := &api.ExperienceCalculationResponse{
 		BaseXp:    api.NewOptInt(baseXP),
 		FinalXp:   api.NewOptInt(int(finalXP)),
@@ -61,7 +61,7 @@ func (s *ExperienceService) CalculateExperience(ctx context.Context, baseXP int,
 }
 
 // CheckLevelUp checks if player can level up
-func (s *ExperienceService) CheckLevelUp(ctx context.Context, playerID uuid.UUID) (*api.LevelUpCheckResponse, error) {
+func (s *ExperienceService) CheckLevelUp(_ context.Context, playerID uuid.UUID) (*api.LevelUpCheckResponse, error) {
 	// TODO: Implement level up check logic
 	response := &api.LevelUpCheckResponse{
 		PlayerID:              api.NewOptUUID(playerID),
@@ -75,11 +75,11 @@ func (s *ExperienceService) CheckLevelUp(ctx context.Context, playerID uuid.UUID
 }
 
 // GetLevelRequirements returns level requirements
-func (s *ExperienceService) GetLevelRequirements(ctx context.Context, level int) (*api.LevelRequirementsResponse, error) {
+func (s *ExperienceService) GetLevelRequirements(_ context.Context, level int) (*api.LevelRequirementsResponse, error) {
 	// TODO: Implement level requirements calculation
 	response := &api.LevelRequirementsResponse{
-		Level:              api.NewOptInt(level),
-		ExperienceRequired: api.NewOptInt(1000),
+		Level:                 api.NewOptInt(level),
+		ExperienceRequired:    api.NewOptInt(1000),
 		AttributePointsReward: api.NewOptInt(5),
 		SkillPointsReward:     api.NewOptInt(3),
 	}
@@ -87,7 +87,7 @@ func (s *ExperienceService) GetLevelRequirements(ctx context.Context, level int)
 }
 
 // GetPlayerLevel returns player level
-func (s *ExperienceService) GetPlayerLevel(ctx context.Context, playerID uuid.UUID) (*api.PlayerLevelResponse, error) {
+func (s *ExperienceService) GetPlayerLevel(_ context.Context, playerID uuid.UUID) (*api.PlayerLevelResponse, error) {
 	// TODO: Implement database query
 	response := &api.PlayerLevelResponse{
 		PlayerID:              api.NewOptUUID(playerID),
@@ -97,4 +97,3 @@ func (s *ExperienceService) GetPlayerLevel(ctx context.Context, playerID uuid.UU
 	}
 	return response, nil
 }
-

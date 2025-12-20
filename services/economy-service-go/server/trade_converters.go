@@ -103,4 +103,3 @@ func convertTradeStatusToAPI(status models.TradeStatus) api.TradeSessionStatus {
 		return api.TradeSessionStatusPending
 	}
 }
-

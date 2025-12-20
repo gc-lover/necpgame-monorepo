@@ -1,203 +1,203 @@
-        - Exchanges
-      summary: Create a new exchange
-      operationId: createExchange
-      security:
-        - BearerAuth: []
-      requestBody:
-        required: true
+- Exchanges
+summary: Create a new exchange
+operationId: createExchange
+security:
+  - BearerAuth: [ ]
+requestBody:
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: '#/components/schemas/CreateExchangeRequest'
+responses:
+  '201':
+    description: Exchange created
+    content:
+      application/json:
+        schema:
+          $ref: '#/components/schemas/CreateExchangeResponse'
+  '400':
+    description: Invalid request data
+    content:
+      application/json:
+        schema:
+          $ref: '#/components/schemas/Error'
+  '401':
+    description: Unauthorized
+    content:
+      application/json:
+        schema:
+          $ref: '#/components/schemas/Error'
+  '409':
+    description: Exchange already exists
+    content:
+      application/json:
+        schema:
+          $ref: '#/components/schemas/Error'
+
+/mq/consumers:
+  get:
+    tags:
+      - Consumers
+    summary: List active consumers
+    operationId: listConsumers
+    security:
+      - BearerAuth: [ ]
+    parameters:
+      - name: queue_name
+        in: query
+        schema:
+          type: string
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum: [ active, inactive, error ]
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+    responses:
+      '200':
+        description: List of consumers
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateExchangeRequest'
-      responses:
-        '201':
-          description: Exchange created
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CreateExchangeResponse'
-        '400':
-          description: Invalid request data
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '401':
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '409':
-          description: Exchange already exists
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+              $ref: '#/components/schemas/ListConsumersResponse'
+      '401':
+        description: Unauthorized
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Error'
 
-  /mq/consumers:
-    get:
-      tags:
-        - Consumers
-      summary: List active consumers
-      operationId: listConsumers
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: queue_name
-          in: query
+  post:
+    tags:
+      - Consumers
+    summary: Register a new consumer
+    operationId: registerConsumer
+    security:
+      - BearerAuth: [ ]
+    requestBody:
+      required: true
+      content:
+        application/json:
           schema:
-            type: string
-        - name: status
-          in: query
+            $ref: '#/components/schemas/RegisterConsumerRequest'
+    responses:
+      '201':
+        description: Consumer registered
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterConsumerResponse'
+      '400':
+        description: Invalid request data
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Error'
+      '401':
+        description: Unauthorized
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Error'
+      '404':
+        description: Queue not found
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Error'
+
+/mq/events/publish:
+  post:
+    tags:
+      - Events
+    summary: Publish an event to an exchange
+    operationId: publishEvent
+    security:
+      - BearerAuth: [ ]
+    requestBody:
+      required: true
+      content:
+        application/json:
           schema:
-            type: string
-            enum: [active, inactive, error]
-        - name: limit
-          in: query
+            $ref: '#/components/schemas/PublishEventRequest'
+    responses:
+      '200':
+        description: Event published
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PublishEventResponse'
+      '400':
+        description: Invalid request data
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Error'
+      '401':
+        description: Unauthorized
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Error'
+      '404':
+        description: Exchange not found
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Error'
+
+/mq/bindings:
+  post:
+    tags:
+      - Exchanges
+    summary: Create a binding between exchange and queue
+    operationId: createBinding
+    security:
+      - BearerAuth: [ ]
+    requestBody:
+      required: true
+      content:
+        application/json:
           schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 20
-      responses:
-        '200':
-          description: List of consumers
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ListConsumersResponse'
-        '401':
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-
-    post:
-      tags:
-        - Consumers
-      summary: Register a new consumer
-      operationId: registerConsumer
-      security:
-        - BearerAuth: []
-      requestBody:
-        required: true
+            $ref: '#/components/schemas/CreateBindingRequest'
+    responses:
+      '201':
+        description: Binding created
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/RegisterConsumerRequest'
-      responses:
-        '201':
-          description: Consumer registered
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RegisterConsumerResponse'
-        '400':
-          description: Invalid request data
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '401':
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '404':
-          description: Queue not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-
-  /mq/events/publish:
-    post:
-      tags:
-        - Events
-      summary: Publish an event to an exchange
-      operationId: publishEvent
-      security:
-        - BearerAuth: []
-      requestBody:
-        required: true
+              $ref: '#/components/schemas/CreateBindingResponse'
+      '400':
+        description: Invalid request data
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PublishEventRequest'
-      responses:
-        '200':
-          description: Event published
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PublishEventResponse'
-        '400':
-          description: Invalid request data
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '401':
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '404':
-          description: Exchange not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-
-  /mq/bindings:
-    post:
-      tags:
-        - Exchanges
-      summary: Create a binding between exchange and queue
-      operationId: createBinding
-      security:
-        - BearerAuth: []
-      requestBody:
-        required: true
+              $ref: '#/components/schemas/Error'
+      '401':
+        description: Unauthorized
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateBindingRequest'
-      responses:
-        '201':
-          description: Binding created
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CreateBindingResponse'
-        '400':
-          description: Invalid request data
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '401':
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '404':
-          description: Exchange or queue not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '409':
-          description: Binding already exists
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+              $ref: '#/components/schemas/Error'
+      '404':
+        description: Exchange or queue not found
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Error'
+      '409':
+        description: Binding already exists
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Error'
 
 components:
   securitySchemes:
@@ -239,7 +239,7 @@ components:
           additionalProperties: true
         status:
           type: string
-          enum: [active, paused, dead]
+          enum: [ active, paused, dead ]
         message_count:
           type: integer
         consumer_count:
@@ -385,7 +385,7 @@ components:
           additionalProperties: true
         delivery_mode:
           type: integer
-          enum: [1, 2]  # 1=transient, 2=persistent
+          enum: [ 1, 2 ]  # 1=transient, 2=persistent
         priority:
           type: integer
           minimum: 0

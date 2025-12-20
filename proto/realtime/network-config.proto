@@ -1,156 +1,16 @@
 // Issue: #142109960
 // Protocol Buffer definitions for network configuration, tick rate, and zone management
 // Network Engineer - Network protocol extensions
+// This file has been split into multiple files for maintainability:
+// - network-config-tickrate.proto: Tick rate configurations
+// - network-config-zones.proto: Zone and protocol management
+// - network-config-optimization.proto: Network optimization and metrics
 
 syntax = "proto3";
 package necp.realtime.v1;
 
 option go_package = "github.com/necpgame/realtime-gateway-go/pkg/proto";
 
-message TickRateConfig {
-  int32 base = 1;
-  int32 min = 2;
-  int32 max = 3;
-  bool adaptive = 4;
-  int32 current = 5;
-}
-
-message ZoneConfig {
-  string zone_id = 1;
-  string zone_type = 2;
-  string protocol = 3;
-  TickRateConfig tickrate = 4;
-  int32 max_players = 5;
-  int32 current_players = 6;
-  int32 latency_target_ms = 7;
-}
-
-message ProtocolSwitchRequest {
-  string session_id = 1;
-  string current_protocol = 2;
-  string target_protocol = 3;
-  string zone_id = 4;
-  string reason = 5;
-}
-
-message ProtocolSwitchResponse {
-  bool success = 1;
-  string new_protocol = 2;
-  string udp_endpoint = 3;
-  int32 udp_port = 4;
-  string session_token = 5;
-  int64 switch_time_ms = 6;
-}
-
-message ProtocolSwitchStatus {
-  string session_id = 1;
-  string current_protocol = 2;
-  string target_protocol = 3;
-  string status = 4;
-  int32 progress_percent = 5;
-  int64 start_time_ms = 6;
-  int64 estimated_completion_ms = 7;
-}
-
-message ZoneJoinRequest {
-  string player_id = 1;
-  string zone_id = 2;
-  string preferred_protocol = 3;
-}
-
-message ZoneJoinResponse {
-  bool success = 1;
-  ZoneConfig zone_config = 2;
-  string assigned_protocol = 3;
-  string connection_endpoint = 4;
-  int32 connection_port = 5;
-  TickRateConfig tickrate = 6;
-}
-
-message ZoneLeaveRequest {
-  string player_id = 1;
-  string zone_id = 2;
-}
-
-message ZoneLeaveResponse {
-  bool success = 1;
-  string message = 2;
-}
-
-message TickRateUpdate {
-  string zone_id = 1;
-  int32 new_tickrate = 2;
-  string reason = 3;
-  map<string, string> metrics = 4;
-}
-
-message AdaptiveTickRateConfig {
-  bool enabled = 1;
-  int32 adjustment_interval_seconds = 2;
-  int32 min_tickrate = 3;
-  int32 max_tickrate = 4;
-  
-  message FactorConfig {
-    bool enabled = 1;
-    double weight = 2;
-    map<string, double> thresholds = 3;
-  }
-  
-  FactorConfig player_count_factor = 5;
-  FactorConfig network_latency_factor = 6;
-  FactorConfig cpu_usage_factor = 7;
-}
-
-message NetworkMetrics {
-  string zone_id = 1;
-  int64 timestamp_ms = 2;
-  int32 current_tickrate = 3;
-  int32 target_tickrate = 4;
-  double adjustment_factor = 5;
-  int32 player_count = 6;
-  int32 network_latency_ms = 7;
-  double cpu_usage_percent = 8;
-  int64 bandwidth_usage_kbps = 9;
-}
-
-message SpatialPartitioningConfig {
-  bool enabled = 1;
-  int32 grid_size_meters = 2;
-  string visibility_range = 3;
-  int32 max_visible_cells = 4;
-  double traffic_reduction_percent = 5;
-}
-
-message SpatialShardingConfig {
-  bool enabled = 1;
-  int32 shard_count = 2;
-  int32 shard_size_meters = 3;
-  int32 edge_buffer_meters = 4;
-  double traffic_reduction_percent = 5;
-}
-
-message ClusterConfig {
-  bool enabled = 1;
-  int32 server_count = 2;
-  int32 players_per_server = 3;
-  int32 shard_count = 4;
-  int32 shard_size_meters = 5;
-  int32 edge_buffer_meters = 6;
-}
-
-message NetworkOptimizationConfig {
-  SpatialPartitioningConfig spatial_partitioning = 1;
-  SpatialShardingConfig spatial_sharding = 2;
-  ClusterConfig cluster = 3;
-  bool event_aggregation_enabled = 4;
-  int32 event_batch_window_ms = 5;
-  bool lod_system_enabled = 6;
-}
-
-message ZoneNetworkConfig {
-  string zone_id = 1;
-  ZoneConfig zone_config = 2;
-  AdaptiveTickRateConfig adaptive_tickrate = 3;
-  NetworkOptimizationConfig optimization = 4;
-}
-
+import "network-config-tickrate.proto";
+import "network-config-zones.proto";
+import "network-config-optimization.proto";

@@ -1,8 +1,7 @@
-// Issue: #1841-#1844 - In-memory repository for testing interactive objects
+// Package repository Issue: #1841-#1844 - In-memory repository for testing interactive objects
 package repository
 
 import (
-	"context"
 	"fmt"
 	"sync"
 	"time"
@@ -24,7 +23,7 @@ func NewInMemoryInteractiveRepository() *InMemoryInteractiveRepository {
 }
 
 // SaveInteractive saves an interactive object
-func (r *InMemoryInteractiveRepository) SaveInteractive(ctx context.Context, interactiveID string, version int, name, description, location string, interactiveType models.InteractiveType, status models.InteractiveStatus, contentData map[string]interface{}) (*models.Interactive, error) {
+func (r *InMemoryInteractiveRepository) SaveInteractive(interactiveID string, version int, name, description, location string, interactiveType models.InteractiveType, status models.InteractiveStatus, contentData map[string]interface{}) (*models.Interactive, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -47,7 +46,7 @@ func (r *InMemoryInteractiveRepository) SaveInteractive(ctx context.Context, int
 }
 
 // GetInteractives retrieves interactives with filtering
-func (r *InMemoryInteractiveRepository) GetInteractives(ctx context.Context, filter *models.ListInteractivesRequest) ([]models.Interactive, int, error) {
+func (r *InMemoryInteractiveRepository) GetInteractives(filter *models.ListInteractivesRequest) ([]models.Interactive, int, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
@@ -93,7 +92,7 @@ func (r *InMemoryInteractiveRepository) GetInteractives(ctx context.Context, fil
 }
 
 // GetInteractive retrieves a single interactive
-func (r *InMemoryInteractiveRepository) GetInteractive(ctx context.Context, interactiveID string) (*models.Interactive, error) {
+func (r *InMemoryInteractiveRepository) GetInteractive(interactiveID string) (*models.Interactive, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
@@ -106,7 +105,7 @@ func (r *InMemoryInteractiveRepository) GetInteractive(ctx context.Context, inte
 }
 
 // UpdateInteractive updates an interactive
-func (r *InMemoryInteractiveRepository) UpdateInteractive(ctx context.Context, interactiveID string, updates map[string]interface{}) (*models.Interactive, error) {
+func (r *InMemoryInteractiveRepository) UpdateInteractive(interactiveID string, updates map[string]interface{}) (*models.Interactive, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -131,7 +130,7 @@ func (r *InMemoryInteractiveRepository) UpdateInteractive(ctx context.Context, i
 }
 
 // DeleteInteractive deletes an interactive
-func (r *InMemoryInteractiveRepository) DeleteInteractive(ctx context.Context, interactiveID string) error {
+func (r *InMemoryInteractiveRepository) DeleteInteractive(interactiveID string) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 

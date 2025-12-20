@@ -1,9 +1,8 @@
-// Issue: #1595, #1607
+// Package server Issue: #1595, #1607
 // Performance: Memory pooling for hot path (Issue #1607)
 package server
 
 import (
-	"context"
 	"sync"
 
 	"github.com/gc-lover/necpgame-monorepo/services/weapon-progression-service-go/pkg/api"
@@ -58,7 +57,7 @@ func NewService(repo *Repository) *Service {
 
 // GetWeaponProgression - HOT PATH
 // Issue: #1607 - Uses memory pooling for zero allocations
-func (s *Service) GetWeaponProgression(ctx context.Context, weaponID uuid.UUID) (*api.WeaponProgression, error) {
+func (s *Service) GetWeaponProgression(weaponID uuid.UUID) (*api.WeaponProgression, error) {
 	// Get from pool (zero allocation!)
 	resp := s.progressionPool.Get().(*api.WeaponProgression)
 	defer func() {
@@ -79,7 +78,7 @@ func (s *Service) GetWeaponProgression(ctx context.Context, weaponID uuid.UUID) 
 
 // UpgradeWeapon - HOT PATH
 // Issue: #1607 - Uses memory pooling for zero allocations
-func (s *Service) UpgradeWeapon(ctx context.Context, weaponID uuid.UUID, req *api.UpgradeWeaponRequest) (*api.WeaponProgression, error) {
+func (s *Service) UpgradeWeapon(weaponID uuid.UUID) (*api.WeaponProgression, error) {
 	// Get from pool (zero allocation!)
 	resp := s.progressionPool.Get().(*api.WeaponProgression)
 	defer func() {
@@ -100,7 +99,7 @@ func (s *Service) UpgradeWeapon(ctx context.Context, weaponID uuid.UUID, req *ap
 
 // GetAllWeaponMasteries - HOT PATH
 // Issue: #1607 - Uses memory pooling for zero allocations
-func (s *Service) GetAllWeaponMasteries(ctx context.Context, playerID uuid.UUID) (*api.APIV1WeaponsMasteryGetOK, error) {
+func (s *Service) GetAllWeaponMasteries() (*api.APIV1WeaponsMasteryGetOK, error) {
 	// Get from pool (zero allocation!)
 	resp := s.masteryListPool.Get().(*api.APIV1WeaponsMasteryGetOK)
 	defer func() {
@@ -121,7 +120,7 @@ func (s *Service) GetAllWeaponMasteries(ctx context.Context, playerID uuid.UUID)
 
 // GetWeaponMasteryByType - HOT PATH
 // Issue: #1607 - Uses memory pooling for zero allocations
-func (s *Service) GetWeaponMasteryByType(ctx context.Context, playerID uuid.UUID, weaponType api.APIV1WeaponsMasteryWeaponTypeGetWeaponType) (*api.WeaponMastery, error) {
+func (s *Service) GetWeaponMasteryByType(playerID uuid.UUID, weaponType api.APIV1WeaponsMasteryWeaponTypeGetWeaponType) (*api.WeaponMastery, error) {
 	// Get from pool (zero allocation!)
 	mastery := s.masteryPool.Get().(*api.WeaponMastery)
 	defer func() {
@@ -144,7 +143,7 @@ func (s *Service) GetWeaponMasteryByType(ctx context.Context, playerID uuid.UUID
 
 // GetWeaponPerks - HOT PATH
 // Issue: #1607 - Uses memory pooling for zero allocations
-func (s *Service) GetWeaponPerks(ctx context.Context, params api.APIV1WeaponsPerksGetParams) (*api.APIV1WeaponsPerksGetOK, error) {
+func (s *Service) GetWeaponPerks() (*api.APIV1WeaponsPerksGetOK, error) {
 	// Get from pool (zero allocation!)
 	resp := s.perksListPool.Get().(*api.APIV1WeaponsPerksGetOK)
 	defer func() {
@@ -165,7 +164,7 @@ func (s *Service) GetWeaponPerks(ctx context.Context, params api.APIV1WeaponsPer
 
 // UnlockPerk - HOT PATH
 // Issue: #1607 - Uses memory pooling for zero allocations
-func (s *Service) UnlockPerk(ctx context.Context, perkID uuid.UUID, req *api.UnlockPerkRequest) (*api.UnlockPerkResponse, error) {
+func (s *Service) UnlockPerk() (*api.UnlockPerkResponse, error) {
 	// Get from pool (zero allocation!)
 	resp := s.unlockPerkResponsePool.Get().(*api.UnlockPerkResponse)
 	defer func() {

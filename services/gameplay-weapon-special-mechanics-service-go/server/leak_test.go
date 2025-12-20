@@ -35,4 +35,3 @@ func TestGameplayWeaponSpecialMechanicsServiceNoLeaks(t *testing.T) {
 
 	// If goroutines leaked from gameplay weapon special mechanics handlers, test FAILS
 }
-

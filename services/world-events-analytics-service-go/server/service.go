@@ -1,4 +1,4 @@
-// Issue: #44
+// Package server Issue: #44
 package server
 
 import (
@@ -81,35 +81,3 @@ func (s *service) GetEventAnalytics(ctx context.Context, eventID uuid.UUID) (*Ev
 func (s *service) invalidateCache(ctx context.Context, key string) {
 	s.redis.Del(ctx, key)
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -1,4 +1,4 @@
-// Issue: #1578
+// Package server Issue: #1578
 // OPTIMIZED: No chi dependency, standard http.ServeMux + middleware chain
 // PERFORMANCE: OGEN routes (hot path) already maximum speed, removed chi overhead from health/metrics
 package server
@@ -117,13 +117,13 @@ func (s *HTTPServer) Shutdown(ctx context.Context) error {
 }
 
 // Health check handler
-func healthCheck(w http.ResponseWriter, r *http.Request) {
+func healthCheck(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("OK"))
 }
 
 // Metrics handler (stub)
-func metricsHandler(w http.ResponseWriter, r *http.Request) {
+func metricsHandler(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("# HELP combat_combos_service metrics\n"))
 }

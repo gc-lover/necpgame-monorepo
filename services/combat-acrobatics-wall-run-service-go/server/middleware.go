@@ -1,4 +1,4 @@
-// Issue: #227
+// Package server Issue: #227
 package server
 
 import (

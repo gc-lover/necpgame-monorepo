@@ -26,15 +26,15 @@ func TestVoiceChannelNoLeaks(t *testing.T) {
 		goleak.IgnoreTopFunction("database/sql.(*DB).connectionOpener"),
 		goleak.IgnoreTopFunction("github.com/redis/go-redis/v9/internal/pool.startGlobalTimeCache.func1"),
 	)
-	
+
 	// TODO: Test voice channel lifecycle
 	// channel := NewVoiceChannel()
 	// channel.Start()
 	// time.Sleep(100 * time.Millisecond)
 	// channel.Stop()
-	
+
 	time.Sleep(100 * time.Millisecond)
-	
+
 	// If goroutines leaked from voice handlers, test FAILS
 }
 
@@ -44,16 +44,16 @@ func TestConcurrentChannelsNoLeaks(t *testing.T) {
 		goleak.IgnoreTopFunction("database/sql.(*DB).connectionOpener"),
 		goleak.IgnoreTopFunction("github.com/redis/go-redis/v9/internal/pool.startGlobalTimeCache.func1"),
 	)
-	
+
 	// TODO: Simulate 20 concurrent voice channels
 	// for i := 0; i < 20; i++ {
 	//     channel := NewVoiceChannel()
 	//     channel.Start()
 	//     defer channel.Stop()
 	// }
-	
+
 	time.Sleep(200 * time.Millisecond)
-	
+
 	// All channel goroutines must be cleaned up
 }
 
@@ -68,4 +68,3 @@ func TestConcurrentChannelsNoLeaks(t *testing.T) {
 // - Ticker.Stop() for all time.Ticker
 // - Channel close for all audio channels
 // - Connection.Close() for all WebSocket conns
-

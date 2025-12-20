@@ -35,4 +35,3 @@ func TestCharacterEngramCoreServiceNoLeaks(t *testing.T) {
 
 	// If goroutines leaked from character engram core handlers, test FAILS
 }
-

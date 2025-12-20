@@ -15,8 +15,7 @@ func BenchmarkListCombatSessions(b *testing.B) {
 	handlers := NewHandlers(svc)
 
 	ctx := context.Background()
-	params := api.ListCombatSessionsParams{
-	}
+	params := api.ListCombatSessionsParams{}
 
 	b.ReportAllocs()
 	b.ResetTimer()
@@ -52,8 +51,7 @@ func BenchmarkGetCombatSession(b *testing.B) {
 	handlers := NewHandlers(svc)
 
 	ctx := context.Background()
-	params := api.GetCombatSessionParams{
-	}
+	params := api.GetCombatSessionParams{}
 
 	b.ReportAllocs()
 	b.ResetTimer()
@@ -62,4 +60,3 @@ func BenchmarkGetCombatSession(b *testing.B) {
 		_, _ = handlers.GetCombatSession(ctx, params)
 	}
 }
-

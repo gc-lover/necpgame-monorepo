@@ -1,515 +1,515 @@
-            $ref: '#/components/schemas/ErrorResponse'
-    TooManyRequests:
-      description: Слишком много запросов
-      content:
-        application/json:
+$ref: '#/components/schemas/ErrorResponse'
+TooManyRequests:
+  description: Слишком много запросов
+  content:
+    application/json:
+      schema:
+        $ref: '#/components/responses/Error'
+      headers:
+        Retry-After:
+          description: Время ожидания в секундах
           schema:
-            $ref: '#/components/responses/Error'
-          headers:
-            Retry-After:
-              description: Время ожидания в секундах
-              schema:
-                type: integer
-    InternalServerError:
-      description: Внутренняя ошибка сервера
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
+            type: integer
+InternalServerError:
+  description: Внутренняя ошибка сервера
+  content:
+    application/json:
+      schema:
+        $ref: '#/components/schemas/ErrorResponse'
 
-  schemas:
-    ErrorResponse:
-      type: object
-      required:
-        - error
-        - message
-      # BACKEND NOTE: Struct field alignment optimized (large → small)
-      properties:
-        error:      # string → 16 bytes (БОЛЬШОЕ)
+schemas:
+  ErrorResponse:
+    type: object
+    required:
+      - error
+      - message
+    # BACKEND NOTE: Struct field alignment optimized (large → small)
+    properties:
+      error: # string → 16 bytes (БОЛЬШОЕ)
+        type: string
+        description: Код ошибки
+        example: "VALIDATION_ERROR"
+      message: # string → 16 bytes
+        type: string
+        description: Описание ошибки
+        example: "Invalid location coordinates"
+      details: # object → 12 bytes
+        type: object
+        description: Дополнительные детали ошибки
+      code: # integer → 8 bytes (МАЛЕНЬКОЕ)
+        type: integer
+        format: int32
+        description: HTTP код ошибки
+
+  Location:
+    type: object
+    required:
+      - id
+      - name
+      - coordinates
+    # BACKEND NOTE: Struct field alignment optimized (large → small)
+    properties:
+      id: # string → 16 bytes (БОЛЬШОЕ)
+        type: string
+        format: uuid
+        description: ID локации
+      name: # string → 16 bytes
+        type: string
+        description: Название локации
+      description: # string → 16 bytes
+        type: string
+        description: Описание локации
+      region: # string → 16 bytes
+        type: string
+        enum: [ north_america, europe, asia, south_america, australia ]
+        description: Регион
+      location_type:# string → 16 bytes
+      type: string
+      enum: [ city, wilderness, dungeon, instance, pvp_zone ]
+      description: Тип локации
+      coordinates: # object → 12 bytes
+        $ref: '#/components/schemas/Coordinates'
+      npcs: # array → 24 bytes
+        type: array
+        items:
+          $ref: '#/components/schemas/NPC'
+      interactive_objects: # array → 24 bytes
+        type: array
+        items:
+          $ref: '#/components/schemas/InteractiveObject'
+      weather: # object → 12 bytes
+        $ref: '#/components/schemas/Weather'
+      danger_level: # integer → 8 bytes (МАЛЕНЬКОЕ)
+        type: integer
+        minimum: 1
+        maximum: 100
+        description: Уровень опасности
+      player_count: # integer → 8 bytes
+        type: integer
+        minimum: 0
+        description: Количество игроков
+      is_active: # boolean → 1 byte
+        type: boolean
+        description: Активна ли локация
+
+  Coordinates:
+    type: object
+    required:
+      - x
+      - y
+      - z
+    # BACKEND NOTE: Struct field alignment optimized (large → small)
+    properties:
+      x: # number → 8 bytes (МАЛЕНЬКОЕ - но numbers идут после strings в этом случае)
+        type: number
+        format: float
+        description: X координата
+      y: # number → 8 bytes
+        type: number
+        format: float
+        description: Y координата
+      z: # number → 8 bytes
+        type: number
+        format: float
+        description: Z координата
+
+  NPC:
+    type: object
+    required:
+      - id
+      - name
+      - type
+    # BACKEND NOTE: Struct field alignment optimized (large → small)
+    properties:
+      id: # string → 16 bytes (БОЛЬШОЕ)
+        type: string
+        format: uuid
+        description: ID NPC
+      name: # string → 16 bytes
+        type: string
+        description: Имя NPC
+      type: # string → 16 bytes
+        type: string
+        enum: [ merchant, quest_giver, trainer, guard, civilian ]
+        description: Тип NPC
+      description: # string → 16 bytes
+        type: string
+        description: Описание NPC
+      dialogue: # array → 24 bytes
+        type: array
+        items:
           type: string
-          description: Код ошибки
-          example: "VALIDATION_ERROR"
-        message:    # string → 16 bytes
+          description: Реплики NPC
+      position: # object → 12 bytes
+        $ref: '#/components/schemas/Coordinates'
+      quests: # array → 24 bytes
+        type: array
+        items:
           type: string
-          description: Описание ошибки
-          example: "Invalid location coordinates"
-        details:    # object → 12 bytes
+          format: uuid
+          description: ID доступных квестов
+      is_active: # boolean → 1 byte (МАЛЕНЬКОЕ)
+        type: boolean
+        description: Активен ли NPC
+
+  InteractiveObject:
+    type: object
+    required:
+      - id
+      - name
+      - type
+    # BACKEND NOTE: Struct field alignment optimized (large → small)
+    properties:
+      id: # string → 16 bytes (БОЛЬШОЕ)
+        type: string
+        format: uuid
+        description: ID объекта
+      name: # string → 16 bytes
+        type: string
+        description: Название объекта
+      type: # string → 16 bytes
+        type: string
+        enum: [ chest, door, lever, crystal, portal ]
+        description: Тип объекта
+      description: # string → 16 bytes
+        type: string
+        description: Описание объекта
+      position: # object → 12 bytes
+        $ref: '#/components/schemas/Coordinates'
+      interactions: # array → 24 bytes
+        type: array
+        items:
+          $ref: '#/components/schemas/Interaction'
+      is_active: # boolean → 1 byte (МАЛЕНЬКОЕ)
+        type: boolean
+        description: Активен ли объект
+
+  Interaction:
+    type: object
+    # BACKEND NOTE: Struct field alignment optimized (large → small)
+    properties:
+      interaction_type: # string → 16 bytes (БОЛЬШОЕ)
+        type: string
+        enum: [ open, loot, activate, enter, examine ]
+        description: Тип взаимодействия
+      description: # string → 16 bytes
+        type: string
+        description: Описание взаимодействия
+      requirements: # object → 12 bytes
+        type: object
+        description: Требования для взаимодействия
+      rewards: # array → 24 bytes
+        type: array
+        items:
           type: object
-          description: Дополнительные детали ошибки
-        code:       # integer → 8 bytes (МАЛЕНЬКОЕ)
-          type: integer
-          format: int32
-          description: HTTP код ошибки
+          description: Награды за взаимодействие
+      cooldown: # integer → 8 bytes (МАЛЕНЬКОЕ)
+        type: integer
+        minimum: 0
+        description: Время восстановления в секундах
 
-    Location:
-      type: object
-      required:
-        - id
-        - name
-        - coordinates
-      # BACKEND NOTE: Struct field alignment optimized (large → small)
-      properties:
-        id:           # string → 16 bytes (БОЛЬШОЕ)
+  Weather:
+    type: object
+    # BACKEND NOTE: Struct field alignment optimized (large → small)
+    properties:
+      weather_type: # string → 16 bytes (БОЛЬШОЕ)
+        type: string
+        enum: [ clear, cloudy, rain, storm, snow, fog ]
+        description: Тип погоды
+      intensity: # integer → 8 bytes (МАЛЕНЬКОЕ)
+        type: integer
+        minimum: 0
+        maximum: 100
+        description: Интенсивность погоды
+      temperature: # integer → 8 bytes
+        type: integer
+        minimum: -50
+        maximum: 50
+        description: Температура в градусах
+      duration: # integer → 8 bytes
+        type: integer
+        minimum: 0
+        description: Длительность в минутах
+      effects: # array → 24 bytes
+        type: array
+        items:
+          type: string
+          description: Эффекты погоды
+
+  WorldEvent:
+    type: object
+    required:
+      - id
+      - name
+      - type
+      - status
+      - start_time
+    # BACKEND NOTE: Struct field alignment optimized (large → small)
+    properties:
+      id: # string → 16 bytes (БОЛЬШОЕ)
+        type: string
+        format: uuid
+        description: ID события
+      name: # string → 16 bytes
+        type: string
+        description: Название события
+      description: # string → 16 bytes
+        type: string
+        description: Описание события
+      type: # string → 16 bytes
+        type: string
+        enum: [ raid, invasion, festival, weather, disaster, quest ]
+        description: Тип события
+      status: # string → 16 bytes
+        type: string
+        enum: [ upcoming, active, completed ]
+        description: Статус события
+      region: # string → 16 bytes
+        type: string
+        enum: [ north_america, europe, asia, south_america, australia ]
+        description: Регион события
+      affected_locations: # array → 24 bytes
+        type: array
+        items:
           type: string
           format: uuid
-          description: ID локации
-        name:         # string → 16 bytes
-          type: string
-          description: Название локации
-        description:  # string → 16 bytes
-          type: string
-          description: Описание локации
-        region:       # string → 16 bytes
-          type: string
-          enum: [north_america, europe, asia, south_america, australia]
-          description: Регион
-        location_type:# string → 16 bytes
-          type: string
-          enum: [city, wilderness, dungeon, instance, pvp_zone]
-          description: Тип локации
-        coordinates:  # object → 12 bytes
-          $ref: '#/components/schemas/Coordinates'
-        npcs:         # array → 24 bytes
-          type: array
-          items:
-            $ref: '#/components/schemas/NPC'
-        interactive_objects: # array → 24 bytes
-          type: array
-          items:
-            $ref: '#/components/schemas/InteractiveObject'
-        weather:      # object → 12 bytes
-          $ref: '#/components/schemas/Weather'
-        danger_level: # integer → 8 bytes (МАЛЕНЬКОЕ)
-          type: integer
-          minimum: 1
-          maximum: 100
-          description: Уровень опасности
-        player_count: # integer → 8 bytes
-          type: integer
-          minimum: 0
-          description: Количество игроков
-        is_active:    # boolean → 1 byte
-          type: boolean
-          description: Активна ли локация
-
-    Coordinates:
-      type: object
-      required:
-        - x
-        - y
-        - z
-      # BACKEND NOTE: Struct field alignment optimized (large → small)
-      properties:
-        x: # number → 8 bytes (МАЛЕНЬКОЕ - но numbers идут после strings в этом случае)
-          type: number
-          format: float
-          description: X координата
-        y: # number → 8 bytes
-          type: number
-          format: float
-          description: Y координата
-        z: # number → 8 bytes
-          type: number
-          format: float
-          description: Z координата
-
-    NPC:
-      type: object
-      required:
-        - id
-        - name
-        - type
-      # BACKEND NOTE: Struct field alignment optimized (large → small)
-      properties:
-        id:           # string → 16 bytes (БОЛЬШОЕ)
+          description: Затронутые локации
+      participants: # array → 24 bytes
+        type: array
+        items:
           type: string
           format: uuid
-          description: ID NPC
-        name:         # string → 16 bytes
-          type: string
-          description: Имя NPC
-        type:         # string → 16 bytes
-          type: string
-          enum: [merchant, quest_giver, trainer, guard, civilian]
-          description: Тип NPC
-        description:  # string → 16 bytes
-          type: string
-          description: Описание NPC
-        dialogue:     # array → 24 bytes
-          type: array
-          items:
-            type: string
-            description: Реплики NPC
-        position:     # object → 12 bytes
-          $ref: '#/components/schemas/Coordinates'
-        quests:       # array → 24 bytes
-          type: array
-          items:
-            type: string
-            format: uuid
-            description: ID доступных квестов
-        is_active:    # boolean → 1 byte (МАЛЕНЬКОЕ)
-          type: boolean
-          description: Активен ли NPC
+          description: Участники события
+      start_time: # string → 16 bytes
+        type: string
+        format: date-time
+        description: Время начала
+      end_time: # string → 16 bytes
+        type: string
+        format: date-time
+        description: Время окончания
+      rewards: # object → 12 bytes
+        type: object
+        description: Награды за участие
+      progress: # integer → 8 bytes (МАЛЕНЬКОЕ)
+        type: integer
+        minimum: 0
+        maximum: 100
+        description: Прогресс события
 
-    InteractiveObject:
-      type: object
-      required:
-        - id
-        - name
-        - type
-      # BACKEND NOTE: Struct field alignment optimized (large → small)
-      properties:
-        id:           # string → 16 bytes (БОЛЬШОЕ)
-          type: string
-          format: uuid
-          description: ID объекта
-        name:         # string → 16 bytes
-          type: string
-          description: Название объекта
-        type:         # string → 16 bytes
-          type: string
-          enum: [chest, door, lever, crystal, portal]
-          description: Тип объекта
-        description:  # string → 16 bytes
-          type: string
-          description: Описание объекта
-        position:     # object → 12 bytes
-          $ref: '#/components/schemas/Coordinates'
-        interactions: # array → 24 bytes
-          type: array
-          items:
-            $ref: '#/components/schemas/Interaction'
-        is_active:    # boolean → 1 byte (МАЛЕНЬКОЕ)
-          type: boolean
-          description: Активен ли объект
-
-    Interaction:
-      type: object
-      # BACKEND NOTE: Struct field alignment optimized (large → small)
-      properties:
-        interaction_type: # string → 16 bytes (БОЛЬШОЕ)
-          type: string
-          enum: [open, loot, activate, enter, examine]
-          description: Тип взаимодействия
-        description:      # string → 16 bytes
-          type: string
-          description: Описание взаимодействия
-        requirements:     # object → 12 bytes
-          type: object
-          description: Требования для взаимодействия
-        rewards:          # array → 24 bytes
-          type: array
-          items:
-            type: object
-            description: Награды за взаимодействие
-        cooldown:         # integer → 8 bytes (МАЛЕНЬКОЕ)
-          type: integer
-          minimum: 0
-          description: Время восстановления в секундах
-
-    Weather:
-      type: object
-      # BACKEND NOTE: Struct field alignment optimized (large → small)
-      properties:
-        weather_type:   # string → 16 bytes (БОЛЬШОЕ)
-          type: string
-          enum: [clear, cloudy, rain, storm, snow, fog]
-          description: Тип погоды
-        intensity:      # integer → 8 bytes (МАЛЕНЬКОЕ)
-          type: integer
-          minimum: 0
-          maximum: 100
-          description: Интенсивность погоды
-        temperature:    # integer → 8 bytes
-          type: integer
-          minimum: -50
-          maximum: 50
-          description: Температура в градусах
-        duration:       # integer → 8 bytes
-          type: integer
-          minimum: 0
-          description: Длительность в минутах
-        effects:        # array → 24 bytes
-          type: array
-          items:
-            type: string
-            description: Эффекты погоды
-
-    WorldEvent:
-      type: object
-      required:
-        - id
-        - name
-        - type
-        - status
-        - start_time
-      # BACKEND NOTE: Struct field alignment optimized (large → small)
-      properties:
-        id:             # string → 16 bytes (БОЛЬШОЕ)
-          type: string
-          format: uuid
-          description: ID события
-        name:           # string → 16 bytes
-          type: string
-          description: Название события
-        description:    # string → 16 bytes
-          type: string
-          description: Описание события
-        type:           # string → 16 bytes
-          type: string
-          enum: [raid, invasion, festival, weather, disaster, quest]
-          description: Тип события
-        status:         # string → 16 bytes
-          type: string
-          enum: [upcoming, active, completed]
-          description: Статус события
-        region:         # string → 16 bytes
-          type: string
-          enum: [north_america, europe, asia, south_america, australia]
-          description: Регион события
-        affected_locations: # array → 24 bytes
-          type: array
-          items:
-            type: string
-            format: uuid
-            description: Затронутые локации
-        participants:   # array → 24 bytes
-          type: array
-          items:
-            type: string
-            format: uuid
-            description: Участники события
-        start_time:     # string → 16 bytes
-          type: string
-          format: date-time
-          description: Время начала
-        end_time:       # string → 16 bytes
-          type: string
-          format: date-time
-          description: Время окончания
-        rewards:        # object → 12 bytes
-          type: object
-          description: Награды за участие
-        progress:       # integer → 8 bytes (МАЛЕНЬКОЕ)
-          type: integer
-          minimum: 0
-          maximum: 100
-          description: Прогресс события
-
-    GetLocationsResponse:
-      type: object
-      required:
-        - locations
-        - total
-      # BACKEND NOTE: Struct field alignment optimized (large → small)
-      properties:
-        locations: # array → 24 bytes (БОЛЬШОЕ)
-          type: array
-          items:
-            $ref: '#/components/schemas/Location'
-        total:     # integer → 8 bytes (МАЛЕНЬКОЕ)
-          type: integer
-          minimum: 0
-          description: Общее количество
-        page:      # integer → 8 bytes
-          type: integer
-          minimum: 1
-          description: Текущая страница
-        limit:     # integer → 8 bytes
-          type: integer
-          minimum: 1
-          maximum: 100
-          description: Элементов на странице
-
-    GetLocationResponse:
-      type: object
-      required:
-        - location
-      # BACKEND NOTE: Struct field alignment optimized (large → small)
-      properties:
-        location: # object → 12 bytes (БОЛЬШОЕ)
+  GetLocationsResponse:
+    type: object
+    required:
+      - locations
+      - total
+    # BACKEND NOTE: Struct field alignment optimized (large → small)
+    properties:
+      locations: # array → 24 bytes (БОЛЬШОЕ)
+        type: array
+        items:
           $ref: '#/components/schemas/Location'
+      total: # integer → 8 bytes (МАЛЕНЬКОЕ)
+        type: integer
+        minimum: 0
+        description: Общее количество
+      page: # integer → 8 bytes
+        type: integer
+        minimum: 1
+        description: Текущая страница
+      limit: # integer → 8 bytes
+        type: integer
+        minimum: 1
+        maximum: 100
+        description: Элементов на странице
 
-    GetNPCsResponse:
-      type: object
-      required:
-        - npcs
-        - total
-      # BACKEND NOTE: Struct field alignment optimized (large → small)
-      properties:
-        npcs:  # array → 24 bytes (БОЛЬШОЕ)
-          type: array
-          items:
-            $ref: '#/components/schemas/NPC'
-        total: # integer → 8 bytes (МАЛЕНЬКОЕ)
-          type: integer
-          minimum: 0
-          description: Общее количество
-        page:  # integer → 8 bytes
-          type: integer
-          minimum: 1
-          description: Текущая страница
-        limit: # integer → 8 bytes
-          type: integer
-          minimum: 1
-          maximum: 100
-          description: Элементов на странице
+  GetLocationResponse:
+    type: object
+    required:
+      - location
+    # BACKEND NOTE: Struct field alignment optimized (large → small)
+    properties:
+      location: # object → 12 bytes (БОЛЬШОЕ)
+        $ref: '#/components/schemas/Location'
 
-    GetWorldEventsResponse:
-      type: object
-      required:
-        - events
-        - total
-      # BACKEND NOTE: Struct field alignment optimized (large → small)
-      properties:
-        events: # array → 24 bytes (БОЛЬШОЕ)
-          type: array
-          items:
-            $ref: '#/components/schemas/WorldEvent'
-        total:  # integer → 8 bytes (МАЛЕНЬКОЕ)
-          type: integer
-          minimum: 0
-          description: Общее количество
-        page:   # integer → 8 bytes
-          type: integer
-          minimum: 1
-          description: Текущая страница
-        limit:  # integer → 8 bytes
-          type: integer
-          minimum: 1
-          maximum: 100
-          description: Элементов на странице
+  GetNPCsResponse:
+    type: object
+    required:
+      - npcs
+      - total
+    # BACKEND NOTE: Struct field alignment optimized (large → small)
+    properties:
+      npcs: # array → 24 bytes (БОЛЬШОЕ)
+        type: array
+        items:
+          $ref: '#/components/schemas/NPC'
+      total: # integer → 8 bytes (МАЛЕНЬКОЕ)
+        type: integer
+        minimum: 0
+        description: Общее количество
+      page: # integer → 8 bytes
+        type: integer
+        minimum: 1
+        description: Текущая страница
+      limit: # integer → 8 bytes
+        type: integer
+        minimum: 1
+        maximum: 100
+        description: Элементов на странице
 
-    CreateWorldEventRequest:
-      type: object
-      required:
-        - name
-        - type
-        - region
-        - start_time
-      # BACKEND NOTE: Struct field alignment optimized (large → small)
-      properties:
-        name:               # string → 16 bytes (БОЛЬШОЕ)
-          type: string
-          minLength: 3
-          maxLength: 100
-          description: Название события
-        description:        # string → 16 bytes
-          type: string
-          maxLength: 1000
-          description: Описание события
-        type:               # string → 16 bytes
-          type: string
-          enum: [raid, invasion, festival, weather, disaster, quest]
-          description: Тип события
-        region:             # string → 16 bytes
-          type: string
-          enum: [north_america, europe, asia, south_america, australia]
-          description: Регион события
-        affected_locations: # array → 24 bytes
-          type: array
-          items:
-            type: string
-            format: uuid
-            description: Затронутые локации
-        start_time:         # string → 16 bytes
-          type: string
-          format: date-time
-          description: Время начала
-        duration_minutes:   # integer → 8 bytes (МАЛЕНЬКОЕ)
-          type: integer
-          minimum: 5
-          maximum: 1440
-          description: Длительность в минутах
-        rewards:            # object → 12 bytes
-          type: object
-          description: Награды за участие
-
-    CreateWorldEventResponse:
-      type: object
-      required:
-        - event
-      # BACKEND NOTE: Struct field alignment optimized (large → small)
-      properties:
-        event: # object → 12 bytes (БОЛЬШОЕ)
+  GetWorldEventsResponse:
+    type: object
+    required:
+      - events
+      - total
+    # BACKEND NOTE: Struct field alignment optimized (large → small)
+    properties:
+      events: # array → 24 bytes (БОЛЬШОЕ)
+        type: array
+        items:
           $ref: '#/components/schemas/WorldEvent'
+      total: # integer → 8 bytes (МАЛЕНЬКОЕ)
+        type: integer
+        minimum: 0
+        description: Общее количество
+      page: # integer → 8 bytes
+        type: integer
+        minimum: 1
+        description: Текущая страница
+      limit: # integer → 8 bytes
+        type: integer
+        minimum: 1
+        maximum: 100
+        description: Элементов на странице
 
-    GetWeatherResponse:
-      type: object
-      # BACKEND NOTE: Struct field alignment optimized (large → small)
-      properties:
-        weather: # object → 12 bytes (БОЛЬШОЕ)
-          $ref: '#/components/schemas/Weather'
+  CreateWorldEventRequest:
+    type: object
+    required:
+      - name
+      - type
+      - region
+      - start_time
+    # BACKEND NOTE: Struct field alignment optimized (large → small)
+    properties:
+      name: # string → 16 bytes (БОЛЬШОЕ)
+        type: string
+        minLength: 3
+        maxLength: 100
+        description: Название события
+      description: # string → 16 bytes
+        type: string
+        maxLength: 1000
+        description: Описание события
+      type: # string → 16 bytes
+        type: string
+        enum: [ raid, invasion, festival, weather, disaster, quest ]
+        description: Тип события
+      region: # string → 16 bytes
+        type: string
+        enum: [ north_america, europe, asia, south_america, australia ]
+        description: Регион события
+      affected_locations: # array → 24 bytes
+        type: array
+        items:
+          type: string
+          format: uuid
+          description: Затронутые локации
+      start_time: # string → 16 bytes
+        type: string
+        format: date-time
+        description: Время начала
+      duration_minutes: # integer → 8 bytes (МАЛЕНЬКОЕ)
+        type: integer
+        minimum: 5
+        maximum: 1440
+        description: Длительность в минутах
+      rewards: # object → 12 bytes
+        type: object
+        description: Награды за участие
 
-    UpdateWeatherRequest:
-      type: object
-      required:
-        - weather_type
-        - region
-      # BACKEND NOTE: Struct field alignment optimized (large → small)
-      properties:
-        weather_type: # string → 16 bytes (БОЛЬШОЕ)
-          type: string
-          enum: [clear, cloudy, rain, storm, snow, fog]
-          description: Тип погоды
-        region:       # string → 16 bytes
-          type: string
-          enum: [north_america, europe, asia, south_america, australia]
-          description: Регион
-        intensity:    # integer → 8 bytes (МАЛЕНЬКОЕ)
-          type: integer
-          minimum: 0
-          maximum: 100
-          description: Интенсивность
-        temperature:  # integer → 8 bytes
-          type: integer
-          minimum: -50
-          maximum: 50
-          description: Температура
-        duration:     # integer → 8 bytes
-          type: integer
-          minimum: 0
-          description: Длительность в минутах
+  CreateWorldEventResponse:
+    type: object
+    required:
+      - event
+    # BACKEND NOTE: Struct field alignment optimized (large → small)
+    properties:
+      event: # object → 12 bytes (БОЛЬШОЕ)
+        $ref: '#/components/schemas/WorldEvent'
 
-    UpdateWeatherResponse:
-      type: object
-      # BACKEND NOTE: Struct field alignment optimized (large → small)
-      properties:
-        weather: # object → 12 bytes (БОЛЬШОЕ)
-          $ref: '#/components/schemas/Weather'
+  GetWeatherResponse:
+    type: object
+    # BACKEND NOTE: Struct field alignment optimized (large → small)
+    properties:
+      weather: # object → 12 bytes (БОЛЬШОЕ)
+        $ref: '#/components/schemas/Weather'
 
-    GetWorldTimeResponse:
-      type: object
-      # BACKEND NOTE: Struct field alignment optimized (large → small)
-      properties:
-        game_time:      # string → 16 bytes (БОЛЬШОЕ)
-          type: string
-          format: date-time
-          description: Текущее игровое время
-        time_of_day:    # string → 16 bytes
-          type: string
-          enum: [dawn, morning, noon, afternoon, dusk, night]
-          description: Время суток
-        day_of_week:    # string → 16 bytes
-          type: string
-          enum: [monday, tuesday, wednesday, thursday, friday, saturday, sunday]
-          description: День недели
-        season:         # string → 16 bytes
-          type: string
-          enum: [spring, summer, autumn, winter]
-          description: Сезон
-        day_number:     # integer → 8 bytes (МАЛЕНЬКОЕ)
-          type: integer
-          minimum: 1
-          description: Номер дня в игре
-        hour:           # integer → 8 bytes
-          type: integer
-          minimum: 0
-          maximum: 23
-          description: Час дня
-        minute:         # integer → 8 bytes
-          type: integer
-          minimum: 0
-          maximum: 59
-          description: Минута часа
+  UpdateWeatherRequest:
+    type: object
+    required:
+      - weather_type
+      - region
+    # BACKEND NOTE: Struct field alignment optimized (large → small)
+    properties:
+      weather_type: # string → 16 bytes (БОЛЬШОЕ)
+        type: string
+        enum: [ clear, cloudy, rain, storm, snow, fog ]
+        description: Тип погоды
+      region: # string → 16 bytes
+        type: string
+        enum: [ north_america, europe, asia, south_america, australia ]
+        description: Регион
+      intensity: # integer → 8 bytes (МАЛЕНЬКОЕ)
+        type: integer
+        minimum: 0
+        maximum: 100
+        description: Интенсивность
+      temperature: # integer → 8 bytes
+        type: integer
+        minimum: -50
+        maximum: 50
+        description: Температура
+      duration: # integer → 8 bytes
+        type: integer
+        minimum: 0
+        description: Длительность в минутах
+
+  UpdateWeatherResponse:
+    type: object
+    # BACKEND NOTE: Struct field alignment optimized (large → small)
+    properties:
+      weather: # object → 12 bytes (БОЛЬШОЕ)
+        $ref: '#/components/schemas/Weather'
+
+  GetWorldTimeResponse:
+    type: object
+    # BACKEND NOTE: Struct field alignment optimized (large → small)
+    properties:
+      game_time: # string → 16 bytes (БОЛЬШОЕ)
+        type: string
+        format: date-time
+        description: Текущее игровое время
+      time_of_day: # string → 16 bytes
+        type: string
+        enum: [ dawn, morning, noon, afternoon, dusk, night ]
+        description: Время суток
+      day_of_week: # string → 16 bytes
+        type: string
+        enum: [ monday, tuesday, wednesday, thursday, friday, saturday, sunday ]
+        description: День недели
+      season: # string → 16 bytes
+        type: string
+        enum: [ spring, summer, autumn, winter ]
+        description: Сезон
+      day_number: # integer → 8 bytes (МАЛЕНЬКОЕ)
+        type: integer
+        minimum: 1
+        description: Номер дня в игре
+      hour: # integer → 8 bytes
+        type: integer
+        minimum: 0
+        maximum: 23
+        description: Час дня
+      minute: # integer → 8 bytes
+        type: integer
+        minimum: 0
+        maximum: 59
+        description: Минута часа

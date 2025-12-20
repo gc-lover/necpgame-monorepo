@@ -1,4 +1,4 @@
-// Issue: #140875766
+// Package server Issue: #140875766
 package server
 
 import (
@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"net/http"
+	"net/http/pprof"
 	"os"
 	"os/signal"
 	"syscall"
@@ -18,9 +19,9 @@ import (
 
 // SandevistanServer представляет HTTP сервер для Sandevistan service
 type SandevistanServer struct {
-	server  *http.Server
-	logger  *zap.Logger
-	service *SandevistanService
+	server     *http.Server
+	logger     *zap.Logger
+	service    *SandevistanService
 	middleware *AuthMiddleware
 }
 
@@ -51,6 +52,10 @@ func NewSandevistanServer(logger *zap.Logger, db *sql.DB, jwtSecret string) *San
 	r.Get("/health", service.HealthCheckHandler)
 	r.Get("/ready", service.ReadinessCheckHandler)
 	r.Get("/metrics", service.MetricsHandler)
+
+	// Profiling endpoints для MMOFPS оптимизаций
+	r.HandleFunc("/debug/pprof/*", service.PprofHandler)
+	r.Get("/debug/vars", service.ExpvarHandler)
 
 	// API endpoints
 	r.Route("/api/v1", func(r chi.Router) {
@@ -132,9 +137,9 @@ func (s *SandevistanService) ActivateSandevistanHandler(w http.ResponseWriter, r
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusTooManyRequests)
 			json.NewEncoder(w).Encode(map[string]interface{}{
-				"error": "cooldown_active",
+				"error":              "cooldown_active",
 				"cooldown_remaining": cooldownErr.CooldownRemaining,
-				"message": cooldownErr.Message,
+				"message":            cooldownErr.Message,
 			})
 			return
 		}
@@ -221,21 +226,47 @@ func (s *SandevistanService) GetSandevistanStatsHandler(w http.ResponseWriter, r
 	json.NewEncoder(w).Encode(stats)
 }
 
-// Health check handlers
-func (s *SandevistanService) HealthCheckHandler(w http.ResponseWriter, r *http.Request) {
+// HealthCheckHandler Health check handlers
+func (s *SandevistanService) HealthCheckHandler(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(`{"status": "healthy"}`))
 }
 
-func (s *SandevistanService) ReadinessCheckHandler(w http.ResponseWriter, r *http.Request) {
+func (s *SandevistanService) ReadinessCheckHandler(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(`{"status": "ready"}`))
 }
 
-func (s *SandevistanService) MetricsHandler(w http.ResponseWriter, r *http.Request) {
+func (s *SandevistanService) MetricsHandler(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(`{"service": "sandevistan-service", "version": "1.0.0"}`))
+}
+
+// PprofHandler Profiling handlers для MMOFPS оптимизаций
+func (s *SandevistanService) PprofHandler(w http.ResponseWriter, r *http.Request) {
+	// Используем Chi роутер для pprof endpoints
+	switch r.URL.Path {
+	case "/debug/pprof/":
+		pprof.Index(w, r)
+	case "/debug/pprof/cmdline":
+		pprof.Cmdline(w, r)
+	case "/debug/pprof/profile":
+		pprof.Profile(w, r)
+	case "/debug/pprof/symbol":
+		pprof.Symbol(w, r)
+	case "/debug/pprof/trace":
+		pprof.Trace(w, r)
+	default:
+		// Для heap, goroutine, etc.
+		pprof.Handler(r.URL.Path[13:]).ServeHTTP(w, r) // убираем "/debug/pprof/"
+	}
+}
+
+func (s *SandevistanService) ExpvarHandler(w http.ResponseWriter, _ *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(`{"service": "sandevistan-service", "status": "operational"}`))
 }

@@ -1,64 +1,64 @@
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '409':
-          description: Предметы нельзя объединить
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+'400':
+  $ref: '#/components/responses/BadRequest'
+'404':
+  $ref: '#/components/responses/NotFound'
+'409':
+  description: Предметы нельзя объединить
+  content:
+    application/json:
+      schema:
+        $ref: '#/components/schemas/ErrorResponse'
+'500':
+  $ref: '#/components/responses/InternalServerError'
 
-  # Разделение стека предметов
-  /inventory/items/{itemId}/split:
-    post:
-      tags:
+# Разделение стека предметов
+/inventory/items/{itemId}/split:
+  post:
+    tags:
       - Items
-      summary: Разделить стек предметов
-      operationId: splitItemStack
-      parameters:
+    summary: Разделить стек предметов
+    operationId: splitItemStack
+    parameters:
       - name: itemId
         in: path
         required: true
         schema:
           type: string
           format: uuid
-      requestBody:
-        required: true
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SplitItemRequest'
+    responses:
+      '200':
+        description: Стек разделен
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/SplitItemRequest'
-      responses:
-        '200':
-          description: Стек разделен
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SplitItemResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '409':
-          description: Стек нельзя разделить
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+              $ref: '#/components/schemas/SplitItemResponse'
+      '400':
+        $ref: '#/components/responses/BadRequest'
+      '404':
+        $ref: '#/components/responses/NotFound'
+      '409':
+        description: Стек нельзя разделить
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
 
-  # Поиск предметов
-  /characters/{characterId}/inventory/search:
-    get:
-      tags:
+# Поиск предметов
+/characters/{characterId}/inventory/search:
+  get:
+    tags:
       - Inventory
-      summary: Поиск предметов в инвентаре
-      operationId: searchInventory
-      parameters:
+    summary: Поиск предметов в инвентаре
+    operationId: searchInventory
+    parameters:
       - name: characterId
         in: path
         required: true
@@ -74,12 +74,12 @@
         in: query
         schema:
           type: string
-          enum: [weapon, armor, consumable, cyberware, miscellaneous]
+          enum: [ weapon, armor, consumable, cyberware, miscellaneous ]
       - name: rarity
         in: query
         schema:
           type: string
-          enum: [common, uncommon, rare, epic, legendary]
+          enum: [ common, uncommon, rare, epic, legendary ]
       - name: limit
         in: query
         schema:
@@ -87,107 +87,107 @@
           minimum: 1
           maximum: 100
           default: 50
-      responses:
-        '200':
-          description: Результаты поиска
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SearchResultsResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+    responses:
+      '200':
+        description: Результаты поиска
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchResultsResponse'
+      '400':
+        $ref: '#/components/responses/BadRequest'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
 
-  # Банк персонажа
-  /characters/{characterId}/bank:
-    get:
-      tags:
+# Банк персонажа
+/characters/{characterId}/bank:
+  get:
+    tags:
       - Bank
-      summary: Получить содержимое банка персонажа
-      operationId: getCharacterBank
-      parameters:
+    summary: Получить содержимое банка персонажа
+    operationId: getCharacterBank
+    parameters:
       - name: characterId
         in: path
         required: true
         schema:
           type: string
           format: uuid
-      responses:
-        '200':
-          description: Содержимое банка
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CharacterBankResponse'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+    responses:
+      '200':
+        description: Содержимое банка
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CharacterBankResponse'
+      '404':
+        $ref: '#/components/responses/NotFound'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
 
-  # Перемещение в банк
-  /inventory/items/{itemId}/to-bank:
-    post:
-      tags:
+# Перемещение в банк
+/inventory/items/{itemId}/to-bank:
+  post:
+    tags:
       - Bank
-      summary: Переместить предмет в банк
-      operationId: moveItemToBank
-      parameters:
+    summary: Переместить предмет в банк
+    operationId: moveItemToBank
+    parameters:
       - name: itemId
         in: path
         required: true
         schema:
           type: string
           format: uuid
-      responses:
-        '200':
-          description: Предмет перемещен в банк
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SuccessResponse'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '409':
-          description: Недостаточно места в банке
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+    responses:
+      '200':
+        description: Предмет перемещен в банк
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SuccessResponse'
+      '404':
+        $ref: '#/components/responses/NotFound'
+      '409':
+        description: Недостаточно места в банке
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
 
-  # Перемещение из банка
-  /bank/items/{itemId}/to-inventory:
-    post:
-      tags:
+# Перемещение из банка
+/bank/items/{itemId}/to-inventory:
+  post:
+    tags:
       - Bank
-      summary: Переместить предмет из банка в инвентарь
-      operationId: moveItemFromBank
-      parameters:
+    summary: Переместить предмет из банка в инвентарь
+    operationId: moveItemFromBank
+    parameters:
       - name: itemId
         in: path
         required: true
         schema:
           type: string
           format: uuid
-      responses:
-        '200':
-          description: Предмет перемещен в инвентарь
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SuccessResponse'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '409':
-          description: Недостаточно места в инвентаре
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+    responses:
+      '200':
+        description: Предмет перемещен в инвентарь
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SuccessResponse'
+      '404':
+        $ref: '#/components/responses/NotFound'
+      '409':
+        description: Недостаточно места в инвентаре
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      '500':
+        $ref: '#/components/responses/InternalServerError'
 
 components:
   securitySchemes:
@@ -201,8 +201,8 @@ components:
     AddItemRequest:
       type: object
       required:
-      - itemTemplateId
-      - quantity
+        - itemTemplateId
+        - quantity
       properties:
         itemTemplateId:
           type: string
@@ -244,7 +244,7 @@ components:
     RemoveItemRequest:
       type: object
       required:
-      - quantity
+        - quantity
       properties:
         quantity:
           type: integer
@@ -254,7 +254,7 @@ components:
     MoveItemRequest:
       type: object
       required:
-      - targetSlot
+        - targetSlot
       properties:
         targetSlot:
           type: integer
@@ -265,8 +265,8 @@ components:
     EquipItemRequest:
       type: object
       required:
-      - itemId
-      - slot
+        - itemId
+        - slot
       properties:
         itemId:
           type: string
@@ -274,14 +274,14 @@ components:
           description: ID предмета для экипировки
         slot:
           type: string
-          enum: [head, chest, arms, legs, feet, weapon_primary, weapon_secondary, cyberware_1, cyberware_2, cyberware_3]
+          enum: [ head, chest, arms, legs, feet, weapon_primary, weapon_secondary, cyberware_1, cyberware_2, cyberware_3 ]
           description: Слот экипировки
 
     TransferItemRequest:
       type: object
       required:
-      - targetCharacterId
-      - quantity
+        - targetCharacterId
+        - quantity
       properties:
         targetCharacterId:
           type: string
@@ -295,8 +295,8 @@ components:
     StackItemsRequest:
       type: object
       required:
-      - sourceItemId
-      - targetItemId
+        - sourceItemId
+        - targetItemId
       properties:
         sourceItemId:
           type: string
@@ -310,7 +310,7 @@ components:
     SplitItemRequest:
       type: object
       required:
-      - quantity
+        - quantity
       properties:
         quantity:
           type: integer

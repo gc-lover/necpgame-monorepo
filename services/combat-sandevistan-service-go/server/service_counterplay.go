@@ -1,4 +1,4 @@
-// Issue: #39, #1607 - Sandevistan counterplay operations
+// Package server Issue: #39, #1607 - Sandevistan counterplay operations
 package server
 
 import (

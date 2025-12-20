@@ -1,4 +1,4 @@
-// Issue: #1856
+// Package server Issue: #1856
 package server
 
 import (
@@ -14,7 +14,7 @@ import (
 // Common errors
 var (
 	ErrGuildWarNotFound = errors.New("guild war not found")
-	ErrWarNotActive     = errors.New("war is not active")
+	_                   = errors.New("war is not active")
 	ErrAlreadyInWar     = errors.New("user already in war")
 	ErrWarFull          = errors.New("war is full")
 )
@@ -133,7 +133,7 @@ func (s *Service) DeclareWar(ctx context.Context, params api.DeclareWarParams, r
 	duration := time.Duration(req.Duration) * time.Hour
 
 	// Declare war
-	war, err := s.repo.DeclareWar(ctx, params.AttackerGuildID, params.DefenderGuildID, duration)
+	war, err := s.repo.DeclareWar(ctx, params.AttackerGuildID, params.DefenderGuildID)
 	if err != nil {
 		return nil, err
 	}
@@ -211,9 +211,3 @@ func (s *Service) UpdateWarScore(ctx context.Context, params api.UpdateWarScoreP
 
 	return &api.UpdateWarScoreOK{Message: api.OptString{Value: "Score updated successfully", Set: true}}, nil
 }
-
-// Context timeout constants
-const (
-	DBTimeout    = 50 * time.Millisecond
-	CacheTimeout = 10 * time.Millisecond
-)

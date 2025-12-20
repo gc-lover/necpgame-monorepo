@@ -2,15 +2,12 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	_ "net/http/pprof" // OPTIMIZATION: Issue #2177 - Enable pprof profiling
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
-
-	"github.com/sirupsen/logrus"
 
 	"necpgame/services/tournament-service-go/server"
 )
@@ -23,25 +20,25 @@ func main() {
 
 	// Configuration
 	config := &server.TournamentServiceConfig{
-		Port:                   getEnv("PORT", "8080"),
-		ReadTimeout:            30 * time.Second,
-		WriteTimeout:           30 * time.Second,
-		MaxHeaderBytes:         1 << 20, // 1MB
-		RedisAddr:              getEnv("REDIS_ADDR", "localhost:6379"),
+		Port:                     getEnv("PORT", "8080"),
+		ReadTimeout:              30 * time.Second,
+		WriteTimeout:             30 * time.Second,
+		MaxHeaderBytes:           1 << 20, // 1MB
+		RedisAddr:                getEnv("REDIS_ADDR", "localhost:6379"),
 		TournamentUpdateInterval: 5 * time.Minute,
-		MatchUpdateInterval:    1 * time.Minute,
-		RankingUpdateInterval:  10 * time.Minute,
-		LeagueUpdateInterval:   15 * time.Minute,
-		StatsCleanupInterval:   24 * time.Hour,
+		MatchUpdateInterval:      1 * time.Minute,
+		RankingUpdateInterval:    10 * time.Minute,
+		LeagueUpdateInterval:     15 * time.Minute,
+		StatsCleanupInterval:     24 * time.Hour,
 	}
 
 	// Initialize metrics (placeholder for now)
 	metrics := &server.TournamentMetrics{
-		ActiveTournaments: 0,
-		ActiveMatches:     0,
-		TotalParticipants: 0,
+		ActiveTournaments:    0,
+		ActiveMatches:        0,
+		TotalParticipants:    0,
 		CompletedTournaments: 0,
-		ActiveLeagues:    0,
+		ActiveLeagues:        0,
 	}
 
 	// Initialize service

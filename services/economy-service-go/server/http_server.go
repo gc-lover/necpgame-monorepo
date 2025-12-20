@@ -1,4 +1,4 @@
-// SQL queries use prepared statements with placeholders ($1, $2, ?) for safety
+// Package server SQL queries use prepared statements with placeholders ($1, $2, ?) for safety
 package server
 
 import (
@@ -186,7 +186,7 @@ func (s *HTTPServer) Shutdown(ctx context.Context) error {
 	return nil
 }
 
-func (s *HTTPServer) healthCheck(w http.ResponseWriter, r *http.Request) {
+func (s *HTTPServer) healthCheck(w http.ResponseWriter, _ *http.Request) {
 	s.respondJSON(w, http.StatusOK, map[string]string{"status": "healthy"})
 }
 

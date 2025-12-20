@@ -18,18 +18,18 @@ info:
     name: NECPGAME API Support
     email: api@necp.game
 servers:
-- url: http://localhost:8090/api/v1/sync
-  description: Локальный сервер разработки
-- url: https://api.necp.game/api/v1/sync
-  description: Продакшен сервер
+  - url: http://localhost:8090/api/v1/sync
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1/sync
+    description: Продакшен сервер
 tags:
-- name: Saga
-  description: Управление Saga транзакциями
+  - name: Saga
+    description: Управление Saga транзакциями
 paths:
   /saga/start:
     post:
       tags:
-      - Saga
+        - Saga
       summary: Запустить Saga транзакцию
       description: 'Запускает новую Saga транзакцию с указанными шагами.
 
@@ -38,7 +38,7 @@ paths:
         '
       operationId: startSaga
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       requestBody:
         required: true
         content:
@@ -48,17 +48,17 @@ paths:
             example:
               saga_type: purchase_item
               steps:
-              - step_number: 1
-                service_name: inventory-service
-                action: reserve_slot
-                params:
-                  character_id: aa0e8400-e29b-41d4-a716-446655440000
-              - step_number: 2
-                service_name: character-service
-                action: check_balance
-                params:
-                  character_id: aa0e8400-e29b-41d4-a716-446655440000
-                  amount: 1000
+                - step_number: 1
+                  service_name: inventory-service
+                  action: reserve_slot
+                  params:
+                    character_id: aa0e8400-e29b-41d4-a716-446655440000
+                - step_number: 2
+                  service_name: character-service
+                  action: check_balance
+                  params:
+                    character_id: aa0e8400-e29b-41d4-a716-446655440000
+                    amount: 1000
       responses:
         '200':
           description: Saga запущена
@@ -72,14 +72,14 @@ paths:
                 status: in_progress
                 current_step: 1
                 steps:
-                - step_number: 1
-                  service_name: inventory-service
-                  action: reserve_slot
-                  status: completed
-                - step_number: 2
-                  service_name: character-service
-                  action: check_balance
-                  status: pending
+                  - step_number: 1
+                    service_name: inventory-service
+                    action: reserve_slot
+                    status: completed
+                  - step_number: 2
+                    service_name: character-service
+                    action: check_balance
+                    status: pending
                 created_at: '2025-12-01T10:00:00Z'
         '400':
           $ref: common.yaml#/components/responses/BadRequest
@@ -90,23 +90,23 @@ paths:
   /saga/{sagaId}:
     get:
       tags:
-      - Saga
+        - Saga
       summary: Получить состояние Saga
       description: 'Возвращает текущее состояние Saga транзакции по её ID.
 
         '
       operationId: getSaga
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       parameters:
-      - name: sagaId
-        in: path
-        required: true
-        description: ID Saga транзакции
-        schema:
-          type: string
-          format: uuid
-          example: bb0e8400-e29b-41d4-a716-446655440000
+        - name: sagaId
+          in: path
+          required: true
+          description: ID Saga транзакции
+          schema:
+            type: string
+            format: uuid
+            example: bb0e8400-e29b-41d4-a716-446655440000
       responses:
         '200':
           description: Состояние Saga
@@ -123,7 +123,7 @@ paths:
   /saga/{sagaId}/compensate:
     post:
       tags:
-      - Saga
+        - Saga
       summary: Выполнить компенсацию Saga
       description: 'Запускает компенсирующие транзакции для отката Saga
 
@@ -132,16 +132,16 @@ paths:
         '
       operationId: compensateSaga
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       parameters:
-      - name: sagaId
-        in: path
-        required: true
-        description: ID Saga транзакции
-        schema:
-          type: string
-          format: uuid
-          example: bb0e8400-e29b-41d4-a716-446655440000
+        - name: sagaId
+          in: path
+          required: true
+          description: ID Saga транзакции
+          schema:
+            type: string
+            format: uuid
+            example: bb0e8400-e29b-41d4-a716-446655440000
       requestBody:
         required: false
         content:
@@ -178,8 +178,8 @@ components:
     StartSagaRequest:
       type: object
       required:
-      - saga_type
-      - steps
+        - saga_type
+        - steps
       properties:
         saga_type:
           type: string
@@ -195,9 +195,9 @@ components:
     SagaStepRequest:
       type: object
       required:
-      - step_number
-      - service_name
-      - action
+        - step_number
+        - service_name
+        - action
       properties:
         service_name:
           type: string
@@ -222,12 +222,12 @@ components:
     SagaResponse:
       type: object
       required:
-      - saga_id
-      - saga_type
-      - status
-      - current_step
-      - steps
-      - created_at
+        - saga_id
+        - saga_type
+        - status
+        - current_step
+        - steps
+        - created_at
       properties:
         saga_id:
           type: string
@@ -271,10 +271,10 @@ components:
     CompensateSagaResponse:
       type: object
       required:
-      - saga_id
-      - status
-      - compensation_steps
-      - message
+        - saga_id
+        - status
+        - compensation_steps
+        - message
       properties:
         saga_id:
           type: string

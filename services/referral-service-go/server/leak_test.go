@@ -46,4 +46,3 @@ func TestReferralServiceNoLeaks(t *testing.T) {
 // - Ticker.Stop() for all time.Ticker
 // - Channel close for all event channels
 // - Timeout for all DB operations
-

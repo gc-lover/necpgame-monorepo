@@ -1,11 +1,10 @@
-// Issue: #1856
+// Package server Issue: #1856
 package server
 
 import (
 	"context"
 	"errors"
 	"sync"
-	"time"
 
 	"github.com/gc-lover/necpgame-monorepo/services/guild-territory-service-go/pkg/api"
 	"github.com/google/uuid"
@@ -15,7 +14,7 @@ import (
 var (
 	ErrTerritoryNotFound = errors.New("territory not found")
 	ErrAlreadyOwned      = errors.New("territory already owned")
-	ErrNotOwnedByGuild   = errors.New("territory not owned by guild")
+	_                    = errors.New("territory not owned by guild")
 	ErrClaimInProgress   = errors.New("territory claim already in progress")
 )
 
@@ -137,7 +136,7 @@ func (s *Service) ClaimTerritory(ctx context.Context, params api.ClaimTerritoryP
 }
 
 // GetTerritoryBonuses calculates territory bonuses - BUSINESS LOGIC
-func (s *Service) GetTerritoryBonuses(ctx context.Context, params api.GetTerritoryBonusesParams) (*api.GetTerritoryBonusesOK, error) {
+func (s *Service) GetTerritoryBonuses(ctx context.Context) (*api.GetTerritoryBonusesOK, error) {
 	// Get user ID from context
 	userID, ok := ctx.Value("user_id").(uuid.UUID)
 	if !ok {
@@ -147,7 +146,7 @@ func (s *Service) GetTerritoryBonuses(ctx context.Context, params api.GetTerrito
 	// TODO: Check if user is member of guild that owns the territory
 
 	// Call repository
-	bonuses, err := s.repo.CalculateTerritoryBonuses(ctx, params.TerritoryID)
+	bonuses, err := s.repo.CalculateTerritoryBonuses()
 	if err != nil {
 		return nil, err
 	}
@@ -205,9 +204,3 @@ func (s *Service) GetTerritoryWars(ctx context.Context, params api.GetTerritoryW
 	_ = wars // Remove when implemented
 	return response, nil
 }
-
-// Context timeout constants
-const (
-	DBTimeout    = 50 * time.Millisecond
-	CacheTimeout = 10 * time.Millisecond
-)

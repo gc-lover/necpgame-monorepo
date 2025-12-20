@@ -1,4 +1,4 @@
-// SQL queries use prepared statements with placeholders ($1, $2, ?) for safety
+// Package handler SQL queries use prepared statements with placeholders ($1, $2, ?) for safety
 package handler
 
 import (
@@ -43,7 +43,7 @@ func (h *Handler) Router() http.Handler {
 }
 
 // handleHealth provides health check endpoint
-func (h *Handler) handleHealth(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) handleHealth(w http.ResponseWriter, _ *http.Request) {
 	telemetry := h.interactiveService.GetTelemetry()
 
 	w.Header().Set("Content-Type", "application/json")
@@ -193,7 +193,7 @@ func (h *Handler) handleInteract(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleTelemetry provides service telemetry
-func (h *Handler) handleTelemetry(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) handleTelemetry(w http.ResponseWriter, _ *http.Request) {
 	telemetry := h.interactiveService.GetTelemetry()
 
 	w.Header().Set("Content-Type", "application/json")

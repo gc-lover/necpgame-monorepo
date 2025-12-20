@@ -1,4 +1,4 @@
-// Issue: #1585 - Runtime Goroutine Leak Monitoring
+// Package server Issue: #1585 - Runtime Goroutine Leak Monitoring
 package server
 
 import (
@@ -33,15 +33,6 @@ type GoroutineMonitor struct {
 }
 
 // NewGoroutineMonitor creates a new goroutine monitor
-func NewGoroutineMonitor(max int, logger *logrus.Logger) *GoroutineMonitor {
-	ctx, cancel := context.WithCancel(context.Background())
-	return &GoroutineMonitor{
-		maxGoroutines: max,
-		logger:        logger,
-		ctx:           ctx,
-		cancel:        cancel,
-	}
-}
 
 // Start starts monitoring goroutine count
 func (gm *GoroutineMonitor) Start() {
@@ -79,4 +70,3 @@ func (gm *GoroutineMonitor) Start() {
 func (gm *GoroutineMonitor) Stop() {
 	gm.cancel()
 }
-

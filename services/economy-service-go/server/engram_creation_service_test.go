@@ -53,7 +53,7 @@ func setupTestEngramCreationService() (*EngramCreationService, *mockEngramCreati
 	redisClient := redis.NewClient(&redis.Options{
 		Addr:         "localhost:6379",
 		DB:           1,
-		DialTimeout:  1 * time.Second,  // Fast timeout for tests
+		DialTimeout:  1 * time.Second, // Fast timeout for tests
 		ReadTimeout:  1 * time.Second,
 		WriteTimeout: 1 * time.Second,
 		PoolTimeout:  1 * time.Second,
@@ -231,5 +231,3 @@ func TestEngramCreationService_CreateEngram_DataLossCalculation(t *testing.T) {
 	assert.GreaterOrEqual(t, *result.DataLossPercent, 5.0)
 	mockRepo.AssertExpectations(t)
 }
-
-

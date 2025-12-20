@@ -16,8 +16,8 @@ type ProjectileService struct {
 	repo *ProjectileRepository
 
 	// Memory pooling for hot path structs (Level 2 optimization)
-	formsResponsePool      sync.Pool
-	spawnResponsePool      sync.Pool
+	formsResponsePool         sync.Pool
+	spawnResponsePool         sync.Pool
 	compatibilityResponsePool sync.Pool
 }
 
@@ -87,7 +87,7 @@ func (s *ProjectileService) GetForms(ctx context.Context, params api.GetProjecti
 
 	// Clone response (caller owns it)
 	result := &api.GetProjectileFormsOK{
-		Forms: append([]api.ProjectileForm{}, resp.Forms...),
+		Forms:      append([]api.ProjectileForm{}, resp.Forms...),
 		Pagination: resp.Pagination,
 	}
 
@@ -106,7 +106,7 @@ func (s *ProjectileService) GetForm(ctx context.Context, formID string) (*api.Pr
 // SpawnProjectile creates a new projectile
 func (s *ProjectileService) SpawnProjectile(ctx context.Context, req *api.SpawnProjectileRequest) (*api.SpawnProjectileResponse, error) {
 	// Validate compatibility
-	compatible, err := s.repo.CheckCompatibility(ctx, req.WeaponID, string(req.Form))
+	compatible, err := s.repo.CheckCompatibility(ctx, string(req.Form))
 	if err != nil {
 		return nil, fmt.Errorf("failed to check compatibility: %w", err)
 	}
@@ -194,12 +194,3 @@ func (s *ProjectileService) GetCompatibilityMatrix(ctx context.Context) (*api.Co
 		Matrix: result,
 	}, nil
 }
-
-
-
-
-
-
-
-
-

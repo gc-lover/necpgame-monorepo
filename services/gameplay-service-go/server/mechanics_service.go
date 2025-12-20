@@ -1,4 +1,4 @@
-// SQL queries use prepared statements with placeholders (, , ?) for safety
+// Package server SQL queries use prepared statements with placeholders (, , ?) for safety
 // Issue: #104
 package server
 
@@ -13,23 +13,23 @@ import (
 
 // MechanicsService объединяет все игровые механики
 type MechanicsService interface {
-	// Combat mechanics - using existing CombatSessionResponse as placeholder
+	// GetCombatStats Combat mechanics - using existing CombatSessionResponse as placeholder
 	GetCombatStats(ctx context.Context, playerID uuid.UUID) (*api.CombatSessionResponse, error)
 	ExecuteCombatAction(ctx context.Context, playerID uuid.UUID, action *api.CombatSessionResponse) (*api.CombatSessionResponse, error)
 
-	// Progression mechanics - using existing types
+	// GetProgressionStats Progression mechanics - using existing types
 	GetProgressionStats(ctx context.Context, playerID uuid.UUID) (*api.CombatSessionResponse, error)
 	ApplyExperience(ctx context.Context, playerID uuid.UUID, exp int) (*api.CombatSessionResponse, error)
 
-	// Economy mechanics - using existing types
+	// GetPlayerEconomy Economy mechanics - using existing types
 	GetPlayerEconomy(ctx context.Context, playerID uuid.UUID) (*api.CombatSessionResponse, error)
 	ExecuteTrade(ctx context.Context, trade *api.CombatSessionResponse) (*api.CombatSessionResponse, error)
 
-	// Social mechanics - using existing types
+	// GetSocialRelations Social mechanics - using existing types
 	GetSocialRelations(ctx context.Context, playerID uuid.UUID) (*api.CombatSessionResponse, error)
 	UpdateNPCRelation(ctx context.Context, playerID uuid.UUID, npcID uuid.UUID, change int) error
 
-	// World mechanics - using existing types
+	// GetWorldState World mechanics - using existing types
 	GetWorldState(ctx context.Context, playerID uuid.UUID) (*api.CombatSessionResponse, error)
 	TriggerWorldEvent(ctx context.Context, eventID uuid.UUID) (*api.CombatSessionResponse, error)
 }
@@ -99,8 +99,8 @@ func NewMechanicsService(
 	return ms
 }
 
-// Combat mechanics implementation
-func (ms *mechanicsService) GetCombatStats(ctx context.Context, playerID uuid.UUID) (*api.CombatSessionResponse, error) {
+// GetCombatStats Combat mechanics implementation
+func (ms *mechanicsService) GetCombatStats(_ context.Context, playerID uuid.UUID) (*api.CombatSessionResponse, error) {
 	ms.logger.WithField("player_id", playerID).Debug("Getting combat stats")
 
 	// Use memory pooling - return placeholder response
@@ -114,7 +114,7 @@ func (ms *mechanicsService) GetCombatStats(ctx context.Context, playerID uuid.UU
 	return result, nil
 }
 
-func (ms *mechanicsService) ExecuteCombatAction(ctx context.Context, playerID uuid.UUID, action *api.CombatSessionResponse) (*api.CombatSessionResponse, error) {
+func (ms *mechanicsService) ExecuteCombatAction(_ context.Context, playerID uuid.UUID, _ *api.CombatSessionResponse) (*api.CombatSessionResponse, error) {
 	ms.logger.WithField("player_id", playerID).Debug("Executing combat action")
 
 	// Use memory pooling - return placeholder response
@@ -128,8 +128,8 @@ func (ms *mechanicsService) ExecuteCombatAction(ctx context.Context, playerID uu
 	return result, nil
 }
 
-// Progression mechanics implementation
-func (ms *mechanicsService) GetProgressionStats(ctx context.Context, playerID uuid.UUID) (*api.CombatSessionResponse, error) {
+// GetProgressionStats Progression mechanics implementation
+func (ms *mechanicsService) GetProgressionStats(_ context.Context, playerID uuid.UUID) (*api.CombatSessionResponse, error) {
 	ms.logger.WithField("player_id", playerID).Debug("Getting progression stats")
 
 	result := ms.progressionStatsPool.Get().(*api.CombatSessionResponse)
@@ -141,7 +141,7 @@ func (ms *mechanicsService) GetProgressionStats(ctx context.Context, playerID uu
 	return result, nil
 }
 
-func (ms *mechanicsService) ApplyExperience(ctx context.Context, playerID uuid.UUID, exp int) (*api.CombatSessionResponse, error) {
+func (ms *mechanicsService) ApplyExperience(_ context.Context, playerID uuid.UUID, exp int) (*api.CombatSessionResponse, error) {
 	ms.logger.WithFields(logrus.Fields{
 		"player_id": playerID,
 		"exp":       exp,
@@ -156,8 +156,8 @@ func (ms *mechanicsService) ApplyExperience(ctx context.Context, playerID uuid.U
 	return result, nil
 }
 
-// Economy mechanics implementation
-func (ms *mechanicsService) GetPlayerEconomy(ctx context.Context, playerID uuid.UUID) (*api.CombatSessionResponse, error) {
+// GetPlayerEconomy Economy mechanics implementation
+func (ms *mechanicsService) GetPlayerEconomy(_ context.Context, playerID uuid.UUID) (*api.CombatSessionResponse, error) {
 	ms.logger.WithField("player_id", playerID).Debug("Getting player economy")
 
 	result := ms.economyPool.Get().(*api.CombatSessionResponse)
@@ -169,7 +169,7 @@ func (ms *mechanicsService) GetPlayerEconomy(ctx context.Context, playerID uuid.
 	return result, nil
 }
 
-func (ms *mechanicsService) ExecuteTrade(ctx context.Context, trade *api.CombatSessionResponse) (*api.CombatSessionResponse, error) {
+func (ms *mechanicsService) ExecuteTrade(_ context.Context, _ *api.CombatSessionResponse) (*api.CombatSessionResponse, error) {
 	ms.logger.WithField("trade", "executed").Debug("Executing trade")
 
 	result := ms.economyPool.Get().(*api.CombatSessionResponse)
@@ -180,8 +180,8 @@ func (ms *mechanicsService) ExecuteTrade(ctx context.Context, trade *api.CombatS
 	return result, nil
 }
 
-// Social mechanics implementation
-func (ms *mechanicsService) GetSocialRelations(ctx context.Context, playerID uuid.UUID) (*api.CombatSessionResponse, error) {
+// GetSocialRelations Social mechanics implementation
+func (ms *mechanicsService) GetSocialRelations(_ context.Context, playerID uuid.UUID) (*api.CombatSessionResponse, error) {
 	ms.logger.WithField("player_id", playerID).Debug("Getting social relations")
 
 	result := ms.socialPool.Get().(*api.CombatSessionResponse)
@@ -193,7 +193,7 @@ func (ms *mechanicsService) GetSocialRelations(ctx context.Context, playerID uui
 	return result, nil
 }
 
-func (ms *mechanicsService) UpdateNPCRelation(ctx context.Context, playerID uuid.UUID, npcID uuid.UUID, change int) error {
+func (ms *mechanicsService) UpdateNPCRelation(_ context.Context, playerID uuid.UUID, npcID uuid.UUID, change int) error {
 	ms.logger.WithFields(logrus.Fields{
 		"player_id": playerID,
 		"npc_id":    npcID,
@@ -204,8 +204,8 @@ func (ms *mechanicsService) UpdateNPCRelation(ctx context.Context, playerID uuid
 	return nil
 }
 
-// World mechanics implementation
-func (ms *mechanicsService) GetWorldState(ctx context.Context, playerID uuid.UUID) (*api.CombatSessionResponse, error) {
+// GetWorldState World mechanics implementation
+func (ms *mechanicsService) GetWorldState(_ context.Context, playerID uuid.UUID) (*api.CombatSessionResponse, error) {
 	ms.logger.WithField("player_id", playerID).Debug("Getting world state")
 
 	result := ms.worldPool.Get().(*api.CombatSessionResponse)
@@ -217,7 +217,7 @@ func (ms *mechanicsService) GetWorldState(ctx context.Context, playerID uuid.UUI
 	return result, nil
 }
 
-func (ms *mechanicsService) TriggerWorldEvent(ctx context.Context, eventID uuid.UUID) (*api.CombatSessionResponse, error) {
+func (ms *mechanicsService) TriggerWorldEvent(_ context.Context, eventID uuid.UUID) (*api.CombatSessionResponse, error) {
 	ms.logger.WithField("event_id", eventID).Debug("Triggering world event")
 
 	result := ms.worldPool.Get().(*api.CombatSessionResponse)
@@ -227,4 +227,3 @@ func (ms *mechanicsService) TriggerWorldEvent(ctx context.Context, eventID uuid.
 
 	return result, nil
 }
-

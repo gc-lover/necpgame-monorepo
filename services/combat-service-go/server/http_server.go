@@ -17,7 +17,7 @@ type CombatServiceConfig struct {
 	// Add configuration fields here
 }
 
-// OPTIMIZATION: Issue #1936 - Memory-aligned struct for performance
+// CombatServer OPTIMIZATION: Issue #1936 - Memory-aligned struct for performance
 type CombatServer struct {
 	router  *chi.Mux
 	logger  *logrus.Logger
@@ -25,7 +25,7 @@ type CombatServer struct {
 	metrics *CombatMetrics
 }
 
-// OPTIMIZATION: Issue #1936 - Struct field alignment (large → small)
+// CombatMetrics OPTIMIZATION: Issue #1936 - Struct field alignment (large → small)
 type CombatMetrics struct {
 	RequestsTotal      prometheus.Counter   `json:"-"` // 16 bytes (interface)
 	RequestDuration    prometheus.Histogram `json:"-"` // 16 bytes (interface)
@@ -34,7 +34,7 @@ type CombatMetrics struct {
 	DamageCalculations prometheus.Counter   `json:"-"` // 16 bytes (interface)
 }
 
-func NewCombatServer(config *CombatServiceConfig, logger *logrus.Logger) (*CombatServer, error) {
+func NewCombatServer(logger *logrus.Logger) (*CombatServer, error) {
 	// Initialize metrics
 	metrics := &CombatMetrics{
 		RequestsTotal: promauto.NewCounter(prometheus.CounterOpts{
@@ -138,7 +138,7 @@ func (s *CombatServer) Router() *chi.Mux {
 	return s.router
 }
 
-func (s *CombatServer) HealthCheck(w http.ResponseWriter, r *http.Request) {
+func (s *CombatServer) HealthCheck(w http.ResponseWriter) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(`{"status":"healthy","service":"combat-service","version":"1.0.0"}`))

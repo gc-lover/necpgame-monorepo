@@ -1,4 +1,4 @@
-// SQL queries use prepared statements with placeholders (, , ?) for safety
+// Package server SQL queries use prepared statements with placeholders (, , ?) for safety
 // Issue: #1490
 package server
 
@@ -26,7 +26,7 @@ func NewChatCommandService(logger *logrus.Logger) *ChatCommandService {
 	}
 }
 
-func (s *ChatCommandService) ExecuteCommand(ctx context.Context, req *models.ExecuteCommandRequest) (*models.CommandResponse, error) {
+func (s *ChatCommandService) ExecuteCommand(_ context.Context, req *models.ExecuteCommandRequest) (*models.CommandResponse, error) {
 	if req.Command == "" {
 		return &models.CommandResponse{
 			Success: false,
@@ -45,7 +45,7 @@ func (s *ChatCommandService) ExecuteCommand(ctx context.Context, req *models.Exe
 	case "/ping", "/p":
 		return s.handlePingCommand(req), nil
 	case "/whoami", "/who":
-		return s.handleWhoAmICommand(ctx, req), nil
+		return s.handleWhoAmICommand(req), nil
 	default:
 		return &models.CommandResponse{
 			Success: false,
@@ -86,7 +86,7 @@ func (s *ChatCommandService) handlePingCommand(req *models.ExecuteCommandRequest
 	}
 }
 
-func (s *ChatCommandService) handleWhoAmICommand(ctx context.Context, req *models.ExecuteCommandRequest) *models.CommandResponse {
+func (s *ChatCommandService) handleWhoAmICommand(req *models.ExecuteCommandRequest) *models.CommandResponse {
 	// TODO: Extract character ID from JWT token in context
 	result := "Character info not available (JWT token parsing not implemented)"
 	return &models.CommandResponse{
@@ -99,5 +99,3 @@ func (s *ChatCommandService) handleWhoAmICommand(ctx context.Context, req *model
 func stringPtr(s string) *string {
 	return &s
 }
-
-

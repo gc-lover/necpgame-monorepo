@@ -1,4 +1,4 @@
-// Issue: #141886738
+// Package server Issue: #141886738
 package server
 
 import (
@@ -7,10 +7,10 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/gc-lover/necpgame-monorepo/services/support-service-go/models"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/gc-lover/necpgame-monorepo/services/support-service-go/models"
 	"github.com/sirupsen/logrus"
 )
 
@@ -338,4 +338,3 @@ func (r *TicketRepository) GetNextTicketNumber(ctx context.Context) (string, err
 func formatNumber(n int) string {
 	return fmt.Sprintf("%04d", n)
 }
-

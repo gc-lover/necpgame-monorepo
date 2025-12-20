@@ -82,7 +82,11 @@ func (sb *StringBuilder) Len() int {
 
 // GetStringBuilder gets a pooled string builder
 func GetStringBuilder() *StringBuilder {
-	return stringBuilderPool.Get().(*StringBuilder)
+	if sb, ok := stringBuilderPool.Get().(*StringBuilder); ok {
+		return sb
+	}
+	// Fallback if type assertion fails
+	return &StringBuilder{}
 }
 
 // ReleaseStringBuilder returns builder to pool
@@ -93,17 +97,40 @@ func ReleaseStringBuilder(sb *StringBuilder) {
 
 // UUIDToStringFast converts UUID to string with zero allocations
 func UUIDToStringFast(uuid interface{ String() string }) string {
-	buf := uuidStringPool.Get().([]byte)
-	defer uuidStringPool.Put(buf)
+	if uuid == nil {
+		return ""
+	}
+
+	buf := uuidStringPool.Get()
+	defer func() {
+		if buf != nil {
+			uuidStringPool.Put(buf)
+		}
+	}()
+
+	bufBytes, ok := buf.([]byte)
+	if !ok {
+		// Fallback if type assertion fails
+		return uuid.String()
+	}
 
 	s := uuid.String()
-	copy(buf, s)
-	return unsafe.String(&buf[0], len(s))
+	if len(s) > len(bufBytes) {
+		// Fallback to regular string conversion if UUID is too long
+		return s
+	}
+
+	copy(bufBytes, s)
+	return unsafe.String(&bufBytes[0], len(s))
 }
 
 // GetJSONBuffer gets a pooled JSON buffer
 func GetJSONBuffer() []byte {
-	return jsonBufferPool.Get().([]byte)
+	if buf, ok := jsonBufferPool.Get().([]byte); ok {
+		return buf
+	}
+	// Fallback if type assertion fails
+	return make([]byte, 0, 4096)
 }
 
 // ReleaseJSONBuffer returns buffer to pool
@@ -115,7 +142,11 @@ func ReleaseJSONBuffer(buf []byte) {
 
 // GetIntSlice gets a pooled int slice
 func GetIntSlice() []int {
-	return intSlicePool.Get().([]int)
+	if slice, ok := intSlicePool.Get().([]int); ok {
+		return slice
+	}
+	// Fallback if type assertion fails
+	return make([]int, 0, 100)
 }
 
 // ReleaseIntSlice returns slice to pool
@@ -127,7 +158,11 @@ func ReleaseIntSlice(slice []int) {
 
 // GetStringSlice gets a pooled string slice
 func GetStringSlice() []string {
-	return stringSlicePool.Get().([]string)
+	if slice, ok := stringSlicePool.Get().([]string); ok {
+		return slice
+	}
+	// Fallback if type assertion fails
+	return make([]string, 0, 50)
 }
 
 // ReleaseStringSlice returns slice to pool

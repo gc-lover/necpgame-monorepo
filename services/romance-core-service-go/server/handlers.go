@@ -1,4 +1,4 @@
-// Issue: #140876112
+// Package server Issue: #140876112
 package server
 
 import (
@@ -229,14 +229,14 @@ func (s *RomanceCoreServer) getRomanceStatsFromDB(ctx context.Context, playerID 
 }
 
 // HealthCheckHandler проверяет здоровье сервиса
-func (s *RomanceCoreServer) HealthCheckHandler(w http.ResponseWriter, r *http.Request) {
+func (s *RomanceCoreServer) HealthCheckHandler(w http.ResponseWriter) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(`{"status": "healthy", "service": "romance-core-service"}`))
 }
 
 // ReadinessCheckHandler проверяет готовность сервиса
-func (s *RomanceCoreServer) ReadinessCheckHandler(w http.ResponseWriter, r *http.Request) {
+func (s *RomanceCoreServer) ReadinessCheckHandler(w http.ResponseWriter) {
 	// Проверяем подключение к БД
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
@@ -253,7 +253,7 @@ func (s *RomanceCoreServer) ReadinessCheckHandler(w http.ResponseWriter, r *http
 }
 
 // MetricsHandler предоставляет метрики сервиса
-func (s *RomanceCoreServer) MetricsHandler(w http.ResponseWriter, r *http.Request) {
+func (s *RomanceCoreServer) MetricsHandler(w http.ResponseWriter) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(`{"service": "romance-core-service", "version": "1.0.0", "algorithms": ["scoring", "filtering", "chemistry", "cultural_adaptation", "trigger_validation"]}`))

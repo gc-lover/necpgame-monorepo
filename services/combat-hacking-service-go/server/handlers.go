@@ -1,4 +1,4 @@
-// Issue: #1595
+// Package server Issue: #1595
 // ogen handlers - TYPED responses (no interface{} boxing!)
 package server
 
@@ -36,7 +36,7 @@ func (h *Handlers) HackTarget(ctx context.Context, req *api.HackTargetRequest) (
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	playerID, err := h.getPlayerIDFromContext(ctx)
+	playerID, err := h.getPlayerIDFromContext()
 	if err != nil {
 		return &api.HackTargetUnauthorized{}, nil
 	}
@@ -57,7 +57,7 @@ func (h *Handlers) ActivateCountermeasures(ctx context.Context, req *api.Counter
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	playerID, err := h.getPlayerIDFromContext(ctx)
+	playerID, err := h.getPlayerIDFromContext()
 	if err != nil {
 		return &api.ActivateCountermeasuresUnauthorized{}, nil
 	}
@@ -75,7 +75,7 @@ func (h *Handlers) GetDemons(ctx context.Context) (api.GetDemonsRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	playerID, err := h.getPlayerIDFromContext(ctx)
+	playerID, err := h.getPlayerIDFromContext()
 	if err != nil {
 		return &api.GetDemonsUnauthorized{}, nil
 	}
@@ -93,7 +93,7 @@ func (h *Handlers) ActivateDemon(ctx context.Context, req *api.ActivateDemonRequ
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	playerID, err := h.getPlayerIDFromContext(ctx)
+	playerID, err := h.getPlayerIDFromContext()
 	if err != nil {
 		return &api.ActivateDemonUnauthorized{}, nil
 	}
@@ -140,7 +140,7 @@ func (h *Handlers) AccessNetwork(ctx context.Context, req *api.NetworkAccessRequ
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	playerID, err := h.getPlayerIDFromContext(ctx)
+	playerID, err := h.getPlayerIDFromContext()
 	if err != nil {
 		return &api.AccessNetworkUnauthorized{}, nil
 	}
@@ -158,7 +158,7 @@ func (h *Handlers) GetOverheatStatus(ctx context.Context) (api.GetOverheatStatus
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	playerID, err := h.getPlayerIDFromContext(ctx)
+	playerID, err := h.getPlayerIDFromContext()
 	if err != nil {
 		return &api.GetOverheatStatusUnauthorized{}, nil
 	}
@@ -171,7 +171,7 @@ func (h *Handlers) GetOverheatStatus(ctx context.Context) (api.GetOverheatStatus
 	return status, nil
 }
 
-func (h *Handlers) getPlayerIDFromContext(ctx context.Context) (uuid.UUID, error) {
+func (h *Handlers) getPlayerIDFromContext() (uuid.UUID, error) {
 	// TODO: Extract from JWT token in context
 	return uuid.New(), nil
 }

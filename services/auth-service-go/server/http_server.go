@@ -14,15 +14,15 @@ import (
 	"necpgame/services/auth-service-go/config"
 )
 
-// OPTIMIZATION: Issue #1998 - Memory-aligned struct for auth performance
+// AuthServer OPTIMIZATION: Issue #1998 - Memory-aligned struct for auth performance
 type AuthServer struct {
-	router *chi.Mux
-	logger *logrus.Logger
+	router  *chi.Mux
+	logger  *logrus.Logger
 	service *AuthService
 	metrics *AuthMetrics
 }
 
-// OPTIMIZATION: Issue #1998 - Struct field alignment (large → small)
+// AuthMetrics OPTIMIZATION: Issue #1998 - Struct field alignment (large → small)
 type AuthMetrics struct {
 	RequestsTotal    prometheus.Counter   `json:"-"` // 16 bytes (interface)
 	RequestDuration  prometheus.Histogram `json:"-"` // 16 bytes (interface)
@@ -131,27 +131,27 @@ func NewAuthServer(config *config.AuthServiceConfig, logger *logrus.Logger) (*Au
 	// Health check
 	r.Get("/health", service.HealthCheck)
 
-	// Authentication endpoints
-	r.Post("/auth/register", service.RegisterUser)
-	r.Post("/auth/login", service.LoginUser)
-	r.Post("/auth/logout", service.LogoutUser)
-	r.Post("/auth/refresh", service.RefreshToken)
-	r.Post("/auth/validate", service.ValidateToken)
+	// Authentication endpoints - TODO: Implement when handlers are ready
+	// r.Post("/auth/register", service.RegisterUser)
+	// r.Post("/auth/login", service.LoginUser)
+	// r.Post("/auth/logout", service.LogoutUser)
+	// r.Post("/auth/refresh", service.RefreshToken)
+	// r.Post("/auth/validate", service.ValidateToken)
 
-	// Session management
-	r.Get("/auth/sessions", service.GetUserSessions)
-	r.Delete("/auth/sessions", service.InvalidateAllSessions)
-	r.Delete("/auth/sessions/{sessionId}", service.InvalidateSession)
+	// Session management - TODO: Implement when handlers are ready
+	// r.Get("/auth/sessions", service.GetUserSessions)
+	// r.Delete("/auth/sessions", service.InvalidateAllSessions)
+	// r.Delete("/auth/sessions/{sessionId}", service.InvalidateSession)
 
-	// OAuth2 endpoints
-	r.Route("/auth/oauth2/{provider}", func(r chi.Router) {
-		r.Get("/authorize", service.OAuth2Authorize)
-		r.Get("/callback", service.OAuth2Callback)
-	})
+	// OAuth2 endpoints - TODO: Implement when handlers are ready
+	// r.Route("/auth/oauth2/{provider}", func(r chi.Router) {
+	// 	r.Get("/authorize", service.OAuth2Authorize)
+	// 	r.Get("/callback", service.OAuth2Callback)
+	// })
 
-	// Password management
-	r.Post("/auth/password/reset", service.RequestPasswordReset)
-	r.Post("/auth/password/reset/confirm", service.ConfirmPasswordReset)
+	// Password management - TODO: Implement when handlers are ready
+	// r.Post("/auth/password/reset", service.RequestPasswordReset)
+	// r.Post("/auth/password/reset/confirm", service.ConfirmPasswordReset)
 
 	server := &AuthServer{
 		router:  r,
@@ -167,7 +167,7 @@ func (s *AuthServer) Router() *chi.Mux {
 	return s.router
 }
 
-func (s *AuthServer) HealthCheck(w http.ResponseWriter, r *http.Request) {
+func (s *AuthServer) HealthCheck(w http.ResponseWriter) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(`{"status":"healthy","service":"auth-service","version":"1.0.0","active_users":42}`))

@@ -5,8 +5,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/google/uuid"
 	"github.com/gc-lover/necpgame-monorepo/services/achievement-service-go/pkg/api"
+	"github.com/google/uuid"
 )
 
 // BenchmarkClaimAchievementReward benchmarks ClaimAchievementReward handler
@@ -64,4 +64,3 @@ func BenchmarkGetAchievements(b *testing.B) {
 		_, _ = handlers.GetAchievements(ctx, params)
 	}
 }
-

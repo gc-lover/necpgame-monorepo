@@ -12,7 +12,6 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
-
 	// pb "github.com/gc-lover/necpgame-monorepo/proto/realtime/projectile" // TODO: Fix proto import
 )
 
@@ -21,19 +20,19 @@ type Projectile struct {
 	ProjectileID uint64
 	OwnerID      uint64
 	Type         pb.ProjectileSpawn_ProjectileType
-	
+
 	// Position (server-authoritative)
 	X, Y, Z float32
-	
+
 	// Velocity
 	VX, VY, VZ float32
-	
+
 	// Spawn time
 	SpawnTime time.Time
-	
+
 	// TTL (time to live)
 	TTL time.Duration
-	
+
 	// Damage (server-calculated)
 	Damage uint32
 }
@@ -42,41 +41,41 @@ type Projectile struct {
 type ProjectileService struct {
 	// Active projectiles (lock-free read!)
 	projectiles sync.Map // projectile_id → *Projectile
-	
+
 	// Projectile ID generator (atomic)
 	nextProjectileID atomic.Uint64
-	
+
 	// Weapon configurations (for validation)
 	weaponConfigs sync.Map // weapon_id → *WeaponConfig
-	
+
 	// Player states (for validation)
 	playerStates sync.Map // player_id → *PlayerFireState
 }
 
 // WeaponConfig represents weapon configuration for validation
 type WeaponConfig struct {
-	WeaponID     uint32
-	FireRate     float32 // shots per second
+	WeaponID        uint32
+	FireRate        float32 // shots per second
 	ProjectileSpeed float32 // m/s
-	Damage       uint32
-	TTL          time.Duration
+	Damage          uint32
+	TTL             time.Duration
 }
 
 // PlayerFireState tracks player firing for anti-cheat
 type PlayerFireState struct {
-	PlayerID      uint64
-	LastFireTime  time.Time
-	FireCount     int
-	LastWeaponID  uint32
+	PlayerID     uint64
+	LastFireTime time.Time
+	FireCount    int
+	LastWeaponID uint32
 }
 
 // NewProjectileService creates new projectile service
 func NewProjectileService() *ProjectileService {
 	s := &ProjectileService{}
-	
+
 	// Load default weapon configs
 	s.loadWeaponConfigs()
-	
+
 	return s
 }
 
@@ -117,7 +116,7 @@ func (s *ProjectileService) ValidateProjectileSpawn(ctx context.Context, spawn *
 		float64(spawn.Direction.X*spawn.Direction.X +
 			spawn.Direction.Y*spawn.Direction.Y +
 			spawn.Direction.Z*spawn.Direction.Z))
-	
+
 	if dirLen < 90 || dirLen > 110 { // Should be ~100 (quantized unit vector)
 		result.Reason = pb.ProjectileValidationResult_INVALID_DIRECTION
 		return result
@@ -213,26 +212,26 @@ func (s *ProjectileService) SimulateTick(ctx context.Context, deltaTime float32)
 // GetActiveProjectiles returns all active projectiles
 func (s *ProjectileService) GetActiveProjectiles() []*Projectile {
 	projectiles := make([]*Projectile, 0, 100)
-	
+
 	s.projectiles.Range(func(_, value interface{}) bool {
 		projectiles = append(projectiles, value.(*Projectile))
 		return true
 	})
-	
+
 	return projectiles
 }
 
 // CleanupExpired removes expired projectiles
 func (s *ProjectileService) CleanupExpired() {
 	now := time.Now()
-	
+
 	s.projectiles.Range(func(key, value interface{}) bool {
 		projectile := value.(*Projectile)
-		
+
 		if now.Sub(projectile.SpawnTime) > projectile.TTL {
 			s.projectiles.Delete(key)
 		}
-		
+
 		return true
 	})
 }
@@ -263,13 +262,12 @@ func (p *Projectile) ToProto() *pb.ProjectileState {
 func (s *ProjectileService) loadWeaponConfigs() {
 	// Example weapon configs
 	configs := []WeaponConfig{
-		{WeaponID: 1, FireRate: 10.0, ProjectileSpeed: 100.0, Damage: 25, TTL: 5 * time.Second},   // Assault Rifle
-		{WeaponID: 2, FireRate: 1.0, ProjectileSpeed: 50.0, Damage: 100, TTL: 10 * time.Second},   // Sniper
-		{WeaponID: 3, FireRate: 0.5, ProjectileSpeed: 30.0, Damage: 150, TTL: 15 * time.Second},   // Rocket
+		{WeaponID: 1, FireRate: 10.0, ProjectileSpeed: 100.0, Damage: 25, TTL: 5 * time.Second}, // Assault Rifle
+		{WeaponID: 2, FireRate: 1.0, ProjectileSpeed: 50.0, Damage: 100, TTL: 10 * time.Second}, // Sniper
+		{WeaponID: 3, FireRate: 0.5, ProjectileSpeed: 30.0, Damage: 150, TTL: 15 * time.Second}, // Rocket
 	}
 
 	for _, config := range configs {
 		s.weaponConfigs.Store(config.WeaponID, &config)
 	}
 }
-

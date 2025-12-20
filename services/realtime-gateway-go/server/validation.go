@@ -1,4 +1,4 @@
-// Issue: #141889273
+// Package server Issue: #141889273
 package server
 
 import "unicode"
@@ -23,31 +23,3 @@ func isValidPlayerID(id string) bool {
 	}
 	return true
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

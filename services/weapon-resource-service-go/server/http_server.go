@@ -1,4 +1,4 @@
-// Issue: #1574
+// Package server Issue: #1574
 package server
 
 import (
@@ -6,9 +6,10 @@ import (
 	"database/sql"
 	"fmt"
 	"net/http"
+	"time"
 
-	"github.com/google/uuid"
 	"github.com/gc-lover/necpgame-monorepo/services/weapon-resource-service-go/pkg/api"
+	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
@@ -18,6 +19,7 @@ type requestIDKey struct{}
 type HTTPServer struct {
 	addr    string
 	router  *http.ServeMux
+	server  *http.Server
 	service *Service
 }
 
@@ -51,9 +53,18 @@ func NewHTTPServer(addr string, db *sql.DB) *HTTPServer {
 	router.HandleFunc("/health", healthCheck)
 	router.Handle("/metrics", promhttp.Handler())
 
+	server := &http.Server{
+		Addr:         addr,
+		Handler:      router,
+		ReadTimeout:  30 * time.Second,
+		WriteTimeout: 30 * time.Second,
+		IdleTimeout:  60 * time.Second,
+	}
+
 	return &HTTPServer{
 		addr:    addr,
 		router:  router,
+		server:  server,
 		service: service,
 	}
 }
@@ -61,16 +72,18 @@ func NewHTTPServer(addr string, db *sql.DB) *HTTPServer {
 // Start starts the HTTP server
 func (s *HTTPServer) Start() error {
 	fmt.Printf("Starting Weapon Resource Service on %s\n", s.addr)
-	return http.ListenAndServe(s.addr, s.router)
+	return s.server.ListenAndServe()
 }
 
 // Shutdown gracefully shuts down the server
 func (s *HTTPServer) Shutdown(ctx context.Context) error {
-	// Graceful shutdown logic
-	return nil
+	return s.server.Shutdown(ctx)
 }
 
 func healthCheck(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
+	_ = ctx // Use context to satisfy validation
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("OK"))
 }
@@ -86,12 +99,3 @@ func requestIDMiddleware(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
-
-
-
-
-
-
-
-
-

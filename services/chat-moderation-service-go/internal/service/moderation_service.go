@@ -1,4 +1,4 @@
-// Issue: #1911
+// Package service Issue: #1911
 package service
 
 import (
@@ -338,7 +338,7 @@ func (s *ModerationService) ApplyModerationAction(ctx context.Context, violation
 }
 
 // GetStats returns moderation service statistics
-func (s *ModerationService) GetStats(ctx context.Context, timeframe string) (*models.ModerationStatsResponse, error) {
+func (s *ModerationService) GetStats(timeframe string) (*models.ModerationStatsResponse, error) {
 	// Calculate time range (placeholder - not used in simplified implementation)
 	switch timeframe {
 	case "1h", "24h", "7d", "30d":
@@ -405,7 +405,7 @@ func (s *ModerationService) checkRule(message string, rule *models.ModerationRul
 	case models.RuleTypeSpamPattern:
 		return s.checkSpamPattern(message, rule.Pattern)
 	case models.RuleTypeToxicityThreshold:
-		return s.checkToxicity(message, rule.Pattern)
+		return s.checkToxicity(message)
 	default:
 		return false
 	}
@@ -448,7 +448,7 @@ func (s *ModerationService) checkSpamPattern(message, pattern string) bool {
 }
 
 // checkToxicity performs basic toxicity analysis (placeholder for ML model)
-func (s *ModerationService) checkToxicity(message, threshold string) bool {
+func (s *ModerationService) checkToxicity(message string) bool {
 	// Placeholder implementation - would integrate with ML model
 	toxicWords := []string{"toxic", "hate", "abuse", "insult"}
 	messageLower := strings.ToLower(message)

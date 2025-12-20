@@ -1,4 +1,4 @@
-// Issue: #139 - party-service ogen handlers + FULL optimizations
+// Package server Issue: #139 - party-service ogen handlers + FULL optimizations
 // BLOCKER: Context timeouts OK, Memory pooling OK, Zero allocations target
 // GAINS: 90% faster than oapi-codegen
 package server
@@ -11,10 +11,8 @@ import (
 	"github.com/google/uuid"
 )
 
-// Context timeout constants (CRITICAL!)
 const (
-	DBTimeout    = 50 * time.Millisecond
-	CacheTimeout = 10 * time.Millisecond
+	DBTimeout = 50 * time.Millisecond
 )
 
 // Handlers implements api.Handler interface (ogen typed!)
@@ -203,12 +201,9 @@ func (h *Handlers) RollForLoot(ctx context.Context, req *api.LootRollRequest, pa
 type SecurityHandler struct{}
 
 // NewSecurityHandler creates new security handler
-func NewSecurityHandler() *SecurityHandler {
-	return &SecurityHandler{}
-}
 
 // HandleBearerAuth implements BearerAuth security scheme
-func (s *SecurityHandler) HandleBearerAuth(ctx context.Context, operationName string, t api.BearerAuth) (context.Context, error) {
+func (s *SecurityHandler) HandleBearerAuth(ctx context.Context, _ string, t api.BearerAuth) (context.Context, error) {
 	// TODO: Implement JWT validation
 	// - Parse JWT token
 	// - Validate signature
@@ -235,7 +230,7 @@ func getCharacterIDFromContext(ctx context.Context) string {
 	return "player-001"
 }
 
-// Security handler (for backward compatibility with existing code)
+// HandleBearerAuth Security handler (for backward compatibility with existing code)
 func (h *Handlers) HandleBearerAuth(ctx context.Context, operationName string, t api.BearerAuth) (context.Context, error) {
 	// Delegate to security handler
 	sh := &SecurityHandler{}
@@ -243,7 +238,7 @@ func (h *Handlers) HandleBearerAuth(ctx context.Context, operationName string, t
 }
 
 // NewError implements ogen error handler
-func (h *Handlers) NewError(ctx context.Context, err error) *api.Error {
+func (h *Handlers) NewError(err error) *api.Error {
 	errStr := err.Error()
 	return &api.Error{
 		Error:   errStr,

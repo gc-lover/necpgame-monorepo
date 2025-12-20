@@ -6,30 +6,30 @@ info:
 
     '
 servers:
-- url: http://localhost:8095
-  description: Local development
-- url: https://api.necpgame.com
-  description: Production
+  - url: http://localhost:8095
+    description: Local development
+  - url: https://api.necpgame.com
+    description: Production
 security:
-- BearerAuth: []
+  - BearerAuth: [ ]
 tags:
-- name: conflicts
-  description: Управление конфликтами
+  - name: conflicts
+    description: Управление конфликтами
 paths:
   /api/v1/factions/{factionId}/conflicts/declare-war:
     post:
       tags:
-      - conflicts
+        - conflicts
       summary: Объявить войну
       description: Объявить войну другой фракции
       operationId: declareWar
       parameters:
-      - name: factionId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+        - name: factionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
       requestBody:
         required: true
         content:
@@ -37,8 +37,8 @@ paths:
             schema:
               type: object
               required:
-              - defender_faction_id
-              - conflict_type
+                - defender_faction_id
+                - conflict_type
               properties:
                 defender_faction_id:
                   type: string
@@ -69,23 +69,23 @@ paths:
   /api/v1/conflicts/active:
     get:
       tags:
-      - conflicts
+        - conflicts
       summary: Активные конфликты
       description: Получить список активных конфликтов
       operationId: listActiveConflicts
       parameters:
-      - name: faction_id
-        in: query
-        schema:
-          type: string
-          format: uuid
-        description: Фильтр по фракции
-      - name: conflict_type
-        in: query
-        schema:
-          $ref: '#/components/schemas/ConflictType'
-      - $ref: common.yaml#/components/parameters/PageParam
-      - $ref: common.yaml#/components/parameters/LimitParam
+        - name: faction_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Фильтр по фракции
+        - name: conflict_type
+          in: query
+          schema:
+            $ref: '#/components/schemas/ConflictType'
+        - $ref: common.yaml#/components/parameters/PageParam
+        - $ref: common.yaml#/components/parameters/LimitParam
       responses:
         '200':
           description: Список конфликтов
@@ -103,17 +103,17 @@ paths:
   /api/v1/conflicts/{conflictId}/battle/report:
     post:
       tags:
-      - conflicts
+        - conflicts
       summary: Отчет о битве
       description: Зарегистрировать результат битвы в конфликте
       operationId: reportBattle
       parameters:
-      - name: conflictId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+        - name: conflictId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
       requestBody:
         required: true
         content:
@@ -121,9 +121,9 @@ paths:
             schema:
               type: object
               required:
-              - attacker_score
-              - defender_score
-              - participants_count
+                - attacker_score
+                - defender_score
+                - participants_count
               properties:
                 attacker_score:
                   type: integer
@@ -149,17 +149,17 @@ paths:
   /api/v1/conflicts/{conflictId}/resolve:
     post:
       tags:
-      - conflicts
+        - conflicts
       summary: Разрешить конфликт
       description: Завершить конфликт с определением победителя
       operationId: resolveConflict
       parameters:
-      - name: conflictId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+        - name: conflictId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
       requestBody:
         required: true
         content:
@@ -167,7 +167,7 @@ paths:
             schema:
               type: object
               required:
-              - resolution_type
+                - resolution_type
               properties:
                 winner_faction_id:
                   type: string
@@ -175,10 +175,10 @@ paths:
                 resolution_type:
                   type: string
                   enum:
-                  - military_victory
-                  - diplomatic
-                  - economic
-                  - stalemate
+                    - military_victory
+                    - diplomatic
+                    - economic
+                    - stalemate
       responses:
         '200':
           description: Конфликт разрешен
@@ -189,23 +189,23 @@ paths:
   /api/v1/factions/{factionId}/conflicts/history:
     get:
       tags:
-      - conflicts
+        - conflicts
       summary: История конфликтов
       description: Получить историю конфликтов фракции
       operationId: getConflictHistory
       parameters:
-      - name: factionId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      - name: status
-        in: query
-        schema:
-          $ref: '#/components/schemas/ConflictStatus'
-      - $ref: common.yaml#/components/parameters/PageParam
-      - $ref: common.yaml#/components/parameters/LimitParam
+        - name: factionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/ConflictStatus'
+        - $ref: common.yaml#/components/parameters/PageParam
+        - $ref: common.yaml#/components/parameters/LimitParam
       responses:
         '200':
           description: История конфликтов
@@ -227,18 +227,18 @@ components:
     ConflictType:
       type: string
       enum:
-      - territorial
-      - economic
-      - political
-      - ideological
-      - resource
+        - territorial
+        - economic
+        - political
+        - ideological
+        - resource
     ConflictStatus:
       type: string
       enum:
-      - active
-      - resolved
-      - ongoing
-      - stalemate
+        - active
+        - resolved
+        - ongoing
+        - stalemate
     Conflict:
       type: object
       properties:

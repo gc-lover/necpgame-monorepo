@@ -85,7 +85,7 @@ func (h *Handlers) CheckQuestConditions(ctx context.Context, params api.CheckQue
 
 // CompleteQuest implements POST /gameplay/quests/{questId}/complete
 // Issue: #50
-func (h *Handlers) CompleteQuest(ctx context.Context, req api.OptCompleteQuestRequest, params api.CompleteQuestParams) (api.CompleteQuestRes, error) {
+func (h *Handlers) CompleteQuest(ctx context.Context, _ api.OptCompleteQuestRequest, params api.CompleteQuestParams) (api.CompleteQuestRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
@@ -158,7 +158,7 @@ func (h *Handlers) DistributeQuestRewards(ctx context.Context, params api.Distri
 
 // CreateEncounter implements POST /gameplay/combat/ai/encounter
 // Issue: #50
-func (h *Handlers) CreateEncounter(ctx context.Context, req *api.CreateEncounterRequest) (api.CreateEncounterRes, error) {
+func (h *Handlers) CreateEncounter(ctx context.Context, _ *api.CreateEncounterRequest) (api.CreateEncounterRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
@@ -214,7 +214,7 @@ func (h *Handlers) EndEncounter(ctx context.Context, req *api.EndEncounterReques
 
 // GetAIProfile implements GET /gameplay/combat/ai/profiles/{profileId}
 // Issue: #50
-func (h *Handlers) GetAIProfile(ctx context.Context, params api.GetAIProfileParams) (api.GetAIProfileRes, error) {
+func (h *Handlers) GetAIProfile(ctx context.Context, _ api.GetAIProfileParams) (api.GetAIProfileRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
@@ -225,7 +225,7 @@ func (h *Handlers) GetAIProfile(ctx context.Context, params api.GetAIProfilePara
 
 // GetAIProfileTelemetry implements GET /gameplay/combat/ai/profiles/{profileId}/telemetry
 // Issue: #50
-func (h *Handlers) GetAIProfileTelemetry(ctx context.Context, params api.GetAIProfileTelemetryParams) (api.GetAIProfileTelemetryRes, error) {
+func (h *Handlers) GetAIProfileTelemetry(ctx context.Context, _ api.GetAIProfileTelemetryParams) (api.GetAIProfileTelemetryRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
@@ -236,7 +236,7 @@ func (h *Handlers) GetAIProfileTelemetry(ctx context.Context, params api.GetAIPr
 
 // GetDialogueHistory implements GET /gameplay/dialogue/history
 // Issue: #50
-func (h *Handlers) GetDialogueHistory(ctx context.Context, params api.GetDialogueHistoryParams) (api.GetDialogueHistoryRes, error) {
+func (h *Handlers) GetDialogueHistory(ctx context.Context, _ api.GetDialogueHistoryParams) (api.GetDialogueHistoryRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
@@ -247,7 +247,7 @@ func (h *Handlers) GetDialogueHistory(ctx context.Context, params api.GetDialogu
 
 // GetEncounter implements GET /gameplay/combat/ai/encounter/{encounterId}
 // Issue: #50
-func (h *Handlers) GetEncounter(ctx context.Context, params api.GetEncounterParams) (api.GetEncounterRes, error) {
+func (h *Handlers) GetEncounter(ctx context.Context, _ api.GetEncounterParams) (api.GetEncounterRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
@@ -258,7 +258,7 @@ func (h *Handlers) GetEncounter(ctx context.Context, params api.GetEncounterPara
 
 // GetPlayerQuests implements GET /gameplay/quests/by-player/{player_id}
 // Issue: #50
-func (h *Handlers) GetPlayerQuests(ctx context.Context, params api.GetPlayerQuestsParams) (api.GetPlayerQuestsRes, error) {
+func (h *Handlers) GetPlayerQuests(ctx context.Context, _ api.GetPlayerQuestsParams) (api.GetPlayerQuestsRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
@@ -277,7 +277,7 @@ func (h *Handlers) GetPlayerQuests(ctx context.Context, params api.GetPlayerQues
 
 // GetQuest implements GET /gameplay/quests/{quest_id}
 // Issue: #50
-func (h *Handlers) GetQuest(ctx context.Context, params api.GetQuestParams) (api.GetQuestRes, error) {
+func (h *Handlers) GetQuest(ctx context.Context, _ api.GetQuestParams) (api.GetQuestRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
@@ -293,7 +293,7 @@ func (h *Handlers) GetQuest(ctx context.Context, params api.GetQuestParams) (api
 
 // GetQuestDialogue implements GET /gameplay/quests/{quest_id}/dialogue
 // Issue: #50
-func (h *Handlers) GetQuestDialogue(ctx context.Context, params api.GetQuestDialogueParams) (api.GetQuestDialogueRes, error) {
+func (h *Handlers) GetQuestDialogue(ctx context.Context, _ api.GetQuestDialogueParams) (api.GetQuestDialogueRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
@@ -308,7 +308,7 @@ func (h *Handlers) GetQuestDialogue(ctx context.Context, params api.GetQuestDial
 
 // GetQuestEvents implements GET /gameplay/quests/{quest_id}/events
 // Issue: #50
-func (h *Handlers) GetQuestEvents(ctx context.Context, params api.GetQuestEventsParams) (api.GetQuestEventsRes, error) {
+func (h *Handlers) GetQuestEvents(ctx context.Context, _ api.GetQuestEventsParams) (api.GetQuestEventsRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
@@ -326,7 +326,7 @@ func (h *Handlers) GetQuestEvents(ctx context.Context, params api.GetQuestEvents
 
 // GetQuestRequirements implements GET /gameplay/quests/{quest_id}/requirements
 // Issue: #50
-func (h *Handlers) GetQuestRequirements(ctx context.Context, params api.GetQuestRequirementsParams) (api.GetQuestRequirementsRes, error) {
+func (h *Handlers) GetQuestRequirements(ctx context.Context, _ api.GetQuestRequirementsParams) (api.GetQuestRequirementsRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
@@ -341,7 +341,7 @@ func (h *Handlers) GetQuestRequirements(ctx context.Context, params api.GetQuest
 
 // GetQuestRewards implements GET /gameplay/quests/{quest_id}/rewards
 // Issue: #50
-func (h *Handlers) GetQuestRewards(ctx context.Context, params api.GetQuestRewardsParams) (api.GetQuestRewardsRes, error) {
+func (h *Handlers) GetQuestRewards(ctx context.Context, _ api.GetQuestRewardsParams) (api.GetQuestRewardsRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
@@ -356,7 +356,7 @@ func (h *Handlers) GetQuestRewards(ctx context.Context, params api.GetQuestRewar
 
 // GetQuestState implements GET /gameplay/quests/{quest_id}/state
 // Issue: #50
-func (h *Handlers) GetQuestState(ctx context.Context, params api.GetQuestStateParams) (api.GetQuestStateRes, error) {
+func (h *Handlers) GetQuestState(ctx context.Context, _ api.GetQuestStateParams) (api.GetQuestStateRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
@@ -371,7 +371,7 @@ func (h *Handlers) GetQuestState(ctx context.Context, params api.GetQuestStatePa
 
 // GetSkillCheckHistory implements GET /gameplay/quests/{quest_id}/skill-checks
 // Issue: #50
-func (h *Handlers) GetSkillCheckHistory(ctx context.Context, params api.GetSkillCheckHistoryParams) (api.GetSkillCheckHistoryRes, error) {
+func (h *Handlers) GetSkillCheckHistory(ctx context.Context, _ api.GetSkillCheckHistoryParams) (api.GetSkillCheckHistoryRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
@@ -389,7 +389,7 @@ func (h *Handlers) GetSkillCheckHistory(ctx context.Context, params api.GetSkill
 
 // StartQuest implements POST /gameplay/quests/{quest_id}/start
 // Issue: #50
-func (h *Handlers) StartQuest(ctx context.Context, req *api.StartQuestRequest) (api.StartQuestRes, error) {
+func (h *Handlers) StartQuest(ctx context.Context, _ *api.StartQuestRequest) (api.StartQuestRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
@@ -404,7 +404,7 @@ func (h *Handlers) StartQuest(ctx context.Context, req *api.StartQuestRequest) (
 
 // ListAIProfiles implements GET /gameplay/combat/ai/profiles
 // Issue: #50
-func (h *Handlers) ListAIProfiles(ctx context.Context, params api.ListAIProfilesParams) (api.ListAIProfilesRes, error) {
+func (h *Handlers) ListAIProfiles(ctx context.Context, _ api.ListAIProfilesParams) (api.ListAIProfilesRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
@@ -417,7 +417,7 @@ func (h *Handlers) ListAIProfiles(ctx context.Context, params api.ListAIProfiles
 
 // MakeDialogueChoice implements POST /gameplay/quests/{quest_id}/dialogue/choice
 // Issue: #50
-func (h *Handlers) MakeDialogueChoice(ctx context.Context, req *api.DialogueChoiceRequest, params api.MakeDialogueChoiceParams) (api.MakeDialogueChoiceRes, error) {
+func (h *Handlers) MakeDialogueChoice(ctx context.Context, _ *api.DialogueChoiceRequest, _ api.MakeDialogueChoiceParams) (api.MakeDialogueChoiceRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
@@ -427,7 +427,7 @@ func (h *Handlers) MakeDialogueChoice(ctx context.Context, req *api.DialogueChoi
 
 // PerformSkillCheck implements POST /gameplay/quests/{quest_id}/skill-checks
 // Issue: #50
-func (h *Handlers) PerformSkillCheck(ctx context.Context, req *api.SkillCheckRequest, params api.PerformSkillCheckParams) (api.PerformSkillCheckRes, error) {
+func (h *Handlers) PerformSkillCheck(ctx context.Context, _ *api.SkillCheckRequest, _ api.PerformSkillCheckParams) (api.PerformSkillCheckRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
@@ -442,7 +442,7 @@ func (h *Handlers) PerformSkillCheck(ctx context.Context, req *api.SkillCheckReq
 
 // StartEncounter implements POST /gameplay/combat/ai/encounter/start
 // Issue: #50
-func (h *Handlers) StartEncounter(ctx context.Context, params api.StartEncounterParams) (api.StartEncounterRes, error) {
+func (h *Handlers) StartEncounter(ctx context.Context, _ api.StartEncounterParams) (api.StartEncounterRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
@@ -452,7 +452,7 @@ func (h *Handlers) StartEncounter(ctx context.Context, params api.StartEncounter
 
 // TransitionRaidPhase implements POST /gameplay/raids/{raid_id}/phases/{phase_id}/transition
 // Issue: #50
-func (h *Handlers) TransitionRaidPhase(ctx context.Context, req *api.RaidPhaseTransitionRequest, params api.TransitionRaidPhaseParams) (api.TransitionRaidPhaseRes, error) {
+func (h *Handlers) TransitionRaidPhase(ctx context.Context, _ *api.RaidPhaseTransitionRequest, _ api.TransitionRaidPhaseParams) (api.TransitionRaidPhaseRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
@@ -462,7 +462,7 @@ func (h *Handlers) TransitionRaidPhase(ctx context.Context, req *api.RaidPhaseTr
 
 // UpdateQuestState implements POST /gameplay/quests/{quest_id}/state/update
 // Issue: #50
-func (h *Handlers) UpdateQuestState(ctx context.Context, req *api.UpdateStateRequest, params api.UpdateQuestStateParams) (api.UpdateQuestStateRes, error) {
+func (h *Handlers) UpdateQuestState(ctx context.Context, _ *api.UpdateStateRequest, _ api.UpdateQuestStateParams) (api.UpdateQuestStateRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 

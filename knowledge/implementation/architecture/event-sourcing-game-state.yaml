@@ -1,0 +1,430 @@
+<!-- Issue: #2035 -->
+# Event Sourcing Architecture for Game State
+
+## Overview
+Event Sourcing архитектура для управления игровым состоянием в NECPGAME, обеспечивающая audit trail, temporal queries, replay capabilities и масштабируемую обработку игровых событий.
+
+## Performance Requirements
+
+**Load:** 25k events/sec, 200k concurrent players, P99 <25ms for hot queries
+
+**Data Model (optimized):**
+- Event store: 10M events/day, 100GB/day
+- Snapshot frequency: every 100 events per aggregate
+- Read model cache: Redis clusters with 1TB capacity
+- Expected struct size: ~512 bytes/event
+
+**Hot Path:** Player state queries → 10k RPS (CRITICAL)
+
+**Backend optimizations required:**
+- Event store partitioning by player_id
+- Snapshot-based state reconstruction
+- Read model projections with eventual consistency
+- CQRS separation for read/write workloads
+
+## Architecture Components
+
+### 1. Event Sourcing Flow
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Game Client   │────│ Command Handler│────│ Event Store     │
+│   (UE5)         │    │ (Business Logic)│    │ (PostgreSQL)   │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+          │                       │                       │
+          ▼                       ▼                       ▼
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Event Stream  │────│   Projectors    │────│ Read Models     │
+│   (Kafka)       │    │   (Async)       │    │ (Redis/Cache)   │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+```
+
+### 2. Aggregate Design
+
+#### Player Aggregate
+```yaml
+PlayerAggregate:
+  id: uuid
+  version: int
+  state:
+    level: int
+    experience: int64
+    position: vector3
+    inventory: [item...]
+    skills: [skill...]
+    stats: player_stats
+
+  events:
+    - PlayerCreated
+    - LevelGained
+    - ItemEquipped
+    - PositionChanged
+    - CombatStarted
+    - CombatEnded
+```
+
+#### Game Session Aggregate
+```yaml
+GameSessionAggregate:
+  id: uuid
+  version: int
+  state:
+    players: [player_id...]
+    start_time: datetime
+    end_time: datetime
+    status: active|completed|abandoned
+    score: int
+    achievements: [achievement...]
+
+  events:
+    - SessionStarted
+    - PlayerJoined
+    - PlayerLeft
+    - AchievementUnlocked
+    - SessionCompleted
+```
+
+### 3. Event Store Schema
+
+#### Events Table
+```sql
+CREATE TABLE events (
+    event_id UUID PRIMARY KEY,
+    aggregate_id UUID NOT NULL,
+    aggregate_type VARCHAR(50) NOT NULL,
+    event_type VARCHAR(100) NOT NULL,
+    event_version INT NOT NULL,
+    event_data JSONB NOT NULL,
+    metadata JSONB,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+
+    -- Partitioning
+    PARTITION BY RANGE (created_at)
+);
+
+-- Indexes for performance
+CREATE INDEX idx_events_aggregate ON events(aggregate_id, aggregate_type, event_version);
+CREATE INDEX idx_events_type_time ON events(event_type, created_at);
+CREATE INDEX idx_events_metadata ON events USING GIN(metadata);
+```
+
+#### Snapshots Table
+```sql
+CREATE TABLE snapshots (
+    aggregate_id UUID PRIMARY KEY,
+    aggregate_type VARCHAR(50) NOT NULL,
+    aggregate_version INT NOT NULL,
+    aggregate_state JSONB NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Index for efficient snapshot retrieval
+CREATE INDEX idx_snapshots_lookup ON snapshots(aggregate_id, aggregate_type);
+```
+
+## CQRS Implementation
+
+### 1. Command Side (Write Model)
+```
+Responsibilities:
+├── Business logic validation
+├── Event generation and storage
+├── Aggregate state management
+├── Concurrency control (optimistic locking)
+└── Domain invariants enforcement
+```
+
+#### Command Handlers
+```go
+type PlayerCommandHandler struct {
+    eventStore EventStore
+    publisher  EventPublisher
+}
+
+func (h *PlayerCommandHandler) HandleEquipItem(cmd EquipItemCommand) error {
+    // Load aggregate
+    player, err := h.loadPlayer(cmd.PlayerID)
+    if err != nil {
+        return err
+    }
+
+    // Validate business rules
+    if err := player.CanEquipItem(cmd.ItemID); err != nil {
+        return err
+    }
+
+    // Generate event
+    event := ItemEquippedEvent{
+        PlayerID: cmd.PlayerID,
+        ItemID:   cmd.ItemID,
+        Slot:     cmd.Slot,
+    }
+
+    // Store event
+    return h.eventStore.Save(cmd.PlayerID, event)
+}
+```
+
+### 2. Query Side (Read Model)
+```
+Responsibilities:
+├── Event stream processing
+├── Read model projection
+├── Cache management
+├── Query optimization
+└── Eventual consistency handling
+```
+
+#### Read Model Projectors
+```go
+type PlayerReadModelProjector struct {
+    cache Cache
+}
+
+func (p *PlayerReadModelProjector) Project(event Event) error {
+    switch e := event.(type) {
+    case ItemEquippedEvent:
+        return p.updatePlayerInventory(e.PlayerID, e.ItemID, e.Slot)
+    case LevelGainedEvent:
+        return p.updatePlayerLevel(e.PlayerID, e.NewLevel)
+    }
+    return nil
+}
+```
+
+## Event Processing Patterns
+
+### 1. Synchronous Processing
+```
+For immediate consistency requirements:
+Command → Validate → Store Event → Update Read Model → Response
+
+Use Case: Player inventory changes during combat
+```
+
+### 2. Asynchronous Processing
+```
+For eventual consistency:
+Command → Validate → Store Event → Publish to Kafka → Async Projectors → Update Read Models
+
+Use Case: Achievement calculations, statistics updates
+```
+
+### 3. Temporal Queries
+```
+Point-in-time queries for game state:
+- Player state at specific timestamp
+- Session replay for debugging
+- Audit trail for security/compliance
+```
+
+## State Reconstruction
+
+### 1. Aggregate Loading Strategy
+```go
+func (es *EventStore) LoadAggregate(aggregateID uuid.UUID, aggregateType string) (Aggregate, error) {
+    // Try snapshot first
+    snapshot, err := es.getLatestSnapshot(aggregateID, aggregateType)
+    if err == nil && snapshot != nil {
+        // Load from snapshot + recent events
+        events, err := es.getEventsSince(aggregateID, snapshot.Version)
+        return reconstructFromSnapshot(snapshot, events)
+    }
+
+    // Full reconstruction from events
+    events, err := es.getAllEvents(aggregateID)
+    return reconstructFromEvents(events)
+}
+```
+
+### 2. Snapshot Strategy
+```
+Snapshot Triggers:
+├── Every 100 events per aggregate
+├── Aggregate size > 10KB
+├── Time-based (hourly for active aggregates)
+└── Manual triggers for performance
+
+Retention Policy:
+├── Keep last 10 snapshots per aggregate
+├── Archive old snapshots to cold storage
+└── Delete snapshots older than 90 days
+```
+
+## Scalability Patterns
+
+### 1. Event Store Partitioning
+```
+Partitioning Strategy:
+├── By aggregate_id hash (distribute load)
+├── Time-based partitioning (efficient queries)
+├── Hot/cold storage separation
+└── Geographic replication for global players
+```
+
+### 2. Read Model Scaling
+```
+Cache Hierarchy:
+├── L1: In-memory (single request)
+├── L2: Redis cluster (shared across services)
+├── L3: PostgreSQL (authoritative source)
+
+Cache Invalidation:
+├── Event-driven updates
+├── TTL-based expiration
+├── Manual invalidation for critical updates
+```
+
+### 3. Event Streaming
+```
+Kafka Topics:
+├── events.player.*     (per region)
+├── events.game.*       (global)
+├── events.system.*     (infrastructure)
+
+Consumer Groups:
+├── read-models         (multiple instances)
+├── analytics          (parallel processing)
+├── audit              (single consumer)
+```
+
+## Reliability & Consistency
+
+### 1. Eventual Consistency Handling
+```
+Stale Data Scenarios:
+├── Cache inconsistency during network partitions
+├── Read model lag during high load
+├── Client-side caching conflicts
+
+Mitigation:
+├── Version vectors for conflict resolution
+├── Client-side event polling
+├── Cache warming strategies
+```
+
+### 2. Concurrency Control
+```
+Optimistic Locking:
+├── Aggregate version checking
+├── Retry with exponential backoff
+├── Conflict resolution strategies
+
+Distributed Locking:
+├── Redis-based locks for critical sections
+├── Lease-based locking with TTL
+└── Deadlock prevention mechanisms
+```
+
+## Monitoring & Observability
+
+### 1. Key Metrics
+```
+Event Store:
+├── Events per second (write throughput)
+├── Query latency (read performance)
+├── Snapshot frequency and size
+└── Aggregate reconstruction time
+
+Read Models:
+├── Cache hit/miss ratios
+├── Projection lag (seconds behind)
+├── Query performance by type
+└── Inconsistency incidents
+```
+
+### 2. Alerting
+```
+Critical Alerts:
+├── Event store write failures
+├── Read model projection failures
+├── High aggregate reconstruction latency
+└── Cache inconsistency > 5%
+
+Warning Alerts:
+├── Snapshot creation delays
+├── Query performance degradation
+└── Event processing backlog
+```
+
+## Security Considerations
+
+### 1. Event Data Protection
+```
+Encryption:
+├── Sensitive event data encryption at rest
+├── TLS for event transport
+├── API key authentication for event access
+
+Access Control:
+├── Event type-based authorization
+├── Player data isolation
+├── Audit logging for all event access
+```
+
+### 2. Data Retention & Compliance
+```
+Retention Policies:
+├── Game events: 90 days active, 1 year archived
+├── Audit events: 7 years (compliance)
+├── Personal data: GDPR-compliant deletion
+
+Anonymization:
+├── PII removal after retention period
+├── Statistical data aggregation
+└── ML training data sanitization
+```
+
+## Implementation Roadmap
+
+### Phase 1: Core Infrastructure
+- [ ] Event store schema design and implementation
+- [ ] Basic command/query handlers
+- [ ] Event serialization framework
+- [ ] Unit testing framework
+
+### Phase 2: Aggregate Modeling
+- [ ] Player aggregate implementation
+- [ ] Game session aggregates
+- [ ] Business rule validation
+- [ ] Event versioning strategy
+
+### Phase 3: CQRS Implementation
+- [ ] Read model projectors
+- [ ] Cache integration
+- [ ] Asynchronous processing
+- [ ] Performance optimization
+
+### Phase 4: Advanced Features
+- [ ] Snapshot management
+- [ ] Temporal queries
+- [ ] Event replay capabilities
+- [ ] Monitoring and alerting
+
+### Phase 5: Production Readiness
+- [ ] Load testing (10k events/sec)
+- [ ] Chaos engineering
+- [ ] Backup and recovery procedures
+- [ ] Documentation and training
+
+## Risk Assessment
+- **Data Consistency:** CQRS with eventual consistency may cause temporary inconsistencies
+- **Performance:** Aggregate reconstruction from many events can be slow
+- **Storage Growth:** Event store grows indefinitely, requires archiving strategy
+- **Complexity:** Event sourcing increases system complexity
+
+## Dependencies
+- PostgreSQL 15+ (Event Store)
+- Redis Cluster 7+ (Read Models)
+- Apache Kafka 3.6+ (Event Streaming)
+- Go 1.21+ (Implementation)
+- Protocol Buffers (Event Schema)
+
+## Success Metrics
+- Event throughput: 25k events/sec sustained
+- Query latency: P95 <50ms for hot paths
+- Data consistency: >99.9% eventual consistency
+- System availability: 99.95% uptime
+
+---
+
+*Designed by Architect Agent for Issue #2035*

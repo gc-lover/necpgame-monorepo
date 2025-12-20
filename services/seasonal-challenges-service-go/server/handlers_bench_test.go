@@ -29,8 +29,7 @@ func BenchmarkGetSeasonChallenges(b *testing.B) {
 	handlers := NewHandlers()
 
 	ctx := context.Background()
-	params := api.GetSeasonChallengesParams{
-	}
+	params := api.GetSeasonChallengesParams{}
 
 	b.ReportAllocs()
 	b.ResetTimer()
@@ -46,8 +45,7 @@ func BenchmarkGetSeasonRewards(b *testing.B) {
 	handlers := NewHandlers()
 
 	ctx := context.Background()
-	params := api.GetSeasonRewardsParams{
-	}
+	params := api.GetSeasonRewardsParams{}
 
 	b.ReportAllocs()
 	b.ResetTimer()
@@ -56,4 +54,3 @@ func BenchmarkGetSeasonRewards(b *testing.B) {
 		_, _ = handlers.GetSeasonRewards(ctx, params)
 	}
 }
-

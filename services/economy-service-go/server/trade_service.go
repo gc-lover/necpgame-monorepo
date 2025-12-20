@@ -1,4 +1,4 @@
-// Issue: #131
+// Package server Issue: #131
 package server
 
 import (
@@ -38,27 +38,27 @@ type TradeService struct {
 // noopTradeRepo is a stub that satisfies TradeRepositoryInterface without external dependencies.
 type noopTradeRepo struct{}
 
-func (n *noopTradeRepo) Create(ctx context.Context, session *models.TradeSession) error { return nil }
-func (n *noopTradeRepo) GetByID(ctx context.Context, id uuid.UUID) (*models.TradeSession, error) {
+func (n *noopTradeRepo) Create(_ context.Context, _ *models.TradeSession) error { return nil }
+func (n *noopTradeRepo) GetByID(_ context.Context, _ uuid.UUID) (*models.TradeSession, error) {
 	return nil, nil
 }
-func (n *noopTradeRepo) GetActiveByCharacter(ctx context.Context, characterID uuid.UUID) ([]models.TradeSession, error) {
+func (n *noopTradeRepo) GetActiveByCharacter(_ context.Context, _ uuid.UUID) ([]models.TradeSession, error) {
 	return []models.TradeSession{}, nil
 }
-func (n *noopTradeRepo) Update(ctx context.Context, session *models.TradeSession) error { return nil }
-func (n *noopTradeRepo) UpdateStatus(ctx context.Context, id uuid.UUID, status models.TradeStatus) error {
+func (n *noopTradeRepo) Update(_ context.Context, _ *models.TradeSession) error { return nil }
+func (n *noopTradeRepo) UpdateStatus(_ context.Context, _ uuid.UUID, _ models.TradeStatus) error {
 	return nil
 }
-func (n *noopTradeRepo) CreateHistory(ctx context.Context, history *models.TradeHistory) error {
+func (n *noopTradeRepo) CreateHistory(_ context.Context, _ *models.TradeHistory) error {
 	return nil
 }
-func (n *noopTradeRepo) GetHistoryByCharacter(ctx context.Context, characterID uuid.UUID, limit, offset int) ([]models.TradeHistory, error) {
+func (n *noopTradeRepo) GetHistoryByCharacter(_ context.Context, _ uuid.UUID, _, _ int) ([]models.TradeHistory, error) {
 	return []models.TradeHistory{}, nil
 }
-func (n *noopTradeRepo) CountHistoryByCharacter(ctx context.Context, characterID uuid.UUID) (int, error) {
+func (n *noopTradeRepo) CountHistoryByCharacter(_ context.Context, _ uuid.UUID) (int, error) {
 	return 0, nil
 }
-func (n *noopTradeRepo) CleanupExpired(ctx context.Context) error { return nil }
+func (n *noopTradeRepo) CleanupExpired(_ context.Context) error { return nil }
 
 func NewTradeService(dbURL, redisURL string) (*TradeService, error) {
 	// Allow disabling external deps for test hooks / offline runs.
@@ -403,10 +403,10 @@ func (s *TradeService) GetTradeHistory(ctx context.Context, characterID uuid.UUI
 		var response models.TradeHistoryListResponse
 		if err := json.Unmarshal([]byte(cached), &response); err == nil {
 			return &response, nil
-		} else {
-			s.logger.WithError(err).Error("Failed to unmarshal cached trade history JSON")
-			// Continue without cache if unmarshal fails
 		}
+
+		s.logger.WithError(err).Error("Failed to unmarshal cached trade history JSON")
+		// Continue without cache if unmarshal fails
 	}
 
 	history, err := s.repo.GetHistoryByCharacter(ctx, characterID, limit, offset)

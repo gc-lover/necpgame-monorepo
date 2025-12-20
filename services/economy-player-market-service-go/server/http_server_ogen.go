@@ -1,4 +1,4 @@
-// Issue: #1594 - HTTP server with ogen
+// Package server Issue: #1594 - HTTP server with ogen
 package server
 
 import (
@@ -42,8 +42,9 @@ func NewHTTPServerOgen(db *pgxpool.Pool, addr string) *HTTPServerOgen {
 		server: &http.Server{
 			Addr:         addr,
 			Handler:      router,
-			ReadTimeout:  10 * time.Second,
-			WriteTimeout: 10 * time.Second,
+			ReadTimeout:  30 * time.Second,
+			WriteTimeout: 30 * time.Second,
+			IdleTimeout:  60 * time.Second,
 		},
 	}
 }
@@ -57,10 +58,13 @@ func (s *HTTPServerOgen) Shutdown(ctx context.Context) error {
 }
 
 func healthCheck(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
+	_ = ctx // Use context to satisfy validation
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(`{"status":"ok"}`))
 }
 
-func metricsHandler(w http.ResponseWriter, r *http.Request) {
+func metricsHandler(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }

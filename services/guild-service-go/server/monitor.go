@@ -1,4 +1,4 @@
-// Issue: #1585 - Goroutine leak detection for guild service
+// Package server Issue: #1585 - Goroutine leak detection for guild service
 package server
 
 import (
@@ -53,8 +53,8 @@ func (m *GoroutineMonitor) checkGoroutines() {
 	if numGoroutines > m.maxGoroutines {
 		m.logger.WithFields(logrus.Fields{
 			"current_goroutines": numGoroutines,
-			"max_allowed":       m.maxGoroutines,
-			"service":           "guild-service",
+			"max_allowed":        m.maxGoroutines,
+			"service":            "guild-service",
 		}).Warn("High goroutine count detected - potential leak")
 
 		// Log stack traces for debugging
@@ -64,8 +64,8 @@ func (m *GoroutineMonitor) checkGoroutines() {
 	} else {
 		m.logger.WithFields(logrus.Fields{
 			"current_goroutines": numGoroutines,
-			"max_allowed":       m.maxGoroutines,
-			"service":           "guild-service",
+			"max_allowed":        m.maxGoroutines,
+			"service":            "guild-service",
 		}).Debug("Goroutine count normal")
 	}
 }

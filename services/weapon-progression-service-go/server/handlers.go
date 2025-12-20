@@ -1,4 +1,4 @@
-// Issue: #1595 - ogen handlers (TYPED responses)
+// Package server Issue: #1595 - ogen handlers (TYPED responses)
 package server
 
 import (
@@ -10,8 +10,7 @@ import (
 )
 
 const (
-	DBTimeout    = 50 * time.Millisecond
-	CacheTimeout = 10 * time.Millisecond
+	DBTimeout = 50 * time.Millisecond
 )
 
 var (
@@ -30,7 +29,7 @@ func (h *Handlers) APIV1WeaponsProgressionWeaponIdGet(ctx context.Context, param
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	result, err := h.service.GetWeaponProgression(ctx, params.WeaponId)
+	result, err := h.service.GetWeaponProgression(params.WeaponId)
 	if err != nil {
 		if err == ErrNotFound {
 			return &api.APIV1WeaponsProgressionWeaponIdGetNotFound{}, nil
@@ -41,11 +40,11 @@ func (h *Handlers) APIV1WeaponsProgressionWeaponIdGet(ctx context.Context, param
 	return result, nil
 }
 
-func (h *Handlers) APIV1WeaponsProgressionWeaponIdPost(ctx context.Context, req *api.UpgradeWeaponRequest, params api.APIV1WeaponsProgressionWeaponIdPostParams) (api.APIV1WeaponsProgressionWeaponIdPostRes, error) {
+func (h *Handlers) APIV1WeaponsProgressionWeaponIdPost(ctx context.Context, _ *api.UpgradeWeaponRequest, params api.APIV1WeaponsProgressionWeaponIdPostParams) (api.APIV1WeaponsProgressionWeaponIdPostRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	result, err := h.service.UpgradeWeapon(ctx, params.WeaponId, req)
+	result, err := h.service.UpgradeWeapon(params.WeaponId)
 	if err != nil {
 		if err == ErrNotFound {
 			return &api.APIV1WeaponsProgressionWeaponIdPostNotFound{}, nil
@@ -56,11 +55,11 @@ func (h *Handlers) APIV1WeaponsProgressionWeaponIdPost(ctx context.Context, req 
 	return result, nil
 }
 
-func (h *Handlers) APIV1WeaponsMasteryGet(ctx context.Context, params api.APIV1WeaponsMasteryGetParams) (api.APIV1WeaponsMasteryGetRes, error) {
+func (h *Handlers) APIV1WeaponsMasteryGet(ctx context.Context, _ api.APIV1WeaponsMasteryGetParams) (api.APIV1WeaponsMasteryGetRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	result, err := h.service.GetAllWeaponMasteries(ctx, params.PlayerId)
+	result, err := h.service.GetAllWeaponMasteries()
 	if err != nil {
 		return &api.Error{Error: "INTERNAL_SERVER_ERROR", Message: err.Error()}, err
 	}
@@ -72,7 +71,7 @@ func (h *Handlers) APIV1WeaponsMasteryWeaponTypeGet(ctx context.Context, params 
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	result, err := h.service.GetWeaponMasteryByType(ctx, params.PlayerId, params.WeaponType)
+	result, err := h.service.GetWeaponMasteryByType(params.PlayerId, params.WeaponType)
 	if err != nil {
 		if err == ErrNotFound {
 			return &api.APIV1WeaponsMasteryWeaponTypeGetNotFound{}, nil
@@ -83,11 +82,11 @@ func (h *Handlers) APIV1WeaponsMasteryWeaponTypeGet(ctx context.Context, params 
 	return result, nil
 }
 
-func (h *Handlers) APIV1WeaponsPerksGet(ctx context.Context, params api.APIV1WeaponsPerksGetParams) (api.APIV1WeaponsPerksGetRes, error) {
+func (h *Handlers) APIV1WeaponsPerksGet(ctx context.Context, _ api.APIV1WeaponsPerksGetParams) (api.APIV1WeaponsPerksGetRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	result, err := h.service.GetWeaponPerks(ctx, params)
+	result, err := h.service.GetWeaponPerks()
 	if err != nil {
 		return &api.Error{Error: "INTERNAL_SERVER_ERROR", Message: err.Error()}, err
 	}
@@ -95,11 +94,11 @@ func (h *Handlers) APIV1WeaponsPerksGet(ctx context.Context, params api.APIV1Wea
 	return result, nil
 }
 
-func (h *Handlers) APIV1WeaponsPerksPerkIdUnlockPost(ctx context.Context, req *api.UnlockPerkRequest, params api.APIV1WeaponsPerksPerkIdUnlockPostParams) (api.APIV1WeaponsPerksPerkIdUnlockPostRes, error) {
+func (h *Handlers) APIV1WeaponsPerksPerkIdUnlockPost(ctx context.Context, _ *api.UnlockPerkRequest, _ api.APIV1WeaponsPerksPerkIdUnlockPostParams) (api.APIV1WeaponsPerksPerkIdUnlockPostRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	result, err := h.service.UnlockPerk(ctx, params.PerkId, req)
+	result, err := h.service.UnlockPerk()
 	if err != nil {
 		if err == ErrNotFound {
 			return &api.APIV1WeaponsPerksPerkIdUnlockPostNotFound{}, nil

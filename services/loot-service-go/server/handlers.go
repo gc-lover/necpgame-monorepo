@@ -1,4 +1,4 @@
-// Issue: #1604, #1607
+// Package server Issue: #1604, #1607
 // ogen handlers - TYPED responses (no interface{} boxing!)
 package server
 
@@ -7,14 +7,13 @@ import (
 	"sync"
 	"time"
 
+	"github.com/gc-lover/necpgame-monorepo/services/loot-service-go/pkg/api"
 	"github.com/google/uuid"
-	api "github.com/gc-lover/necpgame-monorepo/services/loot-service-go/pkg/api"
 	"github.com/sirupsen/logrus"
 )
 
 const (
-	DBTimeout    = 50 * time.Millisecond
-	CacheTimeout = 10 * time.Millisecond
+	DBTimeout = 50 * time.Millisecond
 )
 
 // Handlers implements api.Handler interface (ogen typed handlers!)
@@ -184,7 +183,7 @@ func (h *Handlers) GetRollStatus(ctx context.Context, params api.GetRollStatusPa
 }
 
 // GetWorldDrops - TYPED response!
-func (h *Handlers) GetWorldDrops(ctx context.Context, params api.GetWorldDropsParams) (*api.WorldDropsListResponse, error) {
+func (h *Handlers) GetWorldDrops(ctx context.Context, _ api.GetWorldDropsParams) (*api.WorldDropsListResponse, error) {
 	_, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
@@ -204,8 +203,8 @@ func (h *Handlers) GetWorldDrops(ctx context.Context, params api.GetWorldDropsPa
 		return result, nil
 	}
 
-	limit := 50  // Default limit
-	offset := 0  // Default offset
+	limit := 50 // Default limit
+	offset := 0 // Default offset
 
 	drops, err := h.service.GetWorldDrops(ctx, limit, offset)
 	if err != nil {
@@ -279,7 +278,7 @@ func (h *Handlers) PickupWorldDrop(ctx context.Context, params api.PickupWorldDr
 }
 
 // RollForItem - TYPED response!
-func (h *Handlers) RollForItem(ctx context.Context, req *api.RollRequest, params api.RollForItemParams) (api.RollForItemRes, error) {
+func (h *Handlers) RollForItem(ctx context.Context, req *api.RollRequest, _ api.RollForItemParams) (api.RollForItemRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 

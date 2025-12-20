@@ -1,4 +1,4 @@
-// Issue: #156 - Abilities repository interface and constructor
+// Package server Issue: #156 - Abilities repository interface and constructor
 // Implementation split across multiple files for better maintainability:
 // - abilities_repository_catalog.go: Catalog operations
 // - abilities_repository_loadout.go: Loadout operations

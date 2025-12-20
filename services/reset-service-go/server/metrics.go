@@ -56,4 +56,3 @@ func RecordReset(resetType, status string) {
 func RecordResetDuration(resetType string, duration float64) {
 	ResetDuration.WithLabelValues(resetType).Observe(duration)
 }
-

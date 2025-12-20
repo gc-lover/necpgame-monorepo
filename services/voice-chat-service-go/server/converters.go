@@ -1,10 +1,10 @@
-// Issue: ogen migration
+// Package server Issue: ogen migration
 package server
 
 import (
-	"github.com/google/uuid"
 	"github.com/gc-lover/necpgame-monorepo/services/voice-chat-service-go/models"
 	"github.com/gc-lover/necpgame-monorepo/services/voice-chat-service-go/pkg/api"
+	"github.com/google/uuid"
 )
 
 func convertVoiceChannelToAPI(ch *models.VoiceChannel) api.VoiceChannel {
@@ -88,5 +88,3 @@ func convertChannelTypeToAPI(t models.VoiceChannelType) api.VoiceChannelChannelT
 		return ""
 	}
 }
-
-

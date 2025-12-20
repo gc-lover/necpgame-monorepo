@@ -1,4 +1,4 @@
-// Issue: #1580 - Spatial partitioning for network optimization
+// Package server Issue: #1580 - Spatial partitioning for network optimization
 // Performance: Reduces network traffic by 80-90% for >100 players
 package server
 
@@ -42,7 +42,7 @@ func (sg *SpatialGrid) Add(playerID string, pos Vec3) {
 	key := sg.GetCellKey(pos)
 	sg.mu.Lock()
 	defer sg.mu.Unlock()
-	
+
 	// Remove from old cell if exists
 	for oldKey, players := range sg.cells {
 		for i, p := range players {
@@ -55,7 +55,7 @@ func (sg *SpatialGrid) Add(playerID string, pos Vec3) {
 			}
 		}
 	}
-	
+
 	// Add to new cell
 	sg.cells[key] = append(sg.cells[key], playerID)
 }
@@ -64,14 +64,14 @@ func (sg *SpatialGrid) Add(playerID string, pos Vec3) {
 func (sg *SpatialGrid) Update(playerID string, oldPos, newPos Vec3) {
 	oldKey := sg.GetCellKey(oldPos)
 	newKey := sg.GetCellKey(newPos)
-	
+
 	if oldKey == newKey {
 		return // Same cell, no update needed
 	}
-	
+
 	sg.mu.Lock()
 	defer sg.mu.Unlock()
-	
+
 	// Remove from old cell
 	if players, ok := sg.cells[oldKey]; ok {
 		for i, p := range players {
@@ -84,7 +84,7 @@ func (sg *SpatialGrid) Update(playerID string, oldPos, newPos Vec3) {
 			}
 		}
 	}
-	
+
 	// Add to new cell
 	sg.cells[newKey] = append(sg.cells[newKey], playerID)
 }
@@ -110,11 +110,11 @@ func (sg *SpatialGrid) Remove(playerID string) {
 func (sg *SpatialGrid) GetNearby(pos Vec3, radius float32) []string {
 	centerKey := sg.GetCellKey(pos)
 	radiusCells := int(radius/sg.cellSize) + 1
-	
+
 	var nearby []string
 	sg.mu.RLock()
 	defer sg.mu.RUnlock()
-	
+
 	for dx := -radiusCells; dx <= radiusCells; dx++ {
 		for dy := -radiusCells; dy <= radiusCells; dy++ {
 			for dz := -radiusCells; dz <= radiusCells; dz++ {
@@ -129,7 +129,6 @@ func (sg *SpatialGrid) GetNearby(pos Vec3, radius float32) []string {
 			}
 		}
 	}
-	
+
 	return nearby
 }
-

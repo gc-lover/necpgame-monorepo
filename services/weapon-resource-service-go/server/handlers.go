@@ -1,4 +1,4 @@
-// Issue: #1595
+// Package server Issue: #1595
 // ogen handlers - TYPED responses (no interface{} boxing!)
 package server
 
@@ -26,7 +26,7 @@ func (h *Handlers) APIV1WeaponsResourcesWeaponIdGet(ctx context.Context, params 
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	resources, err := h.service.GetWeaponResources(ctx, params.WeaponId.String())
+	resources, err := h.service.GetWeaponResources(params.WeaponId.String())
 	if err != nil {
 		return &api.APIV1WeaponsResourcesWeaponIdGetInternalServerError{
 			Error:   "InternalServerError",
@@ -42,7 +42,7 @@ func (h *Handlers) APIV1WeaponsResourcesWeaponIdConsumePost(ctx context.Context,
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	result, err := h.service.ConsumeResource(ctx, params.WeaponId.String(), req)
+	result, err := h.service.ConsumeResource(ctx, params.WeaponId.String())
 	if err != nil {
 		return &api.APIV1WeaponsResourcesWeaponIdConsumePostInternalServerError{
 			Error:   "InternalServerError",
@@ -58,7 +58,7 @@ func (h *Handlers) APIV1WeaponsResourcesWeaponIdCooldownPost(ctx context.Context
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	result, err := h.service.ApplyCooldown(ctx, params.WeaponId.String(), req)
+	result, err := h.service.ApplyCooldown(ctx, params.WeaponId.String())
 	if err != nil {
 		return &api.APIV1WeaponsResourcesWeaponIdCooldownPostInternalServerError{
 			Error:   "InternalServerError",
@@ -74,7 +74,7 @@ func (h *Handlers) APIV1WeaponsResourcesWeaponIdReloadPost(ctx context.Context, 
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	result, err := h.service.ReloadWeapon(ctx, params.WeaponId.String(), req)
+	result, err := h.service.ReloadWeapon(ctx, params.WeaponId.String())
 	if err != nil {
 		return &api.APIV1WeaponsResourcesWeaponIdReloadPostInternalServerError{
 			Error:   "InternalServerError",
@@ -90,7 +90,7 @@ func (h *Handlers) APIV1WeaponsResourcesWeaponIdStatusGet(ctx context.Context, p
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	status, err := h.service.GetWeaponStatus(ctx, params.WeaponId.String())
+	status, err := h.service.GetWeaponStatus(params.WeaponId.String())
 	if err != nil {
 		return &api.APIV1WeaponsResourcesWeaponIdStatusGetInternalServerError{
 			Error:   "InternalServerError",

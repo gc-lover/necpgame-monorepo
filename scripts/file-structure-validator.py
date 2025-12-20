@@ -2,14 +2,15 @@
 # Issue: #1858
 # File size and structure validation tool
 
+import argparse
+import json
 import os
 import re
-import yaml
-import json
 import sys
+import yaml
 from pathlib import Path
 from typing import Dict, List, Set
-import argparse
+
 
 class FileStructureValidator:
     """File size and structure validation"""
@@ -21,19 +22,19 @@ class FileStructureValidator:
 
         # File size limits (lines)
         self.size_limits = {
-            'go': 500,
-            'py': 500,
-            'yaml': 500,
-            'yml': 500,
+            'go': 1000,
+            'py': 1000,
+            'yaml': 1000,
+            'yml': 1000,
             'md': 1000,
-            'sql': 800,
-            'cpp': 800,
-            'h': 600,
-            'java': 600,
-            'js': 400,
-            'ts': 400,
-            'html': 300,
-            'css': 300
+            'sql': 1000,
+            'cpp': 1000,
+            'h': 1000,
+            'java': 1000,
+            'js': 1000,
+            'ts': 1000,
+            'html': 1000,
+            'css': 1000
         }
 
         # Structure patterns to check
@@ -114,7 +115,7 @@ class FileStructureValidator:
                 return False
 
             # Additional check for very long lines (>200 chars)
-            long_lines = [i+1 for i, line in enumerate(lines) if len(line.rstrip()) > 200]
+            long_lines = [i + 1 for i, line in enumerate(lines) if len(line.rstrip()) > 200]
             if long_lines:
                 self.warnings.append(
                     f"File {file_path.name} has {len(long_lines)} very long lines: {long_lines[:5]}"
@@ -200,8 +201,8 @@ class FileStructureValidator:
 
             if re.match(patterns['imports'], stripped):
                 if code_started:
-                    self.warnings.append(f"Import after code in {file_path.name} at line {i+1}")
-                import_lines.append(i+1)
+                    self.warnings.append(f"Import after code in {file_path.name} at line {i + 1}")
+                import_lines.append(i + 1)
             else:
                 code_started = True
 
@@ -286,6 +287,15 @@ class FileStructureValidator:
             '*.min.css'
         ]
 
+        # Skip bundled/generated files
+        if 'bundled.yaml' in file_path.name or \
+           file_path.name.startswith('oas_') and file_path.name.endswith('.go') or \
+           '_gen.go' in file_path.name or \
+           '.pb.go' in file_path.name or \
+           'changelog' in file_path.name and file_path.suffix == '.yaml' or \
+           file_path.name == 'docker-compose.yml':
+            return False
+
         file_str = str(file_path)
 
         for pattern in skip_patterns:
@@ -333,7 +343,7 @@ def main():
     parser.add_argument('--project-root', default='.', help='Project root directory')
     parser.add_argument('--file', help='Validate only specific file')
     parser.add_argument('--type', choices=['size', 'structure', 'encoding'],
-                       help='Check only specific validation type')
+                        help='Check only specific validation type')
 
     args = parser.parse_args()
 

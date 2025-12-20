@@ -1,4 +1,4 @@
-// Issue: #50, #387, #388
+// Package server Issue: #50, #387, #388
 package server
 
 import (

@@ -1,4 +1,4 @@
-// SQL queries use prepared statements with placeholders (, , ?) for safety
+// Package server SQL queries use prepared statements with placeholders (, , ?) for safety
 // Issue: #1595
 // ogen handlers - TYPED responses (no interface{} boxing!)
 package server
@@ -10,10 +10,8 @@ import (
 	"github.com/gc-lover/necpgame-monorepo/services/combat-extended-mechanics-service-go/pkg/api"
 )
 
-// Context timeout constants
 const (
-	DBTimeout    = 50 * time.Millisecond
-	CacheTimeout = 10 * time.Millisecond
+	DBTimeout = 50 * time.Millisecond
 )
 
 // Handlers implements api.Handler interface (ogen typed handlers!)
@@ -31,7 +29,7 @@ func (h *Handlers) ActivateCombatImplant(ctx context.Context, req *api.CombatImp
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	result, err := h.service.ActivateCombatImplant(ctx, req)
+	result, err := h.service.ActivateCombatImplant()
 	if err != nil {
 		return &api.ActivateCombatImplantInternalServerError{}, err
 	}
@@ -40,11 +38,11 @@ func (h *Handlers) ActivateCombatImplant(ctx context.Context, req *api.CombatImp
 }
 
 // AdvancedAim - TYPED response!
-func (h *Handlers) AdvancedAim(ctx context.Context, req *api.AdvancedAimRequest) (api.AdvancedAimRes, error) {
+func (h *Handlers) AdvancedAim(ctx context.Context, _ *api.AdvancedAimRequest) (api.AdvancedAimRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	result, err := h.service.AdvancedAim(ctx, req)
+	result, err := h.service.AdvancedAim()
 	if err != nil {
 		return &api.AdvancedAimInternalServerError{}, err
 	}
@@ -53,11 +51,11 @@ func (h *Handlers) AdvancedAim(ctx context.Context, req *api.AdvancedAimRequest)
 }
 
 // ControlRecoil - TYPED response!
-func (h *Handlers) ControlRecoil(ctx context.Context, req *api.RecoilControlRequest) (api.ControlRecoilRes, error) {
+func (h *Handlers) ControlRecoil(ctx context.Context, _ *api.RecoilControlRequest) (api.ControlRecoilRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	result, err := h.service.ControlRecoil(ctx, req)
+	result, err := h.service.ControlRecoil()
 	if err != nil {
 		return &api.ControlRecoilInternalServerError{}, err
 	}
@@ -70,7 +68,7 @@ func (h *Handlers) CreateOrUpdateCombatLoadout(ctx context.Context, req *api.Com
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	result, err := h.service.CreateOrUpdateCombatLoadout(ctx, req)
+	result, err := h.service.CreateOrUpdateCombatLoadout(req)
 	if err != nil {
 		return &api.CreateOrUpdateCombatLoadoutInternalServerError{}, err
 	}
@@ -89,11 +87,11 @@ func (h *Handlers) CreateOrUpdateCombatLoadout(ctx context.Context, req *api.Com
 }
 
 // EquipCombatLoadout - TYPED response!
-func (h *Handlers) EquipCombatLoadout(ctx context.Context, req *api.CombatLoadoutEquipRequest) (api.EquipCombatLoadoutRes, error) {
+func (h *Handlers) EquipCombatLoadout(ctx context.Context, _ *api.CombatLoadoutEquipRequest) (api.EquipCombatLoadoutRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	result, err := h.service.EquipCombatLoadout(ctx, req)
+	result, err := h.service.EquipCombatLoadout()
 	if err != nil {
 		if err == ErrNotFound {
 			return &api.EquipCombatLoadoutNotFound{}, nil
@@ -105,11 +103,11 @@ func (h *Handlers) EquipCombatLoadout(ctx context.Context, req *api.CombatLoadou
 }
 
 // ExecuteCombatHacking - TYPED response!
-func (h *Handlers) ExecuteCombatHacking(ctx context.Context, req *api.CombatHackingRequest) (api.ExecuteCombatHackingRes, error) {
+func (h *Handlers) ExecuteCombatHacking(ctx context.Context, _ *api.CombatHackingRequest) (api.ExecuteCombatHackingRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	result, err := h.service.ExecuteCombatHacking(ctx, req)
+	result, err := h.service.ExecuteCombatHacking()
 	if err != nil {
 		return &api.ExecuteCombatHackingInternalServerError{}, err
 	}
@@ -118,11 +116,11 @@ func (h *Handlers) ExecuteCombatHacking(ctx context.Context, req *api.CombatHack
 }
 
 // GetCombatHackingNetworks - TYPED response!
-func (h *Handlers) GetCombatHackingNetworks(ctx context.Context, params api.GetCombatHackingNetworksParams) (api.GetCombatHackingNetworksRes, error) {
+func (h *Handlers) GetCombatHackingNetworks(ctx context.Context, _ api.GetCombatHackingNetworksParams) (api.GetCombatHackingNetworksRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	result, err := h.service.GetCombatHackingNetworks(ctx, params)
+	result, err := h.service.GetCombatHackingNetworks()
 	if err != nil {
 		if err == ErrNotFound {
 			return &api.GetCombatHackingNetworksNotFound{}, nil
@@ -134,11 +132,11 @@ func (h *Handlers) GetCombatHackingNetworks(ctx context.Context, params api.GetC
 }
 
 // GetCombatImplantEffects - TYPED response!
-func (h *Handlers) GetCombatImplantEffects(ctx context.Context, params api.GetCombatImplantEffectsParams) (api.GetCombatImplantEffectsRes, error) {
+func (h *Handlers) GetCombatImplantEffects(ctx context.Context, _ api.GetCombatImplantEffectsParams) (api.GetCombatImplantEffectsRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	result, err := h.service.GetCombatImplantEffects(ctx, params)
+	result, err := h.service.GetCombatImplantEffects()
 	if err != nil {
 		if err == ErrNotFound {
 			return &api.GetCombatImplantEffectsNotFound{}, nil
@@ -150,11 +148,11 @@ func (h *Handlers) GetCombatImplantEffects(ctx context.Context, params api.GetCo
 }
 
 // GetCombatLoadouts - TYPED response!
-func (h *Handlers) GetCombatLoadouts(ctx context.Context, params api.GetCombatLoadoutsParams) (api.GetCombatLoadoutsRes, error) {
+func (h *Handlers) GetCombatLoadouts(ctx context.Context, _ api.GetCombatLoadoutsParams) (api.GetCombatLoadoutsRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	result, err := h.service.GetCombatLoadouts(ctx, params)
+	result, err := h.service.GetCombatLoadouts()
 	if err != nil {
 		if err == ErrNotFound {
 			return &api.GetCombatLoadoutsNotFound{}, nil
@@ -170,7 +168,7 @@ func (h *Handlers) GetCombatMechanicsStatus(ctx context.Context, params api.GetC
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	result, err := h.service.GetCombatMechanicsStatus(ctx, params)
+	result, err := h.service.GetCombatMechanicsStatus(params)
 	if err != nil {
 		if err == ErrNotFound {
 			return &api.GetCombatMechanicsStatusNotFound{}, nil
@@ -180,4 +178,3 @@ func (h *Handlers) GetCombatMechanicsStatus(ctx context.Context, params api.GetC
 
 	return result, nil
 }
-

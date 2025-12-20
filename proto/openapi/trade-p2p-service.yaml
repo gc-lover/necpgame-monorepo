@@ -19,21 +19,21 @@ info:
     '
   version: 1.0.0
 servers:
-- url: https://api.necp.game/api/v1
-- url: http://localhost:8085/api/v1
+  - url: https://api.necp.game/api/v1
+  - url: http://localhost:8085/api/v1
 security:
-- BearerAuth: []
+  - BearerAuth: [ ]
 tags:
-- name: Trade Sessions
-- name: Trade Offers
-- name: Trade History
+  - name: Trade Sessions
+  - name: Trade Offers
+  - name: Trade History
 paths:
   /economy/trade/initiate:
     post:
       summary: Инициировать торговлю
       operationId: initiateTrade
       tags:
-      - Trade Sessions
+        - Trade Sessions
       requestBody:
         required: true
         content:
@@ -41,7 +41,7 @@ paths:
             schema:
               type: object
               required:
-              - target_player_id
+                - target_player_id
               properties:
                 target_player_id:
                   type: string
@@ -63,12 +63,12 @@ paths:
                 $ref: common.yaml#/components/schemas/Error
   /economy/trade/sessions/{sessionId}:
     parameters:
-    - $ref: '#/components/parameters/TradeSessionId'
+      - $ref: '#/components/parameters/TradeSessionId'
     get:
       summary: Получить торговую сессию
       operationId: getTradeSession
       tags:
-      - Trade Sessions
+        - Trade Sessions
       responses:
         '200':
           description: Состояние торговли
@@ -82,7 +82,7 @@ paths:
       summary: Отменить торговлю
       operationId: cancelTradeSession
       tags:
-      - Trade Sessions
+        - Trade Sessions
       requestBody:
         content:
           application/json:
@@ -101,12 +101,12 @@ paths:
                 $ref: common.yaml#/components/schemas/SuccessResponse
   /economy/trade/sessions/{sessionId}/offer:
     parameters:
-    - $ref: '#/components/parameters/TradeSessionId'
+      - $ref: '#/components/parameters/TradeSessionId'
     post:
       summary: Добавить предложение
       operationId: addTradeOffer
       tags:
-      - Trade Offers
+        - Trade Offers
       requestBody:
         required: true
         content:
@@ -132,7 +132,7 @@ paths:
       summary: Изменить предложение
       operationId: updateTradeOffer
       tags:
-      - Trade Offers
+        - Trade Offers
       requestBody:
         required: true
         content:
@@ -150,7 +150,7 @@ paths:
       summary: Удалить предложение
       operationId: removeTradeOffer
       tags:
-      - Trade Offers
+        - Trade Offers
       responses:
         '200':
           description: Предложение удалено
@@ -160,12 +160,12 @@ paths:
                 $ref: '#/components/schemas/TradeSessionResponse'
   /economy/trade/sessions/{sessionId}/confirm:
     parameters:
-    - $ref: '#/components/parameters/TradeSessionId'
+      - $ref: '#/components/parameters/TradeSessionId'
     post:
       summary: Подтвердить предложение
       operationId: confirmTrade
       tags:
-      - Trade Sessions
+        - Trade Sessions
       responses:
         '200':
           description: Подтверждено
@@ -181,13 +181,13 @@ paths:
                 $ref: common.yaml#/components/schemas/Error
   /economy/trade/sessions/{sessionId}/complete:
     parameters:
-    - $ref: '#/components/parameters/TradeSessionId'
+      - $ref: '#/components/parameters/TradeSessionId'
     post:
       summary: Завершить торговлю
       description: Завершение сделки (требуется двойное подтверждение)
       operationId: completeTrade
       tags:
-      - Trade Sessions
+        - Trade Sessions
       responses:
         '200':
           description: Торговля завершена
@@ -212,10 +212,10 @@ paths:
       summary: История торговли
       operationId: getTradeHistory
       tags:
-      - Trade History
+        - Trade History
       parameters:
-      - $ref: common.yaml#/components/parameters/Limit
-      - $ref: common.yaml#/components/parameters/Offset
+        - $ref: common.yaml#/components/parameters/Limit
+        - $ref: common.yaml#/components/parameters/Offset
       responses:
         '200':
           description: История
@@ -224,8 +224,8 @@ paths:
               schema:
                 type: object
                 required:
-                - items
-                - pagination
+                  - items
+                  - pagination
                 properties:
                   items:
                     type: array
@@ -249,12 +249,12 @@ components:
     TradeStatus:
       type: string
       enum:
-      - pending
-      - offering
-      - confirmed
-      - completed
-      - cancelled
-      - expired
+        - pending
+        - offering
+        - confirmed
+        - completed
+        - cancelled
+        - expired
     TradeOfferRequest:
       type: object
       properties:
@@ -272,8 +272,8 @@ components:
           items:
             type: object
             required:
-            - item_id
-            - quantity
+              - item_id
+              - quantity
             properties:
               item_id:
                 type: string
@@ -284,44 +284,44 @@ components:
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     TradeOffer:
       allOf:
-      - $ref: '#/components/schemas/TradeOfferRequest'
+        - $ref: '#/components/schemas/TradeOfferRequest'
     TradeSessionResponse:
       allOf:
-      - $ref: common.yaml#/components/schemas/BaseEntityWithTimestamps
-      - type: object
-        required:
-        - initiator_id
-        - target_id
-        - status
-        properties:
-          initiator_id:
-            type: string
-            format: uuid
-          target_id:
-            type: string
-            format: uuid
-          zone_id:
-            type: string
-          status:
-            $ref: '#/components/schemas/TradeStatus'
-          initiator_offer:
-            $ref: '#/components/schemas/TradeOffer'
-            nullable: true
-          target_offer:
-            $ref: '#/components/schemas/TradeOffer'
-            nullable: true
-          initiator_confirmed:
-            type: boolean
-          target_confirmed:
-            type: boolean
-          expires_at:
-            type: string
-            format: date-time
+        - $ref: common.yaml#/components/schemas/BaseEntityWithTimestamps
+        - type: object
+          required:
+            - initiator_id
+            - target_id
+            - status
+          properties:
+            initiator_id:
+              type: string
+              format: uuid
+            target_id:
+              type: string
+              format: uuid
+            zone_id:
+              type: string
+            status:
+              $ref: '#/components/schemas/TradeStatus'
+            initiator_offer:
+              $ref: '#/components/schemas/TradeOffer'
+              nullable: true
+            target_offer:
+              $ref: '#/components/schemas/TradeOffer'
+              nullable: true
+            initiator_confirmed:
+              type: boolean
+            target_confirmed:
+              type: boolean
+            expires_at:
+              type: string
+              format: date-time
     TradeCompleteResponse:
       type: object
       required:
-      - session_id
-      - status
+        - session_id
+        - status
       properties:
         session_id:
           type: string
@@ -335,11 +335,11 @@ components:
     TradeHistory:
       type: object
       required:
-      - id
-      - session_id
-      - player1_id
-      - player2_id
-      - completed_at
+        - id
+        - session_id
+        - player1_id
+        - player2_id
+        - completed_at
       properties:
         id:
           type: string

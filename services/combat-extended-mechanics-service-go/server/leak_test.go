@@ -35,4 +35,3 @@ func TestCombatExtendedMechanicsServiceNoLeaks(t *testing.T) {
 
 	// If goroutines leaked from combat extended mechanics handlers, test FAILS
 }
-

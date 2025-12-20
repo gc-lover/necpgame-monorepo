@@ -1,4 +1,4 @@
-// Issue: #140876112
+// Package server Issue: #140876112
 package server
 
 import (
@@ -24,7 +24,7 @@ type RomanceCoreServer struct {
 }
 
 // NewRomanceCoreServer создает новый сервер romance-core-service
-func NewRomanceCoreServer(logger *zap.Logger, db *sql.DB, jwtSecret string) *RomanceCoreServer {
+func NewRomanceCoreServer(logger *zap.Logger, db *sql.DB) *RomanceCoreServer {
 	// Создаем сервис романтики
 	romanceService := NewRomanceCoreService(db, logger)
 

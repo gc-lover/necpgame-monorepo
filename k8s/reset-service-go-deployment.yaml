@@ -30,74 +30,74 @@ spec:
         seccompProfile:
           type: RuntimeDefault
       containers:
-      - name: reset-service-go
-        image: necpgame-reset-service-go:latest
-        imagePullPolicy: IfNotPresent
-        securityContext:
-          allowPrivilegeEscalation: false
-          readOnlyRootFilesystem: true
-          capabilities:
-            drop:
-            - ALL
-        ports:
-        - name: http
-          containerPort: 8088
-          protocol: TCP
-        - name: metrics
-          containerPort: 9098
-          protocol: TCP
-        env:
-        - name: ADDR
-          value: "0.0.0.0:8088"
-        - name: METRICS_ADDR
-          value: ":9098"
-        - name: DATABASE_URL
-          valueFrom:
-            secretKeyRef:
-              name: database-secrets
-              key: url
-        - name: REDIS_URL
-          valueFrom:
-            secretKeyRef:
-              name: redis-secrets
-              key: url
-        resources:
-          requests:
-            memory: "128Mi"
-            cpu: "100m"
-          limits:
-            memory: "512Mi"
-            cpu: "500m"
-        startupProbe:
-          httpGet:
-            path: /metrics
-            port: 9098
-          initialDelaySeconds: 5
-          periodSeconds: 5
-          timeoutSeconds: 3
-          failureThreshold: 30
-        livenessProbe:
-          httpGet:
-            path: /metrics
-            port: 9098
-          initialDelaySeconds: 30
-          periodSeconds: 30
-          timeoutSeconds: 3
-          failureThreshold: 3
-        readinessProbe:
-          httpGet:
-            path: /metrics
-            port: 9098
-          initialDelaySeconds: 5
-          periodSeconds: 10
-          timeoutSeconds: 3
-          failureThreshold: 3
-        volumeMounts:
-        - name: tmp
-          mountPath: /tmp
+        - name: reset-service-go
+          image: necpgame-reset-service-go:latest
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          ports:
+            - name: http
+              containerPort: 8088
+              protocol: TCP
+            - name: metrics
+              containerPort: 9098
+              protocol: TCP
+          env:
+            - name: ADDR
+              value: "0.0.0.0:8088"
+            - name: METRICS_ADDR
+              value: ":9098"
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: database-secrets
+                  key: url
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: redis-secrets
+                  key: url
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          startupProbe:
+            httpGet:
+              path: /metrics
+              port: 9098
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 30
+          livenessProbe:
+            httpGet:
+              path: /metrics
+              port: 9098
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 3
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /metrics
+              port: 9098
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
       volumes:
-      - name: tmp
-        emptyDir: {}
+        - name: tmp
+          emptyDir: { }
 ---
 apiVersion: v1
 kind: Service
@@ -110,13 +110,13 @@ metadata:
 spec:
   type: ClusterIP
   ports:
-  - name: http
-    port: 8088
-    targetPort: 8088
-    protocol: TCP
-  - name: metrics
-    port: 9098
-    targetPort: 9098
-    protocol: TCP
+    - name: http
+      port: 8088
+      targetPort: 8088
+      protocol: TCP
+    - name: metrics
+      port: 9098
+      targetPort: 9098
+      protocol: TCP
   selector:
     app: reset-service-go

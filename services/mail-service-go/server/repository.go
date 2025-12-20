@@ -1,4 +1,4 @@
-// Issue: #151
+// Package server Issue: #151
 package server
 
 import (
@@ -8,8 +8,8 @@ import (
 	"errors"
 	"time"
 
-	_ "github.com/lib/pq"
 	"github.com/google/uuid"
+	_ "github.com/lib/pq"
 )
 
 // NewPostgresDB creates a new PostgreSQL database connection
@@ -18,17 +18,17 @@ func NewPostgresDB(connStr string) (*sql.DB, error) {
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Connection pool settings for performance
 	db.SetMaxOpenConns(25)
 	db.SetMaxIdleConns(25)
 	db.SetConnMaxLifetime(5 * time.Minute)
 	db.SetConnMaxIdleTime(10 * time.Minute)
-	
+
 	if err := db.Ping(); err != nil {
 		return nil, err
 	}
-	
+
 	return db, nil
 }
 
@@ -52,36 +52,36 @@ func NewPostgresRepository(db *sql.DB) Repository {
 }
 
 type Mail struct {
-	ID              uuid.UUID
-	SenderID        *uuid.UUID
-	SenderName      string
-	RecipientID     uuid.UUID
-	Type            string
-	Subject         string
-	Content         string
-	Status          string
-	Attachments     *json.RawMessage
-	CODAmount       *int
-	SentAt          time.Time
-	ReadAt          *time.Time
-	ExpiresAt       *time.Time
-	IsRead          bool
-	IsClaimed       bool
-	CreatedAt       time.Time
-	UpdatedAt       time.Time
+	ID          uuid.UUID
+	SenderID    *uuid.UUID
+	SenderName  string
+	RecipientID uuid.UUID
+	Type        string
+	Subject     string
+	Content     string
+	Status      string
+	Attachments *json.RawMessage
+	CODAmount   *int
+	SentAt      time.Time
+	ReadAt      *time.Time
+	ExpiresAt   *time.Time
+	IsRead      bool
+	IsClaimed   bool
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
 }
 
 func (r *PostgresRepository) GetPlayerMails(ctx context.Context, playerID uuid.UUID, filter string, limit, offset int) ([]Mail, int, error) {
 	var query string
 	var args []interface{}
-	
+
 	baseQuery := `SELECT id, sender_id, sender_name, recipient_id, type, subject, content, status, 
 		attachments, cod_amount, sent_at, read_at, expires_at, is_read, is_claimed, created_at, updated_at
 		FROM social.mail_messages
 		WHERE recipient_id = $1 AND deleted_at IS NULL`
-	
+
 	args = []interface{}{playerID}
-	
+
 	if filter != "" && filter != "all" {
 		switch filter {
 		case "unread":
@@ -92,7 +92,7 @@ func (r *PostgresRepository) GetPlayerMails(ctx context.Context, playerID uuid.U
 			baseQuery += " AND is_claimed = true"
 		}
 	}
-	
+
 	// Count total
 	countQuery := `SELECT COUNT(*) FROM social.mail_messages WHERE recipient_id = $1 AND deleted_at IS NULL`
 	if filter != "" && filter != "all" {
@@ -105,22 +105,22 @@ func (r *PostgresRepository) GetPlayerMails(ctx context.Context, playerID uuid.U
 			countQuery += " AND is_claimed = true"
 		}
 	}
-	
+
 	var total int
 	err := r.db.QueryRowContext(ctx, countQuery, playerID).Scan(&total)
 	if err != nil {
 		return nil, 0, err
 	}
-	
+
 	query = baseQuery + " ORDER BY sent_at DESC LIMIT $2 OFFSET $3"
 	args = append(args, limit, offset)
-	
+
 	rows, err := r.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, 0, err
 	}
 	defer rows.Close()
-	
+
 	var mails []Mail
 	for rows.Next() {
 		var mail Mail
@@ -135,7 +135,7 @@ func (r *PostgresRepository) GetPlayerMails(ctx context.Context, playerID uuid.U
 		}
 		mails = append(mails, mail)
 	}
-	
+
 	return mails, total, rows.Err()
 }
 
@@ -145,7 +145,7 @@ func (r *PostgresRepository) GetMail(ctx context.Context, mailID uuid.UUID) (*Ma
 		attachments, cod_amount, sent_at, read_at, expires_at, is_read, is_claimed, created_at, updated_at
 		FROM social.mail_messages
 		WHERE id = $1 AND deleted_at IS NULL`
-	
+
 	err := r.db.QueryRowContext(ctx, query, mailID).Scan(
 		&mail.ID, &mail.SenderID, &mail.SenderName, &mail.RecipientID, &mail.Type,
 		&mail.Subject, &mail.Content, &mail.Status, &mail.Attachments, &mail.CODAmount,
@@ -167,7 +167,7 @@ func (r *PostgresRepository) CreateMail(ctx context.Context, mail *Mail) (*uuid.
 		(sender_id, sender_name, recipient_id, type, subject, content, status, attachments, cod_amount, expires_at, sent_at, created_at, updated_at)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW(), NOW())
 		RETURNING id`
-	
+
 	err := r.db.QueryRowContext(ctx, query,
 		mail.SenderID, mail.SenderName, mail.RecipientID, mail.Type, mail.Subject,
 		mail.Content, mail.Status, mail.Attachments, mail.CODAmount, mail.ExpiresAt,
@@ -182,7 +182,7 @@ func (r *PostgresRepository) DeleteMail(ctx context.Context, mailID uuid.UUID) e
 	query := `UPDATE social.mail_messages
 		SET deleted_at = NOW(), updated_at = NOW()
 		WHERE id = $1 AND deleted_at IS NULL`
-	
+
 	result, err := r.db.ExecContext(ctx, query, mailID)
 	if err != nil {
 		return err
@@ -201,7 +201,7 @@ func (r *PostgresRepository) UpdateMailStatus(ctx context.Context, mailID uuid.U
 	query := `UPDATE social.mail_messages
 		SET status = $1, updated_at = NOW()
 		WHERE id = $2 AND deleted_at IS NULL`
-	
+
 	result, err := r.db.ExecContext(ctx, query, status, mailID)
 	if err != nil {
 		return err
@@ -220,7 +220,7 @@ func (r *PostgresRepository) MarkAsRead(ctx context.Context, mailID uuid.UUID) e
 	query := `UPDATE social.mail_messages
 		SET is_read = true, read_at = NOW(), status = 'read', updated_at = NOW()
 		WHERE id = $1 AND deleted_at IS NULL`
-	
+
 	result, err := r.db.ExecContext(ctx, query, mailID)
 	if err != nil {
 		return err
@@ -240,7 +240,7 @@ func (r *PostgresRepository) ClaimAttachments(ctx context.Context, mailID uuid.U
 	query := `UPDATE social.mail_messages
 		SET is_claimed = true, status = 'claimed', updated_at = NOW()
 		WHERE id = $1 AND deleted_at IS NULL AND is_claimed = false`
-	
+
 	result, err := r.db.ExecContext(ctx, query, mailID)
 	if err != nil {
 		return nil, err
@@ -252,7 +252,7 @@ func (r *PostgresRepository) ClaimAttachments(ctx context.Context, mailID uuid.U
 	if rows == 0 {
 		return nil, errors.New("mail not found or already claimed")
 	}
-	
+
 	// Get updated mail
 	return r.GetMail(ctx, mailID)
 }
@@ -261,22 +261,7 @@ func (r *PostgresRepository) GetUnreadCount(ctx context.Context, playerID uuid.U
 	var count int
 	query := `SELECT COUNT(*) FROM social.mail_messages
 		WHERE recipient_id = $1 AND deleted_at IS NULL AND is_read = false`
-	
+
 	err := r.db.QueryRowContext(ctx, query, playerID).Scan(&count)
 	return count, err
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -1,4 +1,4 @@
-// Issue: #1489
+// Package server Issue: #1489
 package server
 
 import (
@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/gc-lover/necpgame-monorepo/services/support-service-go/models"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/gc-lover/necpgame-monorepo/services/support-service-go/models"
 	"github.com/sirupsen/logrus"
 )
 
@@ -52,7 +52,7 @@ func (r *SLARepository) GetTicketSLAStatus(ctx context.Context, ticketID uuid.UU
 	}
 
 	firstResponseTarget, resolutionTarget := r.calculateSLATargets(priority, createdAt)
-	
+
 	var firstResponseActual *time.Time
 	if firstResponseAt != nil {
 		firstResponseActual = firstResponseAt
@@ -99,35 +99,33 @@ func (r *SLARepository) GetTicketSLAStatus(ctx context.Context, ticketID uuid.UU
 	}
 
 	return &models.TicketSLAStatus{
-		TicketID:                    ticketIDResult,
-		Priority:                    priority,
-		FirstResponseTarget:         firstResponseTarget,
-		FirstResponseActual:         firstResponseActual,
-		ResolutionTarget:            resolutionTarget,
-		ResolutionActual:            resolutionActual,
-		FirstResponseSLAMet:         firstResponseSLAMet,
-		ResolutionSLAMet:            resolutionSLAMet,
+		TicketID:                     ticketIDResult,
+		Priority:                     priority,
+		FirstResponseTarget:          firstResponseTarget,
+		FirstResponseActual:          firstResponseActual,
+		ResolutionTarget:             resolutionTarget,
+		ResolutionActual:             resolutionActual,
+		FirstResponseSLAMet:          firstResponseSLAMet,
+		ResolutionSLAMet:             resolutionSLAMet,
 		TimeUntilFirstResponseTarget: timeUntilFirstResponseTarget,
-		TimeUntilResolutionTarget:   timeUntilResolutionTarget,
+		TimeUntilResolutionTarget:    timeUntilResolutionTarget,
 	}, nil
 }
 
 func (r *SLARepository) GetSLAViolations(ctx context.Context, priority *string, violationType *string, limit, offset int) ([]models.SLAViolation, int, error) {
-	query := `
+	baseQuery := `
 		SELECT id, number, priority, created_at, first_response_at, resolved_at, closed_at
 		FROM support.support_tickets
 		WHERE status NOT IN ('closed', 'resolved')`
 
-	args := []interface{}{}
-	argIndex := 1
+	var args []interface{}
 
 	if priority != nil {
-		query += fmt.Sprintf(" AND priority = $%d", argIndex)
+		baseQuery += fmt.Sprintf(" AND priority = $%d", len(args)+1)
 		args = append(args, *priority)
-		argIndex++
 	}
 
-	query += " ORDER BY created_at DESC LIMIT $" + fmt.Sprintf("%d", argIndex) + " OFFSET $" + fmt.Sprintf("%d", argIndex+1)
+	query := baseQuery + " ORDER BY created_at DESC LIMIT $" + fmt.Sprintf("%d", len(args)+1) + " OFFSET $" + fmt.Sprintf("%d", len(args)+2)
 	args = append(args, limit, offset)
 
 	rows, err := r.db.Query(ctx, query, args...)
@@ -167,22 +165,22 @@ func (r *SLARepository) GetSLAViolations(ctx context.Context, priority *string, 
 			if firstResponseActual == nil && now.After(firstResponseTarget) {
 				violationDuration := int(now.Sub(firstResponseTarget).Seconds())
 				violations = append(violations, models.SLAViolation{
-					TicketID:                ticketID,
-					TicketNumber:            number,
-					Priority:                priority,
-					ViolationType:           models.SLAViolationTypeFirstResponse,
-					TargetTime:              firstResponseTarget,
+					TicketID:                 ticketID,
+					TicketNumber:             number,
+					Priority:                 priority,
+					ViolationType:            models.SLAViolationTypeFirstResponse,
+					TargetTime:               firstResponseTarget,
 					ViolationDurationSeconds: &violationDuration,
 				})
 			} else if firstResponseActual != nil && firstResponseActual.After(firstResponseTarget) {
 				violationDuration := int(firstResponseActual.Sub(firstResponseTarget).Seconds())
 				violations = append(violations, models.SLAViolation{
-					TicketID:                ticketID,
-					TicketNumber:            number,
-					Priority:                priority,
-					ViolationType:           models.SLAViolationTypeFirstResponse,
-					TargetTime:              firstResponseTarget,
-					ActualTime:              firstResponseActual,
+					TicketID:                 ticketID,
+					TicketNumber:             number,
+					Priority:                 priority,
+					ViolationType:            models.SLAViolationTypeFirstResponse,
+					TargetTime:               firstResponseTarget,
+					ActualTime:               firstResponseActual,
 					ViolationDurationSeconds: &violationDuration,
 				})
 			}
@@ -199,22 +197,22 @@ func (r *SLARepository) GetSLAViolations(ctx context.Context, priority *string, 
 			if resolutionActual == nil && now.After(resolutionTarget) {
 				violationDuration := int(now.Sub(resolutionTarget).Seconds())
 				violations = append(violations, models.SLAViolation{
-					TicketID:                ticketID,
-					TicketNumber:            number,
-					Priority:                priority,
-					ViolationType:           models.SLAViolationTypeResolution,
-					TargetTime:              resolutionTarget,
+					TicketID:                 ticketID,
+					TicketNumber:             number,
+					Priority:                 priority,
+					ViolationType:            models.SLAViolationTypeResolution,
+					TargetTime:               resolutionTarget,
 					ViolationDurationSeconds: &violationDuration,
 				})
 			} else if resolutionActual != nil && resolutionActual.After(resolutionTarget) {
 				violationDuration := int(resolutionActual.Sub(resolutionTarget).Seconds())
 				violations = append(violations, models.SLAViolation{
-					TicketID:                ticketID,
-					TicketNumber:            number,
-					Priority:                priority,
-					ViolationType:           models.SLAViolationTypeResolution,
-					TargetTime:              resolutionTarget,
-					ActualTime:              resolutionActual,
+					TicketID:                 ticketID,
+					TicketNumber:             number,
+					Priority:                 priority,
+					ViolationType:            models.SLAViolationTypeResolution,
+					TargetTime:               resolutionTarget,
+					ActualTime:               resolutionActual,
 					ViolationDurationSeconds: &violationDuration,
 				})
 			}
@@ -231,7 +229,7 @@ func (r *SLARepository) GetSLAViolations(ctx context.Context, priority *string, 
 		FROM support.support_tickets
 		WHERE status NOT IN ('closed', 'resolved')`
 
-	countArgs := []interface{}{}
+	var countArgs []interface{}
 	countArgIndex := 1
 	if priority != nil {
 		countQuery += fmt.Sprintf(" AND priority = $%d", countArgIndex)
@@ -282,4 +280,3 @@ func (r *SLARepository) calculateSLATargets(priority string, createdAt time.Time
 
 	return firstResponseTarget, resolutionTarget
 }
-

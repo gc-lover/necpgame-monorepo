@@ -1,4 +1,4 @@
-// Issue: #141887950
+// Package server Issue: #141887950
 package server
 
 import (
@@ -13,34 +13,34 @@ import (
 )
 
 type EngramChipTier struct {
-	Tier                int     `json:"tier"`
-	TierName            string  `json:"tier_name"`
-	StabilityLevel      string  `json:"stability_level"`
-	LifespanYearsMin    int     `json:"lifespan_years_min"`
-	LifespanYearsMax    int     `json:"lifespan_years_max"`
-	CorruptionRisk      string  `json:"corruption_risk"`
+	Tier                  int     `json:"tier"`
+	TierName              string  `json:"tier_name"`
+	StabilityLevel        string  `json:"stability_level"`
+	LifespanYearsMin      int     `json:"lifespan_years_min"`
+	LifespanYearsMax      int     `json:"lifespan_years_max"`
+	CorruptionRisk        string  `json:"corruption_risk"`
 	CorruptionRiskPercent float64 `json:"corruption_risk_percent"`
-	ProtectionLevel     string  `json:"protection_level"`
-	CreationCostMin     float64 `json:"creation_cost_min"`
-	CreationCostMax     float64 `json:"creation_cost_max"`
-	AvailableFromYear   int     `json:"available_from_year"`
+	ProtectionLevel       string  `json:"protection_level"`
+	CreationCostMin       float64 `json:"creation_cost_min"`
+	CreationCostMax       float64 `json:"creation_cost_max"`
+	AvailableFromYear     int     `json:"available_from_year"`
 }
 
 type EngramChipDecay struct {
-	ID                      uuid.UUID              `json:"id"`
-	ChipID                  uuid.UUID              `json:"chip_id"`
-	Tier                    int                    `json:"tier"`
-	DecayPercent            float64                `json:"decay_percent"`
-	DecayRisk               string                 `json:"decay_risk"`
-	StorageTemperature      string                 `json:"storage_temperature"`
-	StorageHumidity         string                 `json:"storage_humidity"`
-	ElectromagneticShield   bool                   `json:"electromagnetic_shield"`
-	StorageTimeOutsideHours int                    `json:"storage_time_outside_hours"`
-	TimeUntilCriticalHours  *int                   `json:"time_until_critical_hours,omitempty"`
-	DecayEffects            []string               `json:"decay_effects"`
-	LastCheckedAt           time.Time              `json:"last_checked_at"`
-	CreatedAt               time.Time              `json:"created_at"`
-	UpdatedAt               time.Time              `json:"updated_at"`
+	ID                      uuid.UUID `json:"id"`
+	ChipID                  uuid.UUID `json:"chip_id"`
+	Tier                    int       `json:"tier"`
+	DecayPercent            float64   `json:"decay_percent"`
+	DecayRisk               string    `json:"decay_risk"`
+	StorageTemperature      string    `json:"storage_temperature"`
+	StorageHumidity         string    `json:"storage_humidity"`
+	ElectromagneticShield   bool      `json:"electromagnetic_shield"`
+	StorageTimeOutsideHours int       `json:"storage_time_outside_hours"`
+	TimeUntilCriticalHours  *int      `json:"time_until_critical_hours,omitempty"`
+	DecayEffects            []string  `json:"decay_effects"`
+	LastCheckedAt           time.Time `json:"last_checked_at"`
+	CreatedAt               time.Time `json:"created_at"`
+	UpdatedAt               time.Time `json:"updated_at"`
 }
 
 type EngramChipsRepositoryInterface interface {
@@ -55,13 +55,6 @@ type EngramChipsRepositoryInterface interface {
 type EngramChipsRepository struct {
 	db     *pgxpool.Pool
 	logger *logrus.Logger
-}
-
-func NewEngramChipsRepository(db *pgxpool.Pool) *EngramChipsRepository {
-	return &EngramChipsRepository{
-		db:     db,
-		logger: GetLogger(),
-	}
 }
 
 func (r *EngramChipsRepository) GetChipTiers(ctx context.Context, leagueYear *int) ([]*EngramChipTier, error) {
@@ -205,19 +198,19 @@ func (r *EngramChipsRepository) GetChipDecay(ctx context.Context, chipID uuid.UU
 
 func (r *EngramChipsRepository) CreateChipDecay(ctx context.Context, chipID uuid.UUID, tier int) (*EngramChipDecay, error) {
 	decay := &EngramChipDecay{
-		ID:                    uuid.New(),
-		ChipID:                chipID,
-		Tier:                  tier,
-		DecayPercent:          0.0,
-		DecayRisk:             "none",
-		StorageTemperature:    "optimal",
-		StorageHumidity:       "optimal",
-		ElectromagneticShield: true,
+		ID:                      uuid.New(),
+		ChipID:                  chipID,
+		Tier:                    tier,
+		DecayPercent:            0.0,
+		DecayRisk:               "none",
+		StorageTemperature:      "optimal",
+		StorageHumidity:         "optimal",
+		ElectromagneticShield:   true,
 		StorageTimeOutsideHours: 0,
-		DecayEffects:          []string{},
-		LastCheckedAt:         time.Now(),
-		CreatedAt:             time.Now(),
-		UpdatedAt:             time.Now(),
+		DecayEffects:            []string{},
+		LastCheckedAt:           time.Now(),
+		CreatedAt:               time.Now(),
+		UpdatedAt:               time.Now(),
 	}
 
 	decayEffectsJSON, _ := json.Marshal(decay.DecayEffects)
@@ -269,6 +262,3 @@ func (r *EngramChipsRepository) UpdateChipDecay(ctx context.Context, decay *Engr
 
 	return nil
 }
-
-
-

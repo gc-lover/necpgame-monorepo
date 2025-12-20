@@ -33,7 +33,7 @@ func main() {
 	config.MinConns = 10
 	config.MaxConnLifetime = 5 * time.Minute
 	config.MaxConnIdleTime = 1 * time.Minute
-	
+
 	dbPool, err := pgxpool.NewWithConfig(context.Background(), config)
 	if err != nil {
 		logger.WithError(err).Fatal("Failed to connect to database")
@@ -85,7 +85,7 @@ func main() {
 	metricsMux.Handle("/metrics", promhttp.Handler())
 
 	metricsServer := &http.Server{
-		Addr: metricsAddr,
+		Addr:    metricsAddr,
 		Handler: metricsMux,
 	}
 
@@ -139,4 +139,3 @@ func getEnv(key, defaultValue string) string {
 	}
 	return defaultValue
 }
-

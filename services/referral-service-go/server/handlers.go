@@ -1,4 +1,4 @@
-// Issue: #1599 - ogen handlers (TYPED responses)
+// Package server Issue: #1599 - ogen handlers (TYPED responses)
 package server
 
 import (
@@ -10,10 +10,8 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// Context timeout constants
 const (
-	DBTimeout    = 50 * time.Millisecond
-	CacheTimeout = 10 * time.Millisecond
+	DBTimeout = 50 * time.Millisecond
 )
 
 // ServiceHandlers implements api.Handler interface (ogen typed handlers!)
@@ -27,7 +25,7 @@ func NewServiceHandlers(logger *logrus.Logger) *ServiceHandlers {
 }
 
 // GetReferralCode implements getReferralCode operation.
-func (h *ServiceHandlers) GetReferralCode(ctx context.Context, params api.GetReferralCodeParams) (api.GetReferralCodeRes, error) {
+func (h *ServiceHandlers) GetReferralCode(ctx context.Context, _ api.GetReferralCodeParams) (api.GetReferralCodeRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 

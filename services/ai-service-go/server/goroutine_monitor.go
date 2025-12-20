@@ -8,7 +8,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// OPTIMIZATION: Issue #1585 - Runtime Goroutine Monitoring for AI stability
+// GoroutineMonitor OPTIMIZATION: Issue #1585 - Runtime Goroutine Monitoring for AI stability
 type GoroutineMonitor struct {
 	maxGoroutines int64
 	logger        *logrus.Logger
@@ -16,20 +16,12 @@ type GoroutineMonitor struct {
 	stopCh        chan struct{}
 }
 
-// OPTIMIZATION: Issue #1968 - Memory-aligned struct
+// GoroutineStats OPTIMIZATION: Issue #1968 - Memory-aligned struct
 type GoroutineStats struct {
 	CurrentCount int64     `json:"current_count"` // 8 bytes
 	MaxAllowed   int64     `json:"max_allowed"`   // 8 bytes
 	Timestamp    time.Time `json:"timestamp"`     // 24 bytes
 	IsOverLimit  bool      `json:"is_over_limit"` // 1 byte
-}
-
-func NewGoroutineMonitor(maxGoroutines int64, logger *logrus.Logger) *GoroutineMonitor {
-	return &GoroutineMonitor{
-		maxGoroutines: maxGoroutines,
-		logger:        logger,
-		stopCh:        make(chan struct{}),
-	}
 }
 
 func (gm *GoroutineMonitor) Start() {

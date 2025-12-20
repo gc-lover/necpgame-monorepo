@@ -9,6 +9,7 @@ docker-compose ps realtime-gateway
 ```
 
 Если не запущен:
+
 ```powershell
 docker-compose up -d realtime-gateway
 ```
@@ -16,6 +17,7 @@ docker-compose up -d realtime-gateway
 ### Шаг 2: Запустите Dedicated Server
 
 Просто запустите скрипт:
+
 ```powershell
 cd client\UE5\NECPGAME
 .\RunServerInEditor.bat
@@ -26,11 +28,13 @@ cd client\UE5\NECPGAME
 ### Шаг 3: Проверьте подключение
 
 В логах UE5 Editor (Output Log) должно появиться:
+
 ```
 LyraServerGatewayConnection: Connected to gateway at 127.0.0.1:18080
 ```
 
 В логах Gateway (через docker-compose) должно появиться:
+
 ```
 server connected to /server endpoint
 ```
@@ -40,8 +44,8 @@ server connected to /server endpoint
 1. Откройте проект `NECPGAME.uproject` в UE5 Editor
 2. Нажмите на стрелку рядом с кнопкой **Play**
 3. Выберите:
-   - **Number of Players**: 2 или больше
-   - **Net Mode**: **Play As Listen Server** (или Dedicated Server)
+    - **Number of Players**: 2 или больше
+    - **Net Mode**: **Play As Listen Server** (или Dedicated Server)
 4. Нажмите **Play**
 5. В окне PIE управляйте персонажем
 
@@ -98,5 +102,6 @@ cd client\UE5\NECPGAME
 
 ## Следующие шаги
 
-После запуска сервера сообщите **"сервер запущен"** и я запущу нагрузочный тест с полным циклом синхронизации (PlayerInput → Server → GameState → Clients)!
+После запуска сервера сообщите **"сервер запущен"** и я запущу нагрузочный тест с полным циклом синхронизации (
+PlayerInput → Server → GameState → Clients)!
 

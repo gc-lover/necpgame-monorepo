@@ -23,7 +23,7 @@ var (
 		[]string{"method", "endpoint"},
 	)
 
-	feedbackTotal = promauto.NewGaugeVec(
+	_ = promauto.NewGaugeVec(
 		prometheus.GaugeOpts{
 			Name: "feedback_total",
 			Help: "Total number of feedback items",
@@ -31,7 +31,7 @@ var (
 		[]string{"type", "status"},
 	)
 
-	feedbackErrorsTotal = promauto.NewCounterVec(
+	_ = promauto.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "feedback_errors_total",
 			Help: "Total number of feedback service errors",
@@ -47,64 +47,3 @@ func RecordRequest(method, endpoint, status string) {
 func RecordRequestDuration(method, endpoint string, duration float64) {
 	feedbackRequestDuration.WithLabelValues(method, endpoint).Observe(duration)
 }
-
-func SetFeedbackCount(feedbackType, status string, count float64) {
-	feedbackTotal.WithLabelValues(feedbackType, status).Set(count)
-}
-
-func RecordError(errorType string) {
-	feedbackErrorsTotal.WithLabelValues(errorType).Inc()
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

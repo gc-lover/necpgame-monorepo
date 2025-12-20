@@ -1,4 +1,4 @@
-// Issue: #1597, #1607
+// Package server Issue: #1597, #1607
 // ogen handlers - TYPED responses (no interface{} boxing!)
 package server
 
@@ -6,21 +6,19 @@ import (
 	"context"
 	"time"
 
-	"github.com/go-faster/jx"
 	"github.com/gc-lover/necpgame-monorepo/services/quest-state-dialogue-service-go/pkg/api"
+	"github.com/go-faster/jx"
 )
 
-// Context timeout constants (Issue #1604)
 const (
-	DBTimeout    = 50 * time.Millisecond
-	CacheTimeout = 10 * time.Millisecond
+	DBTimeout = 50 * time.Millisecond
 )
 
 // Handlers implements api.Handler interface (ogen typed handlers!)
 type Handlers struct{}
 
 // GetQuestState - TYPED response!
-func (h *Handlers) GetQuestState(ctx context.Context, params api.GetQuestStateParams) (api.GetQuestStateRes, error) {
+func (h *Handlers) GetQuestState(ctx context.Context, _ api.GetQuestStateParams) (api.GetQuestStateRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 	_ = ctx // Will be used when DB operations are implemented
@@ -41,7 +39,7 @@ func (h *Handlers) GetQuestState(ctx context.Context, params api.GetQuestStatePa
 }
 
 // UpdateQuestState - TYPED response!
-func (h *Handlers) UpdateQuestState(ctx context.Context, req *api.UpdateStateRequest, params api.UpdateQuestStateParams) (api.UpdateQuestStateRes, error) {
+func (h *Handlers) UpdateQuestState(ctx context.Context, req *api.UpdateStateRequest, _ api.UpdateQuestStateParams) (api.UpdateQuestStateRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 	_ = ctx // Will be used when DB operations are implemented
@@ -79,7 +77,7 @@ func (h *Handlers) UpdateQuestState(ctx context.Context, req *api.UpdateStateReq
 }
 
 // GetQuestDialogue - TYPED response!
-func (h *Handlers) GetQuestDialogue(ctx context.Context, params api.GetQuestDialogueParams) (api.GetQuestDialogueRes, error) {
+func (h *Handlers) GetQuestDialogue(ctx context.Context, _ api.GetQuestDialogueParams) (api.GetQuestDialogueRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 	_ = ctx // Will be used when DB operations are implemented
@@ -117,7 +115,7 @@ func (h *Handlers) GetQuestDialogue(ctx context.Context, params api.GetQuestDial
 }
 
 // MakeDialogueChoice - TYPED response!
-func (h *Handlers) MakeDialogueChoice(ctx context.Context, req *api.DialogueChoiceRequest, params api.MakeDialogueChoiceParams) (api.MakeDialogueChoiceRes, error) {
+func (h *Handlers) MakeDialogueChoice(ctx context.Context, _ *api.DialogueChoiceRequest, _ api.MakeDialogueChoiceParams) (api.MakeDialogueChoiceRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 	_ = ctx // Will be used when DB operations are implemented

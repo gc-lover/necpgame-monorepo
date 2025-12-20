@@ -1,4 +1,4 @@
-// Issue: #150 - Security Handler (JWT validation)
+// Package server Issue: #150 - Security Handler (JWT validation)
 package server
 
 import (
@@ -6,20 +6,17 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	
-	api "github.com/gc-lover/necpgame-monorepo/services/matchmaking-go/pkg/api"
+
+	"github.com/gc-lover/necpgame-monorepo/services/matchmaking-go/pkg/api"
 )
 
 // SecurityHandler implements ogen security handler
 type SecurityHandler struct{}
 
 // NewSecurityHandler creates new security handler
-func NewSecurityHandler() *SecurityHandler {
-	return &SecurityHandler{}
-}
 
 // HandleBearerAuth handles Bearer token authentication
-func (s *SecurityHandler) HandleBearerAuth(ctx context.Context, operationName string, t api.BearerAuth) (context.Context, error) {
+func (s *SecurityHandler) HandleBearerAuth(ctx context.Context, _ string, t api.BearerAuth) (context.Context, error) {
 	// Extract token from BearerAuth struct
 	token := t.GetToken()
 	if token == "" {
@@ -28,7 +25,7 @@ func (s *SecurityHandler) HandleBearerAuth(ctx context.Context, operationName st
 
 	// TODO: Validate JWT token properly (use jwt-go library)
 	// For now, mock validation
-	playerID, err := s.validateToken(token)
+	playerID, err := s.validateToken()
 	if err != nil {
 		return ctx, fmt.Errorf("invalid token: %w", err)
 	}
@@ -40,7 +37,7 @@ func (s *SecurityHandler) HandleBearerAuth(ctx context.Context, operationName st
 }
 
 // validateToken validates JWT token (mock for now)
-func (s *SecurityHandler) validateToken(token string) (uuid.UUID, error) {
+func (s *SecurityHandler) validateToken() (uuid.UUID, error) {
 	// TODO: Implement real JWT validation
 	// - Verify signature
 	// - Check expiration
@@ -49,4 +46,3 @@ func (s *SecurityHandler) validateToken(token string) (uuid.UUID, error) {
 	// Mock: just return a random UUID for testing
 	return uuid.New(), nil
 }
-

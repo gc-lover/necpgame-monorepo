@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"net/http"
-	"net/http/pprof"
 	"os"
 	"os/signal"
 	"syscall"
@@ -14,15 +13,15 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// OPTIMIZATION: Issue #1950 - Memory-aligned struct for performance
+// InventoryServiceConfig OPTIMIZATION: Issue #1950 - Memory-aligned struct for performance
 type InventoryServiceConfig struct {
-	HTTPAddr       string        `json:"http_addr"`       // 16 bytes
-	HealthAddr     string        `json:"health_addr"`     // 16 bytes
-	PprofAddr      string        `json:"pprof_addr"`      // 16 bytes
+	HTTPAddr       string        `json:"http_addr"`         // 16 bytes
+	HealthAddr     string        `json:"health_addr"`       // 16 bytes
+	PprofAddr      string        `json:"pprof_addr"`        // 16 bytes
 	DBMaxOpenConns int           `json:"db_max_open_conns"` // 8 bytes
-	ReadTimeout    time.Duration `json:"read_timeout"`    // 8 bytes
-	WriteTimeout   time.Duration `json:"write_timeout"`   // 8 bytes
-	MaxHeaderBytes int           `json:"max_header_bytes"` // 8 bytes
+	ReadTimeout    time.Duration `json:"read_timeout"`      // 8 bytes
+	WriteTimeout   time.Duration `json:"write_timeout"`     // 8 bytes
+	MaxHeaderBytes int           `json:"max_header_bytes"`  // 8 bytes
 }
 
 func main() {
@@ -52,7 +51,7 @@ func main() {
 	}()
 
 	// Initialize service with performance optimizations
-	srv, err := server.NewInventoryServer(config, logger)
+	srv, err := server.NewInventoryServer(logger)
 	if err != nil {
 		logger.WithError(err).Fatal("failed to initialize inventory server")
 	}

@@ -1,4 +1,4 @@
-// Issue: #2203 - Station service implementation
+// Package server Issue: #2203 - Station service implementation
 package server
 
 import (

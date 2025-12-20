@@ -1,4 +1,4 @@
-// Issue: #1911
+// Package models Issue: #1911
 package models
 
 import (
@@ -14,16 +14,15 @@ const (
 	RuleTypeWordFilter        RuleType = "word_filter"
 	RuleTypeSpamPattern       RuleType = "spam_pattern"
 	RuleTypeToxicityThreshold RuleType = "toxicity_threshold"
-	RuleTypeRateLimit         RuleType = "rate_limit"
 )
 
 // ViolationType represents types of violations
 type ViolationType string
 
 const (
-	ViolationTypeSpam              ViolationType = "spam"
-	ViolationTypeToxicity          ViolationType = "toxicity"
-	ViolationTypeHarassment        ViolationType = "harassment"
+	ViolationTypeSpam     ViolationType = "spam"
+	ViolationTypeToxicity ViolationType = "toxicity"
+
 	ViolationTypeForbiddenWords    ViolationType = "forbidden_words"
 	ViolationTypeRateLimitExceeded ViolationType = "rate_limit_exceeded"
 )
@@ -32,25 +31,20 @@ const (
 type ViolationStatus string
 
 const (
-	ViolationStatusPending   ViolationStatus = "pending"
 	ViolationStatusResolved  ViolationStatus = "resolved"
 	ViolationStatusDismissed ViolationStatus = "dismissed"
-	ViolationStatusEscalated ViolationStatus = "escalated"
 )
 
 // ActionType represents moderation actions
 type ActionType string
 
 const (
-	ActionTypeWarning        ActionType = "warning"
-	ActionTypeMute           ActionType = "mute"
-	ActionTypeBan            ActionType = "ban"
-	ActionTypeMessageDelete  ActionType = "message_delete"
-	ActionTypeAccountSuspend ActionType = "account_suspend"
-	ActionTypeDismiss        ActionType = "dismiss"
+	ActionTypeMessageDelete ActionType = "message_delete"
+
+	ActionTypeDismiss ActionType = "dismiss"
 )
 
-// Severity level for violations
+// SeverityLevel Severity level for violations
 type SeverityLevel string
 
 const (
@@ -64,13 +58,7 @@ const (
 type ChannelType string
 
 const (
-	ChannelTypeGlobal   ChannelType = "global"
-	ChannelTypeTeam     ChannelType = "team"
-	ChannelTypeParty    ChannelType = "party"
-	ChannelTypeWhisper  ChannelType = "whisper"
-	ChannelTypeTrade    ChannelType = "trade"
-	ChannelTypeGuild    ChannelType = "guild"
-	ChannelTypeAlliance ChannelType = "alliance"
+	ChannelTypeGlobal ChannelType = "global"
 )
 
 // ModerationRule represents a moderation rule

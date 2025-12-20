@@ -373,4 +373,3 @@ func TestAdminRepository_ListAuditLogs_Pagination(t *testing.T) {
 		assert.NotNil(t, logsPage2)
 	}
 }
-

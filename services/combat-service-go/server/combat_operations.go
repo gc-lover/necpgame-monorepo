@@ -146,7 +146,7 @@ func (s *CombatService) ExecuteCombatAction(w http.ResponseWriter, r *http.Reque
 
 	// Calculate damage if it's an attack
 	if req.ActionType == "ATTACK" {
-		damage := s.calculateDamage(req.ActionID, req.TargetID)
+		damage := s.calculateDamage()
 		resp.Damage = &damage
 	}
 
@@ -154,8 +154,8 @@ func (s *CombatService) ExecuteCombatAction(w http.ResponseWriter, r *http.Reque
 	json.NewEncoder(w).Encode(resp)
 
 	s.logger.WithFields(logrus.Fields{
-		"combat_id":  combatID,
-		"action_id":  actionID,
+		"combat_id":   combatID,
+		"action_id":   actionID,
 		"action_type": req.ActionType,
 	}).Info("combat action executed")
 }

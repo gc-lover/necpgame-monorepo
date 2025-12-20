@@ -1,4 +1,4 @@
-// Issue: #39, #1607 - Sandevistan heat and cooling operations
+// Package server Issue: #39, #1607 - Sandevistan heat and cooling operations
 package server
 
 import (
@@ -10,7 +10,7 @@ import (
 )
 
 // ApplyCooling applies cooling effect using a cartridge
-func (s *sandevistanService) ApplyCooling(ctx context.Context, playerID uuid.UUID, cartridgeID uuid.UUID) (*api.CoolingResult, error) {
+func (s *sandevistanService) ApplyCooling(ctx context.Context, playerID uuid.UUID, _ uuid.UUID) (*api.CoolingResult, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 

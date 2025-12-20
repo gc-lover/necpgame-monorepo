@@ -1,4 +1,4 @@
-// Issue: #141889273
+// Package server Issue: #141889273
 package server
 
 import (
@@ -14,7 +14,7 @@ import (
 func (h *GatewayHandler) HandleConnection(ctx context.Context, conn *websocket.Conn) error {
 	var playerID string
 	var sessionToken string
-	
+
 	h.AddClientConnection(conn)
 	defer func() {
 		logger := GetLogger()
@@ -34,7 +34,7 @@ func (h *GatewayHandler) HandleConnection(ctx context.Context, conn *websocket.C
 
 	logger := GetLogger()
 	logger.WithField("remote_addr", conn.RemoteAddr().String()).Info("New WebSocket client connection")
-	
+
 	h.clientConnsMu.RLock()
 	clientCount := len(h.clientConns)
 	h.clientConnsMu.RUnlock()
@@ -70,7 +70,7 @@ func (h *GatewayHandler) HandleConnection(ctx context.Context, conn *websocket.C
 			}
 		}
 	}()
-	
+
 	for {
 		select {
 		case <-ctx.Done():
@@ -104,10 +104,10 @@ func (h *GatewayHandler) HandleConnection(ctx context.Context, conn *websocket.C
 
 		if messageType == websocket.BinaryMessage {
 			logger.WithFields(map[string]interface{}{
-				"data_len":    len(data),
-				"source":      "client_connection",
+				"data_len": len(data),
+				"source":   "client_connection",
 			}).Debug("HandleConnection: Received binary message from client, attempting to parse as PlayerInput")
-			
+
 			playerInput, err := ParseClientMessage(data)
 			if err != nil {
 				if err.Error() != "no PlayerInput found in message" {
@@ -116,7 +116,7 @@ func (h *GatewayHandler) HandleConnection(ctx context.Context, conn *websocket.C
 						hexLen = len(data)
 					}
 					remoteAddr := conn.RemoteAddr().String()
-					
+
 					if len(data) > 100 && !strings.Contains(err.Error(), "PlayerID string length") {
 						logger.WithFields(map[string]interface{}{
 							"data_len":    len(data),
@@ -125,15 +125,15 @@ func (h *GatewayHandler) HandleConnection(ctx context.Context, conn *websocket.C
 							"source":      "client_connection",
 						}).Warn("HandleConnection: Large message that doesn't parse as PlayerInput - might be GameState from server that should be handled by handleServerWebSocket")
 					}
-					
+
 					logger.WithError(err).WithFields(map[string]interface{}{
 						"data_len":    len(data),
-						"data_hex":     fmt.Sprintf("%x", data[:hexLen]),
-						"remote_addr":  remoteAddr,
-						"error_msg":    err.Error(),
-						"source":       "client_connection",
+						"data_hex":    fmt.Sprintf("%x", data[:hexLen]),
+						"remote_addr": remoteAddr,
+						"error_msg":   err.Error(),
+						"source":      "client_connection",
 					}).Error("HandleConnection: Failed to parse PlayerInput from client - TRACING SOURCE")
-					
+
 					if strings.Contains(err.Error(), "PlayerID string length") {
 						fullHexLen := 200
 						if len(data) < fullHexLen {
@@ -142,8 +142,8 @@ func (h *GatewayHandler) HandleConnection(ctx context.Context, conn *websocket.C
 						logger.WithFields(map[string]interface{}{
 							"remote_addr": remoteAddr,
 							"data_len":    len(data),
-							"full_hex":     fmt.Sprintf("%x", data[:fullHexLen]),
-							"source":       "client_connection",
+							"full_hex":    fmt.Sprintf("%x", data[:fullHexLen]),
+							"source":      "client_connection",
 						}).Error("HandleConnection: LONG PlayerID DETECTED in client message - SOURCE TRACE")
 					}
 				} else {
@@ -156,19 +156,19 @@ func (h *GatewayHandler) HandleConnection(ctx context.Context, conn *websocket.C
 			} else if playerInput != nil {
 				RecordPlayerInputReceived()
 				RecordMessageSize("player_input", len(data))
-				
+
 				if playerID == "" {
 					playerID = playerInput.PlayerID
-					
+
 					if h.sessionMgr != nil {
 						ipAddress := conn.RemoteAddr().String()
 						userAgent := ""
-						
+
 						existingSession, _ := h.sessionMgr.GetSessionByPlayerID(ctx, playerID)
 						if existingSession != nil && existingSession.Status == SessionStatusActive {
 							h.sessionMgr.DisconnectSession(ctx, existingSession.Token)
 						}
-						
+
 						newSession, err := h.sessionMgr.CreateSession(ctx, playerID, ipAddress, userAgent, nil)
 						if err == nil && newSession != nil {
 							sessionToken = newSession.Token
@@ -178,24 +178,24 @@ func (h *GatewayHandler) HandleConnection(ctx context.Context, conn *websocket.C
 						}
 					}
 				}
-				
+
 				if sessionToken != "" && h.sessionMgr != nil {
 					h.sessionMgr.UpdateHeartbeat(ctx, sessionToken)
 				}
-				
+
 				if len(playerInput.PlayerID) > 20 || !isValidPlayerID(playerInput.PlayerID) {
 					hexLen := 50
 					if len(data) < hexLen {
 						hexLen = len(data)
 					}
 					logger.WithFields(map[string]interface{}{
-						"player_id":      playerInput.PlayerID,
-						"player_id_len":  len(playerInput.PlayerID),
-						"data_len":       len(data),
-						"data_hex":       fmt.Sprintf("%x", data[:hexLen]),
-						"tick":           playerInput.Tick,
-						"move_x":         playerInput.MoveX,
-						"move_y":         playerInput.MoveY,
+						"player_id":     playerInput.PlayerID,
+						"player_id_len": len(playerInput.PlayerID),
+						"data_len":      len(data),
+						"data_hex":      fmt.Sprintf("%x", data[:hexLen]),
+						"tick":          playerInput.Tick,
+						"move_x":        playerInput.MoveX,
+						"move_y":        playerInput.MoveY,
 					}).Warn("Received PlayerInput with suspicious player_id")
 				} else {
 					logger.WithFields(map[string]interface{}{
@@ -246,12 +246,3 @@ func (h *GatewayHandler) HandleConnection(ctx context.Context, conn *websocket.C
 		conn.SetReadDeadline(time.Now().Add(60 * time.Second))
 	}
 }
-
-
-
-
-
-
-
-
-

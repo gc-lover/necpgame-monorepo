@@ -188,4 +188,3 @@ func TestCharacterService_SwitchCharacter_SingleCharacter(t *testing.T) {
 	assert.Nil(t, result.PreviousCharacterID)
 	mockRepo.AssertExpectations(t)
 }
-

@@ -29,22 +29,22 @@ info:
     name: NECPGAME API Support
     email: api@necp.game
 servers:
-- url: http://localhost:8083/api/v1/gameplay
-  description: Локальный сервер разработки
-- url: https://api.necp.game/api/v1/gameplay
-  description: Продакшен сервер
+  - url: http://localhost:8083/api/v1/gameplay
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1/gameplay
+    description: Продакшен сервер
 tags:
-- name: Difficulty Rating
-  description: Рейтинг сложности
-- name: Recommendations
-  description: Рекомендации по сложности
-- name: Difficulty Adjustment
-  description: Подстройка сложности
+  - name: Difficulty Rating
+    description: Рейтинг сложности
+  - name: Recommendations
+    description: Рекомендации по сложности
+  - name: Difficulty Adjustment
+    description: Подстройка сложности
 paths:
   /difficulty-rating/player/{playerId}:
     get:
       tags:
-      - Difficulty Rating
+        - Difficulty Rating
       summary: Получить рейтинг навыков игрока
       description: 'Возвращает текущий рейтинг навыков игрока, рассчитанный на основе
 
@@ -53,16 +53,16 @@ paths:
         '
       operationId: getPlayerSkillRating
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       parameters:
-      - name: playerId
-        in: path
-        required: true
-        description: UUID игрока
-        schema:
-          type: string
-          format: uuid
-          example: aa0e8400-e29b-41d4-a716-446655440000
+        - name: playerId
+          in: path
+          required: true
+          description: UUID игрока
+          schema:
+            type: string
+            format: uuid
+            example: aa0e8400-e29b-41d4-a716-446655440000
       responses:
         '200':
           description: Рейтинг навыков игрока
@@ -89,7 +89,7 @@ paths:
   /difficulty-rating/content/{contentId}:
     get:
       tags:
-      - Difficulty Rating
+        - Difficulty Rating
       summary: Получить рейтинг сложности контента
       description: 'Возвращает рейтинг сложности контента, рассчитанный на основе статистики
 
@@ -98,16 +98,16 @@ paths:
         '
       operationId: getContentDifficultyRating
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       parameters:
-      - name: contentId
-        in: path
-        required: true
-        description: UUID контента
-        schema:
-          type: string
-          format: uuid
-          example: bb0e8400-e29b-41d4-a716-446655440000
+        - name: contentId
+          in: path
+          required: true
+          description: UUID контента
+          schema:
+            type: string
+            format: uuid
+            example: bb0e8400-e29b-41d4-a716-446655440000
       responses:
         '200':
           description: Рейтинг сложности контента
@@ -134,7 +134,7 @@ paths:
   /difficulty-rating/recommendations/{playerId}:
     get:
       tags:
-      - Recommendations
+        - Recommendations
       summary: Получить рекомендации по сложности
       description: 'Возвращает рекомендации по подходящей сложности контента для игрока
 
@@ -143,24 +143,24 @@ paths:
         '
       operationId: getDifficultyRecommendations
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       parameters:
-      - name: playerId
-        in: path
-        required: true
-        description: UUID игрока
-        schema:
-          type: string
-          format: uuid
-          example: aa0e8400-e29b-41d4-a716-446655440000
-      - name: content_id
-        in: query
-        required: false
-        description: UUID контента для конкретной рекомендации (опционально)
-        schema:
-          type: string
-          format: uuid
-          example: bb0e8400-e29b-41d4-a716-446655440000
+        - name: playerId
+          in: path
+          required: true
+          description: UUID игрока
+          schema:
+            type: string
+            format: uuid
+            example: aa0e8400-e29b-41d4-a716-446655440000
+        - name: content_id
+          in: query
+          required: false
+          description: UUID контента для конкретной рекомендации (опционально)
+          schema:
+            type: string
+            format: uuid
+            example: bb0e8400-e29b-41d4-a716-446655440000
       responses:
         '200':
           description: Рекомендации по сложности
@@ -173,16 +173,16 @@ paths:
                 recommended_difficulty: medium
                 skill_rating: 75.5
                 recommendations:
-                - content_id: bb0e8400-e29b-41d4-a716-446655440000
-                  content_name: Dungeon Alpha
-                  recommended_difficulty: medium
-                  match_score: 0.85
-                  reason: Ваш рейтинг навыков соответствует сложности контента
-                - content_id: cc0e8400-e29b-41d4-a716-446655440001
-                  content_name: Dungeon Beta
-                  recommended_difficulty: hard
-                  match_score: 0.72
-                  reason: Немного сложнее, но подходит для развития навыков
+                  - content_id: bb0e8400-e29b-41d4-a716-446655440000
+                    content_name: Dungeon Alpha
+                    recommended_difficulty: medium
+                    match_score: 0.85
+                    reason: Ваш рейтинг навыков соответствует сложности контента
+                  - content_id: cc0e8400-e29b-41d4-a716-446655440001
+                    content_name: Dungeon Beta
+                    recommended_difficulty: hard
+                    match_score: 0.72
+                    reason: Немного сложнее, но подходит для развития навыков
         '400':
           $ref: common.yaml#/components/responses/BadRequest
         '401':
@@ -194,7 +194,7 @@ paths:
   /difficulty-rating/adjust:
     post:
       tags:
-      - Difficulty Adjustment
+        - Difficulty Adjustment
       summary: Подстроить сложность контента
       description: 'Автоматически подстраивает сложность контента под команду игроков
 
@@ -205,7 +205,7 @@ paths:
         '
       operationId: adjustDifficulty
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       requestBody:
         required: true
         content:
@@ -215,9 +215,9 @@ paths:
             example:
               content_id: bb0e8400-e29b-41d4-a716-446655440000
               team_members:
-              - player_id: aa0e8400-e29b-41d4-a716-446655440000
-              - player_id: dd0e8400-e29b-41d4-a716-446655440001
-              - player_id: ee0e8400-e29b-41d4-a716-446655440002
+                - player_id: aa0e8400-e29b-41d4-a716-446655440000
+                - player_id: dd0e8400-e29b-41d4-a716-446655440001
+                - player_id: ee0e8400-e29b-41d4-a716-446655440002
       responses:
         '200':
           description: Сложность подстроена
@@ -249,13 +249,13 @@ components:
     PlayerSkillRating:
       type: object
       required:
-      - player_id
-      - skill_rating
-      - completion_rate
-      - average_time
-      - average_deaths
-      - recommended_difficulty
-      - updated_at
+        - player_id
+        - skill_rating
+        - completion_rate
+        - average_time
+        - average_deaths
+        - recommended_difficulty
+        - updated_at
       properties:
         player_id:
           type: string
@@ -297,13 +297,13 @@ components:
     ContentDifficultyRating:
       type: object
       required:
-      - content_id
-      - difficulty_rating
-      - completion_rate
-      - average_time
-      - average_deaths
-      - difficulty_level
-      - updated_at
+        - content_id
+        - difficulty_rating
+        - completion_rate
+        - average_time
+        - average_deaths
+        - difficulty_level
+        - updated_at
       properties:
         content_id:
           type: string
@@ -345,19 +345,19 @@ components:
     DifficultyLevel:
       type: string
       enum:
-      - easy
-      - medium
-      - hard
-      - extreme
+        - easy
+        - medium
+        - hard
+        - extreme
       description: Уровень сложности
       example: medium
     DifficultyRecommendations:
       type: object
       required:
-      - player_id
-      - recommended_difficulty
-      - skill_rating
-      - recommendations
+        - player_id
+        - recommended_difficulty
+        - skill_rating
+        - recommendations
       properties:
         player_id:
           type: string
@@ -380,11 +380,11 @@ components:
     ContentRecommendation:
       type: object
       required:
-      - content_id
-      - content_name
-      - recommended_difficulty
-      - match_score
-      - reason
+        - content_id
+        - content_name
+        - recommended_difficulty
+        - match_score
+        - reason
       properties:
         content_id:
           type: string
@@ -411,8 +411,8 @@ components:
     DifficultyAdjustmentRequest:
       type: object
       required:
-      - content_id
-      - team_members
+        - content_id
+        - team_members
       properties:
         content_id:
           type: string
@@ -427,7 +427,7 @@ components:
           items:
             type: object
             required:
-            - player_id
+              - player_id
             properties:
               player_id:
                 type: string
@@ -437,12 +437,12 @@ components:
     DifficultyAdjustmentResult:
       type: object
       required:
-      - content_id
-      - team_average_rating
-      - original_difficulty
-      - adjusted_difficulty
-      - modifiers
-      - adjusted_at
+        - content_id
+        - team_average_rating
+        - original_difficulty
+        - adjusted_difficulty
+        - modifiers
+        - adjusted_at
       properties:
         content_id:
           type: string
@@ -456,9 +456,9 @@ components:
           type: object
           description: Модификаторы сложности
           required:
-          - hp_modifier
-          - damage_modifier
-          - experience_modifier
+            - hp_modifier
+            - damage_modifier
+            - experience_modifier
           properties:
             hp_modifier:
               type: number

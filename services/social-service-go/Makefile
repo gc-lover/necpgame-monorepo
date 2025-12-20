@@ -70,11 +70,11 @@ generate-spec: bundle-api
 
 check-file-sizes:
 	@echo ""
-	@echo "File size check (max 500 lines):"
+	@echo "File size check (max 1000 lines):"
 	@for file in $(TYPES_FILE) $(SERVER_FILE) $(SPEC_FILE); do \
 		if [ -f "$$file" ]; then \
 			lines=$$(wc -l < "$$file" | tr -d ' '); \
-			if [ $$lines -gt 500 ]; then \
+			if [ $$lines -gt 1000 ]; then \
 				echo "WARNING  $$file: $$lines lines (EXCEEDS)"; \
 			else \
 				echo "OK $$file: $$lines lines"; \

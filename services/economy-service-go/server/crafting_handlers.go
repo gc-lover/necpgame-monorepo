@@ -1,4 +1,4 @@
-// Issue: #140890170 - Crafting mechanics implementation
+// Package server Issue: #140890170 - Crafting mechanics implementation
 package server
 
 import (
@@ -108,7 +108,7 @@ func (h *CraftingHandlers) StartCraftingHandler(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	playerID := h.getPlayerIDFromContext(ctx)
+	playerID := h.getPlayerIDFromContext()
 	if playerID == "" {
 		h.writeError(w, "player authentication required", http.StatusUnauthorized)
 		return
@@ -134,7 +134,7 @@ func (h *CraftingHandlers) GetPlayerOrdersHandler(w http.ResponseWriter, r *http
 	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
 	defer cancel()
 
-	playerID := h.getPlayerIDFromContext(ctx)
+	playerID := h.getPlayerIDFromContext()
 	if playerID == "" {
 		h.writeError(w, "player authentication required", http.StatusUnauthorized)
 		return
@@ -185,7 +185,7 @@ func (h *CraftingHandlers) GetOrderHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	playerID := h.getPlayerIDFromContext(ctx)
+	playerID := h.getPlayerIDFromContext()
 	if playerID == "" {
 		h.writeError(w, "player authentication required", http.StatusUnauthorized)
 		return
@@ -219,7 +219,7 @@ func (h *CraftingHandlers) CancelOrderHandler(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	playerID := h.getPlayerIDFromContext(ctx)
+	playerID := h.getPlayerIDFromContext()
 	if playerID == "" {
 		h.writeError(w, "player authentication required", http.StatusUnauthorized)
 		return
@@ -355,7 +355,7 @@ func (h *CraftingHandlers) GetContractsHandler(w http.ResponseWriter, r *http.Re
 
 // Вспомогательные методы
 
-func (h *CraftingHandlers) getPlayerIDFromContext(ctx context.Context) string {
+func (h *CraftingHandlers) getPlayerIDFromContext() string {
 	// TODO: извлечь player ID из JWT токена или контекста
 	// Пока возвращаем заглушку
 	return "player-123"

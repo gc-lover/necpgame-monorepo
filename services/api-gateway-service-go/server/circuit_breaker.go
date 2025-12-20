@@ -1,4 +1,4 @@
-// Issue: #146073424
+// Package server provides HTTP server implementation for the API gateway.
 package server
 
 import (

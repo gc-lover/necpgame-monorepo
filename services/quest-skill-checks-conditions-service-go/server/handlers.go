@@ -1,4 +1,4 @@
-// Issue: #1597, #1604
+// Package server Issue: #1597, #1604
 // ogen handlers - TYPED responses (no interface{} boxing!)
 package server
 
@@ -6,28 +6,26 @@ import (
 	"context"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/gc-lover/necpgame-monorepo/services/quest-skill-checks-conditions-service-go/pkg/api"
+	"github.com/google/uuid"
 )
 
-// Context timeout constants (Issue #1604)
 const (
-	DBTimeout    = 50 * time.Millisecond
-	CacheTimeout = 10 * time.Millisecond
+	DBTimeout = 50 * time.Millisecond
 )
 
 // Handlers implements api.Handler interface (ogen typed handlers!)
 type Handlers struct{}
 
 // CheckQuestConditions - TYPED response!
-func (h *Handlers) CheckQuestConditions(ctx context.Context, params api.CheckQuestConditionsParams) (api.CheckQuestConditionsRes, error) {
+func (h *Handlers) CheckQuestConditions(ctx context.Context, _ api.CheckQuestConditionsParams) (api.CheckQuestConditionsRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 	_ = ctx // Will be used when DB operations are implemented
 
 	conditions := []api.CheckQuestConditionsOKConditionsItem{
 		{
-			ConditionType:  api.NewOptString("level"),
+			ConditionType:   api.NewOptString("level"),
 			ConditionTarget: api.NewOptString("character"),
 			RequiredValue:   api.NewOptInt(10),
 			ActualValue:     api.NewOptInt(15),
@@ -44,7 +42,7 @@ func (h *Handlers) CheckQuestConditions(ctx context.Context, params api.CheckQue
 }
 
 // GetQuestRequirements - TYPED response!
-func (h *Handlers) GetQuestRequirements(ctx context.Context, params api.GetQuestRequirementsParams) (api.GetQuestRequirementsRes, error) {
+func (h *Handlers) GetQuestRequirements(ctx context.Context, _ api.GetQuestRequirementsParams) (api.GetQuestRequirementsRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 	_ = ctx // Will be used when DB operations are implemented
@@ -58,11 +56,11 @@ func (h *Handlers) GetQuestRequirements(ctx context.Context, params api.GetQuest
 	}
 
 	response := &api.QuestRequirements{
-		Level:             api.NewOptInt(10),
-		Items:             items,
+		Level:              api.NewOptInt(10),
+		Items:              items,
 		QuestPrerequisites: []uuid.UUID{},
-		Reputation:        api.OptQuestRequirementsReputation{},
-		Location:          api.OptQuestRequirementsLocation{},
+		Reputation:         api.OptQuestRequirementsReputation{},
+		Location:           api.OptQuestRequirementsLocation{},
 	}
 
 	return response, nil
@@ -122,4 +120,3 @@ func (h *Handlers) GetSkillCheckHistory(ctx context.Context, params api.GetSkill
 
 	return response, nil
 }
-

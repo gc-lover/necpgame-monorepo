@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	api "github.com/gc-lover/necpgame-monorepo/services/matchmaking-go/pkg/api"
+	"github.com/gc-lover/necpgame-monorepo/services/matchmaking-go/pkg/api"
 )
 
 func TestService_EnterQueue_PersistsAndCaches(t *testing.T) {

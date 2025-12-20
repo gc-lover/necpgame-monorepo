@@ -14,53 +14,53 @@ import (
 )
 
 type mockCharacterService struct {
-	accounts      map[uuid.UUID]*models.PlayerAccount
-	characters    map[uuid.UUID]*models.Character
-	accountChars  map[uuid.UUID][]models.Character
-	createErr     error
-	getErr        error
-	updateErr     error
-	deleteErr     error
-	switchErr     error
+	accounts     map[uuid.UUID]*models.PlayerAccount
+	characters   map[uuid.UUID]*models.Character
+	accountChars map[uuid.UUID][]models.Character
+	createErr    error
+	getErr       error
+	updateErr    error
+	deleteErr    error
+	switchErr    error
 }
 
-func (m *mockCharacterService) GetAccount(ctx context.Context, accountID uuid.UUID) (*models.PlayerAccount, error) {
+func (m *mockCharacterService) GetAccount(_ context.Context, accountID uuid.UUID) (*models.PlayerAccount, error) {
 	if m.getErr != nil {
 		return nil, m.getErr
 	}
 	return m.accounts[accountID], nil
 }
 
-func (m *mockCharacterService) CreateAccount(ctx context.Context, req *models.CreateAccountRequest) (*models.PlayerAccount, error) {
+func (m *mockCharacterService) CreateAccount(_ context.Context, req *models.CreateAccountRequest) (*models.PlayerAccount, error) {
 	if m.createErr != nil {
 		return nil, m.createErr
 	}
 	account := &models.PlayerAccount{
-		ID:        uuid.New(),
+		ID:         uuid.New(),
 		Nickname:   req.Nickname,
 		OriginCode: req.OriginCode,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
+		CreatedAt:  time.Now(),
+		UpdatedAt:  time.Now(),
 	}
 	m.accounts[account.ID] = account
 	return account, nil
 }
 
-func (m *mockCharacterService) GetCharactersByAccountID(ctx context.Context, accountID uuid.UUID) ([]models.Character, error) {
+func (m *mockCharacterService) GetCharactersByAccountID(_ context.Context, accountID uuid.UUID) ([]models.Character, error) {
 	if m.getErr != nil {
 		return nil, m.getErr
 	}
 	return m.accountChars[accountID], nil
 }
 
-func (m *mockCharacterService) GetCharacter(ctx context.Context, characterID uuid.UUID) (*models.Character, error) {
+func (m *mockCharacterService) GetCharacter(_ context.Context, characterID uuid.UUID) (*models.Character, error) {
 	if m.getErr != nil {
 		return nil, m.getErr
 	}
 	return m.characters[characterID], nil
 }
 
-func (m *mockCharacterService) CreateCharacter(ctx context.Context, req *models.CreateCharacterRequest) (*models.Character, error) {
+func (m *mockCharacterService) CreateCharacter(_ context.Context, req *models.CreateCharacterRequest) (*models.Character, error) {
 	if m.createErr != nil {
 		return nil, m.createErr
 	}
@@ -85,7 +85,7 @@ func (m *mockCharacterService) CreateCharacter(ctx context.Context, req *models.
 	return char, nil
 }
 
-func (m *mockCharacterService) UpdateCharacter(ctx context.Context, characterID uuid.UUID, req *models.UpdateCharacterRequest) (*models.Character, error) {
+func (m *mockCharacterService) UpdateCharacter(_ context.Context, characterID uuid.UUID, req *models.UpdateCharacterRequest) (*models.Character, error) {
 	if m.updateErr != nil {
 		return nil, m.updateErr
 	}
@@ -109,18 +109,18 @@ func (m *mockCharacterService) UpdateCharacter(ctx context.Context, characterID 
 	return char, nil
 }
 
-func (m *mockCharacterService) DeleteCharacter(ctx context.Context, characterID uuid.UUID) error {
+func (m *mockCharacterService) DeleteCharacter(_ context.Context, _ uuid.UUID) error {
 	return m.deleteErr
 }
 
-func (m *mockCharacterService) ValidateCharacter(ctx context.Context, characterID uuid.UUID) (bool, error) {
+func (m *mockCharacterService) ValidateCharacter(_ context.Context, characterID uuid.UUID) (bool, error) {
 	if m.getErr != nil {
 		return false, m.getErr
 	}
 	return m.characters[characterID] != nil, nil
 }
 
-func (m *mockCharacterService) SwitchCharacter(ctx context.Context, accountID, characterID uuid.UUID) (*models.SwitchCharacterResponse, error) {
+func (m *mockCharacterService) SwitchCharacter(_ context.Context, accountID, characterID uuid.UUID) (*models.SwitchCharacterResponse, error) {
 	if m.switchErr != nil {
 		return nil, m.switchErr
 	}
@@ -171,7 +171,7 @@ func TestHTTPServer_GetAccount(t *testing.T) {
 	accountID := uuid.New()
 	account := &models.PlayerAccount{
 		ID:        accountID,
-		Nickname:   "testuser",
+		Nickname:  "testuser",
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
@@ -242,7 +242,7 @@ func TestHTTPServer_GetCharacter(t *testing.T) {
 	characterID := uuid.New()
 	character := &models.Character{
 		ID:        characterID,
-		AccountID:  uuid.New(),
+		AccountID: uuid.New(),
 		Name:      "TestChar",
 		Level:     10,
 		CreatedAt: time.Now(),
@@ -326,7 +326,7 @@ func TestHTTPServer_UpdateCharacter(t *testing.T) {
 	characterID := uuid.New()
 	character := &models.Character{
 		ID:        characterID,
-		AccountID:  uuid.New(),
+		AccountID: uuid.New(),
 		Name:      "OldName",
 		Level:     5,
 		CreatedAt: time.Now(),
@@ -495,4 +495,3 @@ func stringPtr(s string) *string {
 func intPtr(i int) *int {
 	return &i
 }
-

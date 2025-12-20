@@ -4,9 +4,6 @@
 package server
 
 import (
-	"context"
-	"time"
-
 	"github.com/go-redis/redis/v8"
 )
 
@@ -24,13 +21,13 @@ func NewRedisCache(addr string) *RedisCache {
 }
 
 // SetSession caches session
-func (c *RedisCache) SetSession(ctx context.Context, sessionID string, session *CombatSession, ttl time.Duration) error {
+func (c *RedisCache) SetSession() error {
 	// TODO: Implement Redis caching
 	return nil
 }
 
 // GetSession gets cached session
-func (c *RedisCache) GetSession(ctx context.Context, sessionID string) (*CombatSession, error) {
+func (c *RedisCache) GetSession() (*CombatSession, error) {
 	// TODO: Implement Redis retrieval
 	return nil, redis.Nil
 }
@@ -52,7 +49,7 @@ func NewKafkaEventBus(brokers string) *KafkaEventBus {
 }
 
 // PublishSessionCreated publishes session created event
-func (k *KafkaEventBus) PublishSessionCreated(ctx context.Context, session *CombatSession) error {
+func (k *KafkaEventBus) PublishSessionCreated() error {
 	// TODO: Implement Kafka publishing
 	return nil
 }
@@ -64,7 +61,7 @@ func (k *KafkaEventBus) PublishSessionCreated(ctx context.Context, session *Comb
 // }
 
 // PublishSessionEnded publishes session ended event
-func (k *KafkaEventBus) PublishSessionEnded(ctx context.Context, session *CombatSession) error {
+func (k *KafkaEventBus) PublishSessionEnded() error {
 	// TODO: Implement Kafka publishing
 	return nil
 }
@@ -104,13 +101,3 @@ func NewCombatEngine() *CombatEngine {
 // 		Timestamp:  time.Now(),
 // 	}
 // }
-
-
-
-
-
-
-
-
-
-

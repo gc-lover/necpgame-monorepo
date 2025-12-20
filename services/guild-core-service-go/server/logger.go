@@ -1,4 +1,4 @@
-// Issue: #1856
+// Package server Issue: #1856
 // Structured logging with logrus for guild-core-service
 package server
 
@@ -38,7 +38,3 @@ func GetLogger() *logrus.Logger {
 
 	return logger
 }
-
-
-
-

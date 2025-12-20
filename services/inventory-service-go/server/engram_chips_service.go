@@ -23,18 +23,18 @@ type EngramChipsServiceInterface interface {
 }
 
 type EngramChipTierInfo struct {
-	Tier                int     `json:"tier"`
-	TierName            string  `json:"tier_name"`
-	StabilityLevel      string  `json:"stability_level"`
-	LifespanYears       int     `json:"lifespan_years"`
-	LifespanRange       *LifespanRange `json:"lifespan_range,omitempty"`
-	CorruptionRisk      string  `json:"corruption_risk"`
-	CorruptionRiskPercent float64 `json:"corruption_risk_percent"`
-	ProtectionLevel     string  `json:"protection_level"`
-	CreationCostMin     float64 `json:"creation_cost_min"`
-	CreationCostMax     float64 `json:"creation_cost_max"`
-	AvailableFromYear   int     `json:"available_from_year"`
-	IsAvailable         bool    `json:"is_available"`
+	Tier                  int            `json:"tier"`
+	TierName              string         `json:"tier_name"`
+	StabilityLevel        string         `json:"stability_level"`
+	LifespanYears         int            `json:"lifespan_years"`
+	LifespanRange         *LifespanRange `json:"lifespan_range,omitempty"`
+	CorruptionRisk        string         `json:"corruption_risk"`
+	CorruptionRiskPercent float64        `json:"corruption_risk_percent"`
+	ProtectionLevel       string         `json:"protection_level"`
+	CreationCostMin       float64        `json:"creation_cost_min"`
+	CreationCostMax       float64        `json:"creation_cost_max"`
+	AvailableFromYear     int            `json:"available_from_year"`
+	IsAvailable           bool           `json:"is_available"`
 }
 
 type LifespanRange struct {
@@ -43,12 +43,12 @@ type LifespanRange struct {
 }
 
 type EngramChipDecayInfo struct {
-	ChipID                 uuid.UUID              `json:"chip_id"`
-	DecayPercent           float64                `json:"decay_percent"`
-	DecayRisk              string                 `json:"decay_risk"`
-	StorageConditions      *StorageConditions     `json:"storage_conditions"`
-	TimeUntilCritical      *int                   `json:"time_until_critical,omitempty"`
-	DecayEffects           []string               `json:"decay_effects"`
+	ChipID            uuid.UUID          `json:"chip_id"`
+	DecayPercent      float64            `json:"decay_percent"`
+	DecayRisk         string             `json:"decay_risk"`
+	StorageConditions *StorageConditions `json:"storage_conditions"`
+	TimeUntilCritical *int               `json:"time_until_critical,omitempty"`
+	DecayEffects      []string           `json:"decay_effects"`
 }
 
 type StorageConditions struct {
@@ -59,17 +59,9 @@ type StorageConditions struct {
 }
 
 type EngramChipsService struct {
-	repo     EngramChipsRepositoryInterface
-	cache    *redis.Client
-	logger   *logrus.Logger
-}
-
-func NewEngramChipsService(repo EngramChipsRepositoryInterface, cache *redis.Client) *EngramChipsService {
-	return &EngramChipsService{
-		repo:   repo,
-		cache:  cache,
-		logger: GetLogger(),
-	}
+	repo   EngramChipsRepositoryInterface
+	cache  *redis.Client
+	logger *logrus.Logger
 }
 
 func (s *EngramChipsService) GetChipTiers(ctx context.Context, leagueYear *int) ([]*EngramChipTierInfo, error) {
@@ -82,16 +74,16 @@ func (s *EngramChipsService) GetChipTiers(ctx context.Context, leagueYear *int) 
 	result := make([]*EngramChipTierInfo, 0, len(tiers))
 	for _, tier := range tiers {
 		info := &EngramChipTierInfo{
-			Tier:                tier.Tier,
-			TierName:            tier.TierName,
-			StabilityLevel:      tier.StabilityLevel,
-			LifespanYears:       tier.LifespanYearsMin,
-			CorruptionRisk:      tier.CorruptionRisk,
+			Tier:                  tier.Tier,
+			TierName:              tier.TierName,
+			StabilityLevel:        tier.StabilityLevel,
+			LifespanYears:         tier.LifespanYearsMin,
+			CorruptionRisk:        tier.CorruptionRisk,
 			CorruptionRiskPercent: tier.CorruptionRiskPercent,
-			ProtectionLevel:     tier.ProtectionLevel,
-			CreationCostMin:     tier.CreationCostMin,
-			CreationCostMax:     tier.CreationCostMax,
-			AvailableFromYear:   tier.AvailableFromYear,
+			ProtectionLevel:       tier.ProtectionLevel,
+			CreationCostMin:       tier.CreationCostMin,
+			CreationCostMax:       tier.CreationCostMax,
+			AvailableFromYear:     tier.AvailableFromYear,
 		}
 
 		if tier.LifespanYearsMin != tier.LifespanYearsMax {
@@ -125,17 +117,17 @@ func (s *EngramChipsService) GetChipTier(ctx context.Context, chipID uuid.UUID) 
 	}
 
 	info := &EngramChipTierInfo{
-		Tier:                tier.Tier,
-		TierName:            tier.TierName,
-		StabilityLevel:      tier.StabilityLevel,
-		LifespanYears:       tier.LifespanYearsMin,
-		CorruptionRisk:      tier.CorruptionRisk,
+		Tier:                  tier.Tier,
+		TierName:              tier.TierName,
+		StabilityLevel:        tier.StabilityLevel,
+		LifespanYears:         tier.LifespanYearsMin,
+		CorruptionRisk:        tier.CorruptionRisk,
 		CorruptionRiskPercent: tier.CorruptionRiskPercent,
-		ProtectionLevel:     tier.ProtectionLevel,
-		CreationCostMin:     tier.CreationCostMin,
-		CreationCostMax:     tier.CreationCostMax,
-		AvailableFromYear:   tier.AvailableFromYear,
-		IsAvailable:         true,
+		ProtectionLevel:       tier.ProtectionLevel,
+		CreationCostMin:       tier.CreationCostMin,
+		CreationCostMax:       tier.CreationCostMax,
+		AvailableFromYear:     tier.AvailableFromYear,
+		IsAvailable:           true,
 	}
 
 	if tier.LifespanYearsMin != tier.LifespanYearsMax {
@@ -243,7 +235,7 @@ func (s *EngramChipsService) calculateDecayPercent(decay *EngramChipDecay, tier 
 		shieldMultiplier = 1.2
 	}
 
-	hoursMultiplier := 1.0 + (float64(decay.StorageTimeOutsideHours) / 8760.0) * 0.1
+	hoursMultiplier := 1.0 + (float64(decay.StorageTimeOutsideHours)/8760.0)*0.1
 
 	newDecay := decay.DecayPercent + (baseDecayRate * temperatureMultiplier * humidityMultiplier * shieldMultiplier * hoursMultiplier * 0.01)
 
@@ -263,13 +255,13 @@ func (s *EngramChipsService) calculateDecayRisk(decayPercent float64) string {
 		return "medium"
 	} else if decayPercent < 75 {
 		return "high"
-	} else {
-		return "critical"
 	}
+
+	return "critical"
 }
 
 func (s *EngramChipsService) calculateDecayEffects(decayPercent float64) []string {
-	effects := []string{}
+	var effects []string
 
 	if decayPercent >= 20 {
 		effects = append(effects, "data_loss")
@@ -299,6 +291,3 @@ func (s *EngramChipsService) calculateTimeUntilCritical(decay *EngramChipDecay, 
 
 	return nil
 }
-
-
-

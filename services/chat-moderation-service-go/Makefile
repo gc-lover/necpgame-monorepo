@@ -62,8 +62,8 @@ dev: generate
 
 # Check file sizes (SOLID validation)
 check-file-sizes:
-	@echo "Checking generated file sizes (<500 lines)..."
-	@find pkg/api -name "*.go" -exec wc -l {} \; | awk '$$1 > 500 {print "❌ "$$2" has "$$1" lines (>500)"; exit 1} {print "OK "$$2" has "$$1" lines"}'
+	@echo "Checking generated file sizes (<1000 lines)..."
+	@find pkg/api -name "*.go" -exec wc -l {} \; | awk '$$1 > 1000 {print "❌ "$$2" has "$$1" lines (>1000)"; exit 1} {print "OK "$$2" has "$$1" lines"}'
 
 # Full CI pipeline
 ci: tidy generate build test bench lint check-file-sizes

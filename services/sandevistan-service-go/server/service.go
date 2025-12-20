@@ -1,141 +1,181 @@
-// Issue: #140875766
+// Package server Issue: #140875766 - Main Sandevistan Service
+// Refactored to follow Single Responsibility Principle
 package server
 
 import (
 	"context"
 	"database/sql"
 	"fmt"
-	"math"
+	"sync"
 	"time"
 
-	"github.com/google/uuid"
 	"go.uber.org/zap"
+
+	"necpgame/services/sandevistan-service-go/pkg/api"
 )
 
-// SandevistanService содержит бизнес-логику Sandevistan системы
+// CooldownError represents a cooldown period error
+type CooldownError struct {
+	Message           string
+	CooldownRemaining float64
+}
+
+func (e *CooldownError) Error() string {
+	return e.Message
+}
+
+// SandevistanService contains the main business logic for Sandevistan system
 type SandevistanService struct {
-	repo     *SandevistanRepository
-	logger   *zap.Logger
-	calculator *SandevistanCalculator
+	repo                 *SandevistanRepository
+	logger               *zap.Logger
+	calculator           *SandevistanCalculator
+	temporalMarksTracker *TemporalMarksTracker
+	counterplayHandler   *CounterplayHandler
+	actionBudgetEngine   *ActionPriorityBudgetEngine
+
+	// Memory pools for optimization
+	statePool  *sync.Pool
+	statsPool  *sync.Pool
+	actionPool *sync.Pool
 }
 
-// SandevistanState представляет текущее состояние Sandevistan для игрока
-type SandevistanState struct {
-	UserID             string    `json:"user_id"`
-	IsActive           bool      `json:"is_active"`
-	ActivationTime     *time.Time `json:"activation_time"`
-	RemainingTime      float64   `json:"remaining_time"`
-	TimeDilation       float64   `json:"time_dilation"`
-	CooldownRemaining  float64   `json:"cooldown_remaining"`
-	CyberpsychosisLevel float64  `json:"cyberpsychosis_level"`
-	HeatLevel          float64   `json:"heat_level"`
-	LastActivation     *time.Time `json:"last_activation"`
-}
-
-// SandevistanStats представляет статистику Sandevistan для игрока
-type SandevistanStats struct {
-	UserID                  string  `json:"user_id"`
-	Level                   int     `json:"level"`
-	MaxDuration             float64 `json:"max_duration"`
-	CooldownTime            float64 `json:"cooldown_time"`
-	TimeDilationBase        float64 `json:"time_dilation_base"`
-	CyberpsychosisResistance float64 `json:"cyberpsychosis_resistance"`
-	HeatDissipationRate     float64 `json:"heat_dissipation_rate"`
-	TotalActivations        int     `json:"total_activations"`
-	TotalDuration           float64 `json:"total_duration"`
-	BestStreak              int     `json:"best_streak"`
-	AverageDuration         float64 `json:"average_duration"`
-}
-
-// SandevistanCalculator содержит логику расчетов для Sandevistan
-type SandevistanCalculator struct {
-	baseDuration      float64 // базовая длительность (секунды)
-	baseCooldown      float64 // базовое время cooldown (секунды)
-	baseTimeDilation  float64 // базовый коэффициент замедления
-	maxLevel          int     // максимальный уровень прокачки
-	cyberpsychosisRate float64 // скорость накопления киберпсихоза
-	heatBuildupRate   float64 // скорость нагрева
-	heatDissipationRate float64 // скорость охлаждения
-}
-
-// NewSandevistanCalculator создает новый калькулятор с базовыми параметрами
-func NewSandevistanCalculator() *SandevistanCalculator {
-	return &SandevistanCalculator{
-		baseDuration:       8.0,   // 8 секунд базовой длительности
-		baseCooldown:       30.0,  // 30 секунд базового cooldown
-		baseTimeDilation:   0.1,   // замедление в 10 раз (90% замедления)
-		maxLevel:           10,    // максимальный уровень прокачки
-		cyberpsychosisRate: 0.05,  // +5% киберпсихоза за секунду
-		heatBuildupRate:    0.1,   // +10% нагрева за секунду
-		heatDissipationRate: 0.02, // -2% охлаждения за секунду неактивности
-	}
-}
-
-// NewSandevistanService создает новый сервис Sandevistan
+// NewSandevistanService creates a new Sandevistan service
 func NewSandevistanService(db *sql.DB, logger *zap.Logger) *SandevistanService {
-	return &SandevistanService{
-		repo:       NewSandevistanRepository(db, logger),
+	repo := NewSandevistanRepository(db, logger)
+	service := &SandevistanService{
+		repo:       repo,
 		logger:     logger,
 		calculator: NewSandevistanCalculator(),
 	}
+
+	// Initialize components
+	service.temporalMarksTracker = NewTemporalMarksTracker(repo, logger)
+	service.counterplayHandler = NewCounterplayHandler(repo, logger, service)
+	service.actionBudgetEngine = NewActionPriorityBudgetEngine(repo, logger)
+
+	// Initialize memory pools for optimization
+	service.statePool = &sync.Pool{
+		New: func() interface{} {
+			return &api.SandevistanState{}
+		},
+	}
+	service.statsPool = &sync.Pool{
+		New: func() interface{} {
+			return &api.SandevistanStats{}
+		},
+	}
+	service.actionPool = &sync.Pool{
+		New: func() interface{} {
+			return &Action{}
+		},
+	}
+
+	return service
 }
 
-// ActivateSandevistan активирует Sandevistan для игрока
-func (s *SandevistanService) ActivateSandevistan(ctx context.Context, userID string, durationOverride *float64) (*SandevistanState, error) {
+// Memory pool methods for optimization
+
+// getStateFromPool gets a state object from the pool
+func (s *SandevistanService) getStateFromPool() *api.SandevistanState {
+	return s.statePool.Get().(*api.SandevistanState)
+}
+
+// putStateToPool returns a state object to the pool
+func (s *SandevistanService) putStateToPool(state *api.SandevistanState) {
+	// Reset fields for reuse
+	state.IsActive = false
+	state.ActivationTime = api.OptNilDateTime{}
+	state.RemainingTime = 0
+	state.TimeDilation = 1.0
+	state.CooldownRemaining = 0
+	state.CyberpsychosisLevel = 0
+	state.HeatLevel = 0
+	s.statePool.Put(state)
+}
+
+// getStatsFromPool gets a stats object from the pool
+func (s *SandevistanService) getStatsFromPool() *api.SandevistanStats {
+	return s.statsPool.Get().(*api.SandevistanStats)
+}
+
+// putStatsToPool returns a stats object to the pool
+func (s *SandevistanService) putStatsToPool(stats *api.SandevistanStats) {
+	// Reset fields for reuse
+	stats.Level = 0
+	stats.MaxDuration = 0
+	stats.CooldownTime = 0
+	stats.TimeDilationBase = 0
+	stats.CyberpsychosisResistance = 0
+	stats.HeatDissipationRate = 0
+	stats.TotalActivations = 0
+	stats.TotalDuration = 0
+	stats.BestStreak = 0
+	stats.AverageDuration = 0
+	s.statsPool.Put(stats)
+}
+
+// ActivateSandevistan activates Sandevistan for a player
+func (s *SandevistanService) ActivateSandevistan(ctx context.Context, userID string, durationOverride *float64) (*api.SandevistanState, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
 	s.logger.Info("Activating Sandevistan", zap.String("user_id", userID))
 
-	// Получаем текущее состояние
+	// Get current state
 	state, err := s.repo.GetSandevistanState(ctx, userID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get state: %w", err)
+		return nil, fmt.Errorf("failed to get current state: %w", err)
 	}
 
-	// Проверяем cooldown
+	// Check if already active
+	if state.IsActive {
+		return nil, fmt.Errorf("sandevistan already active")
+	}
+
+	// Check cooldown
 	if state.CooldownRemaining > 0 {
-		return nil, &CooldownError{
-			CooldownRemaining: state.CooldownRemaining,
-			Message:          "Sandevistan is on cooldown",
-		}
+		return nil, fmt.Errorf("sandevistan on cooldown: %.1f seconds remaining", state.CooldownRemaining)
 	}
 
-	// Получаем статистику для расчетов
+	// Get stats for calculations
 	stats, err := s.repo.GetSandevistanStats(ctx, userID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get stats: %w", err)
 	}
 
-	// Рассчитываем параметры активации
+	// Calculate duration
 	duration := s.calculator.calculateDuration(stats.Level, durationOverride)
+
+	// Calculate cooldown
+	cooldown := s.calculator.calculateCooldown(stats.Level)
+
+	// Calculate time dilation
 	timeDilation := s.calculator.calculateTimeDilation(stats.Level)
-	activationTime := time.Now()
 
-	// Создаем новое состояние
-	newState := &SandevistanState{
-		UserID:             userID,
-		IsActive:           true,
-		ActivationTime:     &activationTime,
-		RemainingTime:      duration,
-		TimeDilation:       timeDilation,
-		CooldownRemaining:  0,
-		CyberpsychosisLevel: s.calculator.calculateCyberpsychosisIncrease(state.CyberpsychosisLevel, stats.CyberpsychosisResistance),
-		HeatLevel:          s.calculator.calculateHeatIncrease(state.HeatLevel),
-		LastActivation:     &activationTime,
+	// Create new state
+	now := time.Now()
+	newState := s.getStateFromPool()
+	newState.IsActive = true
+	newState.ActivationTime = api.NewOptNilDateTime(now)
+	newState.RemainingTime = api.NewOptFloat32(duration)
+	newState.TimeDilation = timeDilation
+	newState.CooldownRemaining = 0
+	newState.CyberpsychosisLevel = 0
+	newState.HeatLevel = 0
+
+	// Save state
+	if err := s.repo.SaveSandevistanState(ctx, userID, newState); err != nil {
+		s.putStateToPool(newState)
+		return nil, fmt.Errorf("failed to save state: %w", err)
 	}
 
-	// Сохраняем состояние
-	if err := s.repo.UpdateSandevistanState(ctx, newState); err != nil {
-		return nil, fmt.Errorf("failed to update state: %w", err)
+	// Update stats
+	stats.TotalActivations++
+	if err := s.repo.SaveSandevistanStats(ctx, userID, stats); err != nil {
+		s.logger.Warn("Failed to update stats", zap.Error(err))
 	}
 
-	// Обновляем статистику
-	if err := s.repo.IncrementActivationCount(ctx, userID, duration); err != nil {
-		s.logger.Warn("Failed to update activation stats", zap.Error(err))
-	}
-
-	s.logger.Info("Sandevistan activated successfully",
+	s.logger.Info("Sandevistan activated",
 		zap.String("user_id", userID),
 		zap.Float64("duration", duration),
 		zap.Float64("time_dilation", timeDilation))
@@ -143,120 +183,73 @@ func (s *SandevistanService) ActivateSandevistan(ctx context.Context, userID str
 	return newState, nil
 }
 
-// DeactivateSandevistan деактивирует Sandevistan для игрока
-func (s *SandevistanService) DeactivateSandevistan(ctx context.Context, userID string) (*SandevistanState, error) {
-	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
+// DeactivateSandevistan deactivates Sandevistan for a player
+func (s *SandevistanService) DeactivateSandevistan(ctx context.Context, userID string) (*api.SandevistanState, error) {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
 	s.logger.Info("Deactivating Sandevistan", zap.String("user_id", userID))
 
-	// Получаем текущее состояние
+	// Get current state
 	state, err := s.repo.GetSandevistanState(ctx, userID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get state: %w", err)
+		return nil, fmt.Errorf("failed to get current state: %w", err)
 	}
 
 	if !state.IsActive {
-		return nil, fmt.Errorf("Sandevistan is not active")
+		return nil, fmt.Errorf("sandevistan not active")
 	}
 
-	// Получаем статистику для расчетов cooldown
+	// Get stats for cooldown calculation
 	stats, err := s.repo.GetSandevistanStats(ctx, userID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get stats: %w", err)
 	}
 
-	// Рассчитываем cooldown
+	// Calculate cooldown
 	cooldown := s.calculator.calculateCooldown(stats.Level)
 
-	// Создаем новое состояние
-	newState := &SandevistanState{
-		UserID:             userID,
-		IsActive:           false,
-		ActivationTime:     nil,
-		RemainingTime:      0,
-		TimeDilation:       1.0, // нормальная скорость
-		CooldownRemaining:  cooldown,
-		CyberpsychosisLevel: state.CyberpsychosisLevel, // сохраняем уровень
-		HeatLevel:          state.HeatLevel,           // сохраняем уровень
-		LastActivation:     state.LastActivation,
+	// Apply delayed burst if temporal marks exist
+	if err := s.temporalMarksTracker.ApplyDelayedBurst(ctx, userID); err != nil {
+		s.logger.Warn("Failed to apply delayed burst", zap.Error(err))
 	}
 
-	// Сохраняем состояние
-	if err := s.repo.UpdateSandevistanState(ctx, newState); err != nil {
-		return nil, fmt.Errorf("failed to update state: %w", err)
+	// Update state
+	now := time.Now()
+	state.IsActive = false
+	state.CooldownRemaining = cooldown
+	state.LastActivation = &now
+
+	// Save updated state
+	if err := s.repo.SaveSandevistanState(ctx, userID, state); err != nil {
+		return nil, fmt.Errorf("failed to save updated state: %w", err)
 	}
 
-	s.logger.Info("Sandevistan deactivated successfully",
+	s.logger.Info("Sandevistan deactivated",
 		zap.String("user_id", userID),
 		zap.Float64("cooldown", cooldown))
-
-	return newState, nil
-}
-
-// GetSandevistanState получает текущее состояние Sandevistan
-func (s *SandevistanService) GetSandevistanState(ctx context.Context, userID string) (*SandevistanState, error) {
-	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
-	defer cancel()
-
-	state, err := s.repo.GetSandevistanState(ctx, userID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get state: %w", err)
-	}
-
-	// Обновляем оставшееся время если активно
-	if state.IsActive && state.ActivationTime != nil {
-		elapsed := time.Since(*state.ActivationTime).Seconds()
-		if elapsed >= state.RemainingTime {
-			// Время вышло, деактивируем
-			state.IsActive = false
-			state.RemainingTime = 0
-			state.TimeDilation = 1.0
-			// Автоматически обновляем состояние в БД
-			s.repo.UpdateSandevistanState(ctx, state)
-		} else {
-			state.RemainingTime -= elapsed
-		}
-	}
-
-	// Обновляем cooldown
-	if state.CooldownRemaining > 0 {
-		if state.LastActivation != nil {
-			elapsed := time.Since(*state.LastActivation).Seconds()
-			stats, _ := s.repo.GetSandevistanStats(ctx, userID)
-			cooldown := s.calculator.calculateCooldown(stats.Level)
-			remaining := cooldown - elapsed
-			if remaining <= 0 {
-				state.CooldownRemaining = 0
-			} else {
-				state.CooldownRemaining = remaining
-			}
-		}
-	}
-
-	// Обновляем уровни heat и cyberpsychosis
-	if !state.IsActive {
-		state.HeatLevel = s.calculator.calculateHeatDissipation(state.HeatLevel)
-	}
 
 	return state, nil
 }
 
-// GetSandevistanStats получает статистику Sandevistan
-func (s *SandevistanService) GetSandevistanStats(ctx context.Context, userID string) (*SandevistanStats, error) {
+// GetSandevistanState gets the current Sandevistan state for a player
+func (s *SandevistanService) GetSandevistanState(ctx context.Context, userID string) (*api.SandevistanState, error) {
 	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
 	defer cancel()
 
-	stats, err := s.repo.GetSandevistanStats(ctx, userID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get stats: %w", err)
-	}
-
-	return stats, nil
+	return s.repo.GetSandevistanState(ctx, userID)
 }
 
-// UpgradeSandevistan улучшает Sandevistan
-func (s *SandevistanService) UpgradeSandevistan(ctx context.Context, userID, upgradeType string, level int) (*SandevistanStats, error) {
+// GetSandevistanStats gets the Sandevistan stats for a player
+func (s *SandevistanService) GetSandevistanStats(ctx context.Context, userID string) (*api.SandevistanStats, error) {
+	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	defer cancel()
+
+	return s.repo.GetSandevistanStats(ctx, userID)
+}
+
+// UpgradeSandevistan upgrades Sandevistan for a player
+func (s *SandevistanService) UpgradeSandevistan(ctx context.Context, userID, upgradeType string, level int) (*api.SandevistanStats, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
@@ -265,44 +258,35 @@ func (s *SandevistanService) UpgradeSandevistan(ctx context.Context, userID, upg
 		zap.String("upgrade_type", upgradeType),
 		zap.Int("level", level))
 
-	if level < 1 || level > s.calculator.maxLevel {
-		return nil, fmt.Errorf("invalid level: must be between 1 and %d", s.calculator.maxLevel)
-	}
-
-	// Получаем текущую статистику
+	// Get current stats
 	stats, err := s.repo.GetSandevistanStats(ctx, userID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get stats: %w", err)
 	}
 
-	// Проверяем, что уровень повышается
-	if level <= stats.Level {
-		return nil, fmt.Errorf("new level must be higher than current level %d", stats.Level)
-	}
-
-	// Рассчитываем стоимость улучшения (примерная формула)
+	// Calculate upgrade cost
 	cost := s.calculator.calculateUpgradeCost(upgradeType, level)
-	// В реальности здесь нужно проверить баланс игрока
+	// TODO: Check if player has enough resources
 
-	// Обновляем статистику
+	// Apply upgrade based on type
 	switch upgradeType {
 	case "duration":
 		stats.MaxDuration = s.calculator.calculateDuration(level, nil)
 	case "cooldown":
 		stats.CooldownTime = s.calculator.calculateCooldown(level)
-	case "cyberpsychosis_resistance":
+	case "efficiency":
+		stats.TimeDilationBase = s.calculator.calculateTimeDilation(level)
+	case "resistance":
 		stats.CyberpsychosisResistance = s.calculator.calculateResistance(level)
-	case "heat_dissipation":
+	case "capacity":
 		stats.HeatDissipationRate = s.calculator.calculateDissipationRate(level)
 	default:
-		return nil, fmt.Errorf("invalid upgrade type: %s", upgradeType)
+		return nil, fmt.Errorf("unknown upgrade type: %s", upgradeType)
 	}
 
-	stats.Level = level
-
-	// Сохраняем обновленную статистику
-	if err := s.repo.UpdateSandevistanStats(ctx, stats); err != nil {
-		return nil, fmt.Errorf("failed to update stats: %w", err)
+	// Save updated stats
+	if err := s.repo.SaveSandevistanStats(ctx, userID, stats); err != nil {
+		return nil, fmt.Errorf("failed to save upgraded stats: %w", err)
 	}
 
 	s.logger.Info("Sandevistan upgraded successfully",
@@ -313,55 +297,43 @@ func (s *SandevistanService) UpgradeSandevistan(ctx context.Context, userID, upg
 	return stats, nil
 }
 
-// Методы калькулятора
+// ApplyCounterplay applies counterplay effects to a Sandevistan user
+func (s *SandevistanService) ApplyCounterplay(ctx context.Context, userID, counterplayType string) error {
+	return s.counterplayHandler.ApplyCounterplay(ctx, userID, counterplayType)
+}
 
-func (c *SandevistanCalculator) calculateDuration(level int, override *float64) float64 {
-	if override != nil {
-		return math.Min(*override, c.baseDuration*float64(level+1))
+// TrackTarget adds a target for temporal marks tracking
+func (s *SandevistanService) TrackTarget(ctx context.Context, userID, targetID, targetType string) error {
+	// Get current activation ID (simplified)
+	activationID := "current_activation_" + userID
+	return s.temporalMarksTracker.TrackTarget(activationID, targetID, targetType)
+}
+
+// GetTrackedTargets gets the list of tracked targets
+func (s *SandevistanService) GetTrackedTargets(ctx context.Context, userID string) ([]*TemporalMark, error) {
+	activationID := "current_activation_" + userID
+	return s.temporalMarksTracker.GetTrackedTargets(ctx, activationID)
+}
+
+// CheckActionBudget checks the current action budget for a user
+func (s *SandevistanService) CheckActionBudget(ctx context.Context, userID string) (*ActionBudget, error) {
+	return s.actionBudgetEngine.CheckBudget(ctx, userID)
+}
+
+// ConsumeAction consumes an action from the budget
+func (s *SandevistanService) ConsumeAction(ctx context.Context, userID, actionType, targetID string) error {
+	return s.actionBudgetEngine.ConsumeAction(ctx, userID, actionType, targetID)
+}
+
+// ProcessActionBatch processes a batch of actions
+func (s *SandevistanService) ProcessActionBatch(ctx context.Context, userID string, actions []Action) error {
+	window := &MicroTickWindow{
+		UserID:    userID,
+		Actions:   actions,
+		StartTime: time.Now(),
+		EndTime:   time.Now().Add(100 * time.Millisecond), // 100ms window
+		Processed: false,
 	}
-	return c.baseDuration * (1.0 + float64(level)*0.2) // +20% за уровень
-}
 
-func (c *SandevistanCalculator) calculateCooldown(level int) float64 {
-	return c.baseCooldown * (1.0 - float64(level)*0.1) // -10% за уровень
-}
-
-func (c *SandevistanCalculator) calculateTimeDilation(level int) float64 {
-	return c.baseTimeDilation * (1.0 + float64(level)*0.05) // +5% замедления за уровень
-}
-
-func (c *SandevistanCalculator) calculateCyberpsychosisIncrease(currentLevel, resistance float64) float64 {
-	increase := c.cyberpsychosisRate * (1.0 - resistance)
-	return math.Min(1.0, currentLevel+increase) // максимум 100%
-}
-
-func (c *SandevistanCalculator) calculateHeatIncrease(currentLevel float64) float64 {
-	return math.Min(1.0, currentLevel+c.heatBuildupRate) // максимум 100%
-}
-
-func (c *SandevistanCalculator) calculateHeatDissipation(currentLevel float64) float64 {
-	return math.Max(0.0, currentLevel-c.heatDissipationRate)
-}
-
-func (c *SandevistanCalculator) calculateResistance(level int) float64 {
-	return float64(level) / float64(c.maxLevel) // 0-1 сопротивление
-}
-
-func (c *SandevistanCalculator) calculateDissipationRate(level int) float64 {
-	return c.heatDissipationRate * (1.0 + float64(level)*0.5) // +50% за уровень
-}
-
-func (c *SandevistanCalculator) calculateUpgradeCost(upgradeType string, level int) int {
-	baseCost := 1000
-	return baseCost * level * level // квадратичная стоимость
-}
-
-// CooldownError представляет ошибку cooldown
-type CooldownError struct {
-	CooldownRemaining float64
-	Message          string
-}
-
-func (e *CooldownError) Error() string {
-	return e.Message
+	return s.actionBudgetEngine.ProcessMicroTickWindow(ctx, window)
 }

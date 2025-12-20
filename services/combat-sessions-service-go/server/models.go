@@ -53,30 +53,3 @@ type CombatLog struct {
 	ID             int64
 	SequenceNumber int64
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

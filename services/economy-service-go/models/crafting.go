@@ -1,4 +1,4 @@
-// Issue: #140890170 - Crafting mechanics implementation
+// Package models Issue: #140890170 - Crafting mechanics implementation
 package models
 
 import (
@@ -7,16 +7,16 @@ import (
 
 // CraftingRecipe представляет рецепт крафта
 type CraftingRecipe struct {
-	ID          string            `json:"id" db:"id"`
-	Name        string            `json:"name" db:"name"`
-	Description string            `json:"description" db:"description"`
-	Tier        int               `json:"tier" db:"tier"`
-	Category    string            `json:"category" db:"category"`
-	Quality     int               `json:"quality" db:"quality"`
-	Duration    time.Duration     `json:"duration" db:"duration"`
-	SuccessRate float64           `json:"success_rate" db:"success_rate"`
-	CreatedAt   time.Time         `json:"created_at" db:"created_at"`
-	UpdatedAt   time.Time         `json:"updated_at" db:"updated_at"`
+	ID          string        `json:"id" db:"id"`
+	Name        string        `json:"name" db:"name"`
+	Description string        `json:"description" db:"description"`
+	Tier        int           `json:"tier" db:"tier"`
+	Category    string        `json:"category" db:"category"`
+	Quality     int           `json:"quality" db:"quality"`
+	Duration    time.Duration `json:"duration" db:"duration"`
+	SuccessRate float64       `json:"success_rate" db:"success_rate"`
+	CreatedAt   time.Time     `json:"created_at" db:"created_at"`
+	UpdatedAt   time.Time     `json:"updated_at" db:"updated_at"`
 
 	// Материалы для крафта
 	Materials []RecipeMaterial `json:"materials"`
@@ -30,10 +30,10 @@ type CraftingRecipe struct {
 
 // RecipeMaterial представляет материал, необходимый для рецепта
 type RecipeMaterial struct {
-	ResourceID string  `json:"resource_id" db:"resource_id"`
-	Quantity   int     `json:"quantity" db:"quantity"`
-	Quality    int     `json:"quality" db:"quality"`
-	IsOptional bool    `json:"is_optional" db:"is_optional"`
+	ResourceID string `json:"resource_id" db:"resource_id"`
+	Quantity   int    `json:"quantity" db:"quantity"`
+	Quality    int    `json:"quality" db:"quality"`
+	IsOptional bool   `json:"is_optional" db:"is_optional"`
 }
 
 // RecipeOutput представляет результат крафта
@@ -53,15 +53,15 @@ type RecipeRequirements struct {
 
 // CraftingOrder представляет заказ на крафт
 type CraftingOrder struct {
-	ID            string    `json:"id" db:"id"`
-	PlayerID      string    `json:"player_id" db:"player_id"`
-	RecipeID      string    `json:"recipe_id" db:"recipe_id"`
-	StationID     string    `json:"station_id" db:"station_id"`
-	Status        string    `json:"status" db:"status"` // pending, crafting, completed, failed
-	Quality       int       `json:"quality" db:"quality"`
-	CreatedAt     time.Time `json:"created_at" db:"created_at"`
-	StartedAt     *time.Time `json:"started_at" db:"started_at"`
-	CompletedAt   *time.Time `json:"completed_at" db:"completed_at"`
+	ID          string     `json:"id" db:"id"`
+	PlayerID    string     `json:"player_id" db:"player_id"`
+	RecipeID    string     `json:"recipe_id" db:"recipe_id"`
+	StationID   string     `json:"station_id" db:"station_id"`
+	Status      string     `json:"status" db:"status"` // pending, crafting, completed, failed
+	Quality     int        `json:"quality" db:"quality"`
+	CreatedAt   time.Time  `json:"created_at" db:"created_at"`
+	StartedAt   *time.Time `json:"started_at" db:"started_at"`
+	CompletedAt *time.Time `json:"completed_at" db:"completed_at"`
 
 	// Материалы, использованные в крафте
 	UsedMaterials []UsedMaterial `json:"used_materials"`
@@ -87,16 +87,16 @@ type CraftingResult struct {
 
 // CraftingStation представляет станцию крафта
 type CraftingStation struct {
-	ID          string    `json:"id" db:"id"`
-	Name        string    `json:"name" db:"name"`
-	Type        string    `json:"type" db:"type"`
-	Location    string    `json:"location" db:"location"`
-	OwnerID     string    `json:"owner_id" db:"owner_id"`
-	Tier        int       `json:"tier" db:"tier"`
-	Efficiency  float64   `json:"efficiency" db:"efficiency"`
-	IsActive    bool      `json:"is_active" db:"is_active"`
-	CreatedAt   time.Time `json:"created_at" db:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at" db:"updated_at"`
+	ID         string    `json:"id" db:"id"`
+	Name       string    `json:"name" db:"name"`
+	Type       string    `json:"type" db:"type"`
+	Location   string    `json:"location" db:"location"`
+	OwnerID    string    `json:"owner_id" db:"owner_id"`
+	Tier       int       `json:"tier" db:"tier"`
+	Efficiency float64   `json:"efficiency" db:"efficiency"`
+	IsActive   bool      `json:"is_active" db:"is_active"`
+	CreatedAt  time.Time `json:"created_at" db:"created_at"`
+	UpdatedAt  time.Time `json:"updated_at" db:"updated_at"`
 
 	// Статистика использования
 	UsageStats StationUsageStats `json:"usage_stats"`
@@ -104,26 +104,26 @@ type CraftingStation struct {
 
 // StationUsageStats представляет статистику использования станции
 type StationUsageStats struct {
-	TotalOrders     int       `json:"total_orders" db:"total_orders"`
-	SuccessfulOrders int      `json:"successful_orders" db:"successful_orders"`
-	FailedOrders    int       `json:"failed_orders" db:"failed_orders"`
-	AverageQuality  float64   `json:"average_quality" db:"average_quality"`
-	LastUsedAt      *time.Time `json:"last_used_at" db:"last_used_at"`
+	TotalOrders      int        `json:"total_orders" db:"total_orders"`
+	SuccessfulOrders int        `json:"successful_orders" db:"successful_orders"`
+	FailedOrders     int        `json:"failed_orders" db:"failed_orders"`
+	AverageQuality   float64    `json:"average_quality" db:"average_quality"`
+	LastUsedAt       *time.Time `json:"last_used_at" db:"last_used_at"`
 }
 
 // CraftingContract представляет контракт на крафт
 type CraftingContract struct {
-	ID          string    `json:"id" db:"id"`
-	Title       string    `json:"title" db:"title"`
-	Description string    `json:"description" db:"description"`
-	ClientID    string    `json:"client_id" db:"client_id"`
-	CrafterID   string    `json:"crafter_id" db:"crafter_id"`
-	RecipeID    string    `json:"recipe_id" db:"recipe_id"`
-	Status      string    `json:"status" db:"status"` // open, accepted, completed, cancelled
+	ID          string         `json:"id" db:"id"`
+	Title       string         `json:"title" db:"title"`
+	Description string         `json:"description" db:"description"`
+	ClientID    string         `json:"client_id" db:"client_id"`
+	CrafterID   string         `json:"crafter_id" db:"crafter_id"`
+	RecipeID    string         `json:"recipe_id" db:"recipe_id"`
+	Status      string         `json:"status" db:"status"` // open, accepted, completed, cancelled
 	Reward      ContractReward `json:"reward"`
-	Deadline    *time.Time `json:"deadline" db:"deadline"`
-	CreatedAt   time.Time `json:"created_at" db:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at" db:"updated_at"`
+	Deadline    *time.Time     `json:"deadline" db:"deadline"`
+	CreatedAt   time.Time      `json:"created_at" db:"created_at"`
+	UpdatedAt   time.Time      `json:"updated_at" db:"updated_at"`
 }
 
 // ContractReward представляет награду за контракт
@@ -146,19 +146,19 @@ type CraftingSkill struct {
 
 // CraftingQualityModifier представляет модификатор качества
 type CraftingQualityModifier struct {
-	Type     string  `json:"type"`     // skill, material, station, luck
-	Value    float64 `json:"value"`    // модификатор качества
-	Source   string  `json:"source"`   // источник модификатора
+	Type     string  `json:"type"`   // skill, material, station, luck
+	Value    float64 `json:"value"`  // модификатор качества
+	Source   string  `json:"source"` // источник модификатора
 	IsActive bool    `json:"is_active"`
 }
 
 // CraftingFailure представляет провал крафта
 type CraftingFailure struct {
-	OrderID     string            `json:"order_id" db:"order_id"`
-	Reason      string            `json:"reason" db:"reason"`
-	LostMaterials []LostMaterial  `json:"lost_materials"`
-	Penalties   map[string]float64 `json:"penalties"` // штрафы
-	CreatedAt   time.Time         `json:"created_at" db:"created_at"`
+	OrderID       string             `json:"order_id" db:"order_id"`
+	Reason        string             `json:"reason" db:"reason"`
+	LostMaterials []LostMaterial     `json:"lost_materials"`
+	Penalties     map[string]float64 `json:"penalties"` // штрафы
+	CreatedAt     time.Time          `json:"created_at" db:"created_at"`
 }
 
 // LostMaterial представляет потерянный материал
@@ -181,8 +181,8 @@ type CraftingAnalytics struct {
 
 // PopularRecipe представляет популярный рецепт
 type PopularRecipe struct {
-	RecipeID string `json:"recipe_id"`
-	Count    int    `json:"count"`
-	SuccessRate float64 `json:"success_rate"`
+	RecipeID       string  `json:"recipe_id"`
+	Count          int     `json:"count"`
+	SuccessRate    float64 `json:"success_rate"`
 	AverageQuality float64 `json:"average_quality"`
 }

@@ -120,14 +120,14 @@ func (pm *PartitionManager) ManagePartitions(ctx context.Context) error {
 
 		// Create future partitions
 		if err := pm.createFuturePartitions(ctx, config); err != nil {
-			log.Printf("❌ Failed to create partitions for %s.%s: %v", 
+			log.Printf("❌ Failed to create partitions for %s.%s: %v",
 				config.Schema, config.Table, err)
 			continue
 		}
 
 		// Drop old partitions
 		if err := pm.dropOldPartitions(ctx, config); err != nil {
-			log.Printf("❌ Failed to drop old partitions for %s.%s: %v", 
+			log.Printf("❌ Failed to drop old partitions for %s.%s: %v",
 				config.Schema, config.Table, err)
 			continue
 		}
@@ -223,7 +223,7 @@ func (pm *PartitionManager) dropOldPartitions(ctx context.Context, config Partit
 				continue
 			}
 
-			log.Printf("  🗑️  Dropped old partition: %s (date: %s)", 
+			log.Printf("  🗑️  Dropped old partition: %s (date: %s)",
 				tableName, partitionDate.Format("2006-01-02"))
 			droppedCount++
 		}
@@ -241,7 +241,7 @@ func (pm *PartitionManager) dropOldPartitions(ctx context.Context, config Partit
 func parsePartitionDate(partitionName, tablePrefix string) (time.Time, error) {
 	// Remove table prefix and underscore
 	dateStr := partitionName[len(tablePrefix)+1:]
-	
+
 	// Parse date (format: 2006_01_02)
 	return time.Parse("2006_01_02", dateStr)
 }
@@ -252,5 +252,3 @@ func getEnv(key, defaultValue string) string {
 	}
 	return defaultValue
 }
-
-

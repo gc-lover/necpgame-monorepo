@@ -1,4 +1,4 @@
-// Issue: #1595, #1607
+// Package server Issue: #1595, #1607
 // ogen handlers - TYPED responses (no interface{} boxing!)
 // Memory pooling for hot path (Issue #1607)
 package server
@@ -160,7 +160,7 @@ func (h *Handlers) ApplyEffects(ctx context.Context, req *api.ApplyEffectsReques
 }
 
 // RemoveEffect - TYPED response!
-func (h *Handlers) RemoveEffect(ctx context.Context, params api.RemoveEffectParams) (api.RemoveEffectRes, error) {
+func (h *Handlers) RemoveEffect(ctx context.Context, _ api.RemoveEffectParams) (api.RemoveEffectRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
@@ -173,7 +173,7 @@ func (h *Handlers) RemoveEffect(ctx context.Context, params api.RemoveEffectPara
 }
 
 // ExtendEffect - TYPED response!
-func (h *Handlers) ExtendEffect(ctx context.Context, req *api.ExtendEffectReq, params api.ExtendEffectParams) (api.ExtendEffectRes, error) {
+func (h *Handlers) ExtendEffect(ctx context.Context, _ *api.ExtendEffectReq, _ api.ExtendEffectParams) (api.ExtendEffectRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 

@@ -1,4 +1,4 @@
-// Issue: #39
+// Package server Issue: #39
 package server
 
 import (
@@ -10,30 +10,30 @@ import (
 )
 
 type Activation struct {
-	ID                    uuid.UUID
-	PlayerID              uuid.UUID
-	Phase                 string
-	StartedAt             time.Time
-	ActivePhaseStartedAt  *time.Time
+	ID                     uuid.UUID
+	PlayerID               uuid.UUID
+	Phase                  string
+	StartedAt              time.Time
+	ActivePhaseStartedAt   *time.Time
 	RecoveryPhaseStartedAt *time.Time
-	EndedAt               *time.Time
-	ActionBudgetRemaining int
-	ActionBudgetMax       int
-	HeatStacks            int
-	IsOverstress          bool
-	IsActive              bool
-	CreatedAt             time.Time
-	UpdatedAt             time.Time
+	EndedAt                *time.Time
+	ActionBudgetRemaining  int
+	ActionBudgetMax        int
+	HeatStacks             int
+	IsOverstress           bool
+	IsActive               bool
+	CreatedAt              time.Time
+	UpdatedAt              time.Time
 }
 
 type TemporalMark struct {
-	ID          uuid.UUID
+	ID           uuid.UUID
 	ActivationID uuid.UUID
-	PlayerID    uuid.UUID
-	TargetID    uuid.UUID
-	MarkedAt    time.Time
-	AppliedAt   *time.Time
-	CreatedAt   time.Time
+	PlayerID     uuid.UUID
+	TargetID     uuid.UUID
+	MarkedAt     time.Time
+	AppliedAt    *time.Time
+	CreatedAt    time.Time
 }
 
 type Repository interface {
@@ -57,7 +57,7 @@ func NewInMemoryRepository() Repository {
 	}
 }
 
-func (r *inMemoryRepository) GetActivation(ctx context.Context, playerID uuid.UUID) (*Activation, error) {
+func (r *inMemoryRepository) GetActivation(_ context.Context, playerID uuid.UUID) (*Activation, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
@@ -69,7 +69,7 @@ func (r *inMemoryRepository) GetActivation(ctx context.Context, playerID uuid.UU
 	return activation, nil
 }
 
-func (r *inMemoryRepository) SaveActivation(ctx context.Context, activation *Activation) error {
+func (r *inMemoryRepository) SaveActivation(_ context.Context, activation *Activation) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -83,7 +83,7 @@ func (r *inMemoryRepository) SaveActivation(ctx context.Context, activation *Act
 	return nil
 }
 
-func (r *inMemoryRepository) GetTemporalMarks(ctx context.Context, playerID uuid.UUID) ([]*TemporalMark, error) {
+func (r *inMemoryRepository) GetTemporalMarks(_ context.Context, playerID uuid.UUID) ([]*TemporalMark, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
@@ -95,7 +95,7 @@ func (r *inMemoryRepository) GetTemporalMarks(ctx context.Context, playerID uuid
 	return marks, nil
 }
 
-func (r *inMemoryRepository) SaveTemporalMarks(ctx context.Context, marks []*TemporalMark) error {
+func (r *inMemoryRepository) SaveTemporalMarks(_ context.Context, marks []*TemporalMark) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -116,7 +116,7 @@ func (r *inMemoryRepository) SaveTemporalMarks(ctx context.Context, marks []*Tem
 	return nil
 }
 
-func (r *inMemoryRepository) UpdateTemporalMarks(ctx context.Context, marks []*TemporalMark) error {
+func (r *inMemoryRepository) UpdateTemporalMarks(_ context.Context, marks []*TemporalMark) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -143,36 +143,3 @@ func (r *inMemoryRepository) UpdateTemporalMarks(ctx context.Context, marks []*T
 	r.marks[playerID] = existingMarks
 	return nil
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

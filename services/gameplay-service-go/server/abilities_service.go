@@ -1,4 +1,4 @@
-// Issue: #156
+// Package server Issue: #156
 package server
 
 import (
@@ -6,9 +6,9 @@ import (
 	"errors"
 	"time"
 
+	"github.com/gc-lover/necpgame-monorepo/services/gameplay-service-go/pkg/api"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/gc-lover/necpgame-monorepo/services/gameplay-service-go/pkg/api"
 	"github.com/sirupsen/logrus"
 )
 
@@ -123,18 +123,18 @@ func (s *AbilityService) ActivateAbility(ctx context.Context, characterID uuid.U
 		return nil, errors.New("ability not found")
 	}
 
-		// Check cooldown
-		cooldowns, err := s.repo.GetCooldowns(ctx, characterID)
-		if err == nil {
-			for _, cd := range cooldowns {
-				if cd.AbilityID == req.AbilityID && cd.IsOnCooldown {
-					// Check if cooldown expired
-					if cd.ExpiresAt.Set && cd.ExpiresAt.Value.After(time.Now()) {
-						return nil, errors.New("ability is on cooldown")
-					}
+	// Check cooldown
+	cooldowns, err := s.repo.GetCooldowns(ctx, characterID)
+	if err == nil {
+		for _, cd := range cooldowns {
+			if cd.AbilityID == req.AbilityID && cd.IsOnCooldown {
+				// Check if cooldown expired
+				if cd.ExpiresAt.Set && cd.ExpiresAt.Value.After(time.Now()) {
+					return nil, errors.New("ability is on cooldown")
 				}
 			}
 		}
+	}
 
 	// Start cooldown
 	cooldownDuration := 30 // Default, should come from ability
@@ -147,15 +147,15 @@ func (s *AbilityService) ActivateAbility(ctx context.Context, characterID uuid.U
 		s.logger.WithError(err).Warn("Failed to start cooldown")
 	}
 
-		// Record activation
-		var targetID *uuid.UUID
-		if req.TargetID.Set {
-			targetID = &req.TargetID.Value
-		}
-		err = s.repo.RecordActivation(ctx, characterID, req.AbilityID, targetID)
-		if err != nil {
-			s.logger.WithError(err).Warn("Failed to record activation")
-		}
+	// Record activation
+	var targetID *uuid.UUID
+	if req.TargetID.Set {
+		targetID = &req.TargetID.Value
+	}
+	err = s.repo.RecordActivation(ctx, characterID, req.AbilityID, targetID)
+	if err != nil {
+		s.logger.WithError(err).Warn("Failed to record activation")
+	}
 
 	// Check for synergies
 	synergyTriggered := false
@@ -174,11 +174,11 @@ func (s *AbilityService) ActivateAbility(ctx context.Context, characterID uuid.U
 	}
 
 	return &api.AbilityActivationResponse{
-		AbilityID:            req.AbilityID,
-		Success:             true,
-		Message:             api.NewOptNilString("Ability activated successfully"),
-		CooldownStarted:     api.NewOptBool(true),
-		SynergyTriggered:    api.NewOptBool(synergyTriggered),
+		AbilityID:             req.AbilityID,
+		Success:               true,
+		Message:               api.NewOptNilString("Ability activated successfully"),
+		CooldownStarted:       api.NewOptBool(true),
+		SynergyTriggered:      api.NewOptBool(synergyTriggered),
 		CyberpsychosisUpdated: api.NewOptBool(cyberpsychosisUpdated),
 	}, nil
 }
@@ -239,4 +239,3 @@ func (s *AbilityService) GetAbilityMetrics(ctx context.Context, characterID uuid
 	}
 	return metrics, nil
 }
-

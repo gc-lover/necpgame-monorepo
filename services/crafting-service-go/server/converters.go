@@ -1,4 +1,4 @@
-// Issue: #2203 - API model converters
+// Package server Issue: #2203 - API model converters
 package server
 
 import (
@@ -272,19 +272,19 @@ func (h *CraftingHandler) convertStationToAPI(station Station) api.Station {
 	isAvailable.SetTo(station.IsAvailable)
 
 	return api.Station{
-		ID:               station.ID,
-		Name:             station.Name,
-		Description:      description,
-		Type:             api.StationType(station.Type),
-		Efficiency:       float32(station.Efficiency),
-		ZoneID:           station.ZoneID,
-		OwnerID:          ownerID,
-		CurrentOrderID:   currentOrderID,
-		IsAvailable:      isAvailable,
-		MaintenanceCost:  maintenanceCost,
-		LastMaintenance:  lastMaintenance,
-		CreatedAt:        createdAt,
-		UpdatedAt:        updatedAt,
+		ID:              station.ID,
+		Name:            station.Name,
+		Description:     description,
+		Type:            api.StationType(station.Type),
+		Efficiency:      float32(station.Efficiency),
+		ZoneID:          station.ZoneID,
+		OwnerID:         ownerID,
+		CurrentOrderID:  currentOrderID,
+		IsAvailable:     isAvailable,
+		MaintenanceCost: maintenanceCost,
+		LastMaintenance: lastMaintenance,
+		CreatedAt:       createdAt,
+		UpdatedAt:       updatedAt,
 	}
 }
 

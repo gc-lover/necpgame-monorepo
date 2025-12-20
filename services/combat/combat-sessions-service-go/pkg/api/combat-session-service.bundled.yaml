@@ -1,0 +1,792 @@
+openapi: 3.0.3
+info:
+  title: Combat Session Service API
+  description: |
+    API для управления боевыми сессиями в MMOFPS RPG.
+
+    Функциональность:
+    - Создание и управление боевыми сессиями
+    - Обработка боевых действий
+    - Статистика и логи
+  version: 1.0.0
+  contact:
+    name: NECPGAME Backend Team
+    email: backend@necp.game
+servers:
+  - url: https://api.necp.game/api/v1
+    description: Production
+  - url: http://localhost:8080/api/v1
+    description: Local
+security:
+  - BearerAuth: [ ]
+tags:
+  - name: Combat Sessions
+  - name: Combat Actions
+  - name: Combat Analytics
+paths:
+  /gameplay/combat/sessions:
+    post:
+      summary: Создать боевую сессию
+      operationId: createCombatSession
+      tags:
+        - Combat Sessions
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSessionRequest'
+      responses:
+        '201':
+          description: Сессия создана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CombatSessionResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    get:
+      summary: Список сессий
+      operationId: listCombatSessions
+      tags:
+        - Combat Sessions
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/SessionStatus'
+        - name: session_type
+          in: query
+          schema:
+            $ref: '#/components/schemas/SessionType'
+      responses:
+        '200':
+          description: Список сессий
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionListResponse'
+  /gameplay/combat/sessions/{sessionId}:
+    parameters:
+      - $ref: '#/components/parameters/SessionId'
+    get:
+      summary: Получить сессию
+      operationId: getCombatSession
+      tags:
+        - Combat Sessions
+      responses:
+        '200':
+          description: Состояние сессии
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CombatSessionResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      summary: Завершить сессию
+      operationId: endCombatSession
+      tags:
+        - Combat Sessions
+      responses:
+        '200':
+          description: Сессия завершена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionEndResponse'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /gameplay/combat/sessions/{sessionId}/actions:
+    parameters:
+      - $ref: '#/components/parameters/SessionId'
+    post:
+      summary: Выполнить действие
+      description: Выполнение боевого действия (с античит-валидацией)
+      operationId: executeCombatAction
+      tags:
+        - Combat Actions
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ActionRequest'
+      responses:
+        '200':
+          description: Действие выполнено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActionResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '403':
+          description: Античит отклонил
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /gameplay/combat/sessions/{sessionId}/state:
+    parameters:
+      - $ref: '#/components/parameters/SessionId'
+    get:
+      summary: Получить realtime состояние
+      operationId: getCombatState
+      tags:
+        - Combat Sessions
+      responses:
+        '200':
+          description: Текущее состояние
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CombatState'
+  /gameplay/combat/sessions/{sessionId}/logs:
+    parameters:
+      - $ref: '#/components/parameters/SessionId'
+    get:
+      summary: Логи сессии
+      operationId: getCombatLogs
+      tags:
+        - Combat Analytics
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Логи
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LogsResponse'
+  /gameplay/combat/sessions/{sessionId}/stats:
+    parameters:
+      - $ref: '#/components/parameters/SessionId'
+    get:
+      summary: Статистика сессии
+      operationId: getCombatStats
+      tags:
+        - Combat Analytics
+      responses:
+        '200':
+          description: Статистика
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatsResponse'
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT токен для аутентификации
+  parameters:
+    SessionId:
+      name: sessionId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    Limit:
+      name: limit
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 50
+      description: Количество элементов на странице
+    Offset:
+      name: offset
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+      description: Смещение для пагинации
+  schemas:
+    SessionType:
+      type: string
+      enum:
+        - pvp_arena
+        - pve_raid
+        - extract_zone
+        - guild_war
+    SessionStatus:
+      type: string
+      enum:
+        - pending
+        - active
+        - ended
+        - aborted
+    Difficulty:
+      type: string
+      enum:
+        - normal
+        - hard
+        - elite
+    ActionType:
+      type: string
+      enum:
+        - attack
+        - ability
+        - move
+        - reload
+        - extract
+        - heal
+        - revive
+    ParticipantStatus:
+      type: string
+      enum:
+        - alive
+        - dead
+        - extracted
+        - disconnected
+    CreateSessionRequest:
+      type: object
+      required:
+        - session_type
+        - participants
+      properties:
+        session_type:
+          $ref: '#/components/schemas/SessionType'
+        participants:
+          type: array
+          items:
+            type: string
+            format: uuid
+          minItems: 1
+          maxItems: 200
+        zone_id:
+          type: string
+        difficulty:
+          $ref: '#/components/schemas/Difficulty'
+        settings:
+          type: object
+    CombatSessionResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseEntityWithTimestamps'
+        - type: object
+          required:
+            - session_type
+            - status
+            - participants
+          properties:
+            session_type:
+              $ref: '#/components/schemas/SessionType'
+            status:
+              $ref: '#/components/schemas/SessionStatus'
+            zone_id:
+              type: string
+            difficulty:
+              $ref: '#/components/schemas/Difficulty'
+            participants:
+              type: array
+              items:
+                $ref: '#/components/schemas/Participant'
+            winner_team:
+              type: string
+              nullable: true
+    SessionListResponse:
+      type: object
+      required:
+        - items
+        - pagination
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/SessionSummary'
+        pagination:
+          $ref: '#/components/schemas/PaginationResponse'
+    SessionSummary:
+      type: object
+      required:
+        - id
+        - session_type
+        - status
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        session_type:
+          $ref: '#/components/schemas/SessionType'
+        status:
+          $ref: '#/components/schemas/SessionStatus'
+        participant_count:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+    ActionRequest:
+      type: object
+      required:
+        - action_type
+      properties:
+        action_type:
+          $ref: '#/components/schemas/ActionType'
+        target_id:
+          type: string
+          format: uuid
+        position:
+          $ref: '#/components/schemas/Position3D'
+        ability_id:
+          type: string
+        weapon_id:
+          type: string
+          format: uuid
+    ActionResponse:
+      type: object
+      required:
+        - success
+        - action_type
+        - timestamp
+      properties:
+        success:
+          type: boolean
+        action_type:
+          $ref: '#/components/schemas/ActionType'
+        damage_dealt:
+          type: integer
+        effects_applied:
+          type: array
+          items:
+            $ref: '#/components/schemas/StatusEffect'
+        validation:
+          $ref: '#/components/schemas/ActionValidation'
+        timestamp:
+          type: string
+          format: date-time
+    CombatState:
+      type: object
+      required:
+        - session_id
+        - participants_state
+        - current_turn
+      properties:
+        session_id:
+          type: string
+          format: uuid
+        participants_state:
+          type: array
+          items:
+            $ref: '#/components/schemas/ParticipantState'
+        current_turn:
+          type: string
+          format: uuid
+        turn_number:
+          type: integer
+    LogsResponse:
+      type: object
+      required:
+        - logs
+        - pagination
+      properties:
+        logs:
+          type: array
+          items:
+            $ref: '#/components/schemas/CombatLog'
+        pagination:
+          $ref: '#/components/schemas/PaginationResponse'
+    StatsResponse:
+      type: object
+      required:
+        - session_id
+        - participants_stats
+      properties:
+        session_id:
+          type: string
+          format: uuid
+        participants_stats:
+          type: array
+          items:
+            $ref: '#/components/schemas/ParticipantStats'
+        total_damage:
+          type: integer
+          format: int64
+    SessionEndResponse:
+      type: object
+      required:
+        - session_id
+        - status
+      properties:
+        session_id:
+          type: string
+          format: uuid
+        status:
+          $ref: '#/components/schemas/SessionStatus'
+        winner_team:
+          type: string
+          nullable: true
+        rewards:
+          type: array
+          items:
+            $ref: '#/components/schemas/Reward'
+    PaginationResponse:
+      type: object
+      required:
+        - items
+        - total
+      properties:
+        items:
+          type: array
+          description: Список элементов
+        total:
+          type: integer
+          minimum: 0
+          description: Общее количество элементов
+        limit:
+          type: integer
+          minimum: 1
+          description: Количество элементов на странице
+        offset:
+          type: integer
+          minimum: 0
+          description: Смещение для пагинации
+        has_more:
+          type: boolean
+          description: Есть ли еще элементы
+    BaseEntity:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Уникальный идентификатор
+    TimestampFields:
+      type: object
+      properties:
+        created_at:
+          type: string
+          format: date-time
+          description: Дата создания
+        updated_at:
+          type: string
+          format: date-time
+          description: Дата обновления
+          nullable: true
+        expires_at:
+          type: string
+          format: date-time
+          description: Дата истечения
+          nullable: true
+    BaseEntityWithTimestamps:
+      allOf:
+        - $ref: '#/components/schemas/BaseEntity'
+        - $ref: '#/components/schemas/TimestampFields'
+    Participant:
+      type: object
+      required:
+        - player_id
+        - character_id
+        - team
+        - role
+        - health
+        - max_health
+        - status
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        character_id:
+          type: string
+          format: uuid
+        team:
+          type: string
+          enum:
+            - team_a
+            - team_b
+            - solo
+        role:
+          type: string
+          enum:
+            - assault
+            - support
+            - tech
+            - stealth
+        damage_dealt:
+          type: integer
+          format: int64
+        damage_taken:
+          type: integer
+          format: int64
+        healing_done:
+          type: integer
+          format: int64
+        kills:
+          type: integer
+        deaths:
+          type: integer
+        assists:
+          type: integer
+        health:
+          type: integer
+        max_health:
+          type: integer
+        status:
+          type: string
+          enum:
+            - alive
+            - dead
+            - extracted
+            - disconnected
+    Error:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          description: Тип ошибки
+        message:
+          type: string
+          description: Сообщение об ошибке
+        code:
+          type: string
+          description: Код ошибки
+          nullable: true
+        details:
+          type: object
+          additionalProperties: true
+          description: Дополнительные детали ошибки
+          nullable: true
+    Reward:
+      type: object
+      required:
+        - player_id
+        - experience
+        - currency
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        experience:
+          type: integer
+          minimum: 0
+        currency:
+          type: object
+          properties:
+            eurodollars:
+              type: integer
+            cryptos:
+              type: integer
+        items:
+          type: array
+          items:
+            type: object
+            required:
+              - item_id
+              - quantity
+            properties:
+              item_id:
+                type: string
+                format: uuid
+              quantity:
+                type: integer
+                minimum: 1
+    Position3D:
+      type: object
+      required:
+        - x
+        - 'y'
+        - z
+      properties:
+        x:
+          type: number
+          format: float
+          description: Координата X
+        'y':
+          type: number
+          format: float
+          description: Координата Y
+        z:
+          type: number
+          format: float
+          description: Координата Z
+    StatusEffect:
+      type: object
+      required:
+        - effect_type
+        - duration_seconds
+      properties:
+        effect_type:
+          type: string
+          enum:
+            - bleeding
+            - burning
+            - poisoned
+            - stunned
+            - slowed
+            - buffed
+            - debuffed
+        duration_seconds:
+          type: integer
+          minimum: 1
+        strength:
+          type: number
+          format: float
+    ActionValidation:
+      type: object
+      required:
+        - anti_cheat_passed
+        - position_valid
+        - cooldown_valid
+      properties:
+        anti_cheat_passed:
+          type: boolean
+        position_valid:
+          type: boolean
+        cooldown_valid:
+          type: boolean
+        details:
+          type: string
+    ParticipantState:
+      type: object
+      required:
+        - player_id
+        - health
+        - status
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        health:
+          type: integer
+        max_health:
+          type: integer
+        position:
+          $ref: '#/components/schemas/Position3D'
+        status:
+          type: string
+          enum:
+            - alive
+            - dead
+            - extracted
+            - disconnected
+        active_effects:
+          type: array
+          items:
+            $ref: '#/components/schemas/StatusEffect'
+    CombatLog:
+      type: object
+      required:
+        - id
+        - event_type
+        - timestamp
+        - sequence_number
+      properties:
+        id:
+          type: integer
+          format: int64
+        event_type:
+          type: string
+          enum:
+            - attack
+            - ability
+            - move
+            - reload
+            - death
+            - extract
+        actor_id:
+          type: string
+          format: uuid
+        target_id:
+          type: string
+          format: uuid
+        action_data:
+          type: object
+        result_data:
+          type: object
+        timestamp:
+          type: string
+          format: date-time
+        sequence_number:
+          type: integer
+          format: int64
+    ParticipantStats:
+      type: object
+      required:
+        - player_id
+        - damage_dealt
+        - kills
+        - deaths
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        damage_dealt:
+          type: integer
+          format: int64
+        damage_taken:
+          type: integer
+          format: int64
+        healing_done:
+          type: integer
+          format: int64
+        kills:
+          type: integer
+        deaths:
+          type: integer
+        assists:
+          type: integer
+        shots_fired:
+          type: integer
+        shots_hit:
+          type: integer
+        accuracy:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+  responses:
+    BadRequest:
+      description: Неверный запрос
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: BadRequest
+            message: Неверные параметры запроса
+            code: INVALID_PARAMETERS
+    Unauthorized:
+      description: Требуется аутентификация
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: Unauthorized
+            message: Требуется аутентификация
+            code: AUTH_REQUIRED
+    NotFound:
+      description: Ресурс не найден
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: NotFound
+            message: Ресурс не найден
+            code: RESOURCE_NOT_FOUND
+    Forbidden:
+      description: Доступ запрещен
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: Forbidden
+            message: Доступ запрещен
+            code: ACCESS_DENIED

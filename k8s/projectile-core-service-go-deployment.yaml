@@ -32,61 +32,61 @@ spec:
         seccompProfile:
           type: RuntimeDefault
       containers:
-      - name: projectile-core-service-go
-        image: necpgame-projectile-core-service-go:latest
-        imagePullPolicy: IfNotPresent
-        securityContext:
-          allowPrivilegeEscalation: false
-          readOnlyRootFilesystem: true
-          capabilities:
-            drop:
-            - ALL
-        ports:
-        - name: http
-          containerPort: 8091
-          protocol: TCP
-        - name: metrics
-          containerPort: 9091
-          protocol: TCP
-        env:
-        - name: SERVER_ADDR
-          value: ":8091"
-        - name: DATABASE_URL
-          valueFrom:
-            secretKeyRef:
-              name: database-secrets
-              key: url
-        resources:
-          requests:
-            memory: "128Mi"
-            cpu: "100m"
-          limits:
-            memory: "256Mi"
-            cpu: "200m"
-        startupProbe:
-          httpGet:
-            path: /health
-            port: 8091
-          initialDelaySeconds: 5
-          periodSeconds: 5
-          timeoutSeconds: 3
-          failureThreshold: 12
-        livenessProbe:
-          httpGet:
-            path: /health
-            port: 8091
-          initialDelaySeconds: 10
-          periodSeconds: 30
-          timeoutSeconds: 5
-          failureThreshold: 3
-        readinessProbe:
-          httpGet:
-            path: /health
-            port: 8091
-          initialDelaySeconds: 5
-          periodSeconds: 10
-          timeoutSeconds: 3
-          failureThreshold: 3
+        - name: projectile-core-service-go
+          image: necpgame-projectile-core-service-go:latest
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          ports:
+            - name: http
+              containerPort: 8091
+              protocol: TCP
+            - name: metrics
+              containerPort: 9091
+              protocol: TCP
+          env:
+            - name: SERVER_ADDR
+              value: ":8091"
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: database-secrets
+                  key: url
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "200m"
+          startupProbe:
+            httpGet:
+              path: /health
+              port: 8091
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 12
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8091
+            initialDelaySeconds: 10
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8091
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
 
 ---
 apiVersion: v1
@@ -100,14 +100,14 @@ metadata:
 spec:
   type: ClusterIP
   ports:
-  - name: http
-    port: 8091
-    targetPort: 8091
-    protocol: TCP
-  - name: metrics
-    port: 9091
-    targetPort: 9091
-    protocol: TCP
+    - name: http
+      port: 8091
+      targetPort: 8091
+      protocol: TCP
+    - name: metrics
+      port: 9091
+      targetPort: 9091
+      protocol: TCP
   selector:
     app: projectile-core-service-go
 

@@ -1,8 +1,9 @@
-// Issue: #1856
+// Package server Issue: #1856
 // OPTIMIZED middleware chain - structured logging, metrics, recovery
 package server
 
 import (
+	"context"
 	"net/http"
 	"time"
 
@@ -17,8 +18,8 @@ func recoveryMiddleware(next http.Handler) http.Handler {
 			if err := recover(); err != nil {
 				logger := GetLogger()
 				logger.WithFields(logrus.Fields{
-					"panic": err,
-					"url":   r.URL.Path,
+					"panic":  err,
+					"url":    r.URL.Path,
 					"method": r.Method,
 				}).Error("Panic recovered")
 				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -64,11 +65,11 @@ func LoggingMiddleware(next http.Handler) http.Handler {
 		// Log response
 		duration := time.Since(start)
 		logger.WithFields(logrus.Fields{
-			"method":       r.Method,
-			"url":          r.URL.Path,
-			"status_code":  wrapped.statusCode,
-			"duration_ms":  duration.Milliseconds(),
-			"remote_ip":    r.RemoteAddr,
+			"method":      r.Method,
+			"url":         r.URL.Path,
+			"status_code": wrapped.statusCode,
+			"duration_ms": duration.Milliseconds(),
+			"remote_ip":   r.RemoteAddr,
 		}).Info("Request completed")
 	})
 }
@@ -103,7 +104,3 @@ func (rw *responseWriter) WriteHeader(code int) {
 	rw.statusCode = code
 	rw.ResponseWriter.WriteHeader(code)
 }
-
-
-
-

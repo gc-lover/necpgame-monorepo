@@ -42,57 +42,57 @@ info:
     name: NECPGAME API Support
     email: api@necp.game
 servers:
-- url: http://localhost:8080/api/v1
-  description: Economy Service (локальная разработка)
-- url: https://api.necp.game/api/v1
-  description: Economy Service (продакшн)
+  - url: http://localhost:8080/api/v1
+    description: Economy Service (локальная разработка)
+  - url: https://api.necp.game/api/v1
+    description: Economy Service (продакшн)
 tags:
-- name: Contracts
-  description: Управление контрактами
+  - name: Contracts
+    description: Управление контрактами
 paths:
   /economy/contracts:
     get:
       tags:
-      - Contracts
+        - Contracts
       summary: Получить список контрактов
       description: 'Возвращает список контрактов с фильтрацией.
 
         '
       operationId: getContracts
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       parameters:
-      - name: status
-        in: query
-        schema:
-          type: string
-          enum:
-          - draft
-          - negotiation
-          - escrow_pending
-          - active
-          - completed
-          - cancelled
-          - disputed
-        description: Фильтр по статусу
-      - name: contract_type
-        in: query
-        schema:
-          type: string
-          enum:
-          - exchange
-          - delivery
-          - craft
-          - service
-        description: Фильтр по типу контракта
-      - name: party_id
-        in: query
-        schema:
-          type: string
-          format: uuid
-        description: Фильтр по участнику контракта
-      - $ref: common.yaml#/components/parameters/Limit
-      - $ref: common.yaml#/components/parameters/Offset
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum:
+              - draft
+              - negotiation
+              - escrow_pending
+              - active
+              - completed
+              - cancelled
+              - disputed
+          description: Фильтр по статусу
+        - name: contract_type
+          in: query
+          schema:
+            type: string
+            enum:
+              - exchange
+              - delivery
+              - craft
+              - service
+          description: Фильтр по типу контракта
+        - name: party_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Фильтр по участнику контракта
+        - $ref: common.yaml#/components/parameters/Limit
+        - $ref: common.yaml#/components/parameters/Offset
       responses:
         '200':
           description: Список контрактов
@@ -113,14 +113,14 @@ paths:
           $ref: common.yaml#/components/responses/InternalServerError
     post:
       tags:
-      - Contracts
+        - Contracts
       summary: Создать контракт
       description: 'Создает новый контракт.
 
         '
       operationId: createContract
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       requestBody:
         required: true
         content:
@@ -143,22 +143,22 @@ paths:
   /economy/contracts/{contract_id}:
     get:
       tags:
-      - Contracts
+        - Contracts
       summary: Получить информацию о контракте
       description: 'Возвращает детальную информацию о контракте.
 
         '
       operationId: getContractById
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       parameters:
-      - name: contract_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: Идентификатор контракта
+        - name: contract_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор контракта
       responses:
         '200':
           description: Информация о контракте
@@ -174,22 +174,22 @@ paths:
           $ref: common.yaml#/components/responses/InternalServerError
     put:
       tags:
-      - Contracts
+        - Contracts
       summary: Обновить контракт
       description: 'Обновляет контракт (только в статусе draft или negotiation).
 
         '
       operationId: updateContract
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       parameters:
-      - name: contract_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: Идентификатор контракта
+        - name: contract_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор контракта
       requestBody:
         required: true
         content:
@@ -215,22 +215,22 @@ paths:
           $ref: common.yaml#/components/responses/InternalServerError
     delete:
       tags:
-      - Contracts
+        - Contracts
       summary: Отменить контракт
       description: 'Отменяет контракт (только в статусе draft или negotiation).
 
         '
       operationId: cancelContract
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       parameters:
-      - name: contract_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: Идентификатор контракта
+        - name: contract_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор контракта
       responses:
         '200':
           description: Контракт отменен
@@ -249,22 +249,22 @@ paths:
   /economy/contracts/{contract_id}/negotiate:
     post:
       tags:
-      - Contracts
+        - Contracts
       summary: Предложить изменения контракта
       description: 'Предлагает изменения условий контракта (переговоры).
 
         '
       operationId: negotiateContract
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       parameters:
-      - name: contract_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: Идентификатор контракта
+        - name: contract_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор контракта
       requestBody:
         required: true
         content:
@@ -289,22 +289,22 @@ paths:
   /economy/contracts/{contract_id}/accept:
     post:
       tags:
-      - Contracts
+        - Contracts
       summary: Принять контракт
       description: 'Принимает контракт и переводит его в статус escrow_pending.
 
         '
       operationId: acceptContract
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       parameters:
-      - name: contract_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: Идентификатор контракта
+        - name: contract_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор контракта
       responses:
         '200':
           description: Контракт принят
@@ -323,22 +323,22 @@ paths:
   /economy/contracts/{contract_id}/reject:
     post:
       tags:
-      - Contracts
+        - Contracts
       summary: Отклонить контракт
       description: 'Отклоняет контракт.
 
         '
       operationId: rejectContract
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       parameters:
-      - name: contract_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: Идентификатор контракта
+        - name: contract_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор контракта
       requestBody:
         required: false
         content:
@@ -366,22 +366,22 @@ paths:
   /economy/contracts/{contract_id}/complete:
     post:
       tags:
-      - Contracts
+        - Contracts
       summary: Завершить контракт
       description: 'Завершает контракт и освобождает эскроу.
 
         '
       operationId: completeContract
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       parameters:
-      - name: contract_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: Идентификатор контракта
+        - name: contract_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор контракта
       responses:
         '200':
           description: Контракт завершен
@@ -400,17 +400,17 @@ paths:
   /economy/contracts/active:
     get:
       tags:
-      - Contracts
+        - Contracts
       summary: Получить активные контракты
       description: 'Возвращает список активных контрактов игрока.
 
         '
       operationId: getActiveContracts
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       parameters:
-      - $ref: common.yaml#/components/parameters/Limit
-      - $ref: common.yaml#/components/parameters/Offset
+        - $ref: common.yaml#/components/parameters/Limit
+        - $ref: common.yaml#/components/parameters/Offset
       responses:
         '200':
           description: Список активных контрактов
@@ -437,11 +437,11 @@ components:
     Contract:
       type: object
       required:
-      - id
-      - contract_type
-      - initiator_id
-      - status
-      - created_at
+        - id
+        - contract_type
+        - initiator_id
+        - status
+        - created_at
       properties:
         id:
           type: string
@@ -456,20 +456,20 @@ components:
         contract_type:
           type: string
           enum:
-          - exchange
-          - delivery
-          - craft
-          - service
+            - exchange
+            - delivery
+            - craft
+            - service
         status:
           type: string
           enum:
-          - draft
-          - negotiation
-          - escrow_pending
-          - active
-          - completed
-          - cancelled
-          - disputed
+            - draft
+            - negotiation
+            - escrow_pending
+            - active
+            - completed
+            - cancelled
+            - disputed
         created_at:
           type: string
           format: date-time
@@ -481,11 +481,11 @@ components:
     ContractDetailed:
       type: object
       required:
-      - id
-      - contract_type
-      - initiator_id
-      - status
-      - created_at
+        - id
+        - contract_type
+        - initiator_id
+        - status
+        - created_at
       properties:
         id:
           type: string
@@ -508,20 +508,20 @@ components:
         contract_type:
           type: string
           enum:
-          - exchange
-          - delivery
-          - craft
-          - service
+            - exchange
+            - delivery
+            - craft
+            - service
         status:
           type: string
           enum:
-          - draft
-          - negotiation
-          - escrow_pending
-          - active
-          - completed
-          - cancelled
-          - disputed
+            - draft
+            - negotiation
+            - escrow_pending
+            - active
+            - completed
+            - cancelled
+            - disputed
         created_at:
           type: string
           format: date-time
@@ -540,9 +540,9 @@ components:
     CreateContractRequest:
       type: object
       required:
-      - contract_type
-      - counterparty_id
-      - terms
+        - contract_type
+        - counterparty_id
+        - terms
       properties:
         counterparty_id:
           type: string
@@ -550,10 +550,10 @@ components:
         contract_type:
           type: string
           enum:
-          - exchange
-          - delivery
-          - craft
-          - service
+            - exchange
+            - delivery
+            - craft
+            - service
         expires_at:
           type: string
           format: date-time
@@ -575,11 +575,11 @@ components:
     NegotiateContractRequest:
       type: object
       required:
-      - proposed_terms
+        - proposed_terms
       properties:
         proposed_terms:
           type: object
           description: Предлагаемые изменения условий
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
 security:
-- BearerAuth: []
+  - BearerAuth: [ ]

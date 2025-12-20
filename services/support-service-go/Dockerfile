@@ -32,9 +32,9 @@ RUN chown -R appuser:appuser /app
 
 USER appuser
 
-EXPOSE 8087/tcp 9097
+EXPOSE 8163/tcp 9263
 
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:9097/metrics || exit 1
+  CMD wget -q --spider http://localhost:9263/metrics || exit 1
 
 ENTRYPOINT ["/app/support-service"]

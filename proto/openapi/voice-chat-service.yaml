@@ -1,56 +1,65 @@
+# Voice Chat Service API
+# Issue: #2206 - Backend Agent will implement this service
+
 openapi: 3.0.3
 info:
   title: Voice Chat Service API
-  description: |
-    API для управления системой голосового чата в NECPGAME.
-    Обеспечивает голосовую коммуникацию через WebRTC с поддержкой различных типов каналов.
   version: 1.0.0
-  contact:
-    name: Voice Chat Team
-    email: voice@necp.game
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  description: Voice Chat Service for MMO Real-Time Communication with WebRTC signaling, room management, and spatial audio support
 
 servers:
-  - url: https://api.necp.game/v1
+  - url: https://voice-chat.necpgame.com/api/v1
     description: Production server
-  - url: https://staging-api.necp.game/v1
-    description: Staging server
-  - url: http://localhost:8085/v1
+  - url: http://localhost:8080/api/v1
     description: Local development
 
 security:
-  - BearerAuth: []
-  - ApiKeyAuth: []
+  - BearerAuth: [ ]
 
 paths:
-  # Управление каналами
-  /social/voice/channels:
+  /health:
     get:
-      summary: Получить список голосовых каналов
-      description: |
-        Возвращает список доступных голосовых каналов с фильтрацией по типу и состоянию.
-        Поддерживает пагинацию для больших списков.
-      operationId: getVoiceChannels
-      tags:
-        - Voice Channels
+      tags: [ health ]
+      summary: Health check
+      operationId: healthCheck
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: healthy
+                  timestamp:
+                    type: string
+                    format: date-time
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /rooms:
+    get:
+      tags: [ rooms ]
+      summary: List voice rooms
+      operationId: listRooms
       parameters:
-        - name: channelType
+        - name: status
           in: query
           schema:
             type: string
-            enum: [PARTY, GUILD, RAID, PROXIMITY]
-          description: Фильтр по типу канала
-        - name: isActive
-          in: query
-          schema:
-            type: boolean
-            default: true
-          description: Показывать только активные каналы
-        - name: playerId
+            enum: [ active, inactive, full, closed ]
+        - name: game_session_id
           in: query
           schema:
             type: string
             format: uuid
-          description: ID игрока для фильтрации доступных каналов
         - name: limit
           in: query
           schema:
@@ -58,343 +67,505 @@ paths:
             minimum: 1
             maximum: 100
             default: 20
-          description: Количество элементов на страницу
         - name: offset
           in: query
           schema:
             type: integer
             minimum: 0
             default: 0
-          description: Смещение для пагинации
       responses:
-        "200":
-          description: Успешный ответ со списком каналов
+        '200':
+          description: List of voice rooms
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  channels:
-                    type: array
-                    items:
-                      $ref: "#/components/schemas/VoiceChannel"
-                  pagination:
-                    $ref: "#/components/schemas/PaginationInfo"
-                  total:
-                    type: integer
-                    description: Общее количество каналов
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
+                $ref: '#/components/schemas/RoomListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
 
     post:
-      summary: Создать новый голосовой канал
-      description: |
-        Создает новый голосовой канал указанного типа.
-        Проверяет права доступа и лимиты.
-      operationId: createVoiceChannel
-      tags:
-        - Voice Channels
+      tags: [ rooms ]
+      summary: Create voice room
+      operationId: createRoom
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              required:
-                - channelType
-                - name
-              properties:
-                channelType:
-                  type: string
-                  enum: [PARTY, GUILD, RAID, PROXIMITY]
-                  description: Тип создаваемого канала
-                name:
-                  type: string
-                  minLength: 1
-                  maxLength: 255
-                  description: Название канала
-                maxParticipants:
-                  type: integer
-                  minimum: 2
-                  maximum: 100
-                  description: Максимальное количество участников
-                qualityPreset:
-                  type: string
-                  enum: [HIGH, MEDIUM, LOW, ADAPTIVE]
-                  default: MEDIUM
-                  description: Пресет качества звука
-                associatedEntityId:
-                  type: string
-                  format: uuid
-                  description: ID связанной сущности (party, guild, raid)
+              $ref: '#/components/schemas/CreateRoomRequest'
       responses:
-        "201":
-          description: Канал успешно создан
+        '201':
+          description: Voice room created
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/VoiceChannel"
-          headers:
-            Location:
-              schema:
-                type: string
-                format: uri
-              description: URL созданного канала
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "403":
-          description: Недостаточно прав для создания канала
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "409":
-          description: Канал с таким именем уже существует
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
+                $ref: '#/components/schemas/VoiceRoom'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          $ref: '#/components/responses/Conflict'
 
-  /social/voice/channels/{channelId}:
+  /rooms/{roomId}:
     get:
-      summary: Получить информацию о канале
-      description: Возвращает подробную информацию о голосовом канале
-      operationId: getVoiceChannel
-      tags:
-        - Voice Channels
+      tags: [ rooms ]
+      summary: Get voice room details
+      operationId: getRoom
       parameters:
-        - name: channelId
+        - name: roomId
           in: path
           required: true
           schema:
-            type: string
-            format: uuid
-          description: ID канала
+            $ref: '#/components/schemas/RoomId'
       responses:
-        "200":
-          description: Успешный ответ с информацией о канале
+        '200':
+          description: Voice room details
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/VoiceChannel"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
+                $ref: '#/components/schemas/VoiceRoom'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      tags: [ rooms ]
+      summary: Update voice room
+      operationId: updateRoom
+      parameters:
+        - name: roomId
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/RoomId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateRoomRequest'
+      responses:
+        '200':
+          description: Voice room updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VoiceRoom'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
 
     delete:
-      summary: Удалить голосовой канал
-      description: |
-        Удаляет голосовой канал. Доступно только владельцу или администратору.
-        Все участники будут отключены.
-      operationId: deleteVoiceChannel
-      tags:
-        - Voice Channels
+      tags: [ rooms ]
+      summary: Delete voice room
+      operationId: deleteRoom
       parameters:
-        - name: channelId
+        - name: roomId
           in: path
           required: true
           schema:
-            type: string
-            format: uuid
-          description: ID канала
+            $ref: '#/components/schemas/RoomId'
       responses:
-        "204":
-          description: Канал успешно удален
-        "403":
-          description: Недостаточно прав для удаления канала
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "409":
-          description: Невозможно удалить канал с активными участниками
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
+        '204':
+          description: Voice room deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
 
-  /social/voice/channels/{channelId}/join:
+  /rooms/{roomId}/join:
     post:
-      summary: Присоединиться к голосовому каналу
-      description: |
-        Присоединяет игрока к голосовому каналу.
-        Возвращает WebRTC токен для установления соединения.
-      operationId: joinVoiceChannel
-      tags:
-        - Voice Channels
+      tags: [ rooms ]
+      summary: Join voice room
+      operationId: joinRoom
       parameters:
-        - name: channelId
+        - name: roomId
           in: path
           required: true
           schema:
-            type: string
-            format: uuid
-          description: ID канала
+            $ref: '#/components/schemas/RoomId'
       requestBody:
-        required: false
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                position:
-                  $ref: "#/components/schemas/Vector3D"
-                  description: Позиция игрока (для proximity каналов)
+              $ref: '#/components/schemas/JoinRoomRequest'
       responses:
-        "200":
-          description: Успешно присоединен к каналу
+        '200':
+          description: Successfully joined room
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  participant:
-                    $ref: "#/components/schemas/VoiceParticipant"
-                  webrtcToken:
-                    type: string
-                    description: WebRTC токен для соединения
-                  channel:
-                    $ref: "#/components/schemas/VoiceChannel"
-                required:
-                  - participant
-                  - webrtcToken
-                  - channel
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "403":
-          description: Доступ к каналу запрещен
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "409":
-          description: Канал полон или игрок уже в другом канале
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
+                  room:
+                    $ref: '#/components/schemas/VoiceRoom'
+                  ice_servers:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        urls:
+                          type: string
+                        username:
+                          type: string
+                        credential:
+                          type: string
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
 
-  /social/voice/channels/{channelId}/leave:
+  /rooms/{roomId}/leave:
     post:
-      summary: Покинуть голосовой канал
-      description: Отключает игрока от голосового канала
-      operationId: leaveVoiceChannel
-      tags:
-        - Voice Channels
+      tags: [ rooms ]
+      summary: Leave voice room
+      operationId: leaveRoom
       parameters:
-        - name: channelId
+        - name: roomId
           in: path
           required: true
           schema:
-            type: string
-            format: uuid
-          description: ID канала
+            $ref: '#/components/schemas/RoomId'
       responses:
-        "204":
-          description: Успешно покинул канал
-        "404":
-          description: Канал или участник не найден
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
+        '200':
+          description: Successfully left room
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
 
-  # WebRTC соединения
-  /social/voice/webrtc/token:
+  /signal:
     post:
-      summary: Получить WebRTC токен
-      description: |
-        Генерирует WebRTC токен для подключения к голосовому каналу.
-        Токен содержит информацию о канале и участнике.
-      operationId: getWebRTCToken
-      tags:
-        - WebRTC
+      tags: [ signaling ]
+      summary: Send WebRTC signaling message
+      operationId: sendSignal
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              required:
-                - channelId
-                - playerId
-              properties:
-                channelId:
-                  type: string
-                  format: uuid
-                  description: ID канала
-                playerId:
-                  type: string
-                  format: uuid
-                  description: ID игрока
-                provider:
-                  type: string
-                  enum: [AGORA, TWILIO, SELF_HOSTED]
-                  default: SELF_HOSTED
-                  description: WebRTC провайдер
+              $ref: '#/components/schemas/WebRTCSignal'
       responses:
-        "200":
-          description: WebRTC токен успешно сгенерирован
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  token:
-                    type: string
-                    description: WebRTC токен
-                  provider:
-                    type: string
-                    enum: [AGORA, TWILIO, SELF_HOSTED]
-                    description: Используемый провайдер
-                  expiresAt:
-                    type: string
-                    format: date-time
-                    description: Время истечения токена
-                  channelId:
-                    type: string
-                    format: uuid
-                    description: ID канала
-                required:
-                  - token
-                  - provider
-                  - expiresAt
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "403":
-          description: Доступ к каналу запрещен
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "404":
-          description: Канал не найден
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
+        '200':
+          description: Signal sent successfully
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
 
-  /social/voice/webrtc/connect:
-    post:
-      summary: Установить WebRTC соединение
-      description: |
-        Инициирует установление WebRTC соединения для голосового канала.
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Forbidden:
+      description: Insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Conflict:
+      description: Resource conflict
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+  schemas:
+    Error:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          description: Error code
+        message:
+          type: string
+          description: Human-readable error message
+        details:
+          type: object
+          description: Additional error details
+
+    PlayerId:
+      type: string
+      format: uuid
+      description: Player unique identifier
+
+    RoomId:
+      type: string
+      format: uuid
+      description: Voice room unique identifier
+
+    SessionId:
+      type: string
+      format: uuid
+      description: Voice session unique identifier
+
+    VoiceRoom:
+      type: object
+      required:
+        - id
+        - name
+        - host_id
+        - max_participants
+        - status
+        - created_at
+      properties:
+        id:
+          $ref: '#/components/schemas/RoomId'
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Voice room display name
+        description:
+          type: string
+          maxLength: 500
+          description: Optional room description
+        host_id:
+          $ref: '#/components/schemas/PlayerId'
+        game_session_id:
+          $ref: '#/components/schemas/SessionId'
+        max_participants:
+          type: integer
+          minimum: 2
+          maximum: 50
+          default: 10
+          description: Maximum number of participants
+        current_participants:
+          type: integer
+          minimum: 0
+          description: Current number of participants
+        status:
+          type: string
+          enum: [ active, inactive, full, closed ]
+          description: Room status
+        is_spatial_audio:
+          type: boolean
+          default: false
+          description: Whether spatial audio is enabled
+        is_muted:
+          type: boolean
+          default: false
+          description: Whether room is globally muted
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        participants:
+          type: array
+          items:
+            $ref: '#/components/schemas/VoiceParticipant'
+
+    VoiceParticipant:
+      type: object
+      required:
+        - player_id
+        - joined_at
+        - is_muted
+        - is_host
+      properties:
+        player_id:
+          $ref: '#/components/schemas/PlayerId'
+        display_name:
+          type: string
+          maxLength: 50
+          description: Player display name
+        joined_at:
+          type: string
+          format: date-time
+        is_muted:
+          type: boolean
+          description: Whether participant is muted
+        is_host:
+          type: boolean
+          description: Whether participant is room host
+        is_deafened:
+          type: boolean
+          default: false
+          description: Whether participant has deafened themselves
+        volume_level:
+          type: number
+          minimum: 0.0
+          maximum: 1.0
+          default: 1.0
+          description: Participant volume level
+        position:
+          $ref: '#/components/schemas/Vector3'
+          description: 3D position for spatial audio
+
+    Vector3:
+      type: object
+      required:
+        - x
+        - y
+        - z
+      properties:
+        x:
+          type: number
+          format: float
+          description: X coordinate
+        y:
+          type: number
+          format: float
+          description: Y coordinate
+        z:
+          type: number
+          format: float
+          description: Z coordinate
+
+    WebRTCSignal:
+      type: object
+      required:
+        - type
+        - from_player_id
+        - to_player_id
+        - room_id
+      properties:
+        type:
+          type: string
+          enum: [ offer, answer, ice_candidate ]
+          description: WebRTC signal type
+        from_player_id:
+          $ref: '#/components/schemas/PlayerId'
+        to_player_id:
+          $ref: '#/components/schemas/PlayerId'
+        room_id:
+          $ref: '#/components/schemas/RoomId'
+        payload:
+          type: object
+          description: WebRTC signal payload (SDP, ICE candidate)
+        timestamp:
+          type: string
+          format: date-time
+
+    CreateRoomRequest:
+      type: object
+      required:
+        - name
+        - max_participants
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Voice room name
+        description:
+          type: string
+          maxLength: 500
+          description: Optional room description
+        max_participants:
+          type: integer
+          minimum: 2
+          maximum: 50
+          default: 10
+        game_session_id:
+          $ref: '#/components/schemas/SessionId'
+        is_spatial_audio:
+          type: boolean
+          default: false
+        is_private:
+          type: boolean
+          default: false
+
+    UpdateRoomRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 500
+        max_participants:
+          type: integer
+          minimum: 2
+          maximum: 50
+        is_spatial_audio:
+          type: boolean
+        is_muted:
+          type: boolean
+
+    JoinRoomRequest:
+      type: object
+      properties:
+        password:
+          type: string
+          description: Password for private rooms
+
+    RoomListResponse:
+      type: object
+      required:
+        - rooms
+        - total_count
+        - page
+        - page_size
+      properties:
+        rooms:
+          type: array
+          items:
+            $ref: '#/components/schemas/VoiceRoom'
+        total_count:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+          default: 1
+        page_size:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+

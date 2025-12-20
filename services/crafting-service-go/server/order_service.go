@@ -1,4 +1,4 @@
-// Issue: #2203 - Order service implementation
+// Package server Issue: #2203 - Order service implementation
 package server
 
 import (
@@ -13,11 +13,11 @@ import (
 
 // OrderService handles order business logic
 type OrderService struct {
-	repo         *OrderRepository
-	recipeRepo   *RecipeRepository
-	stationRepo  *StationRepository
-	redis        *redis.Client
-	logger       *logrus.Logger
+	repo        *OrderRepository
+	recipeRepo  *RecipeRepository
+	stationRepo *StationRepository
+	redis       *redis.Client
+	logger      *logrus.Logger
 }
 
 // NewOrderService creates new order service

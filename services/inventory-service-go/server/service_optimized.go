@@ -1,4 +1,4 @@
-// Issue: #1581 - Optimized Inventory Service with Redis Caching
+// Package server Issue: #1581 - Optimized Inventory Service with Redis Caching
 // OPTIMIZATION: 3-tier cache → DB queries ↓95%, Latency ↓80%
 // OPTIMIZATION: Diff updates → Bandwidth ↓70-90%
 // OPTIMIZATION: Batch operations → DB round trips ↓90%
@@ -11,24 +11,23 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/gc-lover/necpgame-monorepo/services/inventory-service-go/pkg/api"
-	"github.com/go-redis/redis/v8"
-	"github.com/google/uuid"
 	"github.com/gc-lover/necpgame-monorepo/services/inventory-service-go/models"
+	"github.com/gc-lover/necpgame-monorepo/services/inventory-service-go/pkg/api"
+	"github.com/google/uuid"
 )
 
 var (
-	ErrInventoryFull    = errors.New("inventory full")
-	ErrItemNotFound     = errors.New("item not found")
-	ErrInvalidSlot      = errors.New("invalid slot")
-	ErrCannotEquip      = errors.New("cannot equip item")
+	_               = errors.New("inventory full")
+	ErrItemNotFound = errors.New("item not found")
+	_               = errors.New("invalid slot")
+	_               = errors.New("cannot equip item")
 )
 
 // OptimizedInventoryService with 3-tier caching
 type OptimizedInventoryService struct {
 	cache      *InventoryCache
 	repository Repository
-	
+
 	// Track last inventory version (for diff updates)
 	lastVersions sync.Map // characterID -> *models.InventoryResponse
 }
@@ -39,21 +38,13 @@ type InventoryServiceInterface interface {
 	AddItem(ctx context.Context, playerID string, req *api.AddItemRequest) (*api.InventoryItemResponse, error)
 	RemoveItem(ctx context.Context, playerID, itemID string) error
 	UpdateItem(ctx context.Context, playerID, itemID string, req *api.UpdateItemRequest) (*api.InventoryItemResponse, error)
-	// Equipment methods
+	// EquipItem Equipment methods
 	EquipItem(ctx context.Context, playerID, itemID string, req *api.EquipItemRequest) (*api.EquipmentResponse, error)
 	UnequipItem(ctx context.Context, playerID, itemID string) (*api.EquipmentResponse, error)
 	GetEquipment(ctx context.Context, playerID string) (*api.EquipmentResponse, error)
 }
 
 // NewOptimizedInventoryService creates service with Redis caching
-func NewOptimizedInventoryService(redisClient *redis.Client, repository Repository) InventoryServiceInterface {
-	cache := NewInventoryCache(redisClient, repository)
-	
-	return &OptimizedInventoryService{
-		cache:      cache,
-		repository: repository,
-	}
-}
 
 // GetInventory returns inventory (from cache or DB)
 // HOT PATH: 10k+ RPS expected
@@ -63,16 +54,16 @@ func (s *OptimizedInventoryService) GetInventory(ctx context.Context, playerID s
 	if err != nil {
 		return nil, fmt.Errorf("invalid player ID: %w", err)
 	}
-	
+
 	// Get from cache (3-tier cascade!)
 	inv, err := s.cache.Get(ctx, characterID)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Store for diff calculation
 	s.lastVersions.Store(characterID.String(), inv)
-	
+
 	// Convert to API response
 	return toAPIInventoryResponse(inv), nil
 }
@@ -84,13 +75,13 @@ func (s *OptimizedInventoryService) GetInventoryDiff(ctx context.Context, player
 	if err != nil {
 		return nil, fmt.Errorf("invalid player ID: %w", err)
 	}
-	
+
 	// Get current inventory
 	newInv, err := s.cache.Get(ctx, characterID)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Get last sent version
 	oldInvI, ok := s.lastVersions.Load(characterID.String())
 	if !ok {
@@ -102,15 +93,15 @@ func (s *OptimizedInventoryService) GetInventoryDiff(ctx context.Context, player
 			Updated:     []models.InventoryItem{},
 		}, nil
 	}
-	
+
 	oldInv := oldInvI.(*models.InventoryResponse)
-	
+
 	// Calculate diff
 	diff := GetInventoryDiff(oldInv, newInv)
-	
+
 	// Update last version
 	s.lastVersions.Store(characterID.String(), newInv)
-	
+
 	return diff, nil
 }
 
@@ -120,7 +111,7 @@ func (s *OptimizedInventoryService) AddItem(ctx context.Context, playerID string
 	if err != nil {
 		return nil, fmt.Errorf("invalid player ID: %w", err)
 	}
-	
+
 	// Convert API request to model
 	quantity := 1
 	if req.Quantity.Set {
@@ -130,16 +121,16 @@ func (s *OptimizedInventoryService) AddItem(ctx context.Context, playerID string
 		ItemID:     req.ItemID.String(),
 		StackCount: quantity,
 	}
-	
+
 	// Add to DB and invalidate cache
 	err = s.cache.UpdateItem(ctx, characterID, func() error {
 		return s.repository.AddItem(ctx, characterID, modelReq)
 	})
-	
+
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Return response
 	return &api.InventoryItemResponse{
 		ItemID:   api.NewOptUUID(req.ItemID),
@@ -155,7 +146,7 @@ func (s *OptimizedInventoryService) BatchAddItems(ctx context.Context, playerID 
 	if err != nil {
 		return fmt.Errorf("invalid player ID: %w", err)
 	}
-	
+
 	// Convert to model requests
 	modelReqs := make([]models.AddItemRequest, len(items))
 	for i, item := range items {
@@ -168,13 +159,13 @@ func (s *OptimizedInventoryService) BatchAddItems(ctx context.Context, playerID 
 			StackCount: quantity,
 		}
 	}
-	
+
 	// Batch operation
-	err = s.cache.BatchAddItems(ctx, characterID, modelReqs)
+	err = s.cache.BatchAddItems(ctx, characterID)
 	if err != nil {
 		return err
 	}
-	
+
 	return nil
 }
 
@@ -184,18 +175,18 @@ func (s *OptimizedInventoryService) GetItem(ctx context.Context, playerID, itemI
 	if err != nil {
 		return nil, fmt.Errorf("invalid player ID: %w", err)
 	}
-	
+
 	itemUUID, err := uuid.Parse(itemID)
 	if err != nil {
 		return nil, fmt.Errorf("invalid item ID: %w", err)
 	}
-	
+
 	// Get from cache
 	inv, err := s.cache.Get(ctx, characterID)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Find item
 	for _, item := range inv.Items {
 		itemID, _ := uuid.Parse(item.ItemID)
@@ -206,7 +197,7 @@ func (s *OptimizedInventoryService) GetItem(ctx context.Context, playerID, itemI
 			}, nil
 		}
 	}
-	
+
 	return nil, ErrItemNotFound
 }
 
@@ -216,12 +207,12 @@ func (s *OptimizedInventoryService) UpdateItem(ctx context.Context, playerID, it
 	if err != nil {
 		return nil, fmt.Errorf("invalid player ID: %w", err)
 	}
-	
+
 	itemUUID, err := uuid.Parse(itemID)
 	if err != nil {
 		return nil, fmt.Errorf("invalid item ID: %w", err)
 	}
-	
+
 	// Update in DB and invalidate cache
 	err = s.cache.UpdateItem(ctx, characterID, func() error {
 		// Get item from cache first
@@ -247,11 +238,11 @@ func (s *OptimizedInventoryService) UpdateItem(ctx context.Context, playerID, it
 		}
 		return ErrItemNotFound
 	})
-	
+
 	if err != nil {
 		return nil, err
 	}
-	
+
 	quantity := api.OptInt{}
 	if req.Durability.Set {
 		// Use durability as quantity if set
@@ -269,22 +260,22 @@ func (s *OptimizedInventoryService) RemoveItem(ctx context.Context, playerID, it
 	if err != nil {
 		return fmt.Errorf("invalid player ID: %w", err)
 	}
-	
+
 	itemUUID, err := uuid.Parse(itemID)
 	if err != nil {
 		return fmt.Errorf("invalid item ID: %w", err)
 	}
-	
+
 	// Remove from DB and invalidate cache
 	err = s.cache.UpdateItem(ctx, characterID, func() error {
 		return s.repository.RemoveItem(ctx, characterID, itemUUID)
 	})
-	
+
 	return err
 }
 
 // MoveItem moves item to different slot
-func (s *OptimizedInventoryService) MoveItem(ctx context.Context, playerID, itemID string, req *api.MoveItemRequest) error {
+func (s *OptimizedInventoryService) MoveItem() error {
 	// TODO: Implement
 	return nil
 }
@@ -295,41 +286,41 @@ func (s *OptimizedInventoryService) GetEquipment(ctx context.Context, playerID s
 	if err != nil {
 		return nil, fmt.Errorf("invalid player ID: %w", err)
 	}
-	
+
 	// Get from cache
 	inv, err := s.cache.Get(ctx, characterID)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Filter equipped items
 	equipment := make(api.EquipmentResponseEquipment)
 	for _, item := range inv.Items {
 		if item.IsEquipped && item.EquipSlot != "" {
 			itemID, _ := uuid.Parse(item.ItemID)
 			equipment[item.EquipSlot] = api.InventoryItemResponse{
-				ItemID:       api.NewOptUUID(itemID),
+				ItemID:        api.NewOptUUID(itemID),
 				EquipmentSlot: api.NewOptString(item.EquipSlot),
-				SlotIndex:    api.NewOptInt(item.SlotIndex),
-				Quantity:     api.NewOptInt(item.StackCount),
-				IsEquipped:   api.NewOptBool(true),
+				SlotIndex:     api.NewOptInt(item.SlotIndex),
+				Quantity:      api.NewOptInt(item.StackCount),
+				IsEquipped:    api.NewOptBool(true),
 			}
 		}
 	}
-	
+
 	return &api.EquipmentResponse{
-		PlayerID: api.NewOptUUID(characterID),
+		PlayerID:  api.NewOptUUID(characterID),
 		Equipment: api.NewOptEquipmentResponseEquipment(equipment),
 	}, nil
 }
 
 // EquipItem equips item
-func (s *OptimizedInventoryService) EquipItem(ctx context.Context, playerID, itemID string, req *api.EquipItemRequest) (*api.EquipmentResponse, error) {
+func (s *OptimizedInventoryService) EquipItem(_ context.Context, playerID, _ string, _ *api.EquipItemRequest) (*api.EquipmentResponse, error) {
 	playerUUID, err := uuid.Parse(playerID)
 	if err != nil {
 		return nil, fmt.Errorf("invalid player ID: %w", err)
 	}
-	
+
 	// TODO: Implement equipment logic
 	return &api.EquipmentResponse{
 		PlayerID:  api.NewOptUUID(playerUUID),
@@ -338,12 +329,12 @@ func (s *OptimizedInventoryService) EquipItem(ctx context.Context, playerID, ite
 }
 
 // UnequipItem unequips item
-func (s *OptimizedInventoryService) UnequipItem(ctx context.Context, playerID, itemID string) (*api.EquipmentResponse, error) {
+func (s *OptimizedInventoryService) UnequipItem(_ context.Context, playerID, _ string) (*api.EquipmentResponse, error) {
 	playerUUID, err := uuid.Parse(playerID)
 	if err != nil {
 		return nil, fmt.Errorf("invalid player ID: %w", err)
 	}
-	
+
 	// TODO: Implement unequip logic
 	return &api.EquipmentResponse{
 		PlayerID:  api.NewOptUUID(playerUUID),
@@ -352,22 +343,22 @@ func (s *OptimizedInventoryService) UnequipItem(ctx context.Context, playerID, i
 }
 
 // GetVaults returns vaults
-func (s *OptimizedInventoryService) GetVaults(ctx context.Context, playerID string) (*api.VaultsListResponse, error) {
+func (s *OptimizedInventoryService) GetVaults() (*api.VaultsListResponse, error) {
 	return &api.VaultsListResponse{Vaults: []api.VaultResponse{}}, nil
 }
 
 // GetVault returns single vault
-func (s *OptimizedInventoryService) GetVault(ctx context.Context, vaultID string) (*api.VaultResponse, error) {
+func (s *OptimizedInventoryService) GetVault() (*api.VaultResponse, error) {
 	return nil, errors.New("not implemented")
 }
 
 // StoreItem stores item in vault
-func (s *OptimizedInventoryService) StoreItem(ctx context.Context, vaultID string, req *api.StoreItemRequest) error {
+func (s *OptimizedInventoryService) StoreItem() error {
 	return nil
 }
 
 // RetrieveItem retrieves item from vault
-func (s *OptimizedInventoryService) RetrieveItem(ctx context.Context, vaultID, itemID string) error {
+func (s *OptimizedInventoryService) RetrieveItem() error {
 	return nil
 }
 
@@ -383,7 +374,7 @@ func toAPIInventoryResponse(inv *models.InventoryResponse) *api.InventoryRespons
 			IsEquipped: api.NewOptBool(item.IsEquipped),
 		}
 	}
-	
+
 	return &api.InventoryResponse{
 		ID:            api.NewOptUUID(inv.Inventory.ID),
 		PlayerID:      api.NewOptUUID(inv.Inventory.CharacterID),
@@ -394,7 +385,3 @@ func toAPIInventoryResponse(inv *models.InventoryResponse) *api.InventoryRespons
 		CurrentWeight: api.NewOptFloat32(float32(inv.Inventory.Weight)),
 	}
 }
-
-
-
-

@@ -9,6 +9,7 @@
 ## Changes Made
 
 ### 1. Updated go.mod
+
 - Removed `oapi-codegen/runtime`
 - Using `ogen-go/ogen v1.18.0`
 - OpenTelemetry dependencies present

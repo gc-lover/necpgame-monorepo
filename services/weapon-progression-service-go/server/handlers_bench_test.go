@@ -5,8 +5,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/gc-lover/necpgame-monorepo/services/weapon-progression-service-go/pkg/api"
 	"github.com/google/uuid"
-	api "github.com/gc-lover/necpgame-monorepo/services/weapon-progression-service-go/pkg/api"
 )
 
 // BenchmarkAPIV1WeaponsProgressionWeaponIdGet benchmarks APIV1WeaponsProgressionWeaponIdGet handler
@@ -16,8 +16,7 @@ func BenchmarkAPIV1WeaponsProgressionWeaponIdGet(b *testing.B) {
 	handlers := NewHandlers(service)
 
 	ctx := context.Background()
-	params := api.APIV1WeaponsProgressionWeaponIdGetParams{
-	}
+	params := api.APIV1WeaponsProgressionWeaponIdGetParams{}
 
 	b.ReportAllocs()
 	b.ResetTimer()
@@ -56,8 +55,7 @@ func BenchmarkAPIV1WeaponsMasteryGet(b *testing.B) {
 	handlers := NewHandlers(service)
 
 	ctx := context.Background()
-	params := api.APIV1WeaponsMasteryGetParams{
-	}
+	params := api.APIV1WeaponsMasteryGetParams{}
 
 	b.ReportAllocs()
 	b.ResetTimer()
@@ -66,4 +64,3 @@ func BenchmarkAPIV1WeaponsMasteryGet(b *testing.B) {
 		_, _ = handlers.APIV1WeaponsMasteryGet(ctx, params)
 	}
 }
-

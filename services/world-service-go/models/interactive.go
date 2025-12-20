@@ -1,4 +1,4 @@
-// Issue: #1841-#1844 - Interactive objects models
+// Package models Issue: #1841-#1844 - Interactive objects models
 package models
 
 import (
@@ -9,91 +9,48 @@ import (
 // InteractiveCategory represents main categories of interactive objects
 type InteractiveCategory string
 
-const (
-	CategoryFactionControl InteractiveCategory = "faction_control"
-	CategoryCommunication  InteractiveCategory = "communication"
-	CategoryMedical        InteractiveCategory = "medical"
-	CategoryLogistics      InteractiveCategory = "logistics"
-)
-
 // InteractiveType represents different types of interactive objects
 type InteractiveType string
 
 const (
-	// Faction control types
+	// InteractiveTypeFactionBlockpost Faction control types
 	InteractiveTypeFactionBlockpost InteractiveType = "faction_blockpost"
 
-	// Communication types
+	// InteractiveTypeCommunicationRelay Communication types
 	InteractiveTypeCommunicationRelay InteractiveType = "communication_relay"
 
-	// Medical types
+	// InteractiveTypeMedicalStation Medical types
 	InteractiveTypeMedicalStation InteractiveType = "medical_station"
 
-	// Logistics types
+	// InteractiveTypeLogisticsContainer Logistics types
 	InteractiveTypeLogisticsContainer InteractiveType = "logistics_container"
 
-	// Legacy types (keep for compatibility)
+	// InteractiveTypeCheckpoint Legacy types (keep for compatibility)
 	InteractiveTypeCheckpoint InteractiveType = "checkpoint"
 	InteractiveTypeTerminal   InteractiveType = "terminal"
-	InteractiveTypeContainer  InteractiveType = "container"
-	InteractiveTypeTurret     InteractiveType = "turret"
 )
 
 // InteractiveStatus represents the status of an interactive object
 type InteractiveStatus string
 
 const (
-	InteractiveStatusActive    InteractiveStatus = "active"
-	InteractiveStatusInactive  InteractiveStatus = "inactive"
-	InteractiveStatusBroken    InteractiveStatus = "broken"
-	InteractiveStatusDestroyed InteractiveStatus = "destroyed"
-	InteractiveStatusAlert     InteractiveStatus = "alert"
-	InteractiveStatusLockdown  InteractiveStatus = "lockdown"
+	InteractiveStatusActive InteractiveStatus = "active"
 )
 
 // SecurityLevel represents security levels for containers and relays
 type SecurityLevel string
 
-const (
-	SecurityNone     SecurityLevel = "none"
-	SecurityBasic    SecurityLevel = "basic"
-	SecurityAdvanced SecurityLevel = "advanced"
-	SecurityMilitary SecurityLevel = "military"
-)
-
 // EncryptionLevel represents encryption strength
 type EncryptionLevel string
-
-const (
-	EncryptionNone     EncryptionLevel = "none"
-	EncryptionBasic    EncryptionLevel = "basic"
-	EncryptionAdvanced EncryptionLevel = "advanced"
-	EncryptionMilitary EncryptionLevel = "military"
-)
 
 // LootQuality represents quality of loot in containers
 type LootQuality string
 
-const (
-	LootTrash     LootQuality = "trash"
-	LootCommon    LootQuality = "common"
-	LootUncommon  LootQuality = "uncommon"
-	LootRare      LootQuality = "rare"
-	LootEpic      LootQuality = "epic"
-	LootLegendary LootQuality = "legendary"
-)
-
 // TakeoverMethod represents methods to take control of faction blockposts
 type TakeoverMethod string
 
-const (
-	TakeoverBribery TakeoverMethod = "bribery"
-	TakeoverHacking TakeoverMethod = "hacking"
-	TakeoverAssault TakeoverMethod = "assault"
-)
-
-// BaseInteractive contains common fields for all interactive objects
-type BaseInteractive struct {
+// InteractiveIdentity contains identity fields
+type InteractiveIdentity struct {
 	InteractiveID string              `json:"interactive_id"`
 	Version       int                 `json:"version"`
 	Name          string              `json:"name"`
@@ -101,30 +58,48 @@ type BaseInteractive struct {
 	Category      InteractiveCategory `json:"category"`
 	Type          InteractiveType     `json:"type"`
 	Status        InteractiveStatus   `json:"status"`
+}
 
-	// Location data
+// InteractiveLocation contains location-related fields
+type InteractiveLocation struct {
 	WorldLocation string  `json:"world_location"` // Format: "continent/city/district"
 	CoordinatesX  float64 `json:"coordinates_x"`
 	CoordinatesY  float64 `json:"coordinates_y"`
 	CoordinatesZ  float64 `json:"coordinates_z"`
+	Location      string  `json:"location,omitempty"` // Legacy field
+}
 
-	// Physical properties
+// InteractivePhysical contains physical properties
+type InteractivePhysical struct {
 	BaseHealth     int  `json:"base_health"`
 	CurrentHealth  *int `json:"current_health,omitempty"`
 	IsDestructible bool `json:"is_destructible"`
 	RespawnTimeSec int  `json:"respawn_time_sec"`
+}
 
-	// Runtime state
+// InteractiveRuntime contains runtime state
+type InteractiveRuntime struct {
 	IsActive        bool       `json:"is_active"`
 	LastInteraction *time.Time `json:"last_interaction,omitempty"`
 	SecurityStatus  string     `json:"security_status"`
+}
+
+// InteractiveMetadata contains metadata fields
+type InteractiveMetadata struct {
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
+// BaseInteractive contains common fields for all interactive objects
+type BaseInteractive struct {
+	InteractiveIdentity
+	InteractiveLocation
+	InteractivePhysical
+	InteractiveRuntime
+	InteractiveMetadata
 
 	// Legacy support
 	ContentData map[string]interface{} `json:"content_data,omitempty"`
-	Location    string                 `json:"location,omitempty"` // Legacy field
-
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
 }
 
 // FactionControlData contains faction control specific properties
@@ -187,21 +162,21 @@ type ListInteractivesRequest struct {
 
 // InteractiveRepository interface for interactive objects
 type InteractiveRepository interface {
-	// Legacy methods (keep for compatibility)
+	// SaveInteractive Legacy methods (keep for compatibility)
 	SaveInteractive(ctx context.Context, interactiveID string, version int, name, description, location string, interactiveType InteractiveType, status InteractiveStatus, contentData map[string]interface{}) (*Interactive, error)
 	GetInteractives(ctx context.Context, filter *ListInteractivesRequest) ([]Interactive, int, error)
 	GetInteractive(ctx context.Context, interactiveID string) (*Interactive, error)
 	UpdateInteractive(ctx context.Context, interactiveID string, updates map[string]interface{}) (*Interactive, error)
 	DeleteInteractive(ctx context.Context, interactiveID string) error
 
-	// New comprehensive methods for world interactives
+	// SaveWorldInteractive New comprehensive methods for world interactives
 	SaveWorldInteractive(ctx context.Context, interactive *Interactive) (*Interactive, error)
 	GetWorldInteractives(ctx context.Context, filter *ListWorldInteractivesRequest) ([]Interactive, int, error)
 	GetWorldInteractive(ctx context.Context, interactiveID string) (*Interactive, error)
 	UpdateWorldInteractive(ctx context.Context, interactiveID string, updates map[string]interface{}) (*Interactive, error)
 	DeleteWorldInteractive(ctx context.Context, interactiveID string) error
 
-	// Specialized queries
+	// GetInteractivesByFaction Specialized queries
 	GetInteractivesByFaction(ctx context.Context, faction string) ([]Interactive, error)
 	GetInteractivesByLocation(ctx context.Context, worldLocation string, radius float64) ([]Interactive, error)
 	GetInteractivesByCategory(ctx context.Context, category InteractiveCategory) ([]Interactive, error)

@@ -1,331 +1,331 @@
-          type: integer
-          minimum: 1
-          maximum: 5
-          default: 1
-          description: Количество уровней для повышения
+type: integer
+minimum: 1
+maximum: 5
+default: 1
+description: Количество уровней для повышения
 
-    # Ответы
-    CharacterProgressionResponse:
+# Ответы
+CharacterProgressionResponse:
+  type: object
+  properties:
+    progression:
+      $ref: "#/components/schemas/CharacterProgression"
+
+ExperienceGrantedResponse:
+  type: object
+  properties:
+    experienceGained:
+      type: integer
+      description: Полученный опыт
+    newExperience:
+      type: integer
+      description: Общий опыт после начисления
+    levelUp:
+      type: boolean
+      description: Произошло ли повышение уровня
+    newLevel:
+      type: integer
+      description: Новый уровень (если повышен)
+    attributePointsGained:
+      type: integer
+      description: Получено очков атрибутов
+    skillPointsGained:
+      type: integer
+      description: Получено очков навыков
+
+LevelUpResponse:
+  type: object
+  properties:
+    previousLevel:
+      type: integer
+      description: Предыдущий уровень
+    newLevel:
+      type: integer
+      description: Новый уровень
+    attributePointsGained:
+      type: integer
+      description: Получено очков атрибутов
+    skillPointsGained:
+      type: integer
+      description: Получено очков навыков
+    experienceRequired:
+      type: integer
+      description: Опыт, необходимый для следующего уровня
+
+AttributesAllocatedResponse:
+  type: object
+  properties:
+    allocated:
       type: object
-      properties:
-        progression:
-          $ref: "#/components/schemas/CharacterProgression"
+      description: Распределенные очки атрибутов
+    remainingPoints:
+      type: integer
+      description: Оставшиеся очки атрибутов
 
-    ExperienceGrantedResponse:
+SkillUpgradedResponse:
+  type: object
+  properties:
+    skillId:
+      type: string
+      description: ID навыка
+    previousLevel:
+      type: integer
+      description: Предыдущий уровень навыка
+    newLevel:
+      type: integer
+      description: Новый уровень навыка
+    remainingPoints:
+      type: integer
+      description: Оставшиеся очки навыков
+
+CharacterSkillsResponse:
+  type: object
+  properties:
+    skills:
+      type: array
+      items:
+        $ref: "#/components/schemas/CharacterSkill"
+
+RecalculateStatsResponse:
+  type: object
+  properties:
+    statsRecalculated:
+      type: boolean
+      default: true
+    lastRecalculation:
+      type: string
+      format: date-time
+
+LevelRequirementsResponse:
+  type: object
+  properties:
+    level:
+      type: integer
+      description: Уровень
+    experienceRequired:
+      type: integer
+      description: Необходимый опыт для достижения уровня
+    attributePointsGranted:
+      type: integer
+      description: Очки атрибутов при достижении уровня
+    skillPointsGranted:
+      type: integer
+      description: Очки навыков при достижении уровня
+
+SkillInfoResponse:
+  type: object
+  properties:
+    skill:
+      $ref: "#/components/schemas/SkillInfo"
+
+SuccessResponse:
+  type: object
+  properties:
+    success:
+      type: boolean
+      default: true
+    message:
+      type: string
+
+ErrorResponse:
+  type: object
+  properties:
+    error:
+      type: string
+    code:
+      type: string
+    details:
       type: object
-      properties:
-        experienceGained:
-          type: integer
-          description: Полученный опыт
-        newExperience:
-          type: integer
-          description: Общий опыт после начисления
-        levelUp:
-          type: boolean
-          description: Произошло ли повышение уровня
-        newLevel:
-          type: integer
-          description: Новый уровень (если повышен)
-        attributePointsGained:
-          type: integer
-          description: Получено очков атрибутов
-        skillPointsGained:
-          type: integer
-          description: Получено очков навыков
 
-    LevelUpResponse:
-      type: object
-      properties:
-        previousLevel:
-          type: integer
-          description: Предыдущий уровень
-        newLevel:
-          type: integer
-          description: Новый уровень
-        attributePointsGained:
-          type: integer
-          description: Получено очков атрибутов
-        skillPointsGained:
-          type: integer
-          description: Получено очков навыков
-        experienceRequired:
-          type: integer
-          description: Опыт, необходимый для следующего уровня
+# Основные сущности
+CharacterProgression:
+  type: object
+  properties:
+    characterId:
+      type: string
+      format: uuid
+    level:
+      type: integer
+      minimum: 1
+    experience:
+      type: integer
+      minimum: 0
+    experienceToNext:
+      type: integer
+      minimum: 0
+      description: Опыт до следующего уровня
+    attributePoints:
+      type: integer
+      minimum: 0
+      description: Доступные очки атрибутов
+    skillPoints:
+      type: integer
+      minimum: 0
+      description: Доступные очки навыков
+    attributes:
+      $ref: "#/components/schemas/CharacterAttributes"
+    lastLevelUpAt:
+      type: string
+      format: date-time
 
-    AttributesAllocatedResponse:
-      type: object
-      properties:
-        allocated:
-          type: object
-          description: Распределенные очки атрибутов
-        remainingPoints:
-          type: integer
-          description: Оставшиеся очки атрибутов
+CharacterAttributes:
+  type: object
+  properties:
+    intelligence:
+      type: integer
+      minimum: 1
+      maximum: 20
+    reflexes:
+      type: integer
+      minimum: 1
+      maximum: 20
+    dexterity:
+      type: integer
+      minimum: 1
+      maximum: 20
+    technology:
+      type: integer
+      minimum: 1
+      maximum: 20
+    cool:
+      type: integer
+      minimum: 1
+      maximum: 20
+    willpower:
+      type: integer
+      minimum: 1
+      maximum: 20
+    luck:
+      type: integer
+      minimum: 1
+      maximum: 20
+    movement:
+      type: integer
+      minimum: 1
+      maximum: 20
+    body:
+      type: integer
+      minimum: 1
+      maximum: 20
+    empathy:
+      type: integer
+      minimum: 1
+      maximum: 20
 
-    SkillUpgradedResponse:
-      type: object
-      properties:
-        skillId:
-          type: string
-          description: ID навыка
-        previousLevel:
-          type: integer
-          description: Предыдущий уровень навыка
-        newLevel:
-          type: integer
-          description: Новый уровень навыка
-        remainingPoints:
-          type: integer
-          description: Оставшиеся очки навыков
+CharacterSkill:
+  type: object
+  properties:
+    skillId:
+      type: string
+      description: ID навыка
+    name:
+      type: string
+      description: Название навыка
+    description:
+      type: string
+      description: Описание навыка
+    category:
+      type: string
+      enum: [ combat, technical, social, awareness, body, control, sense ]
+      description: Категория навыка
+    currentLevel:
+      type: integer
+      minimum: 0
+      maximum: 10
+      description: Текущий уровень навыка
+    maxLevel:
+      type: integer
+      minimum: 1
+      maximum: 10
+      description: Максимальный уровень навыка
+    experience:
+      type: integer
+      minimum: 0
+      description: Опыт в навыке
+    experienceToNext:
+      type: integer
+      minimum: 0
+      description: Опыт до следующего уровня
+    attribute:
+      type: string
+      description: Связанный атрибут
 
-    CharacterSkillsResponse:
-      type: object
-      properties:
-        skills:
-          type: array
-          items:
-            $ref: "#/components/schemas/CharacterSkill"
+SkillInfo:
+  type: object
+  properties:
+    id:
+      type: string
+      description: ID навыка
+    name:
+      type: string
+      description: Название навыка
+    description:
+      type: string
+      description: Описание навыка
+    category:
+      type: string
+      enum: [ combat, technical, social, awareness, body, control, sense ]
+      description: Категория навыка
+    attribute:
+      type: string
+      description: Связанный атрибут
+    maxLevel:
+      type: integer
+      minimum: 1
+      maximum: 10
+      description: Максимальный уровень навыка
+    baseDifficulty:
+      type: integer
+      minimum: 1
+      maximum: 6
+      description: Базовая сложность изучения
 
-    RecalculateStatsResponse:
-      type: object
-      properties:
-        statsRecalculated:
-          type: boolean
-          default: true
-        lastRecalculation:
-          type: string
-          format: date-time
+responses:
+  BadRequest:
+    description: Неверный запрос
+    content:
+      application/json:
+        schema:
+          $ref: "#/components/schemas/ErrorResponse"
 
-    LevelRequirementsResponse:
-      type: object
-      properties:
-        level:
-          type: integer
-          description: Уровень
-        experienceRequired:
-          type: integer
-          description: Необходимый опыт для достижения уровня
-        attributePointsGranted:
-          type: integer
-          description: Очки атрибутов при достижении уровня
-        skillPointsGranted:
-          type: integer
-          description: Очки навыков при достижении уровня
+  Unauthorized:
+    description: Не авторизован
+    content:
+      application/json:
+        schema:
+          $ref: "#/components/schemas/ErrorResponse"
 
-    SkillInfoResponse:
-      type: object
-      properties:
-        skill:
-          $ref: "#/components/schemas/SkillInfo"
+  Forbidden:
+    description: Доступ запрещен
+    content:
+      application/json:
+        schema:
+          $ref: "#/components/schemas/ErrorResponse"
 
-    SuccessResponse:
-      type: object
-      properties:
-        success:
-          type: boolean
-          default: true
-        message:
-          type: string
+  NotFound:
+    description: Ресурс не найден
+    content:
+      application/json:
+        schema:
+          $ref: "#/components/schemas/ErrorResponse"
 
-    ErrorResponse:
-      type: object
-      properties:
-        error:
-          type: string
-        code:
-          type: string
-        details:
-          type: object
+  Conflict:
+    description: Конфликт данных
+    content:
+      application/json:
+        schema:
+          $ref: "#/components/schemas/ErrorResponse"
 
-    # Основные сущности
-    CharacterProgression:
-      type: object
-      properties:
-        characterId:
-          type: string
-          format: uuid
-        level:
-          type: integer
-          minimum: 1
-        experience:
-          type: integer
-          minimum: 0
-        experienceToNext:
-          type: integer
-          minimum: 0
-          description: Опыт до следующего уровня
-        attributePoints:
-          type: integer
-          minimum: 0
-          description: Доступные очки атрибутов
-        skillPoints:
-          type: integer
-          minimum: 0
-          description: Доступные очки навыков
-        attributes:
-          $ref: "#/components/schemas/CharacterAttributes"
-        lastLevelUpAt:
-          type: string
-          format: date-time
+  TooManyRequests:
+    description: Слишком много запросов
+    content:
+      application/json:
+        schema:
+          $ref: "#/components/schemas/ErrorResponse"
 
-    CharacterAttributes:
-      type: object
-      properties:
-        intelligence:
-          type: integer
-          minimum: 1
-          maximum: 20
-        reflexes:
-          type: integer
-          minimum: 1
-          maximum: 20
-        dexterity:
-          type: integer
-          minimum: 1
-          maximum: 20
-        technology:
-          type: integer
-          minimum: 1
-          maximum: 20
-        cool:
-          type: integer
-          minimum: 1
-          maximum: 20
-        willpower:
-          type: integer
-          minimum: 1
-          maximum: 20
-        luck:
-          type: integer
-          minimum: 1
-          maximum: 20
-        movement:
-          type: integer
-          minimum: 1
-          maximum: 20
-        body:
-          type: integer
-          minimum: 1
-          maximum: 20
-        empathy:
-          type: integer
-          minimum: 1
-          maximum: 20
-
-    CharacterSkill:
-      type: object
-      properties:
-        skillId:
-          type: string
-          description: ID навыка
-        name:
-          type: string
-          description: Название навыка
-        description:
-          type: string
-          description: Описание навыка
-        category:
-          type: string
-          enum: [combat, technical, social, awareness, body, control, sense]
-          description: Категория навыка
-        currentLevel:
-          type: integer
-          minimum: 0
-          maximum: 10
-          description: Текущий уровень навыка
-        maxLevel:
-          type: integer
-          minimum: 1
-          maximum: 10
-          description: Максимальный уровень навыка
-        experience:
-          type: integer
-          minimum: 0
-          description: Опыт в навыке
-        experienceToNext:
-          type: integer
-          minimum: 0
-          description: Опыт до следующего уровня
-        attribute:
-          type: string
-          description: Связанный атрибут
-
-    SkillInfo:
-      type: object
-      properties:
-        id:
-          type: string
-          description: ID навыка
-        name:
-          type: string
-          description: Название навыка
-        description:
-          type: string
-          description: Описание навыка
-        category:
-          type: string
-          enum: [combat, technical, social, awareness, body, control, sense]
-          description: Категория навыка
-        attribute:
-          type: string
-          description: Связанный атрибут
-        maxLevel:
-          type: integer
-          minimum: 1
-          maximum: 10
-          description: Максимальный уровень навыка
-        baseDifficulty:
-          type: integer
-          minimum: 1
-          maximum: 6
-          description: Базовая сложность изучения
-
-  responses:
-    BadRequest:
-      description: Неверный запрос
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/ErrorResponse"
-
-    Unauthorized:
-      description: Не авторизован
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/ErrorResponse"
-
-    Forbidden:
-      description: Доступ запрещен
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/ErrorResponse"
-
-    NotFound:
-      description: Ресурс не найден
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/ErrorResponse"
-
-    Conflict:
-      description: Конфликт данных
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/ErrorResponse"
-
-    TooManyRequests:
-      description: Слишком много запросов
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/ErrorResponse"
-
-    InternalServerError:
-      description: Внутренняя ошибка сервера
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/ErrorResponse"
+  InternalServerError:
+    description: Внутренняя ошибка сервера
+    content:
+      application/json:
+        schema:
+          $ref: "#/components/schemas/ErrorResponse"

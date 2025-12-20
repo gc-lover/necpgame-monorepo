@@ -6,13 +6,11 @@ import (
 	"testing"
 
 	"necpgame/services/auth-service-go/pkg/api"
-	"go.uber.org/zap"
 )
 
 // BenchmarkRegister benchmarks Register handler
 // Target: <50ms per operation, minimal allocs
 func BenchmarkRegister(b *testing.B) {
-	logger := zap.NewNop() // Use nop logger for benchmarks
 	// Note: Using mock DB and Redis for benchmark isolation
 
 	ctx := context.Background()
@@ -35,7 +33,6 @@ func BenchmarkRegister(b *testing.B) {
 // BenchmarkLogin benchmarks Login handler
 // Target: <30ms per operation, zero allocations in hot path
 func BenchmarkLogin(b *testing.B) {
-	logger := zap.NewNop()
 	// Note: Using mock authentication for benchmark
 
 	ctx := context.Background()
@@ -43,13 +40,13 @@ func BenchmarkLogin(b *testing.B) {
 	b.ResetTimer()
 
 	req := &api.LoginRequest{
-		Username: "testuser",
+		Login:    "testuser",
 		Password: "securepassword123",
 	}
 
 	for i := 0; i < b.N; i++ {
 		// Mock implementation
-		_ = req.Username
+		_ = req.Login
 		_ = ctx
 	}
 }
@@ -57,8 +54,6 @@ func BenchmarkLogin(b *testing.B) {
 // BenchmarkValidateToken benchmarks token validation
 // Target: <10ms per operation, zero allocations
 func BenchmarkValidateToken(b *testing.B) {
-	logger := zap.NewNop()
-
 	ctx := context.Background()
 	b.ReportAllocs()
 	b.ResetTimer()
@@ -75,8 +70,6 @@ func BenchmarkValidateToken(b *testing.B) {
 // BenchmarkRefreshToken benchmarks token refresh
 // Target: <25ms per operation, minimal allocs
 func BenchmarkRefreshToken(b *testing.B) {
-	logger := zap.NewNop()
-
 	ctx := context.Background()
 	b.ReportAllocs()
 	b.ResetTimer()

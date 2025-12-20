@@ -8,37 +8,23 @@ import (
 
 type ApartmentType string
 
-const (
-	ApartmentTypeStudio    ApartmentType = "studio"
-	ApartmentTypeStandard  ApartmentType = "standard"
-	ApartmentTypePenthouse ApartmentType = "penthouse"
-	ApartmentTypeGuildHall ApartmentType = "guild_hall"
-)
-
 type Apartment struct {
-	ID            uuid.UUID              `json:"id" db:"id"`
-	OwnerID       uuid.UUID              `json:"owner_id" db:"owner_id"`
-	OwnerType     string                 `json:"owner_type" db:"owner_type"`
-	ApartmentType ApartmentType          `json:"apartment_type" db:"apartment_type"`
-	Location      string                 `json:"location" db:"location"`
-	Price         int64                  `json:"price" db:"price"`
-	FurnitureSlots int                   `json:"furniture_slots" db:"furniture_slots"`
-	PrestigeScore int                    `json:"prestige_score" db:"prestige_score"`
-	IsPublic      bool                   `json:"is_public" db:"is_public"`
-	Guests        []uuid.UUID            `json:"guests" db:"guests"`
-	Settings      map[string]interface{} `json:"settings" db:"settings"`
-	CreatedAt     time.Time              `json:"created_at" db:"created_at"`
-	UpdatedAt     time.Time              `json:"updated_at" db:"updated_at"`
+	ID             uuid.UUID              `json:"id" db:"id"`
+	OwnerID        uuid.UUID              `json:"owner_id" db:"owner_id"`
+	OwnerType      string                 `json:"owner_type" db:"owner_type"`
+	ApartmentType  ApartmentType          `json:"apartment_type" db:"apartment_type"`
+	Location       string                 `json:"location" db:"location"`
+	Price          int64                  `json:"price" db:"price"`
+	FurnitureSlots int                    `json:"furniture_slots" db:"furniture_slots"`
+	PrestigeScore  int                    `json:"prestige_score" db:"prestige_score"`
+	IsPublic       bool                   `json:"is_public" db:"is_public"`
+	Guests         []uuid.UUID            `json:"guests" db:"guests"`
+	Settings       map[string]interface{} `json:"settings" db:"settings"`
+	CreatedAt      time.Time              `json:"created_at" db:"created_at"`
+	UpdatedAt      time.Time              `json:"updated_at" db:"updated_at"`
 }
 
 type FurnitureCategory string
-
-const (
-	FurnitureCategoryDecorative FurnitureCategory = "decorative"
-	FurnitureCategoryFunctional FurnitureCategory = "functional"
-	FurnitureCategoryComfort    FurnitureCategory = "comfort"
-	FurnitureCategoryStorage   FurnitureCategory = "storage"
-)
 
 type FurnitureItem struct {
 	ID            string                 `json:"id" db:"id"`
@@ -52,14 +38,14 @@ type FurnitureItem struct {
 }
 
 type PlacedFurniture struct {
-	ID          uuid.UUID              `json:"id" db:"id"`
-	ApartmentID uuid.UUID              `json:"apartment_id" db:"apartment_id"`
-	FurnitureItemID string             `json:"furniture_item_id" db:"furniture_item_id"`
-	Position    map[string]interface{} `json:"position" db:"position"`
-	Rotation    map[string]interface{} `json:"rotation" db:"rotation"`
-	Scale       map[string]interface{} `json:"scale" db:"scale"`
-	CreatedAt   time.Time              `json:"created_at" db:"created_at"`
-	UpdatedAt   time.Time              `json:"updated_at" db:"updated_at"`
+	ID              uuid.UUID              `json:"id" db:"id"`
+	ApartmentID     uuid.UUID              `json:"apartment_id" db:"apartment_id"`
+	FurnitureItemID string                 `json:"furniture_item_id" db:"furniture_item_id"`
+	Position        map[string]interface{} `json:"position" db:"position"`
+	Rotation        map[string]interface{} `json:"rotation" db:"rotation"`
+	Scale           map[string]interface{} `json:"scale" db:"scale"`
+	CreatedAt       time.Time              `json:"created_at" db:"created_at"`
+	UpdatedAt       time.Time              `json:"updated_at" db:"updated_at"`
 }
 
 type ApartmentVisit struct {
@@ -76,11 +62,11 @@ type PurchaseApartmentRequest struct {
 }
 
 type PlaceFurnitureRequest struct {
-	CharacterID    uuid.UUID              `json:"character_id"`
-	FurnitureItemID string                `json:"furniture_item_id"`
-	Position       map[string]interface{} `json:"position"`
-	Rotation       map[string]interface{} `json:"rotation"`
-	Scale          map[string]interface{} `json:"scale"`
+	CharacterID     uuid.UUID              `json:"character_id"`
+	FurnitureItemID string                 `json:"furniture_item_id"`
+	Position        map[string]interface{} `json:"position"`
+	Rotation        map[string]interface{} `json:"rotation"`
+	Scale           map[string]interface{} `json:"scale"`
 }
 
 type RemoveFurnitureRequest struct {
@@ -112,13 +98,13 @@ type FurnitureListResponse struct {
 
 type PlacedFurnitureListResponse struct {
 	Furniture []PlacedFurniture `json:"furniture"`
-	Total     int                `json:"total"`
+	Total     int               `json:"total"`
 }
 
 type ApartmentDetailResponse struct {
-	Apartment *Apartment           `json:"apartment"`
-	Furniture []PlacedFurniture   `json:"furniture,omitempty"`
-	ItemDetails []FurnitureItem    `json:"item_details,omitempty"`
+	Apartment         *Apartment             `json:"apartment"`
+	Furniture         []PlacedFurniture      `json:"furniture,omitempty"`
+	ItemDetails       []FurnitureItem        `json:"item_details,omitempty"`
 	FunctionalBonuses map[string]interface{} `json:"functional_bonuses,omitempty"`
 }
 
@@ -128,11 +114,10 @@ type PrestigeLeaderboardResponse struct {
 }
 
 type PrestigeLeaderboardEntry struct {
-	ApartmentID   uuid.UUID `json:"apartment_id"`
-	OwnerID       uuid.UUID `json:"owner_id"`
-	OwnerName     string    `json:"owner_name"`
-	PrestigeScore int       `json:"prestige_score"`
+	ApartmentID   uuid.UUID     `json:"apartment_id"`
+	OwnerID       uuid.UUID     `json:"owner_id"`
+	OwnerName     string        `json:"owner_name"`
+	PrestigeScore int           `json:"prestige_score"`
 	ApartmentType ApartmentType `json:"apartment_type"`
-	Location      string    `json:"location"`
+	Location      string        `json:"location"`
 }
-

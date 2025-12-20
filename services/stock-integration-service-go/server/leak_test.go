@@ -46,10 +46,3 @@ func TestStockIntegrationServiceNoLeaks(t *testing.T) {
 // - Context cancellation for all goroutines
 // - Timeout for all external calls
 // - Connection pool limits
-
-
-
-
-
-
-

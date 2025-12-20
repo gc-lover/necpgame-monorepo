@@ -1,4 +1,4 @@
-// Issue: #1607, ogen migration
+// Package server Issue: #1607, ogen migration
 // ogen handlers - TYPED responses (no interface{} boxing!)
 package server
 
@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	api "github.com/necpgame/companion-service-go/pkg/api"
+	"github.com/necpgame/companion-service-go/pkg/api"
 	"github.com/sirupsen/logrus"
 )
 

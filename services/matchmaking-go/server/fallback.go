@@ -1,4 +1,4 @@
-// Issue: #1588 - Fallback Strategy for graceful degradation
+// Package server Issue: #1588 - Fallback Strategy for graceful degradation
 package server
 
 import (
@@ -9,11 +9,11 @@ import (
 
 	"github.com/google/uuid"
 
-	api "github.com/gc-lover/necpgame-monorepo/services/matchmaking-go/pkg/api"
+	"github.com/gc-lover/necpgame-monorepo/services/matchmaking-go/pkg/api"
 )
 
 var (
-	ErrAllSourcesFailed = errors.New("all data sources failed, using fallback")
+	_ = errors.New("all data sources failed, using fallback")
 )
 
 // FallbackStrategy implements fallback logic: primary → cache → default
@@ -56,11 +56,11 @@ func (fs *FallbackStrategy) GetQueueStatusWithFallback(ctx context.Context, queu
 	// Fallback 2: Return default response (degraded mode)
 	log.Printf("All sources failed for queue %s, returning default", queueID)
 	return &api.QueueStatusResponse{
-		QueueId:     queueID,
-		Status:      api.QueueStatusResponseStatusWaiting,
-		TimeInQueue: 0,
+		QueueId:           queueID,
+		Status:            api.QueueStatusResponseStatusWaiting,
+		TimeInQueue:       0,
 		EstimatedWaitTime: api.NewOptInt32(30), // Default 30s
-		RatingRange: []int32{1400, 1600},      // Default range
+		RatingRange:       []int32{1400, 1600}, // Default range
 	}, nil
 }
 
@@ -85,4 +85,3 @@ func (fs *FallbackStrategy) GetPlayerRatingWithFallback(ctx context.Context, pla
 	log.Printf("All sources failed for player %s rating, using default 1500", playerID)
 	return 1500, nil
 }
-

@@ -1,3 +1,4 @@
+// Package server provides HTTP handlers for chat moderation service.
 // Issue: #1911
 // ogen handlers - TYPED responses (no interface{} boxing!)
 package server
@@ -9,10 +10,9 @@ import (
 	"necpgame/services/chat-moderation-service-go/pkg/api"
 )
 
-// Context timeout constants for performance
 const (
-	DBTimeout    = 50 * time.Millisecond // P99 <50ms requirement
-	CacheTimeout = 10 * time.Millisecond
+	DBTimeout = 50 * time.Millisecond // P99 <50ms requirement
+
 )
 
 // Handlers implements api.Handler interface (ogen typed handlers!)
@@ -32,10 +32,13 @@ func (h *Handlers) GetModerationRules(ctx context.Context, params api.GetModerat
 
 	rules, total, err := h.service.GetModerationRules(ctx, params)
 	if err != nil {
-		return &api.GetModerationRulesInternalServerError{}, err
+		return &api.InternalServerError{}, err
 	}
 
-	return rules, total, nil
+	return &api.GetModerationRulesOK{
+		Rules: rules,
+		Total: api.NewOptInt(int(total)),
+	}, nil
 }
 
 // CreateModerationRule creates a new moderation rule
@@ -45,7 +48,7 @@ func (h *Handlers) CreateModerationRule(ctx context.Context, req *api.CreateMode
 
 	rule, err := h.service.CreateModerationRule(ctx, req)
 	if err != nil {
-		return &api.CreateModerationRuleInternalServerError{}, err
+		return &api.InternalServerError{}, err
 	}
 
 	return rule, nil
@@ -59,25 +62,25 @@ func (h *Handlers) GetModerationRule(ctx context.Context, params api.GetModerati
 	rule, err := h.service.GetModerationRule(ctx, params.RuleID.String())
 	if err != nil {
 		if err == ErrNotFound {
-			return &api.GetModerationRuleNotFound{}, nil
+			return &api.NotFound{}, nil
 		}
-		return &api.GetModerationRuleInternalServerError{}, err
+		return &api.InternalServerError{}, err
 	}
 
 	return rule, nil
 }
 
 // UpdateModerationRule updates an existing moderation rule
-func (h *Handlers) UpdateModerationRule(ctx context.Context, params api.UpdateModerationRuleParams, req *api.UpdateModerationRuleRequest) (api.UpdateModerationRuleRes, error) {
+func (h *Handlers) UpdateModerationRule(ctx context.Context, req *api.UpdateModerationRuleRequest, params api.UpdateModerationRuleParams) (api.UpdateModerationRuleRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
 	rule, err := h.service.UpdateModerationRule(ctx, params.RuleID.String(), req)
 	if err != nil {
 		if err == ErrNotFound {
-			return &api.UpdateModerationRuleNotFound{}, nil
+			return &api.NotFound{}, nil
 		}
-		return &api.UpdateModerationRuleInternalServerError{}, err
+		return &api.InternalServerError{}, err
 	}
 
 	return rule, nil
@@ -91,9 +94,9 @@ func (h *Handlers) DeleteModerationRule(ctx context.Context, params api.DeleteMo
 	err := h.service.DeleteModerationRule(ctx, params.RuleID.String())
 	if err != nil {
 		if err == ErrNotFound {
-			return &api.DeleteModerationRuleNotFound{}, nil
+			return &api.NotFound{}, nil
 		}
-		return &api.DeleteModerationRuleInternalServerError{}, err
+		return &api.InternalServerError{}, err
 	}
 
 	return &api.DeleteModerationRuleNoContent{}, nil
@@ -106,10 +109,13 @@ func (h *Handlers) GetModerationViolations(ctx context.Context, params api.GetMo
 
 	violations, total, err := h.service.GetModerationViolations(ctx, params)
 	if err != nil {
-		return &api.GetModerationViolationsInternalServerError{}, err
+		return &api.InternalServerError{}, err
 	}
 
-	return violations, total, nil
+	return &api.GetModerationViolationsOK{
+		Violations: violations,
+		Total:      api.NewOptInt(int(total)),
+	}, nil
 }
 
 // GetModerationViolation returns violation details
@@ -120,41 +126,41 @@ func (h *Handlers) GetModerationViolation(ctx context.Context, params api.GetMod
 	violation, err := h.service.GetModerationViolation(ctx, params.ViolationID.String())
 	if err != nil {
 		if err == ErrNotFound {
-			return &api.GetModerationViolationNotFound{}, nil
+			return &api.NotFound{}, nil
 		}
-		return &api.GetModerationViolationInternalServerError{}, err
+		return &api.InternalServerError{}, err
 	}
 
 	return violation, nil
 }
 
 // UpdateViolationStatus updates violation status
-func (h *Handlers) UpdateViolationStatus(ctx context.Context, params api.UpdateViolationStatusParams, req *api.UpdateViolationStatusRequest) (api.UpdateViolationStatusRes, error) {
+func (h *Handlers) UpdateViolationStatus(ctx context.Context, req *api.UpdateViolationStatusReq, params api.UpdateViolationStatusParams) (api.UpdateViolationStatusRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
 	violation, err := h.service.UpdateViolationStatus(ctx, params.ViolationID.String(), req)
 	if err != nil {
 		if err == ErrNotFound {
-			return &api.UpdateViolationStatusNotFound{}, nil
+			return &api.NotFound{}, nil
 		}
-		return &api.UpdateViolationStatusInternalServerError{}, err
+		return &api.InternalServerError{}, err
 	}
 
 	return violation, nil
 }
 
 // ApplyModerationAction applies a moderation action
-func (h *Handlers) ApplyModerationAction(ctx context.Context, params api.ApplyModerationActionParams, req *api.ApplyModerationActionRequest) (api.ApplyModerationActionRes, error) {
+func (h *Handlers) ApplyModerationAction(ctx context.Context, req *api.ApplyModerationActionRequest, params api.ApplyModerationActionParams) (api.ApplyModerationActionRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
 	action, err := h.service.ApplyModerationAction(ctx, params.ViolationID.String(), req)
 	if err != nil {
 		if err == ErrNotFound {
-			return &api.ApplyModerationActionNotFound{}, nil
+			return &api.NotFound{}, nil
 		}
-		return &api.ApplyModerationActionInternalServerError{}, err
+		return &api.InternalServerError{}, err
 	}
 
 	return action, nil
@@ -167,10 +173,13 @@ func (h *Handlers) GetModerationLogs(ctx context.Context, params api.GetModerati
 
 	logs, total, err := h.service.GetModerationLogs(ctx, params)
 	if err != nil {
-		return &api.GetModerationLogsInternalServerError{}, err
+		return &api.InternalServerError{}, err
 	}
 
-	return logs, total, nil
+	return &api.GetModerationLogsOK{
+		Logs:  logs,
+		Total: api.NewOptInt(int(total)),
+	}, nil
 }
 
 // CheckMessage checks message for violations (HOT PATH - P99 <50ms)
@@ -184,10 +193,10 @@ func (h *Handlers) CheckMessage(ctx context.Context, req *api.CheckMessageReques
 	processingTime := time.Since(start)
 
 	if err != nil {
-		return &api.CheckMessageInternalServerError{}, err
+		return &api.InternalServerError{}, err
 	}
 
 	// Add processing time for monitoring
-	result.ProcessingTimeMs = float64(processingTime.Nanoseconds()) / 1e6
+	result.ProcessingTimeMs = api.NewOptFloat64(float64(processingTime.Nanoseconds()) / 1e6)
 	return result, nil
 }

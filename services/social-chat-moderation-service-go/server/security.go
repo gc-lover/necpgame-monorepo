@@ -1,4 +1,4 @@
-// Issue: #1598
+// Package server Issue: #1598
 package server
 
 import (
@@ -10,11 +10,10 @@ import (
 
 type SecurityHandler struct{}
 
-func (s *SecurityHandler) HandleBearerAuth(ctx context.Context, operationName api.OperationName, t api.BearerAuth) (context.Context, error) {
+func (s *SecurityHandler) HandleBearerAuth(ctx context.Context, _ api.OperationName, t api.BearerAuth) (context.Context, error) {
 	// TODO: Implement JWT validation
 	if t.Token == "" {
 		return ctx, errors.New("bearer token required")
 	}
 	return ctx, nil
 }
-

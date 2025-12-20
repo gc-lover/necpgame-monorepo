@@ -24,7 +24,6 @@ const (
 	ModeActive    ModeState = "ACTIVE"
 	ModeCompleted ModeState = "COMPLETED"
 	ModeFailed    ModeState = "FAILED"
-	ModeInactive  ModeState = "INACTIVE"
 )
 
 type RestrictedModeType string
@@ -133,7 +132,7 @@ func (s *server) routes() {
 	s.r.HandleFunc("/restricted-modes/resource/", s.consumeResource)
 }
 
-func (s *server) health(w http.ResponseWriter, r *http.Request) {
+func (s *server) health(w http.ResponseWriter, _ *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 }
 
@@ -394,4 +393,3 @@ func getEnv(key, def string) string {
 	}
 	return def
 }
-

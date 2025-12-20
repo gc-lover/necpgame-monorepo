@@ -1,13 +1,13 @@
 package main
 
 import (
-	_ "net/http/pprof" // OPTIMIZATION: Issue #1584 - profiling endpoints
 	"context"
 	"encoding/binary"
 	"flag"
 	"fmt"
 	"log"
 	"math"
+	_ "net/http/pprof" // OPTIMIZATION: Issue #1584 - profiling endpoints
 	"sync"
 	"sync/atomic"
 	"time"
@@ -164,18 +164,18 @@ func runClient(ctx context.Context, config LoadTestConfig, metrics *ClientMetric
 			case <-ctx.Done():
 				return
 			default:
-			conn.SetReadDeadline(time.Now().Add(5 * time.Second))
-			messageType, data, err := conn.ReadMessage()
-			if err != nil {
-				if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-					atomic.AddInt64(&metrics.Errors, 1)
-					select {
-					case errChan <- err:
-					default:
+				conn.SetReadDeadline(time.Now().Add(5 * time.Second))
+				messageType, data, err := conn.ReadMessage()
+				if err != nil {
+					if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+						atomic.AddInt64(&metrics.Errors, 1)
+						select {
+						case errChan <- err:
+						default:
+						}
 					}
+					return
 				}
-				return
-			}
 
 				if messageType == websocket.BinaryMessage {
 					atomic.AddInt64(&metrics.TotalBytesReceived, int64(len(data)))
@@ -218,17 +218,17 @@ func runClient(ctx context.Context, config LoadTestConfig, metrics *ClientMetric
 			return
 		case <-ticker.C:
 			elapsed := time.Since(startTime).Seconds()
-			
+
 			// Симулируем движение по кругу для постоянных изменений
 			// Каждый клиент имеет свой offset для уникальности
-			clientOffset := float64(tick % 100) * 0.1
+			clientOffset := float64(tick%100) * 0.1
 			moveX := float32(math.Sin(elapsed*0.5 + clientOffset))
 			moveY := float32(math.Cos(elapsed*0.5 + clientOffset))
-			
+
 			// Симулируем поворот камеры
 			aimX := float32(math.Sin(elapsed*0.3 + clientOffset*2))
 			aimY := float32(math.Cos(elapsed*0.3 + clientOffset*2))
-			
+
 			playerInput := buildPlayerInput(metrics.PlayerID, tick, moveX, moveY, false, aimX, aimY)
 
 			conn.SetWriteDeadline(time.Now().Add(5 * time.Second))
@@ -492,4 +492,3 @@ func appendFloat32(buf []byte, f float32) []byte {
 	buf = append(buf, b[:]...)
 	return buf
 }
-

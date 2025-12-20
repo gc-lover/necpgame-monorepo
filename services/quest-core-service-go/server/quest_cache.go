@@ -1,6 +1,4 @@
-// Issue: #1609 - Quest Cache (3-tier: Memory → Redis → DB)
-// OPTIMIZATION: Caching → DB queries ↓95%, Latency ↓80%
-// PERFORMANCE GAINS: 10k RPS with <30ms P99
+// Package server provides HTTP server implementation for the quest core service.
 package server
 
 import (

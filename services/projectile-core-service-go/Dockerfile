@@ -54,7 +54,7 @@ EXPOSE 8091/tcp 9091/tcp
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:9091/metrics || exit 1
+  CMD wget -q --spider http://localhost:8091/health || exit 1
 
 # Run service
 ENTRYPOINT ["/app/projectile-core-service"]

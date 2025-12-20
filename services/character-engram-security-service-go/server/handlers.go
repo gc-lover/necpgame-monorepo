@@ -1,4 +1,4 @@
-// Issue: #1600 - ogen handlers (TYPED responses)
+// Package server Issue: #1600 - ogen handlers (TYPED responses)
 package server
 
 import (
@@ -51,15 +51,15 @@ func (h *EngramSecurityHandlers) EncodeEngram(ctx context.Context, req *api.Enco
 	encodedBy := uuid.UUID{}
 
 	response := &api.EngramProtection{
-		EngramID:              params.EngramID,
-		ProtectionTier:        req.ProtectionTier,
-		ProtectionTierName:    api.NewOptEngramProtectionProtectionTierName(protectionTierName),
+		EngramID:               params.EngramID,
+		ProtectionTier:         req.ProtectionTier,
+		ProtectionTierName:     api.NewOptEngramProtectionProtectionTierName(protectionTierName),
 		RequiredNetrunnerLevel: api.NewOptInt(requiredNetrunnerLevel),
 		ProtectionSettings: api.NewOptEngramProtectionProtectionSettings(api.EngramProtectionProtectionSettings{
 			CopyProtection:    api.NewOptBool(copyProtection),
 			HackProtection:    api.NewOptBool(hackProtection),
 			InstallProtection: api.NewOptBool(installProtection),
-			BoundCharacterID: boundCharacterID,
+			BoundCharacterID:  boundCharacterID,
 		}),
 		EncodedAt: api.NewOptDateTime(now),
 		EncodedBy: api.NewOptUUID(encodedBy),
@@ -82,14 +82,14 @@ func (h *EngramSecurityHandlers) GetEngramProtection(ctx context.Context, params
 	encodedBy := uuid.UUID{}
 
 	response := &api.EngramProtection{
-		EngramID:              params.EngramID,
-		ProtectionTier:        protectionTier,
-		ProtectionTierName:    api.NewOptEngramProtectionProtectionTierName(protectionTierName),
+		EngramID:               params.EngramID,
+		ProtectionTier:         protectionTier,
+		ProtectionTierName:     api.NewOptEngramProtectionProtectionTierName(protectionTierName),
 		RequiredNetrunnerLevel: api.NewOptInt(requiredNetrunnerLevel),
 		ProtectionSettings: api.NewOptEngramProtectionProtectionSettings(api.EngramProtectionProtectionSettings{
-			CopyProtection:    api.NewOptBool(copyProtection),
-			HackProtection:    api.NewOptBool(hackProtection),
-			InstallProtection: api.NewOptBool(installProtection),
+			CopyProtection:    api.NewOptBool(true),
+			HackProtection:    api.NewOptBool(true),
+			InstallProtection: api.NewOptBool(false),
 			BoundCharacterID:  api.OptNilUUID{},
 		}),
 		EncodedAt: api.NewOptDateTime(now),
@@ -132,4 +132,3 @@ func getRequiredNetrunnerLevel(tier int) int {
 		return 20
 	}
 }
-

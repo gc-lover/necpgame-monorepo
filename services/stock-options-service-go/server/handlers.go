@@ -1,4 +1,4 @@
-// Issue: #1600 - ogen handlers (TYPED responses)
+// Package server Issue: #1600 - ogen handlers (TYPED responses)
 package server
 
 import (
@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	api "github.com/necpgame/stock-options-service-go/pkg/api"
+	"github.com/necpgame/stock-options-service-go/pkg/api"
 	"github.com/sirupsen/logrus"
 )
 
@@ -37,7 +37,7 @@ func (h *OptionsHandlers) ListOptionsContracts(ctx context.Context, params api.L
 	}).Info("ListOptionsContracts request")
 
 	// TODO: Implement business logic
-	contracts := []api.OptionsContract{}
+	var contracts []api.OptionsContract
 	total := 0
 
 	return &api.ListOptionsContractsOK{
@@ -63,9 +63,9 @@ func (h *OptionsHandlers) BuyOptionsContract(ctx context.Context, req *api.BuyOp
 	// TODO: Implement business logic
 	positionID := uuid.New()
 	now := time.Now()
-	currentValue := float64(0.0)
-	premiumPaid := float64(0.0)
-	pnl := float64(0.0)
+	currentValue := 0.0
+	premiumPaid := 0.0
+	pnl := 0.0
 	daysToExpiration := 0
 
 	return &api.OptionsPosition{
@@ -95,7 +95,7 @@ func (h *OptionsHandlers) ListOptionsPositions(ctx context.Context, params api.L
 	}).Info("ListOptionsPositions request")
 
 	// TODO: Implement business logic
-	positions := []api.OptionsPosition{}
+	var positions []api.OptionsPosition
 	total := 0
 
 	return &api.ListOptionsPositionsOK{
@@ -117,8 +117,8 @@ func (h *OptionsHandlers) ExerciseOption(ctx context.Context, req *api.ExerciseO
 
 	// TODO: Implement business logic
 	now := time.Now()
-	realizedPnl := float64(0.0)
-	totalCost := float64(0.0)
+	realizedPnl := 0.0
+	totalCost := 0.0
 	sharesAcquired := 0
 
 	return &api.ExerciseOptionResponse{
@@ -138,10 +138,10 @@ func (h *OptionsHandlers) GetOptionsGreeks(ctx context.Context, params api.GetOp
 	h.logger.WithField("position_id", params.PositionID).Info("GetOptionsGreeks request")
 
 	// TODO: Implement business logic
-	delta := float64(0.0)
-	gamma := float64(0.0)
-	theta := float64(0.0)
-	vega := float64(0.0)
+	delta := 0.0
+	gamma := 0.0
+	theta := 0.0
+	vega := 0.0
 
 	return &api.Greeks{
 		Delta: api.NewOptFloat64(delta),

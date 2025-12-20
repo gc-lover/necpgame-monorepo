@@ -1,4 +1,4 @@
-// Issue: #42 - economy-player-market ogen typed handlers with business logic
+// Package server Issue: #42 - economy-player-market ogen typed handlers with business logic
 package server
 
 import (
@@ -35,10 +35,10 @@ func (h *MarketHandlersOgen) GetMyMarketListings(ctx context.Context, params api
 	limit := 50
 	offset := 0
 	if params.Limit.IsSet() && params.Limit.Value > 0 && params.Limit.Value <= 100 {
-		limit = int(params.Limit.Value)
+		limit = params.Limit.Value
 	}
 	if params.Offset.IsSet() && params.Offset.Value >= 0 {
-		offset = int(params.Offset.Value)
+		offset = params.Offset.Value
 	}
 
 	// Get total count
@@ -208,4 +208,3 @@ func (h *MarketHandlersOgen) CancelMarketListing(ctx context.Context, params api
 		Status: api.NewOptString("cancelled"),
 	}, nil
 }
-

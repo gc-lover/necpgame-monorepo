@@ -1,4 +1,4 @@
-// Issue: #1600 - ogen handlers (TYPED responses)
+// Package server Issue: #1600 - ogen handlers (TYPED responses)
 package server
 
 import (
@@ -6,10 +6,10 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	api "github.com/necpgame/character-engram-compatibility-service-go/pkg/api"
+	"github.com/necpgame/character-engram-compatibility-service-go/pkg/api"
 )
 
-// Context timeout constants
+// DBTimeout Context timeout constants
 const (
 	DBTimeout = 50 * time.Millisecond // Performance: context timeout for DB ops
 )
@@ -21,7 +21,7 @@ func NewHandlers() *Handlers {
 }
 
 // GetEngramCompatibility implements getEngramCompatibility operation.
-func (h *Handlers) GetEngramCompatibility(ctx context.Context, params api.GetEngramCompatibilityParams) (api.GetEngramCompatibilityRes, error) {
+func (h *Handlers) GetEngramCompatibility(ctx context.Context, _ api.GetEngramCompatibilityParams) (api.GetEngramCompatibilityRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
@@ -38,26 +38,26 @@ func (h *Handlers) GetEngramCompatibility(ctx context.Context, params api.GetEng
 }
 
 // CheckEngramCompatibility implements checkEngramCompatibility operation.
-func (h *Handlers) CheckEngramCompatibility(ctx context.Context, req *api.CheckCompatibilityRequest, params api.CheckEngramCompatibilityParams) (api.CheckEngramCompatibilityRes, error) {
+func (h *Handlers) CheckEngramCompatibility(ctx context.Context, req *api.CheckCompatibilityRequest, _ api.CheckEngramCompatibilityParams) (api.CheckEngramCompatibilityRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
 	compatibilityLevel := api.CompatibilityResultCompatibilityLevelNeutral
 	canInstall := true
 	response := &api.CompatibilityResult{
-		EngramIds:              req.EngramIds,
-		CompatibilityLevel:     compatibilityLevel,
+		EngramIds:               req.EngramIds,
+		CompatibilityLevel:      compatibilityLevel,
 		CompatibilityPercentage: 0.0,
-		CanInstall:             api.NewOptBool(canInstall),
-		Pairs:                  nil,
-		Warnings:               nil,
+		CanInstall:              api.NewOptBool(true),
+		Pairs:                   nil,
+		Warnings:                nil,
 	}
 
 	return response, nil
 }
 
 // GetEngramConflicts implements getEngramConflicts operation.
-func (h *Handlers) GetEngramConflicts(ctx context.Context, params api.GetEngramConflictsParams) (api.GetEngramConflictsRes, error) {
+func (h *Handlers) GetEngramConflicts(ctx context.Context, _ api.GetEngramConflictsParams) (api.GetEngramConflictsRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
@@ -66,17 +66,17 @@ func (h *Handlers) GetEngramConflicts(ctx context.Context, params api.GetEngramC
 }
 
 // ResolveEngramConflict implements resolveEngramConflict operation.
-func (h *Handlers) ResolveEngramConflict(ctx context.Context, req *api.ResolveConflictRequest, params api.ResolveEngramConflictParams) (api.ResolveEngramConflictRes, error) {
+func (h *Handlers) ResolveEngramConflict(ctx context.Context, req *api.ResolveConflictRequest, _ api.ResolveEngramConflictParams) (api.ResolveEngramConflictRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
 	resolvedAt := time.Now()
 	response := &api.ResolveConflictResponse{
-		ConflictID:        req.ConflictID,
-		Success:           true,
-		ResolvedAt:        api.NewOptDateTime(resolvedAt),
-		InfluenceChanges:  api.OptResolveConflictResponseInfluenceChanges{},
-		NewBalance:        api.OptResolveConflictResponseNewBalance{},
+		ConflictID:       req.ConflictID,
+		Success:          true,
+		ResolvedAt:       api.NewOptDateTime(resolvedAt),
+		InfluenceChanges: api.OptResolveConflictResponseInfluenceChanges{},
+		NewBalance:       api.OptResolveConflictResponseNewBalance{},
 	}
 
 	return response, nil
@@ -90,7 +90,7 @@ func (h *Handlers) CreateConflictEvent(ctx context.Context, req *api.CreateConfl
 	eventID := uuid.New()
 	engramIds := []uuid.UUID{req.Engram1ID, req.Engram2ID}
 	conflictType := api.ConflictEventConflictType(req.ConflictType)
-	
+
 	var eventData api.OptNilConflictEventEventData
 	if req.EventData.IsSet() {
 		// Convert CreateConflictEventRequestEventData to ConflictEventEventData
@@ -100,16 +100,15 @@ func (h *Handlers) CreateConflictEvent(ctx context.Context, req *api.CreateConfl
 		}
 		eventData = api.NewOptNilConflictEventEventData(convertedData)
 	}
-	
+
 	response := &api.ConflictEvent{
-		EventID:     eventID,
-		CharacterID: params.CharacterID,
+		EventID:      eventID,
+		CharacterID:  params.CharacterID,
 		ConflictType: conflictType,
-		EngramIds:   engramIds,
-		EventData:   eventData,
-		CreatedAt:   time.Now(),
+		EngramIds:    engramIds,
+		EventData:    eventData,
+		CreatedAt:    time.Now(),
 	}
 
 	return response, nil
 }
-

@@ -29,16 +29,14 @@ type BattleType string
 const (
 	BattleTypeTerritory BattleType = "territory"
 	BattleTypeSiege     BattleType = "siege"
-	BattleTypeOpenWorld BattleType = "open_world"
 )
 
 type BattleStatus string
 
 const (
 	BattleStatusScheduled BattleStatus = "scheduled"
-	BattleStatusActive     BattleStatus = "active"
+	BattleStatusActive    BattleStatus = "active"
 	BattleStatusCompleted BattleStatus = "completed"
-	BattleStatusCancelled BattleStatus = "cancelled"
 )
 
 type ClanWar struct {
@@ -59,29 +57,29 @@ type ClanWar struct {
 }
 
 type WarBattle struct {
-	ID          uuid.UUID   `json:"id" db:"id"`
-	WarID       uuid.UUID   `json:"war_id" db:"war_id"`
-	Type        BattleType  `json:"type" db:"type"`
-	TerritoryID *uuid.UUID  `json:"territory_id,omitempty" db:"territory_id"`
-	Status      BattleStatus `json:"status" db:"status"`
-	AttackerScore int       `json:"attacker_score" db:"attacker_score"`
-	DefenderScore int       `json:"defender_score" db:"defender_score"`
-	StartTime   time.Time   `json:"start_time" db:"start_time"`
-	EndTime     *time.Time  `json:"end_time,omitempty" db:"end_time"`
-	CreatedAt   time.Time   `json:"created_at" db:"created_at"`
-	UpdatedAt   time.Time   `json:"updated_at" db:"updated_at"`
+	ID            uuid.UUID    `json:"id" db:"id"`
+	WarID         uuid.UUID    `json:"war_id" db:"war_id"`
+	Type          BattleType   `json:"type" db:"type"`
+	TerritoryID   *uuid.UUID   `json:"territory_id,omitempty" db:"territory_id"`
+	Status        BattleStatus `json:"status" db:"status"`
+	AttackerScore int          `json:"attacker_score" db:"attacker_score"`
+	DefenderScore int          `json:"defender_score" db:"defender_score"`
+	StartTime     time.Time    `json:"start_time" db:"start_time"`
+	EndTime       *time.Time   `json:"end_time,omitempty" db:"end_time"`
+	CreatedAt     time.Time    `json:"created_at" db:"created_at"`
+	UpdatedAt     time.Time    `json:"updated_at" db:"updated_at"`
 }
 
 type Territory struct {
-	ID          uuid.UUID `json:"id" db:"id"`
-	Name        string    `json:"name" db:"name"`
-	Region      string    `json:"region" db:"region"`
-	OwnerGuildID *uuid.UUID `json:"owner_guild_id,omitempty" db:"owner_guild_id"`
-	Resources   map[string]interface{} `json:"resources" db:"resources"`
-	DefenseLevel int      `json:"defense_level" db:"defense_level"`
-	SiegeDifficulty int   `json:"siege_difficulty" db:"siege_difficulty"`
-	CreatedAt   time.Time `json:"created_at" db:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at" db:"updated_at"`
+	ID              uuid.UUID              `json:"id" db:"id"`
+	Name            string                 `json:"name" db:"name"`
+	Region          string                 `json:"region" db:"region"`
+	OwnerGuildID    *uuid.UUID             `json:"owner_guild_id,omitempty" db:"owner_guild_id"`
+	Resources       map[string]interface{} `json:"resources" db:"resources"`
+	DefenseLevel    int                    `json:"defense_level" db:"defense_level"`
+	SiegeDifficulty int                    `json:"siege_difficulty" db:"siege_difficulty"`
+	CreatedAt       time.Time              `json:"created_at" db:"created_at"`
+	UpdatedAt       time.Time              `json:"updated_at" db:"updated_at"`
 }
 
 type DeclareWarRequest struct {
@@ -105,8 +103,8 @@ type UpdateBattleScoreRequest struct {
 }
 
 type WarListResponse struct {
-	Wars []ClanWar `json:"wars"`
-	Total int      `json:"total"`
+	Wars  []ClanWar `json:"wars"`
+	Total int       `json:"total"`
 }
 
 type BattleListResponse struct {
@@ -120,8 +118,7 @@ type TerritoryListResponse struct {
 }
 
 type WarDetailResponse struct {
-	War     *ClanWar    `json:"war"`
-	Battles []WarBattle `json:"battles"`
-	Territory *Territory `json:"territory,omitempty"`
+	War       *ClanWar    `json:"war"`
+	Battles   []WarBattle `json:"battles"`
+	Territory *Territory  `json:"territory,omitempty"`
 }
-

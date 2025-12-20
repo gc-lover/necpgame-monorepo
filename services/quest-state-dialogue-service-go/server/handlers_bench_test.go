@@ -5,8 +5,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/google/uuid"
 	"github.com/gc-lover/necpgame-monorepo/services/quest-state-dialogue-service-go/pkg/api"
+	"github.com/google/uuid"
 )
 
 // BenchmarkGetQuestState benchmarks GetQuestState handler
@@ -65,4 +65,3 @@ func BenchmarkGetQuestDialogue(b *testing.B) {
 		_, _ = handlers.GetQuestDialogue(ctx, params)
 	}
 }
-

@@ -1,0 +1,72 @@
+// Issue: #142109960
+// Protocol Buffer definitions for zone and protocol management
+// Network Engineer - Network protocol extensions
+
+syntax = "proto3";
+package necp.realtime.v1;
+
+option go_package = "github.com/necpgame/realtime-gateway-go/pkg/proto";
+
+import "network-config-tickrate.proto";
+
+message ZoneConfig {
+  string zone_id = 1;
+  string zone_type = 2;
+  string protocol = 3;
+  TickRateConfig tickrate = 4;
+  int32 max_players = 5;
+  int32 current_players = 6;
+  int32 latency_target_ms = 7;
+}
+
+message ProtocolSwitchRequest {
+  string session_id = 1;
+  string current_protocol = 2;
+  string target_protocol = 3;
+  string zone_id = 4;
+  string reason = 5;
+}
+
+message ProtocolSwitchResponse {
+  bool success = 1;
+  string new_protocol = 2;
+  string udp_endpoint = 3;
+  int32 udp_port = 4;
+  string session_token = 5;
+  int64 switch_time_ms = 6;
+}
+
+message ProtocolSwitchStatus {
+  string session_id = 1;
+  string current_protocol = 2;
+  string target_protocol = 3;
+  string status = 4;
+  int32 progress_percent = 5;
+  int64 start_time_ms = 6;
+  int64 estimated_completion_ms = 7;
+}
+
+message ZoneJoinRequest {
+  string player_id = 1;
+  string zone_id = 2;
+  string preferred_protocol = 3;
+}
+
+message ZoneJoinResponse {
+  bool success = 1;
+  ZoneConfig zone_config = 2;
+  string assigned_protocol = 3;
+  string connection_endpoint = 4;
+  int32 connection_port = 5;
+  TickRateConfig tickrate = 6;
+}
+
+message ZoneLeaveRequest {
+  string player_id = 1;
+  string zone_id = 2;
+}
+
+message ZoneLeaveResponse {
+  bool success = 1;
+  string message = 2;
+}

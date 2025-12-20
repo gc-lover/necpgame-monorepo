@@ -23,7 +23,7 @@ type SpatialCuller struct {
 type ProjectileZone struct {
 	ZoneID      uint32
 	Projectiles []interface{} // *Projectile (from projectile_service_optimized.go)
-	Players     []uint64       // Players in this zone
+	Players     []uint64      // Players in this zone
 	mu          sync.RWMutex
 }
 
@@ -144,4 +144,3 @@ func (c *SpatialCuller) UpdatePlayerZone(playerID uint64, x, y float32) {
 		zone.Players = append(zone.Players, playerID)
 	}
 }
-

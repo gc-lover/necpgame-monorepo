@@ -4,10 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/gc-lover/necpgame-monorepo/services/voice-chat-service-go/models"
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/sirupsen/logrus"
 )
 
@@ -79,7 +78,7 @@ func (r *SubchannelRepository) GetSubchannel(ctx context.Context, lobbyID, subch
 		&subchannel.MaxParticipants, &roleRestrictions,
 		&subchannel.CreatedAt, &subchannel.UpdatedAt,
 	)
-	
+
 	subchannel.SubchannelType = models.SubchannelType(subchannelTypeStr)
 
 	if err == pgx.ErrNoRows {
@@ -139,7 +138,7 @@ func (r *SubchannelRepository) ListSubchannels(ctx context.Context, lobbyID uuid
 		}
 
 		subchannel.SubchannelType = models.SubchannelType(subchannelTypeStr)
-		
+
 		// roleRestrictions can be stored in Settings if needed
 		if roleRestrictions != nil {
 			if subchannel.Settings == nil {
@@ -225,7 +224,7 @@ func (r *SubchannelRepository) UpdateSubchannel(ctx context.Context, lobbyID, su
 	}
 
 	subchannel.SubchannelType = models.SubchannelType(subchannelTypeStr)
-	
+
 	// roleRestrictions can be stored in Settings if needed
 	if roleRestrictions != nil {
 		if subchannel.Settings == nil {
@@ -304,4 +303,3 @@ func (r *SubchannelRepository) GetParticipants(ctx context.Context, subchannelID
 
 	return participants, nil
 }
-

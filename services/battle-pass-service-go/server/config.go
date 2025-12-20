@@ -1,4 +1,4 @@
-// Issue: JWT Implementation for Battle Pass Service
+// Package server Issue: JWT Implementation for Battle Pass Service
 // Configuration for battle-pass-service
 package server
 

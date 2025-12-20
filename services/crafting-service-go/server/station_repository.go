@@ -1,4 +1,4 @@
-// Issue: #2203 - Station repository implementation
+// Package server Issue: #2203 - Station repository implementation
 package server
 
 import (
@@ -57,7 +57,7 @@ func (r *StationRepository) List(ctx context.Context, zoneID *uuid.UUID, station
 		FROM crafting_stations
 		WHERE 1=1
 	`
-	args := []interface{}{}
+	var args []interface{}
 
 	if zoneID != nil {
 		baseQuery += fmt.Sprintf(" AND zone_id = $%d", len(args)+1)
@@ -101,7 +101,7 @@ func (r *StationRepository) List(ctx context.Context, zoneID *uuid.UUID, station
 
 	// Get total count
 	countQuery := "SELECT COUNT(*) FROM crafting_stations WHERE 1=1"
-	countArgs := []interface{}{}
+	var countArgs []interface{}
 
 	if zoneID != nil {
 		countQuery += " AND zone_id = $1"

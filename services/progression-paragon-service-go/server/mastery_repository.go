@@ -25,13 +25,6 @@ type MasteryRepository struct {
 	logger *logrus.Logger
 }
 
-func NewMasteryRepository(db *pgxpool.Pool) *MasteryRepository {
-	return &MasteryRepository{
-		db:     db,
-		logger: GetLogger(),
-	}
-}
-
 func (r *MasteryRepository) GetMasteryLevels(ctx context.Context, characterID uuid.UUID) (*MasteryLevels, error) {
 	query := `
 		SELECT mastery_type, mastery_level, experience_current, experience_required
@@ -46,7 +39,7 @@ func (r *MasteryRepository) GetMasteryLevels(ctx context.Context, characterID uu
 	}
 	defer rows.Close()
 
-	masteries := []Mastery{}
+	var masteries []Mastery
 	masteryTypes := []string{"raid", "dungeon", "world_boss", "pvp", "exploration"}
 	masteryMap := make(map[string]*Mastery)
 
@@ -76,11 +69,11 @@ func (r *MasteryRepository) GetMasteryLevels(ctx context.Context, characterID uu
 			masteries = append(masteries, *m)
 		} else {
 			masteries = append(masteries, Mastery{
-				MasteryType:       mt,
-				MasteryLevel:      0,
-				ExperienceCurrent: 0,
+				MasteryType:        mt,
+				MasteryLevel:       0,
+				ExperienceCurrent:  0,
 				ExperienceRequired: 1000,
-				RewardsUnlocked:   []MasteryReward{},
+				RewardsUnlocked:    []MasteryReward{},
 			})
 		}
 	}
@@ -173,7 +166,7 @@ func (r *MasteryRepository) GetMasteryRewardsByCharacter(ctx context.Context, ch
 	}
 	defer rows.Close()
 
-	rewards := []MasteryRewardItem{}
+	var rewards []MasteryRewardItem
 	rewardMap := make(map[string]bool)
 
 	for rows.Next() {
@@ -206,7 +199,7 @@ func (r *MasteryRepository) GetMasteryRewardsByCharacter(ctx context.Context, ch
 }
 
 func (r *MasteryRepository) getStandardRewards() []MasteryRewardItem {
-	rewards := []MasteryRewardItem{}
+	var rewards []MasteryRewardItem
 	masteryTypes := []string{"raid", "dungeon", "world_boss", "pvp", "exploration"}
 	rewardLevels := []int{25, 50, 75, 100}
 
@@ -275,4 +268,3 @@ func (r *MasteryRepository) AddMasteryReward(ctx context.Context, characterID uu
 	_, err := r.db.Exec(ctx, query, characterID, masteryType, rewardLevel, rewardType, rewardID)
 	return err
 }
-

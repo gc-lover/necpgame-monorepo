@@ -1,5 +1,4 @@
-// Issue: #1597
-// ogen handlers - TYPED responses (no interface{} boxing!)
+// Package server provides HTTP server implementation for the quest core service.
 package server
 
 import (
@@ -14,10 +13,8 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// Context timeout constants
 const (
-	DBTimeout    = 50 * time.Millisecond
-	CacheTimeout = 10 * time.Millisecond
+	DBTimeout = 50 * time.Millisecond
 )
 
 var (
@@ -131,7 +128,7 @@ func (h *Handlers) CompleteQuest(ctx context.Context, req api.OptCompleteQuestRe
 		reqPtr = &req.Value
 	}
 
-	result, err := h.service.CompleteQuest(ctx, params.QuestID, reqPtr)
+	result, err := h.service.CompleteQuest(ctx, params.QuestID)
 	if err != nil {
 		if err == ErrNotFound {
 			return &api.CompleteQuestNotFound{}, nil

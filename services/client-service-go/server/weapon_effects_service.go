@@ -23,73 +23,28 @@ func NewWeaponEffectsService() *WeaponEffectsService {
 	}
 }
 
-func (s *WeaponEffectsService) TriggerVisualEffect(ctx context.Context, effectType, mechanicType string, position map[string]float64, targetID *uuid.UUID, effectData map[string]interface{}) (uuid.UUID, error) {
+func (s *WeaponEffectsService) TriggerVisualEffect(_ context.Context, effectType, mechanicType string, _ map[string]float64, _ *uuid.UUID, _ map[string]interface{}) (uuid.UUID, error) {
 	s.logger.WithFields(logrus.Fields{
-		"effect_type":  effectType,
+		"effect_type":   effectType,
 		"mechanic_type": mechanicType,
 	}).Info("Triggering visual effect")
-	
+
 	effectID := uuid.New()
 	return effectID, nil
 }
 
-func (s *WeaponEffectsService) TriggerAudioEffect(ctx context.Context, effectType, mechanicType, soundID string, position map[string]float64, volume, pitch *float64) (uuid.UUID, error) {
+func (s *WeaponEffectsService) TriggerAudioEffect(_ context.Context, effectType, mechanicType, soundID string, _ map[string]float64, _, _ *float64) (uuid.UUID, error) {
 	s.logger.WithFields(logrus.Fields{
-		"effect_type":  effectType,
+		"effect_type":   effectType,
 		"mechanic_type": mechanicType,
-		"sound_id":     soundID,
+		"sound_id":      soundID,
 	}).Info("Triggering audio effect")
-	
+
 	effectID := uuid.New()
 	return effectID, nil
 }
 
-func (s *WeaponEffectsService) GetEffect(ctx context.Context, effectID uuid.UUID) (map[string]interface{}, error) {
+func (s *WeaponEffectsService) GetEffect(_ context.Context, effectID uuid.UUID) (map[string]interface{}, error) {
 	s.logger.WithField("effect_id", effectID).Info("Getting effect")
 	return map[string]interface{}{}, nil
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

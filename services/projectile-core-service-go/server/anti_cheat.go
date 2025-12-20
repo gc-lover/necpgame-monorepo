@@ -1,4 +1,4 @@
-// Issue: #1587 - Server-Side Validation & Anti-Cheat Integration
+// Package server Issue: #1587 - Server-Side Validation & Anti-Cheat Integration
 // CRITICAL for projectile service - prevents projectile spam, impossible trajectories
 package server
 
@@ -13,9 +13,9 @@ import (
 )
 
 var (
-	ErrProjectileSpam      = errors.New("projectile spawn rate too high (potential spam)")
+	ErrProjectileSpam       = errors.New("projectile spawn rate too high (potential spam)")
 	ErrImpossibleTrajectory = errors.New("projectile trajectory exceeds maximum range")
-	ErrInvalidVelocity     = errors.New("projectile velocity exceeds maximum")
+	ErrInvalidVelocity      = errors.New("projectile velocity exceeds maximum")
 )
 
 // ProjectileValidator validates projectile spawning (anti-cheat: rate, trajectory, velocity)
@@ -38,19 +38,19 @@ func NewProjectileValidator() *ProjectileValidator {
 }
 
 // ValidateProjectileSpawn validates a projectile spawn request
-func (pv *ProjectileValidator) ValidateProjectileSpawn(playerID string, position Vec3, velocity Vec3, maxRange float32) error {
+func (pv *ProjectileValidator) ValidateProjectileSpawn(playerID string, velocity Vec3, maxRange float32) error {
 	// 1. Rate check (max 20 projectiles/sec per player)
 	last, ok := pv.lastSpawns.Load(playerID)
 	if ok {
 		lastSpawn := last.(*LastSpawn)
 		elapsed := time.Since(lastSpawn.Timestamp)
-		
+
 		// Reset counter every second
 		if elapsed > 1*time.Second {
 			lastSpawn.Count.Store(0)
 			lastSpawn.Timestamp = time.Now()
 		}
-		
+
 		count := lastSpawn.Count.Add(1)
 		if count > 20 {
 			logrus.WithFields(logrus.Fields{
@@ -71,9 +71,9 @@ func (pv *ProjectileValidator) ValidateProjectileSpawn(playerID string, position
 	velocityMagnitude := math.Sqrt(float64(velocity.X*velocity.X + velocity.Y*velocity.Y + velocity.Z*velocity.Z))
 	if velocityMagnitude > 500.0 {
 		logrus.WithFields(logrus.Fields{
-			"player_id":         playerID,
+			"player_id":          playerID,
 			"velocity_magnitude": velocityMagnitude,
-			"max_velocity":      500.0,
+			"max_velocity":       500.0,
 		}).Warn("Projectile velocity exceeds maximum")
 		return ErrInvalidVelocity
 	}
@@ -83,7 +83,7 @@ func (pv *ProjectileValidator) ValidateProjectileSpawn(playerID string, position
 	// Assuming gravity = 9.8 m/s^2
 	gravity := 9.8
 	maxTrajectoryRange := (velocityMagnitude * velocityMagnitude) / (2 * gravity)
-	
+
 	if maxRange > float32(maxTrajectoryRange) {
 		logrus.WithFields(logrus.Fields{
 			"player_id":      playerID,
@@ -111,14 +111,13 @@ func (pv *ProjectileValidator) ValidateProjectilePosition(playerID string, curre
 
 	if distance > maxDistance {
 		logrus.WithFields(logrus.Fields{
-			"player_id":   playerID,
-			"distance":    distance,
+			"player_id":    playerID,
+			"distance":     distance,
 			"max_distance": maxDistance,
-			"delta_time":  deltaTime,
+			"delta_time":   deltaTime,
 		}).Warn("Projectile position change exceeds maximum (potential teleportation)")
 		return ErrImpossibleTrajectory
 	}
 
 	return nil
 }
-

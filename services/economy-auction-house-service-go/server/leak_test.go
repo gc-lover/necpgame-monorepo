@@ -35,4 +35,3 @@ func TestEconomyPlayerMarketServiceNoLeaks(t *testing.T) {
 
 	// If goroutines leaked from economy player market handlers, test FAILS
 }
-

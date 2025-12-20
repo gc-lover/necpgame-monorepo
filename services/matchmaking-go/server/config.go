@@ -13,4 +13,3 @@ func NewMatchmakerConfig(redisUrl, mode string, teamSize int) *MatchmakerConfig 
 		TeamSize: teamSize,
 	}
 }
-

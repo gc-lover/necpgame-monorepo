@@ -1,4 +1,4 @@
-// Issue: #1595, #1607 - ogen handlers (TYPED responses)
+// Package server Issue: #1595, #1607 - ogen handlers (TYPED responses)
 package server
 
 import (
@@ -14,23 +14,22 @@ import (
 )
 
 const (
-	DBTimeout    = 50 * time.Millisecond
-	CacheTimeout = 10 * time.Millisecond
+	DBTimeout = 50 * time.Millisecond
 )
 
 var (
-	ErrNotFound = errors.New("not found")
+	_ = errors.New("not found")
 )
 
-// Issue: #1607 - Memory pooling for hot path structs (Level 2 optimization)
+// Handlers Issue: #1607 - Memory pooling for hot path structs (Level 2 optimization)
 type Handlers struct {
 	service ResetServiceInterface
 	logger  *logrus.Logger
 
 	// Memory pooling for hot path structs (zero allocations target!)
-	resetStatsPool      sync.Pool
+	resetStatsPool        sync.Pool
 	resetListResponsePool sync.Pool
-	successResponsePool sync.Pool
+	successResponsePool   sync.Pool
 }
 
 func NewHandlers(service ResetServiceInterface) *Handlers {

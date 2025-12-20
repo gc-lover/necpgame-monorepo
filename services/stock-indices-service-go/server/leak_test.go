@@ -35,4 +35,3 @@ func TestStockIndicesServiceNoLeaks(t *testing.T) {
 
 	// If goroutines leaked from stock indices handlers, test FAILS
 }
-

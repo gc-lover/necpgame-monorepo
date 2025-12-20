@@ -56,4 +56,3 @@ func BenchmarkExecuteHack(b *testing.B) {
 		_, _ = handlers.ExecuteHack(ctx, req, params)
 	}
 }
-

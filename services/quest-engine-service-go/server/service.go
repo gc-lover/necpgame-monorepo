@@ -1,4 +1,4 @@
-// Issue: #176
+// Package server Issue: #176
 package server
 
 import (
@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/segmentio/kafka-go"
 	"github.com/valyala/fasthttp"
 	"go.uber.org/zap"
 	"golang.org/x/sync/semaphore"
@@ -302,7 +301,7 @@ func (s *Service) handleHTTPRequest(ctx *fasthttp.RequestCtx) {
 		s.handleMetrics(ctx)
 	default:
 		// Route to OpenAPI handlers
-		s.routeToAPIHandler(ctx, pctx.Context)
+		s.routeToAPIHandler(ctx)
 	}
 }
 
@@ -333,7 +332,7 @@ func (s *Service) handleMetrics(ctx *fasthttp.RequestCtx) {
 }
 
 // routeToAPIHandler routes requests to generated OpenAPI handlers
-func (s *Service) routeToAPIHandler(ctx *fasthttp.RequestCtx, reqCtx context.Context) {
+func (s *Service) routeToAPIHandler(ctx *fasthttp.RequestCtx) {
 	// TODO: Integrate with generated OpenAPI handlers
 	ctx.SetStatusCode(fasthttp.StatusNotImplemented)
 	ctx.SetBodyString("API handlers not yet implemented")
@@ -381,12 +380,12 @@ func (s *Service) cleanupRoutine() {
 // performCleanup performs maintenance cleanup tasks
 func (s *Service) performCleanup() {
 	// Cleanup expired quest instances
-	if err := s.questManager.CleanupExpiredQuests(context.Background()); err != nil {
+	if err := s.questManager.CleanupExpiredQuests(); err != nil {
 		s.logger.Errorf("Failed to cleanup expired quests: %v", err)
 	}
 
 	// Cleanup old dialogue states
-	if err := s.dialogueManager.CleanupOldDialogues(context.Background()); err != nil {
+	if err := s.dialogueManager.CleanupOldDialogues(); err != nil {
 		s.logger.Errorf("Failed to cleanup old dialogues: %v", err)
 	}
 
@@ -409,8 +408,3 @@ type ContextWithCancel struct {
 	context.Context
 	Cancel context.CancelFunc
 }
-
-
-
-
-

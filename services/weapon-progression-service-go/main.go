@@ -9,8 +9,8 @@ import (
 	"os"
 	"time"
 
-	_ "github.com/lib/pq"
 	"github.com/gc-lover/necpgame-monorepo/services/weapon-progression-service-go/server"
+	_ "github.com/lib/pq"
 )
 
 func main() {
@@ -63,12 +63,3 @@ func getEnv(key, defaultValue string) string {
 	}
 	return defaultValue
 }
-
-
-
-
-
-
-
-
-

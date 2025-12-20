@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"net/http"
-	"net/http/pprof"
 	"os"
 	"os/signal"
 	"syscall"
@@ -14,16 +13,16 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// OPTIMIZATION: Issue #1968 - Memory-aligned struct for AI service performance
+// AIServiceConfig OPTIMIZATION: Issue #1968 - Memory-aligned struct for AI service performance
 type AIServiceConfig struct {
-	HTTPAddr       string        `json:"http_addr"`       // 16 bytes
-	HealthAddr     string        `json:"health_addr"`     // 16 bytes
-	PprofAddr      string        `json:"pprof_addr"`      // 16 bytes
-	DBMaxOpenConns int           `json:"db_max_open_conns"` // 8 bytes
-	ReadTimeout    time.Duration `json:"read_timeout"`    // 8 bytes
-	WriteTimeout   time.Duration `json:"write_timeout"`   // 8 bytes
-	MaxHeaderBytes int           `json:"max_header_bytes"` // 8 bytes
-	MaxConcurrentAI int          `json:"max_concurrent_ai"` // 8 bytes
+	HTTPAddr        string        `json:"http_addr"`         // 16 bytes
+	HealthAddr      string        `json:"health_addr"`       // 16 bytes
+	PprofAddr       string        `json:"pprof_addr"`        // 16 bytes
+	DBMaxOpenConns  int           `json:"db_max_open_conns"` // 8 bytes
+	ReadTimeout     time.Duration `json:"read_timeout"`      // 8 bytes
+	WriteTimeout    time.Duration `json:"write_timeout"`     // 8 bytes
+	MaxHeaderBytes  int           `json:"max_header_bytes"`  // 8 bytes
+	MaxConcurrentAI int           `json:"max_concurrent_ai"` // 8 bytes
 }
 
 func main() {
@@ -54,7 +53,7 @@ func main() {
 	}()
 
 	// Initialize AI service with performance optimizations
-	srv, err := server.NewAIServer(config, logger)
+	srv, err := server.NewAIServer(logger)
 	if err != nil {
 		logger.WithError(err).Fatal("failed to initialize AI server")
 	}

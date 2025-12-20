@@ -16,8 +16,7 @@ func BenchmarkGetProjectileForms(b *testing.B) {
 	handlers := NewHandlers(service)
 
 	ctx := context.Background()
-	params := api.GetProjectileFormsParams{
-	}
+	params := api.GetProjectileFormsParams{}
 
 	b.ReportAllocs()
 	b.ResetTimer()
@@ -35,8 +34,7 @@ func BenchmarkGetProjectileForm(b *testing.B) {
 	handlers := NewHandlers(service)
 
 	ctx := context.Background()
-	params := api.GetProjectileFormParams{
-	}
+	params := api.GetProjectileFormParams{}
 
 	b.ReportAllocs()
 	b.ResetTimer()
@@ -62,4 +60,3 @@ func BenchmarkSpawnProjectile(b *testing.B) {
 		_, _ = handlers.SpawnProjectile(ctx, req)
 	}
 }
-

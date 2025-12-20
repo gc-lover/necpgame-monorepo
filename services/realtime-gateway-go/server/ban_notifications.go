@@ -1,4 +1,4 @@
-// Issue: #140899117, #141889261
+// Package server Issue: #140899117, #141889261
 package server
 
 import (
@@ -13,22 +13,22 @@ import (
 )
 
 type BanNotification struct {
-	BanID       string    `json:"ban_id"`
-	CharacterID string    `json:"character_id"`
-	Reason      string    `json:"reason"`
-	ExpiresAt   *string   `json:"expires_at,omitempty"`
-	ChannelID   *string   `json:"channel_id,omitempty"`
-	Type        *string   `json:"type,omitempty"`
-	Timestamp   string    `json:"timestamp"`
+	BanID       string  `json:"ban_id"`
+	CharacterID string  `json:"character_id"`
+	Reason      string  `json:"reason"`
+	ExpiresAt   *string `json:"expires_at,omitempty"`
+	ChannelID   *string `json:"channel_id,omitempty"`
+	Type        *string `json:"type,omitempty"`
+	Timestamp   string  `json:"timestamp"`
 }
 
 type BanNotificationSubscriber struct {
-	redis        *redis.Client
-	handler      *GatewayHandler
-	logger       *logrus.Logger
-	pubsub       *redis.PubSub
-	ctx          context.Context
-	cancel       context.CancelFunc
+	redis   *redis.Client
+	handler *GatewayHandler
+	logger  *logrus.Logger
+	pubsub  *redis.PubSub
+	ctx     context.Context
+	cancel  context.CancelFunc
 }
 
 func NewBanNotificationSubscriber(redisClient *redis.Client, handler *GatewayHandler) *BanNotificationSubscriber {
@@ -69,7 +69,7 @@ func (bns *BanNotificationSubscriber) Stop() error {
 
 func (bns *BanNotificationSubscriber) listen() {
 	ch := bns.pubsub.Channel()
-	
+
 	for {
 		select {
 		case <-bns.ctx.Done():
@@ -79,7 +79,7 @@ func (bns *BanNotificationSubscriber) listen() {
 			if msg == nil {
 				continue
 			}
-			
+
 			bns.handleBanEvent(msg.Channel, []byte(msg.Payload))
 		}
 	}
@@ -154,7 +154,7 @@ func (bns *BanNotificationSubscriber) sendBanNotification(notification BanNotifi
 				bns.logger.WithField("character_id", notification.CharacterID).Error("Failed to build ban notification message, skipping send")
 				break
 			}
-			
+
 			clientConn.mu.Lock()
 			conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
 			if err := conn.WriteMessage(websocket.TextMessage, notificationMessage); err != nil {
@@ -191,9 +191,9 @@ func (bns *BanNotificationSubscriber) buildNotificationMessage(notification BanN
 	}
 
 	response := map[string]interface{}{
-		"type":        notificationType,
-		"ban_id":      notification.BanID,
-		"timestamp":   notification.Timestamp,
+		"type":      notificationType,
+		"ban_id":    notification.BanID,
+		"timestamp": notification.Timestamp,
 	}
 
 	// Only include reason for ban notifications, not removals
@@ -220,4 +220,3 @@ func (bns *BanNotificationSubscriber) buildNotificationMessage(notification BanN
 	}
 	return message
 }
-

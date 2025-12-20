@@ -1,4 +1,4 @@
-// Issue: #1911
+// Package repository Issue: #1911
 package repository
 
 import (
@@ -23,13 +23,6 @@ type Repository struct {
 }
 
 // NewRepository creates a new repository instance
-func NewRepository(db *pgxpool.Pool, rdb *redis.Client, logger *zap.Logger) *Repository {
-	return &Repository{
-		db:     db,
-		rdb:    rdb,
-		logger: logger,
-	}
-}
 
 // GetRedisClient returns the Redis client for rate limiting operations
 func (r *Repository) GetRedisClient() *redis.Client {
@@ -249,8 +242,8 @@ func (r *Repository) GetActiveRules(ctx context.Context) ([]*models.ModerationRu
 // UpdateRule updates a moderation rule
 func (r *Repository) UpdateRule(ctx context.Context, ruleID uuid.UUID, updates map[string]interface{}) error {
 	// Build dynamic update query
-	setParts := []string{}
-	args := []interface{}{}
+	var setParts []string
+	var args []interface{}
 	argIndex := 1
 
 	for field, value := range updates {
@@ -313,47 +306,47 @@ func (r *Repository) DeleteRule(ctx context.Context, ruleID uuid.UUID) error {
 	return nil
 }
 
-// Placeholder implementations for other interfaces (to be implemented)
-func (r *Repository) CreateViolation(ctx context.Context, violation *models.ModerationViolation) error {
+// CreateViolation Placeholder implementations for other interfaces (to be implemented)
+func (r *Repository) CreateViolation(_ context.Context, _ *models.ModerationViolation) error {
 	return fmt.Errorf("not implemented")
 }
 
-func (r *Repository) GetViolation(ctx context.Context, violationID uuid.UUID) (*models.ModerationViolation, error) {
+func (r *Repository) GetViolation(_ context.Context, _ uuid.UUID) (*models.ModerationViolation, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 
-func (r *Repository) GetViolations(ctx context.Context, filter map[string]interface{}, limit, offset int) ([]*models.ModerationViolation, error) {
+func (r *Repository) GetViolations(_ context.Context, _ map[string]interface{}, _, _ int) ([]*models.ModerationViolation, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 
-func (r *Repository) UpdateViolationStatus(ctx context.Context, violationID uuid.UUID, status models.ViolationStatus) error {
+func (r *Repository) UpdateViolationStatus(_ context.Context, _ uuid.UUID, _ models.ViolationStatus) error {
 	return fmt.Errorf("not implemented")
 }
 
-func (r *Repository) GetViolationsCount(ctx context.Context, filter map[string]interface{}) (int, error) {
+func (r *Repository) GetViolationsCount(_ context.Context, _ map[string]interface{}) (int, error) {
 	return 0, fmt.Errorf("not implemented")
 }
 
-func (r *Repository) CreateAction(ctx context.Context, action *models.ModerationAction) error {
+func (r *Repository) CreateAction(_ context.Context, _ *models.ModerationAction) error {
 	return fmt.Errorf("not implemented")
 }
 
-func (r *Repository) GetActionsByViolation(ctx context.Context, violationID uuid.UUID) ([]*models.ModerationAction, error) {
+func (r *Repository) GetActionsByViolation(_ context.Context, _ uuid.UUID) ([]*models.ModerationAction, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 
-func (r *Repository) GetAction(ctx context.Context, actionID uuid.UUID) (*models.ModerationAction, error) {
+func (r *Repository) GetAction(_ context.Context, _ uuid.UUID) (*models.ModerationAction, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 
-func (r *Repository) CreateLogEntry(ctx context.Context, logEntry *models.ModerationLog) error {
+func (r *Repository) CreateLogEntry(_ context.Context, _ *models.ModerationLog) error {
 	return fmt.Errorf("not implemented")
 }
 
-func (r *Repository) GetLogs(ctx context.Context, filter map[string]interface{}, limit, offset int) ([]*models.ModerationLog, error) {
+func (r *Repository) GetLogs(_ context.Context, _ map[string]interface{}, _, _ int) ([]*models.ModerationLog, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 
-func (r *Repository) GetLogsCount(ctx context.Context, filter map[string]interface{}) (int, error) {
+func (r *Repository) GetLogsCount(_ context.Context, _ map[string]interface{}) (int, error) {
 	return 0, fmt.Errorf("not implemented")
 }

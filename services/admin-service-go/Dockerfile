@@ -39,6 +39,6 @@ USER appuser
 EXPOSE 8090/tcp 9100
 
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:9100/metrics || exit 1
+  CMD wget -q --spider http://localhost:9201/metrics || exit 1
 
 ENTRYPOINT ["/app/admin-service"]

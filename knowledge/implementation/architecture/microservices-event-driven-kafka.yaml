@@ -1,0 +1,343 @@
+<!-- Issue: #2093 -->
+# Microservices Event-Driven Architecture with Kafka
+
+## Overview
+Event-driven микросервисная архитектура на базе Apache Kafka для обеспечения масштабируемой асинхронной коммуникации, обработки игровых событий и обеспечения отказоустойчивости в NECPGAME.
+
+## Performance Requirements
+
+**Load:** 50k events/sec, 500k concurrent users, P99 <50ms processing
+
+**Data Model (optimized):**
+- Event throughput: 100k msg/sec per topic
+- Message size: ~1KB average
+- Retention: 7 days for game events, 30 days for analytics
+- Expected struct size: ~256 bytes/event
+
+**Hot Path:** Combat events → 20k EPS (CRITICAL)
+
+**Backend optimizations required:**
+- Message batching and compression
+- Consumer group partitioning
+- Dead letter queues for failed events
+- Event deduplication and idempotency
+
+## Architecture Components
+
+### 1. Event-Driven Flow
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Game Client   │────│   API Gateway   │────│ Event Producer │
+│   (UE5)         │    │   (Go)          │    │ (Kafka Client) │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+          │                       │                       │
+          ▼                       ▼                       ▼
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│ Combat Service  │────│   Kafka         │────│ Analytics      │
+│ (Real-time)     │    │   Cluster       │    │ Service        │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+                                                          │
+                                                          ▼
+                                               ┌─────────────────┐
+                                               │   Data Lake     │
+                                               │   (S3/ClickHouse)│
+                                               └─────────────────┘
+```
+
+### 2. Kafka Cluster Architecture
+
+#### Multi-Broker Setup
+```yaml
+Kafka Cluster:
+  brokers: 6 (3 per AZ)
+  partitions: 24 per topic
+  replication: 3x
+  retention: 7d game events, 30d analytics
+```
+
+#### Topic Design
+```
+Game Events Topics:
+├── game.combat.events     (partitions: 24, retention: 7d)
+├── game.matchmaking.events (partitions: 12, retention: 7d)
+├── game.economy.events    (partitions: 12, retention: 30d)
+├── game.social.events     (partitions: 8, retention: 30d)
+└── game.system.events     (partitions: 6, retention: 90d)
+```
+
+### 3. Event Types & Schema
+
+#### Core Event Schema
+```yaml
+Event:
+  id: uuid (for deduplication)
+  type: string (combat.start|player.move|item.use)
+  timestamp: datetime
+  version: int
+  source: string (service.name)
+  correlation_id: uuid
+  session_id: uuid
+  player_id: uuid
+  game_id: uuid (optional)
+  data: jsonb
+  metadata:
+    priority: low|normal|high|critical
+    ttl: duration
+    retry_count: int
+```
+
+#### Combat Events
+```yaml
+CombatStartEvent:
+  event_type: "combat.start"
+  data:
+    combat_id: uuid
+    players: [player_id...]
+    location: vector3
+    combat_type: pvp|pve|arena
+    start_time: datetime
+
+CombatActionEvent:
+  event_type: "combat.action"
+  data:
+    combat_id: uuid
+    player_id: uuid
+    action_type: attack|defend|ability
+    target_id: uuid
+    damage: int
+    position: vector3
+```
+
+## Processing Patterns
+
+### 1. Event Sourcing Pattern
+```
+Event Store (Kafka) → Materialized Views (Redis) → Read Models (PostgreSQL)
+     │                        │                        │
+     ▼                        ▼                        ▼
+  Append-only            Real-time updates       Optimized queries
+  audit trail            for active games       for analytics
+```
+
+### 2. CQRS Implementation
+```
+Command Side:              Query Side:
+├── Combat Service       ├── Leaderboard Service
+├── Matchmaking Service  ├── Statistics Service
+├── Economy Service      ├── Analytics Service
+└── Social Service       └── Cache Service
+```
+
+### 3. Saga Pattern for Transactions
+```
+Order Processing Saga:
+1. Validate → Inventory Service
+2. Reserve → Payment Service
+3. Confirm → Notification Service
+4. Complete → Success Event
+
+Failure Handling:
+- Compensation events for rollback
+- Dead letter queue for manual review
+- Circuit breakers for cascade prevention
+```
+
+## Streaming Processing
+
+### Kafka Streams Topology
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Event Stream  │────│   Filter/       │────│   Aggregate     │
+│   (Source)      │    │   Transform     │    │   (KTable)      │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+          │                       │                       │
+          ▼                       ▼                       ▼
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│ Session Windows │────│   Join with     │────│   Sink to       │
+│ (Combat Stats)  │    │   Player Data   │    │   Redis/Cache   │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+```
+
+### Real-time Analytics
+```
+Combat Analytics Pipeline:
+1. Raw combat events → Kafka Streams
+2. Session windowing (per combat)
+3. Real-time aggregations (damage, kills, duration)
+4. Cache updates for live dashboards
+5. Long-term storage for ML training
+```
+
+## Reliability & Resilience
+
+### 1. Message Delivery Guarantees
+```
+At-Least-Once: Combat events (critical)
+At-Most-Once: Analytics events (tolerate loss)
+Exactly-Once: Payment/Order events (financial)
+
+Idempotency Keys:
+- Event ID for deduplication
+- Correlation ID for request tracking
+```
+
+### 2. Failure Handling
+```
+Dead Letter Queues:
+├── dlq.combat.failed     (manual review)
+├── dlq.payment.failed    (high priority)
+└── dlq.analytics.failed  (batch retry)
+
+Circuit Breakers:
+├── Service health checks
+├── Rate limiting per consumer
+└── Backpressure handling
+```
+
+### 3. Monitoring & Observability
+```
+Metrics:
+├── Message throughput per topic
+├── Consumer lag per partition
+├── Error rates per service
+└── End-to-end latency
+
+Tracing:
+├── Distributed tracing with OpenTelemetry
+├── Event correlation across services
+└── Performance bottleneck identification
+```
+
+## Security Architecture
+
+### 1. Authentication & Authorization
+```
+Kafka ACLs:
+├── Producers: authenticated services only
+├── Consumers: role-based access
+├── Topics: encrypted in transit
+
+mTLS:
+├── Certificate-based authentication
+├── Service identity verification
+└── Encrypted communication
+```
+
+### 2. Data Protection
+```
+Encryption:
+├── Data at rest: AES-256
+├── Data in transit: TLS 1.3
+├── Sensitive fields: additional encryption
+
+Audit Logging:
+├── All event access logged
+├── Compliance with GDPR/CCPA
+└── Data retention policies
+```
+
+## Deployment & Scaling
+
+### 1. Kubernetes Integration
+```yaml
+apiVersion: kafka.strimzi.io/v1beta2
+kind: Kafka
+metadata:
+  name: game-events-cluster
+spec:
+  kafka:
+    version: 3.6.0
+    replicas: 6
+    listeners:
+      - name: plain
+        port: 9092
+        type: internal
+        tls: false
+      - name: tls
+        port: 9093
+        type: internal
+        tls: true
+    config:
+      offsets.topic.replication.factor: 3
+      transaction.state.log.replication.factor: 3
+      transaction.state.log.min.isr: 2
+```
+
+### 2. Auto-scaling
+```
+Horizontal Pod Autoscaling:
+├── Based on CPU/Memory utilization
+├── Custom metrics (consumer lag)
+├── Min/Max replicas per service
+
+Kafka Scaling:
+├── Automatic partition reassignment
+├── Broker scaling with Cruise Control
+└── Topic scaling based on throughput
+```
+
+## Performance Optimizations
+
+### Level 3 Optimizations Required
+1. **Message Batching:** Group events before sending
+2. **Compression:** Snappy/LZ4 for high throughput
+3. **Partitioning Strategy:** Key-based for ordering guarantees
+4. **Consumer Optimization:** Async processing with worker pools
+5. **Cache Integration:** Redis for hot data paths
+
+### Benchmarking Targets
+```
+Throughput: 100k events/sec sustained
+Latency: P99 <50ms end-to-end
+Durability: 99.999% message persistence
+Availability: 99.9% cluster uptime
+```
+
+## Implementation Roadmap
+
+### Phase 1: Core Infrastructure
+- [ ] Kafka cluster deployment (Strimzi operator)
+- [ ] Topic creation and configuration
+- [ ] Producer/Consumer client libraries
+- [ ] Basic monitoring setup
+
+### Phase 2: Event-Driven Services
+- [ ] Event schema definitions (Protobuf/Avro)
+- [ ] Core event producers (API Gateway, Game Services)
+- [ ] Basic consumers (Analytics, Cache services)
+- [ ] Saga pattern implementation
+
+### Phase 3: Advanced Processing
+- [ ] Kafka Streams applications
+- [ ] Real-time aggregations
+- [ ] Complex event processing
+- [ ] ML feature pipelines
+
+### Phase 4: Production Readiness
+- [ ] Performance testing (100k EPS load)
+- [ ] Chaos engineering (failure injection)
+- [ ] Monitoring dashboards
+- [ ] Incident response procedures
+
+## Risk Assessment
+- **Data Loss:** 3x replication + backups prevent loss
+- **Processing Delays:** Consumer group scaling handles load
+- **Service Coupling:** Event contracts prevent tight coupling
+- **Security:** mTLS + encryption protects sensitive data
+
+## Dependencies
+- Apache Kafka 3.6+
+- Kubernetes 1.28+
+- Strimzi Kafka Operator 0.38+
+- Kafka Streams 3.6+
+- OpenTelemetry 1.28+
+
+## Success Metrics
+- Event throughput: 100k/sec sustained
+- Processing latency: P95 <100ms
+- Data loss incidents: 0 per quarter
+- Service coupling: <20% shared schemas
+
+---
+
+*Designed by Architect Agent for Issue #2093*

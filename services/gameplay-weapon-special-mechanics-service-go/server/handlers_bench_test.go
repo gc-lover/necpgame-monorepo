@@ -61,4 +61,3 @@ func BenchmarkCreatePersistentEffect(b *testing.B) {
 		_, _ = handlers.CreatePersistentEffect(ctx, req)
 	}
 }
-

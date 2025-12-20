@@ -1,4 +1,4 @@
-// Issue: #227, #1607
+// Package server Issue: #227, #1607
 package server
 
 import (
@@ -10,12 +10,12 @@ import (
 )
 
 var (
-	ErrNotFound          = errors.New("not found")
-	ErrAlreadyClaimed    = errors.New("already claimed")
-	ErrAlreadyCompleted  = errors.New("already completed")
-	ErrAlreadyPremium    = errors.New("already premium")
-	ErrPremiumRequired   = errors.New("premium required")
-	ErrLevelNotReached   = errors.New("level not reached")
+	ErrNotFound         = errors.New("not found")
+	ErrAlreadyClaimed   = errors.New("already claimed")
+	ErrAlreadyCompleted = errors.New("already completed")
+	ErrAlreadyPremium   = errors.New("already premium")
+	ErrPremiumRequired  = errors.New("premium required")
+	ErrLevelNotReached  = errors.New("level not reached")
 )
 
 const XPPerLevel = 1000 // XP required per level
@@ -26,9 +26,9 @@ type Service struct {
 	repo *Repository
 
 	// Memory pooling for hot path structs (zero allocations target!)
-	seasonPool sync.Pool
-	playerProgressPool sync.Pool
-	claimRewardResponsePool sync.Pool
+	seasonPool                  sync.Pool
+	playerProgressPool          sync.Pool
+	claimRewardResponsePool     sync.Pool
 	purchasePremiumResponsePool sync.Pool
 }
 
@@ -241,7 +241,7 @@ func (s *Service) CompleteChallenge(ctx context.Context, playerId, challengeId s
 	}
 
 	// Add XP
-	newLevel, err := s.addXPInternal(ctx, playerId, challengeDetails.XpReward, "weekly_challenge")
+	newLevel, err := s.addXPInternal(ctx, playerId, challengeDetails.XpReward)
 	if err != nil {
 		return nil, err
 	}
@@ -262,8 +262,8 @@ func (s *Service) CompleteChallenge(ctx context.Context, playerId, challengeId s
 
 // AddXP adds XP to player progress
 // Issue: #1607 - Uses memory pooling for zero allocations
-func (s *Service) AddXP(ctx context.Context, playerId string, xpAmount int, source string) (map[string]interface{}, error) {
-	newLevel, err := s.addXPInternal(ctx, playerId, xpAmount, source)
+func (s *Service) AddXP(ctx context.Context, playerId string, xpAmount int) (map[string]interface{}, error) {
+	newLevel, err := s.addXPInternal(ctx, playerId, xpAmount)
 	if err != nil {
 		return nil, err
 	}
@@ -312,7 +312,7 @@ func (s *Service) AddXP(ctx context.Context, playerId string, xpAmount int, sour
 	return result, nil
 }
 
-func (s *Service) addXPInternal(ctx context.Context, playerId string, xpAmount int, source string) (int, error) {
+func (s *Service) addXPInternal(ctx context.Context, playerId string, xpAmount int) (int, error) {
 	progress, err := s.repo.GetPlayerProgress(ctx, playerId)
 	if err != nil {
 		return 0, err
@@ -330,13 +330,3 @@ func (s *Service) addXPInternal(ctx context.Context, playerId string, xpAmount i
 
 	return newLevel, nil
 }
-
-
-
-
-
-
-
-
-
-

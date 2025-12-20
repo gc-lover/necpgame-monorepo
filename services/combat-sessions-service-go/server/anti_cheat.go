@@ -1,4 +1,4 @@
-// Issue: #1587 - Server-Side Validation & Anti-Cheat Integration
+// Package server Issue: #1587 - Server-Side Validation & Anti-Cheat Integration
 // CRITICAL for combat sessions - prevents session manipulation, invalid participants
 package server
 
@@ -13,7 +13,7 @@ import (
 
 var (
 	ErrTooManyParticipants = errors.New("too many participants (max 200)")
-	ErrInvalidSession      = errors.New("invalid session state")
+	_                      = errors.New("invalid session state")
 	ErrSessionManipulation = errors.New("suspicious session manipulation")
 )
 
@@ -23,10 +23,10 @@ type SessionValidator struct {
 }
 
 type SessionStats struct {
-	CreatedAt    time.Time
+	CreatedAt        time.Time
 	ParticipantCount atomic.Int32
-	ActionCount  atomic.Int64
-	Flags        atomic.Int32
+	ActionCount      atomic.Int64
+	Flags            atomic.Int32
 }
 
 // NewSessionValidator creates a new session validator
@@ -59,7 +59,7 @@ func (sv *SessionValidator) ValidateSessionAction(sessionID string, actionType s
 
 	// Rate check: max 100 actions/sec per session
 	actionCount := stats.ActionCount.Add(1)
-	
+
 	// Reset counter every second (simplified - in production use sliding window)
 	if time.Since(stats.CreatedAt) > 1*time.Second {
 		stats.ActionCount.Store(0)
@@ -68,8 +68,8 @@ func (sv *SessionValidator) ValidateSessionAction(sessionID string, actionType s
 
 	if actionCount > 100 {
 		logrus.WithFields(logrus.Fields{
-			"session_id":  sessionID,
-			"action_type": actionType,
+			"session_id":   sessionID,
+			"action_type":  actionType,
 			"action_count": actionCount,
 		}).Warn("Session action rate too high (potential abuse)")
 		return ErrSessionManipulation
@@ -85,4 +85,3 @@ func (sv *SessionValidator) getOrCreateStats(sessionID string) *SessionStats {
 	})
 	return statsInterface.(*SessionStats)
 }
-

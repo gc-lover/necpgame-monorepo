@@ -7,8 +7,8 @@ import (
 	"github.com/kelseyhightower/envconfig"
 )
 
-// ServerConfig holds server-specific configuration
-type ServerConfig struct {
+// Config ServerConfig holds server-specific configuration
+type Config struct {
 	Addr           string `envconfig:"SERVER_ADDR" default:":8083"`
 	ReadTimeout    int    `envconfig:"READ_TIMEOUT" default:"30"`
 	WriteTimeout   int    `envconfig:"WRITE_TIMEOUT" default:"30"`
@@ -63,7 +63,7 @@ type LoggingConfig struct {
 
 // Config holds all configuration for the service (SOLID: Single Responsibility)
 type Config struct {
-	Server      ServerConfig      `json:"server"`
+	Server      Config            `json:"server"`
 	Database    DatabaseConfig    `json:"database"`
 	Redis       RedisConfig       `json:"redis"`
 	Service     ServiceConfig     `json:"service"`

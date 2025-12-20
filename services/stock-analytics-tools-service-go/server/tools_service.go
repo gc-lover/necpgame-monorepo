@@ -1,4 +1,4 @@
-// Issue: #1601 - Stock Analytics Tools Service implementation
+// Package server Issue: #1601 - Stock Analytics Tools Service implementation
 package server
 
 import (
@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	api "github.com/necpgame/stock-analytics-tools-service-go/pkg/api"
+	"github.com/necpgame/stock-analytics-tools-service-go/pkg/api"
 	"github.com/sirupsen/logrus"
 )
 
@@ -34,7 +34,7 @@ func NewToolsService(logger *logrus.Logger) ToolsServiceInterface {
 }
 
 // CreateAlert creates a new alert
-func (s *ToolsService) CreateAlert(ctx context.Context, req *api.CreateAlertRequest) (*api.Alert, error) {
+func (s *ToolsService) CreateAlert(_ context.Context, req *api.CreateAlertRequest) (*api.Alert, error) {
 	// TODO: Implement database insert
 	alertID := uuid.New()
 	now := time.Now()
@@ -52,40 +52,39 @@ func (s *ToolsService) CreateAlert(ctx context.Context, req *api.CreateAlertRequ
 }
 
 // DeleteAlert deletes an alert
-func (s *ToolsService) DeleteAlert(ctx context.Context, alertID uuid.UUID) error {
+func (s *ToolsService) DeleteAlert(_ context.Context, _ uuid.UUID) error {
 	// TODO: Implement database delete
 	return nil
 }
 
 // GetHeatmap returns heatmap data
-func (s *ToolsService) GetHeatmap(ctx context.Context, period string) (*api.Heatmap, error) {
+func (s *ToolsService) GetHeatmap(_ context.Context, _ string) (*api.Heatmap, error) {
 	// TODO: Implement database query
 	return &api.Heatmap{}, nil
 }
 
 // GetMarketDashboard returns market dashboard data
-func (s *ToolsService) GetMarketDashboard(ctx context.Context) (*api.MarketDashboard, error) {
+func (s *ToolsService) GetMarketDashboard(_ context.Context) (*api.MarketDashboard, error) {
 	// TODO: Implement database query
 	return &api.MarketDashboard{}, nil
 }
 
 // GetOrderBook returns order book data
-func (s *ToolsService) GetOrderBook(ctx context.Context, ticker string) (*api.OrderBook, error) {
+func (s *ToolsService) GetOrderBook(_ context.Context, _ string) (*api.OrderBook, error) {
 	// TODO: Implement database query
 	return &api.OrderBook{}, nil
 }
 
 // GetPortfolioDashboard returns portfolio dashboard data
-func (s *ToolsService) GetPortfolioDashboard(ctx context.Context) (*api.PortfolioDashboard, error) {
+func (s *ToolsService) GetPortfolioDashboard(_ context.Context) (*api.PortfolioDashboard, error) {
 	// TODO: Implement database query
 	return &api.PortfolioDashboard{}, nil
 }
 
 // ListAlerts returns list of alerts
-func (s *ToolsService) ListAlerts(ctx context.Context, activeOnly bool, limit, offset int) ([]api.Alert, int, error) {
+func (s *ToolsService) ListAlerts(_ context.Context, _ bool, _, _ int) ([]api.Alert, int, error) {
 	// TODO: Implement database query
-	alerts := []api.Alert{}
+	var alerts []api.Alert
 	total := 0
 	return alerts, total, nil
 }
-

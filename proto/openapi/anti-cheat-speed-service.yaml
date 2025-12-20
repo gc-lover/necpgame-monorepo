@@ -7,18 +7,18 @@ info:
     name: NECPGAME API Support
     email: api@necp.game
 servers:
-- url: http://localhost:8086/api/v1
-  description: Локальный сервер разработки
-- url: https://api.necp.game/api/v1
-  description: Продакшен сервер
+  - url: http://localhost:8086/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
 tags:
-- name: Speed Validation
-  description: Валидация скорости движения
+  - name: Speed Validation
+    description: Валидация скорости движения
 paths:
   /anti-cheat/speed/validate:
     post:
       tags:
-      - Speed Validation
+        - Speed Validation
       summary: Валидация скорости движения
       description: 'Проверяет скорость движения игрока и обнаруживает возможные speed hack.
 
@@ -27,7 +27,7 @@ paths:
         '
       operationId: validateSpeed
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       requestBody:
         required: true
         content:
@@ -50,23 +50,23 @@ paths:
   /anti-cheat/speed/violations/{player_id}:
     get:
       tags:
-      - Speed Validation
+        - Speed Validation
       summary: Получить нарушения скорости для игрока
       description: Возвращает список нарушений скорости для указанного игрока с пагинацией.
       operationId: getSpeedViolations
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       parameters:
-      - name: player_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: Идентификатор игрока
-        example: 550e8400-e29b-41d4-a716-446655440000
-      - $ref: common.yaml#/components/parameters/Limit
-      - $ref: common.yaml#/components/parameters/Offset
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор игрока
+          example: 550e8400-e29b-41d4-a716-446655440000
+        - $ref: common.yaml#/components/parameters/Limit
+        - $ref: common.yaml#/components/parameters/Offset
       responses:
         '200':
           description: Список нарушений скорости
@@ -88,10 +88,10 @@ components:
     SpeedValidationRequest:
       type: object
       required:
-      - player_id
-      - current_position
-      - previous_position
-      - time_delta
+        - player_id
+        - current_position
+        - previous_position
+        - time_delta
       properties:
         player_id:
           type: string
@@ -112,15 +112,15 @@ components:
             type: string
           description: Активные навыки
           example:
-          - speed_boost
-          - dash
+            - speed_boost
+            - dash
         buffs:
           type: array
           items:
             type: string
           description: Активные баффы
           example:
-          - haste
+            - haste
         time_delta:
           type: number
           format: float
@@ -131,7 +131,7 @@ components:
     SpeedValidationResponse:
       type: object
       required:
-      - is_valid
+        - is_valid
       properties:
         violation:
           $ref: '#/components/schemas/SpeedViolation'
@@ -164,22 +164,22 @@ components:
     SpeedViolation:
       type: object
       required:
-      - violation_type
-      - severity
+        - violation_type
+        - severity
       properties:
         violation_type:
           type: string
           enum:
-          - SPEED_HACK
+            - SPEED_HACK
           description: Тип нарушения
           example: SPEED_HACK
         severity:
           type: string
           enum:
-          - LOW
-          - MEDIUM
-          - HIGH
-          - CRITICAL
+            - LOW
+            - MEDIUM
+            - HIGH
+            - CRITICAL
           description: Серьезность нарушения
           example: MEDIUM
         speed_exceeded_by:
@@ -198,8 +198,8 @@ components:
     SpeedViolationsResponse:
       type: object
       required:
-      - violations
-      - total
+        - violations
+        - total
       properties:
         violations:
           type: array
@@ -223,4 +223,4 @@ components:
           example: 0
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
 security:
-- BearerAuth: []
+  - BearerAuth: [ ]

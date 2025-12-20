@@ -1,4 +1,4 @@
-// Issue: #1509
+// Package server Issue: #1509
 package server
 
 import (
@@ -115,7 +115,7 @@ func (r *OrderRepository) List(ctx context.Context, orderType *models.OrderType,
 			status, reward, requirements, deadline, created_at, updated_at, completed_at
 		FROM social.player_orders
 		WHERE 1=1`
-	args := []interface{}{}
+	var args []interface{}
 	argPos := 1
 
 	if orderType != nil {
@@ -178,7 +178,7 @@ func (r *OrderRepository) List(ctx context.Context, orderType *models.OrderType,
 
 func (r *OrderRepository) Count(ctx context.Context, orderType *models.OrderType, status *models.OrderStatus) (int, error) {
 	query := `SELECT COUNT(*) FROM social.player_orders WHERE 1=1`
-	args := []interface{}{}
+	var args []interface{}
 	argPos := 1
 
 	if orderType != nil {
@@ -237,4 +237,3 @@ func (r *OrderRepository) CancelOrder(ctx context.Context, orderID uuid.UUID) er
 	_, err := r.db.Exec(ctx, query, models.OrderStatusCancelled, time.Now(), orderID, models.OrderStatusCompleted, models.OrderStatusCancelled)
 	return err
 }
-

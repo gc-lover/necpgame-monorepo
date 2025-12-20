@@ -1,4 +1,4 @@
-// Issue: #1637 - P2P Trade Repository
+// Package server Issue: #1637 - P2P Trade Repository
 package server
 
 import (
@@ -6,8 +6,8 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/gc-lover/necpgame-monorepo/services/trade-p2p-service-go/pkg/api"
+	"github.com/google/uuid"
 )
 
 type Repository struct {
@@ -129,7 +129,7 @@ func (r *Repository) UpdateTradeSessionStatus(ctx context.Context, sessionID uui
 }
 
 // UpdateTradeOffer updates a trade offer for a session
-func (r *Repository) UpdateTradeOffer(ctx context.Context, sessionID uuid.UUID, offer *api.TradeOfferRequest, isInitiator bool) error {
+func (r *Repository) UpdateTradeOffer(ctx context.Context, sessionID uuid.UUID, isInitiator bool) error {
 	var column string
 	if isInitiator {
 		column = "initiator_offer"

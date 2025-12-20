@@ -1,4 +1,4 @@
-// Issue: #150 - Redis Cache Manager
+// Package server Issue: #150 - Redis Cache Manager
 // Performance: 5s TTL for queue status (95%+ hit rate), 5min for leaderboard
 package server
 
@@ -10,8 +10,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
-	
-	api "github.com/gc-lover/necpgame-monorepo/services/matchmaking-go/pkg/api"
+
+	"github.com/gc-lover/necpgame-monorepo/services/matchmaking-go/pkg/api"
 )
 
 // CacheManager handles Redis operations
@@ -137,4 +137,3 @@ func (c *CacheManager) CachePlayerRating(ctx context.Context, playerID uuid.UUID
 func (c *CacheManager) Close() error {
 	return c.client.Close()
 }
-

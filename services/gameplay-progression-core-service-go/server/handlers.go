@@ -1,4 +1,4 @@
-// Issue: #1599 - ogen handlers (TYPED responses)
+// Package server Issue: #1599 - ogen handlers (TYPED responses)
 package server
 
 import (
@@ -8,7 +8,7 @@ import (
 	"github.com/necpgame/gameplay-progression-core-service-go/pkg/api"
 )
 
-// Context timeout constants
+// DBTimeout Context timeout constants
 const (
 	DBTimeout = 50 * time.Millisecond
 )
@@ -196,4 +196,3 @@ func (h *Handlers) DistributeSkillPoints(ctx context.Context, req *api.Distribut
 
 	return progression, nil
 }
-

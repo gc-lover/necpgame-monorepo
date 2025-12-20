@@ -29,14 +29,14 @@ func main() {
 	}
 
 	handler := server.NewGatewayHandler(tickRate, sessionMgr)
-	
+
 	// Issue: #1580 - UDP server for real-time game state (CRITICAL)
 	udpAddr := getEnv("UDP_ADDR", "0.0.0.0:18081")
 	udpServer, err := server.NewUDPServer(udpAddr, handler)
 	if err != nil {
 		logger.WithError(err).Fatal("Failed to create UDP server")
 	}
-	
+
 	// OPTIMIZATION: Issue #1584 - pprof for real-time performance monitoring
 	go func() {
 		pprofAddr := getEnv("PPROF_ADDR", "localhost:6856")
@@ -46,18 +46,18 @@ func main() {
 			logger.WithError(err).Error("pprof server failed")
 		}
 	}()
-	
+
 	// OPTIMIZATION: Issue #1585 - Runtime goroutine leak monitoring
 	goroutineMonitor := server.NewGoroutineMonitor(1000, logger) // Max 1000 goroutines for WebSocket service
 	go goroutineMonitor.Start()
 	defer goroutineMonitor.Stop()
-	
+
 	if sessionMgr != nil {
 		redisClient := sessionMgr.GetRedisClient()
 		if redisClient != nil {
 			banNotifier := server.NewBanNotificationSubscriber(redisClient, handler)
 			handler.SetBanNotifier(banNotifier)
-			
+
 			if err := banNotifier.Start(); err != nil {
 				logger.WithError(err).Error("Failed to start ban notification subscriber")
 			} else {
@@ -66,7 +66,7 @@ func main() {
 
 			notificationSubscriber := server.NewNotificationSubscriber(redisClient, handler)
 			handler.SetNotificationSubscriber(notificationSubscriber)
-			
+
 			if err := notificationSubscriber.Start(); err != nil {
 				logger.WithError(err).Error("Failed to start notification subscriber")
 			} else {
@@ -74,7 +74,7 @@ func main() {
 			}
 		}
 	}
-	
+
 	wsServer := server.NewWebSocketServer(addr, handler)
 
 	metricsMux := http.NewServeMux()

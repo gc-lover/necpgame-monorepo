@@ -1,4 +1,4 @@
-// Issue: Social Service ogen Migration
+// Package server Issue: Social Service ogen Migration
 // Handlers for social-service-go - implements api.Handler (ogen)
 package server
 
@@ -16,9 +16,9 @@ import (
 
 // SocialHandlersOgen implements api.Handler (ogen)
 type SocialHandlersOgen struct {
-	logger       *logrus.Logger
-	partyService PartyServiceInterface
-	orderService OrderServiceInterface
+	logger        *logrus.Logger
+	partyService  PartyServiceInterface
+	orderService  OrderServiceInterface
 	friendService FriendServiceInterface
 }
 
@@ -289,9 +289,6 @@ func (h *SocialHandlersOgen) RemoveFriend(ctx context.Context, params api.Remove
 }
 
 // NewOptInt creates OptInt from int value
-func NewOptInt(v int) api.OptInt {
-	return api.OptInt{Value: v, Set: true}
-}
 
 // Issue: #1509 - Order handlers moved to order_handlers.go (chi router)
 // Ogen handlers require generated types from social-service.yaml
@@ -547,13 +544,13 @@ func convertRoleToAPI(role models.PartyRole) api.PartyMemberRole {
 // convertFriendshipToAPI converts model Friendship to API Friendship
 func convertFriendshipToAPI(f *models.Friendship) api.Friendship {
 	return api.Friendship{
-		ID:          api.NewOptUUID(f.ID),
+		ID:           api.NewOptUUID(f.ID),
 		CharacterAID: api.NewOptUUID(f.CharacterAID),
 		CharacterBID: api.NewOptUUID(f.CharacterBID),
-		InitiatorID: api.NewOptUUID(f.InitiatorID),
-		Status:     api.NewOptFriendshipStatus(convertFriendshipStatusToAPI(f.Status)),
-		CreatedAt:   api.NewOptDateTime(f.CreatedAt),
-		UpdatedAt:   api.NewOptDateTime(f.UpdatedAt),
+		InitiatorID:  api.NewOptUUID(f.InitiatorID),
+		Status:       api.NewOptFriendshipStatus(convertFriendshipStatusToAPI(f.Status)),
+		CreatedAt:    api.NewOptDateTime(f.CreatedAt),
+		UpdatedAt:    api.NewOptDateTime(f.UpdatedAt),
 	}
 }
 
@@ -570,4 +567,3 @@ func convertFriendshipStatusToAPI(status models.FriendshipStatus) api.Friendship
 		return api.FriendshipStatusPending
 	}
 }
-

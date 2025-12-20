@@ -6,8 +6,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/google/uuid"
 	"github.com/gc-lover/necpgame-monorepo/services/quest-rewards-events-service-go/pkg/api"
+	"github.com/google/uuid"
 )
 
 // BenchmarkGetQuestRewards benchmarks GetQuestRewards handler

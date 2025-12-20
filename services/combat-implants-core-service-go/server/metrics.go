@@ -1,4 +1,4 @@
-// Issue: #58
+// Package server Issue: #58
 package server
 
 import (
@@ -32,4 +32,3 @@ func RecordRequest(method, path, status string) {
 func RecordRequestDuration(method, path string, duration float64) {
 	RequestDuration.WithLabelValues(method, path).Observe(duration)
 }
-

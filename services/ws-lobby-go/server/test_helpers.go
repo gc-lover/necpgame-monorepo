@@ -1,11 +1,7 @@
-// Issue: #104
+// Package server Issue: #104
 package server
 
-import (
-	"testing"
-)
-
-func setupTestLobbyServer(t *testing.T) (*LobbyServer, func()) {
+func setupTestLobbyServer() (*LobbyServer, func()) {
 	config := NewLobbyConfig("18081", "http://localhost:8080/realms/necpgame", "http://localhost:8080/realms/necpgame/protocol/openid-connect/certs")
 	server := NewLobbyServer(config)
 
@@ -27,4 +23,3 @@ func setupTestLobbyServer(t *testing.T) (*LobbyServer, func()) {
 
 	return server, cleanup
 }
-

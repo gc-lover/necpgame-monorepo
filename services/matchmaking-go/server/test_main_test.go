@@ -16,8 +16,8 @@ import (
 var (
 	pgContainer    *postgres.PostgresContainer
 	redisContainer *redis.RedisContainer
-	testPgConnStr  string
-	testRedisAddr  string
+	_              string
+	_              string
 )
 
 func TestMain(m *testing.M) {
@@ -56,7 +56,7 @@ func startPostgresForSuite(ctx context.Context) *postgres.PostgresContainer {
 	if err != nil {
 		panic(err)
 	}
-	testPgConnStr = connStr
+	_ = connStr
 
 	// Ensure ready
 	db := connectWithRetryCtx(ctx, connStr)
@@ -85,7 +85,7 @@ func startRedisForSuite(ctx context.Context) *redis.RedisContainer {
 	if err != nil {
 		panic(err)
 	}
-	testRedisAddr = host + ":" + port.Port()
+	_ = host + ":" + port.Port()
 	return container
 }
 

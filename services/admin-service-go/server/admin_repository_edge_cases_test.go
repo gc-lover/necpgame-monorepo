@@ -199,9 +199,9 @@ func TestAdminRepository_GetAuditLog_WithComplexDetails(t *testing.T) {
 			"key2": 123,
 			"key3": []interface{}{"item1", "item2"},
 		},
-		"array": []interface{}{1, 2, 3},
-		"string": "test",
-		"number": 42,
+		"array":   []interface{}{1, 2, 3},
+		"string":  "test",
+		"number":  42,
 		"boolean": true,
 	}
 	log := &models.AdminAuditLog{
@@ -274,4 +274,3 @@ func TestAdminRepository_ListAuditLogs_OrderByCreatedAt(t *testing.T) {
 		assert.True(t, logs[0].CreatedAt.After(logs[1].CreatedAt) || logs[0].CreatedAt.Equal(logs[1].CreatedAt))
 	}
 }
-

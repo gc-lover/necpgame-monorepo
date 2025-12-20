@@ -1,4 +1,4 @@
-// Issue: #1856
+// Package server Issue: #1856
 // ogen handlers - TYPED responses (no interface{} boxing!)
 package server
 
@@ -9,10 +9,8 @@ import (
 	"github.com/gc-lover/necpgame-monorepo/services/guild-territory-service-go/pkg/api"
 )
 
-// Context timeout constants
 const (
-	DBTimeout    = 50 * time.Millisecond
-	CacheTimeout = 10 * time.Millisecond
+	DBTimeout = 50 * time.Millisecond
 )
 
 // Handlers implements api.Handler interface (ogen typed handlers!)
@@ -86,7 +84,7 @@ func (h *Handlers) GetTerritoryBonuses(ctx context.Context, params api.GetTerrit
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	bonuses, err := h.service.GetTerritoryBonuses(ctx, params)
+	bonuses, err := h.service.GetTerritoryBonuses(ctx)
 	if err != nil {
 		return &api.GetTerritoryBonusesInternalServerError{}, err
 	}

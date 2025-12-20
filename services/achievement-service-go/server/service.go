@@ -1,8 +1,7 @@
-// Issue: #1595, #1607
+// Package server Issue: #1595, #1607
 package server
 
 import (
-	"context"
 	"errors"
 	"sync"
 	"time"
@@ -27,12 +26,12 @@ type Service struct {
 	data achievementsData
 
 	// Memory pooling for hot path structs (zero allocations target!)
-	claimRewardResponsePool sync.Pool
-	achievementDetailsPool  sync.Pool
-	achievementsResponsePool sync.Pool
+	claimRewardResponsePool    sync.Pool
+	achievementDetailsPool     sync.Pool
+	achievementsResponsePool   sync.Pool
 	playerProgressResponsePool sync.Pool
-	playerTitlesResponsePool sync.Pool
-	playerTitlePool sync.Pool
+	playerTitlesResponsePool   sync.Pool
+	playerTitlePool            sync.Pool
 }
 
 func NewService(repo RepositoryCloser) *Service {
@@ -97,7 +96,7 @@ func NewService(repo RepositoryCloser) *Service {
 
 // ClaimAchievementReward claims achievement reward
 // Issue: #1607 - Uses memory pooling for zero allocations
-func (s *Service) ClaimAchievementReward(ctx context.Context, playerID uuid.UUID, achievementID uuid.UUID) (*api.ClaimAchievementRewardOK, error) {
+func (s *Service) ClaimAchievementReward(achievementID uuid.UUID) (*api.ClaimAchievementRewardOK, error) {
 	result := s.claimRewardResponsePool.Get().(*api.ClaimAchievementRewardOK)
 	result.TitleUnlocked = api.NewOptBool(true)
 	result.Rewards = result.Rewards[:0]
@@ -118,7 +117,7 @@ func (s *Service) ClaimAchievementReward(ctx context.Context, playerID uuid.UUID
 
 // GetAchievementDetails returns achievement details
 // Issue: #1607 - Uses memory pooling for zero allocations
-func (s *Service) GetAchievementDetails(ctx context.Context, achievementID uuid.UUID) (*api.AchievementDetails, error) {
+func (s *Service) GetAchievementDetails(achievementID uuid.UUID) (*api.AchievementDetails, error) {
 	result := s.achievementDetailsPool.Get().(*api.AchievementDetails)
 	*result = api.AchievementDetails{}
 
@@ -139,7 +138,7 @@ func (s *Service) GetAchievementDetails(ctx context.Context, achievementID uuid.
 
 // GetAchievements returns achievements list
 // Issue: #1607 - Uses memory pooling for zero allocations
-func (s *Service) GetAchievements(ctx context.Context, params api.GetAchievementsParams) (*api.GetAchievementsOK, error) {
+func (s *Service) GetAchievements(params api.GetAchievementsParams) (*api.GetAchievementsOK, error) {
 	result := s.achievementsResponsePool.Get().(*api.GetAchievementsOK)
 	result.Achievements = result.Achievements[:0]
 
@@ -162,7 +161,7 @@ func (s *Service) GetAchievements(ctx context.Context, params api.GetAchievement
 
 // GetPlayerProgress returns player achievement progress
 // Issue: #1607 - Uses memory pooling for zero allocations
-func (s *Service) GetPlayerProgress(ctx context.Context, playerID uuid.UUID, params api.GetPlayerProgressParams) (*api.GetPlayerProgressOK, error) {
+func (s *Service) GetPlayerProgress() (*api.GetPlayerProgressOK, error) {
 	result := s.playerProgressResponsePool.Get().(*api.GetPlayerProgressOK)
 	result.Achievements = result.Achievements[:0]
 
@@ -180,7 +179,7 @@ func (s *Service) GetPlayerProgress(ctx context.Context, playerID uuid.UUID, par
 
 // GetPlayerTitles returns player titles
 // Issue: #1607 - Uses memory pooling for zero allocations
-func (s *Service) GetPlayerTitles(ctx context.Context, playerID uuid.UUID) (*api.GetPlayerTitlesOK, error) {
+func (s *Service) GetPlayerTitles() (*api.GetPlayerTitlesOK, error) {
 	result := s.playerTitlesResponsePool.Get().(*api.GetPlayerTitlesOK)
 	result.Titles = result.Titles[:0]
 
@@ -199,7 +198,7 @@ func (s *Service) GetPlayerTitles(ctx context.Context, playerID uuid.UUID) (*api
 
 // SetActiveTitle sets active title for player
 // Issue: #1607 - Uses memory pooling for zero allocations
-func (s *Service) SetActiveTitle(ctx context.Context, playerID uuid.UUID, req *api.SetActiveTitleReq) (*api.PlayerTitle, error) {
+func (s *Service) SetActiveTitle(req *api.SetActiveTitleReq) (*api.PlayerTitle, error) {
 	result := s.playerTitlePool.Get().(*api.PlayerTitle)
 	*result = api.PlayerTitle{
 		ID:       req.TitleID,

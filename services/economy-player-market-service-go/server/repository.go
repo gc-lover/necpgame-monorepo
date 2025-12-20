@@ -1,4 +1,4 @@
-// Issue: #42 - Player Market Repository
+// Package server Issue: #42 - Player Market Repository
 // Performance: Connection pooling, covering indexes, context timeouts
 package server
 
@@ -62,7 +62,7 @@ func (r *PlayerMarketRepository) GetListingByID(ctx context.Context, listingID u
 
 // SearchListings searches active listings with filters
 func (r *PlayerMarketRepository) SearchListings(ctx context.Context, filters map[string]interface{}, limit, offset int) (pgx.Rows, error) {
-	query := `
+	baseQuery := `
 		SELECT
 			ml.id, ml.seller_id, ml.item_id, ml.price, ml.status, ml.created_at, ml.expires_at,
 			ml.city_id, ml.quantity,
@@ -76,61 +76,51 @@ func (r *PlayerMarketRepository) SearchListings(ctx context.Context, filters map
 		LEFT JOIN gameplay.cities city ON ml.city_id = city.id
 		WHERE ml.status = 'active'`
 
-	args := []interface{}{}
-	argCount := 0
+	var args []interface{}
 
 	// Apply filters
 	if itemName, ok := filters["item_name"].(string); ok && itemName != "" {
-		argCount++
-		query += fmt.Sprintf(" AND i.name ILIKE $%d", argCount)
+		baseQuery += fmt.Sprintf(" AND i.name ILIKE $%d", len(args)+1)
 		args = append(args, "%"+itemName+"%")
 	}
 
 	if category, ok := filters["category"].(string); ok && category != "" {
-		argCount++
-		query += fmt.Sprintf(" AND i.category = $%d", argCount)
+		baseQuery += fmt.Sprintf(" AND i.category = $%d", len(args)+1)
 		args = append(args, category)
 	}
 
 	if quality, ok := filters["quality"].(string); ok && quality != "" {
-		argCount++
-		query += fmt.Sprintf(" AND i.quality = $%d", argCount)
+		baseQuery += fmt.Sprintf(" AND i.quality = $%d", len(args)+1)
 		args = append(args, quality)
 	}
 
 	if minLevel, ok := filters["min_level"].(int); ok {
-		argCount++
-		query += fmt.Sprintf(" AND i.level >= $%d", argCount)
+		baseQuery += fmt.Sprintf(" AND i.level >= $%d", len(args)+1)
 		args = append(args, minLevel)
 	}
 
 	if maxLevel, ok := filters["max_level"].(int); ok {
-		argCount++
-		query += fmt.Sprintf(" AND i.level <= $%d", argCount)
+		baseQuery += fmt.Sprintf(" AND i.level <= $%d", len(args)+1)
 		args = append(args, maxLevel)
 	}
 
 	if minPrice, ok := filters["min_price"].(float64); ok {
-		argCount++
-		query += fmt.Sprintf(" AND ml.price >= $%d", argCount)
+		baseQuery += fmt.Sprintf(" AND ml.price >= $%d", len(args)+1)
 		args = append(args, minPrice)
 	}
 
 	if maxPrice, ok := filters["max_price"].(float64); ok {
-		argCount++
-		query += fmt.Sprintf(" AND ml.price <= $%d", argCount)
+		baseQuery += fmt.Sprintf(" AND ml.price <= $%d", len(args)+1)
 		args = append(args, maxPrice)
 	}
 
 	if cityID, ok := filters["city_id"].(uuid.UUID); ok {
-		argCount++
-		query += fmt.Sprintf(" AND ml.city_id = $%d", argCount)
+		baseQuery += fmt.Sprintf(" AND ml.city_id = $%d", len(args)+1)
 		args = append(args, cityID)
 	}
 
 	if sellerID, ok := filters["seller_id"].(uuid.UUID); ok {
-		argCount++
-		query += fmt.Sprintf(" AND ml.seller_id = $%d", argCount)
+		baseQuery += fmt.Sprintf(" AND ml.seller_id = $%d", len(args)+1)
 		args = append(args, sellerID)
 	}
 
@@ -168,7 +158,7 @@ func (r *PlayerMarketRepository) SearchListings(ctx context.Context, filters map
 func (r *PlayerMarketRepository) CountListings(ctx context.Context, filters map[string]interface{}) (int, error) {
 	query := `SELECT COUNT(*) FROM economy.market_listings ml JOIN gameplay.items i ON ml.item_id = i.id WHERE ml.status = 'active'`
 
-	args := []interface{}{}
+	var args []interface{}
 	argCount := 0
 
 	// Apply same filters as search
@@ -284,7 +274,7 @@ func (r *PlayerMarketRepository) CountMyListings(ctx context.Context, sellerID u
 // UpdateListing updates listing price and description
 func (r *PlayerMarketRepository) UpdateListing(ctx context.Context, listingID uuid.UUID, price *float64, description *string) error {
 	query := `UPDATE economy.market_listings SET updated_at = CURRENT_TIMESTAMP`
-	args := []interface{}{}
+	var args []interface{}
 	argCount := 0
 
 	if price != nil {

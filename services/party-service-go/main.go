@@ -65,11 +65,11 @@ func main() {
 	}
 
 	// Initialize repository & service
-	repo := server.NewPartyRepository(db)
+	repo := server.NewPartyRepository()
 	var service *server.PartyService
 	if rdb != nil {
 		eventBus := server.NewRedisEventBus(rdb)
-		service = server.NewPartyService(repo, eventBus)
+		service = server.NewPartyService(repo)
 	} else {
 		// Fallback without event bus
 		service = server.NewPartyServiceSimple(repo)
@@ -99,9 +99,9 @@ func main() {
 	// OPTIMIZATION: pprof profiling server
 	go func() {
 		log.Printf("pprof server starting on %s", pprofAddr)
-		log.Printf("  • CPU: http://%s/debug/pprof/profile?seconds=30", pprofAddr)
-		log.Printf("  • Heap: http://%s/debug/pprof/heap", pprofAddr)
-		log.Printf("  • Goroutines: http://%s/debug/pprof/goroutine", pprofAddr)
+		log.Printf("  • CPU: https://%s/debug/pprof/profile?seconds=30", pprofAddr)
+		log.Printf("  • Heap: https://%s/debug/pprof/heap", pprofAddr)
+		log.Printf("  • Goroutines: https://%s/debug/pprof/goroutine", pprofAddr)
 		if err := http.ListenAndServe(pprofAddr, nil); err != nil {
 			log.Printf("pprof server error: %v", err)
 		}

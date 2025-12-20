@@ -1,4 +1,4 @@
-// Issue: #140874394
+// Package server Issue: #140874394
 package server
 
 import (
@@ -265,7 +265,7 @@ func (m *AuthMiddleware) HandleBearerAuth(ctx context.Context, operationName api
 	claims, err := m.validateAccessToken(t.Token)
 	if err != nil {
 		m.logger.Warn("Invalid Bearer token",
-			zap.String("operation", string(operationName)),
+			zap.String("operation", operationName),
 			zap.Error(err))
 		return ctx, err
 	}
@@ -276,7 +276,7 @@ func (m *AuthMiddleware) HandleBearerAuth(ctx context.Context, operationName api
 	ctx = context.WithValue(ctx, "user_email", claims.Email)
 
 	m.logger.Debug("Bearer auth successful",
-		zap.String("operation", string(operationName)),
+		zap.String("operation", operationName),
 		zap.String("user_id", claims.UserID))
 
 	return ctx, nil

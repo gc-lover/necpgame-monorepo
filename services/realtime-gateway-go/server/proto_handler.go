@@ -1,7 +1,6 @@
 package server
 
 import (
-	"encoding/binary"
 	"fmt"
 	"math"
 
@@ -66,29 +65,12 @@ func readString(data []byte, offset *int) (string, error) {
 	return result, nil
 }
 
-func readFloat32(data []byte, offset *int) (float32, error) {
-	if *offset+4 > len(data) {
-		return 0, fmt.Errorf("not enough data for float32")
-	}
-	bits := binary.LittleEndian.Uint32(data[*offset:])
-	*offset += 4
-	return math.Float32frombits(bits), nil
-}
-
 func readInt64(data []byte, offset *int) (int64, error) {
 	val, err := readVarInt(data, offset)
 	if err != nil {
 		return 0, err
 	}
 	return int64(val), nil
-}
-
-func readBool(data []byte, offset *int) (bool, error) {
-	val, err := readVarInt(data, offset)
-	if err != nil {
-		return false, err
-	}
-	return val != 0, nil
 }
 
 func ParseClientMessage(data []byte) (*PlayerInputData, error) {
@@ -130,13 +112,6 @@ func writeString(buf []byte, s string) []byte {
 	buf = writeVarInt(buf, uint64(len(s)))
 	buf = append(buf, []byte(s)...)
 	return buf
-}
-
-func writeFloat32(buf []byte, f float32) []byte {
-	bits := math.Float32bits(f)
-	bytes := make([]byte, 4)
-	binary.LittleEndian.PutUint32(bytes, bits)
-	return append(buf, bytes...)
 }
 
 func writeInt64(buf []byte, v int64) []byte {
@@ -225,7 +200,7 @@ func ParseGameStateMessage(data []byte) (*GameStateData, error) {
 							return nil, err
 						}
 						if gsOffset+int(entityLength) > len(gameStateData) {
-							return nil, fmt.Errorf("Entity field length exceeds data")
+							return nil, fmt.Errorf("entity field length exceeds data")
 						}
 
 						entityData := gameStateData[gsOffset : gsOffset+int(entityLength)]

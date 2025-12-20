@@ -35,4 +35,3 @@ func TestClientServiceNoLeaks(t *testing.T) {
 
 	// If goroutines leaked from client handlers, test FAILS
 }
-

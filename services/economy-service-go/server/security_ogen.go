@@ -1,12 +1,12 @@
-// Issue: #150 - Security Handler for ogen (JWT validation)
+// Package server Issue: #150 - Security Handler for ogen (JWT validation)
 package server
 
 import (
 	"context"
 	"fmt"
 
+	"github.com/gc-lover/necpgame-monorepo/services/economy-service-go/pkg/api"
 	"github.com/google/uuid"
-	api "github.com/gc-lover/necpgame-monorepo/services/economy-service-go/pkg/api"
 )
 
 // SecurityHandler implements ogen security handler
@@ -22,7 +22,7 @@ func NewSecurityHandler(jwtValidator *JwtValidator) *SecurityHandler {
 }
 
 // HandleBearerAuth handles Bearer token authentication
-func (s *SecurityHandler) HandleBearerAuth(ctx context.Context, operationName string, t api.BearerAuth) (context.Context, error) {
+func (s *SecurityHandler) HandleBearerAuth(ctx context.Context, _ string, t api.BearerAuth) (context.Context, error) {
 	// Extract token from BearerAuth struct
 	token := t.GetToken()
 	if token == "" {
@@ -55,4 +55,3 @@ func (s *SecurityHandler) HandleBearerAuth(ctx context.Context, operationName st
 
 	return ctx, nil
 }
-

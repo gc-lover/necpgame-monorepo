@@ -12,26 +12,26 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// OPTIMIZATION: Issue #1968 - Memory-aligned struct for AI performance
+// AIServer OPTIMIZATION: Issue #1968 - Memory-aligned struct for AI performance
 type AIServer struct {
-	router       *chi.Mux
-	logger       *logrus.Logger
-	service      *AIService
-	metrics      *AIMetrics
+	router  *chi.Mux
+	logger  *logrus.Logger
+	service *AIService
+	metrics *AIMetrics
 }
 
-// OPTIMIZATION: Issue #1968 - Struct field alignment (large → small)
+// AIMetrics OPTIMIZATION: Issue #1968 - Struct field alignment (large → small)
 type AIMetrics struct {
-	RequestsTotal    prometheus.Counter   `json:"-"` // 16 bytes (interface)
-	RequestDuration  prometheus.Histogram `json:"-"` // 16 bytes (interface)
-	ActiveAI         prometheus.Gauge     `json:"-"` // 16 bytes (interface)
-	PathfindingOps   prometheus.Counter   `json:"-"` // 16 bytes (interface)
-	DecisionOps      prometheus.Counter   `json:"-"` // 16 bytes (interface)
-	BehaviorOps      prometheus.Counter   `json:"-"` // 16 bytes (interface)
-	ConcurrentAI     prometheus.Gauge     `json:"-"` // 16 bytes (interface)
+	RequestsTotal   prometheus.Counter   `json:"-"` // 16 bytes (interface)
+	RequestDuration prometheus.Histogram `json:"-"` // 16 bytes (interface)
+	ActiveAI        prometheus.Gauge     `json:"-"` // 16 bytes (interface)
+	PathfindingOps  prometheus.Counter   `json:"-"` // 16 bytes (interface)
+	DecisionOps     prometheus.Counter   `json:"-"` // 16 bytes (interface)
+	BehaviorOps     prometheus.Counter   `json:"-"` // 16 bytes (interface)
+	ConcurrentAI    prometheus.Gauge     `json:"-"` // 16 bytes (interface)
 }
 
-func NewAIServer(config *AIServiceConfig, logger *logrus.Logger) (*AIServer, error) {
+func NewAIServer(logger *logrus.Logger) (*AIServer, error) {
 	// Initialize metrics
 	metrics := &AIMetrics{
 		RequestsTotal: promauto.NewCounter(prometheus.CounterOpts{
@@ -66,7 +66,7 @@ func NewAIServer(config *AIServiceConfig, logger *logrus.Logger) (*AIServer, err
 	}
 
 	// Initialize service
-	service := NewAIService(logger, metrics, config.MaxConcurrentAI)
+	service := NewAIService(logger, metrics)
 
 	// Create router with AI-specific optimizations
 	r := chi.NewRouter()
@@ -140,7 +140,7 @@ func (s *AIServer) Router() *chi.Mux {
 	return s.router
 }
 
-func (s *AIServer) HealthCheck(w http.ResponseWriter, r *http.Request) {
+func (s *AIServer) HealthCheck(w http.ResponseWriter) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(`{"status":"healthy","service":"ai-service","version":"1.0.0"}`))

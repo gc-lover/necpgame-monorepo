@@ -14,15 +14,15 @@ func TestParagonHandlers_GetParagonLevels(t *testing.T) {
 	// Mock service
 	mockService := &MockParagonService{
 		levels: &ParagonLevels{
-			CharacterID:          uuid.MustParse("110e8400-e29b-41d4-a716-446655440000"),
-			ParagonLevel:         15,
-			ParagonPointsTotal:   75,
-			ParagonPointsSpent:   60,
+			CharacterID:            uuid.MustParse("110e8400-e29b-41d4-a716-446655440000"),
+			ParagonLevel:           15,
+			ParagonPointsTotal:     75,
+			ParagonPointsSpent:     60,
 			ParagonPointsAvailable: 15,
-			ExperienceCurrent:    125000,
-			ExperienceRequired:   150000,
-			Allocations:          []ParagonAllocation{},
-			UpdatedAt:            time.Now(),
+			ExperienceCurrent:      125000,
+			ExperienceRequired:     150000,
+			Allocations:            []ParagonAllocation{},
+			UpdatedAt:              time.Now(),
 		},
 	}
 
@@ -50,15 +50,15 @@ func TestParagonHandlers_GetParagonLevels(t *testing.T) {
 func TestParagonHandlers_DistributeParagonPoints(t *testing.T) {
 	mockService := &MockParagonService{
 		levels: &ParagonLevels{
-			CharacterID:          uuid.MustParse("110e8400-e29b-41d4-a716-446655440000"),
-			ParagonLevel:         15,
-			ParagonPointsTotal:   75,
-			ParagonPointsSpent:   60,
+			CharacterID:            uuid.MustParse("110e8400-e29b-41d4-a716-446655440000"),
+			ParagonLevel:           15,
+			ParagonPointsTotal:     75,
+			ParagonPointsSpent:     60,
 			ParagonPointsAvailable: 15,
-			ExperienceCurrent:    125000,
-			ExperienceRequired:   150000,
-			Allocations:          []ParagonAllocation{},
-			UpdatedAt:            time.Now(),
+			ExperienceCurrent:      125000,
+			ExperienceRequired:     150000,
+			Allocations:            []ParagonAllocation{},
+			UpdatedAt:              time.Now(),
 		},
 	}
 
@@ -157,28 +157,27 @@ type MockParagonService struct {
 	err    error
 }
 
-func (m *MockParagonService) GetParagonLevels(ctx context.Context, characterID uuid.UUID) (*ParagonLevels, error) {
+func (m *MockParagonService) GetParagonLevels(_ context.Context, _ uuid.UUID) (*ParagonLevels, error) {
 	if m.err != nil {
 		return nil, m.err
 	}
 	return m.levels, nil
 }
 
-func (m *MockParagonService) DistributeParagonPoints(ctx context.Context, characterID uuid.UUID, allocations []ParagonAllocation) (*ParagonLevels, error) {
+func (m *MockParagonService) DistributeParagonPoints(_ context.Context, _ uuid.UUID, _ []ParagonAllocation) (*ParagonLevels, error) {
 	if m.err != nil {
 		return nil, m.err
 	}
 	return m.levels, nil
 }
 
-func (m *MockParagonService) GetParagonStats(ctx context.Context, characterID uuid.UUID) (*ParagonStats, error) {
+func (m *MockParagonService) GetParagonStats(_ context.Context, _ uuid.UUID) (*ParagonStats, error) {
 	if m.err != nil {
 		return nil, m.err
 	}
 	return m.stats, nil
 }
 
-func (m *MockParagonService) AddParagonExperience(ctx context.Context, characterID uuid.UUID, amount int64) error {
+func (m *MockParagonService) AddParagonExperience(_ context.Context, _ uuid.UUID, _ int64) error {
 	return m.err
 }
-

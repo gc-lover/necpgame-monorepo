@@ -1,4 +1,4 @@
-// Issue: #141887950
+// Package server Issue: #141887950
 package server
 
 import (
@@ -8,8 +8,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/gc-lover/necpgame-monorepo/services/inventory-service-go/models"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/sirupsen/logrus"
@@ -126,7 +126,7 @@ func (r *InventoryRepository) AddItem(ctx context.Context, item *models.Inventor
 		r.logger.WithError(err).Error("Failed to marshal metadata JSON")
 		return err
 	}
-	
+
 	_, err = r.db.Exec(ctx,
 		`INSERT INTO mvp_core.character_items (id, inventory_id, item_id, slot_index, stack_count, max_stack_size, is_equipped, equip_slot, metadata, created_at, updated_at)
 		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
@@ -147,7 +147,7 @@ func (r *InventoryRepository) UpdateItem(ctx context.Context, item *models.Inven
 	if err != nil {
 		return fmt.Errorf("failed to marshal metadata JSON: %w", err)
 	}
-	
+
 	_, err = r.db.Exec(ctx,
 		`UPDATE mvp_core.character_items
 		 SET slot_index = $1, stack_count = $2, is_equipped = $3, equip_slot = $4, metadata = $5, updated_at = $6
@@ -316,5 +316,3 @@ func (r *InventoryRepository) GetItemTemplate(ctx context.Context, itemID string
 
 	return &template, nil
 }
-
-

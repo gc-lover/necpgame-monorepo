@@ -11,11 +11,11 @@ import (
 
 // HTTPServer represents the HTTP server
 type HTTPServer struct {
-	addr          string
-	server        *http.Server
-	logger        *logrus.Logger
-	jwtValidator  *JwtValidator
-	authEnabled   bool
+	addr         string
+	server       *http.Server
+	logger       *logrus.Logger
+	jwtValidator *JwtValidator
+	authEnabled  bool
 }
 
 // NewHTTPServer creates new HTTP server
@@ -33,7 +33,7 @@ func NewHTTPServer(addr string, handler *CraftingHandler) *HTTPServer {
 	// Add middleware
 	httpHandler = NewAuthMiddleware(handler.jwtValidator, handler.authEnabled, logger)(httpHandler)
 	httpHandler = NewLoggingMiddleware(logger)(httpHandler)
-	httpHandler = NewTimeoutMiddleware(30*time.Second)(httpHandler) // PERFORMANCE: Context timeouts
+	httpHandler = NewTimeoutMiddleware(30 * time.Second)(httpHandler) // PERFORMANCE: Context timeouts
 
 	mux := http.NewServeMux()
 	mux.Handle("/", httpHandler)
@@ -42,8 +42,8 @@ func NewHTTPServer(addr string, handler *CraftingHandler) *HTTPServer {
 	httpServer := &http.Server{
 		Addr:         addr,
 		Handler:      mux,
-		ReadTimeout:  30 * time.Second, // PERFORMANCE: Prevent slow loris attacks
-		WriteTimeout: 30 * time.Second, // PERFORMANCE: Prevent hanging connections
+		ReadTimeout:  30 * time.Second,  // PERFORMANCE: Prevent slow loris attacks
+		WriteTimeout: 30 * time.Second,  // PERFORMANCE: Prevent hanging connections
 		IdleTimeout:  120 * time.Second, // PERFORMANCE: Reuse connections
 	}
 

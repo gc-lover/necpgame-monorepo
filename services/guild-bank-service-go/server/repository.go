@@ -1,4 +1,4 @@
-// Issue: #1856
+// Package server Issue: #1856
 package server
 
 import (
@@ -234,7 +234,7 @@ func (r *Repository) GetBankTransactions(ctx context.Context, guildID uuid.UUID,
 }
 
 // CollectGuildTax collects tax from guild members
-func (r *Repository) CollectGuildTax(ctx context.Context, guildID uuid.UUID, taxRate float64) (int64, error) {
+func (r *Repository) CollectGuildTax() (int64, error) {
 	// This would integrate with economy-service to collect taxes
 	// For now, return 0 as placeholder
 	return 0, nil
@@ -273,7 +273,7 @@ func (r *Repository) GrantGuildReward(ctx context.Context, guildID uuid.UUID, am
 }
 
 // TransferBetweenGuilds transfers money between guild banks (for future guild alliances)
-func (r *Repository) TransferBetweenGuilds(ctx context.Context, fromGuildID, toGuildID uuid.UUID, amount int64, description string) error {
+func (r *Repository) TransferBetweenGuilds() error {
 	// This would be implemented when guild alliances are added
 	return nil
 }

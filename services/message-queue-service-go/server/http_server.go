@@ -1,6 +1,5 @@
-package server
-
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"strconv"
@@ -12,7 +11,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// OPTIMIZATION: Issue #2205 - HTTP server optimized for MMO message queue throughput
+// MessageQueueServer OPTIMIZATION: Issue #2205 - HTTP server optimized for MMO message queue throughput
 type MessageQueueServer struct {
 	config  *MessageQueueServiceConfig
 	service *MessageQueueService
@@ -20,7 +19,7 @@ type MessageQueueServer struct {
 	server  *http.Server
 }
 
-// OPTIMIZATION: Constructor with optimized middleware stack for MMO performance
+// NewMessageQueueServer OPTIMIZATION: Constructor with optimized middleware stack for MMO performance
 func NewMessageQueueServer(config *MessageQueueServiceConfig, service *MessageQueueService, logger *logrus.Logger) (*MessageQueueServer, error) {
 	r := chi.NewRouter()
 
@@ -39,10 +38,10 @@ func NewMessageQueueServer(config *MessageQueueServiceConfig, service *MessageQu
 		service: service,
 		logger:  logger,
 		server: &http.Server{
-			Addr:         config.HTTPAddr,
-			Handler:      r,
-			ReadTimeout:  config.ReadTimeout,
-			WriteTimeout: config.WriteTimeout,
+			Addr:           config.HTTPAddr,
+			Handler:        r,
+			ReadTimeout:    config.ReadTimeout,
+			WriteTimeout:   config.WriteTimeout,
 			MaxHeaderBytes: config.MaxHeaderBytes,
 		},
 	}
@@ -86,7 +85,7 @@ func (s *MessageQueueServer) registerRoutes(r chi.Router) {
 }
 
 // OPTIMIZATION: Health check endpoint
-func (s *MessageQueueServer) healthCheck(w http.ResponseWriter, r *http.Request) {
+func (s *MessageQueueServer) healthCheck(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]string{
@@ -212,8 +211,8 @@ func (s *MessageQueueServer) getQueueInfo(w http.ResponseWriter, r *http.Request
 	// For now, return mock data - actual implementation would query queue info
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{
-		"name":        queueName,
-		"message_count": 0,
+		"name":           queueName,
+		"message_count":  0,
 		"consumer_count": 0,
 	})
 }
@@ -231,7 +230,7 @@ func (s *MessageQueueServer) deleteQueue(w http.ResponseWriter, r *http.Request)
 }
 
 // OPTIMIZATION: Consumer management endpoints
-func (s *MessageQueueServer) registerConsumer(w http.ResponseWriter, r *http.Request) {
+func (s *MessageQueueServer) registerConsumer(w http.ResponseWriter, _ *http.Request) {
 	// Mock implementation
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{
@@ -263,7 +262,7 @@ func (s *MessageQueueServer) unregisterConsumer(w http.ResponseWriter, r *http.R
 }
 
 // OPTIMIZATION: Consumer group management endpoints
-func (s *MessageQueueServer) createConsumerGroup(w http.ResponseWriter, r *http.Request) {
+func (s *MessageQueueServer) createConsumerGroup(w http.ResponseWriter, _ *http.Request) {
 	// Mock implementation
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{
@@ -296,7 +295,7 @@ func (s *MessageQueueServer) removeConsumerFromGroup(w http.ResponseWriter, r *h
 	})
 }
 
-// OPTIMIZATION: Graceful server shutdown
+// ListenAndServe OPTIMIZATION: Graceful server shutdown
 func (s *MessageQueueServer) ListenAndServe() error {
 	return s.server.ListenAndServe()
 }

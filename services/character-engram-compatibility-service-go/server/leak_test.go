@@ -35,4 +35,3 @@ func TestCharacterEngramCompatibilityServiceNoLeaks(t *testing.T) {
 
 	// If goroutines leaked from character engram compatibility handlers, test FAILS
 }
-

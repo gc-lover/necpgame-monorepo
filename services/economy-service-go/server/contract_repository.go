@@ -1,4 +1,4 @@
-// Issue: #140890166 - Contract system extension
+// Package server Issue: #140890166 - Contract system extension
 package server
 
 import (

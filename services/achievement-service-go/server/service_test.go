@@ -16,14 +16,14 @@ func TestAchievementService_GetAchievements(t *testing.T) {
 	ctx := context.Background()
 
 	params := api.GetAchievementsParams{IncludeHidden: api.NewOptBool(false)}
-	achievements, err := svc.GetAchievements(ctx, params)
+	achievements, err := svc.GetAchievements(params)
 	assert.NoError(t, err)
 	assert.NotNil(t, achievements)
 	assert.NotEmpty(t, achievements.Achievements)
 	assert.Len(t, achievements.Achievements, 2)
 
 	params.Category = api.NewOptAchievementCategory(api.AchievementCategoryCombat)
-	achievements, err = svc.GetAchievements(ctx, params)
+	achievements, err = svc.GetAchievements(params)
 	assert.NoError(t, err)
 	assert.NotNil(t, achievements)
 	assert.Len(t, achievements.Achievements, 1)
@@ -36,13 +36,13 @@ func TestAchievementService_GetAchievementDetails(t *testing.T) {
 
 	// Existing achievement
 	achID := uuid.MustParse("123e4567-e89b-12d3-a456-426614174000")
-	details, err := svc.GetAchievementDetails(ctx, achID)
+	details, err := svc.GetAchievementDetails(achID)
 	assert.NoError(t, err)
 	assert.NotNil(t, details)
 	assert.Equal(t, "First Blood", details.Name)
 
 	// Non-existing achievement
-	_, err = svc.GetAchievementDetails(ctx, uuid.New())
+	_, err = svc.GetAchievementDetails(uuid.New())
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "not found")
 }
@@ -53,7 +53,7 @@ func TestAchievementService_GetPlayerProgress(t *testing.T) {
 	playerID := uuid.New()
 
 	params := api.GetPlayerProgressParams{UnlockedOnly: api.NewOptBool(false), ClaimedOnly: api.NewOptBool(false)}
-	progress, err := svc.GetPlayerProgress(ctx, playerID, params)
+	progress, err := svc.GetPlayerProgress()
 	assert.NoError(t, err)
 	assert.NotNil(t, progress)
 	assert.NotEmpty(t, progress.Achievements)
@@ -66,7 +66,7 @@ func TestAchievementService_ClaimAchievementReward(t *testing.T) {
 	playerID := uuid.New()
 	achID := uuid.New()
 
-	rewards, err := svc.ClaimAchievementReward(ctx, playerID, achID)
+	rewards, err := svc.ClaimAchievementReward(achID)
 	assert.NoError(t, err)
 	assert.NotNil(t, rewards)
 	assert.True(t, rewards.TitleUnlocked.Value)
@@ -77,7 +77,7 @@ func TestAchievementService_GetPlayerTitles(t *testing.T) {
 	ctx := context.Background()
 	playerID := uuid.New()
 
-	titles, err := svc.GetPlayerTitles(ctx, playerID)
+	titles, err := svc.GetPlayerTitles()
 	assert.NoError(t, err)
 	assert.NotNil(t, titles)
 	assert.NotEmpty(t, titles.Titles)
@@ -91,7 +91,7 @@ func TestAchievementService_SetActiveTitle(t *testing.T) {
 	titleID := uuid.New()
 
 	req := &api.SetActiveTitleReq{TitleID: titleID}
-	activeTitle, err := svc.SetActiveTitle(ctx, playerID, req)
+	activeTitle, err := svc.SetActiveTitle(req)
 	assert.NoError(t, err)
 	assert.NotNil(t, activeTitle)
 	assert.Equal(t, titleID, activeTitle.ID)

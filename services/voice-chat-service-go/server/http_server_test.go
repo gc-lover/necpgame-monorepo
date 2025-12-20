@@ -2,15 +2,14 @@ package server
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/gc-lover/necpgame-monorepo/services/voice-chat-service-go/models"
+	"github.com/google/uuid"
 )
 
 type mockVoiceService struct {
@@ -20,7 +19,7 @@ type mockVoiceService struct {
 	getErr       error
 }
 
-func (m *mockVoiceService) CreateChannel(ctx context.Context, req *models.CreateChannelRequest) (*models.VoiceChannel, error) {
+func (m *mockVoiceService) CreateChannel(req *models.CreateChannelRequest) (*models.VoiceChannel, error) {
 	if m.createErr != nil {
 		return nil, m.createErr
 	}
@@ -60,19 +59,19 @@ func (m *mockVoiceService) CreateChannel(ctx context.Context, req *models.Create
 	return channel, nil
 }
 
-func (m *mockVoiceService) GetChannel(ctx context.Context, channelID uuid.UUID) (*models.VoiceChannel, error) {
+func (m *mockVoiceService) GetChannel(channelID uuid.UUID) (*models.VoiceChannel, error) {
 	if m.getErr != nil {
 		return nil, m.getErr
 	}
 	return m.channels[channelID], nil
 }
 
-func (m *mockVoiceService) ListChannels(ctx context.Context, channelType *models.VoiceChannelType, ownerID *uuid.UUID, limit, offset int) (*models.ChannelListResponse, error) {
+func (m *mockVoiceService) ListChannels(channelType *models.VoiceChannelType, ownerID *uuid.UUID, limit, offset int) (*models.ChannelListResponse, error) {
 	if m.getErr != nil {
 		return nil, m.getErr
 	}
 
-	channels := []models.VoiceChannel{}
+	var channels []models.VoiceChannel
 	for _, ch := range m.channels {
 		if channelType != nil && ch.Type != *channelType {
 			continue
@@ -99,7 +98,7 @@ func (m *mockVoiceService) ListChannels(ctx context.Context, channelType *models
 	}, nil
 }
 
-func (m *mockVoiceService) JoinChannel(ctx context.Context, req *models.JoinChannelRequest) (*models.WebRTCTokenResponse, error) {
+func (m *mockVoiceService) JoinChannel(req *models.JoinChannelRequest) (*models.WebRTCTokenResponse, error) {
 	channel := m.channels[req.ChannelID]
 	if channel == nil {
 		return nil, nil
@@ -142,7 +141,7 @@ func (m *mockVoiceService) JoinChannel(ctx context.Context, req *models.JoinChan
 	}, nil
 }
 
-func (m *mockVoiceService) LeaveChannel(ctx context.Context, req *models.LeaveChannelRequest) error {
+func (m *mockVoiceService) LeaveChannel(req *models.LeaveChannelRequest) error {
 	participants := m.participants[req.ChannelID]
 	for i, p := range participants {
 		if p.CharacterID == req.CharacterID {
@@ -153,7 +152,7 @@ func (m *mockVoiceService) LeaveChannel(ctx context.Context, req *models.LeaveCh
 	return nil
 }
 
-func (m *mockVoiceService) UpdateParticipantStatus(ctx context.Context, req *models.UpdateParticipantStatusRequest) error {
+func (m *mockVoiceService) UpdateParticipantStatus(req *models.UpdateParticipantStatusRequest) error {
 	participants := m.participants[req.ChannelID]
 	for i, p := range participants {
 		if p.CharacterID == req.CharacterID {
@@ -165,7 +164,7 @@ func (m *mockVoiceService) UpdateParticipantStatus(ctx context.Context, req *mod
 	return nil
 }
 
-func (m *mockVoiceService) UpdateParticipantPosition(ctx context.Context, req *models.UpdateParticipantPositionRequest) error {
+func (m *mockVoiceService) UpdateParticipantPosition(req *models.UpdateParticipantPositionRequest) error {
 	participants := m.participants[req.ChannelID]
 	for i, p := range participants {
 		if p.CharacterID == req.CharacterID {
@@ -177,7 +176,7 @@ func (m *mockVoiceService) UpdateParticipantPosition(ctx context.Context, req *m
 	return nil
 }
 
-func (m *mockVoiceService) GetChannelParticipants(ctx context.Context, channelID uuid.UUID) (*models.ParticipantListResponse, error) {
+func (m *mockVoiceService) GetChannelParticipants(channelID uuid.UUID) (*models.ParticipantListResponse, error) {
 	participants := m.participants[channelID]
 	return &models.ParticipantListResponse{
 		Participants: participants,
@@ -185,7 +184,7 @@ func (m *mockVoiceService) GetChannelParticipants(ctx context.Context, channelID
 	}, nil
 }
 
-func (m *mockVoiceService) GetChannelDetail(ctx context.Context, channelID uuid.UUID) (*models.ChannelDetailResponse, error) {
+func (m *mockVoiceService) GetChannelDetail(channelID uuid.UUID) (*models.ChannelDetailResponse, error) {
 	channel := m.channels[channelID]
 	if channel == nil {
 		return nil, nil
@@ -251,22 +250,22 @@ func TestHTTPServer_ListChannels(t *testing.T) {
 
 	characterID := uuid.New()
 	channel1 := &models.VoiceChannel{
-		ID:          uuid.New(),
-		OwnerID:     characterID,
-		Type:        models.VoiceChannelTypeParty,
-		Name:        "Party 1",
-		MaxMembers:  5,
-		CreatedAt:   time.Now(),
-		UpdatedAt:   time.Now(),
+		ID:         uuid.New(),
+		OwnerID:    characterID,
+		Type:       models.VoiceChannelTypeParty,
+		Name:       "Party 1",
+		MaxMembers: 5,
+		CreatedAt:  time.Now(),
+		UpdatedAt:  time.Now(),
 	}
 	channel2 := &models.VoiceChannel{
-		ID:          uuid.New(),
-		OwnerID:     characterID,
-		Type:        models.VoiceChannelTypeGuild,
-		Name:        "Guild 1",
-		MaxMembers:  100,
-		CreatedAt:   time.Now(),
-		UpdatedAt:   time.Now(),
+		ID:         uuid.New(),
+		OwnerID:    characterID,
+		Type:       models.VoiceChannelTypeGuild,
+		Name:       "Guild 1",
+		MaxMembers: 100,
+		CreatedAt:  time.Now(),
+		UpdatedAt:  time.Now(),
 	}
 
 	mockService.channels[channel1.ID] = channel1
@@ -301,13 +300,13 @@ func TestHTTPServer_GetChannel(t *testing.T) {
 
 	channelID := uuid.New()
 	channel := &models.VoiceChannel{
-		ID:          channelID,
-		OwnerID:     uuid.New(),
-		Type:        models.VoiceChannelTypeParty,
-		Name:        "Test Party",
-		MaxMembers:  5,
-		CreatedAt:   time.Now(),
-		UpdatedAt:   time.Now(),
+		ID:         channelID,
+		OwnerID:    uuid.New(),
+		Type:       models.VoiceChannelTypeParty,
+		Name:       "Test Party",
+		MaxMembers: 5,
+		CreatedAt:  time.Now(),
+		UpdatedAt:  time.Now(),
 	}
 
 	mockService.channels[channelID] = channel
@@ -358,13 +357,13 @@ func TestHTTPServer_JoinChannel(t *testing.T) {
 	channelID := uuid.New()
 	characterID := uuid.New()
 	channel := &models.VoiceChannel{
-		ID:          channelID,
-		OwnerID:     characterID,
-		Type:        models.VoiceChannelTypeParty,
-		Name:        "Test Party",
-		MaxMembers:  5,
-		CreatedAt:   time.Now(),
-		UpdatedAt:   time.Now(),
+		ID:         channelID,
+		OwnerID:    characterID,
+		Type:       models.VoiceChannelTypeParty,
+		Name:       "Test Party",
+		MaxMembers: 5,
+		CreatedAt:  time.Now(),
+		UpdatedAt:  time.Now(),
 	}
 
 	mockService.channels[channelID] = channel
@@ -404,13 +403,13 @@ func TestHTTPServer_LeaveChannel(t *testing.T) {
 	channelID := uuid.New()
 	characterID := uuid.New()
 	channel := &models.VoiceChannel{
-		ID:          channelID,
-		OwnerID:     characterID,
-		Type:        models.VoiceChannelTypeParty,
-		Name:        "Test Party",
-		MaxMembers:  5,
-		CreatedAt:   time.Now(),
-		UpdatedAt:   time.Now(),
+		ID:         channelID,
+		OwnerID:    characterID,
+		Type:       models.VoiceChannelTypeParty,
+		Name:       "Test Party",
+		MaxMembers: 5,
+		CreatedAt:  time.Now(),
+		UpdatedAt:  time.Now(),
 	}
 
 	mockService.channels[channelID] = channel
@@ -546,4 +545,3 @@ func TestHTTPServer_HealthCheck(t *testing.T) {
 		t.Errorf("Expected status 'healthy', got %s", response["status"])
 	}
 }
-

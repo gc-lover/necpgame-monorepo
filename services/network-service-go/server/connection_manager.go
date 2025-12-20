@@ -1,11 +1,12 @@
 package server
 
 import (
+	"net/http"
 	"time"
 )
 
-// OPTIMIZATION: Issue #1978 - Connection management and cleanup
-func (s *NetworkService) GetClusterStatus(w http.ResponseWriter, r *http.Request) {
+// GetClusterStatus OPTIMIZATION: Issue #1978 - Connection management and cleanup
+func (s *NetworkService) GetClusterStatus(w http.ResponseWriter) {
 	// OPTIMIZATION: Issue #1978 - Use memory pool
 	resp := s.clusterResponsePool.Get().(*GetClusterStatusResponse)
 	defer s.clusterResponsePool.Put(resp)

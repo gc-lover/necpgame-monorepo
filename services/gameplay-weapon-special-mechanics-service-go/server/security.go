@@ -1,4 +1,4 @@
-// Issue: #1595
+// Package server Issue: #1595
 package server
 
 import (
@@ -13,8 +13,7 @@ func NewSecurityHandler() *SecurityHandler {
 	return &SecurityHandler{}
 }
 
-func (s *SecurityHandler) HandleBearerAuth(ctx context.Context, operationName string, t api.BearerAuth) (context.Context, error) {
+func (s *SecurityHandler) HandleBearerAuth(ctx context.Context, _ string, _ api.BearerAuth) (context.Context, error) {
 	// TODO: Implement JWT validation
 	return ctx, nil
 }
-

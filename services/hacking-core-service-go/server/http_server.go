@@ -1,4 +1,4 @@
-// Issue: #1595
+// Package server Issue: #1595
 package server
 
 // HTTP handlers use context.WithTimeout for request timeouts (see handlers.go)
@@ -72,8 +72,8 @@ func NewHTTPServer(addr string) *HTTPServer {
 		server: &http.Server{
 			Addr:         addr,
 			Handler:      router,
-			ReadTimeout:  30 * time.Second,  // Prevent slowloris attacks,
-			WriteTimeout: 30 * time.Second,  // Prevent hanging writes,
+			ReadTimeout:  30 * time.Second, // Prevent slowloris attacks,
+			WriteTimeout: 30 * time.Second, // Prevent hanging writes,
 		},
 	}
 
@@ -140,7 +140,7 @@ func corsMiddleware() func(http.Handler) http.Handler {
 	}
 }
 
-func healthCheck(w http.ResponseWriter, r *http.Request) {
+func healthCheck(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("OK"))
 }
@@ -166,6 +166,3 @@ func getRequestID(ctx context.Context) string {
 	}
 	return ""
 }
-
-
-

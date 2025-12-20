@@ -1,4 +1,4 @@
-// SQL queries use prepared statements with placeholders (, , ?) for safety
+// Package server SQL queries use prepared statements with placeholders (, , ?) for safety
 // Issue: #57
 package server
 
@@ -11,24 +11,24 @@ import (
 )
 
 type HackingExecution struct {
-	ID              uuid.UUID
-	PlayerID        uuid.UUID
-	TargetID        uuid.UUID
-	HackType        string
-	DemonID         *uuid.UUID
-	Success         bool
-	Detected        bool
+	ID               uuid.UUID
+	PlayerID         uuid.UUID
+	TargetID         uuid.UUID
+	HackType         string
+	DemonID          *uuid.UUID
+	Success          bool
+	Detected         bool
 	OverheatIncrease float32
-	CreatedAt       time.Time
+	CreatedAt        time.Time
 }
 
 type NetworkAccess struct {
-	ID              uuid.UUID
-	PlayerID        uuid.UUID
-	NetworkID       uuid.UUID
-	AccessLevel     string
-	AccessGranted   bool
-	CreatedAt       time.Time
+	ID            uuid.UUID
+	PlayerID      uuid.UUID
+	NetworkID     uuid.UUID
+	AccessLevel   string
+	AccessGranted bool
+	CreatedAt     time.Time
 }
 
 type OverheatState struct {
@@ -50,10 +50,10 @@ type Repository interface {
 }
 
 type inMemoryRepository struct {
-	mu                sync.RWMutex
-	executions        map[uuid.UUID][]*HackingExecution
-	networkAccesses   map[string]*NetworkAccess
-	overheatStates    map[uuid.UUID]*OverheatState
+	mu              sync.RWMutex
+	executions      map[uuid.UUID][]*HackingExecution
+	networkAccesses map[string]*NetworkAccess
+	overheatStates  map[uuid.UUID]*OverheatState
 }
 
 func NewInMemoryRepository() Repository {
@@ -64,7 +64,7 @@ func NewInMemoryRepository() Repository {
 	}
 }
 
-func (r *inMemoryRepository) SaveHackingExecution(ctx context.Context, execution *HackingExecution) error {
+func (r *inMemoryRepository) SaveHackingExecution(_ context.Context, execution *HackingExecution) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -76,7 +76,7 @@ func (r *inMemoryRepository) SaveHackingExecution(ctx context.Context, execution
 	return nil
 }
 
-func (r *inMemoryRepository) GetHackingExecutions(ctx context.Context, playerID uuid.UUID) ([]*HackingExecution, error) {
+func (r *inMemoryRepository) GetHackingExecutions(_ context.Context, playerID uuid.UUID) ([]*HackingExecution, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
@@ -88,7 +88,7 @@ func (r *inMemoryRepository) GetHackingExecutions(ctx context.Context, playerID 
 	return executions, nil
 }
 
-func (r *inMemoryRepository) SaveNetworkAccess(ctx context.Context, access *NetworkAccess) error {
+func (r *inMemoryRepository) SaveNetworkAccess(_ context.Context, access *NetworkAccess) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -101,7 +101,7 @@ func (r *inMemoryRepository) SaveNetworkAccess(ctx context.Context, access *Netw
 	return nil
 }
 
-func (r *inMemoryRepository) GetNetworkAccess(ctx context.Context, playerID uuid.UUID, networkID uuid.UUID) (*NetworkAccess, error) {
+func (r *inMemoryRepository) GetNetworkAccess(_ context.Context, playerID uuid.UUID, networkID uuid.UUID) (*NetworkAccess, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
@@ -114,7 +114,7 @@ func (r *inMemoryRepository) GetNetworkAccess(ctx context.Context, playerID uuid
 	return access, nil
 }
 
-func (r *inMemoryRepository) GetOverheatState(ctx context.Context, playerID uuid.UUID) (*OverheatState, error) {
+func (r *inMemoryRepository) GetOverheatState(_ context.Context, playerID uuid.UUID) (*OverheatState, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
@@ -133,7 +133,7 @@ func (r *inMemoryRepository) GetOverheatState(ctx context.Context, playerID uuid
 	return state, nil
 }
 
-func (r *inMemoryRepository) UpdateOverheatState(ctx context.Context, state *OverheatState) error {
+func (r *inMemoryRepository) UpdateOverheatState(_ context.Context, state *OverheatState) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -141,42 +141,3 @@ func (r *inMemoryRepository) UpdateOverheatState(ctx context.Context, state *Ove
 	r.overheatStates[state.PlayerID] = state
 	return nil
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

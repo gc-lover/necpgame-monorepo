@@ -1,9 +1,10 @@
+// Package server provides security utilities for chat moderation service.
 // Issue: #1911
 package server
 
 import (
 	"context"
-	"net/http"
+	"fmt"
 
 	"necpgame/services/chat-moderation-service-go/pkg/api"
 )
@@ -12,17 +13,11 @@ import (
 type SecurityHandler struct{}
 
 // HandleBearerAuth implements Bearer authentication
-func (s *SecurityHandler) HandleBearerAuth(ctx context.Context, operationName string, t api.BearerAuth) (context.Context, error) {
+func (s *SecurityHandler) HandleBearerAuth(ctx context.Context, _ string, t api.BearerAuth) (context.Context, error) {
 	// TODO: Implement JWT token validation
 	// For now, accept any token (development mode)
 	if t.Token == "" {
-		return ctx, &api.ErrorStatusCode{
-			StatusCode: http.StatusUnauthorized,
-			Response: api.Error{
-				Code:    "UNAUTHORIZED",
-				Message: "Missing or invalid token",
-			},
-		}
+		return ctx, fmt.Errorf("missing or invalid token")
 	}
 
 	// In production, validate JWT token here
@@ -33,6 +28,3 @@ func (s *SecurityHandler) HandleBearerAuth(ctx context.Context, operationName st
 }
 
 // NewSecurityHandler creates new security handler
-func NewSecurityHandler() *SecurityHandler {
-	return &SecurityHandler{}
-}

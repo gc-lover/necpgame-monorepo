@@ -15,15 +15,15 @@ func TestUDPServerNoLeaks(t *testing.T) {
 	defer goleak.VerifyNone(t,
 		goleak.IgnoreTopFunction("database/sql.(*DB).connectionOpener"),
 	)
-	
+
 	// TODO: Test UDP server lifecycle
 	// server := NewUDPServer(":18080", nil)
 	// server.Start()
 	// time.Sleep(100 * time.Millisecond)
 	// server.Stop()
-	
+
 	time.Sleep(100 * time.Millisecond)
-	
+
 	// If goroutines leaked from UDP handlers, test FAILS
 }
 
@@ -33,15 +33,15 @@ func TestPositionUpdatesNoLeaks(t *testing.T) {
 	defer goleak.VerifyNone(t,
 		goleak.IgnoreTopFunction("database/sql.(*DB).connectionOpener"),
 	)
-	
+
 	// TODO: Test position update tick loop
 	// loop := NewPositionUpdateLoop()
 	// loop.Start()
 	// time.Sleep(200 * time.Millisecond)
 	// loop.Stop()
-	
+
 	time.Sleep(200 * time.Millisecond)
-	
+
 	// Position update loops must stop cleanly (no leaked tickers/goroutines)
 }
 
@@ -56,4 +56,3 @@ func TestPositionUpdatesNoLeaks(t *testing.T) {
 // - Ticker.Stop() for all time.Ticker
 // - UDP connection close
 // - Channel close for all update channels
-

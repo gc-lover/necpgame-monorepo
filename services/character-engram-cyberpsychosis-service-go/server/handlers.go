@@ -1,4 +1,4 @@
-// Issue: #1600 - ogen handlers (TYPED responses)
+// Package server Issue: #1600 - ogen handlers (TYPED responses)
 package server
 
 import (
@@ -6,10 +6,10 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	api "github.com/necpgame/character-engram-cyberpsychosis-service-go/pkg/api"
+	"github.com/necpgame/character-engram-cyberpsychosis-service-go/pkg/api"
 )
 
-// Context timeout constants
+// DBTimeout Context timeout constants
 const (
 	DBTimeout = 50 * time.Millisecond // Performance: context timeout for DB ops
 )
@@ -114,22 +114,22 @@ func (h *EngramCyberpsychosisHandlers) GetEngramBlockers(ctx context.Context, pa
 
 	blockers := []api.EngramBlocker{
 		{
-			BlockerID:         blockerID,
-			Buffs:             api.NewOptEngramBlockerBuffs(buffs),
-			CharacterID:       params.CharacterID,
-			Debuffs:           api.NewOptEngramBlockerDebuffs(debuffs),
-			DurationDays:      api.NewOptInt(durationDays),
-			ExpiresAt:         expiresAt,
+			BlockerID:          blockerID,
+			Buffs:              api.NewOptEngramBlockerBuffs(buffs),
+			CharacterID:        params.CharacterID,
+			Debuffs:            api.NewOptEngramBlockerDebuffs(debuffs),
+			DurationDays:       api.NewOptInt(durationDays),
+			ExpiresAt:          expiresAt,
 			InfluenceReduction: api.NewOptFloat32(influenceReduction),
-			InstalledAt:       now,
-			IsActive:          api.NewOptBool(isActive),
-			RiskReduction:     api.NewOptFloat32(riskReduction),
-			Tier:              2,
+			InstalledAt:        now,
+			IsActive:           api.NewOptBool(true),
+			RiskReduction:      api.NewOptFloat32(riskReduction),
+			Tier:               2,
 		},
 	}
 
 	response := &api.GetEngramBlockersOKApplicationJSON{}
-	*response = api.GetEngramBlockersOKApplicationJSON(blockers)
+	*response = blockers
 	return response, nil
 }
 
@@ -167,9 +167,9 @@ func (h *EngramCyberpsychosisHandlers) InstallEngramBlocker(ctx context.Context,
 	riskReduction := float32(req.BlockerTier * 5)
 	influenceReduction := float32(req.BlockerTier * 10)
 
-	mentalResistance := float32(float32(req.BlockerTier) * 5.0)
-	concentration := float32(float32(req.BlockerTier) * 2.5)
-	energyRecovery := float32(-float32(req.BlockerTier) * 5.0)
+	mentalResistance := float32(req.BlockerTier) * 5.0
+	concentration := float32(req.BlockerTier) * 2.5
+	energyRecovery := -float32(req.BlockerTier) * 5.0
 
 	buffs := api.EngramBlockerBuffs{
 		Concentration:    api.NewOptFloat32(concentration),
@@ -181,17 +181,17 @@ func (h *EngramCyberpsychosisHandlers) InstallEngramBlocker(ctx context.Context,
 	}
 
 	response := &api.EngramBlocker{
-		BlockerID:         blockerID,
-		Buffs:             api.NewOptEngramBlockerBuffs(buffs),
-		CharacterID:       params.CharacterID,
-		Debuffs:           api.NewOptEngramBlockerDebuffs(debuffs),
-		DurationDays:      api.NewOptInt(durationDays),
-		ExpiresAt:         expiresAt,
+		BlockerID:          blockerID,
+		Buffs:              api.NewOptEngramBlockerBuffs(buffs),
+		CharacterID:        params.CharacterID,
+		Debuffs:            api.NewOptEngramBlockerDebuffs(debuffs),
+		DurationDays:       api.NewOptInt(durationDays),
+		ExpiresAt:          expiresAt,
 		InfluenceReduction: api.NewOptFloat32(influenceReduction),
-		InstalledAt:       now,
-		IsActive:          api.NewOptBool(true),
-		RiskReduction:     api.NewOptFloat32(riskReduction),
-		Tier:              req.BlockerTier,
+		InstalledAt:        now,
+		IsActive:           api.NewOptBool(true),
+		RiskReduction:      api.NewOptFloat32(riskReduction),
+		Tier:               req.BlockerTier,
 	}
 
 	return response, nil

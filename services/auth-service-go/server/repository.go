@@ -1,4 +1,4 @@
-// Issue: #136
+// Package server Issue: #136
 package server
 
 import (
@@ -23,13 +23,6 @@ type Repository struct {
 }
 
 // NewRepository создает новый репозиторий
-func NewRepository(db *sql.DB, redisClient *redis.Client, logger *zap.Logger) *Repository {
-	return &Repository{
-		db:          db,
-		redisClient: redisClient,
-		logger:      logger,
-	}
-}
 
 // CreateUser создает нового пользователя
 func (r *Repository) CreateUser(ctx context.Context, req api.RegisterRequest) (*User, error) {

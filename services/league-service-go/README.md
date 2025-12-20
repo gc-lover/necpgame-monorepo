@@ -47,7 +47,8 @@ docker build -t league-service:latest .
 
 ## Environment Variables
 
-- `DATABASE_URL` - PostgreSQL connection string (default: `postgres://postgres:postgres@localhost:5432/necpgame?sslmode=disable`)
+- `DATABASE_URL` - PostgreSQL connection string (default:
+  `postgres://postgres:postgres@localhost:5432/necpgame?sslmode=disable`)
 - `PORT` - Service port (default: `8093`)
 
 ## Architecture

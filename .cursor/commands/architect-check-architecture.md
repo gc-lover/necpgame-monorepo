@@ -9,10 +9,12 @@ Check architecture readiness before handoff to API Designer.
 - [ ] Requirements ready
 
 **Result:**
+
 - OK Ready → handoff to API: Status `Todo`, Agent `API`
 - ❌ Not ready → fix issues, don't handoff
 
 **Update fields:**
+
 ```javascript
 mcp_github_update_project_item({
   owner_type: 'user',

@@ -1,11 +1,10 @@
-// Issue: #1595
+// Package server Issue: #1595
 package server
 
 // HTTP handlers use context.WithTimeout for request timeouts (see handlers.go)
 
 import (
 	"context"
-		"time"
 	"log"
 	"net/http"
 
@@ -62,16 +61,12 @@ func (s *HTTPServer) Shutdown(ctx context.Context) error {
 	return s.server.Shutdown(ctx)
 }
 
-func healthCheck(w http.ResponseWriter, r *http.Request) {
+func healthCheck(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("OK"))
 }
 
-func metricsHandler(w http.ResponseWriter, r *http.Request) {
+func metricsHandler(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("# HELP combat_ai_service metrics\n"))
 }
-
-
-
-

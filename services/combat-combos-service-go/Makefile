@@ -1,73 +1,45 @@
-.PHONY: generate-api bundle-api clean verify-api check-deps install-deps check-file-sizes
+# Issue: #158
+.PHONY: help build test clean docker-build docker-run lint vet fmt mod-tidy run dev deps
 
-SERVICE_NAME := combat-combos-service
-OGEN := ogen
-REDOCLY_CLI := npx -y @redocly/cli
+help: ## Show this help message
+	@echo 'Usage: make [target]'
+	@echo ''
+	@echo 'Targets:'
+	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  %-15s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
-SPEC_DIR := ../../proto/openapi
-API_DIR := pkg/api
-SERVICE_SPEC := $(SPEC_DIR)/$(SERVICE_NAME).yaml
-BUNDLED_SPEC := $(API_DIR)/openapi-bundled.yaml
+build: ## Build the application
+	go build -o bin/combat-combos-service ./main.go
 
-check-deps:
-	@echo "Checking dependencies..."
-	@command -v $(OGEN) >/dev/null 2>&1 || { echo "вќЊ ogen not found"; exit 1; }
-	@command -v node >/dev/null 2>&1 || { echo "вќЊ node not found"; exit 1; }
-	@echo "вњ… Dependencies installed"
+test: ## Run tests
+	go test -v -race -coverprofile=coverage.out ./...
 
-install-deps:
-	@go install github.com/ogen-go/ogen/cmd/ogen@latest || true
+clean: ## Clean build artifacts
+	rm -rf bin/
+	rm -f coverage.out
 
-bundle-api: check-deps
-	@echo "Bundling: $(SERVICE_SPEC)"
-	@if [ ! -f "$(SERVICE_SPEC)" ]; then echo "вќЊ Spec not found"; exit 1; fi
-	@mkdir -p $(API_DIR)
-	@$(REDOCLY_CLI) bundle $(SERVICE_SPEC) -o $(BUNDLED_SPEC) || exit 1
-	@echo "вњ… Bundled"
+docker-build: ## Build Docker image
+	docker build -t combat-combos-service-go:latest .
 
-generate-api: bundle-api
-	@echo "Generating ogen code..."
-	@$(OGEN) --target $(API_DIR) --package api --clean $(BUNDLED_SPEC) || exit 1
-	@echo "вњ… Generation complete!"
+docker-run: ## Run Docker container
+	docker run -p 8084:8084 --env-file .env combat-combos-service-go:latest
 
-verify-api: check-deps
-	@echo "Verifying: $(SERVICE_SPEC)"
-	@if [ ! -f "$(SERVICE_SPEC)" ]; then exit 1; fi
-	@$(REDOCLY_CLI) lint $(SERVICE_SPEC) || exit 1
-	@echo "вњ… Valid"
+lint: ## Run linter
+	golangci-lint run
 
-clean:
+vet: ## Run go vet
+	go vet ./...
 
-.PHONY: test bench-quick build
+fmt: ## Format code
+	go fmt ./...
 
-# Run tests
-test:
-	@go test -v ./...
+mod-tidy: ## Tidy modules
+	go mod tidy
 
-# Quick benchmark (short duration)
-bench-quick:
-	@if [ -f "server/handlers_bench_test.go" ] || find . -name "*_bench_test.go" | grep -q .; then \
-		go test -run=^\$\$ -bench=. -benchmem -benchtime=100ms ./server; \
-	fi
+run: ## Run the application
+	go run main.go
 
-# Build (runs tests and benchmarks first)
-build: test bench-quick
-	@CGO_ENABLED=0 go build -ldflags="-w -s" -o bin/combat-combos-service .
-	@rm -f $(BUNDLED_SPEC)
-	@rm -rf $(API_DIR)/*.gen.go
+dev: ## Run in development mode with hot reload
+	air
 
-
-.PHONY: bench bench-json bench-quick
-
-# Run benchmarks (human-readable)
-bench:
-	go test -run=^ -bench=. -benchmem ./server
-
-# Run benchmarks (JSON output for CI)
-bench-json:
-	@mkdir -p ../../.benchmarks/results
-	go test -run=^ -bench=. -benchmem -json ./server > ../../.benchmarks/results/combat-combos-service_bench.json
-
-# Quick benchmark (short duration)
-bench-quick:
-	go test -run=^ -bench=. -benchmem -benchtime=100ms ./server
+deps: ## Download dependencies
+	go mod download

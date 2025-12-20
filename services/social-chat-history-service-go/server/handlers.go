@@ -1,4 +1,4 @@
-// SQL queries use prepared statements with placeholders (, , ?) for safety
+// Package server SQL queries use prepared statements with placeholders (, , ?) for safety
 // Issue: #1598, #1607
 // ogen handlers - TYPED responses (no interface{} boxing!)
 package server
@@ -11,7 +11,7 @@ import (
 	"github.com/google/uuid"
 )
 
-// Context timeout constants (Issue #1604)
+// DBTimeout Context timeout constants (Issue #1604)
 const (
 	DBTimeout = 50 * time.Millisecond
 )
@@ -42,33 +42,33 @@ func (h *ChatHistoryHandlers) GetChatHistory(ctx context.Context, params api.Get
 
 	messages := []api.ChatMessage{
 		{
-			ID:           api.NewOptUUID(messageId1),
-			ChannelID:    api.NewOptUUID(channelId1),
-			ChannelType:  api.NewOptChatMessageChannelType(channelTypeMsg),
-			SenderID:     api.NewOptUUID(senderId1),
-			SenderName:   api.NewOptString("Player1"),
-			Content:      api.NewOptString("History message 1"),
-			MessageType:  api.NewOptChatMessageMessageType(api.ChatMessageMessageTypeText),
-			CreatedAt:    api.NewOptDateTime(now),
-			UpdatedAt:    api.NewOptNilDateTime(now),
-			ExpiresAt:    api.OptNilDateTime{},
-			IsDeleted:    api.NewOptBool(false),
-			IsEdited:     api.NewOptBool(false),
+			ID:            api.NewOptUUID(messageId1),
+			ChannelID:     api.NewOptUUID(channelId1),
+			ChannelType:   api.NewOptChatMessageChannelType(channelTypeMsg),
+			SenderID:      api.NewOptUUID(senderId1),
+			SenderName:    api.NewOptString("Player1"),
+			Content:       api.NewOptString("History message 1"),
+			MessageType:   api.NewOptChatMessageMessageType(api.ChatMessageMessageTypeText),
+			CreatedAt:     api.NewOptDateTime(now),
+			UpdatedAt:     api.NewOptNilDateTime(now),
+			ExpiresAt:     api.OptNilDateTime{},
+			IsDeleted:     api.NewOptBool(false),
+			IsEdited:      api.NewOptBool(false),
 			FormattedText: api.OptString{},
 		},
 		{
-			ID:           api.NewOptUUID(messageId2),
-			ChannelID:    api.NewOptUUID(channelId2),
-			ChannelType:  api.NewOptChatMessageChannelType(channelTypeMsg),
-			SenderID:     api.NewOptUUID(senderId2),
-			SenderName:   api.NewOptString("Player2"),
-			Content:      api.NewOptString("History message 2"),
-			MessageType:  api.NewOptChatMessageMessageType(api.ChatMessageMessageTypeText),
-			CreatedAt:    api.NewOptDateTime(now),
-			UpdatedAt:    api.NewOptNilDateTime(now),
-			ExpiresAt:    api.OptNilDateTime{},
-			IsDeleted:    api.NewOptBool(false),
-			IsEdited:     api.NewOptBool(false),
+			ID:            api.NewOptUUID(messageId2),
+			ChannelID:     api.NewOptUUID(channelId2),
+			ChannelType:   api.NewOptChatMessageChannelType(channelTypeMsg),
+			SenderID:      api.NewOptUUID(senderId2),
+			SenderName:    api.NewOptString("Player2"),
+			Content:       api.NewOptString("History message 2"),
+			MessageType:   api.NewOptChatMessageMessageType(api.ChatMessageMessageTypeText),
+			CreatedAt:     api.NewOptDateTime(now),
+			UpdatedAt:     api.NewOptNilDateTime(now),
+			ExpiresAt:     api.OptNilDateTime{},
+			IsDeleted:     api.NewOptBool(false),
+			IsEdited:      api.NewOptBool(false),
 			FormattedText: api.OptString{},
 		},
 	}
@@ -119,33 +119,33 @@ func (h *ChatHistoryHandlers) SearchChatHistory(ctx context.Context, params api.
 
 	messages := []api.ChatMessage{
 		{
-			ID:           api.NewOptUUID(messageId1),
-			ChannelID:    api.NewOptUUID(channelId1),
-			ChannelType:  api.NewOptChatMessageChannelType(channelType),
-			SenderID:     api.NewOptUUID(senderId1),
-			SenderName:   api.NewOptString("Player1"),
-			Content:      api.NewOptString("Search result 1"),
-			MessageType:  api.NewOptChatMessageMessageType(api.ChatMessageMessageTypeText),
-			CreatedAt:    api.NewOptDateTime(now),
-			UpdatedAt:    api.NewOptNilDateTime(now),
-			ExpiresAt:    api.OptNilDateTime{},
-			IsDeleted:    api.NewOptBool(false),
-			IsEdited:     api.NewOptBool(false),
+			ID:            api.NewOptUUID(messageId1),
+			ChannelID:     api.NewOptUUID(channelId1),
+			ChannelType:   api.NewOptChatMessageChannelType(channelType),
+			SenderID:      api.NewOptUUID(senderId1),
+			SenderName:    api.NewOptString("Player1"),
+			Content:       api.NewOptString("Search result 1"),
+			MessageType:   api.NewOptChatMessageMessageType(api.ChatMessageMessageTypeText),
+			CreatedAt:     api.NewOptDateTime(now),
+			UpdatedAt:     api.NewOptNilDateTime(now),
+			ExpiresAt:     api.OptNilDateTime{},
+			IsDeleted:     api.NewOptBool(false),
+			IsEdited:      api.NewOptBool(false),
 			FormattedText: api.OptString{},
 		},
 		{
-			ID:           api.NewOptUUID(messageId2),
-			ChannelID:    api.NewOptUUID(channelId2),
-			ChannelType:  api.NewOptChatMessageChannelType(channelType),
-			SenderID:     api.NewOptUUID(senderId2),
-			SenderName:   api.NewOptString("Player2"),
-			Content:      api.NewOptString("Search result 2"),
-			MessageType:  api.NewOptChatMessageMessageType(api.ChatMessageMessageTypeText),
-			CreatedAt:    api.NewOptDateTime(now),
-			UpdatedAt:    api.NewOptNilDateTime(now),
-			ExpiresAt:    api.OptNilDateTime{},
-			IsDeleted:    api.NewOptBool(false),
-			IsEdited:     api.NewOptBool(false),
+			ID:            api.NewOptUUID(messageId2),
+			ChannelID:     api.NewOptUUID(channelId2),
+			ChannelType:   api.NewOptChatMessageChannelType(channelType),
+			SenderID:      api.NewOptUUID(senderId2),
+			SenderName:    api.NewOptString("Player2"),
+			Content:       api.NewOptString("Search result 2"),
+			MessageType:   api.NewOptChatMessageMessageType(api.ChatMessageMessageTypeText),
+			CreatedAt:     api.NewOptDateTime(now),
+			UpdatedAt:     api.NewOptNilDateTime(now),
+			ExpiresAt:     api.OptNilDateTime{},
+			IsDeleted:     api.NewOptBool(false),
+			IsEdited:      api.NewOptBool(false),
 			FormattedText: api.OptString{},
 		},
 	}
@@ -174,4 +174,3 @@ func (h *ChatHistoryHandlers) SearchChatHistory(ctx context.Context, params api.
 
 	return response, nil
 }
-

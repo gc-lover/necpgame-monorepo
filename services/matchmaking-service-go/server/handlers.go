@@ -1,4 +1,4 @@
-// Issue: #1579 - ogen migration + full optimizations
+// Package server Issue: #1579 - ogen migration + full optimizations
 // Migrated from oapi-codegen to ogen for typed responses (no interface{} boxing!)
 package server
 
@@ -147,7 +147,7 @@ func (h *Handlers) DeclineMatch(ctx context.Context, params api.DeclineMatchPara
 }
 
 // NewError implements ogen error handler (handles errors from middleware/validation)
-func (h *Handlers) NewError(ctx context.Context, err error) *api.Error {
+func (h *Handlers) NewError(err error) *api.Error {
 	return &api.Error{
 		Error:   "error",
 		Message: err.Error(),

@@ -1,4 +1,4 @@
-// Issue: #141889273
+// Package server Issue: #141889273
 package server
 
 import (
@@ -35,6 +35,8 @@ func (h *GatewayHandler) BroadcastToClients(data []byte) {
 }
 
 // BroadcastGameStateWithDelta broadcasts game state with delta compression
+//
+//goland:noinspection ALL
 func (h *GatewayHandler) BroadcastGameStateWithDelta(newState *GameStateData) {
 	startTime := time.Now()
 	h.clientConnsMu.RLock()
@@ -91,6 +93,7 @@ func (h *GatewayHandler) BroadcastGameStateWithDelta(newState *GameStateData) {
 
 				oldState := deltaState.GetLastState()
 				delta := CalculateDelta(oldState, newState)
+				//goland:noinspection ALL
 				defer func() {
 					if delta != nil {
 						PutGameStateToPool(delta)
@@ -156,9 +159,9 @@ func (h *GatewayHandler) BroadcastGameStateWithDelta(newState *GameStateData) {
 	}
 
 	logger.WithFields(map[string]interface{}{
-		"success_count": finalSuccessCount,
-		"total_clients": clientCount,
-		"duration_ms":   duration * 1000,
+		"success_count":  finalSuccessCount,
+		"total_clients":  clientCount,
+		"duration_ms":    duration * 1000,
 		"avg_delta_size": avgDeltaSize,
 	}).Info("Broadcasted GameState with delta compression to clients")
 }
@@ -174,23 +177,23 @@ func (h *GatewayHandler) BroadcastToClientsParallel(data []byte) {
 		logger.Warn("No clients connected, GameState not broadcasted")
 		return
 	}
-	
+
 	clients := make([]*ClientConnection, 0, clientCount)
 	for _, clientConn := range h.clientConns {
 		clients = append(clients, clientConn)
 	}
 	h.clientConnsMu.RUnlock()
-	
+
 	logger := GetLogger()
 	logger.WithField("client_count", clientCount).WithField("data_len", len(data)).Info("Broadcasting GameState to clients")
-	
+
 	RecordMessageSize("gamestate", len(data))
-	
+
 	deadline := h.getWriteDeadline()
 	var wg sync.WaitGroup
 	var successCount int64
 	var mu sync.Mutex
-	
+
 	for _, clientConn := range clients {
 		wg.Add(1)
 		go func(cc *ClientConnection) {
@@ -209,40 +212,12 @@ func (h *GatewayHandler) BroadcastToClientsParallel(data []byte) {
 			cc.mu.Unlock()
 		}(clientConn)
 	}
-	
+
 	wg.Wait()
-	
+
 	duration := time.Since(startTime).Seconds()
 	RecordGameStateBroadcastDuration(duration)
 	RecordGameStateBroadcasted()
-	
+
 	logger.WithField("success_count", successCount).WithField("total_clients", clientCount).WithField("duration_ms", duration*1000).Info("Broadcasted GameState to clients")
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -9,22 +9,26 @@
 **Оптимизации ОБЯЗАТЕЛЬНЫ, а не опциональны.**
 
 ### Было (старый подход):
+
 ```
 Создать функционал → Передать → (может быть) оптимизировать потом
 ```
 
 ### Стало (новый подход):
+
 ```
 Создать функционал С ОПТИМИЗАЦИЯМИ → Валидировать → Передать
 ```
 
 **Benefits:**
+
 - OK Production-ready с первого дня
 - OK Нет technical debt
 - OK Performance targets с самого начала
 - OK Дешевле (оптимизировать сразу проще чем потом)
 
 **Цель:**
+
 - Каждый Backend сервис ДОЛЖЕН следовать Performance Bible
 - Каждая Database таблица ДОЛЖНА быть оптимизирована
 - Рефакторинг неоптимизированного кода ОБЯЗАТЕЛЕН
@@ -44,6 +48,7 @@
 ```
 
 **BLOCKER checklist:**
+
 - ❌ No context timeouts
 - ❌ No DB pool config
 - ❌ Goroutine leaks
@@ -54,6 +59,7 @@
 - ❌ Unbounded channels (для production)
 
 **Что делать при BLOCKER:**
+
 1. Исправь проблемы
 2. Запусти валидацию снова
 3. Повтори пока не пройдет
@@ -73,14 +79,14 @@
    ```
 
 2. **Если нашел проблемы:**
-   - Создай рефакторинг план
-   - Создай Issue для рефакторинга
-   - Пометь label `refactor` + `performance`
+    - Создай рефакторинг план
+    - Создай Issue для рефакторинга
+    - Пометь label `refactor` + `performance`
 
 3. **Приоритизируй:**
-   - 🔴 BLOCKER issues → исправь немедленно
-   - 🟡 WARNING issues → создай Issue
-   - 🟢 IMPROVEMENTS → backlog
+    - 🔴 BLOCKER issues → исправь немедленно
+    - 🟡 WARNING issues → создай Issue
+    - 🟢 IMPROVEMENTS → backlog
 
 **ПРАВИЛО:** Каждый existing сервис должен быть optimized или иметь plan для optimization.
 
@@ -115,6 +121,7 @@ CREATE TABLE players (
 ### Index Optimization
 
 **ОБЯЗАТЕЛЬНО:**
+
 - Covering indexes для hot queries
 - Partial indexes (WHERE is_active = true)
 - GIN indexes для JSONB
@@ -127,6 +134,7 @@ CREATE TABLE players (
 ```
 
 **Создает:**
+
 - Optimization plan
 - Migration scripts
 - Expected gains report
@@ -148,9 +156,9 @@ CREATE TABLE players (
    ```
 
 2. **Если нашел bottleneck:**
-   - Создай Issue для оптимизации
-   - Пометь label `performance` + `priority-high`
-   - Назначь Backend или Database
+    - Создай Issue для оптимизации
+    - Пометь label `performance` + `priority-high`
+    - Назначь Backend или Database
 
 3. **PGO compilation:**
    ```bash
@@ -214,13 +222,13 @@ Backend берет задачу →
 
 **Отслеживай:**
 
-| Метрика | Цель | Текущее |
-|---------|------|---------|
-| % сервисов с оптимизациями | 100% | - |
-| % таблиц с оптимизацией | 100% | - |
-| Avg validation score | >90% | - |
-| Рефакторинг Issues открыто | Track | - |
-| Рефакторинг Issues закрыто | Track | - |
+| Метрика                    | Цель  | Текущее |
+|----------------------------|-------|---------|
+| % сервисов с оптимизациями | 100%  | -       |
+| % таблиц с оптимизацией    | 100%  | -       |
+| Avg validation score       | >90%  | -       |
+| Рефакторинг Issues открыто | Track | -       |
+| Рефакторинг Issues закрыто | Track | -       |
 
 ---
 
@@ -257,6 +265,7 @@ Backend берет задачу →
 ## OK Success Criteria
 
 **Backend сервис готов когда:**
+
 - OK Validation script passed (0 BLOCKERS)
 - OK Benchmarks show 0 allocs/op (hot path)
 - OK No goroutine leaks
@@ -264,6 +273,7 @@ Backend берет задачу →
 - OK Performance targets met
 
 **Database schema готова когда:**
+
 - OK Columns ordered (large → small)
 - OK Covering indexes для hot queries
 - OK Partial indexes где применимо
@@ -274,6 +284,7 @@ Backend берет задачу →
 ## 📚 References
 
 **Для Backend:**
+
 - `.cursor/GO_BACKEND_PERFORMANCE_BIBLE.md` - 120+ оптимизаций
 - `.cursor/BACKEND_OPTIMIZATION_CHECKLIST.md` - чек-лист
 - `.cursor/templates/backend-*.md` - шаблоны
@@ -281,10 +292,12 @@ Backend берет задачу →
 - `/backend-refactor-service` - рефакторинг
 
 **Для Database:**
+
 - `.cursor/GO_BACKEND_PERFORMANCE_BIBLE.md` - Part 5A, 7A
 - `/database-refactor-schema` - рефакторинг
 
 **Для Performance:**
+
 - `.cursor/GO_BACKEND_PERFORMANCE_BIBLE.md` - Part 3 (Profiling)
 - Pyroscope, pprof, benchmarks
 
@@ -295,11 +308,13 @@ Backend берет задачу →
 **"Optimization is NOT optional - it's a requirement"**
 
 Без оптимизаций:
+
 - Сервис не готов к production
 - Задача не может быть передана
 - Issue не может быть закрыт
 
 С оптимизациями:
+
 - OK Production-ready
 - OK Scalable
 - OK Cost-effective

@@ -1,4 +1,4 @@
-// Issue: #141889181
+// Package server Issue: #141889181
 package server
 
 import (
@@ -95,7 +95,7 @@ func (m *Matchmaker) allocate(ctx context.Context, tickets []string) {
 		RecordError("marshal_tickets")
 		return
 	}
-	
+
 	payload := map[string]interface{}{
 		"instance": instanceId,
 		"mode":     m.config.Mode,
@@ -145,4 +145,3 @@ func (r redisKeysType) ticket(id string) string {
 func (r redisKeysType) allocations() string {
 	return "mm:allocations"
 }
-

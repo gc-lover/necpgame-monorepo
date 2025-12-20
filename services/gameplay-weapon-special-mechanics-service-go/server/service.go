@@ -1,9 +1,8 @@
-// Issue: #1595, #1607
+// Package server Issue: #1595, #1607
 // Performance: Memory pooling for hot path (Issue #1607)
 package server
 
 import (
-	"context"
 	"sync"
 
 	"github.com/gc-lover/necpgame-monorepo/services/gameplay-weapon-special-mechanics-service-go/pkg/api"
@@ -18,7 +17,7 @@ type Service struct {
 	// Memory pooling for hot structs (zero allocations target!)
 	applyMechanicsResponsePool    sync.Pool
 	chainDamageResponsePool       sync.Pool
-	persistentEffectPool           sync.Pool
+	persistentEffectPool          sync.Pool
 	environmentDestructionPool    sync.Pool
 	persistentEffectsResponsePool sync.Pool
 	weaponMechanicsResponsePool   sync.Pool
@@ -64,7 +63,7 @@ func NewService(repo *Repository) *Service {
 
 // ApplySpecialMechanics - HOT PATH
 // Issue: #1607 - Uses memory pooling for zero allocations
-func (s *Service) ApplySpecialMechanics(ctx context.Context, req *api.ApplySpecialMechanicsRequest) (*api.ApplySpecialMechanicsResponse, error) {
+func (s *Service) ApplySpecialMechanics(req *api.ApplySpecialMechanicsRequest) (*api.ApplySpecialMechanicsResponse, error) {
 	// Get from pool (zero allocation!)
 	resp := s.applyMechanicsResponsePool.Get().(*api.ApplySpecialMechanicsResponse)
 	defer func() {
@@ -88,7 +87,7 @@ func (s *Service) ApplySpecialMechanics(ctx context.Context, req *api.ApplySpeci
 
 // CalculateChainDamage - HOT PATH
 // Issue: #1607 - Uses memory pooling for zero allocations
-func (s *Service) CalculateChainDamage(ctx context.Context, req *api.CalculateChainDamageRequest) (*api.ChainDamageResponse, error) {
+func (s *Service) CalculateChainDamage() (*api.ChainDamageResponse, error) {
 	// Get from pool (zero allocation!)
 	resp := s.chainDamageResponsePool.Get().(*api.ChainDamageResponse)
 	defer func() {
@@ -112,7 +111,7 @@ func (s *Service) CalculateChainDamage(ctx context.Context, req *api.CalculateCh
 
 // CreatePersistentEffect - HOT PATH
 // Issue: #1607 - Uses memory pooling for zero allocations
-func (s *Service) CreatePersistentEffect(ctx context.Context, req *api.CreatePersistentEffectRequest) (*api.PersistentEffect, error) {
+func (s *Service) CreatePersistentEffect(req *api.CreatePersistentEffectRequest) (*api.PersistentEffect, error) {
 	// Get from pool (zero allocation!)
 	effect := s.persistentEffectPool.Get().(*api.PersistentEffect)
 	defer func() {
@@ -136,7 +135,7 @@ func (s *Service) CreatePersistentEffect(ctx context.Context, req *api.CreatePer
 
 // DestroyEnvironment - HOT PATH
 // Issue: #1607 - Uses memory pooling for zero allocations
-func (s *Service) DestroyEnvironment(ctx context.Context, req *api.DestroyEnvironmentRequest) (*api.EnvironmentDestructionResponse, error) {
+func (s *Service) DestroyEnvironment() (*api.EnvironmentDestructionResponse, error) {
 	// Get from pool (zero allocation!)
 	resp := s.environmentDestructionPool.Get().(*api.EnvironmentDestructionResponse)
 	defer func() {
@@ -160,7 +159,7 @@ func (s *Service) DestroyEnvironment(ctx context.Context, req *api.DestroyEnviro
 
 // GetPersistentEffects - HOT PATH
 // Issue: #1607 - Uses memory pooling for zero allocations
-func (s *Service) GetPersistentEffects(ctx context.Context, targetID uuid.UUID) (*api.PersistentEffectsResponse, error) {
+func (s *Service) GetPersistentEffects(targetID uuid.UUID) (*api.PersistentEffectsResponse, error) {
 	// Get from pool (zero allocation!)
 	resp := s.persistentEffectsResponsePool.Get().(*api.PersistentEffectsResponse)
 	defer func() {
@@ -184,7 +183,7 @@ func (s *Service) GetPersistentEffects(ctx context.Context, targetID uuid.UUID) 
 
 // GetWeaponSpecialMechanics - HOT PATH
 // Issue: #1607 - Uses memory pooling for zero allocations
-func (s *Service) GetWeaponSpecialMechanics(ctx context.Context, weaponID uuid.UUID) (*api.WeaponSpecialMechanicsResponse, error) {
+func (s *Service) GetWeaponSpecialMechanics(weaponID uuid.UUID) (*api.WeaponSpecialMechanicsResponse, error) {
 	// Get from pool (zero allocation!)
 	resp := s.weaponMechanicsResponsePool.Get().(*api.WeaponSpecialMechanicsResponse)
 	defer func() {
@@ -205,4 +204,3 @@ func (s *Service) GetWeaponSpecialMechanics(ctx context.Context, weaponID uuid.U
 	}
 	return result, nil
 }
-

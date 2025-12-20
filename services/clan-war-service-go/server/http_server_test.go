@@ -15,15 +15,15 @@ import (
 )
 
 type mockClanWarService struct {
-	wars       map[uuid.UUID]*models.ClanWar
-	battles    map[uuid.UUID]*models.WarBattle
+	wars        map[uuid.UUID]*models.ClanWar
+	battles     map[uuid.UUID]*models.WarBattle
 	territories map[uuid.UUID]*models.Territory
-	declareErr error
-	getErr     error
-	startErr   error
+	declareErr  error
+	getErr      error
+	startErr    error
 }
 
-func (m *mockClanWarService) DeclareWar(ctx context.Context, req *models.DeclareWarRequest) (*models.ClanWar, error) {
+func (m *mockClanWarService) DeclareWar(_ context.Context, req *models.DeclareWarRequest) (*models.ClanWar, error) {
 	if m.declareErr != nil {
 		return nil, m.declareErr
 	}
@@ -51,7 +51,7 @@ func (m *mockClanWarService) DeclareWar(ctx context.Context, req *models.Declare
 	return war, nil
 }
 
-func (m *mockClanWarService) GetWar(ctx context.Context, warID uuid.UUID) (*models.ClanWar, error) {
+func (m *mockClanWarService) GetWar(_ context.Context, warID uuid.UUID) (*models.ClanWar, error) {
 	if m.getErr != nil {
 		return nil, m.getErr
 	}
@@ -64,7 +64,7 @@ func (m *mockClanWarService) GetWar(ctx context.Context, warID uuid.UUID) (*mode
 	return war, nil
 }
 
-func (m *mockClanWarService) ListWars(ctx context.Context, guildID *uuid.UUID, status *models.WarStatus, limit, offset int) ([]models.ClanWar, int, error) {
+func (m *mockClanWarService) ListWars(_ context.Context, guildID *uuid.UUID, status *models.WarStatus, limit, offset int) ([]models.ClanWar, int, error) {
 	var wars []models.ClanWar
 	for _, war := range m.wars {
 		if guildID != nil && war.AttackerGuildID != *guildID && war.DefenderGuildID != *guildID {
@@ -89,7 +89,7 @@ func (m *mockClanWarService) ListWars(ctx context.Context, guildID *uuid.UUID, s
 	return wars[offset:end], total, nil
 }
 
-func (m *mockClanWarService) StartWar(ctx context.Context, warID uuid.UUID) error {
+func (m *mockClanWarService) StartWar(_ context.Context, warID uuid.UUID) error {
 	if m.startErr != nil {
 		return m.startErr
 	}
@@ -109,7 +109,7 @@ func (m *mockClanWarService) StartWar(ctx context.Context, warID uuid.UUID) erro
 	return nil
 }
 
-func (m *mockClanWarService) CompleteWar(ctx context.Context, warID uuid.UUID) error {
+func (m *mockClanWarService) CompleteWar(_ context.Context, warID uuid.UUID) error {
 	war, ok := m.wars[warID]
 	if !ok {
 		return errors.New("war not found")
@@ -135,7 +135,7 @@ func (m *mockClanWarService) CompleteWar(ctx context.Context, warID uuid.UUID) e
 	return nil
 }
 
-func (m *mockClanWarService) CreateBattle(ctx context.Context, req *models.CreateBattleRequest) (*models.WarBattle, error) {
+func (m *mockClanWarService) CreateBattle(_ context.Context, req *models.CreateBattleRequest) (*models.WarBattle, error) {
 	battle := &models.WarBattle{
 		ID:            uuid.New(),
 		WarID:         req.WarID,
@@ -153,7 +153,7 @@ func (m *mockClanWarService) CreateBattle(ctx context.Context, req *models.Creat
 	return battle, nil
 }
 
-func (m *mockClanWarService) GetBattle(ctx context.Context, battleID uuid.UUID) (*models.WarBattle, error) {
+func (m *mockClanWarService) GetBattle(_ context.Context, battleID uuid.UUID) (*models.WarBattle, error) {
 	battle, ok := m.battles[battleID]
 	if !ok {
 		return nil, errors.New("battle not found")
@@ -162,7 +162,7 @@ func (m *mockClanWarService) GetBattle(ctx context.Context, battleID uuid.UUID) 
 	return battle, nil
 }
 
-func (m *mockClanWarService) ListBattles(ctx context.Context, warID *uuid.UUID, status *models.BattleStatus, limit, offset int) ([]models.WarBattle, int, error) {
+func (m *mockClanWarService) ListBattles(_ context.Context, warID *uuid.UUID, status *models.BattleStatus, limit, offset int) ([]models.WarBattle, int, error) {
 	var battles []models.WarBattle
 	for _, battle := range m.battles {
 		if warID != nil && battle.WarID != *warID {
@@ -187,7 +187,7 @@ func (m *mockClanWarService) ListBattles(ctx context.Context, warID *uuid.UUID, 
 	return battles[offset:end], total, nil
 }
 
-func (m *mockClanWarService) StartBattle(ctx context.Context, battleID uuid.UUID) error {
+func (m *mockClanWarService) StartBattle(_ context.Context, battleID uuid.UUID) error {
 	battle, ok := m.battles[battleID]
 	if !ok {
 		return errors.New("battle not found")
@@ -203,7 +203,7 @@ func (m *mockClanWarService) StartBattle(ctx context.Context, battleID uuid.UUID
 	return nil
 }
 
-func (m *mockClanWarService) UpdateBattleScore(ctx context.Context, req *models.UpdateBattleScoreRequest) error {
+func (m *mockClanWarService) UpdateBattleScore(_ context.Context, req *models.UpdateBattleScoreRequest) error {
 	battle, ok := m.battles[req.BattleID]
 	if !ok {
 		return errors.New("battle not found")
@@ -215,7 +215,7 @@ func (m *mockClanWarService) UpdateBattleScore(ctx context.Context, req *models.
 	return nil
 }
 
-func (m *mockClanWarService) CompleteBattle(ctx context.Context, battleID uuid.UUID) error {
+func (m *mockClanWarService) CompleteBattle(_ context.Context, battleID uuid.UUID) error {
 	battle, ok := m.battles[battleID]
 	if !ok {
 		return errors.New("battle not found")
@@ -232,7 +232,7 @@ func (m *mockClanWarService) CompleteBattle(ctx context.Context, battleID uuid.U
 	return nil
 }
 
-func (m *mockClanWarService) GetTerritory(ctx context.Context, territoryID uuid.UUID) (*models.Territory, error) {
+func (m *mockClanWarService) GetTerritory(_ context.Context, territoryID uuid.UUID) (*models.Territory, error) {
 	territory, ok := m.territories[territoryID]
 	if !ok {
 		return nil, errors.New("territory not found")
@@ -241,7 +241,7 @@ func (m *mockClanWarService) GetTerritory(ctx context.Context, territoryID uuid.
 	return territory, nil
 }
 
-func (m *mockClanWarService) ListTerritories(ctx context.Context, ownerGuildID *uuid.UUID, limit, offset int) ([]models.Territory, int, error) {
+func (m *mockClanWarService) ListTerritories(_ context.Context, ownerGuildID *uuid.UUID, limit, offset int) ([]models.Territory, int, error) {
 	var territories []models.Territory
 	for _, territory := range m.territories {
 		if ownerGuildID != nil {
@@ -561,21 +561,21 @@ func TestHTTPServer_ListBattles(t *testing.T) {
 
 	warID := uuid.New()
 	battle1 := &models.WarBattle{
-		ID:            uuid.New(),
-		WarID:         warID,
-		Type:          models.BattleTypeTerritory,
-		Status:        models.BattleStatusScheduled,
-		CreatedAt:     time.Now(),
-		UpdatedAt:     time.Now(),
+		ID:        uuid.New(),
+		WarID:     warID,
+		Type:      models.BattleTypeTerritory,
+		Status:    models.BattleStatusScheduled,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
 	}
 
 	battle2 := &models.WarBattle{
-		ID:            uuid.New(),
-		WarID:         warID,
-		Type:          models.BattleTypeSiege,
-		Status:        models.BattleStatusActive,
-		CreatedAt:     time.Now(),
-		UpdatedAt:     time.Now(),
+		ID:        uuid.New(),
+		WarID:     warID,
+		Type:      models.BattleTypeSiege,
+		Status:    models.BattleStatusActive,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
 	}
 
 	mockService.battles[battle1.ID] = battle1
@@ -611,13 +611,13 @@ func TestHTTPServer_StartBattle(t *testing.T) {
 
 	battleID := uuid.New()
 	battle := &models.WarBattle{
-		ID:            battleID,
-		WarID:         uuid.New(),
-		Type:          models.BattleTypeTerritory,
-		Status:        models.BattleStatusScheduled,
-		StartTime:     time.Now(),
-		CreatedAt:     time.Now(),
-		UpdatedAt:     time.Now(),
+		ID:        battleID,
+		WarID:     uuid.New(),
+		Type:      models.BattleTypeTerritory,
+		Status:    models.BattleStatusScheduled,
+		StartTime: time.Now(),
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
 	}
 
 	mockService.battles[battleID] = battle
@@ -684,12 +684,12 @@ func TestHTTPServer_CompleteBattle(t *testing.T) {
 
 	battleID := uuid.New()
 	battle := &models.WarBattle{
-		ID:            battleID,
-		WarID:         uuid.New(),
-		Type:          models.BattleTypeTerritory,
-		Status:        models.BattleStatusActive,
-		CreatedAt:     time.Now(),
-		UpdatedAt:     time.Now(),
+		ID:        battleID,
+		WarID:     uuid.New(),
+		Type:      models.BattleTypeTerritory,
+		Status:    models.BattleStatusActive,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
 	}
 
 	mockService.battles[battleID] = battle
@@ -715,13 +715,13 @@ func TestHTTPServer_GetTerritory(t *testing.T) {
 
 	territoryID := uuid.New()
 	territory := &models.Territory{
-		ID:            territoryID,
-		Name:          "Test Territory",
-		Region:        "Test Region",
-		DefenseLevel:  5,
+		ID:              territoryID,
+		Name:            "Test Territory",
+		Region:          "Test Region",
+		DefenseLevel:    5,
 		SiegeDifficulty: 3,
-		CreatedAt:     time.Now(),
-		UpdatedAt:     time.Now(),
+		CreatedAt:       time.Now(),
+		UpdatedAt:       time.Now(),
 	}
 
 	mockService.territories[territoryID] = territory
@@ -756,21 +756,21 @@ func TestHTTPServer_ListTerritories(t *testing.T) {
 
 	guildID := uuid.New()
 	territory1 := &models.Territory{
-		ID:            uuid.New(),
-		Name:          "Territory 1",
-		Region:        "Region 1",
-		OwnerGuildID:  &guildID,
-		CreatedAt:     time.Now(),
-		UpdatedAt:     time.Now(),
+		ID:           uuid.New(),
+		Name:         "Territory 1",
+		Region:       "Region 1",
+		OwnerGuildID: &guildID,
+		CreatedAt:    time.Now(),
+		UpdatedAt:    time.Now(),
 	}
 
 	territory2 := &models.Territory{
-		ID:            uuid.New(),
-		Name:          "Territory 2",
-		Region:        "Region 2",
-		OwnerGuildID:  nil,
-		CreatedAt:     time.Now(),
-		UpdatedAt:     time.Now(),
+		ID:           uuid.New(),
+		Name:         "Territory 2",
+		Region:       "Region 2",
+		OwnerGuildID: nil,
+		CreatedAt:    time.Now(),
+		UpdatedAt:    time.Now(),
 	}
 
 	mockService.territories[territory1.ID] = territory1
@@ -824,4 +824,3 @@ func TestHTTPServer_HealthCheck(t *testing.T) {
 		t.Errorf("Expected status 'healthy', got %s", response["status"])
 	}
 }
-

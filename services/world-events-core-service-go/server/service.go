@@ -1,4 +1,4 @@
-// Issue: #44
+// Package server Issue: #44
 package server
 
 import (
@@ -15,23 +15,23 @@ import (
 
 // Service - интерфейс бизнес-логики
 type Service interface {
-	// Events CRUD
+	// CreateEvent Events CRUD
 	CreateEvent(ctx context.Context, name, description, eventType, scale, frequency string, startTime, endTime *time.Time, effects, triggers, constraints map[string]interface{}) (*WorldEvent, error)
 	GetEvent(ctx context.Context, id uuid.UUID) (*WorldEvent, error)
 	UpdateEvent(ctx context.Context, id uuid.UUID, name, description, eventType, scale, frequency, status *string, startTime, endTime *time.Time, effects, triggers, constraints map[string]interface{}) (*WorldEvent, error)
 	DeleteEvent(ctx context.Context, id uuid.UUID) error
 	ListEvents(ctx context.Context, filter EventFilter) ([]*WorldEvent, int, error)
 
-	// Event state
+	// GetActiveEvents Event state
 	GetActiveEvents(ctx context.Context) ([]*WorldEvent, error)
 	GetPlannedEvents(ctx context.Context) ([]*WorldEvent, error)
 
-	// Event actions
+	// ActivateEvent Event actions
 	ActivateEvent(ctx context.Context, id uuid.UUID, activatedBy string) error
 	DeactivateEvent(ctx context.Context, id uuid.UUID) error
 	AnnounceEvent(ctx context.Context, id uuid.UUID, announcedBy, message string, channels []string) error
 
-	// Era-based event generation
+	// GetEraConfig Era-based event generation
 	GetEraConfig(ctx context.Context, eraID string) (*EraConfig, error)
 	ListEraConfigs(ctx context.Context) ([]*EraConfig, error)
 	GenerateEventFromEra(ctx context.Context, eraID string, roll int) (*WorldEvent, error)
@@ -397,4 +397,3 @@ func (s *service) UpdateEvent(ctx context.Context, id uuid.UUID, name, descripti
 	if err != nil {
 		return nil, err
 	}
-

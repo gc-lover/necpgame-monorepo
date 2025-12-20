@@ -19,4 +19,3 @@ func NewJwtValidator(issuer, jwksUrl string) *JwtValidator {
 func (v *JwtValidator) Verify(token string) bool {
 	return token != "" && strings.TrimSpace(token) != ""
 }
-

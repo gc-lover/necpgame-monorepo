@@ -1,4 +1,4 @@
-// Issue: #1856
+// Package server Issue: #1856
 // OPTIMIZED middleware chain - structured logging, metrics, recovery
 package server
 

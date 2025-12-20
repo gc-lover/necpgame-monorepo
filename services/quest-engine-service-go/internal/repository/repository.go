@@ -4,7 +4,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/go-redis/redis/v8"
 	"github.com/jackc/pgx/v4/pgxpool"
 )
 
@@ -22,10 +21,6 @@ type Quest struct {
 	Progress    float64    `json:"progress"`
 	CreatedAt   time.Time  `json:"created_at"`
 	CompletedAt *time.Time `json:"completed_at,omitempty"`
-}
-
-func NewRepository(db *pgxpool.Pool, rdb *redis.Client) *Repository {
-	return &Repository{db: db, rdb: rdb}
 }
 
 func (r *Repository) SaveQuest(ctx context.Context, quest *Quest) error {

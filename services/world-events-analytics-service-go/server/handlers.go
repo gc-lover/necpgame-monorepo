@@ -1,12 +1,11 @@
-// Issue: #44 - ogen handlers (TYPED responses)
+// Package server Issue: #44 - ogen handlers (TYPED responses)
 package server
 
 import (
 	"context"
 	"time"
 
-	"github.com/google/uuid"
-	api "github.com/gc-lover/necpgame-monorepo/services/world-events-analytics-service-go/pkg/api"
+	"github.com/gc-lover/necpgame-monorepo/services/world-events-analytics-service-go/pkg/api"
 	"go.uber.org/zap"
 )
 
@@ -27,7 +26,7 @@ func (h *Handlers) GetWorldEventMetrics(ctx context.Context, params api.GetWorld
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	eventID := uuid.UUID(params.ID)
+	eventID := params.ID
 
 	metrics, err := h.service.GetEventMetrics(ctx, eventID)
 	if err != nil || metrics == nil {
@@ -38,7 +37,7 @@ func (h *Handlers) GetWorldEventMetrics(ctx context.Context, params api.GetWorld
 		}, nil
 	}
 
-	playerCount := int(metrics.ParticipantCount)
+	playerCount := metrics.ParticipantCount
 	engagementRate := float32(metrics.PlayerEngagement)
 	economicImpact := float32(0.0)
 	socialImpact := float32(0.0)

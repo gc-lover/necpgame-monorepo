@@ -79,12 +79,12 @@ func NewEngramTransferRepository(db *pgxpool.Pool) *EngramTransferRepository {
 }
 
 func (r *EngramTransferRepository) CreateTransfer(ctx context.Context, transfer *EngramTransfer) error {
-	transfer.ID = uuid.New()
-	if transfer.TransferID == uuid.Nil {
-		transfer.TransferID = uuid.New()
+	transfer.Base.ID = uuid.New()
+	if transfer.Base.TransferID == uuid.Nil {
+		transfer.Base.TransferID = uuid.New()
 	}
-	transfer.CreatedAt = time.Now()
-	transfer.UpdatedAt = time.Now()
+	transfer.Metadata.CreatedAt = time.Now()
+	transfer.Metadata.UpdatedAt = time.Now()
 
 	_, err := r.db.Exec(ctx,
 		`INSERT INTO economy.engram_transfers 
@@ -93,11 +93,11 @@ func (r *EngramTransferRepository) CreateTransfer(ctx context.Context, transfer 
 		  extraction_risk_percent, engram_damaged, damage_percent, target_character_died,
 		  new_engram_id, transferred_at, created_at, updated_at)
 		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)`,
-		transfer.ID, transfer.TransferID, transfer.EngramID, transfer.FromCharacterID,
-		transfer.ToCharacterID, transfer.TransferType, transfer.IsCopy, transfer.NewAttitudeType,
-		transfer.TransferPrice, transfer.Status, transfer.LoanReturnDate, transfer.ExtractionRiskPercent,
-		transfer.EngramDamaged, transfer.DamagePercent, transfer.TargetCharacterDied,
-		transfer.NewEngramID, transfer.TransferredAt, transfer.CreatedAt, transfer.UpdatedAt,
+		transfer.Base.ID, transfer.Base.TransferID, transfer.Base.EngramID, transfer.Parties.FromCharacterID,
+		transfer.Parties.ToCharacterID, transfer.Base.TransferType, transfer.Base.IsCopy, transfer.Conditions.NewAttitudeType,
+		transfer.Conditions.TransferPrice, transfer.Base.Status, transfer.Conditions.LoanReturnDate, transfer.Conditions.ExtractionRiskPercent,
+		transfer.Outcome.EngramDamaged, transfer.Outcome.DamagePercent, transfer.Outcome.TargetCharacterDied,
+		transfer.Outcome.NewEngramID, transfer.Outcome.TransferredAt, transfer.Metadata.CreatedAt, transfer.Metadata.UpdatedAt,
 	)
 
 	if err != nil {
@@ -127,11 +127,11 @@ func (r *EngramTransferRepository) GetTransferByID(ctx context.Context, transfer
 		 WHERE transfer_id = $1`,
 		transferID,
 	).Scan(
-		&transfer.ID, &transfer.TransferID, &transfer.EngramID, &transfer.FromCharacterID,
-		&transfer.ToCharacterID, &transfer.TransferType, &transfer.IsCopy, &newAttitudeType,
-		&transferPrice, &transfer.Status, &loanReturnDate, &extractionRiskPercent,
-		&transfer.EngramDamaged, &damagePercent, &transfer.TargetCharacterDied,
-		&newEngramID, &transferredAt, &transfer.CreatedAt, &transfer.UpdatedAt,
+		&transfer.Base.ID, &transfer.Base.TransferID, &transfer.Base.EngramID, &transfer.Parties.FromCharacterID,
+		&transfer.Parties.ToCharacterID, &transfer.Base.TransferType, &transfer.Base.IsCopy, &newAttitudeType,
+		&transferPrice, &transfer.Base.Status, &loanReturnDate, &extractionRiskPercent,
+		&transfer.Outcome.EngramDamaged, &damagePercent, &transfer.Outcome.TargetCharacterDied,
+		&newEngramID, &transferredAt, &transfer.Metadata.CreatedAt, &transfer.Metadata.UpdatedAt,
 	)
 
 	if err == pgx.ErrNoRows {
@@ -142,13 +142,13 @@ func (r *EngramTransferRepository) GetTransferByID(ctx context.Context, transfer
 		return nil, err
 	}
 
-	transfer.NewAttitudeType = newAttitudeType
-	transfer.TransferPrice = transferPrice
-	transfer.LoanReturnDate = loanReturnDate
-	transfer.ExtractionRiskPercent = extractionRiskPercent
-	transfer.DamagePercent = damagePercent
-	transfer.NewEngramID = newEngramID
-	transfer.TransferredAt = transferredAt
+	transfer.Conditions.NewAttitudeType = newAttitudeType
+	transfer.Conditions.TransferPrice = transferPrice
+	transfer.Conditions.LoanReturnDate = loanReturnDate
+	transfer.Conditions.ExtractionRiskPercent = extractionRiskPercent
+	transfer.Outcome.DamagePercent = damagePercent
+	transfer.Outcome.NewEngramID = newEngramID
+	transfer.Outcome.TransferredAt = transferredAt
 
 	return &transfer, nil
 }
@@ -200,24 +200,24 @@ func (r *EngramTransferRepository) GetActiveLoans(ctx context.Context, character
 		var transferredAt *time.Time
 
 		err := rows.Scan(
-			&transfer.ID, &transfer.TransferID, &transfer.EngramID, &transfer.FromCharacterID,
-			&transfer.ToCharacterID, &transfer.TransferType, &transfer.IsCopy, &newAttitudeType,
-			&transferPrice, &transfer.Status, &loanReturnDate, &extractionRiskPercent,
-			&transfer.EngramDamaged, &damagePercent, &transfer.TargetCharacterDied,
-			&newEngramID, &transferredAt, &transfer.CreatedAt, &transfer.UpdatedAt,
+			&transfer.Base.ID, &transfer.Base.TransferID, &transfer.Base.EngramID, &transfer.Parties.FromCharacterID,
+			&transfer.Parties.ToCharacterID, &transfer.Base.TransferType, &transfer.Base.IsCopy, &newAttitudeType,
+			&transferPrice, &transfer.Base.Status, &loanReturnDate, &extractionRiskPercent,
+			&transfer.Outcome.EngramDamaged, &damagePercent, &transfer.Outcome.TargetCharacterDied,
+			&newEngramID, &transferredAt, &transfer.Metadata.CreatedAt, &transfer.Metadata.UpdatedAt,
 		)
 		if err != nil {
 			r.logger.WithError(err).Error("Failed to scan engram transfer")
 			continue
 		}
 
-		transfer.NewAttitudeType = newAttitudeType
-		transfer.TransferPrice = transferPrice
-		transfer.LoanReturnDate = loanReturnDate
-		transfer.ExtractionRiskPercent = extractionRiskPercent
-		transfer.DamagePercent = damagePercent
-		transfer.NewEngramID = newEngramID
-		transfer.TransferredAt = transferredAt
+		transfer.Conditions.NewAttitudeType = newAttitudeType
+		transfer.Conditions.TransferPrice = transferPrice
+		transfer.Conditions.LoanReturnDate = loanReturnDate
+		transfer.Conditions.ExtractionRiskPercent = extractionRiskPercent
+		transfer.Outcome.DamagePercent = damagePercent
+		transfer.Outcome.NewEngramID = newEngramID
+		transfer.Outcome.TransferredAt = transferredAt
 
 		transfers = append(transfers, transfer)
 	}
@@ -253,24 +253,24 @@ func (r *EngramTransferRepository) GetPendingReturns(ctx context.Context) ([]*En
 		var transferredAt *time.Time
 
 		err := rows.Scan(
-			&transfer.ID, &transfer.TransferID, &transfer.EngramID, &transfer.FromCharacterID,
-			&transfer.ToCharacterID, &transfer.TransferType, &transfer.IsCopy, &newAttitudeType,
-			&transferPrice, &transfer.Status, &loanReturnDate, &extractionRiskPercent,
-			&transfer.EngramDamaged, &damagePercent, &transfer.TargetCharacterDied,
-			&newEngramID, &transferredAt, &transfer.CreatedAt, &transfer.UpdatedAt,
+			&transfer.Base.ID, &transfer.Base.TransferID, &transfer.Base.EngramID, &transfer.Parties.FromCharacterID,
+			&transfer.Parties.ToCharacterID, &transfer.Base.TransferType, &transfer.Base.IsCopy, &newAttitudeType,
+			&transferPrice, &transfer.Base.Status, &loanReturnDate, &extractionRiskPercent,
+			&transfer.Outcome.EngramDamaged, &damagePercent, &transfer.Outcome.TargetCharacterDied,
+			&newEngramID, &transferredAt, &transfer.Metadata.CreatedAt, &transfer.Metadata.UpdatedAt,
 		)
 		if err != nil {
 			r.logger.WithError(err).Error("Failed to scan engram transfer")
 			continue
 		}
 
-		transfer.NewAttitudeType = newAttitudeType
-		transfer.TransferPrice = transferPrice
-		transfer.LoanReturnDate = loanReturnDate
-		transfer.ExtractionRiskPercent = extractionRiskPercent
-		transfer.DamagePercent = damagePercent
-		transfer.NewEngramID = newEngramID
-		transfer.TransferredAt = transferredAt
+		transfer.Conditions.NewAttitudeType = newAttitudeType
+		transfer.Conditions.TransferPrice = transferPrice
+		transfer.Conditions.LoanReturnDate = loanReturnDate
+		transfer.Conditions.ExtractionRiskPercent = extractionRiskPercent
+		transfer.Outcome.DamagePercent = damagePercent
+		transfer.Outcome.NewEngramID = newEngramID
+		transfer.Outcome.TransferredAt = transferredAt
 
 		transfers = append(transfers, transfer)
 	}

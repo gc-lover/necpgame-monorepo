@@ -1,13 +1,13 @@
-// SQL queries use prepared statements with placeholders (, , ?) for safety
+// Package server SQL queries use prepared statements with placeholders (, , ?) for safety
 // Issue: #1588 - Circuit Breaker for DB connections
 package server
 
 import (
 	"time"
 
-	"github.com/sony/gobreaker"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
+	"github.com/sony/gobreaker"
 )
 
 var (
@@ -29,10 +29,10 @@ type DBCircuitBreaker struct {
 func NewDBCircuitBreaker(name string) *DBCircuitBreaker {
 	cb := gobreaker.NewCircuitBreaker(gobreaker.Settings{
 		Name:        name,
-		MaxRequests: 3,              // Max requests in half-open
+		MaxRequests: 3,                // Max requests in half-open
 		Interval:    10 * time.Second, // Reset failure count
 		Timeout:     30 * time.Second, // Try recover after 30s
-		
+
 		ReadyToTrip: func(counts gobreaker.Counts) bool {
 			if counts.Requests < 3 {
 				return false
@@ -40,7 +40,7 @@ func NewDBCircuitBreaker(name string) *DBCircuitBreaker {
 			failureRatio := float64(counts.TotalFailures) / float64(counts.Requests)
 			return failureRatio >= 0.6 // Open if 60%+ failures
 		},
-		
+
 		OnStateChange: func(name string, from, to gobreaker.State) {
 			// Update Prometheus metric
 			stateValue := 0.0
@@ -53,7 +53,7 @@ func NewDBCircuitBreaker(name string) *DBCircuitBreaker {
 			circuitBreakerState.WithLabelValues(name).Set(stateValue)
 		},
 	})
-	
+
 	return &DBCircuitBreaker{cb: cb}
 }
 
@@ -61,5 +61,3 @@ func NewDBCircuitBreaker(name string) *DBCircuitBreaker {
 func (dbcb *DBCircuitBreaker) Execute(fn func() (interface{}, error)) (interface{}, error) {
 	return dbcb.cb.Execute(fn)
 }
-
-

@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-// OPTIMIZATION: Issue #1978 - Event subscription management
+// SubscribeToEvents OPTIMIZATION: Issue #1978 - Event subscription management
 func (s *NetworkService) SubscribeToEvents(w http.ResponseWriter, r *http.Request) {
 	var req SubscribeEventsRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -28,7 +28,7 @@ func (s *NetworkService) SubscribeToEvents(w http.ResponseWriter, r *http.Reques
 	json.NewEncoder(w).Encode(resp)
 }
 
-// OPTIMIZATION: Issue #1978 - Event publishing with routing
+// PublishEvent OPTIMIZATION: Issue #1978 - Event publishing with routing
 func (s *NetworkService) PublishEvent(w http.ResponseWriter, r *http.Request) {
 	var req PublishEventRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {

@@ -56,10 +56,10 @@ func TestRepository_ConnectionPoolSettings(t *testing.T) {
 	defer repo.Close()
 
 	stats := repo.db.Stats()
-	
+
 	// Check pool settings match our configuration
 	assert.Equal(t, 25, stats.MaxOpenConnections)
-	
+
 	// Test that connection is working
 	err = repo.db.Ping()
 	if err != nil {
@@ -79,7 +79,7 @@ func TestRepository_ConnectionLifetime(t *testing.T) {
 	// Test connection settings are applied
 	// We can't directly test the lifetime, but we can ensure the repository was created
 	assert.NotNil(t, repo.db)
-	
+
 	// Verify the settings indirectly through stats
 	stats := repo.db.Stats()
 	assert.Equal(t, 25, stats.MaxOpenConnections)
@@ -106,7 +106,7 @@ func TestRepository_EdgeCases(t *testing.T) {
 
 func BenchmarkNewRepository(b *testing.B) {
 	connStr := "postgres://user:pass@localhost:5432/test?sslmode=disable"
-	
+
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		repo, err := NewRepository(connStr)

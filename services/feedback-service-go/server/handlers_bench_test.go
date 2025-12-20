@@ -13,35 +13,35 @@ import (
 // mockFeedbackService implements FeedbackServiceInterface for benchmarks
 type mockFeedbackService struct{}
 
-func (m *mockFeedbackService) SubmitFeedback(ctx context.Context, playerID uuid.UUID, req *models.SubmitFeedbackRequest) (*models.SubmitFeedbackResponse, error) {
+func (m *mockFeedbackService) SubmitFeedback(_ context.Context, _ uuid.UUID, _ *models.SubmitFeedbackRequest) (*models.SubmitFeedbackResponse, error) {
 	return nil, nil
 }
 
-func (m *mockFeedbackService) GetFeedback(ctx context.Context, id uuid.UUID) (*models.Feedback, error) {
+func (m *mockFeedbackService) GetFeedback(_ context.Context, _ uuid.UUID) (*models.Feedback, error) {
 	return nil, nil
 }
 
-func (m *mockFeedbackService) GetPlayerFeedback(ctx context.Context, playerID uuid.UUID, status *models.FeedbackStatus, feedbackType *models.FeedbackType, limit, offset int) (*models.FeedbackList, error) {
+func (m *mockFeedbackService) GetPlayerFeedback(_ context.Context, _ uuid.UUID, _ *models.FeedbackStatus, _ *models.FeedbackType, _, _ int) (*models.FeedbackList, error) {
 	return nil, nil
 }
 
-func (m *mockFeedbackService) UpdateStatus(ctx context.Context, id uuid.UUID, req *models.UpdateStatusRequest) (*models.Feedback, error) {
+func (m *mockFeedbackService) UpdateStatus(_ context.Context, _ uuid.UUID, _ *models.UpdateStatusRequest) (*models.Feedback, error) {
 	return nil, nil
 }
 
-func (m *mockFeedbackService) GetBoard(ctx context.Context, category *models.FeedbackCategory, status *models.FeedbackStatus, search *string, sort string, limit, offset int) (*models.FeedbackBoardList, error) {
+func (m *mockFeedbackService) GetBoard(_ context.Context, _ *models.FeedbackCategory, _ *models.FeedbackStatus, _ *string, _ string, _, _ int) (*models.FeedbackBoardList, error) {
 	return nil, nil
 }
 
-func (m *mockFeedbackService) Vote(ctx context.Context, feedbackID, playerID uuid.UUID) (*models.VoteResponse, error) {
+func (m *mockFeedbackService) Vote(_ context.Context, _, _ uuid.UUID) (*models.VoteResponse, error) {
 	return nil, nil
 }
 
-func (m *mockFeedbackService) Unvote(ctx context.Context, feedbackID, playerID uuid.UUID) (*models.VoteResponse, error) {
+func (m *mockFeedbackService) Unvote(_ context.Context, _, _ uuid.UUID) (*models.VoteResponse, error) {
 	return nil, nil
 }
 
-func (m *mockFeedbackService) GetStats(ctx context.Context) (*models.FeedbackStats, error) {
+func (m *mockFeedbackService) GetStats(_ context.Context) (*models.FeedbackStats, error) {
 	return nil, nil
 }
 
@@ -52,8 +52,7 @@ func BenchmarkGetFeedback(b *testing.B) {
 	handlers := NewHandlers(mockService)
 
 	ctx := context.Background()
-	params := api.GetFeedbackParams{
-	}
+	params := api.GetFeedbackParams{}
 
 	b.ReportAllocs()
 	b.ResetTimer()
@@ -98,4 +97,3 @@ func BenchmarkSubmitFeedback(b *testing.B) {
 		_, _ = handlers.SubmitFeedback(ctx, req)
 	}
 }
-

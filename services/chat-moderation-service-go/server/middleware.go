@@ -1,3 +1,4 @@
+// Package server provides HTTP middleware for chat moderation service.
 // Issue: #1911
 package server
 

@@ -14,10 +14,6 @@ type OptGetPlayerOrdersStatus struct {
 	Set   bool
 }
 
-func NewOptGetPlayerOrdersStatus(v GetPlayerOrdersStatus) OptGetPlayerOrdersStatus {
-	return OptGetPlayerOrdersStatus{Value: v, Set: true}
-}
-
 func (o OptGetPlayerOrdersStatus) IsSet() bool { return o.Set }
 func (o *OptGetPlayerOrdersStatus) Reset()     { o.Value = ""; o.Set = false }
 func (o OptGetPlayerOrdersStatus) Get() (GetPlayerOrdersStatus, bool) {
@@ -33,10 +29,6 @@ type OptGetPlayerOrdersOrderType struct {
 	Set   bool
 }
 
-func NewOptGetPlayerOrdersOrderType(v GetPlayerOrdersOrderType) OptGetPlayerOrdersOrderType {
-	return OptGetPlayerOrdersOrderType{Value: v, Set: true}
-}
-
 func (o OptGetPlayerOrdersOrderType) IsSet() bool { return o.Set }
 func (o *OptGetPlayerOrdersOrderType) Reset()     { o.Value = ""; o.Set = false }
 func (o OptGetPlayerOrdersOrderType) Get() (GetPlayerOrdersOrderType, bool) {
@@ -46,7 +38,7 @@ func (o *OptGetPlayerOrdersOrderType) SetTo(v GetPlayerOrdersOrderType) {
 	o.Value, o.Set = v, true
 }
 
-// Create request and order models (minimal to satisfy validators).
+// CreatePlayerOrderRequest Create request and order models (minimal to satisfy validators).
 type CreatePlayerOrderRequest struct {
 	OrderType CreatePlayerOrderRequestOrderType `json:"order_type"`
 }
@@ -60,15 +52,12 @@ type PlayerOrdersResponse struct {
 	Orders []PlayerOrder `json:"orders"`
 }
 
-// Optional wrappers for player order fields.
+// OptPlayerOrderOrderType Optional wrappers for player order fields.
 type OptPlayerOrderOrderType struct {
 	Value PlayerOrderOrderType
 	Set   bool
 }
 
-func NewOptPlayerOrderOrderType(v PlayerOrderOrderType) OptPlayerOrderOrderType {
-	return OptPlayerOrderOrderType{Value: v, Set: true}
-}
 func (o OptPlayerOrderOrderType) IsSet() bool { return o.Set }
 func (o *OptPlayerOrderOrderType) Reset()     { o.Value = ""; o.Set = false }
 func (o OptPlayerOrderOrderType) Get() (PlayerOrderOrderType, bool) {
@@ -83,9 +72,6 @@ type OptPlayerOrderStatus struct {
 	Set   bool
 }
 
-func NewOptPlayerOrderStatus(v PlayerOrderStatus) OptPlayerOrderStatus {
-	return OptPlayerOrderStatus{Value: v, Set: true}
-}
 func (o OptPlayerOrderStatus) IsSet() bool { return o.Set }
 func (o *OptPlayerOrderStatus) Reset()     { o.Value = ""; o.Set = false }
 func (o OptPlayerOrderStatus) Get() (PlayerOrderStatus, bool) {
@@ -101,7 +87,6 @@ type OptInt struct {
 	Set   bool
 }
 
-func NewOptInt(v int) OptInt      { return OptInt{Value: v, Set: true} }
 func (o OptInt) IsSet() bool      { return o.Set }
 func (o *OptInt) Reset()          { o.Value = 0; o.Set = false }
 func (o OptInt) Get() (int, bool) { return o.Value, o.Set }

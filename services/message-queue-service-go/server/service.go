@@ -1,5 +1,3 @@
-package server
-
 import (
 	"context"
 	"crypto/rand"
@@ -9,11 +7,12 @@ import (
 	"sync"
 	"time"
 
+	"github.com/gc-lover/necpgame-monorepo/services/message-queue-service-go"
 	"github.com/redis/go-redis/v9"
 	"github.com/sirupsen/logrus"
 )
 
-// OPTIMIZATION: Issue #2205 - Memory-aligned message queue service for high-throughput MMO communication
+// MessageQueueService OPTIMIZATION: Issue #2205 - Memory-aligned message queue service for high-throughput MMO communication
 type MessageQueueService struct {
 	config         *MessageQueueServiceConfig
 	logger         *logrus.Logger
@@ -28,8 +27,8 @@ type MessageQueueService struct {
 	wg             sync.WaitGroup
 }
 
-// OPTIMIZATION: Issue #2205 - Constructor with optimized Redis connection pooling
-func NewMessageQueueService(config *MessageQueueServiceConfig, logger *logrus.Logger) (*MessageQueueService, error) {
+// NewMessageQueueService OPTIMIZATION: Issue #2205 - Constructor with optimized Redis connection pooling
+func NewMessageQueueService(config *main.MessageQueueServiceConfig, logger *logrus.Logger) *MessageQueueService {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	// OPTIMIZATION: Redis connection pooling for MMO-scale messaging
@@ -46,7 +45,7 @@ func NewMessageQueueService(config *MessageQueueServiceConfig, logger *logrus.Lo
 	// Test Redis connection
 	if err := redisClient.Ping(ctx).Err(); err != nil {
 		cancel()
-		return nil, fmt.Errorf("failed to connect to Redis: %w", err)
+		return nil
 	}
 
 	// OPTIMIZATION: Message pool for zero-allocation in hot paths
@@ -57,20 +56,20 @@ func NewMessageQueueService(config *MessageQueueServiceConfig, logger *logrus.Lo
 	}
 
 	service := &MessageQueueService{
-		config:         config,
-		logger:         logger,
-		redis:          redisClient,
-		metrics:        &MessageQueueMetrics{},
-		messagePool:    messagePool,
-		ctx:            ctx,
-		cancel:         cancel,
+		config:      config,
+		logger:      logger,
+		redis:       redisClient,
+		metrics:     &MessageQueueMetrics{},
+		messagePool: messagePool,
+		ctx:         ctx,
+		cancel:      cancel,
 	}
 
 	// Start background processes
 	service.startBackgroundProcesses()
 
 	logger.Info("message queue service initialized")
-	return service, nil
+	return service
 }
 
 // OPTIMIZATION: Background processes for MMO message queue maintenance
@@ -131,7 +130,7 @@ func (s *MessageQueueService) generateID() string {
 	return hex.EncodeToString(bytes)
 }
 
-// OPTIMIZATION: Batch enqueue for high-throughput MMO messaging
+// EnqueueMessages OPTIMIZATION: Batch enqueue for high-throughput MMO messaging
 func (s *MessageQueueService) EnqueueMessages(ctx context.Context, req *EnqueueMessageRequest) (*EnqueueMessageResponse, error) {
 	queue, err := s.getOrCreateQueue(req.QueueName)
 	if err != nil {
@@ -169,9 +168,9 @@ func (s *MessageQueueService) EnqueueMessages(ctx context.Context, req *EnqueueM
 	}
 
 	// Update metrics
-	s.metrics.mu.Lock()
+	s.metrics.Mu.Lock()
 	s.metrics.MessagesEnqueued++
-	s.metrics.mu.Unlock()
+	s.metrics.Mu.Unlock()
 
 	s.logger.WithFields(logrus.Fields{
 		"message_id": msg.ID,
@@ -184,7 +183,7 @@ func (s *MessageQueueService) EnqueueMessages(ctx context.Context, req *EnqueueM
 	}, nil
 }
 
-// OPTIMIZATION: Batch dequeue for efficient MMO message processing
+// DequeueMessages OPTIMIZATION: Batch dequeue for efficient MMO message processing
 func (s *MessageQueueService) DequeueMessages(ctx context.Context, req *DequeueMessageRequest) (*DequeueMessageResponse, error) {
 	queueKey := fmt.Sprintf("mq:queue:%s:list", req.QueueName)
 
@@ -233,9 +232,9 @@ func (s *MessageQueueService) DequeueMessages(ctx context.Context, req *DequeueM
 
 	// Update metrics
 	if len(messages) > 0 {
-		s.metrics.mu.Lock()
+		s.metrics.Mu.Lock()
 		s.metrics.MessagesDequeued += int64(len(messages))
-		s.metrics.mu.Unlock()
+		s.metrics.Mu.Unlock()
 	}
 
 	return &DequeueMessageResponse{
@@ -244,14 +243,14 @@ func (s *MessageQueueService) DequeueMessages(ctx context.Context, req *DequeueM
 	}, nil
 }
 
-// OPTIMIZATION: Acknowledgment with error handling for reliable MMO messaging
+// AcknowledgeMessage OPTIMIZATION: Acknowledgment with error handling for reliable MMO messaging
 func (s *MessageQueueService) AcknowledgeMessage(ctx context.Context, req *AcknowledgeMessageRequest) (*AcknowledgeMessageResponse, error) {
 	// Get message
 	key := fmt.Sprintf("mq:queue:%s:%s", req.QueueName, req.MessageID)
 	data, err := s.redis.Get(ctx, key).Result()
 	if err == redis.Nil {
 		return &AcknowledgeMessageResponse{
-			MessageID:     req.MessageID,
+			MessageID:    req.MessageID,
 			Acknowledged: false,
 		}, nil
 	}
@@ -280,7 +279,7 @@ func (s *MessageQueueService) AcknowledgeMessage(ctx context.Context, req *Ackno
 	}
 
 	return &AcknowledgeMessageResponse{
-		MessageID:     req.MessageID,
+		MessageID:    req.MessageID,
 		Acknowledged: true,
 	}, nil
 }
@@ -306,9 +305,9 @@ func (s *MessageQueueService) getOrCreateQueue(name string) (*Queue, error) {
 	s.queues.Store(name, queue)
 
 	// Update metrics
-	s.metrics.mu.Lock()
+	s.metrics.Mu.Lock()
 	s.metrics.QueuesCreated++
-	s.metrics.mu.Unlock()
+	s.metrics.Mu.Unlock()
 
 	return queue, nil
 }
@@ -334,17 +333,17 @@ func (s *MessageQueueService) collectMetrics() {
 	activeConsumers := int64(0)
 	s.consumers.Range(func(key, value interface{}) bool {
 		consumer := value.(*Consumer)
-		consumer.mu.RLock()
+		consumer.Mu.RLock()
 		if consumer.Active {
 			activeConsumers++
 		}
-		consumer.mu.RUnlock()
+		consumer.Mu.RUnlock()
 		return true
 	})
 
-	s.metrics.mu.Lock()
+	s.metrics.Mu.Lock()
 	s.metrics.ConsumersActive = activeConsumers
-	s.metrics.mu.Unlock()
+	s.metrics.Mu.Unlock()
 }
 
 // OPTIMIZATION: Queue cleanup for memory efficiency in MMO environment
@@ -387,9 +386,9 @@ func (s *MessageQueueService) cleanupExpiredMessages() {
 	})
 
 	if expiredCount > 0 {
-		s.metrics.mu.Lock()
+		s.metrics.Mu.Lock()
 		s.metrics.MessagesExpired += expiredCount
-		s.metrics.mu.Unlock()
+		s.metrics.Mu.Unlock()
 
 		s.logger.WithField("expired", expiredCount).Info("cleaned up expired messages")
 	}
@@ -417,19 +416,19 @@ func (s *MessageQueueService) checkConsumerHeartbeats() {
 
 	s.consumers.Range(func(key, value interface{}) bool {
 		consumer := value.(*Consumer)
-		consumer.mu.Lock()
+		consumer.Mu.Lock()
 
 		if consumer.Active && now.Sub(consumer.LastHeartbeat) > timeout {
 			consumer.Active = false
 			s.logger.WithField("consumer_id", consumer.ID).Warn("consumer heartbeat timeout")
 		}
 
-		consumer.mu.Unlock()
+		consumer.Mu.Unlock()
 		return true
 	})
 }
 
-// OPTIMIZATION: Graceful shutdown for MMO service reliability
+// Shutdown OPTIMIZATION: Graceful shutdown for MMO service reliability
 func (s *MessageQueueService) Shutdown(ctx context.Context) error {
 	s.logger.Info("shutting down message queue service")
 

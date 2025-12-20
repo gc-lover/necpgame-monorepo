@@ -1,4 +1,4 @@
-// Issue: #146073424
+// Package server Issue: #146073424
 package server
 
 import (
@@ -121,7 +121,7 @@ func (cb *CircuitBreaker) CanExecute() bool {
 }
 
 // RecordResult записывает результат выполнения запроса
-func (cb *CircuitBreaker) RecordResult(success bool, err error) {
+func (cb *CircuitBreaker) RecordResult(success bool) {
 	cb.mutex.Lock()
 	defer cb.mutex.Unlock()
 
@@ -235,7 +235,7 @@ func (g *APIGateway) rateLimitMiddleware(next http.Handler) http.Handler {
 // getClientID получает идентификатор клиента
 func (g *APIGateway) getClientID(r *http.Request) string {
 	// Сначала пытаемся получить из JWT токена
-	if userID := g.getUserIDFromToken(r); userID != "" {
+	if userID := g.getUserIDFromToken(); userID != "" {
 		return "user:" + userID
 	}
 
@@ -312,7 +312,7 @@ func (g *APIGateway) validateJWT(r *http.Request) (string, error) {
 }
 
 // getUserIDFromToken извлекает user ID из токена (упрощенная логика)
-func (g *APIGateway) getUserIDFromToken(r *http.Request) string {
+func (g *APIGateway) getUserIDFromToken() string {
 	// Для демонстрации - в реальном приложении нужно декодировать JWT
 	return ""
 }

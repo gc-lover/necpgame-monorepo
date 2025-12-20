@@ -30,68 +30,68 @@ spec:
         seccompProfile:
           type: RuntimeDefault
       containers:
-      - name: ws-lobby-go
-        image: necpgame-ws-lobby-go:latest
-        imagePullPolicy: IfNotPresent
-        securityContext:
-          allowPrivilegeEscalation: false
-          readOnlyRootFilesystem: true
-          capabilities:
-            drop:
-            - ALL
-        ports:
-        - name: websocket
-          containerPort: 18081
-          protocol: TCP
-        - name: metrics
-          containerPort: 9090
-          protocol: TCP
-        env:
-        - name: PORT
-          value: "18081"
-        - name: LOG_LEVEL
-          value: "info"
-        - name: METRICS_ADDR
-          value: ":9090"
-        - name: KEYCLOAK_ISSUER
-          value: "http://keycloak:8080/realms/necpgame"
-        resources:
-          requests:
-            memory: "128Mi"
-            cpu: "100m"
-          limits:
-            memory: "512Mi"
-            cpu: "500m"
-        startupProbe:
-          httpGet:
-            path: /metrics
-            port: 9090
-          initialDelaySeconds: 5
-          periodSeconds: 5
-          timeoutSeconds: 3
-          failureThreshold: 30
-        livenessProbe:
-          httpGet:
-            path: /metrics
-            port: 9090
-          initialDelaySeconds: 30
-          periodSeconds: 30
-          timeoutSeconds: 3
-          failureThreshold: 3
-        readinessProbe:
-          httpGet:
-            path: /metrics
-            port: 9090
-          initialDelaySeconds: 5
-          periodSeconds: 10
-          timeoutSeconds: 3
-          failureThreshold: 3
-        volumeMounts:
-        - name: tmp
-          mountPath: /tmp
+        - name: ws-lobby-go
+          image: necpgame-ws-lobby-go:latest
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          ports:
+            - name: websocket
+              containerPort: 18081
+              protocol: TCP
+            - name: metrics
+              containerPort: 9090
+              protocol: TCP
+          env:
+            - name: PORT
+              value: "18081"
+            - name: LOG_LEVEL
+              value: "info"
+            - name: METRICS_ADDR
+              value: ":9090"
+            - name: KEYCLOAK_ISSUER
+              value: "http://keycloak:8080/realms/necpgame"
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          startupProbe:
+            httpGet:
+              path: /metrics
+              port: 9090
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 30
+          livenessProbe:
+            httpGet:
+              path: /metrics
+              port: 9090
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 3
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /metrics
+              port: 9090
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
       volumes:
-      - name: tmp
-        emptyDir: {}
+        - name: tmp
+          emptyDir: { }
 ---
 apiVersion: v1
 kind: Service
@@ -104,13 +104,13 @@ metadata:
 spec:
   type: ClusterIP
   ports:
-  - name: websocket
-    port: 18081
-    targetPort: 18081
-    protocol: TCP
-  - name: metrics
-    port: 9090
-    targetPort: 9090
-    protocol: TCP
+    - name: websocket
+      port: 18081
+      targetPort: 18081
+      protocol: TCP
+    - name: metrics
+      port: 9090
+      targetPort: 9090
+      protocol: TCP
   selector:
     app: ws-lobby-go

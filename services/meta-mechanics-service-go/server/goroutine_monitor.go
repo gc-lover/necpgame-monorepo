@@ -1,4 +1,4 @@
-// Issue: #1585 - Goroutine leak detection for Meta Mechanics Service
+// Package server Issue: #1585 - Goroutine leak detection for Meta Mechanics Service
 // CRITICAL: League calculations, ranking updates, event processing
 package server
 

@@ -1,4 +1,4 @@
-// Issue: #1595
+// Package server Issue: #1595
 package server
 
 import (
@@ -10,7 +10,7 @@ import (
 
 const DBTimeout = 50 * time.Millisecond
 
-// Issue: #1588 - Resilience patterns (Load Shedding, Circuit Breaker)
+// Handlers Issue: #1588 - Resilience patterns (Load Shedding, Circuit Breaker)
 type Handlers struct {
 	service     *Service
 	loadShedder *LoadShedder
@@ -19,14 +19,14 @@ type Handlers struct {
 func NewHandlers(service *Service) *Handlers {
 	// Issue: #1588 - Resilience patterns for hot path service
 	loadShedder := NewLoadShedder(500) // Max 500 concurrent requests
-	
+
 	return &Handlers{
 		service:     service,
 		loadShedder: loadShedder,
 	}
 }
 
-func (h *Handlers) GetAIProfile(ctx context.Context, params api.GetAIProfileParams) (api.GetAIProfileRes, error) {
+func (h *Handlers) GetAIProfile(ctx context.Context, _ api.GetAIProfileParams) (api.GetAIProfileRes, error) {
 	// Issue: #1588 - Load shedding (prevent overload)
 	if !h.loadShedder.Allow() {
 		err := api.GetAIProfileInternalServerError(api.Error{
@@ -41,7 +41,7 @@ func (h *Handlers) GetAIProfile(ctx context.Context, params api.GetAIProfilePara
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	result, err := h.service.GetAIProfile(ctx, params.ProfileID.String())
+	result, err := h.service.GetAIProfile()
 	if err != nil {
 		if err == ErrNotFound {
 			return &api.GetAIProfileNotFound{}, nil
@@ -67,7 +67,7 @@ func (h *Handlers) GetAIProfileTelemetry(ctx context.Context, params api.GetAIPr
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	result, err := h.service.GetAIProfileTelemetry(ctx, params.ProfileID.String())
+	result, err := h.service.GetAIProfileTelemetry()
 	if err != nil {
 		if err == ErrNotFound {
 			return &api.GetAIProfileTelemetryNotFound{}, nil
@@ -82,11 +82,10 @@ func (h *Handlers) ListAIProfiles(ctx context.Context, params api.ListAIProfiles
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	result, err := h.service.ListAIProfiles(ctx, params)
+	result, err := h.service.ListAIProfiles()
 	if err != nil {
 		return &api.ListAIProfilesInternalServerError{}, err
 	}
 
 	return result, nil
 }
-

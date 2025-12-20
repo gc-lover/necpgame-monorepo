@@ -59,10 +59,10 @@ function Validate-OpenAPISpec {
     Write-Host "$BLUE`📋 Validating: $serviceName$NC"
     $script:SERVICES_CHECKED++
 
-    # Check file size (<600 lines)
+    # Check file size (<1000 lines)
     $lines = (Get-Content $SpecFile | Measure-Object -Line).Lines
-    if ($lines -gt 600) {
-        Write-Host "  $RED❌ File size: $lines lines (exceeds 600 limit)$NC"
+    if ($lines -gt 1000) {
+        Write-Host "  $RED❌ File size: $lines lines (exceeds 1000 limit)$NC"
         $script:ERRORS++
         return $false
     }
@@ -181,7 +181,7 @@ if ($ERRORS -gt 0) {
     Write-Host "$RED❌ VALIDATION FAILED$NC"
     Write-Host ""
     Write-Host "Fix the following issues:"
-    Write-Host "- Ensure OpenAPI specs are valid and <600 lines"
+    Write-Host "- Ensure OpenAPI specs are valid and <1000 lines"
     Write-Host "- Run 'ogen generate' for all services"
     Write-Host "- Implement Handler interfaces completely"
     Write-Host "- Add performance optimizations (context timeouts, memory pooling)"

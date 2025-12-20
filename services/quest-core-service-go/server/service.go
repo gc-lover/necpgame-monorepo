@@ -1,4 +1,4 @@
-// Issue: #1597, #1607
+// Package server provides HTTP server implementation for the quest core service.
 package server
 
 import (
@@ -19,11 +19,11 @@ type Service struct {
 	questCache *QuestCache // Issue: #1609 - 3-tier cache
 
 	// Memory pooling for hot path structs (zero allocations target!)
-	startQuestResponsePool sync.Pool
-	questInstancePool sync.Pool
-	questListResponsePool sync.Pool
+	startQuestResponsePool    sync.Pool
+	questInstancePool         sync.Pool
+	questListResponsePool     sync.Pool
 	completeQuestResponsePool sync.Pool
-	questRewardsPool sync.Pool
+	questRewardsPool          sync.Pool
 }
 
 // NewService creates new service with memory pooling
@@ -219,7 +219,7 @@ func (s *Service) CancelQuest(ctx context.Context, questID uuid.UUID) (api.Cance
 }
 
 // CompleteQuest completes a quest (invalidates cache) - Issue: #1609
-func (s *Service) CompleteQuest(ctx context.Context, questID uuid.UUID, req *api.CompleteQuestRequest) (api.CompleteQuestRes, error) {
+func (s *Service) CompleteQuest(ctx context.Context, questID uuid.UUID) (api.CompleteQuestRes, error) {
 	playerID := uuid.New()
 	questDefinitionID := uuid.New()
 	now := time.Now()
@@ -275,9 +275,8 @@ func (s *Service) ImportQuestDefinition(ctx context.Context, questDef *QuestDefi
 	if existing != nil {
 		// Update existing quest
 		return s.repo.UpdateQuestDefinition(ctx, questDef)
-	} else {
-		// Create new quest
-		return s.repo.CreateQuestDefinition(ctx, questDef)
 	}
-}
 
+	// Create new quest
+	return s.repo.CreateQuestDefinition(ctx, questDef)
+}

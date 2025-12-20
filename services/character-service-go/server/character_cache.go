@@ -1,4 +1,4 @@
-// Issue: #1609 - Character Cache (3-tier: Memory → Redis → DB)
+// Package server Issue: #1609 - Character Cache (3-tier: Memory → Redis → DB)
 // OPTIMIZATION: Caching → DB queries ↓95%, Latency ↓80%
 // PERFORMANCE GAINS: 10k RPS with <30ms P99
 package server
@@ -19,13 +19,13 @@ import (
 type CharacterCache struct {
 	// L1: In-memory cache (fastest, but limited size)
 	memoryCache sync.Map // characterID -> *CachedCharacter
-	
+
 	// L2: Redis (shared across instances)
 	redis *redis.Client
-	
+
 	// L3: Database (fallback)
 	repo CharacterRepositoryInterface
-	
+
 	// Cache TTL
 	memoryTTL time.Duration // 30 seconds
 	redisTTL  time.Duration // 5 minutes
@@ -42,7 +42,7 @@ type CachedCharacter struct {
 func NewCharacterCache(redis *redis.Client, repo CharacterRepositoryInterface) *CharacterCache {
 	return &CharacterCache{
 		redis:     redis,
-		repo:       repo,
+		repo:      repo,
 		memoryTTL: 30 * time.Second,
 		redisTTL:  5 * time.Minute,
 	}
@@ -55,35 +55,35 @@ func (c *CharacterCache) Get(ctx context.Context, characterID uuid.UUID) (*model
 	if cached, ok := c.tryMemoryCache(characterID); ok {
 		return cached.Character, nil
 	}
-	
+
 	// L2: Try Redis cache
 	if char, err := c.tryRedisCache(ctx, characterID); err == nil {
 		// Store in memory for next time
 		c.storeInMemory(characterID, char)
 		return char, nil
 	}
-	
+
 	// L3: Load from DB (cache miss)
 	char, err := c.repo.GetCharacterByID(ctx, characterID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load character: %w", err)
 	}
-	
+
 	if char == nil {
 		return nil, nil
 	}
-	
+
 	// Cache in both Redis and Memory
 	c.storeInRedis(ctx, characterID, char)
 	c.storeInMemory(characterID, char)
-	
+
 	return char, nil
 }
 
 // GetByAccountID returns characters by account ID (with caching)
 func (c *CharacterCache) GetByAccountID(ctx context.Context, accountID uuid.UUID) ([]models.Character, error) {
 	cacheKey := fmt.Sprintf("characters:account:%s", accountID.String())
-	
+
 	// L1: Try memory cache
 	if cached, ok := c.memoryCache.Load(cacheKey); ok {
 		chars := cached.(*CachedCharacters)
@@ -91,34 +91,34 @@ func (c *CharacterCache) GetByAccountID(ctx context.Context, accountID uuid.UUID
 			return chars.Characters, nil
 		}
 	}
-	
+
 	// L2: Try Redis cache
 	if data, err := c.redis.Get(ctx, cacheKey).Bytes(); err == nil {
 		var chars []models.Character
 		if err := json.Unmarshal(data, &chars); err == nil {
 			c.storeInMemoryList(cacheKey, &CachedCharacters{
 				Characters: chars,
-				LoadedAt:  time.Now(),
+				LoadedAt:   time.Now(),
 			})
 			return chars, nil
 		}
 	}
-	
+
 	// L3: Load from DB
 	characters, err := c.repo.GetCharactersByAccountID(ctx, accountID)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Cache in both Redis and Memory
 	if data, err := json.Marshal(characters); err == nil {
 		c.redis.Set(ctx, cacheKey, data, c.redisTTL)
 	}
 	c.storeInMemoryList(cacheKey, &CachedCharacters{
 		Characters: characters,
-		LoadedAt:  time.Now(),
+		LoadedAt:   time.Now(),
 	})
-	
+
 	return characters, nil
 }
 
@@ -142,32 +142,32 @@ func (c *CharacterCache) tryMemoryCache(characterID uuid.UUID) (*CachedCharacter
 	if !ok {
 		return nil, false
 	}
-	
+
 	cached := value.(*CachedCharacter)
-	
+
 	// Check TTL
 	if time.Since(cached.LoadedAt) > c.memoryTTL {
 		c.memoryCache.Delete(characterID.String()) // Evict stale
 		return nil, false
 	}
-	
+
 	return cached, true
 }
 
 // tryRedisCache attempts L2 cache lookup
 func (c *CharacterCache) tryRedisCache(ctx context.Context, characterID uuid.UUID) (*models.Character, error) {
 	key := fmt.Sprintf("character:%s", characterID.String())
-	
+
 	data, err := c.redis.Get(ctx, key).Bytes()
 	if err != nil {
 		return nil, err
 	}
-	
+
 	var char models.Character
 	if err := json.Unmarshal(data, &char); err != nil {
 		return nil, err
 	}
-	
+
 	return &char, nil
 }
 
@@ -188,12 +188,12 @@ func (c *CharacterCache) storeInMemoryList(key string, chars *CachedCharacters) 
 // storeInRedis stores in L2 cache
 func (c *CharacterCache) storeInRedis(ctx context.Context, characterID uuid.UUID, char *models.Character) {
 	key := fmt.Sprintf("character:%s", characterID.String())
-	
+
 	data, err := json.Marshal(char)
 	if err != nil {
 		return
 	}
-	
+
 	c.redis.Set(ctx, key, data, c.redisTTL)
 }
 
@@ -202,4 +202,3 @@ type CachedCharacters struct {
 	Characters []models.Character
 	LoadedAt   time.Time
 }
-

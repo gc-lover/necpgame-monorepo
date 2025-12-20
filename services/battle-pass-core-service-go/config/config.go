@@ -1,9 +1,5 @@
-// Issue: #1636
+// Package config Issue: #1636
 package config
-
-import (
-	"github.com/kelseyhightower/envconfig"
-)
 
 // Config holds service configuration
 type Config struct {
@@ -29,25 +25,3 @@ type Config struct {
 }
 
 // Load loads configuration from environment variables
-func Load() (*Config, error) {
-	var cfg Config
-	if err := envconfig.Process("", &cfg); err != nil {
-		return nil, err
-	}
-	return &cfg, nil
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

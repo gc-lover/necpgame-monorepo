@@ -36,7 +36,7 @@ func NewParagonService(dbURL, redisURL string) (*ParagonService, error) {
 	config.MinConns = 10
 	config.MaxConnLifetime = 5 * time.Minute
 	config.MaxConnIdleTime = 1 * time.Minute
-	
+
 	dbPool, err := pgxpool.NewWithConfig(context.Background(), config)
 	if err != nil {
 		return nil, err
@@ -168,4 +168,3 @@ func (s *ParagonService) updateParagonLevels(ctx context.Context, levels *Parago
 	)
 	return err
 }
-

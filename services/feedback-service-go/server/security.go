@@ -1,12 +1,12 @@
-// Issue: ogen migration
+// Package server Issue: ogen migration
 package server
 
 import (
 	"context"
 	"strings"
 
-	"github.com/ogen-go/ogen/ogenerrors"
 	"github.com/gc-lover/necpgame-monorepo/services/feedback-service-go/pkg/api"
+	"github.com/ogen-go/ogen/ogenerrors"
 )
 
 // SecurityHandler handles ogen security
@@ -24,7 +24,7 @@ func NewSecurityHandler(jwtValidator *JwtValidator, authEnabled bool) *SecurityH
 }
 
 // HandleBearerAuth implements Bearer auth for ogen
-func (s *SecurityHandler) HandleBearerAuth(ctx context.Context, operationName api.OperationName, t api.BearerAuth) (context.Context, error) {
+func (s *SecurityHandler) HandleBearerAuth(ctx context.Context, _ api.OperationName, t api.BearerAuth) (context.Context, error) {
 	if !s.authEnabled {
 		return ctx, nil
 	}
@@ -47,4 +47,3 @@ func (s *SecurityHandler) HandleBearerAuth(ctx context.Context, operationName ap
 	ctx = context.WithValue(ctx, "user_id", claims.Subject)
 	return ctx, nil
 }
-

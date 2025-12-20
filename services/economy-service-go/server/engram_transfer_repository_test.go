@@ -52,15 +52,23 @@ func TestEngramTransferRepository_CreateTransfer(t *testing.T) {
 	}
 	defer cleanup()
 
+	now := time.Now()
 	transfer := &EngramTransfer{
-		EngramID:        uuid.New(),
-		FromCharacterID: uuid.New(),
-		ToCharacterID:   uuid.New(),
-		TransferType:    "voluntary",
-		IsCopy:          false,
-		Status:          "pending",
-		CreatedAt:       time.Now(),
-		UpdatedAt:       time.Now(),
+		Base: EngramTransferBase{
+			EngramID:     uuid.New(),
+			TransferID:   uuid.New(),
+			TransferType: "voluntary",
+			IsCopy:       false,
+			Status:       "pending",
+		},
+		Parties: EngramTransferParties{
+			FromCharacterID: uuid.New(),
+			ToCharacterID:   uuid.New(),
+		},
+		Metadata: EngramTransferMetadata{
+			CreatedAt: now,
+			UpdatedAt: now,
+		},
 	}
 
 	ctx := context.Background()
@@ -72,8 +80,8 @@ func TestEngramTransferRepository_CreateTransfer(t *testing.T) {
 	}
 
 	assert.NoError(t, err)
-	assert.NotEqual(t, uuid.Nil, transfer.ID)
-	assert.NotEqual(t, uuid.Nil, transfer.TransferID)
+	assert.NotEqual(t, uuid.Nil, transfer.Base.ID)
+	assert.NotEqual(t, uuid.Nil, transfer.Base.TransferID)
 }
 
 func TestEngramTransferRepository_GetTransferByID_NotFound(t *testing.T) {
@@ -104,17 +112,27 @@ func TestEngramTransferRepository_GetTransferByID_Success(t *testing.T) {
 	}
 	defer cleanup()
 
+	now := time.Now()
 	transfer := &EngramTransfer{
-		EngramID:        uuid.New(),
-		FromCharacterID: uuid.New(),
-		ToCharacterID:   uuid.New(),
-		TransferType:    "voluntary",
-		IsCopy:          true,
-		NewAttitudeType: stringPtr("friendly"),
-		TransferPrice:   float64Ptr(100000.0),
-		Status:          "completed",
-		CreatedAt:       time.Now(),
-		UpdatedAt:       time.Now(),
+		Base: EngramTransferBase{
+			EngramID:     uuid.New(),
+			TransferID:   uuid.New(),
+			TransferType: "voluntary",
+			IsCopy:       true,
+			Status:       "completed",
+		},
+		Parties: EngramTransferParties{
+			FromCharacterID: uuid.New(),
+			ToCharacterID:   uuid.New(),
+		},
+		Conditions: EngramTransferConditions{
+			NewAttitudeType: stringPtr("friendly"),
+			TransferPrice:   float64Ptr(100000.0),
+		},
+		Metadata: EngramTransferMetadata{
+			CreatedAt: now,
+			UpdatedAt: now,
+		},
 	}
 
 	ctx := context.Background()
@@ -124,15 +142,15 @@ func TestEngramTransferRepository_GetTransferByID_Success(t *testing.T) {
 		return
 	}
 
-	retrieved, err := repo.GetTransferByID(ctx, transfer.TransferID)
+	retrieved, err := repo.GetTransferByID(ctx, transfer.Base.TransferID)
 	require.NoError(t, err)
 	assert.NotNil(t, retrieved)
-	assert.Equal(t, transfer.TransferID, retrieved.TransferID)
-	assert.Equal(t, transfer.EngramID, retrieved.EngramID)
-	assert.Equal(t, transfer.FromCharacterID, retrieved.FromCharacterID)
-	assert.Equal(t, transfer.ToCharacterID, retrieved.ToCharacterID)
-	assert.Equal(t, transfer.TransferType, retrieved.TransferType)
-	assert.Equal(t, transfer.IsCopy, retrieved.IsCopy)
+	assert.Equal(t, transfer.Base.TransferID, retrieved.Base.TransferID)
+	assert.Equal(t, transfer.Base.EngramID, retrieved.Base.EngramID)
+	assert.Equal(t, transfer.Parties.FromCharacterID, retrieved.Parties.FromCharacterID)
+	assert.Equal(t, transfer.Parties.ToCharacterID, retrieved.Parties.ToCharacterID)
+	assert.Equal(t, transfer.Base.TransferType, retrieved.Base.TransferType)
+	assert.Equal(t, transfer.Base.IsCopy, retrieved.Base.IsCopy)
 }
 
 func TestEngramTransferRepository_UpdateTransferStatus(t *testing.T) {
@@ -142,14 +160,22 @@ func TestEngramTransferRepository_UpdateTransferStatus(t *testing.T) {
 	}
 	defer cleanup()
 
+	now := time.Now()
 	transfer := &EngramTransfer{
-		EngramID:        uuid.New(),
-		FromCharacterID: uuid.New(),
-		ToCharacterID:   uuid.New(),
-		TransferType:    "voluntary",
-		Status:          "pending",
-		CreatedAt:       time.Now(),
-		UpdatedAt:       time.Now(),
+		Base: EngramTransferBase{
+			EngramID:     uuid.New(),
+			TransferID:   uuid.New(),
+			TransferType: "voluntary",
+			Status:       "pending",
+		},
+		Parties: EngramTransferParties{
+			FromCharacterID: uuid.New(),
+			ToCharacterID:   uuid.New(),
+		},
+		Metadata: EngramTransferMetadata{
+			CreatedAt: now,
+			UpdatedAt: now,
+		},
 	}
 
 	ctx := context.Background()
@@ -159,8 +185,8 @@ func TestEngramTransferRepository_UpdateTransferStatus(t *testing.T) {
 		return
 	}
 
-	now := time.Now()
-	err = repo.UpdateTransferStatus(ctx, transfer.TransferID, "completed", &now)
+	updateTime := time.Now()
+	err = repo.UpdateTransferStatus(ctx, transfer.Base.TransferID, "completed", &updateTime)
 
 	if err != nil {
 		t.Skipf("Skipping test due to database error: %v", err)
@@ -169,11 +195,11 @@ func TestEngramTransferRepository_UpdateTransferStatus(t *testing.T) {
 
 	assert.NoError(t, err)
 
-	updated, err := repo.GetTransferByID(ctx, transfer.TransferID)
+	updated, err := repo.GetTransferByID(ctx, transfer.Base.TransferID)
 	require.NoError(t, err)
 	assert.NotNil(t, updated)
-	assert.Equal(t, "completed", updated.Status)
-	assert.NotNil(t, updated.TransferredAt)
+	assert.Equal(t, "completed", updated.Base.Status)
+	assert.NotNil(t, updated.Outcome.TransferredAt)
 }
 
 func TestEngramTransferRepository_GetActiveLoans_Empty(t *testing.T) {
@@ -216,5 +242,3 @@ func TestEngramTransferRepository_GetPendingReturns_Empty(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Empty(t, returns)
 }
-
-

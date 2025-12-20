@@ -1,4 +1,4 @@
-// SQL queries use prepared statements with placeholders (, , ?) for safety
+// Package server SQL queries use prepared statements with placeholders (, , ?) for safety
 // Issue: #57, #1607
 package server
 
@@ -9,14 +9,14 @@ import (
 	"sync"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/gc-lover/necpgame-monorepo/services/combat-hacking-service-go/pkg/api"
+	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 )
 
 const (
-	MaxHeat         = 100.0
-	DefaultCoolingRate = 1.0
+	MaxHeat = 100.0
+
 	OverheatThreshold = 80.0
 )
 
@@ -36,13 +36,13 @@ type hackingService struct {
 	logger *logrus.Logger
 
 	// Issue: #1607 - Memory pooling for hot path structs (Level 2 optimization)
-	hackResultPool sync.Pool
-	countermeasureResultPool sync.Pool
+	hackResultPool            sync.Pool
+	countermeasureResultPool  sync.Pool
 	demonActivationResultPool sync.Pool
-	iceInfoPool sync.Pool
-	networkInfoPool sync.Pool
-	networkAccessResultPool sync.Pool
-	overheatStatusPool sync.Pool
+	iceInfoPool               sync.Pool
+	networkInfoPool           sync.Pool
+	networkAccessResultPool   sync.Pool
+	overheatStatusPool        sync.Pool
 }
 
 func NewHackingService(repo Repository, logger *logrus.Logger) HackingService {
@@ -125,13 +125,19 @@ func (s *hackingService) HackTarget(ctx context.Context, playerID uuid.UUID, req
 	}
 
 	execution := &HackingExecution{
-		ID:              uuid.New(),
-		PlayerID:        playerID,
-		TargetID:        req.TargetID,
-		HackType:        string(req.HackType),
-		DemonID:         func() *uuid.UUID { if req.DemonID.IsSet() { d := req.DemonID.Value; return &d }; return nil }(),
-		Success:         success,
-		Detected:        detected,
+		ID:       uuid.New(),
+		PlayerID: playerID,
+		TargetID: req.TargetID,
+		HackType: string(req.HackType),
+		DemonID: func() *uuid.UUID {
+			if req.DemonID.IsSet() {
+				d := req.DemonID.Value
+				return &d
+			}
+			return nil
+		}(),
+		Success:          success,
+		Detected:         detected,
 		OverheatIncrease: overheatIncrease,
 	}
 
@@ -211,7 +217,7 @@ func (s *hackingService) generateEffects(hackType api.HackTargetRequestHackType,
 		return []map[string]interface{}{}
 	}
 
-	effects := []map[string]interface{}{}
+	var effects []map[string]interface{}
 	switch hackType {
 	case api.HackTargetRequestHackTypeControl:
 		effects = append(effects, map[string]interface{}{
@@ -240,11 +246,11 @@ func (s *hackingService) generateEffects(hackType api.HackTargetRequestHackType,
 	return effects
 }
 
-func (s *hackingService) ActivateCountermeasures(ctx context.Context, playerID uuid.UUID, req *api.CountermeasureRequest) (*api.CountermeasureResult, error) {
+func (s *hackingService) ActivateCountermeasures(_ context.Context, playerID uuid.UUID, req *api.CountermeasureRequest) (*api.CountermeasureResult, error) {
 	s.logger.WithFields(logrus.Fields{
-		"player_id": playerID,
+		"player_id":   playerID,
 		"attacker_id": req.AttackerID,
-		"type": req.CountermeasureType,
+		"type":        req.CountermeasureType,
 	}).Info("Activating countermeasures")
 
 	activated := true
@@ -256,13 +262,13 @@ func (s *hackingService) ActivateCountermeasures(ctx context.Context, playerID u
 	result := s.countermeasureResultPool.Get().(*api.CountermeasureResult)
 	// Note: Not returning to pool - struct is returned to caller
 
-	result.Activated = api.NewOptBool(activated)
+	result.Activated = api.NewOptBool(true)
 	result.Effects = effectsItems
 
 	return result, nil
 }
 
-func (s *hackingService) GetDemons(ctx context.Context, playerID uuid.UUID) ([]api.Demon, error) {
+func (s *hackingService) GetDemons(_ context.Context, _ uuid.UUID) ([]api.Demon, error) {
 	demon1ID := uuid.New()
 	demon2ID := uuid.New()
 	name1 := "Ping"
@@ -274,16 +280,16 @@ func (s *hackingService) GetDemons(ctx context.Context, playerID uuid.UUID) ([]a
 
 	demons := []api.Demon{
 		{
-			ID:              api.NewOptUUID(demon1ID),
-			Name:            api.NewOptString(name1),
-			Type:            api.NewOptDemonType(demonType1),
-			HeatCost:        api.NewOptFloat32(heatCost1),
+			ID:       api.NewOptUUID(demon1ID),
+			Name:     api.NewOptString(name1),
+			Type:     api.NewOptDemonType(demonType1),
+			HeatCost: api.NewOptFloat32(heatCost1),
 		},
 		{
-			ID:              api.NewOptUUID(demon2ID),
-			Name:            api.NewOptString(name2),
-			Type:            api.NewOptDemonType(demonType2),
-			HeatCost:        api.NewOptFloat32(heatCost2),
+			ID:       api.NewOptUUID(demon2ID),
+			Name:     api.NewOptString(name2),
+			Type:     api.NewOptDemonType(demonType2),
+			HeatCost: api.NewOptFloat32(heatCost2),
 		},
 	}
 
@@ -329,14 +335,14 @@ func (s *hackingService) ActivateDemon(ctx context.Context, playerID uuid.UUID, 
 	result := s.demonActivationResultPool.Get().(*api.DemonActivationResult)
 	// Note: Not returning to pool - struct is returned to caller
 
-	result.Activated = api.NewOptBool(activated)
+	result.Activated = api.NewOptBool(true)
 	result.OverheatIncrease = api.NewOptFloat32(overheatIncrease)
 	result.Effects = effectsItems
 
 	return result, nil
 }
 
-func (s *hackingService) GetICELevel(ctx context.Context, targetID uuid.UUID) (*api.ICEInfo, error) {
+func (s *hackingService) GetICELevel(_ context.Context, targetID uuid.UUID) (*api.ICEInfo, error) {
 	iceLevel := 5
 	iceType := api.ICEInfoIceType("basic")
 
@@ -352,7 +358,7 @@ func (s *hackingService) GetICELevel(ctx context.Context, targetID uuid.UUID) (*
 	return info, nil
 }
 
-func (s *hackingService) GetNetworkInfo(ctx context.Context, networkID uuid.UUID) (*api.NetworkInfo, error) {
+func (s *hackingService) GetNetworkInfo(_ context.Context, networkID uuid.UUID) (*api.NetworkInfo, error) {
 	networkType := api.NetworkInfoType("simple")
 	securityLevel := api.NetworkInfoSecurityLevel("low")
 
@@ -370,7 +376,7 @@ func (s *hackingService) GetNetworkInfo(ctx context.Context, networkID uuid.UUID
 
 func (s *hackingService) AccessNetwork(ctx context.Context, playerID uuid.UUID, networkID uuid.UUID, req *api.NetworkAccessRequest) (*api.NetworkAccessResult, error) {
 	s.logger.WithFields(logrus.Fields{
-		"player_id": playerID,
+		"player_id":  playerID,
 		"network_id": networkID,
 		"method":     req.Method,
 	}).Info("Accessing network")
@@ -383,7 +389,7 @@ func (s *hackingService) AccessNetwork(ctx context.Context, playerID uuid.UUID, 
 		PlayerID:      playerID,
 		NetworkID:     networkID,
 		AccessLevel:   accessLevel,
-		AccessGranted: accessGranted,
+		AccessGranted: true,
 	}
 
 	if err := s.repo.SaveNetworkAccess(ctx, access); err != nil {
@@ -394,7 +400,7 @@ func (s *hackingService) AccessNetwork(ctx context.Context, playerID uuid.UUID, 
 	result := s.networkAccessResultPool.Get().(*api.NetworkAccessResult)
 	// Note: Not returning to pool - struct is returned to caller
 
-	result.AccessGranted = api.NewOptBool(accessGranted)
+	result.AccessGranted = api.NewOptBool(true)
 	result.AccessLevel = api.NewOptString(accessLevel)
 	result.AvailableTargets = []uuid.UUID{}
 
@@ -418,5 +424,3 @@ func (s *hackingService) GetOverheatStatus(ctx context.Context, playerID uuid.UU
 
 	return status, nil
 }
-
-

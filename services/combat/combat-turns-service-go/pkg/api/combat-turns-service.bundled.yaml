@@ -1,0 +1,305 @@
+openapi: 3.0.3
+info:
+  title: Combat Turns Service API
+  description: |
+    API для управления порядком ходов в боевых сессиях NECPGAME.
+
+    **Основные возможности:**
+    - Определение порядка ходов на основе инициативы
+    - Управление текущим ходом
+    - Переключение между участниками
+    - Обработка таймаутов ходов
+    - Управление фазами боя
+
+    **Связанные API:**
+    - Combat Sessions Service (управление сессиями)
+    - Combat Actions Service (действия в бою)
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    url: https://necpgame.com/support
+    email: api@necpgame.com
+servers:
+  - url: http://localhost:8083
+    description: Gameplay Service (локальная разработка)
+  - url: https://gameplay.necpgame.com
+    description: Gameplay Service (продакшн)
+tags:
+  - name: Turn Management
+    description: Управление порядком ходов
+paths:
+  /api/v1/gameplay/combat/sessions/{session_id}/turn-order:
+    get:
+      tags:
+        - Turn Management
+      summary: Порядок ходов
+      description: |
+        Возвращает порядок ходов в боевой сессии.
+
+        **Определение порядка:**
+        - На основе инициативы участников (Initiative stat)
+        - Сортировка от большего к меньшему
+        - При равной инициативе - случайный порядок
+
+        **Обновление порядка:**
+        - Рассчитывается при запуске боя
+        - Может меняться при добавлении/удалении участников
+        - Некоторые способности могут изменить порядок ходов
+      operationId: getTurnOrder
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      responses:
+        '200':
+          description: Порядок ходов
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  session_id:
+                    type: string
+                    format: uuid
+                    description: ID боевой сессии
+                  current_turn:
+                    type: integer
+                    description: Номер текущего хода
+                  turn_order:
+                    type: array
+                    description: Порядок участников (по убыванию инициативы)
+                    items:
+                      type: object
+                      properties:
+                        participant_id:
+                          type: string
+                          format: uuid
+                          description: ID участника
+                        initiative:
+                          type: integer
+                          description: Значение инициативы
+                        position_in_order:
+                          type: integer
+                          description: Позиция в порядке ходов
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      security:
+        - BearerAuth: [ ]
+  /api/v1/gameplay/combat/sessions/{session_id}/current-turn:
+    get:
+      tags:
+        - Turn Management
+      summary: Текущий ход
+      description: |
+        Возвращает информацию о текущем ходе.
+
+        **Включает:**
+        - ID участника чей ход
+        - Оставшееся время до таймаута
+        - Список доступных действий
+        - Фаза боя (подготовка/бой/завершение)
+      operationId: getCurrentTurn
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      responses:
+        '200':
+          description: Информация о текущем ходе
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CurrentTurn'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      security:
+        - BearerAuth: [ ]
+  /api/v1/gameplay/combat/sessions/{session_id}/next-turn:
+    post:
+      tags:
+        - Turn Management
+      summary: Следующий ход
+      description: |
+        Переключает на следующий ход в боевой сессии.
+
+        **Автоматически вызывается:**
+        - После выполнения действия в Combat Actions API
+        - При таймауте текущего хода
+        - При пропуске хода
+
+        **Может быть вызван вручную:**
+        - Администратором для управления боем
+        - При отладке боевой системы
+      operationId: nextTurn
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      responses:
+        '200':
+          description: Переключено на следующий ход
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CurrentTurn'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      security:
+        - BearerAuth: [ ]
+  /api/v1/gameplay/combat/sessions/{session_id}/skip-turn:
+    post:
+      tags:
+        - Turn Management
+      summary: Пропуск хода
+      description: |
+        Пропускает текущий ход участника и переключает на следующий.
+
+        **Причины пропуска:**
+        - Игрок явно пропускает ход
+        - Таймаут хода (истекло время)
+        - Статус паралича/оглушения
+        - Отключение игрока
+      operationId: skipTurn
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  enum:
+                    - manual
+                    - timeout
+                    - status_effect
+                    - disconnected
+                  description: Причина пропуска хода
+                  default: manual
+      responses:
+        '200':
+          description: Ход пропущен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CurrentTurn'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      security:
+        - BearerAuth: [ ]
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT токен для аутентификации
+  parameters:
+    SessionId:
+      name: session_id
+      in: path
+      required: true
+      description: Уникальный идентификатор боевой сессии
+      schema:
+        type: string
+        format: uuid
+  schemas:
+    CurrentTurn:
+      type: object
+      properties:
+        session_id:
+          type: string
+          format: uuid
+          description: ID боевой сессии
+        turn_number:
+          type: integer
+          description: Номер текущего хода (начинается с 1)
+        current_participant:
+          type: string
+          format: uuid
+          description: ID участника чей ход
+        time_remaining:
+          type: integer
+          description: Оставшееся время в секундах до таймаута
+        available_actions:
+          type: array
+          description: Список доступных действий для текущего участника
+          items:
+            type: string
+            enum:
+              - attack
+              - ability
+              - defend
+              - item
+              - move
+              - skip
+        combat_phase:
+          type: string
+          enum:
+            - preparation
+            - active
+            - completion
+          description: |
+            Фаза боя:
+            - `preparation` - подготовка, расстановка участников
+            - `active` - активный бой
+            - `completion` - завершение, подсчёт наград
+    Error:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          description: Тип ошибки
+        message:
+          type: string
+          description: Сообщение об ошибке
+        code:
+          type: string
+          description: Код ошибки
+          nullable: true
+        details:
+          type: object
+          additionalProperties: true
+          description: Дополнительные детали ошибки
+          nullable: true
+  responses:
+    Unauthorized:
+      description: Требуется аутентификация
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: Unauthorized
+            message: Требуется аутентификация
+            code: AUTH_REQUIRED
+    NotFound:
+      description: Ресурс не найден
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: NotFound
+            message: Ресурс не найден
+            code: RESOURCE_NOT_FOUND
+    BadRequest:
+      description: Неверный запрос
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: BadRequest
+            message: Неверные параметры запроса
+            code: INVALID_PARAMETERS

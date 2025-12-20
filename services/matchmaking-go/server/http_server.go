@@ -1,4 +1,4 @@
-// Issue: #150 - Matchmaking HTTP Server (ogen-based)
+// Package server Issue: #150 - Matchmaking HTTP Server (ogen-based)
 // SOLID: ТОЛЬКО настройка сервера. Middleware в middleware.go, Handlers в handlers.go
 package server
 
@@ -10,7 +10,7 @@ import (
 	"net/http"
 	"time"
 
-	api "github.com/gc-lover/necpgame-monorepo/services/matchmaking-go/pkg/api"
+	"github.com/gc-lover/necpgame-monorepo/services/matchmaking-go/pkg/api"
 )
 
 // HTTPServer represents HTTP server
@@ -61,10 +61,10 @@ func NewHTTPServer(addr string, service *Service) *HTTPServer {
 		server: &http.Server{
 			Addr:           addr,
 			Handler:        router,
-			ReadTimeout:  30 * time.Second,  // Prevent slowloris attacks,
-			WriteTimeout: 30 * time.Second,  // Prevent hanging writes,
-			IdleTimeout:  120 * time.Second, // Keep connections alive for reuse,
-			MaxHeaderBytes: 1 << 20, // 1 MB
+			ReadTimeout:    30 * time.Second,  // Prevent slowloris attacks,
+			WriteTimeout:   30 * time.Second,  // Prevent hanging writes,
+			IdleTimeout:    120 * time.Second, // Keep connections alive for reuse,
+			MaxHeaderBytes: 1 << 20,           // 1 MB
 		},
 	}
 }
@@ -91,14 +91,14 @@ func (s *HTTPServer) Shutdown(ctx context.Context) error {
 }
 
 // Health check handler
-func healthCheck(w http.ResponseWriter, r *http.Request) {
+func healthCheck(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(`{"status":"healthy"}`))
 }
 
 // Ready check handler
-func readyCheck(w http.ResponseWriter, r *http.Request) {
+func readyCheck(w http.ResponseWriter, _ *http.Request) {
 	// TODO: Check DB and Redis connectivity
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
@@ -106,7 +106,7 @@ func readyCheck(w http.ResponseWriter, r *http.Request) {
 }
 
 // Metrics handler (Prometheus format)
-func metricsHandler(w http.ResponseWriter, r *http.Request) {
+func metricsHandler(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(http.StatusOK)
 	// TODO: Collect real metrics
@@ -114,7 +114,3 @@ func metricsHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("# TYPE matchmaking_requests_total counter\n"))
 	w.Write([]byte("matchmaking_requests_total 0\n"))
 }
-
-
-
-

@@ -1,4 +1,4 @@
-// Issue: #141888646
+// Package server Issue: #141888646
 package server
 
 import (
@@ -9,8 +9,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
-	api "github.com/necpgame/admin-service-go/pkg/api"
 	"github.com/necpgame/admin-service-go/models"
+	"github.com/necpgame/admin-service-go/pkg/api"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
 )
@@ -33,13 +33,13 @@ type AdminServiceInterface interface {
 }
 
 type HTTPServer struct {
-	addr          string
-	router        http.Handler
-	adminService  AdminServiceInterface
-	logger        *logrus.Logger
-	server        *http.Server
-	jwtValidator  *JwtValidator
-	authEnabled   bool
+	addr         string
+	router       http.Handler
+	adminService AdminServiceInterface
+	logger       *logrus.Logger
+	server       *http.Server
+	jwtValidator *JwtValidator
+	authEnabled  bool
 }
 
 func NewHTTPServer(addr string, adminService AdminServiceInterface, jwtValidator *JwtValidator, authEnabled bool) *HTTPServer {
@@ -79,7 +79,7 @@ func NewHTTPServer(addr string, adminService AdminServiceInterface, jwtValidator
 		json.NewEncoder(w).Encode(map[string]string{"status": "healthy"})
 	})
 	router.Handle("/metrics", promhttp.Handler())
-	
+
 	// Legacy endpoints removed - all functionality available through ogen API at /api/v1/admin
 
 	server.router = router
@@ -149,7 +149,7 @@ func (s *HTTPServer) Start(ctx context.Context) error {
 
 	errChan := make(chan error, 1)
 	go func() {
-			defer close(errChan)
+		defer close(errChan)
 		if err := s.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			errChan <- err
 		}
@@ -169,4 +169,3 @@ func (s *HTTPServer) Shutdown(ctx context.Context) error {
 	}
 	return nil
 }
-

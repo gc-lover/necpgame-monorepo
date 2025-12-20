@@ -1,12 +1,12 @@
 package main
 
 import (
-	_ "net/http/pprof" // OPTIMIZATION: Issue #1584 - profiling endpoints
 	"context"
 	"encoding/binary"
 	"flag"
 	"fmt"
 	"math"
+	_ "net/http/pprof" // OPTIMIZATION: Issue #1584 - profiling endpoints
 	"sync"
 	"sync/atomic"
 	"time"
@@ -15,17 +15,17 @@ import (
 )
 
 type ClientMetrics struct {
-	PlayerID          string
-	Connections       int64
-	ConnectionsFailed int64
-	PlayerInputSent   int64
-	GameStateReceived int64
-	TotalLatency      int64
-	TotalLatencyCount int64
-	TotalBytesSent    int64
+	PlayerID           string
+	Connections        int64
+	ConnectionsFailed  int64
+	PlayerInputSent    int64
+	GameStateReceived  int64
+	TotalLatency       int64
+	TotalLatencyCount  int64
+	TotalBytesSent     int64
 	TotalBytesReceived int64
-	Errors            int64
-	LastGameStateTick int64
+	Errors             int64
+	LastGameStateTick  int64
 }
 
 type TestResult struct {
@@ -56,35 +56,35 @@ type FindLimitConfig struct {
 	ErrorThreshold float64 // Процент ошибок, при котором считаем тест провальным
 	CooldownTime   time.Duration
 	// Пороги для киберспортивных игр (CS:GO, VALORANT стандарты)
-	MaxLatencyMs   float64 // Максимальная допустимая latency (мс)
+	MaxLatencyMs      float64 // Максимальная допустимая latency (мс)
 	CriticalLatencyMs float64 // Критическая latency, при которой тест останавливается (мс)
 }
 
 func main() {
 	var (
-		serverURL        = flag.String("url", "ws://127.0.0.1:18080/ws?token=test", "WebSocket server URL")
-		startClients     = flag.Int("start", 10, "Starting number of clients")
-		maxClients       = flag.Int("max", 500, "Maximum number of clients to test")
-		stepSize         = flag.Int("step", 20, "Number of clients to add per iteration")
-		testDuration     = flag.Duration("duration", 20*time.Second, "Duration per test iteration")
-		playerInputHz    = flag.Int("hz", 60, "PlayerInput frequency (Hz)")
-		errorThreshold   = flag.Float64("error-threshold", 0.5, "Error rate threshold (percent) to consider test failed (competitive gaming standard: 0.5%)")
-		cooldownTime     = flag.Duration("cooldown", 5*time.Second, "Cooldown time between tests")
-		maxLatencyMs     = flag.Float64("max-latency", 50.0, "Maximum acceptable latency in milliseconds (competitive gaming: 50ms for good, 100ms acceptable)")
+		serverURL         = flag.String("url", "ws://127.0.0.1:18080/ws?token=test", "WebSocket server URL")
+		startClients      = flag.Int("start", 10, "Starting number of clients")
+		maxClients        = flag.Int("max", 500, "Maximum number of clients to test")
+		stepSize          = flag.Int("step", 20, "Number of clients to add per iteration")
+		testDuration      = flag.Duration("duration", 20*time.Second, "Duration per test iteration")
+		playerInputHz     = flag.Int("hz", 60, "PlayerInput frequency (Hz)")
+		errorThreshold    = flag.Float64("error-threshold", 0.5, "Error rate threshold (percent) to consider test failed (competitive gaming standard: 0.5%)")
+		cooldownTime      = flag.Duration("cooldown", 5*time.Second, "Cooldown time between tests")
+		maxLatencyMs      = flag.Float64("max-latency", 50.0, "Maximum acceptable latency in milliseconds (competitive gaming: 50ms for good, 100ms acceptable)")
 		criticalLatencyMs = flag.Float64("critical-latency", 150.0, "Critical latency threshold in milliseconds - test stops if exceeded (competitive gaming: 150ms is unplayable)")
 	)
 	flag.Parse()
 
 	config := FindLimitConfig{
-		ServerURL:        *serverURL,
-		StartClients:     *startClients,
-		MaxClients:       *maxClients,
-		StepSize:         *stepSize,
-		TestDuration:     *testDuration,
-		PlayerInputHz:    *playerInputHz,
-		ErrorThreshold:   *errorThreshold,
-		CooldownTime:     *cooldownTime,
-		MaxLatencyMs:     *maxLatencyMs,
+		ServerURL:         *serverURL,
+		StartClients:      *startClients,
+		MaxClients:        *maxClients,
+		StepSize:          *stepSize,
+		TestDuration:      *testDuration,
+		PlayerInputHz:     *playerInputHz,
+		ErrorThreshold:    *errorThreshold,
+		CooldownTime:      *cooldownTime,
+		MaxLatencyMs:      *maxLatencyMs,
 		CriticalLatencyMs: *criticalLatencyMs,
 	}
 
@@ -102,7 +102,7 @@ func main() {
 	fmt.Printf("\n")
 	fmt.Printf("Starting limit search...\n\n")
 
-	results := []TestResult{}
+	var results []TestResult
 	maxLimit := 0
 	maxSuccessfulClients := 0
 	currentStep := config.StepSize
@@ -117,13 +117,13 @@ func main() {
 
 		// Ожидаемая пропускная способность (клиенты * частота)
 		expectedRate := float64(numClients) * float64(config.PlayerInputHz)
-		
+
 		// Проверяем, что реальная пропускная способность составляет минимум 95% от ожидаемой
 		throughputRatio := float64(0)
 		if expectedRate > 0 {
 			throughputRatio = result.PlayerInputRate / expectedRate * 100.0
 		}
-		
+
 		// Проверяем, прошел ли тест
 		// Тест считается успешным, если:
 		// 1. Процент ошибок меньше порога (competitive gaming: <0.5%)
@@ -131,17 +131,17 @@ func main() {
 		// 3. Пропускная способность составляет минимум 95% от ожидаемой
 		// 4. Latency не превышает максимально допустимую (competitive gaming: <50ms хорошая, <100ms приемлемая)
 		latencyOK := result.AvgLatency == 0 || result.AvgLatency <= config.MaxLatencyMs
-		success := result.ErrorRate < config.ErrorThreshold && 
-		           result.ConnectionsFailed == 0 &&
-		           throughputRatio >= 95.0 &&
-		           latencyOK
+		success := result.ErrorRate < config.ErrorThreshold &&
+			result.ConnectionsFailed == 0 &&
+			throughputRatio >= 95.0 &&
+			latencyOK
 
 		// Адаптивный шаг: уменьшаем шаг, если начинается рост latency или error rate
 		if len(results) > 0 {
 			latencyIncrease := result.AvgLatency > 0 && previousLatency > 0 && result.AvgLatency > previousLatency*1.2
 			errorRateIncrease := result.ErrorRate > previousErrorRate*1.5 && previousErrorRate > 0
 			latencyNearLimit := result.AvgLatency > 0 && result.AvgLatency > config.MaxLatencyMs*0.7
-			
+
 			if latencyIncrease || errorRateIncrease || latencyNearLimit {
 				// Уменьшаем шаг для более точного поиска предела
 				newStep := currentStep / 2
@@ -164,7 +164,7 @@ func main() {
 				}
 			}
 		}
-		
+
 		previousLatency = result.AvgLatency
 		previousErrorRate = result.ErrorRate
 
@@ -201,7 +201,7 @@ func main() {
 			// 3. Пропускная способность слишком низкая (<80% от ожидаемой)
 			shouldStop := false
 			stopReason := ""
-			
+
 			if result.ErrorRate >= config.ErrorThreshold*2 {
 				shouldStop = true
 				stopReason = fmt.Sprintf("Error rate critically high (%.2f%% >= %.2f%%)", result.ErrorRate, config.ErrorThreshold*2)
@@ -212,7 +212,7 @@ func main() {
 				shouldStop = true
 				stopReason = fmt.Sprintf("Throughput critically low (%.1f%% of expected)", throughputRatio)
 			}
-			
+
 			if shouldStop {
 				fmt.Printf("WARNING  %s - stopping limit search.\n", stopReason)
 				break
@@ -277,7 +277,7 @@ func runTest(config FindLimitConfig, numClients int) TestResult {
 	for i := 0; i < numClients; i++ {
 		clientsWg.Add(1)
 		testCtxChan <- testCtx
-		go runClientTest(ctx, config, clientMetrics[i], &clientsWg, &connectedWg, startTestChan, testCtxChan)
+		go runClientTest(config, clientMetrics[i], &clientsWg, &connectedWg, startTestChan, testCtxChan)
 	}
 
 	// Ждем подключения всех клиентов (с таймаутом 30 секунд)
@@ -298,12 +298,12 @@ func runTest(config FindLimitConfig, numClients int) TestResult {
 
 	// Только после подключения всех клиентов начинаем измерение времени и тест
 	startTime := time.Now()
-	
+
 	// Запускаем таймер для testCtx
 	time.AfterFunc(config.TestDuration, func() {
 		testCancel()
 	})
-	
+
 	close(startTestChan) // Сигнализируем клиентам, что можно начинать тест
 
 	// Ждем завершения теста или истечения времени
@@ -327,7 +327,7 @@ func runTest(config FindLimitConfig, numClients int) TestResult {
 
 	// Собираем метрики
 	var totalMetrics ClientMetrics
-	var minLatency = float64(math.MaxFloat64)
+	var minLatency = math.MaxFloat64
 	var maxLatency = float64(0)
 
 	for _, cm := range clientMetrics {
@@ -338,7 +338,7 @@ func runTest(config FindLimitConfig, numClients int) TestResult {
 		totalMetrics.TotalBytesSent += atomic.LoadInt64(&cm.TotalBytesSent)
 		totalMetrics.TotalBytesReceived += atomic.LoadInt64(&cm.TotalBytesReceived)
 		totalMetrics.Errors += atomic.LoadInt64(&cm.Errors)
-		
+
 		// Суммируем latency метрики
 		cmLatency := atomic.LoadInt64(&cm.TotalLatency)
 		cmLatencyCount := atomic.LoadInt64(&cm.TotalLatencyCount)
@@ -390,7 +390,7 @@ func runTest(config FindLimitConfig, numClients int) TestResult {
 	return result
 }
 
-func runClientTest(ctx context.Context, config FindLimitConfig, metrics *ClientMetrics, wg *sync.WaitGroup, connectedWg *sync.WaitGroup, startTestChan <-chan struct{}, testCtxChan <-chan context.Context) {
+func runClientTest(config FindLimitConfig, metrics *ClientMetrics, wg *sync.WaitGroup, connectedWg *sync.WaitGroup, startTestChan <-chan struct{}, testCtxChan <-chan context.Context) {
 	defer wg.Done()
 
 	// Подключаемся к серверу с отдельным контекстом для подключения
@@ -465,12 +465,12 @@ func runClientTest(ctx context.Context, config FindLimitConfig, metrics *ClientM
 
 			// Симулируем движение и поворот для постоянных изменений в GameState
 			elapsed := time.Since(testStartTime).Seconds()
-			
+
 			// Каждый клиент имеет свой offset для уникальности движения
-			clientOffset := float64(tick % 100) * 0.1
+			clientOffset := float64(tick%100) * 0.1
 			moveX := float32(math.Sin(elapsed*0.5 + clientOffset))
 			moveY := float32(math.Cos(elapsed*0.5 + clientOffset))
-			
+
 			// Симулируем поворот камеры
 			aimX := float32(math.Sin(elapsed*0.3 + clientOffset*2))
 			aimY := float32(math.Cos(elapsed*0.3 + clientOffset*2))
@@ -594,4 +594,3 @@ func printSummaryTable(results []TestResult) {
 		)
 	}
 }
-

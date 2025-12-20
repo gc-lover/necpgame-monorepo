@@ -9,7 +9,7 @@ import (
 )
 
 func TestLobbyServer_AddClientToRoom(t *testing.T) {
-	server, cleanup := setupTestLobbyServer(t)
+	server, cleanup := setupTestLobbyServer()
 	defer cleanup()
 
 	client := &Client{
@@ -37,7 +37,7 @@ func TestLobbyServer_AddClientToRoom(t *testing.T) {
 }
 
 func TestLobbyServer_AddClientToRoom_ExistingRoom(t *testing.T) {
-	server, cleanup := setupTestLobbyServer(t)
+	server, cleanup := setupTestLobbyServer()
 	defer cleanup()
 
 	client1 := &Client{
@@ -71,7 +71,7 @@ func TestLobbyServer_AddClientToRoom_ExistingRoom(t *testing.T) {
 }
 
 func TestLobbyServer_RemoveClientFromRoom(t *testing.T) {
-	server, cleanup := setupTestLobbyServer(t)
+	server, cleanup := setupTestLobbyServer()
 	defer cleanup()
 
 	client := &Client{
@@ -92,7 +92,7 @@ func TestLobbyServer_RemoveClientFromRoom(t *testing.T) {
 }
 
 func TestLobbyServer_RemoveClientFromRoom_NonEmptyRoom(t *testing.T) {
-	server, cleanup := setupTestLobbyServer(t)
+	server, cleanup := setupTestLobbyServer()
 	defer cleanup()
 
 	client1 := &Client{
@@ -127,7 +127,7 @@ func TestLobbyServer_RemoveClientFromRoom_NonEmptyRoom(t *testing.T) {
 }
 
 func TestLobbyServer_BroadcastToRoom(t *testing.T) {
-	server, cleanup := setupTestLobbyServer(t)
+	server, cleanup := setupTestLobbyServer()
 	defer cleanup()
 
 	client1 := &Client{
@@ -166,7 +166,7 @@ func TestLobbyServer_BroadcastToRoom(t *testing.T) {
 }
 
 func TestLobbyServer_BroadcastToRoom_NonExistentRoom(t *testing.T) {
-	server, cleanup := setupTestLobbyServer(t)
+	server, cleanup := setupTestLobbyServer()
 	defer cleanup()
 
 	message := []byte("test message")
@@ -180,7 +180,7 @@ func TestLobbyServer_BroadcastToRoom_NonExistentRoom(t *testing.T) {
 }
 
 func TestLobbyServer_BroadcastToRoom_EmptyRoom(t *testing.T) {
-	server, cleanup := setupTestLobbyServer(t)
+	server, cleanup := setupTestLobbyServer()
 	defer cleanup()
 
 	room := &Room{
@@ -201,7 +201,7 @@ func TestLobbyServer_BroadcastToRoom_EmptyRoom(t *testing.T) {
 }
 
 func TestLobbyServer_BroadcastToRoom_FullChannel(t *testing.T) {
-	server, cleanup := setupTestLobbyServer(t)
+	server, cleanup := setupTestLobbyServer()
 	defer cleanup()
 
 	client := &Client{
@@ -238,7 +238,7 @@ func TestLobbyServer_BroadcastToRoom_FullChannel(t *testing.T) {
 }
 
 func TestLobbyServer_MultipleRooms(t *testing.T) {
-	server, cleanup := setupTestLobbyServer(t)
+	server, cleanup := setupTestLobbyServer()
 	defer cleanup()
 
 	client1 := &Client{
@@ -298,4 +298,3 @@ func TestLobbyServer_MultipleRooms(t *testing.T) {
 
 	cleanup()
 }
-

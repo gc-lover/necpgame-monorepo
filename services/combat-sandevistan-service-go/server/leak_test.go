@@ -35,4 +35,3 @@ func TestCombatSandevistanServiceNoLeaks(t *testing.T) {
 
 	// If goroutines leaked from combat sandevistan handlers, test FAILS
 }
-

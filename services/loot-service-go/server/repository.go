@@ -1,7 +1,5 @@
-// Issue: #1604
+// Package server Issue: #1604
 package server
-
-import "context"
 
 // Repository interface for loot data access
 type Repository interface {
@@ -12,12 +10,9 @@ type Repository interface {
 type LootRepository struct{}
 
 // NewLootRepository creates new repository
-func NewLootRepository() Repository {
-	return &LootRepository{}
-}
 
-// Placeholder methods
-func (r *LootRepository) GetLootHistory(ctx context.Context, playerID string) ([]interface{}, error) {
+// GetLootHistory Placeholder methods
+func (r *LootRepository) GetLootHistory() ([]interface{}, error) {
 	// TODO: Implement
 	return []interface{}{}, nil
 }

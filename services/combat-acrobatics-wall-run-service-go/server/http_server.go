@@ -1,4 +1,4 @@
-// Issue: #1510
+// Package server Issue: #1510
 package server
 
 // HTTP handlers use context.WithTimeout for request timeouts (see handlers.go)
@@ -69,16 +69,13 @@ func (s *HTTPServer) Stop(ctx context.Context) error {
 	return s.server.Shutdown(ctx)
 }
 
-func healthCheck(w http.ResponseWriter, r *http.Request) {
+func healthCheck(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("OK"))
 }
 
-func metricsHandler(w http.ResponseWriter, r *http.Request) {
+func metricsHandler(w http.ResponseWriter, _ *http.Request) {
 	// TODO: Implement Prometheus metrics handler
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("Metrics not implemented yet"))
 }
-
-
-

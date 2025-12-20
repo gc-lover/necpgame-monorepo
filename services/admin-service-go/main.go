@@ -21,7 +21,7 @@ func main() {
 
 	addr := getEnv("ADDR", "0.0.0.0:8090")
 	metricsAddr := getEnv("METRICS_ADDR", ":9100")
-	
+
 	dbURL := getEnv("DATABASE_URL", "postgresql://necpgame:necpgame@localhost:5432/necpgame?sslmode=disable")
 	redisURL := getEnv("REDIS_URL", "redis://localhost:6379/10")
 
@@ -109,4 +109,3 @@ func getEnv(key, defaultValue string) string {
 	}
 	return defaultValue
 }
-

@@ -1,4 +1,4 @@
-// Issue: #140890170 - Crafting mechanics implementation
+// Package server Issue: #140890170 - Crafting mechanics implementation
 package server
 
 import (

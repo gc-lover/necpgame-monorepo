@@ -15,13 +15,6 @@ type GoroutineMonitor struct {
 }
 
 // NewGoroutineMonitor creates a new goroutine monitor
-func NewGoroutineMonitor(maxGoroutines int, logger *logrus.Logger) *GoroutineMonitor {
-	return &GoroutineMonitor{
-		maxGoroutines: maxGoroutines,
-		logger:        logger,
-		stopCh:        make(chan struct{}),
-	}
-}
 
 // Start begins monitoring goroutines
 func (gm *GoroutineMonitor) Start() {
@@ -49,14 +42,14 @@ func (gm *GoroutineMonitor) checkGoroutines() {
 
 	if count > gm.maxGoroutines {
 		gm.logger.WithFields(logrus.Fields{
-			"goroutines":     count,
-			"max_allowed":    gm.maxGoroutines,
-			"service":        "tournament-service",
+			"goroutines":  count,
+			"max_allowed": gm.maxGoroutines,
+			"service":     "tournament-service",
 		}).Warn("high goroutine count detected - potential leak")
 	} else {
 		gm.logger.WithFields(logrus.Fields{
-			"goroutines":  count,
-			"service":     "tournament-service",
+			"goroutines": count,
+			"service":    "tournament-service",
 		}).Debug("goroutine count check")
 	}
 }

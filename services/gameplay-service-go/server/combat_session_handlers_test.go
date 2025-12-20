@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/gc-lover/necpgame-monorepo/services/gameplay-service-go/pkg/api"
+	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -55,13 +55,13 @@ func TestHandlers_CreateCombatSession(t *testing.T) {
 	logger := logrus.New()
 	handlers := &Handlers{
 		combatSessionService: mockService,
-		logger:                logger,
+		logger:               logger,
 	}
 
 	sessionID := uuid.New()
 	participantID := uuid.New()
 	req := &api.CreateSessionRequest{
-		SessionType: api.SessionTypePvpArena,
+		SessionType:  api.SessionTypePvpArena,
 		Participants: []uuid.UUID{participantID},
 	}
 
@@ -95,11 +95,11 @@ func TestHandlers_CreateCombatSession_NoService(t *testing.T) {
 	logger := logrus.New()
 	handlers := &Handlers{
 		combatSessionService: nil,
-		logger:                logger,
+		logger:               logger,
 	}
 
 	req := &api.CreateSessionRequest{
-		SessionType: api.SessionTypePvpArena,
+		SessionType:  api.SessionTypePvpArena,
 		Participants: []uuid.UUID{uuid.New()},
 	}
 
@@ -117,7 +117,7 @@ func TestHandlers_GetCombatSession(t *testing.T) {
 	logger := logrus.New()
 	handlers := &Handlers{
 		combatSessionService: mockService,
-		logger:                logger,
+		logger:               logger,
 	}
 
 	sessionID := uuid.New()
@@ -156,7 +156,7 @@ func TestHandlers_ListCombatSessions(t *testing.T) {
 	logger := logrus.New()
 	handlers := &Handlers{
 		combatSessionService: mockService,
-		logger:                logger,
+		logger:               logger,
 	}
 
 	sessionID := uuid.New()
@@ -173,9 +173,9 @@ func TestHandlers_ListCombatSessions(t *testing.T) {
 			},
 		},
 		Pagination: api.PaginationResponse{
-			Total:  1,
-			Limit:  api.NewOptInt(20),
-			Offset: api.NewOptInt(0),
+			Total:   1,
+			Limit:   api.NewOptInt(20),
+			Offset:  api.NewOptInt(0),
 			HasMore: api.NewOptBool(false),
 		},
 	}
@@ -199,7 +199,7 @@ func TestHandlers_EndCombatSession(t *testing.T) {
 	logger := logrus.New()
 	handlers := &Handlers{
 		combatSessionService: mockService,
-		logger:                logger,
+		logger:               logger,
 	}
 
 	sessionID := uuid.New()
@@ -222,4 +222,3 @@ func TestHandlers_EndCombatSession(t *testing.T) {
 	assert.NotNil(t, response)
 	mockService.AssertExpectations(t)
 }
-

@@ -10,11 +10,12 @@
     --category   - создать только указанную категорию (america_quests, europe_quests, etc.)
 """
 
-import yaml
 import argparse
 import sys
+import yaml
 from pathlib import Path
 from typing import Dict, List, Any
+
 
 def load_pending_issues() -> Dict[str, Any]:
     """Загрузить документ с pending issues"""
@@ -26,6 +27,7 @@ def load_pending_issues() -> Dict[str, Any]:
 
     with open(issues_file, 'r', encoding='utf-8') as f:
         return yaml.safe_load(f)
+
 
 def parse_issue_groups(data: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
     """Распарсить группы issues из документа"""
@@ -43,6 +45,7 @@ def parse_issue_groups(data: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
         }
 
     return groups
+
 
 def parse_issues_from_body(body: str) -> List[Dict[str, Any]]:
     """Распарсить issues из тела секции"""
@@ -98,6 +101,7 @@ def parse_issues_from_body(body: str) -> List[Dict[str, Any]]:
 
     return issues
 
+
 def create_github_issue(title: str, body: str, labels: List[str] = None) -> bool:
     """Создать GitHub Issue (заглушка для dry-run)"""
     print(f"Создание Issue: {title}")
@@ -106,6 +110,7 @@ def create_github_issue(title: str, body: str, labels: List[str] = None) -> bool
     print(f"   Body: {body[:100]}...")
     print()
     return True
+
 
 def format_issue_body(issue_data: Dict[str, Any], section_title: str) -> str:
     """Форматировать тело Issue"""
@@ -141,6 +146,7 @@ def format_issue_body(issue_data: Dict[str, Any], section_title: str) -> str:
 
     return body
 
+
 def get_labels_from_string(labels_str: str) -> List[str]:
     """Преобразовать строку меток в список"""
     if not labels_str:
@@ -149,6 +155,7 @@ def get_labels_from_string(labels_str: str) -> List[str]:
     # Разделить по запятой и очистить
     labels = [label.strip() for label in labels_str.split(',')]
     return [label for label in labels if label]
+
 
 def main():
     parser = argparse.ArgumentParser(description='Создать GitHub Issues из pending документа')
@@ -211,6 +218,7 @@ def main():
         print("\nDry run завершен. Используйте без --dry-run для реального создания.")
     else:
         print(f"\nСоздано {created_count} Issues")
+
 
 if __name__ == '__main__':
     main()

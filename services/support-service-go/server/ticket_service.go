@@ -1,4 +1,4 @@
-// Issue: #141886738
+// Package server Issue: #141886738
 package server
 
 import (
@@ -8,9 +8,9 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/gc-lover/necpgame-monorepo/services/support-service-go/models"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/gc-lover/necpgame-monorepo/services/support-service-go/models"
 	"github.com/redis/go-redis/v9"
 	"github.com/sirupsen/logrus"
 )
@@ -31,8 +31,8 @@ type TicketRepositoryInterface interface {
 }
 
 type TicketService struct {
-	repo  TicketRepositoryInterface
-	cache *redis.Client
+	repo   TicketRepositoryInterface
+	cache  *redis.Client
 	logger *logrus.Logger
 }
 
@@ -46,7 +46,7 @@ func NewTicketService(dbURL, redisURL string) (*TicketService, error) {
 	config.MinConns = 10
 	config.MaxConnLifetime = 5 * time.Minute
 	config.MaxConnIdleTime = 1 * time.Minute
-	
+
 	dbPool, err := pgxpool.NewWithConfig(context.Background(), config)
 	if err != nil {
 		return nil, err
@@ -62,8 +62,8 @@ func NewTicketService(dbURL, redisURL string) (*TicketService, error) {
 	repo := NewTicketRepository(dbPool)
 
 	return &TicketService{
-		repo:  repo,
-		cache: redisClient,
+		repo:   repo,
+		cache:  redisClient,
 		logger: GetLogger(),
 	}, nil
 }
@@ -197,7 +197,7 @@ func (s *TicketService) UpdateTicket(ctx context.Context, id uuid.UUID, req *mod
 	}
 	if req.Status != nil {
 		ticket.Status = *req.Status
-		
+
 		now := time.Now()
 		if ticket.Status == models.TicketStatusResolved && ticket.ResolvedAt == nil {
 			ticket.ResolvedAt = &now
@@ -363,4 +363,3 @@ func (s *TicketService) invalidateAgentCache(ctx context.Context, agentID uuid.U
 		s.cache.Del(ctx, keys...)
 	}
 }
-

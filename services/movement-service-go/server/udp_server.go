@@ -1,16 +1,14 @@
-// Issue: #MOVEMENT_OPTIMIZATION
+// Package server Issue: #MOVEMENT_OPTIMIZATION
 // Movement Service - UDP Server with Protobuf
 // Performance: UDP (↓50% latency), Protobuf (2.5x faster), Spatial partitioning (↓70% bandwidth)
 package server
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"net"
 	"sync"
 	"time"
-
 	// TODO: Uncomment when protobuf is fixed
 	// "google.golang.org/protobuf/proto"
 	// pb "github.com/gc-lover/necpgame-monorepo/proto/realtime/movement"
@@ -20,27 +18,27 @@ import (
 // UDPServer handles real-time player movement over UDP
 // Performance: 1000+ updates/sec, <20ms latency, 50% smaller messages
 type UDPServer struct {
-	addr     *net.UDPAddr
-	conn     *net.UDPConn
-	service  *MovementService
-	
+	addr    *net.UDPAddr
+	conn    *net.UDPConn
+	service *MovementService
+
 	// Spatial partitioning for interest management (Level 3)
 	spatialGrid *SpatialGrid
-	
+
 	// Client tracking
-	clients sync.Map  // player_id → *net.UDPAddr
-	
+	clients sync.Map // player_id → *net.UDPAddr
+
 	// Adaptive tick rate (Level 3)
-	tickRate     time.Duration
-	playerCount  int
-	mu           sync.RWMutex
-	
+	tickRate    time.Duration
+	playerCount int
+	mu          sync.RWMutex
+
 	// Issue: #1612 - Adaptive compression
 	compressor *AdaptiveCompressor
-	
+
 	// Issue: #1587 - Anti-cheat validation
 	movementValidator *MovementValidator
-	
+
 	// Metrics
 	packetsReceived uint64
 	packetsSent     uint64
@@ -49,41 +47,6 @@ type UDPServer struct {
 }
 
 // NewUDPServer creates new UDP server
-func NewUDPServer(addr string, service *MovementService) (*UDPServer, error) {
-	udpAddr, err := net.ResolveUDPAddr("udp", addr)
-	if err != nil {
-		return nil, fmt.Errorf("failed to resolve UDP address: %w", err)
-	}
-
-	conn, err := net.ListenUDP("udp", udpAddr)
-	if err != nil {
-		return nil, fmt.Errorf("failed to listen UDP: %w", err)
-	}
-
-	// Issue: #1612 - Initialize adaptive compressor
-	compressor, err := NewAdaptiveCompressor()
-	if err != nil {
-		// Log error but continue without compression
-		log.Printf("Failed to initialize compressor, continuing without compression: %v", err)
-		compressor = nil
-	}
-
-	// Set UDP buffer sizes (critical for high throughput!)
-	conn.SetReadBuffer(4 * 1024 * 1024)  // 4 MB
-	conn.SetWriteBuffer(4 * 1024 * 1024) // 4 MB
-
-	s := &UDPServer{
-		addr:             udpAddr,
-		conn:             conn,
-		service:          service,
-		spatialGrid:      NewSpatialGrid(100.0), // 100m zones
-		tickRate:         7812500 * time.Nanosecond, // 128 Hz (default for FPS)
-		compressor:       compressor, // Issue: #1612
-		movementValidator: NewMovementValidator(), // Issue: #1587
-	}
-
-	return s, nil
-}
 
 // Start starts UDP server and game loop
 func (s *UDPServer) Start(ctx context.Context) error {
@@ -133,14 +96,14 @@ func (s *UDPServer) receiveLoop(ctx context.Context) {
 		// Unmarshal protobuf (2.5x faster than JSON!)
 		// TODO: Uncomment when protobuf is fixed
 		/*
-		var msg pb.PlayerMovementUpdate
-		if err := proto.Unmarshal(buffer[:n], &msg); err != nil {
-			log.Printf("Failed to unmarshal protobuf: %v", err)
-			continue
-		}
+			var msg pb.PlayerMovementUpdate
+			if err := proto.Unmarshal(buffer[:n], &msg); err != nil {
+				log.Printf("Failed to unmarshal protobuf: %v", err)
+				continue
+			}
 
-		// Process movement update
-		go s.handleMovementUpdate(ctx, &msg, clientAddr)
+			// Process movement update
+			go s.handleMovementUpdate(ctx, &msg, clientAddr)
 		*/
 		_ = clientAddr // TODO: Use when protobuf is fixed
 	}
@@ -154,25 +117,25 @@ func (s *UDPServer) receiveLoop(ctx context.Context) {
 func (s *UDPServer) handleMovementUpdate(ctx context.Context, msg *pb.PlayerMovementUpdate, clientAddr *net.UDPAddr) {
 	// Extract player_id from validated input
 	// (In production, validate token/session first)
-	
+
 	// Issue: #1587 - Validate movement before processing (anti-cheat)
 	newPos := Vec3{
 		X: float64(msg.Position.X),
 		Y: float64(msg.Position.Y),
 		Z: float64(msg.Position.Z),
 	}
-	
+
 	if err := s.movementValidator.ValidateMovement(msg.ClientTick, newPos); err != nil {
 		log.Printf("Movement validation failed for player %d: %v", msg.ClientTick, err)
 		return // Reject invalid movement
 	}
-	
+
 	// Update player state in spatial grid
 	position := s.service.ProcessMovementInput(ctx, msg)
-	
+
 	// Update spatial grid (for interest management)
 	s.spatialGrid.UpdatePlayerPosition(msg.ClientTick, position)
-	
+
 	// Register/update client address
 	s.clients.Store(msg.ClientTick, clientAddr) // Mock: use real player_id
 }
@@ -192,28 +155,28 @@ func (s *UDPServer) gameTickLoop(ctx context.Context) {
 			return
 		case <-ticker.C:
 			serverTick++
-			
+
 			// Adaptive tick rate adjustment (Level 3)
 			if serverTick%128 == 0 { // Every ~1 second
 				s.adjustTickRate()
 			}
 
 			// Broadcast movement state (delta compressed, spatially culled)
-			s.broadcastMovementState(ctx, serverTick)
+			s.broadcastMovementState()
 		}
 	}
 }
 
 // broadcastMovementState sends updates to all players
 // Performance: Spatial partitioning (only nearby players), batch updates
-func (s *UDPServer) broadcastMovementState(ctx context.Context, serverTick uint32) {
+func (s *UDPServer) broadcastMovementState() {
 	// Get all spatial zones
 	zones := s.spatialGrid.GetAllZones()
 
 	for _, zone := range zones {
 		// Get players in this zone (delta: only those who moved!)
 		movedPlayers := s.spatialGrid.GetMovedPlayers(zone.ZoneID)
-		
+
 		if len(movedPlayers) == 0 {
 			continue // No updates needed
 		}
@@ -221,51 +184,51 @@ func (s *UDPServer) broadcastMovementState(ctx context.Context, serverTick uint3
 		// Build batch message
 		// TODO: Uncomment when protobuf is fixed
 		/*
-		batch := &pb.MovementState{
-			ServerTick: serverTick,
-			Positions:  make([]*pb.PlayerPosition, len(movedPlayers)),
-			ZoneId:     zone.ZoneID,
-		}
-
-		for i, player := range movedPlayers {
-			batch.Positions[i] = player.ToProto()
-		}
-
-		// Marshal protobuf (2.5x faster than JSON!)
-		data, err := proto.Marshal(batch)
-		if err != nil {
-			log.Printf("Failed to marshal batch: %v", err)
-			continue
-		}
-
-		// Issue: #1612 - Compress data (real-time position updates use LZ4)
-		if s.compressor != nil {
-			compressed, err := s.compressor.Compress(data, true) // true = real-time
-			if err == nil && len(compressed) < len(data) {
-				data = compressed // Use compressed if smaller
-			}
-		}
-
-		// Send to all players in this zone + adjacent zones (interest management)
-		recipients := s.spatialGrid.GetPlayersInAdjacentZones(zone.ZoneID)
-		
-		for _, playerID := range recipients {
-			// Get client address
-			addr, ok := s.clients.Load(playerID)
-			if !ok {
-				continue
+			batch := &pb.MovementState{
+				ServerTick: serverTick,
+				Positions:  make([]*pb.PlayerPosition, len(movedPlayers)),
+				ZoneId:     zone.ZoneID,
 			}
 
-			// Send UDP packet (non-blocking)
-			_, err := s.conn.WriteToUDP(data, addr.(*net.UDPAddr))
+			for i, player := range movedPlayers {
+				batch.Positions[i] = player.ToProto()
+			}
+
+			// Marshal protobuf (2.5x faster than JSON!)
+			data, err := proto.Marshal(batch)
 			if err != nil {
-				// Don't block on send errors (UDP is unreliable)
+				log.Printf("Failed to marshal batch: %v", err)
 				continue
 			}
 
-			s.packetsSent++
-			s.bytesSent += uint64(len(data))
-		}
+			// Issue: #1612 - Compress data (real-time position updates use LZ4)
+			if s.compressor != nil {
+				compressed, err := s.compressor.Compress(data, true) // true = real-time
+				if err == nil && len(compressed) < len(data) {
+					data = compressed // Use compressed if smaller
+				}
+			}
+
+			// Send to all players in this zone + adjacent zones (interest management)
+			recipients := s.spatialGrid.GetPlayersInAdjacentZones(zone.ZoneID)
+
+			for _, playerID := range recipients {
+				// Get client address
+				addr, ok := s.clients.Load(playerID)
+				if !ok {
+					continue
+				}
+
+				// Send UDP packet (non-blocking)
+				_, err := s.conn.WriteToUDP(data, addr.(*net.UDPAddr))
+				if err != nil {
+					// Don't block on send errors (UDP is unreliable)
+					continue
+				}
+
+				s.packetsSent++
+				s.bytesSent += uint64(len(data))
+			}
 		*/
 	}
 }
@@ -333,4 +296,3 @@ func (s *UDPServer) metricsLoop(ctx context.Context) {
 func (s *UDPServer) Close() error {
 	return s.conn.Close()
 }
-

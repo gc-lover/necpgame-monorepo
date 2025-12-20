@@ -1,0 +1,725 @@
+# Voice Chat Service API - Room Management
+openapi: 3.0.3
+info:
+  title: Voice Chat Service API - Room Management
+  version: 1.0.0
+  description: Room management endpoints for Voice Chat Service
+
+servers:
+  - url: https://voice-chat.necpgame.com/api/v1
+    description: Production server
+  - url: http://localhost:8080/api/v1
+    description: Local development
+
+security:
+  - BearerAuth: [ ]
+
+tags:
+  - name: rooms
+    description: Voice room management
+  - name: participants
+    description: Room participant management
+  - name: moderation
+    description: Room moderation controls
+
+paths:
+  /health:
+    get:
+      tags: [ health ]
+      summary: Health check
+      operationId: healthCheck
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: healthy
+                  timestamp:
+                    type: string
+                    format: date-time
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /rooms:
+    get:
+      tags: [ rooms ]
+      summary: List voice rooms
+      operationId: listRooms
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [ active, inactive, full, closed ]
+        - name: game_session_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: List of voice rooms
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoomListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      tags: [ rooms ]
+      summary: Create voice room
+      operationId: createRoom
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateRoomRequest'
+      responses:
+        '201':
+          description: Voice room created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VoiceRoom'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /rooms/{roomId}:
+    get:
+      tags: [ rooms ]
+      summary: Get voice room details
+      operationId: getRoom
+      parameters:
+        - name: roomId
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/RoomId'
+      responses:
+        '200':
+          description: Voice room details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VoiceRoom'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      tags: [ rooms ]
+      summary: Update voice room
+      operationId: updateRoom
+      parameters:
+        - name: roomId
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/RoomId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateRoomRequest'
+      responses:
+        '200':
+          description: Voice room updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VoiceRoom'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags: [ rooms ]
+      summary: Delete voice room
+      operationId: deleteRoom
+      parameters:
+        - name: roomId
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/RoomId'
+      responses:
+        '204':
+          description: Voice room deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /rooms/{roomId}/join:
+    post:
+      tags: [ rooms ]
+      summary: Join voice room
+      operationId: joinRoom
+      parameters:
+        - name: roomId
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/RoomId'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JoinRoomRequest'
+      responses:
+        '200':
+          description: Successfully joined room
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  room:
+                    $ref: '#/components/schemas/VoiceRoom'
+                  ice_servers:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        urls:
+                          type: string
+                        username:
+                          type: string
+                        credential:
+                          type: string
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /rooms/{roomId}/leave:
+    post:
+      tags: [ rooms ]
+      summary: Leave voice room
+      operationId: leaveRoom
+      parameters:
+        - name: roomId
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/RoomId'
+      responses:
+        '200':
+          description: Successfully left room
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /rooms/{roomId}/participants:
+    get:
+      tags: [ participants ]
+      summary: List room participants
+      operationId: listParticipants
+      parameters:
+        - name: roomId
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/RoomId'
+      responses:
+        '200':
+          description: List of participants
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/VoiceParticipant'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /rooms/{roomId}/participants/{playerId}:
+    put:
+      tags: [ participants ]
+      summary: Update participant settings
+      operationId: updateParticipant
+      parameters:
+        - name: roomId
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/RoomId'
+        - name: playerId
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/PlayerId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ParticipantUpdateRequest'
+      responses:
+        '200':
+          description: Participant updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VoiceParticipant'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags: [ participants ]
+      summary: Remove participant from room
+      operationId: removeParticipant
+      parameters:
+        - name: roomId
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/RoomId'
+        - name: playerId
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/PlayerId'
+      responses:
+        '204':
+          description: Participant removed
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /rooms/{roomId}/mute:
+    post:
+      tags: [ moderation ]
+      summary: Mute entire room (host only)
+      operationId: muteRoom
+      parameters:
+        - name: roomId
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/RoomId'
+      responses:
+        '200':
+          description: Room muted successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /rooms/{roomId}/unmute:
+    post:
+      tags: [ moderation ]
+      summary: Unmute entire room (host only)
+      operationId: unmuteRoom
+      parameters:
+        - name: roomId
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/RoomId'
+      responses:
+        '200':
+          description: Room unmuted successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Forbidden:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Conflict:
+      description: Conflict
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+  schemas:
+    # Common schemas
+    Error:
+      type: object
+      required:
+        - error
+        - message
+        - timestamp
+      properties:
+        error:
+          type: string
+          description: Error code
+        message:
+          type: string
+          description: Human-readable error message
+        timestamp:
+          type: string
+          format: date-time
+          description: Error timestamp
+        details:
+          type: object
+          additionalProperties: true
+          description: Additional error details
+
+    PlayerId:
+      type: string
+      format: uuid
+      description: Player identifier
+
+    RoomId:
+      type: string
+      format: uuid
+      description: Voice room identifier
+
+    SessionId:
+      type: string
+      format: uuid
+      description: Game session identifier
+
+    # Room schemas
+    VoiceRoom:
+      type: object
+      required:
+        - id
+        - name
+        - host_id
+        - status
+        - max_participants
+        - created_at
+      properties:
+        id:
+          $ref: '#/components/schemas/RoomId'
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Room display name
+        description:
+          type: string
+          maxLength: 500
+          description: Room description
+        host_id:
+          $ref: '#/components/schemas/PlayerId'
+        game_session_id:
+          $ref: '#/components/schemas/SessionId'
+        status:
+          type: string
+          enum: [ active, inactive, full, closed ]
+          description: Room status
+        max_participants:
+          type: integer
+          minimum: 2
+          maximum: 50
+          description: Maximum number of participants
+        current_participants:
+          type: integer
+          minimum: 0
+          description: Current number of participants
+        is_private:
+          type: boolean
+          default: false
+          description: Whether room is private
+        password:
+          type: string
+          description: Room password (if private)
+        spatial_audio:
+          type: boolean
+          default: true
+          description: Enable spatial audio
+        noise_suppression:
+          type: boolean
+          default: true
+          description: Enable noise suppression
+        echo_cancellation:
+          type: boolean
+          default: true
+          description: Enable echo cancellation
+        voice_activation:
+          type: boolean
+          default: false
+          description: Use voice activation detection
+        push_to_talk:
+          type: boolean
+          default: false
+          description: Require push-to-talk
+        created_at:
+          type: string
+          format: date-time
+          description: Room creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+
+    CreateRoomRequest:
+      type: object
+      required:
+        - name
+        - max_participants
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Room display name
+        description:
+          type: string
+          maxLength: 500
+          description: Room description
+        game_session_id:
+          $ref: '#/components/schemas/SessionId'
+        max_participants:
+          type: integer
+          minimum: 2
+          maximum: 50
+          description: Maximum number of participants
+        is_private:
+          type: boolean
+          default: false
+          description: Whether room is private
+        password:
+          type: string
+          minLength: 4
+          maxLength: 32
+          description: Room password (required if private)
+        spatial_audio:
+          type: boolean
+          default: true
+          description: Enable spatial audio
+        noise_suppression:
+          type: boolean
+          default: true
+          description: Enable noise suppression
+        echo_cancellation:
+          type: boolean
+          default: true
+          description: Enable echo cancellation
+        voice_activation:
+          type: boolean
+          default: false
+          description: Use voice activation detection
+        push_to_talk:
+          type: boolean
+          default: false
+          description: Require push-to-talk
+
+    UpdateRoomRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Room display name
+        description:
+          type: string
+          maxLength: 500
+          description: Room description
+        max_participants:
+          type: integer
+          minimum: 2
+          maximum: 50
+          description: Maximum number of participants
+        is_private:
+          type: boolean
+          description: Whether room is private
+        password:
+          type: string
+          minLength: 4
+          maxLength: 32
+          description: Room password (required if private)
+        spatial_audio:
+          type: boolean
+          description: Enable spatial audio
+        noise_suppression:
+          type: boolean
+          description: Enable noise suppression
+        echo_cancellation:
+          type: boolean
+          description: Enable echo cancellation
+        voice_activation:
+          type: boolean
+          description: Use voice activation detection
+        push_to_talk:
+          type: boolean
+          description: Require push-to-talk
+
+    JoinRoomRequest:
+      type: object
+      properties:
+        password:
+          type: string
+          description: Room password (required if room is private)
+
+    RoomListResponse:
+      type: object
+      required:
+        - rooms
+        - total_count
+        - limit
+        - offset
+      properties:
+        rooms:
+          type: array
+          items:
+            $ref: '#/components/schemas/VoiceRoom'
+        total_count:
+          type: integer
+          minimum: 0
+          description: Total number of rooms
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Requested limit
+        offset:
+          type: integer
+          minimum: 0
+          description: Requested offset
+
+    # Participant schemas
+    VoiceParticipant:
+      type: object
+      required:
+        - player_id
+        - joined_at
+        - is_muted
+        - is_deafened
+      properties:
+        player_id:
+          $ref: '#/components/schemas/PlayerId'
+        joined_at:
+          type: string
+          format: date-time
+          description: When participant joined
+        left_at:
+          type: string
+          format: date-time
+          description: When participant left (if applicable)
+        is_muted:
+          type: boolean
+          description: Whether participant is muted
+        is_deafened:
+          type: boolean
+          description: Whether participant is deafened
+        volume_level:
+          type: number
+          minimum: 0.0
+          maximum: 1.0
+          default: 1.0
+          description: Participant volume level
+        is_speaking:
+          type: boolean
+          description: Whether participant is currently speaking
+        network_quality:
+          type: string
+          enum: [ excellent, good, fair, poor ]
+          description: Network connection quality
+        last_activity:
+          type: string
+          format: date-time
+          description: Last activity timestamp
+
+    ParticipantUpdateRequest:
+      type: object
+      properties:
+        is_muted:
+          type: boolean
+        is_deafened:
+          type: boolean
+        volume_level:
+          type: number
+          minimum: 0.0
+          maximum: 1.0

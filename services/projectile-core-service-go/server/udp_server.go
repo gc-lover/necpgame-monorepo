@@ -13,7 +13,6 @@ import (
 	"net"
 	"sync"
 	"time"
-
 	// "google.golang.org/protobuf/proto"
 	// pb "github.com/gc-lover/necpgame-monorepo/proto/realtime/projectile" // TODO: Fix proto import
 )
@@ -24,16 +23,16 @@ type UDPServer struct {
 	addr    *net.UDPAddr
 	conn    *net.UDPConn
 	service *ProjectileService
-	
+
 	// Spatial culling for interest management
 	spatialCuller *SpatialCuller
-	
+
 	// Client tracking
-	clients sync.Map  // player_id → *net.UDPAddr
-	
+	clients sync.Map // player_id → *net.UDPAddr
+
 	// Tick rate (adaptive)
 	tickRate time.Duration
-	
+
 	// Metrics
 	projectilesProcessed uint64
 	projectilesActive    int
@@ -54,14 +53,14 @@ func NewUDPServer(addr string, service *ProjectileService) (*UDPServer, error) {
 	}
 
 	// Set UDP buffer sizes (critical for burst projectile spawns!)
-	conn.SetReadBuffer(8 * 1024 * 1024)  // 8 MB (handle burst fire)
+	conn.SetReadBuffer(8 * 1024 * 1024) // 8 MB (handle burst fire)
 	conn.SetWriteBuffer(8 * 1024 * 1024)
 
 	s := &UDPServer{
 		addr:          udpAddr,
 		conn:          conn,
 		service:       service,
-		spatialCuller: NewSpatialCuller(100.0), // 100m culling zones
+		spatialCuller: NewSpatialCuller(100.0),    // 100m culling zones
 		tickRate:      16666666 * time.Nanosecond, // 60 Hz (default for projectiles)
 	}
 
@@ -128,7 +127,7 @@ func (s *UDPServer) receiveLoop(ctx context.Context) {
 func (s *UDPServer) handleProjectileSpawn(ctx context.Context, spawn *pb.ProjectileSpawn, clientAddr *net.UDPAddr) {
 	// Server-side validation (anti-cheat)
 	validation := s.service.ValidateProjectileSpawn(ctx, spawn)
-	
+
 	if !validation.Valid {
 		// Send validation failure back to client
 		s.sendValidationResult(ctx, validation, clientAddr)
@@ -137,17 +136,17 @@ func (s *UDPServer) handleProjectileSpawn(ctx context.Context, spawn *pb.Project
 
 	// Spawn projectile (server-authoritative)
 	projectile := s.service.SpawnProjectile(ctx, spawn)
-	
+
 	// Add to spatial culler
 	s.spatialCuller.AddProjectile(projectile)
-	
+
 	// Send confirmation to client
 	validation.ServerProjectileId = projectile.ProjectileID
 	s.sendValidationResult(ctx, validation, clientAddr)
-	
+
 	// Register client
 	s.clients.Store(spawn.PlayerId, clientAddr)
-	
+
 	s.projectilesProcessed++
 }
 
@@ -193,8 +192,8 @@ func (s *UDPServer) broadcastProjectileState(ctx context.Context, serverTick uin
 	for zoneID, projs := range zoneProjectiles {
 		// Build batch message
 		batch := &pb.ProjectileBatch{
-			ServerTick: serverTick,
-			ZoneId:     zoneID,
+			ServerTick:  serverTick,
+			ZoneId:      zoneID,
 			Projectiles: make([]*pb.ProjectileState, len(projs)),
 		}
 
@@ -211,7 +210,7 @@ func (s *UDPServer) broadcastProjectileState(ctx context.Context, serverTick uin
 
 		// Send to all players in this zone + adjacent zones
 		recipients := s.spatialCuller.GetPlayersInZone(zoneID)
-		
+
 		for _, playerID := range recipients {
 			addr, ok := s.clients.Load(playerID)
 			if !ok {
@@ -259,4 +258,3 @@ func (s *UDPServer) metricsLoop(ctx context.Context) {
 func (s *UDPServer) Close() error {
 	return s.conn.Close()
 }
-

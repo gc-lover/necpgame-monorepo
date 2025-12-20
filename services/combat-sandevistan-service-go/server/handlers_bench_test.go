@@ -3,8 +3,9 @@ package server
 
 import (
 	"context"
-	"github.com/gc-lover/necpgame-monorepo/services/combat-sandevistan-service-go/pkg/api"
 	"testing"
+
+	"github.com/gc-lover/necpgame-monorepo/services/combat-sandevistan-service-go/pkg/api"
 )
 
 // BenchmarkActivateSandevistan benchmarks ActivateSandevistan handler
@@ -45,8 +46,7 @@ func BenchmarkGetSandevistanStatus(b *testing.B) {
 	handlers := NewHandlers()
 
 	ctx := context.Background()
-	params := api.GetSandevistanStatusParams{
-	}
+	params := api.GetSandevistanStatusParams{}
 
 	b.ReportAllocs()
 	b.ResetTimer()
@@ -55,4 +55,3 @@ func BenchmarkGetSandevistanStatus(b *testing.B) {
 		_, _ = handlers.GetSandevistanStatus(ctx, params)
 	}
 }
-

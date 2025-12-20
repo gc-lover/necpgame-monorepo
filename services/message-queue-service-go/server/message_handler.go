@@ -1,5 +1,3 @@
-package server
-
 import (
 	"encoding/json"
 	"net/http"
@@ -9,7 +7,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// OPTIMIZATION: Issue #2143 - Message publishing and consumption operations
+// PublishMessage OPTIMIZATION: Issue #2143 - Message publishing and consumption operations
 func (s *MessageQueueService) PublishMessage(w http.ResponseWriter, r *http.Request) {
 	var req PublishMessageRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -41,10 +39,10 @@ func (s *MessageQueueService) PublishMessage(w http.ResponseWriter, r *http.Requ
 
 	err := s.rabbitChannel.PublishWithContext(
 		r.Context(),
-		exchange,              // exchange
-		req.QueueName,         // routing key
-		false,                 // mandatory
-		false,                 // immediate
+		exchange,      // exchange
+		req.QueueName, // routing key
+		false,         // mandatory
+		false,         // immediate
 		amqp091.Publishing{
 			ContentType:     req.ContentType,
 			ContentEncoding: "",
@@ -102,8 +100,8 @@ func (s *MessageQueueService) PublishBatchMessages(w http.ResponseWriter, r *htt
 
 	publishedCount := 0
 	failedCount := 0
-	messageIDs := []string{}
-	failedMessages := []*FailedMessage{}
+	var messageIDs []string
+	var failedMessages []*FailedMessage
 
 	for i, msg := range req.Messages {
 		messageID := uuid.New().String()
@@ -188,13 +186,13 @@ func (s *MessageQueueService) ConsumeMessages(w http.ResponseWriter, r *http.Req
 
 	// Get messages from queue
 	msgs, err := s.rabbitChannel.Consume(
-		req.QueueName,       // queue
-		req.ConsumerTag,     // consumer
-		req.AutoAck,         // auto-ack
-		req.Exclusive,       // exclusive
-		false,               // no-local
-		req.NoWait,          // no-wait
-		nil,                 // args
+		req.QueueName,   // queue
+		req.ConsumerTag, // consumer
+		req.AutoAck,     // auto-ack
+		req.Exclusive,   // exclusive
+		false,           // no-local
+		req.NoWait,      // no-wait
+		nil,             // args
 	)
 	if err != nil {
 		s.logger.WithError(err).WithField("queue_name", req.QueueName).Error("failed to consume messages")
@@ -202,7 +200,7 @@ func (s *MessageQueueService) ConsumeMessages(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	messages := []*ConsumedMessage{}
+	var messages []*ConsumedMessage
 	deliveryTag := uint64(0)
 
 	// Collect messages

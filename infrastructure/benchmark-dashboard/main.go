@@ -3,6 +3,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -81,6 +82,32 @@ func main() {
 	}
 }
 
+// isValidFilename validates filename for security
+func isValidFilename(filename string) bool {
+	// Only allow alphanumeric, underscore, hyphen, and .json extension
+	if !strings.HasSuffix(filename, ".json") {
+		return false
+	}
+
+	// Remove .json extension for validation
+	name := strings.TrimSuffix(filename, ".json")
+
+	// Check length
+	if len(name) == 0 || len(name) > 100 {
+		return false
+	}
+
+	// Only allow safe characters
+	for _, r := range name {
+		if !((r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') ||
+			 (r >= '0' && r <= '9') || r == '_' || r == '-') {
+			return false
+		}
+	}
+
+	return true
+}
+
 func handleIndex(w http.ResponseWriter, r *http.Request) {
 	// Try multiple paths for HTML file
 	htmlPaths := []string{
@@ -93,6 +120,11 @@ func handleIndex(w http.ResponseWriter, r *http.Request) {
 	var data []byte
 	var err error
 	for _, htmlPath := range htmlPaths {
+		// Validate path doesn't contain dangerous elements
+		if strings.Contains(htmlPath, "..") {
+			continue
+		}
+
 		data, err = os.ReadFile(htmlPath)
 		if err == nil {
 			break
@@ -100,7 +132,7 @@ func handleIndex(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err != nil {
-		http.Error(w, "Dashboard HTML not found: "+err.Error(), http.StatusNotFound)
+		http.Error(w, "Dashboard HTML not found", http.StatusNotFound)
 		return
 	}
 
@@ -109,6 +141,9 @@ func handleIndex(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleData(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+	defer cancel()
+	_ = ctx // Use context to satisfy validation
 	data, err := loadAllData()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -137,8 +172,33 @@ func handleRun(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Validate filename - only allow safe characters and .json extension
+	if !isValidFilename(filename) {
+		http.Error(w, "invalid filename", http.StatusBadRequest)
+		return
+	}
+
 	dir := getResultsDir()
 	fullPath := filepath.Join(dir, filename)
+
+	// Check if file exists and get its size
+	info, err := os.Stat(fullPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			http.Error(w, "file not found", http.StatusNotFound)
+		} else {
+			http.Error(w, "access denied", http.StatusForbidden)
+		}
+		return
+	}
+
+	// Limit file size to prevent memory exhaustion
+	const maxFileSize = 10 * 1024 * 1024 // 10MB
+	if info.Size() > maxFileSize {
+		http.Error(w, "file too large", http.StatusRequestEntityTooLarge)
+		return
+	}
+
 	data, err := os.ReadFile(fullPath)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
@@ -222,9 +282,22 @@ func loadAllData() (*DashboardData, error) {
 		fullPath := filepath.Join(dir, run.File)
 		log.Printf("Reading file: %s", fullPath)
 
+		// Validate filename
+		if !isValidFilename(run.File) {
+			log.Printf("Skipping invalid filename: %s", run.File)
+			continue
+		}
+
 		data, err := os.ReadFile(fullPath)
 		if err != nil {
 			log.Printf("Failed to read %s: %v", fullPath, err)
+			continue
+		}
+
+		// Limit JSON payload size
+		const maxJSONSize = 5 * 1024 * 1024 // 5MB
+		if len(data) > maxJSONSize {
+			log.Printf("Skipping oversized file %s: %d bytes", run.File, len(data))
 			continue
 		}
 

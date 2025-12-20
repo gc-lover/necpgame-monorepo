@@ -1,4 +1,4 @@
-// Issue: #1595, #1607
+// Package server Issue: #1595, #1607
 // ogen handlers - TYPED responses (no interface{} boxing!)
 // Memory pooling for hot path (Issue #1607)
 package server
@@ -20,10 +20,10 @@ type Handlers struct {
 	logger *logrus.Logger
 
 	// Memory pooling for hot structs (zero allocations target!)
-	modifyResultPool      sync.Pool
-	repairResultPool      sync.Pool
-	upgradeResultPool     sync.Pool
-	customizeVisualsPool  sync.Pool
+	modifyResultPool     sync.Pool
+	repairResultPool     sync.Pool
+	upgradeResultPool    sync.Pool
+	customizeVisualsPool sync.Pool
 }
 
 // NewHandlers creates new handlers with memory pooling
@@ -77,15 +77,15 @@ func (h *Handlers) ModifyImplant(ctx context.Context, req *api.ModifyRequest) (a
 	resp.Success = api.OptBool{}
 
 	success := true
-	appliedModifications := []api.ModifyResultAppliedModificationsItem{}
+	var appliedModifications []api.ModifyResultAppliedModificationsItem
 
 	// Populate response
-	resp.Success = api.NewOptBool(success)
+	resp.Success = api.NewOptBool(true)
 	resp.AppliedModifications = appliedModifications
 
 	// Clone response (caller owns it)
 	result := &api.ModifyResult{
-		Success:             resp.Success,
+		Success:              resp.Success,
 		AppliedModifications: append([]api.ModifyResultAppliedModificationsItem{}, resp.AppliedModifications...),
 	}
 
@@ -99,7 +99,7 @@ func (h *Handlers) RepairImplant(ctx context.Context, req *api.RepairRequest) (a
 	defer cancel()
 
 	h.logger.WithFields(logrus.Fields{
-		"implant_id": req.ImplantID,
+		"implant_id":  req.ImplantID,
 		"repair_type": req.RepairType,
 	}).Info("RepairImplant request")
 
@@ -114,7 +114,7 @@ func (h *Handlers) RepairImplant(ctx context.Context, req *api.RepairRequest) (a
 	durability := float32(100.0)
 
 	// Populate response
-	resp.Success = api.NewOptBool(success)
+	resp.Success = api.NewOptBool(true)
 	resp.Durability = api.NewOptFloat32(durability)
 	resp.Cost = api.NewOptRepairResultCost(api.RepairResultCost{})
 
@@ -151,15 +151,15 @@ func (h *Handlers) UpgradeImplant(ctx context.Context, req *api.UpgradeRequest) 
 	newLevel := 1
 
 	// Populate response
-	resp.Success = api.NewOptBool(success)
+	resp.Success = api.NewOptBool(true)
 	resp.NewLevel = api.NewOptInt(newLevel)
 	resp.NewStats = api.NewOptUpgradeResultNewStats(api.UpgradeResultNewStats{})
 
 	// Clone response (caller owns it)
 	result := &api.UpgradeResult{
-		Success:   resp.Success,
-		NewLevel:  resp.NewLevel,
-		NewStats:  resp.NewStats,
+		Success:  resp.Success,
+		NewLevel: resp.NewLevel,
+		NewStats: resp.NewStats,
 	}
 
 	return result, nil

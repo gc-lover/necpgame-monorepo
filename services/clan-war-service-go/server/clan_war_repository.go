@@ -1,4 +1,4 @@
-// Issue: #141888796
+// Package server Issue: #141888796
 package server
 
 import (
@@ -99,29 +99,26 @@ func (r *ClanWarRepository) GetWarByID(ctx context.Context, warID uuid.UUID) (*m
 }
 
 func (r *ClanWarRepository) ListWars(ctx context.Context, guildID *uuid.UUID, status *models.WarStatus, limit, offset int) ([]models.ClanWar, int, error) {
-	query := `
+	baseQuery := `
 		SELECT id, attacker_guild_id, defender_guild_id, allies, status, phase,
 			territory_id, attacker_score, defender_score, winner_guild_id,
 			start_time, end_time, created_at, updated_at
 		FROM pvp.clan_wars
 		WHERE 1=1
 	`
-	args := []interface{}{}
-	argIndex := 1
+	var args []interface{}
 
 	if guildID != nil {
-		query += fmt.Sprintf(" AND (attacker_guild_id = $%d OR defender_guild_id = $%d)", argIndex, argIndex)
+		baseQuery += fmt.Sprintf(" AND (attacker_guild_id = $%d OR defender_guild_id = $%d)", len(args)+1, len(args)+1)
 		args = append(args, *guildID)
-		argIndex++
 	}
 
 	if status != nil {
-		query += fmt.Sprintf(" AND status = $%d", argIndex)
+		baseQuery += fmt.Sprintf(" AND status = $%d", len(args)+1)
 		args = append(args, *status)
-		argIndex++
 	}
 
-	query += " ORDER BY created_at DESC"
+	query := baseQuery + " ORDER BY created_at DESC"
 
 	countQuery := "SELECT COUNT(*) FROM (" + query + ") AS count_query"
 	var total int
@@ -130,7 +127,7 @@ func (r *ClanWarRepository) ListWars(ctx context.Context, guildID *uuid.UUID, st
 		return nil, 0, fmt.Errorf("failed to count wars: %w", err)
 	}
 
-	query += fmt.Sprintf(" LIMIT $%d OFFSET $%d", argIndex, argIndex+1)
+	query += fmt.Sprintf(" LIMIT $%d OFFSET $%d", len(args)+1, len(args)+2)
 	args = append(args, limit, offset)
 
 	rows, err := r.db.Query(ctx, query, args...)
@@ -261,7 +258,7 @@ func (r *ClanWarRepository) ListBattles(ctx context.Context, warID *uuid.UUID, s
 		FROM pvp.war_battles
 		WHERE 1=1
 	`
-	args := []interface{}{}
+	var args []interface{}
 	argIndex := 1
 
 	if warID != nil {
@@ -384,7 +381,7 @@ func (r *ClanWarRepository) ListTerritories(ctx context.Context, ownerGuildID *u
 		FROM pvp.territories
 		WHERE 1=1
 	`
-	args := []interface{}{}
+	var args []interface{}
 	argIndex := 1
 
 	if ownerGuildID != nil {
@@ -455,4 +452,3 @@ func (r *ClanWarRepository) UpdateTerritoryOwner(ctx context.Context, territoryI
 
 	return nil
 }
-

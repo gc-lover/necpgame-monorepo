@@ -12,34 +12,34 @@ import (
 
 // TournamentServiceConfig holds configuration for the Tournament Service
 type TournamentServiceConfig struct {
-	Port                   string
-	ReadTimeout            time.Duration
-	WriteTimeout           time.Duration
-	MaxHeaderBytes         int
-	RedisAddr              string
+	Port                     string
+	ReadTimeout              time.Duration
+	WriteTimeout             time.Duration
+	MaxHeaderBytes           int
+	RedisAddr                string
 	TournamentUpdateInterval time.Duration
-	MatchUpdateInterval    time.Duration
-	RankingUpdateInterval  time.Duration
-	LeagueUpdateInterval   time.Duration
-	StatsCleanupInterval   time.Duration
+	MatchUpdateInterval      time.Duration
+	RankingUpdateInterval    time.Duration
+	LeagueUpdateInterval     time.Duration
+	StatsCleanupInterval     time.Duration
 }
 
 // TournamentMetrics holds Prometheus metrics for the Tournament Service
 type TournamentMetrics struct {
 	// Metrics implementation would go here
 	// For now, using placeholder counters
-	ActiveTournaments     float64
-	ActiveMatches         float64
-	TotalParticipants     float64
-	CompletedTournaments  float64
-	ActiveLeagues         float64
-	ValidationErrors      float64
-	MatchCreations        float64
-	RankingUpdates        float64
-	RewardClaims          float64
+	ActiveTournaments    float64
+	ActiveMatches        float64
+	TotalParticipants    float64
+	CompletedTournaments float64
+	ActiveLeagues        float64
+	ValidationErrors     float64
+	MatchCreations       float64
+	RankingUpdates       float64
+	RewardClaims         float64
 }
 
-// HTTP server for Tournament Service
+// HTTPServer HTTP server for Tournament Service
 type HTTPServer struct {
 	service *TournamentService
 	logger  *logrus.Logger
@@ -84,22 +84,22 @@ func (hs *HTTPServer) SetupRoutes() *chi.Mux {
 
 	// Tournament management routes
 	r.Route("/tournament/tournaments", func(r chi.Router) {
-		r.Get("/", hs.service.ListTournaments)           // List tournaments with filtering
-		r.Post("/", hs.service.CreateTournament)         // Create tournament
+		r.Get("/", hs.service.ListTournaments)   // List tournaments with filtering
+		r.Post("/", hs.service.CreateTournament) // Create tournament
 
 		r.Route("/{tournamentId}", func(r chi.Router) {
-			r.Get("/", hs.service.GetTournament)               // Get tournament details
-			r.Put("/", hs.service.UpdateTournament)            // Update tournament
-			r.Delete("/", hs.service.CancelTournament)         // Cancel tournament
+			r.Get("/", hs.service.GetTournament)       // Get tournament details
+			r.Put("/", hs.service.UpdateTournament)    // Update tournament
+			r.Delete("/", hs.service.CancelTournament) // Cancel tournament
 
 			// Registration management
-			r.Post("/register", hs.service.RegisterForTournament)     // Register for tournament
+			r.Post("/register", hs.service.RegisterForTournament)      // Register for tournament
 			r.Post("/unregister", hs.service.UnregisterFromTournament) // Unregister from tournament
 
 			// Tournament data
 			r.Get("/bracket", hs.service.GetTournamentBracket) // Get tournament bracket
-			r.Get("/rewards", hs.service.GetTournamentRewards)  // Get tournament rewards
-			r.Post("/rewards/claim", hs.service.ClaimRewards)   // Claim rewards
+			r.Get("/rewards", hs.service.GetTournamentRewards) // Get tournament rewards
+			r.Post("/rewards/claim", hs.service.ClaimRewards)  // Claim rewards
 		})
 	})
 
@@ -108,8 +108,8 @@ func (hs *HTTPServer) SetupRoutes() *chi.Mux {
 		r.Get("/", hs.service.ListMatches) // List matches with filtering
 
 		r.Route("/{matchId}", func(r chi.Router) {
-			r.Get("/", hs.service.GetMatch)                    // Get match details
-			r.Put("/", hs.service.UpdateMatchResult)          // Update match result
+			r.Get("/", hs.service.GetMatch)          // Get match details
+			r.Put("/", hs.service.UpdateMatchResult) // Update match result
 		})
 	})
 

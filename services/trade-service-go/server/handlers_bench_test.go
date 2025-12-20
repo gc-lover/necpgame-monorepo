@@ -11,35 +11,35 @@ import (
 // mockService implements Service for benchmarks
 type mockService struct{}
 
-func (m *mockService) CreateTradeSession(ctx context.Context, req *api.CreateTradeRequest) (*api.TradeSessionResponse, error) {
+func (m *mockService) CreateTradeSession(_ context.Context, _ *api.CreateTradeRequest) (*api.TradeSessionResponse, error) {
 	return nil, nil
 }
 
-func (m *mockService) GetTradeSession(ctx context.Context, sessionID string) (*api.TradeSessionResponse, error) {
+func (m *mockService) GetTradeSession(_ context.Context, _ string) (*api.TradeSessionResponse, error) {
 	return nil, nil
 }
 
-func (m *mockService) CancelTradeSession(ctx context.Context, sessionID string) error {
+func (m *mockService) CancelTradeSession(_ context.Context, _ string) error {
 	return nil
 }
 
-func (m *mockService) AddTradeItems(ctx context.Context, sessionID string, req *api.AddItemsRequest) (*api.TradeSessionResponse, error) {
+func (m *mockService) AddTradeItems(_ context.Context, _ string, _ *api.AddItemsRequest) (*api.TradeSessionResponse, error) {
 	return nil, nil
 }
 
-func (m *mockService) AddTradeCurrency(ctx context.Context, sessionID string, req *api.AddCurrencyRequest) (*api.TradeSessionResponse, error) {
+func (m *mockService) AddTradeCurrency(_ context.Context, _ string, _ *api.AddCurrencyRequest) (*api.TradeSessionResponse, error) {
 	return nil, nil
 }
 
-func (m *mockService) SetTradeReady(ctx context.Context, sessionID string, req *api.ReadyRequest) (*api.TradeSessionResponse, error) {
+func (m *mockService) SetTradeReady(_ context.Context, _ string, _ *api.ReadyRequest) (*api.TradeSessionResponse, error) {
 	return nil, nil
 }
 
-func (m *mockService) CompleteTrade(ctx context.Context, sessionID string) (*api.TradeCompleteResponse, error) {
+func (m *mockService) CompleteTrade(_ context.Context, _ string) (*api.TradeCompleteResponse, error) {
 	return nil, nil
 }
 
-func (m *mockService) GetTradeHistory(ctx context.Context, playerID string, params api.GetTradeHistoryParams) (*api.TradeHistoryResponse, error) {
+func (m *mockService) GetTradeHistory(_ context.Context, _ string, _ api.GetTradeHistoryParams) (*api.TradeHistoryResponse, error) {
 	return nil, nil
 }
 
@@ -93,4 +93,3 @@ func BenchmarkCancelTradeSession(b *testing.B) {
 		_, _ = handlers.CancelTradeSession(ctx, params)
 	}
 }
-

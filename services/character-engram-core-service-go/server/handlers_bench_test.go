@@ -3,8 +3,9 @@ package server
 
 import (
 	"context"
-	"github.com/necpgame/character-engram-core-service-go/pkg/api"
 	"testing"
+
+	"github.com/necpgame/character-engram-core-service-go/pkg/api"
 
 	"github.com/google/uuid"
 )
@@ -15,8 +16,7 @@ func BenchmarkGetEngramSlots(b *testing.B) {
 	handlers := NewHandlers()
 
 	ctx := context.Background()
-	params := api.GetEngramSlotsParams{
-	}
+	params := api.GetEngramSlotsParams{}
 
 	b.ReportAllocs()
 	b.ResetTimer()
@@ -66,4 +66,3 @@ func BenchmarkRemoveEngram(b *testing.B) {
 		_, _ = handlers.RemoveEngram(ctx, params)
 	}
 }
-

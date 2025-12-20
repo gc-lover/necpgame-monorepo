@@ -7,14 +7,14 @@ import (
 )
 
 type CharacterProgression struct {
-	CharacterID      uuid.UUID              `json:"character_id" db:"character_id"`
-	Level            int                    `json:"level" db:"level"`
-	Experience       int64                  `json:"experience" db:"experience"`
-	ExperienceToNext int64                  `json:"experience_to_next" db:"experience_to_next"`
-	AttributePoints  int                    `json:"attribute_points" db:"attribute_points"`
-	SkillPoints      int                    `json:"skill_points" db:"skill_points"`
-	Attributes       map[string]int        `json:"attributes" db:"attributes"`
-	UpdatedAt        time.Time              `json:"updated_at" db:"updated_at"`
+	CharacterID      uuid.UUID      `json:"character_id" db:"character_id"`
+	Level            int            `json:"level" db:"level"`
+	Experience       int64          `json:"experience" db:"experience"`
+	ExperienceToNext int64          `json:"experience_to_next" db:"experience_to_next"`
+	AttributePoints  int            `json:"attribute_points" db:"attribute_points"`
+	SkillPoints      int            `json:"skill_points" db:"skill_points"`
+	Attributes       map[string]int `json:"attributes" db:"attributes"`
+	UpdatedAt        time.Time      `json:"updated_at" db:"updated_at"`
 }
 
 type SkillExperience struct {
@@ -54,6 +54,5 @@ type ProgressionResponse struct {
 
 type SkillProgressionResponse struct {
 	Skills []SkillExperience `json:"skills"`
-	Total  int              `json:"total"`
+	Total  int               `json:"total"`
 }
-

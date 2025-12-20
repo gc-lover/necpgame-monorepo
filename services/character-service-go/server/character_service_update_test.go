@@ -114,4 +114,3 @@ func TestCharacterService_UpdateCharacter_DatabaseError(t *testing.T) {
 	assert.Nil(t, result)
 	mockRepo.AssertExpectations(t)
 }
-

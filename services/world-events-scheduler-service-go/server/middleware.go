@@ -1,4 +1,4 @@
-// Issue: #44
+// Package server Issue: #44
 package server
 
 import (
@@ -36,35 +36,3 @@ func LoggingMiddleware(logger *zap.Logger) func(next http.Handler) http.Handler 
 		})
 	}
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

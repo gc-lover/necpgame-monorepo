@@ -1,4 +1,4 @@
-// Issue: #156 - Abilities cooldown operations
+// Package server Issue: #156 - Abilities cooldown operations
 package server
 
 import (

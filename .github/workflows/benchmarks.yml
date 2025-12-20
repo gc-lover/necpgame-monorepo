@@ -5,7 +5,7 @@ on:
     - cron: '0 2 * * *'  # Каждый день в 2:00 UTC
   workflow_dispatch:  # Ручной запуск
   push:
-    branches: [main, develop]
+    branches: [ main, develop ]
     paths:
       - 'services/**/*_bench_test.go'
       - 'services/**/server/**/*.go'
@@ -26,18 +26,18 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      
+
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
           go-version: '1.23'
-      
+
       - name: Install dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y jq bc
           go install golang.org/x/perf/cmd/benchstat@latest
-      
+
       - name: Detect changed services
         id: changed
         run: |
@@ -48,7 +48,7 @@ jobs:
           fi
           echo "services=$CHANGED" >> $GITHUB_OUTPUT
           echo "Changed services: $CHANGED"
-      
+
       - name: Run benchmarks for changed services
         if: steps.changed.outputs.services != ''
         run: |
@@ -65,13 +65,13 @@ jobs:
               cd ../..
             fi
           done
-      
+
       - name: Run all benchmarks (if no changes detected)
         if: steps.changed.outputs.services == ''
         run: |
           chmod +x scripts/run-all-benchmarks.sh
           ./scripts/run-all-benchmarks.sh
-      
+
       - name: Compare with previous
         id: compare
         continue-on-error: true
@@ -86,14 +86,14 @@ jobs:
           else
             echo "comparison=false" >> $GITHUB_OUTPUT
           fi
-      
+
       - name: Upload results
         uses: actions/upload-artifact@v4
         with:
           name: benchmark-results
           path: .benchmarks/
           retention-days: 90
-      
+
       - name: Commit results
         if: github.ref == 'refs/heads/main'
         run: |
@@ -102,7 +102,7 @@ jobs:
           git add .benchmarks/
           git diff --staged --quiet || git commit -m "[ci] benchmark: update results $(date +%Y%m%d_%H%M%S)"
           git push || echo "No changes to commit"
-      
+
       - name: Build and push dashboard
         if: github.ref == 'refs/heads/main'
         uses: docker/build-push-action@v5

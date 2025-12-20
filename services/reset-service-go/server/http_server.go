@@ -37,7 +37,7 @@ func NewHTTPServer(addr string, resetService ResetServiceInterface) *HTTPServer 
 		panic(err)
 	}
 
-	var handler http.Handler = http.StripPrefix("/api/v1", ogenServer)
+	var handler = http.StripPrefix("/api/v1", ogenServer)
 	handler = server.loggingMiddleware(handler)
 	handler = server.metricsMiddleware(handler)
 	handler = server.corsMiddleware(handler)
@@ -65,7 +65,7 @@ func (s *HTTPServer) Start(ctx context.Context) error {
 
 	errChan := make(chan error, 1)
 	go func() {
-			defer close(errChan)
+		defer close(errChan)
 		if err := s.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			errChan <- err
 		}
@@ -86,7 +86,7 @@ func (s *HTTPServer) Shutdown(ctx context.Context) error {
 	return nil
 }
 
-func (s *HTTPServer) healthCheck(w http.ResponseWriter, r *http.Request) {
+func (s *HTTPServer) healthCheck(w http.ResponseWriter, _ *http.Request) {
 	s.respondJSON(w, http.StatusOK, map[string]string{"status": "healthy"})
 }
 
@@ -168,6 +168,3 @@ func (sr *statusRecorder) WriteHeader(code int) {
 	sr.statusCode = code
 	sr.ResponseWriter.WriteHeader(code)
 }
-
-
-

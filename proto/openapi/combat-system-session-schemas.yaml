@@ -1,0 +1,375 @@
+# Issue: #2183 - Combat System Session Schemas
+components:
+  schemas:
+
+    # ============================================================================
+    # COMBAT SESSION SCHEMAS
+    # ============================================================================
+
+    CombatSession:
+      type: object
+      required:
+        - id
+        - player_id
+        - status
+        - created_at
+      properties:
+        # BACKEND NOTE: Struct field alignment optimized - large fields first
+        # Expected memory: ~120 bytes/instance with proper alignment
+        description:
+          type: string
+          description: Session description or mission name
+        session_config:
+          $ref: '#/components/schemas/CombatSessionConfig'
+        participants:
+          type: array
+          items:
+            $ref: '#/components/schemas/CombatParticipant'
+          description: Players and NPCs in session
+        combat_log:
+          type: array
+          items:
+            $ref: '#/components/schemas/CombatLogEntry'
+          description: Combat action log
+        rewards:
+          $ref: '#/components/schemas/CombatRewards'
+        statistics:
+          $ref: '#/components/schemas/CombatStatistics'
+        created_at:
+          type: string
+          format: date-time
+        started_at:
+          type: string
+          format: date-time
+        ended_at:
+          type: string
+          format: date-time
+        last_activity:
+          type: string
+          format: date-time
+        id:
+          type: string
+          format: uuid
+          description: Combat session unique identifier
+        player_id:
+          type: string
+          format: uuid
+          description: Primary player who initiated the session
+        zone_id:
+          type: string
+          format: uuid
+          description: Zone where combat takes place
+        mission_id:
+          type: string
+          format: uuid
+          description: Associated mission or quest
+        status:
+          type: string
+          enum: [ preparing, active, paused, completed, failed, terminated ]
+          description: Current session status
+        max_participants:
+          type: integer
+          minimum: 1
+          maximum: 50
+          description: Maximum number of participants
+        difficulty:
+          type: string
+          enum: [ easy, normal, hard, nightmare ]
+          description: Combat difficulty level
+        game_mode:
+          type: string
+          enum: [ solo, coop, pvp, arena ]
+          description: Combat game mode
+
+    CombatSessionConfig:
+      type: object
+      properties:
+        time_limit:
+          type: integer
+          minimum: 0
+          description: Session time limit in seconds (0 = no limit)
+        respawn_enabled:
+          type: boolean
+          default: true
+          description: Whether respawning is allowed
+        friendly_fire:
+          type: boolean
+          default: false
+          description: Whether friendly fire is enabled
+        damage_multiplier:
+          type: number
+          format: float
+          minimum: 0.1
+          maximum: 5.0
+          default: 1.0
+          description: Global damage multiplier
+        xp_multiplier:
+          type: number
+          format: float
+          minimum: 0.1
+          maximum: 5.0
+          default: 1.0
+          description: Experience gain multiplier
+        loot_multiplier:
+          type: number
+          format: float
+          minimum: 0.1
+          maximum: 5.0
+          default: 1.0
+          description: Loot drop multiplier
+
+    CombatParticipant:
+      type: object
+      required:
+        - id
+        - type
+        - joined_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Participant identifier
+        type:
+          type: string
+          enum: [ player, npc, enemy ]
+          description: Participant type
+        name:
+          type: string
+          description: Participant display name
+        level:
+          type: integer
+          minimum: 1
+          description: Participant level
+        health:
+          $ref: '#/components/schemas/HealthStatus'
+        position:
+          $ref: '#/components/schemas/Vector3'
+        joined_at:
+          type: string
+          format: date-time
+          description: When participant joined
+        is_alive:
+          type: boolean
+          default: true
+          description: Whether participant is alive
+        team:
+          type: string
+          enum: [ alpha, bravo, neutral ]
+          description: Team affiliation
+
+    CombatLogEntry:
+      type: object
+      required:
+        - timestamp
+        - action_type
+        - participant_id
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        action_type:
+          type: string
+          enum: [ damage_dealt, damage_taken, ability_used, item_used, death, respawn, mission_complete ]
+          description: Type of combat action
+        participant_id:
+          type: string
+          format: uuid
+          description: Participant who performed the action
+        target_id:
+          type: string
+          format: uuid
+          description: Target of the action (if applicable)
+        details:
+          type: object
+          description: Action-specific details
+        location:
+          $ref: '#/components/schemas/Vector3'
+          description: Location where action occurred
+
+    CombatRewards:
+      type: object
+      properties:
+        experience:
+          type: integer
+          minimum: 0
+          description: Experience points earned
+        currency:
+          type: object
+          properties:
+            eddies:
+              type: integer
+              minimum: 0
+              description: Eddies earned
+            eurobucks:
+              type: integer
+              minimum: 0
+              description: Eurobucks earned
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/RewardItem'
+          description: Items earned
+        achievements:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Achievement IDs unlocked
+
+    RewardItem:
+      type: object
+      required:
+        - item_id
+        - quantity
+      properties:
+        item_id:
+          type: string
+          format: uuid
+          description: Item identifier
+        quantity:
+          type: integer
+          minimum: 1
+          description: Quantity received
+        quality:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Item quality rating
+
+    CombatStatistics:
+      type: object
+      properties:
+        duration_seconds:
+          type: integer
+          minimum: 0
+          description: Combat session duration
+        total_damage_dealt:
+          type: integer
+          minimum: 0
+          description: Total damage dealt by all participants
+        total_damage_taken:
+          type: integer
+          minimum: 0
+          description: Total damage taken by all participants
+        kills:
+          type: integer
+          minimum: 0
+          description: Total enemy kills
+        deaths:
+          type: integer
+          minimum: 0
+          description: Total participant deaths
+        accuracy_percentage:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 100.0
+          description: Average accuracy percentage
+        headshot_percentage:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 100.0
+          description: Headshot accuracy percentage
+
+    HealthStatus:
+      type: object
+      required:
+        - current
+        - maximum
+      properties:
+        current:
+          type: integer
+          minimum: 0
+          description: Current health points
+        maximum:
+          type: integer
+          minimum: 1
+          description: Maximum health points
+        shields:
+          type: integer
+          minimum: 0
+          description: Current shield points
+        regeneration_rate:
+          type: number
+          format: float
+          minimum: 0
+          description: Health regeneration per second
+
+    # ============================================================================
+    # REQUEST/RESPONSE SCHEMAS
+    # ============================================================================
+
+    CreateCombatSessionRequest:
+      type: object
+      required:
+        - player_id
+        - zone_id
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          description: Player initiating the session
+        zone_id:
+          type: string
+          format: uuid
+          description: Zone for combat
+        mission_id:
+          type: string
+          format: uuid
+          description: Associated mission
+        difficulty:
+          type: string
+          enum: [ easy, normal, hard, nightmare ]
+          default: normal
+          description: Combat difficulty
+        game_mode:
+          type: string
+          enum: [ solo, coop, pvp, arena ]
+          default: solo
+          description: Game mode
+        max_participants:
+          type: integer
+          minimum: 1
+          maximum: 50
+          default: 1
+          description: Maximum participants
+        config:
+          $ref: '#/components/schemas/CombatSessionConfig'
+          description: Session configuration
+
+    UpdateCombatSessionRequest:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [ active, paused, terminated ]
+          description: New session status
+        config:
+          $ref: '#/components/schemas/CombatSessionConfig'
+          description: Updated configuration
+
+    CombatSessionListResponse:
+      type: object
+      required:
+        - sessions
+        - total
+      properties:
+        sessions:
+          type: array
+          items:
+            $ref: '#/components/schemas/CombatSession'
+          description: Combat sessions
+        total:
+          type: integer
+          minimum: 0
+          description: Total number of sessions
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Items per page
+        offset:
+          type: integer
+          minimum: 0
+          description: Pagination offset

@@ -1,4 +1,4 @@
-// SQL queries use prepared statements with placeholders (, , ?) for safety
+// Package server SQL queries use prepared statements with placeholders (, , ?) for safety
 // Issue: Social Service ogen Migration
 // HTTP Server setup with ogen integration
 package server
@@ -261,4 +261,3 @@ func orderAuthMiddleware(config *Config, logger *logrus.Logger) func(http.Handle
 		})
 	}
 }
-

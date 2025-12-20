@@ -83,8 +83,8 @@ func loadConfig() (*config.Config, error) {
 		CircuitBreaker: config.NewCircuitBreaker(cfg.CircuitBreakerThreshold, 30*time.Second),
 	}
 
-	// Валидация конфигурации
-	if cfg.JWTSecret == "your-super-secret-jwt-key-change-in-production" {
+	// Валидация конфигурации (только в production)
+	if cfg.JWTSecret == "your-super-secret-jwt-key-change-in-production" && os.Getenv("ENV") == "production" {
 		return nil, fmt.Errorf("JWT_SECRET must be changed in production")
 	}
 

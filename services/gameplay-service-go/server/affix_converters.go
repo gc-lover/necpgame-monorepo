@@ -1,4 +1,4 @@
-// Issue: #1515
+// Package server Issue: #1515
 package server
 
 import (
@@ -127,4 +127,3 @@ func convertRotationToAPI(rotation *models.AffixRotation) api.AffixRotation {
 
 	return result
 }
-

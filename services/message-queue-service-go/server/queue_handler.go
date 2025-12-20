@@ -1,16 +1,12 @@
-package server
-
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/sirupsen/logrus"
 )
 
-// OPTIMIZATION: Issue #2143 - Queue management with RabbitMQ operations
+// CreateQueue OPTIMIZATION: Issue #2143 - Queue management with RabbitMQ operations
 func (s *MessageQueueService) CreateQueue(w http.ResponseWriter, r *http.Request) {
 	var req CreateQueueRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -37,12 +33,12 @@ func (s *MessageQueueService) CreateQueue(w http.ResponseWriter, r *http.Request
 	}
 
 	_, err := s.rabbitChannel.QueueDeclare(
-		req.Name,           // name
-		req.Durable,        // durable
-		req.AutoDelete,     // delete when unused
-		false,              // exclusive
-		false,              // no-wait
-		args,               // arguments
+		req.Name,       // name
+		req.Durable,    // durable
+		req.AutoDelete, // delete when unused
+		false,          // exclusive
+		false,          // no-wait
+		args,           // arguments
 	)
 	if err != nil {
 		s.logger.WithError(err).WithField("queue_name", req.Name).Error("failed to declare queue")
@@ -74,10 +70,10 @@ func (s *MessageQueueService) CreateQueue(w http.ResponseWriter, r *http.Request
 	s.logger.WithField("queue_name", req.Name).Info("queue created successfully")
 }
 
-func (s *MessageQueueService) ListQueues(w http.ResponseWriter, r *http.Request) {
+func (s *MessageQueueService) ListQueues(w http.ResponseWriter) {
 	// Get all queues from RabbitMQ management API
 	// For now, return empty list (would need RabbitMQ management plugin)
-	queues := []*QueueInfo{}
+	var queues []*QueueInfo
 
 	resp := &ListQueuesResponse{
 		Queues:     queues,

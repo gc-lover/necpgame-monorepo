@@ -1,4 +1,4 @@
-// SQL queries use prepared statements with placeholders (, , ?) for safety
+// Package server SQL queries use prepared statements with placeholders (, , ?) for safety
 // Issue: #1525
 package server
 
@@ -9,8 +9,8 @@ import (
 
 func convertLoadoutToAPI(loadout *models.ComboLoadout) *api.ComboLoadout {
 	result := &api.ComboLoadout{
-		ID:          loadout.ID,
-		CharacterID: loadout.CharacterID,
+		ID:           loadout.ID,
+		CharacterID:  loadout.CharacterID,
 		ActiveCombos: loadout.ActiveCombos,
 	}
 
@@ -134,5 +134,3 @@ func convertComboAnalyticsToAPI(analytics *models.ComboAnalytics) api.ComboAnaly
 
 	return result
 }
-
-

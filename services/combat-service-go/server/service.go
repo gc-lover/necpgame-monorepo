@@ -7,25 +7,23 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// OPTIMIZATION: Issue #1936 - Memory-aligned struct for performance
+// CombatService OPTIMIZATION: Issue #1936 - Memory-aligned struct for performance
 type CombatService struct {
-	logger       *logrus.Logger
-	metrics      *CombatMetrics
+	logger        *logrus.Logger
+	metrics       *CombatMetrics
 	activeCombats sync.Map // OPTIMIZATION: Thread-safe map for concurrent access
 
 	// OPTIMIZATION: Issue #1607 - Memory pooling for hot path structs (zero allocations target!)
-	initiateCombatResponsePool sync.Pool
-	combatStatusResponsePool   sync.Pool
-	combatActionResponsePool   sync.Pool
-	endCombatResponsePool      sync.Pool
+	initiateCombatResponsePool    sync.Pool
+	combatStatusResponsePool      sync.Pool
+	combatActionResponsePool      sync.Pool
+	endCombatResponsePool         sync.Pool
 	damageCalculationResponsePool sync.Pool
-	statusEffectsResponsePool  sync.Pool
+	statusEffectsResponsePool     sync.Pool
 }
 
-
-
 // HealthCheck handler for health check endpoint
-func (s *CombatService) HealthCheck(w http.ResponseWriter, r *http.Request) {
+func (s *CombatService) HealthCheck(w http.ResponseWriter) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(`{"status":"healthy","service":"combat-service","version":"1.0.0"}`))

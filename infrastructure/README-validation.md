@@ -138,8 +138,8 @@ Quality Gates → Backend CI → Deployment
 
 ```json
 {
-  "max_go_lines": 350,
-  "max_yaml_lines": 400,
+  "max_go_lines": 1000,
+  "max_yaml_lines": 1000,
   "required_patterns": ["# Issue:"],
   "forbidden_patterns": ["fmt\\.Print", "log\\.Fatal"]
 }

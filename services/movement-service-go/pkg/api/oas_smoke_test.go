@@ -7,21 +7,21 @@ import (
 
 type noopHandler struct{}
 
-func (noopHandler) GetPosition(ctx context.Context, params GetPositionParams) (GetPositionRes, error) {
+func (noopHandler) GetPosition(_ context.Context, _ GetPositionParams) (GetPositionRes, error) {
 	return &CharacterPosition{}, nil
 }
 
-func (noopHandler) GetPositionHistory(ctx context.Context, params GetPositionHistoryParams) (GetPositionHistoryRes, error) {
+func (noopHandler) GetPositionHistory(_ context.Context, _ GetPositionHistoryParams) (GetPositionHistoryRes, error) {
 	return &GetPositionHistoryOKApplicationJSON{}, nil
 }
 
-func (noopHandler) SavePosition(ctx context.Context, req *SavePositionRequest, params SavePositionParams) (SavePositionRes, error) {
+func (noopHandler) SavePosition(_ context.Context, _ *SavePositionRequest, _ SavePositionParams) (SavePositionRes, error) {
 	return &CharacterPosition{}, nil
 }
 
 type noopSecurity struct{}
 
-func (noopSecurity) HandleBearerAuth(ctx context.Context, operationName OperationName, t BearerAuth) (context.Context, error) {
+func (noopSecurity) HandleBearerAuth(ctx context.Context, _ OperationName, _ BearerAuth) (context.Context, error) {
 	return ctx, nil
 }
 

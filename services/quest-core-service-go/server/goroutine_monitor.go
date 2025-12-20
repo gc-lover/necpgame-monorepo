@@ -1,4 +1,4 @@
-// Issue: #1585 - Runtime Goroutine Leak Monitoring
+// Package server provides HTTP server implementation for the quest core service.
 package server
 
 import (

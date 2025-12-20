@@ -8,35 +8,35 @@ info:
     name: Apache 2.0
     url: https://www.apache.org/licenses/LICENSE-2.0
 servers:
-- url: https://api.necp.game/api/v1
-  description: Production
-- url: https://dev.necp.game/api/v1
-  description: Development
+  - url: https://api.necp.game/api/v1
+    description: Production
+  - url: https://dev.necp.game/api/v1
+    description: Development
 tags:
-- name: Mail
-  description: Управление письмами
+  - name: Mail
+    description: Управление письмами
 paths:
   /social/mail/inbox:
     get:
       tags:
-      - Mail
+        - Mail
       summary: Получить входящие письма
       operationId: getInbox
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       parameters:
-      - name: status
-        in: query
-        schema:
-          type: string
-          enum:
-          - all
-          - unread
-          - read
-          - claimed
-          default: all
-      - $ref: common.yaml#/components/parameters/Page
-      - $ref: common.yaml#/components/parameters/Limit
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum:
+              - all
+              - unread
+              - read
+              - claimed
+            default: all
+        - $ref: common.yaml#/components/parameters/Page
+        - $ref: common.yaml#/components/parameters/Limit
       responses:
         '200':
           description: Список писем
@@ -48,14 +48,14 @@ paths:
           $ref: common.yaml#/components/responses/Unauthorized
   /social/mail/{mail_id}:
     parameters:
-    - $ref: common.yaml#/components/parameters/MailId
+      - $ref: common.yaml#/components/parameters/MailId
     get:
       tags:
-      - Mail
+        - Mail
       summary: Получить детали письма (помечает как прочитанное)
       operationId: getMail
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       responses:
         '200':
           description: Детали письма
@@ -67,11 +67,11 @@ paths:
           $ref: common.yaml#/components/responses/NotFound
     delete:
       tags:
-      - Mail
+        - Mail
       summary: Удалить письмо
       operationId: deleteMail
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       responses:
         '200':
           description: Письмо удалено
@@ -86,11 +86,11 @@ paths:
   /social/mail/send:
     post:
       tags:
-      - Mail
+        - Mail
       summary: Отправить письмо
       operationId: sendMail
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       requestBody:
         required: true
         content:
@@ -114,14 +114,14 @@ paths:
           $ref: common.yaml#/components/responses/TooManyRequests
   /social/mail/{mail_id}/claim-attachments:
     parameters:
-    - $ref: common.yaml#/components/parameters/MailId
+      - $ref: common.yaml#/components/parameters/MailId
     post:
       tags:
-      - Mail
+        - Mail
       summary: Забрать вложения
       operationId: claimAttachments
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       responses:
         '200':
           description: Вложения получены
@@ -139,14 +139,14 @@ paths:
           $ref: common.yaml#/components/responses/NotFound
   /social/mail/{mail_id}/cod/pay:
     parameters:
-    - $ref: common.yaml#/components/parameters/MailId
+      - $ref: common.yaml#/components/parameters/MailId
     post:
       tags:
-      - Mail
+        - Mail
       summary: Оплатить COD и получить вложения
       operationId: payCod
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       responses:
         '200':
           description: COD оплачен, вложения выданы
@@ -162,14 +162,14 @@ paths:
           $ref: common.yaml#/components/responses/NotFound
   /social/mail/{mail_id}/cod/decline:
     parameters:
-    - $ref: common.yaml#/components/parameters/MailId
+      - $ref: common.yaml#/components/parameters/MailId
     post:
       tags:
-      - Mail
+        - Mail
       summary: Отклонить COD и вернуть письмо отправителю
       operationId: declineCod
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       responses:
         '200':
           description: COD отклонён
@@ -186,11 +186,11 @@ paths:
   /social/mail/system/send:
     post:
       tags:
-      - Mail
+        - Mail
       summary: Отправить системное письмо конкретному игроку
       operationId: sendSystemMail
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       requestBody:
         required: true
         content:
@@ -211,11 +211,11 @@ paths:
   /social/mail/system/broadcast:
     post:
       tags:
-      - Mail
+        - Mail
       summary: Массовая рассылка системных писем по фильтру
       operationId: broadcastSystemMail
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       requestBody:
         required: true
         content:
@@ -236,11 +236,11 @@ paths:
   /social/mail/unread-count:
     get:
       tags:
-      - Mail
+        - Mail
       summary: Получить количество непрочитанных писем
       operationId: getUnreadCount
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       responses:
         '200':
           description: Количество непрочитанных и всего писем
@@ -253,21 +253,21 @@ paths:
   /social/mail/expiring:
     get:
       tags:
-      - Mail
+        - Mail
       summary: Получить письма с истекающим сроком действия
       operationId: getExpiringMail
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       parameters:
-      - name: days
-        in: query
-        schema:
-          type: integer
-          minimum: 1
-          maximum: 30
-          default: 3
-      - $ref: common.yaml#/components/parameters/Page
-      - $ref: common.yaml#/components/parameters/Limit
+        - name: days
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 30
+            default: 3
+        - $ref: common.yaml#/components/parameters/Page
+        - $ref: common.yaml#/components/parameters/Limit
       responses:
         '200':
           description: Истекающие письма
@@ -279,14 +279,14 @@ paths:
           $ref: common.yaml#/components/responses/Unauthorized
   /social/mail/{mail_id}/extend:
     parameters:
-    - $ref: common.yaml#/components/parameters/MailId
+      - $ref: common.yaml#/components/parameters/MailId
     post:
       tags:
-      - Mail
+        - Mail
       summary: Продлить срок действия письма
       operationId: extendMail
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       requestBody:
         required: true
         content:
@@ -313,4 +313,4 @@ components:
   schemas:
     $ref: './mail-service-schemas.yaml#/components/schemas'
 security:
-- BearerAuth: []
+  - BearerAuth: [ ]

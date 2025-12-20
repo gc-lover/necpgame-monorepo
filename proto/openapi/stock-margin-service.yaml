@@ -48,27 +48,27 @@ info:
     url: https://necpgame.com/support
     email: api@necpgame.com
 servers:
-- url: http://localhost:8080
-  description: Margin Service (локальная разработка)
-- url: https://trading.necpgame.com
-  description: Margin Service (продакшн)
+  - url: http://localhost:8080
+    description: Margin Service (локальная разработка)
+  - url: https://trading.necpgame.com
+    description: Margin Service (продакшн)
 tags:
-- name: Margin Accounts
-  description: Маржинальные счета
-- name: Short Selling
-  description: Короткие продажи
-- name: Risk Management
-  description: Управление рисками
+  - name: Margin Accounts
+    description: Маржинальные счета
+  - name: Short Selling
+    description: Короткие продажи
+  - name: Risk Management
+    description: Управление рисками
 paths:
   /api/v1/margin/account:
     get:
       tags:
-      - Margin Accounts
+        - Margin Accounts
       summary: Информация о маржинальном счёте
       description: Возвращает баланс, equity, leverage и margin health
       operationId: getMarginAccount
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       responses:
         '200':
           description: Маржинальный счёт
@@ -80,12 +80,12 @@ paths:
           $ref: common.yaml#/components/responses/Unauthorized
     post:
       tags:
-      - Margin Accounts
+        - Margin Accounts
       summary: Открыть маржинальный счёт
       description: Требования - уровень 40+, кредитная история, min 10K баланс
       operationId: openMarginAccount
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       requestBody:
         required: true
         content:
@@ -106,12 +106,12 @@ paths:
   /api/v1/margin/borrow:
     post:
       tags:
-      - Margin Accounts
+        - Margin Accounts
       summary: Занять средства
       description: Займ с проверкой margin health, плечо 2x-10x
       operationId: borrowMargin
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       requestBody:
         required: true
         content:
@@ -132,12 +132,12 @@ paths:
   /api/v1/margin/repay:
     post:
       tags:
-      - Margin Accounts
+        - Margin Accounts
       summary: Погасить займ
       description: Погашение с освобождением коллатерала
       operationId: repayMargin
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       requestBody:
         required: true
         content:
@@ -154,15 +154,15 @@ paths:
   /api/v1/margin/history:
     get:
       tags:
-      - Margin Accounts
+        - Margin Accounts
       summary: История маржин-коллов
       description: История с timestamp, суммой, статусом
       operationId: getMarginCallHistory
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       parameters:
-      - $ref: common.yaml#/components/parameters/Limit
-      - $ref: common.yaml#/components/parameters/Offset
+        - $ref: common.yaml#/components/parameters/Limit
+        - $ref: common.yaml#/components/parameters/Offset
       responses:
         '200':
           description: История
@@ -182,12 +182,12 @@ paths:
   /api/v1/short:
     post:
       tags:
-      - Short Selling
+        - Short Selling
       summary: Открыть короткую позицию
       description: Short selling - уровень 45+, объём 500K+, коллатерал 150%, лимит 30% float
       operationId: openShortPosition
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       requestBody:
         required: true
         content:
@@ -207,15 +207,15 @@ paths:
           $ref: common.yaml#/components/responses/Unauthorized
     get:
       tags:
-      - Short Selling
+        - Short Selling
       summary: Список коротких позиций
       description: Позиции с сортировкой по PnL или дате
       operationId: listShortPositions
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       parameters:
-      - $ref: common.yaml#/components/parameters/Limit
-      - $ref: common.yaml#/components/parameters/Offset
+        - $ref: common.yaml#/components/parameters/Limit
+        - $ref: common.yaml#/components/parameters/Offset
       responses:
         '200':
           description: Список позиций
@@ -235,19 +235,19 @@ paths:
   /api/v1/short/{position_id}:
     get:
       tags:
-      - Short Selling
+        - Short Selling
       summary: Информация о короткой позиции
       description: Возвращает детали короткой позиции
       operationId: getShortPosition
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       parameters:
-      - name: position_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+        - name: position_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
       responses:
         '200':
           description: Детали позиции
@@ -262,19 +262,19 @@ paths:
   /api/v1/short/{position_id}/close:
     post:
       tags:
-      - Short Selling
+        - Short Selling
       summary: Закрыть короткую позицию
       description: Выкуп акций, возврат брокеру, расчёт PnL
       operationId: closeShortPosition
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       parameters:
-      - name: position_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+        - name: position_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
       responses:
         '200':
           description: Позиция закрыта
@@ -289,12 +289,12 @@ paths:
   /api/v1/risk/health:
     get:
       tags:
-      - Risk Management
+        - Risk Management
       summary: Уровень риска
       description: Margin health (5 сек), liquidation price, warnings
       operationId: getRiskHealth
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       responses:
         '200':
           description: Показатели риска
@@ -345,7 +345,7 @@ components:
     OpenMarginAccountRequest:
       type: object
       required:
-      - initial_deposit
+        - initial_deposit
       properties:
         initial_deposit:
           type: number
@@ -355,7 +355,7 @@ components:
     BorrowMarginRequest:
       type: object
       required:
-      - amount
+        - amount
       properties:
         amount:
           type: number
@@ -380,7 +380,7 @@ components:
     RepayMarginRequest:
       type: object
       required:
-      - amount
+        - amount
       properties:
         amount:
           type: number
@@ -398,9 +398,9 @@ components:
         status:
           type: string
           enum:
-          - active
-          - fulfilled
-          - liquidated
+            - active
+            - fulfilled
+            - liquidated
         triggered_at:
           type: string
           format: date-time
@@ -414,8 +414,8 @@ components:
     ShortPositionRequest:
       type: object
       required:
-      - ticker
-      - quantity
+        - ticker
+        - quantity
       properties:
         ticker:
           type: string

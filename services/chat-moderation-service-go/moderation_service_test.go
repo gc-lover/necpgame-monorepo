@@ -18,10 +18,11 @@ import (
 func TestModerationService_CheckMessage(t *testing.T) {
 	// Create test config
 	cfg := &config.Config{
-		Logger:             zaptest.NewLogger(t),
-		MaxMessageLength:   500,
-		ProcessingTimeout:  50 * time.Millisecond,
-		RateLimitPerSecond: 10,
+		ModerationConfig: config.ModerationConfig{
+			MaxMessageLength:   500,
+			ProcessingTimeout:  50 * time.Millisecond,
+			RateLimitPerSecond: 10,
+		},
 	}
 
 	// Create mock repository (simplified)
@@ -91,10 +92,11 @@ func TestModerationService_CheckMessage(t *testing.T) {
 func TestModerationService_RateLimit(t *testing.T) {
 	// Test rate limiting functionality
 	cfg := &config.Config{
-		Logger:             zaptest.NewLogger(t),
-		MaxMessageLength:   500,
-		ProcessingTimeout:  50 * time.Millisecond,
-		RateLimitPerSecond: 1, // Very low limit for testing
+		ModerationConfig: config.ModerationConfig{
+			MaxMessageLength:   500,
+			ProcessingTimeout:  50 * time.Millisecond,
+			RateLimitPerSecond: 1, // Very low limit for testing
+		},
 	}
 
 	playerID := uuid.New()
@@ -135,7 +137,7 @@ func TestModerationService_Stats(t *testing.T) {
 	moderationSvc := service.NewModerationService(repo, cfg)
 
 	// Get initial stats
-	stats, err := moderationSvc.GetStats(context.Background(), "24h")
+	stats, err := moderationSvc.GetStats("24h")
 	if err != nil {
 		t.Fatalf("GetStats failed: %v", err)
 	}
@@ -153,10 +155,11 @@ func TestModerationService_Stats(t *testing.T) {
 // Benchmark for performance testing
 func BenchmarkModerationService_CheckMessage(b *testing.B) {
 	cfg := &config.Config{
-		Logger:             zaptest.NewLogger(b),
-		MaxMessageLength:   500,
-		ProcessingTimeout:  50 * time.Millisecond,
-		RateLimitPerSecond: 1000, // High limit for benchmark
+		ModerationConfig: config.ModerationConfig{
+			MaxMessageLength:   500,
+			ProcessingTimeout:  50 * time.Millisecond,
+			RateLimitPerSecond: 1000, // High limit for benchmark
+		},
 	}
 
 	repo := &repository.Repository{}

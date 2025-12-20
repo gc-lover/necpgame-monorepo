@@ -1,4 +1,4 @@
-// SQL queries use prepared statements with placeholders (, , ?) for safety
+// Package server SQL queries use prepared statements with placeholders (, , ?) for safety
 // Issue: #1581 - Inventory Cache (3-tier: Memory → Redis → DB)
 // OPTIMIZATION: Caching → DB queries ↓95%, Latency ↓80%
 // PERFORMANCE GAINS: 10k RPS with <30ms P99
@@ -11,22 +11,21 @@ import (
 	"sync"
 	"time"
 
-	"github.com/go-redis/redis/v8"
-	"github.com/google/uuid"
 	"github.com/gc-lover/necpgame-monorepo/services/inventory-service-go/models"
+	"github.com/google/uuid"
 )
 
 // InventoryCache - 3-tier caching (Memory → Redis → DB)
 type InventoryCache struct {
 	// L1: In-memory cache (fastest, but limited size)
 	memoryCache sync.Map // characterID -> *CachedInventory
-	
+
 	// L2: Redis (shared across instances)
 	redis *redis.Client
-	
+
 	// L3: Database (fallback)
 	db Repository
-	
+
 	// Cache TTL
 	memoryTTL time.Duration // 30 seconds
 	redisTTL  time.Duration // 5 minutes
@@ -40,14 +39,6 @@ type CachedInventory struct {
 }
 
 // NewInventoryCache creates 3-tier cache
-func NewInventoryCache(redis *redis.Client, db Repository) *InventoryCache {
-	return &InventoryCache{
-		redis:     redis,
-		db:        db,
-		memoryTTL: 30 * time.Second,
-		redisTTL:  5 * time.Minute,
-	}
-}
 
 // Get returns inventory from cache or DB (3-tier cascade)
 func (c *InventoryCache) Get(ctx context.Context, characterID uuid.UUID) (*models.InventoryResponse, error) {
@@ -55,24 +46,24 @@ func (c *InventoryCache) Get(ctx context.Context, characterID uuid.UUID) (*model
 	if cached, ok := c.tryMemoryCache(characterID); ok {
 		return cached.Inventory, nil
 	}
-	
+
 	// L2: Try Redis cache
 	if inv, err := c.tryRedisCache(ctx, characterID); err == nil {
 		// Store in memory for next time
 		c.storeInMemory(characterID, inv)
 		return inv, nil
 	}
-	
+
 	// L3: Load from DB (cache miss)
-	inv, err := c.loadFromDB(ctx, characterID)
+	inv, err := c.loadFromDB(characterID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load inventory: %w", err)
 	}
-	
+
 	// Cache in both Redis and Memory
 	c.storeInRedis(ctx, characterID, inv)
 	c.storeInMemory(characterID, inv)
-	
+
 	return inv, nil
 }
 
@@ -82,37 +73,37 @@ func (c *InventoryCache) tryMemoryCache(characterID uuid.UUID) (*CachedInventory
 	if !ok {
 		return nil, false
 	}
-	
+
 	cached := value.(*CachedInventory)
-	
+
 	// Check TTL
 	if time.Since(cached.LoadedAt) > c.memoryTTL {
 		c.memoryCache.Delete(characterID.String()) // Evict stale
 		return nil, false
 	}
-	
+
 	return cached, true
 }
 
 // tryRedisCache attempts L2 cache lookup
 func (c *InventoryCache) tryRedisCache(ctx context.Context, characterID uuid.UUID) (*models.InventoryResponse, error) {
 	key := fmt.Sprintf("inventory:%s", characterID.String())
-	
+
 	data, err := c.redis.Get(ctx, key).Bytes()
 	if err != nil {
 		return nil, err // Cache miss
 	}
-	
+
 	var inv models.InventoryResponse
 	if err := json.Unmarshal(data, &inv); err != nil {
 		return nil, err
 	}
-	
+
 	return &inv, nil
 }
 
 // loadFromDB loads inventory from database
-func (c *InventoryCache) loadFromDB(ctx context.Context, characterID uuid.UUID) (*models.InventoryResponse, error) {
+func (c *InventoryCache) loadFromDB(characterID uuid.UUID) (*models.InventoryResponse, error) {
 	// TODO: Implement actual DB query
 	// For now, return empty inventory
 	return &models.InventoryResponse{
@@ -132,19 +123,19 @@ func (c *InventoryCache) storeInMemory(characterID uuid.UUID, inv *models.Invent
 		LoadedAt:  time.Now(),
 		Version:   time.Now().UnixNano(), // Simple versioning
 	}
-	
+
 	c.memoryCache.Store(characterID.String(), cached)
 }
 
 // storeInRedis stores in L2 cache
 func (c *InventoryCache) storeInRedis(ctx context.Context, characterID uuid.UUID, inv *models.InventoryResponse) {
 	key := fmt.Sprintf("inventory:%s", characterID.String())
-	
+
 	data, err := json.Marshal(inv)
 	if err != nil {
 		return // Silently fail caching
 	}
-	
+
 	c.redis.Set(ctx, key, data, c.redisTTL)
 }
 
@@ -152,7 +143,7 @@ func (c *InventoryCache) storeInRedis(ctx context.Context, characterID uuid.UUID
 func (c *InventoryCache) Invalidate(ctx context.Context, characterID uuid.UUID) {
 	// Remove from memory
 	c.memoryCache.Delete(characterID.String())
-	
+
 	// Remove from Redis
 	key := fmt.Sprintf("inventory:%s", characterID.String())
 	c.redis.Del(ctx, key)
@@ -164,14 +155,14 @@ func (c *InventoryCache) UpdateItem(ctx context.Context, characterID uuid.UUID, 
 	if err := updateFn(); err != nil {
 		return err
 	}
-	
+
 	// Invalidate cache (force reload on next access)
 	c.Invalidate(ctx, characterID)
-	
+
 	return nil
 }
 
-// GetDiff returns diff between old and new inventory (bandwidth optimization!)
+// GetInventoryDiff GetDiff returns diff between old and new inventory (bandwidth optimization!)
 // GAINS: Bandwidth ↓70-90% (send only changes, not full inventory)
 func GetInventoryDiff(old, new *models.InventoryResponse) *InventoryDiff {
 	diff := &InventoryDiff{
@@ -180,20 +171,20 @@ func GetInventoryDiff(old, new *models.InventoryResponse) *InventoryDiff {
 		Removed:     []uuid.UUID{},
 		Updated:     []models.InventoryItem{},
 	}
-	
+
 	// Create maps for quick lookup
 	oldItems := make(map[uuid.UUID]*models.InventoryItem)
 	for _, item := range old.Items {
 		itemID, _ := uuid.Parse(item.ItemID)
 		oldItems[itemID] = &item
 	}
-	
+
 	newItems := make(map[uuid.UUID]*models.InventoryItem)
 	for _, item := range new.Items {
 		itemID, _ := uuid.Parse(item.ItemID)
 		newItems[itemID] = &item
 	}
-	
+
 	// Find added and updated
 	for id, newItem := range newItems {
 		if oldItem, exists := oldItems[id]; !exists {
@@ -204,23 +195,23 @@ func GetInventoryDiff(old, new *models.InventoryResponse) *InventoryDiff {
 			diff.Updated = append(diff.Updated, *newItem)
 		}
 	}
-	
+
 	// Find removed
 	for id := range oldItems {
 		if _, exists := newItems[id]; !exists {
 			diff.Removed = append(diff.Removed, id)
 		}
 	}
-	
+
 	return diff
 }
 
 // InventoryDiff represents changes (for bandwidth optimization)
 type InventoryDiff struct {
-	CharacterId uuid.UUID                `json:"character_id"`
-	Added       []models.InventoryItem   `json:"added,omitempty"`
-	Removed     []uuid.UUID              `json:"removed,omitempty"`
-	Updated     []models.InventoryItem   `json:"updated,omitempty"`
+	CharacterId uuid.UUID              `json:"character_id"`
+	Added       []models.InventoryItem `json:"added,omitempty"`
+	Removed     []uuid.UUID            `json:"removed,omitempty"`
+	Updated     []models.InventoryItem `json:"updated,omitempty"`
 }
 
 // itemsEqual checks if two items are equal
@@ -233,7 +224,7 @@ func itemsEqual(a, b *models.InventoryItem) bool {
 
 // BatchAddItems adds multiple items in single transaction
 // OPTIMIZATION: Batch operations → DB round trips ↓90%
-func (c *InventoryCache) BatchAddItems(ctx context.Context, characterID uuid.UUID, items []models.AddItemRequest) error {
+func (c *InventoryCache) BatchAddItems(ctx context.Context, characterID uuid.UUID) error {
 	// TODO: Implement batch DB insert
 	// For now, invalidate cache
 	c.Invalidate(ctx, characterID)
@@ -247,8 +238,3 @@ type Repository interface {
 	RemoveItem(ctx context.Context, characterID, itemID uuid.UUID) error
 	UpdateItem(ctx context.Context, characterID, itemID uuid.UUID, updateFn func() error) error
 }
-
-
-
-
-

@@ -1,4 +1,4 @@
-// Issue: #131
+// Package server Issue: #131
 package server
 
 import (
@@ -10,7 +10,7 @@ import (
 
 type SecurityHandler struct{}
 
-func (h *SecurityHandler) HandleBearerAuth(ctx context.Context, operationName string, t api.BearerAuth) (context.Context, error) {
+func (h *SecurityHandler) HandleBearerAuth(ctx context.Context, _ string, _ api.BearerAuth) (context.Context, error) {
 	// Extract token from header
 	req := ctx.Value("http_request").(*http.Request)
 	token := req.Header.Get("Authorization")
@@ -22,4 +22,3 @@ func (h *SecurityHandler) HandleBearerAuth(ctx context.Context, operationName st
 	ctx = context.WithValue(ctx, "user_id", "user-id-from-token")
 	return ctx, nil
 }
-

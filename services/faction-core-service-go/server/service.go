@@ -1,4 +1,4 @@
-// Issue: #1442
+// Package server Issue: #1442
 package server
 
 import (
@@ -10,9 +10,9 @@ import (
 )
 
 var (
-	ErrNotFound      = errors.New("not found")
-	ErrAlreadyExists = errors.New("already exists")
-	ErrInvalidInput  = errors.New("invalid input")
+	ErrNotFound     = errors.New("not found")
+	_               = errors.New("already exists")
+	ErrInvalidInput = errors.New("invalid input")
 )
 
 type Service struct {
@@ -56,17 +56,17 @@ func (s *Service) GetFaction(ctx context.Context, factionId string) (*api.Factio
 	}
 
 	details := &api.FactionDetails{
-		ID:          faction.ID,
-		Name:        faction.Name,
-		Type:        faction.Type,
-		Ideology:    faction.Ideology,
-		Description: faction.Description,
+		ID:           faction.ID,
+		Name:         faction.Name,
+		Type:         faction.Type,
+		Ideology:     faction.Ideology,
+		Description:  faction.Description,
 		LeaderClanID: faction.LeaderClanID,
-		Status:      faction.Status,
-		CreatedAt:   faction.CreatedAt,
-		UpdatedAt:   faction.UpdatedAt,
-		MemberCount: api.NewOptInt(memberCount),
-		ClanCount:   api.NewOptInt(clanCount),
+		Status:       faction.Status,
+		CreatedAt:    faction.CreatedAt,
+		UpdatedAt:    faction.UpdatedAt,
+		MemberCount:  api.NewOptInt(memberCount),
+		ClanCount:    api.NewOptInt(clanCount),
 	}
 
 	return details, nil
@@ -124,7 +124,7 @@ func (s *Service) ListFactions(ctx context.Context, params api.ListFactionsParam
 	return factions, pagination, nil
 }
 
-func (s *Service) UpdateHierarchy(ctx context.Context, factionId string, req api.UpdateHierarchyRequest) (*api.FactionHierarchy, error) {
+func (s *Service) UpdateHierarchy(ctx context.Context, factionId string) (*api.FactionHierarchy, error) {
 	// Check if faction exists
 	_, err := s.repo.GetFactionByID(ctx, factionId)
 	if err != nil {
@@ -132,7 +132,7 @@ func (s *Service) UpdateHierarchy(ctx context.Context, factionId string, req api
 	}
 
 	// Update hierarchy
-	if err := s.repo.UpdateHierarchy(ctx, factionId, req); err != nil {
+	if err := s.repo.UpdateHierarchy(); err != nil {
 		return nil, err
 	}
 
@@ -161,12 +161,3 @@ func (s *Service) GetHierarchy(ctx context.Context, factionId string) (*api.Fact
 
 	return hierarchy, nil
 }
-
-
-
-
-
-
-
-
-

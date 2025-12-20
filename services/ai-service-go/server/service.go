@@ -2,7 +2,6 @@ package server
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"sync"
 	"time"
@@ -12,33 +11,33 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// OPTIMIZATION: Issue #1968 - Memory-aligned struct for AI performance
+// AIService OPTIMIZATION: Issue #1968 - Memory-aligned struct for AI performance
 type AIService struct {
-	logger          *logrus.Logger
-	metrics         *AIMetrics
-	activeAI        sync.Map // OPTIMIZATION: Thread-safe map for concurrent AI operations
+	logger   *logrus.Logger
+	metrics  *AIMetrics
+	activeAI sync.Map // OPTIMIZATION: Thread-safe map for concurrent AI operations
 
 	// OPTIMIZATION: Issue #1968 - Memory pooling for hot path structs (zero allocations target!)
-	getBehaviorResponsePool sync.Pool
+	getBehaviorResponsePool     sync.Pool
 	executeBehaviorResponsePool sync.Pool
-	calculatePathResponsePool sync.Pool
-	makeDecisionResponsePool sync.Pool
-	listTreesResponsePool sync.Pool
-	getTreeResponsePool sync.Pool
-	executeTreeResponsePool sync.Pool
+	calculatePathResponsePool   sync.Pool
+	makeDecisionResponsePool    sync.Pool
+	listTreesResponsePool       sync.Pool
+	getTreeResponsePool         sync.Pool
+	executeTreeResponsePool     sync.Pool
 }
 
-// OPTIMIZATION: Issue #1968 - Struct field alignment (large → small)
+// AIProcessingContext OPTIMIZATION: Issue #1968 - Struct field alignment (large → small)
 type AIProcessingContext struct {
-	NPCID       string                 `json:"npc_id"`       // 16 bytes
-	RequestID   string                 `json:"request_id"`   // 16 bytes
-	StartTime   time.Time              `json:"start_time"`   // 24 bytes
-	Data        map[string]interface{} `json:"data"`         // 8 bytes (map)
-	Timeout     time.Duration          `json:"timeout"`      // 8 bytes
-	Priority    int                    `json:"priority"`     // 8 bytes
+	NPCID     string                 `json:"npc_id"`     // 16 bytes
+	RequestID string                 `json:"request_id"` // 16 bytes
+	StartTime time.Time              `json:"start_time"` // 24 bytes
+	Data      map[string]interface{} `json:"data"`       // 8 bytes (map)
+	Timeout   time.Duration          `json:"timeout"`    // 8 bytes
+	Priority  int                    `json:"priority"`   // 8 bytes
 }
 
-func NewAIService(logger *logrus.Logger, metrics *AIMetrics, maxConcurrent int) *AIService {
+func NewAIService(logger *logrus.Logger, metrics *AIMetrics) *AIService {
 	s := &AIService{
 		logger:  logger,
 		metrics: metrics,
@@ -100,7 +99,7 @@ func (s *AIService) GetNPCBehavior(w http.ResponseWriter, r *http.Request) {
 	resp.NPCID = npcID
 	resp.CurrentBehavior = "patrol"
 	resp.BehaviorState = &AIState{
-		NPCID:          npcID,
+		NPCID:           npcID,
 		CurrentBehavior: "patrol",
 		StateVariables: map[string]interface{}{
 			"health": 100,
@@ -167,8 +166,8 @@ func (s *AIService) ExecuteNPCBehavior(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(resp)
 
 	s.logger.WithFields(logrus.Fields{
-		"npc_id":           npcID,
-		"behavior_tree_id": req.BehaviorTreeID,
+		"npc_id":            npcID,
+		"behavior_tree_id":  req.BehaviorTreeID,
 		"execution_time_ms": resp.ExecutionTimeMs,
 	}).Info("NPC behavior executed successfully")
 }
@@ -195,11 +194,11 @@ func (s *AIService) CalculatePath(w http.ResponseWriter, r *http.Request) {
 
 	resp.NPCID = npcID
 	resp.Path = &Path{
-		PathID:         uuid.New().String(),
-		Waypoints:      []Vector3{{X: 10, Y: 20, Z: 0}, {X: 15, Y: 25, Z: 0}},
-		TotalDistance:  7.07,
-		EstimatedTime:  1414, // ~1.4 seconds
-		PathType:       req.PathType,
+		PathID:            uuid.New().String(),
+		Waypoints:         []Vector3{{X: 10, Y: 20, Z: 0}, {X: 15, Y: 25, Z: 0}},
+		TotalDistance:     7.07,
+		EstimatedTime:     1414, // ~1.4 seconds
+		PathType:          req.PathType,
 		CalculationTimeMs: 8,
 	}
 	resp.Success = true
@@ -208,9 +207,9 @@ func (s *AIService) CalculatePath(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(resp)
 
 	s.logger.WithFields(logrus.Fields{
-		"npc_id":             npcID,
-		"path_type":          req.PathType,
-		"total_distance":     resp.Path.TotalDistance,
+		"npc_id":              npcID,
+		"path_type":           req.PathType,
+		"total_distance":      resp.Path.TotalDistance,
 		"calculation_time_ms": resp.Path.CalculationTimeMs,
 	}).Debug("path calculated successfully")
 }
@@ -237,11 +236,11 @@ func (s *AIService) MakeDecision(w http.ResponseWriter, r *http.Request) {
 
 	resp.NPCID = npcID
 	resp.ChosenAction = &DecisionAction{
-		ActionID:        "attack_001",
-		ActionType:      "ATTACK",
-		PriorityScore:   85,
-		RiskLevel:       30,
-		ExpectedOutcome: "damage_enemy",
+		ActionID:           "attack_001",
+		ActionType:         "ATTACK",
+		PriorityScore:      85,
+		RiskLevel:          30,
+		ExpectedOutcome:    "damage_enemy",
 		SuccessProbability: 0.75,
 	}
 	resp.DecisionReasoning = "High priority threat detected, sufficient health to engage"
@@ -252,16 +251,16 @@ func (s *AIService) MakeDecision(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(resp)
 
 	s.logger.WithFields(logrus.Fields{
-		"npc_id":            npcID,
-		"chosen_action":     resp.ChosenAction.ActionType,
-		"confidence_score":  resp.ConfidenceScore,
-		"decision_time_ms":  resp.DecisionTimeMs,
+		"npc_id":           npcID,
+		"chosen_action":    resp.ChosenAction.ActionType,
+		"confidence_score": resp.ConfidenceScore,
+		"decision_time_ms": resp.DecisionTimeMs,
 	}).Debug("decision made successfully")
 }
 
-func (s *AIService) ListBehaviorTrees(w http.ResponseWriter, r *http.Request) {
-	limit := 50  // Default limit
-	offset := 0  // Default offset
+func (s *AIService) ListBehaviorTrees(w http.ResponseWriter) {
+	limit := 50 // Default limit
+	offset := 0 // Default offset
 
 	// OPTIMIZATION: Issue #1968 - Use memory pool
 	resp := s.listTreesResponsePool.Get().(*ListBehaviorTreesResponse)
@@ -370,7 +369,7 @@ func (s *AIService) ExecuteBehaviorTree(w http.ResponseWriter, r *http.Request) 
 	resp.ExecutionPath = []string{"combat_root", "attack_sequence", "move_to_target"}
 	resp.ExecutionTimeMs = 25
 	resp.NewAIState = &AIState{
-		NPCID:          req.NPCID,
+		NPCID:           req.NPCID,
 		CurrentBehavior: "combat",
 		StateVariables: map[string]interface{}{
 			"target_locked": true,
@@ -383,21 +382,21 @@ func (s *AIService) ExecuteBehaviorTree(w http.ResponseWriter, r *http.Request) 
 	json.NewEncoder(w).Encode(resp)
 
 	s.logger.WithFields(logrus.Fields{
-		"npc_id":           req.NPCID,
-		"tree_id":          treeID,
-		"execution_result": resp.ExecutionResult,
+		"npc_id":            req.NPCID,
+		"tree_id":           treeID,
+		"execution_result":  resp.ExecutionResult,
 		"execution_time_ms": resp.ExecutionTimeMs,
 	}).Info("behavior tree executed successfully")
 }
 
-func (s *AIService) HealthCheck(w http.ResponseWriter, r *http.Request) {
+func (s *AIService) HealthCheck(w http.ResponseWriter) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(`{"status":"healthy","service":"ai-service","active_ai":42}`))
 }
 
 // Helper functions for AI processing
-func (s *AIService) calculateThreatLevel(entity *AIEntity, npcState *AIState) int {
+func (s *AIService) calculateThreatLevel(entity *AIEntity) int {
 	// Simple threat calculation based on distance and entity type
 	threat := 0
 

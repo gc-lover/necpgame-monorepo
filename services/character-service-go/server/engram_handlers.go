@@ -1,4 +1,4 @@
-// SQL queries use prepared statements with placeholders ($1, $2, ?) for safety
+// Package server SQL queries use prepared statements with placeholders ($1, $2, ?) for safety
 package server
 
 import (
@@ -382,7 +382,7 @@ func getInfluenceCategory(level float64) string {
 		return "high"
 	} else if level < 90 {
 		return "critical"
-	} else {
-		return "takeover"
 	}
+
+	return "takeover"
 }

@@ -1,4 +1,4 @@
-// Issue: #1578
+// Package server Issue: #1578
 // ogen handlers - TYPED responses (no interface{} boxing!)
 package server
 
@@ -9,10 +9,8 @@ import (
 	"github.com/gc-lover/necpgame-monorepo/services/combat-combos-service-ogen-go/pkg/api"
 )
 
-// Context timeout constants
 const (
-	DBTimeout    = 50 * time.Millisecond
-	CacheTimeout = 10 * time.Millisecond
+	DBTimeout = 50 * time.Millisecond
 )
 
 // Handlers implements api.Handler interface (ogen typed handlers!)
@@ -30,7 +28,7 @@ func (h *Handlers) GetComboCatalog(ctx context.Context, params api.GetComboCatal
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	catalog, err := h.service.GetComboCatalog(ctx, params)
+	catalog, err := h.service.GetComboCatalog()
 	if err != nil {
 		return &api.GetComboCatalogInternalServerError{}, err
 	}
@@ -44,7 +42,7 @@ func (h *Handlers) GetComboDetails(ctx context.Context, params api.GetComboDetai
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	details, err := h.service.GetComboDetails(ctx, params.ComboId.String())
+	details, err := h.service.GetComboDetails()
 	if err != nil {
 		if err == ErrNotFound {
 			return &api.GetComboDetailsNotFound{}, nil
@@ -60,7 +58,7 @@ func (h *Handlers) ActivateCombo(ctx context.Context, req *api.ActivateComboRequ
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	response, err := h.service.ActivateCombo(ctx, req)
+	response, err := h.service.ActivateCombo(req)
 	if err != nil {
 		if err == ErrRequirementsNotMet {
 			return &api.ActivateComboBadRequest{}, nil
@@ -79,7 +77,7 @@ func (h *Handlers) ApplySynergy(ctx context.Context, req *api.ApplySynergyReques
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	response, err := h.service.ApplySynergy(ctx, req)
+	response, err := h.service.ApplySynergy(req)
 	if err != nil {
 		if err == ErrNotFound {
 			return &api.ApplySynergyNotFound{}, nil
@@ -98,7 +96,7 @@ func (h *Handlers) GetComboLoadout(ctx context.Context, params api.GetComboLoado
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	loadout, err := h.service.GetComboLoadout(ctx, params.CharacterID.String())
+	loadout, err := h.service.GetComboLoadout(params.CharacterID.String())
 	if err != nil {
 		if err == ErrNotFound {
 			return &api.GetComboLoadoutNotFound{}, nil
@@ -114,7 +112,7 @@ func (h *Handlers) UpdateComboLoadout(ctx context.Context, req *api.UpdateLoadou
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	loadout, err := h.service.UpdateComboLoadout(ctx, req)
+	loadout, err := h.service.UpdateComboLoadout(req)
 	if err != nil {
 		return &api.UpdateComboLoadoutInternalServerError{}, err
 	}
@@ -127,7 +125,7 @@ func (h *Handlers) SubmitComboScore(ctx context.Context, req *api.SubmitScoreReq
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	response, err := h.service.SubmitComboScore(ctx, req)
+	response, err := h.service.SubmitComboScore(req)
 	if err != nil {
 		if err == ErrNotFound {
 			return &api.SubmitComboScoreNotFound{}, nil
@@ -143,7 +141,7 @@ func (h *Handlers) GetComboAnalytics(ctx context.Context, params api.GetComboAna
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	analytics, err := h.service.GetComboAnalytics(ctx, params)
+	analytics, err := h.service.GetComboAnalytics(params)
 	if err != nil {
 		return &api.GetComboAnalyticsInternalServerError{}, err
 	}

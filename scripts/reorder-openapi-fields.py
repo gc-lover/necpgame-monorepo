@@ -9,9 +9,9 @@ PERFORMANCE: Memory ↓30-50%, Cache hits ↑15-20%
 - Добавляет BACKEND NOTE если отсутствует
 """
 
-import yaml
-import sys
 import argparse
+import sys
+import yaml
 from pathlib import Path
 from typing import Dict, Any, List, Tuple
 
@@ -39,7 +39,7 @@ TYPE_ORDER = {
     'date': 3,
     'time': 3,
     'duration': 3,
-    
+
     # ===== COMPLEX TYPES (8-24 bytes: pointer) =====
     # $ref: 8 bytes (pointer to object)
     '$ref': 4,
@@ -47,31 +47,32 @@ TYPE_ORDER = {
     'object': 4,
     # array: 24 bytes (slice header: pointer + len + cap)
     'array': 5,
-    
+
     # ===== NUMERIC TYPES (8 bytes) =====
     'int64': 6,
     'float64': 7,
     'double': 7,
     'number': 7,  # default float64
-    
+
     # ===== NUMERIC TYPES (4 bytes) =====
     'int32': 8,
     'float32': 9,
     'float': 9,
-    
+
     # ===== NUMERIC TYPES (2 bytes) =====
     'int16': 10,
-    
+
     # ===== NUMERIC TYPES (1 byte) =====
     # Note: int8 и byte как format обрабатываются в get_field_size()
-    
+
     # ===== BOOLEAN (1 byte) =====
     'boolean': 12,
     'bool': 12,
-    
+
     # ===== NULL =====
     'null': 13,
 }
+
 
 def get_field_size(prop: Dict[str, Any]) -> Tuple[int, str]:
     """
@@ -82,19 +83,19 @@ def get_field_size(prop: Dict[str, Any]) -> Tuple[int, str]:
     format_type = prop.get('format', '')
     ref = prop.get('$ref', '')
     enum = prop.get('enum')
-    
+
     # $ref (object reference) - ПЕРВЫМ среди complex types
     if ref:
         return (TYPE_ORDER['$ref'], f"ref:{ref}")
-    
+
     # array
     if prop_type == 'array':
         return (TYPE_ORDER['array'], 'array')
-    
+
     # object
     if prop_type == 'object':
         return (TYPE_ORDER['object'], 'object')
-    
+
     # string с форматом
     if prop_type == 'string':
         if format_type == 'uuid':
@@ -110,7 +111,7 @@ def get_field_size(prop: Dict[str, Any]) -> Tuple[int, str]:
             return (TYPE_ORDER['string'], 'string:enum')
         else:
             return (TYPE_ORDER['string'], 'string')
-    
+
     # number/float
     if prop_type == 'number':
         if format_type == 'float':
@@ -120,7 +121,7 @@ def get_field_size(prop: Dict[str, Any]) -> Tuple[int, str]:
         else:
             # default float64
             return (TYPE_ORDER['number'], 'float64')
-    
+
     # integer
     if prop_type == 'integer':
         if format_type == 'int64':
@@ -134,15 +135,15 @@ def get_field_size(prop: Dict[str, Any]) -> Tuple[int, str]:
         else:
             # default int32
             return (TYPE_ORDER['int32'], 'int32')
-    
+
     # boolean
     if prop_type == 'boolean':
         return (TYPE_ORDER['boolean'], 'boolean')
-    
+
     # null (редко используется отдельно)
     if prop_type == 'null':
         return (TYPE_ORDER['null'], 'null')
-    
+
     # fallback: unknown type
     return (999, f"unknown:{prop_type}")
 
@@ -154,36 +155,36 @@ def reorder_schema_properties(schema: Dict[str, Any], schema_name: str) -> bool:
     """
     if 'properties' not in schema:
         return False
-    
+
     properties = schema['properties']
     if not properties:
         return False
-    
+
     # Сохраняем required поля (они должны быть первыми в списке required)
     required = schema.get('required', [])
-    
+
     # Сортируем properties по размеру типа
     sorted_props = sorted(
         properties.items(),
         key=lambda x: get_field_size(x[1])
     )
-    
+
     # Проверяем, изменился ли порядок
     old_order = list(properties.keys())
     new_order = [name for name, _ in sorted_props]
-    
+
     # Создаем новый OrderedDict (в Python 3.7+ dict сохраняет порядок)
     new_properties = {name: props for name, props in sorted_props}
-    
+
     # Проверяем, нужно ли добавить BACKEND NOTE (даже если порядок уже правильный)
     description = schema.get('description', '')
     needs_note = 'BACKEND NOTE' not in description and 'Fields ordered' not in description
-    
+
     # Если порядок изменился или нужен BACKEND NOTE
     if old_order != new_order:
         # Обновляем schema
         schema['properties'] = new_properties
-    
+
     # Добавляем/обновляем BACKEND NOTE (даже если порядок уже правильный)
     if needs_note:
         note = (
@@ -195,7 +196,7 @@ def reorder_schema_properties(schema: Dict[str, Any], schema_name: str) -> bool:
         else:
             schema['description'] = note
         return True  # Изменения были (добавлен BACKEND NOTE)
-    
+
     # Возвращаем True только если порядок изменился
     return old_order != new_order
 
@@ -207,19 +208,19 @@ def process_openapi_file(file_path: Path, dry_run: bool = False) -> Tuple[int, L
     """
     with open(file_path, 'r', encoding='utf-8') as f:
         data = yaml.safe_load(f)
-    
+
     if not data or 'components' not in data or 'schemas' not in data['components']:
         return (0, [])
-    
+
     schemas = data['components']['schemas']
     changed_schemas = []
-    
+
     for schema_name, schema in schemas.items():
         if isinstance(schema, dict) and schema.get('type') == 'object':
             # Проверяем, нужен ли BACKEND NOTE (даже если порядок уже правильный)
             description = schema.get('description', '')
             needs_note = 'BACKEND NOTE' not in description and 'Fields ordered' not in description
-            
+
             if reorder_schema_properties(schema, schema_name):
                 changed_schemas.append(schema_name)
             elif needs_note and 'properties' in schema:
@@ -233,13 +234,13 @@ def process_openapi_file(file_path: Path, dry_run: bool = False) -> Tuple[int, L
                 else:
                     schema['description'] = note
                 changed_schemas.append(schema_name)
-    
+
     if changed_schemas and not dry_run:
         # Сохраняем изменения
         with open(file_path, 'w', encoding='utf-8') as f:
-            yaml.dump(data, f, allow_unicode=True, sort_keys=False, 
-                     default_flow_style=False, width=120)
-    
+            yaml.dump(data, f, allow_unicode=True, sort_keys=False,
+                      default_flow_style=False, width=120)
+
     return (len(changed_schemas), changed_schemas)
 
 
@@ -248,24 +249,24 @@ def main():
         description='Автоматический рефакторинг OpenAPI YAML для struct field alignment'
     )
     parser.add_argument('file', type=Path, help='OpenAPI YAML файл для обработки')
-    parser.add_argument('--dry-run', action='store_true', 
-                       help='Показать что будет изменено без сохранения')
+    parser.add_argument('--dry-run', action='store_true',
+                        help='Показать что будет изменено без сохранения')
     parser.add_argument('--verbose', '-v', action='store_true',
-                       help='Подробный вывод')
-    
+                        help='Подробный вывод')
+
     args = parser.parse_args()
-    
+
     if not args.file.exists():
         print(f"ERROR: File not found: {args.file}", file=sys.stderr)
         sys.exit(1)
-    
+
     print(f"Processing: {args.file}")
     if args.dry_run:
         print("DRY RUN mode - changes will not be saved")
     print()
-    
+
     count, changed = process_openapi_file(args.file, dry_run=args.dry_run)
-    
+
     if count > 0:
         print(f"Changed schemas: {count}")
         if args.verbose:
@@ -273,7 +274,7 @@ def main():
                 print(f"  - {name}")
     else:
         print("All schemas already optimized")
-    
+
     if args.dry_run and count > 0:
         print()
         print("Run without --dry-run to apply changes")
@@ -281,4 +282,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-

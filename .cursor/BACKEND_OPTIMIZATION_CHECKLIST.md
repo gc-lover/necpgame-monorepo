@@ -75,6 +75,7 @@
 ```
 
 **Output:**
+
 ```
 🔍 Validating optimizations for {service}-go...
 
@@ -139,31 +140,34 @@ golangci-lint run
 
 **После применения оптимизаций проверь:**
 
-| Метрика | Цель | Как измерить |
-|---------|------|--------------|
-| P99 Latency | <10ms | Prometheus histogram |
-| Allocs/op | 0 (hot path) | `go test -benchmem` |
-| GC Pause | <1ms | `/debug/pprof/heap` |
-| Goroutines | Stable | `/debug/pprof/goroutine` |
-| Memory | No leaks | Memory over time (Grafana) |
-| DB Queries | <10ms P95 | Slow query log |
+| Метрика     | Цель         | Как измерить               |
+|-------------|--------------|----------------------------|
+| P99 Latency | <10ms        | Prometheus histogram       |
+| Allocs/op   | 0 (hot path) | `go test -benchmem`        |
+| GC Pause    | <1ms         | `/debug/pprof/heap`        |
+| Goroutines  | Stable       | `/debug/pprof/goroutine`   |
+| Memory      | No leaks     | Memory over time (Grafana) |
+| DB Queries  | <10ms P95    | Slow query log             |
 
 ## 🎯 Severity Levels
 
 **Насколько критично:**
 
 ### 🔴 BLOCKER (задачу нельзя передавать без этого):
+
 - Context deadlines отсутствуют
 - DB connection pool не настроен
 - Goroutine leaks в тестах
 - Нет error handling
 
 ### 🟡 WARNING (нужно исправить, но можно передать):
+
 - Memory pooling не используется в hot path
 - Batch operations можно добавить
 - GC tuning не настроен
 
 ### 🟢 OPTIONAL (nice to have):
+
 - FlatBuffers вместо Protobuf
 - SIMD optimizations
 - Advanced patterns

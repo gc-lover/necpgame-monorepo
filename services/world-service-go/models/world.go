@@ -8,61 +8,37 @@ import (
 
 type ResetType string
 
-const (
-	ResetTypeDaily  ResetType = "daily"
-	ResetTypeWeekly ResetType = "weekly"
-)
-
 type ResetStatus string
-
-const (
-	ResetStatusPending     ResetStatus = "pending"
-	ResetStatusInProgress  ResetStatus = "in_progress"
-	ResetStatusCompleted   ResetStatus = "completed"
-	ResetStatusFailed      ResetStatus = "failed"
-)
 
 type QuestPoolType string
 
-const (
-	QuestPoolTypeDaily  QuestPoolType = "daily"
-	QuestPoolTypeWeekly QuestPoolType = "weekly"
-	QuestPoolTypeGuild  QuestPoolType = "guild"
-)
-
 type LoginRewardType string
 
-const (
-	LoginRewardTypeDaily   LoginRewardType = "daily"
-	LoginRewardTypeWeekly  LoginRewardType = "weekly"
-	LoginRewardTypeMonthly LoginRewardType = "monthly"
-)
-
 type ResetExecution struct {
-	ID             uuid.UUID   `json:"execution_id" db:"id"`
-	ResetType      ResetType   `json:"reset_type" db:"reset_type"`
-	Status         ResetStatus `json:"status" db:"status"`
-	StartedAt      time.Time   `json:"started_at" db:"started_at"`
-	CompletedAt    *time.Time  `json:"completed_at,omitempty" db:"completed_at"`
-	PlayersProcessed int       `json:"players_processed" db:"players_processed"`
-	PlayersTotal    int       `json:"players_total" db:"players_total"`
-	CreatedAt       time.Time  `json:"created_at" db:"created_at"`
-	UpdatedAt       time.Time `json:"updated_at" db:"updated_at"`
+	ID               uuid.UUID   `json:"execution_id" db:"id"`
+	ResetType        ResetType   `json:"reset_type" db:"reset_type"`
+	Status           ResetStatus `json:"status" db:"status"`
+	StartedAt        time.Time   `json:"started_at" db:"started_at"`
+	CompletedAt      *time.Time  `json:"completed_at,omitempty" db:"completed_at"`
+	PlayersProcessed int         `json:"players_processed" db:"players_processed"`
+	PlayersTotal     int         `json:"players_total" db:"players_total"`
+	CreatedAt        time.Time   `json:"created_at" db:"created_at"`
+	UpdatedAt        time.Time   `json:"updated_at" db:"updated_at"`
 }
 
 type ResetStatusInfo struct {
-	ResetType       ResetType   `json:"reset_type"`
-	Status          ResetStatus `json:"status"`
-	LastReset       *time.Time  `json:"last_reset,omitempty"`
-	NextReset       time.Time   `json:"next_reset"`
-	PlayersProcessed int        `json:"players_processed"`
-	PlayersTotal    int        `json:"players_total"`
+	ResetType        ResetType   `json:"reset_type"`
+	Status           ResetStatus `json:"status"`
+	LastReset        *time.Time  `json:"last_reset,omitempty"`
+	NextReset        time.Time   `json:"next_reset"`
+	PlayersProcessed int         `json:"players_processed"`
+	PlayersTotal     int         `json:"players_total"`
 }
 
 type NextResetInfo struct {
-	ResetType            ResetType `json:"reset_type"`
-	NextReset            time.Time `json:"next_reset"`
-	TimeUntilResetSeconds int      `json:"time_until_reset_seconds"`
+	ResetType             ResetType `json:"reset_type"`
+	NextReset             time.Time `json:"next_reset"`
+	TimeUntilResetSeconds int       `json:"time_until_reset_seconds"`
 }
 
 type QuestPoolEntry struct {
@@ -74,35 +50,35 @@ type QuestPoolEntry struct {
 }
 
 type QuestPool struct {
-	PoolType QuestPoolType   `json:"pool_type"`
+	PoolType QuestPoolType    `json:"pool_type"`
 	Quests   []QuestPoolEntry `json:"quests"`
-	Total    int             `json:"total"`
+	Total    int              `json:"total"`
 }
 
 type PlayerQuest struct {
-	ID          uuid.UUID    `json:"id" db:"id"`
-	PlayerID    uuid.UUID    `json:"player_id" db:"player_id"`
-	QuestID     uuid.UUID    `json:"quest_id" db:"quest_id"`
+	ID          uuid.UUID     `json:"id" db:"id"`
+	PlayerID    uuid.UUID     `json:"player_id" db:"player_id"`
+	QuestID     uuid.UUID     `json:"quest_id" db:"quest_id"`
 	PoolType    QuestPoolType `json:"pool_type" db:"pool_type"`
-	AssignedAt  time.Time    `json:"assigned_at" db:"assigned_at"`
-	CompletedAt *time.Time   `json:"completed_at,omitempty" db:"completed_at"`
-	ResetDate   time.Time    `json:"reset_date" db:"reset_date"`
-	CreatedAt   time.Time    `json:"created_at" db:"created_at"`
-	UpdatedAt   time.Time    `json:"updated_at" db:"updated_at"`
+	AssignedAt  time.Time     `json:"assigned_at" db:"assigned_at"`
+	CompletedAt *time.Time    `json:"completed_at,omitempty" db:"completed_at"`
+	ResetDate   time.Time     `json:"reset_date" db:"reset_date"`
+	CreatedAt   time.Time     `json:"created_at" db:"created_at"`
+	UpdatedAt   time.Time     `json:"updated_at" db:"updated_at"`
 }
 
 type LoginReward struct {
-	RewardType LoginRewardType          `json:"reward_type"`
-	DayNumber  int                     `json:"day_number"`
-	RewardData map[string]interface{}  `json:"reward_data"`
-	ClaimedAt  *time.Time               `json:"claimed_at,omitempty"`
+	RewardType LoginRewardType        `json:"reward_type"`
+	DayNumber  int                    `json:"day_number"`
+	RewardData map[string]interface{} `json:"reward_data"`
+	ClaimedAt  *time.Time             `json:"claimed_at,omitempty"`
 }
 
 type PlayerLoginRewards struct {
-	PlayerID       uuid.UUID     `json:"player_id"`
+	PlayerID         uuid.UUID     `json:"player_id"`
 	AvailableRewards []LoginReward `json:"available_rewards"`
 	ClaimedRewards   []LoginReward `json:"claimed_rewards"`
-	StreakDays      int          `json:"streak_days"`
+	StreakDays       int           `json:"streak_days"`
 }
 
 type LoginStreak struct {
@@ -158,16 +134,16 @@ type TravelEvent struct {
 }
 
 type TravelEventInstance struct {
-	ID          uuid.UUID `json:"id" db:"id"`
-	EventID     uuid.UUID `json:"event_id" db:"event_id"`
-	CharacterID uuid.UUID `json:"character_id" db:"character_id"`
-	ZoneID      uuid.UUID `json:"zone_id" db:"zone_id"`
-	EpochID     string    `json:"epoch_id" db:"epoch_id"`
-	State       string    `json:"state" db:"state"`
-	StartedAt   time.Time `json:"started_at" db:"started_at"`
+	ID          uuid.UUID  `json:"id" db:"id"`
+	EventID     uuid.UUID  `json:"event_id" db:"event_id"`
+	CharacterID uuid.UUID  `json:"character_id" db:"character_id"`
+	ZoneID      uuid.UUID  `json:"zone_id" db:"zone_id"`
+	EpochID     string     `json:"epoch_id" db:"epoch_id"`
+	State       string     `json:"state" db:"state"`
+	StartedAt   time.Time  `json:"started_at" db:"started_at"`
 	CompletedAt *time.Time `json:"completed_at,omitempty" db:"completed_at"`
-	CreatedAt   time.Time `json:"created_at" db:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at" db:"updated_at"`
+	CreatedAt   time.Time  `json:"created_at" db:"created_at"`
+	UpdatedAt   time.Time  `json:"updated_at" db:"updated_at"`
 }
 
 type SkillCheckDefinition struct {
@@ -186,9 +162,9 @@ type TravelEventPenalty struct {
 }
 
 type TravelEventCooldown struct {
-	EventType      string    `json:"event_type"`
+	EventType       string    `json:"event_type"`
 	LastTriggeredAt time.Time `json:"last_triggered_at"`
-	CooldownUntil  time.Time `json:"cooldown_until"`
+	CooldownUntil   time.Time `json:"cooldown_until"`
 }
 
 type TriggerTravelEventRequest struct {
@@ -221,16 +197,16 @@ type CompleteTravelEventRequest struct {
 }
 
 type TravelEventCompletionResponse struct {
-	EventInstanceID uuid.UUID              `json:"event_instance_id"`
-	Rewards         []TravelEventReward   `json:"rewards"`
-	Penalties       []TravelEventPenalty  `json:"penalties"`
+	EventInstanceID uuid.UUID            `json:"event_instance_id"`
+	Rewards         []TravelEventReward  `json:"rewards"`
+	Penalties       []TravelEventPenalty `json:"penalties"`
 }
 
 type AvailableTravelEventsResponse struct {
-	ZoneID  uuid.UUID      `json:"zone_id"`
-	EpochID string         `json:"epoch_id"`
-	Events  []TravelEvent  `json:"events"`
-	Total   int            `json:"total"`
+	ZoneID  uuid.UUID     `json:"zone_id"`
+	EpochID string        `json:"epoch_id"`
+	Events  []TravelEvent `json:"events"`
+	Total   int           `json:"total"`
 }
 
 type EpochTravelEventsResponse struct {
@@ -240,19 +216,19 @@ type EpochTravelEventsResponse struct {
 }
 
 type TravelEventCooldownResponse struct {
-	CharacterID uuid.UUID              `json:"character_id"`
+	CharacterID uuid.UUID             `json:"character_id"`
 	Cooldowns   []TravelEventCooldown `json:"cooldowns"`
 }
 
 type TravelEventProbabilityResponse struct {
-	EventType  string                 `json:"event_type"`
-	Probability float64               `json:"probability"`
-	Modifiers  map[string]interface{} `json:"modifiers"`
+	EventType   string                 `json:"event_type"`
+	Probability float64                `json:"probability"`
+	Modifiers   map[string]interface{} `json:"modifiers"`
 }
 
 type TravelEventRewardsResponse struct {
-	EventID uuid.UUID            `json:"event_id"`
-	Rewards []TravelEventReward  `json:"rewards"`
+	EventID uuid.UUID           `json:"event_id"`
+	Rewards []TravelEventReward `json:"rewards"`
 }
 
 type TravelEventPenaltiesResponse struct {
@@ -260,7 +236,7 @@ type TravelEventPenaltiesResponse struct {
 	Penalties []TravelEventPenalty `json:"penalties"`
 }
 
-// Global State models (Issue: #140876058)
+// GlobalState Global State models (Issue: #140876058)
 type GlobalState struct {
 	Key       string                 `json:"key" db:"key"`
 	Category  string                 `json:"category" db:"category"`
@@ -287,4 +263,3 @@ type BatchStateUpdate struct {
 	Version  *int                   `json:"version,omitempty"`
 	SyncType *string                `json:"sync_type,omitempty"`
 }
-

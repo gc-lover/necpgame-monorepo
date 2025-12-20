@@ -334,4 +334,3 @@ func TestClanWarRepository_UpdateTerritoryOwner(t *testing.T) {
 		_ = repo.UpdateTerritoryOwner(ctx, territoryID, ownerGuildID)
 	})
 }
-

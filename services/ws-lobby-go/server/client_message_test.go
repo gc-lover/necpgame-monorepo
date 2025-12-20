@@ -9,7 +9,7 @@ import (
 )
 
 func TestClient_HandleMessage_Join(t *testing.T) {
-	server, cleanup := setupTestLobbyServer(t)
+	server, cleanup := setupTestLobbyServer()
 	defer cleanup()
 
 	client := &Client{
@@ -41,7 +41,7 @@ func TestClient_HandleMessage_Join(t *testing.T) {
 }
 
 func TestClient_HandleMessage_Leave(t *testing.T) {
-	server, cleanup := setupTestLobbyServer(t)
+	server, cleanup := setupTestLobbyServer()
 	defer cleanup()
 
 	client := &Client{
@@ -67,7 +67,7 @@ func TestClient_HandleMessage_Leave(t *testing.T) {
 }
 
 func TestClient_HandleMessage_Msg(t *testing.T) {
-	server, cleanup := setupTestLobbyServer(t)
+	server, cleanup := setupTestLobbyServer()
 	defer cleanup()
 
 	client1 := &Client{
@@ -108,7 +108,7 @@ func TestClient_HandleMessage_Msg(t *testing.T) {
 }
 
 func TestClient_HandleMessage_Broadcast(t *testing.T) {
-	server, cleanup := setupTestLobbyServer(t)
+	server, cleanup := setupTestLobbyServer()
 	defer cleanup()
 
 	client1 := &Client{
@@ -147,7 +147,7 @@ func TestClient_HandleMessage_Broadcast(t *testing.T) {
 }
 
 func TestClient_HandleMessage_InvalidCommands(t *testing.T) {
-	server, cleanup := setupTestLobbyServer(t)
+	server, cleanup := setupTestLobbyServer()
 	defer cleanup()
 
 	client := &Client{
@@ -192,7 +192,7 @@ func TestClient_HandleMessage_InvalidCommands(t *testing.T) {
 }
 
 func TestClient_HandleMessage_Join_EmptyRoomName(t *testing.T) {
-	server, cleanup := setupTestLobbyServer(t)
+	server, cleanup := setupTestLobbyServer()
 	defer cleanup()
 
 	client := &Client{
@@ -220,7 +220,7 @@ func TestClient_HandleMessage_Join_EmptyRoomName(t *testing.T) {
 }
 
 func TestClient_HandleMessage_Msg_EmptyBody(t *testing.T) {
-	server, cleanup := setupTestLobbyServer(t)
+	server, cleanup := setupTestLobbyServer()
 	defer cleanup()
 
 	client1 := &Client{
@@ -261,4 +261,3 @@ func TestClient_HandleMessage_Msg_EmptyBody(t *testing.T) {
 
 	cleanup()
 }
-

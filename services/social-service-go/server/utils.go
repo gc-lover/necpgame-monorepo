@@ -1,4 +1,4 @@
-// Issue: #1433, #1380
+// Package server Issue: #1433, #1380
 package server
 
 import (
@@ -69,18 +69,3 @@ func respondError(w http.ResponseWriter, status int, message string) {
 		w.Write([]byte(`{"error":"Internal Server Error","message":"Failed to encode error response"}`))
 	}
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

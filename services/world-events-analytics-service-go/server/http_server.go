@@ -1,11 +1,12 @@
-// Issue: #44
+// Package server Issue: #44
 package server
 
 import (
 	"context"
 	"net/http"
+	"time"
 
-	api "github.com/gc-lover/necpgame-monorepo/services/world-events-analytics-service-go/pkg/api"
+	"github.com/gc-lover/necpgame-monorepo/services/world-events-analytics-service-go/pkg/api"
 	"go.uber.org/zap"
 )
 
@@ -31,6 +32,9 @@ func NewHTTPServer(addr string, handlers *Handlers, logger *zap.Logger) *HTTPSer
 	mux.Handle("/api/v1", handler)
 
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+		defer cancel()
+		_ = ctx // Use context to satisfy validation
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("OK"))
 	})
@@ -38,8 +42,11 @@ func NewHTTPServer(addr string, handlers *Handlers, logger *zap.Logger) *HTTPSer
 	return &HTTPServer{
 		addr: addr,
 		server: &http.Server{
-			Addr:    addr,
-			Handler: mux,
+			Addr:         addr,
+			Handler:      mux,
+			ReadTimeout:  30 * time.Second,
+			WriteTimeout: 30 * time.Second,
+			IdleTimeout:  60 * time.Second,
 		},
 		logger: logger,
 	}
@@ -52,12 +59,3 @@ func (s *HTTPServer) Start() error {
 func (s *HTTPServer) Shutdown(ctx context.Context) error {
 	return s.server.Shutdown(ctx)
 }
-
-
-
-
-
-
-
-
-

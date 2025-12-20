@@ -18,20 +18,20 @@ info:
     name: NECPGAME API Support
     email: api@necp.game
 servers:
-- url: http://localhost:8085/api/v1/economy
-  description: Локальный сервер разработки
-- url: https://api.necp.game/api/v1/economy
-  description: Продакшен сервер
+  - url: http://localhost:8085/api/v1/economy
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1/economy
+    description: Продакшен сервер
 tags:
-- name: Stat Pools
-  description: Пулы характеристик
-- name: Balance Validation
-  description: Валидация баланса
+  - name: Stat Pools
+    description: Пулы характеристик
+  - name: Balance Validation
+    description: Валидация баланса
 paths:
   /equipment/stat-pools:
     get:
       tags:
-      - Stat Pools
+        - Stat Pools
       summary: Получить пулы характеристик
       description: 'Возвращает пулы характеристик для указанного типа предмета.
 
@@ -40,14 +40,14 @@ paths:
         '
       operationId: getStatPools
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       parameters:
-      - name: item_type
-        in: query
-        description: Тип предмета для фильтрации
-        required: false
-        schema:
-          $ref: '#/components/schemas/ItemType'
+        - name: item_type
+          in: query
+          description: Тип предмета для фильтрации
+          required: false
+          schema:
+            $ref: '#/components/schemas/ItemType'
       responses:
         '200':
           description: Пулы характеристик успешно получены
@@ -58,30 +58,30 @@ paths:
                 items:
                   $ref: '#/components/schemas/StatPool'
               example:
-              - id: 550e8400-e29b-41d4-a716-446655440005
-                name: Damage Pool
-                stat_type: DAMAGE
-                min_value: 100.0
-                max_value: 150.0
-                distribution: NORMAL
-                rarity_modifiers:
-                  COMMON: 1.0
-                  UNCOMMON: 1.1
-                  RARE: 1.25
-                  EPIC: 1.5
-                  LEGENDARY: 2.0
-              - id: 550e8400-e29b-41d4-a716-446655440006
-                name: Accuracy Pool
-                stat_type: ACCURACY
-                min_value: 0.7
-                max_value: 0.95
-                distribution: NORMAL
-                rarity_modifiers:
-                  COMMON: 1.0
-                  UNCOMMON: 1.05
-                  RARE: 1.1
-                  EPIC: 1.15
-                  LEGENDARY: 1.2
+                - id: 550e8400-e29b-41d4-a716-446655440005
+                  name: Damage Pool
+                  stat_type: DAMAGE
+                  min_value: 100.0
+                  max_value: 150.0
+                  distribution: NORMAL
+                  rarity_modifiers:
+                    COMMON: 1.0
+                    UNCOMMON: 1.1
+                    RARE: 1.25
+                    EPIC: 1.5
+                    LEGENDARY: 2.0
+                - id: 550e8400-e29b-41d4-a716-446655440006
+                  name: Accuracy Pool
+                  stat_type: ACCURACY
+                  min_value: 0.7
+                  max_value: 0.95
+                  distribution: NORMAL
+                  rarity_modifiers:
+                    COMMON: 1.0
+                    UNCOMMON: 1.05
+                    RARE: 1.1
+                    EPIC: 1.15
+                    LEGENDARY: 1.2
         '401':
           $ref: common.yaml#/components/responses/Unauthorized
         '500':
@@ -89,7 +89,7 @@ paths:
   /equipment/validate-balance:
     post:
       tags:
-      - Balance Validation
+        - Balance Validation
       summary: Валидировать баланс предмета
       description: 'Валидирует баланс сгенерированного предмета по лигам и режимам игры.
 
@@ -98,7 +98,7 @@ paths:
         '
       operationId: validateBalance
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       requestBody:
         required: true
         content:
@@ -124,19 +124,19 @@ paths:
                 league: GOLD
                 game_mode: PVP
                 checks:
-                - check_type: TTK
-                  passed: true
-                  message: TTK в допустимых пределах
-                  value: 0.85
-                - check_type: TEMPERATURE
-                  passed: true
-                  message: Температура в норме
-                  value: 0.65
-                - check_type: CYBERPSYCHOSIS
-                  passed: true
-                  message: Риск киберпсихоза низкий
-                  value: 0.15
-                warnings: []
+                  - check_type: TTK
+                    passed: true
+                    message: TTK в допустимых пределах
+                    value: 0.85
+                  - check_type: TEMPERATURE
+                    passed: true
+                    message: Температура в норме
+                    value: 0.65
+                  - check_type: CYBERPSYCHOSIS
+                    passed: true
+                    message: Риск киберпсихоза низкий
+                    value: 0.15
+                warnings: [ ]
         '400':
           $ref: common.yaml#/components/responses/BadRequest
         '401':
@@ -153,12 +153,12 @@ components:
     StatPool:
       type: object
       required:
-      - id
-      - name
-      - stat_type
-      - min_value
-      - max_value
-      - distribution
+        - id
+        - name
+        - stat_type
+        - min_value
+        - max_value
+        - distribution
       properties:
         id:
           type: string
@@ -192,9 +192,9 @@ components:
     ValidateBalanceRequest:
       type: object
       required:
-      - item_id
-      - league
-      - game_mode
+        - item_id
+        - league
+        - game_mode
       properties:
         item_id:
           type: string
@@ -218,11 +218,11 @@ components:
     BalanceValidationResult:
       type: object
       required:
-      - is_valid
-      - item_id
-      - league
-      - game_mode
-      - checks
+        - is_valid
+        - item_id
+        - league
+        - game_mode
+        - checks
       properties:
         item_id:
           type: string
@@ -248,9 +248,9 @@ components:
     BalanceCheck:
       type: object
       required:
-      - check_type
-      - passed
-      - message
+        - check_type
+        - passed
+        - message
       properties:
         message:
           type: string
@@ -267,58 +267,58 @@ components:
     ItemType:
       type: string
       enum:
-      - WEAPON
-      - IMPLANT
-      - ARMOR
-      - ACCESSORY
+        - WEAPON
+        - IMPLANT
+        - ARMOR
+        - ACCESSORY
       description: Тип предмета
     StatType:
       type: string
       enum:
-      - DAMAGE
-      - ACCURACY
-      - RANGE
-      - FIRE_RATE
-      - RELOAD_SPEED
-      - MAGAZINE_SIZE
-      - HANDLING
-      - STABILITY
-      - PENETRATION
-      - ELEMENTAL_DAMAGE
+        - DAMAGE
+        - ACCURACY
+        - RANGE
+        - FIRE_RATE
+        - RELOAD_SPEED
+        - MAGAZINE_SIZE
+        - HANDLING
+        - STABILITY
+        - PENETRATION
+        - ELEMENTAL_DAMAGE
       description: Тип характеристики
     Distribution:
       type: string
       enum:
-      - UNIFORM
-      - NORMAL
-      - EXPONENTIAL
+        - UNIFORM
+        - NORMAL
+        - EXPONENTIAL
       description: Тип распределения значений
     League:
       type: string
       enum:
-      - BRONZE
-      - SILVER
-      - GOLD
-      - PLATINUM
-      - DIAMOND
-      - MASTER
-      - GRANDMASTER
+        - BRONZE
+        - SILVER
+        - GOLD
+        - PLATINUM
+        - DIAMOND
+        - MASTER
+        - GRANDMASTER
       description: Лига для проверки баланса
     GameMode:
       type: string
       enum:
-      - PVE
-      - PVP
-      - EXTRACT
+        - PVE
+        - PVP
+        - EXTRACT
       description: Режим игры
     BalanceCheckType:
       type: string
       enum:
-      - TTK
-      - TEMPERATURE
-      - CYBERPSYCHOSIS
-      - DAMAGE_OUTPUT
-      - SURVIVABILITY
+        - TTK
+        - TEMPERATURE
+        - CYBERPSYCHOSIS
+        - DAMAGE_OUTPUT
+        - SURVIVABILITY
       description: Тип проверки баланса
   responses:
     BadRequest:

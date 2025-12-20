@@ -9,6 +9,7 @@
 import re
 from pathlib import Path
 
+
 def analyze_pending_issues():
     """Проанализировать документ с pending issues"""
     issues_file = Path(__file__).parent.parent / "knowledge/analysis/tasks/github-issues-pending.yaml"
@@ -55,13 +56,15 @@ def analyze_pending_issues():
     print("\nПримеры Issues:")
     issue_matches = re.findall(r'## Issue: ([^\n]+)', content)
     for i, issue in enumerate(issue_matches[:5]):  # Показать первые 5
-        print(f"  {i+1}. {issue.strip()}")
+        print(f"  {i + 1}. {issue.strip()}")
 
     if len(issue_matches) > 5:
         print(f"  ... и ещё {len(issue_matches) - 5} issues")
 
+
 def main():
     analyze_pending_issues()
+
 
 if __name__ == '__main__':
     main()

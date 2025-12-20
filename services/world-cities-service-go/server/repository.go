@@ -1,4 +1,4 @@
-// Issue: #140875381
+// Package server Issue: #140875381
 package server
 
 import (
@@ -7,9 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
-	"time"
 
-	"github.com/lib/pq"
 	"go.uber.org/zap"
 )
 
@@ -29,7 +27,7 @@ func NewWorldCitiesRepository(db *sql.DB, logger *zap.Logger) *WorldCitiesReposi
 
 // GetCities возвращает города с фильтрацией и пагинацией
 func (r *WorldCitiesRepository) GetCities(ctx context.Context, filters map[string]interface{}, limit, offset int) ([]*City, int, error) {
-	query := `
+	baseQuery := `
 		SELECT id, name, country, region, latitude, longitude, population,
 		       development_level, description, landmarks, economic_data,
 		       social_data, timeline_year, is_active, created_at, updated_at
@@ -37,38 +35,32 @@ func (r *WorldCitiesRepository) GetCities(ctx context.Context, filters map[strin
 		WHERE is_active = true
 	`
 
-	args := []interface{}{}
-	argIndex := 1
+	var args []interface{}
 
 	// Применяем фильтры
 	if region, ok := filters["region"].(string); ok && region != "" {
-		query += fmt.Sprintf(" AND region = $%d", argIndex)
+		baseQuery += fmt.Sprintf(" AND region = $%d", len(args)+1)
 		args = append(args, region)
-		argIndex++
 	}
 
 	if country, ok := filters["country"].(string); ok && country != "" {
-		query += fmt.Sprintf(" AND country = $%d", argIndex)
+		baseQuery += fmt.Sprintf(" AND country = $%d", len(args)+1)
 		args = append(args, country)
-		argIndex++
 	}
 
 	if minPop, ok := filters["min_population"].(int); ok {
-		query += fmt.Sprintf(" AND population >= $%d", argIndex)
+		baseQuery += fmt.Sprintf(" AND population >= $%d", len(args)+1)
 		args = append(args, minPop)
-		argIndex++
 	}
 
 	if maxPop, ok := filters["max_population"].(int); ok {
-		query += fmt.Sprintf(" AND population <= $%d", argIndex)
+		baseQuery += fmt.Sprintf(" AND population <= $%d", len(args)+1)
 		args = append(args, maxPop)
-		argIndex++
 	}
 
 	if devLevel, ok := filters["development_level"].(string); ok && devLevel != "" {
-		query += fmt.Sprintf(" AND development_level = $%d", argIndex)
+		baseQuery += fmt.Sprintf(" AND development_level = $%d", len(args)+1)
 		args = append(args, devLevel)
-		argIndex++
 	}
 
 	// Геофильтр
@@ -79,18 +71,17 @@ func (r *WorldCitiesRepository) GetCities(ctx context.Context, filters map[strin
 				radius = r
 			}
 
-			query += fmt.Sprintf(` AND ST_DWithin(
+			baseQuery += fmt.Sprintf(` AND ST_DWithin(
 				ST_SetSRID(ST_MakePoint($%d, $%d), 4326)::geography,
 				geom::geography,
 				$%d * 1000
-			)`, argIndex, argIndex+1, argIndex+2)
+			)`, len(args)+1, len(args)+2, len(args)+3)
 			args = append(args, lon, lat, radius)
-			argIndex += 3
 		}
 	}
 
 	// Получаем общее количество для пагинации
-	countQuery := strings.Replace(query, "SELECT id, name, country, region, latitude, longitude, population,\n\t\t       development_level, description, landmarks, economic_data,\n\t\t       social_data, timeline_year, is_active, created_at, updated_at\n\t\tFROM world_cities.cities", "SELECT COUNT(*) FROM world_cities.cities", 1)
+	countQuery := strings.Replace(baseQuery, "SELECT id, name, country, region, latitude, longitude, population,\n\t\t       development_level, description, landmarks, economic_data,\n\t\t       social_data, timeline_year, is_active, created_at, updated_at\n\t\tFROM world_cities.cities", "SELECT COUNT(*) FROM world_cities.cities", 1)
 
 	var total int
 	if err := r.db.QueryRowContext(ctx, countQuery, args...).Scan(&total); err != nil {
@@ -98,8 +89,7 @@ func (r *WorldCitiesRepository) GetCities(ctx context.Context, filters map[strin
 	}
 
 	// Добавляем сортировку и пагинацию
-	query += " ORDER BY population DESC, name ASC"
-	query += fmt.Sprintf(" LIMIT $%d OFFSET $%d", argIndex, argIndex+1)
+	query := baseQuery + " ORDER BY population DESC, name ASC" + fmt.Sprintf(" LIMIT $%d OFFSET $%d", len(args)+1, len(args)+2)
 	args = append(args, limit, offset)
 
 	rows, err := r.db.QueryContext(ctx, query, args...)
@@ -238,20 +228,18 @@ func (r *WorldCitiesRepository) UpdateCity(ctx context.Context, cityID string, u
 	}
 
 	query := "UPDATE world_cities.cities SET "
-	args := []interface{}{}
-	argIndex := 1
+	var args []interface{}
 
 	// Добавляем updated_at в любом случае
 	query += "updated_at = CURRENT_TIMESTAMP"
 
 	// Добавляем остальные поля
 	for field, value := range updates {
-		query += fmt.Sprintf(", %s = $%d", field, argIndex)
+		query += fmt.Sprintf(", %s = $%d", field, len(args)+1)
 		args = append(args, value)
-		argIndex++
 	}
 
-	query += fmt.Sprintf(" WHERE id = $%d AND is_active = true", argIndex)
+	query += fmt.Sprintf(" WHERE id = $%d AND is_active = true", len(args)+1)
 	args = append(args, cityID)
 
 	result, err := r.db.ExecContext(ctx, query, args...)

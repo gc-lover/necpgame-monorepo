@@ -8,29 +8,9 @@ import (
 
 type GuildRank string
 
-const (
-	GuildRankLeader   GuildRank = "leader"
-	GuildRankOfficer  GuildRank = "officer"
-	GuildRankMember   GuildRank = "member"
-	GuildRankRecruit  GuildRank = "recruit"
-)
-
 type GuildStatus string
 
-const (
-	GuildStatusActive   GuildStatus = "active"
-	GuildStatusInactive GuildStatus = "inactive"
-	GuildStatusDisbanded GuildStatus = "disbanded"
-)
-
 type GuildMemberStatus string
-
-const (
-	GuildMemberStatusActive   GuildMemberStatus = "active"
-	GuildMemberStatusInvited  GuildMemberStatus = "invited"
-	GuildMemberStatusLeft     GuildMemberStatus = "left"
-	GuildMemberStatusKicked   GuildMemberStatus = "kicked"
-)
 
 type Guild struct {
 	ID          uuid.UUID   `json:"id" db:"id"`
@@ -51,8 +31,8 @@ type GuildMember struct {
 	GuildID      uuid.UUID         `json:"guild_id" db:"guild_id"`
 	CharacterID  uuid.UUID         `json:"character_id" db:"character_id"`
 	Rank         GuildRank         `json:"rank" db:"rank"`
-	Status       GuildMemberStatus  `json:"status" db:"status"`
-	Contribution int                `json:"contribution" db:"contribution"`
+	Status       GuildMemberStatus `json:"status" db:"status"`
+	Contribution int               `json:"contribution" db:"contribution"`
 	JoinedAt     time.Time         `json:"joined_at" db:"joined_at"`
 	UpdatedAt    time.Time         `json:"updated_at" db:"updated_at"`
 }
@@ -69,11 +49,11 @@ type GuildInvitation struct {
 }
 
 type GuildBank struct {
-	ID         uuid.UUID              `json:"id" db:"id"`
-	GuildID    uuid.UUID              `json:"guild_id" db:"guild_id"`
-	Currency   map[string]int         `json:"currency" db:"currency"`
-	Items      []map[string]interface{} `json:"items" db:"items"`
-	UpdatedAt  time.Time              `json:"updated_at" db:"updated_at"`
+	ID        uuid.UUID                `json:"id" db:"id"`
+	GuildID   uuid.UUID                `json:"guild_id" db:"guild_id"`
+	Currency  map[string]int           `json:"currency" db:"currency"`
+	Items     []map[string]interface{} `json:"items" db:"items"`
+	UpdatedAt time.Time                `json:"updated_at" db:"updated_at"`
 }
 
 type CreateGuildRequest struct {
@@ -109,7 +89,7 @@ type GuildDetailResponse struct {
 
 type GuildMemberListResponse struct {
 	Members []GuildMember `json:"members"`
-	Total   int          `json:"total"`
+	Total   int           `json:"total"`
 }
 
 type GuildRankEntity struct {
@@ -134,31 +114,30 @@ type UpdateGuildRankRequest struct {
 
 type GuildRanksResponse struct {
 	Ranks []GuildRankEntity `json:"ranks"`
-	Total int                `json:"total"`
+	Total int               `json:"total"`
 }
 
 type GuildBankDepositRequest struct {
-	Currency int                    `json:"currency"`
+	Currency int                      `json:"currency"`
 	Items    []map[string]interface{} `json:"items,omitempty"`
 }
 
 type GuildBankWithdrawRequest struct {
-	Currency int                    `json:"currency"`
+	Currency int                      `json:"currency"`
 	Items    []map[string]interface{} `json:"items,omitempty"`
 }
 
 type GuildBankTransaction struct {
-	ID        uuid.UUID              `json:"id" db:"id"`
-	GuildID   uuid.UUID              `json:"guild_id" db:"guild_id"`
-	AccountID uuid.UUID              `json:"account_id" db:"account_id"`
-	Type      string                 `json:"type" db:"type"`
-	Currency  int                    `json:"currency" db:"currency"`
+	ID        uuid.UUID                `json:"id" db:"id"`
+	GuildID   uuid.UUID                `json:"guild_id" db:"guild_id"`
+	AccountID uuid.UUID                `json:"account_id" db:"account_id"`
+	Type      string                   `json:"type" db:"type"`
+	Currency  int                      `json:"currency" db:"currency"`
 	Items     []map[string]interface{} `json:"items" db:"items"`
-	CreatedAt time.Time              `json:"created_at" db:"created_at"`
+	CreatedAt time.Time                `json:"created_at" db:"created_at"`
 }
 
 type GuildBankTransactionsResponse struct {
 	Transactions []GuildBankTransaction `json:"transactions"`
-	Total        int                     `json:"total"`
+	Total        int                    `json:"total"`
 }
-

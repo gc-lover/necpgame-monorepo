@@ -1,4 +1,4 @@
-// Issue: #1597-#1599, ogen migration
+// Package server Issue: #1597-#1599, ogen migration
 package server
 
 import (
@@ -23,7 +23,7 @@ func NewHTTPServer(addr string, logger *logrus.Logger) *HTTPServer {
 
 	// Register ogen handlers
 	ogenHandlers := NewHandlers(logger)
-	ogenServer, err := housingapi.NewServer(ogenHandlers, nil)
+	ogenServer, err := housingapi.NewServer(ogenHandlers)
 	if err != nil {
 		logger.Fatalf("Failed to create ogen server: %v", err)
 	}
@@ -56,7 +56,7 @@ func (s *HTTPServer) Start(ctx context.Context) error {
 
 	errChan := make(chan error, 1)
 	go func() {
-			defer close(errChan)
+		defer close(errChan)
 		if err := s.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			errChan <- err
 		}
@@ -103,5 +103,3 @@ func corsMiddleware(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 	})
 }
-
-

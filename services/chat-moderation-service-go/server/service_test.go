@@ -17,15 +17,15 @@ func TestService_CheckMessage_WordFilter(t *testing.T) {
 
 	req := &api.CheckMessageRequest{
 		PlayerID: uuid.New(),
-		Message:  "This message contains badword",
+		Message:  api.NewOptString("This message contains badword"),
 	}
 
 	// Create test rule
 	rule := api.ModerationRule{
 		ID:       uuid.New(),
-		Name:     "Test Word Filter",
+		Name:     api.NewOptString("Test Word Filter"),
 		Type:     api.ModerationRuleTypeWordFilter,
-		Pattern:  "badword",
+		Pattern:  api.NewOptString("badword"),
 		Severity: api.ModerationRuleSeverityMedium,
 		Action:   api.ModerationRuleActionWarn,
 		Active:   true,
@@ -35,7 +35,7 @@ func TestService_CheckMessage_WordFilter(t *testing.T) {
 	// This is a simplified test - in real scenario we'd use a test DB
 
 	// For now, test the basic logic
-	violated, desc := service.checkWordFilter(req.Message, rule.Pattern)
+	violated, desc := service.checkWordFilter(req.Message.Value, rule.Pattern.Value)
 	if !violated {
 		t.Error("Expected word filter to trigger")
 	}
@@ -60,7 +60,7 @@ func TestService_CheckMessage_SpamDetection(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			playerID := uuid.New().String()
-			violated, desc := service.checkSpamDetection(context.Background(), playerID, tt.message, "spam")
+			violated, desc := service.checkSpamDetection(tt.message)
 			if violated != tt.expected {
 				t.Errorf("Expected violation=%v, got %v. Description: %s", tt.expected, violated, desc)
 			}
@@ -83,7 +83,7 @@ func TestService_CheckMessage_ToxicityAnalysis(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			violated, desc := service.checkToxicityAnalysis(tt.message, "toxic")
+			violated, desc := service.checkToxicityAnalysis(tt.message)
 			if violated != tt.expected {
 				t.Errorf("Expected violation=%v, got %v. Description: %s", tt.expected, violated, desc)
 			}

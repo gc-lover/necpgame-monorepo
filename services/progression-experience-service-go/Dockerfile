@@ -28,10 +28,10 @@ RUN chown -R appuser:appuser /app
 
 USER appuser
 
-EXPOSE 8083/tcp 9093
+EXPOSE 8135/tcp 9235
 
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:9093/metrics || exit 1
+  CMD wget -q --spider http://localhost:9235/metrics || exit 1
 
 ENTRYPOINT ["/app/progression-experience-service"]
 

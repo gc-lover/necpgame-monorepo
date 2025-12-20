@@ -5,9 +5,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gc-lover/necpgame-monorepo/services/reset-service-go/models"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/gc-lover/necpgame-monorepo/services/reset-service-go/models"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -470,4 +470,3 @@ func TestResetRepository_Update_EdgeCase_EmptyMetadata(t *testing.T) {
 
 	assert.NoError(t, err)
 }
-

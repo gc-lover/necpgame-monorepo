@@ -1,384 +1,384 @@
-          type: string
-      required:
-        - message_id
-        - routing_key
-        - body
+type: string
+required:
+  - message_id
+  - routing_key
+  - body
 
-    PublishMessageRequest:
+PublishMessageRequest:
+  type: object
+  properties:
+    exchange:
+      type: string
+      default: ""
+    routing_key:
+      type: string
+    body:
+      type: string
+      minLength: 1
+    content_type:
+      type: string
+      default: "application/json"
+    headers:
       type: object
-      properties:
-        exchange:
-          type: string
-          default: ""
-        routing_key:
-          type: string
-        body:
-          type: string
-          minLength: 1
-        content_type:
-          type: string
-          default: "application/json"
-        headers:
-          type: object
-          additionalProperties: true
-        delivery_mode:
-          type: integer
-          enum: [1, 2]
-          default: 2
-        priority:
-          type: integer
-          minimum: 0
-          maximum: 255
-          default: 0
-        expiration:
-          type: string
-        persistent:
-          type: boolean
-          default: true
-      required:
-        - routing_key
-        - body
+      additionalProperties: true
+    delivery_mode:
+      type: integer
+      enum: [ 1, 2 ]
+      default: 2
+    priority:
+      type: integer
+      minimum: 0
+      maximum: 255
+      default: 0
+    expiration:
+      type: string
+    persistent:
+      type: boolean
+      default: true
+  required:
+    - routing_key
+    - body
 
-    PublishMessageResponse:
-      type: object
-      properties:
-        message_id:
-          type: string
-          format: uuid
-        status:
-          type: string
-          enum: [published, queued, failed]
-        timestamp:
-          type: integer
-          format: int64
-      required:
-        - message_id
-        - status
-        - timestamp
+PublishMessageResponse:
+  type: object
+  properties:
+    message_id:
+      type: string
+      format: uuid
+    status:
+      type: string
+      enum: [ published, queued, failed ]
+    timestamp:
+      type: integer
+      format: int64
+  required:
+    - message_id
+    - status
+    - timestamp
 
-    ConsumeMessagesRequest:
-      type: object
-      properties:
-        queue_name:
-          type: string
-          minLength: 1
-          maxLength: 255
-        consumer_tag:
-          type: string
-        auto_ack:
-          type: boolean
-          default: false
-        max_messages:
-          type: integer
-          minimum: 1
-          maximum: 100
-          default: 10
-        timeout:
-          type: integer
-          minimum: 1
-          maximum: 30000
-          default: 5000
-          description: Timeout in milliseconds
-      required:
-        - queue_name
+ConsumeMessagesRequest:
+  type: object
+  properties:
+    queue_name:
+      type: string
+      minLength: 1
+      maxLength: 255
+    consumer_tag:
+      type: string
+    auto_ack:
+      type: boolean
+      default: false
+    max_messages:
+      type: integer
+      minimum: 1
+      maximum: 100
+      default: 10
+    timeout:
+      type: integer
+      minimum: 1
+      maximum: 30000
+      default: 5000
+      description: Timeout in milliseconds
+  required:
+    - queue_name
 
-    ConsumeMessagesResponse:
-      type: object
-      properties:
-        messages:
-          type: array
-          items:
-            $ref: '#/components/schemas/Message'
-        delivery_tag:
-          type: integer
-        redelivered:
-          type: boolean
-        exchange:
-          type: string
-        routing_key:
-          type: string
-        consumer_tag:
-          type: string
-      required:
-        - messages
+ConsumeMessagesResponse:
+  type: object
+  properties:
+    messages:
+      type: array
+      items:
+        $ref: '#/components/schemas/Message'
+    delivery_tag:
+      type: integer
+    redelivered:
+      type: boolean
+    exchange:
+      type: string
+    routing_key:
+      type: string
+    consumer_tag:
+      type: string
+  required:
+    - messages
 
-    # Exchange schemas
-    Exchange:
+# Exchange schemas
+Exchange:
+  type: object
+  properties:
+    name:
+      type: string
+    type:
+      type: string
+      enum: [ direct, topic, fanout, headers ]
+    durable:
+      type: boolean
+    auto_delete:
+      type: boolean
+    internal:
+      type: boolean
+    arguments:
       type: object
-      properties:
-        name:
-          type: string
-        type:
-          type: string
-          enum: [direct, topic, fanout, headers]
-        durable:
-          type: boolean
-        auto_delete:
-          type: boolean
-        internal:
-          type: boolean
-        arguments:
-          type: object
-          additionalProperties: true
-        bindings:
-          type: integer
-        created_at:
-          type: integer
-          format: int64
-      required:
-        - name
-        - type
-        - durable
+      additionalProperties: true
+    bindings:
+      type: integer
+    created_at:
+      type: integer
+      format: int64
+  required:
+    - name
+    - type
+    - durable
 
-    CreateExchangeRequest:
+CreateExchangeRequest:
+  type: object
+  properties:
+    name:
+      type: string
+      minLength: 1
+      maxLength: 255
+      pattern: '^[a-zA-Z0-9._-]+$'
+    type:
+      type: string
+      enum: [ direct, topic, fanout, headers ]
+      default: direct
+    durable:
+      type: boolean
+      default: true
+    auto_delete:
+      type: boolean
+      default: false
+    internal:
+      type: boolean
+      default: false
+    arguments:
       type: object
-      properties:
-        name:
-          type: string
-          minLength: 1
-          maxLength: 255
-          pattern: '^[a-zA-Z0-9._-]+$'
-        type:
-          type: string
-          enum: [direct, topic, fanout, headers]
-          default: direct
-        durable:
-          type: boolean
-          default: true
-        auto_delete:
-          type: boolean
-          default: false
-        internal:
-          type: boolean
-          default: false
-        arguments:
-          type: object
-          additionalProperties: true
-      required:
-        - name
-        - type
+      additionalProperties: true
+  required:
+    - name
+    - type
 
-    CreateExchangeResponse:
-      type: object
-      properties:
-        name:
-          type: string
-        type:
-          type: string
-        status:
-          type: string
-        created_at:
-          type: integer
-          format: int64
-      required:
-        - name
-        - type
-        - status
-        - created_at
+CreateExchangeResponse:
+  type: object
+  properties:
+    name:
+      type: string
+    type:
+      type: string
+    status:
+      type: string
+    created_at:
+      type: integer
+      format: int64
+  required:
+    - name
+    - type
+    - status
+    - created_at
 
-    ListExchangesResponse:
-      type: object
-      properties:
-        exchanges:
-          type: array
-          items:
-            $ref: '#/components/schemas/Exchange'
-        total_count:
-          type: integer
-      required:
-        - exchanges
-        - total_count
+ListExchangesResponse:
+  type: object
+  properties:
+    exchanges:
+      type: array
+      items:
+        $ref: '#/components/schemas/Exchange'
+    total_count:
+      type: integer
+  required:
+    - exchanges
+    - total_count
 
-    # Consumer schemas
-    Consumer:
-      type: object
-      properties:
-        consumer_tag:
-          type: string
-        queue_name:
-          type: string
-        channel:
-          type: string
-        ack_required:
-          type: boolean
-        prefetch_count:
-          type: integer
-        prefetch_size:
-          type: integer
-        status:
-          type: string
-          enum: [active, inactive, error]
-        messages_delivered:
-          type: integer
-        messages_acked:
-          type: integer
-        messages_nacked:
-          type: integer
-        connected_at:
-          type: integer
-          format: int64
-        last_activity:
-          type: integer
-          format: int64
-      required:
-        - consumer_tag
-        - queue_name
-        - status
+# Consumer schemas
+Consumer:
+  type: object
+  properties:
+    consumer_tag:
+      type: string
+    queue_name:
+      type: string
+    channel:
+      type: string
+    ack_required:
+      type: boolean
+    prefetch_count:
+      type: integer
+    prefetch_size:
+      type: integer
+    status:
+      type: string
+      enum: [ active, inactive, error ]
+    messages_delivered:
+      type: integer
+    messages_acked:
+      type: integer
+    messages_nacked:
+      type: integer
+    connected_at:
+      type: integer
+      format: int64
+    last_activity:
+      type: integer
+      format: int64
+  required:
+    - consumer_tag
+    - queue_name
+    - status
 
-    RegisterConsumerRequest:
+RegisterConsumerRequest:
+  type: object
+  properties:
+    queue_name:
+      type: string
+      minLength: 1
+      maxLength: 255
+    consumer_tag:
+      type: string
+    auto_ack:
+      type: boolean
+      default: false
+    exclusive:
+      type: boolean
+      default: false
+    no_local:
+      type: boolean
+      default: false
+    no_wait:
+      type: boolean
+      default: false
+    arguments:
       type: object
-      properties:
-        queue_name:
-          type: string
-          minLength: 1
-          maxLength: 255
-        consumer_tag:
-          type: string
-        auto_ack:
-          type: boolean
-          default: false
-        exclusive:
-          type: boolean
-          default: false
-        no_local:
-          type: boolean
-          default: false
-        no_wait:
-          type: boolean
-          default: false
-        arguments:
-          type: object
-          additionalProperties: true
-      required:
-        - queue_name
+      additionalProperties: true
+  required:
+    - queue_name
 
-    RegisterConsumerResponse:
-      type: object
-      properties:
-        consumer_tag:
-          type: string
-        queue_name:
-          type: string
-        status:
-          type: string
-        registered_at:
-          type: integer
-          format: int64
-      required:
-        - consumer_tag
-        - queue_name
-        - status
-        - registered_at
+RegisterConsumerResponse:
+  type: object
+  properties:
+    consumer_tag:
+      type: string
+    queue_name:
+      type: string
+    status:
+      type: string
+    registered_at:
+      type: integer
+      format: int64
+  required:
+    - consumer_tag
+    - queue_name
+    - status
+    - registered_at
 
-    ListConsumersResponse:
-      type: object
-      properties:
-        consumers:
-          type: array
-          items:
-            $ref: '#/components/schemas/Consumer'
-        total_count:
-          type: integer
-      required:
-        - consumers
-        - total_count
+ListConsumersResponse:
+  type: object
+  properties:
+    consumers:
+      type: array
+      items:
+        $ref: '#/components/schemas/Consumer'
+    total_count:
+      type: integer
+  required:
+    - consumers
+    - total_count
 
-    # Event schemas
-    PublishEventRequest:
+# Event schemas
+PublishEventRequest:
+  type: object
+  properties:
+    exchange:
+      type: string
+      minLength: 1
+      maxLength: 255
+    routing_key:
+      type: string
+    event_type:
+      type: string
+      minLength: 1
+      maxLength: 100
+    payload:
       type: object
-      properties:
-        exchange:
-          type: string
-          minLength: 1
-          maxLength: 255
-        routing_key:
-          type: string
-        event_type:
-          type: string
-          minLength: 1
-          maxLength: 100
-        payload:
-          type: object
-          additionalProperties: true
-        headers:
-          type: object
-          additionalProperties: true
-        priority:
-          type: integer
-          minimum: 0
-          maximum: 255
-          default: 0
-        persistent:
-          type: boolean
-          default: true
-      required:
-        - exchange
-        - routing_key
-        - event_type
-        - payload
+      additionalProperties: true
+    headers:
+      type: object
+      additionalProperties: true
+    priority:
+      type: integer
+      minimum: 0
+      maximum: 255
+      default: 0
+    persistent:
+      type: boolean
+      default: true
+  required:
+    - exchange
+    - routing_key
+    - event_type
+    - payload
 
-    PublishEventResponse:
-      type: object
-      properties:
-        event_id:
-          type: string
-          format: uuid
-        exchange:
-          type: string
-        routing_key:
-          type: string
-        status:
-          type: string
-          enum: [published, routed, failed]
-        published_at:
-          type: integer
-          format: int64
-      required:
-        - event_id
-        - exchange
-        - routing_key
-        - status
-        - published_at
+PublishEventResponse:
+  type: object
+  properties:
+    event_id:
+      type: string
+      format: uuid
+    exchange:
+      type: string
+    routing_key:
+      type: string
+    status:
+      type: string
+      enum: [ published, routed, failed ]
+    published_at:
+      type: integer
+      format: int64
+  required:
+    - event_id
+    - exchange
+    - routing_key
+    - status
+    - published_at
 
-    # Binding schemas
-    CreateBindingRequest:
+# Binding schemas
+CreateBindingRequest:
+  type: object
+  properties:
+    exchange:
+      type: string
+      minLength: 1
+      maxLength: 255
+    queue:
+      type: string
+      minLength: 1
+      maxLength: 255
+    routing_key:
+      type: string
+      default: ""
+    arguments:
       type: object
-      properties:
-        exchange:
-          type: string
-          minLength: 1
-          maxLength: 255
-        queue:
-          type: string
-          minLength: 1
-          maxLength: 255
-        routing_key:
-          type: string
-          default: ""
-        arguments:
-          type: object
-          additionalProperties: true
-      required:
-        - exchange
-        - queue
+      additionalProperties: true
+  required:
+    - exchange
+    - queue
 
-    CreateBindingResponse:
-      type: object
-      properties:
-        exchange:
-          type: string
-        queue:
-          type: string
-        routing_key:
-          type: string
-        status:
-          type: string
-        created_at:
-          type: integer
-          format: int64
-      required:
-        - exchange
-        - queue
-        - routing_key
-        - status
-        - created_at
+CreateBindingResponse:
+  type: object
+  properties:
+    exchange:
+      type: string
+    queue:
+      type: string
+    routing_key:
+      type: string
+    status:
+      type: string
+    created_at:
+      type: integer
+      format: int64
+  required:
+    - exchange
+    - queue
+    - routing_key
+    - status
+    - created_at

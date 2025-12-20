@@ -35,4 +35,3 @@ func TestStockEventsServiceNoLeaks(t *testing.T) {
 
 	// If goroutines leaked from stock events handlers, test FAILS
 }
-

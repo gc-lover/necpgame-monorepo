@@ -1,4 +1,4 @@
-// Issue: #1595
+// Package server Issue: #1595
 package server
 
 import (
@@ -11,8 +11,3 @@ func init() {
 	defaultLogger = logrus.New()
 	defaultLogger.SetFormatter(&logrus.JSONFormatter{})
 }
-
-func GetLogger() *logrus.Logger {
-	return defaultLogger
-}
-

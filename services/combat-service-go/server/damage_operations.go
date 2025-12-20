@@ -3,6 +3,7 @@ package server
 import (
 	"encoding/json"
 	"net/http"
+	"time"
 )
 
 // CalculateDamage calculates damage for attacks
@@ -57,7 +58,7 @@ func (s *CombatService) CalculateDamage(w http.ResponseWriter, r *http.Request) 
 }
 
 // calculateDamage helper method for damage calculation
-func (s *CombatService) calculateDamage(attackerID, defenderID string) DamageResult {
+func (s *CombatService) calculateDamage() DamageResult {
 	// Simplified damage calculation
 	baseDamage := 25
 	isCritical := false
@@ -69,11 +70,11 @@ func (s *CombatService) calculateDamage(attackerID, defenderID string) DamageRes
 	}
 
 	return DamageResult{
-		TotalDamage:       baseDamage,
-		DamageType:        "PHYSICAL",
-		CriticalHit:       isCritical,
-		Blocked:           false,
-		Mitigated:         5,
+		TotalDamage:        baseDamage,
+		DamageType:         "PHYSICAL",
+		CriticalHit:        isCritical,
+		Blocked:            false,
+		Mitigated:          5,
 		CriticalMultiplier: 2.0,
 	}
 }

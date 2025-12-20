@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/gc-lover/necpgame-monorepo/services/reset-service-go/models"
+	"github.com/google/uuid"
 )
 
 type mockResetService struct {
@@ -21,18 +21,18 @@ type mockResetService struct {
 	getHistoryErr error
 }
 
-func (m *mockResetService) TriggerReset(ctx context.Context, resetType models.ResetType) error {
+func (m *mockResetService) TriggerReset(_ context.Context, _ models.ResetType) error {
 	return m.triggerErr
 }
 
-func (m *mockResetService) GetResetStats(ctx context.Context) (*models.ResetStats, error) {
+func (m *mockResetService) GetResetStats(_ context.Context) (*models.ResetStats, error) {
 	if m.getStatsErr != nil {
 		return nil, m.getStatsErr
 	}
 	return m.stats, nil
 }
 
-func (m *mockResetService) GetResetHistory(ctx context.Context, resetType *models.ResetType, limit, offset int) (*models.ResetListResponse, error) {
+func (m *mockResetService) GetResetHistory(_ context.Context, _ *models.ResetType, _, _ int) (*models.ResetListResponse, error) {
 	if m.getHistoryErr != nil {
 		return nil, m.getHistoryErr
 	}
@@ -75,17 +75,17 @@ func TestHTTPServer_GetResetHistory(t *testing.T) {
 		history: &models.ResetListResponse{
 			Resets: []models.ResetRecord{
 				{
-					ID:        uuid.New(),
-					Type:      models.ResetTypeDaily,
-					Status:    models.ResetStatusCompleted,
-					StartedAt: time.Now().Add(-24 * time.Hour),
+					ID:          uuid.New(),
+					Type:        models.ResetTypeDaily,
+					Status:      models.ResetStatusCompleted,
+					StartedAt:   time.Now().Add(-24 * time.Hour),
 					CompletedAt: timePtr(time.Now().Add(-23 * time.Hour)),
 				},
 				{
-					ID:        uuid.New(),
-					Type:      models.ResetTypeWeekly,
-					Status:    models.ResetStatusCompleted,
-					StartedAt: time.Now().Add(-7 * 24 * time.Hour),
+					ID:          uuid.New(),
+					Type:        models.ResetTypeWeekly,
+					Status:      models.ResetStatusCompleted,
+					StartedAt:   time.Now().Add(-7 * 24 * time.Hour),
 					CompletedAt: timePtr(time.Now().Add(-6 * 24 * time.Hour)),
 				},
 			},
@@ -119,10 +119,10 @@ func TestHTTPServer_GetResetHistoryWithFilter(t *testing.T) {
 		history: &models.ResetListResponse{
 			Resets: []models.ResetRecord{
 				{
-					ID:        uuid.New(),
-					Type:      models.ResetTypeDaily,
-					Status:    models.ResetStatusCompleted,
-					StartedAt: time.Now().Add(-24 * time.Hour),
+					ID:          uuid.New(),
+					Type:        models.ResetTypeDaily,
+					Status:      models.ResetStatusCompleted,
+					StartedAt:   time.Now().Add(-24 * time.Hour),
 					CompletedAt: timePtr(time.Now().Add(-23 * time.Hour)),
 				},
 			},
@@ -241,4 +241,3 @@ func TestHTTPServer_HealthCheck(t *testing.T) {
 func timePtr(t time.Time) *time.Time {
 	return &t
 }
-

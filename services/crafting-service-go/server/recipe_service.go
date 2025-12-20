@@ -1,4 +1,4 @@
-// Issue: #2203 - Recipe service implementation
+// Package server Issue: #2203 - Recipe service implementation
 package server
 
 import (
@@ -42,7 +42,7 @@ func (s *RecipeService) GetRecipe(ctx context.Context, recipeID uuid.UUID) (*Rec
 	}
 
 	// PERFORMANCE: Cache result
-	s.cacheRecipe(ctx, cacheKey, recipe, 10*time.Minute)
+	s.cacheRecipe()
 
 	return recipe, nil
 }
@@ -186,7 +186,7 @@ func (s *RecipeService) getCachedRecipe(ctx context.Context, key string) (*Recip
 	return nil, fmt.Errorf("cache not implemented")
 }
 
-func (s *RecipeService) cacheRecipe(ctx context.Context, key string, recipe *Recipe, ttl time.Duration) {
+func (s *RecipeService) cacheRecipe() {
 	// TODO: Implement JSON marshaling and caching
 	// s.redis.Set(ctx, key, jsonData, ttl)
 }

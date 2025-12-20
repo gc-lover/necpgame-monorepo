@@ -1,4 +1,4 @@
-// Issue: #227
+// Package server Issue: #227
 package server
 
 import (
@@ -49,39 +49,3 @@ func CORSMiddleware(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 	})
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

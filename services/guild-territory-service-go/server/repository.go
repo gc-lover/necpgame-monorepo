@@ -1,4 +1,4 @@
-// Issue: #1856
+// Package server Package server Issue: #1856
 package server
 
 import (
@@ -257,7 +257,7 @@ func (r *Repository) GetGuildTerritories(ctx context.Context, guildID uuid.UUID)
 }
 
 // CalculateTerritoryBonuses calculates bonuses for a territory
-func (r *Repository) CalculateTerritoryBonuses(ctx context.Context, territoryID uuid.UUID) (map[string]interface{}, error) {
+func (r *Repository) CalculateTerritoryBonuses() (map[string]interface{}, error) {
 	// This would calculate bonuses based on territory type and ownership duration
 	// For now, return mock bonuses
 	bonuses := map[string]interface{}{

@@ -4,9 +4,9 @@ import (
 	"context"
 	"time"
 
+	"github.com/gc-lover/necpgame-monorepo/services/feedback-service-go/models"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/gc-lover/necpgame-monorepo/services/feedback-service-go/models"
 	"github.com/sirupsen/logrus"
 )
 
@@ -22,19 +22,19 @@ type FeedbackServiceInterface interface {
 }
 
 type FeedbackService struct {
-	repo        *FeedbackRepository
+	repo         *FeedbackRepository
 	githubClient *GitHubClient
-	logger      *logrus.Logger
+	logger       *logrus.Logger
 }
 
 func NewFeedbackService(db *pgxpool.Pool, githubToken string) (*FeedbackService, error) {
 	repo := NewFeedbackRepository(db)
 	githubClient := NewGitHubClient(githubToken, GetLogger())
-	
+
 	return &FeedbackService{
-		repo:        repo,
+		repo:         repo,
 		githubClient: githubClient,
-		logger:      GetLogger(),
+		logger:       GetLogger(),
 	}, nil
 }
 
@@ -174,29 +174,3 @@ func (s *FeedbackService) Unvote(ctx context.Context, feedbackID, playerID uuid.
 func (s *FeedbackService) GetStats(ctx context.Context) (*models.FeedbackStats, error) {
 	return s.repo.GetStats(ctx)
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

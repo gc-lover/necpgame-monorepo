@@ -13,19 +13,19 @@ import (
 // mockParagonService implements ParagonServiceInterface
 type mockParagonService struct{}
 
-func (m *mockParagonService) GetParagonLevels(ctx context.Context, characterID uuid.UUID) (*ParagonLevels, error) {
+func (m *mockParagonService) GetParagonLevels(_ context.Context, _ uuid.UUID) (*ParagonLevels, error) {
 	return &ParagonLevels{}, nil
 }
 
-func (m *mockParagonService) DistributeParagonPoints(ctx context.Context, characterID uuid.UUID, allocations []ParagonAllocation) (*ParagonLevels, error) {
+func (m *mockParagonService) DistributeParagonPoints(_ context.Context, _ uuid.UUID, _ []ParagonAllocation) (*ParagonLevels, error) {
 	return &ParagonLevels{}, nil
 }
 
-func (m *mockParagonService) GetParagonStats(ctx context.Context, characterID uuid.UUID) (*ParagonStats, error) {
+func (m *mockParagonService) GetParagonStats(_ context.Context, _ uuid.UUID) (*ParagonStats, error) {
 	return &ParagonStats{}, nil
 }
 
-func (m *mockParagonService) AddParagonExperience(ctx context.Context, characterID uuid.UUID, amount int64) error {
+func (m *mockParagonService) AddParagonExperience(_ context.Context, _ uuid.UUID, _ int64) error {
 	return nil
 }
 

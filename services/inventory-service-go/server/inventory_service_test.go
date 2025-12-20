@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/gc-lover/necpgame-monorepo/services/inventory-service-go/models"
+	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -75,7 +75,7 @@ func setupTestService() (*InventoryService, *mockInventoryRepository, *redis.Cli
 	redisClient := redis.NewClient(&redis.Options{
 		Addr:         "localhost:6379",
 		DB:           1,
-		DialTimeout:  1 * time.Second,  // Fast timeout for tests
+		DialTimeout:  1 * time.Second, // Fast timeout for tests
 		ReadTimeout:  1 * time.Second,
 		WriteTimeout: 1 * time.Second,
 		PoolTimeout:  1 * time.Second,
@@ -86,11 +86,11 @@ func setupTestService() (*InventoryService, *mockInventoryRepository, *redis.Cli
 	loadShedder := NewLoadShedder(1000) // Max 1000 concurrent requests
 
 	service := &InventoryService{
-		repo:           mockRepo,
-		cache:          redisClient,
-		logger:         GetLogger(),
+		repo:             mockRepo,
+		cache:            redisClient,
+		logger:           GetLogger(),
 		dbCircuitBreaker: dbCB,
-		loadShedder:    loadShedder,
+		loadShedder:      loadShedder,
 	}
 
 	return service, mockRepo, redisClient
@@ -115,7 +115,7 @@ func TestInventoryService_GetInventory_Success(t *testing.T) {
 		UpdatedAt:   time.Now(),
 	}
 
-	items := []models.InventoryItem{}
+	var items []models.InventoryItem
 
 	mockRepo.On("GetInventoryByCharacterID", ctx, characterID).Return(inv, nil)
 	mockRepo.On("GetInventoryItems", ctx, inventoryID).Return(items, nil)
@@ -148,7 +148,7 @@ func TestInventoryService_GetInventory_CreateNew(t *testing.T) {
 		UpdatedAt:   time.Now(),
 	}
 
-	items := []models.InventoryItem{}
+	var items []models.InventoryItem
 
 	mockRepo.On("GetInventoryByCharacterID", ctx, characterID).Return(nil, nil)
 	mockRepo.On("CreateInventory", ctx, characterID, 50, 100.0).Return(newInv, nil)
@@ -181,7 +181,7 @@ func TestInventoryService_GetInventory_Cache(t *testing.T) {
 		UpdatedAt:   time.Now(),
 	}
 
-	items := []models.InventoryItem{}
+	var items []models.InventoryItem
 	response := &models.InventoryResponse{
 		Inventory: *inv,
 		Items:     items,
@@ -225,16 +225,16 @@ func TestInventoryService_AddItem_Success(t *testing.T) {
 	}
 
 	template := &models.ItemTemplate{
-		ID:          "item_001",
-		Name:        "Test Item",
-		Type:        "weapon",
-		Rarity:      "common",
+		ID:           "item_001",
+		Name:         "Test Item",
+		Type:         "weapon",
+		Rarity:       "common",
 		MaxStackSize: 10,
-		Weight:      1.0,
-		CanEquip:    false,
+		Weight:       1.0,
+		CanEquip:     false,
 	}
 
-	items := []models.InventoryItem{}
+	var items []models.InventoryItem
 
 	req := &models.AddItemRequest{
 		ItemID:     "item_001",
@@ -273,13 +273,13 @@ func TestInventoryService_AddItem_InventoryFull(t *testing.T) {
 	}
 
 	template := &models.ItemTemplate{
-		ID:          "item_001",
-		Name:        "Test Item",
-		Type:        "weapon",
-		Rarity:      "common",
+		ID:           "item_001",
+		Name:         "Test Item",
+		Type:         "weapon",
+		Rarity:       "common",
 		MaxStackSize: 10,
-		Weight:      1.0,
-		CanEquip:    false,
+		Weight:       1.0,
+		CanEquip:     false,
 	}
 
 	req := &models.AddItemRequest{
@@ -351,13 +351,13 @@ func TestInventoryService_AddItem_StackExisting(t *testing.T) {
 	}
 
 	template := &models.ItemTemplate{
-		ID:          "item_001",
-		Name:        "Test Item",
-		Type:        "consumable",
-		Rarity:      "common",
+		ID:           "item_001",
+		Name:         "Test Item",
+		Type:         "consumable",
+		Rarity:       "common",
 		MaxStackSize: 10,
-		Weight:      1.0,
-		CanEquip:    false,
+		Weight:       1.0,
+		CanEquip:     false,
 	}
 
 	existingItem := models.InventoryItem{
@@ -426,13 +426,13 @@ func TestInventoryService_RemoveItem_Success(t *testing.T) {
 	items := []models.InventoryItem{item}
 
 	template := &models.ItemTemplate{
-		ID:          "item_001",
-		Name:        "Test Item",
-		Type:        "weapon",
-		Rarity:      "common",
+		ID:           "item_001",
+		Name:         "Test Item",
+		Type:         "weapon",
+		Rarity:       "common",
 		MaxStackSize: 10,
-		Weight:      1.0,
-		CanEquip:    false,
+		Weight:       1.0,
+		CanEquip:     false,
 	}
 
 	mockRepo.On("GetInventoryByCharacterID", ctx, characterID).Return(inv, nil)
@@ -484,7 +484,7 @@ func TestInventoryService_RemoveItem_ItemNotFound(t *testing.T) {
 		UpdatedAt:   time.Now(),
 	}
 
-	items := []models.InventoryItem{}
+	var items []models.InventoryItem
 
 	mockRepo.On("GetInventoryByCharacterID", ctx, characterID).Return(inv, nil)
 	mockRepo.On("GetInventoryItems", ctx, inventoryID).Return(items, nil)
@@ -531,14 +531,14 @@ func TestInventoryService_EquipItem_Success(t *testing.T) {
 	items := []models.InventoryItem{item}
 
 	template := &models.ItemTemplate{
-		ID:          "item_001",
-		Name:        "Test Weapon",
-		Type:        "weapon",
-		Rarity:      "common",
+		ID:           "item_001",
+		Name:         "Test Weapon",
+		Type:         "weapon",
+		Rarity:       "common",
 		MaxStackSize: 1,
-		Weight:      1.0,
-		CanEquip:    true,
-		EquipSlot:   "weapon",
+		Weight:       1.0,
+		CanEquip:     true,
+		EquipSlot:    "weapon",
 	}
 
 	req := &models.EquipItemRequest{
@@ -597,7 +597,7 @@ func TestInventoryService_EquipItem_ItemNotFound(t *testing.T) {
 		UpdatedAt:   time.Now(),
 	}
 
-	items := []models.InventoryItem{}
+	var items []models.InventoryItem
 
 	req := &models.EquipItemRequest{
 		ItemID:    "item_001",
@@ -649,13 +649,13 @@ func TestInventoryService_EquipItem_CannotEquip(t *testing.T) {
 	items := []models.InventoryItem{item}
 
 	template := &models.ItemTemplate{
-		ID:          "item_001",
-		Name:        "Test Item",
-		Type:        "consumable",
-		Rarity:      "common",
+		ID:           "item_001",
+		Name:         "Test Item",
+		Type:         "consumable",
+		Rarity:       "common",
 		MaxStackSize: 10,
-		Weight:      1.0,
-		CanEquip:    false,
+		Weight:       1.0,
+		CanEquip:     false,
 	}
 
 	req := &models.EquipItemRequest{
@@ -756,7 +756,7 @@ func TestInventoryService_UnequipItem_ItemNotFound(t *testing.T) {
 		UpdatedAt:   time.Now(),
 	}
 
-	items := []models.InventoryItem{}
+	var items []models.InventoryItem
 
 	mockRepo.On("GetInventoryByCharacterID", ctx, characterID).Return(inv, nil)
 	mockRepo.On("GetInventoryItems", ctx, inventoryID).Return(items, nil)
@@ -802,7 +802,7 @@ func TestInventoryService_GetInventory_RepositoryError(t *testing.T) {
 	// Service may return graceful degradation (empty inventory) instead of error
 	// due to circuit breaker fallback, so we check that repo was called
 	mockRepo.AssertExpectations(t)
-	
+
 	// If error occurred, response should be nil or empty
 	if err != nil {
 		assert.Nil(t, response)
@@ -828,5 +828,3 @@ func TestInventoryService_AddItem_RepositoryError(t *testing.T) {
 	assert.Error(t, err)
 	mockRepo.AssertExpectations(t)
 }
-
-

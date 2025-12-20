@@ -1,4 +1,4 @@
-// Issue: ogen migration
+// Package server Issue: ogen migration
 package server
 
 // HTTP handlers use context.WithTimeout for request timeouts (see handlers.go)
@@ -105,7 +105,7 @@ func (s *HTTPServer) Stop(ctx context.Context) error {
 	return s.server.Shutdown(ctx)
 }
 
-func healthCheck(w http.ResponseWriter, r *http.Request) {
+func healthCheck(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(`{"status":"healthy"}`))
@@ -166,16 +166,6 @@ func corsMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-type statusRecorder struct {
-	http.ResponseWriter
-	statusCode int
-}
-
-func (sr *statusRecorder) WriteHeader(code int) {
-	sr.statusCode = code
-	sr.ResponseWriter.WriteHeader(code)
-}
-
 func requestIDMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		reqID := r.Header.Get("X-Request-ID")
@@ -187,6 +177,3 @@ func requestIDMiddleware(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
-
-
-

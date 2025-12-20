@@ -1,4 +1,4 @@
-// Issue: #2203 - Order repository implementation
+// Package server Issue: #2203 - Order repository implementation
 package server
 
 import (
@@ -55,7 +55,7 @@ func (r *OrderRepository) List(ctx context.Context, playerID *uuid.UUID, status 
 		FROM crafting_orders
 		WHERE 1=1
 	`
-	args := []interface{}{}
+	var args []interface{}
 
 	if playerID != nil {
 		baseQuery += fmt.Sprintf(" AND player_id = $%d", len(args)+1)
@@ -93,7 +93,7 @@ func (r *OrderRepository) List(ctx context.Context, playerID *uuid.UUID, status 
 
 	// Get total count
 	countQuery := "SELECT COUNT(*) FROM crafting_orders WHERE 1=1"
-	countArgs := []interface{}{}
+	var countArgs []interface{}
 
 	if playerID != nil {
 		countQuery += " AND player_id = $1"

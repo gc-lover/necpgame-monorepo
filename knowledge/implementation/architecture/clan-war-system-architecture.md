@@ -19,7 +19,7 @@ This document defines the complete technical architecture for the clan war syste
 
 ### Core Microservices
 
-```
+```text
 ┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
 │   Clan War      │    │   Guild          │    │   Territory     │
 │   Service       │◄──►│   Service        │◄──►│   Service       │
@@ -357,7 +357,7 @@ CREATE TABLE war_battles_202512 PARTITION OF war_battles
 
 ### War Management API
 
-```
+```text
 POST   /api/v1/clan-wars              # Declare war
 GET    /api/v1/clan-wars/{id}         # Get war details
 PUT    /api/v1/clan-wars/{id}         # Update war settings
@@ -370,7 +370,7 @@ POST   /api/v1/clan-wars/{id}/end      # Force end war
 
 ### Battle Management API
 
-```
+```text
 POST   /api/v1/clan-wars/{warId}/battles # Create battle
 GET    /api/v1/clan-wars/{warId}/battles # List battles
 GET    /api/v1/clan-wars/{warId}/battles/{id} # Get battle details
@@ -382,7 +382,7 @@ POST   /api/v1/battles/{id}/score      # Report score event
 
 ### Territory Management API
 
-```
+```text
 GET    /api/v1/territories             # List territories
 GET    /api/v1/territories/{id}        # Get territory details
 PUT    /api/v1/territories/{id}/owner  # Transfer ownership
@@ -394,7 +394,7 @@ DELETE /api/v1/territories/{id}/improvements/{impId} # Remove improvement
 
 ### Statistics and Leaderboards API
 
-```
+```text
 GET    /api/v1/clan-wars/{id}/stats    # War statistics
 GET    /api/v1/clan-wars/{id}/leaderboard # Participant rankings
 GET    /api/v1/territories/{id}/history # Territory ownership history
@@ -492,7 +492,7 @@ subscriber.on('message', (channel, message) => {
 
 ### Alerting Rules
 
-```
+```yaml
 ALERT ClanWarHighLoad
   IF clan_war_active_count > 50 FOR 5m
   LABELS { severity = "warning" }

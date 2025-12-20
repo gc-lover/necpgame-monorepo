@@ -15,7 +15,7 @@ type benchmarkRepository struct {
 }
 
 // Override methods to avoid database calls in benchmarks
-func (r *benchmarkRepository) GetQueueEntry(ctx context.Context, playerID uuid.UUID) (*QueueEntry, error) {
+func (r *benchmarkRepository) GetQueueEntry(playerID uuid.UUID) (*QueueEntry, error) {
 	return &QueueEntry{
 		ID:           uuid.New(),
 		PlayerID:     playerID,
@@ -25,7 +25,7 @@ func (r *benchmarkRepository) GetQueueEntry(ctx context.Context, playerID uuid.U
 	}, nil
 }
 
-func (r *benchmarkRepository) GetPlayerRating(ctx context.Context, playerID uuid.UUID, activityType string) (*PlayerRating, error) {
+func (r *benchmarkRepository) GetPlayerRating(playerID uuid.UUID, activityType string) (*PlayerRating, error) {
 	return &PlayerRating{
 		PlayerID:      playerID,
 		ActivityType:  activityType,
@@ -38,12 +38,12 @@ func (r *benchmarkRepository) GetPlayerRating(ctx context.Context, playerID uuid
 	}, nil
 }
 
-func (r *benchmarkRepository) GetLeaderboard(ctx context.Context, activityType string, limit int) ([]LeaderboardEntry, error) {
+func (r *benchmarkRepository) GetLeaderboard() ([]LeaderboardEntry, error) {
 	return []LeaderboardEntry{}, nil
 }
 
 // setupBenchmarkService creates a service with minimal repository for benchmarking
-func setupBenchmarkService(b *testing.B) (*Service, func()) {
+func setupBenchmarkService() (*Service, func()) {
 	// Create a repository with nil db to avoid database connections
 	repo := &Repository{
 		db: nil, // Avoid database operations in benchmarks
@@ -70,7 +70,7 @@ func setupBenchmarkService(b *testing.B) (*Service, func()) {
 // BenchmarkEnterQueue benchmarks EnterQueue handler
 // Target: <100μs per operation, minimal allocs
 func BenchmarkEnterQueue(b *testing.B) {
-	service, cleanup := setupBenchmarkService(b)
+	service, cleanup := setupBenchmarkService()
 	defer cleanup()
 	handlers := NewHandlers(service)
 

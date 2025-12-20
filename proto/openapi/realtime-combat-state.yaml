@@ -1,0 +1,816 @@
+# Issue: #2197 - Real-time Combat API - State Synchronization
+openapi: 3.0.3
+info:
+  title: Real-time Combat API - State Synchronization
+  version: 1.0.0
+  description: State synchronization management for real-time combat system
+
+servers:
+  - url: http://localhost:8110
+    description: Local development
+  - url: https://api.necpgame.com/v1/realtime/combat
+    description: Production API
+
+tags:
+  - name: state
+    description: Real-time state synchronization
+
+security:
+  - BearerAuth: [ ]
+
+paths:
+
+  # ============================================================================
+  # STATE SYNCHRONIZATION
+  # ============================================================================
+
+  /api/v1/realtime/combat/state/{session_id}/sync:
+    post:
+      summary: Request state synchronization
+      operationId: requestStateSync
+      tags: [ state ]
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Combat session ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StateSyncRequest'
+      responses:
+        '200':
+          description: State synchronization initiated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StateSyncResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/realtime/combat/state/{session_id}/snapshot:
+    get:
+      summary: Get current state snapshot
+      operationId: getStateSnapshot
+      tags: [ state ]
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Combat session ID
+        - name: include_history
+          in: query
+          schema:
+            type: boolean
+            default: false
+          description: Include recent state history
+        - name: max_history_entries
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+          description: Maximum history entries to include
+      responses:
+        '200':
+          description: Current state snapshot
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StateSnapshot'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    NotFound:
+      description: Not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+  schemas:
+    # ============================================================================
+    # STATE SYNCHRONIZATION SCHEMAS
+    # ============================================================================
+
+    StateSyncRequest:
+      type: object
+      required:
+        - player_id
+        - client_state_version
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          description: Player requesting synchronization
+        client_state_version:
+          type: integer
+          minimum: 0
+          description: Client's current state version
+        requested_components:
+          type: array
+          items:
+            type: string
+            enum: [ player_states, combat_entities, environment, ai_states, items, effects ]
+          description: Specific state components to sync
+        priority:
+          type: string
+          enum: [ low, normal, high, urgent ]
+          default: normal
+          description: Synchronization priority
+        compression:
+          type: boolean
+          default: true
+          description: Enable response compression
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Additional sync metadata
+
+    StateSyncResponse:
+      type: object
+      required:
+        - sync_id
+        - session_id
+        - server_state_version
+        - status
+        - initiated_at
+      properties:
+        sync_id:
+          type: string
+          format: uuid
+          description: Unique synchronization identifier
+        session_id:
+          type: string
+          format: uuid
+          description: Combat session identifier
+        server_state_version:
+          type: integer
+          minimum: 0
+          description: Current server state version
+        status:
+          type: string
+          enum: [ initiated, in_progress, completed, failed ]
+          description: Synchronization status
+        initiated_at:
+          type: string
+          format: date-time
+          description: Sync initiation timestamp
+        estimated_completion:
+          type: string
+          format: date-time
+          description: Estimated completion time
+        components_included:
+          type: array
+          items:
+            type: string
+            enum: [ player_states, combat_entities, environment, ai_states, items, effects ]
+          description: State components included in sync
+        data_size:
+          type: integer
+          minimum: 0
+          description: Size of sync data in bytes
+        checksum:
+          type: string
+          description: Data integrity checksum
+        next_sync_recommended:
+          type: string
+          format: date-time
+          description: Recommended time for next sync
+
+    StateSnapshot:
+      type: object
+      required:
+        - session_id
+        - state_version
+        - timestamp
+        - players
+        - entities
+      properties:
+        session_id:
+          type: string
+          format: uuid
+          description: Combat session identifier
+        state_version:
+          type: integer
+          minimum: 0
+          description: State version number
+        timestamp:
+          type: string
+          format: date-time
+          description: Snapshot creation timestamp
+        players:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlayerState'
+          description: Current player states
+        entities:
+          type: array
+          items:
+            $ref: '#/components/schemas/CombatEntityState'
+          description: Current combat entity states
+        environment:
+          $ref: '#/components/schemas/EnvironmentState'
+        ai_states:
+          type: array
+          items:
+            $ref: '#/components/schemas/AIState'
+          description: AI entity states
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ItemState'
+          description: Item states in the session
+        effects:
+          type: array
+          items:
+            $ref: '#/components/schemas/EffectState'
+          description: Active effects
+        history:
+          type: array
+          items:
+            $ref: '#/components/schemas/StateChange'
+          description: Recent state changes (if requested)
+        metadata:
+          type: object
+          properties:
+            server_load:
+              type: number
+              format: float
+              minimum: 0
+              maximum: 1
+              description: Server load factor
+            active_connections:
+              type: integer
+              minimum: 0
+              description: Number of active connections
+            last_full_sync:
+              type: string
+              format: date-time
+              description: Last full synchronization timestamp
+          description: Session metadata
+
+    PlayerState:
+      type: object
+      required:
+        - player_id
+        - position
+        - health
+        - status
+        - last_update
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          description: Player identifier
+        position:
+          $ref: '#/components/schemas/Vector3'
+        rotation:
+          $ref: '#/components/schemas/Vector3'
+        velocity:
+          $ref: '#/components/schemas/Vector3'
+        health:
+          $ref: '#/components/schemas/HealthState'
+        status:
+          type: string
+          enum: [ alive, dead, incapacitated, spectating ]
+          description: Player status
+        equipment:
+          type: array
+          items:
+            $ref: '#/components/schemas/EquipmentItem'
+          description: Currently equipped items
+        active_abilities:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: IDs of currently active abilities
+        buffs:
+          type: array
+          items:
+            $ref: '#/components/schemas/StatusEffect'
+          description: Active buffs/debuffs
+        last_update:
+          type: string
+          format: date-time
+          description: Last state update timestamp
+        input_state:
+          type: object
+          properties:
+            movement_keys:
+              type: array
+              items:
+                type: string
+                enum: [ w, a, s, d, space, shift ]
+              description: Currently pressed movement keys
+            mouse_position:
+              $ref: '#/components/schemas/Vector2'
+            actions:
+              type: array
+              items:
+                type: string
+                enum: [ attack, defend, ability1, ability2, ability3, ultimate ]
+              description: Currently active actions
+          description: Current input state
+
+    CombatEntityState:
+      type: object
+      required:
+        - entity_id
+        - entity_type
+        - position
+        - health
+        - status
+        - last_update
+      properties:
+        entity_id:
+          type: string
+          format: uuid
+          description: Entity identifier
+        entity_type:
+          type: string
+          enum: [ enemy, npc, projectile, trap, environmental ]
+          description: Type of combat entity
+        position:
+          $ref: '#/components/schemas/Vector3'
+        rotation:
+          $ref: '#/components/schemas/Vector3'
+        velocity:
+          $ref: '#/components/schemas/Vector3'
+        health:
+          $ref: '#/components/schemas/HealthState'
+        status:
+          type: string
+          enum: [ active, inactive, destroyed, spawning ]
+          description: Entity status
+        ai_state:
+          type: string
+          enum: [ idle, patrolling, chasing, attacking, fleeing, stunned ]
+          description: AI behavior state
+        target_id:
+          type: string
+          format: uuid
+          description: Current target entity ID
+        last_update:
+          type: string
+          format: date-time
+          description: Last state update timestamp
+
+    EnvironmentState:
+      type: object
+      properties:
+        time_of_day:
+          type: string
+          format: date-time
+          description: Current game time
+        weather:
+          type: string
+          enum: [ clear, rainy, stormy, foggy, snowy ]
+          description: Current weather conditions
+        lighting:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Lighting level (0=dark, 1=bright)
+        active_zones:
+          type: array
+          items:
+            $ref: '#/components/schemas/ZoneState'
+          description: Active environmental zones
+        destructible_objects:
+          type: array
+          items:
+            $ref: '#/components/schemas/DestructibleObjectState'
+          description: States of destructible environment objects
+
+    AIState:
+      type: object
+      required:
+        - ai_id
+        - behavior_tree_state
+        - last_update
+      properties:
+        ai_id:
+          type: string
+          format: uuid
+          description: AI entity identifier
+        behavior_tree_state:
+          type: object
+          additionalProperties: true
+          description: Current state of AI behavior tree
+        decision_context:
+          type: object
+          properties:
+            threat_level:
+              type: number
+              format: float
+              minimum: 0
+              maximum: 1
+              description: Perceived threat level
+            confidence:
+              type: number
+              format: float
+              minimum: 0
+              maximum: 1
+              description: AI decision confidence
+            last_target_seen:
+              type: string
+              format: date-time
+              description: When target was last seen
+          description: Context for AI decision making
+        pathfinding_state:
+          type: object
+          properties:
+            current_path:
+              type: array
+              items:
+                $ref: '#/components/schemas/Vector3'
+              description: Current navigation path
+            path_progress:
+              type: number
+              format: float
+              minimum: 0
+              maximum: 1
+              description: Progress along current path
+            stuck_timer:
+              type: number
+              format: float
+              minimum: 0
+              description: Time spent stuck (seconds)
+          description: Pathfinding state
+        last_update:
+          type: string
+          format: date-time
+          description: Last AI state update
+
+    ItemState:
+      type: object
+      required:
+        - item_id
+        - item_type
+        - position
+        - status
+      properties:
+        item_id:
+          type: string
+          format: uuid
+          description: Item identifier
+        item_type:
+          type: string
+          enum: [ weapon, armor, consumable, currency, quest_item ]
+          description: Type of item
+        position:
+          $ref: '#/components/schemas/Vector3'
+        rotation:
+          $ref: '#/components/schemas/Vector3'
+        status:
+          type: string
+          enum: [ available, picked_up, destroyed, respawning ]
+          description: Item availability status
+        owner_id:
+          type: string
+          format: uuid
+          description: Current owner player ID (if picked up)
+        respawn_timer:
+          type: integer
+          minimum: 0
+          description: Time until respawn (seconds)
+
+    EffectState:
+      type: object
+      required:
+        - effect_id
+        - effect_type
+        - position
+        - radius
+        - duration
+        - remaining_time
+      properties:
+        effect_id:
+          type: string
+          format: uuid
+          description: Effect identifier
+        effect_type:
+          type: string
+          enum: [ damage_over_time, healing, buff, debuff, environmental ]
+          description: Type of effect
+        position:
+          $ref: '#/components/schemas/Vector3'
+        radius:
+          type: number
+          format: float
+          minimum: 0
+          description: Effect radius
+        duration:
+          type: number
+          format: float
+          minimum: 0
+          description: Total effect duration (seconds)
+        remaining_time:
+          type: number
+          format: float
+          minimum: 0
+          description: Remaining effect time (seconds)
+        affected_entities:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: IDs of affected entities
+        parameters:
+          type: object
+          additionalProperties: true
+          description: Effect-specific parameters
+
+    StateChange:
+      type: object
+      required:
+        - change_id
+        - change_type
+        - timestamp
+        - entity_id
+      properties:
+        change_id:
+          type: string
+          format: uuid
+          description: Change identifier
+        change_type:
+          type: string
+          enum: [ position_update, health_change, status_change, equipment_change, effect_applied, effect_removed ]
+          description: Type of state change
+        timestamp:
+          type: string
+          format: date-time
+          description: Change timestamp
+        entity_id:
+          type: string
+          format: uuid
+          description: Affected entity ID
+        previous_value:
+          type: object
+          additionalProperties: true
+          description: Previous state value
+        new_value:
+          type: object
+          additionalProperties: true
+          description: New state value
+        change_reason:
+          type: string
+          description: Reason for the change
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Additional change metadata
+
+    EquipmentItem:
+      type: object
+      required:
+        - item_id
+        - slot
+        - item_type
+      properties:
+        item_id:
+          type: string
+          format: uuid
+          description: Equipment item identifier
+        slot:
+          type: string
+          enum: [ weapon_primary, weapon_secondary, armor_head, armor_body, armor_legs, accessory1, accessory2 ]
+          description: Equipment slot
+        item_type:
+          type: string
+          description: Type of equipment item
+        durability:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Item durability (0=broken, 1=perfect)
+
+    StatusEffect:
+      type: object
+      required:
+        - effect_id
+        - effect_type
+        - duration
+        - remaining_time
+      properties:
+        effect_id:
+          type: string
+          format: uuid
+          description: Status effect identifier
+        effect_type:
+          type: string
+          enum: [ buff, debuff ]
+          description: Effect type
+        name:
+          type: string
+          description: Effect name
+        duration:
+          type: number
+          format: float
+          minimum: 0
+          description: Total effect duration (seconds)
+        remaining_time:
+          type: number
+          format: float
+          minimum: 0
+          description: Remaining effect time (seconds)
+        parameters:
+          type: object
+          additionalProperties: true
+          description: Effect parameters (damage per second, etc.)
+
+    ZoneState:
+      type: object
+      required:
+        - zone_id
+        - zone_type
+        - bounds
+        - active
+      properties:
+        zone_id:
+          type: string
+          format: uuid
+          description: Zone identifier
+        zone_type:
+          type: string
+          enum: [ safe, danger, objective, restricted ]
+          description: Type of zone
+        bounds:
+          type: object
+          properties:
+            center:
+              $ref: '#/components/schemas/Vector3'
+            radius:
+              type: number
+              format: float
+              minimum: 0
+              description: Zone radius
+          description: Zone boundaries
+        active:
+          type: boolean
+          description: Whether zone is currently active
+        properties:
+          type: object
+          additionalProperties: true
+          description: Zone-specific properties
+
+    DestructibleObjectState:
+      type: object
+      required:
+        - object_id
+        - position
+        - health
+        - destroyed
+      properties:
+        object_id:
+          type: string
+          format: uuid
+          description: Object identifier
+        position:
+          $ref: '#/components/schemas/Vector3'
+        health:
+          $ref: '#/components/schemas/HealthState'
+        destroyed:
+          type: boolean
+          description: Whether object is destroyed
+        respawn_timer:
+          type: integer
+          minimum: 0
+          description: Time until respawn (seconds)
+
+    Vector2:
+      type: object
+      required:
+        - x
+        - y
+      properties:
+        x:
+          type: number
+          format: float
+          description: X coordinate
+        y:
+          type: number
+          format: float
+          description: Y coordinate
+
+    Vector3:
+      type: object
+      required:
+        - x
+        - y
+        - z
+      properties:
+        x:
+          type: number
+          format: float
+          description: X coordinate
+        y:
+          type: number
+          format: float
+          description: Y coordinate
+        z:
+          type: number
+          format: float
+          description: Z coordinate
+
+    HealthState:
+      type: object
+      required:
+        - current
+        - maximum
+      properties:
+        current:
+          type: integer
+          minimum: 0
+          description: Current health points
+        maximum:
+          type: integer
+          minimum: 1
+          description: Maximum health points
+        shields:
+          type: integer
+          minimum: 0
+          description: Current shield points
+        regeneration_rate:
+          type: number
+          format: float
+          minimum: 0
+          description: Health regeneration per second
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - message
+        - timestamp
+      properties:
+        error:
+          type: string
+          description: Error code
+        message:
+          type: string
+          description: Human-readable error message
+        timestamp:
+          type: string
+          format: date-time
+          description: Error timestamp
+        details:
+          type: object
+          additionalProperties: true
+          description: Additional error details
+        request_id:
+          type: string
+          description: Request identifier for tracing

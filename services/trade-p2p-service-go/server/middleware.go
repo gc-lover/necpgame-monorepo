@@ -1,4 +1,4 @@
-// Issue: #1637 - Middleware for P2P Trade Service
+// Package server Issue: #1637 - Middleware for P2P Trade Service
 package server
 
 import (

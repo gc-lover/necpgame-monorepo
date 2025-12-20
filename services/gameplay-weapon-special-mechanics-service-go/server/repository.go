@@ -1,4 +1,4 @@
-// Issue: #1595
+// Package server Issue: #1595
 package server
 
 import (
@@ -34,4 +34,3 @@ func NewRepository(connStr string) (*Repository, error) {
 func (r *Repository) Close() error {
 	return r.db.Close()
 }
-

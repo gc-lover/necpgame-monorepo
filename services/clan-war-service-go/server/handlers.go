@@ -1,4 +1,4 @@
-// Issue: #1607, ogen migration
+// Package server Issue: #1607, ogen migration
 package server
 
 import (
@@ -13,19 +13,18 @@ import (
 )
 
 const (
-	DBTimeout    = 50 * time.Millisecond
-	CacheTimeout = 10 * time.Millisecond
+	DBTimeout = 50 * time.Millisecond
 )
 
-// Issue: #1607 - Memory pooling for hot path structs (Level 2 optimization)
+// Handlers Issue: #1607 - Memory pooling for hot path structs (Level 2 optimization)
 type Handlers struct {
 	clanWarService ClanWarServiceInterface
 	logger         *logrus.Logger
 
 	// Memory pooling for hot path structs (zero allocations target!)
-	clanWarPool          sync.Pool
+	clanWarPool            sync.Pool
 	activeWarsResponsePool sync.Pool
-	warResolutionPool    sync.Pool
+	warResolutionPool      sync.Pool
 }
 
 func NewHandlers(clanWarService ClanWarServiceInterface) *Handlers {
@@ -140,7 +139,7 @@ func (h *Handlers) GetActiveWars(ctx context.Context, params clanwarapi.GetActiv
 	return apiResponse, nil
 }
 
-func (h *Handlers) CancelWar(ctx context.Context, req *clanwarapi.CancelWarRequest, params clanwarapi.CancelWarParams) (clanwarapi.CancelWarRes, error) {
+func (h *Handlers) CancelWar(ctx context.Context, _ *clanwarapi.CancelWarRequest, _ clanwarapi.CancelWarParams) (clanwarapi.CancelWarRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
@@ -188,4 +187,3 @@ func (h *Handlers) ResolveWar(ctx context.Context, params clanwarapi.ResolveWarP
 
 	return resolution, nil
 }
-

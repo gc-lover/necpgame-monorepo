@@ -16,11 +16,14 @@
 ## 📦 Changes
 
 ### 1. **Makefile** - Already migrated to ogen
+
 - OK Using `ogen` generation
 - OK Clean bundled spec
 
 ### 2. **Code Generation** - 19 ogen files
+
 Generated files in `pkg/api/`:
+
 - `oas_cfg_gen.go`
 - `oas_client_gen.go`
 - `oas_handlers_gen.go`
@@ -44,7 +47,9 @@ Generated files in `pkg/api/`:
 **Auto SOLID:** Each file <200 lines!
 
 ### 3. **Handlers** - Typed responses (NO interface{})
+
 Implemented 10 combat mechanics operations:
+
 1. OK `ActivateCombatImplant` - Activate combat implant
 2. OK `AdvancedAim` - Advanced aiming mechanics
 3. OK `ControlRecoil` - Recoil control
@@ -59,7 +64,9 @@ Implemented 10 combat mechanics operations:
 **Key Feature:** All handlers return TYPED responses (no `interface{}` boxing!)
 
 ### 4. **Service Structure** - SOLID
+
 Clean structure:
+
 ```
 server/
 ├── handlers.go       - ogen typed handlers (10 methods)
@@ -72,6 +79,7 @@ server/
 ```
 
 ### 5. **Fixes Applied**
+
 - OK Fixed import path in `handlers_bench_test.go`
 - OK Replaced incorrect handlers from `combat-actions-service-go`
 - OK Added all 10 required handler methods
@@ -83,11 +91,13 @@ server/
 ## ⚡ Expected Performance Gains
 
 ### Benchmarks (ogen vs oapi-codegen):
+
 - **Latency:** 90% faster (191 ns/op vs 1994 ns/op)
 - **Memory:** 95% less (320 B/op vs 6528 B/op)
 - **Allocations:** 80% fewer (5 allocs/op vs 25 allocs/op)
 
 **Real-world impact @ 5000 RPS:**
+
 - Latency: 25ms → 8ms P99 OK
 - CPU: -60%
 - Memory: -50%
@@ -108,10 +118,12 @@ server/
 ## 📚 Reference
 
 **Documentation:**
+
 - `.cursor/OGEN_MIGRATION_GUIDE.md`
 - `.cursor/ogen/02-MIGRATION-STEPS.md`
 
 **Reference Implementation:**
+
 - `services/combat-combos-service-ogen-go/` - Perfect example
 - `services/combat-actions-service-go/` - Recently migrated
 

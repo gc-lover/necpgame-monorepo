@@ -1,4 +1,4 @@
-// Issue: #1604, #1607 - ogen migration
+// Package server Issue: #1604, #1607 - ogen migration
 package server
 
 import (
@@ -18,11 +18,11 @@ const (
 // Issue: #1607 - Memory pooling for hot path structs (Level 2 optimization)
 type Handlers struct {
 	// Memory pooling for hot path structs (zero allocations target!)
-	engramSlotsResponsePool sync.Pool
-	engramSlotPool sync.Pool
+	engramSlotsResponsePool  sync.Pool
+	engramSlotPool           sync.Pool
 	removeEngramResponsePool sync.Pool
-	activeEngramPool sync.Pool
-	engramInfluencePool sync.Pool
+	activeEngramPool         sync.Pool
+	engramInfluencePool      sync.Pool
 	engramInfluenceLevelPool sync.Pool
 }
 
@@ -73,26 +73,26 @@ func (h *Handlers) GetEngramSlots(ctx context.Context, params api.GetEngramSlots
 
 	slots := []api.EngramSlot{
 		{
-			CharacterID:     characterId,
-			SlotID:          1,
-			EngramID:        api.OptNilUUID{},
-			InfluenceLevel:  api.NewOptNilFloat32(zeroFloat),
-			IsActive:        true,
-			CreatedAt:       api.OptDateTime{},
-			InstalledAt:     api.OptNilDateTime{},
-			UpdatedAt:       api.OptDateTime{},
-			UsagePoints:     api.OptNilInt{},
+			CharacterID:    characterId,
+			SlotID:         1,
+			EngramID:       api.OptNilUUID{},
+			InfluenceLevel: api.NewOptNilFloat32(zeroFloat),
+			IsActive:       true,
+			CreatedAt:      api.OptDateTime{},
+			InstalledAt:    api.OptNilDateTime{},
+			UpdatedAt:      api.OptDateTime{},
+			UsagePoints:    api.OptNilInt{},
 		},
 		{
-			CharacterID:     characterId,
-			SlotID:          2,
-			EngramID:        api.OptNilUUID{},
-			InfluenceLevel:  api.NewOptNilFloat32(zeroFloat),
-			IsActive:        true,
-			CreatedAt:       api.OptDateTime{},
-			InstalledAt:     api.OptNilDateTime{},
-			UpdatedAt:       api.OptDateTime{},
-			UsagePoints:     api.OptNilInt{},
+			CharacterID:    characterId,
+			SlotID:         2,
+			EngramID:       api.OptNilUUID{},
+			InfluenceLevel: api.NewOptNilFloat32(zeroFloat),
+			IsActive:       true,
+			CreatedAt:      api.OptDateTime{},
+			InstalledAt:    api.OptNilDateTime{},
+			UpdatedAt:      api.OptDateTime{},
+			UsagePoints:    api.OptNilInt{},
 		},
 	}
 
@@ -105,7 +105,7 @@ func (h *Handlers) GetEngramSlots(ctx context.Context, params api.GetEngramSlots
 	return response, nil
 }
 
-// Issue: #1607 - Uses memory pooling for zero allocations
+// InstallEngram Issue: #1607 - Uses memory pooling for zero allocations
 func (h *Handlers) InstallEngram(ctx context.Context, req *api.InstallEngramRequest, params api.InstallEngramParams) (api.InstallEngramRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
@@ -130,8 +130,8 @@ func (h *Handlers) InstallEngram(ctx context.Context, req *api.InstallEngramRequ
 	return response, nil
 }
 
-// Issue: #1607 - Uses memory pooling for zero allocations
-func (h *Handlers) RemoveEngram(ctx context.Context, params api.RemoveEngramParams) (api.RemoveEngramRes, error) {
+// RemoveEngram Issue: #1607 - Uses memory pooling for zero allocations
+func (h *Handlers) RemoveEngram(ctx context.Context, _ api.RemoveEngramParams) (api.RemoveEngramRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
@@ -151,7 +151,7 @@ func (h *Handlers) RemoveEngram(ctx context.Context, params api.RemoveEngramPara
 	return response, nil
 }
 
-func (h *Handlers) GetActiveEngrams(ctx context.Context, params api.GetActiveEngramsParams) (api.GetActiveEngramsRes, error) {
+func (h *Handlers) GetActiveEngrams(ctx context.Context, _ api.GetActiveEngramsParams) (api.GetActiveEngramsRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
@@ -161,12 +161,12 @@ func (h *Handlers) GetActiveEngrams(ctx context.Context, params api.GetActiveEng
 	usagePoints := 100
 	engrams := []api.ActiveEngram{
 		{
-			EngramID:              engramId,
-			SlotID:                1,
-			InfluenceLevel:        50.0,
+			EngramID:               engramId,
+			SlotID:                 1,
+			InfluenceLevel:         50.0,
 			InfluenceLevelCategory: api.NewOptActiveEngramInfluenceLevelCategory(cat),
-			InstalledAt:           api.NewOptDateTime(installedAt),
-			UsagePoints:           api.NewOptInt(usagePoints),
+			InstalledAt:            api.NewOptDateTime(installedAt),
+			UsagePoints:            api.NewOptInt(usagePoints),
 		},
 	}
 
@@ -196,8 +196,8 @@ func (h *Handlers) GetEngramInfluence(ctx context.Context, params api.GetEngramI
 	return influence, nil
 }
 
-// Issue: #1607 - Uses memory pooling for zero allocations
-func (h *Handlers) UpdateEngramInfluence(ctx context.Context, req *api.UpdateInfluenceRequest, params api.UpdateEngramInfluenceParams) (api.UpdateEngramInfluenceRes, error) {
+// UpdateEngramInfluence Issue: #1607 - Uses memory pooling for zero allocations
+func (h *Handlers) UpdateEngramInfluence(ctx context.Context, _ *api.UpdateInfluenceRequest, params api.UpdateEngramInfluenceParams) (api.UpdateEngramInfluenceRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
@@ -219,7 +219,7 @@ func (h *Handlers) UpdateEngramInfluence(ctx context.Context, req *api.UpdateInf
 	return influence, nil
 }
 
-func (h *Handlers) GetEngramInfluenceLevels(ctx context.Context, params api.GetEngramInfluenceLevelsParams) (api.GetEngramInfluenceLevelsRes, error) {
+func (h *Handlers) GetEngramInfluenceLevels(ctx context.Context, _ api.GetEngramInfluenceLevelsParams) (api.GetEngramInfluenceLevelsRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
@@ -230,12 +230,12 @@ func (h *Handlers) GetEngramInfluenceLevels(ctx context.Context, params api.GetE
 
 	levels := []api.EngramInfluenceLevel{
 		{
-			EngramID:              engramId,
-			SlotID:                1,
-			InfluenceLevel:        50.0,
+			EngramID:               engramId,
+			SlotID:                 1,
+			InfluenceLevel:         50.0,
 			InfluenceLevelCategory: cat,
-			UsagePoints:           api.NewOptInt(usagePoints),
-			DominancePercentage:   api.NewOptFloat32(dominancePercentage),
+			UsagePoints:            api.NewOptInt(usagePoints),
+			DominancePercentage:    api.NewOptFloat32(dominancePercentage),
 		},
 	}
 

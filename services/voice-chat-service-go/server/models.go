@@ -2,7 +2,7 @@ package server
 
 // API Request/Response models for Voice Chat Service
 
-// Voice channel models
+// VoiceChannelSummary Voice channel models
 type VoiceChannelSummary struct {
 	ChannelID        string `json:"channel_id"`
 	Name             string `json:"name"`
@@ -15,7 +15,7 @@ type VoiceChannelSummary struct {
 	CreatedAt        int64  `json:"created_at"`
 }
 
-// Request models
+// CreateChannelRequest Request models
 type CreateChannelRequest struct {
 	Name            string          `json:"name"`
 	Type            string          `json:"type"`
@@ -32,12 +32,12 @@ type UpdateChannelRequest struct {
 }
 
 type JoinChannelRequest struct {
-	UserID      string `json:"user_id"`
-	MuteOnJoin  bool   `json:"mute_on_join,omitempty"`
-	DeafenOnJoin bool  `json:"deafen_on_join,omitempty"`
+	UserID       string `json:"user_id"`
+	MuteOnJoin   bool   `json:"mute_on_join,omitempty"`
+	DeafenOnJoin bool   `json:"deafen_on_join,omitempty"`
 }
 
-// Response models
+// CreateChannelResponse Response models
 type CreateChannelResponse struct {
 	ChannelID    string   `json:"channel_id"`
 	Name         string   `json:"name"`
@@ -54,7 +54,7 @@ type ListChannelsResponse struct {
 }
 
 type GetChannelResponse struct {
-	Channel      *VoiceChannel        `json:"channel"`
+	Channel      *VoiceChannel         `json:"channel"`
 	Participants []*ChannelParticipant `json:"participants"`
 }
 
@@ -65,11 +65,11 @@ type UpdateChannelResponse struct {
 }
 
 type JoinChannelResponse struct {
-	ChannelID     string `json:"channel_id"`
-	UserID        string `json:"user_id"`
-	WebsocketURL  string `json:"websocket_url"`
-	SessionToken  string `json:"session_token"`
-	JoinedAt      int64  `json:"joined_at"`
+	ChannelID    string `json:"channel_id"`
+	UserID       string `json:"user_id"`
+	WebsocketURL string `json:"websocket_url"`
+	SessionToken string `json:"session_token"`
+	JoinedAt     int64  `json:"joined_at"`
 }
 
 type LeaveChannelResponse struct {
@@ -78,11 +78,11 @@ type LeaveChannelResponse struct {
 	LeftAt    int64  `json:"left_at"`
 }
 
-// Audio streaming models
+// StartAudioStreamRequest Audio streaming models
 type StartAudioStreamRequest struct {
-	ChannelID    string      `json:"channel_id"`
-	UserID       string      `json:"user_id"`
-	AudioConfig  AudioConfig `json:"audio_config"`
+	ChannelID   string      `json:"channel_id"`
+	UserID      string      `json:"user_id"`
+	AudioConfig AudioConfig `json:"audio_config"`
 }
 
 type UpdateProximityRequest struct {
@@ -91,15 +91,15 @@ type UpdateProximityRequest struct {
 	Position  PlayerLocation `json:"position"`
 }
 
-// Response models
+// StartAudioStreamResponse Response models
 type StartAudioStreamResponse struct {
-	StreamID      string   `json:"stream_id"`
-	ChannelID     string   `json:"channel_id"`
-	UserID        string   `json:"user_id"`
-	WebsocketURL  string   `json:"websocket_url"`
-	ICEServers    []string `json:"ice_servers"`
-	SessionToken  string   `json:"session_token"`
-	StartedAt     int64    `json:"started_at"`
+	StreamID     string   `json:"stream_id"`
+	ChannelID    string   `json:"channel_id"`
+	UserID       string   `json:"user_id"`
+	WebsocketURL string   `json:"websocket_url"`
+	ICEServers   []string `json:"ice_servers"`
+	SessionToken string   `json:"session_token"`
+	StartedAt    int64    `json:"started_at"`
 }
 
 type UpdateProximityResponse struct {
@@ -109,13 +109,13 @@ type UpdateProximityResponse struct {
 	UpdatedAt    int64          `json:"updated_at"`
 }
 
-// Text-to-speech models
+// SynthesizeSpeechRequest Text-to-speech models
 type SynthesizeSpeechRequest struct {
-	Text    string  `json:"text"`
-	Voice   string  `json:"voice,omitempty"`
-	Language string `json:"language,omitempty"`
-	Speed   float64 `json:"speed,omitempty"`
-	Pitch   float64 `json:"pitch,omitempty"`
+	Text     string  `json:"text"`
+	Voice    string  `json:"voice,omitempty"`
+	Language string  `json:"language,omitempty"`
+	Speed    float64 `json:"speed,omitempty"`
+	Pitch    float64 `json:"pitch,omitempty"`
 }
 
 type SynthesizeSpeechResponse struct {
@@ -127,7 +127,7 @@ type SynthesizeSpeechResponse struct {
 	GeneratedAt int64   `json:"generated_at"`
 }
 
-// Moderation models
+// ReportVoiceAbuseRequest Moderation models
 type ReportVoiceAbuseRequest struct {
 	ReportedUserID string   `json:"reported_user_id"`
 	ChannelID      string   `json:"channel_id"`
@@ -137,14 +137,14 @@ type ReportVoiceAbuseRequest struct {
 }
 
 type ReportVoiceAbuseResponse struct {
-	ReportID        string `json:"report_id"`
-	ReportedUserID  string `json:"reported_user_id"`
-	ChannelID       string `json:"channel_id"`
-	Status          string `json:"status"`
-	SubmittedAt     int64  `json:"submitted_at"`
+	ReportID       string `json:"report_id"`
+	ReportedUserID string `json:"reported_user_id"`
+	ChannelID      string `json:"channel_id"`
+	Status         string `json:"status"`
+	SubmittedAt    int64  `json:"submitted_at"`
 }
 
-// Helper models
+// ChannelParticipant Helper models
 type ChannelParticipant struct {
 	UserID      string `json:"user_id"`
 	DisplayName string `json:"display_name"`
@@ -154,12 +154,12 @@ type ChannelParticipant struct {
 }
 
 type AudibleUser struct {
-	UserID  string  `json:"user_id"`
+	UserID   string  `json:"user_id"`
 	Distance float64 `json:"distance"`
 	Volume   float64 `json:"volume"`
 }
 
-// Error response model
+// ErrorResponse Error response model
 type ErrorResponse struct {
 	Code    int    `json:"code"`
 	Message string `json:"message"`

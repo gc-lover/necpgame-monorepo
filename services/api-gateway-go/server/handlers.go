@@ -1,4 +1,4 @@
-// Issue: #146073424
+// Package server Issue: #146073424
 package server
 
 import (
@@ -8,7 +8,7 @@ import (
 )
 
 // healthCheckHandler проверяет здоровье API Gateway
-func (g *APIGateway) healthCheckHandler(w http.ResponseWriter, r *http.Request) {
+func (g *APIGateway) healthCheckHandler(w http.ResponseWriter) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 
@@ -23,7 +23,7 @@ func (g *APIGateway) healthCheckHandler(w http.ResponseWriter, r *http.Request) 
 }
 
 // readinessCheckHandler проверяет готовность API Gateway
-func (g *APIGateway) readinessCheckHandler(w http.ResponseWriter, r *http.Request) {
+func (g *APIGateway) readinessCheckHandler(w http.ResponseWriter) {
 	// Проверяем состояние circuit breakers
 	allHealthy := true
 	cbStatus := make(map[string]string)
@@ -59,7 +59,7 @@ func (g *APIGateway) readinessCheckHandler(w http.ResponseWriter, r *http.Reques
 }
 
 // metricsHandler предоставляет метрики API Gateway
-func (g *APIGateway) metricsHandler(w http.ResponseWriter, r *http.Request) {
+func (g *APIGateway) metricsHandler(w http.ResponseWriter) {
 	// Собираем метрики circuit breakers
 	cbMetrics := make(map[string]interface{})
 	for serviceName, cb := range g.circuitBreakers {

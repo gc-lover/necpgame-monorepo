@@ -1,4 +1,4 @@
-// Issue: #44
+// Package server Issue: #44
 package server
 
 import (
@@ -54,44 +54,3 @@ func MetricsMiddleware() func(next http.Handler) http.Handler {
 }
 
 // AuthMiddleware - аутентификация через JWT
-func AuthMiddleware() func(next http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			// TODO: Validate JWT token
-			// For now, skip authentication
-			next.ServeHTTP(w, r)
-		})
-	}
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

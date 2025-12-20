@@ -33,4 +33,3 @@ func (b *RedisEventBus) PublishEvent(ctx context.Context, eventType string, payl
 	channel := "events:" + eventType
 	return b.client.Publish(ctx, channel, eventData).Err()
 }
-

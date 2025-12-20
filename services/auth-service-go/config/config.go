@@ -1,4 +1,4 @@
-// Issue: #136
+// Package config provides configuration management for the auth service.
 package config
 
 import (

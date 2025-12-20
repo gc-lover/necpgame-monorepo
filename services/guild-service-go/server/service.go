@@ -40,44 +40,70 @@ type GuildServicePools struct {
 	WarResponsePool       sync.Pool
 }
 
-// OPTIMIZATION: Issue #2177 - Memory-aligned struct for guild service performance
+// GuildService OPTIMIZATION: Issue #2177 - Memory-aligned struct for guild service performance
 type GuildService struct {
 	GuildServiceDependencies
 	GuildServiceStorage
 	GuildServicePools
 }
 
-// OPTIMIZATION: Issue #2177 - Memory-aligned guild structs
-type Guild struct {
-	GuildID               string        `json:"guild_id"`               // 16 bytes
-	Name                  string        `json:"name"`                   // 16 bytes
-	Description           string        `json:"description"`            // 16 bytes
-	Motto                 string        `json:"motto"`                  // 16 bytes
-	Faction               string        `json:"faction"`                // 16 bytes
-	LeaderID              string        `json:"leader_id"`              // 16 bytes
-	Status                string        `json:"status"`                 // 16 bytes
-	Level                 int           `json:"level"`                  // 8 bytes
-	Experience            int           `json:"experience"`             // 8 bytes
-	Reputation            int           `json:"reputation"`             // 8 bytes
-	Wealth                int           `json:"wealth"`                 // 8 bytes
-	MaxMembers            int           `json:"max_members"`            // 8 bytes
-	CurrentMembers        int           `json:"current_members"`        // 8 bytes
-	Region                string        `json:"region"`                 // 16 bytes
-	Headquarters          GuildLocation `json:"headquarters"`           // ~48 bytes
-	Colors                GuildColors   `json:"colors"`                 // ~64 bytes
-	Policies              GuildPolicies `json:"policies"`               // ~16 bytes
-	RecruitmentOpen       bool          `json:"recruitment_open"`       // 1 byte
-	ApplicationRequired   bool          `json:"application_required"`   // 1 byte
-	MinLevelRequirement   int           `json:"min_level_requirement"`  // 8 bytes
-	TerritoriesControlled int           `json:"territories_controlled"` // 8 bytes
-	WarsActive            int           `json:"wars_active"`            // 8 bytes
-	AlliancesActive       int           `json:"alliances_active"`       // 8 bytes
-	CreatedAt             time.Time     `json:"created_at"`             // 24 bytes
-	UpdatedAt             time.Time     `json:"updated_at"`             // 24 bytes
-	LastActivity          time.Time     `json:"last_activity"`          // 24 bytes
+// GuildIdentity contains identity fields
+type GuildIdentity struct {
+	GuildID     string `json:"guild_id"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Motto       string `json:"motto"`
+	Faction     string `json:"faction"`
+	LeaderID    string `json:"leader_id"`
+	Status      string `json:"status"`
+	Region      string `json:"region"`
 }
 
-// OPTIMIZATION: Issue #2177 - Memory-aligned supporting structs
+// GuildStats contains statistical fields
+type GuildStats struct {
+	Level                 int `json:"level"`
+	Experience            int `json:"experience"`
+	Reputation            int `json:"reputation"`
+	Wealth                int `json:"wealth"`
+	MaxMembers            int `json:"max_members"`
+	CurrentMembers        int `json:"current_members"`
+	TerritoriesControlled int `json:"territories_controlled"`
+	WarsActive            int `json:"wars_active"`
+	AlliancesActive       int `json:"alliances_active"`
+}
+
+// GuildAppearance contains appearance-related fields
+type GuildAppearance struct {
+	Headquarters GuildLocation `json:"headquarters"`
+	Colors       GuildColors   `json:"colors"`
+}
+
+// GuildRequirements contains requirement fields
+type GuildRequirements struct {
+	RecruitmentOpen     bool `json:"recruitment_open"`
+	ApplicationRequired bool `json:"application_required"`
+	MinLevelRequirement int  `json:"min_level_requirement"`
+}
+
+// GuildMetadata contains metadata fields
+type GuildMetadata struct {
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
+	LastActivity time.Time `json:"last_activity"`
+}
+
+// Guild OPTIMIZATION: Issue #2177 - Memory-aligned guild structs
+type Guild struct {
+	GuildIdentity
+	GuildStats
+	GuildAppearance
+	GuildRequirements
+	GuildMetadata
+
+	Policies GuildPolicies `json:"policies"`
+}
+
+// GuildLocation OPTIMIZATION: Issue #2177 - Memory-aligned supporting structs
 type GuildLocation struct {
 	Zone string  `json:"zone"`
 	X    float64 `json:"x"`
@@ -172,7 +198,7 @@ func NewGuildService(logger *logrus.Logger, metrics *GuildMetrics, config *Guild
 	return s
 }
 
-// OPTIMIZATION: Issue #2177 - Rate limiting middleware for guild protection
+// RateLimitMiddleware OPTIMIZATION: Issue #2177 - Rate limiting middleware for guild protection
 func (s *GuildService) RateLimitMiddleware() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -196,7 +222,7 @@ func (s *GuildService) RateLimitMiddleware() func(http.Handler) http.Handler {
 	}
 }
 
-// Guild management methods
+// CreateGuild Guild management methods
 func (s *GuildService) CreateGuild(w http.ResponseWriter, r *http.Request) {
 	var req CreateGuildRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -304,7 +330,7 @@ func (s *GuildService) CreateGuild(w http.ResponseWriter, r *http.Request) {
 	s.logger.WithField("guild_id", guild.GuildID).Info("guild created successfully")
 }
 
-func (s *GuildService) ListGuilds(w http.ResponseWriter, r *http.Request) {
+func (s *GuildService) ListGuilds(w http.ResponseWriter) {
 	// Implementation would include filtering and pagination
 	// For now, return basic response
 	resp := &ListGuildsResponse{
@@ -436,8 +462,8 @@ func (s *GuildService) GetGuildMembers(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(resp)
 }
 
-// Health check method
-func (s *GuildService) HealthCheck(w http.ResponseWriter, r *http.Request) {
+// HealthCheck Health check method
+func (s *GuildService) HealthCheck(w http.ResponseWriter) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(`{"status":"healthy","service":"guild-service","version":"1.0.0","active_guilds":500,"active_members":25000,"territories_controlled":150,"ongoing_wars":25,"active_alliances":30}`))

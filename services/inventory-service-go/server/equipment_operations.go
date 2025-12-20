@@ -3,9 +3,11 @@ package server
 import (
 	"encoding/json"
 	"net/http"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
+	"github.com/sirupsen/logrus"
 )
 
 // EquipItem equips item to character
@@ -130,12 +132,12 @@ func (s *InventoryService) GetEquipmentStats(w http.ResponseWriter, r *http.Requ
 			"defense":      10,
 			"health":       0,
 		},
-		ActiveBonuses: []*ItemEffect{},
-		SetBonuses:    map[string]string{},
-		DefenseRating: 10,
+		ActiveBonuses:   []*ItemEffect{},
+		SetBonuses:      map[string]string{},
+		DefenseRating:   10,
 		MagicResistance: 5,
-		AttackPower:   25,
-		SpellPower:    0,
+		AttackPower:     25,
+		SpellPower:      0,
 	}
 
 	w.Header().Set("Content-Type", "application/json")

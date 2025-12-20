@@ -1,13 +1,13 @@
-// Issue: #141886477
+// Package server Issue: #141886477
 package server
 
 import (
 	"context"
 	"encoding/json"
 
+	"github.com/gc-lover/necpgame-monorepo/services/reset-service-go/models"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/gc-lover/necpgame-monorepo/services/reset-service-go/models"
 	"github.com/sirupsen/logrus"
 )
 
@@ -167,4 +167,3 @@ func (r *ResetRepository) Count(ctx context.Context, resetType *models.ResetType
 	err := r.db.QueryRow(ctx, query, args...).Scan(&count)
 	return count, err
 }
-

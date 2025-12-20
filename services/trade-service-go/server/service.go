@@ -1,4 +1,4 @@
-// Issue: #131
+// Package server Issue: #131
 package server
 
 import (
@@ -68,7 +68,7 @@ func (s *TradeService) CreateTradeSession(ctx context.Context, req *api.CreateTr
 		return nil, err
 	}
 
-	return convertToTradeSessionResponse(session, initiatorID)
+	return convertToTradeSessionResponse(session)
 }
 
 func (s *TradeService) GetTradeSession(ctx context.Context, sessionID string) (*api.TradeSessionResponse, error) {
@@ -85,7 +85,7 @@ func (s *TradeService) GetTradeSession(ctx context.Context, sessionID string) (*
 		return nil, errors.New("not found")
 	}
 
-	return convertToTradeSessionResponse(session, playerID)
+	return convertToTradeSessionResponse(session)
 }
 
 func (s *TradeService) CancelTradeSession(ctx context.Context, sessionID string) error {
@@ -145,7 +145,7 @@ func (s *TradeService) AddTradeItems(ctx context.Context, sessionID string, req 
 		return nil, err
 	}
 
-	return convertToTradeSessionResponse(session, playerID)
+	return convertToTradeSessionResponse(session)
 }
 
 func (s *TradeService) AddTradeCurrency(ctx context.Context, sessionID string, req *api.AddCurrencyRequest) (*api.TradeSessionResponse, error) {
@@ -171,7 +171,7 @@ func (s *TradeService) AddTradeCurrency(ctx context.Context, sessionID string, r
 		return nil, err
 	}
 
-	return convertToTradeSessionResponse(session, playerID)
+	return convertToTradeSessionResponse(session)
 }
 
 func (s *TradeService) SetTradeReady(ctx context.Context, sessionID string, req *api.ReadyRequest) (*api.TradeSessionResponse, error) {
@@ -192,7 +192,7 @@ func (s *TradeService) SetTradeReady(ctx context.Context, sessionID string, req 
 		return nil, err
 	}
 
-	return convertToTradeSessionResponse(session, playerID)
+	return convertToTradeSessionResponse(session)
 }
 
 func (s *TradeService) CompleteTrade(ctx context.Context, sessionID string) (*api.TradeCompleteResponse, error) {
@@ -267,9 +267,9 @@ func (s *TradeService) CompleteTrade(ctx context.Context, sessionID string) (*ap
 	return response, nil
 }
 
-func (s *TradeService) GetTradeHistory(ctx context.Context, playerID string, params api.GetTradeHistoryParams) (*api.TradeHistoryResponse, error) {
+func (s *TradeService) GetTradeHistory(_ context.Context, _ string, _ api.GetTradeHistoryParams) (*api.TradeHistoryResponse, error) {
 	// Get history from repository (stub - repository doesn't have this method yet)
-	emptyHistory := []api.TradeHistoryEntry{}
+	var emptyHistory []api.TradeHistoryEntry
 	return &api.TradeHistoryResponse{
 		History: emptyHistory,
 		Total:   api.NewOptInt(0),
@@ -277,7 +277,7 @@ func (s *TradeService) GetTradeHistory(ctx context.Context, playerID string, par
 }
 
 // convertToTradeSessionResponse converts repository session data to API response
-func convertToTradeSessionResponse(session interface{}, playerID uuid.UUID) (*api.TradeSessionResponse, error) {
+func convertToTradeSessionResponse(session interface{}) (*api.TradeSessionResponse, error) {
 	sessionData, ok := session.(map[string]interface{})
 	if !ok {
 		return nil, errors.New("invalid session data")
@@ -355,12 +355,3 @@ func convertToTradeSessionResponse(session interface{}, playerID uuid.UUID) (*ap
 
 	return response, nil
 }
-
-
-
-
-
-
-
-
-

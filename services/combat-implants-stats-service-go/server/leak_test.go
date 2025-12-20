@@ -35,4 +35,3 @@ func TestCombatImplantsStatsServiceNoLeaks(t *testing.T) {
 
 	// If goroutines leaked from combat implants stats handlers, test FAILS
 }
-

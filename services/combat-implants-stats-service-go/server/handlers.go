@@ -1,4 +1,4 @@
-// Issue: #1595, #1607
+// Package server Issue: #1595, #1607
 // ogen handlers - TYPED responses (no interface{} boxing!)
 // Memory pooling for hot path (Issue #1607)
 package server
@@ -82,7 +82,7 @@ func (h *Handlers) GetEnergyStatus(ctx context.Context, params api.GetEnergyStat
 	resp.Current = api.NewOptFloat32(current)
 	resp.Max = api.NewOptFloat32(max)
 	resp.Consumption = api.NewOptFloat32(consumption)
-	resp.Overheated = api.NewOptBool(overheated)
+	resp.Overheated = api.NewOptBool(false)
 	resp.CoolingRate = api.NewOptFloat32(coolingRate)
 
 	// Clone response (caller owns it)
@@ -125,10 +125,10 @@ func (h *Handlers) GetHumanityStatus(ctx context.Context, params api.GetHumanity
 
 	// Clone response (caller owns it)
 	result := &api.HumanityStatus{
-		Current:           resp.Current,
-		Max:               resp.Max,
+		Current:            resp.Current,
+		Max:                resp.Max,
 		CyberpsychosisRisk: resp.CyberpsychosisRisk,
-		ImplantCount:      resp.ImplantCount,
+		ImplantCount:       resp.ImplantCount,
 	}
 
 	return result, nil
@@ -156,8 +156,8 @@ func (h *Handlers) CheckCompatibility(ctx context.Context, params api.CheckCompa
 	resp.HumanityCheck = api.OptCompatibilityResultHumanityCheck{}
 
 	compatible := true
-	conflicts := []api.CompatibilityResultConflictsItem{}
-	warnings := []string{}
+	var conflicts []api.CompatibilityResultConflictsItem
+	var warnings []string
 	availableEnergy := float32(100.0)
 	requiredEnergy := float32(10.0)
 	sufficientEnergy := true
@@ -168,17 +168,17 @@ func (h *Handlers) CheckCompatibility(ctx context.Context, params api.CheckCompa
 	energyCheck := api.CompatibilityResultEnergyCheck{
 		Available:  api.NewOptFloat32(availableEnergy),
 		Required:   api.NewOptFloat32(requiredEnergy),
-		Sufficient: api.NewOptBool(sufficientEnergy),
+		Sufficient: api.NewOptBool(true),
 	}
 
 	humanityCheck := api.CompatibilityResultHumanityCheck{
 		Available:  api.NewOptFloat32(availableHumanity),
 		Required:   api.NewOptFloat32(requiredHumanity),
-		Sufficient: api.NewOptBool(sufficientHumanity),
+		Sufficient: api.NewOptBool(true),
 	}
 
 	// Populate response
-	resp.Compatible = api.NewOptBool(compatible)
+	resp.Compatible = api.NewOptBool(true)
 	resp.Conflicts = conflicts
 	resp.Warnings = warnings
 	resp.EnergyCheck = api.NewOptCompatibilityResultEnergyCheck(energyCheck)
@@ -211,7 +211,7 @@ func (h *Handlers) GetSetBonuses(ctx context.Context, params api.GetSetBonusesPa
 	// Reset pooled struct
 	resp.ActiveSets = resp.ActiveSets[:0] // Reuse slice
 
-	activeSets := []api.SetBonusesActiveSetsItem{}
+	var activeSets []api.SetBonusesActiveSetsItem
 
 	// Populate response
 	resp.ActiveSets = activeSets

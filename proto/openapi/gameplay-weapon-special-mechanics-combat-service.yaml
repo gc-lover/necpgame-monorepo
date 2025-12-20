@@ -18,27 +18,27 @@ info:
     name: NECPGAME API Support
     email: api@necp.game
 servers:
-- url: http://localhost:8083/api/v1
-  description: Локальный сервер разработки
-- url: https://api.necp.game/api/v1
-  description: Продакшен сервер
+  - url: http://localhost:8083/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
 tags:
-- name: Deployable Weapons
-  description: Размещаемое оружие (мины, ловушки, турели)
-- name: Laser Weapons
-  description: Лазерное оружие
-- name: Melee Combat
-  description: Ближний бой
+  - name: Deployable Weapons
+    description: Размещаемое оружие (мины, ловушки, турели)
+  - name: Laser Weapons
+    description: Лазерное оружие
+  - name: Melee Combat
+    description: Ближний бой
 paths:
   /gameplay/combat/weapons/deployable/place:
     post:
       tags:
-      - Deployable Weapons
+        - Deployable Weapons
       summary: Разместить оружие
       description: Размещает оружие на карте (мина, ловушка, турель)
       operationId: placeDeployableWeapon
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       requestBody:
         required: true
         content:
@@ -69,20 +69,20 @@ paths:
   /gameplay/combat/weapons/deployable/{deploymentId}:
     get:
       tags:
-      - Deployable Weapons
+        - Deployable Weapons
       summary: Получить размещенное оружие
       description: Возвращает информацию о размещенном оружии
       operationId: getDeployableWeapon
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       parameters:
-      - name: deploymentId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: ID размещенного оружия
+        - name: deploymentId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID размещенного оружия
       responses:
         '200':
           description: Информация о размещенном оружии
@@ -99,12 +99,12 @@ paths:
   /gameplay/combat/weapons/laser/fire:
     post:
       tags:
-      - Laser Weapons
+        - Laser Weapons
       summary: Стрелять лазером
       description: Выполняет выстрел лазерным оружием (непрерывный луч, импульс, рельс)
       operationId: fireLaser
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       requestBody:
         required: true
         content:
@@ -136,12 +136,12 @@ paths:
   /gameplay/combat/weapons/melee/attack:
     post:
       tags:
-      - Melee Combat
+        - Melee Combat
       summary: Выполнить атаку ближнего боя
       description: Выполняет атаку ближнего боя (катана, когти, сюрикены)
       operationId: performMeleeAttack
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       requestBody:
         required: true
         content:
@@ -174,9 +174,9 @@ components:
     PlaceDeployableWeaponRequest:
       type: object
       required:
-      - character_id
-      - weapon_type
-      - position
+        - character_id
+        - weapon_type
+        - position
       properties:
         character_id:
           type: string
@@ -185,10 +185,10 @@ components:
         weapon_type:
           type: string
           enum:
-          - mine
-          - trap
-          - turret
-          - drone
+            - mine
+            - trap
+            - turret
+            - drone
           description: Тип размещаемого оружия
         position:
           $ref: common-schemas.yaml#/components/schemas/Position3D
@@ -218,9 +218,9 @@ components:
         state:
           type: string
           enum:
-          - placed
-          - active
-          - destroyed
+            - placed
+            - active
+            - destroyed
         created_at:
           type: string
           format: date-time
@@ -243,10 +243,10 @@ components:
     FireLaserRequest:
       type: object
       required:
-      - weapon_id
-      - character_id
-      - laser_type
-      - direction
+        - weapon_id
+        - character_id
+        - laser_type
+        - direction
       properties:
         weapon_id:
           type: string
@@ -259,9 +259,9 @@ components:
         laser_type:
           type: string
           enum:
-          - continuous
-          - pulse
-          - rail
+            - continuous
+            - pulse
+            - rail
           description: Тип лазера
         direction:
           $ref: common-schemas.yaml#/components/schemas/Direction3D
@@ -315,10 +315,10 @@ components:
     MeleeAttackRequest:
       type: object
       required:
-      - character_id
-      - weapon_type
-      - target_id
-      - attack_type
+        - character_id
+        - weapon_type
+        - target_id
+        - attack_type
       properties:
         character_id:
           type: string
@@ -331,16 +331,16 @@ components:
         weapon_type:
           type: string
           enum:
-          - katana
-          - claws
-          - shuriken
+            - katana
+            - claws
+            - shuriken
           description: Тип оружия ближнего боя
         attack_type:
           type: string
           enum:
-          - slash
-          - stab
-          - throw
+            - slash
+            - stab
+            - throw
           description: Тип атаки
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     MeleeAttackResponse:

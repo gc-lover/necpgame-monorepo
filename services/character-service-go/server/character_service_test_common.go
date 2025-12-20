@@ -1,4 +1,4 @@
-// Issue: #140893532
+// Package server Issue: #140893532
 package server
 
 import (
@@ -98,4 +98,3 @@ func setupTestService(t *testing.T) (*CharacterService, *mockCharacterRepository
 
 	return service, mockRepo, cleanup
 }
-

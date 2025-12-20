@@ -7,42 +7,42 @@ info:
     name: NECPGAME API Support
     email: api@necp.game
 servers:
-- url: http://localhost:8084/api/v1
-  description: Локальный сервер разработки
-- url: https://api.necp.game/api/v1
-  description: Продакшен сервер
+  - url: http://localhost:8084/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
 tags:
-- name: Chat Messages
-  description: Сообщения чата
+  - name: Chat Messages
+    description: Сообщения чата
 paths:
   /social/chat/messages:
     get:
       tags:
-      - Chat Messages
+        - Chat Messages
       summary: Получить список сообщений
       operationId: getMessages
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       parameters:
-      - name: channel_type
-        in: query
-        schema:
-          type: string
-          enum:
-          - GLOBAL
-          - TRADE
-          - NEWBIE
-          - LOCAL
-          - PARTY
-          - RAID
-          - GUILD
-          - GUILD_OFFICER
-          - WHISPER
-          - SYSTEM
-          - COMBAT_LOG
-          - RP_EMOTE
-      - $ref: common.yaml#/components/parameters/Limit
-      - $ref: common.yaml#/components/parameters/Offset
+        - name: channel_type
+          in: query
+          schema:
+            type: string
+            enum:
+              - GLOBAL
+              - TRADE
+              - NEWBIE
+              - LOCAL
+              - PARTY
+              - RAID
+              - GUILD
+              - GUILD_OFFICER
+              - WHISPER
+              - SYSTEM
+              - COMBAT_LOG
+              - RP_EMOTE
+        - $ref: common.yaml#/components/parameters/Limit
+        - $ref: common.yaml#/components/parameters/Offset
       responses:
         '200':
           description: Список сообщений
@@ -57,20 +57,20 @@ paths:
   /social/chat/messages/{channel_id}:
     get:
       tags:
-      - Chat Messages
+        - Chat Messages
       summary: Получить сообщения канала
       operationId: getChannelMessages
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       parameters:
-      - name: channel_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      - $ref: common.yaml#/components/parameters/Limit
-      - $ref: common.yaml#/components/parameters/Offset
+        - name: channel_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: common.yaml#/components/parameters/Limit
+        - $ref: common.yaml#/components/parameters/Offset
       responses:
         '200':
           description: Список сообщений
@@ -87,11 +87,11 @@ paths:
   /social/chat/messages/send:
     post:
       tags:
-      - Chat Messages
+        - Chat Messages
       summary: Отправить сообщение
       operationId: sendChatMessage
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       requestBody:
         required: true
         content:
@@ -114,11 +114,11 @@ paths:
   /social/chat/messages/process:
     post:
       tags:
-      - Chat Messages
+        - Chat Messages
       summary: Обработать сообщение
       operationId: processChatMessage
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       requestBody:
         required: true
         content:
@@ -145,65 +145,65 @@ components:
   schemas:
     ChatMessage:
       allOf:
-      - $ref: common.yaml#/components/schemas/BaseEntityWithTimestamps
-      - type: object
-        properties:
-          channel_id:
-            type: string
-            format: uuid
-          channel_type:
-            type: string
-            enum:
-            - GLOBAL
-            - TRADE
-            - NEWBIE
-            - LOCAL
-            - PARTY
-            - RAID
-            - GUILD
-            - GUILD_OFFICER
-            - WHISPER
-            - SYSTEM
-            - COMBAT_LOG
-            - RP_EMOTE
-          sender_id:
-            type: string
-            format: uuid
-          sender_name:
-            type: string
-          content:
-            type: string
-          formatted_text:
-            type: string
-          message_type:
-            type: string
-            enum:
-            - text
-            - system
-            - emote
-            - command
-          is_edited:
-            type: boolean
-            default: false
-          is_deleted:
-            type: boolean
-            default: false
+        - $ref: common.yaml#/components/schemas/BaseEntityWithTimestamps
+        - type: object
+          properties:
+            channel_id:
+              type: string
+              format: uuid
+            channel_type:
+              type: string
+              enum:
+                - GLOBAL
+                - TRADE
+                - NEWBIE
+                - LOCAL
+                - PARTY
+                - RAID
+                - GUILD
+                - GUILD_OFFICER
+                - WHISPER
+                - SYSTEM
+                - COMBAT_LOG
+                - RP_EMOTE
+            sender_id:
+              type: string
+              format: uuid
+            sender_name:
+              type: string
+            content:
+              type: string
+            formatted_text:
+              type: string
+            message_type:
+              type: string
+              enum:
+                - text
+                - system
+                - emote
+                - command
+            is_edited:
+              type: boolean
+              default: false
+            is_deleted:
+              type: boolean
+              default: false
     MessageListResponse:
       allOf:
-      - $ref: common.yaml#/components/schemas/PaginationResponse
-      - type: object
-        properties:
-          items:
-            type: array
+        - $ref: common.yaml#/components/schemas/PaginationResponse
+        - type: object
+          properties:
             items:
-              $ref: '#/components/schemas/ChatMessage'
-            description: Список сообщений
+              type: array
+              items:
+                $ref: '#/components/schemas/ChatMessage'
+              description: Список сообщений
     SendMessageRequest:
       type: object
       required:
-      - channel_id
-      - channel_type
-      - content
+        - channel_id
+        - channel_type
+        - content
       properties:
         channel_id:
           type: string
@@ -218,23 +218,23 @@ components:
         channel_type:
           type: string
           enum:
-          - GLOBAL
-          - TRADE
-          - NEWBIE
-          - LOCAL
-          - PARTY
-          - RAID
-          - GUILD
-          - GUILD_OFFICER
-          - WHISPER
-          - SYSTEM
-          - COMBAT_LOG
-          - RP_EMOTE
+            - GLOBAL
+            - TRADE
+            - NEWBIE
+            - LOCAL
+            - PARTY
+            - RAID
+            - GUILD
+            - GUILD_OFFICER
+            - WHISPER
+            - SYSTEM
+            - COMBAT_LOG
+            - RP_EMOTE
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     ProcessMessageRequest:
       type: object
       required:
-      - message_id
+        - message_id
       properties:
         message_id:
           type: string
@@ -251,4 +251,4 @@ components:
           type: boolean
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
 security:
-- BearerAuth: []
+  - BearerAuth: [ ]

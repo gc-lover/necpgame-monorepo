@@ -30,10 +30,10 @@ RUN chown -R appuser:appuser /app
 
 USER appuser
 
-EXPOSE 8080/tcp 9090
+EXPOSE 8161/tcp 9261
 
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:9090/metrics || exit 1
+  CMD wget -q --spider http://localhost:9261/metrics || exit 1
 
 ENTRYPOINT ["/app/stock-options-service"]
 

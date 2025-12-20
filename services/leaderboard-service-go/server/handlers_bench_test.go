@@ -17,8 +17,7 @@ func BenchmarkGetGlobalLeaderboard(b *testing.B) {
 	handlers := NewHandlers(logger, service)
 
 	ctx := context.Background()
-	params := api.GetGlobalLeaderboardParams{
-	}
+	params := api.GetGlobalLeaderboardParams{}
 
 	b.ReportAllocs()
 	b.ResetTimer()
@@ -36,8 +35,7 @@ func BenchmarkGetFactionLeaderboard(b *testing.B) {
 	handlers := NewHandlers(logger, service)
 
 	ctx := context.Background()
-	params := api.GetFactionLeaderboardParams{
-	}
+	params := api.GetFactionLeaderboardParams{}
 
 	b.ReportAllocs()
 	b.ResetTimer()
@@ -66,4 +64,3 @@ func BenchmarkGetPlayerRank(b *testing.B) {
 		_, _ = handlers.GetPlayerRank(ctx, params)
 	}
 }
-

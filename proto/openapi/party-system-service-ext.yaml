@@ -1,210 +1,210 @@
-                $ref: common.yaml#/components/schemas/Error
+$ref: common.yaml#/components/schemas/Error
 
-  /social/party/invitations/{invitationId}/decline:
-    parameters:
-      - name: invitationId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+/social/party/invitations/{invitationId}/decline:
+  parameters:
+    - name: invitationId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
 
-    post:
-      tags:
-        - Invitations
-      summary: Отклонить приглашение
-      description: Отклоняет приглашение в группу
-      operationId: declineInvitation
-      security:
-        - BearerAuth: []
-      responses:
-        "200":
-          description: Приглашение отклонено
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/StatusResponse"
-        "404":
-          $ref: common.yaml#/components/responses/NotFound
-
-  # Loot Distribution
-  /social/party/{partyId}/loot-mode:
-    parameters:
-      - name: partyId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-
-    get:
-      tags:
-        - Loot Distribution
-      summary: Получить режим распределения лута
-      description: Возвращает текущий режим распределения лута группы
-      operationId: getLootMode
-      security:
-        - BearerAuth: []
-      responses:
-        "200":
-          description: Режим распределения лута
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/LootModeResponse"
-        "403":
-          $ref: common.yaml#/components/responses/Forbidden
-
-    put:
-      tags:
-        - Loot Distribution
-      summary: Изменить режим распределения лута
-      description: Изменяет режим распределения лута группы (только лидер)
-      operationId: setLootMode
-      security:
-        - BearerAuth: []
-      requestBody:
-        required: true
+  post:
+    tags:
+      - Invitations
+    summary: Отклонить приглашение
+    description: Отклоняет приглашение в группу
+    operationId: declineInvitation
+    security:
+      - BearerAuth: [ ]
+    responses:
+      "200":
+        description: Приглашение отклонено
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/SetLootModeRequest"
-      responses:
-        "200":
-          description: Режим изменён
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/LootModeResponse"
-        "403":
-          $ref: common.yaml#/components/responses/Forbidden
+              $ref: "#/components/schemas/StatusResponse"
+      "404":
+        $ref: common.yaml#/components/responses/NotFound
 
-  /social/party/{partyId}/loot/distribute:
-    parameters:
-      - name: partyId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+# Loot Distribution
+/social/party/{partyId}/loot-mode:
+  parameters:
+    - name: partyId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
 
-    post:
-      tags:
-        - Loot Distribution
-      summary: Распределить лут
-      description: Распределяет предметы между участниками группы согласно выбранному режиму
-      operationId: distributeLoot
-      security:
-        - BearerAuth: []
-      requestBody:
-        required: true
+  get:
+    tags:
+      - Loot Distribution
+    summary: Получить режим распределения лута
+    description: Возвращает текущий режим распределения лута группы
+    operationId: getLootMode
+    security:
+      - BearerAuth: [ ]
+    responses:
+      "200":
+        description: Режим распределения лута
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/DistributeLootRequest"
-      responses:
-        "200":
-          description: Лут распределён
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/LootDistributionResult"
-        "400":
-          $ref: common.yaml#/components/responses/BadRequest
-        "403":
-          $ref: common.yaml#/components/responses/Forbidden
+              $ref: "#/components/schemas/LootModeResponse"
+      "403":
+        $ref: common.yaml#/components/responses/Forbidden
 
-  # Quest Coordination
-  /social/party/{partyId}/quests:
-    parameters:
-      - name: partyId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-
-    get:
-      tags:
-        - Quest Coordination
-      summary: Получить задания группы
-      description: Возвращает список активных заданий группы
-      operationId: getPartyQuests
-      security:
-        - BearerAuth: []
-      responses:
-        "200":
-          description: Задания группы
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  quests:
-                    type: array
-                    items:
-                      $ref: "#/components/schemas/PartyQuest"
-        "403":
-          $ref: common.yaml#/components/responses/Forbidden
-
-  /social/party/{partyId}/quests/{questId}/sync:
-    parameters:
-      - name: partyId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      - name: questId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-
-    post:
-      tags:
-        - Quest Coordination
-      summary: Синхронизировать прогресс задания
-      description: Синхронизирует прогресс задания между участниками группы
-      operationId: syncQuestProgress
-      security:
-        - BearerAuth: []
-      requestBody:
-        required: true
+  put:
+    tags:
+      - Loot Distribution
+    summary: Изменить режим распределения лута
+    description: Изменяет режим распределения лута группы (только лидер)
+    operationId: setLootMode
+    security:
+      - BearerAuth: [ ]
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/SetLootModeRequest"
+    responses:
+      "200":
+        description: Режим изменён
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/SyncQuestRequest"
-      responses:
-        "200":
-          description: Прогресс синхронизирован
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/QuestSyncResult"
-        "403":
-          $ref: common.yaml#/components/responses/Forbidden
+              $ref: "#/components/schemas/LootModeResponse"
+      "403":
+        $ref: common.yaml#/components/responses/Forbidden
 
-  # Monitoring
-  /social/party/stats:
-    get:
-      tags:
-        - Monitoring
-      summary: Получить статистику групп
-      description: Возвращает общую статистику системы групп
-      operationId: getPartyStats
-      security:
-        - BearerAuth: []
-      responses:
-        "200":
-          description: Статистика групп
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/PartyStats"
-        "403":
-          $ref: common.yaml#/components/responses/Forbidden
+/social/party/{partyId}/loot/distribute:
+  parameters:
+    - name: partyId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+  post:
+    tags:
+      - Loot Distribution
+    summary: Распределить лут
+    description: Распределяет предметы между участниками группы согласно выбранному режиму
+    operationId: distributeLoot
+    security:
+      - BearerAuth: [ ]
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/DistributeLootRequest"
+    responses:
+      "200":
+        description: Лут распределён
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LootDistributionResult"
+      "400":
+        $ref: common.yaml#/components/responses/BadRequest
+      "403":
+        $ref: common.yaml#/components/responses/Forbidden
+
+# Quest Coordination
+/social/party/{partyId}/quests:
+  parameters:
+    - name: partyId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+  get:
+    tags:
+      - Quest Coordination
+    summary: Получить задания группы
+    description: Возвращает список активных заданий группы
+    operationId: getPartyQuests
+    security:
+      - BearerAuth: [ ]
+    responses:
+      "200":
+        description: Задания группы
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                quests:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/PartyQuest"
+      "403":
+        $ref: common.yaml#/components/responses/Forbidden
+
+/social/party/{partyId}/quests/{questId}/sync:
+  parameters:
+    - name: partyId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    - name: questId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+  post:
+    tags:
+      - Quest Coordination
+    summary: Синхронизировать прогресс задания
+    description: Синхронизирует прогресс задания между участниками группы
+    operationId: syncQuestProgress
+    security:
+      - BearerAuth: [ ]
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/SyncQuestRequest"
+    responses:
+      "200":
+        description: Прогресс синхронизирован
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QuestSyncResult"
+      "403":
+        $ref: common.yaml#/components/responses/Forbidden
+
+# Monitoring
+/social/party/stats:
+  get:
+    tags:
+      - Monitoring
+    summary: Получить статистику групп
+    description: Возвращает общую статистику системы групп
+    operationId: getPartyStats
+    security:
+      - BearerAuth: [ ]
+    responses:
+      "200":
+        description: Статистика групп
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PartyStats"
+      "403":
+        $ref: common.yaml#/components/responses/Forbidden
 
 components:
   securitySchemes:
@@ -277,7 +277,7 @@ components:
 
     PartyStatus:
       type: string
-      enum: [active, disbanded]
+      enum: [ active, disbanded ]
       description: Статус группы
 
     PartyMember:
@@ -302,7 +302,7 @@ components:
 
     MemberRole:
       type: string
-      enum: [leader, member]
+      enum: [ leader, member ]
       description: Роль участника в группе
 
     # Invitations
@@ -344,7 +344,7 @@ components:
 
     InvitationStatus:
       type: string
-      enum: [pending, accepted, declined, expired]
+      enum: [ pending, accepted, declined, expired ]
 
     # Member Management
     AddMemberRequest:
@@ -369,7 +369,7 @@ components:
     # Loot Distribution
     LootMode:
       type: string
-      enum: [free_for_all, need_before_greed, master_looter, round_robin]
+      enum: [ free_for_all, need_before_greed, master_looter, round_robin ]
       description: Режим распределения лута
 
     LootModeResponse:
@@ -406,7 +406,7 @@ components:
             $ref: "#/components/schemas/LootItem"
         source:
           type: string
-          enum: [combat, quest, container]
+          enum: [ combat, quest, container ]
           description: Источник лута
       description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
 
@@ -423,7 +423,7 @@ components:
           minimum: 1
         quality:
           type: string
-          enum: [common, uncommon, rare, epic, legendary]
+          enum: [ common, uncommon, rare, epic, legendary ]
       description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
 
     LootDistributionResult:
@@ -453,7 +453,7 @@ components:
           type: integer
         method:
           type: string
-          enum: [assigned, rolled, traded]
+          enum: [ assigned, rolled, traded ]
       description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
 
     # Quest Coordination
@@ -527,7 +527,7 @@ components:
       properties:
         status:
           type: string
-          enum: [success, error]
+          enum: [ success, error ]
         message:
           type: string
       description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
@@ -549,4 +549,4 @@ components:
       description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
 
 security:
-  - BearerAuth: []
+  - BearerAuth: [ ]

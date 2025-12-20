@@ -26,48 +26,48 @@ metadata:
 spec:
   ingressClassName: nginx
   tls:
-  - hosts:
-    - api.necpgame.com
-    - ws.necpgame.com
-    secretName: necpgame-tls
+    - hosts:
+        - api.necpgame.com
+        - ws.necpgame.com
+      secretName: necpgame-tls
   rules:
-  # REST API
-  - host: api.necpgame.com
-    http:
-      paths:
-      - path: /gameplay/quests
-        pathType: Prefix
-        backend:
-          service:
-            name: gameplay-service-go
-            port:
-              number: 8083
-      - path: /health
-        pathType: Exact
-        backend:
-          service:
-            name: gameplay-service-go
-            port:
-              number: 8083
+    # REST API
+    - host: api.necpgame.com
+      http:
+        paths:
+          - path: /gameplay/quests
+            pathType: Prefix
+            backend:
+              service:
+                name: gameplay-service-go
+                port:
+                  number: 8083
+          - path: /health
+            pathType: Exact
+            backend:
+              service:
+                name: gameplay-service-go
+                port:
+                  number: 8083
 
-  # WebSocket API
-  - host: ws.necpgame.com
-    http:
-      paths:
-      - path: /ws/quests
-        pathType: Prefix
-        backend:
-          service:
-            name: gameplay-service-go
-            port:
-              number: 8083
-      - path: /ws/quest-engine
-        pathType: Prefix
-        backend:
-          service:
-            name: quest-engine-websocket
-            port:
-              number: 8301
+    # WebSocket API
+    - host: ws.necpgame.com
+      http:
+        paths:
+          - path: /ws/quests
+            pathType: Prefix
+            backend:
+              service:
+                name: gameplay-service-go
+                port:
+                  number: 8083
+          - path: /ws/quest-engine
+            pathType: Prefix
+            backend:
+              service:
+                name: quest-engine-websocket
+                port:
+                  number: 8301
 ---
 apiVersion: v1
 kind: Service
@@ -80,14 +80,14 @@ metadata:
 spec:
   type: ClusterIP
   ports:
-  - name: websocket
-    port: 8301
-    targetPort: 8301
-    protocol: TCP
-  - name: metrics
-    port: 9301
-    targetPort: 9301
-    protocol: TCP
+    - name: websocket
+      port: 8301
+      targetPort: 8301
+      protocol: TCP
+    - name: metrics
+      port: 9301
+      targetPort: 9301
+      protocol: TCP
   selector:
     app: quest-engine-websocket
 ---
@@ -121,52 +121,52 @@ spec:
         runAsUser: 1000
         fsGroup: 1000
       containers:
-      - name: quest-engine-websocket
-        image: necpgame-quest-engine-websocket:latest
-        imagePullPolicy: IfNotPresent
-        ports:
-        - name: websocket
-          containerPort: 8301
-          protocol: TCP
-        - name: metrics
-          containerPort: 9301
-          protocol: TCP
-        env:
-        - name: REDIS_URL
-          valueFrom:
-            secretKeyRef:
-              name: redis-secrets
-              key: url
-        - name: DATABASE_URL
-          valueFrom:
-            secretKeyRef:
-              name: database-secrets
-              key: url
-        resources:
-          requests:
-            memory: "64Mi"
-            cpu: "50m"
-          limits:
-            memory: "256Mi"
-            cpu: "200m"
-        startupProbe:
-          tcpSocket:
-            port: 8301
-          initialDelaySeconds: 10
-          periodSeconds: 5
-          timeoutSeconds: 3
-          failureThreshold: 12
-        livenessProbe:
-          tcpSocket:
-            port: 8301
-          initialDelaySeconds: 30
-          periodSeconds: 30
-          timeoutSeconds: 3
-          failureThreshold: 3
-        readinessProbe:
-          tcpSocket:
-            port: 8301
-          initialDelaySeconds: 5
-          periodSeconds: 10
-          timeoutSeconds: 3
-          failureThreshold: 3
+        - name: quest-engine-websocket
+          image: necpgame-quest-engine-websocket:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: websocket
+              containerPort: 8301
+              protocol: TCP
+            - name: metrics
+              containerPort: 9301
+              protocol: TCP
+          env:
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: redis-secrets
+                  key: url
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: database-secrets
+                  key: url
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "50m"
+            limits:
+              memory: "256Mi"
+              cpu: "200m"
+          startupProbe:
+            tcpSocket:
+              port: 8301
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 12
+          livenessProbe:
+            tcpSocket:
+              port: 8301
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 3
+            failureThreshold: 3
+          readinessProbe:
+            tcpSocket:
+              port: 8301
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3

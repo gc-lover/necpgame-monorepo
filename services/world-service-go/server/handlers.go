@@ -1,4 +1,4 @@
-// Issue: #1596 - ogen migration + performance optimizations
+// Package server Issue: #1596 - ogen migration + performance optimizations
 // Migrated from oapi-codegen to ogen for typed responses (no interface{} boxing!)
 package server
 
@@ -12,10 +12,8 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// Context timeout constants (Issue #1604)
 const (
-	DBTimeout    = 50 * time.Millisecond
-	CacheTimeout = 10 * time.Millisecond
+	DBTimeout = 50 * time.Millisecond
 )
 
 // Handlers implements api.Handler interface (ogen typed handlers!)
@@ -38,7 +36,7 @@ func NewHandlers(logger *logrus.Logger, interactiveRepo ...models.InteractiveRep
 }
 
 // ListContinents implements GET /world/continents (TYPED ogen response)
-func (h *Handlers) ListContinents(ctx context.Context, params api.ListContinentsParams) (api.ListContinentsRes, error) {
+func (h *Handlers) ListContinents(ctx context.Context, _ api.ListContinentsParams) (api.ListContinentsRes, error) {
 	// CRITICAL: Context timeout for DB operations (50ms)
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()

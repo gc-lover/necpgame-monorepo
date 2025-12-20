@@ -1,0 +1,106 @@
+# Issue: #2197 - Real-time Combat API Monitoring Schemas
+components:
+  schemas:
+
+    # ============================================================================
+    # MONITORING SCHEMAS
+    # ============================================================================
+
+    ConnectionStats:
+      type: object
+      required:
+        - timeframe
+        - total_connections
+        - active_connections
+        - peak_connections
+      properties:
+        timeframe:
+          type: string
+          enum: [ 1m, 5m, 15m, 1h, 24h ]
+          description: Statistics timeframe
+        total_connections:
+          type: integer
+          minimum: 0
+          description: Total connections in timeframe
+        active_connections:
+          type: integer
+          minimum: 0
+          description: Currently active connections
+        peak_connections:
+          type: integer
+          minimum: 0
+          description: Peak concurrent connections
+        average_session_duration:
+          type: number
+          format: float
+          description: Average session duration in seconds
+        connection_success_rate:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Connection success rate
+        disconnect_reasons:
+          type: object
+          additionalProperties:
+            type: integer
+            minimum: 0
+          description: Disconnect reasons and counts
+        regional_distribution:
+          type: object
+          additionalProperties:
+            type: integer
+            minimum: 0
+          description: Connections by region
+
+    PerformanceMetrics:
+      type: object
+      required:
+        - metric_type
+        - timeframe
+        - samples
+      properties:
+        metric_type:
+          type: string
+          enum: [ latency, throughput, error_rate, memory, cpu ]
+          description: Type of metrics
+        timeframe:
+          type: string
+          enum: [ 1m, 5m, 15m, 1h, 24h ]
+          description: Metrics timeframe
+        samples:
+          type: integer
+          minimum: 0
+          description: Number of metric samples
+        average_value:
+          type: number
+          format: float
+          description: Average metric value
+        min_value:
+          type: number
+          format: float
+          description: Minimum metric value
+        max_value:
+          type: number
+          format: float
+          description: Maximum metric value
+        p50_value:
+          type: number
+          format: float
+          description: 50th percentile value
+        p95_value:
+          type: number
+          format: float
+          description: 95th percentile value
+        p99_value:
+          type: number
+          format: float
+          description: 99th percentile value
+        trend:
+          type: string
+          enum: [ increasing, decreasing, stable ]
+          description: Metric trend over timeframe
+        unit:
+          type: string
+          enum: [ ms, requests_per_second, percentage, bytes, percentage ]
+          description: Metric unit

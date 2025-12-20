@@ -1,4 +1,4 @@
-// Issue: #MOVEMENT_OPTIMIZATION
+// Package server Issue: #MOVEMENT_OPTIMIZATION
 // Spatial Grid - Interest Management for Movement Service
 // Performance: O(1) zone lookup, bandwidth ↓70-80%, CPU ↓70%
 package server
@@ -7,7 +7,6 @@ import (
 	"math"
 	"sync"
 	"time"
-
 	// pb "github.com/gc-lover/necpgame-monorepo/proto/realtime/movement" // TODO: Fix protobuf import
 )
 
@@ -21,13 +20,13 @@ type SpatialGrid struct {
 
 // Zone represents a spatial zone
 type Zone struct {
-	ZoneID    uint32
-	MinX      float64
-	MinY      float64
-	MaxX      float64
-	MaxY      float64
-	Players   map[uint64]*PlayerState // player_id → state
-	mu        sync.RWMutex
+	ZoneID  uint32
+	MinX    float64
+	MinY    float64
+	MaxX    float64
+	MaxY    float64
+	Players map[uint64]*PlayerState // player_id → state
+	mu      sync.RWMutex
 }
 
 // PlayerState represents player position and velocity
@@ -48,12 +47,6 @@ type PlayerState struct {
 }
 
 // NewSpatialGrid creates new spatial grid
-func NewSpatialGrid(zoneSize float64) *SpatialGrid {
-	return &SpatialGrid{
-		zoneSize: zoneSize,
-		zones:    make(map[uint32]*Zone),
-	}
-}
 
 // GetZoneID calculates zone ID from coordinates
 // Performance: O(1) calculation
@@ -206,4 +199,3 @@ func (p *PlayerState) ToProto() *pb.PlayerPosition {
 	}
 }
 */
-

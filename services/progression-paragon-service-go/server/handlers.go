@@ -1,4 +1,4 @@
-// Issue: #1604, #1607
+// Package server Issue: #1604, #1607
 package server
 
 import (
@@ -12,7 +12,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// Context timeout constants
+// DBTimeout Context timeout constants
 const (
 	DBTimeout = 50 * time.Millisecond
 )
@@ -24,8 +24,8 @@ type ParagonHandlers struct {
 	logger  *logrus.Logger
 
 	// Memory pooling for hot path structs (zero allocations target!)
-	paragonLevelsPool sync.Pool
-	paragonStatsPool sync.Pool
+	paragonLevelsPool     sync.Pool
+	paragonStatsPool      sync.Pool
 	paragonAllocationPool sync.Pool
 }
 
@@ -117,15 +117,15 @@ func (h *ParagonHandlers) DistributeParagonPoints(ctx context.Context, req *api.
 	if err != nil {
 		// Issue: #1516 - Check for validation errors (BadRequest)
 		errMsg := err.Error()
-		if strings.Contains(errMsg, "invalid stat_type") || strings.Contains(errMsg, "points must be positive") || 
-		   strings.Contains(errMsg, "not enough paragon points") || strings.Contains(errMsg, "not found") {
+		if strings.Contains(errMsg, "invalid stat_type") || strings.Contains(errMsg, "points must be positive") ||
+			strings.Contains(errMsg, "not enough paragon points") || strings.Contains(errMsg, "not found") {
 			h.logger.WithError(err).Warn("Validation error in distribute paragon points")
 			return &api.DistributeParagonPointsBadRequest{
 				Error:   http.StatusText(http.StatusBadRequest),
 				Message: errMsg,
 			}, nil
 		}
-		
+
 		h.logger.WithError(err).Error("Failed to distribute paragon points")
 		return &api.DistributeParagonPointsInternalServerError{
 			Error:   http.StatusText(http.StatusInternalServerError),
@@ -192,7 +192,7 @@ func convertParagonLevelsToAPI(levels *ParagonLevels) api.ParagonLevels {
 		ExperienceCurrent:      api.NewOptInt(int(levels.ExperienceCurrent)),
 		ExperienceRequired:     api.NewOptInt(int(levels.ExperienceRequired)),
 		Allocations:            allocations,
-		UpdatedAt:             api.NewOptDateTime(levels.UpdatedAt),
+		UpdatedAt:              api.NewOptDateTime(levels.UpdatedAt),
 	}
 }
 
@@ -207,4 +207,3 @@ func convertParagonStatsToAPI(stats *ParagonStats) api.ParagonStats {
 		Percentile:         api.NewOptFloat32(float32(stats.Percentile)),
 	}
 }
-

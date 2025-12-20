@@ -188,7 +188,7 @@ func TestAdminService_GetAuditLogs_EmptyResult(t *testing.T) {
 	adminID := uuid.New()
 	ctx := context.Background()
 
-	logs := []models.AdminAuditLog{}
+	var logs []models.AdminAuditLog
 
 	mockRepo.On("ListAuditLogs", ctx, &adminID, (*models.AdminActionType)(nil), 10, 0).Return(logs, nil)
 	mockRepo.On("CountAuditLogs", ctx, &adminID, (*models.AdminActionType)(nil)).Return(0, nil)
@@ -201,4 +201,3 @@ func TestAdminService_GetAuditLogs_EmptyResult(t *testing.T) {
 	assert.Empty(t, response.Logs)
 	mockRepo.AssertExpectations(t)
 }
-

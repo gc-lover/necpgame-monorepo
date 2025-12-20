@@ -1,14 +1,12 @@
-// Issue: #176
+// Package server Issue: #176
 package server
 
 import (
-	"context"
 	"net/http"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/segmentio/kafka-go"
 	"go.uber.org/zap"
 )
 
@@ -29,7 +27,7 @@ func NewQuestManager(db *pgxpool.Pool, kafka *kafka.Writer, log *zap.SugaredLogg
 }
 
 // CleanupExpiredQuests removes expired quest instances
-func (m *QuestManager) CleanupExpiredQuests(ctx context.Context) error {
+func (m *QuestManager) CleanupExpiredQuests() error {
 	// TODO: Implement cleanup logic
 	return nil
 }
@@ -67,7 +65,7 @@ func NewDialogueManager(db *pgxpool.Pool, kafka *kafka.Writer, log *zap.SugaredL
 }
 
 // CleanupOldDialogues removes old dialogue states
-func (m *DialogueManager) CleanupOldDialogues(ctx context.Context) error {
+func (m *DialogueManager) CleanupOldDialogues() error {
 	// TODO: Implement cleanup logic
 	return nil
 }
@@ -148,8 +146,3 @@ type QuestObjective struct {
 	CreatedAt           time.Time              `json:"created_at"`
 	UpdatedAt           time.Time              `json:"updated_at"`
 }
-
-
-
-
-

@@ -79,4 +79,3 @@ func TestCharacterService_GetCharactersByAccountID_DatabaseError(t *testing.T) {
 	assert.Nil(t, characters)
 	mockRepo.AssertExpectations(t)
 }
-

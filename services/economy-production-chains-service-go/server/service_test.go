@@ -88,21 +88,3 @@ func TestChainsAndOrdersFlow(t *testing.T) {
 		t.Fatalf("cancel status = %d", w.Code)
 	}
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -1,4 +1,4 @@
-// Issue: #1604, #1599 - ogen handlers (TYPED responses)
+// Package server Issue: #1604, #1599 - ogen handlers (TYPED responses)
 package server
 
 import (
@@ -8,7 +8,7 @@ import (
 	"github.com/necpgame/progression-experience-service-go/pkg/api"
 )
 
-// Context timeout constants
+// DBTimeout Context timeout constants
 const (
 	DBTimeout = 50 * time.Millisecond
 )
@@ -125,8 +125,8 @@ func (h *Handlers) GetLevelRequirements(ctx context.Context, params api.GetLevel
 
 	if h.service == nil {
 		return &api.LevelRequirementsResponse{
-			Level:              api.NewOptInt(params.Level),
-			ExperienceRequired: api.NewOptInt(1000),
+			Level:                 api.NewOptInt(params.Level),
+			ExperienceRequired:    api.NewOptInt(1000),
 			AttributePointsReward: api.NewOptInt(5),
 			SkillPointsReward:     api.NewOptInt(3),
 		}, nil
@@ -135,8 +135,8 @@ func (h *Handlers) GetLevelRequirements(ctx context.Context, params api.GetLevel
 	response, err := h.service.GetLevelRequirements(ctx, params.Level)
 	if err != nil {
 		return &api.LevelRequirementsResponse{
-			Level:              api.NewOptInt(params.Level),
-			ExperienceRequired: api.NewOptInt(1000),
+			Level:                 api.NewOptInt(params.Level),
+			ExperienceRequired:    api.NewOptInt(1000),
 			AttributePointsReward: api.NewOptInt(5),
 			SkillPointsReward:     api.NewOptInt(3),
 		}, nil
@@ -171,4 +171,3 @@ func (h *Handlers) GetPlayerLevel(ctx context.Context, params api.GetPlayerLevel
 
 	return response, nil
 }
-

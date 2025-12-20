@@ -1,11 +1,11 @@
-// Issue: #1601 - ogen handlers (TYPED responses)
+// Package server Issue: #1601 - ogen handlers (TYPED responses)
 package server
 
 import (
 	"context"
 	"time"
 
-	api "github.com/gc-lover/necpgame-monorepo/services/stock-integration-service-go/pkg/api"
+	"github.com/gc-lover/necpgame-monorepo/services/stock-integration-service-go/pkg/api"
 	"github.com/sirupsen/logrus"
 )
 
@@ -39,14 +39,14 @@ func (h *IntegrationHandlers) GetStockEconomyImpact(ctx context.Context, params 
 
 	if h.service == nil {
 		response := &api.GetStockEconomyImpactOK{
-			Period:          api.OptString{Value: period, Set: true},
-			TradingVolume:   api.OptFloat64{Value: 0.0, Set: true},
-			MarketCapChange: api.OptFloat64{Value: 0.0, Set: true},
+			Period:               api.OptString{Value: period, Set: true},
+			TradingVolume:        api.OptFloat64{Value: 0.0, Set: true},
+			MarketCapChange:      api.OptFloat64{Value: 0.0, Set: true},
 			ResourcePriceImpacts: []api.GetStockEconomyImpactOKResourcePriceImpactsItem{},
 			CurrencyRateImpacts:  []api.GetStockEconomyImpactOKCurrencyRateImpactsItem{},
 			EconomicIndicators: api.OptGetStockEconomyImpactOKEconomicIndicators{
 				Value: api.GetStockEconomyImpactOKEconomicIndicators{
-					GdpImpact:      api.OptFloat64{Value: 0.0, Set: true},
+					GdpImpact:       api.OptFloat64{Value: 0.0, Set: true},
 					InflationImpact: api.OptFloat64{Value: 0.0, Set: true},
 				},
 				Set: true,
@@ -59,22 +59,21 @@ func (h *IntegrationHandlers) GetStockEconomyImpact(ctx context.Context, params 
 	if err != nil {
 		h.logger.WithError(err).Error("GetStockEconomyImpact: failed")
 		response := &api.GetStockEconomyImpactOK{
-		Period:          api.OptString{Value: period, Set: true},
-		TradingVolume:   api.OptFloat64{Value: 0.0, Set: true},
-		MarketCapChange: api.OptFloat64{Value: 0.0, Set: true},
-		ResourcePriceImpacts: []api.GetStockEconomyImpactOKResourcePriceImpactsItem{},
-		CurrencyRateImpacts:  []api.GetStockEconomyImpactOKCurrencyRateImpactsItem{},
-		EconomicIndicators: api.OptGetStockEconomyImpactOKEconomicIndicators{
-			Value: api.GetStockEconomyImpactOKEconomicIndicators{
-				GdpImpact:      api.OptFloat64{Value: 0.0, Set: true},
-				InflationImpact: api.OptFloat64{Value: 0.0, Set: true},
+			Period:               api.OptString{Value: period, Set: true},
+			TradingVolume:        api.OptFloat64{Value: 0.0, Set: true},
+			MarketCapChange:      api.OptFloat64{Value: 0.0, Set: true},
+			ResourcePriceImpacts: []api.GetStockEconomyImpactOKResourcePriceImpactsItem{},
+			CurrencyRateImpacts:  []api.GetStockEconomyImpactOKCurrencyRateImpactsItem{},
+			EconomicIndicators: api.OptGetStockEconomyImpactOKEconomicIndicators{
+				Value: api.GetStockEconomyImpactOKEconomicIndicators{
+					GdpImpact:       api.OptFloat64{Value: 0.0, Set: true},
+					InflationImpact: api.OptFloat64{Value: 0.0, Set: true},
+				},
+				Set: true,
 			},
-			Set: true,
-		},
-	}
+		}
 		return response, nil
 	}
 
 	return response, nil
 }
-

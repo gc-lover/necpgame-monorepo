@@ -12,9 +12,9 @@ import (
 )
 
 var (
-	ErrEngramNotFound      = errors.New("engram not found")
+	_                      = errors.New("engram not found")
 	ErrInvalidTransferType = errors.New("invalid transfer type")
-	ErrTransferFailed      = errors.New("transfer failed")
+	_                      = errors.New("transfer failed")
 	ErrInvalidCharacter    = errors.New("invalid character")
 )
 
@@ -26,48 +26,48 @@ type EngramTransferServiceInterface interface {
 }
 
 type TransferEngramResult struct {
-	TransferID    uuid.UUID   `json:"transfer_id"`
-	Success       bool        `json:"success"`
-	NewEngramID   *uuid.UUID  `json:"new_engram_id,omitempty"`
-	TransferredAt time.Time   `json:"transferred_at"`
+	TransferID    uuid.UUID  `json:"transfer_id"`
+	Success       bool       `json:"success"`
+	NewEngramID   *uuid.UUID `json:"new_engram_id,omitempty"`
+	TransferredAt time.Time  `json:"transferred_at"`
 }
 
 type LoanEngramResult struct {
-	LoanID           uuid.UUID   `json:"loan_id"`
-	Success          bool        `json:"success"`
-	ReturnDate       time.Time   `json:"return_date"`
-	TemporaryEngramID uuid.UUID   `json:"temporary_engram_id"`
+	LoanID            uuid.UUID `json:"loan_id"`
+	Success           bool      `json:"success"`
+	ReturnDate        time.Time `json:"return_date"`
+	TemporaryEngramID uuid.UUID `json:"temporary_engram_id"`
 }
 
 type ExtractEngramResult struct {
-	ExtractionID      uuid.UUID   `json:"extraction_id"`
-	Success           bool        `json:"success"`
-	EngramDamaged     bool        `json:"engram_damaged"`
-	DamagePercent     *float64    `json:"damage_percent,omitempty"`
-	ExtractedEngramID *uuid.UUID  `json:"extracted_engram_id,omitempty"`
-	TargetCharacterDied bool      `json:"target_character_died"`
+	ExtractionID        uuid.UUID  `json:"extraction_id"`
+	Success             bool       `json:"success"`
+	EngramDamaged       bool       `json:"engram_damaged"`
+	DamagePercent       *float64   `json:"damage_percent,omitempty"`
+	ExtractedEngramID   *uuid.UUID `json:"extracted_engram_id,omitempty"`
+	TargetCharacterDied bool       `json:"target_character_died"`
 }
 
 type TradeEngramResult struct {
-	TradeID     uuid.UUID   `json:"trade_id"`
-	Success     bool        `json:"success"`
-	TradedAt    time.Time   `json:"traded_at"`
-	NewOwnerID  *uuid.UUID  `json:"new_owner_id,omitempty"`
+	TradeID    uuid.UUID  `json:"trade_id"`
+	Success    bool       `json:"success"`
+	TradedAt   time.Time  `json:"traded_at"`
+	NewOwnerID *uuid.UUID `json:"new_owner_id,omitempty"`
 }
 
 type EngramTransferService struct {
-	repo       EngramTransferRepositoryInterface
+	repo         EngramTransferRepositoryInterface
 	creationRepo EngramCreationRepositoryInterface
-	cache      *redis.Client
-	logger     *logrus.Logger
+	cache        *redis.Client
+	logger       *logrus.Logger
 }
 
 func NewEngramTransferService(repo EngramTransferRepositoryInterface, creationRepo EngramCreationRepositoryInterface, cache *redis.Client) *EngramTransferService {
 	return &EngramTransferService{
-		repo:       repo,
+		repo:         repo,
 		creationRepo: creationRepo,
-		cache:      cache,
-		logger:     GetLogger(),
+		cache:        cache,
+		logger:       GetLogger(),
 	}
 }
 
@@ -93,22 +93,28 @@ func (s *EngramTransferService) TransferEngram(ctx context.Context, engramID uui
 	}
 
 	transfer := &EngramTransfer{
-		EngramID:        engramID,
-		FromCharacterID: fromCharacterID,
-		ToCharacterID:   toCharacterID,
-		TransferType:    transferType,
-		IsCopy:          isCopy,
-		NewAttitudeType: newAttitudeType,
-		TransferPrice:   transferPrice,
-		Status:          "completed",
+		Base: EngramTransferBase{
+			EngramID:     engramID,
+			TransferType: transferType,
+			IsCopy:       isCopy,
+			Status:       "completed",
+		},
+		Parties: EngramTransferParties{
+			FromCharacterID: fromCharacterID,
+			ToCharacterID:   toCharacterID,
+		},
+		Conditions: EngramTransferConditions{
+			NewAttitudeType: newAttitudeType,
+			TransferPrice:   transferPrice,
+		},
 	}
 
 	if hasNewEngram {
-		transfer.NewEngramID = &newEngramID
+		transfer.Outcome.NewEngramID = &newEngramID
 	}
 
 	now := time.Now()
-	transfer.TransferredAt = &now
+	transfer.Outcome.TransferredAt = &now
 
 	err := s.repo.CreateTransfer(ctx, transfer)
 	if err != nil {
@@ -142,19 +148,32 @@ func (s *EngramTransferService) LoanEngram(ctx context.Context, engramID uuid.UU
 	temporaryEngramID := uuid.New()
 	returnDate := time.Now().AddDate(0, 0, loanDurationDays)
 
-	transfer := &EngramTransfer{
-		EngramID:        engramID,
-		FromCharacterID: fromCharacterID,
-		ToCharacterID:   toCharacterID,
-		TransferType:    "loan",
-		IsCopy:          true,
-		Status:          "completed",
-		LoanReturnDate:  &returnDate,
-		NewEngramID:     &temporaryEngramID,
-	}
-
 	now := time.Now()
-	transfer.TransferredAt = &now
+	transfer := &EngramTransfer{
+		Base: EngramTransferBase{
+			ID:           uuid.New(),
+			TransferID:   uuid.New(),
+			EngramID:     engramID,
+			TransferType: "loan",
+			IsCopy:       true,
+			Status:       "completed",
+		},
+		Parties: EngramTransferParties{
+			FromCharacterID: fromCharacterID,
+			ToCharacterID:   toCharacterID,
+		},
+		Conditions: EngramTransferConditions{
+			LoanReturnDate: &returnDate,
+		},
+		Outcome: EngramTransferOutcome{
+			NewEngramID:   &temporaryEngramID,
+			TransferredAt: &now,
+		},
+		Metadata: EngramTransferMetadata{
+			CreatedAt: now,
+			UpdatedAt: now,
+		},
+	}
 
 	err := s.repo.CreateTransfer(ctx, transfer)
 	if err != nil {
@@ -163,21 +182,21 @@ func (s *EngramTransferService) LoanEngram(ctx context.Context, engramID uuid.UU
 	}
 
 	return &LoanEngramResult{
-		LoanID:           loanID,
-		Success:          true,
-		ReturnDate:       returnDate,
+		LoanID:            loanID,
+		Success:           true,
+		ReturnDate:        returnDate,
 		TemporaryEngramID: temporaryEngramID,
 	}, nil
 }
 
-func (s *EngramTransferService) ExtractEngram(ctx context.Context, engramID uuid.UUID, extractorCharacterID uuid.UUID, targetCharacterID uuid.UUID, extractionMethod string, riskLevel float64) (*ExtractEngramResult, error) {
+func (s *EngramTransferService) ExtractEngram(ctx context.Context, engramID uuid.UUID, extractorCharacterID uuid.UUID, targetCharacterID uuid.UUID, _ string, riskLevel float64) (*ExtractEngramResult, error) {
 	if riskLevel < 20 || riskLevel > 80 {
 		return nil, errors.New("risk level must be 20-80%")
 	}
 
 	extractionID := uuid.New()
 	extractedEngramID := uuid.New()
-	
+
 	engramDamaged := rand.Float64()*100 < riskLevel
 	var damagePercent *float64
 	if engramDamaged {
@@ -188,21 +207,29 @@ func (s *EngramTransferService) ExtractEngram(ctx context.Context, engramID uuid
 	targetDied := rand.Float64()*100 < (riskLevel * 0.3)
 
 	transfer := &EngramTransfer{
-		EngramID:             engramID,
-		FromCharacterID:      targetCharacterID,
-		ToCharacterID:        extractorCharacterID,
-		TransferType:         "extract",
-		IsCopy:               false,
-		Status:               "completed",
-		ExtractionRiskPercent: &riskLevel,
-		EngramDamaged:        engramDamaged,
-		DamagePercent:        damagePercent,
-		TargetCharacterDied:  targetDied,
-		NewEngramID:          &extractedEngramID,
+		Base: EngramTransferBase{
+			EngramID:     engramID,
+			TransferType: "extract",
+			IsCopy:       false,
+			Status:       "completed",
+		},
+		Parties: EngramTransferParties{
+			FromCharacterID: targetCharacterID,
+			ToCharacterID:   extractorCharacterID,
+		},
+		Conditions: EngramTransferConditions{
+			ExtractionRiskPercent: &riskLevel,
+		},
+		Outcome: EngramTransferOutcome{
+			EngramDamaged:       engramDamaged,
+			DamagePercent:       damagePercent,
+			TargetCharacterDied: targetDied,
+			NewEngramID:         &extractedEngramID,
+		},
 	}
 
 	now := time.Now()
-	transfer.TransferredAt = &now
+	transfer.Outcome.TransferredAt = &now
 
 	err := s.repo.CreateTransfer(ctx, transfer)
 	if err != nil {
@@ -211,16 +238,16 @@ func (s *EngramTransferService) ExtractEngram(ctx context.Context, engramID uuid
 	}
 
 	return &ExtractEngramResult{
-		ExtractionID:      extractionID,
-		Success:           true,
-		EngramDamaged:     engramDamaged,
-		DamagePercent:     damagePercent,
-		ExtractedEngramID: &extractedEngramID,
+		ExtractionID:        extractionID,
+		Success:             true,
+		EngramDamaged:       engramDamaged,
+		DamagePercent:       damagePercent,
+		ExtractedEngramID:   &extractedEngramID,
 		TargetCharacterDied: targetDied,
 	}, nil
 }
 
-func (s *EngramTransferService) TradeEngram(ctx context.Context, engramID uuid.UUID, fromCharacterID uuid.UUID, tradeType string, targetCharacterID *uuid.UUID, price *float64, exchangeItemID *uuid.UUID) (*TradeEngramResult, error) {
+func (s *EngramTransferService) TradeEngram(ctx context.Context, engramID uuid.UUID, fromCharacterID uuid.UUID, tradeType string, targetCharacterID *uuid.UUID, price *float64, _ *uuid.UUID) (*TradeEngramResult, error) {
 	validTypes := map[string]bool{"sell": true, "buy": true, "exchange": true}
 	if !validTypes[tradeType] {
 		return nil, ErrInvalidTransferType
@@ -235,20 +262,32 @@ func (s *EngramTransferService) TradeEngram(ctx context.Context, engramID uuid.U
 		newOwnerID = targetCharacterID
 	}
 
+	now := time.Now()
 	transfer := &EngramTransfer{
-		EngramID:        engramID,
-		FromCharacterID: fromCharacterID,
-		TransferType:    "trade",
-		TransferPrice:   price,
-		Status:          "completed",
+		Base: EngramTransferBase{
+			EngramID:     engramID,
+			TransferID:   uuid.New(),
+			TransferType: "trade",
+			Status:       "completed",
+		},
+		Parties: EngramTransferParties{
+			FromCharacterID: fromCharacterID,
+		},
+		Conditions: EngramTransferConditions{
+			TransferPrice: price,
+		},
+		Metadata: EngramTransferMetadata{
+			CreatedAt: now,
+			UpdatedAt: now,
+		},
 	}
 
 	if newOwnerID != nil {
-		transfer.ToCharacterID = *newOwnerID
+		transfer.Parties.ToCharacterID = *newOwnerID
 	}
 
-	now := time.Now()
-	transfer.TransferredAt = &now
+	transferTime := time.Now()
+	transfer.Outcome.TransferredAt = &transferTime
 
 	err := s.repo.CreateTransfer(ctx, transfer)
 	if err != nil {
@@ -263,6 +302,3 @@ func (s *EngramTransferService) TradeEngram(ctx context.Context, engramID uuid.U
 		NewOwnerID: newOwnerID,
 	}, nil
 }
-
-
-

@@ -31,7 +31,7 @@ var (
 		[]string{"account_id"},
 	)
 
-	characterErrorsTotal = promauto.NewCounterVec(
+	_ = promauto.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "character_errors_total",
 			Help: "Total number of character errors",
@@ -50,8 +50,4 @@ func RecordRequestDuration(method, endpoint string, duration float64) {
 
 func SetCharactersCount(accountID string, count float64) {
 	charactersTotal.WithLabelValues(accountID).Set(count)
-}
-
-func RecordError(errorType string) {
-	characterErrorsTotal.WithLabelValues(errorType).Inc()
 }

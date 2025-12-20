@@ -1,0 +1,399 @@
+openapi: 3.0.3
+info:
+  title: Combat Actions Service API
+  description: |
+    API для обработки действий в бою NECPGAME.
+
+    **Основные возможности:**
+    - Выполнение атак оружием
+    - Использование боевых способностей
+    - Защитные действия
+    - Использование предметов в бою
+
+    **Связанные API:**
+    - Combat Sessions Service (управление сессиями)
+    - Combat Turns Service (управление ходами)
+    - Combat Damage Service (расчёт урона)
+
+    **Автоматически:**
+    - Валидация действий (доступность, ресурсы, условия)
+    - Расчёт урона через Damage Calculator
+    - Применение эффектов
+    - Переключение хода после действия
+    - Синхронизация состояния через Realtime Gateway
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    url: https://necpgame.com/support
+    email: api@necpgame.com
+servers:
+  - url: http://localhost:8083
+    description: Gameplay Service (локальная разработка)
+  - url: https://gameplay.necpgame.com
+    description: Gameplay Service (продакшн)
+tags:
+  - name: Combat Actions
+    description: Действия в бою
+paths:
+  /api/v1/gameplay/combat/sessions/{session_id}/attack:
+    post:
+      tags:
+        - Combat Actions
+      summary: Атака
+      description: |
+        Выполняет атаку оружием в бою.
+
+        **Процесс:**
+        1. Валидация действия (правильный ход, доступность оружия)
+        2. Расчёт попадания (проверка точности)
+        3. Расчёт урона через Combat Damage API
+        4. Применение урона к цели
+        5. Проверка статуса цели (жив/повержен)
+        6. Логирование действия
+        7. Переключение хода
+        8. Синхронизация через Realtime Gateway
+
+        **Публикует события:**
+        - `combat:attack:performed`
+        - `combat:damage:dealt`
+        - `combat:participant:defeated` (если цель повержена)
+      operationId: performAttack
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AttackRequest'
+            examples:
+              melee:
+                summary: Атака холодным оружием
+                value:
+                  actor_id: 123e4567-e89b-12d3-a456-426614174000
+                  target_id: 123e4567-e89b-12d3-a456-426614174001
+                  weapon_id: weapon-katana-001
+              ranged:
+                summary: Атака огнестрельным оружием
+                value:
+                  actor_id: 123e4567-e89b-12d3-a456-426614174000
+                  target_id: 123e4567-e89b-12d3-a456-426614174001
+                  weapon_id: weapon-rifle-m16a4
+      responses:
+        '200':
+          description: Атака выполнена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CombatActionResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      security:
+        - BearerAuth: [ ]
+  /api/v1/gameplay/combat/sessions/{session_id}/ability:
+    post:
+      tags:
+        - Combat Actions
+      summary: Использование способности
+      description: |
+        Использует боевую способность в бою.
+
+        **Валидация:**
+        - Проверка доступности способности
+        - Проверка кулдауна (если ещё не готова - ошибка)
+        - Проверка ресурсов (мана, энергия, заряды)
+        - Проверка условий использования
+
+        **Типы способностей:**
+        - Атакующие (наносят урон)
+        - Защитные (щиты, барьеры)
+        - Лечащие (восстановление здоровья)
+        - Контроля (стан, замедление, паралич)
+        - Баффы (усиления)
+        - Дебаффы (ослабления)
+      operationId: useAbility
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AbilityRequest'
+      responses:
+        '200':
+          description: Способность использована
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CombatActionResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      security:
+        - BearerAuth: [ ]
+  /api/v1/gameplay/combat/sessions/{session_id}/defend:
+    post:
+      tags:
+        - Combat Actions
+      summary: Защита
+      description: |
+        Принимает защитную стойку на текущий ход.
+
+        **Эффект:**
+        - Увеличение брони на 50%
+        - Снижение входящего урона на 50%
+        - Действует до начала следующего хода
+
+        **Ограничения:**
+        - Нельзя атаковать или использовать способности
+        - Можно использовать предметы
+      operationId: defend
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - actor_id
+              properties:
+                actor_id:
+                  type: string
+                  format: uuid
+                  description: ID участника который защищается
+      responses:
+        '200':
+          description: Защита активирована
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CombatActionResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      security:
+        - BearerAuth: [ ]
+  /api/v1/gameplay/combat/sessions/{session_id}/item:
+    post:
+      tags:
+        - Combat Actions
+      summary: Использование предмета
+      description: |
+        Использует предмет из инвентаря в бою.
+
+        **Типы предметов:**
+        - Аптечки (восстановление здоровья)
+        - Гранаты (урон по области)
+        - Баффы (временные усиления)
+        - Антидоты (снятие статусов)
+        - Щиты (временная защита)
+
+        **Ограничения:**
+        - Предмет должен быть в инвентаре
+        - Можно использовать только consumable предметы
+        - Предмет расходуется после использования
+      operationId: useItem
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ItemRequest'
+      responses:
+        '200':
+          description: Предмет использован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CombatActionResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+      security:
+        - BearerAuth: [ ]
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT токен для аутентификации
+  parameters:
+    SessionId:
+      name: session_id
+      in: path
+      required: true
+      description: Уникальный идентификатор боевой сессии
+      schema:
+        type: string
+        format: uuid
+  schemas:
+    AttackRequest:
+      type: object
+      required:
+        - actor_id
+        - target_id
+        - weapon_id
+      properties:
+        actor_id:
+          type: string
+          format: uuid
+          description: ID атакующего участника
+        target_id:
+          type: string
+          format: uuid
+          description: ID цели атаки
+        weapon_id:
+          type: string
+          description: ID оружия (из инвентаря персонажа)
+    AbilityRequest:
+      type: object
+      required:
+        - actor_id
+        - ability_id
+      properties:
+        actor_id:
+          type: string
+          format: uuid
+          description: ID участника использующего способность
+        ability_id:
+          type: string
+          format: uuid
+          description: ID способности
+        target_id:
+          type: string
+          format: uuid
+          description: ID цели (если способность требует цель)
+    ItemRequest:
+      type: object
+      required:
+        - actor_id
+        - item_id
+      properties:
+        actor_id:
+          type: string
+          format: uuid
+          description: ID участника использующего предмет
+        item_id:
+          type: string
+          format: uuid
+          description: ID предмета из инвентаря
+        target_id:
+          type: string
+          format: uuid
+          description: ID цели (если предмет требует цель)
+    CombatActionResult:
+      type: object
+      properties:
+        action_type:
+          type: string
+          enum:
+            - attack
+            - ability
+            - defend
+            - item
+          description: Тип выполненного действия
+        actor_id:
+          type: string
+          format: uuid
+          description: ID участника выполнившего действие
+        target_id:
+          type: string
+          format: uuid
+          description: ID цели действия
+        damage_dealt:
+          type: integer
+          description: Нанесённый урон (0 для неатакующих действий)
+        healing_done:
+          type: integer
+          description: Восстановленное здоровье
+        effects_applied:
+          type: array
+          description: Применённые эффекты
+          items:
+            type: string
+            format: uuid
+            description: ID эффектов (см. Combat Damage API)
+        turn_number:
+          type: integer
+          description: Номер хода когда было выполнено действие
+        was_successful:
+          type: boolean
+          description: Успешно ли выполнено действие
+        failure_reason:
+          type: string
+          description: Причина неудачи (если применимо)
+        created_at:
+          type: string
+          format: date-time
+          description: Время выполнения действия
+    Error:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          description: Тип ошибки
+        message:
+          type: string
+          description: Сообщение об ошибке
+        code:
+          type: string
+          description: Код ошибки
+          nullable: true
+        details:
+          type: object
+          additionalProperties: true
+          description: Дополнительные детали ошибки
+          nullable: true
+  responses:
+    BadRequest:
+      description: Неверный запрос
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: BadRequest
+            message: Неверные параметры запроса
+            code: INVALID_PARAMETERS
+    Unauthorized:
+      description: Требуется аутентификация
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: Unauthorized
+            message: Требуется аутентификация
+            code: AUTH_REQUIRED
+    NotFound:
+      description: Ресурс не найден
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: NotFound
+            message: Ресурс не найден
+            code: RESOURCE_NOT_FOUND

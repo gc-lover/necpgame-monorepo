@@ -1,0 +1,502 @@
+openapi: 3.0.3
+info:
+  title: Security Service API
+  version: 1.0.0
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  description: |
+    Security Service for MMO RPG Authentication and Authorization
+
+    ## Overview
+    Provides comprehensive security for MMOFPS RPG including:
+    - User registration and authentication
+    - JWT token management
+    - Role-Based Access Control (RBAC)
+    - Session management
+    - OAuth integration
+    - Multi-Factor Authentication (MFA)
+
+    ## Key Features
+    - **JWT Authentication**: Secure token-based authentication
+    - **RBAC System**: Fine-grained permissions and roles
+    - **Session Management**: Secure session handling with refresh tokens
+    - **OAuth Integration**: Social login support (Google, Discord, etc.)
+    - **MFA Support**: TOTP and SMS-based 2FA
+    - **Security Monitoring**: Failed login tracking and suspicious activity detection
+
+servers:
+  - url: https://security.necpgame.com/api/v1
+    description: Production server
+  - url: http://localhost:8080/api/v1
+    description: Local development
+
+security:
+  - BearerAuth: [ ]
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Forbidden:
+      description: Insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Conflict:
+      description: Resource conflict
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+  schemas:
+    Error:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          description: Error code
+        message:
+          type: string
+          description: Human-readable error message
+        details:
+          type: object
+          description: Additional error details
+
+    UserId:
+      type: string
+      format: uuid
+      description: User unique identifier
+
+    Email:
+      type: string
+      format: email
+      description: User email address
+
+    Password:
+      type: string
+      minLength: 8
+      maxLength: 128
+      description: User password
+
+    Username:
+      type: string
+      minLength: 3
+      maxLength: 50
+      pattern: '^[a-zA-Z0-9_-]+$'
+      description: Username (alphanumeric, underscore, dash only)
+
+    Role:
+      type: string
+      enum: [ player, moderator, admin, developer ]
+      description: User role in the system
+
+    UserStatus:
+      type: string
+      enum: [ active, suspended, banned, pending_verification ]
+      description: User account status
+
+    User:
+      type: object
+      required:
+        - id
+        - username
+        - email
+        - status
+        - created_at
+      properties:
+        id:
+          $ref: '#/components/schemas/UserId'
+        username:
+          $ref: '#/components/schemas/Username'
+        email:
+          $ref: '#/components/schemas/Email'
+        display_name:
+          type: string
+          maxLength: 100
+          description: Display name
+        status:
+          $ref: '#/components/schemas/UserStatus'
+        roles:
+          type: array
+          items:
+            $ref: '#/components/schemas/Role'
+          description: User roles
+        last_login:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    RegisterRequest:
+      type: object
+      required:
+        - username
+        - email
+        - password
+      properties:
+        username:
+          $ref: '#/components/schemas/Username'
+        email:
+          $ref: '#/components/schemas/Email'
+        password:
+          $ref: '#/components/schemas/Password'
+        display_name:
+          type: string
+          maxLength: 100
+          description: Optional display name
+
+    LoginRequest:
+      type: object
+      required:
+        - username
+        - password
+      properties:
+        username:
+          $ref: '#/components/schemas/Username'
+        password:
+          $ref: '#/components/schemas/Password'
+        remember_me:
+          type: boolean
+          default: false
+          description: Extend session duration
+
+    AuthResponse:
+      type: object
+      required:
+        - access_token
+        - refresh_token
+        - token_type
+        - expires_in
+        - user
+      properties:
+        access_token:
+          type: string
+          description: JWT access token
+        refresh_token:
+          type: string
+          description: JWT refresh token
+        token_type:
+          type: string
+          enum: [ Bearer ]
+          default: Bearer
+        expires_in:
+          type: integer
+          description: Access token expiration time in seconds
+        user:
+          $ref: '#/components/schemas/User'
+
+    RefreshTokenRequest:
+      type: object
+      required:
+        - refresh_token
+      properties:
+        refresh_token:
+          type: string
+          description: JWT refresh token
+
+    ChangePasswordRequest:
+      type: object
+      required:
+        - current_password
+        - new_password
+      properties:
+        current_password:
+          type: string
+          description: Current password
+        new_password:
+          $ref: '#/components/schemas/Password'
+
+    ResetPasswordRequest:
+      type: object
+      required:
+        - email
+      properties:
+        email:
+          $ref: '#/components/schemas/Email'
+
+    ConfirmResetPasswordRequest:
+      type: object
+      required:
+        - token
+        - new_password
+      properties:
+        token:
+          type: string
+          description: Password reset token
+        new_password:
+          $ref: '#/components/schemas/Password'
+
+    MFASetupResponse:
+      type: object
+      required:
+        - secret
+        - qr_code_url
+      properties:
+        secret:
+          type: string
+          description: TOTP secret
+        qr_code_url:
+          type: string
+          format: uri
+          description: QR code URL for TOTP setup
+
+    MFAVerifyRequest:
+      type: object
+      required:
+        - code
+      properties:
+        code:
+          type: string
+          minLength: 6
+          maxLength: 6
+          pattern: '^[0-9]+$'
+          description: TOTP code
+
+    OAuthProvider:
+      type: string
+      enum: [ google, discord, github, steam ]
+      description: OAuth provider
+
+    OAuthLoginRequest:
+      type: object
+      required:
+        - provider
+        - code
+      properties:
+        provider:
+          $ref: '#/components/schemas/OAuthProvider'
+        code:
+          type: string
+          description: OAuth authorization code
+        redirect_uri:
+          type: string
+          format: uri
+          description: OAuth redirect URI
+
+    Permission:
+      type: object
+      required:
+        - resource
+        - action
+      properties:
+        resource:
+          type: string
+          description: Resource name (e.g., "users", "games", "admin")
+        action:
+          type: string
+          enum: [ create, read, update, delete, manage ]
+          description: Action on resource
+
+    RoleDefinition:
+      type: object
+      required:
+        - name
+        - permissions
+      properties:
+        name:
+          $ref: '#/components/schemas/Role'
+        description:
+          type: string
+          maxLength: 200
+        permissions:
+          type: array
+          items:
+            $ref: '#/components/schemas/Permission'
+
+    SessionInfo:
+      type: object
+      required:
+        - session_id
+        - user_id
+        - created_at
+        - expires_at
+        - is_active
+      properties:
+        session_id:
+          type: string
+          format: uuid
+        user_id:
+          $ref: '#/components/schemas/UserId'
+        user_agent:
+          type: string
+          description: User agent string
+        ip_address:
+          type: string
+          description: IP address
+        created_at:
+          type: string
+          format: date-time
+        last_activity:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+        is_active:
+          type: boolean
+
+    SessionsListResponse:
+      type: object
+      required:
+        - sessions
+        - total_count
+      properties:
+        sessions:
+          type: array
+          items:
+            $ref: '#/components/schemas/SessionInfo'
+        total_count:
+          type: integer
+          minimum: 0
+
+paths:
+  /health:
+    get:
+      tags: [ health ]
+      summary: Health check
+      operationId: healthCheck
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: healthy
+                  timestamp:
+                    type: string
+                    format: date-time
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /auth/register:
+    post:
+      tags: [ authentication ]
+      summary: Register new user
+      operationId: registerUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /auth/login:
+    post:
+      tags: [ authentication ]
+      summary: User login
+      operationId: loginUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          description: Too many login attempts
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/refresh:
+    post:
+      tags: [ authentication ]
+      summary: Refresh access token
+      operationId: refreshToken
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshTokenRequest'
+      responses:
+        '200':
+          description: Token refreshed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/logout:
+    post:
+      tags: [ authentication ]
+      summary: Logout user
+      operationId: logoutUser
+      responses:
+        '200':
+          description: Logout successful
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+

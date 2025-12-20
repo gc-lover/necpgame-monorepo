@@ -35,4 +35,3 @@ func TestCharacterEngramHistoricalServiceNoLeaks(t *testing.T) {
 
 	// If goroutines leaked from character engram historical handlers, test FAILS
 }
-

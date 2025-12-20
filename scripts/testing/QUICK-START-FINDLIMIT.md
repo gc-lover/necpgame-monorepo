@@ -85,6 +85,7 @@ OK RECOMMENDED LIMIT: 180 clients
 ```
 
 **Решение**: Запустите Gateway:
+
 ```powershell
 docker-compose up -d realtime-gateway
 ```
@@ -92,10 +93,12 @@ docker-compose up -d realtime-gateway
 ### Слишком много ошибок
 
 **Возможные причины**:
+
 - Gateway перегружен
 - Недостаточно ресурсов
 
-**Решение**: 
+**Решение**:
+
 - Проверьте логи: `docker-compose logs realtime-gateway`
 - Увеличьте `-CooldownSeconds` между тестами
 - Проверьте метрики: `curl http://localhost:9093/metrics`

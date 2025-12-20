@@ -1,4 +1,4 @@
-// Issue: #1596 - ogen migration + performance optimizations
+// Package server Issue: #1596 - ogen migration + performance optimizations
 package server
 
 import (
@@ -113,6 +113,3 @@ func healthCheckHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(`{"status":"healthy"}`))
 }
-
-
-

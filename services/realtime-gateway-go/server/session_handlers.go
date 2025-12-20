@@ -81,8 +81,8 @@ func (s *WebSocketServer) handleReconnect(w http.ResponseWriter, r *http.Request
 
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]interface{}{
-			"status":         "reconnected",
-			"token":          session.Token,
+			"status":          "reconnected",
+			"token":           session.Token,
 			"reconnect_token": session.ReconnectToken,
 		})
 	} else {
@@ -90,4 +90,3 @@ func (s *WebSocketServer) handleReconnect(w http.ResponseWriter, r *http.Request
 		json.NewEncoder(w).Encode(map[string]string{"error": "session manager not available"})
 	}
 }
-

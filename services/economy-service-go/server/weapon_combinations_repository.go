@@ -27,17 +27,17 @@ func NewWeaponCombinationsRepository(db *pgxpool.Pool) *WeaponCombinationsReposi
 	}
 }
 
-func (r *WeaponCombinationsRepository) SaveWeaponCombination(ctx context.Context, weaponID uuid.UUID, combinationData map[string]interface{}) error {
+func (r *WeaponCombinationsRepository) SaveWeaponCombination(_ context.Context, weaponID uuid.UUID, _ map[string]interface{}) error {
 	r.logger.WithField("weapon_id", weaponID).Info("Saving weapon combination")
 	return nil
 }
 
-func (r *WeaponCombinationsRepository) GetWeaponCombination(ctx context.Context, weaponID uuid.UUID) (map[string]interface{}, error) {
+func (r *WeaponCombinationsRepository) GetWeaponCombination(_ context.Context, weaponID uuid.UUID) (map[string]interface{}, error) {
 	r.logger.WithField("weapon_id", weaponID).Info("Getting weapon combination")
 	return map[string]interface{}{}, nil
 }
 
-func (r *WeaponCombinationsRepository) SaveWeaponModifier(ctx context.Context, weaponID, modifierID uuid.UUID, modifierData map[string]interface{}) error {
+func (r *WeaponCombinationsRepository) SaveWeaponModifier(_ context.Context, weaponID, modifierID uuid.UUID, _ map[string]interface{}) error {
 	r.logger.WithFields(logrus.Fields{
 		"weapon_id":   weaponID,
 		"modifier_id": modifierID,
@@ -45,52 +45,7 @@ func (r *WeaponCombinationsRepository) SaveWeaponModifier(ctx context.Context, w
 	return nil
 }
 
-func (r *WeaponCombinationsRepository) GetWeaponModifiers(ctx context.Context) ([]map[string]interface{}, error) {
+func (r *WeaponCombinationsRepository) GetWeaponModifiers(_ context.Context) ([]map[string]interface{}, error) {
 	r.logger.Info("Getting weapon modifiers")
 	return []map[string]interface{}{}, nil
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

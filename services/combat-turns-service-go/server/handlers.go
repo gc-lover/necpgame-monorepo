@@ -1,4 +1,4 @@
-// Issue: #1595
+// Package server Issue: #1595
 // ogen handlers - TYPED responses (no interface{} boxing!)
 package server
 
@@ -9,10 +9,8 @@ import (
 	"github.com/gc-lover/necpgame-monorepo/services/combat-turns-service-go/pkg/api"
 )
 
-// Context timeout constants
 const (
-	DBTimeout    = 50 * time.Millisecond
-	CacheTimeout = 10 * time.Millisecond
+	DBTimeout = 50 * time.Millisecond
 )
 
 // Handlers implements api.Handler interface (ogen typed handlers!)
@@ -26,7 +24,7 @@ type Handlers struct {
 func NewHandlers(service *Service) *Handlers {
 	// Issue: #1588 - Resilience patterns for hot path service
 	loadShedder := NewLoadShedder(500) // Max 500 concurrent requests
-	
+
 	return &Handlers{
 		service:     service,
 		loadShedder: loadShedder,
@@ -49,7 +47,7 @@ func (h *Handlers) GetCurrentTurn(ctx context.Context, params api.GetCurrentTurn
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	result, err := h.service.GetCurrentTurn(ctx, params.SessionId)
+	result, err := h.service.GetCurrentTurn(params.SessionId)
 	if err != nil {
 		return &api.GetCurrentTurnInternalServerError{}, err
 	}
@@ -62,7 +60,7 @@ func (h *Handlers) GetTurnOrder(ctx context.Context, params api.GetTurnOrderPara
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	result, err := h.service.GetTurnOrder(ctx, params.SessionId)
+	result, err := h.service.GetTurnOrder(params.SessionId)
 	if err != nil {
 		return &api.GetTurnOrderInternalServerError{}, err
 	}
@@ -75,7 +73,7 @@ func (h *Handlers) NextTurn(ctx context.Context, params api.NextTurnParams) (api
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	result, err := h.service.NextTurn(ctx, params.SessionId)
+	result, err := h.service.NextTurn(params.SessionId)
 	if err != nil {
 		return &api.NextTurnInternalServerError{}, err
 	}
@@ -84,11 +82,11 @@ func (h *Handlers) NextTurn(ctx context.Context, params api.NextTurnParams) (api
 }
 
 // SkipTurn - TYPED response!
-func (h *Handlers) SkipTurn(ctx context.Context, req *api.SkipTurnRequest, params api.SkipTurnParams) (api.SkipTurnRes, error) {
+func (h *Handlers) SkipTurn(ctx context.Context, _ *api.SkipTurnRequest, params api.SkipTurnParams) (api.SkipTurnRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	result, err := h.service.SkipTurn(ctx, params.SessionId, req)
+	result, err := h.service.SkipTurn(params.SessionId)
 	if err != nil {
 		return &api.SkipTurnInternalServerError{}, err
 	}

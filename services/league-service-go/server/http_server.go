@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	api "github.com/gc-lover/necpgame-monorepo/services/league-service-go/pkg/api"
+	"github.com/gc-lover/necpgame-monorepo/services/league-service-go/pkg/api"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
 )
@@ -70,6 +70,3 @@ func corsMiddleware(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 	})
 }
-
-
-

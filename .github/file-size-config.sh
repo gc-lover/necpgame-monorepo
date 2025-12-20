@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export MAX_LINES=600
+export MAX_LINES=1000
 
 export FILE_EXTENSIONS=(
   "md"

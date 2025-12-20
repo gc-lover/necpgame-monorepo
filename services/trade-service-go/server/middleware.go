@@ -1,4 +1,4 @@
-// Issue: #131
+// Package server Issue: #131
 package server
 
 import (
@@ -19,10 +19,10 @@ func LoggingMiddleware(next http.Handler) http.Handler {
 		start := time.Now()
 		next.ServeHTTP(w, r)
 		logger.WithFields(logrus.Fields{
-			"method":     r.Method,
-			"path":       r.URL.Path,
-			"duration":   time.Since(start),
-			"status":     w.Header().Get("Status"),
+			"method":   r.Method,
+			"path":     r.URL.Path,
+			"duration": time.Since(start),
+			"status":   w.Header().Get("Status"),
 		}).Info("HTTP request")
 	})
 }
@@ -32,4 +32,3 @@ func MetricsMiddleware(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 	})
 }
-

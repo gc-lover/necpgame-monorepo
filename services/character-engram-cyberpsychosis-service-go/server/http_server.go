@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 	"time"
 
@@ -124,28 +123,6 @@ func (s *HTTPServer) corsMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func respondJSON(w http.ResponseWriter, statusCode int, data interface{}) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(statusCode)
-	if err := json.NewEncoder(w).Encode(data); err != nil {
-		GetLogger().WithError(err).Error("Failed to encode JSON response")
-	}
-}
-
-func respondError(w http.ResponseWriter, statusCode int, err error, details string) {
-	GetLogger().WithError(err).Error(details)
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(statusCode)
-	code := http.StatusText(statusCode)
-	errorResponse := api.Error{
-		Code:    api.NewOptNilString(code),
-		Message: details,
-	}
-	if err := json.NewEncoder(w).Encode(errorResponse); err != nil {
-		GetLogger().WithError(err).Error("Failed to encode JSON error response")
-	}
-}
-
 func requestIDMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		reqID := r.Header.Get("X-Request-ID")
@@ -167,23 +144,3 @@ func getRequestID(ctx context.Context) string {
 	}
 	return ""
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -1,4 +1,4 @@
-// Issue: ogen migration, #1607
+// Package server Issue: ogen migration, #1607
 package server
 
 import (
@@ -6,9 +6,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/gc-lover/necpgame-monorepo/services/voice-chat-service-go/models"
 	"github.com/gc-lover/necpgame-monorepo/services/voice-chat-service-go/pkg/api"
+	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 )
 
@@ -21,10 +21,10 @@ type Handlers struct {
 	logger       *logrus.Logger
 
 	// Memory pooling for hot path structs (Issue #1607)
-	channelPool           sync.Pool
-	channelDetailPool     sync.Pool
-	channelListPool       sync.Pool
-	participantListPool   sync.Pool
+	channelPool             sync.Pool
+	channelDetailPool       sync.Pool
+	channelListPool         sync.Pool
+	participantListPool     sync.Pool
 	webRTCTokenResponsePool sync.Pool
 }
 
@@ -336,7 +336,7 @@ func (h *Handlers) UpdateParticipantPosition(ctx context.Context, req *api.Updat
 	return &api.UpdateParticipantPositionOK{}, nil
 }
 
-func (h *Handlers) GetWebRTCToken(ctx context.Context, req *api.GetWebRTCTokenRequest) (api.GetWebRTCTokenRes, error) {
+func (h *Handlers) GetWebRTCToken(ctx context.Context) (api.GetWebRTCTokenRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
@@ -347,7 +347,7 @@ func (h *Handlers) GetWebRTCToken(ctx context.Context, req *api.GetWebRTCTokenRe
 	}, nil
 }
 
-func (h *Handlers) ConnectWebRTC(ctx context.Context, req *api.ConnectWebRTCRequest) (api.ConnectWebRTCRes, error) {
+func (h *Handlers) ConnectWebRTC(ctx context.Context) (api.ConnectWebRTCRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
@@ -358,7 +358,7 @@ func (h *Handlers) ConnectWebRTC(ctx context.Context, req *api.ConnectWebRTCRequ
 	}, nil
 }
 
-func (h *Handlers) DisconnectWebRTC(ctx context.Context, req *api.DisconnectWebRTCRequest) (api.DisconnectWebRTCRes, error) {
+func (h *Handlers) DisconnectWebRTC(ctx context.Context) (api.DisconnectWebRTCRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
@@ -368,4 +368,3 @@ func (h *Handlers) DisconnectWebRTC(ctx context.Context, req *api.DisconnectWebR
 		Message: "not implemented",
 	}, nil
 }
-

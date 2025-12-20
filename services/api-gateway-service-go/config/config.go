@@ -1,4 +1,4 @@
-// Issue: #146073424
+// Package config Issue: #146073424
 package config
 
 import (

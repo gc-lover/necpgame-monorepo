@@ -1,4 +1,4 @@
-// Issue: #1600 - ogen handlers (TYPED responses)
+// Package server Issue: #1600 - ogen handlers (TYPED responses)
 package server
 
 import (
@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	api "github.com/necpgame/stock-futures-service-go/pkg/api"
+	"github.com/necpgame/stock-futures-service-go/pkg/api"
 	"github.com/sirupsen/logrus"
 )
 
@@ -36,7 +36,7 @@ func (h *FuturesHandlers) ListFuturesContracts(ctx context.Context, params api.L
 	}).Info("ListFuturesContracts request")
 
 	// TODO: Implement business logic
-	contracts := []api.FuturesContract{}
+	var contracts []api.FuturesContract
 	total := 0
 
 	return &api.ListFuturesContractsOK{
@@ -62,22 +62,22 @@ func (h *FuturesHandlers) OpenFuturesPosition(ctx context.Context, req *api.Open
 	// TODO: Implement business logic
 	positionID := uuid.New()
 	now := time.Now()
-	entryPrice := float64(0.0)
-	currentPrice := float64(0.0)
-	marginHeld := float64(0.0)
-	pnl := float64(0.0)
+	entryPrice := 0.0
+	currentPrice := 0.0
+	marginHeld := 0.0
+	pnl := 0.0
 	daysToSettlement := 0
 
 	return &api.FuturesPosition{
 		PositionID:       api.NewOptUUID(positionID),
-		ContractID:      api.NewOptUUID(req.ContractID),
-		Quantity:        api.NewOptInt(req.Quantity),
-		EntryPrice:      api.NewOptFloat64(entryPrice),
-		CurrentPrice:    api.NewOptFloat64(currentPrice),
-		MarginHeld:      api.NewOptFloat64(marginHeld),
-		Pnl:             api.NewOptFloat64(pnl),
+		ContractID:       api.NewOptUUID(req.ContractID),
+		Quantity:         api.NewOptInt(req.Quantity),
+		EntryPrice:       api.NewOptFloat64(entryPrice),
+		CurrentPrice:     api.NewOptFloat64(currentPrice),
+		MarginHeld:       api.NewOptFloat64(marginHeld),
+		Pnl:              api.NewOptFloat64(pnl),
 		DaysToSettlement: api.NewOptInt(daysToSettlement),
-		OpenedAt:        api.NewOptDateTime(now),
+		OpenedAt:         api.NewOptDateTime(now),
 	}, nil
 }
 
@@ -96,7 +96,7 @@ func (h *FuturesHandlers) ListFuturesPositions(ctx context.Context, params api.L
 	}).Info("ListFuturesPositions request")
 
 	// TODO: Implement business logic
-	positions := []api.FuturesPosition{}
+	var positions []api.FuturesPosition
 	total := 0
 
 	return &api.ListFuturesPositionsOK{
@@ -118,7 +118,7 @@ func (h *FuturesHandlers) CloseFuturesPosition(ctx context.Context, params api.C
 
 	// TODO: Implement business logic
 	now := time.Now()
-	realizedPnl := float64(0.0)
+	realizedPnl := 0.0
 
 	return &api.ClosePositionResponse{
 		PositionID:  api.NewOptUUID(params.PositionID),

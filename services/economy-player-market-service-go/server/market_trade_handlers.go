@@ -1,4 +1,4 @@
-// SQL queries use prepared statements with placeholders (, , ?) for safety
+// Package server SQL queries use prepared statements with placeholders (, , ?) for safety
 // Issue: #42 - economy-player-market ogen typed handlers with business logic
 package server
 
@@ -108,10 +108,10 @@ func (h *MarketHandlersOgen) GetPurchaseHistory(ctx context.Context, params api.
 	limit := 50
 	offset := 0
 	if params.Limit.IsSet() && params.Limit.Value > 0 && params.Limit.Value <= 100 {
-		limit = int(params.Limit.Value)
+		limit = params.Limit.Value
 	}
 	if params.Offset.IsSet() && params.Offset.Value >= 0 {
-		offset = int(params.Offset.Value)
+		offset = params.Offset.Value
 	}
 
 	// Get purchase history
@@ -164,10 +164,10 @@ func (h *MarketHandlersOgen) GetSalesHistory(ctx context.Context, params api.Get
 	limit := 50
 	offset := 0
 	if params.Limit.IsSet() && params.Limit.Value > 0 && params.Limit.Value <= 100 {
-		limit = int(params.Limit.Value)
+		limit = params.Limit.Value
 	}
 	if params.Offset.IsSet() && params.Offset.Value >= 0 {
-		offset = int(params.Offset.Value)
+		offset = params.Offset.Value
 	}
 
 	// Get sales history
@@ -199,5 +199,3 @@ func (h *MarketHandlersOgen) GetSalesHistory(ctx context.Context, params api.Get
 		Total: api.NewOptInt(len(sales)), // Simplified - should count all records
 	}, nil
 }
-
-

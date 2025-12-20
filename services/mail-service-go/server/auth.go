@@ -1,4 +1,4 @@
-// Issue: #151 - JWT validation
+// Package server Issue: #151 - JWT validation
 package server
 
 import (
@@ -46,8 +46,8 @@ type JwtValidator struct {
 
 type Claims struct {
 	jwt.RegisteredClaims
-	PreferredUsername string   `json:"preferred_username,omitempty"`
-	Email             string   `json:"email,omitempty"`
+	PreferredUsername string `json:"preferred_username,omitempty"`
+	Email             string `json:"email,omitempty"`
 	RealmAccess       struct {
 		Roles []string `json:"roles,omitempty"`
 	} `json:"realm_access,omitempty"`
@@ -212,12 +212,11 @@ func ExtractPlayerIDFromClaims(claims *Claims) (uuid.UUID, error) {
 	if claims.Sub == "" {
 		return uuid.Nil, fmt.Errorf("sub claim is empty")
 	}
-	
+
 	playerID, err := uuid.Parse(claims.Sub)
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("failed to parse sub as UUID: %w", err)
 	}
-	
+
 	return playerID, nil
 }
-

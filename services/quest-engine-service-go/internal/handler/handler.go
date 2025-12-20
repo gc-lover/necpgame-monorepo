@@ -1,4 +1,4 @@
-// SQL queries use prepared statements with placeholders (, , ?) for safety
+// Package handler SQL queries use prepared statements with placeholders (, , ?) for safety
 // HTTP handlers use context.WithTimeout for request timeouts
 package handler
 
@@ -14,10 +14,6 @@ type Handler struct {
 	questService *service.QuestService
 }
 
-func NewHandler(questService *service.QuestService) *Handler {
-	return &Handler{questService: questService}
-}
-
 func (h *Handler) Router() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/health", h.handleHealth)
@@ -25,7 +21,7 @@ func (h *Handler) Router() http.Handler {
 	return mux
 }
 
-func (h *Handler) handleHealth(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) handleHealth(w http.ResponseWriter, _ *http.Request) {
 	telemetry := h.questService.GetTelemetry()
 
 	w.Header().Set("Content-Type", "application/json")

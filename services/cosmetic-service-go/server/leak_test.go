@@ -46,4 +46,3 @@ func TestCosmeticServiceNoLeaks(t *testing.T) {
 // - Connection pool limits
 // - Timeout for all DB operations
 // - Proper transaction management
-

@@ -1,6 +1,7 @@
 # DevOps Agent - Architecture Validation Commands
 
 ## 🎯 Purpose
+
 Commands for DevOps agent to validate NECPGAME project architecture and ensure code quality standards.
 
 **Issue:** #1866
@@ -10,23 +11,28 @@ Commands for DevOps agent to validate NECPGAME project architecture and ensure c
 ### Architecture Validation
 
 #### `validate-architecture-simple`
+
 **Purpose:** Run basic architecture validation (file sizes, structure)
 **Platform:** Windows PowerShell
 **Usage:**
+
 ```bash
 # From project root
 ./scripts/validate-architecture-simple.ps1
 ```
 
 **Checks Performed:**
+
 - File sizes (max 1000 lines, excludes generated files)
 - Required directory structure
 - Basic project integrity
 
 #### `validate-architecture-advanced`
+
 **Purpose:** Run comprehensive architecture validation
 **Platform:** Windows PowerShell
 **Usage:**
+
 ```bash
 # All checks
 ./scripts/validate-architecture.ps1
@@ -39,6 +45,7 @@ Commands for DevOps agent to validate NECPGAME project architecture and ensure c
 ```
 
 **Checks Performed:**
+
 - All basic checks plus:
 - YAML metadata validation
 - Security pattern detection
@@ -47,15 +54,18 @@ Commands for DevOps agent to validate NECPGAME project architecture and ensure c
 ### Git Hooks Management
 
 #### `install-git-hooks`
+
 **Purpose:** Install pre-commit and pre-push hooks for automatic validation
 **Platform:** Cross-platform (Bash)
 **Usage:**
+
 ```bash
 # From project root
 ./scripts/install-git-hooks.sh
 ```
 
 **What it does:**
+
 - Creates `.git/hooks/pre-commit` (basic validation)
 - Creates `.git/hooks/pre-push` (full validation)
 - Sets executable permissions
@@ -64,9 +74,11 @@ Commands for DevOps agent to validate NECPGAME project architecture and ensure c
 ### CI/CD Validation
 
 #### `validate-ci-cd`
+
 **Purpose:** Run validation as CI/CD would
 **Platform:** Windows PowerShell
 **Usage:**
+
 ```bash
 # Simulate CI/CD run
 ./scripts/validate-architecture-simple.ps1
@@ -74,12 +86,14 @@ echo "Exit code: $LASTEXITCODE"
 ```
 
 **Exit Codes:**
+
 - `0`: Validation passed
 - `1`: Validation failed (errors found)
 
 ## 🔧 Maintenance Commands
 
 ### Update Validation Limits
+
 ```powershell
 # Edit file size limits in scripts
 # File: scripts/validate-architecture-simple.ps1
@@ -90,12 +104,14 @@ echo "Exit code: $LASTEXITCODE"
 ```
 
 ### Add New Validation Checks
+
 1. Add check logic to PowerShell scripts
 2. Update parameter validation in advanced script
 3. Add documentation to README
 4. Test with existing codebase
 
 ### Cross-Platform Testing
+
 ```bash
 # Test bash fallback (Linux/Mac)
 echo "Testing bash compatibility..."
@@ -107,6 +123,7 @@ powershell -c "Write-Host 'PowerShell available'"
 ## 📊 Validation Results
 
 ### Success Output
+
 ```
 🔍 Starting NECPGAME Architecture Validation...
 ==================================================
@@ -131,6 +148,7 @@ OK VALIDATION PASSED: No errors or warnings
 ```
 
 ### Error Output
+
 ```
 ❌ ERROR: File large-file.go exceeds 1000 lines (1500 lines)
 ❌ ERROR: Required directory missing: proto/openapi
@@ -144,6 +162,7 @@ Please fix all errors before committing
 ### Common Issues
 
 #### PowerShell Execution Policy
+
 ```powershell
 # Fix execution policy
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
@@ -153,11 +172,13 @@ powershell -ExecutionPolicy Bypass -File script.ps1
 ```
 
 #### File Access Errors
+
 - Ensure scripts are run from project root
 - Check file permissions
 - Verify PowerShell version (5.1+ recommended)
 
 #### Git Hook Issues
+
 ```bash
 # Check hook installation
 ls -la .git/hooks/
@@ -170,6 +191,7 @@ ls -la .git/hooks/
 ```
 
 ### Performance Issues
+
 - Large codebases may take 30-60 seconds
 - Consider excluding vendor directories
 - Use simple script for faster validation
@@ -177,12 +199,14 @@ ls -la .git/hooks/
 ## 📈 Quality Metrics
 
 ### Coverage
+
 - **Files:** 10,000+ files scanned
 - **Types:** YAML, Go, SQL, Markdown
 - **Directories:** 4 required structures
 - **Security:** Basic pattern matching
 
 ### Performance
+
 - **Simple validation:** < 30 seconds
 - **Advanced validation:** < 60 seconds
 - **Git hooks:** < 10 seconds
@@ -191,16 +215,19 @@ ls -la .git/hooks/
 ## 🔗 Integration Points
 
 ### GitHub Actions
+
 - Workflow: `.github/workflows/architecture-validation.yml`
 - Triggers: Push, PR, manual
 - Artifacts: Validation reports (30 days retention)
 
 ### CI/CD Pipeline
+
 - Dependency in `ci-backend.yml`
 - Quality gates in `quality-gates.yml`
 - Blocking merges on validation failures
 
 ### Development Workflow
+
 - Pre-commit: Basic validation
 - Pre-push: Full validation
 - IDE integration: Manual script execution

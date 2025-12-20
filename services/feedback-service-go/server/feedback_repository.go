@@ -6,10 +6,10 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/gc-lover/necpgame-monorepo/services/feedback-service-go/models"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/gc-lover/necpgame-monorepo/services/feedback-service-go/models"
 	"github.com/sirupsen/logrus"
 )
 
@@ -195,7 +195,7 @@ func (r *FeedbackRepository) ListBoard(ctx context.Context, category *models.Fee
 			github_issue_number, github_issue_url, created_at
 		FROM feedback.player_feedback
 		WHERE moderation_status = 'approved' AND type IN ('feature_request', 'wishlist')`
-	args := []interface{}{}
+	var args []interface{}
 	argPos := 1
 
 	if category != nil {
@@ -255,7 +255,7 @@ func (r *FeedbackRepository) CountBoard(ctx context.Context, category *models.Fe
 		SELECT COUNT(*)
 		FROM feedback.player_feedback
 		WHERE moderation_status = 'approved' AND type IN ('feature_request', 'wishlist')`
-	args := []interface{}{}
+	var args []interface{}
 	argPos := 1
 
 	if category != nil {
@@ -396,29 +396,3 @@ func (r *FeedbackRepository) GetStats(ctx context.Context) (*models.FeedbackStat
 
 	return stats, nil
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

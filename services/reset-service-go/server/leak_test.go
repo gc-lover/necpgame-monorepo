@@ -37,4 +37,3 @@ func TestResetServiceNoLeaks(t *testing.T) {
 
 	// If goroutines leaked from reset handlers, test FAILS
 }
-

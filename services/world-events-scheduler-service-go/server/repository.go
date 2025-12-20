@@ -1,4 +1,4 @@
-// Issue: #44
+// Package server Issue: #44
 package server
 
 import (
@@ -53,7 +53,7 @@ func (r *repository) GetScheduledEvents(ctx context.Context) ([]*ScheduledEvent,
 	}
 	defer rows.Close()
 
-	events := []*ScheduledEvent{}
+	var events []*ScheduledEvent
 	for rows.Next() {
 		event := &ScheduledEvent{}
 		if err := rows.Scan(&event.ID, &event.EventID, &event.ScheduledAt, &event.CronPattern,
@@ -101,35 +101,3 @@ func (r *repository) DeleteScheduledEvent(ctx context.Context, id uuid.UUID) err
 	_, err := r.db.ExecContext(ctx, query, id)
 	return err
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

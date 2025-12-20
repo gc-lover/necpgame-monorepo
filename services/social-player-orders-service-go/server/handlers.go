@@ -1,4 +1,4 @@
-// Issue: #1598, #1607
+// Package server Issue: #1598, #1607
 // ogen handlers - TYPED responses (no interface{} boxing!)
 package server
 
@@ -10,9 +10,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// Context timeout constants (Issue #1604)
 const (
-	DBTimeout    = 50 * time.Millisecond
 	CacheTimeout = 10 * time.Millisecond
 )
 

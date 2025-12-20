@@ -6,7 +6,7 @@ import (
 	"context"
 	"testing"
 
-	api "github.com/necpgame/stock-options-service-go/pkg/api"
+	"github.com/necpgame/stock-options-service-go/pkg/api"
 )
 
 // BenchmarkListOptionsContracts benchmarks ListOptionsContracts handler

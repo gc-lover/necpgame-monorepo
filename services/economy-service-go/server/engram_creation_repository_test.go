@@ -65,7 +65,7 @@ func TestEngramCreationRepository_CreateCreationLog(t *testing.T) {
 		DataLossPercent:        5.0,
 		IsComplete:             false,
 		CreationCost:           1000000.0,
-		ReputationSnapshot:    map[string]interface{}{"corp": "Arasaka"},
+		ReputationSnapshot:     map[string]interface{}{"corp": "Arasaka"},
 		CreatedAt:              time.Now(),
 		UpdatedAt:              time.Now(),
 	}
@@ -122,7 +122,7 @@ func TestEngramCreationRepository_GetCreationLogByCreationID_Success(t *testing.
 		DataLossPercent:        5.0,
 		IsComplete:             false,
 		CreationCost:           1000000.0,
-		ReputationSnapshot:    map[string]interface{}{"corp": "Arasaka"},
+		ReputationSnapshot:     map[string]interface{}{"corp": "Arasaka"},
 		CreatedAt:              time.Now(),
 		UpdatedAt:              time.Now(),
 	}
@@ -185,7 +185,7 @@ func TestEngramCreationRepository_GetCreationLogByEngramID_Success(t *testing.T)
 		DataLossPercent:        10.0,
 		IsComplete:             false,
 		CreationCost:           500000.0,
-		ReputationSnapshot:    nil,
+		ReputationSnapshot:     nil,
 		CreatedAt:              time.Now(),
 		UpdatedAt:              time.Now(),
 	}
@@ -211,18 +211,18 @@ func TestEngramCreationRepository_UpdateCreationStage(t *testing.T) {
 	defer cleanup()
 
 	creation := &EngramCreation{
-		ID:                     uuid.New(),
-		CreationID:             uuid.New(),
-		EngramID:               uuid.New(),
-		CharacterID:            uuid.New(),
-		ChipTier:               4,
-		AttitudeType:           "hostile",
-		CreationStage:          "initializing",
-		DataLossPercent:        3.0,
-		IsComplete:             false,
-		CreationCost:           2000000.0,
-		CreatedAt:              time.Now(),
-		UpdatedAt:              time.Now(),
+		ID:              uuid.New(),
+		CreationID:      uuid.New(),
+		EngramID:        uuid.New(),
+		CharacterID:     uuid.New(),
+		ChipTier:        4,
+		AttitudeType:    "hostile",
+		CreationStage:   "initializing",
+		DataLossPercent: 3.0,
+		IsComplete:      false,
+		CreationCost:    2000000.0,
+		CreatedAt:       time.Now(),
+		UpdatedAt:       time.Now(),
 	}
 
 	ctx := context.Background()
@@ -259,18 +259,18 @@ func TestEngramCreationRepository_CompleteCreation(t *testing.T) {
 	defer cleanup()
 
 	creation := &EngramCreation{
-		ID:                     uuid.New(),
-		CreationID:             uuid.New(),
-		EngramID:               uuid.New(),
-		CharacterID:            uuid.New(),
-		ChipTier:               5,
-		AttitudeType:           "loyal",
-		CreationStage:          "processing",
-		DataLossPercent:        2.0,
-		IsComplete:             false,
-		CreationCost:           4000000.0,
-		CreatedAt:              time.Now(),
-		UpdatedAt:              time.Now(),
+		ID:              uuid.New(),
+		CreationID:      uuid.New(),
+		EngramID:        uuid.New(),
+		CharacterID:     uuid.New(),
+		ChipTier:        5,
+		AttitudeType:    "loyal",
+		CreationStage:   "processing",
+		DataLossPercent: 2.0,
+		IsComplete:      false,
+		CreationCost:    4000000.0,
+		CreatedAt:       time.Now(),
+		UpdatedAt:       time.Now(),
 	}
 
 	ctx := context.Background()
@@ -297,5 +297,3 @@ func TestEngramCreationRepository_CompleteCreation(t *testing.T) {
 	assert.Equal(t, newEngramID, completed.EngramID)
 	assert.NotNil(t, completed.CompletedAt)
 }
-
-

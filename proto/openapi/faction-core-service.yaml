@@ -9,22 +9,22 @@ info:
 
     '
 servers:
-- url: http://localhost:8091
-  description: Local development
-- url: https://api.necpgame.com
-  description: Production
+  - url: http://localhost:8091
+    description: Local development
+  - url: https://api.necpgame.com
+    description: Production
 security:
-- BearerAuth: []
+  - BearerAuth: [ ]
 tags:
-- name: factions
-  description: Управление фракциями
-- name: hierarchy
-  description: Иерархия и роли
+  - name: factions
+    description: Управление фракциями
+  - name: hierarchy
+    description: Иерархия и роли
 paths:
   /api/v1/factions/create:
     post:
       tags:
-      - factions
+        - factions
       summary: Создать фракцию
       description: Создание новой фракции с базовыми параметрами
       operationId: createFaction
@@ -50,12 +50,12 @@ paths:
   /api/v1/factions/{factionId}:
     get:
       tags:
-      - factions
+        - factions
       summary: Получить фракцию
       description: Получить детали фракции по ID
       operationId: getFaction
       parameters:
-      - $ref: '#/components/parameters/FactionIdParam'
+        - $ref: '#/components/parameters/FactionIdParam'
       responses:
         '200':
           description: Фракция найдена
@@ -67,12 +67,12 @@ paths:
           $ref: common.yaml#/components/responses/NotFound
     put:
       tags:
-      - factions
+        - factions
       summary: Обновить фракцию
       description: Обновить параметры фракции
       operationId: updateFaction
       parameters:
-      - $ref: '#/components/parameters/FactionIdParam'
+        - $ref: '#/components/parameters/FactionIdParam'
       requestBody:
         required: true
         content:
@@ -92,12 +92,12 @@ paths:
           $ref: common.yaml#/components/responses/NotFound
     delete:
       tags:
-      - factions
+        - factions
       summary: Удалить фракцию
       description: Распустить фракцию
       operationId: deleteFaction
       parameters:
-      - $ref: '#/components/parameters/FactionIdParam'
+        - $ref: '#/components/parameters/FactionIdParam'
       responses:
         '204':
           description: Фракция удалена
@@ -106,21 +106,21 @@ paths:
   /api/v1/factions/list:
     get:
       tags:
-      - factions
+        - factions
       summary: Список фракций
       description: Получить список всех фракций с фильтрами
       operationId: listFactions
       parameters:
-      - name: type
-        in: query
-        schema:
-          $ref: '#/components/schemas/FactionType'
-      - name: status
-        in: query
-        schema:
-          $ref: '#/components/schemas/FactionStatus'
-      - $ref: common.yaml#/components/parameters/Page
-      - $ref: common.yaml#/components/parameters/Limit
+        - name: type
+          in: query
+          schema:
+            $ref: '#/components/schemas/FactionType'
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/FactionStatus'
+        - $ref: common.yaml#/components/parameters/Page
+        - $ref: common.yaml#/components/parameters/Limit
       responses:
         '200':
           description: Список фракций
@@ -138,12 +138,12 @@ paths:
   /api/v1/factions/{factionId}/hierarchy/update:
     post:
       tags:
-      - hierarchy
+        - hierarchy
       summary: Обновить иерархию
       description: Обновить роли и структуру фракции
       operationId: updateHierarchy
       parameters:
-      - $ref: '#/components/parameters/FactionIdParam'
+        - $ref: '#/components/parameters/FactionIdParam'
       requestBody:
         required: true
         content:
@@ -164,12 +164,12 @@ paths:
   /api/v1/factions/{factionId}/hierarchy:
     get:
       tags:
-      - hierarchy
+        - hierarchy
       summary: Получить иерархию
       description: Получить структуру и роли фракции
       operationId: getHierarchy
       parameters:
-      - $ref: '#/components/parameters/FactionIdParam'
+        - $ref: '#/components/parameters/FactionIdParam'
       responses:
         '200':
           description: Иерархия фракции
@@ -195,35 +195,35 @@ components:
     FactionType:
       type: string
       enum:
-      - criminal_gang
-      - professional_guild
-      - political_movement
-      - corporate_alliance
-      - religious_sect
-      - scientific_org
+        - criminal_gang
+        - professional_guild
+        - political_movement
+        - corporate_alliance
+        - religious_sect
+        - scientific_org
       description: Тип фракции
     FactionStatus:
       type: string
       enum:
-      - active
-      - disbanded
-      - suspended
+        - active
+        - disbanded
+        - suspended
       description: Статус фракции
     HierarchyRole:
       type: string
       enum:
-      - leader
-      - officer
-      - council_member
-      - member
-      - recruit
+        - leader
+        - officer
+        - council_member
+        - member
+        - recruit
       description: Роль в иерархии фракции
     CreateFactionRequest:
       type: object
       required:
-      - name
-      - type
-      - leader_clan_id
+        - name
+        - type
+        - leader_clan_id
       properties:
         leader_clan_id:
           type: string
@@ -286,23 +286,23 @@ components:
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     FactionDetails:
       allOf:
-      - $ref: '#/components/schemas/Faction'
-      - type: object
-        properties:
-          member_count:
-            type: integer
-            description: Количество членов
-          clan_count:
-            type: integer
-            description: Количество кланов
-          controlled_niches:
-            type: array
-            items:
-              type: string
-              format: uuid
-          relations_count:
-            type: integer
-            description: Количество отношений
+        - $ref: '#/components/schemas/Faction'
+        - type: object
+          properties:
+            member_count:
+              type: integer
+              description: Количество членов
+            clan_count:
+              type: integer
+              description: Количество кланов
+            controlled_niches:
+              type: array
+              items:
+                type: string
+                format: uuid
+            relations_count:
+              type: integer
+              description: Количество отношений
     HierarchyMember:
       type: object
       properties:
@@ -347,15 +347,15 @@ components:
     UpdateHierarchyRequest:
       type: object
       required:
-      - updates
+        - updates
       properties:
         updates:
           type: array
           items:
             type: object
             required:
-            - member_id
-            - role
+              - member_id
+              - role
             properties:
               member_id:
                 type: string

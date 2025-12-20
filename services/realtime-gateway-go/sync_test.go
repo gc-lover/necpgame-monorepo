@@ -15,7 +15,7 @@ func TestSynchronizationCycle(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skipping integration test in short mode")
 	}
-	
+
 	// Skip if gateway is not running
 	// This test requires realtime-gateway service to be running
 	t.Skip("Skipping integration test - requires running gateway service")
@@ -88,7 +88,7 @@ func TestSynchronizationCycle(t *testing.T) {
 		}
 
 		playerInput := buildPlayerInput(playerID, tick, 1.0, 0.0, false, 0.0, 0.0)
-		
+
 		conn.SetWriteDeadline(time.Now().Add(5 * time.Second))
 		err = conn.WriteMessage(websocket.BinaryMessage, playerInput)
 		require.NoError(t, err, "Failed to send PlayerInput")
@@ -108,7 +108,7 @@ func TestSynchronizationCycle(t *testing.T) {
 	t.Logf("Last GameState tick: %d", lastGameStateTick)
 
 	assert.Greater(t, playerInputSent, 0, "Should send at least one PlayerInput")
-	
+
 	if gameStateReceived == 0 {
 		t.Log("WARNING: No GameState received - this is expected if Dedicated Server is not running")
 		t.Log("To test full cycle, start UE5 Dedicated Server first")
@@ -278,4 +278,3 @@ func appendFloat32(buf []byte, f float32) []byte {
 	buf = append(buf, b[:]...)
 	return buf
 }
-

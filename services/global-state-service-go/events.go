@@ -54,20 +54,3 @@ func (s *inMemoryEventStore) list(ctx context.Context, limit int) ([]stateEvent,
 	copy(result, s.buf[:limit])
 	return result, nil
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

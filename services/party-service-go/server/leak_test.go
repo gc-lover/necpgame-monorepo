@@ -45,4 +45,3 @@ func TestPartyServiceNoLeaks(t *testing.T) {
 // - Context cancellation for all goroutines
 // - Party connection cleanup
 // - DB connection pool limits
-

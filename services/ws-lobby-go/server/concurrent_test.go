@@ -10,7 +10,7 @@ import (
 )
 
 func TestLobbyServer_ConcurrentAddRemove(t *testing.T) {
-	server, cleanup := setupTestLobbyServer(t)
+	server, cleanup := setupTestLobbyServer()
 	defer cleanup()
 
 	var wg sync.WaitGroup
@@ -65,7 +65,7 @@ func TestLobbyServer_ConcurrentAddRemove(t *testing.T) {
 }
 
 func TestLobbyServer_ConcurrentBroadcast(t *testing.T) {
-	server, cleanup := setupTestLobbyServer(t)
+	server, cleanup := setupTestLobbyServer()
 	defer cleanup()
 
 	clients := make([]*Client, 5)
@@ -107,4 +107,3 @@ func TestLobbyServer_ConcurrentBroadcast(t *testing.T) {
 
 	cleanup()
 }
-

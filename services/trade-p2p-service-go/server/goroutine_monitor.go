@@ -1,4 +1,4 @@
-// Issue: #1585 - Runtime Goroutine Leak Monitoring for P2P Trade Service
+// Package server Issue: #1585 - Runtime Goroutine Leak Monitoring for P2P Trade Service
 package server
 
 import (
@@ -6,6 +6,8 @@ import (
 	"log"
 	"runtime"
 	"time"
+
+	"go.uber.org/zap"
 )
 
 // GoroutineMonitor monitors goroutine count and detects leaks
@@ -18,7 +20,7 @@ type GoroutineMonitor struct {
 }
 
 // NewGoroutineMonitor creates a new goroutine monitor
-func NewGoroutineMonitor(max int, logger *log.Logger) *GoroutineMonitor {
+func NewGoroutineMonitor(max int, logger *zap.Logger) *GoroutineMonitor {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &GoroutineMonitor{
 		maxGoroutines: max,

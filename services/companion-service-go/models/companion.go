@@ -8,12 +8,6 @@ import (
 
 type CompanionCategory string
 
-const (
-	CompanionCategoryCombat  CompanionCategory = "combat"
-	CompanionCategoryUtility CompanionCategory = "utility"
-	CompanionCategorySocial  CompanionCategory = "social"
-)
-
 type CompanionType struct {
 	ID          string                 `json:"id" db:"id"`
 	Category    CompanionCategory      `json:"category" db:"category"`
@@ -27,40 +21,34 @@ type CompanionType struct {
 
 type CompanionStatus string
 
-const (
-	CompanionStatusOwned    CompanionStatus = "owned"
-	CompanionStatusSummoned CompanionStatus = "summoned"
-	CompanionStatusDismissed CompanionStatus = "dismissed"
-)
-
 type PlayerCompanion struct {
-	ID            uuid.UUID              `json:"id" db:"id"`
-	CharacterID   uuid.UUID              `json:"character_id" db:"character_id"`
-	CompanionTypeID string               `json:"companion_type_id" db:"companion_type_id"`
-	CustomName    *string                `json:"custom_name,omitempty" db:"custom_name"`
-	Level         int                    `json:"level" db:"level"`
-	Experience    int64                  `json:"experience" db:"experience"`
-	Status        CompanionStatus        `json:"status" db:"status"`
-	Equipment     map[string]interface{} `json:"equipment" db:"equipment"`
-	Stats         map[string]interface{} `json:"stats" db:"stats"`
-	SummonedAt    *time.Time             `json:"summoned_at,omitempty" db:"summoned_at"`
-	CreatedAt     time.Time              `json:"created_at" db:"created_at"`
-	UpdatedAt     time.Time              `json:"updated_at" db:"updated_at"`
+	ID              uuid.UUID              `json:"id" db:"id"`
+	CharacterID     uuid.UUID              `json:"character_id" db:"character_id"`
+	CompanionTypeID string                 `json:"companion_type_id" db:"companion_type_id"`
+	CustomName      *string                `json:"custom_name,omitempty" db:"custom_name"`
+	Level           int                    `json:"level" db:"level"`
+	Experience      int64                  `json:"experience" db:"experience"`
+	Status          CompanionStatus        `json:"status" db:"status"`
+	Equipment       map[string]interface{} `json:"equipment" db:"equipment"`
+	Stats           map[string]interface{} `json:"stats" db:"stats"`
+	SummonedAt      *time.Time             `json:"summoned_at,omitempty" db:"summoned_at"`
+	CreatedAt       time.Time              `json:"created_at" db:"created_at"`
+	UpdatedAt       time.Time              `json:"updated_at" db:"updated_at"`
 }
 
 type CompanionAbility struct {
-	ID            uuid.UUID `json:"id" db:"id"`
-	PlayerCompanionID uuid.UUID `json:"player_companion_id" db:"player_companion_id"`
-	AbilityID     string    `json:"ability_id" db:"ability_id"`
-	IsActive      bool      `json:"is_active" db:"is_active"`
-	CooldownUntil *time.Time `json:"cooldown_until,omitempty" db:"cooldown_until"`
-	LastUsedAt    *time.Time `json:"last_used_at,omitempty" db:"last_used_at"`
-	UpdatedAt     time.Time  `json:"updated_at" db:"updated_at"`
+	ID                uuid.UUID  `json:"id" db:"id"`
+	PlayerCompanionID uuid.UUID  `json:"player_companion_id" db:"player_companion_id"`
+	AbilityID         string     `json:"ability_id" db:"ability_id"`
+	IsActive          bool       `json:"is_active" db:"is_active"`
+	CooldownUntil     *time.Time `json:"cooldown_until,omitempty" db:"cooldown_until"`
+	LastUsedAt        *time.Time `json:"last_used_at,omitempty" db:"last_used_at"`
+	UpdatedAt         time.Time  `json:"updated_at" db:"updated_at"`
 }
 
 type PurchaseCompanionRequest struct {
-	CharacterID uuid.UUID `json:"character_id"`
-	CompanionTypeID string `json:"companion_type_id"`
+	CharacterID     uuid.UUID `json:"character_id"`
+	CompanionTypeID string    `json:"companion_type_id"`
 }
 
 type SummonCompanionRequest struct {
@@ -94,7 +82,7 @@ type UseAbilityRequest struct {
 
 type CompanionTypeListResponse struct {
 	Types []CompanionType `json:"types"`
-	Total int            `json:"total"`
+	Total int             `json:"total"`
 }
 
 type PlayerCompanionListResponse struct {
@@ -103,8 +91,7 @@ type PlayerCompanionListResponse struct {
 }
 
 type CompanionDetailResponse struct {
-	Companion *PlayerCompanion `json:"companion"`
-	Type      *CompanionType    `json:"type,omitempty"`
+	Companion *PlayerCompanion   `json:"companion"`
+	Type      *CompanionType     `json:"type,omitempty"`
 	Abilities []CompanionAbility `json:"abilities,omitempty"`
 }
-

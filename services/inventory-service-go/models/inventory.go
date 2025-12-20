@@ -51,17 +51,17 @@ type AddItemRequest struct {
 }
 
 type MoveItemRequest struct {
-	ItemID      string `json:"item_id"`
-	FromSlot    int    `json:"from_slot,omitempty"`
-	ToSlot      int    `json:"to_slot,omitempty"`
+	ItemID   string `json:"item_id"`
+	FromSlot int    `json:"from_slot,omitempty"`
+	ToSlot   int    `json:"to_slot,omitempty"`
 }
 
 type EquipItemRequest struct {
-	ItemID   string `json:"item_id"`
+	ItemID    string `json:"item_id"`
 	EquipSlot string `json:"equip_slot"`
 }
 
 type InventoryResponse struct {
-	Inventory Inventory      `json:"inventory"`
+	Inventory Inventory       `json:"inventory"`
 	Items     []InventoryItem `json:"items"`
 }

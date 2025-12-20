@@ -1,4 +1,4 @@
-// Issue: #141888104, #1607, #1867
+// Package server Issue: #141888104, #1607, #1867
 // ogen handlers - TYPED responses (no interface{} boxing!)
 // Memory pooling for hot path (Issue #1607) + Extended zero-allocations optimization (#1867)
 package server
@@ -13,10 +13,8 @@ import (
 	"github.com/gc-lover/necpgame-monorepo/services/movement-service-go/pkg/api"
 )
 
-// Context timeout constants
 const (
-	DBTimeout    = 50 * time.Millisecond
-	CacheTimeout = 10 * time.Millisecond
+	DBTimeout = 50 * time.Millisecond
 )
 
 // Handlers implements api.Handler interface (ogen typed handlers!)

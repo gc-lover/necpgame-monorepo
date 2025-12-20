@@ -7,23 +7,23 @@ info:
     name: NECPGAME API Support
     email: api@necp.game
 servers:
-- url: http://localhost:8086/api/v1
-  description: Локальный сервер разработки
-- url: https://api.necp.game/api/v1
-  description: Продакшен сервер
+  - url: http://localhost:8086/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
 tags:
-- name: Violations
-  description: Управление нарушениями
+  - name: Violations
+    description: Управление нарушениями
 paths:
   /anti-cheat/violations/log:
     post:
       tags:
-      - Violations
+        - Violations
       summary: Логирование нарушения
       description: Логирует новое нарушение античита в систему.
       operationId: logViolation
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       requestBody:
         required: true
         content:
@@ -46,33 +46,33 @@ paths:
   /anti-cheat/violations/{player_id}:
     get:
       tags:
-      - Violations
+        - Violations
       summary: Получить историю нарушений игрока
       description: Возвращает историю нарушений для указанного игрока с фильтрацией и пагинацией.
       operationId: getPlayerViolations
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       parameters:
-      - name: player_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: Идентификатор игрока
-        example: 550e8400-e29b-41d4-a716-446655440000
-      - name: violation_type
-        in: query
-        schema:
-          type: string
-          enum:
-          - SPEED_HACK
-          - POSITION_HACK
-          - ACTION_RATE_HACK
-          - RECONCILIATION_FAILURE
-        description: Фильтр по типу нарушения
-      - $ref: common.yaml#/components/parameters/Limit
-      - $ref: common.yaml#/components/parameters/Offset
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор игрока
+          example: 550e8400-e29b-41d4-a716-446655440000
+        - name: violation_type
+          in: query
+          schema:
+            type: string
+            enum:
+              - SPEED_HACK
+              - POSITION_HACK
+              - ACTION_RATE_HACK
+              - RECONCILIATION_FAILURE
+          description: Фильтр по типу нарушения
+        - $ref: common.yaml#/components/parameters/Limit
+        - $ref: common.yaml#/components/parameters/Offset
       responses:
         '200':
           description: История нарушений
@@ -94,9 +94,9 @@ components:
     LogViolationRequest:
       type: object
       required:
-      - player_id
-      - violation_type
-      - violation_data
+        - player_id
+        - violation_type
+        - violation_data
       properties:
         player_id:
           type: string
@@ -106,19 +106,19 @@ components:
         violation_type:
           type: string
           enum:
-          - SPEED_HACK
-          - POSITION_HACK
-          - ACTION_RATE_HACK
-          - RECONCILIATION_FAILURE
+            - SPEED_HACK
+            - POSITION_HACK
+            - ACTION_RATE_HACK
+            - RECONCILIATION_FAILURE
           description: Тип нарушения
           example: SPEED_HACK
         severity:
           type: string
           enum:
-          - LOW
-          - MEDIUM
-          - HIGH
-          - CRITICAL
+            - LOW
+            - MEDIUM
+            - HIGH
+            - CRITICAL
           default: MEDIUM
           description: Серьезность нарушения
           example: MEDIUM
@@ -134,8 +134,8 @@ components:
     PlayerViolationsResponse:
       type: object
       required:
-      - violations
-      - total
+        - violations
+        - total
       properties:
         violations:
           type: array
@@ -159,4 +159,4 @@ components:
           example: 0
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
 security:
-- BearerAuth: []
+  - BearerAuth: [ ]

@@ -153,8 +153,8 @@ func (s *InteractiveService) RemoveObject(ctx context.Context, objectID string) 
 }
 
 // GetTelemetry returns current service metrics
-func (s *InteractiveService) GetTelemetry() *ServiceTelemetry {
-	return &ServiceTelemetry{
+func (s *InteractiveService) GetTelemetry() *Telemetry {
+	return &Telemetry{
 		ActiveObjects:         atomic.LoadInt64(&s.atomicStats.activeObjects),
 		InteractionsProcessed: atomic.LoadInt64(&s.atomicStats.interactionsProcessed),
 		RewardsDistributed:    atomic.LoadInt64(&s.atomicStats.rewardsDistributed),
@@ -172,9 +172,9 @@ type InteractionResult struct {
 	Success         bool   `json:"success"`          // 1 byte (bool)
 }
 
-// ServiceTelemetry contains service performance metrics
+// Telemetry ServiceTelemetry contains service performance metrics
 // Field alignment optimized: int64 fields aligned to 8-byte boundaries
-type ServiceTelemetry struct {
+type Telemetry struct {
 	ObjectsDestroyed      int64 `json:"objects_destroyed"`      // 8 bytes
 	RewardsDistributed    int64 `json:"rewards_distributed"`    // 8 bytes
 	InteractionsProcessed int64 `json:"interactions_processed"` // 8 bytes

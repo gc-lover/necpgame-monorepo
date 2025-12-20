@@ -1,4 +1,4 @@
-// Issue: #2203 - Ogen API handlers implementation
+// Package server Issue: #2203 - Ogen API handlers implementation
 package server
 
 import (
@@ -11,13 +11,13 @@ import (
 
 // CraftingHandler implements ogen StrictHandler
 type CraftingHandler struct {
-	recipeService   RecipeServiceInterface
-	orderService    OrderServiceInterface
-	stationService  StationServiceInterface
-	chainService    ChainServiceInterface
-	logger          *logrus.Logger
-	jwtValidator    *JwtValidator
-	authEnabled     bool
+	recipeService  RecipeServiceInterface
+	orderService   OrderServiceInterface
+	stationService StationServiceInterface
+	chainService   ChainServiceInterface
+	logger         *logrus.Logger
+	jwtValidator   *JwtValidator
+	authEnabled    bool
 }
 
 // NewCraftingHandler creates new crafting handler

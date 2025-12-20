@@ -1,15 +1,11 @@
-// Issue: #1579 - ogen router + middleware
+// Package server Issue: #1579 - ogen router + middleware
 package server
 
 // HTTP handlers use context.WithTimeout for request timeouts (see handlers.go)
 
 import (
 	"context"
-		"time"
-	"log"
 	"net/http"
-
-	"github.com/gc-lover/necpgame-monorepo/services/matchmaking-service-go/pkg/api"
 )
 
 // HTTPServer wraps ogen server
@@ -54,30 +50,6 @@ func (s *HTTPServer) Shutdown(ctx context.Context) error {
 }
 
 // withCORS adds CORS headers
-func withCORS(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-		
-		if r.Method == http.MethodOptions {
-			w.WriteHeader(http.StatusOK)
-			return
-		}
-		
-		next.ServeHTTP(w, r)
-	})
-}
-
-func healthCheck(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(`{"status":"ok"}`))
-}
-
-func metricsHandler(w http.ResponseWriter, r *http.Request) {
-	// TODO: Prometheus metrics
-	w.WriteHeader(http.StatusOK)
-}
 
 // loadSheddingMiddleware prevents overload by limiting concurrent requests
 // Issue: #1588 - Resilience patterns
@@ -92,7 +64,3 @@ func (s *HTTPServer) loadSheddingMiddleware(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 	})
 }
-
-
-
-

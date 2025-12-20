@@ -33,6 +33,7 @@ docker exec necpgame-postgres-1 psql -U postgres -d necpgame -c "SELECT COUNT(*)
 ## API тесты
 
 ### Character Service
+
 ```bash
 # Создать аккаунт
 curl -X POST http://localhost:8087/api/v1/accounts \
@@ -46,6 +47,7 @@ curl -X POST http://localhost:8087/api/v1/characters \
 ```
 
 ### Inventory Service
+
 ```bash
 # Получить инвентарь
 curl http://localhost:8085/api/v1/inventory/<character_id>
@@ -57,6 +59,7 @@ curl -X POST http://localhost:8085/api/v1/inventory/<character_id>/items \
 ```
 
 ### Movement Service
+
 ```bash
 # Получить позицию
 curl http://localhost:8086/api/v1/movement/<character_id>/position

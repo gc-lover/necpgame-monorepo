@@ -1,4 +1,4 @@
-// Issue: #39, #1607 - Sandevistan action budget operations
+// Package server Issue: #39, #1607 - Sandevistan action budget operations
 package server
 
 import (

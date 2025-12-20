@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/gc-lover/necpgame-monorepo/services/economy-service-go/models"
+	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -77,7 +77,7 @@ func setupTestService() (*TradeService, *mockTradeRepository, *redis.Client) {
 	redisClient := redis.NewClient(&redis.Options{
 		Addr:         "localhost:6379",
 		DB:           1,
-		DialTimeout:  1 * time.Second,  // Fast timeout for tests
+		DialTimeout:  1 * time.Second, // Fast timeout for tests
 		ReadTimeout:  1 * time.Second,
 		WriteTimeout: 1 * time.Second,
 		PoolTimeout:  1 * time.Second,
@@ -213,13 +213,13 @@ func TestTradeService_GetTrade_Success(t *testing.T) {
 	ctx := context.Background()
 
 	session := &models.TradeSession{
-		ID:            sessionID,
-		InitiatorID:   initiatorID,
-		RecipientID:   recipientID,
-		Status:        models.TradeStatusPending,
-		CreatedAt:     time.Now(),
-		UpdatedAt:     time.Now(),
-		ExpiresAt:     time.Now().Add(5 * time.Minute),
+		ID:          sessionID,
+		InitiatorID: initiatorID,
+		RecipientID: recipientID,
+		Status:      models.TradeStatusPending,
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
+		ExpiresAt:   time.Now().Add(5 * time.Minute),
 	}
 
 	mockRepo.On("GetByID", ctx, sessionID).Return(session, nil)
@@ -310,7 +310,7 @@ func TestTradeService_GetActiveTrades_Cache(t *testing.T) {
 		t.Skipf("Skipping test due to Redis not available: %v", err)
 		return
 	}
-	
+
 	// Set cache with timeout
 	setCtx, setCancel := context.WithTimeout(ctx, 1*time.Second)
 	defer setCancel()
@@ -340,17 +340,17 @@ func TestTradeService_UpdateOffer_Success(t *testing.T) {
 	ctx := context.Background()
 
 	session := &models.TradeSession{
-		ID:                sessionID,
-		InitiatorID:       initiatorID,
-		RecipientID:       recipientID,
-		Status:            models.TradeStatusPending,
-		InitiatorOffer:    models.TradeOffer{Items: []map[string]interface{}{}, Currency: make(map[string]int)},
-		RecipientOffer:    models.TradeOffer{Items: []map[string]interface{}{}, Currency: make(map[string]int)},
+		ID:                 sessionID,
+		InitiatorID:        initiatorID,
+		RecipientID:        recipientID,
+		Status:             models.TradeStatusPending,
+		InitiatorOffer:     models.TradeOffer{Items: []map[string]interface{}{}, Currency: make(map[string]int)},
+		RecipientOffer:     models.TradeOffer{Items: []map[string]interface{}{}, Currency: make(map[string]int)},
 		InitiatorConfirmed: false,
-		RecipientConfirmed:  false,
-		CreatedAt:         time.Now(),
-		UpdatedAt:         time.Now(),
-		ExpiresAt:         time.Now().Add(5 * time.Minute),
+		RecipientConfirmed: false,
+		CreatedAt:          time.Now(),
+		UpdatedAt:          time.Now(),
+		ExpiresAt:          time.Now().Add(5 * time.Minute),
 	}
 
 	req := &models.UpdateTradeOfferRequest{
@@ -380,17 +380,17 @@ func TestTradeService_UpdateOffer_Recipient(t *testing.T) {
 	ctx := context.Background()
 
 	session := &models.TradeSession{
-		ID:                sessionID,
-		InitiatorID:       initiatorID,
-		RecipientID:       recipientID,
-		Status:            models.TradeStatusPending,
-		InitiatorOffer:    models.TradeOffer{Items: []map[string]interface{}{}, Currency: make(map[string]int)},
-		RecipientOffer:    models.TradeOffer{Items: []map[string]interface{}{}, Currency: make(map[string]int)},
+		ID:                 sessionID,
+		InitiatorID:        initiatorID,
+		RecipientID:        recipientID,
+		Status:             models.TradeStatusPending,
+		InitiatorOffer:     models.TradeOffer{Items: []map[string]interface{}{}, Currency: make(map[string]int)},
+		RecipientOffer:     models.TradeOffer{Items: []map[string]interface{}{}, Currency: make(map[string]int)},
 		InitiatorConfirmed: false,
-		RecipientConfirmed:  false,
-		CreatedAt:         time.Now(),
-		UpdatedAt:         time.Now(),
-		ExpiresAt:         time.Now().Add(5 * time.Minute),
+		RecipientConfirmed: false,
+		CreatedAt:          time.Now(),
+		UpdatedAt:          time.Now(),
+		ExpiresAt:          time.Now().Add(5 * time.Minute),
 	}
 
 	req := &models.UpdateTradeOfferRequest{
@@ -441,15 +441,15 @@ func TestTradeService_UpdateOffer_InvalidStatus(t *testing.T) {
 	ctx := context.Background()
 
 	session := &models.TradeSession{
-		ID:                sessionID,
-		InitiatorID:       initiatorID,
-		RecipientID:       recipientID,
-		Status:            models.TradeStatusCompleted,
-		InitiatorOffer:    models.TradeOffer{Items: []map[string]interface{}{}, Currency: make(map[string]int)},
-		RecipientOffer:    models.TradeOffer{Items: []map[string]interface{}{}, Currency: make(map[string]int)},
-		CreatedAt:         time.Now(),
-		UpdatedAt:         time.Now(),
-		ExpiresAt:         time.Now().Add(5 * time.Minute),
+		ID:             sessionID,
+		InitiatorID:    initiatorID,
+		RecipientID:    recipientID,
+		Status:         models.TradeStatusCompleted,
+		InitiatorOffer: models.TradeOffer{Items: []map[string]interface{}{}, Currency: make(map[string]int)},
+		RecipientOffer: models.TradeOffer{Items: []map[string]interface{}{}, Currency: make(map[string]int)},
+		CreatedAt:      time.Now(),
+		UpdatedAt:      time.Now(),
+		ExpiresAt:      time.Now().Add(5 * time.Minute),
 	}
 
 	req := &models.UpdateTradeOfferRequest{
@@ -475,15 +475,15 @@ func TestTradeService_ConfirmTrade_Success(t *testing.T) {
 	ctx := context.Background()
 
 	session := &models.TradeSession{
-		ID:                sessionID,
-		InitiatorID:       initiatorID,
-		RecipientID:       recipientID,
-		Status:            models.TradeStatusActive,
+		ID:                 sessionID,
+		InitiatorID:        initiatorID,
+		RecipientID:        recipientID,
+		Status:             models.TradeStatusActive,
 		InitiatorConfirmed: false,
-		RecipientConfirmed:  false,
-		CreatedAt:         time.Now(),
-		UpdatedAt:         time.Now(),
-		ExpiresAt:         time.Now().Add(5 * time.Minute),
+		RecipientConfirmed: false,
+		CreatedAt:          time.Now(),
+		UpdatedAt:          time.Now(),
+		ExpiresAt:          time.Now().Add(5 * time.Minute),
 	}
 
 	mockRepo.On("GetByID", ctx, sessionID).Return(session, nil)
@@ -509,15 +509,15 @@ func TestTradeService_ConfirmTrade_BothConfirmed(t *testing.T) {
 	ctx := context.Background()
 
 	session := &models.TradeSession{
-		ID:                sessionID,
-		InitiatorID:       initiatorID,
-		RecipientID:       recipientID,
-		Status:            models.TradeStatusActive,
+		ID:                 sessionID,
+		InitiatorID:        initiatorID,
+		RecipientID:        recipientID,
+		Status:             models.TradeStatusActive,
 		InitiatorConfirmed: true,
-		RecipientConfirmed:  false,
-		CreatedAt:         time.Now(),
-		UpdatedAt:         time.Now(),
-		ExpiresAt:         time.Now().Add(5 * time.Minute),
+		RecipientConfirmed: false,
+		CreatedAt:          time.Now(),
+		UpdatedAt:          time.Now(),
+		ExpiresAt:          time.Now().Add(5 * time.Minute),
 	}
 
 	mockRepo.On("GetByID", ctx, sessionID).Return(session, nil)
@@ -560,17 +560,17 @@ func TestTradeService_CompleteTrade_Success(t *testing.T) {
 	ctx := context.Background()
 
 	session := &models.TradeSession{
-		ID:                sessionID,
-		InitiatorID:       initiatorID,
-		RecipientID:       recipientID,
-		Status:            models.TradeStatusConfirmed,
-		InitiatorOffer:    models.TradeOffer{Items: []map[string]interface{}{}, Currency: make(map[string]int)},
-		RecipientOffer:    models.TradeOffer{Items: []map[string]interface{}{}, Currency: make(map[string]int)},
+		ID:                 sessionID,
+		InitiatorID:        initiatorID,
+		RecipientID:        recipientID,
+		Status:             models.TradeStatusConfirmed,
+		InitiatorOffer:     models.TradeOffer{Items: []map[string]interface{}{}, Currency: make(map[string]int)},
+		RecipientOffer:     models.TradeOffer{Items: []map[string]interface{}{}, Currency: make(map[string]int)},
 		InitiatorConfirmed: true,
-		RecipientConfirmed:  true,
-		CreatedAt:         time.Now(),
-		UpdatedAt:         time.Now(),
-		ExpiresAt:         time.Now().Add(5 * time.Minute),
+		RecipientConfirmed: true,
+		CreatedAt:          time.Now(),
+		UpdatedAt:          time.Now(),
+		ExpiresAt:          time.Now().Add(5 * time.Minute),
 	}
 
 	mockRepo.On("GetByID", ctx, sessionID).Return(session, nil)
@@ -608,13 +608,13 @@ func TestTradeService_CompleteTrade_InvalidStatus(t *testing.T) {
 	ctx := context.Background()
 
 	session := &models.TradeSession{
-		ID:                sessionID,
-		InitiatorID:       initiatorID,
-		RecipientID:       recipientID,
-		Status:            models.TradeStatusActive,
-		CreatedAt:         time.Now(),
-		UpdatedAt:         time.Now(),
-		ExpiresAt:         time.Now().Add(5 * time.Minute),
+		ID:          sessionID,
+		InitiatorID: initiatorID,
+		RecipientID: recipientID,
+		Status:      models.TradeStatusActive,
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
+		ExpiresAt:   time.Now().Add(5 * time.Minute),
 	}
 
 	mockRepo.On("GetByID", ctx, sessionID).Return(session, nil)
@@ -635,13 +635,13 @@ func TestTradeService_CancelTrade_Success(t *testing.T) {
 	ctx := context.Background()
 
 	session := &models.TradeSession{
-		ID:                sessionID,
-		InitiatorID:       initiatorID,
-		RecipientID:       recipientID,
-		Status:            models.TradeStatusActive,
-		CreatedAt:         time.Now(),
-		UpdatedAt:         time.Now(),
-		ExpiresAt:         time.Now().Add(5 * time.Minute),
+		ID:          sessionID,
+		InitiatorID: initiatorID,
+		RecipientID: recipientID,
+		Status:      models.TradeStatusActive,
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
+		ExpiresAt:   time.Now().Add(5 * time.Minute),
 	}
 
 	mockRepo.On("GetByID", ctx, sessionID).Return(session, nil)
@@ -679,13 +679,13 @@ func TestTradeService_CancelTrade_AlreadyCompleted(t *testing.T) {
 	ctx := context.Background()
 
 	session := &models.TradeSession{
-		ID:                sessionID,
-		InitiatorID:       initiatorID,
-		RecipientID:       recipientID,
-		Status:            models.TradeStatusCompleted,
-		CreatedAt:         time.Now(),
-		UpdatedAt:         time.Now(),
-		ExpiresAt:         time.Now().Add(5 * time.Minute),
+		ID:          sessionID,
+		InitiatorID: initiatorID,
+		RecipientID: recipientID,
+		Status:      models.TradeStatusCompleted,
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
+		ExpiresAt:   time.Now().Add(5 * time.Minute),
 	}
 
 	mockRepo.On("GetByID", ctx, sessionID).Return(session, nil)
@@ -705,12 +705,12 @@ func TestTradeService_GetTradeHistory_Success(t *testing.T) {
 
 	history := []models.TradeHistory{
 		{
-			ID:             uuid.New(),
-			InitiatorID:    characterID,
-			RecipientID:   uuid.New(),
-			Status:         models.TradeStatusCompleted,
-			CreatedAt:      time.Now(),
-			CompletedAt:    time.Now(),
+			ID:          uuid.New(),
+			InitiatorID: characterID,
+			RecipientID: uuid.New(),
+			Status:      models.TradeStatusCompleted,
+			CreatedAt:   time.Now(),
+			CompletedAt: time.Now(),
 		},
 	}
 
@@ -735,12 +735,12 @@ func TestTradeService_GetTradeHistory_Cache(t *testing.T) {
 
 	history := []models.TradeHistory{
 		{
-			ID:             uuid.New(),
-			InitiatorID:    characterID,
-			RecipientID:   uuid.New(),
-			Status:         models.TradeStatusCompleted,
-			CreatedAt:      time.Now(),
-			CompletedAt:    time.Now(),
+			ID:          uuid.New(),
+			InitiatorID: characterID,
+			RecipientID: uuid.New(),
+			Status:      models.TradeStatusCompleted,
+			CreatedAt:   time.Now(),
+			CompletedAt: time.Now(),
 		},
 	}
 
@@ -751,7 +751,7 @@ func TestTradeService_GetTradeHistory_Cache(t *testing.T) {
 
 	responseJSON, _ := json.Marshal(response)
 	cacheKey := "trade_history:" + characterID.String() + ":limit:10:offset:0"
-	
+
 	// Check Redis connection first with timeout
 	pingCtx, pingCancel := context.WithTimeout(ctx, 1*time.Second)
 	defer pingCancel()
@@ -760,12 +760,12 @@ func TestTradeService_GetTradeHistory_Cache(t *testing.T) {
 		t.Skipf("Skipping test due to Redis not available: %v", err)
 		return
 	}
-	
+
 	// Flush and set cache with timeout
 	flushCtx, flushCancel := context.WithTimeout(ctx, 1*time.Second)
 	defer flushCancel()
 	redisClient.FlushDB(flushCtx)
-	
+
 	setCtx, setCancel := context.WithTimeout(ctx, 1*time.Second)
 	defer setCancel()
 	if err := redisClient.Set(setCtx, cacheKey, responseJSON, 5*time.Minute).Err(); err != nil {

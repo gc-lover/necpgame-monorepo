@@ -1,4 +1,4 @@
-// Issue: #1443
+// Package server Issue: #1443
 // Currency Exchange Repository - database operations for currency exchange
 package server
 
@@ -10,38 +10,39 @@ import (
 
 	"github.com/gc-lover/necpgame-monorepo/services/economy-service-go/models"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/lib/pq"
 	"github.com/sirupsen/logrus"
 )
 
 // CurrencyExchangeRepositoryInterface defines methods for currency exchange database operations
 type CurrencyExchangeRepositoryInterface interface {
-	// Rates
+	// GetExchangeRates Rates
 	GetExchangeRates(ctx context.Context) ([]models.CurrencyExchangeRate, error)
 	GetExchangeRate(ctx context.Context, pair string) (*models.CurrencyExchangeRate, error)
 	GetExchangeRateHistory(ctx context.Context, pair string, limit int) ([]models.CurrencyExchangeRate, error)
 	UpdateExchangeRate(ctx context.Context, rate *models.CurrencyExchangeRate) error
 
-	// Orders
+	// CreateOrder Orders
 	CreateOrder(ctx context.Context, order *models.CurrencyExchangeOrder) (*models.CurrencyExchangeOrder, error)
 	GetOrder(ctx context.Context, orderID uuid.UUID) (*models.CurrencyExchangeOrder, error)
 	ListOrders(ctx context.Context, filter models.OrderFilter) ([]models.CurrencyExchangeOrder, error)
 	UpdateOrderStatus(ctx context.Context, orderID uuid.UUID, status string) error
 	CancelOrder(ctx context.Context, orderID uuid.UUID) error
 
-	// Trades
+	// CreateTrade Trades
 	CreateTrade(ctx context.Context, trade *models.CurrencyExchangeTrade) (*models.CurrencyExchangeTrade, error)
 	ListTrades(ctx context.Context, filter models.TradeFilter) ([]models.CurrencyExchangeTrade, error)
 }
 
 // CurrencyExchangeRepository implements CurrencyExchangeRepositoryInterface
 type CurrencyExchangeRepository struct {
-	db     *sql.DB
+	db     *pgxpool.Pool
 	logger *logrus.Logger
 }
 
 // NewCurrencyExchangeRepository creates a new currency exchange repository
-func NewCurrencyExchangeRepository(db *sql.DB) *CurrencyExchangeRepository {
+func NewCurrencyExchangeRepository(db *pgxpool.Pool) *CurrencyExchangeRepository {
 	return &CurrencyExchangeRepository{
 		db:     db,
 		logger: GetLogger(),
@@ -57,7 +58,7 @@ func (r *CurrencyExchangeRepository) GetExchangeRates(ctx context.Context) ([]mo
 		ORDER BY pair
 	`
 
-	rows, err := r.db.QueryContext(ctx, query)
+	rows, err := r.db.Query(ctx, query)
 	if err != nil {
 		r.logger.WithError(err).Error("Failed to query exchange rates")
 		return nil, fmt.Errorf("failed to query exchange rates: %w", err)
@@ -92,7 +93,7 @@ func (r *CurrencyExchangeRepository) GetExchangeRate(ctx context.Context, pair s
 	`
 
 	var rate models.CurrencyExchangeRate
-	err := r.db.QueryRowContext(ctx, query, pair).Scan(
+	err := r.db.QueryRow(ctx, query, pair).Scan(
 		&rate.Pair, &rate.Bid, &rate.Ask, &rate.Spread, &rate.UpdatedAt, &rate.IsActive,
 	)
 	if err != nil {
@@ -116,7 +117,7 @@ func (r *CurrencyExchangeRepository) GetExchangeRateHistory(ctx context.Context,
 		LIMIT $2
 	`
 
-	rows, err := r.db.QueryContext(ctx, query, pair, limit)
+	rows, err := r.db.Query(ctx, query, pair, limit)
 	if err != nil {
 		r.logger.WithError(err).Error("Failed to query exchange rate history")
 		return nil, fmt.Errorf("failed to query exchange rate history: %w", err)
@@ -150,7 +151,7 @@ func (r *CurrencyExchangeRepository) UpdateExchangeRate(ctx context.Context, rat
 			is_active = EXCLUDED.is_active
 	`
 
-	_, err := r.db.ExecContext(ctx, query,
+	_, err := r.db.Exec(ctx, query,
 		rate.Pair, rate.Bid, rate.Ask, rate.Spread, rate.UpdatedAt, rate.IsActive)
 	if err != nil {
 		r.logger.WithError(err).Error("Failed to update exchange rate")
@@ -178,7 +179,7 @@ func (r *CurrencyExchangeRepository) CreateOrder(ctx context.Context, order *mod
 		expiresAt = nil
 	}
 
-	err := r.db.QueryRowContext(ctx, query,
+	err := r.db.QueryRow(ctx, query,
 		order.PlayerID, order.OrderType, order.FromCurrency, order.ToCurrency,
 		order.FromAmount, order.ToAmount, order.ExchangeRate, order.Fee, order.Status, expiresAt,
 	).Scan(&order.ID, &order.CreatedAt, &order.UpdatedAt)
@@ -204,7 +205,7 @@ func (r *CurrencyExchangeRepository) GetOrder(ctx context.Context, orderID uuid.
 	var order models.CurrencyExchangeOrder
 	var filledAt, expiresAt pq.NullTime
 
-	err := r.db.QueryRowContext(ctx, query, orderID).Scan(
+	err := r.db.QueryRow(ctx, query, orderID).Scan(
 		&order.ID, &order.PlayerID, &order.OrderType, &order.FromCurrency, &order.ToCurrency,
 		&order.FromAmount, &order.ToAmount, &order.ExchangeRate, &order.Fee, &order.Status,
 		&order.CreatedAt, &order.UpdatedAt, &filledAt, &expiresAt,
@@ -229,50 +230,44 @@ func (r *CurrencyExchangeRepository) GetOrder(ctx context.Context, orderID uuid.
 
 // ListOrders returns orders with filtering
 func (r *CurrencyExchangeRepository) ListOrders(ctx context.Context, filter models.OrderFilter) ([]models.CurrencyExchangeOrder, error) {
-	query := `
+	baseQuery := `
 		SELECT id, player_id, order_type, from_currency, to_currency,
 			   from_amount, to_amount, exchange_rate, fee, status,
 			   created_at, updated_at, filled_at, expires_at
 		FROM economy.currency_exchange_orders
 		WHERE 1=1
 	`
-	args := []interface{}{}
-	argCount := 0
+	var args []interface{}
 
 	if filter.PlayerID != nil {
-		argCount++
-		query += fmt.Sprintf(" AND player_id = $%d", argCount)
+		baseQuery += fmt.Sprintf(" AND player_id = $%d", len(args)+1)
 		args = append(args, *filter.PlayerID)
 	}
 
 	if filter.OrderType != nil {
-		argCount++
-		query += fmt.Sprintf(" AND order_type = $%d", argCount)
+		baseQuery += fmt.Sprintf(" AND order_type = $%d", len(args)+1)
 		args = append(args, *filter.OrderType)
 	}
 
 	if filter.Status != nil {
-		argCount++
-		query += fmt.Sprintf(" AND status = $%d", argCount)
+		baseQuery += fmt.Sprintf(" AND status = $%d", len(args)+1)
 		args = append(args, *filter.Status)
 	}
 
 	if filter.FromCurrency != nil {
-		argCount++
-		query += fmt.Sprintf(" AND from_currency = $%d", argCount)
+		baseQuery += fmt.Sprintf(" AND from_currency = $%d", len(args)+1)
 		args = append(args, *filter.FromCurrency)
 	}
 
 	if filter.ToCurrency != nil {
-		argCount++
-		query += fmt.Sprintf(" AND to_currency = $%d", argCount)
+		baseQuery += fmt.Sprintf(" AND to_currency = $%d", len(args)+1)
 		args = append(args, *filter.ToCurrency)
 	}
 
-	query += " ORDER BY created_at DESC"
-	query += fmt.Sprintf(" LIMIT %d OFFSET %d", filter.Limit, filter.Offset)
+	query := baseQuery + " ORDER BY created_at DESC" + fmt.Sprintf(" LIMIT $%d OFFSET $%d", len(args)+1, len(args)+2)
+	args = append(args, filter.Limit, filter.Offset)
 
-	rows, err := r.db.QueryContext(ctx, query, args...)
+	rows, err := r.db.Query(ctx, query, args...)
 	if err != nil {
 		r.logger.WithError(err).Error("Failed to list exchange orders")
 		return nil, fmt.Errorf("failed to list exchange orders: %w", err)
@@ -315,7 +310,7 @@ func (r *CurrencyExchangeRepository) UpdateOrderStatus(ctx context.Context, orde
 		WHERE id = $3
 	`
 
-	_, err := r.db.ExecContext(ctx, query, status, time.Now(), orderID)
+	_, err := r.db.Exec(ctx, query, status, time.Now(), orderID)
 	if err != nil {
 		r.logger.WithError(err).Error("Failed to update order status")
 		return fmt.Errorf("failed to update order status: %w", err)
@@ -340,7 +335,7 @@ func (r *CurrencyExchangeRepository) CreateTrade(ctx context.Context, trade *mod
 		RETURNING trade_id
 	`
 
-	err := r.db.QueryRowContext(ctx, query,
+	err := r.db.QueryRow(ctx, query,
 		trade.OrderID, trade.PlayerID, trade.FromCurrency, trade.ToCurrency,
 		trade.FromAmount, trade.ToAmount, trade.ExchangeRate, trade.Fee, trade.ExecutedAt,
 	).Scan(&trade.TradeID)
@@ -355,37 +350,33 @@ func (r *CurrencyExchangeRepository) CreateTrade(ctx context.Context, trade *mod
 
 // ListTrades returns trades with filtering
 func (r *CurrencyExchangeRepository) ListTrades(ctx context.Context, filter models.TradeFilter) ([]models.CurrencyExchangeTrade, error) {
-	query := `
+	baseQuery := `
 		SELECT trade_id, order_id, player_id, from_currency, to_currency,
 			   from_amount, to_amount, exchange_rate, fee, executed_at
 		FROM economy.currency_exchange_trades
 		WHERE 1=1
 	`
-	args := []interface{}{}
-	argCount := 0
+	var args []interface{}
 
 	if filter.PlayerID != nil {
-		argCount++
-		query += fmt.Sprintf(" AND player_id = $%d", argCount)
+		baseQuery += fmt.Sprintf(" AND player_id = $%d", len(args)+1)
 		args = append(args, *filter.PlayerID)
 	}
 
 	if filter.FromCurrency != nil {
-		argCount++
-		query += fmt.Sprintf(" AND from_currency = $%d", argCount)
+		baseQuery += fmt.Sprintf(" AND from_currency = $%d", len(args)+1)
 		args = append(args, *filter.FromCurrency)
 	}
 
 	if filter.ToCurrency != nil {
-		argCount++
-		query += fmt.Sprintf(" AND to_currency = $%d", argCount)
+		baseQuery += fmt.Sprintf(" AND to_currency = $%d", len(args)+1)
 		args = append(args, *filter.ToCurrency)
 	}
 
-	query += " ORDER BY executed_at DESC"
-	query += fmt.Sprintf(" LIMIT %d OFFSET %d", filter.Limit, filter.Offset)
+	query := baseQuery + " ORDER BY executed_at DESC" + fmt.Sprintf(" LIMIT $%d OFFSET $%d", len(args)+1, len(args)+2)
+	args = append(args, filter.Limit, filter.Offset)
 
-	rows, err := r.db.QueryContext(ctx, query, args...)
+	rows, err := r.db.Query(ctx, query, args...)
 	if err != nil {
 		r.logger.WithError(err).Error("Failed to list exchange trades")
 		return nil, fmt.Errorf("failed to list exchange trades: %w", err)

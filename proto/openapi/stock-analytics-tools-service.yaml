@@ -43,22 +43,22 @@ info:
     url: https://necpgame.com/support
     email: api@necpgame.com
 servers:
-- url: http://localhost:8080
-  description: Analytics Service (локальная разработка)
-- url: https://analytics.necpgame.com
-  description: Analytics Service (продакшн)
+  - url: http://localhost:8080
+    description: Analytics Service (локальная разработка)
+  - url: https://analytics.necpgame.com
+    description: Analytics Service (продакшн)
 tags:
-- name: Tools
-  description: Дополнительные инструменты
-- name: Alerts
-  description: Алерты
-- name: Dashboards
-  description: Дашборды
+  - name: Tools
+    description: Дополнительные инструменты
+  - name: Alerts
+    description: Алерты
+  - name: Dashboards
+    description: Дашборды
 paths:
   /api/v1/analytics/heatmap:
     get:
       tags:
-      - Tools
+        - Tools
       summary: Тепловая карта секторов
       description: 'Возвращает тепловую карту для визуализации производительности секторов.
 
@@ -83,18 +83,18 @@ paths:
         '
       operationId: getHeatmap
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       parameters:
-      - name: period
-        in: query
-        required: true
-        schema:
-          type: string
-          enum:
-          - 1d
-          - 1w
-          - 1m
-        description: Период (день, неделя, месяц)
+        - name: period
+          in: query
+          required: true
+          schema:
+            type: string
+            enum:
+              - 1d
+              - 1w
+              - 1m
+          description: Период (день, неделя, месяц)
       responses:
         '200':
           description: Тепловая карта
@@ -107,7 +107,7 @@ paths:
   /api/v1/analytics/orderbook/{ticker}:
     get:
       tags:
-      - Tools
+        - Tools
       summary: Стакан заявок
       description: 'Возвращает данные стакана заявок (order book).
 
@@ -132,19 +132,19 @@ paths:
         '
       operationId: getOrderBook
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       parameters:
-      - name: ticker
-        in: path
-        required: true
-        schema:
-          type: string
-      - name: depth
-        in: query
-        schema:
-          type: integer
-          default: 10
-        description: Глубина стакана (количество уровней)
+        - name: ticker
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: depth
+          in: query
+          schema:
+            type: integer
+            default: 10
+          description: Глубина стакана (количество уровней)
       responses:
         '200':
           description: Стакан заявок
@@ -159,7 +159,7 @@ paths:
   /api/v1/analytics/alerts:
     post:
       tags:
-      - Alerts
+        - Alerts
       summary: Создать алерт
       description: 'Создаёт алерт по пользовательским условиям.
 
@@ -188,7 +188,7 @@ paths:
         '
       operationId: createAlert
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       requestBody:
         required: true
         content:
@@ -208,21 +208,21 @@ paths:
           $ref: common.yaml#/components/responses/Unauthorized
     get:
       tags:
-      - Alerts
+        - Alerts
       summary: Список алертов
       description: Возвращает алерты игрока с фильтрацией по активности
       operationId: listAlerts
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       parameters:
-      - name: active_only
-        in: query
-        schema:
-          type: boolean
-          default: true
-        description: Только активные алерты
-      - $ref: common.yaml#/components/parameters/Limit
-      - $ref: common.yaml#/components/parameters/Offset
+        - name: active_only
+          in: query
+          schema:
+            type: boolean
+            default: true
+          description: Только активные алерты
+        - $ref: common.yaml#/components/parameters/Limit
+        - $ref: common.yaml#/components/parameters/Offset
       responses:
         '200':
           description: Список алертов
@@ -242,19 +242,19 @@ paths:
   /api/v1/analytics/alerts/{alert_id}:
     delete:
       tags:
-      - Alerts
+        - Alerts
       summary: Удалить алерт
       description: Удаляет алерт из системы
       operationId: deleteAlert
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       parameters:
-      - name: alert_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+        - name: alert_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
       responses:
         '204':
           description: Алерт удалён
@@ -265,7 +265,7 @@ paths:
   /api/v1/analytics/dashboards/portfolio:
     get:
       tags:
-      - Dashboards
+        - Dashboards
       summary: Портфельный дашборд
       description: 'Возвращает дашборд портфеля игрока.
 
@@ -292,7 +292,7 @@ paths:
         '
       operationId: getPortfolioDashboard
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       responses:
         '200':
           description: Портфельный дашборд
@@ -305,7 +305,7 @@ paths:
   /api/v1/analytics/dashboards/market:
     get:
       tags:
-      - Dashboards
+        - Dashboards
       summary: Обзор рынка
       description: 'Возвращает обзор рынка.
 
@@ -332,7 +332,7 @@ paths:
         '
       operationId: getMarketDashboard
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       responses:
         '200':
           description: Обзор рынка
@@ -404,9 +404,9 @@ components:
     CreateAlertRequest:
       type: object
       required:
-      - ticker
-      - condition_type
-      - threshold
+        - ticker
+        - condition_type
+        - threshold
       properties:
         ticker:
           type: string
@@ -414,18 +414,18 @@ components:
         condition_type:
           type: string
           enum:
-          - price_above
-          - price_below
-          - rsi_above
-          - rsi_below
-          - volume_spike
+            - price_above
+            - price_below
+            - rsi_above
+            - rsi_below
+            - volume_spike
           description: Тип условия
         notification_channel:
           type: string
           enum:
-          - in_game
-          - email
-          - push
+            - in_game
+            - email
+            - push
           description: Канал уведомления
         threshold:
           type: number

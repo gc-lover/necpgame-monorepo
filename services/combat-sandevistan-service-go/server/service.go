@@ -1,4 +1,4 @@
-// Issue: #39, #1607 - Sandevistan service interface and constructor
+// Package server Issue: #39, #1607 - Sandevistan service interface and constructor
 // Implementation split across multiple files for better maintainability:
 // - service_activation.go: Activation/deactivation operations
 // - service_status.go: Status and bonus operations
@@ -21,18 +21,17 @@ import (
 const (
 	PhasePreparation = "preparation"
 	PhaseActive      = "active"
-	PhaseRecovery    = "recovery"
-	PhaseIdle        = "idle"
+
+	PhaseIdle = "idle"
 
 	PreparationDuration = 300 * time.Millisecond
 	ActiveDuration      = 4 * time.Second
 	RecoveryDuration    = 6 * time.Second
 
-	MaxActionBudget     = 100
-	MaxActionsPerTick   = 3
-	MaxTemporalMarks    = 3
-	MaxHeatStacks       = 4
-	OverstressThreshold = 4
+	MaxActionBudget   = 100
+	MaxActionsPerTick = 3
+	MaxTemporalMarks  = 3
+	MaxHeatStacks     = 4
 )
 
 type SandevistanService interface {

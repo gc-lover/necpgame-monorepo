@@ -46,4 +46,3 @@ func TestChatHistoryServiceNoLeaks(t *testing.T) {
 // - Worker pool limits (bounded concurrency)
 // - Timeout for all DB operations
 // - Proper connection management
-

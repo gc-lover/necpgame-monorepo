@@ -55,4 +55,3 @@ func BenchmarkUpgradeImplant(b *testing.B) {
 		_, _ = handlers.UpgradeImplant(ctx, req)
 	}
 }
-

@@ -47,4 +47,3 @@ func TestChatMessagesServiceNoLeaks(t *testing.T) {
 // - Timeout for all DB operations
 // - Proper channel management
 // - Message queue cleanup
-

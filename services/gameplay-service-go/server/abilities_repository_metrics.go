@@ -1,4 +1,4 @@
-// Issue: #156 - Abilities metrics operations
+// Package server Issue: #156 - Abilities metrics operations
 package server
 
 import (

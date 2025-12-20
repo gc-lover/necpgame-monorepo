@@ -1,4 +1,4 @@
-// Issue: #1598, #1607
+// Package server Issue: #1598, #1607
 // ogen handlers - TYPED responses (no interface{} boxing!)
 package server
 
@@ -6,12 +6,12 @@ import (
 	"context"
 	"time"
 
-	"github.com/go-faster/jx"
 	"github.com/gc-lover/necpgame-monorepo/services/social-chat-format-service-go/pkg/api"
+	"github.com/go-faster/jx"
 	"github.com/google/uuid"
 )
 
-// Context timeout constants (Issue #1604)
+// DBTimeout Context timeout constants (Issue #1604)
 const (
 	DBTimeout = 50 * time.Millisecond
 )
@@ -31,7 +31,7 @@ func (h *ChatFormatHandlers) FormatChatMessage(ctx context.Context, req *api.For
 
 	original := req.Content
 	formatted := req.Content
-	mentions := []uuid.UUID{}
+	var mentions []uuid.UUID
 
 	response := &api.FormattedMessageResponse{
 		Original:  api.NewOptString(original),

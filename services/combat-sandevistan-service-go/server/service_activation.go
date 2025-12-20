@@ -1,4 +1,4 @@
-// Issue: #39, #1607 - Sandevistan activation operations
+// Package server Issue: #39, #1607 - Sandevistan activation operations
 package server
 
 import (

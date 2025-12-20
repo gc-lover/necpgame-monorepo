@@ -1,4 +1,4 @@
-// Issue: #141888878, #141888890
+// Package server Issue: #141888878, #141888890
 package server
 
 import (
@@ -95,7 +95,24 @@ func (s *LobbyServer) Stop() {
 func (s *LobbyServer) handleWebSocket(w http.ResponseWriter, r *http.Request) {
 	logger := GetLogger()
 	token := r.URL.Query().Get("token")
+
+	// Validate token presence and format
+	if token == "" {
+		logger.Warn("Missing token in WebSocket connection attempt")
+		RecordWebSocketError("missing_token")
+		http.Error(w, "Unauthorized: missing token", http.StatusUnauthorized)
+		return
+	}
+
+	if len(token) < 10 { // Basic length validation for JWT
+		logger.Warn("Invalid token format in WebSocket connection attempt")
+		RecordWebSocketError("invalid_token_format")
+		http.Error(w, "Unauthorized: invalid token", http.StatusUnauthorized)
+		return
+	}
+
 	if !s.config.JwtValidator.Verify(token) {
+		logger.Warn("Invalid token in WebSocket connection attempt")
 		RecordWebSocketError("unauthorized")
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
@@ -318,7 +335,7 @@ func (c *Client) writePump() {
 				RecordWebSocketError("write")
 				return
 			}
-			
+
 			if _, err := w.Write(message); err != nil {
 				logger := GetLogger()
 				logger.WithError(err).Error("Failed to write WebSocket message")
@@ -397,4 +414,3 @@ func (c *Client) handleMessage(message []byte) {
 	c.server.broadcastToRoom(c.room, message)
 	RecordWebSocketMessage("broadcast", "success")
 }
-

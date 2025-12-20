@@ -26,39 +26,6 @@ type MasteryService struct {
 	logger *logrus.Logger
 }
 
-func NewMasteryService(dbURL, redisURL string) (*MasteryService, error) {
-	// Issue: #1605 - DB Connection Pool configuration
-	config, err := pgxpool.ParseConfig(dbURL)
-	if err != nil {
-		return nil, err
-	}
-	config.MaxConns = 50
-	config.MinConns = 10
-	config.MaxConnLifetime = 5 * time.Minute
-	config.MaxConnIdleTime = 1 * time.Minute
-	
-	dbPool, err := pgxpool.NewWithConfig(context.Background(), config)
-	if err != nil {
-		return nil, err
-	}
-
-	redisOpts, err := redis.ParseURL(redisURL)
-	if err != nil {
-		return nil, err
-	}
-
-	redisClient := redis.NewClient(redisOpts)
-
-	repo := NewMasteryRepository(dbPool)
-
-	return &MasteryService{
-		repo:   repo,
-		db:     dbPool,
-		cache:  redisClient,
-		logger: GetLogger(),
-	}, nil
-}
-
 func (s *MasteryService) GetMasteryLevels(ctx context.Context, characterID uuid.UUID) (*MasteryLevels, error) {
 	cacheKey := fmt.Sprintf("mastery:levels:%s", characterID.String())
 
@@ -209,4 +176,3 @@ func (s *MasteryService) checkAndUnlockRewards(ctx context.Context, characterID 
 		}
 	}
 }
-

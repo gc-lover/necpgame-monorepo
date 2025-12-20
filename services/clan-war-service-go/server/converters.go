@@ -1,4 +1,4 @@
-// Issue: ogen migration
+// Package server Issue: ogen migration
 package server
 
 import (
@@ -107,4 +107,3 @@ func convertWarPhaseToAPI(phase models.WarPhase) clanwarapi.ClanWarPhase {
 		return clanwarapi.ClanWarPhasePREPARATION
 	}
 }
-

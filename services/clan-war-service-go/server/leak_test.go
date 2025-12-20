@@ -35,4 +35,3 @@ func TestClanWarServiceNoLeaks(t *testing.T) {
 
 	// If goroutines leaked from clan war handlers, test FAILS
 }
-

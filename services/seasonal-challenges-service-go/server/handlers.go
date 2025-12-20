@@ -1,4 +1,4 @@
-// Issue: ogen migration, #1607
+// Package server Issue: ogen migration, #1607
 // ogen handlers - TYPED responses (no interface{} boxing!)
 package server
 
@@ -8,13 +8,12 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	api "github.com/necpgame/seasonal-challenges-service-go/pkg/api"
+	"github.com/necpgame/seasonal-challenges-service-go/pkg/api"
 	"github.com/sirupsen/logrus"
 )
 
 const (
-	DBTimeout    = 50 * time.Millisecond
-	CacheTimeout = 10 * time.Millisecond
+	DBTimeout = 50 * time.Millisecond
 )
 
 // Handlers implements api.Handler interface (ogen typed handlers!)
@@ -23,13 +22,13 @@ type Handlers struct {
 	logger *logrus.Logger
 
 	// Memory pooling for hot path structs (zero allocations target!)
-	seasonPool sync.Pool
-	seasonChallengesPool sync.Pool
-	seasonRewardsPool sync.Pool
-	activeChallengesPool sync.Pool
+	seasonPool              sync.Pool
+	seasonChallengesPool    sync.Pool
+	seasonRewardsPool       sync.Pool
+	activeChallengesPool    sync.Pool
 	challengeCompletionPool sync.Pool
-	currencyBalancePool sync.Pool
-	currencyExchangePool sync.Pool
+	currencyBalancePool     sync.Pool
+	currencyExchangePool    sync.Pool
 }
 
 // NewHandlers creates new handlers with memory pooling
@@ -173,7 +172,7 @@ func (h *Handlers) GetActiveChallenges(ctx context.Context, params api.GetActive
 
 // CompleteSeasonalChallenge - TYPED response!
 // Issue: #1607 - Uses memory pooling for zero allocations
-func (h *Handlers) CompleteSeasonalChallenge(ctx context.Context, req api.OptCompleteSeasonalChallengeReq, params api.CompleteSeasonalChallengeParams) (api.CompleteSeasonalChallengeRes, error) {
+func (h *Handlers) CompleteSeasonalChallenge(ctx context.Context, _ api.OptCompleteSeasonalChallengeReq, params api.CompleteSeasonalChallengeParams) (api.CompleteSeasonalChallengeRes, error) {
 	_, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
@@ -190,7 +189,7 @@ func (h *Handlers) CompleteSeasonalChallenge(ctx context.Context, req api.OptCom
 	// Note: Not returning to pool - struct is returned to caller
 
 	result.ChallengeID = api.NewOptUUID(params.ChallengeID)
-	result.Completed = api.NewOptBool(completed)
+	result.Completed = api.NewOptBool(true)
 	result.CompletedAt = api.NewOptDateTime(now)
 	result.CurrencyEarned = api.NewOptInt(currencyEarned)
 	result.Rewards = []api.ChallengeCompletionResultRewardsItem{}
@@ -262,4 +261,3 @@ func (h *Handlers) ExchangeSeasonalCurrency(ctx context.Context, req *api.Curren
 
 	return result, nil
 }
-

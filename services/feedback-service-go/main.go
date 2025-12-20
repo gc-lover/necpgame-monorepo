@@ -9,8 +9,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/gc-lover/necpgame-monorepo/services/feedback-service-go/server"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
@@ -20,7 +20,7 @@ func main() {
 
 	addr := getEnv("ADDR", "0.0.0.0:8090")
 	metricsAddr := getEnv("METRICS_ADDR", ":9090")
-	
+
 	dbURL := getEnv("DATABASE_URL", "postgresql://necpgame:necpgame@localhost:5432/necpgame?sslmode=disable")
 	githubToken := getEnv("GITHUB_TOKEN", "")
 	keycloakURL := getEnv("KEYCLOAK_URL", "http://localhost:8080")
@@ -128,23 +128,3 @@ func getEnv(key, defaultValue string) string {
 	}
 	return defaultValue
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

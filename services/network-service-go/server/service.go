@@ -1,6 +1,7 @@
 package server
 
 import (
+	"net/http"
 	"sync"
 	"time"
 
@@ -8,54 +9,54 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// OPTIMIZATION: Issue #1978 - Memory-aligned struct for network performance
+// NetworkService OPTIMIZATION: Issue #1978 - Memory-aligned struct for network performance
 type NetworkService struct {
-	logger          *logrus.Logger
-	metrics         *NetworkMetrics
-	config          *NetworkServiceConfig
-	connections     sync.Map // OPTIMIZATION: Thread-safe WebSocket connections map
-	channels        sync.Map // OPTIMIZATION: Thread-safe channels map
-	presence        sync.Map // OPTIMIZATION: Thread-safe presence map
-	subscriptions   sync.Map // OPTIMIZATION: Thread-safe event subscriptions map
+	logger        *logrus.Logger
+	metrics       *NetworkMetrics
+	config        *NetworkServiceConfig
+	connections   sync.Map // OPTIMIZATION: Thread-safe WebSocket connections map
+	channels      sync.Map // OPTIMIZATION: Thread-safe channels map
+	presence      sync.Map // OPTIMIZATION: Thread-safe presence map
+	subscriptions sync.Map // OPTIMIZATION: Thread-safe event subscriptions map
 
 	// OPTIMIZATION: Issue #1978 - Memory pooling for hot path structs (zero allocations target!)
-	messageResponsePool sync.Pool
+	messageResponsePool  sync.Pool
 	presenceResponsePool sync.Pool
-	eventResponsePool sync.Pool
-	clusterResponsePool sync.Pool
+	eventResponsePool    sync.Pool
+	clusterResponsePool  sync.Pool
 }
 
-// OPTIMIZATION: Issue #1978 - Memory-aligned WebSocket connection
+// WSConnection OPTIMIZATION: Issue #1978 - Memory-aligned WebSocket connection
 type WSConnection struct {
 	ID            string          `json:"id"`             // 16 bytes
 	UserID        string          `json:"user_id"`        // 16 bytes
 	ClientID      string          `json:"client_id"`      // 16 bytes
-	Conn          *websocket.Conn `json:"-"`             // 8 bytes (pointer)
-	ConnectedAt   time.Time       `json:"connected_at"`  // 24 bytes
+	Conn          *websocket.Conn `json:"-"`              // 8 bytes (pointer)
+	ConnectedAt   time.Time       `json:"connected_at"`   // 24 bytes
 	LastHeartbeat time.Time       `json:"last_heartbeat"` // 24 bytes
 	Status        string          `json:"status"`         // 16 bytes
-	Subscriptions []string        `json:"subscriptions"` // 24 bytes (slice)
-	SendChan      chan []byte      `json:"-"`             // 8 bytes (chan)
+	Subscriptions []string        `json:"subscriptions"`  // 24 bytes (slice)
+	SendChan      chan []byte     `json:"-"`              // 8 bytes (chan)
 }
 
-// OPTIMIZATION: Issue #1978 - Memory-aligned message structs
+// NetworkMessage OPTIMIZATION: Issue #1978 - Memory-aligned message structs
 type NetworkMessage struct {
-	MessageID   string                 `json:"message_id"`   // 16 bytes
-	Type        string                 `json:"type"`         // 16 bytes
-	SenderID    string                 `json:"sender_id"`    // 16 bytes
-	Content     string                 `json:"content"`      // 16 bytes
-	Channel     string                 `json:"channel"`      // 16 bytes
-	Timestamp   int64                  `json:"timestamp"`    // 8 bytes
-	Priority    string                 `json:"priority"`     // 16 bytes
-	Metadata    map[string]interface{} `json:"metadata"`     // 8 bytes (map)
+	MessageID string                 `json:"message_id"` // 16 bytes
+	Type      string                 `json:"type"`       // 16 bytes
+	SenderID  string                 `json:"sender_id"`  // 16 bytes
+	Content   string                 `json:"content"`    // 16 bytes
+	Channel   string                 `json:"channel"`    // 16 bytes
+	Timestamp int64                  `json:"timestamp"`  // 8 bytes
+	Priority  string                 `json:"priority"`   // 16 bytes
+	Metadata  map[string]interface{} `json:"metadata"`   // 8 bytes (map)
 }
 
-// OPTIMIZATION: Issue #1978 - Memory-aligned presence structs
+// UserPresence OPTIMIZATION: Issue #1978 - Memory-aligned presence structs
 type UserPresence struct {
-	UserID        string `json:"user_id"`         // 16 bytes
-	Status        string `json:"status"`          // 16 bytes
-	LastSeen      int64  `json:"last_seen"`       // 8 bytes
-	ConnectedAt   int64  `json:"connected_at"`    // 8 bytes
+	UserID          string `json:"user_id"`          // 16 bytes
+	Status          string `json:"status"`           // 16 bytes
+	LastSeen        int64  `json:"last_seen"`        // 8 bytes
+	ConnectedAt     int64  `json:"connected_at"`     // 8 bytes
 	CurrentActivity string `json:"current_activity"` // 16 bytes
 }
 
@@ -105,35 +106,35 @@ func NewNetworkService(logger *logrus.Logger, metrics *NetworkMetrics, config *N
 
 	return s
 }
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
-		return
-	}
-
-	s.metrics.EventPublishes.Inc()
-
-	event := req.Event
-	event.EventID = uuid.New().String()
-	event.Timestamp = time.Now().Unix()
-
-	// Publish to subscribers
-	recipients := s.publishToSubscribers(event)
-
-	// OPTIMIZATION: Issue #1978 - Use memory pool
-	resp := s.eventResponsePool.Get().(*PublishEventResponse)
-	defer s.eventResponsePool.Put(resp)
-
-	resp.EventID = event.EventID
-	resp.PublishedAt = event.Timestamp
-	resp.RecipientsCount = recipients
-	resp.RoutingStrategy = req.RoutingStrategy
-	resp.DeliveryStatus = "DELIVERED"
-	resp.ProcessingTimeMs = 5
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(resp)
+http.Error(w, "Invalid request body", http.StatusBadRequest)
+return
 }
 
-func (s *NetworkService) GetClusterStatus(w http.ResponseWriter, r *http.Request) {
+s.metrics.EventPublishes.Inc()
+
+event := req.Event
+event.EventID = uuid.New().String()
+event.Timestamp = time.Now().Unix()
+
+// Publish to subscribers
+recipients := s.publishToSubscribers(event)
+
+// OPTIMIZATION: Issue #1978 - Use memory pool
+resp := s.eventResponsePool.Get().(*PublishEventResponse)
+defer s.eventResponsePool.Put(resp)
+
+resp.EventID = event.EventID
+resp.PublishedAt = event.Timestamp
+resp.RecipientsCount = recipients
+resp.RoutingStrategy = req.RoutingStrategy
+resp.DeliveryStatus = "DELIVERED"
+resp.ProcessingTimeMs = 5
+
+w.Header().Set("Content-Type", "application/json")
+json.NewEncoder(w).Encode(resp)
+}
+
+func (s *NetworkService) GetClusterStatus(w http.ResponseWriter) {
 	// OPTIMIZATION: Issue #1978 - Use memory pool
 	resp := s.clusterResponsePool.Get().(*GetClusterStatusResponse)
 	defer s.clusterResponsePool.Put(resp)
@@ -278,11 +279,11 @@ func (s *NetworkService) handleUserMessage(conn *WSConnection, msg NetworkMessag
 	}).Debug("user message received")
 }
 
-// Request/Response structs
+// BroadcastMessageRequest Request/Response structs
 type BroadcastMessageRequest struct {
-	Message     NetworkMessage `json:"message"`
-	ExcludeUsers []string      `json:"exclude_users,omitempty"`
-	Compress    bool           `json:"compress,omitempty"`
+	Message      NetworkMessage `json:"message"`
+	ExcludeUsers []string       `json:"exclude_users,omitempty"`
+	Compress     bool           `json:"compress,omitempty"`
 }
 
 type BroadcastMessageResponse struct {
@@ -293,7 +294,7 @@ type BroadcastMessageResponse struct {
 }
 
 type ChannelMessageRequest struct {
-	Message           NetworkMessage `json:"message"`
+	Message            NetworkMessage         `json:"message"`
 	ChannelPermissions map[string]interface{} `json:"channel_permissions,omitempty"`
 }
 
@@ -305,25 +306,25 @@ type ChannelMessageResponse struct {
 }
 
 type GetPresenceResponse struct {
-	UserID     string       `json:"user_id"`
-	Presence   *UserPresence `json:"presence"`
-	LastUpdated int64        `json:"last_updated"`
-	IsOnline   bool         `json:"is_online"`
+	UserID      string        `json:"user_id"`
+	Presence    *UserPresence `json:"presence"`
+	LastUpdated int64         `json:"last_updated"`
+	IsOnline    bool          `json:"is_online"`
 }
 
 type UpdatePresenceRequest struct {
-	Status        string `json:"status"`
-	StatusMessage string `json:"status_message,omitempty"`
-	Activity      string `json:"activity,omitempty"`
+	Status        string                 `json:"status"`
+	StatusMessage string                 `json:"status_message,omitempty"`
+	Activity      string                 `json:"activity,omitempty"`
 	CustomFields  map[string]interface{} `json:"custom_fields,omitempty"`
 }
 
 type UpdatePresenceResponse struct {
-	UserID             string `json:"user_id"`
-	PreviousStatus     string `json:"previous_status"`
-	NewStatus          string `json:"new_status"`
-	UpdatedAt          int64  `json:"updated_at"`
-	Broadcasted        bool   `json:"broadcasted"`
+	UserID              string `json:"user_id"`
+	PreviousStatus      string `json:"previous_status"`
+	NewStatus           string `json:"new_status"`
+	UpdatedAt           int64  `json:"updated_at"`
+	Broadcasted         bool   `json:"broadcasted"`
 	AffectedSubscribers int    `json:"affected_subscribers"`
 }
 
@@ -339,7 +340,7 @@ type SubscribeEventsResponse struct {
 }
 
 type PublishEventRequest struct {
-	Event          *Event `json:"event"`
+	Event           *Event `json:"event"`
 	RoutingStrategy string `json:"routing_strategy,omitempty"`
 }
 
@@ -353,13 +354,13 @@ type PublishEventResponse struct {
 }
 
 type GetClusterStatusResponse struct {
-	ClusterID   string       `json:"cluster_id"`
-	Status      string       `json:"status"`
+	ClusterID   string         `json:"cluster_id"`
+	Status      string         `json:"status"`
 	Nodes       []*ClusterNode `json:"nodes"`
-	LastUpdated int64        `json:"last_updated"`
+	LastUpdated int64          `json:"last_updated"`
 }
 
-// Additional structs
+// EventSubscription Additional structs
 type EventSubscription struct {
 	SubscriptionID string   `json:"subscription_id"`
 	SubscriberID   string   `json:"subscriber_id"`
@@ -368,11 +369,11 @@ type EventSubscription struct {
 }
 
 type Event struct {
-	EventID   string `json:"event_id"`
-	EventType string `json:"event_type"`
-	Source    string `json:"source"`
+	EventID   string                 `json:"event_id"`
+	EventType string                 `json:"event_type"`
+	Source    string                 `json:"source"`
 	Data      map[string]interface{} `json:"data"`
-	Timestamp int64  `json:"timestamp"`
+	Timestamp int64                  `json:"timestamp"`
 }
 
 type ClusterNode struct {

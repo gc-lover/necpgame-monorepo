@@ -68,6 +68,7 @@ quest_definition:
 **POST** `/api/v1/gameplay/quests/content/reload`
 
 **Request Body:**
+
 ```json
 {
   "quest_id": "quest-vegas-2029-strip",
@@ -80,6 +81,7 @@ quest_definition:
 ```
 
 **Response:**
+
 ```json
 {
   "quest_id": "quest-vegas-2029-strip",
@@ -91,6 +93,7 @@ quest_definition:
 ## Обработка в Handler
 
 Handler (`ReloadQuestContent`) извлекает из YAML:
+
 - `quest_id` из `metadata.id`
 - `title` из `summary.goal` или `metadata.title`
 - `description` из `summary.essence`
@@ -112,17 +115,21 @@ WHERE quest_id = 'quest-vegas-2029-strip';
 ## Troubleshooting
 
 ### Ошибка: "Python is not installed"
+
 Установите Python 3.x и добавьте в PATH.
 
 ### Ошибка: "Quest file not found"
+
 Проверьте путь к файлу. Используйте абсолютный путь или относительный от корня репозитория.
 
 ### Ошибка: "Failed to import quest (HTTP 500)"
+
 - Проверьте, что сервис запущен
 - Проверьте логи сервиса
 - Убедитесь, что база данных доступна
 - Проверьте, что миграции применены
 
 ### Ошибка: "questRepository not initialized"
+
 Убедитесь, что сервис запущен с подключением к БД (переменная окружения `DATABASE_URL`).
 

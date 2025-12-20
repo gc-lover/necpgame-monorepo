@@ -5,8 +5,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/gc-lover/necpgame-monorepo/services/weapon-resource-service-go/pkg/api"
 	"github.com/google/uuid"
-	api "github.com/gc-lover/necpgame-monorepo/services/weapon-resource-service-go/pkg/api"
 )
 
 // BenchmarkAPIV1WeaponsResourcesWeaponIdGet benchmarks APIV1WeaponsResourcesWeaponIdGet handler
@@ -16,8 +16,7 @@ func BenchmarkAPIV1WeaponsResourcesWeaponIdGet(b *testing.B) {
 	handlers := NewHandlers(service)
 
 	ctx := context.Background()
-	params := api.APIV1WeaponsResourcesWeaponIdGetParams{
-	}
+	params := api.APIV1WeaponsResourcesWeaponIdGetParams{}
 
 	b.ReportAllocs()
 	b.ResetTimer()
@@ -70,4 +69,3 @@ func BenchmarkAPIV1WeaponsResourcesWeaponIdCooldownPost(b *testing.B) {
 		_, _ = handlers.APIV1WeaponsResourcesWeaponIdCooldownPost(ctx, req, params)
 	}
 }
-

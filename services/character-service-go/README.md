@@ -13,10 +13,12 @@
 ## API Endpoints
 
 ### Accounts
+
 - `GET /api/v1/accounts/{accountId}` - Получить аккаунт по ID
 - `POST /api/v1/accounts` - Создать новый аккаунт (требует JWT токен)
 
 ### Characters
+
 - `GET /api/v1/characters?account_id={accountId}` - Получить список персонажей аккаунта
 - `GET /api/v1/characters/{characterId}` - Получить персонажа по ID
 - `POST /api/v1/characters` - Создать нового персонажа (требует JWT токен)
@@ -25,6 +27,7 @@
 - `GET /api/v1/characters/{characterId}/validate` - Проверить валидность персонажа
 
 ### Health
+
 - `GET /health` - Проверка здоровья сервиса
 
 ## Аутентификация
@@ -37,6 +40,7 @@
 ### Отключение аутентификации (для разработки)
 
 Установить переменную окружения:
+
 ```bash
 AUTH_ENABLED=false
 ```

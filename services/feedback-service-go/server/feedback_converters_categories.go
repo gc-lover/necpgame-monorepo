@@ -1,8 +1,8 @@
 package server
 
 import (
-	feedbackapi "github.com/gc-lover/necpgame-monorepo/services/feedback-service-go/pkg/api"
 	"github.com/gc-lover/necpgame-monorepo/services/feedback-service-go/models"
+	feedbackapi "github.com/gc-lover/necpgame-monorepo/services/feedback-service-go/pkg/api"
 )
 
 func convertFeedbackCategoryFromAPI(c feedbackapi.SubmitFeedbackRequestCategory) models.FeedbackCategory {
@@ -26,29 +26,6 @@ func convertFeedbackCategoryFromAPI(c feedbackapi.SubmitFeedbackRequestCategory)
 	}
 }
 
-func convertFeedbackCategoryToAPI(c models.FeedbackCategory) *feedbackapi.FeedbackCategory {
-	var result feedbackapi.FeedbackCategory
-	switch c {
-	case models.FeedbackCategoryGameplay:
-		result = feedbackapi.FeedbackCategoryGameplay
-	case models.FeedbackCategoryBalance:
-		result = feedbackapi.FeedbackCategoryBalance
-	case models.FeedbackCategoryContent:
-		result = feedbackapi.FeedbackCategoryContent
-	case models.FeedbackCategoryTechnical:
-		result = feedbackapi.FeedbackCategoryTechnical
-	case models.FeedbackCategoryLore:
-		result = feedbackapi.FeedbackCategoryLore
-	case models.FeedbackCategoryUIUX:
-		result = feedbackapi.FeedbackCategoryUIUx
-	case models.FeedbackCategoryOther:
-		result = feedbackapi.FeedbackCategoryOther
-	default:
-		result = feedbackapi.FeedbackCategoryOther
-	}
-	return &result
-}
-
 func convertFeedbackCategoryToAPIValue(c models.FeedbackCategory) feedbackapi.FeedbackCategory {
 	switch c {
 	case models.FeedbackCategoryGameplay:
@@ -69,5 +46,3 @@ func convertFeedbackCategoryToAPIValue(c models.FeedbackCategory) feedbackapi.Fe
 		return feedbackapi.FeedbackCategoryOther
 	}
 }
-
-

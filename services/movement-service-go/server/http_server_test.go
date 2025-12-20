@@ -10,19 +10,19 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/gc-lover/necpgame-monorepo/services/movement-service-go/models"
+	"github.com/google/uuid"
 )
 
 type mockMovementService struct {
-	positions      map[uuid.UUID]*models.CharacterPosition
+	positions       map[uuid.UUID]*models.CharacterPosition
 	positionHistory map[uuid.UUID][]models.PositionHistory
-	getErr         error
-	saveErr        error
-	historyErr     error
+	getErr          error
+	saveErr         error
+	historyErr      error
 }
 
-func (m *mockMovementService) GetPosition(ctx context.Context, characterID uuid.UUID) (*models.CharacterPosition, error) {
+func (m *mockMovementService) GetPosition(_ context.Context, characterID uuid.UUID) (*models.CharacterPosition, error) {
 	if m.getErr != nil {
 		return nil, m.getErr
 	}
@@ -34,7 +34,7 @@ func (m *mockMovementService) GetPosition(ctx context.Context, characterID uuid.
 	return position, nil
 }
 
-func (m *mockMovementService) SavePosition(ctx context.Context, characterID uuid.UUID, req *models.SavePositionRequest) (*models.CharacterPosition, error) {
+func (m *mockMovementService) SavePosition(_ context.Context, characterID uuid.UUID, req *models.SavePositionRequest) (*models.CharacterPosition, error) {
 	if m.saveErr != nil {
 		return nil, m.saveErr
 	}
@@ -57,7 +57,7 @@ func (m *mockMovementService) SavePosition(ctx context.Context, characterID uuid
 	return position, nil
 }
 
-func (m *mockMovementService) GetPositionHistory(ctx context.Context, characterID uuid.UUID, limit int) ([]models.PositionHistory, error) {
+func (m *mockMovementService) GetPositionHistory(_ context.Context, characterID uuid.UUID, limit int) ([]models.PositionHistory, error) {
 	if m.historyErr != nil {
 		return nil, m.historyErr
 	}
@@ -93,9 +93,9 @@ func TestHTTPServer_GetPosition(t *testing.T) {
 		PositionY:   200.0,
 		PositionZ:   300.0,
 		Yaw:         45.0,
-		VelocityX:    1.0,
-		VelocityY:    0.0,
-		VelocityZ:    0.0,
+		VelocityX:   1.0,
+		VelocityY:   0.0,
+		VelocityZ:   0.0,
 		UpdatedAt:   time.Now(),
 		CreatedAt:   time.Now(),
 	}
@@ -353,4 +353,3 @@ func TestHTTPServer_HealthCheck(t *testing.T) {
 		t.Errorf("Expected status 'healthy', got %s", response["status"])
 	}
 }
-

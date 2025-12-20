@@ -8,7 +8,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// OPTIMIZATION: Issue #1585 - Runtime Goroutine Monitoring for MMO stability
+// GoroutineMonitor OPTIMIZATION: Issue #1585 - Runtime Goroutine Monitoring for MMO stability
 type GoroutineMonitor struct {
 	maxGoroutines int64
 	logger        *logrus.Logger
@@ -16,7 +16,7 @@ type GoroutineMonitor struct {
 	stopCh        chan struct{}
 }
 
-// OPTIMIZATION: Issue #1936 - Memory-aligned struct
+// GoroutineStats OPTIMIZATION: Issue #1936 - Memory-aligned struct
 type GoroutineStats struct {
 	CurrentCount int64     `json:"current_count"` // 8 bytes
 	MaxAllowed   int64     `json:"max_allowed"`   // 8 bytes

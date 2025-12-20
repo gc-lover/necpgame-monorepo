@@ -9,10 +9,10 @@ import (
 type LootMode string
 
 const (
-	LootModeFreeForAll     LootMode = "free_for_all"
-	LootModeRoundRobin     LootMode = "round_robin"
+	LootModeFreeForAll      LootMode = "free_for_all"
+	LootModeRoundRobin      LootMode = "round_robin"
 	LootModeNeedBeforeGreed LootMode = "need_before_greed"
-	LootModeMasterLooter   LootMode = "master_looter"
+	LootModeMasterLooter    LootMode = "master_looter"
 )
 
 type PartyRole string
@@ -33,9 +33,9 @@ type Party struct {
 }
 
 type PartyMember struct {
-	CharacterID uuid.UUID  `json:"character_id" db:"character_id"`
-	Role        PartyRole  `json:"role" db:"role"`
-	JoinedAt    time.Time  `json:"joined_at" db:"joined_at"`
+	CharacterID uuid.UUID `json:"character_id" db:"character_id"`
+	Role        PartyRole `json:"role" db:"role"`
+	JoinedAt    time.Time `json:"joined_at" db:"joined_at"`
 }
 
 type CreatePartyRequest struct {
@@ -46,4 +46,3 @@ type CreatePartyRequest struct {
 type TransferLeadershipRequest struct {
 	NewLeaderID uuid.UUID `json:"new_leader_id"`
 }
-

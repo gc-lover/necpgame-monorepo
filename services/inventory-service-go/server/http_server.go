@@ -12,25 +12,25 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// OPTIMIZATION: Issue #1950 - Memory-aligned struct for performance
+// InventoryServer OPTIMIZATION: Issue #1950 - Memory-aligned struct for performance
 type InventoryServer struct {
-	router       *chi.Mux
-	logger       *logrus.Logger
-	service      *InventoryService
-	metrics      *InventoryMetrics
+	router  *chi.Mux
+	logger  *logrus.Logger
+	service *InventoryService
+	metrics *InventoryMetrics
 }
 
-// OPTIMIZATION: Issue #1950 - Struct field alignment (large → small)
+// InventoryMetrics OPTIMIZATION: Issue #1950 - Struct field alignment (large → small)
 type InventoryMetrics struct {
-	RequestsTotal      prometheus.Counter   `json:"-"` // 16 bytes (interface)
-	RequestDuration    prometheus.Histogram `json:"-"` // 16 bytes (interface)
-	ActiveInventories  prometheus.Gauge     `json:"-"` // 16 bytes (interface)
-	ItemOperations     prometheus.Counter   `json:"-"` // 16 bytes (interface)
-	EquipmentChanges   prometheus.Counter   `json:"-"` // 16 bytes (interface)
-	SearchQueries      prometheus.Counter   `json:"-"` // 16 bytes (interface)
+	RequestsTotal     prometheus.Counter   `json:"-"` // 16 bytes (interface)
+	RequestDuration   prometheus.Histogram `json:"-"` // 16 bytes (interface)
+	ActiveInventories prometheus.Gauge     `json:"-"` // 16 bytes (interface)
+	ItemOperations    prometheus.Counter   `json:"-"` // 16 bytes (interface)
+	EquipmentChanges  prometheus.Counter   `json:"-"` // 16 bytes (interface)
+	SearchQueries     prometheus.Counter   `json:"-"` // 16 bytes (interface)
 }
 
-func NewInventoryServer(config *InventoryServiceConfig, logger *logrus.Logger) (*InventoryServer, error) {
+func NewInventoryServer(logger *logrus.Logger) (*InventoryServer, error) {
 	// Initialize metrics
 	metrics := &InventoryMetrics{
 		RequestsTotal: promauto.NewCounter(prometheus.CounterOpts{
@@ -143,7 +143,7 @@ func (s *InventoryServer) Router() *chi.Mux {
 	return s.router
 }
 
-func (s *InventoryServer) HealthCheck(w http.ResponseWriter, r *http.Request) {
+func (s *InventoryServer) HealthCheck(w http.ResponseWriter) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(`{"status":"healthy","service":"inventory-service","version":"1.0.0"}`))

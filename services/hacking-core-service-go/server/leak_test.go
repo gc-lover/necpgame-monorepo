@@ -21,4 +21,3 @@ func TestServiceNoLeaks(t *testing.T) {
 	)
 	time.Sleep(100 * time.Millisecond)
 }
-

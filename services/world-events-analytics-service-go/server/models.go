@@ -1,4 +1,4 @@
-// Issue: #44
+// Package server Issue: #44
 package server
 
 import (
@@ -9,13 +9,13 @@ import (
 
 // EventMetrics - метрики события
 type EventMetrics struct {
-	EventID           uuid.UUID
-	ParticipantCount  int
-	CompletionRate    float64
-	AverageDuration   int64
-	TotalRewards      int64
-	PlayerEngagement  float64
-	RecordedAt        time.Time
+	EventID          uuid.UUID
+	ParticipantCount int
+	CompletionRate   float64
+	AverageDuration  int64
+	TotalRewards     int64
+	PlayerEngagement float64
+	RecordedAt       time.Time
 }
 
 // EventAnalytics - аналитика события
@@ -28,35 +28,3 @@ type EventAnalytics struct {
 	Metrics      *EventMetrics
 	Aggregations map[string]interface{}
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

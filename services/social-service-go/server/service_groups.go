@@ -1,4 +1,4 @@
-// Issue: #1433
+// Package server Issue: #1433
 package server
 
 import (
@@ -51,9 +51,6 @@ type GroupServiceImpl struct {
 }
 
 // NewGroupService creates new group service
-func NewGroupService(repo GroupRepository) GroupService {
-	return &GroupServiceImpl{repo: repo}
-}
 
 // CreateGroup creates a new group
 func (s *GroupServiceImpl) CreateGroup(ctx context.Context, characterID string, req groups.CreateGroupRequest) (*groups.Group, error) {
@@ -95,7 +92,7 @@ func (s *GroupServiceImpl) CreateGroup(ctx context.Context, characterID string, 
 }
 
 // SearchGroups searches for groups
-func (s *GroupServiceImpl) SearchGroups(ctx context.Context, characterID string, params groups.SearchGroupsParams) (*SearchGroupsResult, error) {
+func (s *GroupServiceImpl) SearchGroups(ctx context.Context, _ string, params groups.SearchGroupsParams) (*SearchGroupsResult, error) {
 	result, err := s.repo.SearchGroups(ctx, params)
 	if err != nil {
 		return nil, err
@@ -252,7 +249,7 @@ func (s *GroupServiceImpl) GetGroupTasks(ctx context.Context, groupID string) (*
 }
 
 // AddGroupTask adds a task to group
-func (s *GroupServiceImpl) AddGroupTask(ctx context.Context, characterID string, groupID string, taskID uuid.UUID, taskType groups.GroupTaskType) (*groups.GroupTask, error) {
+func (s *GroupServiceImpl) AddGroupTask(ctx context.Context, characterID string, groupID string, _ uuid.UUID, taskType groups.GroupTaskType) (*groups.GroupTask, error) {
 	group, err := s.repo.GetGroup(ctx, groupID)
 	if err != nil {
 		return nil, err
@@ -317,4 +314,3 @@ func (s *GroupServiceImpl) DeleteGroupTask(ctx context.Context, characterID stri
 
 	return s.repo.DeleteGroupTask(ctx, groupID, taskID)
 }
-

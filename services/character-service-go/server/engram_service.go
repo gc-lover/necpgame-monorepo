@@ -11,10 +11,10 @@ import (
 )
 
 var (
-	ErrSlotNotFound      = errors.New("engram slot not found")
+	_                      = errors.New("engram slot not found")
 	ErrSlotAlreadyOccupied = errors.New("engram slot already occupied")
-	ErrInvalidSlotID     = errors.New("invalid slot id (must be 1-3)")
-	ErrEngramNotFound    = errors.New("engram not found")
+	ErrInvalidSlotID       = errors.New("invalid slot id (must be 1-3)")
+	ErrEngramNotFound      = errors.New("engram not found")
 )
 
 type EngramServiceInterface interface {
@@ -28,44 +28,44 @@ type EngramServiceInterface interface {
 }
 
 type RemoveEngramResult struct {
-	Success      bool
-	RemovalRisk  float64
-	Penalties    []string
+	Success       bool
+	RemovalRisk   float64
+	Penalties     []string
 	CooldownUntil *time.Time
 }
 
 type EngramInfluenceInfo struct {
-	EngramID           uuid.UUID
-	InfluenceLevel     float64
-	InfluenceCategory  string
-	UsagePoints        int
-	SlotID             int
-	GrowthRate         float64
-	BlockerReduction   float64
+	EngramID          uuid.UUID
+	InfluenceLevel    float64
+	InfluenceCategory string
+	UsagePoints       int
+	SlotID            int
+	GrowthRate        float64
+	BlockerReduction  float64
 }
 
 type EngramInfluenceLevel struct {
-	EngramID           uuid.UUID
-	SlotID             int
-	InfluenceLevel     float64
-	InfluenceCategory  string
-	UsagePoints        int
+	EngramID            uuid.UUID
+	SlotID              int
+	InfluenceLevel      float64
+	InfluenceCategory   string
+	UsagePoints         int
 	DominancePercentage float64
 }
 
 type EngramService struct {
-	repo     EngramRepositoryInterface
+	repo          EngramRepositoryInterface
 	characterRepo CharacterRepositoryInterface
-	cache    *redis.Client
-	logger   *logrus.Logger
+	cache         *redis.Client
+	logger        *logrus.Logger
 }
 
 func NewEngramService(repo EngramRepositoryInterface, characterRepo CharacterRepositoryInterface, cache *redis.Client) *EngramService {
 	return &EngramService{
-		repo:     repo,
+		repo:          repo,
 		characterRepo: characterRepo,
-		cache:    cache,
-		logger:   GetLogger(),
+		cache:         cache,
+		logger:        GetLogger(),
 	}
 }
 
@@ -87,7 +87,7 @@ func (s *EngramService) GetEngramSlots(ctx context.Context, characterID uuid.UUI
 	return slots, nil
 }
 
-func (s *EngramService) InstallEngram(ctx context.Context, characterID uuid.UUID, slotID int, engramID uuid.UUID, validateCompatibility bool) (*EngramSlot, error) {
+func (s *EngramService) InstallEngram(ctx context.Context, characterID uuid.UUID, slotID int, engramID uuid.UUID, _ bool) (*EngramSlot, error) {
 	if slotID < 1 || slotID > 3 {
 		return nil, ErrInvalidSlotID
 	}
@@ -175,9 +175,9 @@ func (s *EngramService) RemoveEngram(ctx context.Context, characterID uuid.UUID,
 	s.invalidateEngramCache(ctx, characterID)
 
 	return &RemoveEngramResult{
-		Success:      true,
-		RemovalRisk:  removalRisk,
-		Penalties:    penalties,
+		Success:       true,
+		RemovalRisk:   removalRisk,
+		Penalties:     penalties,
 		CooldownUntil: cooldownUntil,
 	}, nil
 }
@@ -265,14 +265,14 @@ func (s *EngramService) UpdateEngramInfluence(ctx context.Context, characterID u
 	}
 
 	history := &EngramInfluenceHistory{
-		CharacterID:         characterID,
-		EngramID:            engramID,
-		SlotID:              targetSlot.SlotID,
+		CharacterID:          characterID,
+		EngramID:             engramID,
+		SlotID:               targetSlot.SlotID,
 		InfluenceLevelBefore: oldInfluence,
 		InfluenceLevelAfter:  newInfluence,
-		ChangeAmount:        changeAmount,
-		ChangeReason:        reason,
-		ActionData:          actionData,
+		ChangeAmount:         changeAmount,
+		ChangeReason:         reason,
+		ActionData:           actionData,
 	}
 
 	err = s.repo.RecordInfluenceChange(ctx, history)
@@ -316,7 +316,7 @@ func (s *EngramService) GetEngramInfluenceLevels(ctx context.Context, characterI
 		}
 
 		category := s.getInfluenceCategory(slot.InfluenceLevel)
-		
+
 		dominancePercentage := 0.0
 		if totalUsagePoints > 0 {
 			dominancePercentage = (float64(slot.UsagePoints) / float64(totalUsagePoints)) * 100.0
@@ -344,9 +344,9 @@ func (s *EngramService) getInfluenceCategory(level float64) string {
 		return "high"
 	} else if level < 90 {
 		return "critical"
-	} else {
-		return "takeover"
 	}
+
+	return "takeover"
 }
 
 func (s *EngramService) invalidateEngramCache(ctx context.Context, characterID uuid.UUID) {
@@ -360,4 +360,3 @@ func (s *EngramService) invalidateEngramCache(ctx context.Context, characterID u
 		s.cache.Del(ctx, key)
 	}
 }
-

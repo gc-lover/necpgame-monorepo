@@ -5,6 +5,7 @@
 ### 1. Через Unreal Editor (самый простой способ)
 
 **Для UE5.7:**
+
 1. Убедитесь, что плагин **Editor Tests** включен: **Edit → Plugins → Testing → Editor Tests**
 2. Откройте проект `NECPGAME.uproject` в Unreal Editor
 3. Меню: **Window → Test Automation** (в UE5.7 путь изменился!)
@@ -25,7 +26,7 @@ cd client\UE5\NECPGAME
 
 1. **Connection** - проверка создания WebSocket соединения
 2. **PlayerInputEncoding** - проверка кодирования/декодирования PlayerInput
-3. **GameStateDecoding** - проверка кодирования/декодирования GameState  
+3. **GameStateDecoding** - проверка кодирования/декодирования GameState
 4. **SynchronizationIntegration** - полный интеграционный тест (требует Gateway)
 
 ## Для интеграционного теста

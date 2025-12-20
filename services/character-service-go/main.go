@@ -42,7 +42,7 @@ func main() {
 
 	addr := getEnv("ADDR", "0.0.0.0:8087")
 	metricsAddr := getEnv("METRICS_ADDR", ":9092")
-	
+
 	dbURL := getEnv("DATABASE_URL", "postgresql://necpgame:necpgame@localhost:5432/necpgame?sslmode=disable")
 	redisURL := getEnv("REDIS_URL", "redis://localhost:6379/2")
 	keycloakURL := getEnv("KEYCLOAK_URL", "http://localhost:8080")
@@ -51,7 +51,7 @@ func main() {
 	if err != nil {
 		logger.WithError(err).Fatal("Failed to initialize character service")
 	}
-	
+
 	// OPTIMIZATION: Issue #1584 - Start pprof server for profiling
 	go func() {
 		pprofAddr := getEnv("PPROF_ADDR", "localhost:6557")
@@ -114,4 +114,3 @@ func getEnv(key, defaultValue string) string {
 	}
 	return defaultValue
 }
-

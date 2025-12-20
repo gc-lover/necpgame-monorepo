@@ -5,10 +5,11 @@
 Создает Issues по категориям с правильными метками и описаниями.
 """
 
-import re
 import json
+import re
 from pathlib import Path
 from typing import Dict, List, Tuple
+
 
 def parse_yaml_sections(content: str) -> Dict[str, Dict]:
     """Распарсить секции из YAML файла"""
@@ -30,6 +31,7 @@ def parse_yaml_sections(content: str) -> Dict[str, Dict]:
         }
 
     return sections
+
 
 def parse_issues_from_body(body: str) -> List[Dict]:
     """Распарсить issues из тела секции"""
@@ -69,6 +71,7 @@ def parse_issues_from_body(body: str) -> List[Dict]:
             })
 
     return issues
+
 
 def create_issue_body(issue_data: Dict, section_title: str) -> str:
     """Создать тело Issue"""
@@ -111,6 +114,7 @@ def create_issue_body(issue_data: Dict, section_title: str) -> str:
 
     return body
 
+
 def get_github_labels(labels_str: str, priority: str) -> List[str]:
     """Получить список меток для GitHub"""
     labels = []
@@ -129,6 +133,7 @@ def get_github_labels(labels_str: str, priority: str) -> List[str]:
 
     return [label for label in labels if label]
 
+
 def simulate_github_issue_creation(title: str, body: str, labels: List[str]) -> Dict:
     """Симулировать создание GitHub Issue"""
     issue_data = {
@@ -144,6 +149,7 @@ def simulate_github_issue_creation(title: str, body: str, labels: List[str]) -> 
     print(f"Files to process: {len(re.findall(r'- \\[ \\]', body))}")
 
     return issue_data
+
 
 def main():
     print("Создание GitHub Issues из github-issues-pending.yaml")
@@ -184,7 +190,7 @@ def main():
             all_issues.append(issue)
             total_issues += 1
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"Итого создано: {total_issues} Issues")
 
     # Сохранить в JSON для отладки
@@ -193,6 +199,7 @@ def main():
         json.dump(all_issues, f, ensure_ascii=False, indent=2)
 
     print(f"Результаты сохранены в: {output_file}")
+
 
 if __name__ == '__main__':
     main()

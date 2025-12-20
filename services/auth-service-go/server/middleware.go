@@ -1,4 +1,4 @@
-// Issue: #136
+// Package server Issue: #136
 package server
 
 import (
@@ -19,12 +19,6 @@ type AuthMiddleware struct {
 }
 
 // NewAuthMiddleware создает новый middleware аутентификации
-func NewAuthMiddleware(jwtSecret string, logger *zap.Logger) *AuthMiddleware {
-	return &AuthMiddleware{
-		jwtSecret: []byte(jwtSecret),
-		logger:    logger,
-	}
-}
 
 // Authenticate аутентифицирует запрос по JWT токену
 func (m *AuthMiddleware) Authenticate(next http.Handler) http.Handler {
@@ -141,19 +135,5 @@ func (m *AuthMiddleware) OptionalAuth(next http.Handler) http.Handler {
 }
 
 // GetUserIDFromContext извлекает userID из контекста
-func GetUserIDFromContext(ctx context.Context) (uuid.UUID, error) {
-	userID, ok := ctx.Value("user_id").(uuid.UUID)
-	if !ok {
-		return uuid.Nil, fmt.Errorf("user_id not found in context")
-	}
-	return userID, nil
-}
 
 // GetTokenTypeFromContext извлекает тип токена из контекста
-func GetTokenTypeFromContext(ctx context.Context) string {
-	tokenType, ok := ctx.Value("token_type").(string)
-	if !ok {
-		return ""
-	}
-	return tokenType
-}

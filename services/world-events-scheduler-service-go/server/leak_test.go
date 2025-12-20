@@ -51,4 +51,3 @@ func TestSchedulerServiceNoLeaks(t *testing.T) {
 // - Kafka producer.Close() for all producers
 // - Ticker.Stop() for all time.Ticker
 // - Timeout for all DB operations
-

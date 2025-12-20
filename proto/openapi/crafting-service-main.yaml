@@ -1,0 +1,956 @@
+# Issue: #140890170 - Crafting mechanics OpenAPI specification
+openapi: 3.0.3
+info:
+  title: Crafting Service API
+  version: 1.0.0
+  contact:
+    name: NEPGAME Development Team
+    email: dev@necp.game
+  description: |
+    Crafting Service API for MMOFPS RPG - Production and Manufacturing Systems.
+
+    ## Core Components
+    - Recipe System: Hierarchical recipes with materials and requirements
+    - Crafting Orders: Async production with quality modifiers
+    - Station System: Workstations with efficiency bonuses
+    - Production Chains: Multi-stage manufacturing processes
+
+    ## Architecture Overview
+    - Async processing with Redis queues
+    - Recipe validation and material consumption
+    - Quality calculation with modifiers
+    - Event-driven production completion
+
+    ## Performance Requirements
+    - Recipe queries: 1000+ RPS with P99 <50ms
+    - Order operations: 200+ RPS with P99 <100ms
+    - Station queries: 500+ RPS with P99 <50ms
+    - Memory optimized with object pooling
+
+servers:
+  - url: http://localhost:8210
+    description: Local development
+  - url: https://api.necpgame.com/v1
+    description: Production API
+
+tags:
+  - name: crafting
+    description: Core crafting operations
+  - name: recipes
+    description: Recipe management and queries
+  - name: orders
+    description: Production order management
+  - name: stations
+    description: Crafting station operations
+
+security:
+  - BearerAuth: [ ]
+
+paths:
+  # ============================================================================
+  # RECIPE SYSTEM
+  # ============================================================================
+
+  /api/v1/economy/crafting/recipes:
+    get:
+      tags: [ recipes ]
+      summary: Get recipes by category
+      description: Retrieve recipes filtered by category, tier, and quality
+      operationId: getRecipesByCategory
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum: [ weapons, armor, implants, vehicles, consumables, tools ]
+          description: Recipe category filter
+        - name: tier
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 5
+          description: Recipe tier filter (1-5)
+        - name: quality
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+          description: Minimum quality filter
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of recipes to return
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          description: Pagination offset
+      responses:
+        '200':
+          description: Recipes retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecipeListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      tags: [ recipes ]
+      summary: Create recipe
+      description: Create a new crafting recipe
+      operationId: createRecipe
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateRecipeRequest'
+      responses:
+        '201':
+          description: Recipe created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Recipe'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/economy/crafting/recipes/{recipeId}:
+    get:
+      tags: [ recipes ]
+      summary: Get recipe by ID
+      description: Retrieve detailed recipe information including materials and requirements
+      operationId: getRecipeById
+      parameters:
+        - name: recipeId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Recipe unique identifier
+      responses:
+        '200':
+          description: Recipe retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Recipe'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/economy/crafting/recipes/{recipeId}/cost:
+    get:
+      tags: [ recipes ]
+      summary: Calculate crafting cost
+      description: Calculate total crafting cost including materials and fees
+      operationId: calculateCraftingCost
+      parameters:
+        - name: recipeId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Recipe unique identifier
+        - name: station_bonus
+          in: query
+          schema:
+            type: number
+            format: float
+            minimum: 0.0
+            maximum: 2.0
+            default: 1.0
+          description: Station efficiency bonus multiplier
+        - name: quality_modifier
+          in: query
+          schema:
+            type: number
+            format: float
+            minimum: 0.1
+            maximum: 2.0
+            default: 1.0
+          description: Quality modifier for cost calculation
+      responses:
+        '200':
+          description: Cost calculated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CraftingCost'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # ============================================================================
+  # CRAFTING ORDERS
+  # ============================================================================
+
+  /api/v1/economy/crafting/orders:
+    get:
+      tags: [ orders ]
+      summary: Get player crafting orders
+      description: Retrieve active and completed crafting orders for the authenticated player
+      operationId: getPlayerOrders
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [ pending, active, completed, failed, cancelled ]
+          description: Order status filter
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of orders to return
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          description: Pagination offset
+      responses:
+        '200':
+          description: Orders retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      tags: [ orders ]
+      summary: Create crafting contract
+      description: Create a new crafting contract for production services
+      operationId: createCraftingContract
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateContractRequest'
+      responses:
+        '201':
+          description: Contract created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Contract'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/economy/crafting/start:
+    post:
+      tags: [ orders ]
+      summary: Start crafting order
+      description: Start a new crafting order with specified recipe and quality settings
+      operationId: startCraftingOrder
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartCraftingRequest'
+      responses:
+        '202':
+          description: Crafting order started successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/economy/crafting/orders/{orderId}:
+    get:
+      tags: [ orders ]
+      summary: Get crafting order details
+      description: Retrieve detailed information about a specific crafting order
+      operationId: getCraftingOrder
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Order unique identifier
+      responses:
+        '200':
+          description: Order retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/economy/crafting/orders/{orderId}/cancel:
+    post:
+      tags: [ orders ]
+      summary: Cancel crafting order
+      description: Cancel an active crafting order with refund calculation
+      operationId: cancelCraftingOrder
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Order unique identifier
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  description: Cancellation reason
+                  maxLength: 500
+      responses:
+        '200':
+          description: Order cancelled successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  refund_amount:
+                    type: number
+                    format: float
+                    description: Refunded currency amount
+                  message:
+                    type: string
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # ============================================================================
+  # CRAFTING STATIONS
+  # ============================================================================
+
+  /api/v1/economy/crafting/stations:
+    get:
+      tags: [ stations ]
+      summary: Get available crafting stations
+      description: Retrieve crafting stations available to the player
+      operationId: getCraftingStations
+      parameters:
+        - name: zone_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Zone filter for stations
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum: [ basic, professional, factory, specialized ]
+          description: Station category filter
+      responses:
+        '200':
+          description: Stations retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StationListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/economy/crafting/stations/{stationId}/book:
+    post:
+      tags: [ stations ]
+      summary: Book crafting station
+      description: Reserve a crafting station for exclusive use
+      operationId: bookCraftingStation
+      parameters:
+        - name: stationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Station unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookStationRequest'
+      responses:
+        '200':
+          description: Station booked successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingConfirmation'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/economy/crafting/stations/{stationId}/release:
+    post:
+      tags: [ stations ]
+      summary: Release crafting station
+      description: Release a previously booked crafting station
+      operationId: releaseCraftingStation
+      parameters:
+        - name: stationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Station unique identifier
+      responses:
+        '200':
+          description: Station released successfully
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # ============================================================================
+  # CRAFTING PRODUCTION CHAINS
+  # ============================================================================
+
+  /api/v1/economy/crafting/chains:
+    get:
+      tags: [ crafting ]
+      summary: Get production chains
+      description: Retrieve available production chains for multi-stage manufacturing
+      operationId: getProductionChains
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum: [ weapons, armor, vehicles, electronics ]
+          description: Chain category filter
+        - name: complexity
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 5
+          description: Chain complexity filter (1-5 stages)
+      responses:
+        '200':
+          description: Production chains retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductionChainListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      tags: [ crafting ]
+      summary: Start production chain
+      description: Initiate a multi-stage production chain
+      operationId: startProductionChain
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartProductionChainRequest'
+      responses:
+        '202':
+          description: Production chain started successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductionChain'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    $ref: 'common.yaml#/components/securitySchemes'
+
+  responses:
+    $ref: 'common.yaml#/components/responses'
+
+  schemas:
+    # Import all schemas from crafting-service-ext1.yaml
+    $ref: './crafting-service-ext1.yaml#/components/schemas'
+
+    # Additional schemas defined inline for validation
+    CreateRecipeRequest:
+      type: object
+      required:
+        - name
+        - category
+        - tier
+        - materials
+      properties:
+        name:
+          type: string
+          description: Recipe display name
+        description:
+          type: string
+          description: Recipe detailed description
+        category:
+          type: string
+          enum: [ weapons, armor, implants, vehicles, consumables, tools ]
+          description: Recipe category
+        tier:
+          type: integer
+          minimum: 1
+          maximum: 5
+          description: Recipe tier (1-5)
+        quality:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Base quality rating
+        duration:
+          type: integer
+          minimum: 1
+          description: Crafting duration in seconds
+        success_rate:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Base success rate (0.0-1.0)
+        materials:
+          type: array
+          items:
+            $ref: '#/components/schemas/RecipeMaterial'
+          description: Required materials
+        requirements:
+          $ref: '#/components/schemas/RecipeRequirements'
+
+    OrderListResponse:
+      type: object
+      properties:
+        orders:
+          type: array
+          items:
+            $ref: '#/components/schemas/Order'
+        total:
+          type: integer
+          description: Total number of orders
+        limit:
+          type: integer
+          description: Items per page
+        offset:
+          type: integer
+          description: Pagination offset
+
+    CreateContractRequest:
+      type: object
+      required:
+        - recipe_id
+        - quality_modifier
+      properties:
+        recipe_id:
+          type: string
+          format: uuid
+          description: Recipe to craft
+        quality_modifier:
+          type: number
+          format: float
+          minimum: 0.1
+          maximum: 2.0
+          description: Quality modifier for crafting
+        station_id:
+          type: string
+          format: uuid
+          description: Preferred crafting station
+
+    Contract:
+      type: object
+      required:
+        - id
+        - player_id
+        - recipe_id
+        - status
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Contract unique identifier
+        player_id:
+          type: string
+          format: uuid
+          description: Player who created the contract
+        recipe_id:
+          type: string
+          format: uuid
+          description: Recipe being crafted
+        station_id:
+          type: string
+          format: uuid
+          description: Assigned crafting station
+        status:
+          type: string
+          enum: [ pending, active, completed, failed, cancelled ]
+          description: Contract status
+        quality_modifier:
+          type: number
+          format: float
+          description: Applied quality modifier
+        progress:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Completion progress (0.0-1.0)
+        created_at:
+          type: string
+          format: date-time
+        started_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+
+    StartCraftingRequest:
+      type: object
+      required:
+        - recipe_id
+      properties:
+        recipe_id:
+          type: string
+          format: uuid
+          description: Recipe to craft
+        station_id:
+          type: string
+          format: uuid
+          description: Preferred crafting station
+        quality_modifier:
+          type: number
+          format: float
+          minimum: 0.1
+          maximum: 2.0
+          default: 1.0
+          description: Quality modifier
+
+    Order:
+      type: object
+      required:
+        - id
+        - player_id
+        - recipe_id
+        - status
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Order unique identifier
+        player_id:
+          type: string
+          format: uuid
+          description: Player who placed the order
+        recipe_id:
+          type: string
+          format: uuid
+          description: Recipe being crafted
+        station_id:
+          type: string
+          format: uuid
+          description: Assigned crafting station
+        contract_id:
+          type: string
+          format: uuid
+          description: Associated contract
+        status:
+          type: string
+          enum: [ pending, active, completed, failed, cancelled ]
+          description: Order status
+        quality_modifier:
+          type: number
+          format: float
+          description: Applied quality modifier
+        station_bonus:
+          type: number
+          format: float
+          description: Station efficiency bonus
+        progress:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Completion progress (0.0-1.0)
+        final_quality:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Final crafted item quality
+        created_at:
+          type: string
+          format: date-time
+        started_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+
+    CraftingCost:
+      type: object
+      properties:
+        material_cost:
+          type: number
+          format: float
+          description: Cost of required materials
+        station_fee:
+          type: number
+          format: float
+          description: Crafting station usage fee
+        service_fee:
+          type: number
+          format: float
+          description: Platform service fee
+        total_cost:
+          type: number
+          format: float
+          description: Total crafting cost
+        currency:
+          type: string
+          description: Currency type
+
+    StationListResponse:
+      type: object
+      properties:
+        stations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Station'
+        total:
+          type: integer
+          description: Total number of stations
+
+    BookStationRequest:
+      type: object
+      required:
+        - duration_hours
+      properties:
+        duration_hours:
+          type: integer
+          minimum: 1
+          maximum: 168
+          description: Booking duration in hours
+        priority:
+          type: string
+          enum: [ normal, high ]
+          default: normal
+          description: Booking priority
+
+    BookingConfirmation:
+      type: object
+      required:
+        - booking_id
+        - station_id
+        - expires_at
+      properties:
+        booking_id:
+          type: string
+          format: uuid
+          description: Booking unique identifier
+        station_id:
+          type: string
+          format: uuid
+          description: Booked station identifier
+        player_id:
+          type: string
+          format: uuid
+          description: Player who made the booking
+        expires_at:
+          type: string
+          format: date-time
+          description: Booking expiration time
+        cost:
+          type: number
+          format: float
+          description: Booking cost
+
+    ProductionChainListResponse:
+      type: object
+      properties:
+        chains:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductionChain'
+        total:
+          type: integer
+          description: Total number of chains
+
+    StartProductionChainRequest:
+      type: object
+      required:
+        - chain_id
+      properties:
+        chain_id:
+          type: string
+          format: uuid
+          description: Production chain to start
+        priority:
+          type: string
+          enum: [ normal, high, urgent ]
+          default: normal
+          description: Processing priority
+
+    ProductionChain:
+      type: object
+      required:
+        - id
+        - name
+        - category
+        - complexity
+        - stages
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Chain unique identifier
+        name:
+          type: string
+          description: Chain display name
+        description:
+          type: string
+          description: Chain detailed description
+        category:
+          type: string
+          enum: [ weapons, armor, vehicles, electronics ]
+          description: Chain category
+        complexity:
+          type: integer
+          minimum: 1
+          maximum: 5
+          description: Chain complexity level
+        stages:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChainStage'
+          description: Production stages
+        estimated_duration:
+          type: integer
+          description: Estimated total duration in seconds
+        total_cost:
+          type: number
+          format: float
+          description: Total production cost
+        status:
+          type: string
+          enum: [ available, in_progress, completed ]
+          description: Chain status
+        player_id:
+          type: string
+          format: uuid
+          description: Player who started the chain
+        created_at:
+          type: string
+          format: date-time
+        started_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+
+    ChainStage:
+      type: object
+      required:
+        - sequence
+        - recipe_id
+        - status
+      properties:
+        sequence:
+          type: integer
+          minimum: 1
+          description: Stage sequence number
+        recipe_id:
+          type: string
+          format: uuid
+          description: Recipe for this stage
+        station_type:
+          type: string
+          enum: [ basic, professional, factory, specialized ]
+          description: Required station type
+        status:
+          type: string
+          enum: [ pending, active, completed, failed ]
+          description: Stage status
+        started_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time

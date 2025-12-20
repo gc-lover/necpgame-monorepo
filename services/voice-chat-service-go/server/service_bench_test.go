@@ -3,9 +3,11 @@ package server
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/sirupsen/logrus"
 )
@@ -64,15 +66,15 @@ func BenchmarkVoiceChatService_JoinChannel(b *testing.B) {
 
 	// Create a test channel
 	channel := &VoiceChannel{
-		ChannelID:       "channel_123",
-		Name:            "test-channel",
-		Type:            "group",
-		CreatorID:       "creator_123",
-		CreatedAt:       time.Now(),
-		MaxParticipants: 10,
+		ChannelID:        "channel_123",
+		Name:             "test-channel",
+		Type:             "group",
+		CreatorID:        "creator_123",
+		CreatedAt:        time.Now(),
+		MaxParticipants:  10,
 		ParticipantCount: 0,
-		Participants:    make(map[string]*ChannelParticipant),
-		LastActivity:    time.Now(),
+		Participants:     make(map[string]*ChannelParticipant),
+		LastActivity:     time.Now(),
 	}
 	service.channels.Store(channel.ChannelID, channel)
 
@@ -150,11 +152,11 @@ func BenchmarkVoiceChatService_TextToSpeech(b *testing.B) {
 	service := NewVoiceChatService(logger, metrics, config)
 
 	reqData := TextToSpeechRequest{
-		Text:    "Hello, this is a test message for voice chat",
-		Voice:   "neutral",
+		Text:     "Hello, this is a test message for voice chat",
+		Voice:    "neutral",
 		Language: "en-US",
-		Speed:   1.0,
-		Volume:  0.8,
+		Speed:    1.0,
+		Volume:   0.8,
 	}
 
 	reqBody, _ := json.Marshal(reqData)

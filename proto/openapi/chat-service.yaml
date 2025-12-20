@@ -8,26 +8,26 @@ info:
     '
   version: 1.0.0
 servers:
-- url: https://api.necpgame.com
-  description: Production server
-- url: https://staging-api.necpgame.com
-  description: Staging server
+  - url: https://api.necpgame.com
+    description: Production server
+  - url: https://staging-api.necpgame.com
+    description: Staging server
 tags:
-- name: Messages
-  description: Отправка и получение сообщений
-- name: Channels
-  description: Управление каналами чата
-- name: Moderation
-  description: Модерация и баны
+  - name: Messages
+    description: Отправка и получение сообщений
+  - name: Channels
+    description: Управление каналами чата
+  - name: Moderation
+    description: Модерация и баны
 paths:
   /api/v1/chat/messages:
     post:
       tags:
-      - Messages
+        - Messages
       summary: Отправить сообщение в канал
       operationId: sendMessage
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       requestBody:
         required: true
         content:
@@ -49,33 +49,33 @@ paths:
           $ref: common.yaml#/components/responses/TooManyRequests
   /api/v1/chat/channels/{channel_id}/messages:
     parameters:
-    - name: channel_id
-      in: path
-      required: true
-      schema:
-        type: string
-        format: uuid
+      - name: channel_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
     get:
       tags:
-      - Messages
+        - Messages
       summary: Получить историю сообщений канала
       operationId: getChannelMessages
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       parameters:
-      - $ref: common.yaml#/components/parameters/Limit
-      - name: before
-        in: query
-        description: Получить сообщения до указанного ID
-        schema:
-          type: string
-          format: uuid
-      - name: after
-        in: query
-        description: Получить сообщения после указанного ID
-        schema:
-          type: string
-          format: uuid
+        - $ref: common.yaml#/components/parameters/Limit
+        - name: before
+          in: query
+          description: Получить сообщения до указанного ID
+          schema:
+            type: string
+            format: uuid
+        - name: after
+          in: query
+          description: Получить сообщения после указанного ID
+          schema:
+            type: string
+            format: uuid
       responses:
         '200':
           description: История сообщений
@@ -90,11 +90,11 @@ paths:
   /api/v1/chat/channels:
     get:
       tags:
-      - Channels
+        - Channels
       summary: Получить список доступных каналов
       operationId: getChannels
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       responses:
         '200':
           description: Список каналов
@@ -104,11 +104,11 @@ paths:
                 $ref: '#/components/schemas/ChannelsListResponse'
     post:
       tags:
-      - Channels
+        - Channels
       summary: Создать приватный канал
       operationId: createChannel
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       requestBody:
         required: true
         content:
@@ -126,19 +126,19 @@ paths:
           $ref: common.yaml#/components/responses/BadRequest
   /api/v1/chat/channels/{channel_id}:
     parameters:
-    - name: channel_id
-      in: path
-      required: true
-      schema:
-        type: string
-        format: uuid
+      - name: channel_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
     get:
       tags:
-      - Channels
+        - Channels
       summary: Получить информацию о канале
       operationId: getChannel
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       responses:
         '200':
           description: Информация о канале
@@ -150,11 +150,11 @@ paths:
           $ref: common.yaml#/components/responses/NotFound
     patch:
       tags:
-      - Channels
+        - Channels
       summary: Обновить настройки канала
       operationId: updateChannel
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       requestBody:
         required: true
         content:
@@ -174,11 +174,11 @@ paths:
           $ref: common.yaml#/components/responses/NotFound
     delete:
       tags:
-      - Channels
+        - Channels
       summary: Удалить канал
       operationId: deleteChannel
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       responses:
         '200':
           description: Канал удалён
@@ -192,19 +192,19 @@ paths:
           $ref: common.yaml#/components/responses/NotFound
   /api/v1/chat/channels/{channel_id}/members:
     parameters:
-    - name: channel_id
-      in: path
-      required: true
-      schema:
-        type: string
-        format: uuid
+      - name: channel_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
     post:
       tags:
-      - Channels
+        - Channels
       summary: Добавить участника в канал
       operationId: addChannelMember
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       requestBody:
         required: true
         content:
@@ -224,20 +224,20 @@ paths:
           $ref: common.yaml#/components/responses/NotFound
   /api/v1/chat/channels/{channel_id}/members/{player_id}:
     parameters:
-    - name: channel_id
-      in: path
-      required: true
-      schema:
-        type: string
-        format: uuid
-    - $ref: common.yaml#/components/parameters/PlayerId
+      - name: channel_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - $ref: common.yaml#/components/parameters/PlayerId
     delete:
       tags:
-      - Channels
+        - Channels
       summary: Удалить участника из канала
       operationId: removeChannelMember
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       responses:
         '200':
           description: Участник удалён
@@ -252,11 +252,11 @@ paths:
   /api/v1/chat/bans:
     post:
       tags:
-      - Moderation
+        - Moderation
       summary: Заблокировать игрока в чате
       operationId: banPlayer
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       requestBody:
         required: true
         content:
@@ -276,19 +276,19 @@ paths:
           $ref: common.yaml#/components/responses/Forbidden
   /api/v1/chat/bans/{ban_id}:
     parameters:
-    - name: ban_id
-      in: path
-      required: true
-      schema:
-        type: string
-        format: uuid
+      - name: ban_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
     delete:
       tags:
-      - Moderation
+        - Moderation
       summary: Снять бан с игрока
       operationId: unbanPlayer
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       responses:
         '200':
           description: Бан снят
@@ -302,19 +302,19 @@ paths:
           $ref: common.yaml#/components/responses/NotFound
   /api/v1/chat/messages/{message_id}:
     parameters:
-    - name: message_id
-      in: path
-      required: true
-      schema:
-        type: string
-        format: uuid
+      - name: message_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
     delete:
       tags:
-      - Moderation
+        - Moderation
       summary: Удалить сообщение
       operationId: deleteMessage
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       responses:
         '200':
           description: Сообщение удалено
@@ -334,8 +334,8 @@ components:
     SendMessageRequest:
       type: object
       required:
-      - channel_id
-      - content
+        - channel_id
+        - content
       properties:
         channel_id:
           type: string
@@ -397,8 +397,8 @@ components:
     CreateChannelRequest:
       type: object
       required:
-      - channel_type
-      - name
+        - channel_type
+        - name
       properties:
         name:
           type: string
@@ -407,10 +407,10 @@ components:
         channel_type:
           type: string
           enum:
-          - private
-          - party
-          - guild
-          - trade
+            - private
+            - party
+            - guild
+            - trade
           description: Тип канала
         members:
           type: array
@@ -433,13 +433,13 @@ components:
         channel_type:
           type: string
           enum:
-          - global
-          - local
-          - party
-          - guild
-          - trade
-          - whisper
-          - private
+            - global
+            - local
+            - party
+            - guild
+            - trade
+            - whisper
+            - private
         created_at:
           type: string
           format: date-time
@@ -467,7 +467,7 @@ components:
     AddMemberRequest:
       type: object
       required:
-      - player_id
+        - player_id
       properties:
         player_id:
           type: string
@@ -476,8 +476,8 @@ components:
     BanPlayerRequest:
       type: object
       required:
-      - player_id
-      - reason
+        - player_id
+        - reason
       properties:
         player_id:
           type: string

@@ -48,7 +48,7 @@ func setupTestWeaponCombinationsService() (*WeaponCombinationsService, *mockWeap
 	redisClient := redis.NewClient(&redis.Options{
 		Addr:         "localhost:6379",
 		DB:           1,
-		DialTimeout:  1 * time.Second,  // Fast timeout for tests
+		DialTimeout:  1 * time.Second, // Fast timeout for tests
 		ReadTimeout:  1 * time.Second,
 		WriteTimeout: 1 * time.Second,
 		PoolTimeout:  1 * time.Second,
@@ -165,5 +165,3 @@ func TestWeaponCombinationsService_GetCorporations(t *testing.T) {
 	assert.NotNil(t, corporations)
 	assert.IsType(t, []map[string]interface{}{}, corporations)
 }
-
-

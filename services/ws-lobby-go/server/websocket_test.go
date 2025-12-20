@@ -13,7 +13,7 @@ import (
 )
 
 func TestLobbyServer_HandleWebSocket_Unauthorized(t *testing.T) {
-	server, cleanup := setupTestLobbyServer(t)
+	server, cleanup := setupTestLobbyServer()
 	defer cleanup()
 
 	req := httptest.NewRequest("GET", "/ws", nil)
@@ -28,7 +28,7 @@ func TestLobbyServer_HandleWebSocket_Unauthorized(t *testing.T) {
 }
 
 func TestLobbyServer_HandleWebSocket_ValidToken(t *testing.T) {
-	server, cleanup := setupTestLobbyServer(t)
+	server, cleanup := setupTestLobbyServer()
 	defer cleanup()
 
 	s := httptest.NewServer(http.HandlerFunc(server.handleWebSocket))
@@ -45,7 +45,7 @@ func TestLobbyServer_HandleWebSocket_ValidToken(t *testing.T) {
 }
 
 func TestLobbyServer_HandleServerWebSocket(t *testing.T) {
-	server, cleanup := setupTestLobbyServer(t)
+	server, cleanup := setupTestLobbyServer()
 	defer cleanup()
 
 	s := httptest.NewServer(http.HandlerFunc(server.handleServerWebSocket))
@@ -65,4 +65,3 @@ func TestLobbyServer_HandleServerWebSocket(t *testing.T) {
 
 	cleanup()
 }
-

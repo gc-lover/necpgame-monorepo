@@ -1,9 +1,8 @@
-// Issue: #1595, #1607
+// Package server Issue: #1595, #1607
 // Performance: Memory pooling for hot path (Issue #1607)
 package server
 
 import (
-	"context"
 	"errors"
 	"sync"
 
@@ -13,7 +12,7 @@ import (
 
 var (
 	// ErrNotFound is returned when entity is not found
-	ErrNotFound = errors.New("not found")
+	_ = errors.New("not found")
 )
 
 // Service contains business logic
@@ -47,7 +46,7 @@ func NewService(repo *Repository) *Service {
 
 // GetCurrentTurn returns current turn for session
 // Issue: #1607 - Uses memory pooling for zero allocations
-func (s *Service) GetCurrentTurn(ctx context.Context, sessionID uuid.UUID) (api.GetCurrentTurnRes, error) {
+func (s *Service) GetCurrentTurn(sessionID uuid.UUID) (api.GetCurrentTurnRes, error) {
 	// Get from pool (zero allocation!)
 	resp := s.currentTurnPool.Get().(*api.CurrentTurn)
 	defer s.currentTurnPool.Put(resp)
@@ -59,7 +58,7 @@ func (s *Service) GetCurrentTurn(ctx context.Context, sessionID uuid.UUID) (api.
 	resp.TurnNumber = api.OptInt{}
 	resp.TimeRemaining = api.OptInt{}
 	resp.Phase = api.NewOptCurrentTurnPhase(api.CurrentTurnPhasePreparation)
-	
+
 	// Clone response (caller owns it)
 	result := &api.CurrentTurn{
 		SessionID:            resp.SessionID,
@@ -68,13 +67,13 @@ func (s *Service) GetCurrentTurn(ctx context.Context, sessionID uuid.UUID) (api.
 		TimeRemaining:        resp.TimeRemaining,
 		Phase:                resp.Phase,
 	}
-	
+
 	return result, nil
 }
 
 // GetTurnOrder returns turn order for session
 // Issue: #1607 - Uses memory pooling for zero allocations
-func (s *Service) GetTurnOrder(ctx context.Context, sessionID uuid.UUID) (api.GetTurnOrderRes, error) {
+func (s *Service) GetTurnOrder(sessionID uuid.UUID) (api.GetTurnOrderRes, error) {
 	// Get from pool (zero allocation!)
 	resp := s.turnOrderPool.Get().(*api.TurnOrder)
 	defer s.turnOrderPool.Put(resp)
@@ -83,19 +82,19 @@ func (s *Service) GetTurnOrder(ctx context.Context, sessionID uuid.UUID) (api.Ge
 	// For now, return stub response
 	resp.SessionID = api.NewOptUUID(sessionID)
 	resp.Order = []api.TurnOrderOrderItem{}
-	
+
 	// Clone response (caller owns it)
 	result := &api.TurnOrder{
 		SessionID: resp.SessionID,
 		Order:     resp.Order,
 	}
-	
+
 	return result, nil
 }
 
 // NextTurn advances to next turn
 // Issue: #1607 - Uses memory pooling for zero allocations
-func (s *Service) NextTurn(ctx context.Context, sessionID uuid.UUID) (api.NextTurnRes, error) {
+func (s *Service) NextTurn(sessionID uuid.UUID) (api.NextTurnRes, error) {
 	// Get from pool (zero allocation!)
 	resp := s.currentTurnPool.Get().(*api.CurrentTurn)
 	defer s.currentTurnPool.Put(resp)
@@ -107,7 +106,7 @@ func (s *Service) NextTurn(ctx context.Context, sessionID uuid.UUID) (api.NextTu
 	resp.TurnNumber = api.OptInt{}
 	resp.TimeRemaining = api.OptInt{}
 	resp.Phase = api.NewOptCurrentTurnPhase(api.CurrentTurnPhasePreparation)
-	
+
 	// Clone response (caller owns it)
 	result := &api.CurrentTurn{
 		SessionID:            resp.SessionID,
@@ -116,13 +115,13 @@ func (s *Service) NextTurn(ctx context.Context, sessionID uuid.UUID) (api.NextTu
 		TimeRemaining:        resp.TimeRemaining,
 		Phase:                resp.Phase,
 	}
-	
+
 	return result, nil
 }
 
 // SkipTurn skips current turn
 // Issue: #1607 - Uses memory pooling for zero allocations
-func (s *Service) SkipTurn(ctx context.Context, sessionID uuid.UUID, req *api.SkipTurnRequest) (api.SkipTurnRes, error) {
+func (s *Service) SkipTurn(sessionID uuid.UUID) (api.SkipTurnRes, error) {
 	// Get from pool (zero allocation!)
 	resp := s.currentTurnPool.Get().(*api.CurrentTurn)
 	defer s.currentTurnPool.Put(resp)
@@ -134,7 +133,7 @@ func (s *Service) SkipTurn(ctx context.Context, sessionID uuid.UUID, req *api.Sk
 	resp.TurnNumber = api.OptInt{}
 	resp.TimeRemaining = api.OptInt{}
 	resp.Phase = api.NewOptCurrentTurnPhase(api.CurrentTurnPhasePreparation)
-	
+
 	// Clone response (caller owns it)
 	result := &api.CurrentTurn{
 		SessionID:            resp.SessionID,
@@ -143,6 +142,6 @@ func (s *Service) SkipTurn(ctx context.Context, sessionID uuid.UUID, req *api.Sk
 		TimeRemaining:        resp.TimeRemaining,
 		Phase:                resp.Phase,
 	}
-	
+
 	return result, nil
 }

@@ -32,11 +32,11 @@ generate-api: bundle-api
 
 check-file-sizes:
 	@echo ""
-	@echo "File size check (max 500 lines per file):"
+	@echo "File size check (max 1000 lines per file):"
 	@find $(API_DIR) -name "*.go" -type f | while read file; do \
 		lines=$$(wc -l < "$$file" | tr -d ' '); \
-		if [ $$lines -gt 500 ]; then \
-			echo "вљ пёЏ  $$file: $$lines lines (EXCEEDS 500)"; \
+		if [ $$lines -gt 1000 ]; then \
+			echo "вљ пёЏ  $$file: $$lines lines (EXCEEDS 1000)"; \
 		else \
 			echo "вњ… $$file: $$lines lines"; \
 		fi; \

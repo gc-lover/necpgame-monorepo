@@ -4,10 +4,10 @@ import (
 	"context"
 	"time"
 
+	"github.com/gc-lover/necpgame-monorepo/services/movement-service-go/models"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/gc-lover/necpgame-monorepo/services/movement-service-go/models"
 	"github.com/sirupsen/logrus"
 )
 

@@ -1,4 +1,4 @@
-// Issue: JWT Implementation
+// Package server Issue: JWT Implementation
 // Security handler for ogen (JWT authentication)
 package server
 

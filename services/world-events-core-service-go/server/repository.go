@@ -1,4 +1,4 @@
-// Issue: #44
+// Package server Issue: #44
 package server
 
 import (
@@ -110,13 +110,13 @@ func (r *repository) GetEvent(ctx context.Context, id uuid.UUID) (*WorldEvent, e
 		var metadata map[string]json.RawMessage
 		if err := json.Unmarshal(metadataJSON, &metadata); err == nil {
 			if effects, ok := metadata["effects"]; ok {
-				event.Effects = []byte(effects)
+				event.Effects = effects
 			}
 			if triggers, ok := metadata["triggers"]; ok {
-				event.Triggers = []byte(triggers)
+				event.Triggers = triggers
 			}
 			if constraints, ok := metadata["constraints"]; ok {
-				event.Constraints = []byte(constraints)
+				event.Constraints = constraints
 			}
 		}
 	}
@@ -206,7 +206,7 @@ func (r *repository) DeleteEvent(ctx context.Context, id uuid.UUID) error {
 func (r *repository) ListEvents(ctx context.Context, filter EventFilter) ([]*WorldEvent, int, error) {
 	// Build WHERE clause safely - use parameter placeholders
 	whereParts := []string{"1=1"}
-	args := []interface{}{}
+	var args []interface{}
 	argIndex := 1
 
 	if filter.Status != nil {
@@ -253,7 +253,7 @@ func (r *repository) ListEvents(ctx context.Context, filter EventFilter) ([]*Wor
 	query := fmt.Sprintf(`SELECT id, title, description, type::text, scale::text, frequency::text, status::text,
 		start_time, end_time, created_at, updated_at
 		FROM world_events.world_events WHERE %s ORDER BY created_at DESC LIMIT $%d OFFSET $%d`,
-		whereClause, argIndex, argIndex+1)
+		whereClause, len(args)+1, len(args)+2)
 	args = append(args, limit, offset)
 
 	rows, err := r.db.QueryContext(ctx, query, args...)

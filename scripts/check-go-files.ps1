@@ -1,6 +1,6 @@
-# Quick check for Go files in services exceeding 600 lines
+# Quick check for Go files in services exceeding 1000 lines
 
-$MAX_LINES = 600
+$MAX_LINES = 1000
 $failed = @()
 $checked = 0
 

@@ -57,4 +57,3 @@ func BenchmarkRepayMargin(b *testing.B) {
 		_, _ = handlers.RepayMargin(ctx, req)
 	}
 }
-

@@ -1,7 +1,6 @@
 package server
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -14,48 +13,38 @@ import (
 	"github.com/necpgame/admin-service-go/models"
 )
 
-func createRequestWithAdminID(method, url string, body []byte, adminID uuid.UUID) *http.Request {
-	req := httptest.NewRequest(method, url, bytes.NewBuffer(body))
-	req.Header.Set("Content-Type", "application/json")
-	claims := &Claims{
-		Subject: adminID.String(),
-	}
-	ctx := context.WithValue(req.Context(), "claims", claims)
-	return req.WithContext(ctx)
-}
-
 type mockAdminService struct {
-	banResponse      *models.AdminActionResponse
-	kickResponse     *models.AdminActionResponse
-	muteResponse     *models.AdminActionResponse
-	searchResponse   *models.PlayerSearchResponse
+	banResponse       *models.AdminActionResponse
+	kickResponse      *models.AdminActionResponse
+	muteResponse      *models.AdminActionResponse
+	searchResponse    *models.PlayerSearchResponse
 	analyticsResponse *models.AnalyticsResponse
 	auditLogsResponse *models.AuditLogListResponse
-	auditLog         *models.AdminAuditLog
-	banErr           error
-	logActionErr     error
+	auditLog          *models.AdminAuditLog
+	banErr            error
+	logActionErr      error
 }
 
-func (m *mockAdminService) LogAction(ctx context.Context, adminID uuid.UUID, actionType models.AdminActionType, targetID *uuid.UUID, targetType string, details map[string]interface{}, ipAddress, userAgent string) error {
+func (m *mockAdminService) LogAction(_ context.Context, _ uuid.UUID, _ models.AdminActionType, _ *uuid.UUID, _ string, _ map[string]interface{}, _, _ string) error {
 	return m.logActionErr
 }
 
-func (m *mockAdminService) BanPlayer(ctx context.Context, adminID uuid.UUID, req *models.BanPlayerRequest, ipAddress, userAgent string) (*models.AdminActionResponse, error) {
+func (m *mockAdminService) BanPlayer(_ context.Context, _ uuid.UUID, _ *models.BanPlayerRequest, _, _ string) (*models.AdminActionResponse, error) {
 	if m.banErr != nil {
 		return nil, m.banErr
 	}
 	return m.banResponse, nil
 }
 
-func (m *mockAdminService) KickPlayer(ctx context.Context, adminID uuid.UUID, req *models.KickPlayerRequest, ipAddress, userAgent string) (*models.AdminActionResponse, error) {
+func (m *mockAdminService) KickPlayer(_ context.Context, _ uuid.UUID, _ *models.KickPlayerRequest, _, _ string) (*models.AdminActionResponse, error) {
 	return m.kickResponse, nil
 }
 
-func (m *mockAdminService) MutePlayer(ctx context.Context, adminID uuid.UUID, req *models.MutePlayerRequest, ipAddress, userAgent string) (*models.AdminActionResponse, error) {
+func (m *mockAdminService) MutePlayer(_ context.Context, _ uuid.UUID, _ *models.MutePlayerRequest, _, _ string) (*models.AdminActionResponse, error) {
 	return m.muteResponse, nil
 }
 
-func (m *mockAdminService) GiveItem(ctx context.Context, adminID uuid.UUID, req *models.GiveItemRequest, ipAddress, userAgent string) (*models.AdminActionResponse, error) {
+func (m *mockAdminService) GiveItem(_ context.Context, _ uuid.UUID, _ *models.GiveItemRequest, _, _ string) (*models.AdminActionResponse, error) {
 	return &models.AdminActionResponse{
 		Success:   true,
 		Message:   "Item given",
@@ -64,7 +53,7 @@ func (m *mockAdminService) GiveItem(ctx context.Context, adminID uuid.UUID, req 
 	}, nil
 }
 
-func (m *mockAdminService) RemoveItem(ctx context.Context, adminID uuid.UUID, req *models.RemoveItemRequest, ipAddress, userAgent string) (*models.AdminActionResponse, error) {
+func (m *mockAdminService) RemoveItem(_ context.Context, _ uuid.UUID, _ *models.RemoveItemRequest, _, _ string) (*models.AdminActionResponse, error) {
 	return &models.AdminActionResponse{
 		Success:   true,
 		Message:   "Item removed",
@@ -73,7 +62,7 @@ func (m *mockAdminService) RemoveItem(ctx context.Context, adminID uuid.UUID, re
 	}, nil
 }
 
-func (m *mockAdminService) SetCurrency(ctx context.Context, adminID uuid.UUID, req *models.SetCurrencyRequest, ipAddress, userAgent string) (*models.AdminActionResponse, error) {
+func (m *mockAdminService) SetCurrency(_ context.Context, _ uuid.UUID, _ *models.SetCurrencyRequest, _, _ string) (*models.AdminActionResponse, error) {
 	return &models.AdminActionResponse{
 		Success:   true,
 		Message:   "Currency set",
@@ -82,7 +71,7 @@ func (m *mockAdminService) SetCurrency(ctx context.Context, adminID uuid.UUID, r
 	}, nil
 }
 
-func (m *mockAdminService) AddCurrency(ctx context.Context, adminID uuid.UUID, req *models.AddCurrencyRequest, ipAddress, userAgent string) (*models.AdminActionResponse, error) {
+func (m *mockAdminService) AddCurrency(_ context.Context, _ uuid.UUID, _ *models.AddCurrencyRequest, _, _ string) (*models.AdminActionResponse, error) {
 	return &models.AdminActionResponse{
 		Success:   true,
 		Message:   "Currency added",
@@ -91,7 +80,7 @@ func (m *mockAdminService) AddCurrency(ctx context.Context, adminID uuid.UUID, r
 	}, nil
 }
 
-func (m *mockAdminService) SetWorldFlag(ctx context.Context, adminID uuid.UUID, req *models.SetWorldFlagRequest, ipAddress, userAgent string) (*models.AdminActionResponse, error) {
+func (m *mockAdminService) SetWorldFlag(_ context.Context, _ uuid.UUID, _ *models.SetWorldFlagRequest, _, _ string) (*models.AdminActionResponse, error) {
 	return &models.AdminActionResponse{
 		Success:   true,
 		Message:   "World flag set",
@@ -100,7 +89,7 @@ func (m *mockAdminService) SetWorldFlag(ctx context.Context, adminID uuid.UUID, 
 	}, nil
 }
 
-func (m *mockAdminService) CreateEvent(ctx context.Context, adminID uuid.UUID, req *models.CreateEventRequest, ipAddress, userAgent string) (*models.AdminActionResponse, error) {
+func (m *mockAdminService) CreateEvent(_ context.Context, _ uuid.UUID, _ *models.CreateEventRequest, _, _ string) (*models.AdminActionResponse, error) {
 	return &models.AdminActionResponse{
 		Success:   true,
 		Message:   "Event created",
@@ -109,19 +98,19 @@ func (m *mockAdminService) CreateEvent(ctx context.Context, adminID uuid.UUID, r
 	}, nil
 }
 
-func (m *mockAdminService) SearchPlayers(ctx context.Context, req *models.SearchPlayersRequest) (*models.PlayerSearchResponse, error) {
+func (m *mockAdminService) SearchPlayers(_ context.Context, _ *models.SearchPlayersRequest) (*models.PlayerSearchResponse, error) {
 	return m.searchResponse, nil
 }
 
-func (m *mockAdminService) GetAnalytics(ctx context.Context) (*models.AnalyticsResponse, error) {
+func (m *mockAdminService) GetAnalytics(_ context.Context) (*models.AnalyticsResponse, error) {
 	return m.analyticsResponse, nil
 }
 
-func (m *mockAdminService) GetAuditLogs(ctx context.Context, adminID *uuid.UUID, actionType *models.AdminActionType, limit, offset int) (*models.AuditLogListResponse, error) {
+func (m *mockAdminService) GetAuditLogs(_ context.Context, _ *uuid.UUID, _ *models.AdminActionType, _, _ int) (*models.AuditLogListResponse, error) {
 	return m.auditLogsResponse, nil
 }
 
-func (m *mockAdminService) GetAuditLog(ctx context.Context, logID uuid.UUID) (*models.AdminAuditLog, error) {
+func (m *mockAdminService) GetAuditLog(_ context.Context, _ uuid.UUID) (*models.AdminAuditLog, error) {
 	if m.auditLog == nil {
 		return nil, errors.New("audit log not found")
 	}
@@ -195,4 +184,3 @@ func TestHTTPServer_HealthCheck(t *testing.T) {
 func int64Ptr(i int64) *int64 {
 	return &i
 }
-

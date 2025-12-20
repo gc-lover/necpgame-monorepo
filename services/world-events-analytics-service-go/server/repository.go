@@ -1,4 +1,4 @@
-// Issue: #44
+// Package server Issue: #44
 package server
 
 import (
@@ -66,7 +66,7 @@ func (r *repository) GetEventAnalytics(ctx context.Context, eventID uuid.UUID) (
 		LEFT JOIN world_event_metrics m ON e.id = m.event_id
 		WHERE e.id = $1
 	`
-	
+
 	analytics := &EventAnalytics{Metrics: &EventMetrics{}}
 	err := r.db.QueryRowContext(ctx, query, eventID).Scan(
 		&analytics.EventID, &analytics.Type, &analytics.Scale,
@@ -80,35 +80,3 @@ func (r *repository) GetEventAnalytics(ctx context.Context, eventID uuid.UUID) (
 	}
 	return analytics, err
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

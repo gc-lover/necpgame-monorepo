@@ -1,0 +1,542 @@
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Apartment:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        owner_id:
+          type: string
+          format: uuid
+        apartment_type:
+          type: string
+          enum:
+            - STUDIO
+            - STANDARD
+            - PENTHOUSE
+            - GUILD_HALL
+        location_id:
+          type: string
+          maxLength: 100
+        price:
+          type: integer
+          format: int64
+        furniture_slots:
+          type: integer
+        used_slots:
+          type: integer
+          default: 0
+        prestige_score:
+          type: integer
+          default: 0
+        access_setting:
+          type: string
+          enum:
+            - PRIVATE
+            - FRIENDS_ONLY
+            - PUBLIC
+            - GUILD_ONLY
+        guild_id:
+          type: string
+          format: uuid
+          nullable: true
+        guests:
+          type: array
+          items:
+            type: string
+            format: uuid
+        purchased_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    PurchaseApartmentRequest:
+      type: object
+      required:
+        - apartment_type
+        - location
+      properties:
+        apartment_type:
+          type: string
+          enum:
+            - studio
+            - standard
+            - penthouse
+            - guild_hall
+        location:
+          type: string
+    UpdateApartmentRequest:
+      type: object
+      properties:
+        is_public:
+          type: boolean
+    Guest:
+      type: object
+      properties:
+        character_id:
+          type: string
+          format: uuid
+        character_name:
+          type: string
+        added_at:
+          type: string
+          format: date-time
+    FurnitureItem:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        category:
+          type: string
+          enum:
+            - DECORATIVE
+            - FUNCTIONAL
+            - COMFORT
+            - STORAGE
+        description:
+          type: string
+        price:
+          type: integer
+          format: int64
+        prestige_points:
+          type: integer
+          default: 0
+        slot_cost:
+          type: integer
+          default: 1
+        is_unique:
+          type: boolean
+          default: false
+        function_bonus:
+          type: object
+          additionalProperties: true
+          nullable: true
+        is_active:
+          type: boolean
+          default: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    PlacedFurniture:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        apartment_id:
+          type: string
+          format: uuid
+        furniture_item_id:
+          type: string
+        position_x:
+          type: number
+          format: float
+        position_y:
+          type: number
+          format: float
+        position_z:
+          type: number
+          format: float
+        rotation_yaw:
+          type: number
+          format: float
+        scale:
+          type: number
+          format: float
+          default: 1
+        placed_at:
+          type: string
+          format: date-time
+    PlaceFurnitureRequest:
+      type: object
+      required:
+        - furniture_item_id
+        - position_x
+        - position_y
+        - position_z
+      properties:
+        furniture_item_id:
+          type: string
+        position_x:
+          type: number
+          format: float
+        position_y:
+          type: number
+          format: float
+        position_z:
+          type: number
+          format: float
+        rotation_yaw:
+          type: number
+          format: float
+          default: 0
+        scale:
+          type: number
+          format: float
+          default: 1
+    UpdateFurniturePositionRequest:
+      type: object
+      properties:
+        position_x:
+          type: number
+          format: float
+        position_y:
+          type: number
+          format: float
+        position_z:
+          type: number
+          format: float
+        rotation_yaw:
+          type: number
+          format: float
+        scale:
+          type: number
+          format: float
+    PrestigeEntry:
+      type: object
+      properties:
+        rank:
+          type: integer
+        apartment_id:
+          type: string
+          format: uuid
+        owner_id:
+          type: string
+          format: uuid
+        owner_name:
+          type: string
+        prestige_score:
+          type: integer
+        apartment_type:
+          type: string
+    UpdateApartmentSettingsRequest:
+      type: object
+      required:
+        - player_id
+        - access_setting
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        access_setting:
+          type: string
+          enum:
+            - PRIVATE
+            - FRIENDS_ONLY
+            - PUBLIC
+            - GUILD_ONLY
+        guests:
+          type: array
+          items:
+            type: string
+            format: uuid
+    FurnitureCatalogResponse:
+      type: object
+      properties:
+        furniture:
+          type: array
+          items:
+            $ref: '#/components/schemas/FurnitureItem'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+    PurchaseFurnitureRequest:
+      type: object
+      required:
+        - player_id
+        - furniture_item_id
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        furniture_item_id:
+          type: string
+          format: uuid
+        quantity:
+          type: integer
+          default: 1
+          minimum: 1
+    OwnedFurnitureResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        furniture:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlayerFurnitureInventory'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+    MoveFurnitureRequest:
+      type: object
+      required:
+        - player_id
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        position_x:
+          type: number
+          format: float
+        position_y:
+          type: number
+          format: float
+        position_z:
+          type: number
+          format: float
+        rotation_x:
+          type: number
+          format: float
+        rotation_y:
+          type: number
+          format: float
+        rotation_z:
+          type: number
+          format: float
+        scale_x:
+          type: number
+          format: float
+        scale_y:
+          type: number
+          format: float
+        scale_z:
+          type: number
+          format: float
+    RemoveFurnitureRequest:
+      type: object
+      required:
+        - player_id
+      properties:
+        player_id:
+          type: string
+          format: uuid
+    ApartmentPrestigeResponse:
+      type: object
+      properties:
+        apartment_id:
+          type: string
+          format: uuid
+        prestige_score:
+          type: integer
+        base_prestige:
+          type: integer
+        furniture_prestige:
+          type: integer
+        location_multiplier:
+          type: number
+          format: float
+        uniqueness_bonus:
+          type: integer
+    ApartmentBonusesResponse:
+      type: object
+      properties:
+        apartment_id:
+          type: string
+          format: uuid
+        bonuses:
+          type: object
+          properties:
+            CRAFT_SPEED:
+              type: number
+              format: float
+            STORAGE_SLOTS:
+              type: integer
+            HUMANITY_REGENERATION:
+              type: number
+              format: float
+            WEAPON_STORAGE:
+              type: integer
+    PlayerBonusesResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        bonuses:
+          type: object
+          properties:
+            CRAFT_SPEED:
+              type: number
+              format: float
+            STORAGE_SLOTS:
+              type: integer
+            HUMANITY_REGENERATION:
+              type: number
+              format: float
+            WEAPON_STORAGE:
+              type: integer
+    ApartmentVisit:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        apartment_id:
+          type: string
+          format: uuid
+        visitor_id:
+          type: string
+          format: uuid
+        visited_at:
+          type: string
+          format: date-time
+    ApartmentVisitsResponse:
+      type: object
+      properties:
+        apartment_id:
+          type: string
+          format: uuid
+        visits:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApartmentVisit'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+    PlayerVisitsResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        visits:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApartmentVisit'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+    HousingEvent:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        apartment_id:
+          type: string
+          format: uuid
+        event_type:
+          type: string
+          enum:
+            - housing:apartment-purchased
+            - housing:furniture-placed
+            - housing:furniture-removed
+            - housing:prestige-updated
+            - housing:apartment-visited
+        event_data:
+          type: object
+          additionalProperties: true
+        created_at:
+          type: string
+          format: date-time
+    HousingEventsResponse:
+      type: object
+      properties:
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/HousingEvent'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+    HousingShopCatalogResponse:
+      type: object
+      properties:
+        furniture:
+          type: array
+          items:
+            $ref: '#/components/schemas/FurnitureItem'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+    PlayerFurnitureInventory:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        furniture_item_id:
+          type: string
+          format: uuid
+        furniture_item:
+          $ref: '#/components/schemas/FurnitureItem'
+        quantity:
+          type: integer
+          default: 1
+        purchased_at:
+          type: string
+          format: date-time
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+  responses:
+    BadRequest:
+      description: Неверный запрос
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Требуется аутентификация
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Forbidden:
+      description: Недостаточно прав доступа
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Ресурс не найден
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    InternalServerError:
+      description: Внутренняя ошибка сервера
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'

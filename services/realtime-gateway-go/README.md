@@ -26,6 +26,7 @@ go build -o realtime-gateway .
 ```
 
 Для Windows:
+
 ```bash
 go build -o realtime-gateway.exe .
 ```
@@ -33,6 +34,7 @@ go build -o realtime-gateway.exe .
 ## Запуск
 
 Локально:
+
 ```bash
 ./realtime-gateway
 # или
@@ -40,6 +42,7 @@ go run .
 ```
 
 Через скрипт:
+
 ```bash
 scripts\run\realtime-gateway.cmd  # Windows
 ```
@@ -49,16 +52,19 @@ scripts\run\realtime-gateway.cmd  # Windows
 ## Docker
 
 Сборка образа:
+
 ```bash
 docker build -t necpgame-realtime-gateway-go:latest services/realtime-gateway-go
 ```
 
 Запуск контейнера:
+
 ```bash
 docker run -p 18080:18080/udp necpgame-realtime-gateway-go:latest
 ```
 
 Через docker-compose:
+
 ```bash
 docker-compose up realtime-gateway
 ```
@@ -72,6 +78,7 @@ docker-compose up realtime-gateway
 Для лучшей производительности рекомендуется увеличить размер UDP буфера:
 
 **Linux:**
+
 ```bash
 sudo sysctl -w net.core.rmem_max=2097152
 sudo sysctl -w net.core.rmem_default=2097152
@@ -79,6 +86,7 @@ sudo sysctl -w net.core.rmem_default=2097152
 
 **Docker:**
 Добавить в docker-compose.yml:
+
 ```yaml
 sysctls:
   - net.core.rmem_max=2097152
@@ -107,5 +115,6 @@ realtime-gateway-go/
 
 ## Примечание
 
-**Combat-Sim прототип удален** - игровая логика боя теперь реализуется на **UE5 Dedicated Server** (авторитетный сервер, физика, репликация из коробки). См. `knowledge/implementation/LANGUAGE_CHOICE_STRATEGY.md`.
+**Combat-Sim прототип удален** - игровая логика боя теперь реализуется на **UE5 Dedicated Server** (авторитетный сервер,
+физика, репликация из коробки). См. `knowledge/implementation/LANGUAGE_CHOICE_STRATEGY.md`.
 

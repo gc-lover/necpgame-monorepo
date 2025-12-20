@@ -43,15 +43,15 @@ func (r *ParagonRepository) GetParagonLevels(ctx context.Context, characterID uu
 
 	if err == pgx.ErrNoRows {
 		levels = ParagonLevels{
-			CharacterID:          characterID,
-			ParagonLevel:         0,
-			ParagonPointsTotal:   0,
-			ParagonPointsSpent:   0,
+			CharacterID:            characterID,
+			ParagonLevel:           0,
+			ParagonPointsTotal:     0,
+			ParagonPointsSpent:     0,
 			ParagonPointsAvailable: 0,
-			ExperienceCurrent:    0,
-			ExperienceRequired:   150000,
-			Allocations:          []ParagonAllocation{},
-			UpdatedAt:            time.Now(),
+			ExperienceCurrent:      0,
+			ExperienceRequired:     150000,
+			Allocations:            []ParagonAllocation{},
+			UpdatedAt:              time.Now(),
 		}
 		return &levels, nil
 	}
@@ -72,7 +72,7 @@ func (r *ParagonRepository) GetParagonLevels(ctx context.Context, characterID uu
 	}
 	defer rows.Close()
 
-	allocations := []ParagonAllocation{}
+	var allocations []ParagonAllocation
 	for rows.Next() {
 		var alloc ParagonAllocation
 		if err := rows.Scan(&alloc.StatType, &alloc.PointsAllocated); err != nil {
@@ -217,4 +217,3 @@ func (r *ParagonRepository) GetParagonStats(ctx context.Context, characterID uui
 
 	return stats, nil
 }
-

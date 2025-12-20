@@ -1,4 +1,4 @@
-// Issue: #158
+// Package server Issue: #158
 package server
 
 import (
@@ -23,4 +23,3 @@ func MetricsMiddleware(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 	})
 }
-

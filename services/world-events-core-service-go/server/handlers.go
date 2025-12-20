@@ -1,4 +1,4 @@
-// Issue: #44 - ogen handlers (TYPED responses)
+// Package server Issue: #44 - ogen handlers (TYPED responses)
 package server
 
 import (
@@ -480,7 +480,7 @@ func (h *Handlers) toAPIWorldEvent(event *WorldEvent) *api.WorldEvent {
 					EventID:    event.ID,
 					EffectType: typ,
 					Parameters: api.NewOptEventEffectParameters(
-						api.EventEffectParameters(rawParams),
+						rawParams,
 					),
 				})
 			}

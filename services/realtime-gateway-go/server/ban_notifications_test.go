@@ -7,23 +7,12 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
 
 type mockRedisPubSub struct {
 	mock.Mock
-}
-
-type mockRedisClient struct {
-	mock.Mock
-	pubsub *mockRedisPubSub
-}
-
-func (m *mockRedisClient) Subscribe(ctx context.Context, channels ...string) *redis.PubSub {
-	args := m.Called(ctx, channels)
-	return args.Get(0).(*redis.PubSub)
 }
 
 type mockSessionManager struct {
@@ -157,4 +146,3 @@ func TestBanNotificationSubscriber_buildNotificationMessage_Minimal(t *testing.T
 	assert.NotContains(t, result, "ban_type")
 	assert.NotEmpty(t, result["timestamp"])
 }
-

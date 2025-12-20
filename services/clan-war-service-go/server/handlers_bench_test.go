@@ -13,55 +13,55 @@ import (
 // benchmarkClanWarService implements ClanWarServiceInterface for benchmarks
 type benchmarkClanWarService struct{}
 
-func (m *benchmarkClanWarService) DeclareWar(ctx context.Context, req *models.DeclareWarRequest) (*models.ClanWar, error) {
+func (m *benchmarkClanWarService) DeclareWar(_ context.Context, _ *models.DeclareWarRequest) (*models.ClanWar, error) {
 	return nil, nil
 }
 
-func (m *benchmarkClanWarService) GetWar(ctx context.Context, warID uuid.UUID) (*models.ClanWar, error) {
+func (m *benchmarkClanWarService) GetWar(_ context.Context, _ uuid.UUID) (*models.ClanWar, error) {
 	return nil, nil
 }
 
-func (m *benchmarkClanWarService) ListWars(ctx context.Context, guildID *uuid.UUID, status *models.WarStatus, limit, offset int) ([]models.ClanWar, int, error) {
+func (m *benchmarkClanWarService) ListWars(_ context.Context, _ *uuid.UUID, _ *models.WarStatus, _, _ int) ([]models.ClanWar, int, error) {
 	return nil, 0, nil
 }
 
-func (m *benchmarkClanWarService) StartWar(ctx context.Context, warID uuid.UUID) error {
+func (m *benchmarkClanWarService) StartWar(_ context.Context, _ uuid.UUID) error {
 	return nil
 }
 
-func (m *benchmarkClanWarService) CompleteWar(ctx context.Context, warID uuid.UUID) error {
+func (m *benchmarkClanWarService) CompleteWar(_ context.Context, _ uuid.UUID) error {
 	return nil
 }
 
-func (m *benchmarkClanWarService) CreateBattle(ctx context.Context, req *models.CreateBattleRequest) (*models.WarBattle, error) {
+func (m *benchmarkClanWarService) CreateBattle(_ context.Context, _ *models.CreateBattleRequest) (*models.WarBattle, error) {
 	return nil, nil
 }
 
-func (m *benchmarkClanWarService) GetBattle(ctx context.Context, battleID uuid.UUID) (*models.WarBattle, error) {
+func (m *benchmarkClanWarService) GetBattle(_ context.Context, _ uuid.UUID) (*models.WarBattle, error) {
 	return nil, nil
 }
 
-func (m *benchmarkClanWarService) ListBattles(ctx context.Context, warID *uuid.UUID, status *models.BattleStatus, limit, offset int) ([]models.WarBattle, int, error) {
+func (m *benchmarkClanWarService) ListBattles(_ context.Context, _ *uuid.UUID, _ *models.BattleStatus, _, _ int) ([]models.WarBattle, int, error) {
 	return nil, 0, nil
 }
 
-func (m *benchmarkClanWarService) StartBattle(ctx context.Context, battleID uuid.UUID) error {
+func (m *benchmarkClanWarService) StartBattle(_ context.Context, _ uuid.UUID) error {
 	return nil
 }
 
-func (m *benchmarkClanWarService) UpdateBattleScore(ctx context.Context, req *models.UpdateBattleScoreRequest) error {
+func (m *benchmarkClanWarService) UpdateBattleScore(_ context.Context, _ *models.UpdateBattleScoreRequest) error {
 	return nil
 }
 
-func (m *benchmarkClanWarService) CompleteBattle(ctx context.Context, battleID uuid.UUID) error {
+func (m *benchmarkClanWarService) CompleteBattle(_ context.Context, _ uuid.UUID) error {
 	return nil
 }
 
-func (m *benchmarkClanWarService) GetTerritory(ctx context.Context, territoryID uuid.UUID) (*models.Territory, error) {
+func (m *benchmarkClanWarService) GetTerritory(_ context.Context, _ uuid.UUID) (*models.Territory, error) {
 	return nil, nil
 }
 
-func (m *benchmarkClanWarService) ListTerritories(ctx context.Context, ownerGuildID *uuid.UUID, limit, offset int) ([]models.Territory, int, error) {
+func (m *benchmarkClanWarService) ListTerritories(_ context.Context, _ *uuid.UUID, _, _ int) ([]models.Territory, int, error) {
 	return nil, 0, nil
 }
 
@@ -120,4 +120,3 @@ func BenchmarkGetActiveWars(b *testing.B) {
 		_, _ = handlers.GetActiveWars(ctx, params)
 	}
 }
-

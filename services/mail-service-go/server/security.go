@@ -1,4 +1,4 @@
-// Issue: #1599
+// Package server Issue: #1599
 // Issue: #151 - JWT validation
 package server
 
@@ -6,7 +6,7 @@ import (
 	"context"
 	"errors"
 
-	api "github.com/gc-lover/necpgame-monorepo/services/mail-service-go/pkg/api"
+	"github.com/gc-lover/necpgame-monorepo/services/mail-service-go/pkg/api"
 )
 
 type SecurityHandler struct {
@@ -19,7 +19,7 @@ func NewSecurityHandler(jwtValidator *JwtValidator) *SecurityHandler {
 	}
 }
 
-func (s *SecurityHandler) HandleBearerAuth(ctx context.Context, operationName string, t api.BearerAuth) (context.Context, error) {
+func (s *SecurityHandler) HandleBearerAuth(ctx context.Context, _ string, t api.BearerAuth) (context.Context, error) {
 	if t.Token == "" {
 		return ctx, errors.New("bearer token required")
 	}
@@ -47,10 +47,3 @@ func (s *SecurityHandler) HandleBearerAuth(ctx context.Context, operationName st
 
 	return ctx, nil
 }
-
-
-
-
-
-
-

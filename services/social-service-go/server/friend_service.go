@@ -1,4 +1,4 @@
-// Issue: Social Service ogen Migration - Friends Service
+// Package server Issue: Social Service ogen Migration - Friends Service
 package server
 
 import (
@@ -150,4 +150,3 @@ func (s *FriendService) RemoveFriend(ctx context.Context, characterID, friendID 
 
 	return nil
 }
-

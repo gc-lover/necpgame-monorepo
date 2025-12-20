@@ -1,4 +1,4 @@
-// Issue: #1595
+// Package server Issue: #1595
 package server
 
 import (
@@ -22,7 +22,7 @@ func (h *Handlers) ClaimAchievementReward(ctx context.Context, params api.ClaimA
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	result, err := h.service.ClaimAchievementReward(ctx, params.PlayerId, params.AchievementId)
+	result, err := h.service.ClaimAchievementReward(params.AchievementId)
 	if err != nil {
 		if err == ErrNotFound {
 			return &api.ClaimAchievementRewardNotFound{}, nil
@@ -37,7 +37,7 @@ func (h *Handlers) GetAchievementDetails(ctx context.Context, params api.GetAchi
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	result, err := h.service.GetAchievementDetails(ctx, params.AchievementId)
+	result, err := h.service.GetAchievementDetails(params.AchievementId)
 	if err != nil {
 		if err == ErrNotFound {
 			return &api.GetAchievementDetailsNotFound{}, nil
@@ -52,7 +52,7 @@ func (h *Handlers) GetAchievements(ctx context.Context, params api.GetAchievemen
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	result, err := h.service.GetAchievements(ctx, params)
+	result, err := h.service.GetAchievements(params)
 	if err != nil {
 		return &api.GetAchievementsInternalServerError{}, err
 	}
@@ -60,11 +60,11 @@ func (h *Handlers) GetAchievements(ctx context.Context, params api.GetAchievemen
 	return result, nil
 }
 
-func (h *Handlers) GetPlayerProgress(ctx context.Context, params api.GetPlayerProgressParams) (api.GetPlayerProgressRes, error) {
+func (h *Handlers) GetPlayerProgress(ctx context.Context, _ api.GetPlayerProgressParams) (api.GetPlayerProgressRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	result, err := h.service.GetPlayerProgress(ctx, params.PlayerId, params)
+	result, err := h.service.GetPlayerProgress()
 	if err != nil {
 		return &api.GetPlayerProgressInternalServerError{}, err
 	}
@@ -72,11 +72,11 @@ func (h *Handlers) GetPlayerProgress(ctx context.Context, params api.GetPlayerPr
 	return result, nil
 }
 
-func (h *Handlers) GetPlayerTitles(ctx context.Context, params api.GetPlayerTitlesParams) (api.GetPlayerTitlesRes, error) {
+func (h *Handlers) GetPlayerTitles(ctx context.Context, _ api.GetPlayerTitlesParams) (api.GetPlayerTitlesRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	result, err := h.service.GetPlayerTitles(ctx, params.PlayerId)
+	result, err := h.service.GetPlayerTitles()
 	if err != nil {
 		return &api.GetPlayerTitlesInternalServerError{}, err
 	}
@@ -88,7 +88,7 @@ func (h *Handlers) SetActiveTitle(ctx context.Context, req *api.SetActiveTitleRe
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	result, err := h.service.SetActiveTitle(ctx, params.PlayerId, req)
+	result, err := h.service.SetActiveTitle(req)
 	if err != nil {
 		if err == ErrNotFound {
 			return &api.SetActiveTitleNotFound{}, nil

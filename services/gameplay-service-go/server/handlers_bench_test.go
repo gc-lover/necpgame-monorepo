@@ -61,4 +61,3 @@ func BenchmarkCreateCombatSession(b *testing.B) {
 		_, _ = handlers.CreateCombatSession(ctx, req)
 	}
 }
-

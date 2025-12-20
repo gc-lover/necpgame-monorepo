@@ -1,4 +1,4 @@
-// Issue: #1595, #1607
+// Package server Issue: #1595, #1607
 // ogen handlers - TYPED responses (no interface{} boxing!)
 // Memory pooling for hot path (Issue #1607)
 package server
@@ -20,10 +20,10 @@ type Handlers struct {
 	logger *logrus.Logger
 
 	// Memory pooling for hot structs (zero allocations target!)
-	catalogResponsePool      sync.Pool
-	implantPool              sync.Pool
-	installedImplantPool     sync.Pool
-	implantSlotsPool         sync.Pool
+	catalogResponsePool  sync.Pool
+	implantPool          sync.Pool
+	installedImplantPool sync.Pool
+	implantSlotsPool     sync.Pool
 }
 
 // NewHandlers creates new handlers with memory pooling
@@ -59,7 +59,7 @@ func NewHandlers() *Handlers {
 
 // GetImplantCatalog - TYPED response!
 // Issue: #1607 - Uses memory pooling for zero allocations
-func (h *Handlers) GetImplantCatalog(ctx context.Context, params api.GetImplantCatalogParams) (api.GetImplantCatalogRes, error) {
+func (h *Handlers) GetImplantCatalog(ctx context.Context, _ api.GetImplantCatalogParams) (api.GetImplantCatalogRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
@@ -73,7 +73,7 @@ func (h *Handlers) GetImplantCatalog(ctx context.Context, params api.GetImplantC
 	resp.Implants = resp.Implants[:0] // Reuse slice
 	resp.Total = api.OptInt{}
 
-	implants := []api.Implant{}
+	var implants []api.Implant
 	total := 0
 
 	// Populate response
@@ -107,7 +107,7 @@ func (h *Handlers) GetCharacterImplants(ctx context.Context, params api.GetChara
 
 	h.logger.WithField("character_id", params.CharacterID).Info("GetCharacterImplants request")
 
-	implants := []api.InstalledImplant{}
+	var implants []api.InstalledImplant
 
 	// Clone response (caller owns it)
 	result := &api.GetCharacterImplantsOK{
@@ -190,10 +190,10 @@ func (h *Handlers) GetImplantSlots(ctx context.Context, params api.GetImplantSlo
 
 	// Clone response (caller owns it)
 	result := &api.ImplantSlots{
-		CharacterID:   resp.CharacterID,
-		TotalSlots:    resp.TotalSlots,
+		CharacterID:    resp.CharacterID,
+		TotalSlots:     resp.TotalSlots,
 		AvailableSlots: resp.AvailableSlots,
-		UsedSlots:     resp.UsedSlots,
+		UsedSlots:      resp.UsedSlots,
 	}
 
 	return result, nil

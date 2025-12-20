@@ -5,9 +5,9 @@ import (
 	"context"
 	"testing"
 
+	"github.com/gc-lover/necpgame-monorepo/services/voice-chat-service-go/models"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/gc-lover/necpgame-monorepo/services/voice-chat-service-go/models"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -376,4 +376,3 @@ func TestVoiceRepository_RemoveParticipant(t *testing.T) {
 
 	assert.NoError(t, err)
 }
-

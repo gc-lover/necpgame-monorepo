@@ -1,4 +1,4 @@
-// Issue: #39
+// Package server Issue: #39
 package server
 
 import (
@@ -68,41 +68,3 @@ func corsMiddleware() func(http.Handler) http.Handler {
 		})
 	}
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

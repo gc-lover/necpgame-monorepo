@@ -35,4 +35,3 @@ func TestStockDividendsServiceNoLeaks(t *testing.T) {
 
 	// If goroutines leaked from stock dividends handlers, test FAILS
 }
-

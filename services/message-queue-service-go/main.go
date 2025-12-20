@@ -1,5 +1,3 @@
-package main
-
 import (
 	"context"
 	"flag"
@@ -13,26 +11,27 @@ import (
 	"time"
 
 	_ "net/http/pprof"
+
 	"github.com/gc-lover/necpgame-monorepo/services/message-queue-service-go/server"
 	"github.com/sirupsen/logrus"
 )
 
-// OPTIMIZATION: Issue #2205 - Memory-aligned struct for message queue service performance
+// MessageQueueServiceConfig OPTIMIZATION: Issue #2205 - Memory-aligned struct for message queue service performance
 type MessageQueueServiceConfig struct {
-	StateSyncInterval       time.Duration `json:"state_sync_interval"`       // 8 bytes
-	ReadTimeout             time.Duration `json:"read_timeout"`              // 8 bytes
-	WriteTimeout            time.Duration `json:"write_timeout"`             // 8 bytes
-	MetricsInterval         time.Duration `json:"metrics_interval"`          // 8 bytes
-	DefaultTimeout          time.Duration `json:"default_timeout"`           // 8 bytes
-	CleanupInterval         time.Duration `json:"cleanup_interval"`          // 8 bytes
-	HTTPAddr                string        `json:"http_addr"`                 // 16 bytes
-	RedisAddr               string        `json:"redis_addr"`                // 16 bytes
-	PprofAddr               string        `json:"pprof_addr"`                // 16 bytes
-	HealthAddr              string        `json:"health_addr"`               // 16 bytes
-	MaxConnections          int           `json:"max_connections"`           // 8 bytes
-	MaxHeaderBytes          int           `json:"max_header_bytes"`          // 8 bytes
-	DefaultQueueSize        int           `json:"default_queue_size"`         // 8 bytes
-	DefaultMessageTTL       time.Duration `json:"default_message_ttl"`        // 8 bytes
+	StateSyncInterval time.Duration `json:"state_sync_interval"` // 8 bytes
+	ReadTimeout       time.Duration `json:"read_timeout"`        // 8 bytes
+	WriteTimeout      time.Duration `json:"write_timeout"`       // 8 bytes
+	MetricsInterval   time.Duration `json:"metrics_interval"`    // 8 bytes
+	DefaultTimeout    time.Duration `json:"default_timeout"`     // 8 bytes
+	CleanupInterval   time.Duration `json:"cleanup_interval"`    // 8 bytes
+	HTTPAddr          string        `json:"http_addr"`           // 16 bytes
+	RedisAddr         string        `json:"redis_addr"`          // 16 bytes
+	PprofAddr         string        `json:"pprof_addr"`          // 16 bytes
+	HealthAddr        string        `json:"health_addr"`         // 16 bytes
+	MaxConnections    int           `json:"max_connections"`     // 8 bytes
+	MaxHeaderBytes    int           `json:"max_header_bytes"`    // 8 bytes
+	DefaultQueueSize  int           `json:"default_queue_size"`  // 8 bytes
+	DefaultMessageTTL time.Duration `json:"default_message_ttl"` // 8 bytes
 }
 
 func main() {
@@ -88,7 +87,7 @@ func main() {
 	}()
 
 	// Create message queue service
-	service, err := server.NewMessageQueueService(config, logger)
+	service := server.NewMessageQueueService(config, logger)
 	if err != nil {
 		log.Fatal("failed to create message queue service:", err)
 	}

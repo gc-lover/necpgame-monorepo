@@ -1,4 +1,4 @@
-// Issue: #1604
+// Package server Issue: #1604
 // Handlers for social-service-go - implements api.ServerInterface
 package server
 

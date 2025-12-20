@@ -1,4 +1,4 @@
-// Issue: #141888650
+// Package server Issue: #141888650
 package server
 
 import (
@@ -47,7 +47,7 @@ func (r *AdminRepository) CreateAuditLog(ctx context.Context, log *models.AdminA
 	return err
 }
 
-// OPTIMIZATION: Batch operations for high-throughput scenarios (Issue #2182)
+// CreateAuditLogsBatch OPTIMIZATION: Batch operations for high-throughput scenarios (Issue #2182)
 func (r *AdminRepository) CreateAuditLogsBatch(ctx context.Context, logs []*models.AdminAuditLog) error {
 	if len(logs) == 0 {
 		return nil
@@ -206,4 +206,3 @@ func (r *AdminRepository) CountAuditLogs(ctx context.Context, adminID *uuid.UUID
 	err := r.db.QueryRow(ctx, baseQuery, args...).Scan(&count)
 	return count, err
 }
-

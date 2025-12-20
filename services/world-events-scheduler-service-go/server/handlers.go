@@ -1,4 +1,4 @@
-// Issue: #44 - ogen handlers (TYPED responses)
+// Package server Issue: #44 - ogen handlers (TYPED responses)
 package server
 
 import (

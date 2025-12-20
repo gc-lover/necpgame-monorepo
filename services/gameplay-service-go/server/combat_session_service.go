@@ -1,13 +1,13 @@
-// Issue: #1607
+// Package server Issue: #1607
 package server
 
 import (
 	"context"
 	"errors"
 
+	"github.com/gc-lover/necpgame-monorepo/services/gameplay-service-go/pkg/api"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/gc-lover/necpgame-monorepo/services/gameplay-service-go/pkg/api"
 	"github.com/sirupsen/logrus"
 )
 
@@ -64,4 +64,3 @@ func (s *CombatSessionService) ListSessions(ctx context.Context, status *api.Ses
 func (s *CombatSessionService) EndSession(ctx context.Context, sessionID uuid.UUID) (*api.SessionEndResponse, error) {
 	return s.repo.EndSession(ctx, sessionID)
 }
-

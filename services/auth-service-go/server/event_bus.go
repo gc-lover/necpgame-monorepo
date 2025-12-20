@@ -1,4 +1,4 @@
-// Issue: #136
+// Package server Issue: #136
 package server
 
 import (
@@ -21,12 +21,6 @@ type RedisEventBus struct {
 }
 
 // NewRedisEventBus создает новый Redis event bus
-func NewRedisEventBus(client *redis.Client, logger *zap.Logger) *RedisEventBus {
-	return &RedisEventBus{
-		client: client,
-		logger: logger,
-	}
-}
 
 // PublishEvent публикует событие в Redis канал
 func (b *RedisEventBus) PublishEvent(ctx context.Context, eventType string, payload map[string]interface{}) error {
@@ -49,13 +43,3 @@ func (b *RedisEventBus) PublishEvent(ctx context.Context, eventType string, payl
 
 // AuthEventType типы событий аутентификации
 type AuthEventType string
-
-const (
-	EventAccountCreated  AuthEventType = "ACCOUNT_CREATED"
-	EventLoginSuccess    AuthEventType = "LOGIN_SUCCESS"
-	EventLogout          AuthEventType = "LOGOUT"
-	EventPasswordChanged AuthEventType = "PASSWORD_CHANGED"
-	EventEmailVerified   AuthEventType = "EMAIL_VERIFIED"
-	EventPasswordReset   AuthEventType = "PASSWORD_RESET"
-	EventOAuthLogin      AuthEventType = "OAUTH_LOGIN"
-)

@@ -3,6 +3,7 @@ package server
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -17,7 +18,7 @@ func BenchmarkAIService_GetNPCBehavior(b *testing.B) {
 	logger.SetLevel(logrus.ErrorLevel)
 
 	metrics := &AIMetrics{}
-	service := NewAIService(logger, metrics, 1000)
+	service := NewAIService(logger, metrics)
 
 	npcID := "npc_123"
 
@@ -45,7 +46,7 @@ func BenchmarkAIService_CalculatePath(b *testing.B) {
 	logger.SetLevel(logrus.ErrorLevel)
 
 	metrics := &AIMetrics{}
-	service := NewAIService(logger, metrics, 1000)
+	service := NewAIService(logger, metrics)
 
 	npcID := "npc_123"
 
@@ -81,7 +82,7 @@ func BenchmarkAIService_MakeDecision(b *testing.B) {
 	logger.SetLevel(logrus.ErrorLevel)
 
 	metrics := &AIMetrics{}
-	service := NewAIService(logger, metrics, 1000)
+	service := NewAIService(logger, metrics)
 
 	npcID := "npc_123"
 
@@ -89,7 +90,7 @@ func BenchmarkAIService_MakeDecision(b *testing.B) {
 		DecisionContext: &DecisionContext{
 			NPCID: npcID,
 			CurrentState: &AIState{
-				NPCID:          npcID,
+				NPCID:           npcID,
 				CurrentBehavior: "idle",
 			},
 			TimePressure:  50,
@@ -97,17 +98,17 @@ func BenchmarkAIService_MakeDecision(b *testing.B) {
 		},
 		AvailableActions: []*DecisionAction{
 			{
-				ActionID:        "attack_001",
-				ActionType:      "ATTACK",
-				PriorityScore:   80,
-				RiskLevel:       40,
+				ActionID:           "attack_001",
+				ActionType:         "ATTACK",
+				PriorityScore:      80,
+				RiskLevel:          40,
 				SuccessProbability: 0.7,
 			},
 			{
-				ActionID:        "flee_001",
-				ActionType:      "FLEE",
-				PriorityScore:   60,
-				RiskLevel:       20,
+				ActionID:           "flee_001",
+				ActionType:         "FLEE",
+				PriorityScore:      60,
+				RiskLevel:          20,
 				SuccessProbability: 0.9,
 			},
 		},
@@ -140,14 +141,14 @@ func BenchmarkAIService_ExecuteBehaviorTree(b *testing.B) {
 	logger.SetLevel(logrus.ErrorLevel)
 
 	metrics := &AIMetrics{}
-	service := NewAIService(logger, metrics, 1000)
+	service := NewAIService(logger, metrics)
 
 	treeID := "combat_tree"
 
 	reqData := ExecuteBehaviorTreeRequest{
-		NPCID:           "npc_123",
+		NPCID: "npc_123",
 		ContextVariables: map[string]interface{}{
-			"health": 75,
+			"health":          75,
 			"threat_detected": true,
 		},
 		MaxDepth:  5,
@@ -181,7 +182,7 @@ func BenchmarkAIService_ConcurrentAILoad(b *testing.B) {
 	logger.SetLevel(logrus.ErrorLevel)
 
 	metrics := &AIMetrics{}
-	service := NewAIService(logger, metrics, 1000)
+	service := NewAIService(logger, metrics)
 
 	reqData := CalculatePathRequest{
 		StartPosition: Vector3{X: 0, Y: 0, Z: 0},
@@ -222,7 +223,7 @@ func TestAIService_PerformanceTargets(t *testing.T) {
 	logger.SetLevel(logrus.ErrorLevel)
 
 	metrics := &AIMetrics{}
-	service := NewAIService(logger, metrics, 1000)
+	service := NewAIService(logger, metrics)
 
 	npcID := "npc_123"
 
@@ -231,7 +232,7 @@ func TestAIService_PerformanceTargets(t *testing.T) {
 		DecisionContext: &DecisionContext{
 			NPCID: npcID,
 			CurrentState: &AIState{
-				NPCID:          npcID,
+				NPCID:           npcID,
 				CurrentBehavior: "idle",
 			},
 			TimePressure:  50,
@@ -239,10 +240,10 @@ func TestAIService_PerformanceTargets(t *testing.T) {
 		},
 		AvailableActions: []*DecisionAction{
 			{
-				ActionID:        "attack_001",
-				ActionType:      "ATTACK",
-				PriorityScore:   80,
-				RiskLevel:       40,
+				ActionID:           "attack_001",
+				ActionType:         "ATTACK",
+				PriorityScore:      80,
+				RiskLevel:          40,
 				SuccessProbability: 0.7,
 			},
 		},
@@ -293,7 +294,7 @@ func TestAIService_ConcurrentProcessing(t *testing.T) {
 	logger.SetLevel(logrus.ErrorLevel)
 
 	metrics := &AIMetrics{}
-	service := NewAIService(logger, metrics, 1000)
+	service := NewAIService(logger, metrics)
 
 	// Test with multiple NPCs making decisions simultaneously
 	done := make(chan bool, 10)
@@ -306,16 +307,16 @@ func TestAIService_ConcurrentProcessing(t *testing.T) {
 				DecisionContext: &DecisionContext{
 					NPCID: npcID,
 					CurrentState: &AIState{
-						NPCID:          npcID,
+						NPCID:           npcID,
 						CurrentBehavior: "idle",
 					},
 				},
 				AvailableActions: []*DecisionAction{
 					{
-						ActionID:        "idle_001",
-						ActionType:      "IDLE",
-						PriorityScore:   50,
-						RiskLevel:       0,
+						ActionID:           "idle_001",
+						ActionType:         "IDLE",
+						PriorityScore:      50,
+						RiskLevel:          0,
 						SuccessProbability: 1.0,
 					},
 				},

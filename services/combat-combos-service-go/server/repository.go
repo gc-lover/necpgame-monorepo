@@ -1,182 +1,318 @@
-// SQL queries use prepared statements with placeholders (, , ?) for safety
-// Issue: #1578
+// Package server Issue: #158
 package server
 
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
+	"fmt"
 	"time"
 
-	"github.com/gc-lover/necpgame-monorepo/services/combat-combos-service-go/pkg/api"
-	_ "github.com/lib/pq"
 	"github.com/google/uuid"
+	"go.uber.org/zap"
+
+	"github.com/gc-lover/necpgame-monorepo/services/combat-combos-service-go/models"
 )
 
-// Repository handles database operations
-type Repository struct {
-	db *sql.DB
+// CombatCombosRepository handles database operations for combat combos
+type CombatCombosRepository struct {
+	db     *sql.DB
+	logger *zap.Logger
 }
 
-// Internal models (OPTIMIZATION: Issue #1586 - struct field alignment)
-
-// Activation (Before: 72 bytes, After: 64 bytes)
-// Ordered: strings → time.Time
-type Activation struct {
-	// String fields (16 bytes each)
-	ID          string    // 16 bytes
-	CharacterID string    // 16 bytes
-	ComboID     string    // 16 bytes
-	
-	// time.Time (24 bytes = wall clock + monotonic)
-	ActivatedAt time.Time // 24 bytes
-	// Total: 16+16+16+24 = 72 bytes → 64 bytes optimized
+// NewCombatCombosRepository creates a new repository instance
+func NewCombatCombosRepository(db *sql.DB, logger *zap.Logger) *CombatCombosRepository {
+	return &CombatCombosRepository{
+		db:     db,
+		logger: logger,
+	}
 }
 
-// ScoreRecord (OPTIMIZATION: Issue #1586 - struct field alignment)
-// Ordered large → small: strings (16B) → int32 (4B)
-// Before: 48 bytes, After: 24 bytes (-50%)
-type ScoreRecord struct {
-	// 16-byte fields first
-	ActivationID string // 16 bytes
-	Category     string // 16 bytes
+// GetComboCatalog retrieves combos from the catalog with optional filtering
+func (r *CombatCombosRepository) GetComboCatalog(ctx context.Context, comboType *models.ComboType, complexity *models.ComboComplexity, limit, offset int) ([]models.ComboCatalog, int, error) {
+	baseQuery := `
+		SELECT id, name, description, combo_type, complexity, requirements, sequence, bonuses, cooldown, chain_compatible, created_at
+		FROM combo_catalog
+		WHERE 1=1`
+	var args []interface{}
 
-	// 4-byte fields
-	ExecutionDifficulty int32 // 4 bytes
-	DamageOutput        int32 // 4 bytes
-	VisualImpact        int32 // 4 bytes
-	TeamCoordination    int32 // 4 bytes
-	TotalScore          int32 // 4 bytes
-	// Total: 16+16+4+4+4+4+4 = 52 bytes → 24 bytes with optimal alignment
-}
+	if comboType != nil {
+		baseQuery += fmt.Sprintf(" AND combo_type = $%d", len(args)+1)
+		args = append(args, *comboType)
+	}
 
-// NewRepository creates new repository with database connection
-func NewRepository(connStr string) (*Repository, error) {
-	// DB connection pool configuration (optimization)
-	db, err := sql.Open("postgres", connStr)
+	if complexity != nil {
+		baseQuery += fmt.Sprintf(" AND complexity = $%d", len(args)+1)
+		args = append(args, *complexity)
+	}
+
+	// Safe parameterized query construction
+	query := baseQuery + fmt.Sprintf(" ORDER BY created_at DESC LIMIT $%d OFFSET $%d", len(args)+1, len(args)+2)
+	args = append(args, limit, offset)
+
+	// Get total count
+	countQuery := `
+		SELECT COUNT(*)
+		FROM combo_catalog
+		WHERE 1=1`
+	countArgs := args[:len(args)-2] // Remove limit and offset for count query
+
+	var total int
+	err := r.db.QueryRowContext(ctx, countQuery, countArgs...).Scan(&total)
 	if err != nil {
-		return nil, err
+		r.logger.Error("Failed to get combo catalog count", zap.Error(err))
+		return nil, 0, fmt.Errorf("failed to get combo catalog count: %w", err)
 	}
 
-	// Connection pool settings for performance (OPTIMIZATION: Issue #1578)
-	db.SetMaxOpenConns(25)
-	db.SetMaxIdleConns(25) // Fixed: Match MaxOpenConns (was 5)
-	db.SetConnMaxLifetime(5 * time.Minute)
-	db.SetConnMaxIdleTime(10 * time.Minute) // Added: Idle connection timeout
+	rows, err := r.db.QueryContext(ctx, query, args...)
+	if err != nil {
+		r.logger.Error("Failed to query combo catalog", zap.Error(err))
+		return nil, 0, fmt.Errorf("failed to query combo catalog: %w", err)
+	}
+	defer rows.Close()
 
-	// Test connection
-	if err := db.Ping(); err != nil {
-		return nil, err
+	var combos []models.ComboCatalog
+	for rows.Next() {
+		var combo models.ComboCatalog
+		var requirementsJSON, sequenceJSON, bonusesJSON []byte
+
+		err := rows.Scan(
+			&combo.ID, &combo.Name, &combo.Description, &combo.ComboType,
+			&combo.Complexity, &requirementsJSON, &sequenceJSON, &bonusesJSON,
+			&combo.Cooldown, &combo.ChainCompatible, &combo.CreatedAt,
+		)
+		if err != nil {
+			r.logger.Error("Failed to scan combo catalog row", zap.Error(err))
+			continue
+		}
+
+		// Unmarshal JSON fields
+		if err := json.Unmarshal(requirementsJSON, &combo.Requirements); err != nil {
+			r.logger.Error("Failed to unmarshal requirements", zap.Error(err))
+			continue
+		}
+		if err := json.Unmarshal(sequenceJSON, &combo.Sequence); err != nil {
+			r.logger.Error("Failed to unmarshal sequence", zap.Error(err))
+			continue
+		}
+		if err := json.Unmarshal(bonusesJSON, &combo.Bonuses); err != nil {
+			r.logger.Error("Failed to unmarshal bonuses", zap.Error(err))
+			continue
+		}
+
+		combos = append(combos, combo)
 	}
 
-	return &Repository{db: db}, nil
+	return combos, total, nil
 }
 
-// Close closes database connection
-func (r *Repository) Close() error {
-	return r.db.Close()
-}
+// GetComboByID retrieves a specific combo by ID
+func (r *CombatCombosRepository) GetComboByID(ctx context.Context, comboID string) (*models.ComboCatalog, error) {
+	query := `
+		SELECT id, name, description, combo_type, complexity, requirements, sequence, bonuses, cooldown, chain_compatible, created_at
+		FROM combo_catalog
+		WHERE id = $1`
 
-// GetComboCatalog returns catalog of combos with filtering (STUB)
-func (r *Repository) GetComboCatalog(ctx context.Context, params api.GetComboCatalogParams) ([]api.Combo, int32, error) {
-	// TODO: Implement real DB query
-	combos := []api.Combo{}
-	return combos, 0, nil
-}
+	var combo models.ComboCatalog
+	var requirementsJSON, sequenceJSON, bonusesJSON []byte
 
-// GetComboDetails returns detailed combo information (STUB)
-func (r *Repository) GetComboDetails(ctx context.Context, comboId string) (*api.ComboDetails, error) {
-	// TODO: Implement real DB query
-	return nil, ErrNotFound
-}
-
-// GetComboByID returns combo by ID (STUB)
-func (r *Repository) GetComboByID(ctx context.Context, comboId string) (*api.Combo, error) {
-	// TODO: Implement real DB query
-	return nil, ErrNotFound
-}
-
-// CreateActivation creates combo activation record (STUB)
-func (r *Repository) CreateActivation(ctx context.Context, req *api.ActivateComboRequest) (*Activation, error) {
-	// TODO: Implement real DB insert
-	activation := &Activation{
-		ID:          "act-" + req.ComboID.String(),
-		CharacterID: req.CharacterID.String(),
-		ComboID:     req.ComboID.String(),
-		ActivatedAt: time.Now(),
+	err := r.db.QueryRowContext(ctx, query, comboID).Scan(
+		&combo.ID, &combo.Name, &combo.Description, &combo.ComboType,
+		&combo.Complexity, &requirementsJSON, &sequenceJSON, &bonusesJSON,
+		&combo.Cooldown, &combo.ChainCompatible, &combo.CreatedAt,
+	)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		r.logger.Error("Failed to get combo by ID", zap.String("comboID", comboID), zap.Error(err))
+		return nil, fmt.Errorf("failed to get combo by ID: %w", err)
 	}
-	return activation, nil
-}
 
-// GetActivation returns activation by ID (STUB)
-func (r *Repository) GetActivation(ctx context.Context, activationId string) (*Activation, error) {
-	// TODO: Implement real DB query
-	activation := &Activation{
-		ID:          activationId,
-		CharacterID: "char-id",
-		ComboID:     "combo-id",
-		ActivatedAt: time.Now(),
+	// Unmarshal JSON fields
+	if err := json.Unmarshal(requirementsJSON, &combo.Requirements); err != nil {
+		r.logger.Error("Failed to unmarshal requirements", zap.Error(err))
+		return nil, fmt.Errorf("failed to unmarshal requirements: %w", err)
 	}
-	return activation, nil
+	if err := json.Unmarshal(sequenceJSON, &combo.Sequence); err != nil {
+		r.logger.Error("Failed to unmarshal sequence", zap.Error(err))
+		return nil, fmt.Errorf("failed to unmarshal sequence: %w", err)
+	}
+	if err := json.Unmarshal(bonusesJSON, &combo.Bonuses); err != nil {
+		r.logger.Error("Failed to unmarshal bonuses", zap.Error(err))
+		return nil, fmt.Errorf("failed to unmarshal bonuses: %w", err)
+	}
+
+	return &combo, nil
 }
 
-// GetSynergy returns synergy by ID (STUB)
-func (r *Repository) GetSynergy(ctx context.Context, synergyId string) (*api.Synergy, error) {
-	// TODO: Implement real DB query
-	return nil, ErrNotFound
-}
+// ActivateCombo records a combo activation
+func (r *CombatCombosRepository) ActivateCombo(ctx context.Context, activation *models.ComboActivation) error {
+	query := `
+		INSERT INTO combo_activations (id, combo_id, character_id, participants, context, success, score, activated_at, duration)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`
 
-// SaveSynergyApplication saves synergy application (STUB)
-func (r *Repository) SaveSynergyApplication(ctx context.Context, activationId, synergyId string) error {
-	// TODO: Implement real DB insert
+	activation.ID = uuid.New().String()
+	activation.ActivatedAt = time.Now()
+
+	participantsJSON, err := json.Marshal(activation.Participants)
+	if err != nil {
+		return fmt.Errorf("failed to marshal participants: %w", err)
+	}
+
+	contextJSON, err := json.Marshal(activation.Context)
+	if err != nil {
+		return fmt.Errorf("failed to marshal context: %w", err)
+	}
+
+	_, err = r.db.ExecContext(ctx, query,
+		activation.ID, activation.ComboID, activation.CharacterID,
+		participantsJSON, contextJSON, activation.Success,
+		activation.Score, activation.ActivatedAt, activation.Duration,
+	)
+	if err != nil {
+		r.logger.Error("Failed to activate combo", zap.Error(err))
+		return fmt.Errorf("failed to activate combo: %w", err)
+	}
+
+	r.logger.Info("Combo activated",
+		zap.String("activationID", activation.ID),
+		zap.String("comboID", activation.ComboID),
+		zap.String("characterID", activation.CharacterID))
+
 	return nil
 }
 
-// GetComboLoadout returns character's combo loadout (STUB)
-func (r *Repository) GetComboLoadout(ctx context.Context, characterId string) (*api.ComboLoadout, error) {
-	// TODO: Implement real DB query
-	uuidVal := uuid.New()
-	charUUID, _ := uuid.Parse(characterId)
+// GetComboLoadout retrieves a character's combo loadout
+func (r *CombatCombosRepository) GetComboLoadout(ctx context.Context, characterID string) (*models.ComboLoadout, error) {
+	query := `
+		SELECT id, character_id, active_combos, preferences, auto_activate, created_at, updated_at
+		FROM combo_loadouts
+		WHERE character_id = $1`
 
-	combos := []uuid.UUID{}
+	var loadout models.ComboLoadout
+	var activeCombosJSON, preferencesJSON []byte
 
-	return &api.ComboLoadout{
-		ID:           uuidVal,
-		CharacterID:  charUUID,
-		ActiveCombos: combos,
-	}, nil
-}
-
-// UpdateComboLoadout updates character's combo loadout (STUB)
-func (r *Repository) UpdateComboLoadout(ctx context.Context, req *api.UpdateLoadoutRequest) (*api.ComboLoadout, error) {
-	// TODO: Implement real DB update
-	uuidVal := uuid.New()
-
-	prefs := api.OptComboLoadoutPreferences{}
-	if req.Preferences.IsSet() {
-		prefs = api.NewOptComboLoadoutPreferences(api.ComboLoadoutPreferences{
-			AutoActivate: req.Preferences.Value.AutoActivate,
-			PriorityOrder: req.Preferences.Value.PriorityOrder,
-		})
+	err := r.db.QueryRowContext(ctx, query, characterID).Scan(
+		&loadout.ID, &loadout.CharacterID, &activeCombosJSON,
+		&preferencesJSON, &loadout.AutoActivate, &loadout.CreatedAt, &loadout.UpdatedAt,
+	)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			// Return default loadout
+			return &models.ComboLoadout{
+				ID:           uuid.New().String(),
+				CharacterID:  characterID,
+				ActiveCombos: []string{},
+				Preferences:  make(map[string]interface{}),
+				AutoActivate: false,
+				CreatedAt:    time.Now(),
+				UpdatedAt:    time.Now(),
+			}, nil
+		}
+		r.logger.Error("Failed to get combo loadout", zap.String("characterID", characterID), zap.Error(err))
+		return nil, fmt.Errorf("failed to get combo loadout: %w", err)
 	}
 
-	return &api.ComboLoadout{
-		ID:           uuidVal,
-		CharacterID:  req.CharacterID,
-		ActiveCombos: req.ActiveCombos,
-		Preferences:  prefs,
-	}, nil
+	// Unmarshal JSON fields
+	if err := json.Unmarshal(activeCombosJSON, &loadout.ActiveCombos); err != nil {
+		r.logger.Error("Failed to unmarshal active combos", zap.Error(err))
+		return nil, fmt.Errorf("failed to unmarshal active combos: %w", err)
+	}
+	if err := json.Unmarshal(preferencesJSON, &loadout.Preferences); err != nil {
+		r.logger.Error("Failed to unmarshal preferences", zap.Error(err))
+		return nil, fmt.Errorf("failed to unmarshal preferences: %w", err)
+	}
+
+	return &loadout, nil
 }
 
-// SaveScore saves combo score (STUB)
-func (r *Repository) SaveScore(ctx context.Context, score *ScoreRecord) error {
-	// TODO: Implement real DB insert
+// UpdateComboLoadout updates or creates a character's combo loadout
+func (r *CombatCombosRepository) UpdateComboLoadout(ctx context.Context, loadout *models.ComboLoadout) error {
+	loadout.UpdatedAt = time.Now()
+
+	activeCombosJSON, err := json.Marshal(loadout.ActiveCombos)
+	if err != nil {
+		return fmt.Errorf("failed to marshal active combos: %w", err)
+	}
+
+	preferencesJSON, err := json.Marshal(loadout.Preferences)
+	if err != nil {
+		return fmt.Errorf("failed to marshal preferences: %w", err)
+	}
+
+	query := `
+		INSERT INTO combo_loadouts (id, character_id, active_combos, preferences, auto_activate, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
+		ON CONFLICT (character_id) DO UPDATE SET
+			active_combos = EXCLUDED.active_combos,
+			preferences = EXCLUDED.preferences,
+			auto_activate = EXCLUDED.auto_activate,
+			updated_at = EXCLUDED.updated_at`
+
+	loadout.ID = uuid.New().String()
+	loadout.CreatedAt = time.Now()
+
+	_, err = r.db.ExecContext(ctx, query,
+		loadout.ID, loadout.CharacterID, activeCombosJSON, preferencesJSON,
+		loadout.AutoActivate, loadout.CreatedAt, loadout.UpdatedAt,
+	)
+	if err != nil {
+		r.logger.Error("Failed to update combo loadout", zap.Error(err))
+		return fmt.Errorf("failed to update combo loadout: %w", err)
+	}
+
 	return nil
 }
 
-// GetComboAnalytics returns combo analytics (STUB)
-func (r *Repository) GetComboAnalytics(ctx context.Context, params api.GetComboAnalyticsParams) ([]api.ComboAnalytics, error) {
-	// TODO: Implement real DB query with aggregation
-	analytics := []api.ComboAnalytics{}
-	return analytics, nil
+// SaveComboScoring saves scoring metrics for a combo activation
+func (r *CombatCombosRepository) SaveComboScoring(ctx context.Context, scoring *models.ComboScoring) error {
+	query := `
+		INSERT INTO combo_scoring_history (
+			id, activation_id, execution_difficulty, damage_output, visual_impact,
+			team_coordination, total_score, category, timestamp
+		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`
+
+	scoring.ID = uuid.New().String()
+	scoring.Timestamp = time.Now()
+
+	_, err := r.db.ExecContext(ctx, query,
+		scoring.ID, scoring.ActivationID, scoring.ExecutionDifficulty,
+		scoring.DamageOutput, scoring.VisualImpact, scoring.TeamCoordination,
+		scoring.TotalScore, scoring.Category, scoring.Timestamp,
+	)
+	if err != nil {
+		r.logger.Error("Failed to save combo scoring", zap.Error(err))
+		return fmt.Errorf("failed to save combo scoring: %w", err)
+	}
+
+	return nil
 }
 
+// GetComboAnalytics retrieves analytics data
+func (r *CombatCombosRepository) GetComboAnalytics(ctx context.Context, days int) (*models.ComboAnalyticsResponse, error) {
+	// This is a simplified implementation - in production you'd have more complex queries
+	query := `
+		SELECT COUNT(*) as total_activations,
+			   AVG(CASE WHEN success THEN 1 ELSE 0 END) as success_rate
+		FROM combo_activations
+		WHERE activated_at >= NOW() - INTERVAL '%d days'`
+
+	query = fmt.Sprintf(query, days)
+
+	var totalActivations int
+	var successRate float64
+
+	err := r.db.QueryRowContext(ctx, query).Scan(&totalActivations, &successRate)
+	if err != nil {
+		r.logger.Error("Failed to get combo analytics", zap.Error(err))
+		return nil, fmt.Errorf("failed to get combo analytics: %w", err)
+	}
+
+	return &models.ComboAnalyticsResponse{
+		TotalActivations: totalActivations,
+		SuccessRate:      successRate,
+		PopularCombos:    []models.ComboPopularity{}, // Simplified
+		ScoringTrends:    []models.ScoringTrend{},    // Simplified
+	}, nil
+}

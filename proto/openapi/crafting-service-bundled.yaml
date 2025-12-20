@@ -1,0 +1,882 @@
+openapi: 3.0.3
+info:
+  title: Crafting Service API
+  version: 1.0.0
+  contact:
+    name: NEPGAME Development Team
+    email: dev@necp.game
+  description: |
+    Crafting Service API for MMOFPS RPG - Production and Manufacturing Systems.
+
+    ## Core Components
+    - Recipe System: Hierarchical recipes with materials and requirements
+    - Crafting Orders: Async production with quality modifiers
+    - Station System: Workstations with efficiency bonuses
+    - Production Chains: Multi-stage manufacturing processes
+
+    ## Architecture Overview
+    - Async processing with Redis queues
+    - Recipe validation and material consumption
+    - Quality calculation with modifiers
+    - Event-driven production completion
+
+    ## Performance Requirements
+    - Recipe queries: 1000+ RPS with P99 <50ms
+    - Order operations: 200+ RPS with P99 <100ms
+    - Station queries: 500+ RPS with P99 <50ms
+    - Memory optimized with object pooling
+servers:
+  - url: http://localhost:8210
+    description: Local development
+  - url: https://api.necpgame.com/v1
+    description: Production API
+security:
+  - BearerAuth: [ ]
+tags:
+  - name: crafting
+    description: Core crafting operations
+  - name: recipes
+    description: Recipe management and queries
+  - name: orders
+    description: Production order management
+  - name: stations
+    description: Crafting station operations
+paths:
+  /api/v1/economy/crafting/recipes:
+    get:
+      tags:
+        - recipes
+      summary: Get recipes by category
+      operationId: getRecipesByCategory
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum:
+              - weapons
+              - armor
+              - implants
+              - vehicles
+              - consumables
+              - tools
+        - name: tier
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 5
+        - name: quality
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecipeListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT токен для аутентификации
+  responses:
+    BadRequest:
+      description: Неверный запрос
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: BadRequest
+            message: Неверные параметры запроса
+            code: INVALID_PARAMETERS
+    Unauthorized:
+      description: Требуется аутентификация
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: Unauthorized
+            message: Требуется аутентификация
+            code: AUTH_REQUIRED
+    InternalServerError:
+      description: Внутренняя ошибка сервера
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: InternalServerError
+            message: Внутренняя ошибка сервера
+            code: INTERNAL_ERROR
+    Forbidden:
+      description: Доступ запрещен
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: Forbidden
+            message: Доступ запрещен
+            code: ACCESS_DENIED
+    NotFound:
+      description: Ресурс не найден
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: NotFound
+            message: Ресурс не найден
+            code: RESOURCE_NOT_FOUND
+    Conflict:
+      description: Конфликт ресурсов
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: Conflict
+            message: Конфликт ресурсов
+            code: RESOURCE_CONFLICT
+    TooManyRequests:
+      description: Превышен лимит запросов
+      headers:
+        Retry-After:
+          schema:
+            type: integer
+          description: Количество секунд до следующего запроса
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: TooManyRequests
+            message: Превышен лимит запросов
+            code: RATE_LIMIT_EXCEEDED
+  schemas:
+    RecipeMaterial:
+      type: object
+      required:
+        - item_id
+        - quantity
+      properties:
+        item_id:
+          type: string
+          format: uuid
+          description: Required item identifier
+        quantity:
+          type: integer
+          minimum: 1
+          description: Required quantity
+        quality_min:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Minimum quality requirement
+    RecipeRequirements:
+      type: object
+      properties:
+        skill_level:
+          type: integer
+          minimum: 1
+          description: Required crafting skill level
+        station_type:
+          type: string
+          enum:
+            - basic
+            - professional
+            - factory
+            - specialized
+          description: Required station type
+        zone_access:
+          type: string
+          format: uuid
+          description: Required zone access
+    Recipe:
+      type: object
+      required:
+        - id
+        - name
+        - category
+        - tier
+        - quality
+        - duration
+        - success_rate
+      properties:
+        description:
+          type: string
+          description: Recipe detailed description
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        name:
+          type: string
+          description: Recipe display name
+        materials:
+          type: array
+          items:
+            $ref: '#/components/schemas/RecipeMaterial'
+          description: Required materials
+        requirements:
+          $ref: '#/components/schemas/RecipeRequirements'
+        success_rate:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Base success rate (0.0-1.0)
+        id:
+          type: string
+          format: uuid
+          description: Recipe unique identifier
+        category:
+          type: string
+          enum:
+            - weapons
+            - armor
+            - implants
+            - vehicles
+            - consumables
+            - tools
+          description: Recipe category
+        duration:
+          type: integer
+          minimum: 1
+          description: Crafting duration in seconds
+        quality:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Base quality rating
+        tier:
+          type: integer
+          minimum: 1
+          maximum: 5
+          description: Recipe tier (1-5)
+    RecipeListResponse:
+      type: object
+      required:
+        - recipes
+        - total
+      properties:
+        recipes:
+          type: array
+          items:
+            $ref: '#/components/schemas/Recipe'
+        total:
+          type: integer
+          minimum: 0
+          description: Total number of recipes available
+    Error:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          description: Тип ошибки
+        message:
+          type: string
+          description: Сообщение об ошибке
+        code:
+          type: string
+          description: Код ошибки
+          nullable: true
+        details:
+          type: object
+          additionalProperties: true
+          description: Дополнительные детали ошибки
+          nullable: true
+    Order:
+      type: object
+      required:
+        - id
+        - player_id
+        - recipe_id
+        - status
+        - quality_modifier
+        - station_bonus
+        - created_at
+      properties:
+        failure_reason:
+          type: string
+          description: Reason for failure (if applicable)
+        estimated_completion:
+          type: string
+          format: date-time
+          description: Estimated completion time
+        created_at:
+          type: string
+          format: date-time
+        started_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+        progress:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Completion progress percentage
+        quality_modifier:
+          type: number
+          format: float
+          minimum: 0.1
+          maximum: 2
+          description: Quality modifier applied
+        station_bonus:
+          type: number
+          format: float
+          minimum: 0.5
+          maximum: 2
+          description: Station efficiency bonus
+        result_item_id:
+          type: string
+          format: uuid
+          description: ID of crafted item (when completed)
+        station_id:
+          type: string
+          format: uuid
+          description: Station used for crafting
+        recipe_id:
+          type: string
+          format: uuid
+          description: Recipe being crafted
+        player_id:
+          type: string
+          format: uuid
+          description: Player who initiated the order
+        id:
+          type: string
+          format: uuid
+          description: Order unique identifier
+        status:
+          type: string
+          enum:
+            - pending
+            - active
+            - completed
+            - failed
+            - cancelled
+          description: Order status
+    EscrowDeposit:
+      type: object
+      required:
+        - amount
+        - currency
+      properties:
+        amount:
+          type: number
+          format: float
+          minimum: 0
+          description: Deposit amount
+        currency:
+          type: string
+          enum:
+            - eddies
+            - eurobucks
+          description: Currency type
+    Escrow:
+      type: object
+      properties:
+        buyer_deposit:
+          $ref: '#/components/schemas/EscrowDeposit'
+        seller_deposit:
+          $ref: '#/components/schemas/EscrowDeposit'
+        collateral:
+          type: object
+    Dispute:
+      type: object
+      properties:
+        reason:
+          type: string
+          description: Dispute reason
+        evidence:
+          type: array
+          items:
+            type: string
+          description: Evidence URLs or descriptions
+        status:
+          type: string
+          enum:
+            - open
+            - under_review
+            - resolved
+            - escalated
+          description: Dispute status
+    StationBooking:
+      type: object
+      required:
+        - id
+        - player_id
+        - expires_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Booking unique identifier
+        player_id:
+          type: string
+          format: uuid
+          description: Player who booked the station
+        expires_at:
+          type: string
+          format: date-time
+          description: Booking expiration time
+    Station:
+      type: object
+      required:
+        - id
+        - name
+        - type
+        - efficiency
+        - zone_id
+      properties:
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        name:
+          type: string
+          description: Station display name
+        current_booking:
+          $ref: '#/components/schemas/StationBooking'
+        maintenance_cost:
+          type: number
+          format: float
+          description: Daily maintenance cost
+        efficiency:
+          type: number
+          format: float
+          minimum: 0.5
+          maximum: 2
+          description: Efficiency multiplier
+        zone_id:
+          type: string
+          format: uuid
+          description: Zone where station is located
+        owner_id:
+          type: string
+          format: uuid
+          description: Owner player ID (null for public stations)
+        id:
+          type: string
+          format: uuid
+          description: Station unique identifier
+        type:
+          type: string
+          enum:
+            - basic
+            - professional
+            - factory
+            - specialized
+          description: Station type
+        is_available:
+          type: boolean
+          description: Station availability status
+    ChainStage:
+      type: object
+      required:
+        - order
+        - name
+        - recipe_id
+        - duration
+      properties:
+        order:
+          type: integer
+          minimum: 1
+          description: Stage order in chain
+        name:
+          type: string
+          description: Stage display name
+        description:
+          type: string
+          description: Stage detailed description
+        recipe_id:
+          type: string
+          format: uuid
+          description: Recipe for this stage
+        duration:
+          type: integer
+          minimum: 1
+          description: Stage duration in seconds
+        dependencies:
+          type: array
+          items:
+            type: integer
+          description: Previous stage orders this stage depends on
+        quality_requirement:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Minimum quality from previous stage
+    ProductionChain:
+      type: object
+      required:
+        - id
+        - name
+        - stages
+        - status
+      properties:
+        description:
+          type: string
+          description: Chain detailed description
+        estimated_completion:
+          type: string
+          format: date-time
+          description: Estimated completion time
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        name:
+          type: string
+          description: Chain display name
+        stages:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChainStage'
+          description: Production stages
+        progress:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Overall progress percentage
+        player_id:
+          type: string
+          format: uuid
+          description: Player who initiated the chain
+        id:
+          type: string
+          format: uuid
+          description: Chain unique identifier
+        complexity:
+          type: integer
+          minimum: 1
+          maximum: 5
+          description: Chain complexity (number of stages)
+        current_stage:
+          type: integer
+          minimum: 0
+          description: Current stage index (0-based)
+        category:
+          type: string
+          enum:
+            - weapons
+            - armor
+            - vehicles
+            - electronics
+          description: Chain category
+        status:
+          type: string
+          enum:
+            - planning
+            - active
+            - paused
+            - completed
+            - failed
+          description: Chain status
+    CraftingCost:
+      type: object
+      required:
+        - total_currency
+        - materials_cost
+        - station_fee
+        - success_probability
+      properties:
+        total_currency:
+          type: number
+          format: float
+          description: Total currency cost
+        materials_cost:
+          type: number
+          format: float
+          description: Cost of materials
+        station_fee:
+          type: number
+          format: float
+          description: Station usage fee
+        time_cost:
+          type: number
+          format: float
+          description: Time-based cost
+        success_probability:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Estimated success probability
+    OrderListResponse:
+      type: object
+      required:
+        - orders
+        - total
+      properties:
+        orders:
+          type: array
+          items:
+            $ref: '#/components/schemas/Order'
+        total:
+          type: integer
+          minimum: 0
+          description: Total number of orders
+    StartCraftingRequest:
+      type: object
+      required:
+        - recipe_id
+        - station_id
+      properties:
+        recipe_id:
+          type: string
+          format: uuid
+          description: Recipe to craft
+        station_id:
+          type: string
+          format: uuid
+          description: Station to use
+        quality_modifier:
+          type: number
+          format: float
+          minimum: 0.1
+          maximum: 2
+          default: 1
+          description: Quality modifier (affects cost and result)
+        priority:
+          type: string
+          enum:
+            - normal
+            - high
+            - rush
+          default: normal
+          description: Processing priority
+    Contract:
+      type: object
+      required:
+        - id
+        - buyer_id
+        - seller_id
+        - title
+        - terms
+        - status
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Contract unique identifier
+        buyer_id:
+          type: string
+          format: uuid
+          description: Buyer player ID
+        seller_id:
+          type: string
+          format: uuid
+          description: Seller player ID
+        title:
+          type: string
+          description: Contract title
+        description:
+          type: string
+          description: Contract description
+        terms:
+          type: object
+          description: Contract terms and conditions
+        status:
+          type: string
+          enum:
+            - draft
+            - negotiation
+            - escrow_pending
+            - active
+            - completed
+            - cancelled
+            - disputed
+            - arbitrated
+          description: Contract status
+        escrow:
+          $ref: '#/components/schemas/Escrow'
+        dispute:
+          $ref: '#/components/schemas/Dispute'
+        zone_id:
+          type: string
+          format: uuid
+          description: Zone where contract applies
+        deadline:
+          type: string
+          format: date-time
+          description: Contract deadline
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+    CreateContractRequest:
+      type: object
+      required:
+        - seller_id
+        - title
+        - terms
+      properties:
+        seller_id:
+          type: string
+          format: uuid
+          description: Seller player ID
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Contract title
+        description:
+          type: string
+          maxLength: 2000
+          description: Contract description
+        terms:
+          type: object
+          description: Contract terms and conditions
+        deadline:
+          type: string
+          format: date-time
+          description: Optional contract deadline
+        zone_id:
+          type: string
+          format: uuid
+          description: Optional zone restriction
+    StationListResponse:
+      type: object
+      required:
+        - stations
+        - total
+      properties:
+        stations:
+          type: array
+          items:
+            $ref: '#/components/schemas/Station'
+        total:
+          type: integer
+          minimum: 0
+          description: Total number of stations
+    BookStationRequest:
+      type: object
+      required:
+        - duration_hours
+      properties:
+        duration_hours:
+          type: integer
+          minimum: 1
+          maximum: 24
+          description: Booking duration in hours
+        priority:
+          type: string
+          enum:
+            - normal
+            - high
+          default: normal
+          description: Booking priority
+    BookingConfirmation:
+      type: object
+      required:
+        - booking_id
+        - station_id
+        - expires_at
+        - total_cost
+      properties:
+        booking_id:
+          type: string
+          format: uuid
+          description: Booking unique identifier
+        station_id:
+          type: string
+          format: uuid
+          description: Station identifier
+        expires_at:
+          type: string
+          format: date-time
+          description: Booking expiration time
+        total_cost:
+          type: number
+          format: float
+          description: Total booking cost
+    ProductionChainListResponse:
+      type: object
+      required:
+        - chains
+        - total
+      properties:
+        chains:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductionChain'
+        total:
+          type: integer
+          minimum: 0
+          description: Total number of chains
+    StartProductionChainRequest:
+      type: object
+      required:
+        - chain_id
+        - station_ids
+      properties:
+        chain_id:
+          type: string
+          format: uuid
+          description: Production chain to start
+        station_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          minItems: 1
+          description: Stations to use for each stage
+        priority:
+          type: string
+          enum:
+            - normal
+            - high
+            - rush
+          default: normal
+          description: Processing priority
+        quality_modifiers:
+          type: object
+          description: Quality modifiers for each stage (stage_order -> modifier)

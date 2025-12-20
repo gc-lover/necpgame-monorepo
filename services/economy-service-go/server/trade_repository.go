@@ -1,4 +1,4 @@
-// Issue: #141887883
+// Package server Issue: #141887883
 package server
 
 import (
@@ -6,10 +6,10 @@ import (
 	"encoding/json"
 	"time"
 
+	"github.com/gc-lover/necpgame-monorepo/services/economy-service-go/models"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/gc-lover/necpgame-monorepo/services/economy-service-go/models"
 	"github.com/sirupsen/logrus"
 )
 
@@ -365,4 +365,3 @@ func (r *TradeRepository) CleanupExpired(ctx context.Context) error {
 	_, err := r.db.Exec(ctx, query)
 	return err
 }
-

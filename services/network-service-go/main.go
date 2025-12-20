@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"net/http"
-	"net/http/pprof"
 	"os"
 	"os/signal"
 	"syscall"
@@ -14,17 +13,17 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// OPTIMIZATION: Issue #1978 - Memory-aligned struct for network service performance
+// NetworkServiceConfig OPTIMIZATION: Issue #1978 - Memory-aligned struct for network service performance
 type NetworkServiceConfig struct {
-	HTTPAddr       string        `json:"http_addr"`       // 16 bytes
-	WSAddr         string        `json:"ws_addr"`         // 16 bytes
-	HealthAddr     string        `json:"health_addr"`     // 16 bytes
-	PprofAddr      string        `json:"pprof_addr"`      // 16 bytes
-	DBMaxOpenConns int           `json:"db_max_open_conns"` // 8 bytes
-	ReadTimeout    time.Duration `json:"read_timeout"`    // 8 bytes
-	WriteTimeout   time.Duration `json:"write_timeout"`   // 8 bytes
-	MaxHeaderBytes int           `json:"max_header_bytes"` // 8 bytes
-	MaxConnections int           `json:"max_connections"`  // 8 bytes
+	HTTPAddr          string        `json:"http_addr"`          // 16 bytes
+	WSAddr            string        `json:"ws_addr"`            // 16 bytes
+	HealthAddr        string        `json:"health_addr"`        // 16 bytes
+	PprofAddr         string        `json:"pprof_addr"`         // 16 bytes
+	DBMaxOpenConns    int           `json:"db_max_open_conns"`  // 8 bytes
+	ReadTimeout       time.Duration `json:"read_timeout"`       // 8 bytes
+	WriteTimeout      time.Duration `json:"write_timeout"`      // 8 bytes
+	MaxHeaderBytes    int           `json:"max_header_bytes"`   // 8 bytes
+	MaxConnections    int           `json:"max_connections"`    // 8 bytes
 	HeartbeatInterval time.Duration `json:"heartbeat_interval"` // 8 bytes
 }
 

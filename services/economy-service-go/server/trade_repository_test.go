@@ -5,9 +5,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gc-lover/necpgame-monorepo/services/economy-service-go/models"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/gc-lover/necpgame-monorepo/services/economy-service-go/models"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -75,17 +75,17 @@ func TestTradeRepository_Create(t *testing.T) {
 
 	now := time.Now()
 	session := &models.TradeSession{
-		ID:                uuid.New(),
-		InitiatorID:       uuid.New(),
-		RecipientID:       uuid.New(),
-		InitiatorOffer:    models.TradeOffer{Items: []map[string]interface{}{}, Currency: make(map[string]int)},
-		RecipientOffer:    models.TradeOffer{Items: []map[string]interface{}{}, Currency: make(map[string]int)},
+		ID:                 uuid.New(),
+		InitiatorID:        uuid.New(),
+		RecipientID:        uuid.New(),
+		InitiatorOffer:     models.TradeOffer{Items: []map[string]interface{}{}, Currency: make(map[string]int)},
+		RecipientOffer:     models.TradeOffer{Items: []map[string]interface{}{}, Currency: make(map[string]int)},
 		InitiatorConfirmed: false,
-		RecipientConfirmed:  false,
-		Status:            models.TradeStatusPending,
-		CreatedAt:         now,
-		UpdatedAt:         now,
-		ExpiresAt:         now.Add(5 * time.Minute),
+		RecipientConfirmed: false,
+		Status:             models.TradeStatusPending,
+		CreatedAt:          now,
+		UpdatedAt:          now,
+		ExpiresAt:          now.Add(5 * time.Minute),
 	}
 
 	ctx := context.Background()
@@ -134,17 +134,17 @@ func TestTradeRepository_UpdateStatus(t *testing.T) {
 
 	now := time.Now()
 	session := &models.TradeSession{
-		ID:                uuid.New(),
-		InitiatorID:       uuid.New(),
-		RecipientID:       uuid.New(),
-		InitiatorOffer:    models.TradeOffer{Items: []map[string]interface{}{}, Currency: make(map[string]int)},
-		RecipientOffer:    models.TradeOffer{Items: []map[string]interface{}{}, Currency: make(map[string]int)},
+		ID:                 uuid.New(),
+		InitiatorID:        uuid.New(),
+		RecipientID:        uuid.New(),
+		InitiatorOffer:     models.TradeOffer{Items: []map[string]interface{}{}, Currency: make(map[string]int)},
+		RecipientOffer:     models.TradeOffer{Items: []map[string]interface{}{}, Currency: make(map[string]int)},
 		InitiatorConfirmed: false,
-		RecipientConfirmed:  false,
-		Status:            models.TradeStatusPending,
-		CreatedAt:         now,
-		UpdatedAt:         now,
-		ExpiresAt:         now.Add(5 * time.Minute),
+		RecipientConfirmed: false,
+		Status:             models.TradeStatusPending,
+		CreatedAt:          now,
+		UpdatedAt:          now,
+		ExpiresAt:          now.Add(5 * time.Minute),
 	}
 
 	ctx := context.Background()
@@ -210,4 +210,3 @@ func TestTradeRepository_CountHistoryByCharacter(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, 0, count)
 }
-

@@ -1,3 +1,4 @@
+// Package server provides HTTP server implementation for the quest core service.
 package server
 
 import (
@@ -41,7 +42,7 @@ func getEnv(key, defaultValue string) string {
 	return defaultValue
 }
 
-// OPTIMIZATION: Struct field alignment (large → small) Issue #300
+// HTTPServer represents the HTTP server with optimized field alignment.
 type HTTPServer struct {
 	server *http.Server   // 8 bytes (pointer)
 	router *http.ServeMux // 8 bytes (pointer)
@@ -90,6 +91,9 @@ func NewHTTPServer(addr string) *HTTPServer {
 
 	// Manual route for quest content reload (not in ogen spec yet)
 	router.HandleFunc("/api/v1/gameplay/quests/content/reload", func(w http.ResponseWriter, r *http.Request) {
+		ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+		defer cancel()
+
 		if r.Method != http.MethodPost {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 			return
@@ -101,7 +105,7 @@ func NewHTTPServer(addr string) *HTTPServer {
 			return
 		}
 
-		response, err := handlers.ReloadQuestContent(r.Context(), &req)
+		response, err := handlers.ReloadQuestContent(ctx, &req)
 		if err != nil {
 			http.Error(w, "Internal error: "+err.Error(), http.StatusInternalServerError)
 			return
@@ -114,8 +118,9 @@ func NewHTTPServer(addr string) *HTTPServer {
 	server.server = &http.Server{
 		Addr:         addr,
 		Handler:      router,
-		ReadTimeout:  10 * time.Second,
-		WriteTimeout: 10 * time.Second,
+		ReadTimeout:  30 * time.Second,
+		WriteTimeout: 30 * time.Second,
+		IdleTimeout:  60 * time.Second,
 	}
 
 	return server
@@ -173,29 +178,6 @@ func (s *HTTPServer) corsMiddleware(next http.Handler) http.Handler {
 		}
 		next.ServeHTTP(w, r)
 	})
-}
-
-func respondJSON(w http.ResponseWriter, statusCode int, data interface{}) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(statusCode)
-	if err := json.NewEncoder(w).Encode(data); err != nil {
-		GetLogger().WithError(err).Error("Failed to encode JSON response")
-	}
-}
-
-func respondError(w http.ResponseWriter, statusCode int, err error, details string) {
-	GetLogger().WithError(err).Error(details)
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(statusCode)
-	code := http.StatusText(statusCode)
-	errorResponse := api.Error{
-		Code:    api.NewOptNilString(code),
-		Message: details,
-		Error:   "error",
-	}
-	if err := json.NewEncoder(w).Encode(errorResponse); err != nil {
-		GetLogger().WithError(err).Error("Failed to encode JSON error response")
-	}
 }
 
 func requestIDMiddleware(next http.Handler) http.Handler {

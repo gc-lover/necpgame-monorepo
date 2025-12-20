@@ -1,5 +1,3 @@
-package server
-
 import (
 	"encoding/json"
 	"net/http"
@@ -8,7 +6,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// OPTIMIZATION: Issue #2143 - Exchange and binding management
+// CreateExchange OPTIMIZATION: Issue #2143 - Exchange and binding management
 func (s *MessageQueueService) CreateExchange(w http.ResponseWriter, r *http.Request) {
 	var req CreateExchangeRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -63,8 +61,8 @@ func (s *MessageQueueService) CreateExchange(w http.ResponseWriter, r *http.Requ
 	s.logger.WithField("exchange_name", req.Name).Info("exchange created successfully")
 }
 
-func (s *MessageQueueService) ListExchanges(w http.ResponseWriter, r *http.Request) {
-	exchanges := []*ExchangeInfo{}
+func (s *MessageQueueService) ListExchanges(w http.ResponseWriter) {
+	var exchanges []*ExchangeInfo
 
 	s.exchanges.Range(func(key, value interface{}) bool {
 		exchange := value.(*ExchangeInfo)

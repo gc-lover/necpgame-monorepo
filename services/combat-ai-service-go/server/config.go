@@ -1,4 +1,4 @@
-// Issue: JWT Implementation for Combat AI Service
+// Package server Issue: JWT Implementation for Combat AI Service
 // Configuration for combat-ai-service
 package server
 

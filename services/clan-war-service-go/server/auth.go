@@ -44,9 +44,9 @@ type JwtValidator struct {
 
 type Claims struct {
 	jwt.RegisteredClaims
-	Subject           string   `json:"sub,omitempty"`
-	PreferredUsername string   `json:"preferred_username,omitempty"`
-	Email             string   `json:"email,omitempty"`
+	Subject           string `json:"sub,omitempty"`
+	PreferredUsername string `json:"preferred_username,omitempty"`
+	Email             string `json:"email,omitempty"`
 	RealmAccess       struct {
 		Roles []string `json:"roles,omitempty"`
 	} `json:"realm_access,omitempty"`
@@ -204,4 +204,3 @@ func (v *JwtValidator) Verify(ctx context.Context, tokenString string) (*Claims,
 
 	return claims, nil
 }
-

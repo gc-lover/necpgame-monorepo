@@ -1,13 +1,14 @@
-// Issue: #140875381
+// Package server Issue: #140875381
 package server
 
 import (
 	"context"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
-	"github.com/golang-jwt/jwt/v5"
+	"github.com/lestrrat-go/jwx/v2/jwt"
 	"go.uber.org/zap"
 )
 
@@ -156,7 +157,7 @@ func (m *AuthMiddleware) RequireRole(requiredRole string) func(http.Handler) htt
 func (m *AuthMiddleware) RateLimitMiddleware(rps float64) func(http.Handler) http.Handler {
 	// Простая реализация rate limiting (в продакшене лучше использовать redis)
 	type clientInfo struct {
-		lastRequest time.Time
+		lastRequest  time.Time
 		requestCount int
 	}
 

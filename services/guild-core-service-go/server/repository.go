@@ -1,4 +1,4 @@
-// Issue: #1856
+// Package server Issue: #1856
 package server
 
 import (
@@ -263,7 +263,3 @@ func (r *Repository) IsUserInGuild(ctx context.Context, guildID, userID uuid.UUI
 
 	return true, nil
 }
-
-
-
-

@@ -15,8 +15,7 @@ func BenchmarkListContinents(b *testing.B) {
 	handlers := NewHandlers(logger)
 
 	ctx := context.Background()
-	params := api.ListContinentsParams{
-	}
+	params := api.ListContinentsParams{}
 
 	b.ReportAllocs()
 	b.ResetTimer()
@@ -44,4 +43,3 @@ func BenchmarkCreateContinent(b *testing.B) {
 		_, _ = handlers.CreateContinent(ctx, req)
 	}
 }
-

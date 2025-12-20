@@ -1,11 +1,11 @@
-// Issue: #1600 - ogen handlers (TYPED responses)
+// Package server Issue: #1600 - ogen handlers (TYPED responses)
 package server
 
 import (
 	"context"
 	"time"
 
-	api "github.com/necpgame/stock-events-service-go/pkg/api"
+	"github.com/necpgame/stock-events-service-go/pkg/api"
 	"github.com/sirupsen/logrus"
 )
 

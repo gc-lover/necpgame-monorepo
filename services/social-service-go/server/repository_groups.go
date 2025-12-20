@@ -1,4 +1,4 @@
-// Issue: #1433
+// Package server Issue: #1433
 package server
 
 import (
@@ -34,16 +34,9 @@ type InMemoryGroupRepository struct {
 }
 
 // NewInMemoryGroupRepository creates new in-memory repository
-func NewInMemoryGroupRepository() GroupRepository {
-	return &InMemoryGroupRepository{
-		groups:  make(map[string]*groups.Group),
-		members: make(map[string][]groups.GroupMember),
-		tasks:   make(map[string][]groups.GroupTask),
-	}
-}
 
 // CreateGroup creates a new group
-func (r *InMemoryGroupRepository) CreateGroup(ctx context.Context, group *groups.Group) error {
+func (r *InMemoryGroupRepository) CreateGroup(_ context.Context, group *groups.Group) error {
 	r.groups[group.Id.String()] = group
 	r.members[group.Id.String()] = []groups.GroupMember{}
 	r.tasks[group.Id.String()] = []groups.GroupTask{}
@@ -51,7 +44,7 @@ func (r *InMemoryGroupRepository) CreateGroup(ctx context.Context, group *groups
 }
 
 // SearchGroups searches for groups
-func (r *InMemoryGroupRepository) SearchGroups(ctx context.Context, params groups.SearchGroupsParams) (*SearchGroupsResult, error) {
+func (r *InMemoryGroupRepository) SearchGroups(_ context.Context, params groups.SearchGroupsParams) (*SearchGroupsResult, error) {
 	var result []groups.Group
 
 	for _, group := range r.groups {
@@ -94,7 +87,7 @@ func (r *InMemoryGroupRepository) SearchGroups(ctx context.Context, params group
 }
 
 // GetGroup gets group by ID
-func (r *InMemoryGroupRepository) GetGroup(ctx context.Context, groupID string) (*groups.Group, error) {
+func (r *InMemoryGroupRepository) GetGroup(_ context.Context, groupID string) (*groups.Group, error) {
 	group, ok := r.groups[groupID]
 	if !ok {
 		return nil, errors.New("group not found")
@@ -103,7 +96,7 @@ func (r *InMemoryGroupRepository) GetGroup(ctx context.Context, groupID string) 
 }
 
 // UpdateGroup updates group
-func (r *InMemoryGroupRepository) UpdateGroup(ctx context.Context, group *groups.Group) error {
+func (r *InMemoryGroupRepository) UpdateGroup(_ context.Context, group *groups.Group) error {
 	if _, ok := r.groups[group.Id.String()]; !ok {
 		return errors.New("group not found")
 	}
@@ -112,7 +105,7 @@ func (r *InMemoryGroupRepository) UpdateGroup(ctx context.Context, group *groups
 }
 
 // GetGroupMembers gets all group members
-func (r *InMemoryGroupRepository) GetGroupMembers(ctx context.Context, groupID string) ([]groups.GroupMember, error) {
+func (r *InMemoryGroupRepository) GetGroupMembers(_ context.Context, groupID string) ([]groups.GroupMember, error) {
 	members, ok := r.members[groupID]
 	if !ok {
 		return nil, errors.New("group not found")
@@ -121,7 +114,7 @@ func (r *InMemoryGroupRepository) GetGroupMembers(ctx context.Context, groupID s
 }
 
 // AddGroupMember adds a member to group
-func (r *InMemoryGroupRepository) AddGroupMember(ctx context.Context, groupID string, member *groups.GroupMember) error {
+func (r *InMemoryGroupRepository) AddGroupMember(_ context.Context, groupID string, member *groups.GroupMember) error {
 	if _, ok := r.groups[groupID]; !ok {
 		return errors.New("group not found")
 	}
@@ -130,7 +123,7 @@ func (r *InMemoryGroupRepository) AddGroupMember(ctx context.Context, groupID st
 }
 
 // RemoveGroupMember removes a member from group
-func (r *InMemoryGroupRepository) RemoveGroupMember(ctx context.Context, groupID string, memberID string) error {
+func (r *InMemoryGroupRepository) RemoveGroupMember(_ context.Context, groupID string, memberID string) error {
 	members, ok := r.members[groupID]
 	if !ok {
 		return errors.New("group not found")
@@ -147,7 +140,7 @@ func (r *InMemoryGroupRepository) RemoveGroupMember(ctx context.Context, groupID
 }
 
 // GetGroupMember gets a specific group member
-func (r *InMemoryGroupRepository) GetGroupMember(ctx context.Context, groupID string, memberID string) (*groups.GroupMember, error) {
+func (r *InMemoryGroupRepository) GetGroupMember(_ context.Context, groupID string, memberID string) (*groups.GroupMember, error) {
 	members, ok := r.members[groupID]
 	if !ok {
 		return nil, errors.New("group not found")
@@ -163,7 +156,7 @@ func (r *InMemoryGroupRepository) GetGroupMember(ctx context.Context, groupID st
 }
 
 // UpdateGroupMember updates member information
-func (r *InMemoryGroupRepository) UpdateGroupMember(ctx context.Context, groupID string, member *groups.GroupMember) error {
+func (r *InMemoryGroupRepository) UpdateGroupMember(_ context.Context, groupID string, member *groups.GroupMember) error {
 	members, ok := r.members[groupID]
 	if !ok {
 		return errors.New("group not found")
@@ -180,7 +173,7 @@ func (r *InMemoryGroupRepository) UpdateGroupMember(ctx context.Context, groupID
 }
 
 // GetGroupTasks gets all group tasks
-func (r *InMemoryGroupRepository) GetGroupTasks(ctx context.Context, groupID string) ([]groups.GroupTask, error) {
+func (r *InMemoryGroupRepository) GetGroupTasks(_ context.Context, groupID string) ([]groups.GroupTask, error) {
 	tasks, ok := r.tasks[groupID]
 	if !ok {
 		return nil, errors.New("group not found")
@@ -189,7 +182,7 @@ func (r *InMemoryGroupRepository) GetGroupTasks(ctx context.Context, groupID str
 }
 
 // AddGroupTask adds a task to group
-func (r *InMemoryGroupRepository) AddGroupTask(ctx context.Context, groupID string, task *groups.GroupTask) error {
+func (r *InMemoryGroupRepository) AddGroupTask(_ context.Context, groupID string, task *groups.GroupTask) error {
 	if _, ok := r.groups[groupID]; !ok {
 		return errors.New("group not found")
 	}
@@ -198,7 +191,7 @@ func (r *InMemoryGroupRepository) AddGroupTask(ctx context.Context, groupID stri
 }
 
 // GetGroupTask gets a specific group task
-func (r *InMemoryGroupRepository) GetGroupTask(ctx context.Context, groupID string, taskID string) (*groups.GroupTask, error) {
+func (r *InMemoryGroupRepository) GetGroupTask(_ context.Context, groupID string, taskID string) (*groups.GroupTask, error) {
 	tasks, ok := r.tasks[groupID]
 	if !ok {
 		return nil, errors.New("group not found")
@@ -214,7 +207,7 @@ func (r *InMemoryGroupRepository) GetGroupTask(ctx context.Context, groupID stri
 }
 
 // UpdateGroupTask updates task information
-func (r *InMemoryGroupRepository) UpdateGroupTask(ctx context.Context, groupID string, task *groups.GroupTask) error {
+func (r *InMemoryGroupRepository) UpdateGroupTask(_ context.Context, groupID string, task *groups.GroupTask) error {
 	tasks, ok := r.tasks[groupID]
 	if !ok {
 		return errors.New("group not found")
@@ -231,7 +224,7 @@ func (r *InMemoryGroupRepository) UpdateGroupTask(ctx context.Context, groupID s
 }
 
 // DeleteGroupTask deletes a task from group
-func (r *InMemoryGroupRepository) DeleteGroupTask(ctx context.Context, groupID string, taskID string) error {
+func (r *InMemoryGroupRepository) DeleteGroupTask(_ context.Context, groupID string, taskID string) error {
 	tasks, ok := r.tasks[groupID]
 	if !ok {
 		return errors.New("group not found")
@@ -246,4 +239,3 @@ func (r *InMemoryGroupRepository) DeleteGroupTask(ctx context.Context, groupID s
 
 	return errors.New("task not found")
 }
-

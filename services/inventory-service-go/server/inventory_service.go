@@ -1,4 +1,4 @@
-// SQL queries use prepared statements with placeholders (, , ?) for safety
+// Package server SQL queries use prepared statements with placeholders (, , ?) for safety
 // Issue: #141887950
 package server
 
@@ -8,9 +8,8 @@ import (
 	"errors"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/gc-lover/necpgame-monorepo/services/inventory-service-go/models"
-	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 	"github.com/sirupsen/logrus"
 )
@@ -27,62 +26,21 @@ type InventoryRepositoryInterface interface {
 }
 
 type InventoryService struct {
-	repo  InventoryRepositoryInterface
-	engramChipsRepo EngramChipsRepositoryInterface
+	repo               InventoryRepositoryInterface
+	engramChipsRepo    EngramChipsRepositoryInterface
 	engramChipsService EngramChipsServiceInterface
-	cache *redis.Client
-	logger *logrus.Logger
+	cache              *redis.Client
+	logger             *logrus.Logger
 	// Issue: #1588 - Resilience patterns
 	dbCircuitBreaker *CircuitBreaker
 	loadShedder      *LoadShedder
-}
-
-func NewInventoryService(dbURL, redisURL string) (*InventoryService, error) {
-	// Issue: #1605 - DB Connection Pool configuration
-	config, err := pgxpool.ParseConfig(dbURL)
-	if err != nil {
-		return nil, err
-	}
-	config.MaxConns = 50
-	config.MinConns = 10
-	config.MaxConnLifetime = 5 * time.Minute
-	config.MaxConnIdleTime = 1 * time.Minute
-	
-	dbPool, err := pgxpool.NewWithConfig(context.Background(), config)
-	if err != nil {
-		return nil, err
-	}
-
-	redisOpts, err := redis.ParseURL(redisURL)
-	if err != nil {
-		return nil, err
-	}
-
-	redisClient := redis.NewClient(redisOpts)
-
-	repo := NewInventoryRepository(dbPool)
-	engramChipsRepo := NewEngramChipsRepository(dbPool)
-	engramChipsService := NewEngramChipsService(engramChipsRepo, redisClient)
-
-	// Issue: #1588 - Resilience patterns for hot path service (10k+ RPS)
-	dbCB := NewCircuitBreaker("inventory-db")
-	loadShedder := NewLoadShedder(1000) // Max 1000 concurrent requests
-
-	return &InventoryService{
-		repo:  repo,
-		engramChipsRepo: engramChipsRepo,
-		engramChipsService: engramChipsService,
-		cache: redisClient,
-		logger: GetLogger(),
-		dbCircuitBreaker: dbCB,
-		loadShedder:      loadShedder,
-	}, nil
 }
 
 func (s *InventoryService) GetEngramChipsService() EngramChipsServiceInterface {
 	return s.engramChipsService
 }
 
+//goland:noinspection ALL
 func (s *InventoryService) GetInventory(ctx context.Context, characterID uuid.UUID) (*models.InventoryResponse, error) {
 	// Issue: #1588 - Load shedding (prevent overload)
 	if !s.loadShedder.Allow() {
@@ -92,7 +50,7 @@ func (s *InventoryService) GetInventory(ctx context.Context, characterID uuid.UU
 	defer s.loadShedder.Done()
 
 	cacheKey := "inventory:" + characterID.String()
-	
+
 	// Fallback 1: Try cache first (fastest)
 	cached, err := s.cache.Get(ctx, cacheKey).Result()
 	if err == nil && cached != "" {
@@ -110,7 +68,7 @@ func (s *InventoryService) GetInventory(ctx context.Context, characterID uuid.UU
 	result, cbErr := s.dbCircuitBreaker.Execute(func() (interface{}, error) {
 		return s.repo.GetInventoryByCharacterID(ctx, characterID)
 	})
-	
+
 	if cbErr != nil {
 		// Circuit breaker rejected (open state) or DB error
 		s.logger.WithError(cbErr).Warn("Circuit breaker rejected or DB error, using fallback")
@@ -124,11 +82,11 @@ func (s *InventoryService) GetInventory(ctx context.Context, characterID uuid.UU
 			Items: []models.InventoryItem{},
 		}, nil
 	}
-	
+
 	if result != nil {
 		inv = result.(*models.Inventory)
 	}
-	
+
 	if inv == nil {
 		// Inventory not found, create new
 		inv, err = s.repo.CreateInventory(ctx, characterID, 50, 100.0)
@@ -434,6 +392,3 @@ func (s *InventoryService) findFreeSlot(items []models.InventoryItem, capacity i
 
 	return -1
 }
-
-
-

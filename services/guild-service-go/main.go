@@ -2,15 +2,12 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	_ "net/http/pprof" // OPTIMIZATION: Issue #2177 - Enable pprof profiling
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
-
-	"github.com/sirupsen/logrus"
 
 	"necpgame/services/guild-service-go/server"
 )
@@ -23,28 +20,28 @@ func main() {
 
 	// Configuration
 	config := &server.GuildServiceConfig{
-		Port:                   getEnv("PORT", "8080"),
-		ReadTimeout:            30 * time.Second,
-		WriteTimeout:           30 * time.Second,
-		MaxHeaderBytes:         1 << 20, // 1MB
-		RedisAddr:              getEnv("REDIS_ADDR", "localhost:6379"),
+		Port:                    getEnv("PORT", "8080"),
+		ReadTimeout:             30 * time.Second,
+		WriteTimeout:            30 * time.Second,
+		MaxHeaderBytes:          1 << 20, // 1MB
+		RedisAddr:               getEnv("REDIS_ADDR", "localhost:6379"),
 		TerritoryUpdateInterval: 5 * time.Minute,
-		WarUpdateInterval:      1 * time.Minute,
-		StatsCleanupInterval:   24 * time.Hour,
+		WarUpdateInterval:       1 * time.Minute,
+		StatsCleanupInterval:    24 * time.Hour,
 	}
 
 	// Initialize metrics (placeholder for now)
 	metrics := &server.GuildMetrics{
-		ActiveGuilds:      0,
-		ActiveMembers:     0,
-		GuildCreations:    0,
-		GuildJoins:        0,
-		GuildLeaves:       0,
-		ValidationErrors:  0,
-		TerritoryClaims:   0,
-		WarDeclarations:   0,
+		ActiveGuilds:       0,
+		ActiveMembers:      0,
+		GuildCreations:     0,
+		GuildJoins:         0,
+		GuildLeaves:        0,
+		ValidationErrors:   0,
+		TerritoryClaims:    0,
+		WarDeclarations:    0,
 		AllianceFormations: 0,
-		ContractCreations: 0,
+		ContractCreations:  0,
 	}
 
 	// Initialize service

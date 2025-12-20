@@ -1,17 +1,15 @@
-// Issue: #1599, #1604 - ogen handlers (TYPED responses)
+// Package server Issue: #1599, #1604 - ogen handlers (TYPED responses)
 package server
 
 import (
 	"context"
 	"time"
 
-	api "github.com/gc-lover/necpgame-monorepo/services/mail-service-go/pkg/api"
+	"github.com/gc-lover/necpgame-monorepo/services/mail-service-go/pkg/api"
 )
 
-// Context timeout constants (Issue #1604)
 const (
-	DBTimeout    = 50 * time.Millisecond
-	CacheTimeout = 10 * time.Millisecond
+	DBTimeout = 50 * time.Millisecond
 )
 
 // Handlers implements api.Handler interface (ogen typed handlers!)
@@ -82,4 +80,3 @@ func (h *Handlers) ClaimAttachments(ctx context.Context, params api.ClaimAttachm
 	}
 	return response, nil
 }
-

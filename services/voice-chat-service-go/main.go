@@ -2,15 +2,12 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	_ "net/http/pprof" // OPTIMIZATION: Issue #2177 - Enable pprof profiling
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
-
-	"github.com/sirupsen/logrus"
 
 	"necpgame/services/voice-chat-service-go/server"
 )
@@ -23,27 +20,27 @@ func main() {
 
 	// Configuration
 	config := &server.VoiceChatServiceConfig{
-		Port:                   getEnv("PORT", "8080"),
-		ReadTimeout:            30 * time.Second,
-		WriteTimeout:           30 * time.Second,
-		MaxHeaderBytes:         1 << 20, // 1MB
-		RedisAddr:              getEnv("REDIS_ADDR", "localhost:6379"),
-		WebSocketReadTimeout:   60 * time.Second,
-		WebSocketWriteTimeout:  10 * time.Second,
-		MaxVoiceConnections:    5000,
-		ProximityUpdateInterval: 100 * time.Millisecond,
+		Port:                      getEnv("PORT", "8080"),
+		ReadTimeout:               30 * time.Second,
+		WriteTimeout:              30 * time.Second,
+		MaxHeaderBytes:            1 << 20, // 1MB
+		RedisAddr:                 getEnv("REDIS_ADDR", "localhost:6379"),
+		WebSocketReadTimeout:      60 * time.Second,
+		WebSocketWriteTimeout:     10 * time.Second,
+		MaxVoiceConnections:       5000,
+		ProximityUpdateInterval:   100 * time.Millisecond,
 		ConnectionCleanupInterval: 30 * time.Second,
-		ChannelCleanupInterval: 5 * time.Minute,
+		ChannelCleanupInterval:    5 * time.Minute,
 	}
 
 	// Initialize metrics (placeholder for now)
 	metrics := &server.VoiceChatMetrics{
-		ActiveChannels:      0,
-		ActiveConnections:   0,
-		AudioStreams:        0,
-		TTSSynthesizations:  0,
-		ModerationReports:   0,
-		Errors:              0,
+		ActiveChannels:     0,
+		ActiveConnections:  0,
+		AudioStreams:       0,
+		TTSSynthesizations: 0,
+		ModerationReports:  0,
+		Errors:             0,
 	}
 
 	// Initialize service

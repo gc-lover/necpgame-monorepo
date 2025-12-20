@@ -1,4 +1,4 @@
-// Issue: #150 - Middleware
+// Package server Issue: #150 - Middleware
 package server
 
 import (
@@ -46,4 +46,3 @@ func (rw *responseWriter) WriteHeader(code int) {
 	rw.statusCode = code
 	rw.ResponseWriter.WriteHeader(code)
 }
-

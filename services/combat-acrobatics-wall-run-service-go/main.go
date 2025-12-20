@@ -9,8 +9,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/gc-lover/necpgame-monorepo/services/combat-acrobatics-wall-run-service-go/server"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 func main() {

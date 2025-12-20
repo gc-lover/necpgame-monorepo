@@ -1,4 +1,4 @@
-// Issue: #1592, #1867 - Character Service ogen Migration (1.5k RPS) + Memory Pooling Optimization
+// Package server Issue: #1592, #1867 - Character Service ogen Migration (1.5k RPS) + Memory Pooling Optimization
 // Handlers for character-service-go - implements api.Handler (ogen)
 // Memory pooling for hot path structs (zero allocations target!)
 package server
@@ -149,7 +149,7 @@ func (h *CharacterHandlersOgen) GetCharacterV2(ctx context.Context, params api.G
 
 // GetCurrentCharacter implements getCurrentCharacter operation
 // Issue: #1867 - Request tracking for statistics
-func (h *CharacterHandlersOgen) GetCurrentCharacter(ctx context.Context, params api.GetCurrentCharacterParams) (api.GetCurrentCharacterRes, error) {
+func (h *CharacterHandlersOgen) GetCurrentCharacter(ctx context.Context, _ api.GetCurrentCharacterParams) (api.GetCurrentCharacterRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, CacheTimeout)
 	defer cancel()
 
@@ -163,7 +163,7 @@ func (h *CharacterHandlersOgen) GetCurrentCharacter(ctx context.Context, params 
 
 // DeleteCharacterV2 implements deleteCharacterV2 operation
 // Issue: #1867 - Request tracking for statistics
-func (h *CharacterHandlersOgen) DeleteCharacterV2(ctx context.Context, req *api.DeleteCharacterRequest, params api.DeleteCharacterV2Params) (api.DeleteCharacterV2Res, error) {
+func (h *CharacterHandlersOgen) DeleteCharacterV2(ctx context.Context, _ *api.DeleteCharacterRequest, params api.DeleteCharacterV2Params) (api.DeleteCharacterV2Res, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 

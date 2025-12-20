@@ -1,4 +1,4 @@
-// Issue: #1599, #1607, ogen migration
+// Package server Issue: #1599, #1607, ogen migration
 package server
 
 import (
@@ -10,9 +10,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// Context timeout constants (Issue #1604)
 const (
-	DBTimeout    = 50 * time.Millisecond
 	CacheTimeout = 10 * time.Millisecond
 )
 

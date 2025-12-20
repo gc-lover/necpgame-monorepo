@@ -1,4 +1,4 @@
-// Issue: #42 - economy-player-market ogen typed handlers with business logic
+// Package server Issue: #42 - economy-player-market ogen typed handlers with business logic
 package server
 
 import (
@@ -37,21 +37,21 @@ func (h *MarketHandlersOgen) CreateMarketListing(ctx context.Context, req *api.C
 	// Validate input
 	if req.CharacterID == uuid.Nil {
 		return &api.CreateMarketListingBadRequest{
-			Error: "INVALID_CHARACTER_ID",
+			Error:   "INVALID_CHARACTER_ID",
 			Message: "Character ID is required",
 		}, nil
 	}
 
 	if req.ItemID == uuid.Nil {
 		return &api.CreateMarketListingBadRequest{
-			Error: "INVALID_ITEM_ID",
+			Error:   "INVALID_ITEM_ID",
 			Message: "Item ID is required",
 		}, nil
 	}
 
 	if req.Price <= 0 || req.Price > 999999999 {
 		return &api.CreateMarketListingBadRequest{
-			Error: "INVALID_PRICE",
+			Error:   "INVALID_PRICE",
 			Message: "Price must be between 0.01 and 999,999,999",
 		}, nil
 	}
@@ -64,14 +64,14 @@ func (h *MarketHandlersOgen) CreateMarketListing(ctx context.Context, req *api.C
 
 	if err != nil {
 		return &api.CreateMarketListingInternalServerError{
-			Error: "DATABASE_ERROR",
+			Error:   "DATABASE_ERROR",
 			Message: "Failed to check active listings",
 		}, nil
 	}
 
 	if activeCount >= 20 {
 		return &api.CreateMarketListingBadRequest{
-			Error: "LISTING_LIMIT_EXCEEDED",
+			Error:   "LISTING_LIMIT_EXCEEDED",
 			Message: "Maximum 20 active listings per seller",
 		}, nil
 	}
@@ -80,7 +80,7 @@ func (h *MarketHandlersOgen) CreateMarketListing(ctx context.Context, req *api.C
 	listingID, err := h.repository.CreateListing(ctx, req.CharacterID, req.ItemID, float64(req.Price), &req.CityID)
 	if err != nil {
 		return &api.CreateMarketListingInternalServerError{
-			Error: "DATABASE_ERROR",
+			Error:   "DATABASE_ERROR",
 			Message: "Failed to create listing",
 		}, nil
 	}
@@ -108,12 +108,12 @@ func (h *MarketHandlersOgen) GetMarketListingById(ctx context.Context, params ap
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return &api.GetMarketListingByIdNotFound{
-				Error: "LISTING_NOT_FOUND",
+				Error:   "LISTING_NOT_FOUND",
 				Message: "Listing not found or inactive",
 			}, nil
 		}
 		return &api.GetMarketListingByIdInternalServerError{
-			Error: "DATABASE_ERROR",
+			Error:   "DATABASE_ERROR",
 			Message: "Failed to retrieve listing",
 		}, nil
 	}
@@ -136,7 +136,7 @@ func (h *MarketHandlersOgen) GetMarketListingById(ctx context.Context, params ap
 
 	if err != nil {
 		return &api.GetMarketListingByIdInternalServerError{
-			Error: "DATABASE_ERROR",
+			Error:   "DATABASE_ERROR",
 			Message: "Failed to parse listing data",
 		}, nil
 	}
@@ -215,7 +215,7 @@ func (h *MarketHandlersOgen) SearchMarketListings(ctx context.Context, params ap
 	total, err := h.repository.CountListings(ctx, filters)
 	if err != nil {
 		return &api.SearchMarketListingsInternalServerError{
-			Error: "DATABASE_ERROR",
+			Error:   "DATABASE_ERROR",
 			Message: "Failed to count listings",
 		}, nil
 	}
@@ -224,7 +224,7 @@ func (h *MarketHandlersOgen) SearchMarketListings(ctx context.Context, params ap
 	rows, err := h.repository.SearchListings(ctx, filters, limit, offset)
 	if err != nil {
 		return &api.SearchMarketListingsInternalServerError{
-			Error: "DATABASE_ERROR",
+			Error:   "DATABASE_ERROR",
 			Message: "Failed to search listings",
 		}, nil
 	}
@@ -303,7 +303,7 @@ func (h *MarketHandlersOgen) GetMyMarketListings(ctx context.Context, params api
 	total, err := h.repository.CountMyListings(ctx, characterID, statusFilter)
 	if err != nil {
 		return &api.GetMyMarketListingsInternalServerError{
-			Error: "DATABASE_ERROR",
+			Error:   "DATABASE_ERROR",
 			Message: "Failed to count listings",
 		}, nil
 	}
@@ -312,7 +312,7 @@ func (h *MarketHandlersOgen) GetMyMarketListings(ctx context.Context, params api
 	rows, err := h.repository.GetMyListings(ctx, characterID, statusFilter, limit, offset)
 	if err != nil {
 		return &api.GetMyMarketListingsInternalServerError{
-			Error: "DATABASE_ERROR",
+			Error:   "DATABASE_ERROR",
 			Message: "Failed to get listings",
 		}, nil
 	}
@@ -369,13 +369,13 @@ func (h *MarketHandlersOgen) UpdateMarketListing(ctx context.Context, req *api.U
 	isOwner, err := h.repository.CheckListingOwnership(ctx, params.ListingID, characterID)
 	if err != nil {
 		return &api.UpdateMarketListingInternalServerError{
-			Error: "DATABASE_ERROR",
+			Error:   "DATABASE_ERROR",
 			Message: "Failed to verify ownership",
 		}, nil
 	}
 	if !isOwner {
 		return &api.UpdateMarketListingForbidden{
-			Error: "FORBIDDEN",
+			Error:   "FORBIDDEN",
 			Message: "You can only update your own listings",
 		}, nil
 	}
@@ -385,7 +385,7 @@ func (h *MarketHandlersOgen) UpdateMarketListing(ctx context.Context, req *api.U
 	if req.Price.IsSet() {
 		if float64(req.Price.Value) <= 0 || float64(req.Price.Value) > 999999999 {
 			return &api.UpdateMarketListingBadRequest{
-				Error: "INVALID_PRICE",
+				Error:   "INVALID_PRICE",
 				Message: "Price must be between 0.01 and 999,999,999",
 			}, nil
 		}

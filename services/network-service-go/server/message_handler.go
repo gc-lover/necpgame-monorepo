@@ -6,9 +6,10 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/sirupsen/logrus"
 )
 
-// OPTIMIZATION: Issue #1978 - Message broadcasting with concurrent processing
+// BroadcastMessage OPTIMIZATION: Issue #1978 - Message broadcasting with concurrent processing
 func (s *NetworkService) BroadcastMessage(w http.ResponseWriter, r *http.Request) {
 	var req BroadcastMessageRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -52,7 +53,7 @@ func (s *NetworkService) BroadcastMessage(w http.ResponseWriter, r *http.Request
 	}).Info("message broadcasted successfully")
 }
 
-// OPTIMIZATION: Issue #1978 - Channel messaging with permission checks
+// SendChannelMessage OPTIMIZATION: Issue #1978 - Channel messaging with permission checks
 func (s *NetworkService) SendChannelMessage(w http.ResponseWriter, r *http.Request) {
 	channelID := chi.URLParam(r, "channel")
 

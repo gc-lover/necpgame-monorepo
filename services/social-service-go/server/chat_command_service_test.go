@@ -99,4 +99,3 @@ func TestChatCommandService_ExecuteCommand_Empty(t *testing.T) {
 	assert.Nil(t, response.Result)
 	assert.NotNil(t, response.Error)
 }
-

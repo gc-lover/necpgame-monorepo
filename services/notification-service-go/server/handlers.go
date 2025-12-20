@@ -1,4 +1,4 @@
-// Notification handlers implementation for ogen-generated API
+// Package server Notification handlers implementation for ogen-generated API
 // Issue: #140874394
 package server
 
@@ -318,7 +318,7 @@ func (h *NotificationHandler) MarkBulkAsRead(ctx context.Context, req *api.MarkB
 }
 
 // NotificationWebSocket implements notificationWebSocket operation
-func (h *NotificationHandler) NotificationWebSocket(ctx context.Context, params api.NotificationWebSocketParams) (api.NotificationWebSocketRes, error) {
+func (h *NotificationHandler) NotificationWebSocket(_ context.Context, _ api.NotificationWebSocketParams) (api.NotificationWebSocketRes, error) {
 	// WebSocket handling is done in the server package
 	// This is just a placeholder for the ogen interface
 	return &api.NotificationWebSocketSwitchingProtocols{}, nil

@@ -1,4 +1,4 @@
-// Issue: #1607
+// Package server Issue: #1607
 package server
 
 import (
@@ -218,7 +218,7 @@ func (r *CombatSessionRepository) ListSessions(ctx context.Context, status *api.
 			  (SELECT COUNT(*) FROM mvp_core.combat_participants WHERE session_id = cs.id) as participant_count
 			  FROM mvp_core.combat_sessions cs WHERE 1=1`)
 
-	args := []interface{}{}
+	var args []interface{}
 	argIndex := 1
 
 	if status != nil {
@@ -276,7 +276,7 @@ func (r *CombatSessionRepository) ListSessions(ctx context.Context, status *api.
 	// Get total count
 	var total int
 	countQuery := `SELECT COUNT(*) FROM mvp_core.combat_sessions WHERE 1=1`
-	countArgs := []interface{}{}
+	var countArgs []interface{}
 	countArgIndex := 1
 
 	if status != nil {

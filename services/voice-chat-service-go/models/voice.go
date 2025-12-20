@@ -8,34 +8,20 @@ import (
 
 type VoiceChannelType string
 
-const (
-	VoiceChannelTypeParty     VoiceChannelType = "party"
-	VoiceChannelTypeGuild     VoiceChannelType = "guild"
-	VoiceChannelTypeRaid      VoiceChannelType = "raid"
-	VoiceChannelTypeProximity VoiceChannelType = "proximity"
-)
-
 type VoiceChannel struct {
-	ID          uuid.UUID              `json:"id" db:"id"`
-	Type        VoiceChannelType       `json:"type" db:"type"`
-	OwnerID     uuid.UUID              `json:"owner_id" db:"owner_id"`
-	OwnerType   string                 `json:"owner_type" db:"owner_type"`
-	Name        string                 `json:"name" db:"name"`
-	MaxMembers  int                    `json:"max_members" db:"max_members"`
-	QualityPreset string               `json:"quality_preset" db:"quality_preset"`
-	Settings    map[string]interface{} `json:"settings" db:"settings"`
-	CreatedAt   time.Time              `json:"created_at" db:"created_at"`
-	UpdatedAt   time.Time              `json:"updated_at" db:"updated_at"`
+	ID            uuid.UUID              `json:"id" db:"id"`
+	Type          VoiceChannelType       `json:"type" db:"type"`
+	OwnerID       uuid.UUID              `json:"owner_id" db:"owner_id"`
+	OwnerType     string                 `json:"owner_type" db:"owner_type"`
+	Name          string                 `json:"name" db:"name"`
+	MaxMembers    int                    `json:"max_members" db:"max_members"`
+	QualityPreset string                 `json:"quality_preset" db:"quality_preset"`
+	Settings      map[string]interface{} `json:"settings" db:"settings"`
+	CreatedAt     time.Time              `json:"created_at" db:"created_at"`
+	UpdatedAt     time.Time              `json:"updated_at" db:"updated_at"`
 }
 
 type ParticipantStatus string
-
-const (
-	ParticipantStatusConnected ParticipantStatus = "connected"
-	ParticipantStatusMuted     ParticipantStatus = "muted"
-	ParticipantStatusDeafened  ParticipantStatus = "deafened"
-	ParticipantStatusSpeaking  ParticipantStatus = "speaking"
-)
 
 type VoiceParticipant struct {
 	ID          uuid.UUID              `json:"id" db:"id"`
@@ -50,11 +36,11 @@ type VoiceParticipant struct {
 }
 
 type CreateChannelRequest struct {
-	CharacterID   uuid.UUID        `json:"character_id"`
-	Type          VoiceChannelType `json:"type"`
-	Name          string           `json:"name"`
-	MaxMembers    int              `json:"max_members"`
-	QualityPreset string           `json:"quality_preset"`
+	CharacterID   uuid.UUID              `json:"character_id"`
+	Type          VoiceChannelType       `json:"type"`
+	Name          string                 `json:"name"`
+	MaxMembers    int                    `json:"max_members"`
+	QualityPreset string                 `json:"quality_preset"`
 	Settings      map[string]interface{} `json:"settings"`
 }
 
@@ -92,7 +78,7 @@ type ParticipantListResponse struct {
 }
 
 type ChannelDetailResponse struct {
-	Channel     *VoiceChannel        `json:"channel"`
+	Channel      *VoiceChannel      `json:"channel"`
 	Participants []VoiceParticipant `json:"participants"`
 }
 
@@ -102,33 +88,28 @@ type WebRTCTokenResponse struct {
 	ExpiresAt time.Time `json:"expires_at"`
 }
 
-// Subchannel types
+// SubchannelType Subchannel types
 type SubchannelType string
 
-const (
-	SubchannelTypeMain SubchannelType = "main"
-	SubchannelTypeCustom SubchannelType = "custom"
-)
-
 type Subchannel struct {
-	ID                 uuid.UUID              `json:"id" db:"id"`
-	LobbyID            uuid.UUID              `json:"lobby_id" db:"lobby_id"`
-	Name               string                 `json:"name" db:"name"`
-	SubchannelType     SubchannelType         `json:"subchannel_type" db:"subchannel_type"`
-	MaxParticipants    *int                   `json:"max_participants,omitempty" db:"max_participants"`
-	CurrentParticipants int                   `json:"current_participants" db:"current_participants"`
-	IsLocked           bool                  `json:"is_locked" db:"is_locked"`
-	Settings           map[string]interface{} `json:"settings" db:"settings"`
-	CreatedAt          time.Time              `json:"created_at" db:"created_at"`
-	UpdatedAt          time.Time              `json:"updated_at" db:"updated_at"`
+	ID                  uuid.UUID              `json:"id" db:"id"`
+	LobbyID             uuid.UUID              `json:"lobby_id" db:"lobby_id"`
+	Name                string                 `json:"name" db:"name"`
+	SubchannelType      SubchannelType         `json:"subchannel_type" db:"subchannel_type"`
+	MaxParticipants     *int                   `json:"max_participants,omitempty" db:"max_participants"`
+	CurrentParticipants int                    `json:"current_participants" db:"current_participants"`
+	IsLocked            bool                   `json:"is_locked" db:"is_locked"`
+	Settings            map[string]interface{} `json:"settings" db:"settings"`
+	CreatedAt           time.Time              `json:"created_at" db:"created_at"`
+	UpdatedAt           time.Time              `json:"updated_at" db:"updated_at"`
 }
 
 type SubchannelParticipant struct {
-	ID          uuid.UUID              `json:"id" db:"id"`
-	SubchannelID uuid.UUID              `json:"subchannel_id" db:"subchannel_id"`
-	CharacterID uuid.UUID              `json:"character_id" db:"character_id"`
-	JoinedAt    time.Time              `json:"joined_at" db:"joined_at"`
-	UpdatedAt   time.Time              `json:"updated_at" db:"updated_at"`
+	ID           uuid.UUID `json:"id" db:"id"`
+	SubchannelID uuid.UUID `json:"subchannel_id" db:"subchannel_id"`
+	CharacterID  uuid.UUID `json:"character_id" db:"character_id"`
+	JoinedAt     time.Time `json:"joined_at" db:"joined_at"`
+	UpdatedAt    time.Time `json:"updated_at" db:"updated_at"`
 }
 
 type CreateSubchannelRequest struct {
@@ -138,10 +119,10 @@ type CreateSubchannelRequest struct {
 }
 
 type UpdateSubchannelRequest struct {
-	Name            *string                 `json:"name,omitempty"`
-	MaxParticipants *int                    `json:"max_participants,omitempty"`
-	IsLocked        *bool                   `json:"is_locked,omitempty"`
-	Settings        map[string]interface{}  `json:"settings,omitempty"`
+	Name            *string                `json:"name,omitempty"`
+	MaxParticipants *int                   `json:"max_participants,omitempty"`
+	IsLocked        *bool                  `json:"is_locked,omitempty"`
+	Settings        map[string]interface{} `json:"settings,omitempty"`
 }
 
 type MoveToSubchannelRequest struct {
@@ -156,14 +137,13 @@ type MoveToSubchannelResponse struct {
 }
 
 type SubchannelListResponse struct {
-	LobbyID      uuid.UUID    `json:"lobby_id"`
-	Subchannels  []Subchannel `json:"subchannels"`
-	TotalCount   int          `json:"total_count"`
+	LobbyID     uuid.UUID    `json:"lobby_id"`
+	Subchannels []Subchannel `json:"subchannels"`
+	TotalCount  int          `json:"total_count"`
 }
 
 type SubchannelParticipantsResponse struct {
-	SubchannelID uuid.UUID              `json:"subchannel_id"`
+	SubchannelID uuid.UUID               `json:"subchannel_id"`
 	Participants []SubchannelParticipant `json:"participants"`
-	TotalCount   int                    `json:"total_count"`
+	TotalCount   int                     `json:"total_count"`
 }
-

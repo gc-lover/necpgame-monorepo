@@ -1,4 +1,4 @@
-// Issue: #1856
+// Package server Issue: #1856
 // Structured logging with logrus for guild-bank-service
 package server
 

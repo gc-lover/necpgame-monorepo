@@ -24,15 +24,15 @@ func TestWebSocketNoLeaks(t *testing.T) {
 	defer goleak.VerifyNone(t,
 		goleak.IgnoreTopFunction("database/sql.(*DB).connectionOpener"),
 	)
-	
+
 	// TODO: Test WebSocket connection lifecycle
 	// conn := NewWebSocketConnection()
 	// conn.Start()
 	// time.Sleep(100 * time.Millisecond)
 	// conn.Stop()
-	
+
 	time.Sleep(100 * time.Millisecond)
-	
+
 	// If goroutines leaked from WebSocket handlers, test FAILS
 }
 
@@ -41,15 +41,15 @@ func TestGameLoopNoLeaks(t *testing.T) {
 	defer goleak.VerifyNone(t,
 		goleak.IgnoreTopFunction("database/sql.(*DB).connectionOpener"),
 	)
-	
+
 	// TODO: Test game loop lifecycle
 	// loop := NewGameLoop()
 	// loop.Start()
 	// time.Sleep(200 * time.Millisecond)
 	// loop.Stop()
-	
+
 	time.Sleep(100 * time.Millisecond)
-	
+
 	// Game loops must stop cleanly (no leaked tickers/goroutines)
 }
 
@@ -58,7 +58,7 @@ func TestConcurrentConnectionsNoLeaks(t *testing.T) {
 	defer goleak.VerifyNone(t,
 		goleak.IgnoreTopFunction("database/sql.(*DB).connectionOpener"),
 	)
-	
+
 	// TODO: Simulate 100 concurrent WebSocket connections
 	// done := make(chan struct{})
 	// for i := 0; i < 100; i++ {
@@ -68,13 +68,13 @@ func TestConcurrentConnectionsNoLeaks(t *testing.T) {
 	//         done <- struct{}{}
 	//     }()
 	// }
-	// 
+	//
 	// for i := 0; i < 100; i++ {
 	//     <-done
 	// }
-	
+
 	time.Sleep(200 * time.Millisecond)
-	
+
 	// All connection goroutines must be cleaned up
 }
 
@@ -89,4 +89,3 @@ func TestConcurrentConnectionsNoLeaks(t *testing.T) {
 // - Ticker.Stop() for all time.Ticker
 // - Channel close for all event channels
 // - Connection.Close() for all WebSocket conns
-

@@ -35,4 +35,3 @@ func TestFeedbackServiceNoLeaks(t *testing.T) {
 
 	// If goroutines leaked from feedback handlers, test FAILS
 }
-

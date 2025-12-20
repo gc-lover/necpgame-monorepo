@@ -5,9 +5,9 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/necpgame/character-service-go/models"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/necpgame/character-service-go/models"
 	"github.com/sirupsen/logrus"
 )
 
@@ -56,12 +56,12 @@ func (r *CharacterRepository) GetAccountByID(ctx context.Context, accountID uuid
 
 func (r *CharacterRepository) CreateAccount(ctx context.Context, req *models.CreateAccountRequest) (*models.PlayerAccount, error) {
 	account := &models.PlayerAccount{
-		ID:        uuid.New(),
+		ID:         uuid.New(),
 		ExternalID: req.ExternalID,
-		Nickname:  req.Nickname,
+		Nickname:   req.Nickname,
 		OriginCode: req.OriginCode,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
+		CreatedAt:  time.Now(),
+		UpdatedAt:  time.Now(),
 	}
 
 	err := r.db.QueryRow(ctx,

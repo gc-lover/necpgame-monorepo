@@ -7,9 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5"
 	"github.com/gc-lover/necpgame-monorepo/services/voice-chat-service-go/models"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -69,14 +68,14 @@ func (m *mockSubchannelRepository) GetParticipants(ctx context.Context, subchann
 	return args.Get(0).([]models.SubchannelParticipant), args.Error(1)
 }
 
-func setupTestSubchannelService(t *testing.T) (*SubchannelService, *mockSubchannelRepository) {
+func setupTestSubchannelService() (*SubchannelService, *mockSubchannelRepository) {
 	mockRepo := new(mockSubchannelRepository)
 	service := NewSubchannelService(mockRepo)
 	return service, mockRepo
 }
 
 func TestSubchannelService_CreateSubchannel_Success(t *testing.T) {
-	service, mockRepo := setupTestSubchannelService(t)
+	service, mockRepo := setupTestSubchannelService()
 
 	lobbyID := uuid.New()
 	req := &models.CreateSubchannelRequest{
@@ -85,15 +84,15 @@ func TestSubchannelService_CreateSubchannel_Success(t *testing.T) {
 	}
 
 	subchannel := &models.Subchannel{
-		ID:              uuid.New(),
-		LobbyID:         lobbyID,
-		Name:            "Test Subchannel",
-		SubchannelType: models.SubchannelTypeCustom,
-		MaxParticipants: intPtr(10),
-		IsLocked:        false,
+		ID:                  uuid.New(),
+		LobbyID:             lobbyID,
+		Name:                "Test Subchannel",
+		SubchannelType:      models.SubchannelTypeCustom,
+		MaxParticipants:     intPtr(10),
+		IsLocked:            false,
 		CurrentParticipants: 0,
-		CreatedAt:       time.Now(),
-		UpdatedAt:       time.Now(),
+		CreatedAt:           time.Now(),
+		UpdatedAt:           time.Now(),
 	}
 
 	mockRepo.On("CreateSubchannel", mock.Anything, lobbyID, req).Return(subchannel, nil)
@@ -108,7 +107,7 @@ func TestSubchannelService_CreateSubchannel_Success(t *testing.T) {
 }
 
 func TestSubchannelService_CreateSubchannel_InvalidName(t *testing.T) {
-	service, mockRepo := setupTestSubchannelService(t)
+	service, mockRepo := setupTestSubchannelService()
 
 	lobbyID := uuid.New()
 	req := &models.CreateSubchannelRequest{
@@ -126,7 +125,7 @@ func TestSubchannelService_CreateSubchannel_InvalidName(t *testing.T) {
 }
 
 func TestSubchannelService_CreateSubchannel_InvalidMaxParticipants(t *testing.T) {
-	service, mockRepo := setupTestSubchannelService(t)
+	service, mockRepo := setupTestSubchannelService()
 
 	lobbyID := uuid.New()
 	req := &models.CreateSubchannelRequest{
@@ -144,20 +143,20 @@ func TestSubchannelService_CreateSubchannel_InvalidMaxParticipants(t *testing.T)
 }
 
 func TestSubchannelService_GetSubchannel_Success(t *testing.T) {
-	service, mockRepo := setupTestSubchannelService(t)
+	service, mockRepo := setupTestSubchannelService()
 
 	lobbyID := uuid.New()
 	subchannelID := uuid.New()
 	subchannel := &models.Subchannel{
-		ID:              subchannelID,
-		LobbyID:         lobbyID,
-		Name:            "Test Subchannel",
-		SubchannelType: models.SubchannelTypeCustom,
-		MaxParticipants: intPtr(10),
-		IsLocked:        false,
+		ID:                  subchannelID,
+		LobbyID:             lobbyID,
+		Name:                "Test Subchannel",
+		SubchannelType:      models.SubchannelTypeCustom,
+		MaxParticipants:     intPtr(10),
+		IsLocked:            false,
 		CurrentParticipants: 0,
-		CreatedAt:       time.Now(),
-		UpdatedAt:       time.Now(),
+		CreatedAt:           time.Now(),
+		UpdatedAt:           time.Now(),
 	}
 
 	mockRepo.On("GetSubchannel", mock.Anything, lobbyID, subchannelID).Return(subchannel, nil)
@@ -172,7 +171,7 @@ func TestSubchannelService_GetSubchannel_Success(t *testing.T) {
 }
 
 func TestSubchannelService_GetSubchannel_NotFound(t *testing.T) {
-	service, mockRepo := setupTestSubchannelService(t)
+	service, mockRepo := setupTestSubchannelService()
 
 	lobbyID := uuid.New()
 	subchannelID := uuid.New()
@@ -189,20 +188,20 @@ func TestSubchannelService_GetSubchannel_NotFound(t *testing.T) {
 }
 
 func TestSubchannelService_ListSubchannels_Success(t *testing.T) {
-	service, mockRepo := setupTestSubchannelService(t)
+	service, mockRepo := setupTestSubchannelService()
 
 	lobbyID := uuid.New()
 	subchannels := []models.Subchannel{
 		{
-			ID:              uuid.New(),
-			LobbyID:         lobbyID,
-			Name:            "Test Subchannel",
-			SubchannelType: models.SubchannelTypeCustom,
-			MaxParticipants: intPtr(10),
-			IsLocked:        false,
+			ID:                  uuid.New(),
+			LobbyID:             lobbyID,
+			Name:                "Test Subchannel",
+			SubchannelType:      models.SubchannelTypeCustom,
+			MaxParticipants:     intPtr(10),
+			IsLocked:            false,
 			CurrentParticipants: 0,
-			CreatedAt:       time.Now(),
-			UpdatedAt:       time.Now(),
+			CreatedAt:           time.Now(),
+			UpdatedAt:           time.Now(),
 		},
 	}
 
@@ -220,7 +219,7 @@ func TestSubchannelService_ListSubchannels_Success(t *testing.T) {
 }
 
 func TestSubchannelService_UpdateSubchannel_Success(t *testing.T) {
-	service, mockRepo := setupTestSubchannelService(t)
+	service, mockRepo := setupTestSubchannelService()
 
 	lobbyID := uuid.New()
 	subchannelID := uuid.New()
@@ -230,15 +229,15 @@ func TestSubchannelService_UpdateSubchannel_Success(t *testing.T) {
 	}
 
 	subchannel := &models.Subchannel{
-		ID:              subchannelID,
-		LobbyID:         lobbyID,
-		Name:            "Updated Subchannel",
-		SubchannelType: models.SubchannelTypeCustom,
-		MaxParticipants: intPtr(20),
-		IsLocked:        false,
+		ID:                  subchannelID,
+		LobbyID:             lobbyID,
+		Name:                "Updated Subchannel",
+		SubchannelType:      models.SubchannelTypeCustom,
+		MaxParticipants:     intPtr(20),
+		IsLocked:            false,
 		CurrentParticipants: 0,
-		CreatedAt:       time.Now(),
-		UpdatedAt:       time.Now(),
+		CreatedAt:           time.Now(),
+		UpdatedAt:           time.Now(),
 	}
 
 	mockRepo.On("UpdateSubchannel", mock.Anything, lobbyID, subchannelID, req).Return(subchannel, nil)
@@ -253,7 +252,7 @@ func TestSubchannelService_UpdateSubchannel_Success(t *testing.T) {
 }
 
 func TestSubchannelService_UpdateSubchannel_InvalidName(t *testing.T) {
-	service, mockRepo := setupTestSubchannelService(t)
+	service, mockRepo := setupTestSubchannelService()
 
 	lobbyID := uuid.New()
 	subchannelID := uuid.New()
@@ -272,7 +271,7 @@ func TestSubchannelService_UpdateSubchannel_InvalidName(t *testing.T) {
 }
 
 func TestSubchannelService_UpdateSubchannel_NotFound(t *testing.T) {
-	service, mockRepo := setupTestSubchannelService(t)
+	service, mockRepo := setupTestSubchannelService()
 
 	lobbyID := uuid.New()
 	subchannelID := uuid.New()
@@ -293,20 +292,20 @@ func TestSubchannelService_UpdateSubchannel_NotFound(t *testing.T) {
 }
 
 func TestSubchannelService_DeleteSubchannel_Success(t *testing.T) {
-	service, mockRepo := setupTestSubchannelService(t)
+	service, mockRepo := setupTestSubchannelService()
 
 	lobbyID := uuid.New()
 	subchannelID := uuid.New()
 	subchannel := &models.Subchannel{
-		ID:              subchannelID,
-		LobbyID:         lobbyID,
-		Name:            "Test Subchannel",
-		SubchannelType: models.SubchannelTypeCustom,
-		MaxParticipants: intPtr(10),
-		IsLocked:        false,
+		ID:                  subchannelID,
+		LobbyID:             lobbyID,
+		Name:                "Test Subchannel",
+		SubchannelType:      models.SubchannelTypeCustom,
+		MaxParticipants:     intPtr(10),
+		IsLocked:            false,
 		CurrentParticipants: 0,
-		CreatedAt:       time.Now(),
-		UpdatedAt:       time.Now(),
+		CreatedAt:           time.Now(),
+		UpdatedAt:           time.Now(),
 	}
 
 	mockRepo.On("GetSubchannel", mock.Anything, lobbyID, subchannelID).Return(subchannel, nil)
@@ -320,20 +319,20 @@ func TestSubchannelService_DeleteSubchannel_Success(t *testing.T) {
 }
 
 func TestSubchannelService_DeleteSubchannel_MainSubchannel(t *testing.T) {
-	service, mockRepo := setupTestSubchannelService(t)
+	service, mockRepo := setupTestSubchannelService()
 
 	lobbyID := uuid.New()
 	subchannelID := uuid.New()
 	subchannel := &models.Subchannel{
-		ID:              subchannelID,
-		LobbyID:         lobbyID,
-		Name:            "Main Subchannel",
-		SubchannelType: models.SubchannelTypeMain,
-		MaxParticipants: intPtr(10),
-		IsLocked:        false,
+		ID:                  subchannelID,
+		LobbyID:             lobbyID,
+		Name:                "Main Subchannel",
+		SubchannelType:      models.SubchannelTypeMain,
+		MaxParticipants:     intPtr(10),
+		IsLocked:            false,
 		CurrentParticipants: 0,
-		CreatedAt:       time.Now(),
-		UpdatedAt:       time.Now(),
+		CreatedAt:           time.Now(),
+		UpdatedAt:           time.Now(),
 	}
 
 	mockRepo.On("GetSubchannel", mock.Anything, lobbyID, subchannelID).Return(subchannel, nil)
@@ -347,21 +346,21 @@ func TestSubchannelService_DeleteSubchannel_MainSubchannel(t *testing.T) {
 }
 
 func TestSubchannelService_MoveToSubchannel_Success(t *testing.T) {
-	service, mockRepo := setupTestSubchannelService(t)
+	service, mockRepo := setupTestSubchannelService()
 
 	lobbyID := uuid.New()
 	subchannelID := uuid.New()
 	characterID := uuid.New()
 	subchannel := &models.Subchannel{
-		ID:              subchannelID,
-		LobbyID:         lobbyID,
-		Name:            "Test Subchannel",
-		SubchannelType: models.SubchannelTypeCustom,
-		MaxParticipants: intPtr(10),
-		IsLocked:        false,
+		ID:                  subchannelID,
+		LobbyID:             lobbyID,
+		Name:                "Test Subchannel",
+		SubchannelType:      models.SubchannelTypeCustom,
+		MaxParticipants:     intPtr(10),
+		IsLocked:            false,
 		CurrentParticipants: 5,
-		CreatedAt:       time.Now(),
-		UpdatedAt:       time.Now(),
+		CreatedAt:           time.Now(),
+		UpdatedAt:           time.Now(),
 	}
 
 	mockRepo.On("GetSubchannel", mock.Anything, lobbyID, subchannelID).Return(subchannel, nil)
@@ -378,21 +377,21 @@ func TestSubchannelService_MoveToSubchannel_Success(t *testing.T) {
 }
 
 func TestSubchannelService_MoveToSubchannel_Locked(t *testing.T) {
-	service, mockRepo := setupTestSubchannelService(t)
+	service, mockRepo := setupTestSubchannelService()
 
 	lobbyID := uuid.New()
 	subchannelID := uuid.New()
 	characterID := uuid.New()
 	subchannel := &models.Subchannel{
-		ID:              subchannelID,
-		LobbyID:         lobbyID,
-		Name:            "Test Subchannel",
-		SubchannelType: models.SubchannelTypeCustom,
-		MaxParticipants: intPtr(10),
-		IsLocked:        true,
+		ID:                  subchannelID,
+		LobbyID:             lobbyID,
+		Name:                "Test Subchannel",
+		SubchannelType:      models.SubchannelTypeCustom,
+		MaxParticipants:     intPtr(10),
+		IsLocked:            true,
 		CurrentParticipants: 5,
-		CreatedAt:       time.Now(),
-		UpdatedAt:       time.Now(),
+		CreatedAt:           time.Now(),
+		UpdatedAt:           time.Now(),
 	}
 
 	mockRepo.On("GetSubchannel", mock.Anything, lobbyID, subchannelID).Return(subchannel, nil)
@@ -407,22 +406,22 @@ func TestSubchannelService_MoveToSubchannel_Locked(t *testing.T) {
 }
 
 func TestSubchannelService_MoveToSubchannel_Full(t *testing.T) {
-	service, mockRepo := setupTestSubchannelService(t)
+	service, mockRepo := setupTestSubchannelService()
 
 	lobbyID := uuid.New()
 	subchannelID := uuid.New()
 	characterID := uuid.New()
 	maxParticipants := 10
 	subchannel := &models.Subchannel{
-		ID:              subchannelID,
-		LobbyID:         lobbyID,
-		Name:            "Test Subchannel",
-		SubchannelType: models.SubchannelTypeCustom,
-		MaxParticipants: &maxParticipants,
-		IsLocked:        false,
+		ID:                  subchannelID,
+		LobbyID:             lobbyID,
+		Name:                "Test Subchannel",
+		SubchannelType:      models.SubchannelTypeCustom,
+		MaxParticipants:     &maxParticipants,
+		IsLocked:            false,
 		CurrentParticipants: 10,
-		CreatedAt:       time.Now(),
-		UpdatedAt:       time.Now(),
+		CreatedAt:           time.Now(),
+		UpdatedAt:           time.Now(),
 	}
 
 	mockRepo.On("GetSubchannel", mock.Anything, lobbyID, subchannelID).Return(subchannel, nil)
@@ -437,20 +436,20 @@ func TestSubchannelService_MoveToSubchannel_Full(t *testing.T) {
 }
 
 func TestSubchannelService_GetSubchannelParticipants_Success(t *testing.T) {
-	service, mockRepo := setupTestSubchannelService(t)
+	service, mockRepo := setupTestSubchannelService()
 
 	lobbyID := uuid.New()
 	subchannelID := uuid.New()
 	subchannel := &models.Subchannel{
-		ID:              subchannelID,
-		LobbyID:         lobbyID,
-		Name:            "Test Subchannel",
-		SubchannelType: models.SubchannelTypeCustom,
-		MaxParticipants: intPtr(10),
-		IsLocked:        false,
+		ID:                  subchannelID,
+		LobbyID:             lobbyID,
+		Name:                "Test Subchannel",
+		SubchannelType:      models.SubchannelTypeCustom,
+		MaxParticipants:     intPtr(10),
+		IsLocked:            false,
 		CurrentParticipants: 0,
-		CreatedAt:       time.Now(),
-		UpdatedAt:       time.Now(),
+		CreatedAt:           time.Now(),
+		UpdatedAt:           time.Now(),
 	}
 
 	participants := []models.SubchannelParticipant{
@@ -475,7 +474,7 @@ func TestSubchannelService_GetSubchannelParticipants_Success(t *testing.T) {
 }
 
 func TestSubchannelService_CreateSubchannel_DatabaseError(t *testing.T) {
-	service, mockRepo := setupTestSubchannelService(t)
+	service, mockRepo := setupTestSubchannelService()
 
 	lobbyID := uuid.New()
 	req := &models.CreateSubchannelRequest{
@@ -493,5 +492,3 @@ func TestSubchannelService_CreateSubchannel_DatabaseError(t *testing.T) {
 	assert.Nil(t, result)
 	mockRepo.AssertExpectations(t)
 }
-
-

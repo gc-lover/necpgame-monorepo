@@ -1,14 +1,12 @@
-// Issue: #171
+// Package server Issue: #171
 package server
 
 import (
-	"context"
 	"net/http"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/segmentio/kafka-go"
 	"go.uber.org/zap"
 )
 
@@ -45,7 +43,7 @@ func NewTradeManager(db *pgxpool.Pool, kafka *kafka.Writer, log *zap.SugaredLogg
 }
 
 // CleanupExpiredSessions removes expired trade sessions
-func (m *TradeManager) CleanupExpiredSessions(ctx context.Context) error {
+func (m *TradeManager) CleanupExpiredSessions() error {
 	// TODO: Implement cleanup logic
 	return nil
 }
@@ -153,8 +151,3 @@ type TradeItem struct {
 	Quantity   int       `json:"quantity"`
 	Quality    string    `json:"quality"`
 }
-
-
-
-
-

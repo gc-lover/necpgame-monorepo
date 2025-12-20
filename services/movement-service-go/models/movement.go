@@ -7,30 +7,30 @@ import (
 )
 
 type CharacterPosition struct {
-	ID        uuid.UUID `json:"id" db:"id"`
+	ID          uuid.UUID `json:"id" db:"id"`
 	CharacterID uuid.UUID `json:"character_id" db:"character_id"`
-	PositionX float64   `json:"position_x" db:"position_x"`
-	PositionY float64   `json:"position_y" db:"position_y"`
-	PositionZ float64   `json:"position_z" db:"position_z"`
-	Yaw       float64   `json:"yaw" db:"yaw"`
-	VelocityX float64   `json:"velocity_x,omitempty" db:"velocity_x"`
-	VelocityY float64   `json:"velocity_y,omitempty" db:"velocity_y"`
-	VelocityZ float64   `json:"velocity_z,omitempty" db:"velocity_z"`
-	UpdatedAt time.Time `json:"updated_at" db:"updated_at"`
-	CreatedAt time.Time `json:"created_at" db:"created_at"`
+	PositionX   float64   `json:"position_x" db:"position_x"`
+	PositionY   float64   `json:"position_y" db:"position_y"`
+	PositionZ   float64   `json:"position_z" db:"position_z"`
+	Yaw         float64   `json:"yaw" db:"yaw"`
+	VelocityX   float64   `json:"velocity_x,omitempty" db:"velocity_x"`
+	VelocityY   float64   `json:"velocity_y,omitempty" db:"velocity_y"`
+	VelocityZ   float64   `json:"velocity_z,omitempty" db:"velocity_z"`
+	UpdatedAt   time.Time `json:"updated_at" db:"updated_at"`
+	CreatedAt   time.Time `json:"created_at" db:"created_at"`
 }
 
 type PositionHistory struct {
-	ID        uuid.UUID `json:"id" db:"id"`
+	ID          uuid.UUID `json:"id" db:"id"`
 	CharacterID uuid.UUID `json:"character_id" db:"character_id"`
-	PositionX float64   `json:"position_x" db:"position_x"`
-	PositionY float64   `json:"position_y" db:"position_y"`
-	PositionZ float64   `json:"position_z" db:"position_z"`
-	Yaw       float64   `json:"yaw" db:"yaw"`
-	VelocityX float64   `json:"velocity_x,omitempty" db:"velocity_x"`
-	VelocityY float64   `json:"velocity_y,omitempty" db:"velocity_y"`
-	VelocityZ float64   `json:"velocity_z,omitempty" db:"velocity_z"`
-	CreatedAt time.Time `json:"created_at" db:"created_at"`
+	PositionX   float64   `json:"position_x" db:"position_x"`
+	PositionY   float64   `json:"position_y" db:"position_y"`
+	PositionZ   float64   `json:"position_z" db:"position_z"`
+	Yaw         float64   `json:"yaw" db:"yaw"`
+	VelocityX   float64   `json:"velocity_x,omitempty" db:"velocity_x"`
+	VelocityY   float64   `json:"velocity_y,omitempty" db:"velocity_y"`
+	VelocityZ   float64   `json:"velocity_z,omitempty" db:"velocity_z"`
+	CreatedAt   time.Time `json:"created_at" db:"created_at"`
 }
 
 type SavePositionRequest struct {

@@ -1,4 +1,4 @@
-// Issue: #75
+// Package server Issue: #75
 package server
 
 import (
@@ -518,7 +518,7 @@ type PlayerSlots struct {
 	CanPurchaseMore bool
 }
 
-// Стандартные ошибки
+// ErrCharacterNotFound Стандартные ошибки
 var (
 	ErrCharacterNotFound = fmt.Errorf("character not found")
 )

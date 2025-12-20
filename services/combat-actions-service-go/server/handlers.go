@@ -1,4 +1,4 @@
-// Issue: #1595
+// Package server Issue: #1595
 // ogen handlers - TYPED responses (no interface{} boxing!)
 package server
 
@@ -9,10 +9,8 @@ import (
 	"github.com/gc-lover/necpgame-monorepo/services/combat-actions-service-go/pkg/api"
 )
 
-// Context timeout constants
 const (
-	DBTimeout    = 50 * time.Millisecond
-	CacheTimeout = 10 * time.Millisecond
+	DBTimeout = 50 * time.Millisecond
 )
 
 // Handlers implements api.Handler interface (ogen typed handlers!)
@@ -31,7 +29,7 @@ type Handlers struct {
 func NewHandlers(service *Service) *Handlers {
 	// Issue: #1588 - Resilience patterns for hot path service (1.5k+ RPS)
 	loadShedder := NewLoadShedder(750) // Max 750 concurrent requests
-	
+
 	return &Handlers{
 		service: service,
 		// Issue: #1587 - Anti-cheat validation
@@ -42,11 +40,11 @@ func NewHandlers(service *Service) *Handlers {
 }
 
 // ApplyEffects - TYPED response!
-func (h *Handlers) ApplyEffects(ctx context.Context, req *api.ApplyEffectsRequest) (api.ApplyEffectsRes, error) {
+func (h *Handlers) ApplyEffects(ctx context.Context, _ *api.ApplyEffectsRequest) (api.ApplyEffectsRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	result, err := h.service.ApplyEffects(ctx, req)
+	result, err := h.service.ApplyEffects()
 	if err != nil {
 		return &api.ApplyEffectsInternalServerError{}, err
 	}
@@ -56,11 +54,11 @@ func (h *Handlers) ApplyEffects(ctx context.Context, req *api.ApplyEffectsReques
 }
 
 // CalculateDamage - TYPED response!
-func (h *Handlers) CalculateDamage(ctx context.Context, req *api.CalculateDamageRequest) (api.CalculateDamageRes, error) {
+func (h *Handlers) CalculateDamage(ctx context.Context, _ *api.CalculateDamageRequest) (api.CalculateDamageRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	result, err := h.service.CalculateDamage(ctx, req)
+	result, err := h.service.CalculateDamage()
 	if err != nil {
 		return &api.CalculateDamageInternalServerError{}, err
 	}
@@ -69,7 +67,7 @@ func (h *Handlers) CalculateDamage(ctx context.Context, req *api.CalculateDamage
 }
 
 // DefendInCombat - TYPED response!
-func (h *Handlers) DefendInCombat(ctx context.Context, req *api.DefendRequest, params api.DefendInCombatParams) (api.DefendInCombatRes, error) {
+func (h *Handlers) DefendInCombat(ctx context.Context, _ *api.DefendRequest, _ api.DefendInCombatParams) (api.DefendInCombatRes, error) {
 	// Issue: #1588 - Load shedding (prevent overload)
 	if !h.loadShedder.Allow() {
 		err := api.DefendInCombatInternalServerError(api.Error{
@@ -84,7 +82,7 @@ func (h *Handlers) DefendInCombat(ctx context.Context, req *api.DefendRequest, p
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	result, err := h.service.DefendInCombat(ctx, params.SessionId.String(), req)
+	result, err := h.service.DefendInCombat()
 	if err != nil {
 		if err == ErrNotFound {
 			return &api.DefendInCombatNotFound{}, nil
@@ -97,7 +95,7 @@ func (h *Handlers) DefendInCombat(ctx context.Context, req *api.DefendRequest, p
 
 // ProcessAttack - TYPED response!
 // Issue: #1587 - Server-Side Validation & Anti-Cheat Integration
-func (h *Handlers) ProcessAttack(ctx context.Context, req *api.AttackRequest, params api.ProcessAttackParams) (api.ProcessAttackRes, error) {
+func (h *Handlers) ProcessAttack(ctx context.Context, req *api.AttackRequest, _ api.ProcessAttackParams) (api.ProcessAttackRes, error) {
 	// Issue: #1588 - Load shedding (prevent overload)
 	if !h.loadShedder.Allow() {
 		err := api.ProcessAttackInternalServerError(api.Error{
@@ -117,7 +115,7 @@ func (h *Handlers) ProcessAttack(ctx context.Context, req *api.AttackRequest, pa
 	attack := &AttackAction{
 		From:       Vec3{X: 0, Y: 0, Z: 0}, // TODO: Get from request or session
 		To:         Vec3{X: 0, Y: 0, Z: 0}, // TODO: Get from request or session
-		Distance:   0,                       // TODO: Calculate from From/To
+		Distance:   0,                      // TODO: Calculate from From/To
 		AttackType: "melee",                // TODO: Get from request
 	}
 
@@ -130,7 +128,7 @@ func (h *Handlers) ProcessAttack(ctx context.Context, req *api.AttackRequest, pa
 		}, nil
 	}
 
-	result, err := h.service.ProcessAttack(ctx, params.SessionId.String(), req)
+	result, err := h.service.ProcessAttack()
 	if err != nil {
 		if err == ErrNotFound {
 			return &api.ProcessAttackNotFound{}, nil
@@ -145,11 +143,11 @@ func (h *Handlers) ProcessAttack(ctx context.Context, req *api.AttackRequest, pa
 }
 
 // UseCombatAbility - TYPED response!
-func (h *Handlers) UseCombatAbility(ctx context.Context, req *api.UseAbilityRequest, params api.UseCombatAbilityParams) (api.UseCombatAbilityRes, error) {
+func (h *Handlers) UseCombatAbility(ctx context.Context, _ *api.UseAbilityRequest, _ api.UseCombatAbilityParams) (api.UseCombatAbilityRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	result, err := h.service.UseCombatAbility(ctx, params.SessionId.String(), req)
+	result, err := h.service.UseCombatAbility()
 	if err != nil {
 		if err == ErrNotFound {
 			return &api.UseCombatAbilityNotFound{}, nil
@@ -161,11 +159,11 @@ func (h *Handlers) UseCombatAbility(ctx context.Context, req *api.UseAbilityRequ
 }
 
 // UseCombatItem - TYPED response!
-func (h *Handlers) UseCombatItem(ctx context.Context, req *api.UseItemRequest, params api.UseCombatItemParams) (api.UseCombatItemRes, error) {
+func (h *Handlers) UseCombatItem(ctx context.Context, _ *api.UseItemRequest, _ api.UseCombatItemParams) (api.UseCombatItemRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	result, err := h.service.UseCombatItem(ctx, params.SessionId.String(), req)
+	result, err := h.service.UseCombatItem()
 	if err != nil {
 		if err == ErrNotFound {
 			return &api.UseCombatItemNotFound{}, nil
@@ -175,4 +173,3 @@ func (h *Handlers) UseCombatItem(ctx context.Context, req *api.UseItemRequest, p
 
 	return result, nil
 }
-

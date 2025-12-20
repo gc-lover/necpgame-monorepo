@@ -46,4 +46,3 @@ func TestLeaderboardServiceNoLeaks(t *testing.T) {
 // - Connection pool limits
 // - Timeout for all DB queries
 // - Proper Redis connection management
-

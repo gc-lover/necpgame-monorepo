@@ -1,4 +1,4 @@
-// Issue: #140876112
+// Package server Issue: #140876112
 package server
 
 import (
@@ -39,25 +39,25 @@ func (s *RomanceCoreService) AdaptEventToCulture(ctx context.Context, event Roma
 }
 
 // adaptDialogues адаптирует диалоги под культуру
-func (s *RomanceCoreService) adaptDialogues(event RomanceEvent, context RomanceContext) RomanceEvent {
+func (s *RomanceCoreService) adaptDialogues(event RomanceEvent) RomanceEvent {
 	// TODO: Реализовать адаптацию диалогов
 	return event
 }
 
 // adaptDifficultyChecks адаптирует проверки сложности
-func (s *RomanceCoreService) adaptDifficultyChecks(event RomanceEvent, context RomanceContext) RomanceEvent {
+func (s *RomanceCoreService) adaptDifficultyChecks(event RomanceEvent) RomanceEvent {
 	// TODO: Реализовать адаптацию проверок
 	return event
 }
 
 // adaptPublicity адаптирует публичность события
-func (s *RomanceCoreService) adaptPublicity(event RomanceEvent, context RomanceContext) RomanceEvent {
+func (s *RomanceCoreService) adaptPublicity(event RomanceEvent) RomanceEvent {
 	// TODO: Реализовать адаптацию публичности
 	return event
 }
 
 // addCulturalSteps добавляет культурные шаги
-func (s *RomanceCoreService) addCulturalSteps(event RomanceEvent, context RomanceContext) RomanceEvent {
+func (s *RomanceCoreService) addCulturalSteps(event RomanceEvent) RomanceEvent {
 	// TODO: Реализовать добавление культурных шагов
 	return event
 }

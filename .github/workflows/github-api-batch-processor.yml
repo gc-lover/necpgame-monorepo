@@ -146,7 +146,7 @@ jobs:
             async function getProjectItems() {
               const projectNumberInput = '${{ env.PROJECT_NUMBER }}';
               const projectNumber = parseInt(projectNumberInput) || 1;
-              
+            
               const { data: projectV2 } = await github.graphql(`
                 query($owner: String!, $number: Int!) {
                   organization(login: $owner) {
@@ -164,18 +164,18 @@ jobs:
                 owner: context.repo.owner,
                 number: projectNumber
               });
-              
+            
               const projectId = projectV2.organization?.projectV2?.id || projectV2.user?.projectV2?.id;
-              
+            
               if (!projectId) {
                 console.log(`Project #${projectNumber} not found`);
                 return [];
               }
-              
+            
               let allItems = [];
               let hasNextPage = true;
               let cursor = null;
-              
+            
               while (hasNextPage) {
                 const { data: itemsResult } = await github.graphql(`
                   query($projectId: ID!, $cursor: String) {
@@ -216,35 +216,35 @@ jobs:
                   projectId,
                   cursor
                 });
-                
+            
                 const items = itemsResult.node?.items?.nodes || [];
                 allItems = allItems.concat(items);
-                
+            
                 hasNextPage = itemsResult.node?.items?.pageInfo?.hasNextPage || false;
                 cursor = itemsResult.node?.items?.pageInfo?.endCursor || null;
-                
+            
                 if (hasNextPage) {
                   console.log(`Fetched ${allItems.length} items so far, fetching more...`);
                   await delay(500);
                 }
               }
-              
+            
               console.log(`Total items fetched: ${allItems.length}`);
-              
+            
               return allItems.filter(item => {
                 if (!item.content || item.content.__typename !== 'Issue') return false;
                 if (item.content.state !== 'OPEN') return false;
-                
+            
                 // For analyze-and-update-status, return all items (ignore filter)
                 if (operation === 'analyze-and-update-status') {
                   return true;
                 }
-                
+            
                 const statusValue = item.fieldValues.nodes.find(
                   fv => fv.field.name === 'Status'
                 );
                 const currentStatus = statusValue?.name || '';
-                
+            
                 return currentStatus === statusFilter || statusFilter === '' || statusFilter === 'All';
               });
             }
@@ -254,7 +254,7 @@ jobs:
                 console.log(`Status "${newStatus}" not found in project options`);
                 return false;
               }
-              
+            
               try {
                 await github.graphql(`
                   mutation($projectId: ID!, $itemId: ID!, $fieldId: ID!, $valueId: String!) {
@@ -277,7 +277,7 @@ jobs:
                   fieldId: statusFieldId,
                   valueId: statusOptions[newStatus]
                 });
-                
+            
                 return true;
               } catch (error) {
                 console.error(`Error updating status: ${error.message}`);
@@ -289,7 +289,7 @@ jobs:
               const comment = template
                 .replace('{issue_number}', issueNumber)
                 .replace('{timestamp}', new Date().toISOString());
-              
+            
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
@@ -306,14 +306,14 @@ jobs:
                   repo: context.repo.repo,
                   issue_number: issueNumber
                 });
-                
+            
                 const comments = await github.rest.issues.listComments({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
                   issue_number: issueNumber,
                   per_page: 100
                 });
-                
+            
                 return {
                   title: issue.data.title,
                   body: issue.data.body || '',
@@ -330,7 +330,7 @@ jobs:
               const titleLower = title.toLowerCase();
               const bodyLower = (body || '').toLowerCase();
               const allText = titleLower + ' ' + bodyLower + ' ' + comments.join(' ').toLowerCase();
-              
+            
               // Проверка заголовка на префикс агента
               if (title.startsWith('[Idea Writer]') || title.startsWith('[Idea]')) {
                 // Проверяем комментарии на готовность
@@ -353,7 +353,7 @@ jobs:
                 }
                 return 'Idea Writer - Todo';
               }
-              
+            
               if (title.startsWith('[API Designer]') || title.startsWith('[API]')) {
                 const hasOpenAPIReady = comments.some(c => 
                   c.includes('OpenAPI спецификация готова') || 
@@ -364,57 +364,57 @@ jobs:
                 }
                 return 'API Designer - Todo';
               }
-              
+            
               if (title.startsWith('[Backend]') || title.startsWith('[Implementation]')) {
                 return 'Backend - Todo';
               }
-              
+            
               if (title.startsWith('[Architect]') || title.startsWith('[Architecture]')) {
                 return 'Architect - Todo';
               }
-              
+            
               if (title.startsWith('[Content Writer]') || title.startsWith('[Content]')) {
                 return 'Content Writer - Todo';
               }
-              
+            
               if (title.startsWith('[Database]')) {
                 return 'Database - Todo';
               }
-              
+            
               if (title.startsWith('[Network]')) {
                 return 'Network - Todo';
               }
-              
+            
               if (title.startsWith('[Security]')) {
                 return 'Security - Todo';
               }
-              
+            
               if (title.startsWith('[DevOps]')) {
                 return 'DevOps - Todo';
               }
-              
+            
               if (title.startsWith('[UE5]') || title.startsWith('[Client]')) {
                 return 'UE5 - Todo';
               }
-              
+            
               if (title.startsWith('[QA]') || title.startsWith('[Testing]')) {
                 return 'QA - Todo';
               }
-              
+            
               if (title.startsWith('[Game Balance]')) {
                 return 'Game Balance - Todo';
               }
-              
+            
               if (title.startsWith('[Release]')) {
                 return 'Release - Todo';
               }
-              
+            
               // Анализ по ключевым словам
               const hasContentLabels = labels.some(l => ['canon', 'lore', 'quest', 'content'].includes(l));
               if (hasContentLabels && (allText.includes('квест') || allText.includes('quest'))) {
                 return 'Content Writer - Todo';
               }
-              
+            
               if (allText.includes('openapi') || allText.includes('спецификация') || allText.includes('endpoints')) {
                 const hasOpenAPIReady = comments.some(c => 
                   c.includes('OpenAPI спецификация готова') || 
@@ -425,71 +425,71 @@ jobs:
                 }
                 return 'API Designer - Todo';
               }
-              
+            
               if (allText.includes('архитектура') || allText.includes('architecture') || allText.includes('система') || allText.includes('system')) {
                 return 'Architect - Todo';
               }
-              
+            
               if (allText.includes('реализация') || allText.includes('implementation') || allText.includes('go ') || allText.includes(' сервис')) {
                 return 'Backend - Todo';
               }
-              
+            
               if (allText.includes('база данных') || allText.includes('database') || allText.includes('миграция') || allText.includes('migration')) {
                 return 'Database - Todo';
               }
-              
+            
               if (allText.includes('ue5') || allText.includes('unreal') || allText.includes('клиент') || allText.includes('client')) {
                 return 'UE5 - Todo';
               }
-              
+            
               // По умолчанию - Idea Writer для новых концепций
               if (allText.includes('идея') || allText.includes('концепция') || allText.includes('lore') || allText.includes('лор')) {
                 return 'Idea Writer - Todo';
               }
-              
+            
               // Если ничего не найдено - Todo
               return 'Todo';
             }
 
             async function analyzeAndUpdateStatus(projectItemId, issueNumber, currentStatus) {
               const issueDetails = await getIssueDetails(issueNumber);
-              
+            
               if (!issueDetails) {
                 console.log(`    Could not fetch issue details`);
                 return false;
               }
-              
+            
               const correctStatus = determineStatus(
                 issueDetails.title,
                 issueDetails.body,
                 issueDetails.labels,
                 issueDetails.comments
               );
-              
+            
               if (correctStatus === currentStatus) {
                 console.log(`    Status is correct: ${currentStatus}`);
                 return false;
               }
-              
+            
               console.log(`    Status mismatch: current="${currentStatus}", correct="${correctStatus}"`);
-              
+            
               const updated = await updateStatus(projectItemId, correctStatus);
-              
+            
               if (updated) {
                 console.log(`    OK Updated status from "${currentStatus}" to "${correctStatus}"`);
                 return true;
               }
-              
+            
               return false;
             }
 
             async function processBatch(items) {
               console.log(`Processing ${items.length} items in batches of ${batchSize}`);
-              
+            
               for (let i = 0; i < items.length; i += batchSize) {
                 const batch = items.slice(i, i + batchSize);
                 console.log(`\nProcessing batch ${Math.floor(i / batchSize) + 1} (${batch.length} items)`);
-                
+            
                 for (const item of batch) {
                   try {
                     const issueNumber = item.content.number;
@@ -498,9 +498,9 @@ jobs:
                       fv => fv.field.name === 'Status'
                     );
                     const currentStatus = statusValue?.name || '';
-                    
+            
                     console.log(`  Processing issue #${issueNumber} (status: ${currentStatus})...`);
-                    
+            
                     switch (operation) {
                       case 'update-status':
                         if (newStatus) {
@@ -519,7 +519,7 @@ jobs:
                         await delay(1000); // Extra delay for API calls
                         break;
                     }
-                    
+            
                     await delay(delayMs);
                   } catch (error) {
                     console.error(`  Error processing issue #${item.content.number}:`, error.message);
@@ -529,7 +529,7 @@ jobs:
                     }
                   }
                 }
-                
+            
                 if (i + batchSize < items.length) {
                   console.log(`  Waiting 1s before next batch...`);
                   await delay(1000);
@@ -540,12 +540,12 @@ jobs:
             try {
               const items = await getProjectItems();
               console.log(`Found ${items.length} items with status: ${statusFilter}`);
-              
+            
               if (items.length === 0) {
                 console.log('No items found, exiting');
                 return;
               }
-              
+            
               await processBatch(items);
               console.log('\nOK Batch processing completed');
             } catch (error) {

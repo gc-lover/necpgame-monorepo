@@ -2,12 +2,11 @@ package server
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/gc-lover/necpgame-monorepo/services/quest-state-dialogue-service-go/pkg/api"
+	"github.com/google/uuid"
 )
 
 type requestIDKey struct{}
@@ -101,25 +100,6 @@ func corsMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func respondJSON(w http.ResponseWriter, status int, data interface{}) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	if err := json.NewEncoder(w).Encode(data); err != nil {
-		logger := GetLogger()
-		logger.WithError(err).Error("Failed to encode JSON response")
-	}
-}
-
-func respondError(w http.ResponseWriter, status int, message string) {
-	code := http.StatusText(status)
-	err := api.Error{
-		Code:    api.NewOptNilString(code),
-		Error:   http.StatusText(status),
-		Message: message,
-	}
-	respondJSON(w, status, err)
-}
-
 func requestIDMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		reqID := r.Header.Get("X-Request-ID")
@@ -141,23 +121,3 @@ func getRequestID(ctx context.Context) string {
 	}
 	return ""
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

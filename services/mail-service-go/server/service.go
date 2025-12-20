@@ -1,4 +1,4 @@
-// Issue: #151, #1607
+// Package server Issue: #151, #1607
 package server
 
 import (
@@ -9,8 +9,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/gc-lover/necpgame-monorepo/services/mail-service-go/pkg/api"
+	"github.com/google/uuid"
 )
 
 // getPlayerIDFromContext extracts player ID from context (from JWT token)
@@ -46,9 +46,9 @@ type MailService struct {
 	repository Repository
 
 	// Memory pooling for hot path structs (zero allocations target!)
-	inboxResponsePool sync.Pool
-	mailDetailResponsePool sync.Pool
-	sendMailResponsePool sync.Pool
+	inboxResponsePool            sync.Pool
+	mailDetailResponsePool       sync.Pool
+	sendMailResponsePool         sync.Pool
 	claimAttachmentsResponsePool sync.Pool
 }
 
@@ -88,13 +88,13 @@ func (s *MailService) GetInbox(ctx context.Context, params api.GetInboxParams) (
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Get filter
 	filter := "all"
 	if params.Status.Set {
 		filter = string(params.Status.Value)
 	}
-	
+
 	// Get pagination
 	limit := 50
 	if params.Limit.Set {
@@ -110,30 +110,30 @@ func (s *MailService) GetInbox(ctx context.Context, params api.GetInboxParams) (
 			offset = (page - 1) * limit
 		}
 	}
-	
+
 	// Get mails from repository
 	mails, total, err := s.repository.GetPlayerMails(ctx, playerID, filter, limit, offset)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Get unread count
 	unreadCount, err := s.repository.GetUnreadCount(ctx, playerID)
 	if err != nil {
 		unreadCount = 0 // Continue if error
 	}
-	
+
 	// Issue: #1607 - Use memory pooling
 	result := s.inboxResponsePool.Get().(*api.InboxResponse)
 	result.Mails = make([]api.MailSummary, len(mails))
 	result.UnreadCount = unreadCount
 	result.TotalCount = total
-	
+
 	// Convert to API types
 	for i, mail := range mails {
 		result.Mails[i] = convertMailToSummary(mail)
 	}
-	
+
 	// Pagination
 	if limit > 0 {
 		totalPages := (total + limit - 1) / limit
@@ -141,7 +141,7 @@ func (s *MailService) GetInbox(ctx context.Context, params api.GetInboxParams) (
 		page := (offset / limit) + 1
 		result.Page = api.NewOptInt(page)
 	}
-	
+
 	return result, nil
 }
 
@@ -153,32 +153,32 @@ func (s *MailService) GetMail(ctx context.Context, mailID string) (*api.MailDeta
 	if err != nil {
 		return nil, err
 	}
-	
+
 	mailUUID, err := uuid.Parse(mailID)
 	if err != nil {
 		return nil, errors.New("invalid mail ID")
 	}
-	
+
 	// Get mail from repository
 	mail, err := s.repository.GetMail(ctx, mailUUID)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Check if player is recipient
 	if mail.RecipientID != playerID {
 		return nil, errors.New("forbidden")
 	}
-	
+
 	// Mark as read if not read
 	if !mail.IsRead {
 		_ = s.repository.MarkAsRead(ctx, mailUUID)
 	}
-	
+
 	// Issue: #1607 - Use memory pooling
 	result := s.mailDetailResponsePool.Get().(*api.MailDetailResponse)
 	result.Mail = convertMailToDetail(*mail)
-	
+
 	return result, nil
 }
 
@@ -189,23 +189,23 @@ func (s *MailService) DeleteMail(ctx context.Context, mailID string) error {
 	if err != nil {
 		return err
 	}
-	
+
 	mailUUID, err := uuid.Parse(mailID)
 	if err != nil {
 		return errors.New("invalid mail ID")
 	}
-	
+
 	// Get mail to check ownership
 	mail, err := s.repository.GetMail(ctx, mailUUID)
 	if err != nil {
 		return err
 	}
-	
+
 	// Check if player is recipient
 	if mail.RecipientID != playerID {
 		return errors.New("forbidden")
 	}
-	
+
 	return s.repository.DeleteMail(ctx, mailUUID)
 }
 
@@ -217,7 +217,7 @@ func (s *MailService) SendMail(ctx context.Context, req *api.SendMailRequest) (*
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Prepare attachments JSON
 	var attachmentsJSON *json.RawMessage
 	hasAttachments := len(req.AttachmentItems) > 0 || req.AttachmentCurrency.Set
@@ -243,16 +243,16 @@ func (s *MailService) SendMail(ctx context.Context, req *api.SendMailRequest) (*
 		rawJSON := json.RawMessage(attachmentsBytes)
 		attachmentsJSON = &rawJSON
 	}
-	
+
 	// Prepare body
 	body := ""
 	if req.Body.Set {
 		body = req.Body.Value
 	}
-	
+
 	// Calculate expiration (default 30 days)
 	expiresAt := time.Now().Add(30 * 24 * time.Hour)
-	
+
 	// Create mail
 	mail := &Mail{
 		SenderID:    &senderID,
@@ -265,22 +265,22 @@ func (s *MailService) SendMail(ctx context.Context, req *api.SendMailRequest) (*
 		Attachments: attachmentsJSON,
 		ExpiresAt:   &expiresAt,
 	}
-	
+
 	if req.CodAmount.Set {
 		mail.CODAmount = &req.CodAmount.Value
 	}
-	
+
 	mailID, err := s.repository.CreateMail(ctx, mail)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Issue: #1607 - Use memory pooling
 	result := s.sendMailResponsePool.Get().(*api.SendMailResponse)
 	result.MailId = *mailID
 	result.Status = api.SendMailResponseStatusSent
 	result.ExpiresAt = expiresAt
-	
+
 	return result, nil
 }
 
@@ -292,44 +292,44 @@ func (s *MailService) ClaimAttachments(ctx context.Context, mailID string) (*api
 	if err != nil {
 		return nil, err
 	}
-	
+
 	mailUUID, err := uuid.Parse(mailID)
 	if err != nil {
 		return nil, errors.New("invalid mail ID")
 	}
-	
+
 	// Get mail to check ownership
 	mail, err := s.repository.GetMail(ctx, mailUUID)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Check if player is recipient
 	if mail.RecipientID != playerID {
 		return nil, errors.New("forbidden")
 	}
-	
+
 	// Check if already claimed
 	if mail.IsClaimed {
 		return nil, errors.New("attachments already claimed")
 	}
-	
+
 	// Check COD
 	if mail.CODAmount != nil && *mail.CODAmount > 0 {
 		// TODO: Check player currency and deduct COD amount
 		// For now, just mark as claimed
 	}
-	
+
 	// Claim attachments
 	claimedMail, err := s.repository.ClaimAttachments(ctx, mailUUID)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Issue: #1607 - Use memory pooling
 	result := s.claimAttachmentsResponsePool.Get().(*api.ClaimAttachmentsResponse)
 	result.Claimed = true
-	
+
 	// Parse attachments
 	if claimedMail.Attachments != nil {
 		var attachments map[string]interface{}
@@ -367,11 +367,11 @@ func (s *MailService) ClaimAttachments(ctx context.Context, mailID string) (*api
 			}
 		}
 	}
-	
+
 	if claimedMail.CODAmount != nil {
 		result.CodPaid = api.NewOptInt(*claimedMail.CODAmount)
 	}
-	
+
 	return result, nil
 }
 
@@ -384,19 +384,19 @@ func convertMailToSummary(mail Mail) api.MailSummary {
 		Subject:    mail.Subject,
 		SentAt:     mail.SentAt,
 	}
-	
+
 	if mail.SenderID != nil {
 		summary.SenderId = api.NewOptUUID(*mail.SenderID)
 	}
-	
+
 	// Check if has attachments
 	hasAttachments := mail.Attachments != nil && len(*mail.Attachments) > 0
 	summary.HasAttachments = api.NewOptBool(hasAttachments)
-	
+
 	if mail.CODAmount != nil {
 		summary.CodAmount = api.NewOptInt(*mail.CODAmount)
 	}
-	
+
 	// Convert status
 	switch mail.Status {
 	case "unread":
@@ -410,13 +410,13 @@ func convertMailToSummary(mail Mail) api.MailSummary {
 	default:
 		summary.MailStatus = api.MailSummaryMailStatusSent
 	}
-	
+
 	if mail.ExpiresAt != nil {
 		summary.ExpiresAt = *mail.ExpiresAt
 	} else {
 		summary.ExpiresAt = mail.SentAt.Add(30 * 24 * time.Hour)
 	}
-	
+
 	return summary
 }
 
@@ -427,20 +427,20 @@ func convertMailToDetail(mail Mail) api.MailDetail {
 		Subject:    mail.Subject,
 		SentAt:     mail.SentAt,
 	}
-	
+
 	if mail.SenderID != nil {
 		detail.SenderId = api.NewOptUUID(*mail.SenderID)
 	}
-	
+
 	// Body
 	if mail.Content != "" {
 		detail.Body = api.NewOptString(mail.Content)
 	}
-	
+
 	// Attachments
 	hasAttachments := mail.Attachments != nil && len(*mail.Attachments) > 0
 	detail.HasAttachments = api.NewOptBool(hasAttachments)
-	
+
 	if hasAttachments {
 		var attachments map[string]interface{}
 		if err := json.Unmarshal(*mail.Attachments, &attachments); err == nil {
@@ -477,11 +477,11 @@ func convertMailToDetail(mail Mail) api.MailDetail {
 			}
 		}
 	}
-	
+
 	if mail.CODAmount != nil {
 		detail.CodAmount = api.NewOptInt(*mail.CODAmount)
 	}
-	
+
 	// Convert status
 	switch mail.Status {
 	case "unread":
@@ -495,19 +495,18 @@ func convertMailToDetail(mail Mail) api.MailDetail {
 	default:
 		detail.MailStatus = api.MailDetailMailStatusSent
 	}
-	
+
 	if mail.ExpiresAt != nil {
 		detail.ExpiresAt = *mail.ExpiresAt
 	} else {
 		detail.ExpiresAt = mail.SentAt.Add(30 * 24 * time.Hour)
 	}
-	
+
 	detail.AttachmentClaimed = api.NewOptBool(mail.IsClaimed)
-	
+
 	if mail.ReadAt != nil {
 		detail.ReadAt = api.NewOptDateTime(*mail.ReadAt)
 	}
-	
+
 	return detail
 }
-

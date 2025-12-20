@@ -70,4 +70,3 @@ func TestClanWarService_ListTerritories_Success(t *testing.T) {
 	assert.Equal(t, 1, total)
 	mockRepo.AssertExpectations(t)
 }
-

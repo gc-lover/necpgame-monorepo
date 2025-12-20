@@ -15,8 +15,8 @@ import (
 
 var (
 	ErrSessionNotFound = errors.New("session not found")
-	ErrUnauthorized    = errors.New("unauthorized")
-	ErrActionRejected  = errors.New("action rejected")
+	_                  = errors.New("unauthorized")
+	_                  = errors.New("action rejected")
 )
 
 // CombatSessionService business logic with memory pooling (Issue #1607)
@@ -57,7 +57,7 @@ func (s *CombatSessionService) CreateSession(ctx context.Context, req *api.Creat
 
 	// Create session in DB
 	maxParticipants := 100
-	
+
 	session := &CombatSession{
 		ID:              sessionID,
 		SessionType:     string(req.SessionType),
@@ -71,12 +71,12 @@ func (s *CombatSessionService) CreateSession(ctx context.Context, req *api.Creat
 	}
 
 	// Cache session
-	if err := s.cache.SetSession(ctx, sessionID, session, 3600*time.Second); err != nil {
+	if err := s.cache.SetSession(); err != nil {
 		// Log error but continue
 	}
 
 	// Publish event
-	s.eventBus.PublishSessionCreated(ctx, session)
+	s.eventBus.PublishSessionCreated()
 
 	// Get memory pooled response (zero allocation!)
 	resp := s.sessionPool.Get().(*api.CombatSession)
@@ -112,7 +112,7 @@ func (s *CombatSessionService) ListSessions(ctx context.Context, params api.List
 	for i, session := range sessions {
 		// Get memory pooled response (zero allocation!)
 		resp := s.sessionPool.Get().(*api.CombatSession)
-		
+
 		// Populate response
 		resp.ID = uuid.MustParse(session.ID)
 		resp.PlayerID = uuid.New() // TODO: Get from session
@@ -132,7 +132,7 @@ func (s *CombatSessionService) ListSessions(ctx context.Context, params api.List
 		// Return to pool
 		s.sessionPool.Put(resp)
 	}
-	
+
 	return result, nil
 }
 
@@ -143,7 +143,7 @@ func (s *CombatSessionService) GetSession(ctx context.Context, sessionID string)
 	defer s.sessionPool.Put(resp)
 
 	// Try cache first
-	if cached, err := s.cache.GetSession(ctx, sessionID); err == nil {
+	if cached, err := s.cache.GetSession(); err == nil {
 		// Populate response
 		resp.ID = uuid.MustParse(cached.ID)
 		resp.PlayerID = uuid.New()
@@ -189,7 +189,7 @@ func (s *CombatSessionService) GetSession(ctx context.Context, sessionID string)
 
 // EndSession ends combat session
 // TODO: Update return type when SessionEndResponse is available in OpenAPI spec
-func (s *CombatSessionService) EndSession(ctx context.Context, sessionID string, playerID string) error {
+func (s *CombatSessionService) EndSession(ctx context.Context, sessionID string) error {
 	session, err := s.repo.GetSession(ctx, sessionID)
 	if err != nil {
 		return ErrSessionNotFound
@@ -209,7 +209,7 @@ func (s *CombatSessionService) EndSession(ctx context.Context, sessionID string,
 	}
 
 	// Publish event
-	s.eventBus.PublishSessionEnded(ctx, session)
+	s.eventBus.PublishSessionEnded()
 
 	return nil
 }
@@ -246,7 +246,7 @@ func (s *CombatSessionService) GetSessionState(ctx context.Context, sessionID st
 	sessionUUID, _ := uuid.Parse(sessionID)
 	currentTurn, _ := uuid.Parse(session.CurrentTurn)
 	turnNumber := session.TurnNumber
-	
+
 	state := &api.CombatState{
 		SessionId:         sessionUUID,
 		ParticipantsState: toAPIParticipantStates(participants),
@@ -269,7 +269,7 @@ func (s *CombatSessionService) GetSessionLogs(ctx context.Context, sessionID str
 	for i, log := range logsAPI {
 		logsInterface[i] = log
 	}
-	
+
 	return nil, errors.New("not implemented - LogsResponse type not available")
 }
 */
@@ -284,7 +284,7 @@ func (s *CombatSessionService) GetSessionStats(ctx context.Context, sessionID st
 	}
 
 	sessionUUID, _ := uuid.Parse(sessionID)
-	
+
 	stats := &api.StatsResponse{
 		SessionId:         sessionUUID,
 		ParticipantsStats: toAPIParticipantStats(participants),
@@ -298,5 +298,3 @@ func (s *CombatSessionService) GetSessionStats(ctx context.Context, sessionID st
 	return nil, errors.New("not implemented - StatsResponse type not available")
 }
 */
-
-

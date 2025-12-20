@@ -4,24 +4,24 @@ info:
   description: API для управления группами игроков (до 5 человек)
   version: 1.0.0
 servers:
-- url: http://localhost:8084/api/v1
-  description: Local development
+  - url: http://localhost:8084/api/v1
+    description: Local development
 tags:
-- name: Party
-  description: Управление группами
-- name: Invites
-  description: Приглашения в группу
-- name: Loot
-  description: Распределение лута
+  - name: Party
+    description: Управление группами
+  - name: Invites
+    description: Приглашения в группу
+  - name: Loot
+    description: Распределение лута
 paths:
   /social/party/create:
     post:
       tags:
-      - Party
+        - Party
       summary: Создать группу
       operationId: createParty
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       requestBody:
         content:
           application/json:
@@ -44,14 +44,14 @@ paths:
                 $ref: common.yaml#/components/schemas/Error
   /social/party/{partyId}:
     parameters:
-    - $ref: common.yaml#/components/parameters/PartyId
+      - $ref: common.yaml#/components/parameters/PartyId
     get:
       tags:
-      - Party
+        - Party
       summary: Получить информацию о группе
       operationId: getParty
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       responses:
         '200':
           description: Информация о группе
@@ -63,11 +63,11 @@ paths:
           $ref: common.yaml#/components/responses/NotFound
     delete:
       tags:
-      - Party
+        - Party
       summary: Распустить группу (только лидер)
       operationId: disbandParty
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       responses:
         '200':
           description: Группа распущена
@@ -81,14 +81,14 @@ paths:
           $ref: common.yaml#/components/responses/NotFound
   /social/party/{partyId}/invite:
     parameters:
-    - $ref: common.yaml#/components/parameters/PartyId
+      - $ref: common.yaml#/components/parameters/PartyId
     post:
       tags:
-      - Invites
+        - Invites
       summary: Пригласить игрока
       operationId: invitePlayer
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       requestBody:
         required: true
         content:
@@ -110,19 +110,19 @@ paths:
                 $ref: common.yaml#/components/schemas/Error
   /social/party/invite/{inviteId}/accept:
     parameters:
-    - name: inviteId
-      in: path
-      required: true
-      schema:
-        type: string
-        format: uuid
+      - name: inviteId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
     post:
       tags:
-      - Invites
+        - Invites
       summary: Принять приглашение
       operationId: acceptInvite
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       responses:
         '200':
           description: Приглашение принято
@@ -140,19 +140,19 @@ paths:
                 $ref: common.yaml#/components/schemas/Error
   /social/party/invite/{inviteId}/decline:
     parameters:
-    - name: inviteId
-      in: path
-      required: true
-      schema:
-        type: string
-        format: uuid
+      - name: inviteId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
     post:
       tags:
-      - Invites
+        - Invites
       summary: Отклонить приглашение
       operationId: declineInvite
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       responses:
         '200':
           description: Приглашение отклонено
@@ -162,14 +162,14 @@ paths:
                 $ref: common.yaml#/components/schemas/SuccessResponse
   /social/party/{partyId}/leave:
     parameters:
-    - $ref: common.yaml#/components/parameters/PartyId
+      - $ref: common.yaml#/components/parameters/PartyId
     post:
       tags:
-      - Party
+        - Party
       summary: Покинуть группу
       operationId: leaveParty
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       responses:
         '200':
           description: Покинул группу
@@ -179,14 +179,14 @@ paths:
                 $ref: common.yaml#/components/schemas/SuccessResponse
   /social/party/{partyId}/kick:
     parameters:
-    - $ref: common.yaml#/components/parameters/PartyId
+      - $ref: common.yaml#/components/parameters/PartyId
     post:
       tags:
-      - Party
+        - Party
       summary: Исключить участника (только лидер)
       operationId: kickMember
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       requestBody:
         required: true
         content:
@@ -194,7 +194,7 @@ paths:
             schema:
               type: object
               required:
-              - playerId
+                - playerId
               properties:
                 playerId:
                   type: string
@@ -210,14 +210,14 @@ paths:
           $ref: common.yaml#/components/responses/Forbidden
   /social/party/{partyId}/settings:
     parameters:
-    - $ref: common.yaml#/components/parameters/PartyId
+      - $ref: common.yaml#/components/parameters/PartyId
     patch:
       tags:
-      - Party
+        - Party
       summary: Изменить настройки группы (только лидер)
       operationId: updateSettings
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       requestBody:
         required: true
         content:
@@ -233,14 +233,14 @@ paths:
                 $ref: '#/components/schemas/PartyResponse'
   /social/party/{partyId}/loot/roll:
     parameters:
-    - $ref: common.yaml#/components/parameters/PartyId
+      - $ref: common.yaml#/components/parameters/PartyId
     post:
       tags:
-      - Loot
+        - Loot
       summary: Бросить кубик на предмет
       operationId: rollForLoot
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       requestBody:
         required: true
         content:
@@ -266,10 +266,10 @@ components:
         lootMode:
           type: string
           enum:
-          - need_greed
-          - master_looter
-          - free_for_all
-          - round_robin
+            - need_greed
+            - master_looter
+            - free_for_all
+            - round_robin
           default: need_greed
         questSharing:
           type: boolean
@@ -277,10 +277,10 @@ components:
     PartyResponse:
       type: object
       required:
-      - partyId
-      - leaderId
-      - members
-      - lootMode
+        - partyId
+        - leaderId
+        - members
+        - lootMode
       properties:
         partyId:
           type: string
@@ -291,17 +291,17 @@ components:
         lootMode:
           type: string
           enum:
-          - need_greed
-          - master_looter
-          - free_for_all
-          - round_robin
+            - need_greed
+            - master_looter
+            - free_for_all
+            - round_robin
         partyStatus:
           type: string
           enum:
-          - forming
-          - active
-          - in_combat
-          - disbanded
+            - forming
+            - active
+            - in_combat
+            - disbanded
         members:
           type: array
           items:
@@ -315,8 +315,8 @@ components:
     PartyMember:
       type: object
       required:
-      - playerId
-      - role
+        - playerId
+        - role
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory: ~64 bytes/instance.'
       properties:
         playerId:
@@ -327,15 +327,15 @@ components:
         role:
           type: string
           enum:
-          - leader
-          - member
+            - leader
+            - member
         joinedAt:
           type: string
           format: date-time
     InviteRequest:
       type: object
       required:
-      - playerId
+        - playerId
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory: ~24 bytes/instance.'
       properties:
         playerId:
@@ -344,8 +344,8 @@ components:
     InviteResponse:
       type: object
       required:
-      - inviteId
-      - expiresAt
+        - inviteId
+        - expiresAt
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory: ~40 bytes/instance.'
       properties:
         inviteId:
@@ -361,17 +361,17 @@ components:
         lootMode:
           type: string
           enum:
-          - need_greed
-          - master_looter
-          - free_for_all
-          - round_robin
+            - need_greed
+            - master_looter
+            - free_for_all
+            - round_robin
         questSharing:
           type: boolean
     LootRollRequest:
       type: object
       required:
-      - itemId
-      - rollType
+        - itemId
+        - rollType
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory: ~32 bytes/instance.'
       properties:
         itemId:
@@ -380,15 +380,15 @@ components:
         rollType:
           type: string
           enum:
-          - need
-          - greed
-          - pass
+            - need
+            - greed
+            - pass
     LootRollResponse:
       type: object
       required:
-      - rollValue
-      - playerId
-      - rollType
+        - rollValue
+        - playerId
+        - rollType
       properties:
         playerId:
           type: string
@@ -396,13 +396,13 @@ components:
         rollType:
           type: string
           enum:
-          - need
-          - greed
-          - pass
+            - need
+            - greed
+            - pass
         rollValue:
           type: integer
           minimum: 1
           maximum: 100
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
 security:
-- BearerAuth: []
+  - BearerAuth: [ ]

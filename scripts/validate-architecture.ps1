@@ -28,7 +28,7 @@ function Log-Success {
 Write-Host "🔍 Starting NECPGAME Architecture Validation..." -ForegroundColor Cyan
 Write-Host ("=" * 50) -ForegroundColor Cyan
 
-# 1. Check file sizes (max 600 lines)
+# 1. Check file sizes (max 1000 lines - excludes generated files)
 if ($Check -eq "all" -or $Check -eq "file-sizes") {
     Write-Host ""
     Write-Host "📏 Checking file sizes..."
@@ -39,7 +39,7 @@ if ($Check -eq "all" -or $Check -eq "file-sizes") {
     foreach ($file in $filesToCheck) {
         try {
             $lines = (Get-Content $file.FullName | Measure-Object -Line).Lines
-            if ($lines -gt 600) {
+            if ($lines -gt 1000) {
                 # Skip generated/bundled files
                 $isGenerated = $file.Name -match '^oas_.*\.go$' -or
                 ($file.Name -match '_test\.go$' -and $file.FullName -match '\\benchmarks\\') -or

@@ -8,24 +8,24 @@ info:
     '
   version: 1.0.0
 servers:
-- url: https://api.necpgame.com
-  description: Production server
-- url: https://staging-api.necpgame.com
-  description: Staging server
+  - url: https://api.necpgame.com
+    description: Production server
+  - url: https://staging-api.necpgame.com
+    description: Staging server
 tags:
-- name: Trade Sessions
-  description: Управление торговыми сессиями
-- name: Trade History
-  description: История сделок
+  - name: Trade Sessions
+    description: Управление торговыми сессиями
+  - name: Trade History
+    description: История сделок
 paths:
   /api/v1/trade/sessions:
     post:
       tags:
-      - Trade Sessions
+        - Trade Sessions
       summary: Создать торговую сессию
       operationId: createTradeSession
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       requestBody:
         required: true
         content:
@@ -49,19 +49,19 @@ paths:
                 $ref: common.yaml#/components/schemas/Error
   /api/v1/trade/sessions/{session_id}:
     parameters:
-    - name: session_id
-      in: path
-      required: true
-      schema:
-        type: string
-        format: uuid
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
     get:
       tags:
-      - Trade Sessions
+        - Trade Sessions
       summary: Получить статус торговой сессии
       operationId: getTradeSession
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       responses:
         '200':
           description: Статус торговой сессии
@@ -73,11 +73,11 @@ paths:
           $ref: common.yaml#/components/responses/NotFound
     delete:
       tags:
-      - Trade Sessions
+        - Trade Sessions
       summary: Отменить торговую сессию
       operationId: cancelTradeSession
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       responses:
         '200':
           description: Торговая сессия отменена
@@ -91,19 +91,19 @@ paths:
           $ref: common.yaml#/components/responses/NotFound
   /api/v1/trade/sessions/{session_id}/items:
     parameters:
-    - name: session_id
-      in: path
-      required: true
-      schema:
-        type: string
-        format: uuid
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
     post:
       tags:
-      - Trade Sessions
+        - Trade Sessions
       summary: Добавить предметы в торговое окно
       operationId: addTradeItems
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       requestBody:
         required: true
         content:
@@ -123,19 +123,19 @@ paths:
           $ref: common.yaml#/components/responses/Forbidden
   /api/v1/trade/sessions/{session_id}/currency:
     parameters:
-    - name: session_id
-      in: path
-      required: true
-      schema:
-        type: string
-        format: uuid
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
     post:
       tags:
-      - Trade Sessions
+        - Trade Sessions
       summary: Добавить валюту в торговое окно
       operationId: addTradeCurrency
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       requestBody:
         required: true
         content:
@@ -153,19 +153,19 @@ paths:
           $ref: common.yaml#/components/responses/BadRequest
   /api/v1/trade/sessions/{session_id}/ready:
     parameters:
-    - name: session_id
-      in: path
-      required: true
-      schema:
-        type: string
-        format: uuid
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
     post:
       tags:
-      - Trade Sessions
+        - Trade Sessions
       summary: Подтвердить готовность к сделке
       operationId: setTradeReady
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       requestBody:
         required: true
         content:
@@ -181,19 +181,19 @@ paths:
                 $ref: '#/components/schemas/TradeSessionResponse'
   /api/v1/trade/sessions/{session_id}/complete:
     parameters:
-    - name: session_id
-      in: path
-      required: true
-      schema:
-        type: string
-        format: uuid
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
     post:
       tags:
-      - Trade Sessions
+        - Trade Sessions
       summary: Завершить сделку (обе стороны ready)
       operationId: completeTrade
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       responses:
         '200':
           description: Сделка завершена
@@ -211,16 +211,16 @@ paths:
                 $ref: common.yaml#/components/schemas/Error
   /api/v1/trade/history/{player_id}:
     parameters:
-    - $ref: common.yaml#/components/parameters/PlayerId
+      - $ref: common.yaml#/components/parameters/PlayerId
     get:
       tags:
-      - Trade History
+        - Trade History
       summary: Получить историю сделок игрока
       operationId: getTradeHistory
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       parameters:
-      - $ref: common.yaml#/components/parameters/Limit
+        - $ref: common.yaml#/components/parameters/Limit
       responses:
         '200':
           description: История сделок
@@ -236,7 +236,7 @@ components:
     CreateTradeRequest:
       type: object
       required:
-      - target_player_id
+        - target_player_id
       properties:
         target_player_id:
           type: string
@@ -257,11 +257,11 @@ components:
         trade_status:
           type: string
           enum:
-          - pending
-          - active
-          - completed
-          - cancelled
-          - expired
+            - pending
+            - active
+            - completed
+            - cancelled
+            - expired
         created_at:
           type: string
           format: date-time
@@ -288,7 +288,7 @@ components:
     AddItemsRequest:
       type: object
       required:
-      - items
+        - items
       properties:
         items:
           type: array
@@ -304,21 +304,21 @@ components:
     AddCurrencyRequest:
       type: object
       required:
-      - currency_type
-      - amount
+        - currency_type
+        - amount
       properties:
         currency_type:
           type: string
           enum:
-          - credits
-          - premium_currency
+            - credits
+            - premium_currency
         amount:
           type: integer
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     ReadyRequest:
       type: object
       required:
-      - ready
+        - ready
       properties:
         ready:
           type: boolean

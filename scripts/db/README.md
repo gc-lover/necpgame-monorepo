@@ -10,6 +10,7 @@ docker compose up -d
 ## Применение миграций (Liquibase)
 
 Структура:
+
 - `infrastructure/liquibase/changelog.yaml`
 - `infrastructure/liquibase/migrations/*`
 
@@ -33,14 +34,17 @@ liquibase \
 Liquibase поддерживает выполнение Python скриптов в дополнение к SQL.
 
 **Пример использования:**
+
 - См. `infrastructure/liquibase/migrations/V2_2__python_script_example.xml`
 - Документация: `infrastructure/liquibase/migrations/scripts/README.md`
 
 **Требования:**
+
 - Python 3.x установлен
 - Зависимости установлены (например, `psycopg2` для PostgreSQL)
 
 **Использование:**
+
 ```xml
 <executeCommand executable="python">
     <arg value="path/to/script.py"/>

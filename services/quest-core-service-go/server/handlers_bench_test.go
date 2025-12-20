@@ -5,8 +5,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/google/uuid"
 	"github.com/gc-lover/necpgame-monorepo/services/quest-core-service-go/pkg/api"
+	"github.com/google/uuid"
 )
 
 func BenchmarkStartQuest(b *testing.B) {
@@ -41,7 +41,7 @@ func BenchmarkCompleteQuest(b *testing.B) {
 	b.ReportAllocs()
 
 	for i := 0; i < b.N; i++ {
-		_, _ = service.CompleteQuest(ctx, questInstanceID, req)
+		_, _ = service.CompleteQuest(ctx, questInstanceID)
 	}
 }
 

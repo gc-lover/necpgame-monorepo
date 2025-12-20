@@ -12,20 +12,25 @@ Check if functionality is ready for QA.
 ## Return To
 
 **Content quest (NOT imported to DB):**
+
 - ❌ Return to Backend: Status `Returned`, Agent `Backend`
 - Комментарий: "WARNING Quest not imported to DB. Backend must import first. Issue: #{number}"
 
 **Backend bugs:**
+
 - ❌ Return to Backend: Status `Returned`, Agent `Backend`
 
 **Client bugs:**
+
 - ❌ Return to UE5: Status `Returned`, Agent `UE5`
 
 **Result:**
+
 - OK Ready → can start QA
 - ❌ Not ready → return to determined agent, update Status/Agent accordingly
 
 **Update fields (if returning):**
+
 ```javascript
 mcp_github_update_project_item({
   owner_type: 'user',

@@ -1,0 +1,162 @@
+# Issue: #2197 - Real-time Combat API Subscription Schemas
+components:
+  schemas:
+
+    # ============================================================================
+    # SUBSCRIPTION SCHEMAS
+    # ============================================================================
+
+    EventSubscriptionRequest:
+      type: object
+      required:
+        - player_id
+        - event_types
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          description: Player creating subscription
+        event_types:
+          type: array
+          items:
+            type: string
+            enum: [ combat_actions, ability_usage, damage_events, player_movements, ai_updates, session_events ]
+          description: Event types to subscribe to
+        session_id:
+          type: string
+          format: uuid
+          description: Specific session to monitor (optional)
+        filters:
+          $ref: '#/components/schemas/EventFilters'
+          description: Additional event filtering criteria
+        priority:
+          type: string
+          enum: [ low, normal, high, critical ]
+          default: normal
+          description: Subscription priority
+
+    EventFilters:
+      type: object
+      properties:
+        min_damage:
+          type: integer
+          minimum: 0
+          description: Minimum damage threshold
+        player_only:
+          type: boolean
+          default: false
+          description: Only events involving the subscribing player
+        zone_filter:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Specific zones to monitor
+        distance_filter:
+          type: object
+          properties:
+            max_distance:
+              type: number
+              format: float
+              minimum: 0
+              description: Maximum distance from player
+            center_position:
+              $ref: './realtime-combat-api-common-schemas.yaml#/components/schemas/Vector3'
+              description: Center position for distance calculations
+
+    EventSubscription:
+      type: object
+      required:
+        - id
+        - player_id
+        - event_types
+        - status
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Subscription identifier
+        player_id:
+          type: string
+          format: uuid
+          description: Subscribing player
+        event_types:
+          type: array
+          items:
+            type: string
+            enum: [ combat_actions, ability_usage, damage_events, player_movements, ai_updates, session_events ]
+          description: Subscribed event types
+        session_id:
+          type: string
+          format: uuid
+          description: Associated session
+        filters:
+          $ref: '#/components/schemas/EventFilters'
+          description: Active filters
+        priority:
+          type: string
+          enum: [ low, normal, high, critical ]
+          description: Subscription priority
+        status:
+          type: string
+          enum: [ active, paused, suspended, expired ]
+          description: Subscription status
+        created_at:
+          type: string
+          format: date-time
+          description: Subscription creation time
+        expires_at:
+          type: string
+          format: date-time
+          description: Subscription expiration time
+        last_used:
+          type: string
+          format: date-time
+          description: Last event delivery time
+
+    EventSubscriptionUpdate:
+      type: object
+      properties:
+        event_types:
+          type: array
+          items:
+            type: string
+            enum: [ combat_actions, ability_usage, damage_events, player_movements, ai_updates, session_events ]
+          description: Updated event types
+        filters:
+          $ref: '#/components/schemas/EventFilters'
+          description: Updated filters
+        priority:
+          type: string
+          enum: [ low, normal, high, critical ]
+          description: Updated priority
+        status:
+          type: string
+          enum: [ active, paused, suspended ]
+          description: Updated status
+
+    EventSubscriptionListResponse:
+      type: object
+      required:
+        - subscriptions
+        - total
+      properties:
+        subscriptions:
+          type: array
+          items:
+            $ref: '#/components/schemas/EventSubscription'
+          description: Event subscriptions
+        total:
+          type: integer
+          minimum: 0
+          description: Total number of subscriptions
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Items per page
+        offset:
+          type: integer
+          minimum: 0
+          description: Pagination offset

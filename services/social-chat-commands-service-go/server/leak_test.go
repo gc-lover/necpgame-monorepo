@@ -46,4 +46,3 @@ func TestChatCommandsServiceNoLeaks(t *testing.T) {
 // - Worker pools for bounded concurrency
 // - Timeout for all DB operations
 // - Proper channel management
-

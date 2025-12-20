@@ -4,32 +4,32 @@ info:
   description: Service for managing weapon progression, upgrades, perks, and mastery
   version: 1.0.0
 servers:
-- url: http://localhost:8090
-  description: Local development
-- url: https://api.necpgame.com
-  description: Production
+  - url: http://localhost:8090
+    description: Local development
+  - url: https://api.necpgame.com
+    description: Production
 tags:
-- name: progression
-  description: Weapon progression and upgrades
-- name: perks
-  description: Weapon perks management
-- name: mastery
-  description: Weapon mastery tracking
+  - name: progression
+    description: Weapon progression and upgrades
+  - name: perks
+    description: Weapon perks management
+  - name: mastery
+    description: Weapon mastery tracking
 paths:
   /api/v1/weapons/progression/{weaponId}:
     get:
       summary: Get weapon progression
       description: Retrieve progression data for a specific weapon instance
       tags:
-      - progression
+        - progression
       parameters:
-      - name: weaponId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: Weapon instance ID
+        - name: weaponId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Weapon instance ID
       responses:
         '200':
           description: Weapon progression data
@@ -42,19 +42,19 @@ paths:
         '500':
           $ref: common.yaml#/components/responses/InternalServerError
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
     post:
       summary: Upgrade weapon
       description: Upgrade weapon to next level
       tags:
-      - progression
+        - progression
       parameters:
-      - name: weaponId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+        - name: weaponId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
       requestBody:
         required: true
         content:
@@ -75,34 +75,34 @@ paths:
         '500':
           $ref: common.yaml#/components/responses/InternalServerError
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
   /api/v1/weapons/perks:
     get:
       summary: List all weapon perks
       description: Get all available weapon perks with optional filtering
       tags:
-      - perks
+        - perks
       parameters:
-      - name: weaponType
-        in: query
-        schema:
-          type: string
-          enum:
-          - assault_rifle
-          - sniper_rifle
-          - shotgun
-          - pistol
-          - smg
-        description: Filter by weapon type
-      - $ref: common.yaml#/components/parameters/Page
-      - name: page_size
-        in: query
-        schema:
-          type: integer
-          minimum: 1
-          maximum: 100
-          default: 20
-        description: Number of items per page
+        - name: weaponType
+          in: query
+          schema:
+            type: string
+            enum:
+              - assault_rifle
+              - sniper_rifle
+              - shotgun
+              - pistol
+              - smg
+          description: Filter by weapon type
+        - $ref: common.yaml#/components/parameters/Page
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of items per page
       responses:
         '200':
           description: List of weapon perks
@@ -120,20 +120,20 @@ paths:
         '500':
           $ref: common.yaml#/components/responses/InternalServerError
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
   /api/v1/weapons/perks/{perkId}/unlock:
     post:
       summary: Unlock weapon perk
       description: Unlock a specific perk for player's weapon type
       tags:
-      - perks
+        - perks
       parameters:
-      - name: perkId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+        - name: perkId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
       requestBody:
         required: true
         content:
@@ -154,31 +154,31 @@ paths:
         '500':
           $ref: common.yaml#/components/responses/InternalServerError
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
   /api/v1/weapons/mastery/{weaponType}:
     get:
       summary: Get weapon mastery
       description: Retrieve player's mastery for specific weapon type
       tags:
-      - mastery
+        - mastery
       parameters:
-      - name: weaponType
-        in: path
-        required: true
-        schema:
-          type: string
-          enum:
-          - assault_rifle
-          - sniper_rifle
-          - shotgun
-          - pistol
-          - smg
-      - name: playerId
-        in: query
-        required: true
-        schema:
-          type: string
-          format: uuid
+        - name: weaponType
+          in: path
+          required: true
+          schema:
+            type: string
+            enum:
+              - assault_rifle
+              - sniper_rifle
+              - shotgun
+              - pistol
+              - smg
+        - name: playerId
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
       responses:
         '200':
           description: Weapon mastery data
@@ -191,20 +191,20 @@ paths:
         '500':
           $ref: common.yaml#/components/responses/InternalServerError
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
   /api/v1/weapons/mastery:
     get:
       summary: Get all weapon masteries
       description: Retrieve all weapon masteries for a player
       tags:
-      - mastery
+        - mastery
       parameters:
-      - name: playerId
-        in: query
-        required: true
-        schema:
-          type: string
-          format: uuid
+        - name: playerId
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
       responses:
         '200':
           description: List of weapon masteries
@@ -220,7 +220,7 @@ paths:
         '500':
           $ref: common.yaml#/components/responses/InternalServerError
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
 components:
   schemas:
     WeaponProgression:
@@ -257,11 +257,11 @@ components:
           type: integer
           description: Cost for next upgrade
       required:
-      - weaponInstanceId
-      - upgradeLevel
-      - experience
-      - unlockedPerks
-      - stats
+        - weaponInstanceId
+        - upgradeLevel
+        - experience
+        - unlockedPerks
+        - stats
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     WeaponStats:
       type: object
@@ -283,10 +283,10 @@ components:
           format: float
           description: Critical chance bonus percentage
       required:
-      - damageBonus
-      - accuracyBonus
-      - rangeBonus
-      - criticalChanceBonus
+        - damageBonus
+        - accuracyBonus
+        - rangeBonus
+        - criticalChanceBonus
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     UpgradeWeaponRequest:
       type: object
@@ -301,7 +301,7 @@ components:
           additionalProperties:
             type: integer
       required:
-      - playerId
+        - playerId
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     WeaponPerk:
       type: object
@@ -317,11 +317,11 @@ components:
         weaponType:
           type: string
           enum:
-          - assault_rifle
-          - sniper_rifle
-          - shotgun
-          - pistol
-          - smg
+            - assault_rifle
+            - sniper_rifle
+            - shotgun
+            - pistol
+            - smg
         createdAt:
           type: string
           format: date-time
@@ -343,12 +343,12 @@ components:
               type: string
               format: uuid
       required:
-      - perkId
-      - weaponType
-      - name
-      - description
-      - effect
-      - unlockRequirements
+        - perkId
+        - weaponType
+        - name
+        - description
+        - effect
+        - unlockRequirements
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     UnlockPerkRequest:
       type: object
@@ -360,8 +360,8 @@ components:
           type: string
           format: uuid
       required:
-      - playerId
-      - weaponInstanceId
+        - playerId
+        - weaponInstanceId
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     UnlockPerkResponse:
       type: object
@@ -373,7 +373,7 @@ components:
         success:
           type: boolean
       required:
-      - success
+        - success
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     WeaponMastery:
       type: object
@@ -384,11 +384,11 @@ components:
         weaponType:
           type: string
           enum:
-          - assault_rifle
-          - sniper_rifle
-          - shotgun
-          - pistol
-          - smg
+            - assault_rifle
+            - sniper_rifle
+            - shotgun
+            - pistol
+            - smg
         createdAt:
           type: string
           format: date-time
@@ -409,11 +409,11 @@ components:
           maximum: 100
           description: Calculated mastery level
       required:
-      - playerId
-      - weaponType
-      - usesCount
-      - killsCount
-      - masteryLevel
+        - playerId
+        - weaponType
+        - usesCount
+        - killsCount
+        - masteryLevel
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
   securitySchemes:
     BearerAuth:

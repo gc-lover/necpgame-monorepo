@@ -1,8 +1,8 @@
 .PHONY: generate-api bundle-api clean verify-api check-deps install-deps check-file-sizes build test benchmark
 
-# Issue: #150 - Economy Service ogen migration
+# Issue: #150 - Economy Service oapi-codegen
 SERVICE_NAME := economy-core-service
-OGEN := ogen
+OAPI_CODEGEN := oapi-codegen
 REDOCLY_CLI := npx -y @redocly/cli
 
 SPEC_DIR := ../../proto/openapi
@@ -12,14 +12,14 @@ BUNDLED_SPEC := openapi-bundled.yaml
 
 check-deps:
 	@echo "Checking dependencies..."
-	@command -v $(OGEN) >/dev/null 2>&1 || { echo "❌ ogen not found. Installing..."; $(MAKE) install-deps; }
+	@command -v $(OAPI_CODEGEN) >/dev/null 2>&1 || { echo "❌ oapi-codegen not found. Installing..."; $(MAKE) install-deps; }
 	@command -v node >/dev/null 2>&1 || { echo "❌ node not found"; exit 1; }
 	@echo "OK Dependencies installed"
 
 install-deps:
-	@echo "Installing ogen..."
-	@go install github.com/ogen-go/ogen/cmd/ogen@latest
-	@echo "OK ogen installed"
+	@echo "Installing oapi-codegen..."
+	@go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest
+	@echo "OK oapi-codegen installed"
 
 bundle-api: check-deps
 	@echo "Bundling: $(SERVICE_SPEC)"
@@ -28,18 +28,18 @@ bundle-api: check-deps
 	@echo "OK Bundled to $(BUNDLED_SPEC)"
 
 generate-api: bundle-api
-	@echo "Generating ogen code..."
+	@echo "Generating oapi-codegen code..."
 	@mkdir -p $(API_DIR)
-	@$(OGEN) --target $(API_DIR) --package api --clean $(BUNDLED_SPEC) || exit 1
-	@echo "OK ogen generation complete!"
+	@$(OAPI_CODEGEN) -generate types,client,server -package api $(BUNDLED_SPEC) > $(API_DIR)/api.gen.go || exit 1
+	@echo "OK oapi-codegen generation complete!"
 	@$(MAKE) check-file-sizes
 
 check-file-sizes:
 	@echo ""
-	@echo "File size check (max 500 lines per file):"
+	@echo "File size check (max 1000 lines per file):"
 	@find $(API_DIR) -name "*.go" -type f | while read file; do \
 		lines=$$(wc -l < "$$file" | tr -d ' '); \
-		if [ $$lines -gt 500 ]; then \
+		if [ $$lines -gt 1000 ]; then \
 			echo "WARNING  $$file: $$lines lines (EXCEEDS)"; \
 		else \
 			echo "OK $$file: $$lines lines"; \

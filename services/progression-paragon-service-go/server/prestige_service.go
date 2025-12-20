@@ -19,45 +19,11 @@ type PrestigeServiceInterface interface {
 }
 
 type PrestigeService struct {
-	repo            PrestigeRepositoryInterface
-	paragonRepo     ParagonRepositoryInterface
-	db              *pgxpool.Pool
-	cache           *redis.Client
-	logger          *logrus.Logger
-}
-
-func NewPrestigeService(dbURL, redisURL string, paragonRepo ParagonRepositoryInterface) (*PrestigeService, error) {
-	// Issue: #1605 - DB Connection Pool configuration
-	config, err := pgxpool.ParseConfig(dbURL)
-	if err != nil {
-		return nil, err
-	}
-	config.MaxConns = 50
-	config.MinConns = 10
-	config.MaxConnLifetime = 5 * time.Minute
-	config.MaxConnIdleTime = 1 * time.Minute
-	
-	dbPool, err := pgxpool.NewWithConfig(context.Background(), config)
-	if err != nil {
-		return nil, err
-	}
-
-	redisOpts, err := redis.ParseURL(redisURL)
-	if err != nil {
-		return nil, err
-	}
-
-	redisClient := redis.NewClient(redisOpts)
-
-	repo := NewPrestigeRepository(dbPool)
-
-	return &PrestigeService{
-		repo:        repo,
-		paragonRepo: paragonRepo,
-		db:          dbPool,
-		cache:       redisClient,
-		logger:      GetLogger(),
-	}, nil
+	repo        PrestigeRepositoryInterface
+	paragonRepo ParagonRepositoryInterface
+	db          *pgxpool.Pool
+	cache       *redis.Client
+	logger      *logrus.Logger
 }
 
 func (s *PrestigeService) GetPrestigeInfo(ctx context.Context, characterID uuid.UUID) (*PrestigeInfo, error) {
@@ -152,7 +118,7 @@ func (s *PrestigeService) GetPrestigeBonuses(ctx context.Context, characterID uu
 func (s *PrestigeService) calculateNextPrestigeRequirements(level int) *PrestigeRequirements {
 	return &PrestigeRequirements{
 		MinLevel:         50,
-		MinParagonLevel: 20 + (level * 5),
+		MinParagonLevel:  20 + (level * 5),
 		CompletedContent: []string{},
 	}
 }
@@ -182,7 +148,7 @@ func (s *PrestigeService) calculatePrestigeBonuses(level int) map[string]float64
 
 func (s *PrestigeService) getAvailableBonuses(level int) []PrestigeBonusItem {
 	bonuses := s.calculatePrestigeBonuses(level)
-	items := []PrestigeBonusItem{}
+	var items []PrestigeBonusItem
 
 	for bonusType, value := range bonuses {
 		item := PrestigeBonusItem{
@@ -204,4 +170,3 @@ func (s *PrestigeService) getAvailableBonuses(level int) []PrestigeBonusItem {
 
 	return items
 }
-

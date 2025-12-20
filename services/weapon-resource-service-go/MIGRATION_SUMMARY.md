@@ -9,27 +9,33 @@
 ## Changes Made
 
 ### 1. Updated go.mod
+
 - Removed `oapi-codegen/runtime`
 - Added `ogen-go/ogen v1.18.0`
 - Added OpenTelemetry dependencies
 
 ### 2. Updated handlers.go
+
 - Migrated to typed responses (ogen Handler interface)
 - All 5 handlers use typed responses
 - Context timeouts (50ms DB)
 
 ### 3. Updated http_server.go
+
 - Using ogen server with stdlib `http.ServeMux`
 - SecurityHandler integration
 
 ### 4. Created security.go
+
 - SecurityHandler implementation
 
 ### 5. Updated service.go
+
 - Methods match ogen interface
 - Fixed types (WeaponStatus, ReloadWeaponRequest)
 
 ### 6. Updated repository.go
+
 - Fixed types (HeatState, EnergyState)
 - Methods match service interface
 

@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/gc-lover/necpgame-monorepo/services/movement-service-go/models"
+	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -552,4 +552,3 @@ func TestMovementService_GetPosition_MultipleCharacters(t *testing.T) {
 
 	mockRepo.AssertExpectations(t)
 }
-

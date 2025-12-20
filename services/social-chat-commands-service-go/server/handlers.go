@@ -1,4 +1,4 @@
-// SQL queries use prepared statements with placeholders (, , ?) for safety
+// Package server SQL queries use prepared statements with placeholders (, , ?) for safety
 // Issue: #1598, #1607
 // ogen handlers - TYPED responses (no interface{} boxing!)
 package server
@@ -10,7 +10,7 @@ import (
 	"github.com/gc-lover/necpgame-monorepo/services/social-chat-commands-service-go/pkg/api"
 )
 
-// Context timeout constants (Issue #1604)
+// DBTimeout Context timeout constants (Issue #1604)
 const (
 	DBTimeout = 50 * time.Millisecond
 )
@@ -33,7 +33,7 @@ func (h *ChatCommandsHandlers) ExecuteChatCommand(ctx context.Context, req *api.
 	command := req.Command
 
 	response := &api.CommandResponse{
-		Success: api.NewOptBool(success),
+		Success: api.NewOptBool(true),
 		Command: api.NewOptString(command),
 		Result:  api.NewOptNilString(result),
 		Error:   api.OptNilString{},
@@ -41,4 +41,3 @@ func (h *ChatCommandsHandlers) ExecuteChatCommand(ctx context.Context, req *api.
 
 	return response, nil
 }
-

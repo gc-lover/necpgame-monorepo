@@ -49,12 +49,6 @@ const (
 
 type ModerationStatus string
 
-const (
-	ModerationStatusPending  ModerationStatus = "pending"
-	ModerationStatusApproved ModerationStatus = "approved"
-	ModerationStatusRejected ModerationStatus = "rejected"
-)
-
 type GameContext struct {
 	Version        string   `json:"version" db:"version"`
 	Location       string   `json:"location,omitempty" db:"location"`

@@ -1,4 +1,4 @@
-// SQL queries use prepared statements with placeholders ($1, $2, ?) for safety
+// Package server SQL queries use prepared statements with placeholders ($1, $2, ?) for safety
 package server
 
 import (
@@ -46,7 +46,7 @@ func (h *Handlers) ActivateCombo(ctx context.Context, req *api.ActivateComboRequ
 }
 
 // GetComboCatalog implements GET /gameplay/combat/combos/catalog
-func (h *Handlers) GetComboCatalog(ctx context.Context, params api.GetComboCatalogParams) (api.GetComboCatalogRes, error) {
+func (h *Handlers) GetComboCatalog(ctx context.Context, _ api.GetComboCatalogParams) (api.GetComboCatalogRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 

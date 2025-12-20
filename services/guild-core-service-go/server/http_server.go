@@ -1,4 +1,4 @@
-// Issue: #1856
+// Package server Issue: #1856
 // OPTIMIZED: No chi dependency, standard http.ServeMux + middleware chain
 // PERFORMANCE: OGEN routes (hot path) already maximum speed, removed chi overhead from health/metrics
 package server
@@ -36,9 +36,9 @@ func NewHTTPServer(addr string, service *Service) *HTTPServer {
 	// Middleware chain (no duplication, optimized)
 	apiHandler := chainMiddleware(ogenServer,
 		recoveryMiddleware,  // panic recovery
-		requestIDMiddleware,  // request ID
-		LoggingMiddleware,    // structured logging
-		MetricsMiddleware,    // metrics
+		requestIDMiddleware, // request ID
+		LoggingMiddleware,   // structured logging
+		MetricsMiddleware,   // metrics
 	)
 
 	// Mount OGEN (hot path - maximum speed, static router)
@@ -84,7 +84,7 @@ func chainMiddleware(handler http.Handler, middlewares ...func(http.Handler) htt
 type SecurityHandler struct{}
 
 // HandleBearerAuth handles Bearer token authentication
-func (s *SecurityHandler) HandleBearerAuth(ctx context.Context, operationName string, t api.BearerAuth) (context.Context, error) {
+func (s *SecurityHandler) HandleBearerAuth(ctx context.Context, _ string, _ api.BearerAuth) (context.Context, error) {
 	// TODO: Implement JWT token validation
 	// For now, just extract user ID from token
 	userID, err := uuid.Parse("00000000-0000-0000-0000-000000000001") // Mock user ID
@@ -96,7 +96,3 @@ func (s *SecurityHandler) HandleBearerAuth(ctx context.Context, operationName st
 	ctx = context.WithValue(ctx, "user_id", userID)
 	return ctx, nil
 }
-
-
-
-

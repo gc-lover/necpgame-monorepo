@@ -1,4 +1,4 @@
-// SQL queries use prepared statements with placeholders ($1, $2, ?) for safety
+// Package models SQL queries use prepared statements with placeholders ($1, $2, ?) for safety
 package models
 
 import (
@@ -10,12 +10,7 @@ import (
 type OrderType string
 
 const (
-	OrderTypeCombat    OrderType = "combat"
-	OrderTypeHacking   OrderType = "hacking"
-	OrderTypeTrade     OrderType = "trade"
-	OrderTypePolitical OrderType = "political"
-	OrderTypeResearch  OrderType = "research"
-	OrderTypeSocial    OrderType = "social"
+	OrderTypeCombat OrderType = "combat"
 )
 
 type OrderStatus string

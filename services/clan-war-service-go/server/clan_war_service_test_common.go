@@ -1,4 +1,4 @@
-// Issue: #140895110
+// Package server Issue: #140895110
 package server
 
 import (
@@ -109,4 +109,3 @@ func setupTestService(t *testing.T) (*ClanWarService, *mockClanWarRepository, fu
 
 	return service, mockRepo, cleanup
 }
-

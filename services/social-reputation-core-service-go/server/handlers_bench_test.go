@@ -15,8 +15,7 @@ func BenchmarkGetReputation(b *testing.B) {
 	handlers := NewHandlers(service)
 
 	ctx := context.Background()
-	params := api.GetReputationParams{
-	}
+	params := api.GetReputationParams{}
 
 	b.ReportAllocs()
 	b.ResetTimer()
@@ -33,8 +32,7 @@ func BenchmarkGetFactionReputation(b *testing.B) {
 	handlers := NewHandlers(service)
 
 	ctx := context.Background()
-	params := api.GetFactionReputationParams{
-	}
+	params := api.GetFactionReputationParams{}
 
 	b.ReportAllocs()
 	b.ResetTimer()
@@ -51,8 +49,7 @@ func BenchmarkGetFactionRelations(b *testing.B) {
 	handlers := NewHandlers(service)
 
 	ctx := context.Background()
-	params := api.GetFactionRelationsParams{
-	}
+	params := api.GetFactionRelationsParams{}
 
 	b.ReportAllocs()
 	b.ResetTimer()
@@ -61,4 +58,3 @@ func BenchmarkGetFactionRelations(b *testing.B) {
 		_, _ = handlers.GetFactionRelations(ctx, params)
 	}
 }
-

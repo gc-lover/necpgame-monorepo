@@ -1,4 +1,4 @@
-// SQL queries use prepared statements with placeholders (, , ?) for safety
+// Package server SQL queries use prepared statements with placeholders (, , ?) for safety
 // Issue: #1443
 // Currency Exchange Service - business logic for currency exchange operations
 package server
@@ -15,25 +15,25 @@ import (
 
 // CurrencyExchangeServiceInterface defines business logic methods for currency exchange
 type CurrencyExchangeServiceInterface interface {
-	// Rates
+	// GetExchangeRates Rates
 	GetExchangeRates(ctx context.Context) ([]models.CurrencyExchangeRate, error)
 	GetExchangeRate(ctx context.Context, pair string) (*models.CurrencyExchangeRate, error)
 	GetExchangeRateHistory(ctx context.Context, pair string, limit int) ([]models.CurrencyExchangeRate, error)
 
-	// Quotes
+	// CreateQuote Quotes
 	CreateQuote(ctx context.Context, fromCurrency, toCurrency string, fromAmount float64) (*models.CurrencyExchangeQuote, error)
 
-	// Orders
+	// CreateInstantExchange Orders
 	CreateInstantExchange(ctx context.Context, playerID uuid.UUID, req models.CreateInstantExchangeRequest) (*models.CurrencyExchangeOrder, error)
 	CreateLimitOrder(ctx context.Context, playerID uuid.UUID, req models.CreateLimitOrderRequest) (*models.CurrencyExchangeOrder, error)
 	GetOrder(ctx context.Context, orderID uuid.UUID) (*models.CurrencyExchangeOrder, error)
 	ListOrders(ctx context.Context, filter models.OrderFilter) ([]models.CurrencyExchangeOrder, error)
 	CancelOrder(ctx context.Context, orderID uuid.UUID) error
 
-	// Trades
+	// ListTrades Trades
 	ListTrades(ctx context.Context, filter models.TradeFilter) ([]models.CurrencyExchangeTrade, error)
 
-	// Background processing
+	// ProcessExpiredOrders Background processing
 	ProcessExpiredOrders(ctx context.Context) error
 	ProcessLimitOrders(ctx context.Context) error
 }
@@ -286,7 +286,7 @@ func (s *CurrencyExchangeService) ListTrades(ctx context.Context, filter models.
 }
 
 // ProcessExpiredOrders processes expired limit orders
-func (s *CurrencyExchangeService) ProcessExpiredOrders(ctx context.Context) error {
+func (s *CurrencyExchangeService) ProcessExpiredOrders(_ context.Context) error {
 	// This would be called by a background job
 	// For now, just log that it's not implemented
 	s.logger.Info("ProcessExpiredOrders called - not implemented yet")
@@ -294,10 +294,9 @@ func (s *CurrencyExchangeService) ProcessExpiredOrders(ctx context.Context) erro
 }
 
 // ProcessLimitOrders processes limit orders that can be filled
-func (s *CurrencyExchangeService) ProcessLimitOrders(ctx context.Context) error {
+func (s *CurrencyExchangeService) ProcessLimitOrders(_ context.Context) error {
 	// This would be called by a background job
 	// For now, just log that it's not implemented yet
 	s.logger.Info("ProcessLimitOrders called - not implemented yet")
 	return nil
 }
-

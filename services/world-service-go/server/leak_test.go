@@ -47,4 +47,3 @@ func TestWorldServiceNoLeaks(t *testing.T) {
 // - Channel close for all event channels
 // - Timeout for all DB operations
 // - Connection pool limits
-

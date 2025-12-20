@@ -1,4 +1,4 @@
-// Issue: #1600 - ogen handlers (TYPED responses)
+// Package server Issue: #1600 - ogen handlers (TYPED responses)
 package server
 
 import (
@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	api "github.com/necpgame/stock-margin-service-go/pkg/api"
+	"github.com/necpgame/stock-margin-service-go/pkg/api"
 	"github.com/sirupsen/logrus"
 )
 
@@ -35,7 +35,7 @@ func (h *Handlers) GetMarginAccount(ctx context.Context) (api.GetMarginAccountRe
 
 	// TODO: Get accountID from context (from SecurityHandler)
 	accountID := uuid.New()
-	
+
 	if h.service == nil {
 		return &api.MarginAccount{
 			AccountID: api.NewOptUUID(accountID),
@@ -67,7 +67,7 @@ func (h *Handlers) BorrowMargin(ctx context.Context, req *api.BorrowMarginReques
 
 	// TODO: Get accountID from context (from SecurityHandler)
 	accountID := uuid.New()
-	
+
 	if h.service == nil {
 		return &api.BorrowMarginResponse{
 			BorrowedAmount:     api.NewOptFloat64(0.0),
@@ -96,7 +96,7 @@ func (h *Handlers) RepayMargin(ctx context.Context, req *api.RepayMarginRequest)
 
 	// TODO: Get accountID from context (from SecurityHandler)
 	accountID := uuid.New()
-	
+
 	if h.service == nil {
 		return &api.RepayMarginOK{}, nil
 	}
@@ -146,7 +146,7 @@ func (h *Handlers) GetMarginCallHistory(ctx context.Context, params api.GetMargi
 
 	// TODO: Get accountID from context (from SecurityHandler)
 	accountID := uuid.New()
-	
+
 	limit := 50
 	if params.Limit.IsSet() {
 		limit = params.Limit.Value
@@ -185,7 +185,7 @@ func (h *Handlers) GetRiskHealth(ctx context.Context) (api.GetRiskHealthRes, err
 
 	// TODO: Get accountID from context (from SecurityHandler)
 	accountID := uuid.New()
-	
+
 	if h.service == nil {
 		return &api.RiskHealth{
 			MarginHealth:      api.NewOptFloat64(1.0),
@@ -215,7 +215,7 @@ func (h *Handlers) OpenShortPosition(ctx context.Context, req *api.ShortPosition
 
 	// TODO: Get accountID from context (from SecurityHandler)
 	accountID := uuid.New()
-	
+
 	if h.service == nil {
 		return &api.ShortPosition{
 			PositionID: api.NewOptUUID(uuid.New()),
@@ -244,7 +244,7 @@ func (h *Handlers) ListShortPositions(ctx context.Context, params api.ListShortP
 
 	// TODO: Get accountID from context (from SecurityHandler)
 	accountID := uuid.New()
-	
+
 	limit := 50
 	if params.Limit.IsSet() {
 		limit = params.Limit.Value
@@ -306,7 +306,7 @@ func (h *Handlers) CloseShortPosition(ctx context.Context, params api.CloseShort
 
 	if h.service == nil {
 		return &api.ClosePositionResponse{
-			PositionID: api.NewOptUUID(params.PositionID),
+			PositionID:  api.NewOptUUID(params.PositionID),
 			RealizedPnl: api.NewOptFloat64(0.0),
 			ClosedAt:    api.OptDateTime{},
 		}, nil

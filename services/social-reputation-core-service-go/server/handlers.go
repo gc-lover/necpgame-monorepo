@@ -1,4 +1,4 @@
-// Issue: #1595
+// Package server Issue: #1595
 // ogen handlers - TYPED responses (no interface{} boxing!)
 package server
 
@@ -10,10 +10,8 @@ import (
 	"github.com/gc-lover/necpgame-monorepo/services/social-reputation-core-service-go/pkg/api"
 )
 
-// Context timeout constants
 const (
-	DBTimeout    = 50 * time.Millisecond
-	CacheTimeout = 10 * time.Millisecond
+	DBTimeout = 50 * time.Millisecond
 )
 
 var (
@@ -35,7 +33,7 @@ func (h *Handlers) GetReputation(ctx context.Context, params api.GetReputationPa
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	result, err := h.service.GetReputation(ctx, params.CharacterId)
+	result, err := h.service.GetReputation(params.CharacterId)
 	if err != nil {
 		if err == ErrNotFound {
 			return &api.GetReputationNotFound{}, nil
@@ -51,7 +49,7 @@ func (h *Handlers) GetFactionReputation(ctx context.Context, params api.GetFacti
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	result, err := h.service.GetFactionReputation(ctx, params.CharacterId, params.FactionId)
+	result, err := h.service.GetFactionReputation(params.CharacterId, params.FactionId)
 	if err != nil {
 		if err == ErrNotFound {
 			return &api.GetFactionReputationNotFound{}, nil
@@ -67,7 +65,7 @@ func (h *Handlers) GetFactionRelations(ctx context.Context, params api.GetFactio
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	result, err := h.service.GetFactionRelations(ctx, params.CharacterId)
+	result, err := h.service.GetFactionRelations(params.CharacterId)
 	if err != nil {
 		if err == ErrNotFound {
 			return &api.GetFactionRelationsNotFound{}, nil
@@ -83,7 +81,7 @@ func (h *Handlers) GetReputationTier(ctx context.Context, params api.GetReputati
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	result, err := h.service.GetReputationTier(ctx, params.CharacterId)
+	result, err := h.service.GetReputationTier(params.CharacterId)
 	if err != nil {
 		if err == ErrNotFound {
 			return &api.GetReputationTierNotFound{}, nil
@@ -99,7 +97,7 @@ func (h *Handlers) GetReputationEffects(ctx context.Context, params api.GetReput
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	result, err := h.service.GetReputationEffects(ctx, params.CharacterId)
+	result, err := h.service.GetReputationEffects(params.CharacterId)
 	if err != nil {
 		if err == ErrNotFound {
 			return &api.GetReputationEffectsNotFound{}, nil
@@ -115,7 +113,7 @@ func (h *Handlers) ChangeReputation(ctx context.Context, req *api.ChangeReputati
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	result, err := h.service.ChangeReputation(ctx, params.CharacterId, req)
+	result, err := h.service.ChangeReputation(params.CharacterId, req)
 	if err != nil {
 		if err == ErrNotFound {
 			return &api.ChangeReputationBadRequest{}, nil

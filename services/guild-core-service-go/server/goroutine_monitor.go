@@ -1,8 +1,7 @@
-// Issue: #1585 - Runtime Goroutine Monitoring
+// Package server Issue: #1585 - Runtime Goroutine Monitoring
 package server
 
 import (
-	"context"
 	"runtime"
 	"time"
 
@@ -53,8 +52,8 @@ func (gm *GoroutineMonitor) checkGoroutines() {
 
 	if count > gm.maxGoroutines {
 		gm.logger.WithFields(logrus.Fields{
-			"goroutines":      count,
-			"max_goroutines":  gm.maxGoroutines,
+			"goroutines":         count,
+			"max_goroutines":     gm.maxGoroutines,
 			"threshold_exceeded": true,
 		}).Warn("High goroutine count detected")
 	} else {
@@ -64,7 +63,3 @@ func (gm *GoroutineMonitor) checkGoroutines() {
 		}).Debug("Goroutine count normal")
 	}
 }
-
-
-
-

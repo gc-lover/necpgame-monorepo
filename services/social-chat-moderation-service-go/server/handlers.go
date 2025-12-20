@@ -1,4 +1,4 @@
-// Issue: #1598, #1604
+// Package server Issue: #1598, #1604
 // ogen handlers - TYPED responses (no interface{} boxing!)
 package server
 
@@ -12,7 +12,7 @@ import (
 	"github.com/google/uuid"
 )
 
-// Context timeout constants
+// DBTimeout Context timeout constants
 const (
 	DBTimeout = 50 * time.Millisecond
 )
@@ -46,7 +46,7 @@ func NewChatModerationHandlers() *ChatModerationHandlers {
 }
 
 // ReportChatMessage implements POST /social/chat/report - TYPED response!
-func (h *ChatModerationHandlers) ReportChatMessage(ctx context.Context, req *api.ReportMessageRequest) (api.ReportChatMessageRes, error) {
+func (h *ChatModerationHandlers) ReportChatMessage(ctx context.Context, _ *api.ReportMessageRequest) (api.ReportChatMessageRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
@@ -55,7 +55,7 @@ func (h *ChatModerationHandlers) ReportChatMessage(ctx context.Context, req *api
 
 	return &api.ReportResponse{
 		ReportID: api.NewOptUUID(reportId),
-		Success:  api.NewOptBool(success),
+		Success:  api.NewOptBool(true),
 	}, nil
 }
 
@@ -74,7 +74,7 @@ func (h *ChatModerationHandlers) BanChatUser(ctx context.Context, req *api.BanUs
 
 	return &api.BanResponse{
 		BanID:     api.NewOptUUID(banId),
-		Success:   api.NewOptBool(success),
+		Success:   api.NewOptBool(true),
 		ExpiresAt: expiresAt,
 	}, nil
 }
@@ -137,7 +137,7 @@ func (h *ChatModerationHandlers) GetChatBans(ctx context.Context, params api.Get
 }
 
 // RevokeChatBan implements DELETE /social/chat/bans/{ban_id} - TYPED response!
-func (h *ChatModerationHandlers) RevokeChatBan(ctx context.Context, req *api.RevokeBanRequest, params api.RevokeChatBanParams) (api.RevokeChatBanRes, error) {
+func (h *ChatModerationHandlers) RevokeChatBan(ctx context.Context, _ *api.RevokeBanRequest, params api.RevokeChatBanParams) (api.RevokeChatBanRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
@@ -145,7 +145,7 @@ func (h *ChatModerationHandlers) RevokeChatBan(ctx context.Context, req *api.Rev
 
 	return &api.RevokeBanResponse{
 		BanID:   api.NewOptUUID(params.BanID),
-		Success: api.NewOptBool(success),
+		Success: api.NewOptBool(true),
 	}, nil
 }
 
@@ -196,7 +196,7 @@ func (h *ChatModerationHandlers) FilterChatMessage(ctx context.Context, req *api
 }
 
 // WarnChatUser implements POST /social/chat/warnings - Issue warnings to users
-func (h *ChatModerationHandlers) WarnChatUser(ctx context.Context, req *api.WarnUserRequest) (api.WarnChatUserRes, error) {
+func (h *ChatModerationHandlers) WarnChatUser(ctx context.Context, _ *api.WarnUserRequest) (api.WarnChatUserRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
@@ -377,7 +377,7 @@ func (h *ChatModerationHandlers) ResolveChatReport(ctx context.Context, req *api
 	return &api.ResolveReportResponse{
 		Success:     api.NewOptBool(true),
 		ReportID:    api.NewOptUUID(params.ReportID),
-		ActionTaken: api.OptResolveReportResponseActionTaken{Value: api.ResolveReportResponseActionTaken(string(action)), Set: true},
+		ActionTaken: api.OptResolveReportResponseActionTaken{Value: api.ResolveReportResponseActionTaken(action), Set: true},
 		BanID:       banId,
 		WarningID:   warningId,
 	}, nil

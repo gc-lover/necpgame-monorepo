@@ -1,12 +1,12 @@
-// Issue: #1489
+// Package server Issue: #1489
 package server
 
 import (
 	"context"
 	"fmt"
 
-	"github.com/google/uuid"
 	"github.com/gc-lover/necpgame-monorepo/services/support-service-go/models"
+	"github.com/google/uuid"
 )
 
 type SLAServiceInterface interface {
@@ -77,4 +77,3 @@ func (s *SLAService) GetSLAViolations(ctx context.Context, priority *string, vio
 		Offset: offset,
 	}, nil
 }
-

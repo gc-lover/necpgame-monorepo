@@ -7,15 +7,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/gc-lover/necpgame-monorepo/services/support-service-go/models"
+	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
 
 // serviceTestContext creates a context with timeout for service tests
-func serviceTestContext(t *testing.T) (context.Context, context.CancelFunc) {
+func serviceTestContext() (context.Context, context.CancelFunc) {
 	return context.WithTimeout(context.Background(), 10*time.Second)
 }
 
@@ -101,7 +101,7 @@ func (m *mockTicketRepository) GetNextTicketNumber(ctx context.Context) (string,
 	return args.String(0), args.Error(1)
 }
 
-func setupTestService(t *testing.T) (*TicketService, *mockTicketRepository, func()) {
+func setupTestService() (*TicketService, *mockTicketRepository, func()) {
 	mockRepo := new(mockTicketRepository)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -120,7 +120,7 @@ func setupTestService(t *testing.T) (*TicketService, *mockTicketRepository, func
 		ReadTimeout:  2 * time.Second,
 		WriteTimeout: 2 * time.Second,
 	})
-	
+
 	// Try to flush, but don't fail if Redis is unavailable
 	_ = redisClient.FlushDB(ctx)
 
@@ -142,7 +142,7 @@ func setupTestService(t *testing.T) (*TicketService, *mockTicketRepository, func
 
 func TestTicketService_CreateTicket_Success(t *testing.T) {
 	t.Parallel()
-	service, mockRepo, cleanup := setupTestService(t)
+	service, mockRepo, cleanup := setupTestService()
 	defer cleanup()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -170,10 +170,10 @@ func TestTicketService_CreateTicket_Success(t *testing.T) {
 
 func TestTicketService_CreateTicket_GetNextTicketNumberError(t *testing.T) {
 	t.Parallel()
-	service, mockRepo, cleanup := setupTestService(t)
+	service, mockRepo, cleanup := setupTestService()
 	defer cleanup()
 
-	ctx, cancel := serviceTestContext(t)
+	ctx, cancel := serviceTestContext()
 	defer cancel()
 
 	playerID := uuid.New()
@@ -194,7 +194,7 @@ func TestTicketService_CreateTicket_GetNextTicketNumberError(t *testing.T) {
 }
 
 func TestTicketService_GetTicket_Success(t *testing.T) {
-	service, mockRepo, cleanup := setupTestService(t)
+	service, mockRepo, cleanup := setupTestService()
 	defer cleanup()
 
 	ticketID := uuid.New()
@@ -222,7 +222,7 @@ func TestTicketService_GetTicket_Success(t *testing.T) {
 }
 
 func TestTicketService_GetTicket_NotFound(t *testing.T) {
-	service, mockRepo, cleanup := setupTestService(t)
+	service, mockRepo, cleanup := setupTestService()
 	defer cleanup()
 
 	ticketID := uuid.New()
@@ -237,7 +237,7 @@ func TestTicketService_GetTicket_NotFound(t *testing.T) {
 }
 
 func TestTicketService_GetTicketsByPlayerID_Success(t *testing.T) {
-	service, mockRepo, cleanup := setupTestService(t)
+	service, mockRepo, cleanup := setupTestService()
 	defer cleanup()
 
 	playerID := uuid.New()
@@ -266,7 +266,7 @@ func TestTicketService_GetTicketsByPlayerID_Success(t *testing.T) {
 }
 
 func TestTicketService_UpdateTicket_Success(t *testing.T) {
-	service, mockRepo, cleanup := setupTestService(t)
+	service, mockRepo, cleanup := setupTestService()
 	defer cleanup()
 
 	ticketID := uuid.New()
@@ -300,7 +300,7 @@ func TestTicketService_UpdateTicket_Success(t *testing.T) {
 }
 
 func TestTicketService_UpdateTicket_StatusResolved(t *testing.T) {
-	service, mockRepo, cleanup := setupTestService(t)
+	service, mockRepo, cleanup := setupTestService()
 	defer cleanup()
 
 	ticketID := uuid.New()
@@ -335,7 +335,7 @@ func TestTicketService_UpdateTicket_StatusResolved(t *testing.T) {
 }
 
 func TestTicketService_AssignTicket_Success(t *testing.T) {
-	service, mockRepo, cleanup := setupTestService(t)
+	service, mockRepo, cleanup := setupTestService()
 	defer cleanup()
 
 	ticketID := uuid.New()
@@ -368,7 +368,7 @@ func TestTicketService_AssignTicket_Success(t *testing.T) {
 }
 
 func TestTicketService_AddResponse_Success(t *testing.T) {
-	service, mockRepo, cleanup := setupTestService(t)
+	service, mockRepo, cleanup := setupTestService()
 	defer cleanup()
 
 	ticketID := uuid.New()
@@ -403,7 +403,7 @@ func TestTicketService_AddResponse_Success(t *testing.T) {
 }
 
 func TestTicketService_AddResponse_FirstAgentResponse(t *testing.T) {
-	service, mockRepo, cleanup := setupTestService(t)
+	service, mockRepo, cleanup := setupTestService()
 	defer cleanup()
 
 	ticketID := uuid.New()
@@ -436,7 +436,7 @@ func TestTicketService_AddResponse_FirstAgentResponse(t *testing.T) {
 }
 
 func TestTicketService_GetTicketDetail_Success(t *testing.T) {
-	service, mockRepo, cleanup := setupTestService(t)
+	service, mockRepo, cleanup := setupTestService()
 	defer cleanup()
 
 	ticketID := uuid.New()
@@ -454,10 +454,10 @@ func TestTicketService_GetTicketDetail_Success(t *testing.T) {
 	}
 	responses := []models.TicketResponse{
 		{
-			ID:       uuid.New(),
-			TicketID: ticketID,
-			AuthorID: playerID,
-			Message:  "Test Response",
+			ID:        uuid.New(),
+			TicketID:  ticketID,
+			AuthorID:  playerID,
+			Message:   "Test Response",
 			CreatedAt: time.Now(),
 		},
 	}
@@ -475,7 +475,7 @@ func TestTicketService_GetTicketDetail_Success(t *testing.T) {
 }
 
 func TestTicketService_RateTicket_Success(t *testing.T) {
-	service, mockRepo, cleanup := setupTestService(t)
+	service, mockRepo, cleanup := setupTestService()
 	defer cleanup()
 
 	ticketID := uuid.New()
@@ -503,7 +503,7 @@ func TestTicketService_RateTicket_Success(t *testing.T) {
 }
 
 func TestTicketService_RateTicket_InvalidRating(t *testing.T) {
-	service, mockRepo, cleanup := setupTestService(t)
+	service, mockRepo, cleanup := setupTestService()
 	defer cleanup()
 
 	ticketID := uuid.New()
@@ -516,7 +516,7 @@ func TestTicketService_RateTicket_InvalidRating(t *testing.T) {
 }
 
 func TestTicketService_GetTicketsByAgentID_Success(t *testing.T) {
-	service, mockRepo, cleanup := setupTestService(t)
+	service, mockRepo, cleanup := setupTestService()
 	defer cleanup()
 
 	agentID := uuid.New()
@@ -542,7 +542,7 @@ func TestTicketService_GetTicketsByAgentID_Success(t *testing.T) {
 }
 
 func TestTicketService_GetTicketsByStatus_Success(t *testing.T) {
-	service, mockRepo, cleanup := setupTestService(t)
+	service, mockRepo, cleanup := setupTestService()
 	defer cleanup()
 
 	status := models.TicketStatusOpen
@@ -570,7 +570,7 @@ func TestTicketService_GetTicketsByStatus_Success(t *testing.T) {
 }
 
 func TestTicketService_GetTicket_RepositoryError(t *testing.T) {
-	service, mockRepo, cleanup := setupTestService(t)
+	service, mockRepo, cleanup := setupTestService()
 	defer cleanup()
 
 	ticketID := uuid.New()
@@ -586,7 +586,7 @@ func TestTicketService_GetTicket_RepositoryError(t *testing.T) {
 }
 
 func TestTicketService_UpdateTicket_NotFound(t *testing.T) {
-	service, mockRepo, cleanup := setupTestService(t)
+	service, mockRepo, cleanup := setupTestService()
 	defer cleanup()
 
 	ticketID := uuid.New()
@@ -604,7 +604,7 @@ func TestTicketService_UpdateTicket_NotFound(t *testing.T) {
 }
 
 func TestTicketService_CreateTicket_RepositoryError(t *testing.T) {
-	service, mockRepo, cleanup := setupTestService(t)
+	service, mockRepo, cleanup := setupTestService()
 	defer cleanup()
 
 	playerID := uuid.New()
@@ -626,7 +626,7 @@ func TestTicketService_CreateTicket_RepositoryError(t *testing.T) {
 }
 
 func TestTicketService_GetTicketsByPlayerID_Empty(t *testing.T) {
-	service, mockRepo, cleanup := setupTestService(t)
+	service, mockRepo, cleanup := setupTestService()
 	defer cleanup()
 
 	playerID := uuid.New()
@@ -644,7 +644,7 @@ func TestTicketService_GetTicketsByPlayerID_Empty(t *testing.T) {
 }
 
 func TestTicketService_GetTicketsByPlayerID_RepositoryError(t *testing.T) {
-	service, mockRepo, cleanup := setupTestService(t)
+	service, mockRepo, cleanup := setupTestService()
 	defer cleanup()
 
 	playerID := uuid.New()
@@ -660,7 +660,7 @@ func TestTicketService_GetTicketsByPlayerID_RepositoryError(t *testing.T) {
 }
 
 func TestTicketService_GetTicketsByAgentID_Empty(t *testing.T) {
-	service, mockRepo, cleanup := setupTestService(t)
+	service, mockRepo, cleanup := setupTestService()
 	defer cleanup()
 
 	agentID := uuid.New()
@@ -676,7 +676,7 @@ func TestTicketService_GetTicketsByAgentID_Empty(t *testing.T) {
 }
 
 func TestTicketService_GetTicketsByAgentID_RepositoryError(t *testing.T) {
-	service, mockRepo, cleanup := setupTestService(t)
+	service, mockRepo, cleanup := setupTestService()
 	defer cleanup()
 
 	agentID := uuid.New()
@@ -692,7 +692,7 @@ func TestTicketService_GetTicketsByAgentID_RepositoryError(t *testing.T) {
 }
 
 func TestTicketService_GetTicketsByStatus_Empty(t *testing.T) {
-	service, mockRepo, cleanup := setupTestService(t)
+	service, mockRepo, cleanup := setupTestService()
 	defer cleanup()
 
 	mockRepo.On("GetByStatus", context.Background(), models.TicketStatusOpen, 10, 0).Return([]models.SupportTicket{}, nil)
@@ -708,7 +708,7 @@ func TestTicketService_GetTicketsByStatus_Empty(t *testing.T) {
 }
 
 func TestTicketService_GetTicketsByStatus_RepositoryError(t *testing.T) {
-	service, mockRepo, cleanup := setupTestService(t)
+	service, mockRepo, cleanup := setupTestService()
 	defer cleanup()
 
 	expectedErr := errors.New("database error")
@@ -723,7 +723,7 @@ func TestTicketService_GetTicketsByStatus_RepositoryError(t *testing.T) {
 }
 
 func TestTicketService_AssignTicket_NotFound(t *testing.T) {
-	service, mockRepo, cleanup := setupTestService(t)
+	service, mockRepo, cleanup := setupTestService()
 	defer cleanup()
 
 	ticketID := uuid.New()
@@ -739,7 +739,7 @@ func TestTicketService_AssignTicket_NotFound(t *testing.T) {
 }
 
 func TestTicketService_AssignTicket_RepositoryError(t *testing.T) {
-	service, mockRepo, cleanup := setupTestService(t)
+	service, mockRepo, cleanup := setupTestService()
 	defer cleanup()
 
 	ticketID := uuid.New()
@@ -768,7 +768,7 @@ func TestTicketService_AssignTicket_RepositoryError(t *testing.T) {
 }
 
 func TestTicketService_AddResponse_NotFound(t *testing.T) {
-	service, mockRepo, cleanup := setupTestService(t)
+	service, mockRepo, cleanup := setupTestService()
 	defer cleanup()
 
 	ticketID := uuid.New()
@@ -787,7 +787,7 @@ func TestTicketService_AddResponse_NotFound(t *testing.T) {
 }
 
 func TestTicketService_AddResponse_RepositoryError(t *testing.T) {
-	service, mockRepo, cleanup := setupTestService(t)
+	service, mockRepo, cleanup := setupTestService()
 	defer cleanup()
 
 	ticketID := uuid.New()
@@ -819,7 +819,7 @@ func TestTicketService_AddResponse_RepositoryError(t *testing.T) {
 }
 
 func TestTicketService_GetTicketDetail_NotFound(t *testing.T) {
-	service, mockRepo, cleanup := setupTestService(t)
+	service, mockRepo, cleanup := setupTestService()
 	defer cleanup()
 
 	ticketID := uuid.New()
@@ -834,7 +834,7 @@ func TestTicketService_GetTicketDetail_NotFound(t *testing.T) {
 }
 
 func TestTicketService_GetTicketDetail_RepositoryError(t *testing.T) {
-	service, mockRepo, cleanup := setupTestService(t)
+	service, mockRepo, cleanup := setupTestService()
 	defer cleanup()
 
 	ticketID := uuid.New()
@@ -850,7 +850,7 @@ func TestTicketService_GetTicketDetail_RepositoryError(t *testing.T) {
 }
 
 func TestTicketService_RateTicket_NotFound(t *testing.T) {
-	service, mockRepo, cleanup := setupTestService(t)
+	service, mockRepo, cleanup := setupTestService()
 	defer cleanup()
 
 	ticketID := uuid.New()
@@ -864,7 +864,7 @@ func TestTicketService_RateTicket_NotFound(t *testing.T) {
 }
 
 func TestTicketService_RateTicket_RepositoryError(t *testing.T) {
-	service, mockRepo, cleanup := setupTestService(t)
+	service, mockRepo, cleanup := setupTestService()
 	defer cleanup()
 
 	ticketID := uuid.New()
@@ -891,7 +891,7 @@ func TestTicketService_RateTicket_RepositoryError(t *testing.T) {
 }
 
 func TestTicketService_GetTicketByNumber_NotFound(t *testing.T) {
-	service, mockRepo, cleanup := setupTestService(t)
+	service, mockRepo, cleanup := setupTestService()
 	defer cleanup()
 
 	number := "TKT-20250101-0001"
@@ -906,7 +906,7 @@ func TestTicketService_GetTicketByNumber_NotFound(t *testing.T) {
 }
 
 func TestTicketService_GetTicketByNumber_RepositoryError(t *testing.T) {
-	service, mockRepo, cleanup := setupTestService(t)
+	service, mockRepo, cleanup := setupTestService()
 	defer cleanup()
 
 	number := "TKT-20250101-0001"
@@ -924,4 +924,3 @@ func TestTicketService_GetTicketByNumber_RepositoryError(t *testing.T) {
 func stringPtr(s string) *string {
 	return &s
 }
-

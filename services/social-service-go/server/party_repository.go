@@ -1,4 +1,4 @@
-// Issue: #1488
+// Package server Issue: #1488
 package server
 
 import (
@@ -255,4 +255,3 @@ func (r *PartyRepository) TransferLeadership(ctx context.Context, partyID, newLe
 
 	return nil
 }
-

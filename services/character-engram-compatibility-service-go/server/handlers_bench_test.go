@@ -3,8 +3,9 @@ package server
 
 import (
 	"context"
-	"github.com/necpgame/character-engram-compatibility-service-go/pkg/api"
 	"testing"
+
+	"github.com/necpgame/character-engram-compatibility-service-go/pkg/api"
 
 	"github.com/google/uuid"
 )
@@ -15,8 +16,7 @@ func BenchmarkGetEngramCompatibility(b *testing.B) {
 	handlers := NewHandlers()
 
 	ctx := context.Background()
-	params := api.GetEngramCompatibilityParams{
-	}
+	params := api.GetEngramCompatibilityParams{}
 
 	b.ReportAllocs()
 	b.ResetTimer()
@@ -51,8 +51,7 @@ func BenchmarkGetEngramConflicts(b *testing.B) {
 	handlers := NewHandlers()
 
 	ctx := context.Background()
-	params := api.GetEngramConflictsParams{
-	}
+	params := api.GetEngramConflictsParams{}
 
 	b.ReportAllocs()
 	b.ResetTimer()
@@ -61,4 +60,3 @@ func BenchmarkGetEngramConflicts(b *testing.B) {
 		_, _ = handlers.GetEngramConflicts(ctx, params)
 	}
 }
-

@@ -1,4 +1,4 @@
-// Issue: #1637 - ogen handlers for P2P Trade Service
+// Package server Issue: #1637 - ogen handlers for P2P Trade Service
 package server
 
 import (
@@ -8,10 +8,8 @@ import (
 	"github.com/gc-lover/necpgame-monorepo/services/trade-p2p-service-go/pkg/api"
 )
 
-// Context timeout constants
 const (
-	DBTimeout    = 50 * time.Millisecond
-	CacheTimeout = 10 * time.Millisecond
+	DBTimeout = 50 * time.Millisecond
 )
 
 type Handlers struct {
@@ -82,7 +80,7 @@ func (h *Handlers) CancelTradeSession(ctx context.Context, req api.OptCancelTrad
 		reason = req.Value.Reason.Value
 	}
 
-	err := h.service.CancelTradeSession(ctx, params.SessionId.String(), reason)
+	err := h.service.CancelTradeSession(ctx, params.SessionId.String())
 	if err != nil {
 		return nil, err
 	}
@@ -99,7 +97,7 @@ func (h *Handlers) AddTradeOffer(ctx context.Context, req *api.TradeOfferRequest
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	session, err := h.service.AddTradeOffer(ctx, params.SessionId.String(), req)
+	session, err := h.service.AddTradeOffer(ctx, params.SessionId.String())
 	if err != nil {
 		if err.Error() == "session not found" {
 			return &api.AddTradeOfferBadRequest{

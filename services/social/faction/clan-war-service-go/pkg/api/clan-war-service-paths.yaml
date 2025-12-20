@@ -1,0 +1,915 @@
+paths:
+  /world/clan-war/declare:
+    post:
+      tags:
+        - War Manager
+      summary: Объявить клановую войну
+      operationId: declareWar
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeclareWarRequest'
+      responses:
+        '201':
+          description: Война объявлена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClanWar'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /world/clan-war/active:
+    get:
+      tags:
+        - War Manager
+      summary: Получить активные войны
+      operationId: getActiveWars
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: guild_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Активные войны
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActiveWarsResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /world/clan-war/{war_id}:
+    get:
+      tags:
+        - War Manager
+      summary: Получить информацию о войне
+      operationId: getWar
+      parameters:
+        - name: war_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Информация о войне
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClanWar'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /world/clan-war/wars/{war_id}/battles:
+    post:
+      tags:
+        - Battle Manager
+      summary: Создать битву за территорию
+      operationId: createBattle
+      parameters:
+        - name: war_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBattleRequest'
+      responses:
+        '201':
+          description: Битва создана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarBattle'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    get:
+      tags:
+        - Battle Manager
+      summary: Получить битвы войны
+      operationId: getWarBattles
+      parameters:
+        - name: war_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum:
+              - scheduled
+              - active
+              - completed
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+      responses:
+        '200':
+          description: Список битв
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  battles:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/WarBattle'
+                  total:
+                    type: integer
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /world/clan-war/battles/{battle_id}:
+    get:
+      tags:
+        - Battle Manager
+      summary: Получить информацию о битве
+      operationId: getBattle
+      parameters:
+        - name: battle_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Информация о битве
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarBattle'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    post:
+      tags:
+        - Battle Manager
+      summary: Запустить битву
+      operationId: startBattle
+      parameters:
+        - name: battle_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Битва запущена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarBattle'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /world/clan-war/battles/{battle_id}/score:
+    post:
+      tags:
+        - Battle Manager
+      summary: Обновить счет битвы
+      operationId: updateBattleScore
+      parameters:
+        - name: battle_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateBattleScoreRequest'
+      responses:
+        '200':
+          description: Счет обновлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarBattle'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /world/clan-war/wars/{war_id}/resolve:
+    post:
+      tags:
+        - War Manager
+      summary: Завершить войну и определить победителя
+      operationId: resolveWar
+      parameters:
+        - name: war_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Война завершена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarResolution'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /world/clan-war/territories:
+    get:
+      tags:
+        - Territory Manager
+      summary: Получить список территорий
+      operationId: getTerritories
+      parameters:
+        - name: owner_guild_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Список территорий
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  territories:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Territory'
+                  total:
+                    type: integer
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /world/clan-war/territories/{territory_id}:
+    get:
+      tags:
+        - Territory Manager
+      summary: Получить информацию о территории
+      operationId: getTerritory
+      parameters:
+        - name: territory_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Информация о территории
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Territory'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /world/clan-war/{war_id}/cancel:
+    post:
+      tags:
+        - War Manager
+      summary: Отменить войну
+      operationId: cancelWar
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: war_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CancelWarRequest'
+      responses:
+        '200':
+          description: Война отменена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClanWar'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /world/clan-war/{war_id}/phase:
+    get:
+      tags:
+        - War Phase Controller
+      summary: Получить текущую фазу войны
+      operationId: getWarPhase
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: war_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Фаза войны
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarPhaseResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /world/clan-war/{war_id}/phase/transition:
+    post:
+      tags:
+        - War Phase Controller
+      summary: Перейти на следующую фазу войны (admin)
+      operationId: transitionWarPhase
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: war_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransitionPhaseRequest'
+      responses:
+        '200':
+          description: Фаза изменена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarPhaseResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /world/clan-war/territories/{territory_id}/transfer:
+    post:
+      tags:
+        - Territory Manager
+      summary: Передать территорию другому клану
+      operationId: transferTerritory
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: territory_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransferTerritoryRequest'
+      responses:
+        '200':
+          description: Территория передана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Territory'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /world/clan-war/battles/create:
+    post:
+      tags:
+        - Battle Manager
+      summary: Создать битву за территорию
+      operationId: createBattle
+      security:
+        - BearerAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBattleRequest'
+      responses:
+        '201':
+          description: Битва создана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarBattle'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /world/clan-war/battles/{battle_id}/start:
+    post:
+      tags:
+        - Battle Manager
+      summary: Запустить битву
+      operationId: startBattle
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: battle_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartBattleRequest'
+      responses:
+        '200':
+          description: Битва запущена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarBattle'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /world/clan-war/battles/active:
+    get:
+      tags:
+        - Battle Manager
+      summary: Получить активные битвы
+      operationId: getActiveBattles
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: war_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: territory_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Активные битвы
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActiveBattlesResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /world/clan-war/battles/{battle_id}/end:
+    post:
+      tags:
+        - Battle Manager
+      summary: Завершить битву
+      operationId: endBattle
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: battle_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EndBattleRequest'
+      responses:
+        '200':
+          description: Битва завершена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarBattle'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /world/clan-war/{war_id}/scores:
+    get:
+      tags:
+        - Score Calculator
+      summary: Получить очки войны
+      operationId: getWarScores
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: war_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Очки войны
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarScoresResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /world/clan-war/scores/add:
+    post:
+      tags:
+        - Score Calculator
+      summary: Начислить очки за действие
+      operationId: addWarScore
+      security:
+        - BearerAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddScoreRequest'
+      responses:
+        '200':
+          description: Очки начислены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AddScoreResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /world/clan-war/{war_id}/winner:
+    get:
+      tags:
+        - Score Calculator
+      summary: Получить победителя войны
+      operationId: getWarWinner
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: war_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Победитель войны
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarWinnerResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /world/clan-war/{war_id}/rewards/distribute:
+    post:
+      tags:
+        - Reward Distributor
+      summary: Распределить награды за войну
+      operationId: distributeWarRewards
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: war_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DistributeRewardsRequest'
+      responses:
+        '200':
+          description: Награды распределены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DistributeRewardsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /world/clan-war/{war_id}/rewards:
+    get:
+      tags:
+        - Reward Distributor
+      summary: Получить награды войны
+      operationId: getWarRewards
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: war_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Награды войны
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarRewardsResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /world/clan-war/{war_id}/alliance/invite:
+    post:
+      tags:
+        - Alliance Manager
+      summary: Пригласить союзника в войну
+      operationId: inviteAlliance
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: war_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InviteAllianceRequest'
+      responses:
+        '200':
+          description: Союзник приглашён
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AllianceResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /world/clan-war/{war_id}/alliance:
+    get:
+      tags:
+        - Alliance Manager
+      summary: Получить союзников войны
+      operationId: getAlliance
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: war_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Союзники войны
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AllianceResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /world/clan-war/{war_id}/alliance/remove:
+    post:
+      tags:
+        - Alliance Manager
+      summary: Удалить союзника из войны
+      operationId: removeAlliance
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: war_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RemoveAllianceRequest'
+      responses:
+        '200':
+          description: Союзник удалён
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AllianceResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /world/clan-war/events/{war_id}:
+    get:
+      tags:
+        - War Events
+      summary: Получить события войны
+      operationId: getWarEvents
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: war_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: event_type
+          in: query
+          schema:
+            type: string
+            enum:
+              - clan-war:declared
+              - clan-war:phase-changed
+              - clan-war:battle-started
+              - clan-war:battle-ended
+              - clan-war:territory-captured
+              - clan-war:ended
+              - clan-war:rewards-distributed
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: События войны
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarEventsResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'

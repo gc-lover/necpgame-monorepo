@@ -35,4 +35,3 @@ func TestStockAnalyticsChartsServiceNoLeaks(t *testing.T) {
 
 	// If goroutines leaked from stock analytics charts handlers, test FAILS
 }
-

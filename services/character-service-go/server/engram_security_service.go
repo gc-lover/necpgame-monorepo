@@ -27,13 +27,13 @@ type ProtectionSettings struct {
 }
 
 type EngramProtectionInfo struct {
-	EngramID               uuid.UUID              `json:"engram_id"`
-	ProtectionTier         int                    `json:"protection_tier"`
-	ProtectionTierName     string                 `json:"protection_tier_name"`
-	RequiredNetrunnerLevel int                    `json:"required_netrunner_level"`
-	ProtectionSettings     *ProtectionSettings    `json:"protection_settings"`
-	EncodedAt              time.Time              `json:"encoded_at"`
-	EncodedBy              uuid.UUID              `json:"encoded_by"`
+	EngramID               uuid.UUID           `json:"engram_id"`
+	ProtectionTier         int                 `json:"protection_tier"`
+	ProtectionTierName     string              `json:"protection_tier_name"`
+	RequiredNetrunnerLevel int                 `json:"required_netrunner_level"`
+	ProtectionSettings     *ProtectionSettings `json:"protection_settings"`
+	EncodedAt              time.Time           `json:"encoded_at"`
+	EncodedBy              uuid.UUID           `json:"encoded_by"`
 }
 
 var protectionTierNames = map[int]string{
@@ -154,4 +154,3 @@ func (s *EngramSecurityService) EncodeEngram(ctx context.Context, engramID uuid.
 		EncodedBy: protection.EncodedBy,
 	}, nil
 }
-

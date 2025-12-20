@@ -1,4 +1,4 @@
-// Issue: #1636
+// Package server Issue: #1636
 package server
 
 import (
@@ -17,36 +17,33 @@ type BattlePassRepository struct {
 }
 
 // NewBattlePassRepository creates new repository
-func NewBattlePassRepository(db *pgxpool.Pool) *BattlePassRepository {
-	return &BattlePassRepository{db: db}
-}
 
 // BattlePassSeason represents a battle pass season
 type BattlePassSeason struct {
-	ID          uuid.UUID `db:"id"`
-	SeasonNumber int      `db:"season_number"`
-	Name        string    `db:"name"`
-	Description string    `db:"description"`
-	StartDate   time.Time `db:"start_date"`
-	EndDate     time.Time `db:"end_date"`
-	MaxLevel    int       `db:"max_level"`
-	IsActive    bool      `db:"is_active"`
-	CreatedAt   time.Time `db:"created_at"`
-	UpdatedAt   time.Time `db:"updated_at"`
+	ID           uuid.UUID `db:"id"`
+	SeasonNumber int       `db:"season_number"`
+	Name         string    `db:"name"`
+	Description  string    `db:"description"`
+	StartDate    time.Time `db:"start_date"`
+	EndDate      time.Time `db:"end_date"`
+	MaxLevel     int       `db:"max_level"`
+	IsActive     bool      `db:"is_active"`
+	CreatedAt    time.Time `db:"created_at"`
+	UpdatedAt    time.Time `db:"updated_at"`
 }
 
 // PlayerProgress represents player's battle pass progress
 type PlayerProgress struct {
-	ID           uuid.UUID `db:"id"`
-	CharacterID  uuid.UUID `db:"character_id"`
-	SeasonID     uuid.UUID `db:"season_id"`
-	CurrentLevel int       `db:"current_level"`
-	CurrentXP    int       `db:"current_xp"`
-	TotalXP      int       `db:"total_xp"`
-	IsPremium    bool      `db:"is_premium"`
-	ClaimedRewards []int   `db:"claimed_rewards"`
-	CreatedAt    time.Time `db:"created_at"`
-	UpdatedAt    time.Time `db:"updated_at"`
+	ID             uuid.UUID `db:"id"`
+	CharacterID    uuid.UUID `db:"character_id"`
+	SeasonID       uuid.UUID `db:"season_id"`
+	CurrentLevel   int       `db:"current_level"`
+	CurrentXP      int       `db:"current_xp"`
+	TotalXP        int       `db:"total_xp"`
+	IsPremium      bool      `db:"is_premium"`
+	ClaimedRewards []int     `db:"claimed_rewards"`
+	CreatedAt      time.Time `db:"created_at"`
+	UpdatedAt      time.Time `db:"updated_at"`
 }
 
 // GetCurrentSeason returns the active battle pass season
@@ -259,18 +256,3 @@ func (r *BattlePassRepository) UpgradeToPremium(ctx context.Context, characterID
 
 	return nil
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

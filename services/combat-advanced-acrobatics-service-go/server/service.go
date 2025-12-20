@@ -1,4 +1,4 @@
-// SQL queries use prepared statements with placeholders ($1, $2, ?) for safety
+// Package server SQL queries use prepared statements with placeholders ($1, $2, ?) for safety
 package server
 
 import (
@@ -36,7 +36,7 @@ func (s *Service) HandlePerformAirDash(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 1500*time.Millisecond)
 	defer cancel()
 
-	state := s.airDashPerform(ctx, req)
+	state := s.airDashPerform(req)
 	writeJSON(w, state)
 }
 
@@ -63,7 +63,7 @@ func (s *Service) HandlePerformWallKick(w http.ResponseWriter, r *http.Request) 
 	ctx, cancel := context.WithTimeout(r.Context(), 1500*time.Millisecond)
 	defer cancel()
 
-	state := s.wallKickPerform(ctx, req)
+	state := s.wallKickPerform(req)
 	writeJSON(w, state)
 }
 
@@ -86,11 +86,11 @@ func (s *Service) HandlePerformVault(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 1500*time.Millisecond)
 	defer cancel()
 
-	state := s.vaultPerform(ctx, req)
+	state := s.vaultPerform(req)
 	writeJSON(w, state)
 }
 
-func (s *Service) HandleListVaultObstacles(w http.ResponseWriter, r *http.Request) {
+func (s *Service) HandleListVaultObstacles(w http.ResponseWriter) {
 	// Simple list; in a real service this would query spatial storage.
 	s.mu.RLock()
 	defer s.mu.RUnlock()
@@ -117,7 +117,7 @@ func (s *Service) HandleGetAdvancedState(w http.ResponseWriter, r *http.Request)
 	writeJSON(w, state)
 }
 
-func (s *Service) airDashPerform(ctx context.Context, req AirDashRequest) AirDashState {
+func (s *Service) airDashPerform(req AirDashRequest) AirDashState {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -151,7 +151,7 @@ func (s *Service) getAirDashState(charID string) AirDashState {
 	return state
 }
 
-func (s *Service) wallKickPerform(ctx context.Context, req WallKickRequest) WallKickState {
+func (s *Service) wallKickPerform(req WallKickRequest) WallKickState {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -180,7 +180,7 @@ func (s *Service) getWallKickState(charID string) WallKickState {
 	return state
 }
 
-func (s *Service) vaultPerform(ctx context.Context, req VaultRequest) VaultState {
+func (s *Service) vaultPerform(req VaultRequest) VaultState {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 

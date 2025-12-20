@@ -22,4 +22,3 @@ func BenchmarkHealthCheck(b *testing.B) {
 		_, _ = handlers.HealthCheck(ctx)
 	}
 }
-

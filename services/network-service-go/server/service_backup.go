@@ -2,7 +2,6 @@ package server
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"sync"
 	"time"
@@ -13,54 +12,54 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// OPTIMIZATION: Issue #1978 - Memory-aligned struct for network performance
+// NetworkService OPTIMIZATION: Issue #1978 - Memory-aligned struct for network performance
 type NetworkService struct {
-	logger          *logrus.Logger
-	metrics         *NetworkMetrics
-	config          *NetworkServiceConfig
-	connections     sync.Map // OPTIMIZATION: Thread-safe WebSocket connections map
-	channels        sync.Map // OPTIMIZATION: Thread-safe channels map
-	presence        sync.Map // OPTIMIZATION: Thread-safe presence map
-	subscriptions   sync.Map // OPTIMIZATION: Thread-safe event subscriptions map
+	logger        *logrus.Logger
+	metrics       *NetworkMetrics
+	config        *NetworkServiceConfig
+	connections   sync.Map // OPTIMIZATION: Thread-safe WebSocket connections map
+	channels      sync.Map // OPTIMIZATION: Thread-safe channels map
+	presence      sync.Map // OPTIMIZATION: Thread-safe presence map
+	subscriptions sync.Map // OPTIMIZATION: Thread-safe event subscriptions map
 
 	// OPTIMIZATION: Issue #1978 - Memory pooling for hot path structs (zero allocations target!)
-	messageResponsePool sync.Pool
+	messageResponsePool  sync.Pool
 	presenceResponsePool sync.Pool
-	eventResponsePool sync.Pool
-	clusterResponsePool sync.Pool
+	eventResponsePool    sync.Pool
+	clusterResponsePool  sync.Pool
 }
 
-// OPTIMIZATION: Issue #1978 - Memory-aligned WebSocket connection
+// WSConnection OPTIMIZATION: Issue #1978 - Memory-aligned WebSocket connection
 type WSConnection struct {
 	ID            string          `json:"id"`             // 16 bytes
 	UserID        string          `json:"user_id"`        // 16 bytes
 	ClientID      string          `json:"client_id"`      // 16 bytes
-	Conn          *websocket.Conn `json:"-"`             // 8 bytes (pointer)
-	ConnectedAt   time.Time       `json:"connected_at"`  // 24 bytes
+	Conn          *websocket.Conn `json:"-"`              // 8 bytes (pointer)
+	ConnectedAt   time.Time       `json:"connected_at"`   // 24 bytes
 	LastHeartbeat time.Time       `json:"last_heartbeat"` // 24 bytes
 	Status        string          `json:"status"`         // 16 bytes
-	Subscriptions []string        `json:"subscriptions"` // 24 bytes (slice)
-	SendChan      chan []byte      `json:"-"`             // 8 bytes (chan)
+	Subscriptions []string        `json:"subscriptions"`  // 24 bytes (slice)
+	SendChan      chan []byte     `json:"-"`              // 8 bytes (chan)
 }
 
-// OPTIMIZATION: Issue #1978 - Memory-aligned message structs
+// NetworkMessage OPTIMIZATION: Issue #1978 - Memory-aligned message structs
 type NetworkMessage struct {
-	MessageID   string                 `json:"message_id"`   // 16 bytes
-	Type        string                 `json:"type"`         // 16 bytes
-	SenderID    string                 `json:"sender_id"`    // 16 bytes
-	Content     string                 `json:"content"`      // 16 bytes
-	Channel     string                 `json:"channel"`      // 16 bytes
-	Timestamp   int64                  `json:"timestamp"`    // 8 bytes
-	Priority    string                 `json:"priority"`     // 16 bytes
-	Metadata    map[string]interface{} `json:"metadata"`     // 8 bytes (map)
+	MessageID string                 `json:"message_id"` // 16 bytes
+	Type      string                 `json:"type"`       // 16 bytes
+	SenderID  string                 `json:"sender_id"`  // 16 bytes
+	Content   string                 `json:"content"`    // 16 bytes
+	Channel   string                 `json:"channel"`    // 16 bytes
+	Timestamp int64                  `json:"timestamp"`  // 8 bytes
+	Priority  string                 `json:"priority"`   // 16 bytes
+	Metadata  map[string]interface{} `json:"metadata"`   // 8 bytes (map)
 }
 
-// OPTIMIZATION: Issue #1978 - Memory-aligned presence structs
+// UserPresence OPTIMIZATION: Issue #1978 - Memory-aligned presence structs
 type UserPresence struct {
-	UserID        string `json:"user_id"`         // 16 bytes
-	Status        string `json:"status"`          // 16 bytes
-	LastSeen      int64  `json:"last_seen"`       // 8 bytes
-	ConnectedAt   int64  `json:"connected_at"`    // 8 bytes
+	UserID          string `json:"user_id"`          // 16 bytes
+	Status          string `json:"status"`           // 16 bytes
+	LastSeen        int64  `json:"last_seen"`        // 8 bytes
+	ConnectedAt     int64  `json:"connected_at"`     // 8 bytes
 	CurrentActivity string `json:"current_activity"` // 16 bytes
 }
 
@@ -70,44 +69,6 @@ var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool {
 		return true // OPTIMIZATION: Allow all origins for MMO cross-platform support
 	},
-}
-
-func NewNetworkService(logger *logrus.Logger, metrics *NetworkMetrics, config *NetworkServiceConfig) *NetworkService {
-	s := &NetworkService{
-		logger:  logger,
-		metrics: metrics,
-		config:  config,
-	}
-
-	// OPTIMIZATION: Issue #1978 - Initialize memory pools (zero allocations target!)
-	s.messageResponsePool = sync.Pool{
-		New: func() interface{} {
-			return &BroadcastMessageResponse{}
-		},
-	}
-	s.presenceResponsePool = sync.Pool{
-		New: func() interface{} {
-			return &GetPresenceResponse{}
-		},
-	}
-	s.eventResponsePool = sync.Pool{
-		New: func() interface{} {
-			return &PublishEventResponse{}
-		},
-	}
-	s.clusterResponsePool = sync.Pool{
-		New: func() interface{} {
-			return &GetClusterStatusResponse{}
-		},
-	}
-
-	// Start heartbeat checker
-	go s.heartbeatChecker()
-
-	// Start connection cleaner
-	go s.connectionCleaner()
-
-	return s
 }
 
 func (s *NetworkService) WebSocketHandler(w http.ResponseWriter, r *http.Request) {
@@ -338,11 +299,11 @@ func (s *NetworkService) UpdateUserPresence(w http.ResponseWriter, r *http.Reque
 	s.metrics.PresenceUpdates.Inc()
 
 	resp := &UpdatePresenceResponse{
-		UserID:         userID,
-		PreviousStatus: "AWAY",
-		NewStatus:      req.Status,
-		UpdatedAt:      time.Now().Unix(),
-		Broadcasted:    true,
+		UserID:              userID,
+		PreviousStatus:      "AWAY",
+		NewStatus:           req.Status,
+		UpdatedAt:           time.Now().Unix(),
+		Broadcasted:         true,
 		AffectedSubscribers: 5,
 	}
 

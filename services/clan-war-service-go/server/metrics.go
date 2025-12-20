@@ -65,4 +65,3 @@ func RecordBattleCreated(battleType string) {
 func RecordWarCompleted() {
 	WarsCompletedTotal.Inc()
 }
-

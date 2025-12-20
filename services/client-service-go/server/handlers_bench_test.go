@@ -12,15 +12,15 @@ import (
 // mockWeaponEffectsService implements WeaponEffectsServiceInterface for benchmarks
 type mockWeaponEffectsService struct{}
 
-func (m *mockWeaponEffectsService) TriggerVisualEffect(ctx context.Context, effectType string, mechanicType string, position map[string]float64, targetID *uuid.UUID, effectData map[string]interface{}) (uuid.UUID, error) {
+func (m *mockWeaponEffectsService) TriggerVisualEffect(_ context.Context, _ string, _ string, _ map[string]float64, _ *uuid.UUID, _ map[string]interface{}) (uuid.UUID, error) {
 	return uuid.New(), nil
 }
 
-func (m *mockWeaponEffectsService) TriggerAudioEffect(ctx context.Context, effectType string, mechanicType string, soundID string, position map[string]float64, volume *float64, pitch *float64) (uuid.UUID, error) {
+func (m *mockWeaponEffectsService) TriggerAudioEffect(_ context.Context, _ string, _ string, _ string, _ map[string]float64, _ *float64, _ *float64) (uuid.UUID, error) {
 	return uuid.New(), nil
 }
 
-func (m *mockWeaponEffectsService) GetEffect(ctx context.Context, effectID uuid.UUID) (map[string]interface{}, error) {
+func (m *mockWeaponEffectsService) GetEffect(_ context.Context, _ uuid.UUID) (map[string]interface{}, error) {
 	return nil, nil
 }
 
@@ -82,8 +82,7 @@ func BenchmarkGetEffect(b *testing.B) {
 	handlers := NewHandlers(mockService)
 
 	ctx := context.Background()
-	params := api.GetEffectParams{
-	}
+	params := api.GetEffectParams{}
 
 	b.ReportAllocs()
 	b.ResetTimer()
@@ -92,4 +91,3 @@ func BenchmarkGetEffect(b *testing.B) {
 		_, _ = handlers.GetEffect(ctx, params)
 	}
 }
-

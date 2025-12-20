@@ -9,12 +9,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/gc-lover/necpgame-monorepo/services/support-service-go/models"
+	"github.com/google/uuid"
 )
 
 // testContext creates a context with timeout for HTTP tests
-func httpTestContext(t *testing.T) (context.Context, context.CancelFunc) {
+func httpTestContext() (context.Context, context.CancelFunc) {
 	return context.WithTimeout(context.Background(), 10*time.Second)
 }
 
@@ -27,7 +27,7 @@ type mockTicketService struct {
 	getErr       error
 }
 
-func (m *mockTicketService) CreateTicket(ctx context.Context, playerID uuid.UUID, req *models.CreateTicketRequest) (*models.SupportTicket, error) {
+func (m *mockTicketService) CreateTicket(_ context.Context, playerID uuid.UUID, req *models.CreateTicketRequest) (*models.SupportTicket, error) {
 	if m.createErr != nil {
 		return nil, m.createErr
 	}
@@ -56,26 +56,26 @@ func (m *mockTicketService) CreateTicket(ctx context.Context, playerID uuid.UUID
 	return ticket, nil
 }
 
-func (m *mockTicketService) GetTicket(ctx context.Context, id uuid.UUID) (*models.SupportTicket, error) {
+func (m *mockTicketService) GetTicket(_ context.Context, id uuid.UUID) (*models.SupportTicket, error) {
 	if m.getErr != nil {
 		return nil, m.getErr
 	}
 	return m.tickets[id], nil
 }
 
-func (m *mockTicketService) GetTicketByNumber(ctx context.Context, number string) (*models.SupportTicket, error) {
+func (m *mockTicketService) GetTicketByNumber(_ context.Context, number string) (*models.SupportTicket, error) {
 	if m.getErr != nil {
 		return nil, m.getErr
 	}
 	return m.ticketByNum[number], nil
 }
 
-func (m *mockTicketService) GetTicketsByPlayerID(ctx context.Context, playerID uuid.UUID, limit, offset int) (*models.TicketListResponse, error) {
+func (m *mockTicketService) GetTicketsByPlayerID(_ context.Context, playerID uuid.UUID, limit, offset int) (*models.TicketListResponse, error) {
 	if m.getErr != nil {
 		return nil, m.getErr
 	}
 
-	tickets := []models.SupportTicket{}
+	var tickets []models.SupportTicket
 	for _, t := range m.tickets {
 		if t.PlayerID == playerID {
 			tickets = append(tickets, *t)
@@ -98,12 +98,12 @@ func (m *mockTicketService) GetTicketsByPlayerID(ctx context.Context, playerID u
 	}, nil
 }
 
-func (m *mockTicketService) GetTicketsByAgentID(ctx context.Context, agentID uuid.UUID, limit, offset int) (*models.TicketListResponse, error) {
+func (m *mockTicketService) GetTicketsByAgentID(_ context.Context, agentID uuid.UUID, _, _ int) (*models.TicketListResponse, error) {
 	if m.getErr != nil {
 		return nil, m.getErr
 	}
 
-	tickets := []models.SupportTicket{}
+	var tickets []models.SupportTicket
 	for _, t := range m.tickets {
 		if t.AssignedAgentID != nil && *t.AssignedAgentID == agentID {
 			tickets = append(tickets, *t)
@@ -116,12 +116,12 @@ func (m *mockTicketService) GetTicketsByAgentID(ctx context.Context, agentID uui
 	}, nil
 }
 
-func (m *mockTicketService) GetTicketsByStatus(ctx context.Context, status models.TicketStatus, limit, offset int) (*models.TicketListResponse, error) {
+func (m *mockTicketService) GetTicketsByStatus(_ context.Context, status models.TicketStatus, limit, offset int) (*models.TicketListResponse, error) {
 	if m.getErr != nil {
 		return nil, m.getErr
 	}
 
-	tickets := []models.SupportTicket{}
+	var tickets []models.SupportTicket
 	for _, t := range m.tickets {
 		if t.Status == status {
 			tickets = append(tickets, *t)
@@ -144,7 +144,7 @@ func (m *mockTicketService) GetTicketsByStatus(ctx context.Context, status model
 	}, nil
 }
 
-func (m *mockTicketService) UpdateTicket(ctx context.Context, id uuid.UUID, req *models.UpdateTicketRequest) (*models.SupportTicket, error) {
+func (m *mockTicketService) UpdateTicket(_ context.Context, id uuid.UUID, req *models.UpdateTicketRequest) (*models.SupportTicket, error) {
 	ticket := m.tickets[id]
 	if ticket == nil {
 		return nil, nil
@@ -174,7 +174,7 @@ func (m *mockTicketService) UpdateTicket(ctx context.Context, id uuid.UUID, req 
 	return ticket, nil
 }
 
-func (m *mockTicketService) AssignTicket(ctx context.Context, id uuid.UUID, agentID uuid.UUID) (*models.SupportTicket, error) {
+func (m *mockTicketService) AssignTicket(_ context.Context, id uuid.UUID, agentID uuid.UUID) (*models.SupportTicket, error) {
 	ticket := m.tickets[id]
 	if ticket == nil {
 		return nil, nil
@@ -188,7 +188,7 @@ func (m *mockTicketService) AssignTicket(ctx context.Context, id uuid.UUID, agen
 	return ticket, nil
 }
 
-func (m *mockTicketService) AddResponse(ctx context.Context, ticketID uuid.UUID, authorID uuid.UUID, isAgent bool, req *models.AddResponseRequest) (*models.TicketResponse, error) {
+func (m *mockTicketService) AddResponse(_ context.Context, ticketID uuid.UUID, authorID uuid.UUID, isAgent bool, req *models.AddResponseRequest) (*models.TicketResponse, error) {
 	ticket := m.tickets[ticketID]
 	if ticket == nil {
 		return nil, nil
@@ -224,7 +224,7 @@ func (m *mockTicketService) AddResponse(ctx context.Context, ticketID uuid.UUID,
 	return response, nil
 }
 
-func (m *mockTicketService) GetTicketDetail(ctx context.Context, id uuid.UUID) (*models.TicketDetailResponse, error) {
+func (m *mockTicketService) GetTicketDetail(_ context.Context, id uuid.UUID) (*models.TicketDetailResponse, error) {
 	ticket := m.tickets[id]
 	if ticket == nil {
 		return nil, nil
@@ -237,7 +237,7 @@ func (m *mockTicketService) GetTicketDetail(ctx context.Context, id uuid.UUID) (
 	}, nil
 }
 
-func (m *mockTicketService) RateTicket(ctx context.Context, id uuid.UUID, rating int) error {
+func (m *mockTicketService) RateTicket(_ context.Context, id uuid.UUID, rating int) error {
 	ticket := m.tickets[id]
 	if ticket == nil {
 		return nil
@@ -295,7 +295,7 @@ func TestHTTPServer_CreateTicket(t *testing.T) {
 
 func TestHTTPServer_GetTicket(t *testing.T) {
 	t.Parallel()
-	ctx, cancel := httpTestContext(t)
+	ctx, cancel := httpTestContext()
 	defer cancel()
 
 	mockService := &mockTicketService{
@@ -345,7 +345,7 @@ func TestHTTPServer_GetTicket(t *testing.T) {
 
 func TestHTTPServer_GetTicketNotFound(t *testing.T) {
 	t.Parallel()
-	ctx, cancel := httpTestContext(t)
+	ctx, cancel := httpTestContext()
 	defer cancel()
 
 	mockService := &mockTicketService{
@@ -369,7 +369,7 @@ func TestHTTPServer_GetTicketNotFound(t *testing.T) {
 
 func TestHTTPServer_GetTickets(t *testing.T) {
 	t.Parallel()
-	ctx, cancel := httpTestContext(t)
+	ctx, cancel := httpTestContext()
 	defer cancel()
 
 	mockService := &mockTicketService{
@@ -380,24 +380,24 @@ func TestHTTPServer_GetTickets(t *testing.T) {
 
 	playerID := uuid.New()
 	ticket1 := &models.SupportTicket{
-		ID:          uuid.New(),
-		Number:      "TICKET-1",
-		PlayerID:    playerID,
-		Category:    models.TicketCategoryTechnical,
-		Status:      models.TicketStatusOpen,
-		Subject:     "Ticket 1",
-		CreatedAt:   time.Now(),
-		UpdatedAt:   time.Now(),
+		ID:        uuid.New(),
+		Number:    "TICKET-1",
+		PlayerID:  playerID,
+		Category:  models.TicketCategoryTechnical,
+		Status:    models.TicketStatusOpen,
+		Subject:   "Ticket 1",
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
 	}
 	ticket2 := &models.SupportTicket{
-		ID:          uuid.New(),
-		Number:      "TICKET-2",
-		PlayerID:    playerID,
-		Category:    models.TicketCategoryBilling,
-		Status:      models.TicketStatusOpen,
-		Subject:     "Ticket 2",
-		CreatedAt:   time.Now(),
-		UpdatedAt:   time.Now(),
+		ID:        uuid.New(),
+		Number:    "TICKET-2",
+		PlayerID:  playerID,
+		Category:  models.TicketCategoryBilling,
+		Status:    models.TicketStatusOpen,
+		Subject:   "Ticket 2",
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
 	}
 
 	mockService.tickets[ticket1.ID] = ticket1
@@ -427,7 +427,7 @@ func TestHTTPServer_GetTickets(t *testing.T) {
 
 func TestHTTPServer_UpdateTicket(t *testing.T) {
 	t.Parallel()
-	ctx, cancel := httpTestContext(t)
+	ctx, cancel := httpTestContext()
 	defer cancel()
 
 	mockService := &mockTicketService{
@@ -438,14 +438,14 @@ func TestHTTPServer_UpdateTicket(t *testing.T) {
 
 	ticketID := uuid.New()
 	ticket := &models.SupportTicket{
-		ID:          ticketID,
-		Number:      "TICKET-1",
-		PlayerID:    uuid.New(),
-		Category:    models.TicketCategoryTechnical,
-		Status:      models.TicketStatusOpen,
-		Subject:     "Original Subject",
-		CreatedAt:   time.Now(),
-		UpdatedAt:   time.Now(),
+		ID:        ticketID,
+		Number:    "TICKET-1",
+		PlayerID:  uuid.New(),
+		Category:  models.TicketCategoryTechnical,
+		Status:    models.TicketStatusOpen,
+		Subject:   "Original Subject",
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
 	}
 
 	mockService.tickets[ticketID] = ticket
@@ -483,7 +483,7 @@ func TestHTTPServer_UpdateTicket(t *testing.T) {
 
 func TestHTTPServer_AssignTicket(t *testing.T) {
 	t.Parallel()
-	ctx, cancel := httpTestContext(t)
+	ctx, cancel := httpTestContext()
 	defer cancel()
 
 	mockService := &mockTicketService{
@@ -495,12 +495,12 @@ func TestHTTPServer_AssignTicket(t *testing.T) {
 	ticketID := uuid.New()
 	agentID := uuid.New()
 	ticket := &models.SupportTicket{
-		ID:          ticketID,
-		Number:      "TICKET-1",
-		PlayerID:    uuid.New(),
-		Status:      models.TicketStatusOpen,
-		CreatedAt:   time.Now(),
-		UpdatedAt:   time.Now(),
+		ID:        ticketID,
+		Number:    "TICKET-1",
+		PlayerID:  uuid.New(),
+		Status:    models.TicketStatusOpen,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
 	}
 
 	mockService.tickets[ticketID] = ticket
@@ -534,7 +534,7 @@ func TestHTTPServer_AssignTicket(t *testing.T) {
 
 func TestHTTPServer_AddResponse(t *testing.T) {
 	t.Parallel()
-	ctx, cancel := httpTestContext(t)
+	ctx, cancel := httpTestContext()
 	defer cancel()
 
 	mockService := &mockTicketService{
@@ -546,12 +546,12 @@ func TestHTTPServer_AddResponse(t *testing.T) {
 	ticketID := uuid.New()
 	authorID := uuid.New()
 	ticket := &models.SupportTicket{
-		ID:          ticketID,
-		Number:      "TICKET-1",
-		PlayerID:    authorID,
-		Status:      models.TicketStatusOpen,
-		CreatedAt:   time.Now(),
-		UpdatedAt:   time.Now(),
+		ID:        ticketID,
+		Number:    "TICKET-1",
+		PlayerID:  authorID,
+		Status:    models.TicketStatusOpen,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
 	}
 
 	mockService.tickets[ticketID] = ticket
@@ -592,7 +592,7 @@ func TestHTTPServer_AddResponse(t *testing.T) {
 
 func TestHTTPServer_GetTicketDetail(t *testing.T) {
 	t.Parallel()
-	ctx, cancel := httpTestContext(t)
+	ctx, cancel := httpTestContext()
 	defer cancel()
 
 	mockService := &mockTicketService{
@@ -603,12 +603,12 @@ func TestHTTPServer_GetTicketDetail(t *testing.T) {
 
 	ticketID := uuid.New()
 	ticket := &models.SupportTicket{
-		ID:          ticketID,
-		Number:      "TICKET-1",
-		PlayerID:    uuid.New(),
-		Status:      models.TicketStatusOpen,
-		CreatedAt:   time.Now(),
-		UpdatedAt:   time.Now(),
+		ID:        ticketID,
+		Number:    "TICKET-1",
+		PlayerID:  uuid.New(),
+		Status:    models.TicketStatusOpen,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
 	}
 
 	response := models.TicketResponse{
@@ -646,7 +646,7 @@ func TestHTTPServer_GetTicketDetail(t *testing.T) {
 
 func TestHTTPServer_RateTicket(t *testing.T) {
 	t.Parallel()
-	ctx, cancel := httpTestContext(t)
+	ctx, cancel := httpTestContext()
 	defer cancel()
 
 	mockService := &mockTicketService{
@@ -657,12 +657,12 @@ func TestHTTPServer_RateTicket(t *testing.T) {
 
 	ticketID := uuid.New()
 	ticket := &models.SupportTicket{
-		ID:          ticketID,
-		Number:      "TICKET-1",
-		PlayerID:    uuid.New(),
-		Status:      models.TicketStatusResolved,
-		CreatedAt:   time.Now(),
-		UpdatedAt:   time.Now(),
+		ID:        ticketID,
+		Number:    "TICKET-1",
+		PlayerID:  uuid.New(),
+		Status:    models.TicketStatusResolved,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
 	}
 
 	mockService.tickets[ticketID] = ticket
@@ -687,7 +687,7 @@ func TestHTTPServer_RateTicket(t *testing.T) {
 
 func TestHTTPServer_HealthCheck(t *testing.T) {
 	t.Parallel()
-	ctx, cancel := httpTestContext(t)
+	ctx, cancel := httpTestContext()
 	defer cancel()
 
 	mockService := &mockTicketService{
@@ -716,4 +716,3 @@ func TestHTTPServer_HealthCheck(t *testing.T) {
 		t.Errorf("Expected status 'healthy', got %s", response["status"])
 	}
 }
-

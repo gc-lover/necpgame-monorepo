@@ -19,25 +19,25 @@ info:
     name: NECPGAME API Support
     email: api@necp.game
 servers:
-- url: http://localhost:8085/api/v1
-  description: Локальный сервер разработки
-- url: https://api.necp.game/api/v1
-  description: Продакшен сервер
+  - url: http://localhost:8085/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
 tags:
-- name: Exchange Orders
-  description: Управление ордерами на валютной бирже
+  - name: Exchange Orders
+    description: Управление ордерами на валютной бирже
 paths:
   /currency-exchange/orders/instant:
     post:
       tags:
-      - Exchange Orders
+        - Exchange Orders
       summary: Instant обмен валют
       description: 'Выполняет мгновенный обмен валют по текущему курсу.
 
         '
       operationId: createInstantExchange
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       requestBody:
         required: true
         content:
@@ -60,14 +60,14 @@ paths:
   /currency-exchange/orders/limit:
     post:
       tags:
-      - Exchange Orders
+        - Exchange Orders
       summary: Создать лимитный ордер
       description: 'Создаёт лимитный ордер на обмен валют по указанному курсу.
 
         '
       operationId: createLimitOrder
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       requestBody:
         required: true
         content:
@@ -90,35 +90,35 @@ paths:
   /currency-exchange/orders:
     get:
       tags:
-      - Exchange Orders
+        - Exchange Orders
       summary: Получить список ордеров
       description: 'Возвращает список ордеров игрока с фильтрацией.
 
         '
       operationId: listOrders
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       parameters:
-      - name: status
-        in: query
-        schema:
-          type: string
-          enum:
-          - pending
-          - filled
-          - cancelled
-          - expired
-        description: Фильтр по статусу
-      - name: order_type
-        in: query
-        schema:
-          type: string
-          enum:
-          - instant
-          - limit
-        description: Фильтр по типу ордера
-      - $ref: common.yaml#/components/parameters/Limit
-      - $ref: common.yaml#/components/parameters/Offset
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum:
+              - pending
+              - filled
+              - cancelled
+              - expired
+          description: Фильтр по статусу
+        - name: order_type
+          in: query
+          schema:
+            type: string
+            enum:
+              - instant
+              - limit
+          description: Фильтр по типу ордера
+        - $ref: common.yaml#/components/parameters/Limit
+        - $ref: common.yaml#/components/parameters/Offset
       responses:
         '200':
           description: Список ордеров
@@ -140,22 +140,22 @@ paths:
   /currency-exchange/orders/{order_id}:
     get:
       tags:
-      - Exchange Orders
+        - Exchange Orders
       summary: Получить детали ордера
       description: 'Возвращает детальную информацию об ордере.
 
         '
       operationId: getOrder
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       parameters:
-      - name: order_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: ID ордера
+        - name: order_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID ордера
       responses:
         '200':
           description: Детали ордера
@@ -171,22 +171,22 @@ paths:
           $ref: common.yaml#/components/responses/InternalServerError
     delete:
       tags:
-      - Exchange Orders
+        - Exchange Orders
       summary: Отменить ордер
       description: 'Отменяет лимитный ордер, если он ещё не исполнен.
 
         '
       operationId: cancelOrder
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       parameters:
-      - name: order_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: ID ордера
+        - name: order_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID ордера
       responses:
         '200':
           description: Ордер отменён
@@ -210,9 +210,9 @@ components:
     InstantExchangeRequest:
       type: object
       required:
-      - from_currency
-      - to_currency
-      - amount
+        - from_currency
+        - to_currency
+        - amount
       properties:
         from_currency:
           type: string
@@ -225,10 +225,10 @@ components:
     LimitOrderRequest:
       type: object
       required:
-      - from_currency
-      - to_currency
-      - amount
-      - target_rate
+        - from_currency
+        - to_currency
+        - amount
+        - target_rate
       properties:
         from_currency:
           type: string
@@ -259,15 +259,15 @@ components:
         order_type:
           type: string
           enum:
-          - instant
-          - limit
+            - instant
+            - limit
         status:
           type: string
           enum:
-          - pending
-          - filled
-          - cancelled
-          - expired
+            - pending
+            - filled
+            - cancelled
+            - expired
         created_at:
           type: string
           format: date-time
@@ -294,4 +294,4 @@ components:
           type: number
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
 security:
-- BearerAuth: []
+  - BearerAuth: [ ]

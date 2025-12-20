@@ -16,14 +16,18 @@
 ## 📦 Changes
 
 ### 1. **Makefile** - Already using ogen
+
 - OK Already migrated to ogen
 - OK Code generation working
 
 ### 2. **Code Generation** - 19 ogen files
+
 Generated files in `pkg/api/` (Auto SOLID: each <200 lines!)
 
 ### 3. **Handlers** - Updated to ogen interfaces
+
 Implemented 6 operations:
+
 1. OK `APIV1WeaponsProgressionWeaponIdGet` - Get weapon progression
 2. OK `APIV1WeaponsProgressionWeaponIdPost` - Upgrade weapon
 3. OK `APIV1WeaponsMasteryGet` - Get all masteries
@@ -34,11 +38,13 @@ Implemented 6 operations:
 **Key Feature:** All handlers return TYPED responses (no `interface{}` boxing!)
 
 ### 4. **HTTP Server** - Updated to ogen
+
 - OK Replaced `api.HandlerWithOptions` with `api.NewServer`
 - OK Added SecurityHandler
 - OK Proper ogen integration
 
 ### 5. **Service Layer** - Updated methods
+
 - OK Methods updated to match ogen types
 - OK Proper UUID handling
 - OK Type conversions for weapon types
@@ -48,6 +54,7 @@ Implemented 6 operations:
 ## ⚡ Expected Performance Gains
 
 **@ 1000-2000 RPS (weapon progression):**
+
 - 🚀 Latency: 20-25ms → 6-8ms P99 (3x faster)
 - 💾 Memory: -50%
 - 🖥️ CPU: -60%

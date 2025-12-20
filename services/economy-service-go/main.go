@@ -93,7 +93,13 @@ func main() {
 	contractService := server.NewContractService(contractRepo, redisClient)
 	logger.Info("Contract service initialized")
 
-	currencyExchangeRepo := server.NewCurrencyExchangeRepository(dbPool)
+	// Create separate pgxpool for currency exchange (TODO: use shared pool)
+	currencyExchangePool, err := pgxpool.New(context.Background(), dbURL)
+	if err != nil {
+		logger.WithError(err).Fatal("Failed to create currency exchange pool")
+	}
+
+	currencyExchangeRepo := server.NewCurrencyExchangeRepository(currencyExchangePool)
 	currencyExchangeService := server.NewCurrencyExchangeService(currencyExchangeRepo)
 	logger.Info("Currency exchange service initialized")
 

@@ -40,7 +40,7 @@ func TestJwtValidator_Verify(t *testing.T) {
 }
 
 func TestLobbyServer_Stop(t *testing.T) {
-	server, cleanup := setupTestLobbyServer(t)
+	server, cleanup := setupTestLobbyServer()
 	defer cleanup()
 
 	client1 := &Client{

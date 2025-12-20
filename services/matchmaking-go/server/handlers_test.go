@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
-	api "github.com/gc-lover/necpgame-monorepo/services/matchmaking-go/pkg/api"
+	"github.com/gc-lover/necpgame-monorepo/services/matchmaking-go/pkg/api"
 )
 
 // MockService is a mock implementation of ServiceInterface for testing
@@ -257,8 +257,8 @@ func TestGetPlayerRating(t *testing.T) {
 		PlayerId: playerID,
 		Ratings: []api.ActivityRating{
 			{
-				ActivityType: "pvp_5v5",
-				Tier:         api.ActivityRatingTierGold,
+				ActivityType:  "pvp_5v5",
+				Tier:          api.ActivityRatingTierGold,
 				CurrentRating: 1500,
 			},
 		},
@@ -459,4 +459,3 @@ func TestContextTimeout(t *testing.T) {
 
 	mockService.AssertExpectations(t)
 }
-

@@ -1,178 +1,178 @@
-          type: integer
-        query:
-          type: string
+type: integer
+query:
+  type: string
 
-    SuccessResponse:
+SuccessResponse:
+  type: object
+  properties:
+    success:
+      type: boolean
+      default: true
+    message:
+      type: string
+
+ErrorResponse:
+  type: object
+  properties:
+    error:
+      type: string
+    code:
+      type: string
+    details:
       type: object
-      properties:
-        success:
-          type: boolean
-          default: true
-        message:
-          type: string
 
-    ErrorResponse:
+# Основные сущности
+Inventory:
+  type: object
+  properties:
+    slots:
+      type: array
+      items:
+        type: object
+        properties:
+          slotId:
+            type: integer
+            minimum: 0
+            maximum: 49
+          item:
+            $ref: '#/components/schemas/InventoryItem'
+
+Equipment:
+  type: object
+  properties:
+    head:
+      $ref: '#/components/schemas/InventoryItem'
+    chest:
+      $ref: '#/components/schemas/InventoryItem'
+    arms:
+      $ref: '#/components/schemas/InventoryItem'
+    legs:
+      $ref: '#/components/schemas/InventoryItem'
+    feet:
+      $ref: '#/components/schemas/InventoryItem'
+    weapon_primary:
+      $ref: '#/components/schemas/InventoryItem'
+    weapon_secondary:
+      $ref: '#/components/schemas/InventoryItem'
+    cyberware_1:
+      $ref: '#/components/schemas/InventoryItem'
+    cyberware_2:
+      $ref: '#/components/schemas/InventoryItem'
+    cyberware_3:
+      $ref: '#/components/schemas/InventoryItem'
+
+Bank:
+  type: object
+  properties:
+    slots:
+      type: array
+      items:
+        type: object
+        properties:
+          slotId:
+            type: integer
+          item:
+            $ref: '#/components/schemas/InventoryItem'
+
+InventoryItem:
+  type: object
+  properties:
+    id:
+      type: string
+      format: uuid
+    itemTemplateId:
+      type: string
+      format: uuid
+    name:
+      type: string
+    description:
+      type: string
+    category:
+      type: string
+      enum: [ weapon, armor, consumable, cyberware, miscellaneous ]
+    rarity:
+      type: string
+      enum: [ common, uncommon, rare, epic, legendary ]
+    quantity:
+      type: integer
+      minimum: 1
+    maxStackSize:
+      type: integer
+      minimum: 1
+    durability:
+      type: integer
+      minimum: 0
+      maximum: 100
+    weight:
+      type: number
+      minimum: 0
+    value:
+      type: integer
+      minimum: 0
+    modifiers:
       type: object
-      properties:
-        error:
-          type: string
-        code:
-          type: string
-        details:
-          type: object
+      description: Модификаторы предмета
+    boundToCharacter:
+      type: boolean
+    slot:
+      type: integer
+      description: Номер слота в инвентаре
+    equipped:
+      type: boolean
+      default: false
+    createdAt:
+      type: string
+      format: date-time
+    updatedAt:
+      type: string
+      format: date-time
 
-    # Основные сущности
-    Inventory:
-      type: object
-      properties:
-        slots:
-          type: array
-          items:
-            type: object
-            properties:
-              slotId:
-                type: integer
-                minimum: 0
-                maximum: 49
-              item:
-                $ref: '#/components/schemas/InventoryItem'
+responses:
+  BadRequest:
+    description: Неверный запрос
+    content:
+      application/json:
+        schema:
+          $ref: '#/components/schemas/ErrorResponse'
 
-    Equipment:
-      type: object
-      properties:
-        head:
-          $ref: '#/components/schemas/InventoryItem'
-        chest:
-          $ref: '#/components/schemas/InventoryItem'
-        arms:
-          $ref: '#/components/schemas/InventoryItem'
-        legs:
-          $ref: '#/components/schemas/InventoryItem'
-        feet:
-          $ref: '#/components/schemas/InventoryItem'
-        weapon_primary:
-          $ref: '#/components/schemas/InventoryItem'
-        weapon_secondary:
-          $ref: '#/components/schemas/InventoryItem'
-        cyberware_1:
-          $ref: '#/components/schemas/InventoryItem'
-        cyberware_2:
-          $ref: '#/components/schemas/InventoryItem'
-        cyberware_3:
-          $ref: '#/components/schemas/InventoryItem'
+  Unauthorized:
+    description: Не авторизован
+    content:
+      application/json:
+        schema:
+          $ref: '#/components/schemas/ErrorResponse'
 
-    Bank:
-      type: object
-      properties:
-        slots:
-          type: array
-          items:
-            type: object
-            properties:
-              slotId:
-                type: integer
-              item:
-                $ref: '#/components/schemas/InventoryItem'
+  Forbidden:
+    description: Доступ запрещен
+    content:
+      application/json:
+        schema:
+          $ref: '#/components/schemas/ErrorResponse'
 
-    InventoryItem:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-        itemTemplateId:
-          type: string
-          format: uuid
-        name:
-          type: string
-        description:
-          type: string
-        category:
-          type: string
-          enum: [weapon, armor, consumable, cyberware, miscellaneous]
-        rarity:
-          type: string
-          enum: [common, uncommon, rare, epic, legendary]
-        quantity:
-          type: integer
-          minimum: 1
-        maxStackSize:
-          type: integer
-          minimum: 1
-        durability:
-          type: integer
-          minimum: 0
-          maximum: 100
-        weight:
-          type: number
-          minimum: 0
-        value:
-          type: integer
-          minimum: 0
-        modifiers:
-          type: object
-          description: Модификаторы предмета
-        boundToCharacter:
-          type: boolean
-        slot:
-          type: integer
-          description: Номер слота в инвентаре
-        equipped:
-          type: boolean
-          default: false
-        createdAt:
-          type: string
-          format: date-time
-        updatedAt:
-          type: string
-          format: date-time
+  NotFound:
+    description: Ресурс не найден
+    content:
+      application/json:
+        schema:
+          $ref: '#/components/schemas/ErrorResponse'
 
-  responses:
-    BadRequest:
-      description: Неверный запрос
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
+  Conflict:
+    description: Конфликт данных
+    content:
+      application/json:
+        schema:
+          $ref: '#/components/schemas/ErrorResponse'
 
-    Unauthorized:
-      description: Не авторизован
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
+  TooManyRequests:
+    description: Слишком много запросов
+    content:
+      application/json:
+        schema:
+          $ref: '#/components/schemas/ErrorResponse'
 
-    Forbidden:
-      description: Доступ запрещен
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-
-    NotFound:
-      description: Ресурс не найден
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-
-    Conflict:
-      description: Конфликт данных
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-
-    TooManyRequests:
-      description: Слишком много запросов
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-
-    InternalServerError:
-      description: Внутренняя ошибка сервера
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
+  InternalServerError:
+    description: Внутренняя ошибка сервера
+    content:
+      application/json:
+        schema:
+          $ref: '#/components/schemas/ErrorResponse'

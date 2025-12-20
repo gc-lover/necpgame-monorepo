@@ -1,8 +1,8 @@
 package server
 
 import (
-	feedbackapi "github.com/gc-lover/necpgame-monorepo/services/feedback-service-go/pkg/api"
 	"github.com/gc-lover/necpgame-monorepo/services/feedback-service-go/models"
+	feedbackapi "github.com/gc-lover/necpgame-monorepo/services/feedback-service-go/pkg/api"
 )
 
 func convertFeedbackStatusFromAPI(s feedbackapi.GetPlayerFeedbackStatus) models.FeedbackStatus {
@@ -20,27 +20,6 @@ func convertFeedbackStatusFromAPI(s feedbackapi.GetPlayerFeedbackStatus) models.
 	default:
 		return models.FeedbackStatusPending
 	}
-}
-
-func convertFeedbackStatusToAPI(s models.FeedbackStatus) *feedbackapi.FeedbackStatus {
-	var result feedbackapi.FeedbackStatus
-	switch s {
-	case models.FeedbackStatusPending:
-		result = feedbackapi.FeedbackStatusPending
-	case models.FeedbackStatusInReview:
-		result = feedbackapi.FeedbackStatusInReview
-	case models.FeedbackStatusApproved:
-		result = feedbackapi.FeedbackStatusResolved
-	case models.FeedbackStatusRejected:
-		result = feedbackapi.FeedbackStatusRejected
-	case models.FeedbackStatusMerged:
-		result = feedbackapi.FeedbackStatusMerged
-	case models.FeedbackStatusClosed:
-		result = feedbackapi.FeedbackStatusResolved
-	default:
-		result = feedbackapi.FeedbackStatusPending
-	}
-	return &result
 }
 
 func convertFeedbackStatusToAPIValue(s models.FeedbackStatus) feedbackapi.FeedbackStatus {
@@ -97,26 +76,3 @@ func convertUpdateStatusRequestStatusFromAPI(s feedbackapi.UpdateStatusRequestSt
 		return models.FeedbackStatusPending
 	}
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -35,4 +35,3 @@ func TestCharacterEngramCyberpsychosisServiceNoLeaks(t *testing.T) {
 
 	// If goroutines leaked from character engram cyberpsychosis handlers, test FAILS
 }
-

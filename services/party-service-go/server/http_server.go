@@ -1,4 +1,4 @@
-// Issue: #139 - ogen HTTP server integration
+// Package server Issue: #139 - ogen HTTP server integration
 // OPTIMIZATION: 90% faster than oapi-codegen
 package server
 
@@ -78,7 +78,7 @@ func (s *HTTPServer) Shutdown(ctx context.Context) error {
 	return nil
 }
 
-func healthCheck(w http.ResponseWriter, r *http.Request) {
+func healthCheck(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(`{"status":"healthy","service":"party"}`))
@@ -102,6 +102,3 @@ func recoverMiddleware(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 	})
 }
-
-
-

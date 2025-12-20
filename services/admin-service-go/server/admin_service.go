@@ -22,17 +22,17 @@ type AdminRepositoryInterface interface {
 	CountAuditLogs(ctx context.Context, adminID *uuid.UUID, actionType *models.AdminActionType) (int, error)
 }
 
-// OPTIMIZATION: Memory pooling for MMOFPS performance (Issue #2182)
+// AdminService OPTIMIZATION: Memory pooling for MMOFPS performance (Issue #2182)
 type AdminService struct {
-	repo        AdminRepositoryInterface
-	cache       *redis.Client
-	logger      *logrus.Logger
-	eventBus    EventBus
-	httpClient  *http.Client
+	repo       AdminRepositoryInterface
+	cache      *redis.Client
+	logger     *logrus.Logger
+	eventBus   EventBus
+	httpClient *http.Client
 
 	// Memory pools for zero allocations in hot path
-	auditLogPool    sync.Pool
-	responsePool    sync.Pool
+	auditLogPool     sync.Pool
+	responsePool     sync.Pool
 	searchResultPool sync.Pool
 }
 
@@ -68,13 +68,13 @@ func NewAdminService(dbURL, redisURL string) (*AdminService, error) {
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Pool configuration for MMOFPS performance
-	config.MaxConns = 50        // MaxOpenConns
-	config.MinConns = 10         // MinIdleConns
+	config.MaxConns = 50 // MaxOpenConns
+	config.MinConns = 10 // MinIdleConns
 	config.MaxConnLifetime = 5 * time.Minute
 	config.MaxConnIdleTime = 1 * time.Minute
-	
+
 	dbPool, err := pgxpool.NewWithConfig(context.Background(), config)
 	if err != nil {
 		return nil, err
@@ -168,7 +168,7 @@ func (s *AdminService) LogAction(ctx context.Context, adminID uuid.UUID, actionT
 	return err
 }
 
-// OPTIMIZATION: Batch operations for high-throughput scenarios (Issue #2182)
+// LogActionsBatch OPTIMIZATION: Batch operations for high-throughput scenarios (Issue #2182)
 func (s *AdminService) LogActionsBatch(ctx context.Context, actions []AdminActionBatch) error {
 	if len(actions) == 0 {
 		return nil
@@ -432,12 +432,12 @@ func (s *AdminService) SetWorldFlag(ctx context.Context, adminID uuid.UUID, req 
 
 func (s *AdminService) CreateEvent(ctx context.Context, adminID uuid.UUID, req *models.CreateEventRequest, ipAddress, userAgent string) (*models.AdminActionResponse, error) {
 	details := map[string]interface{}{
-		"event_name":    req.EventName,
-		"event_type":    req.EventType,
-		"description":   req.Description,
-		"start_time":    req.StartTime.Format(time.RFC3339),
-		"announcement":  req.Announcement,
-		"settings":      req.Settings,
+		"event_name":   req.EventName,
+		"event_type":   req.EventType,
+		"description":  req.Description,
+		"start_time":   req.StartTime.Format(time.RFC3339),
+		"announcement": req.Announcement,
+		"settings":     req.Settings,
 	}
 	if req.EndTime != nil {
 		details["end_time"] = req.EndTime.Format(time.RFC3339)
@@ -463,20 +463,20 @@ func (s *AdminService) CreateEvent(ctx context.Context, adminID uuid.UUID, req *
 	}, nil
 }
 
-func (s *AdminService) SearchPlayers(ctx context.Context, req *models.SearchPlayersRequest) (*models.PlayerSearchResponse, error) {
+func (s *AdminService) SearchPlayers(_ context.Context, _ *models.SearchPlayersRequest) (*models.PlayerSearchResponse, error) {
 	return &models.PlayerSearchResponse{
 		Players: []models.PlayerSearchResult{},
 		Total:   0,
 	}, nil
 }
 
-func (s *AdminService) GetAnalytics(ctx context.Context) (*models.AnalyticsResponse, error) {
+func (s *AdminService) GetAnalytics(_ context.Context) (*models.AnalyticsResponse, error) {
 	return &models.AnalyticsResponse{
-		OnlinePlayers:     0,
-		EconomyMetrics:   make(map[string]interface{}),
-		CombatMetrics:    make(map[string]interface{}),
+		OnlinePlayers:      0,
+		EconomyMetrics:     make(map[string]interface{}),
+		CombatMetrics:      make(map[string]interface{}),
 		PerformanceMetrics: make(map[string]interface{}),
-		Timestamp:        time.Now(),
+		Timestamp:          time.Now(),
 	}, nil
 }
 
@@ -588,4 +588,3 @@ func (s *AdminService) publishEventCreatedEvent(ctx context.Context, eventName, 
 	}
 	return s.eventBus.PublishEvent(ctx, "admin:event-created", payload)
 }
-

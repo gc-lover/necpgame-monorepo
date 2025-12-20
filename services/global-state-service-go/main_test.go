@@ -147,5 +147,3 @@ func TestEventsFlow(t *testing.T) {
 		t.Fatalf("list events failed: %d body=%s", list.Status, string(list.Body))
 	}
 }
-
-

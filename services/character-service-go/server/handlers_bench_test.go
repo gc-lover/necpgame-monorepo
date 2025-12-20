@@ -102,4 +102,3 @@ func BenchmarkValidateCharacterName(b *testing.B) {
 		_, _ = handlers.ValidateCharacterName(ctx, params)
 	}
 }
-

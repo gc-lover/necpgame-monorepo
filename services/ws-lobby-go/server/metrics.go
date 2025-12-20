@@ -65,4 +65,3 @@ func RecordWebSocketRoom(count int) {
 func RecordWebSocketError(errorType string) {
 	websocketErrorsTotal.WithLabelValues(errorType).Inc()
 }
-

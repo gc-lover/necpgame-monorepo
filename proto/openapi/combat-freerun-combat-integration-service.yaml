@@ -7,25 +7,25 @@ info:
     name: NECPGAME API Support
     email: api@necp.game
 servers:
-- url: http://localhost:8083
-  description: Локальный сервер разработки
-- url: https://api.necp.game
-  description: Продакшен сервер
+  - url: http://localhost:8083
+    description: Локальный сервер разработки
+  - url: https://api.necp.game
+    description: Продакшен сервер
 tags:
-- name: Movement Attacks
-  description: Атаки во время движения
-- name: Movement Combos
-  description: Комбо из движения
+  - name: Movement Attacks
+    description: Атаки во время движения
+  - name: Movement Combos
+    description: Комбо из движения
 paths:
   /api/v1/gameplay/combat/freerun/movement-attack:
     post:
       tags:
-      - Movement Attacks
+        - Movement Attacks
       summary: Выполнить атаку во время движения
       description: Выполняет атаку (стрельба или ближний бой) во время движения (Wall Run, Slide, Air, Vault)
       operationId: performMovementAttack
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       requestBody:
         required: true
         content:
@@ -98,8 +98,8 @@ paths:
                     combo_triggered: true
                     stamina_consumed: 8
                     effects_applied:
-                    - stun
-                    - knockback
+                      - stun
+                      - knockback
                     accuracy_modifier: -0.15
                     damage_modifier: 1.0
                     message: Movement attack executed
@@ -124,12 +124,12 @@ paths:
   /api/v1/gameplay/combat/freerun/movement-combo:
     post:
       tags:
-      - Movement Combos
+        - Movement Combos
       summary: Выполнить комбо из движения
       description: Выполняет цепочку движений с атаками для получения бонусов
       operationId: performMovementCombo
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       requestBody:
         required: true
         content:
@@ -143,14 +143,14 @@ paths:
                   character_id: a1b2c3d4-e5f6-7890-1234-567890abcdef
                   session_id: b2c3d4e5-f6a7-8901-2345-678901bcdef0
                   combo_chain:
-                  - movement_action: wall_run
-                    duration: 2.0
-                  - movement_action: wall_kick
-                    duration: 0.5
-                  - movement_action: air_dash
-                    duration: 0.3
-                  - attack_type: melee
-                    target_id: c3d4e5f6-a7b8-9012-3456-789012cdef01
+                    - movement_action: wall_run
+                      duration: 2.0
+                    - movement_action: wall_kick
+                      duration: 0.5
+                    - movement_action: air_dash
+                      duration: 0.3
+                    - attack_type: melee
+                      target_id: c3d4e5f6-a7b8-9012-3456-789012cdef01
                   target_id: c3d4e5f6-a7b8-9012-3456-789012cdef01
                   position:
                     x: 100.0
@@ -162,12 +162,12 @@ paths:
                   character_id: a1b2c3d4-e5f6-7890-1234-567890abcdef
                   session_id: b2c3d4e5-f6a7-8901-2345-678901bcdef0
                   combo_chain:
-                  - movement_action: slide
-                    duration: 1.5
-                  - movement_action: vault
-                    duration: 0.8
-                  - attack_type: shooting
-                    target_id: c3d4e5f6-a7b8-9012-3456-789012cdef01
+                    - movement_action: slide
+                      duration: 1.5
+                    - movement_action: vault
+                      duration: 0.8
+                    - attack_type: shooting
+                      target_id: c3d4e5f6-a7b8-9012-3456-789012cdef01
                   target_id: c3d4e5f6-a7b8-9012-3456-789012cdef01
                   position:
                     x: 100.0
@@ -189,13 +189,13 @@ paths:
                     combo_bonus: 1.25
                     damage_dealt: 250
                     effects_applied:
-                    - type: stun
-                      duration: 2.0
-                    - type: knockback
-                      force: 5.0
+                      - type: stun
+                        duration: 2.0
+                      - type: knockback
+                        force: 5.0
                     visual_effects:
-                    - particle_trail
-                    - screen_flash
+                      - particle_trail
+                      - screen_flash
                     chain_length: 4
                     message: Movement combo executed
         '400':
@@ -224,13 +224,13 @@ components:
     MovementAttackRequest:
       type: object
       required:
-      - character_id
-      - session_id
-      - movement_type
-      - attack_type
-      - target_id
-      - position
-      - direction
+        - character_id
+        - session_id
+        - movement_type
+        - attack_type
+        - target_id
+        - position
+        - direction
       properties:
         character_id:
           type: string
@@ -247,17 +247,17 @@ components:
         movement_type:
           type: string
           enum:
-          - wall_run
-          - slide
-          - air
-          - vault
+            - wall_run
+            - slide
+            - air
+            - vault
           description: Тип движения во время атаки
         attack_type:
           type: string
           enum:
-          - shooting
-          - melee
-          - special
+            - shooting
+            - melee
+            - special
           description: Тип атаки
         direction:
           $ref: combat-freerun-acrobatics-base-service.yaml#/components/schemas/Vector3D
@@ -268,10 +268,10 @@ components:
     MovementAttackResponse:
       type: object
       required:
-      - success
-      - attack_id
-      - damage_dealt
-      - stamina_consumed
+        - success
+        - attack_id
+        - damage_dealt
+        - stamina_consumed
       properties:
         attack_id:
           type: string
@@ -314,11 +314,11 @@ components:
     MovementComboRequest:
       type: object
       required:
-      - character_id
-      - session_id
-      - combo_chain
-      - target_id
-      - position
+        - character_id
+        - session_id
+        - combo_chain
+        - target_id
+        - position
       properties:
         character_id:
           type: string
@@ -344,7 +344,7 @@ components:
     ComboChainAction:
       type: object
       required:
-      - duration
+        - duration
       properties:
         target_id:
           type: string
@@ -353,19 +353,19 @@ components:
         movement_action:
           type: string
           enum:
-          - wall_run
-          - double_jump
-          - slide
-          - air_dash
-          - wall_kick
-          - vault
+            - wall_run
+            - double_jump
+            - slide
+            - air_dash
+            - wall_kick
+            - vault
           description: Действие движения (если это движение)
         attack_type:
           type: string
           enum:
-          - shooting
-          - melee
-          - special
+            - shooting
+            - melee
+            - special
           description: Тип атаки (если это атака)
         duration:
           type: number
@@ -376,10 +376,10 @@ components:
     MovementComboResponse:
       type: object
       required:
-      - success
-      - combo_id
-      - combo_bonus
-      - damage_dealt
+        - success
+        - combo_id
+        - combo_bonus
+        - damage_dealt
       properties:
         combo_id:
           type: string
@@ -418,16 +418,16 @@ components:
     ComboEffect:
       type: object
       required:
-      - type
+        - type
       properties:
         type:
           type: string
           enum:
-          - stun
-          - knockback
-          - speed_boost
-          - critical_chance
-          - aoe_damage
+            - stun
+            - knockback
+            - speed_boost
+            - critical_chance
+            - aoe_damage
           description: Тип эффекта
         duration:
           type: number
@@ -445,4 +445,4 @@ components:
           description: Значение эффекта (для speed_boost, critical_chance)
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
 security:
-- BearerAuth: []
+  - BearerAuth: [ ]

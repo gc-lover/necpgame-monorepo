@@ -1,11 +1,9 @@
-// Issue: #140876112
+// Package server Issue: #140876112
 package server
 
 import (
 	"context"
 	"database/sql"
-	"math"
-	"math/rand"
 	"time"
 
 	"go.uber.org/zap"
@@ -72,12 +70,6 @@ type ScoredEvent struct {
 }
 
 // NewRomanceCoreService создает новый сервис романтики
-func NewRomanceCoreService(db *sql.DB, logger *zap.Logger) *RomanceCoreService {
-	return &RomanceCoreService{
-		db:     db,
-		logger: logger,
-	}
-}
 
 // CalculateFinalEventScore рассчитывает итоговый балл события (Algorithm 1)
 func (s *RomanceCoreService) CalculateFinalEventScore(ctx context.Context, event RomanceEvent, romanceCtx RomanceCalculationContext) (float64, error) {
@@ -106,7 +98,7 @@ func (s *RomanceCoreService) CalculateFinalEventScore(ctx context.Context, event
 	score += s.calculateChemistryBonus(event, romanceCtx)
 
 	// Бонусы за предпочтения игрока
-	score += s.calculatePreferenceBonus(event, romanceCtx)
+	score += s.calculatePreferenceBonus()
 
 	// Штрафы за драму и конфликт
 	score += s.calculateDramaPenalty(event, romanceCtx)
@@ -228,7 +220,7 @@ func (s *RomanceCoreService) calculateChemistryBonus(event RomanceEvent, context
 }
 
 // calculatePreferenceBonus рассчитывает бонус за предпочтения игрока
-func (s *RomanceCoreService) calculatePreferenceBonus(event RomanceEvent, context RomanceContext) float64 {
+func (s *RomanceCoreService) calculatePreferenceBonus() float64 {
 	bonus := 0.0
 
 	// Здесь должна быть логика анализа предпочтений игрока

@@ -2,14 +2,15 @@
 # Issue: #1858
 # Docker Security and Optimization Validator
 
-import os
+import argparse
 import json
+import os
+import re
 import subprocess
 import sys
 from pathlib import Path
 from typing import Dict, List, Any, Tuple
-import argparse
-import re
+
 
 class DockerSecurityValidator:
     """Validate Docker images for security and optimization"""
@@ -80,7 +81,8 @@ class DockerSecurityValidator:
         if apt_get_lines:
             has_cleanup = any('rm -rf /var/lib/apt/lists/*' in line for line in lines)
             if not has_cleanup:
-                analysis['optimization_opportunities'].append("Missing apt cache cleanup - add 'rm -rf /var/lib/apt/lists/*'")
+                analysis['optimization_opportunities'].append(
+                    "Missing apt cache cleanup - add 'rm -rf /var/lib/apt/lists/*'")
 
         # Check for unnecessary packages
         curl_wget = any('curl' in line.lower() or 'wget' in line.lower() for line in lines)
@@ -88,7 +90,8 @@ class DockerSecurityValidator:
             analysis['warnings'].append("curl/wget found - ensure removal after use in multi-stage builds")
 
         # Check for large COPY commands
-        copy_lines = [line for line in lines if line.upper().strip().startswith('COPY ') or line.upper().strip().startswith('ADD ')]
+        copy_lines = [line for line in lines if
+                      line.upper().strip().startswith('COPY ') or line.upper().strip().startswith('ADD ')]
         large_copies = []
         for line in copy_lines:
             # Simple heuristic: multiple files or . in path
@@ -149,7 +152,8 @@ class DockerSecurityValidator:
         print("☸️  Scanning for Kubernetes manifests...")
 
         k8s_files = list(self.repo_path.rglob("*.yaml")) + list(self.repo_path.rglob("*.yml"))
-        k8s_files = [f for f in k8s_files if any(pattern in str(f) for pattern in ['k8s', 'kubernetes', 'kube', 'deploy'])]
+        k8s_files = [f for f in k8s_files if
+                     any(pattern in str(f) for pattern in ['k8s', 'kubernetes', 'kube', 'deploy'])]
 
         results = {}
 
@@ -208,8 +212,10 @@ class DockerSecurityValidator:
             'summary': {
                 'docker_score': docker_results['summary']['overall_score'],
                 'k8s_files_analyzed': len(k8s_results),
-                'total_issues': len(docker_results['issues']) + sum(len(analysis.get('security_issues', [])) for analysis in k8s_results.values()),
-                'total_warnings': len(docker_results['warnings']) + sum(len(analysis.get('warnings', [])) for analysis in k8s_results.values()),
+                'total_issues': len(docker_results['issues']) + sum(
+                    len(analysis.get('security_issues', [])) for analysis in k8s_results.values()),
+                'total_warnings': len(docker_results['warnings']) + sum(
+                    len(analysis.get('warnings', [])) for analysis in k8s_results.values()),
                 'total_optimizations': len(docker_results['optimizations'])
             },
             'recommendations': self._generate_recommendations(docker_results, k8s_results)
@@ -231,7 +237,8 @@ class DockerSecurityValidator:
         # K8s recommendations
         k8s_issues = sum(len(analysis.get('security_issues', [])) for analysis in k8s_results.values())
         if k8s_issues > 0:
-            recommendations.append("☸️  Address Kubernetes security issues - add security contexts and proper secrets management")
+            recommendations.append(
+                "☸️  Address Kubernetes security issues - add security contexts and proper secrets management")
 
         # General recommendations
         recommendations.extend([
@@ -243,6 +250,7 @@ class DockerSecurityValidator:
         ])
 
         return recommendations
+
 
 def main():
     parser = argparse.ArgumentParser(description="Docker Security and Optimization Validator")
@@ -256,9 +264,9 @@ def main():
     report = validator.generate_report()
 
     if not args.quiet:
-        print("\n" + "="*80)
+        print("\n" + "=" * 80)
         print("🐳 Docker & Kubernetes Security Validation Report")
-        print("="*80)
+        print("=" * 80)
 
         summary = report['summary']
         print(f"📊 Docker Score: {summary['docker_score']:.1f}/100")
@@ -273,7 +281,7 @@ def main():
             for rec in report['recommendations'][:8]:
                 print(f"   {rec}")
 
-        print("\n" + "="*80)
+        print("\n" + "=" * 80)
 
     if args.output:
         with open(args.output, 'w') as f:
@@ -288,6 +296,7 @@ def main():
     # Exit with code based on issues
     exit_code = 0 if report['summary']['total_issues'] == 0 else 1
     sys.exit(exit_code)
+
 
 if __name__ == "__main__":
     main()

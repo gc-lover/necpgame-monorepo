@@ -1,4 +1,4 @@
-// Issue: #39, #1607 - Sandevistan temporal marks operations
+// Package server Issue: #39, #1607 - Sandevistan temporal marks operations
 package server
 
 import (

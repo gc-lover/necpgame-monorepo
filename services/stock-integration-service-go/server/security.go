@@ -1,12 +1,12 @@
-// Issue: #1601
+// Package server Issue: #1601
 package server
 
 import (
 	"context"
 	"strings"
 
+	"github.com/gc-lover/necpgame-monorepo/services/stock-integration-service-go/pkg/api"
 	"github.com/ogen-go/ogen/ogenerrors"
-	api "github.com/gc-lover/necpgame-monorepo/services/stock-integration-service-go/pkg/api"
 )
 
 type SecurityHandler struct {
@@ -19,7 +19,7 @@ func NewSecurityHandler(authEnabled bool) *SecurityHandler {
 	}
 }
 
-func (s *SecurityHandler) HandleBearerAuth(ctx context.Context, operationName string, t api.BearerAuth) (context.Context, error) {
+func (s *SecurityHandler) HandleBearerAuth(ctx context.Context, _ string, t api.BearerAuth) (context.Context, error) {
 	// Skip validation if auth is disabled (for development/testing)
 	if !s.authEnabled {
 		return ctx, nil
@@ -48,4 +48,3 @@ func (s *SecurityHandler) HandleBearerAuth(ctx context.Context, operationName st
 
 	return ctx, nil
 }
-

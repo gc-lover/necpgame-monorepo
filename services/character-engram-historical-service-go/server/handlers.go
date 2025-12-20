@@ -1,4 +1,4 @@
-// Issue: #1600 - ogen handlers (TYPED responses)
+// Package server Issue: #1600 - ogen handlers (TYPED responses)
 package server
 
 import (
@@ -6,10 +6,10 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	api "github.com/necpgame/character-engram-historical-service-go/pkg/api"
+	"github.com/necpgame/character-engram-historical-service-go/pkg/api"
 )
 
-// Context timeout constants
+// DBTimeout Context timeout constants
 const (
 	DBTimeout = 50 * time.Millisecond // Performance: context timeout for DB ops
 )
@@ -21,7 +21,7 @@ func NewHistoricalEngramHandlers() *HistoricalEngramHandlers {
 }
 
 // GetHistoricalEngrams implements getHistoricalEngrams operation.
-func (h *HistoricalEngramHandlers) GetHistoricalEngrams(ctx context.Context, params api.GetHistoricalEngramsParams) (api.GetHistoricalEngramsRes, error) {
+func (h *HistoricalEngramHandlers) GetHistoricalEngrams(ctx context.Context, _ api.GetHistoricalEngramsParams) (api.GetHistoricalEngramsRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
@@ -34,23 +34,23 @@ func (h *HistoricalEngramHandlers) GetHistoricalEngrams(ctx context.Context, par
 
 	engrams := []api.HistoricalEngram{
 		{
-			EngramID:          engramID,
+			EngramID:           engramID,
 			OriginalPersonName: "Johnny Silverhand",
-			OriginalPersonID:  api.NewOptNilUUID(originalPersonID),
-			HistoricalYear:    2023,
-			AvailableFromYear: 2077,
-			IsAvailable:       true,
-			UniqueBonuses:     uniqueBonuses,
-			SpecialDialogues:  api.NewOptBool(true),
-			StorySignificance: api.NewOptHistoricalEngramStorySignificance(storySignificance),
-			CostMultiplier:    api.NewOptFloat32(costMultiplier),
-			QuestRequired:     api.NewOptBool(true),
-			QuestID:           api.NewOptNilUUID(questID),
+			OriginalPersonID:   api.NewOptNilUUID(originalPersonID),
+			HistoricalYear:     2023,
+			AvailableFromYear:  2077,
+			IsAvailable:        true,
+			UniqueBonuses:      uniqueBonuses,
+			SpecialDialogues:   api.NewOptBool(true),
+			StorySignificance:  api.NewOptHistoricalEngramStorySignificance(storySignificance),
+			CostMultiplier:     api.NewOptFloat32(costMultiplier),
+			QuestRequired:      api.NewOptBool(true),
+			QuestID:            api.NewOptNilUUID(questID),
 		},
 	}
 
 	response := &api.GetHistoricalEngramsOKApplicationJSON{}
-	*response = api.GetHistoricalEngramsOKApplicationJSON(engrams)
+	*response = engrams
 	return response, nil
 }
 
@@ -66,18 +66,18 @@ func (h *HistoricalEngramHandlers) GetHistoricalEngram(ctx context.Context, para
 	questID := uuid.New()
 
 	response := &api.HistoricalEngram{
-		EngramID:          params.EngramID,
+		EngramID:           params.EngramID,
 		OriginalPersonName: "Johnny Silverhand",
-		OriginalPersonID:  api.NewOptNilUUID(originalPersonID),
-		HistoricalYear:    2023,
-		AvailableFromYear: 2077,
-		IsAvailable:       true,
-		UniqueBonuses:     uniqueBonuses,
-		SpecialDialogues:  api.NewOptBool(true),
-		StorySignificance: api.NewOptHistoricalEngramStorySignificance(storySignificance),
-		CostMultiplier:    api.NewOptFloat32(costMultiplier),
-		QuestRequired:     api.NewOptBool(true),
-		QuestID:           api.NewOptNilUUID(questID),
+		OriginalPersonID:   api.NewOptNilUUID(originalPersonID),
+		HistoricalYear:     2023,
+		AvailableFromYear:  2077,
+		IsAvailable:        true,
+		UniqueBonuses:      uniqueBonuses,
+		SpecialDialogues:   api.NewOptBool(true),
+		StorySignificance:  api.NewOptHistoricalEngramStorySignificance(storySignificance),
+		CostMultiplier:     api.NewOptFloat32(costMultiplier),
+		QuestRequired:      api.NewOptBool(true),
+		QuestID:            api.NewOptNilUUID(questID),
 	}
 
 	return response, nil

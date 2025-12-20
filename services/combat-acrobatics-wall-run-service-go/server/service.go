@@ -1,4 +1,4 @@
-// Issue: #1510
+// Package server Issue: #1510
 package server
 
 import (
@@ -7,17 +7,17 @@ import (
 	"sync"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/gc-lover/necpgame-monorepo/services/combat-acrobatics-wall-run-service-go/pkg/api"
+	"github.com/google/uuid"
 )
 
 var (
-	ErrNotFound          = errors.New("not found")
-	ErrInvalidInput      = errors.New("invalid input")
-	ErrWallRunActive     = errors.New("wall run already active")
-	ErrNoWallRun         = errors.New("no active wall run")
-	ErrInvalidSurface    = errors.New("invalid surface")
-	ErrStaminaDepleted   = errors.New("stamina depleted")
+	ErrNotFound      = errors.New("not found")
+	_                = errors.New("invalid input")
+	ErrWallRunActive = errors.New("wall run already active")
+	_                = errors.New("no active wall run")
+	_                = errors.New("invalid surface")
+	_                = errors.New("stamina depleted")
 )
 
 // WallRunSession represents a wall run session
@@ -40,9 +40,9 @@ type Service struct {
 	repo *Repository
 
 	// Memory pooling for hot path structs (zero allocations target!)
-	surfacesPool   sync.Pool
-	statePool      sync.Pool
-	wallKickPool   sync.Pool
+	surfacesPool sync.Pool
+	statePool    sync.Pool
+	wallKickPool sync.Pool
 }
 
 func NewService(repo *Repository) *Service {
@@ -68,14 +68,14 @@ func NewService(repo *Repository) *Service {
 	return s
 }
 
-func (s *Service) GetWallRunSurfaces(ctx context.Context, params api.GetWallRunSurfacesParams) (*api.SurfacesResponse, error) {
+func (s *Service) GetWallRunSurfaces(ctx context.Context) (*api.SurfacesResponse, error) {
 	// TODO: Get character ID from context/auth
 	characterID := uuid.New() // Placeholder
 
 	// TODO: Get zone/area from params
 	zoneID := "current_zone" // Placeholder
 
-	surfaces, err := s.repo.GetSurfacesInZone(ctx, characterID, zoneID)
+	surfaces, err := s.repo.GetSurfacesInZone(ctx, zoneID)
 	if err != nil {
 		return nil, err
 	}
@@ -89,7 +89,7 @@ func (s *Service) GetWallRunSurfaces(ctx context.Context, params api.GetWallRunS
 	return response, nil
 }
 
-func (s *Service) StartWallRun(ctx context.Context, req api.OptStartWallRunRequest) (*api.WallRunStateResponse, error) {
+func (s *Service) StartWallRun(ctx context.Context) (*api.WallRunStateResponse, error) {
 	// TODO: Get character ID from context/auth
 	characterID := uuid.New() // Placeholder
 
@@ -104,8 +104,8 @@ func (s *Service) StartWallRun(ctx context.Context, req api.OptStartWallRunReque
 
 	// Surface selection currently placeholder (no surface ID in request schema)
 	surface := &api.Surface{
-		SurfaceID: uuid.New(),
-		Position:  api.Position3D{X: 0, Y: 0, Z: 0},
+		SurfaceID:  uuid.New(),
+		Position:   api.Position3D{X: 0, Y: 0, Z: 0},
 		IsSuitable: true,
 	}
 

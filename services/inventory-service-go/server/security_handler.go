@@ -1,4 +1,4 @@
-// Issue: #1591 - Security handler for ogen
+// Package server Issue: #1591 - Security handler for ogen
 package server
 
 import (
@@ -16,9 +16,8 @@ func NewSecurityHandler() api.SecurityHandler {
 }
 
 // HandleBearerAuth handles BearerAuth security
-func (s *SecurityHandler) HandleBearerAuth(ctx context.Context, operationName api.OperationName, t api.BearerAuth) (context.Context, error) {
+func (s *SecurityHandler) HandleBearerAuth(ctx context.Context, _ api.OperationName, _ api.BearerAuth) (context.Context, error) {
 	// TODO: Implement JWT validation
 	// For now, just pass through
 	return ctx, nil
 }
-

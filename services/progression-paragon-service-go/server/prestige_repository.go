@@ -23,13 +23,6 @@ type PrestigeRepository struct {
 	logger *logrus.Logger
 }
 
-func NewPrestigeRepository(db *pgxpool.Pool) *PrestigeRepository {
-	return &PrestigeRepository{
-		db:     db,
-		logger: GetLogger(),
-	}
-}
-
 func (r *PrestigeRepository) GetPrestigeInfo(ctx context.Context, characterID uuid.UUID) (*PrestigeInfo, error) {
 	var info PrestigeInfo
 	var bonusesJSON []byte
@@ -120,4 +113,3 @@ func (r *PrestigeRepository) RecordPrestigeReset(ctx context.Context, characterI
 	)
 	return err
 }
-

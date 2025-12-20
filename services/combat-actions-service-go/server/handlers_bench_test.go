@@ -59,4 +59,3 @@ func BenchmarkDefendInCombat(b *testing.B) {
 		_, _ = handlers.DefendInCombat(ctx, req, params)
 	}
 }
-

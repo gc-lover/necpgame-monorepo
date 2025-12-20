@@ -39,6 +39,7 @@ go build -o matchmaking .
 ```
 
 Для Windows:
+
 ```bash
 go build -o matchmaking.exe .
 ```
@@ -46,6 +47,7 @@ go build -o matchmaking.exe .
 ## Запуск
 
 Локально:
+
 ```bash
 ./matchmaking
 # или
@@ -53,6 +55,7 @@ go run .
 ```
 
 Через скрипт:
+
 ```bash
 scripts\run\matchmaking.cmd  # Windows
 ```
@@ -60,16 +63,19 @@ scripts\run\matchmaking.cmd  # Windows
 ## Docker
 
 Сборка образа:
+
 ```bash
 docker build -t necpgame-matchmaking-go:latest services/matchmaking-go
 ```
 
 Запуск контейнера:
+
 ```bash
 docker run -p 6379:6379 -e REDIS_URL=redis://redis:6379 -e MODE=pve8 -e TEAM_SIZE=8 necpgame-matchmaking-go:latest
 ```
 
 Через docker-compose:
+
 ```bash
 docker-compose up matchmaking
 ```

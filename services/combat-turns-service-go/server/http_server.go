@@ -1,4 +1,4 @@
-// Issue: #1595
+// Package server Issue: #1595
 // OPTIMIZED: No chi dependency, standard http.ServeMux + middleware chain
 // PERFORMANCE: OGEN routes (hot path) already maximum speed, removed chi overhead from health/metrics
 package server
@@ -38,9 +38,9 @@ func NewHTTPServer(addr string, service *Service) *HTTPServer {
 	// Middleware chain (no duplication, optimized)
 	apiHandler := chainMiddleware(ogenServer,
 		recoveryMiddleware,  // panic recovery
-		requestIDMiddleware,  // request ID
-		LoggingMiddleware,    // structured logging
-		MetricsMiddleware,    // metrics
+		requestIDMiddleware, // request ID
+		LoggingMiddleware,   // structured logging
+		MetricsMiddleware,   // metrics
 	)
 
 	// Mount OGEN (hot path - maximum speed, static router)
@@ -116,16 +116,13 @@ func (s *HTTPServer) Shutdown(ctx context.Context) error {
 }
 
 // Health check handler
-func healthCheck(w http.ResponseWriter, r *http.Request) {
+func healthCheck(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("OK"))
 }
 
 // Metrics handler (stub)
-func metricsHandler(w http.ResponseWriter, r *http.Request) {
+func metricsHandler(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("# HELP combat_turns_service metrics\n"))
 }
-
-
-

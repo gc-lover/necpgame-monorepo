@@ -1,0 +1,224 @@
+# Issue: #2183 - Combat System Action Schemas
+components:
+  schemas:
+
+    # ============================================================================
+    # COMBAT ACTION SCHEMAS
+    # ============================================================================
+
+    CombatActionRequest:
+      type: object
+      required:
+        - action_type
+        - timestamp
+      properties:
+        action_type:
+          type: string
+          enum: [ move, attack, ability, reload, interact, surrender ]
+          description: Type of combat action
+        timestamp:
+          type: string
+          format: date-time
+          description: Client timestamp
+        target_position:
+          $ref: '#/components/schemas/Vector3'
+          description: Target position for movement/attack
+        target_id:
+          type: string
+          format: uuid
+          description: Target participant ID
+        weapon_id:
+          type: string
+          format: uuid
+          description: Weapon to use
+        ability_id:
+          type: string
+          format: uuid
+          description: Ability to activate
+        parameters:
+          type: object
+          description: Action-specific parameters
+
+    CombatActionResult:
+      type: object
+      required:
+        - success
+        - timestamp
+      properties:
+        success:
+          type: boolean
+          description: Whether action was successful
+        timestamp:
+          type: string
+          format: date-time
+          description: Server timestamp
+        action_id:
+          type: string
+          format: uuid
+          description: Unique action identifier
+        effects:
+          type: array
+          items:
+            $ref: '#/components/schemas/CombatEffect'
+          description: Effects caused by this action
+        validation_errors:
+          type: array
+          items:
+            type: string
+          description: Validation errors (if success = false)
+        cooldown_ms:
+          type: integer
+          minimum: 0
+          description: Cooldown in milliseconds
+
+    CombatEffect:
+      type: object
+      required:
+        - effect_type
+        - target_id
+      properties:
+        effect_type:
+          type: string
+          enum: [ damage, healing, buff, debuff, knockback, stun, death ]
+          description: Type of combat effect
+        target_id:
+          type: string
+          format: uuid
+          description: Affected participant ID
+        value:
+          type: number
+          format: float
+          description: Effect magnitude
+        duration_ms:
+          type: integer
+          minimum: 0
+          description: Effect duration in milliseconds
+        parameters:
+          type: object
+          description: Effect-specific parameters
+
+    CombatState:
+      type: object
+      required:
+        - session_id
+        - timestamp
+        - participants
+      properties:
+        session_id:
+          type: string
+          format: uuid
+          description: Combat session ID
+        timestamp:
+          type: string
+          format: date-time
+          description: State timestamp
+        status:
+          type: string
+          enum: [ preparing, active, paused, completed, failed ]
+          description: Current session status
+        participants:
+          type: array
+          items:
+            $ref: '#/components/schemas/CombatParticipant'
+          description: Current participants
+        active_effects:
+          type: array
+          items:
+            $ref: '#/components/schemas/ActiveEffect'
+          description: Currently active effects
+        time_remaining_seconds:
+          type: integer
+          minimum: 0
+          description: Time remaining in session
+        objectives:
+          type: array
+          items:
+            $ref: '#/components/schemas/CombatObjective'
+          description: Current objectives
+
+    ActiveEffect:
+      type: object
+      required:
+        - effect_id
+        - effect_type
+        - target_id
+        - remaining_ms
+      properties:
+        effect_id:
+          type: string
+          format: uuid
+          description: Effect instance ID
+        effect_type:
+          type: string
+          enum: [ buff, debuff, damage_over_time, healing_over_time ]
+          description: Type of active effect
+        target_id:
+          type: string
+          format: uuid
+          description: Affected participant ID
+        remaining_ms:
+          type: integer
+          minimum: 0
+          description: Remaining duration in milliseconds
+        magnitude:
+          type: number
+          format: float
+          description: Effect magnitude per tick
+
+    CombatObjective:
+      type: object
+      required:
+        - id
+        - type
+        - description
+        - status
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Objective ID
+        type:
+          type: string
+          enum: [ eliminate_enemies, survive_time, collect_items, defend_position ]
+          description: Objective type
+        description:
+          type: string
+          description: Objective description
+        status:
+          type: string
+          enum: [ pending, active, completed, failed ]
+          description: Objective completion status
+        progress:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 100.0
+          description: Completion progress percentage
+        target_value:
+          type: integer
+          minimum: 0
+          description: Target value to achieve
+        current_value:
+          type: integer
+          minimum: 0
+          description: Current progress value
+
+    Vector3:
+      type: object
+      required:
+        - x
+        - y
+        - z
+      properties:
+        x:
+          type: number
+          format: float
+          description: X coordinate
+        y:
+          type: number
+          format: float
+          description: Y coordinate
+        z:
+          type: number
+          format: float
+          description: Z coordinate

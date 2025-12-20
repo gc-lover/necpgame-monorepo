@@ -1,4 +1,4 @@
-// Issue: #1598, #1607
+// Package server Issue: #1598, #1607
 // ogen handlers - TYPED responses (no interface{} boxing!)
 package server
 
@@ -10,10 +10,8 @@ import (
 	"github.com/google/uuid"
 )
 
-// Context timeout constants (Issue #1604)
 const (
-	DBTimeout    = 50 * time.Millisecond
-	CacheTimeout = 10 * time.Millisecond
+	DBTimeout = 50 * time.Millisecond
 )
 
 // ChatMessagesHandlers implements api.Handler interface (ogen typed handlers!)
@@ -39,33 +37,33 @@ func (h *ChatMessagesHandlers) GetMessages(ctx context.Context, params api.GetMe
 
 	messages := []api.ChatMessage{
 		{
-			ID:           api.NewOptUUID(messageId1),
-			ChannelID:    api.NewOptUUID(channelId1),
-			ChannelType:  api.NewOptChatMessageChannelType(api.ChatMessageChannelTypeGLOBAL),
-			SenderID:     api.NewOptUUID(senderId1),
-			SenderName:   api.NewOptString("Player1"),
-			Content:      api.NewOptString("Hello, world!"),
-			MessageType:  api.NewOptChatMessageMessageType(api.ChatMessageMessageTypeText),
-			CreatedAt:    api.NewOptDateTime(now),
-			UpdatedAt:    api.NewOptNilDateTime(now),
-			ExpiresAt:    api.OptNilDateTime{},
-			IsDeleted:    api.NewOptBool(false),
-			IsEdited:     api.NewOptBool(false),
+			ID:            api.NewOptUUID(messageId1),
+			ChannelID:     api.NewOptUUID(channelId1),
+			ChannelType:   api.NewOptChatMessageChannelType(api.ChatMessageChannelTypeGLOBAL),
+			SenderID:      api.NewOptUUID(senderId1),
+			SenderName:    api.NewOptString("Player1"),
+			Content:       api.NewOptString("Hello, world!"),
+			MessageType:   api.NewOptChatMessageMessageType(api.ChatMessageMessageTypeText),
+			CreatedAt:     api.NewOptDateTime(now),
+			UpdatedAt:     api.NewOptNilDateTime(now),
+			ExpiresAt:     api.OptNilDateTime{},
+			IsDeleted:     api.NewOptBool(false),
+			IsEdited:      api.NewOptBool(false),
 			FormattedText: api.OptString{},
 		},
 		{
-			ID:           api.NewOptUUID(messageId2),
-			ChannelID:    api.NewOptUUID(channelId2),
-			ChannelType:  api.NewOptChatMessageChannelType(api.ChatMessageChannelTypeGLOBAL),
-			SenderID:     api.NewOptUUID(senderId2),
-			SenderName:   api.NewOptString("Player2"),
-			Content:      api.NewOptString("How are you?"),
-			MessageType:  api.NewOptChatMessageMessageType(api.ChatMessageMessageTypeText),
-			CreatedAt:    api.NewOptDateTime(now),
-			UpdatedAt:    api.NewOptNilDateTime(now),
-			ExpiresAt:    api.OptNilDateTime{},
-			IsDeleted:    api.NewOptBool(false),
-			IsEdited:     api.NewOptBool(false),
+			ID:            api.NewOptUUID(messageId2),
+			ChannelID:     api.NewOptUUID(channelId2),
+			ChannelType:   api.NewOptChatMessageChannelType(api.ChatMessageChannelTypeGLOBAL),
+			SenderID:      api.NewOptUUID(senderId2),
+			SenderName:    api.NewOptString("Player2"),
+			Content:       api.NewOptString("How are you?"),
+			MessageType:   api.NewOptChatMessageMessageType(api.ChatMessageMessageTypeText),
+			CreatedAt:     api.NewOptDateTime(now),
+			UpdatedAt:     api.NewOptNilDateTime(now),
+			ExpiresAt:     api.OptNilDateTime{},
+			IsDeleted:     api.NewOptBool(false),
+			IsEdited:      api.NewOptBool(false),
 			FormattedText: api.OptString{},
 		},
 	}
@@ -106,33 +104,33 @@ func (h *ChatMessagesHandlers) GetChannelMessages(ctx context.Context, params ap
 
 	messages := []api.ChatMessage{
 		{
-			ID:           api.NewOptUUID(messageId1),
-			ChannelID:    api.NewOptUUID(params.ChannelID),
-			ChannelType:  api.NewOptChatMessageChannelType(api.ChatMessageChannelTypeGLOBAL),
-			SenderID:     api.NewOptUUID(senderId1),
-			SenderName:   api.NewOptString("Player1"),
-			Content:      api.NewOptString("Channel message 1"),
-			MessageType:  api.NewOptChatMessageMessageType(api.ChatMessageMessageTypeText),
-			CreatedAt:    api.NewOptDateTime(now),
-			UpdatedAt:    api.NewOptNilDateTime(now),
-			ExpiresAt:    api.OptNilDateTime{},
-			IsDeleted:    api.NewOptBool(false),
-			IsEdited:     api.NewOptBool(false),
+			ID:            api.NewOptUUID(messageId1),
+			ChannelID:     api.NewOptUUID(params.ChannelID),
+			ChannelType:   api.NewOptChatMessageChannelType(api.ChatMessageChannelTypeGLOBAL),
+			SenderID:      api.NewOptUUID(senderId1),
+			SenderName:    api.NewOptString("Player1"),
+			Content:       api.NewOptString("Channel message 1"),
+			MessageType:   api.NewOptChatMessageMessageType(api.ChatMessageMessageTypeText),
+			CreatedAt:     api.NewOptDateTime(now),
+			UpdatedAt:     api.NewOptNilDateTime(now),
+			ExpiresAt:     api.OptNilDateTime{},
+			IsDeleted:     api.NewOptBool(false),
+			IsEdited:      api.NewOptBool(false),
 			FormattedText: api.OptString{},
 		},
 		{
-			ID:           api.NewOptUUID(messageId2),
-			ChannelID:    api.NewOptUUID(params.ChannelID),
-			ChannelType:  api.NewOptChatMessageChannelType(api.ChatMessageChannelTypeGLOBAL),
-			SenderID:     api.NewOptUUID(senderId2),
-			SenderName:   api.NewOptString("Player2"),
-			Content:      api.NewOptString("Channel message 2"),
-			MessageType:  api.NewOptChatMessageMessageType(api.ChatMessageMessageTypeText),
-			CreatedAt:    api.NewOptDateTime(now),
-			UpdatedAt:    api.NewOptNilDateTime(now),
-			ExpiresAt:    api.OptNilDateTime{},
-			IsDeleted:    api.NewOptBool(false),
-			IsEdited:     api.NewOptBool(false),
+			ID:            api.NewOptUUID(messageId2),
+			ChannelID:     api.NewOptUUID(params.ChannelID),
+			ChannelType:   api.NewOptChatMessageChannelType(api.ChatMessageChannelTypeGLOBAL),
+			SenderID:      api.NewOptUUID(senderId2),
+			SenderName:    api.NewOptString("Player2"),
+			Content:       api.NewOptString("Channel message 2"),
+			MessageType:   api.NewOptChatMessageMessageType(api.ChatMessageMessageTypeText),
+			CreatedAt:     api.NewOptDateTime(now),
+			UpdatedAt:     api.NewOptNilDateTime(now),
+			ExpiresAt:     api.OptNilDateTime{},
+			IsDeleted:     api.NewOptBool(false),
+			IsEdited:      api.NewOptBool(false),
 			FormattedText: api.OptString{},
 		},
 	}
@@ -172,18 +170,18 @@ func (h *ChatMessagesHandlers) SendChatMessage(ctx context.Context, req *api.Sen
 	channelType := api.ChatMessageChannelType(req.ChannelType)
 
 	response := &api.ChatMessage{
-		ID:           api.NewOptUUID(messageId),
-		ChannelID:    api.NewOptUUID(req.ChannelID),
-		ChannelType:  api.NewOptChatMessageChannelType(channelType),
-		SenderID:     api.NewOptUUID(senderId),
-		SenderName:   api.NewOptString("Player1"),
-		Content:      api.NewOptString(req.Content),
-		MessageType:  api.NewOptChatMessageMessageType(api.ChatMessageMessageTypeText),
-		CreatedAt:    api.NewOptDateTime(now),
-		UpdatedAt:    api.NewOptNilDateTime(now),
-		ExpiresAt:    api.OptNilDateTime{},
-		IsDeleted:    api.NewOptBool(false),
-		IsEdited:     api.NewOptBool(false),
+		ID:            api.NewOptUUID(messageId),
+		ChannelID:     api.NewOptUUID(req.ChannelID),
+		ChannelType:   api.NewOptChatMessageChannelType(channelType),
+		SenderID:      api.NewOptUUID(senderId),
+		SenderName:    api.NewOptString("Player1"),
+		Content:       api.NewOptString(req.Content),
+		MessageType:   api.NewOptChatMessageMessageType(api.ChatMessageMessageTypeText),
+		CreatedAt:     api.NewOptDateTime(now),
+		UpdatedAt:     api.NewOptNilDateTime(now),
+		ExpiresAt:     api.OptNilDateTime{},
+		IsDeleted:     api.NewOptBool(false),
+		IsEdited:      api.NewOptBool(false),
 		FormattedText: api.OptString{},
 	}
 
@@ -202,18 +200,18 @@ func (h *ChatMessagesHandlers) ProcessChatMessage(ctx context.Context, req *api.
 	now := time.Now()
 
 	message := api.ChatMessage{
-		ID:           api.NewOptUUID(messageId),
-		ChannelID:    api.NewOptUUID(channelId),
-		ChannelType:  api.NewOptChatMessageChannelType(api.ChatMessageChannelTypeGLOBAL),
-		SenderID:     api.NewOptUUID(senderId),
-		SenderName:   api.NewOptString("Player1"),
-		Content:      api.NewOptString("Processed message"),
-		MessageType:  api.NewOptChatMessageMessageType(api.ChatMessageMessageTypeText),
-		CreatedAt:    api.NewOptDateTime(now),
-		UpdatedAt:    api.NewOptNilDateTime(now),
-		ExpiresAt:    api.OptNilDateTime{},
-		IsDeleted:    api.NewOptBool(false),
-		IsEdited:     api.NewOptBool(false),
+		ID:            api.NewOptUUID(messageId),
+		ChannelID:     api.NewOptUUID(channelId),
+		ChannelType:   api.NewOptChatMessageChannelType(api.ChatMessageChannelTypeGLOBAL),
+		SenderID:      api.NewOptUUID(senderId),
+		SenderName:    api.NewOptString("Player1"),
+		Content:       api.NewOptString("Processed message"),
+		MessageType:   api.NewOptChatMessageMessageType(api.ChatMessageMessageTypeText),
+		CreatedAt:     api.NewOptDateTime(now),
+		UpdatedAt:     api.NewOptNilDateTime(now),
+		ExpiresAt:     api.OptNilDateTime{},
+		IsDeleted:     api.NewOptBool(false),
+		IsEdited:      api.NewOptBool(false),
 		FormattedText: api.OptString{},
 	}
 

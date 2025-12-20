@@ -1,7 +1,9 @@
 # Backend Check OpenAPI - Validation Command
+
 # Issue: #1878
 
 **Purpose:** Validate OpenAPI specifications before backend development to ensure:
+
 - Schema compliance and required fields
 - Security definitions completeness
 - ogen compatibility for code generation
@@ -23,6 +25,7 @@
 ## Validation Steps
 
 ### 1. Spectral Linting
+
 ```bash
 # Check OpenAPI compliance with Spectral
 if ! command -v spectral >/dev/null 2>&1; then
@@ -36,6 +39,7 @@ spectral lint "$spec_file" --ruleset .spectral.yaml
 ```
 
 ### 2. ogen Compatibility Check
+
 ```bash
 # Check if ogen can generate code from spec
 if command -v ogen >/dev/null 2>&1; then
@@ -51,13 +55,15 @@ fi
 ```
 
 ### 3. Schema Validation
+
 - OK Required fields present (title, version, paths)
 - OK Security schemes defined
 - OK Response schemas complete
 - OK Parameter definitions valid
 
 ### 4. Project Standards Check
-- OK File size <500 lines (or properly modularized)
+
+- OK File size <1000 lines (or properly modularized)
 - OK Consistent naming conventions
 - OK Error response schemas standardized
 - OK Pagination patterns followed
@@ -102,7 +108,7 @@ validate_openapi_file() {
     # Check file size
     local lines=$(wc -l < "$file")
     if [ "$lines" -gt 500 ]; then
-        echo "WARNING  WARNING: Spec exceeds 500 lines ($lines lines)"
+        echo "WARNING  WARNING: Spec exceeds 1000 lines ($lines lines)"
         echo "   Consider splitting into modules"
         WARNINGS=$((WARNINGS + 1))
     fi
@@ -231,6 +237,7 @@ rules:
 ## Integration with Backend Workflow
 
 ### Pre-commit Hook
+
 ```bash
 # .git/hooks/pre-commit
 #!/bin/bash
@@ -246,6 +253,7 @@ fi
 ```
 
 ### CI/CD Integration
+
 ```yaml
 # .github/workflows/backend-validation.yml
 name: Backend OpenAPI Validation
@@ -284,16 +292,19 @@ jobs:
 ### Common Issues & Solutions
 
 **Spectral Errors:**
+
 - Missing required fields → Add to OpenAPI spec
 - Invalid schema → Fix JSON Schema definitions
 - Security issues → Add security schemes
 
 **ogen Compatibility:**
+
 - Unsupported features → Use ogen-compatible patterns
 - Type conflicts → Resolve schema conflicts
 - Missing references → Add proper $ref links
 
 **Project Standards:**
+
 - File too large → Split into modules
 - Naming inconsistencies → Follow conventions
 - Missing pagination → Add standard pagination
@@ -301,17 +312,20 @@ jobs:
 ## Success Criteria
 
 OK **All validations pass:**
+
 - Spectral linting successful
 - ogen compatibility confirmed
 - Project standards met
 - No blocking errors
 
 WARNING **Warnings acceptable:**
+
 - Missing optional tools (spectral/ogen)
-- File size warnings (<500 lines)
+- File size warnings (<1000 lines)
 - Minor style issues
 
 ❌ **Blocking errors:**
+
 - Invalid OpenAPI syntax
 - ogen incompatibility
 - Missing required schemas

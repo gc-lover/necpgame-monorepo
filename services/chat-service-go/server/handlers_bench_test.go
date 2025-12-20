@@ -66,4 +66,3 @@ func BenchmarkGetChannels(b *testing.B) {
 		_, _ = handlers.GetChannels(ctx)
 	}
 }
-

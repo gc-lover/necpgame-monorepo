@@ -1,4 +1,4 @@
-// Issue: #75
+// Package server Issue: #75
 package server
 
 import (
@@ -317,7 +317,7 @@ func (s *Service) recalculateCharacterStats(ctx context.Context, characterID uui
 	return nil
 }
 
-func contains(slice []string, item string) bool {
+func contains(slice []string, item api.CreateCharacterRequestOrigin) bool {
 	for _, s := range slice {
 		if s == item {
 			return true

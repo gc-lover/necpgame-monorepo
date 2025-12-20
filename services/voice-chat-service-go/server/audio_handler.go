@@ -6,10 +6,11 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/sirupsen/logrus"
 )
 
-// OPTIMIZATION: Issue #2030 - Audio streaming management for voice chat
+// StartAudioStream OPTIMIZATION: Issue #2030 - Audio streaming management for voice chat
 func (s *VoiceChatService) StartAudioStream(w http.ResponseWriter, r *http.Request) {
 	var req StartStreamRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -41,9 +42,9 @@ func (s *VoiceChatService) StartAudioStream(w http.ResponseWriter, r *http.Reque
 	s.metrics.AudioStreams.Inc()
 
 	resp := &StartStreamResponse{
-		StreamID:      stream.StreamID,
-		ChannelID:     stream.ChannelID,
-		WebSocketURL:  fmt.Sprintf("ws://%s/voice/stream/%s", s.config.WebSocketAddr, stream.StreamID),
+		StreamID:     stream.StreamID,
+		ChannelID:    stream.ChannelID,
+		WebSocketURL: fmt.Sprintf("ws://%s/voice/stream/%s", s.config.WebSocketAddr, stream.StreamID),
 		AudioConfig: &AudioConfig{
 			SampleRate: req.AudioFormat.SampleRate,
 			Channels:   req.AudioFormat.Channels,
@@ -52,7 +53,7 @@ func (s *VoiceChatService) StartAudioStream(w http.ResponseWriter, r *http.Reque
 			BufferSize: s.config.AudioBufferSize,
 			ICEServers: []string{"stun:stun.l.google.com:19302"},
 		},
-		StartedAt:       stream.StartedAt.Unix(),
+		StartedAt:        stream.StartedAt.Unix(),
 		EstimatedBitrate: req.AudioFormat.Bitrate,
 	}
 
@@ -134,11 +135,11 @@ func (s *VoiceChatService) GetProximityAudio(w http.ResponseWriter, r *http.Requ
 	// TODO: Calculate nearby players based on location
 	nearbyPlayers := []*NearbyPlayer{
 		{
-			UserID:          "user_nearby_1",
-			Username:        "NearbyPlayer1",
-			Distance:        5.5,
+			UserID:           "user_nearby_1",
+			Username:         "NearbyPlayer1",
+			Distance:         5.5,
 			VolumeMultiplier: 0.9,
-			Speaking:        true,
+			Speaking:         true,
 		},
 	}
 
@@ -147,10 +148,10 @@ func (s *VoiceChatService) GetProximityAudio(w http.ResponseWriter, r *http.Requ
 		Radius:        radius,
 		NearbyPlayers: nearbyPlayers,
 		AudioSettings: &ProximityAudioSettings{
-			MaxDistance:       s.config.ProximityRadius,
-			MinVolume:         0.1,
-			RolloffFactor:     1.0,
-			DirectionalAudio:  true,
+			MaxDistance:          s.config.ProximityRadius,
+			MinVolume:            0.1,
+			RolloffFactor:        1.0,
+			DirectionalAudio:     true,
 			EnvironmentalEffects: false,
 		},
 		UpdatedAt: time.Now().Unix(),
@@ -180,12 +181,12 @@ func (s *VoiceChatService) TextToSpeech(w http.ResponseWriter, r *http.Request) 
 	audioURL := fmt.Sprintf("https://cdn.example.com/tts/%s.mp3", generateTTSID())
 
 	resp := &TextToSpeechResponse{
-		RequestID:      generateTTSID(),
-		AudioURL:       audioURL,
+		RequestID:       generateTTSID(),
+		AudioURL:        audioURL,
 		DurationSeconds: float64(len(req.Text)) / 15.0, // Rough estimate
-		TextLength:     len(req.Text),
-		GeneratedAt:    time.Now().Unix(),
-		ExpiresAt:      time.Now().Add(24 * time.Hour).Unix(),
+		TextLength:      len(req.Text),
+		GeneratedAt:     time.Now().Unix(),
+		ExpiresAt:       time.Now().Add(24 * time.Hour).Unix(),
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -208,13 +209,13 @@ func (s *VoiceChatService) AudioWebSocketHandler(w http.ResponseWriter, r *http.
 	}
 
 	connection := &AudioConnection{
-		ConnectionID: generateConnectionID(),
-		UserID:       r.Header.Get("X-User-ID"),
-		ChannelID:    streamID, // For simplicity, using streamID as channelID
-		WebSocket:    conn,
-		ConnectedAt:  time.Now(),
+		ConnectionID:  generateConnectionID(),
+		UserID:        r.Header.Get("X-User-ID"),
+		ChannelID:     streamID, // For simplicity, using streamID as channelID
+		WebSocket:     conn,
+		ConnectedAt:   time.Now(),
 		LastHeartbeat: time.Now(),
-		SendChan:     make(chan []byte, 1024), // OPTIMIZATION: Buffered for audio data
+		SendChan:      make(chan []byte, 1024), // OPTIMIZATION: Buffered for audio data
 	}
 
 	s.connections.Store(connection.ConnectionID, connection)

@@ -7,26 +7,26 @@ info:
     name: Matchmaking Team
     email: matchmaking@necp.game
 servers:
-- url: http://localhost:8090/api/v1
-  description: Local development
-- url: https://api.necp.game/api/v1
-  description: Production
+  - url: http://localhost:8090/api/v1
+    description: Local development
+  - url: https://api.necp.game/api/v1
+    description: Production
 tags:
-- name: Queue
-  description: Управление очередями матчмейкинга
-- name: Rating
-  description: Рейтинговая система (MMR/ELO)
-- name: Match
-  description: Управление матчами
+  - name: Queue
+    description: Управление очередями матчмейкинга
+  - name: Rating
+    description: Рейтинговая система (MMR/ELO)
+  - name: Match
+    description: Управление матчами
 paths:
   /matchmaking/queue:
     post:
       tags:
-      - Queue
+        - Queue
       summary: Войти в очередь
       operationId: enterQueue
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       requestBody:
         required: true
         content:
@@ -56,19 +56,19 @@ paths:
           $ref: common.yaml#/components/responses/InternalServerError
   /matchmaking/queue/{queueId}:
     parameters:
-    - name: queueId
-      in: path
-      required: true
-      schema:
-        type: string
-        format: uuid
+      - name: queueId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
     get:
       tags:
-      - Queue
+        - Queue
       summary: Получить статус очереди
       operationId: getQueueStatus
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       responses:
         '200':
           description: Статус очереди
@@ -80,11 +80,11 @@ paths:
           $ref: common.yaml#/components/responses/NotFound
     delete:
       tags:
-      - Queue
+        - Queue
       summary: Выйти из очереди
       operationId: leaveQueue
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       responses:
         '200':
           description: Успешно вышел из очереди
@@ -96,14 +96,14 @@ paths:
           $ref: common.yaml#/components/responses/NotFound
   /matchmaking/rating/{player_id}:
     parameters:
-    - $ref: common.yaml#/components/parameters/PlayerId
+      - $ref: common.yaml#/components/parameters/PlayerId
     get:
       tags:
-      - Rating
+        - Rating
       summary: Получить рейтинг игрока
       operationId: getPlayerRating
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       responses:
         '200':
           description: Рейтинг игрока
@@ -115,30 +115,30 @@ paths:
           $ref: common.yaml#/components/responses/NotFound
   /matchmaking/leaderboard/{activityType}:
     parameters:
-    - name: activityType
-      in: path
-      required: true
-      schema:
-        type: string
-        enum:
-        - pvp_5v5
-        - pvp_10v10
-        - pve_dungeon
-        - raid_10man
-        - raid_25man
+      - name: activityType
+        in: path
+        required: true
+        schema:
+          type: string
+          enum:
+            - pvp_5v5
+            - pvp_10v10
+            - pve_dungeon
+            - raid_10man
+            - raid_25man
     get:
       tags:
-      - Rating
+        - Rating
       summary: Таблица лидеров
       operationId: getLeaderboard
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       parameters:
-      - $ref: common.yaml#/components/parameters/Limit
-      - name: seasonId
-        in: query
-        schema:
-          type: string
+        - $ref: common.yaml#/components/parameters/Limit
+        - name: seasonId
+          in: query
+          schema:
+            type: string
       responses:
         '200':
           description: Таблица лидеров
@@ -148,19 +148,19 @@ paths:
                 $ref: '#/components/schemas/LeaderboardResponse'
   /matchmaking/match/{matchId}/accept:
     parameters:
-    - name: matchId
-      in: path
-      required: true
-      schema:
-        type: string
-        format: uuid
+      - name: matchId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
     post:
       tags:
-      - Match
+        - Match
       summary: Принять найденный матч
       operationId: acceptMatch
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       responses:
         '200':
           description: Матч принят
@@ -178,19 +178,19 @@ paths:
                 $ref: common.yaml#/components/schemas/Error
   /matchmaking/match/{matchId}/decline:
     parameters:
-    - name: matchId
-      in: path
-      required: true
-      schema:
-        type: string
-        format: uuid
+      - name: matchId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
     post:
       tags:
-      - Match
+        - Match
       summary: Отклонить матч
       operationId: declineMatch
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       responses:
         '200':
           description: Матч отклонён (вернётесь в очередь)
@@ -206,7 +206,7 @@ components:
     EnterQueueRequest:
       type: object
       required:
-      - activityType
+        - activityType
       properties:
         partyId:
           type: string
@@ -215,29 +215,29 @@ components:
         activityType:
           type: string
           enum:
-          - pvp_5v5
-          - pvp_10v10
-          - pve_dungeon
-          - raid_10man
-          - raid_25man
+            - pvp_5v5
+            - pvp_10v10
+            - pve_dungeon
+            - raid_10man
+            - raid_25man
           description: Тип активности
         preferredRoles:
           type: array
           items:
             type: string
             enum:
-            - tank
-            - healer
-            - dps
-            - support
+              - tank
+              - healer
+              - dps
+              - support
           description: Предпочитаемые роли
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     QueueResponse:
       type: object
       required:
-      - queueId
-      - estimatedWaitTime
-      - currentQueueSize
+        - queueId
+        - estimatedWaitTime
+        - currentQueueSize
       description: 'BACKEND NOTE: Hot endpoint (2000+ RPS). Use memory pooling.
 
         Expected memory: ~24 bytes/instance.
@@ -260,9 +260,9 @@ components:
     QueueStatusResponse:
       type: object
       required:
-      - queueId
-      - status
-      - timeInQueue
+        - queueId
+        - status
+        - timeInQueue
       description: 'BACKEND NOTE: Polling endpoint (100+ RPS). Cache 5s.
 
         Expected memory: ~48 bytes/instance.
@@ -275,9 +275,9 @@ components:
         status:
           type: string
           enum:
-          - waiting
-          - matched
-          - cancelled
+            - waiting
+            - matched
+            - cancelled
         ratingRange:
           type: array
           items:
@@ -287,8 +287,8 @@ components:
           maxItems: 2
           description: Текущий диапазон поиска [min, max]
           example:
-          - 1450
-          - 1550
+            - 1450
+            - 1550
         timeInQueue:
           type: integer
           format: int32
@@ -300,13 +300,13 @@ components:
     LeaveQueueResponse:
       type: object
       required:
-      - status
-      - waitTimeSeconds
+        - status
+        - waitTimeSeconds
       properties:
         status:
           type: string
           enum:
-          - cancelled
+            - cancelled
         waitTimeSeconds:
           type: integer
           format: int32
@@ -315,8 +315,8 @@ components:
     PlayerRatingResponse:
       type: object
       required:
-      - playerId
-      - ratings
+        - playerId
+        - ratings
       properties:
         playerId:
           type: string
@@ -329,11 +329,11 @@ components:
     ActivityRating:
       type: object
       required:
-      - activityType
-      - currentRating
-      - tier
-      - wins
-      - losses
+        - activityType
+        - currentRating
+        - tier
+        - wins
+        - losses
       description: 'BACKEND NOTE: Fields ordered large→small for struct alignment.
 
         Expected memory: ~60 bytes/instance (vs 72 bytes unoptimized).
@@ -347,13 +347,13 @@ components:
         tier:
           type: string
           enum:
-          - bronze
-          - silver
-          - gold
-          - platinum
-          - diamond
-          - master
-          - grandmaster
+            - bronze
+            - silver
+            - gold
+            - platinum
+            - diamond
+            - master
+            - grandmaster
         currentRating:
           type: integer
           format: int32
@@ -383,9 +383,9 @@ components:
     LeaderboardResponse:
       type: object
       required:
-      - activityType
-      - seasonId
-      - leaderboard
+        - activityType
+        - seasonId
+        - leaderboard
       description: 'BACKEND NOTE: Heavy endpoint. Cache 5min. Use materialized view.
 
         Limit: 100 entries default.
@@ -404,11 +404,11 @@ components:
     LeaderboardEntry:
       type: object
       required:
-      - rank
-      - playerId
-      - playerName
-      - rating
-      - tier
+        - rank
+        - playerId
+        - playerName
+        - rating
+        - tier
       description: 'BACKEND NOTE: Fields ordered large→small for struct alignment.
 
         Expected memory: ~60 bytes/instance (vs 68 bytes unoptimized).
@@ -423,13 +423,13 @@ components:
         tier:
           type: string
           enum:
-          - bronze
-          - silver
-          - gold
-          - platinum
-          - diamond
-          - master
-          - grandmaster
+            - bronze
+            - silver
+            - gold
+            - platinum
+            - diamond
+            - master
+            - grandmaster
         rank:
           type: integer
           format: int32
@@ -444,4 +444,4 @@ components:
           type: integer
           format: int32
 security:
-- BearerAuth: []
+  - BearerAuth: [ ]

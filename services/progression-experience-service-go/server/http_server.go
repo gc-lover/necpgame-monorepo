@@ -1,4 +1,4 @@
-// Issue: #1599 - ogen migration
+// Package server Issue: #1599 - ogen migration
 package server
 
 // HTTP handlers use context.WithTimeout for request timeouts (see handlers.go)
@@ -28,7 +28,7 @@ func NewHTTPServer(addr string) *HTTPServer {
 	// Initialize service
 	logger := GetLogger()
 	service := NewExperienceService(logger)
-	
+
 	// Handlers
 	handlers := NewHandlers(service)
 	secHandler := &SecurityHandler{}
@@ -60,7 +60,7 @@ func (s *HTTPServer) Start(ctx context.Context) error {
 
 	errChan := make(chan error, 1)
 	go func() {
-			defer close(errChan)
+		defer close(errChan)
 		if err := s.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			errChan <- err
 		}
@@ -81,7 +81,7 @@ func (s *HTTPServer) Shutdown(ctx context.Context) error {
 	return nil
 }
 
-func (s *HTTPServer) healthCheck(w http.ResponseWriter, r *http.Request) {
+func (s *HTTPServer) healthCheck(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(`{"status":"ok"}`))
@@ -113,7 +113,3 @@ func (s *HTTPServer) corsMiddleware(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 	})
 }
-
-
-
-

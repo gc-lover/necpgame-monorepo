@@ -16,8 +16,7 @@ func BenchmarkGetAIProfile(b *testing.B) {
 	handlers := NewHandlers(service)
 
 	ctx := context.Background()
-	params := api.GetAIProfileParams{
-	}
+	params := api.GetAIProfileParams{}
 
 	b.ReportAllocs()
 	b.ResetTimer()
@@ -35,8 +34,7 @@ func BenchmarkGetAIProfileTelemetry(b *testing.B) {
 	handlers := NewHandlers(service)
 
 	ctx := context.Background()
-	params := api.GetAIProfileTelemetryParams{
-	}
+	params := api.GetAIProfileTelemetryParams{}
 
 	b.ReportAllocs()
 	b.ResetTimer()
@@ -54,8 +52,7 @@ func BenchmarkListAIProfiles(b *testing.B) {
 	handlers := NewHandlers(service)
 
 	ctx := context.Background()
-	params := api.ListAIProfilesParams{
-	}
+	params := api.ListAIProfilesParams{}
 
 	b.ReportAllocs()
 	b.ResetTimer()
@@ -64,4 +61,3 @@ func BenchmarkListAIProfiles(b *testing.B) {
 		_, _ = handlers.ListAIProfiles(ctx, params)
 	}
 }
-

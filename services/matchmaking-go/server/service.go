@@ -1,4 +1,4 @@
-// SQL queries use prepared statements with placeholders (, , ?) for safety
+// Package server SQL queries use prepared statements with placeholders (, , ?) for safety
 // Issue: #150 - Matchmaking Service Layer
 // Performance: Memory pooling, Redis caching, batch operations, skill buckets
 package server
@@ -12,14 +12,14 @@ import (
 
 	"github.com/google/uuid"
 
-	api "github.com/gc-lover/necpgame-monorepo/services/matchmaking-go/pkg/api"
+	"github.com/gc-lover/necpgame-monorepo/services/matchmaking-go/pkg/api"
 )
 
 var (
-	ErrNotFound           = errors.New("not found")
-	ErrAlreadyInQueue     = errors.New("already in queue")
-	ErrMatchCancelled     = errors.New("match cancelled")
-	ErrRequirementsNotMet = errors.New("requirements not met")
+	ErrNotFound       = errors.New("not found")
+	ErrAlreadyInQueue = errors.New("already in queue")
+	ErrMatchCancelled = errors.New("match cancelled")
+	_                 = errors.New("requirements not met")
 )
 
 // Service implements matchmaking business logic with performance optimizations
@@ -47,7 +47,7 @@ func NewService(repo *Repository, cache *CacheManager) *Service {
 		repo:     repo,
 		cache:    cache,
 		matcher:  NewSkillBucketMatcher(),
-		features: NewFeatureFlags(), // Issue: #1588
+		features: NewFeatureFlags(),                // Issue: #1588
 		fallback: NewFallbackStrategy(repo, cache), // Issue: #1588
 	}
 
@@ -110,7 +110,7 @@ func (s *Service) EnterQueue(ctx context.Context, playerID uuid.UUID, req *api.E
 	s.matcher.AddToQueue(&entry)
 
 	// Try immediate matching (Level 3: skill buckets)
-	go s.tryMatch(context.Background(), string(req.ActivityType), rating)
+	go s.tryMatch()
 
 	// Get memory pooled response (zero allocation!)
 	resp := s.queueResponsePool.Get().(*api.QueueResponse)
@@ -254,7 +254,7 @@ func (s *Service) GetLeaderboard(ctx context.Context, params api.GetLeaderboardP
 	// Cache miss: query materialized view (50ms vs 5000ms raw query!)
 	limit := 100
 	if params.Limit.IsSet() {
-		limit = int(params.Limit.Value)
+		limit = params.Limit.Value
 	}
 
 	seasonID := "current"
@@ -294,20 +294,20 @@ func (s *Service) GetLeaderboard(ctx context.Context, params api.GetLeaderboardP
 }
 
 // AcceptMatch - Standard path: ~1000 RPS
-func (s *Service) AcceptMatch(ctx context.Context, matchID uuid.UUID) error {
+func (s *Service) AcceptMatch(_ context.Context, _ uuid.UUID) error {
 	// TODO: Implement match acceptance logic
 	return nil
 }
 
 // DeclineMatch - Standard path: ~200 RPS
-func (s *Service) DeclineMatch(ctx context.Context, matchID uuid.UUID) error {
+func (s *Service) DeclineMatch(_ context.Context, _ uuid.UUID) error {
 	// TODO: Implement match decline logic
 	return nil
 }
 
 // tryMatch attempts to find matches in the skill bucket (Level 3 optimization)
 // Runs in background goroutine (non-blocking)
-func (s *Service) tryMatch(ctx context.Context, activityType string, rating int) {
+func (s *Service) tryMatch() {
 	// Skill bucket matching: O(1) instead of O(n)
 	// Groups players into skill ranges: <1000, 1000-1500, 1500-2000, 2000+
 	// Matches within bucket instantly
@@ -330,4 +330,3 @@ func calculateWaitTime(queueSize int) int {
 	}
 	return 180 // 3min
 }
-

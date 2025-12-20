@@ -32,10 +32,10 @@ RUN chown -R appuser:appuser /app
 
 USER appuser
 
-EXPOSE 8147/tcp
+EXPOSE 8157/tcp
 
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:8147/health || exit 1
+  CMD wget -q --spider http://localhost:8157/health || exit 1
 
 ENTRYPOINT ["/app/stock-events-service"]
 

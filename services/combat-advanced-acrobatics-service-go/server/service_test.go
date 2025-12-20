@@ -91,21 +91,3 @@ func TestVaultAndAdvancedState(t *testing.T) {
 		t.Fatalf("advanced state status = %d", w2.Code)
 	}
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

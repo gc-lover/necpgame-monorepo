@@ -21,7 +21,7 @@ type HTTPServer struct {
 func NewHTTPServer(addr string, logger *logrus.Logger) *HTTPServer {
 	// Initialize service
 	service := NewLeaderboardService(logger)
-	
+
 	handlers := NewHandlers(logger, service)
 	secHandler := &SecurityHandler{}
 
@@ -134,11 +134,8 @@ func (rr *responseRecorder) WriteHeader(code int) {
 	rr.ResponseWriter.WriteHeader(code)
 }
 
-func healthCheckHandler(w http.ResponseWriter, r *http.Request) {
+func healthCheckHandler(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(`{"status":"healthy"}`))
 }
-
-
-

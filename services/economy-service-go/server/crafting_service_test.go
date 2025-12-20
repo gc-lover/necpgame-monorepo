@@ -9,6 +9,7 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/gc-lover/necpgame-monorepo/services/economy-service-go/models"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -31,7 +32,7 @@ func TestCraftingService_CalculateCraftingCost(t *testing.T) {
 			"duration", "success_rate", "created_at", "updated_at",
 		}).AddRow(
 			"test-recipe", "Test Recipe", "Test description", 1, "weapons", 5,
-			time.Minute * 5, 0.9, time.Now(), time.Now(),
+			time.Minute*5, 0.9, time.Now(), time.Now(),
 		))
 
 	// Mock materials
@@ -85,7 +86,7 @@ func TestCraftingService_StartCrafting(t *testing.T) {
 			"duration", "success_rate", "created_at", "updated_at",
 		}).AddRow(
 			recipeID, "Test Recipe", "Test description", 1, "weapons", 5,
-			time.Minute * 5, 0.9, time.Now(), time.Now(),
+			time.Minute*5, 0.9, time.Now(), time.Now(),
 		))
 
 	// Mock materials query

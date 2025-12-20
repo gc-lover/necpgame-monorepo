@@ -18,8 +18,7 @@ func BenchmarkGetWorldEventMetrics(b *testing.B) {
 	handlers := NewHandlers(service, logger)
 
 	ctx := context.Background()
-	params := api.GetWorldEventMetricsParams{
-	}
+	params := api.GetWorldEventMetricsParams{}
 
 	b.ReportAllocs()
 	b.ResetTimer()
@@ -38,8 +37,7 @@ func BenchmarkGetWorldEventEngagement(b *testing.B) {
 	handlers := NewHandlers(service, logger)
 
 	ctx := context.Background()
-	params := api.GetWorldEventEngagementParams{
-	}
+	params := api.GetWorldEventEngagementParams{}
 
 	b.ReportAllocs()
 	b.ResetTimer()
@@ -58,8 +56,7 @@ func BenchmarkGetWorldEventImpact(b *testing.B) {
 	handlers := NewHandlers(service, logger)
 
 	ctx := context.Background()
-	params := api.GetWorldEventImpactParams{
-	}
+	params := api.GetWorldEventImpactParams{}
 
 	b.ReportAllocs()
 	b.ResetTimer()
@@ -68,4 +65,3 @@ func BenchmarkGetWorldEventImpact(b *testing.B) {
 		_, _ = handlers.GetWorldEventImpact(ctx, params)
 	}
 }
-

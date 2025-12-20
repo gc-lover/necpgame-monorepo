@@ -36,18 +36,18 @@ func NewWeaponCombinationsService(db *pgxpool.Pool, redisURL string) (*WeaponCom
 	}, nil
 }
 
-func (s *WeaponCombinationsService) GenerateWeaponCombination(ctx context.Context, baseWeaponType, brandID uuid.UUID, rarity string, seed *string, playerLevel *int) (uuid.UUID, map[string]interface{}, error) {
+func (s *WeaponCombinationsService) GenerateWeaponCombination(_ context.Context, baseWeaponType, brandID uuid.UUID, rarity string, _ *string, _ *int) (uuid.UUID, map[string]interface{}, error) {
 	s.logger.WithFields(logrus.Fields{
 		"base_weapon_type": baseWeaponType,
 		"brand_id":         brandID,
 		"rarity":           rarity,
 	}).Info("Generating weapon combination")
-	
+
 	weaponID := uuid.New()
 	return weaponID, map[string]interface{}{}, nil
 }
 
-func (s *WeaponCombinationsService) GetWeaponCombinationMatrix(ctx context.Context) (map[string]interface{}, error) {
+func (s *WeaponCombinationsService) GetWeaponCombinationMatrix(_ context.Context) (map[string]interface{}, error) {
 	s.logger.Info("Getting weapon combination matrix")
 	return map[string]interface{}{}, nil
 }
@@ -57,41 +57,17 @@ func (s *WeaponCombinationsService) GetWeaponModifiers(ctx context.Context) ([]m
 	return s.repo.GetWeaponModifiers(ctx)
 }
 
-func (s *WeaponCombinationsService) ApplyWeaponModifier(ctx context.Context, weaponID, modifierID uuid.UUID, modifierType string, characterID *uuid.UUID) (map[string]interface{}, error) {
+func (s *WeaponCombinationsService) ApplyWeaponModifier(_ context.Context, weaponID, modifierID uuid.UUID, modifierType string, _ *uuid.UUID) (map[string]interface{}, error) {
 	s.logger.WithFields(logrus.Fields{
-		"weapon_id":    weaponID,
-		"modifier_id":  modifierID,
+		"weapon_id":     weaponID,
+		"modifier_id":   modifierID,
 		"modifier_type": modifierType,
 	}).Info("Applying weapon modifier")
-	
+
 	return map[string]interface{}{}, nil
 }
 
-func (s *WeaponCombinationsService) GetCorporations(ctx context.Context) ([]map[string]interface{}, error) {
+func (s *WeaponCombinationsService) GetCorporations(_ context.Context) ([]map[string]interface{}, error) {
 	s.logger.Info("Getting corporations")
 	return []map[string]interface{}{}, nil
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

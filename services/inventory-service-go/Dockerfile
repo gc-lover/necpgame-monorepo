@@ -1,5 +1,5 @@
 # OPTIMIZATION: Issue #1951 - Multi-stage build for security and minimal image size
-FROM golang:1.21-alpine AS builder
+FROM golang:1.24-alpine AS builder
 
 # Install build dependencies
 RUN apk add --no-cache git ca-certificates tzdata
@@ -8,7 +8,7 @@ RUN apk add --no-cache git ca-certificates tzdata
 WORKDIR /build
 
 # Copy go mod files
-COPY go.mod go.sum ./
+COPY services/inventory-service-go/go.mod services/inventory-service-go/go.sum ./
 
 # Download dependencies
 RUN go mod download && go mod verify
@@ -20,12 +20,14 @@ COPY . .
 ARG VERSION=dev
 ARG BUILD_TIME
 ARG GIT_COMMIT
+WORKDIR /build/services/inventory-service-go
+RUN go mod tidy
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
     -trimpath \
     -mod=readonly \
     -ldflags "-X main.version=${VERSION} -X main.buildTime=${BUILD_TIME} -X main.gitCommit=${GIT_COMMIT} -s -w" \
     -o inventory-service \
-    ./main.go
+    .
 
 # Final stage - minimal runtime image
 FROM scratch

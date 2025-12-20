@@ -1,4 +1,4 @@
-// Issue: #1515 - Weekly affix rotation scheduler
+// Package server Issue: #1515 - Weekly affix rotation scheduler
 package server
 
 import (

@@ -37,7 +37,7 @@
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin
     ports:
-      - "8080:8080"
+      - "8082:8080"
     volumes:
       - ./infrastructure/docker/auth-envoy/realm-export:/opt/keycloak/data/import:ro
 
@@ -459,27 +459,27 @@
       - "9222:9222"
     restart: unless-stopped
 
-  economy-service:
-    build:
-      context: ./services/economy-service-go
-      dockerfile: Dockerfile
-    depends_on:
-      - postgres
-      - redis
-      - keycloak
-    environment:
-            - ADDR=0.0.0.0:8123
-            - METRICS_ADDR=:9223
-            - LOG_LEVEL=info
-            - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/necpgame?sslmode=disable
-            - REDIS_URL=redis://redis:6379/36
-            - KEYCLOAK_URL=http://keycloak:8080
-            - KEYCLOAK_REALM=necpgame
-            - AUTH_ENABLED=true
-    ports:
-      - "8123:8123"
-      - "9223:9223"
-    restart: unless-stopped
+  # economy-service:
+    # build:
+    #   context: ./services/economy-service-go
+    #   dockerfile: Dockerfile
+    # depends_on:
+    #   - postgres
+    #   - redis
+    #   - keycloak
+    # environment:
+    #         - ADDR=0.0.0.0:8123
+    #         - METRICS_ADDR=:9223
+    #         - LOG_LEVEL=info
+    #         - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/necpgame?sslmode=disable
+    #         - REDIS_URL=redis://redis:6379/36
+    #         - KEYCLOAK_URL=http://keycloak:8080
+    #         - KEYCLOAK_REALM=necpgame
+    #         - AUTH_ENABLED=true
+    # ports:
+    #   - "8123:8123"
+    #   - "9223:9223"
+    # restart: unless-stopped
 
   feedback-service:
     build:

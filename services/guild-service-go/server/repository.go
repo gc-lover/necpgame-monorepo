@@ -1,4 +1,4 @@
-// Issue: #1943
+// Package server Issue: #1943
 package server
 
 import (
@@ -17,28 +17,6 @@ type Repository struct {
 }
 
 // NewRepository creates new repository with database connection
-func NewRepository() *Repository {
-	dbURL := getEnv("DATABASE_URL", "postgres://postgres:postgres@localhost:5432/necpgame?sslmode=disable")
-
-	db, err := sql.Open("postgres", dbURL)
-	if err != nil {
-		// For now, just log and continue without DB
-		fmt.Printf("Warning: Failed to connect to database: %v\n", err)
-		return &Repository{db: nil}
-	}
-
-	if err := db.Ping(); err != nil {
-		fmt.Printf("Warning: Failed to ping database: %v\n", err)
-		return &Repository{db: nil}
-	}
-
-	// OPTIMIZATION: Database connection pool configuration (Issue #300)
-	db.SetMaxOpenConns(25)           // Max 25 concurrent connections for guild service
-	db.SetMaxIdleConns(5)            // Keep 5 idle connections
-	db.SetConnMaxLifetime(time.Hour) // Connection lifetime
-
-	return &Repository{db: db}
-}
 
 // CreateGuild creates new guild in database
 func (r *Repository) CreateGuild(ctx context.Context, guild *GuildDefinition) error {

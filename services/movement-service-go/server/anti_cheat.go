@@ -1,4 +1,4 @@
-// Issue: #1587 - Server-Side Validation & Anti-Cheat Integration
+// Package server Issue: #1587 - Server-Side Validation & Anti-Cheat Integration
 // CRITICAL for movement service - prevents speed hacks, teleportation
 package server
 
@@ -83,4 +83,3 @@ func calculateDistance(from, to Vec3) float64 {
 	dz := to.Z - from.Z
 	return math.Sqrt(dx*dx + dy*dy + dz*dz)
 }
-

@@ -49,14 +49,14 @@ func (gm *GoroutineMonitor) checkGoroutines() {
 
 	if count > gm.maxGoroutines {
 		gm.logger.WithFields(logrus.Fields{
-			"goroutines":     count,
-			"max_allowed":    gm.maxGoroutines,
-			"service":        "voice-chat-service",
+			"goroutines":  count,
+			"max_allowed": gm.maxGoroutines,
+			"service":     "voice-chat-service",
 		}).Warn("high goroutine count detected - potential leak")
 	} else {
 		gm.logger.WithFields(logrus.Fields{
-			"goroutines":  count,
-			"service":     "voice-chat-service",
+			"goroutines": count,
+			"service":    "voice-chat-service",
 		}).Debug("goroutine count check")
 	}
 }

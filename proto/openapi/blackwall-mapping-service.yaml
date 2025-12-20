@@ -38,22 +38,22 @@ info:
     name: NECPGAME API Support
     email: api@necpgame.com
 servers:
-- url: http://localhost:8083
-  description: Gameplay Service (локальная разработка)
-- url: https://gameplay.necpgame.com
-  description: Gameplay Service (продакшн)
+  - url: http://localhost:8083
+    description: Gameplay Service (локальная разработка)
+  - url: https://gameplay.necpgame.com
+    description: Gameplay Service (продакшн)
 tags:
-- name: Mapping
-  description: Картография Blackwall
-- name: Scanning
-  description: Сканирование барьера
-- name: Maps
-  description: Управление картами
+  - name: Mapping
+    description: Картография Blackwall
+  - name: Scanning
+    description: Сканирование барьера
+  - name: Maps
+    description: Управление картами
 paths:
   /api/v1/blackwall/mapping/start:
     post:
       tags:
-      - Mapping
+        - Mapping
       summary: Начало сканирования
       description: 'Начинает сессию активного сканирования барьера Blackwall для картографии слабых зон.
 
@@ -80,7 +80,7 @@ paths:
         '
       operationId: startMappingSession
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       requestBody:
         required: true
         content:
@@ -91,8 +91,8 @@ paths:
               location_id: 550e8400-e29b-41d4-a716-446655440000
               scan_type: deep
               equipment_ids:
-              - 550e8400-e29b-41d4-a716-446655440001
-              - 550e8400-e29b-41d4-a716-446655440002
+                - 550e8400-e29b-41d4-a716-446655440001
+                - 550e8400-e29b-41d4-a716-446655440002
       responses:
         '200':
           description: Сессия сканирования начата
@@ -109,7 +109,7 @@ paths:
   /api/v1/blackwall/mapping/{session_id}/status:
     get:
       tags:
-      - Scanning
+        - Scanning
       summary: Статус сканирования
       description: 'Возвращает текущий статус активной сессии сканирования.
 
@@ -119,15 +119,15 @@ paths:
         '
       operationId: getMappingStatus
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       parameters:
-      - name: session_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: ID сессии сканирования
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID сессии сканирования
       responses:
         '200':
           description: Статус сессии сканирования
@@ -140,7 +140,7 @@ paths:
   /api/v1/blackwall/mapping/{session_id}/analyze-signal:
     post:
       tags:
-      - Scanning
+        - Scanning
       summary: Анализ сигнала
       description: 'Анализирует обнаруженный сигнал (мини-игра).
 
@@ -159,14 +159,14 @@ paths:
         '
       operationId: analyzeSignal
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       parameters:
-      - name: session_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
       requestBody:
         required: true
         content:
@@ -185,7 +185,7 @@ paths:
   /api/v1/blackwall/mapping/{session_id}/complete:
     post:
       tags:
-      - Mapping
+        - Mapping
       summary: Завершение сканирования
       description: 'Завершает сессию сканирования и генерирует карту Blackwall.
 
@@ -197,14 +197,14 @@ paths:
         '
       operationId: completeMapping
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       parameters:
-      - name: session_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
       responses:
         '200':
           description: Карта создана
@@ -217,7 +217,7 @@ paths:
   /api/v1/blackwall/mapping/{session_id}/abort:
     post:
       tags:
-      - Mapping
+        - Mapping
       summary: Прерывание сканирования
       description: 'Экстренное прерывание сканирования (откат).
 
@@ -227,14 +227,14 @@ paths:
         '
       operationId: abortMapping
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       parameters:
-      - name: session_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
       responses:
         '200':
           description: Сканирование прервано
@@ -249,7 +249,7 @@ paths:
   /api/v1/blackwall/maps/{map_id}:
     get:
       tags:
-      - Maps
+        - Maps
       summary: Получение карты
       description: 'Возвращает сохранённую карту Blackwall.
 
@@ -259,15 +259,15 @@ paths:
         '
       operationId: getMap
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       parameters:
-      - name: map_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: ID карты
+        - name: map_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID карты
       responses:
         '200':
           description: Карта Blackwall
@@ -285,8 +285,8 @@ components:
     StartMappingRequest:
       type: object
       required:
-      - location_id
-      - scan_type
+        - location_id
+        - scan_type
       properties:
         location_id:
           type: string
@@ -295,9 +295,9 @@ components:
         scan_type:
           type: string
           enum:
-          - surface
-          - deep
-          - critical
+            - surface
+            - deep
+            - critical
           description: Тип сканирования
         equipment_ids:
           type: array
@@ -309,9 +309,9 @@ components:
     MappingSession:
       type: object
       required:
-      - session_id
-      - status
-      - risk_level
+        - session_id
+        - status
+        - risk_level
       properties:
         session_id:
           type: string
@@ -320,15 +320,15 @@ components:
         status:
           type: string
           enum:
-          - active
+            - active
           description: Статус сессии
         risk_level:
           type: string
           enum:
-          - low
-          - medium
-          - high
-          - extreme
+            - low
+            - medium
+            - high
+            - extreme
           description: Уровень риска
         warnings:
           type: array
@@ -336,8 +336,8 @@ components:
             type: string
           description: Предупреждения о рисках
           example:
-          - High risk of NetWatch detection
-          - Possible AI contact detected
+            - High risk of NetWatch detection
+            - Possible AI contact detected
         estimated_duration:
           type: integer
           format: int64
@@ -347,17 +347,17 @@ components:
     MappingStatus:
       type: object
       required:
-      - progress
-      - stress_level
+        - progress
+        - stress_level
       properties:
         current_zone_type:
           type: string
           enum:
-          - safe
-          - weak
-          - anomaly
-          - critical
-          - unknown
+            - safe
+            - weak
+            - anomaly
+            - critical
+            - unknown
           description: Тип текущей зоны
         warnings:
           type: array
@@ -384,8 +384,8 @@ components:
     AnalyzeSignalRequest:
       type: object
       required:
-      - signal_id
-      - analysis_method
+        - signal_id
+        - analysis_method
       properties:
         signal_id:
           type: string
@@ -394,9 +394,9 @@ components:
         analysis_method:
           type: string
           enum:
-          - basic
-          - advanced
-          - expert
+            - basic
+            - advanced
+            - expert
           description: Метод анализа
         skill_check:
           $ref: '#/components/schemas/SkillCheck'
@@ -404,9 +404,9 @@ components:
     SkillCheck:
       type: object
       required:
-      - skill_name
-      - skill_value
-      - difficulty_class
+        - skill_name
+        - skill_value
+        - difficulty_class
       properties:
         skill_name:
           type: string
@@ -424,15 +424,15 @@ components:
     SignalAnalysis:
       type: object
       required:
-      - signal_type
-      - confidence
+        - signal_type
+        - confidence
       properties:
         signal_type:
           type: string
           enum:
-          - real
-          - false_signal
-          - trap
+            - real
+            - false_signal
+            - trap
           description: Тип сигнала
         zone_info:
           $ref: '#/components/schemas/ZoneInfo'
@@ -448,11 +448,11 @@ components:
         zone_type:
           type: string
           enum:
-          - safe
-          - weak
-          - anomaly
-          - critical
-          - unknown
+            - safe
+            - weak
+            - anomaly
+            - critical
+            - unknown
         coordinates:
           type: object
           description: Координаты зоны в киберпространстве
@@ -468,9 +468,9 @@ components:
     MappingResult:
       type: object
       required:
-      - map_id
-      - accuracy
-      - zones_detected
+        - map_id
+        - accuracy
+        - zones_detected
       properties:
         map_id:
           type: string
@@ -505,11 +505,11 @@ components:
         rarity:
           type: string
           enum:
-          - common
-          - uncommon
-          - rare
-          - epic
-          - legendary
+            - common
+            - uncommon
+            - rare
+            - epic
+            - legendary
         accuracy:
           type: integer
           minimum: 0
@@ -553,9 +553,9 @@ components:
     BlackwallMap:
       type: object
       required:
-      - map_id
-      - accuracy
-      - zones
+        - map_id
+        - accuracy
+        - zones
       properties:
         map_id:
           type: string
@@ -584,9 +584,9 @@ components:
     Zone:
       type: object
       required:
-      - zone_id
-      - zone_type
-      - risk_level
+        - zone_id
+        - zone_type
+        - risk_level
       properties:
         zone_id:
           type: string
@@ -594,11 +594,11 @@ components:
         zone_type:
           type: string
           enum:
-          - safe
-          - weak
-          - anomaly
-          - critical
-          - unknown
+            - safe
+            - weak
+            - anomaly
+            - critical
+            - unknown
         coordinates:
           type: object
         stability:

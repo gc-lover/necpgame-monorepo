@@ -7,8 +7,8 @@ import (
 	"database/sql"
 	"time"
 
-	_ "github.com/lib/pq"
 	"github.com/gc-lover/necpgame-monorepo/services/combat-sessions-service-go/pkg/api"
+	_ "github.com/lib/pq"
 )
 
 // Repository interface for database operations
@@ -17,11 +17,11 @@ type Repository interface {
 	GetSession(ctx context.Context, sessionID string) (*CombatSession, error)
 	UpdateSession(ctx context.Context, session *CombatSession) error
 	ListSessions(ctx context.Context, params api.ListCombatSessionsParams) ([]*CombatSession, int, error)
-	
+
 	GetParticipants(ctx context.Context, sessionID string) ([]*CombatParticipant, error)
 	CreateLog(ctx context.Context, log *CombatLog) error
 	// GetLogs(ctx context.Context, sessionID string, params api.GetCombatLogsParams) ([]*CombatLog, int, error) // TODO: Implement when GetCombatLogsParams is available
-	
+
 	Close() error
 }
 
@@ -94,7 +94,7 @@ func (r *PostgresRepository) UpdateSession(ctx context.Context, session *CombatS
 }
 
 // ListSessions lists sessions with filtering
-func (r *PostgresRepository) ListSessions(ctx context.Context, params api.ListCombatSessionsParams) ([]*CombatSession, int, error) {
+func (r *PostgresRepository) ListSessions(_ context.Context, _ api.ListCombatSessionsParams) ([]*CombatSession, int, error) {
 	// TODO: implement filtering and pagination
 	return []*CombatSession{}, 0, nil
 }
@@ -145,4 +145,3 @@ func (r *PostgresRepository) CreateLog(ctx context.Context, log *CombatLog) erro
 func (r *PostgresRepository) Close() error {
 	return r.db.Close()
 }
-

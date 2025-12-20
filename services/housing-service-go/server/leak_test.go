@@ -46,4 +46,3 @@ func TestHousingServiceNoLeaks(t *testing.T) {
 // - Connection pool limits
 // - Timeout for all DB operations
 // - Proper channel management
-

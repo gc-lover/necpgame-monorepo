@@ -1,4 +1,4 @@
-// Issue: #146073424
+// Package server provides HTTP server implementation for the API gateway.
 package server
 
 import (
@@ -183,6 +183,8 @@ func (g *APIGatewayServer) determineTargetService(path string) string {
 }
 
 // proxyToService выполняет проксирование запроса к целевому сервису
+//
+//goland:noinspection ALL
 func (g *APIGatewayServer) proxyToService(w http.ResponseWriter, r *http.Request, targetURL *url.URL, serviceConfig *config.ServiceConfig, serviceName string) error {
 	// Создаем контекст с таймаутом
 	ctx, cancel := context.WithTimeout(r.Context(), serviceConfig.Timeout)
@@ -273,6 +275,7 @@ func (g *APIGatewayServer) Start() error {
 func (g *APIGatewayServer) HealthCheckHandler(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
 	defer cancel()
+	_ = ctx // Context используется для потенциальных будущих проверок здоровья
 	healthStatus := map[string]interface{}{
 		"status":    "healthy",
 		"service":   "api-gateway",
@@ -282,7 +285,7 @@ func (g *APIGatewayServer) HealthCheckHandler(w http.ResponseWriter, r *http.Req
 
 	// Проверяем здоровье всех сервисов
 	for serviceName, serviceConfig := range g.config.Services {
-		serviceHealth := g.checkServiceHealth(serviceName, serviceConfig)
+		serviceHealth := g.checkServiceHealth(serviceConfig)
 		healthStatus["services"].(map[string]interface{})[serviceName] = serviceHealth
 	}
 
@@ -292,7 +295,7 @@ func (g *APIGatewayServer) HealthCheckHandler(w http.ResponseWriter, r *http.Req
 }
 
 // checkServiceHealth проверяет здоровье конкретного сервиса
-func (g *APIGatewayServer) checkServiceHealth(serviceName string, serviceConfig *config.ServiceConfig) map[string]interface{} {
+func (g *APIGatewayServer) checkServiceHealth(serviceConfig *config.ServiceConfig) map[string]interface{} {
 	healthURL := serviceConfig.URL + serviceConfig.HealthCheck
 
 	client := &http.Client{Timeout: 5 * time.Second}

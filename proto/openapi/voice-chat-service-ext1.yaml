@@ -1,400 +1,400 @@
-        Возвращает параметры для сигналинга.
-      operationId: connectWebRTC
-      tags:
-        - WebRTC
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
+Возвращает параметры для сигналинга.
+operationId: connectWebRTC
+tags:
+  - WebRTC
+requestBody:
+  required: true
+  content:
+    application/json:
+      schema:
+        type: object
+        required:
+          - channelId
+          - playerId
+          - offer
+        properties:
+          channelId:
+            type: string
+            format: uuid
+            description: ID канала
+          playerId:
+            type: string
+            format: uuid
+            description: ID игрока
+          offer:
+            type: object
+            description: WebRTC offer SDP
+            additionalProperties: true
+          provider:
+            type: string
+            enum: [ AGORA, TWILIO, SELF_HOSTED ]
+            default: SELF_HOSTED
+            description: WebRTC провайдер
+responses:
+  "200":
+    description: Соединение установлено
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            connectionId:
+              type: string
+              format: uuid
+              description: ID соединения
+            answer:
               type: object
-              required:
-                - channelId
-                - playerId
-                - offer
-              properties:
-                channelId:
-                  type: string
-                  format: uuid
-                  description: ID канала
-                playerId:
-                  type: string
-                  format: uuid
-                  description: ID игрока
-                offer:
-                  type: object
-                  description: WebRTC offer SDP
-                  additionalProperties: true
-                provider:
-                  type: string
-                  enum: [AGORA, TWILIO, SELF_HOSTED]
-                  default: SELF_HOSTED
-                  description: WebRTC провайдер
-      responses:
-        "200":
-          description: Соединение установлено
-          content:
-            application/json:
-              schema:
+              description: WebRTC answer SDP
+              additionalProperties: true
+            iceServers:
+              type: array
+              items:
                 type: object
                 properties:
-                  connectionId:
-                    type: string
-                    format: uuid
-                    description: ID соединения
-                  answer:
-                    type: object
-                    description: WebRTC answer SDP
-                    additionalProperties: true
-                  iceServers:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        urls:
-                          type: array
-                          items:
-                            type: string
-                        username:
-                          type: string
-                        credential:
-                          type: string
-                      required:
-                        - urls
-                    description: ICE серверы для NAT traversal
-                required:
-                  - connectionId
-                  - answer
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "403":
-          description: Доступ запрещен
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "409":
-          description: Соединение уже установлено
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-
-  /social/voice/webrtc/disconnect:
-    post:
-      summary: Разорвать WebRTC соединение
-      description: Корректно разрывает WebRTC соединение
-      operationId: disconnectWebRTC
-      tags:
-        - WebRTC
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - channelId
-                - playerId
-              properties:
-                channelId:
-                  type: string
-                  format: uuid
-                  description: ID канала
-                playerId:
-                  type: string
-                  format: uuid
-                  description: ID игрока
-      responses:
-        "204":
-          description: Соединение разорвано
-        "404":
-          description: Соединение не найдено
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-
-  # Микшер аудио
-  /social/voice/mixer/configure:
-    post:
-      summary: Настроить аудио микшер
-      description: |
-        Настраивает параметры микширования аудио для канала.
-        Влияет на громкость, эффекты и маршрутизацию.
-      operationId: configureAudioMixer
-      tags:
-        - Audio Mixer
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - channelId
-              properties:
-                channelId:
-                  type: string
-                  format: uuid
-                  description: ID канала
-                volumeSettings:
-                  type: object
-                  description: Настройки громкости
-                  additionalProperties:
-                    type: number
-                    minimum: 0.0
-                    maximum: 2.0
-                effects:
-                  type: array
-                  items:
-                    $ref: "#/components/schemas/AudioEffect"
-                  description: Аудио эффекты
-                routing:
-                  type: object
-                  description: Настройки маршрутизации
-                  additionalProperties:
+                  urls:
                     type: array
                     items:
                       type: string
-                      format: uuid
-      responses:
-        "200":
-          description: Микшер настроен
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  mixerConfig:
-                    $ref: "#/components/schemas/AudioMixerConfig"
-                  appliedAt:
+                  username:
                     type: string
-                    format: date-time
-                    description: Время применения настроек
+                  credential:
+                    type: string
                 required:
-                  - mixerConfig
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "403":
-          description: Недостаточно прав для настройки микшера
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
+                  - urls
+              description: ICE серверы для NAT traversal
+          required:
+            - connectionId
+            - answer
+  "400":
+    $ref: "#/components/responses/BadRequest"
+  "403":
+    description: Доступ запрещен
+    content:
+      application/json:
+        schema:
+          $ref: "#/components/schemas/Error"
+  "409":
+    description: Соединение уже установлено
+    content:
+      application/json:
+        schema:
+          $ref: "#/components/schemas/Error"
+  "500":
+    $ref: "#/components/responses/InternalServerError"
 
-  /social/voice/mixer/status:
-    get:
-      summary: Получить статус аудио микшера
-      description: Возвращает текущий статус и настройки микшера для канала
-      operationId: getAudioMixerStatus
-      tags:
-        - Audio Mixer
-      parameters:
-        - name: channelId
-          in: query
-          required: true
+/social/voice/webrtc/disconnect:
+  post:
+    summary: Разорвать WebRTC соединение
+    description: Корректно разрывает WebRTC соединение
+    operationId: disconnectWebRTC
+    tags:
+      - WebRTC
+    requestBody:
+      required: true
+      content:
+        application/json:
           schema:
-            type: string
-            format: uuid
-          description: ID канала
-      responses:
-        "200":
-          description: Статус микшера получен
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AudioMixerStatus"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
+            type: object
+            required:
+              - channelId
+              - playerId
+            properties:
+              channelId:
+                type: string
+                format: uuid
+                description: ID канала
+              playerId:
+                type: string
+                format: uuid
+                description: ID игрока
+    responses:
+      "204":
+        description: Соединение разорвано
+      "404":
+        description: Соединение не найдено
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Error"
+      "500":
+        $ref: "#/components/responses/InternalServerError"
 
-  # Управление участниками
-  /social/voice/channels/{channelId}/participants:
-    get:
-      summary: Получить список участников канала
-      description: Возвращает список всех участников голосового канала
-      operationId: getChannelParticipants
-      tags:
-        - Participants
-      parameters:
-        - name: channelId
-          in: path
-          required: true
+# Микшер аудио
+/social/voice/mixer/configure:
+  post:
+    summary: Настроить аудио микшер
+    description: |
+      Настраивает параметры микширования аудио для канала.
+      Влияет на громкость, эффекты и маршрутизацию.
+    operationId: configureAudioMixer
+    tags:
+      - Audio Mixer
+    requestBody:
+      required: true
+      content:
+        application/json:
           schema:
-            type: string
-            format: uuid
-          description: ID канала
-        - name: includeInactive
-          in: query
-          schema:
-            type: boolean
-            default: false
-          description: Включать неактивных участников
-      responses:
-        "200":
-          description: Список участников получен
-          content:
-            application/json:
-              schema:
+            type: object
+            required:
+              - channelId
+            properties:
+              channelId:
+                type: string
+                format: uuid
+                description: ID канала
+              volumeSettings:
                 type: object
-                properties:
-                  participants:
-                    type: array
-                    items:
-                      $ref: "#/components/schemas/VoiceParticipant"
-                  total:
-                    type: integer
-                    description: Общее количество участников
-                required:
-                  - participants
-                  - total
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-
-  /social/voice/participants/{participantId}/mute:
-    post:
-      summary: Заглушить участника
-      description: |
-        Заглушает участника канала. Доступно владельцу канала или администратору.
-        Участник не сможет передавать звук.
-      operationId: muteParticipant
-      tags:
-        - Participants
-      parameters:
-        - name: participantId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: ID участника
-      responses:
-        "200":
-          description: Участник заглушен
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/VoiceParticipant"
-        "403":
-          description: Недостаточно прав для заглушения участника
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "409":
-          description: Участник уже заглушен
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-
-  /social/voice/participants/{participantId}/deafen:
-    post:
-      summary: Оглохшить участника
-      description: |
-        Оглохшает участника канала. Участник не сможет слышать других,
-        но сможет передавать звук (если не заглушен).
-      operationId: deafenParticipant
-      tags:
-        - Participants
-      parameters:
-        - name: participantId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: ID участника
-      responses:
-        "200":
-          description: Участник оглохшен
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/VoiceParticipant"
-        "403":
-          description: Недостаточно прав для оглушения участника
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "409":
-          description: Участник уже оглохшен
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-
-  /social/voice/participants/{participantId}/kick:
-    post:
-      summary: Исключить участника из канала
-      description: |
-        Исключает участника из голосового канала.
-        Доступно владельцу канала или администратору.
-      operationId: kickParticipant
-      tags:
-        - Participants
-      parameters:
-        - name: participantId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: ID участника
-      requestBody:
-        required: false
+                description: Настройки громкости
+                additionalProperties:
+                  type: number
+                  minimum: 0.0
+                  maximum: 2.0
+              effects:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AudioEffect"
+                description: Аудио эффекты
+              routing:
+                type: object
+                description: Настройки маршрутизации
+                additionalProperties:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+    responses:
+      "200":
+        description: Микшер настроен
         content:
           application/json:
             schema:
               type: object
               properties:
-                reason:
+                mixerConfig:
+                  $ref: "#/components/schemas/AudioMixerConfig"
+                appliedAt:
                   type: string
-                  maxLength: 255
-                  description: Причина исключения
-                banDuration:
-                  type: integer
-                  description: Длительность бана в секундах (опционально)
-      responses:
-        "204":
-          description: Участник исключен
-        "403":
-          description: Недостаточно прав для исключения участника
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
+                  format: date-time
+                  description: Время применения настроек
+              required:
+                - mixerConfig
+      "400":
+        $ref: "#/components/responses/BadRequest"
+      "403":
+        description: Недостаточно прав для настройки микшера
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Error"
+      "404":
+        $ref: "#/components/responses/NotFound"
+      "500":
+        $ref: "#/components/responses/InternalServerError"
 
-  # Proximity каналы
-  /social/voice/proximity/update:
-    post:
-      summary: Обновить позицию для proximity канала
-      description: |
-        Обновляет позицию игрока в мире для расчета proximity каналов.
-        Влияет на список участников и пространственное позиционирование звука.
-      operationId: updateProximityPosition
+/social/voice/mixer/status:
+  get:
+    summary: Получить статус аудио микшера
+    description: Возвращает текущий статус и настройки микшера для канала
+    operationId: getAudioMixerStatus
+    tags:
+      - Audio Mixer
+    parameters:
+      - name: channelId
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: ID канала
+    responses:
+      "200":
+        description: Статус микшера получен
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AudioMixerStatus"
+      "404":
+        $ref: "#/components/responses/NotFound"
+      "500":
+        $ref: "#/components/responses/InternalServerError"
+
+# Управление участниками
+/social/voice/channels/{channelId}/participants:
+  get:
+    summary: Получить список участников канала
+    description: Возвращает список всех участников голосового канала
+    operationId: getChannelParticipants
+    tags:
+      - Participants
+    parameters:
+      - name: channelId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: ID канала
+      - name: includeInactive
+        in: query
+        schema:
+          type: boolean
+          default: false
+        description: Включать неактивных участников
+    responses:
+      "200":
+        description: Список участников получен
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                participants:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/VoiceParticipant"
+                total:
+                  type: integer
+                  description: Общее количество участников
+              required:
+                - participants
+                - total
+      "404":
+        $ref: "#/components/responses/NotFound"
+      "500":
+        $ref: "#/components/responses/InternalServerError"
+
+/social/voice/participants/{participantId}/mute:
+  post:
+    summary: Заглушить участника
+    description: |
+      Заглушает участника канала. Доступно владельцу канала или администратору.
+      Участник не сможет передавать звук.
+    operationId: muteParticipant
+    tags:
+      - Participants
+    parameters:
+      - name: participantId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: ID участника
+    responses:
+      "200":
+        description: Участник заглушен
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VoiceParticipant"
+      "403":
+        description: Недостаточно прав для заглушения участника
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Error"
+      "404":
+        $ref: "#/components/responses/NotFound"
+      "409":
+        description: Участник уже заглушен
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Error"
+      "500":
+        $ref: "#/components/responses/InternalServerError"
+
+/social/voice/participants/{participantId}/deafen:
+  post:
+    summary: Оглохшить участника
+    description: |
+      Оглохшает участника канала. Участник не сможет слышать других,
+      но сможет передавать звук (если не заглушен).
+    operationId: deafenParticipant
+    tags:
+      - Participants
+    parameters:
+      - name: participantId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: ID участника
+    responses:
+      "200":
+        description: Участник оглохшен
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VoiceParticipant"
+      "403":
+        description: Недостаточно прав для оглушения участника
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Error"
+      "404":
+        $ref: "#/components/responses/NotFound"
+      "409":
+        description: Участник уже оглохшен
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Error"
+      "500":
+        $ref: "#/components/responses/InternalServerError"
+
+/social/voice/participants/{participantId}/kick:
+  post:
+    summary: Исключить участника из канала
+    description: |
+      Исключает участника из голосового канала.
+      Доступно владельцу канала или администратору.
+    operationId: kickParticipant
+    tags:
+      - Participants
+    parameters:
+      - name: participantId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: ID участника
+    requestBody:
+      required: false
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              reason:
+                type: string
+                maxLength: 255
+                description: Причина исключения
+              banDuration:
+                type: integer
+                description: Длительность бана в секундах (опционально)
+    responses:
+      "204":
+        description: Участник исключен
+      "403":
+        description: Недостаточно прав для исключения участника
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Error"
+      "404":
+        $ref: "#/components/responses/NotFound"
+      "500":
+        $ref: "#/components/responses/InternalServerError"
+
+# Proximity каналы
+/social/voice/proximity/update:
+  post:
+    summary: Обновить позицию для proximity канала
+    description: |
+      Обновляет позицию игрока в мире для расчета proximity каналов.
+      Влияет на список участников и пространственное позиционирование звука.
+    operationId: updateProximityPosition

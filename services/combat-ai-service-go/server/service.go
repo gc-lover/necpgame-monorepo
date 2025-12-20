@@ -1,9 +1,8 @@
-// Issue: #1595, #1607
+// Package server Issue: #1595, #1607
 // Performance: Memory pooling for hot path (Issue #1607)
 package server
 
 import (
-	"context"
 	"errors"
 	"sync"
 
@@ -48,7 +47,7 @@ func NewService(repo *Repository) *Service {
 
 // GetAIProfile returns AI profile
 // Issue: #1607 - Uses memory pooling for zero allocations
-func (s *Service) GetAIProfile(ctx context.Context, profileID string) (*api.AIProfile, error) {
+func (s *Service) GetAIProfile() (*api.AIProfile, error) {
 	// Get from pool (zero allocation!)
 	resp := s.profilePool.Get().(*api.AIProfile)
 	defer s.profilePool.Put(resp)
@@ -56,7 +55,7 @@ func (s *Service) GetAIProfile(ctx context.Context, profileID string) (*api.AIPr
 	// TODO: Implement
 	// Reset pooled struct
 	*resp = api.AIProfile{}
-	
+
 	// Clone response (caller owns it)
 	result := &api.AIProfile{}
 	return result, nil
@@ -64,7 +63,7 @@ func (s *Service) GetAIProfile(ctx context.Context, profileID string) (*api.AIPr
 
 // GetAIProfileTelemetry returns AI profile telemetry
 // Issue: #1607 - Uses memory pooling for zero allocations
-func (s *Service) GetAIProfileTelemetry(ctx context.Context, profileID string) (*api.GetAIProfileTelemetryOK, error) {
+func (s *Service) GetAIProfileTelemetry() (*api.GetAIProfileTelemetryOK, error) {
 	// Get from pool (zero allocation!)
 	resp := s.telemetryResponsePool.Get().(*api.GetAIProfileTelemetryOK)
 	defer s.telemetryResponsePool.Put(resp)
@@ -72,7 +71,7 @@ func (s *Service) GetAIProfileTelemetry(ctx context.Context, profileID string) (
 	// TODO: Implement
 	// Reset pooled struct
 	*resp = api.GetAIProfileTelemetryOK{}
-	
+
 	// Clone response (caller owns it)
 	result := &api.GetAIProfileTelemetryOK{}
 	return result, nil
@@ -80,7 +79,7 @@ func (s *Service) GetAIProfileTelemetry(ctx context.Context, profileID string) (
 
 // ListAIProfiles returns list of AI profiles
 // Issue: #1607 - Uses memory pooling for zero allocations
-func (s *Service) ListAIProfiles(ctx context.Context, params api.ListAIProfilesParams) (*api.ListAIProfilesOK, error) {
+func (s *Service) ListAIProfiles() (*api.ListAIProfilesOK, error) {
 	// Get from pool (zero allocation!)
 	resp := s.listResponsePool.Get().(*api.ListAIProfilesOK)
 	defer s.listResponsePool.Put(resp)
@@ -89,7 +88,7 @@ func (s *Service) ListAIProfiles(ctx context.Context, params api.ListAIProfilesP
 	// Reset pooled struct
 	resp.Profiles = resp.Profiles[:0] // Reuse slice
 	resp.Total = 0
-	
+
 	// Clone response (caller owns it)
 	result := &api.ListAIProfilesOK{
 		Profiles: append([]api.AIProfile{}, resp.Profiles...),
@@ -97,4 +96,3 @@ func (s *Service) ListAIProfiles(ctx context.Context, params api.ListAIProfilesP
 	}
 	return result, nil
 }
-

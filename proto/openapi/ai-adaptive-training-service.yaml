@@ -18,27 +18,27 @@ info:
     name: NECPGAME API Support
     email: api@necp.game
 servers:
-- url: http://localhost:8090/api/v1/ai
-  description: Локальный сервер разработки
-- url: https://api.necp.game/api/v1/ai
-  description: Продакшен сервер
+  - url: http://localhost:8090/api/v1/ai
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1/ai
+    description: Продакшен сервер
 tags:
-- name: Training
-  description: Обучение моделей
-- name: Models
-  description: Управление моделями
+  - name: Training
+    description: Обучение моделей
+  - name: Models
+    description: Управление моделями
 paths:
   /training/data:
     post:
       tags:
-      - Training
+        - Training
       summary: Отправить данные для обучения
       description: 'Отправляет данные о тактиках и адаптациях для обучения моделей машинного обучения.
 
         '
       operationId: submitTrainingData
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       requestBody:
         required: true
         content:
@@ -48,9 +48,9 @@ paths:
             example:
               encounter_id: a1b2c3d4-e5f6-7890-1234-567890abcdef
               tactics_data:
-                player_positions: {}
-                ability_usage: {}
-                attack_patterns: {}
+                player_positions: { }
+                ability_usage: { }
+                attack_patterns: { }
               adaptation_data:
                 adaptation_type: focus_weak_player
                 effectiveness: 0.85
@@ -75,14 +75,14 @@ paths:
   /models/status:
     get:
       tags:
-      - Models
+        - Models
       summary: Получить статус моделей
       description: 'Возвращает статус всех моделей машинного обучения AI.
 
         '
       operationId: getModelsStatus
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       responses:
         '200':
           description: Статус моделей
@@ -92,18 +92,18 @@ paths:
                 $ref: '#/components/schemas/ModelsStatusResponse'
               example:
                 models:
-                - model_id: k1e2f3g4-i5h6-7890-1234-567890k01234
-                  model_type: tactics_analyzer
-                  version: 1.2.0
-                  status: active
-                  accuracy: 0.92
-                  last_trained: '2025-12-01T09:00:00Z'
-                - model_id: l2f3g4h5-j6i7-8901-2345-678901l01234
-                  model_type: adaptation_engine
-                  version: 1.1.5
-                  status: active
-                  accuracy: 0.88
-                  last_trained: '2025-12-01T08:00:00Z'
+                  - model_id: k1e2f3g4-i5h6-7890-1234-567890k01234
+                    model_type: tactics_analyzer
+                    version: 1.2.0
+                    status: active
+                    accuracy: 0.92
+                    last_trained: '2025-12-01T09:00:00Z'
+                  - model_id: l2f3g4h5-j6i7-8901-2345-678901l01234
+                    model_type: adaptation_engine
+                    version: 1.1.5
+                    status: active
+                    accuracy: 0.88
+                    last_trained: '2025-12-01T08:00:00Z'
                 total: 2
         '401':
           $ref: common.yaml#/components/responses/Unauthorized
@@ -117,9 +117,9 @@ components:
     SubmitTrainingDataRequest:
       type: object
       required:
-      - encounter_id
-      - tactics_data
-      - adaptation_data
+        - encounter_id
+        - tactics_data
+        - adaptation_data
       properties:
         encounter_id:
           type: string
@@ -136,9 +136,9 @@ components:
           description: Данные о тактиках
           additionalProperties: true
           example:
-            player_positions: {}
-            ability_usage: {}
-            attack_patterns: {}
+            player_positions: { }
+            ability_usage: { }
+            attack_patterns: { }
         adaptation_data:
           type: object
           description: Данные об адаптациях
@@ -158,8 +158,8 @@ components:
     SubmitTrainingDataResponse:
       type: object
       required:
-      - training_data_id
-      - status
+        - training_data_id
+        - status
       properties:
         training_data_id:
           type: string
@@ -173,21 +173,21 @@ components:
         status:
           type: string
           enum:
-          - accepted
-          - rejected
-          - pending
+            - accepted
+            - rejected
+            - pending
           description: Статус данных
           example: accepted
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     ModelStatus:
       type: object
       required:
-      - model_id
-      - model_type
-      - version
-      - status
-      - accuracy
-      - last_trained
+        - model_id
+        - model_type
+        - version
+        - status
+        - accuracy
+        - last_trained
       properties:
         model_id:
           type: string
@@ -201,17 +201,17 @@ components:
         model_type:
           type: string
           enum:
-          - tactics_analyzer
-          - adaptation_engine
-          - counter_strategy
+            - tactics_analyzer
+            - adaptation_engine
+            - counter_strategy
           description: Тип модели
           example: tactics_analyzer
         status:
           type: string
           enum:
-          - active
-          - training
-          - inactive
+            - active
+            - training
+            - inactive
           description: Статус модели
           example: active
         last_trained:
@@ -230,8 +230,8 @@ components:
     ModelsStatusResponse:
       type: object
       required:
-      - models
-      - total
+        - models
+        - total
       properties:
         models:
           type: array
@@ -252,4 +252,4 @@ components:
     InternalServerError:
       $ref: common.yaml#/components/responses/InternalServerError
 security:
-- BearerAuth: []
+  - BearerAuth: [ ]

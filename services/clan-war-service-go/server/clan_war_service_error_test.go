@@ -37,4 +37,3 @@ func TestClanWarService_DeclareWar_DatabaseError(t *testing.T) {
 	assert.Nil(t, war)
 	mockRepo.AssertExpectations(t)
 }
-

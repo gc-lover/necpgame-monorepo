@@ -7,32 +7,32 @@ info:
     name: NECPGAME API Support
     email: api@necp.game
 servers:
-- url: http://localhost:8084/api/v1
-  description: Локальный сервер разработки
-- url: https://api.necp.game/api/v1
-  description: Продакшен сервер
+  - url: http://localhost:8084/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
 tags:
-- name: Mail Management
-  description: Управление письмами
+  - name: Mail Management
+    description: Управление письмами
 paths:
   /social/mail/expiring:
     get:
       tags:
-      - Mail Management
+        - Mail Management
       summary: Получить истекающие письма
       operationId: getExpiringMail
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       parameters:
-      - name: days
-        in: query
-        schema:
-          type: integer
-          minimum: 1
-          maximum: 30
-          default: 3
-      - $ref: common.yaml#/components/parameters/Limit
-      - $ref: common.yaml#/components/parameters/Offset
+        - name: days
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 30
+            default: 3
+        - $ref: common.yaml#/components/parameters/Limit
+        - $ref: common.yaml#/components/parameters/Offset
       responses:
         '200':
           description: Истекающие письма
@@ -47,18 +47,18 @@ paths:
   /social/mail/{mail_id}/extend:
     post:
       tags:
-      - Mail Management
+        - Mail Management
       summary: Продлить срок действия письма
       operationId: extendMailExpiration
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       parameters:
-      - name: mail_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+        - name: mail_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
       requestBody:
         required: true
         content:
@@ -103,11 +103,11 @@ components:
         status:
           type: string
           enum:
-          - unread
-          - read
-          - claimed
-          - expired
-          - returned
+            - unread
+            - read
+            - claimed
+            - expired
+            - returned
         expires_at:
           type: string
           format: date-time
@@ -126,7 +126,7 @@ components:
     ExtendMailRequest:
       type: object
       required:
-      - days
+        - days
       properties:
         days:
           type: integer
@@ -135,4 +135,4 @@ components:
           description: Количество дней для продления
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
 security:
-- BearerAuth: []
+  - BearerAuth: [ ]

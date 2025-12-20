@@ -1,4 +1,4 @@
-// Issue: JWT Implementation
+// Package server Issue: JWT Implementation
 // Configuration for social-service
 package server
 

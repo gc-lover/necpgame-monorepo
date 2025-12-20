@@ -7,22 +7,22 @@ info:
     name: NECPGAME API Support
     email: api@necp.game
 servers:
-- url: http://localhost:8081/api/v1
-  description: Локальный сервер разработки
-- url: https://api.necp.game/api/v1
-  description: Продакшен сервер
+  - url: http://localhost:8081/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
 tags:
-- name: Session Management
-  description: Управление и мониторинг сессий
+  - name: Session Management
+    description: Управление и мониторинг сессий
 paths:
   /auth/session/cleanup:
     post:
       tags:
-      - Session Management
+        - Session Management
       summary: Очистить неактивные сессии
       operationId: cleanupSessions
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       requestBody:
         required: false
         content:
@@ -45,11 +45,11 @@ paths:
   /auth/session/cleanup/stats:
     get:
       tags:
-      - Session Management
+        - Session Management
       summary: Получить статистику очистки сессий
       operationId: getCleanupStats
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       responses:
         '200':
           description: Статистика очистки
@@ -66,11 +66,11 @@ paths:
   /auth/session/security/validate:
     post:
       tags:
-      - Session Management
+        - Session Management
       summary: Валидировать безопасность сессии
       operationId: validateSessionSecurity
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       requestBody:
         required: true
         content:
@@ -93,11 +93,11 @@ paths:
   /auth/session/security/rotate-token:
     post:
       tags:
-      - Session Management
+        - Session Management
       summary: Обновить токен сессии
       operationId: rotateSessionToken
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       requestBody:
         required: true
         content:
@@ -120,11 +120,11 @@ paths:
   /auth/session/monitoring/stats:
     get:
       tags:
-      - Session Management
+        - Session Management
       summary: Получить статистику сессий
       operationId: getSessionStats
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       responses:
         '200':
           description: Статистика сессий
@@ -141,14 +141,14 @@ paths:
   /auth/session/monitoring/active:
     get:
       tags:
-      - Session Management
+        - Session Management
       summary: Получить активные сессии
       operationId: getActiveSessions
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       parameters:
-      - $ref: common.yaml#/components/parameters/Limit
-      - $ref: common.yaml#/components/parameters/Offset
+        - $ref: common.yaml#/components/parameters/Limit
+        - $ref: common.yaml#/components/parameters/Offset
       responses:
         '200':
           description: Активные сессии
@@ -165,11 +165,11 @@ paths:
   /auth/session/admin/terminate:
     post:
       tags:
-      - Session Management
+        - Session Management
       summary: Принудительно закрыть сессию (admin)
       operationId: terminateSession
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       requestBody:
         required: true
         content:
@@ -208,9 +208,9 @@ components:
           items:
             type: string
             enum:
-            - INACTIVE
-            - DISCONNECTED
-            - TERMINATED
+              - INACTIVE
+              - DISCONNECTED
+              - TERMINATED
         max_age_seconds:
           type: integer
           default: 3600
@@ -241,7 +241,7 @@ components:
     ValidateSessionSecurityRequest:
       type: object
       required:
-      - session_id
+        - session_id
       properties:
         session_id:
           type: string
@@ -275,7 +275,7 @@ components:
     RotateSessionTokenRequest:
       type: object
       required:
-      - session_id
+        - session_id
       properties:
         session_id:
           type: string
@@ -315,14 +315,14 @@ components:
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     ActiveSessionsResponse:
       allOf:
-      - $ref: common.yaml#/components/schemas/PaginationResponse
-      - type: object
-        properties:
-          items:
-            type: array
+        - $ref: common.yaml#/components/schemas/PaginationResponse
+        - type: object
+          properties:
             items:
-              $ref: '#/components/schemas/Session'
-            description: Список активных сессий
+              type: array
+              items:
+                $ref: '#/components/schemas/Session'
+              description: Список активных сессий
     Session:
       type: object
       properties:
@@ -340,10 +340,10 @@ components:
         status:
           type: string
           enum:
-          - ACTIVE
-          - INACTIVE
-          - DISCONNECTED
-          - TERMINATED
+            - ACTIVE
+            - INACTIVE
+            - DISCONNECTED
+            - TERMINATED
         created_at:
           type: string
           format: date-time
@@ -354,7 +354,7 @@ components:
     TerminateSessionRequest:
       type: object
       required:
-      - session_id
+        - session_id
       properties:
         session_id:
           type: string
@@ -366,4 +366,4 @@ components:
           default: false
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
 security:
-- BearerAuth: []
+  - BearerAuth: [ ]

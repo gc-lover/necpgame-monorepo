@@ -1,200 +1,200 @@
-  # ============================================================================
-  # TRADE SYSTEM
-  # ============================================================================
+# ============================================================================
+# TRADE SYSTEM
+# ============================================================================
 
-  /gameplay/economy/trade/sessions:
-    post:
-      tags: [trade]
-      summary: Create trade session
-      operationId: createTradeSession
-      requestBody:
-        required: true
+/gameplay/economy/trade/sessions:
+  post:
+    tags: [ trade ]
+    summary: Create trade session
+    operationId: createTradeSession
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/CreateTradeSessionRequest"
+    responses:
+      "201":
+        description: Trade session created
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateTradeSessionRequest"
-      responses:
-        "201":
-          description: Trade session created
-          content:
-            application/json:
-              schema:
+              $ref: "#/components/schemas/TradeSession"
+      "400":
+        $ref: common.yaml#/components/responses/BadRequest
+      "409":
+        description: Trade conflict
+        content:
+          application/json:
+            schema:
+              $ref: common.yaml#/components/schemas/Error
+
+  get:
+    tags: [ trade ]
+    summary: List active trade sessions
+    operationId: listTradeSessions
+    parameters:
+      - name: participant_id
+        in: query
+        schema:
+          type: string
+          format: uuid
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum: [ pending, active, completed, cancelled ]
+      - $ref: common.yaml#/components/parameters/Limit
+    responses:
+      "200":
+        description: Trade sessions
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
                 $ref: "#/components/schemas/TradeSession"
-        "400":
-          $ref: common.yaml#/components/responses/BadRequest
-        "409":
-          description: Trade conflict
-          content:
-            application/json:
-              schema:
-                $ref: common.yaml#/components/schemas/Error
 
-    get:
-      tags: [trade]
-      summary: List active trade sessions
-      operationId: listTradeSessions
-      parameters:
-        - name: participant_id
-          in: query
-          schema:
-            type: string
-            format: uuid
-        - name: status
-          in: query
-          schema:
-            type: string
-            enum: [pending, active, completed, cancelled]
-        - $ref: common.yaml#/components/parameters/Limit
-      responses:
-        "200":
-          description: Trade sessions
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/TradeSession"
-
-  /gameplay/economy/trade/sessions/{session_id}:
-    get:
-      tags: [trade]
-      summary: Get trade session details
-      operationId: getTradeSession
-      parameters:
-        - name: session_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        "200":
-          description: Trade session details
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/TradeSession"
-        "404":
-          $ref: common.yaml#/components/responses/NotFound
-
-    delete:
-      tags: [trade]
-      summary: Cancel trade session
-      operationId: cancelTradeSession
-      parameters:
-        - name: session_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      requestBody:
+/gameplay/economy/trade/sessions/{session_id}:
+  get:
+    tags: [ trade ]
+    summary: Get trade session details
+    operationId: getTradeSession
+    parameters:
+      - name: session_id
+        in: path
         required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      "200":
+        description: Trade session details
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CancelTradeRequest"
-      responses:
-        "200":
-          description: Session cancelled
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/TradeSession"
-        "404":
-          $ref: common.yaml#/components/responses/NotFound
+              $ref: "#/components/schemas/TradeSession"
+      "404":
+        $ref: common.yaml#/components/responses/NotFound
 
-  /gameplay/economy/trade/sessions/{session_id}/offers:
-    post:
-      tags: [trade]
-      summary: Add offer to trade session
-      operationId: addTradeOffer
-      parameters:
-        - name: session_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      requestBody:
+  delete:
+    tags: [ trade ]
+    summary: Cancel trade session
+    operationId: cancelTradeSession
+    parameters:
+      - name: session_id
+        in: path
         required: true
+        schema:
+          type: string
+          format: uuid
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/CancelTradeRequest"
+    responses:
+      "200":
+        description: Session cancelled
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/AddOfferRequest"
-      responses:
-        "200":
-          description: Offer added
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/TradeOffer"
-        "400":
-          description: Invalid offer
-          content:
-            application/json:
-              schema:
-                $ref: common.yaml#/components/schemas/Error
+              $ref: "#/components/schemas/TradeSession"
+      "404":
+        $ref: common.yaml#/components/responses/NotFound
 
-  /gameplay/economy/trade/sessions/{session_id}/confirm:
-    post:
-      tags: [trade]
-      summary: Confirm trade session
-      operationId: confirmTradeSession
-      parameters:
-        - name: session_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      requestBody:
+/gameplay/economy/trade/sessions/{session_id}/offers:
+  post:
+    tags: [ trade ]
+    summary: Add offer to trade session
+    operationId: addTradeOffer
+    parameters:
+      - name: session_id
+        in: path
         required: true
+        schema:
+          type: string
+          format: uuid
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/AddOfferRequest"
+    responses:
+      "200":
+        description: Offer added
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ConfirmTradeRequest"
-      responses:
-        "200":
-          description: Trade completed
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/TradeResult"
-        "400":
-          description: Confirmation failed
-          content:
-            application/json:
-              schema:
-                $ref: common.yaml#/components/schemas/Error
+              $ref: "#/components/schemas/TradeOffer"
+      "400":
+        description: Invalid offer
+        content:
+          application/json:
+            schema:
+              $ref: common.yaml#/components/schemas/Error
 
-  /gameplay/economy/trade/history:
-    get:
-      tags: [trade]
-      summary: Get trade history
-      operationId: getTradeHistory
-      parameters:
-        - name: character_id
-          in: query
-          required: true
+/gameplay/economy/trade/sessions/{session_id}/confirm:
+  post:
+    tags: [ trade ]
+    summary: Confirm trade session
+    operationId: confirmTradeSession
+    parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    requestBody:
+      required: true
+      content:
+        application/json:
           schema:
-            type: string
-            format: uuid
-        - name: since
-          in: query
-          schema:
-            type: string
-            format: date-time
-        - $ref: common.yaml#/components/parameters/Limit
-      responses:
-        "200":
-          description: Trade history
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/TradeHistoryEntry"
+            $ref: "#/components/schemas/ConfirmTradeRequest"
+    responses:
+      "200":
+        description: Trade completed
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TradeResult"
+      "400":
+        description: Confirmation failed
+        content:
+          application/json:
+            schema:
+              $ref: common.yaml#/components/schemas/Error
+
+/gameplay/economy/trade/history:
+  get:
+    tags: [ trade ]
+    summary: Get trade history
+    operationId: getTradeHistory
+    parameters:
+      - name: character_id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: since
+        in: query
+        schema:
+          type: string
+          format: date-time
+      - $ref: common.yaml#/components/parameters/Limit
+    responses:
+      "200":
+        description: Trade history
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "#/components/schemas/TradeHistoryEntry"
 
 components:
   securitySchemes:
@@ -210,14 +210,14 @@ components:
 
     InventorySlot:
       type: object
-      required: [slot_id, slot_type, position_x, position_y]
+      required: [ slot_id, slot_type, position_x, position_y ]
       properties:
         slot_id:
           type: string
           format: uuid
         slot_type:
           type: string
-          enum: [inventory, equipment, stash]
+          enum: [ inventory, equipment, stash ]
         position_x:
           type: integer
           minimum: 0
@@ -235,7 +235,7 @@ components:
 
     InventoryItem:
       type: object
-      required: [item_id, template_id, quantity, quality]
+      required: [ item_id, template_id, quantity, quality ]
       properties:
         item_id:
           type: string
@@ -248,7 +248,7 @@ components:
           minimum: 1
         quality:
           type: string
-          enum: [common, uncommon, rare, epic, legendary, iconic]
+          enum: [ common, uncommon, rare, epic, legendary, iconic ]
         durability:
           type: integer
           minimum: 0
@@ -263,14 +263,14 @@ components:
           default: false
         bound_on:
           type: string
-          enum: [pickup, equip, account]
+          enum: [ pickup, equip, account ]
         created_at:
           type: string
           format: date-time
 
     AddItemRequest:
       type: object
-      required: [template_id, quantity]
+      required: [ template_id, quantity ]
       properties:
         template_id:
           type: string
@@ -280,14 +280,14 @@ components:
           minimum: 1
         quality:
           type: string
-          enum: [common, uncommon, rare, epic, legendary, iconic]
+          enum: [ common, uncommon, rare, epic, legendary, iconic ]
           default: common
         custom_properties:
           type: object
           additionalProperties: true
         source:
           type: string
-          enum: [loot, craft, purchase, reward, admin]
+          enum: [ loot, craft, purchase, reward, admin ]
 
     UpdateSlotRequest:
       type: object
@@ -304,7 +304,7 @@ components:
 
     TransferRequest:
       type: object
-      required: [from_slot_id, to_slot_id, quantity]
+      required: [ from_slot_id, to_slot_id, quantity ]
       properties:
         from_slot_id:
           type: string
@@ -321,7 +321,7 @@ components:
 
     TransferResult:
       type: object
-      required: [from_slot, to_slot, transferred_quantity]
+      required: [ from_slot, to_slot, transferred_quantity ]
       properties:
         from_slot:
           $ref: "#/components/schemas/InventorySlot"
@@ -339,7 +339,7 @@ components:
 
     EquipmentSlot:
       type: object
-      required: [slot_type, is_equipped]
+      required: [ slot_type, is_equipped ]
       properties:
         slot_type:
           type: string
@@ -369,7 +369,7 @@ components:
 
     EquipRequest:
       type: object
-      required: [item_id]
+      required: [ item_id ]
       properties:
         item_id:
           type: string
@@ -380,7 +380,7 @@ components:
 
     UnequipResult:
       type: object
-      required: [slot_type, unequipped_item]
+      required: [ slot_type, unequipped_item ]
       properties:
         slot_type:
           type: string

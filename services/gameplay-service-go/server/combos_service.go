@@ -1,4 +1,4 @@
-// SQL queries use prepared statements with placeholders (, , ?) for safety
+// Package server SQL queries use prepared statements with placeholders (, , ?) for safety
 // Issue: #1525
 package server
 
@@ -7,9 +7,9 @@ import (
 	"errors"
 	"time"
 
+	"github.com/gc-lover/necpgame-monorepo/services/gameplay-service-go/models"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/gc-lover/necpgame-monorepo/services/gameplay-service-go/models"
 	"github.com/sirupsen/logrus"
 )
 
@@ -120,7 +120,7 @@ func (s *ComboService) GetAnalytics(ctx context.Context, comboID, characterID *u
 }
 
 // ActivateCombo activates a combo for a character
-func (s *ComboService) ActivateCombo(ctx context.Context, characterID, comboID uuid.UUID, participants []uuid.UUID, context map[string]interface{}) (*models.ComboActivation, error) {
+func (s *ComboService) ActivateCombo(ctx context.Context, characterID, comboID uuid.UUID, _ []uuid.UUID, _ map[string]interface{}) (*models.ComboActivation, error) {
 	// TODO: Validate combo exists and requirements are met
 	activation := &models.ComboActivation{
 		ID:          uuid.New(),
@@ -173,5 +173,3 @@ func calculateRewards(totalScore int, category string) *models.ScoreRewards {
 		Items:      []uuid.UUID{},
 	}
 }
-
-

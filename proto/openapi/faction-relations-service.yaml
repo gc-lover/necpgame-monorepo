@@ -6,34 +6,34 @@ info:
 
     '
 servers:
-- url: http://localhost:8094
-  description: Local development
-- url: https://api.necpgame.com
-  description: Production
+  - url: http://localhost:8094
+    description: Local development
+  - url: https://api.necpgame.com
+    description: Production
 security:
-- BearerAuth: []
+  - BearerAuth: [ ]
 tags:
-- name: relations
-  description: Отношения между фракциями
+  - name: relations
+    description: Отношения между фракциями
 paths:
   /api/v1/factions/{factionId}/relations:
     get:
       tags:
-      - relations
+        - relations
       summary: Отношения фракции
       description: Получить все отношения фракции
       operationId: getRelations
       parameters:
-      - name: factionId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      - name: relation_type
-        in: query
-        schema:
-          $ref: '#/components/schemas/RelationType'
+        - name: factionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: relation_type
+          in: query
+          schema:
+            $ref: '#/components/schemas/RelationType'
       responses:
         '200':
           description: Список отношений
@@ -49,23 +49,23 @@ paths:
   /api/v1/factions/{factionId}/relations/{targetFactionId}:
     put:
       tags:
-      - relations
+        - relations
       summary: Обновить отношения
       description: Изменить тип отношений с другой фракцией
       operationId: updateRelation
       parameters:
-      - name: factionId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      - name: targetFactionId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+        - name: factionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: targetFactionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
       requestBody:
         required: true
         content:
@@ -73,7 +73,7 @@ paths:
             schema:
               type: object
               required:
-              - relation_type
+                - relation_type
               properties:
                 relation_type:
                   $ref: '#/components/schemas/RelationType'
@@ -91,17 +91,17 @@ paths:
   /api/v1/factions/{factionId}/diplomacy/treaty:
     post:
       tags:
-      - relations
+        - relations
       summary: Заключить договор
       description: Создать дипломатический договор
       operationId: createTreaty
       parameters:
-      - name: factionId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+        - name: factionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
       requestBody:
         required: true
         content:
@@ -109,8 +109,8 @@ paths:
             schema:
               type: object
               required:
-              - target_faction_id
-              - treaty_type
+                - target_faction_id
+                - treaty_type
               properties:
                 target_faction_id:
                   type: string
@@ -118,10 +118,10 @@ paths:
                 treaty_type:
                   type: string
                   enum:
-                  - alliance
-                  - trade_agreement
-                  - non_aggression
-                  - mutual_defense
+                    - alliance
+                    - trade_agreement
+                    - non_aggression
+                    - mutual_defense
                 terms:
                   type: object
                   additionalProperties: true
@@ -137,24 +137,24 @@ paths:
   /api/v1/factions/{factionId}/relations/graph:
     get:
       tags:
-      - relations
+        - relations
       summary: Граф отношений
       description: Получить граф отношений фракции
       operationId: getRelationsGraph
       parameters:
-      - name: factionId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-      - name: depth
-        in: query
-        schema:
-          type: integer
-          default: 2
-          minimum: 1
-          maximum: 5
+        - name: factionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: depth
+          in: query
+          schema:
+            type: integer
+            default: 2
+            minimum: 1
+            maximum: 5
       responses:
         '200':
           description: Граф отношений
@@ -169,11 +169,11 @@ components:
     RelationType:
       type: string
       enum:
-      - allied
-      - neutral
-      - competitive
-      - hostile
-      - trading
+        - allied
+        - neutral
+        - competitive
+        - hostile
+        - trading
     FactionRelation:
       type: object
       properties:
@@ -216,17 +216,17 @@ components:
         treaty_type:
           type: string
           enum:
-          - alliance
-          - trade_agreement
-          - non_aggression
-          - mutual_defense
+            - alliance
+            - trade_agreement
+            - non_aggression
+            - mutual_defense
         status:
           type: string
           enum:
-          - active
-          - expired
-          - violated
-          - cancelled
+            - active
+            - expired
+            - violated
+            - cancelled
         signed_at:
           type: string
           format: date-time

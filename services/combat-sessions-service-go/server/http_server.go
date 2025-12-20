@@ -1,4 +1,4 @@
-// Issue: #1595
+// Package server Issue: #1595
 // OPTIMIZED: No chi dependency, standard http.ServeMux + middleware chain
 // PERFORMANCE: OGEN routes (hot path) already maximum speed, removed chi overhead from health/metrics
 package server
@@ -39,10 +39,10 @@ func NewHTTPServer(addr string, logger *logrus.Logger, service *CombatSessionSer
 
 	// Middleware chain (no duplication, optimized)
 	apiHandler := chainMiddleware(ogenServer,
-		recoveryMiddleware(logger),  // panic recovery
-		requestIDMiddleware,  // request ID
-		loggingMiddleware(logger),    // structured logging
-		CORSMiddleware(),       // CORS
+		recoveryMiddleware(logger), // panic recovery
+		requestIDMiddleware,        // request ID
+		loggingMiddleware(logger),  // structured logging
+		CORSMiddleware(),           // CORS
 	)
 
 	// Mount OGEN (hot path - maximum speed, static router)
@@ -53,7 +53,7 @@ func NewHTTPServer(addr string, logger *logrus.Logger, service *CombatSessionSer
 	mux.HandleFunc("/health", healthCheckHandler)
 
 	return &HTTPServer{
-		addr: addr,
+		addr:   addr,
 		logger: logger,
 		server: &http.Server{
 			Addr:         addr,
@@ -138,11 +138,8 @@ func (s *HTTPServer) Shutdown(ctx context.Context) error {
 }
 
 // Health check handler
-func healthCheckHandler(w http.ResponseWriter, r *http.Request) {
+func healthCheckHandler(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(`{"status":"healthy"}`))
 }
-
-
-

@@ -1,4 +1,4 @@
-// Issue: #1601 - ogen handlers (TYPED responses)
+// Package server Issue: #1601 - ogen handlers (TYPED responses)
 package server
 
 import (
@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	api "github.com/necpgame/stock-analytics-tools-service-go/pkg/api"
+	"github.com/necpgame/stock-analytics-tools-service-go/pkg/api"
 	"github.com/sirupsen/logrus"
 )
 
@@ -178,7 +178,7 @@ func (h *ToolsHandlers) ListAlerts(ctx context.Context, params api.ListAlertsPar
 	}
 
 	if h.service == nil {
-		alerts := []api.Alert{}
+		var alerts []api.Alert
 		pagination := api.PaginationResponse{
 			Total:  0,
 			Limit:  api.NewOptInt(limit),
@@ -193,7 +193,7 @@ func (h *ToolsHandlers) ListAlerts(ctx context.Context, params api.ListAlertsPar
 	alerts, total, err := h.service.ListAlerts(ctx, activeOnly, limit, offset)
 	if err != nil {
 		h.logger.WithError(err).Error("ListAlerts: failed")
-		alerts := []api.Alert{}
+		var alerts []api.Alert
 		pagination := api.PaginationResponse{
 			Total:  0,
 			Limit:  api.NewOptInt(limit),
@@ -216,4 +216,3 @@ func (h *ToolsHandlers) ListAlerts(ctx context.Context, params api.ListAlertsPar
 		Pagination: api.NewOptPaginationResponse(pagination),
 	}, nil
 }
-

@@ -1,4 +1,4 @@
-// Issue: #2203 - Service interfaces for crafting system
+// Package server Issue: #2203 - Service interfaces for crafting system
 package server
 
 import (

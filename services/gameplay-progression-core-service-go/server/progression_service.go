@@ -1,4 +1,4 @@
-// Issue: Gameplay Progression Core Service implementation
+// Package server Issue: Gameplay Progression Core Service implementation
 package server
 
 import (
@@ -31,7 +31,7 @@ func NewProgressionService(logger *logrus.Logger) ProgressionServiceInterface {
 }
 
 // ValidateProgression validates character progression
-func (s *ProgressionService) ValidateProgression(ctx context.Context, characterID uuid.UUID) (*api.ProgressionValidationResponse, error) {
+func (s *ProgressionService) ValidateProgression(_ context.Context, _ uuid.UUID) (*api.ProgressionValidationResponse, error) {
 	// TODO: Implement validation logic
 	response := &api.ProgressionValidationResponse{
 		Valid:  api.NewOptBool(true),
@@ -41,7 +41,7 @@ func (s *ProgressionService) ValidateProgression(ctx context.Context, characterI
 }
 
 // GetCharacterProgression returns character progression
-func (s *ProgressionService) GetCharacterProgression(ctx context.Context, characterID uuid.UUID) (*api.CharacterProgression, error) {
+func (s *ProgressionService) GetCharacterProgression(_ context.Context, characterID uuid.UUID) (*api.CharacterProgression, error) {
 	// TODO: Implement database query
 	progression := &api.CharacterProgression{
 		CharacterID:              api.NewOptUUID(characterID),
@@ -57,7 +57,7 @@ func (s *ProgressionService) GetCharacterProgression(ctx context.Context, charac
 }
 
 // DistributeAttributePoints distributes attribute points
-func (s *ProgressionService) DistributeAttributePoints(ctx context.Context, characterID uuid.UUID, attributes map[string]int) (*api.CharacterProgression, error) {
+func (s *ProgressionService) DistributeAttributePoints(_ context.Context, characterID uuid.UUID, _ map[string]int) (*api.CharacterProgression, error) {
 	// TODO: Implement database update
 	progression := &api.CharacterProgression{
 		CharacterID:              api.NewOptUUID(characterID),
@@ -73,7 +73,7 @@ func (s *ProgressionService) DistributeAttributePoints(ctx context.Context, char
 }
 
 // AddExperience adds experience to character
-func (s *ProgressionService) AddExperience(ctx context.Context, characterID uuid.UUID, amount int, source string) (*api.CharacterProgression, error) {
+func (s *ProgressionService) AddExperience(_ context.Context, characterID uuid.UUID, amount int, _ string) (*api.CharacterProgression, error) {
 	// TODO: Implement database update and level calculation
 	progression := &api.CharacterProgression{
 		CharacterID:              api.NewOptUUID(characterID),
@@ -89,7 +89,7 @@ func (s *ProgressionService) AddExperience(ctx context.Context, characterID uuid
 }
 
 // DistributeSkillPoints distributes skill points
-func (s *ProgressionService) DistributeSkillPoints(ctx context.Context, characterID uuid.UUID, skills map[string]int) (*api.CharacterProgression, error) {
+func (s *ProgressionService) DistributeSkillPoints(_ context.Context, characterID uuid.UUID, _ map[string]int) (*api.CharacterProgression, error) {
 	// TODO: Implement database update
 	progression := &api.CharacterProgression{
 		CharacterID:              api.NewOptUUID(characterID),
@@ -103,4 +103,3 @@ func (s *ProgressionService) DistributeSkillPoints(ctx context.Context, characte
 	}
 	return progression, nil
 }
-

@@ -1,4 +1,4 @@
-// Issue: #1600, #1607 - ogen handlers (TYPED responses)
+// Package server Package server Issue: #1600, #1607 - ogen handlers (TYPED responses)
 package server
 
 import (
@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	api "github.com/gc-lover/necpgame-monorepo/services/stock-protection-service-go/pkg/api"
+	"github.com/gc-lover/necpgame-monorepo/services/stock-protection-service-go/pkg/api"
 	"github.com/sirupsen/logrus"
 )
 

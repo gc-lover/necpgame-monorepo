@@ -12,26 +12,26 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// OPTIMIZATION: Issue #1978 - Memory-aligned struct for network performance
+// NetworkServer OPTIMIZATION: Issue #1978 - Memory-aligned struct for network performance
 type NetworkServer struct {
-	router       *chi.Mux
-	wsRouter     *chi.Mux
-	logger       *logrus.Logger
-	service      *NetworkService
-	metrics      *NetworkMetrics
+	router   *chi.Mux
+	wsRouter *chi.Mux
+	logger   *logrus.Logger
+	service  *NetworkService
+	metrics  *NetworkMetrics
 }
 
-// OPTIMIZATION: Issue #1978 - Struct field alignment (large → small)
+// NetworkMetrics OPTIMIZATION: Issue #1978 - Struct field alignment (large → small)
 type NetworkMetrics struct {
-	RequestsTotal    prometheus.Counter   `json:"-"` // 16 bytes (interface)
-	RequestDuration  prometheus.Histogram `json:"-"` // 16 bytes (interface)
+	RequestsTotal     prometheus.Counter   `json:"-"` // 16 bytes (interface)
+	RequestDuration   prometheus.Histogram `json:"-"` // 16 bytes (interface)
 	ActiveConnections prometheus.Gauge     `json:"-"` // 16 bytes (interface)
-	MessagesSent     prometheus.Counter   `json:"-"` // 16 bytes (interface)
-	MessagesReceived prometheus.Counter   `json:"-"` // 16 bytes (interface)
-	WSConnections    prometheus.Gauge     `json:"-"` // 16 bytes (interface)
-	BroadcastOps     prometheus.Counter   `json:"-"` // 16 bytes (interface)
-	PresenceUpdates  prometheus.Counter   `json:"-"` // 16 bytes (interface)
-	EventPublishes   prometheus.Counter   `json:"-"` // 16 bytes (interface)
+	MessagesSent      prometheus.Counter   `json:"-"` // 16 bytes (interface)
+	MessagesReceived  prometheus.Counter   `json:"-"` // 16 bytes (interface)
+	WSConnections     prometheus.Gauge     `json:"-"` // 16 bytes (interface)
+	BroadcastOps      prometheus.Counter   `json:"-"` // 16 bytes (interface)
+	PresenceUpdates   prometheus.Counter   `json:"-"` // 16 bytes (interface)
+	EventPublishes    prometheus.Counter   `json:"-"` // 16 bytes (interface)
 }
 
 func NewNetworkServer(config *NetworkServiceConfig, logger *logrus.Logger) (*NetworkServer, error) {
@@ -164,7 +164,7 @@ func (s *NetworkServer) WebSocketRouter() *chi.Mux {
 	return s.wsRouter
 }
 
-func (s *NetworkServer) HealthCheck(w http.ResponseWriter, r *http.Request) {
+func (s *NetworkServer) HealthCheck(w http.ResponseWriter) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(`{"status":"healthy","service":"network-service","version":"1.0.0","active_connections":42}`))

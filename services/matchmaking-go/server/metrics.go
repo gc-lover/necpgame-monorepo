@@ -65,4 +65,3 @@ func RecordError(errorType string) {
 func RecordLoopDuration(duration float64) {
 	matchmakingLoopDuration.Observe(duration)
 }
-

@@ -1,4 +1,4 @@
-// Issue: #1602 - ogen handlers (TYPED responses)
+// Package server Issue: #1602 - ogen handlers (TYPED responses)
 package server
 
 import (
@@ -7,13 +7,12 @@ import (
 	"time"
 
 	"github.com/go-faster/jx"
-	api "github.com/necpgame/admin-service-go/pkg/api"
+	"github.com/necpgame/admin-service-go/pkg/api"
 	"github.com/sirupsen/logrus"
 )
 
 const (
-	DBTimeout    = 50 * time.Millisecond
-	CacheTimeout = 10 * time.Millisecond
+	DBTimeout = 50 * time.Millisecond
 )
 
 // AdminHandlers implements api.Handler interface (ogen typed handlers!)
@@ -92,9 +91,8 @@ func convertDetails(details map[string]interface{}) api.AuditLogDetails {
 		// Convert value to JSON using encoding/json, then wrap in jx.Raw
 		detailsJSON, err := json.Marshal(v)
 		if err == nil {
-			result[k] = jx.Raw(detailsJSON)
+			result[k] = detailsJSON
 		}
 	}
 	return result
 }
-

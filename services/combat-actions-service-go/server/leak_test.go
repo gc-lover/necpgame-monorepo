@@ -45,4 +45,3 @@ func TestCombatActionsServiceNoLeaks(t *testing.T) {
 // - Context cancellation for all goroutines
 // - DB connection pool limits
 // - Bounded channels for action updates
-

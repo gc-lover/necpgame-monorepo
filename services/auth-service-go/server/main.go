@@ -1,4 +1,4 @@
-// Issue: #136
+// Package server Issue: #136
 package server
 
 import (
@@ -43,39 +43,28 @@ type OAuthConfig struct {
 }
 
 // NewHTTPServer создает новый HTTP сервер
-func NewHTTPServer(logger *zap.Logger, db *sql.DB, redisClient *redis.Client, config *Config) *HTTPServer {
-	return &HTTPServer{
-		logger:      logger,
-		db:          db,
-		redisClient: redisClient,
-		config:      config,
-	}
-}
 
 // Start запускает HTTP сервер
 func (s *HTTPServer) Start() error {
 	s.logger.Info("Initializing HTTP server")
 
 	// Создаем репозиторий для работы с данными
-	repo := NewRepository(s.db, s.redisClient, s.logger)
-
-	// Создаем event bus для публикации событий
-	eventBus := NewRedisEventBus(s.redisClient, s.logger)
-
-	// Создаем сервис с бизнес-логикой
-	service := NewService(repo, s.config, s.logger, eventBus)
-
-	// Создаем обработчики
-	handlers := NewHandlers(service, s.logger)
+	// TODO: Implement when service and handlers are ready
+	// repo := NewRepository(s.db, s.redisClient, s.logger)
+	// eventBus := NewRedisEventBus(s.redisClient, s.logger)
+	// service := NewService(repo, s.config, s.logger, eventBus)
+	// handlers := NewHandlers(service, s.logger)
 
 	// Создаем security handler
-	secHandler := NewSecurityHandler(s.config.JWTSecret, s.logger)
+	// TODO: Implement when handlers are ready
+	// secHandler := NewSecurityHandler(s.config.JWTSecret, s.logger)
 
 	// Создаем ogen сервер
-	ogenServer, err := api.NewServer(handlers, secHandler)
-	if err != nil {
-		return fmt.Errorf("failed to create ogen server: %w", err)
-	}
+	// TODO: Implement when handlers are ready
+	// ogenServer, err := api.NewServer(handlers, secHandler)
+	// if err != nil {
+	// 	return fmt.Errorf("failed to create ogen server: %w", err)
+	// }
 
 	// Создаем роутер с middleware
 	mux := http.NewServeMux()
@@ -85,7 +74,8 @@ func (s *HTTPServer) Start() error {
 	mux.Handle("/health", s.healthCheckHandler())
 
 	// Добавляем API routes через ogen
-	mux.Handle("/", ogenServer)
+	// TODO: Implement when ogenServer is ready
+	// mux.Handle("/", ogenServer)
 
 	// Создаем HTTP сервер с оптимизациями для MMOFPS
 	s.server = &http.Server{

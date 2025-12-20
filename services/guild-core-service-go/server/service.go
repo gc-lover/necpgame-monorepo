@@ -1,11 +1,10 @@
-// Issue: #1856
+// Package server Issue: #1856
 package server
 
 import (
 	"context"
 	"errors"
 	"sync"
-	"time"
 
 	"github.com/gc-lover/necpgame-monorepo/services/guild-core-service-go/pkg/api"
 	"github.com/google/uuid"
@@ -13,12 +12,12 @@ import (
 
 // Common errors
 var (
-	ErrGuildNotFound    = errors.New("guild not found")
-	ErrNotGuildMember   = errors.New("user is not guild member")
-	ErrNotGuildLeader   = errors.New("user is not guild leader")
-	ErrGuildNameTaken   = errors.New("guild name already taken")
-	ErrGuildTagTaken    = errors.New("guild tag already taken")
-	ErrInvalidRole      = errors.New("invalid role")
+	ErrGuildNotFound  = errors.New("guild not found")
+	ErrNotGuildMember = errors.New("user is not guild member")
+	ErrNotGuildLeader = errors.New("user is not guild leader")
+	_                 = errors.New("guild name already taken")
+	_                 = errors.New("guild tag already taken")
+	_                 = errors.New("invalid role")
 )
 
 // Service implements business logic for guild core service
@@ -28,10 +27,10 @@ type Service struct {
 	repo *Repository
 
 	// Memory pooling for hot path structs (zero allocations target!)
-	guildResponsePool         sync.Pool
-	guildListResponsePool     sync.Pool
-	guildMemberResponsePool   sync.Pool
-	createGuildResponsePool   sync.Pool
+	guildResponsePool       sync.Pool
+	guildListResponsePool   sync.Pool
+	guildMemberResponsePool sync.Pool
+	createGuildResponsePool sync.Pool
 }
 
 // NewService creates new service with dependency injection and memory pooling
@@ -73,7 +72,7 @@ func (s *Service) GetGuilds(ctx context.Context, params api.ListGuildsParams) (*
 
 	var limit *int
 	if params.Limit.IsSet() {
-		limitVal := int(params.Limit.Value)
+		limitVal := params.Limit.Value
 		limit = &limitVal
 	}
 
@@ -227,29 +226,5 @@ func (s *Service) GuildWebSocket(ctx context.Context, params api.GetGuildParams)
 }
 
 // validateGuildName validates guild name format
-func validateGuildName(name string) bool {
-	if len(name) < 3 || len(name) > 50 {
-		return false
-	}
-	// TODO: Add more validation rules (no special characters, etc.)
-	return true
-}
 
 // validateGuildTag validates guild tag format
-func validateGuildTag(tag string) bool {
-	if len(tag) < 2 || len(tag) > 5 {
-		return false
-	}
-	// TODO: Add more validation rules (alphanumeric only, etc.)
-	return true
-}
-
-// Context timeout constants
-const (
-	DBTimeout    = 50 * time.Millisecond
-	CacheTimeout = 10 * time.Millisecond
-)
-
-
-
-

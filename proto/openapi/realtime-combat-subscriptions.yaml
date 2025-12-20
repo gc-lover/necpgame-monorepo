@@ -1,0 +1,545 @@
+# Issue: #2197 - Real-time Combat API - Subscriptions
+openapi: 3.0.3
+info:
+  title: Real-time Combat API - Subscriptions
+  version: 1.0.0
+  description: Event subscription management for real-time combat system
+
+servers:
+  - url: http://localhost:8110
+    description: Local development
+  - url: https://api.necpgame.com/v1/realtime/combat
+    description: Production API
+
+tags:
+  - name: subscriptions
+    description: Event subscription management
+
+security:
+  - BearerAuth: [ ]
+
+paths:
+
+  # ============================================================================
+  # EVENT SUBSCRIPTIONS
+  # ============================================================================
+
+  /api/v1/realtime/combat/subscriptions:
+    post:
+      summary: Create event subscription
+      operationId: createEventSubscription
+      tags: [ subscriptions ]
+      security:
+        - BearerAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventSubscriptionRequest'
+      responses:
+        '201':
+          description: Subscription created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventSubscription'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          description: Subscription already exists
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    get:
+      summary: List event subscriptions
+      operationId: listEventSubscriptions
+      tags: [ subscriptions ]
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: player_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by player ID
+        - name: event_type
+          in: query
+          schema:
+            type: string
+            enum: [ combat_actions, ability_usage, damage_events, player_movements, ai_updates ]
+          description: Filter by event type
+        - name: active_only
+          in: query
+          schema:
+            type: boolean
+            default: true
+          description: Return only active subscriptions
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of subscriptions to return
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          description: Pagination offset
+      responses:
+        '200':
+          description: Event subscriptions retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventSubscriptionListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/realtime/combat/subscriptions/{subscription_id}:
+    get:
+      summary: Get subscription details
+      operationId: getEventSubscription
+      tags: [ subscriptions ]
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: subscription_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Subscription ID
+      responses:
+        '200':
+          description: Subscription details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventSubscription'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    patch:
+      summary: Update subscription
+      operationId: updateEventSubscription
+      tags: [ subscriptions ]
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: subscription_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Subscription ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventSubscriptionUpdate'
+      responses:
+        '200':
+          description: Subscription updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventSubscription'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    delete:
+      summary: Delete subscription
+      operationId: deleteEventSubscription
+      tags: [ subscriptions ]
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: subscription_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Subscription ID
+      responses:
+        '204':
+          description: Subscription deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    NotFound:
+      description: Not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+  schemas:
+    # ============================================================================
+    # SUBSCRIPTION SCHEMAS
+    # ============================================================================
+
+    EventSubscriptionRequest:
+      type: object
+      required:
+        - player_id
+        - event_types
+        - delivery_method
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          description: Player identifier
+        event_types:
+          type: array
+          minItems: 1
+          items:
+            type: string
+            enum: [ combat_actions, ability_usage, damage_events, player_movements, ai_updates, session_events, item_events ]
+          description: Types of events to subscribe to
+        delivery_method:
+          type: string
+          enum: [ websocket, sse, webhook ]
+          description: How to deliver events
+        filters:
+          type: object
+          properties:
+            session_id:
+              type: string
+              format: uuid
+              description: Filter by combat session
+            player_ids:
+              type: array
+              items:
+                type: string
+                format: uuid
+              description: Filter by specific player IDs
+            event_severity:
+              type: string
+              enum: [ low, medium, high, critical ]
+              description: Minimum event severity
+            region:
+              type: string
+              description: Geographic region filter
+            distance_radius:
+              type: number
+              format: float
+              minimum: 0
+              description: Distance radius for location-based events (meters)
+          description: Event filtering criteria
+        priority:
+          type: string
+          enum: [ low, normal, high, urgent ]
+          default: normal
+          description: Subscription priority
+        webhook_url:
+          type: string
+          format: uri
+          description: Webhook URL for webhook delivery method
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Additional subscription metadata
+
+    EventSubscription:
+      type: object
+      required:
+        - subscription_id
+        - player_id
+        - event_types
+        - delivery_method
+        - status
+        - created_at
+        - updated_at
+      properties:
+        subscription_id:
+          type: string
+          format: uuid
+          description: Unique subscription identifier
+        player_id:
+          type: string
+          format: uuid
+          description: Player identifier
+        event_types:
+          type: array
+          items:
+            type: string
+            enum: [ combat_actions, ability_usage, damage_events, player_movements, ai_updates, session_events, item_events ]
+          description: Subscribed event types
+        delivery_method:
+          type: string
+          enum: [ websocket, sse, webhook ]
+          description: Event delivery method
+        filters:
+          type: object
+          properties:
+            session_id:
+              type: string
+              format: uuid
+              description: Combat session filter
+            player_ids:
+              type: array
+              items:
+                type: string
+                format: uuid
+              description: Player ID filters
+            event_severity:
+              type: string
+              enum: [ low, medium, high, critical ]
+              description: Event severity filter
+            region:
+              type: string
+              description: Geographic region filter
+            distance_radius:
+              type: number
+              format: float
+              minimum: 0
+              description: Distance radius filter (meters)
+          description: Active filters
+        priority:
+          type: string
+          enum: [ low, normal, high, urgent ]
+          description: Subscription priority
+        status:
+          type: string
+          enum: [ active, paused, suspended, expired ]
+          description: Subscription status
+        created_at:
+          type: string
+          format: date-time
+          description: Subscription creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+        expires_at:
+          type: string
+          format: date-time
+          description: Subscription expiration timestamp
+        delivery_stats:
+          type: object
+          properties:
+            events_delivered:
+              type: integer
+              minimum: 0
+              description: Total events delivered
+            events_failed:
+              type: integer
+              minimum: 0
+              description: Failed deliveries
+            last_delivery:
+              type: string
+              format: date-time
+              description: Last successful delivery
+            average_latency:
+              type: integer
+              minimum: 0
+              description: Average delivery latency (ms)
+          description: Delivery statistics
+        webhook_config:
+          type: object
+          properties:
+            url:
+              type: string
+              format: uri
+              description: Webhook endpoint URL
+            headers:
+              type: object
+              additionalProperties:
+                type: string
+              description: Custom headers for webhook
+            retry_policy:
+              type: object
+              properties:
+                max_retries:
+                  type: integer
+                  minimum: 0
+                  maximum: 10
+                  default: 3
+                  description: Maximum retry attempts
+                backoff_multiplier:
+                  type: number
+                  format: float
+                  minimum: 1
+                  default: 2
+                  description: Exponential backoff multiplier
+              description: Retry configuration
+          description: Webhook-specific configuration
+
+    EventSubscriptionUpdate:
+      type: object
+      properties:
+        event_types:
+          type: array
+          minItems: 1
+          items:
+            type: string
+            enum: [ combat_actions, ability_usage, damage_events, player_movements, ai_updates, session_events, item_events ]
+          description: Updated event types
+        filters:
+          type: object
+          properties:
+            session_id:
+              type: string
+              format: uuid
+              description: Update session filter
+            player_ids:
+              type: array
+              items:
+                type: string
+                format: uuid
+              description: Update player ID filters
+            event_severity:
+              type: string
+              enum: [ low, medium, high, critical ]
+              description: Update severity filter
+            region:
+              type: string
+              description: Update region filter
+            distance_radius:
+              type: number
+              format: float
+              minimum: 0
+              description: Update distance radius (meters)
+          description: Updated filters
+        priority:
+          type: string
+          enum: [ low, normal, high, urgent ]
+          description: Update priority
+        status:
+          type: string
+          enum: [ active, paused, suspended ]
+          description: Update status
+        webhook_config:
+          type: object
+          properties:
+            url:
+              type: string
+              format: uri
+              description: Update webhook URL
+            headers:
+              type: object
+              additionalProperties:
+                type: string
+              description: Update webhook headers
+            retry_policy:
+              type: object
+              properties:
+                max_retries:
+                  type: integer
+                  minimum: 0
+                  maximum: 10
+                  description: Update max retries
+                backoff_multiplier:
+                  type: number
+                  format: float
+                  minimum: 1
+                  description: Update backoff multiplier
+              description: Update retry policy
+          description: Update webhook configuration
+
+    EventSubscriptionListResponse:
+      type: object
+      required:
+        - subscriptions
+        - total_count
+        - limit
+        - offset
+      properties:
+        subscriptions:
+          type: array
+          items:
+            $ref: '#/components/schemas/EventSubscription'
+        total_count:
+          type: integer
+          minimum: 0
+          description: Total number of subscriptions
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Requested limit
+        offset:
+          type: integer
+          minimum: 0
+          description: Requested offset
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - message
+        - timestamp
+      properties:
+        error:
+          type: string
+          description: Error code
+        message:
+          type: string
+          description: Human-readable error message
+        timestamp:
+          type: string
+          format: date-time
+          description: Error timestamp
+        details:
+          type: object
+          additionalProperties: true
+          description: Additional error details
+        request_id:
+          type: string
+          description: Request identifier for tracing

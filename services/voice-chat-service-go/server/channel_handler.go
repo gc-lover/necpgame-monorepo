@@ -10,7 +10,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// OPTIMIZATION: Issue #2030 - Voice channel management with concurrent access
+// CreateChannel OPTIMIZATION: Issue #2030 - Voice channel management with concurrent access
 func (s *VoiceChatService) CreateChannel(w http.ResponseWriter, r *http.Request) {
 	var req CreateChannelRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -26,20 +26,20 @@ func (s *VoiceChatService) CreateChannel(w http.ResponseWriter, r *http.Request)
 	}
 
 	channel := &VoiceChannel{
-		ChannelID:       generateChannelID(),
-		Name:            req.Name,
-		Type:            req.Type,
-		Description:     req.Description,
-		CreatorID:       userID,
-		CreatedAt:       time.Now(),
-		MaxParticipants: req.MaxParticipants,
+		ChannelID:        generateChannelID(),
+		Name:             req.Name,
+		Type:             req.Type,
+		Description:      req.Description,
+		CreatorID:        userID,
+		CreatedAt:        time.Now(),
+		MaxParticipants:  req.MaxParticipants,
 		ParticipantCount: 0,
-		IsPrivate:       req.Password != "",
-		Password:        req.Password,
-		AudioSettings:   req.AudioSettings,
-		Permissions:     req.Permissions,
-		Participants:    make(map[string]*ChannelParticipant),
-		LastActivity:    time.Now(),
+		IsPrivate:        req.Password != "",
+		Password:         req.Password,
+		AudioSettings:    req.AudioSettings,
+		Permissions:      req.Permissions,
+		Participants:     make(map[string]*ChannelParticipant),
+		LastActivity:     time.Now(),
 	}
 
 	s.channels.Store(channel.ChannelID, channel)
@@ -47,14 +47,14 @@ func (s *VoiceChatService) CreateChannel(w http.ResponseWriter, r *http.Request)
 	s.metrics.ActiveChannels.Inc()
 
 	resp := &CreateChannelResponse{
-		ChannelID:  channel.ChannelID,
-		Name:       channel.Name,
-		Type:       channel.Type,
-		CreatedAt:  channel.CreatedAt.Unix(),
-		CreatorID:  channel.CreatorID,
-		InviteCode: generateInviteCode(),
+		ChannelID:    channel.ChannelID,
+		Name:         channel.Name,
+		Type:         channel.Type,
+		CreatedAt:    channel.CreatedAt.Unix(),
+		CreatorID:    channel.CreatorID,
+		InviteCode:   generateInviteCode(),
 		WebSocketURL: fmt.Sprintf("ws://%s/voice/stream/%s", s.config.WebSocketAddr, channel.ChannelID),
-		Settings:   &ChannelSettings{}, // TODO: Convert audio settings
+		Settings:     &ChannelSettings{}, // TODO: Convert audio settings
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -85,15 +85,15 @@ func (s *VoiceChatService) GetChannels(w http.ResponseWriter, r *http.Request) {
 		// TODO: Check user permissions for private channels
 
 		summary := &ChannelSummary{
-			ChannelID:       channel.ChannelID,
-			Name:            channel.Name,
-			Type:            channel.Type,
+			ChannelID:        channel.ChannelID,
+			Name:             channel.Name,
+			Type:             channel.Type,
 			ParticipantCount: channel.ParticipantCount,
-			MaxParticipants: channel.MaxParticipants,
-			IsPrivate:       channel.IsPrivate,
-			CreatorName:     "Unknown", // TODO: Get from user service
-			CreatedAt:       channel.CreatedAt.Unix(),
-			LastActivity:    channel.LastActivity.Unix(),
+			MaxParticipants:  channel.MaxParticipants,
+			IsPrivate:        channel.IsPrivate,
+			CreatorName:      "Unknown", // TODO: Get from user service
+			CreatedAt:        channel.CreatedAt.Unix(),
+			LastActivity:     channel.LastActivity.Unix(),
 		}
 		channels = append(channels, summary)
 		return true
@@ -135,27 +135,27 @@ func (s *VoiceChatService) GetChannel(w http.ResponseWriter, r *http.Request) {
 	}
 
 	channelDetails := &ChannelDetails{
-		ChannelID:       channel.ChannelID,
-		Name:            channel.Name,
-		Type:            channel.Type,
-		Description:     channel.Description,
+		ChannelID:        channel.ChannelID,
+		Name:             channel.Name,
+		Type:             channel.Type,
+		Description:      channel.Description,
 		ParticipantCount: channel.ParticipantCount,
-		MaxParticipants: channel.MaxParticipants,
-		IsPrivate:       channel.IsPrivate,
-		CreatorID:       channel.CreatorID,
-		CreatorName:     "Unknown", // TODO: Get from user service
-		CreatedAt:       channel.CreatedAt.Unix(),
-		LastActivity:    channel.LastActivity.Unix(),
-		Settings:        &ChannelSettings{}, // TODO: Convert settings
-		Statistics:      &ChannelStatistics{}, // TODO: Calculate stats
+		MaxParticipants:  channel.MaxParticipants,
+		IsPrivate:        channel.IsPrivate,
+		CreatorID:        channel.CreatorID,
+		CreatorName:      "Unknown", // TODO: Get from user service
+		CreatedAt:        channel.CreatedAt.Unix(),
+		LastActivity:     channel.LastActivity.Unix(),
+		Settings:         &ChannelSettings{},   // TODO: Convert settings
+		Statistics:       &ChannelStatistics{}, // TODO: Calculate stats
 	}
 
 	resp := &GetChannelResponse{
-		Channel:      channelDetails,
-		Participants: participants,
+		Channel:       channelDetails,
+		Participants:  participants,
 		IsParticipant: s.isUserInChannel(userID, channelID),
-		CanJoin:      channel.ParticipantCount < channel.MaxParticipants,
-		Permissions:  &UserPermissions{CanSpeak: true}, // TODO: Check actual permissions
+		CanJoin:       channel.ParticipantCount < channel.MaxParticipants,
+		Permissions:   &UserPermissions{CanSpeak: true}, // TODO: Check actual permissions
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -299,15 +299,15 @@ func (s *VoiceChatService) JoinChannel(w http.ResponseWriter, r *http.Request) {
 
 	// Add user to channel
 	participant := &ChannelParticipant{
-		UserID:    userID,
-		Username:  "Unknown", // TODO: Get from user service
+		UserID:      userID,
+		Username:    "Unknown", // TODO: Get from user service
 		DisplayName: "Unknown", // TODO: Get from user service
-		JoinedAt:  time.Now().Unix(),
-		IsMuted:   false,
-		IsDeafened: false,
-		Speaking:  false,
+		JoinedAt:    time.Now().Unix(),
+		IsMuted:     false,
+		IsDeafened:  false,
+		Speaking:    false,
 		VolumeLevel: 1.0,
-		Role:      "participant",
+		Role:        "participant",
 	}
 
 	channel.Participants[userID] = participant

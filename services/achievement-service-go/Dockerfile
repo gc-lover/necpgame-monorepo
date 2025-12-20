@@ -39,6 +39,6 @@ USER appuser
 EXPOSE 8085/tcp 9095
 
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:9095/metrics || exit 1
+  CMD wget --no-verbose --tries=1 --spider http://localhost:9097/metrics || exit 1
 
 ENTRYPOINT ["/app/achievement-service"]

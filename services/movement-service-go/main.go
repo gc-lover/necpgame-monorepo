@@ -20,7 +20,7 @@ func main() {
 
 	addr := getEnv("ADDR", "0.0.0.0:8086")
 	metricsAddr := getEnv("METRICS_ADDR", ":9091")
-	
+
 	dbURL := getEnv("DATABASE_URL", "postgresql://necpgame:necpgame@localhost:5432/necpgame?sslmode=disable")
 	redisURL := getEnv("REDIS_URL", "redis://localhost:6379/1")
 	gatewayURL := getEnv("GATEWAY_URL", "ws://localhost:18080/client")
@@ -102,7 +102,7 @@ func main() {
 	}()
 
 	logger.WithField("addr", addr).Info("HTTP server starting")
-	if err := httpServer.Start(ctx); err != nil && err != http.ErrServerClosed {
+	if err := httpServer.Start(); err != nil && err != http.ErrServerClosed {
 		logger.WithError(err).Fatal("Server error")
 	}
 

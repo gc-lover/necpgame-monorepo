@@ -1,0 +1,843 @@
+openapi: 3.0.3
+info:
+  title: Cyberware Service API
+  description: Advanced Cyberware Integration System - управление боевыми имплантами, киберпсихозом и синергиями
+  version: "1.0.0"
+  contact:
+    name: Backend Team
+    email: backend@necp.game
+
+servers:
+  - url: https://api.necp.game/v1
+    description: Production server
+  - url: http://localhost:8086
+    description: Local development server
+
+security:
+  - bearerAuth: [ ]
+
+paths:
+  # Каталог имплантов
+  /cyberware/catalog:
+    get:
+      summary: Получить каталог имплантов
+      description: Возвращает полный каталог доступных имплантов с фильтрацией
+      parameters:
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [ combat, movement, os, visual ]
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: rarity
+          in: query
+          schema:
+            type: string
+            enum: [ common, uncommon, rare, epic, legendary ]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImplantCatalogResponse'
+
+  /cyberware/catalog/{implantId}:
+    get:
+      summary: Получить информацию об импланте
+      parameters:
+        - name: implantId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImplantDetailResponse'
+        '404':
+          description: Имплант не найден
+
+  # Импланты персонажа
+  /cyberware/characters/{characterId}/implants:
+    get:
+      summary: Получить импланты персонажа
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: active_only
+          in: query
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CharacterImplantsResponse'
+
+  /cyberware/characters/{characterId}/implants/acquire:
+    post:
+      summary: Приобрести имплант
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AcquireImplantRequest'
+      responses:
+        '200':
+          description: Имплант приобретен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AcquireImplantResponse'
+        '400':
+          description: Недостаточно средств или лимиты превышены
+
+  /cyberware/characters/{characterId}/implants/install:
+    post:
+      summary: Установить имплант
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InstallImplantRequest'
+      responses:
+        '200':
+          description: Имплант установлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InstallImplantResponse'
+        '400':
+          description: Лимиты превышены или несовместимость
+
+  /cyberware/characters/{characterId}/implants/{implantId}/uninstall:
+    post:
+      summary: Удалить имплант
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: implantId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Имплант удален
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UninstallImplantResponse'
+
+  /cyberware/characters/{characterId}/implants/{implantId}/upgrade:
+    post:
+      summary: Улучшить имплант
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: implantId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpgradeImplantRequest'
+      responses:
+        '200':
+          description: Имплант улучшен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpgradeImplantResponse'
+        '400':
+          description: Недостаточно материалов или максимальный уровень
+
+  # Лимиты и совместимость
+  /cyberware/characters/{characterId}/limits:
+    get:
+      summary: Проверить лимиты имплантов
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImplantLimitsResponse'
+
+  /cyberware/characters/{characterId}/compatibility:
+    post:
+      summary: Проверить совместимость имплантов
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompatibilityCheckRequest'
+      responses:
+        '200':
+          description: Результат проверки совместимости
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompatibilityCheckResponse'
+
+  # Киберпсихоз
+  /cyberware/characters/{characterId}/cyberpsychosis:
+    get:
+      summary: Получить состояние киберпсихоза
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CyberpsychosisStateResponse'
+
+  # Синергии
+  /cyberware/characters/{characterId}/synergies:
+    get:
+      summary: Получить активные синергии
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActiveSynergiesResponse'
+
+  # Визуализация
+  /cyberware/characters/{characterId}/visuals:
+    get:
+      summary: Получить настройки визуализации
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImplantVisualsResponse'
+    put:
+      summary: Обновить настройки визуализации
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateVisualsRequest'
+      responses:
+        '200':
+          description: Настройки обновлены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateVisualsResponse'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    # Базовые типы
+    ImplantType:
+      type: string
+      enum: [ combat, movement, os, visual ]
+
+    ImplantRarity:
+      type: string
+      enum: [ common, uncommon, rare, epic, legendary ]
+
+    ImplantCategory:
+      type: string
+      enum: [ offensive, defensive, tactical, speed, jump, parkour, cyberdeck, sandevistan, berserk, eyes, skin, limbs ]
+
+    # Каталог имплантов
+    ImplantCatalogItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        type:
+          $ref: '#/components/schemas/ImplantType'
+        category:
+          $ref: '#/components/schemas/ImplantCategory'
+        rarity:
+          $ref: '#/components/schemas/ImplantRarity'
+        description:
+          type: string
+        effects:
+          type: object
+          additionalProperties: true
+        energy_cost:
+          type: integer
+          minimum: 0
+        humanity_cost:
+          type: integer
+          minimum: 0
+        slot_type:
+          type: string
+        compatibility:
+          type: object
+          additionalProperties: true
+        max_level:
+          type: integer
+          minimum: 1
+        base_price:
+          type: number
+          minimum: 0
+      required:
+        - id
+        - name
+        - type
+        - category
+        - rarity
+        - effects
+        - energy_cost
+        - humanity_cost
+        - slot_type
+
+    ImplantCatalogResponse:
+      type: object
+      properties:
+        implants:
+          type: array
+          items:
+            $ref: '#/components/schemas/ImplantCatalogItem'
+        total_count:
+          type: integer
+        has_more:
+          type: boolean
+      required:
+        - implants
+        - total_count
+        - has_more
+
+    ImplantDetailResponse:
+      type: object
+      properties:
+        implant:
+          $ref: '#/components/schemas/ImplantCatalogItem'
+        upgrade_costs:
+          type: array
+          items:
+            type: object
+            properties:
+              level:
+                type: integer
+              materials:
+                type: object
+                additionalProperties:
+                  type: integer
+              price:
+                type: number
+      required:
+        - implant
+
+    # Импланты персонажа
+    CharacterImplant:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        implant_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        type:
+          $ref: '#/components/schemas/ImplantType'
+        category:
+          $ref: '#/components/schemas/ImplantCategory'
+        current_level:
+          type: integer
+          minimum: 1
+        max_level:
+          type: integer
+          minimum: 1
+        slot:
+          type: string
+        is_active:
+          type: boolean
+        installed_at:
+          type: string
+          format: date-time
+        effects:
+          type: object
+          additionalProperties: true
+      required:
+        - id
+        - implant_id
+        - name
+        - type
+        - category
+        - current_level
+        - max_level
+        - slot
+        - is_active
+
+    CharacterImplantsResponse:
+      type: object
+      properties:
+        implants:
+          type: array
+          items:
+            $ref: '#/components/schemas/CharacterImplant'
+        total_energy_used:
+          type: integer
+        max_energy:
+          type: integer
+        total_humanity_lost:
+          type: integer
+        max_humanity:
+          type: integer
+      required:
+        - implants
+        - total_energy_used
+        - max_energy
+        - total_humanity_lost
+        - max_humanity
+
+    # Приобретение имплантов
+    AcquireImplantRequest:
+      type: object
+      properties:
+        implant_id:
+          type: string
+          format: uuid
+        payment_method:
+          type: string
+          enum: [ credits, materials, quest_reward ]
+      required:
+        - implant_id
+
+    AcquireImplantResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        implant_id:
+          type: string
+          format: uuid
+        transaction_id:
+          type: string
+          format: uuid
+        remaining_balance:
+          type: number
+      required:
+        - success
+
+    # Установка имплантов
+    InstallImplantRequest:
+      type: object
+      properties:
+        implant_id:
+          type: string
+          format: uuid
+        slot:
+          type: string
+      required:
+        - implant_id
+        - slot
+
+    InstallImplantResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        implant_id:
+          type: string
+          format: uuid
+        slot:
+          type: string
+        cyberpsychosis_increase:
+          type: integer
+        energy_used:
+          type: integer
+        humanity_lost:
+          type: integer
+        warnings:
+          type: array
+          items:
+            type: string
+      required:
+        - success
+
+    UninstallImplantResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        implant_id:
+          type: string
+          format: uuid
+        cyberpsychosis_decrease:
+          type: integer
+        energy_freed:
+          type: integer
+        humanity_restored:
+          type: integer
+      required:
+        - success
+
+    # Улучшение имплантов
+    UpgradeImplantRequest:
+      type: object
+      properties:
+        materials:
+          type: object
+          additionalProperties:
+            type: integer
+      required:
+        - materials
+
+    UpgradeImplantResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        new_level:
+          type: integer
+        enhanced_effects:
+          type: object
+          additionalProperties: true
+        materials_consumed:
+          type: object
+          additionalProperties:
+            type: integer
+      required:
+        - success
+        - new_level
+
+    # Лимиты
+    ImplantLimitsResponse:
+      type: object
+      properties:
+        energy:
+          type: object
+          properties:
+            used:
+              type: integer
+            max:
+              type: integer
+            available:
+              type: integer
+          required:
+            - used
+            - max
+            - available
+        humanity:
+          type: object
+          properties:
+            lost:
+              type: integer
+            max:
+              type: integer
+            remaining:
+              type: integer
+          required:
+            - lost
+            - max
+            - remaining
+        slots:
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              used:
+                type: integer
+              max:
+                type: integer
+              available:
+                type: integer
+            required:
+              - used
+              - max
+              - available
+        warnings:
+          type: array
+          items:
+            type: string
+      required:
+        - energy
+        - humanity
+        - slots
+
+    # Совместимость
+    CompatibilityCheckRequest:
+      type: object
+      properties:
+        implant_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        target_slot:
+          type: string
+      required:
+        - implant_ids
+
+    CompatibilityCheckResponse:
+      type: object
+      properties:
+        compatible:
+          type: boolean
+        conflicts:
+          type: array
+          items:
+            type: object
+            properties:
+              implant_a:
+                type: string
+                format: uuid
+              implant_b:
+                type: string
+                format: uuid
+              reason:
+                type: string
+            required:
+              - implant_a
+              - implant_b
+              - reason
+        warnings:
+          type: array
+          items:
+            type: string
+      required:
+        - compatible
+
+    # Киберпсихоз
+    CyberpsychosisStateResponse:
+      type: object
+      properties:
+        current_level:
+          type: integer
+          minimum: 0
+        threshold_level:
+          type: integer
+          minimum: 0
+        effects_active:
+          type: array
+          items:
+            type: object
+            properties:
+              effect_type:
+                type: string
+              severity:
+                type: string
+                enum: [ mild, moderate, severe, critical ]
+              description:
+                type: string
+            required:
+              - effect_type
+              - severity
+              - description
+        risk_assessment:
+          type: string
+          enum: [ low, medium, high, critical ]
+      required:
+        - current_level
+        - threshold_level
+        - effects_active
+        - risk_assessment
+
+    # Синергии
+    ActiveSynergy:
+      type: object
+      properties:
+        synergy_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        active_implants:
+          type: array
+          items:
+            type: string
+            format: uuid
+        bonus_effects:
+          type: object
+          additionalProperties: true
+        activated_at:
+          type: string
+          format: date-time
+      required:
+        - synergy_id
+        - name
+        - active_implants
+        - bonus_effects
+
+    ActiveSynergiesResponse:
+      type: object
+      properties:
+        synergies:
+          type: array
+          items:
+            $ref: '#/components/schemas/ActiveSynergy'
+      required:
+        - synergies
+
+    # Визуализация
+    ImplantVisualsResponse:
+      type: object
+      properties:
+        implants:
+          type: array
+          items:
+            type: object
+            properties:
+              implant_id:
+                type: string
+                format: uuid
+              visuals:
+                type: object
+                properties:
+                  glow_color:
+                    type: string
+                  particle_effects:
+                    type: boolean
+                  animation_speed:
+                    type: number
+                  custom_texture:
+                    type: string
+                additionalProperties: true
+            required:
+              - implant_id
+              - visuals
+      required:
+        - implants
+
+    UpdateVisualsRequest:
+      type: object
+      properties:
+        implant_id:
+          type: string
+          format: uuid
+        visuals:
+          type: object
+          additionalProperties: true
+      required:
+        - implant_id
+        - visuals
+
+    UpdateVisualsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        implant_id:
+          type: string
+          format: uuid
+        updated_visuals:
+          type: object
+          additionalProperties: true
+      required:
+        - success
+        - implant_id

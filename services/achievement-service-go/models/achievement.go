@@ -8,44 +8,11 @@ import (
 
 type AchievementRarity string
 
-const (
-	RarityCommon    AchievementRarity = "common"
-	RarityUncommon  AchievementRarity = "uncommon"
-	RarityRare      AchievementRarity = "rare"
-	RarityEpic      AchievementRarity = "epic"
-	RarityLegendary AchievementRarity = "legendary"
-)
-
 type AchievementType string
-
-const (
-	AchievementTypeOneTime     AchievementType = "one_time"
-	AchievementTypeProgressive AchievementType = "progressive"
-	AchievementTypeHidden      AchievementType = "hidden"
-	AchievementTypeSeasonal    AchievementType = "seasonal"
-	AchievementTypeMeta        AchievementType = "meta"
-)
 
 type AchievementCategory string
 
-const (
-	CategoryCombat      AchievementCategory = "combat"
-	CategoryQuest       AchievementCategory = "quest"
-	CategorySocial      AchievementCategory = "social"
-	CategoryEconomy     AchievementCategory = "economy"
-	CategoryExploration AchievementCategory = "exploration"
-	CategorySkills      AchievementCategory = "skills"
-	CategoryCollections AchievementCategory = "collections"
-	CategorySpecial     AchievementCategory = "special"
-)
-
 type AchievementStatus string
-
-const (
-	AchievementStatusLocked   AchievementStatus = "locked"
-	AchievementStatusProgress AchievementStatus = "progress"
-	AchievementStatusUnlocked AchievementStatus = "unlocked"
-)
 
 type Achievement struct {
 	ID          uuid.UUID              `json:"id" db:"id"`

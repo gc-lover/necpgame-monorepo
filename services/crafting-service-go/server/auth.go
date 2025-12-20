@@ -1,4 +1,4 @@
-// Issue: #2203 - Authentication and authorization
+// Package server Issue: #2203 - Authentication and authorization
 package server
 
 import (
@@ -33,7 +33,7 @@ func NewJwtValidator(issuer, jwksURL string, logger *logrus.Logger) *JwtValidato
 }
 
 // ValidateToken validates JWT token
-func (v *JwtValidator) ValidateToken(ctx context.Context, tokenString string) (*Claims, error) {
+func (v *JwtValidator) ValidateToken(tokenString string) (*Claims, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
 		// Validate signing method
 		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
@@ -41,7 +41,7 @@ func (v *JwtValidator) ValidateToken(ctx context.Context, tokenString string) (*
 		}
 
 		// Get public key from JWKS
-		return v.getPublicKey(token.Header["kid"].(string))
+		return v.getPublicKey()
 	})
 
 	if err != nil {
@@ -57,17 +57,17 @@ func (v *JwtValidator) ValidateToken(ctx context.Context, tokenString string) (*
 
 // Claims represents JWT claims
 type Claims struct {
-	UserID       uuid.UUID `json:"sub"`
-	Username     string    `json:"preferred_username"`
-	Email        string    `json:"email"`
-	Roles        []string  `json:"roles"`
-	CharacterID  *uuid.UUID `json:"character_id,omitempty"`
-	GuildID      *uuid.UUID `json:"guild_id,omitempty"`
+	UserID      uuid.UUID  `json:"sub"`
+	Username    string     `json:"preferred_username"`
+	Email       string     `json:"email"`
+	Roles       []string   `json:"roles"`
+	CharacterID *uuid.UUID `json:"character_id,omitempty"`
+	GuildID     *uuid.UUID `json:"guild_id,omitempty"`
 	jwt.RegisteredClaims
 }
 
 // getPublicKey retrieves public key from JWKS (simplified implementation)
-func (v *JwtValidator) getPublicKey(kid string) (interface{}, error) {
+func (v *JwtValidator) getPublicKey() (interface{}, error) {
 	// TODO: Implement proper JWKS fetching and caching
 	// For now, return a mock key
 	return []byte("mock-public-key"), nil
@@ -87,7 +87,7 @@ func (v *JwtValidator) ExtractPlayerID(ctx context.Context) (uuid.UUID, error) {
 	return uuid.Nil, fmt.Errorf("invalid claims type")
 }
 
-// AuthMiddleware validates JWT tokens
+// NewAuthMiddleware AuthMiddleware validates JWT tokens
 func NewAuthMiddleware(validator *JwtValidator, authEnabled bool, logger *logrus.Logger) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -108,7 +108,7 @@ func NewAuthMiddleware(validator *JwtValidator, authEnabled bool, logger *logrus
 				return
 			}
 
-			claims, err := validator.ValidateToken(r.Context(), tokenParts[1])
+			claims, err := validator.ValidateToken(tokenParts[1])
 			if err != nil {
 				logger.WithError(err).Warn("Token validation failed")
 				http.Error(w, "Invalid token", http.StatusUnauthorized)
@@ -124,7 +124,7 @@ func NewAuthMiddleware(validator *JwtValidator, authEnabled bool, logger *logrus
 	}
 }
 
-// LoggingMiddleware logs HTTP requests
+// NewLoggingMiddleware LoggingMiddleware logs HTTP requests
 func NewLoggingMiddleware(logger *logrus.Logger) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -147,7 +147,7 @@ func NewLoggingMiddleware(logger *logrus.Logger) func(http.Handler) http.Handler
 	}
 }
 
-// TimeoutMiddleware adds request timeout
+// NewTimeoutMiddleware TimeoutMiddleware adds request timeout
 func NewTimeoutMiddleware(timeout time.Duration) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

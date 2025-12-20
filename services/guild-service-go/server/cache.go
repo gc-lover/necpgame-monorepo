@@ -1,4 +1,4 @@
-// Issue: #1943 - 3-tier cache implementation for MMOFPS performance
+// Package server Issue: #1943 - 3-tier cache implementation for MMOFPS performance
 package server
 
 import (
@@ -20,18 +20,12 @@ type GuildCache struct {
 
 // OPTIMIZATION: Cache TTL constants for MMOFPS performance
 const (
-	GuildCacheTTL      = 5 * time.Minute  // Issue: #1943 - Guild data cache
-	ListCacheTTL       = 2 * time.Minute  // Issue: #1943 - List data cache
-	MemberCacheTTL     = 10 * time.Minute // Issue: #1943 - Member data cache
+	GuildCacheTTL = 5 * time.Minute // Issue: #1943 - Guild data cache
+	ListCacheTTL  = 2 * time.Minute // Issue: #1943 - List data cache
+
 )
 
 // NewGuildCache creates new 3-tier cache
-func NewGuildCache(redisClient *redis.Client, repo *Repository) *GuildCache {
-	return &GuildCache{
-		redisClient: redisClient,
-		repo:        repo,
-	}
-}
 
 // GetGuild retrieves guild from cache (L1 → L2 → L3)
 func (c *GuildCache) GetGuild(ctx context.Context, guildID string) (*GuildResponse, error) {
@@ -103,7 +97,7 @@ func (c *GuildCache) storeInMemoryGuild(guildID string, response *GuildResponse)
 	c.memoryCache.Store(guildID, response)
 }
 
-func (c *GuildCache) storeInRedisGuildList(ctx context.Context, params *GetGuildsParams, guilds []*GuildResponse, total int) {
+func (c *GuildCache) storeInRedisGuildList(ctx context.Context, params *GetGuildsParams, guilds []*GuildResponse) {
 	if c.redisClient == nil {
 		return
 	}
@@ -121,7 +115,7 @@ func (c *GuildCache) storeInMemoryGuildList(cacheKey string, guilds []*GuildResp
 	c.memoryCache.Store(cacheKey, guilds)
 }
 
-// Invalidation methods
+// InvalidateGuild Invalidation methods
 func (c *GuildCache) InvalidateGuild(ctx context.Context, guildID string) {
 	// Remove from memory cache
 	c.memoryCache.Delete(guildID)

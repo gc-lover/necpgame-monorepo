@@ -1,4 +1,4 @@
-// Issue: #1595
+// Package server Issue: #1595
 package server
 
 // HTTP handlers use context.WithTimeout for request timeouts (see handlers.go)
@@ -49,8 +49,8 @@ func NewHTTPServer(addr string, service *Service, config *Config, logger *log.Lo
 		addr:   addr,
 		router: router,
 		server: &http.Server{
-			Addr:    addr,
-			Handler: router,
+			Addr:         addr,
+			Handler:      router,
 			ReadTimeout:  30 * time.Second,  // Prevent slowloris attacks
 			WriteTimeout: 30 * time.Second,  // Prevent hanging writes
 			IdleTimeout:  120 * time.Second, // Keep connections alive for reuse
@@ -80,16 +80,13 @@ func (s *HTTPServer) Shutdown(ctx context.Context) error {
 }
 
 // Health check handler
-func healthCheck(w http.ResponseWriter, r *http.Request) {
+func healthCheck(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("OK"))
 }
 
 // Metrics handler (stub)
-func metricsHandler(w http.ResponseWriter, r *http.Request) {
+func metricsHandler(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("# HELP combat_actions_service metrics\n"))
 }
-
-
-

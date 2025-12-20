@@ -1,4 +1,4 @@
-// Issue: #156 - Abilities cyberpsychosis operations
+// Package server Issue: #156 - Abilities cyberpsychosis operations
 package server
 
 import (

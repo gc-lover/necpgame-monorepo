@@ -1,0 +1,265 @@
+# Issue: #2206 - Voice Chat Service Schemas
+components:
+  schemas:
+    Error:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          description: Error code
+        message:
+          type: string
+          description: Human-readable error message
+        details:
+          type: object
+          description: Additional error details
+
+    PlayerId:
+      type: string
+      format: uuid
+      description: Player unique identifier
+
+    RoomId:
+      type: string
+      format: uuid
+      description: Voice room unique identifier
+
+    SessionId:
+      type: string
+      format: uuid
+      description: Voice session unique identifier
+
+    VoiceRoom:
+      type: object
+      required:
+        - id
+        - name
+        - host_id
+        - max_participants
+        - status
+        - created_at
+      properties:
+        id:
+          $ref: '#/components/schemas/RoomId'
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Voice room display name
+        description:
+          type: string
+          maxLength: 500
+          description: Optional room description
+        host_id:
+          $ref: '#/components/schemas/PlayerId'
+        game_session_id:
+          $ref: '#/components/schemas/SessionId'
+        max_participants:
+          type: integer
+          minimum: 2
+          maximum: 50
+          default: 10
+          description: Maximum number of participants
+        current_participants:
+          type: integer
+          minimum: 0
+          description: Current number of participants
+        status:
+          type: string
+          enum: [ active, inactive, full, closed ]
+          description: Room status
+        is_spatial_audio:
+          type: boolean
+          default: false
+          description: Whether spatial audio is enabled
+        is_muted:
+          type: boolean
+          default: false
+          description: Whether room is globally muted
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        participants:
+          type: array
+          items:
+            $ref: '#/components/schemas/VoiceParticipant'
+
+    VoiceParticipant:
+      type: object
+      required:
+        - player_id
+        - joined_at
+        - is_muted
+        - is_host
+      properties:
+        player_id:
+          $ref: '#/components/schemas/PlayerId'
+        display_name:
+          type: string
+          maxLength: 50
+          description: Player display name
+        joined_at:
+          type: string
+          format: date-time
+        is_muted:
+          type: boolean
+          description: Whether participant is muted
+        is_host:
+          type: boolean
+          description: Whether participant is room host
+        is_deafened:
+          type: boolean
+          default: false
+          description: Whether participant has deafened themselves
+        volume_level:
+          type: number
+          minimum: 0.0
+          maximum: 1.0
+          default: 1.0
+          description: Participant volume level
+        position:
+          $ref: '#/components/schemas/Vector3'
+          description: 3D position for spatial audio
+
+    Vector3:
+      type: object
+      required:
+        - x
+        - y
+        - z
+      properties:
+        x:
+          type: number
+          format: float
+          description: X coordinate
+        y:
+          type: number
+          format: float
+          description: Y coordinate
+        z:
+          type: number
+          format: float
+          description: Z coordinate
+
+    WebRTCSignal:
+      type: object
+      required:
+        - type
+        - from_player_id
+        - to_player_id
+        - room_id
+      properties:
+        type:
+          type: string
+          enum: [ offer, answer, ice_candidate ]
+          description: WebRTC signal type
+        from_player_id:
+          $ref: '#/components/schemas/PlayerId'
+        to_player_id:
+          $ref: '#/components/schemas/PlayerId'
+        room_id:
+          $ref: '#/components/schemas/RoomId'
+        payload:
+          type: object
+          description: WebRTC signal payload (SDP, ICE candidate)
+        timestamp:
+          type: string
+          format: date-time
+
+    CreateRoomRequest:
+      type: object
+      required:
+        - name
+        - max_participants
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Voice room name
+        description:
+          type: string
+          maxLength: 500
+          description: Optional room description
+        max_participants:
+          type: integer
+          minimum: 2
+          maximum: 50
+          default: 10
+        game_session_id:
+          $ref: '#/components/schemas/SessionId'
+        is_spatial_audio:
+          type: boolean
+          default: false
+        is_private:
+          type: boolean
+          default: false
+
+    UpdateRoomRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 500
+        max_participants:
+          type: integer
+          minimum: 2
+          maximum: 50
+        is_spatial_audio:
+          type: boolean
+        is_muted:
+          type: boolean
+
+    JoinRoomRequest:
+      type: object
+      properties:
+        password:
+          type: string
+          description: Password for private rooms
+
+    RoomListResponse:
+      type: object
+      required:
+        - rooms
+        - total_count
+        - page
+        - page_size
+      properties:
+        rooms:
+          type: array
+          items:
+            $ref: '#/components/schemas/VoiceRoom'
+        total_count:
+          type: integer
+          minimum: 0
+        page:
+          type: integer
+          minimum: 1
+          default: 1
+        page_size:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+
+    ParticipantUpdateRequest:
+      type: object
+      properties:
+        is_muted:
+          type: boolean
+        is_deafened:
+          type: boolean
+        volume_level:
+          type: number
+          minimum: 0.0
+          maximum: 1.0

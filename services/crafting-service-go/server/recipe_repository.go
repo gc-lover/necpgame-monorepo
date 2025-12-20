@@ -1,4 +1,4 @@
-// Issue: #2203 - Recipe repository implementation
+// Package server Issue: #2203 - Recipe repository implementation
 package server
 
 import (
@@ -66,7 +66,7 @@ func (r *RecipeRepository) List(ctx context.Context, category *string, tier *int
 		FROM crafting_recipes
 		WHERE 1=1
 	`
-	args := []interface{}{}
+	var args []interface{}
 
 	if category != nil {
 		baseQuery += fmt.Sprintf(" AND category = $%d", len(args)+1)
@@ -110,7 +110,7 @@ func (r *RecipeRepository) List(ctx context.Context, category *string, tier *int
 
 	// Get total count
 	countQuery := "SELECT COUNT(*) FROM crafting_recipes WHERE 1=1"
-	countArgs := []interface{}{}
+	var countArgs []interface{}
 
 	if category != nil {
 		countQuery += " AND category = $1"

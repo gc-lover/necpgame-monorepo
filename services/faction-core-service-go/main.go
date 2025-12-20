@@ -75,7 +75,7 @@ func main() {
 	httpServer := server.NewHTTPServer(addr, handlers, svc)
 
 	logger.WithField("addr", addr).Info("Starting Faction Core Service")
-	
+
 	// Graceful shutdown
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
@@ -105,12 +105,3 @@ func getEnv(key, defaultValue string) string {
 	}
 	return defaultValue
 }
-
-
-
-
-
-
-
-
-

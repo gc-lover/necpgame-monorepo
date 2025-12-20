@@ -320,10 +320,10 @@ func TestAdminService_SetCurrency_Success(t *testing.T) {
 	ctx := context.Background()
 
 	req := &models.SetCurrencyRequest{
-		CharacterID: characterID,
+		CharacterID:  characterID,
 		CurrencyType: "gold",
-		Amount:      1000,
-		Reason:      "Test set currency",
+		Amount:       1000,
+		Reason:       "Test set currency",
 	}
 
 	mockRepo.On("CreateAuditLog", ctx, mock.AnythingOfType("*models.AdminAuditLog")).Return(nil)
@@ -348,10 +348,10 @@ func TestAdminService_AddCurrency_Success(t *testing.T) {
 	ctx := context.Background()
 
 	req := &models.AddCurrencyRequest{
-		CharacterID: characterID,
+		CharacterID:  characterID,
 		CurrencyType: "gold",
-		Amount:      500,
-		Reason:      "Test add currency",
+		Amount:       500,
+		Reason:       "Test add currency",
 	}
 
 	mockRepo.On("CreateAuditLog", ctx, mock.AnythingOfType("*models.AdminAuditLog")).Return(nil)
@@ -498,7 +498,7 @@ func TestAdminService_GetAuditLogs_WithActionType(t *testing.T) {
 	actionType := models.AdminActionTypeBan
 	ctx := context.Background()
 
-	logs := []models.AdminAuditLog{}
+	var logs []models.AdminAuditLog
 
 	mockRepo.On("ListAuditLogs", ctx, &adminID, &actionType, 10, 0).Return(logs, nil)
 	mockRepo.On("CountAuditLogs", ctx, &adminID, &actionType).Return(0, nil)
@@ -568,5 +568,3 @@ func TestAdminService_GetAuditLogs_RepositoryError(t *testing.T) {
 	assert.Nil(t, response)
 	mockRepo.AssertExpectations(t)
 }
-
-

@@ -1,4 +1,4 @@
-// Issue: #150 - Skill Bucket Matcher (Level 3 Optimization)
+// Package server Issue: #150 - Skill Bucket Matcher (Level 3 Optimization)
 // Performance: O(1) matching instead of O(n), 100x faster for large queues
 package server
 
@@ -122,10 +122,10 @@ func (m *SkillBucketMatcher) FindMatch(activityType string, rating int, teamSize
 	}
 
 	bucketIndex := rating / 500
-	
+
 	// Check current bucket and adjacent buckets (±500 MMR)
 	candidates := make([]*QueueEntry, 0, teamSize*2)
-	
+
 	for offset := 0; offset <= 1; offset++ {
 		// Check bucket and bucket+1 (wider range)
 		bucket, ok := buckets[bucketIndex+offset]
@@ -144,4 +144,3 @@ func (m *SkillBucketMatcher) FindMatch(activityType string, rating int, teamSize
 
 	return candidates
 }
-

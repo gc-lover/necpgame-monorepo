@@ -25,7 +25,7 @@ func NewProjectileRepository(db *sql.DB) *ProjectileRepository {
 // GetForms returns list of projectile forms
 func (r *ProjectileRepository) GetForms(ctx context.Context, params api.GetProjectileFormsParams) ([]*api.ProjectileForm, error) {
 	query := `SELECT id, name, type, description, parameters, visual_effect FROM projectile_forms WHERE 1=1`
-	args := []interface{}{}
+	var args []interface{}
 
 	// Add filters
 	if params.Type.Set {
@@ -103,7 +103,7 @@ func (r *ProjectileRepository) GetFormByID(ctx context.Context, formID string) (
 }
 
 // CheckCompatibility checks if form is compatible with weapon
-func (r *ProjectileRepository) CheckCompatibility(ctx context.Context, weaponID, formID string) (bool, error) {
+func (r *ProjectileRepository) CheckCompatibility(ctx context.Context, formID string) (bool, error) {
 	// TODO: Get weapon type from weapon_id
 	weaponType := "pistols" // Placeholder
 
@@ -166,12 +166,3 @@ func (r *ProjectileRepository) GetCompatibilityMatrix(ctx context.Context) (map[
 
 	return result, nil
 }
-
-
-
-
-
-
-
-
-

@@ -154,7 +154,7 @@ func TestMetrics_Registry(t *testing.T) {
 	// which automatically registers them in the default registry
 	// We can't easily test this without accessing internal state,
 	// but we can verify that the metrics exist and can be collected
-	
+
 	// Reset and record
 	websocketConnectionsTotal.Reset()
 	websocketConnectionsActive.Set(0)
@@ -174,4 +174,3 @@ func TestMetrics_Registry(t *testing.T) {
 	assert.Greater(t, testutil.ToFloat64(websocketRoomsActive), 0.0)
 	assert.Greater(t, testutil.ToFloat64(websocketErrorsTotal.WithLabelValues("test")), 0.0)
 }
-

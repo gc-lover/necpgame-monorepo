@@ -1,0 +1,956 @@
+openapi: 3.0.3
+info:
+  title: Referral Service API
+  description: 'API для реферальной системы: коды, регистрация, награды, milestone бонусы'
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
+servers:
+  - url: http://localhost:8094/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
+security:
+  - BearerAuth: [ ]
+tags:
+  - name: Referral Code Manager
+    description: Управление реферальными кодами
+  - name: Referral Registration
+    description: Регистрация по реферальному коду
+  - name: Referral Milestone
+    description: Отслеживание milestone
+  - name: Referral Rewards
+    description: Распределение наград
+  - name: Referral Statistics
+    description: Статистика рефералов
+  - name: Referral Leaderboard
+    description: Лидерборд рефералов
+  - name: Referral Events
+    description: События реферальной системы
+paths:
+  /growth/referral/code:
+    get:
+      tags:
+        - Referral Code Manager
+      summary: Получить реферальный код игрока
+      operationId: getReferralCode
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: player_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Реферальный код
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReferralCode'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /growth/referral/code/generate:
+    post:
+      tags:
+        - Referral Code Manager
+      summary: Сгенерировать новый реферальный код
+      operationId: generateReferralCode
+      security:
+        - BearerAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateReferralCodeRequest'
+      responses:
+        '201':
+          description: Реферальный код создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReferralCode'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /growth/referral/code/{code}/validate:
+    get:
+      tags:
+        - Referral Code Manager
+      summary: Валидировать реферальный код
+      operationId: validateReferralCode
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema:
+            type: string
+            maxLength: 12
+      responses:
+        '200':
+          description: Код валиден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReferralCodeValidationResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /growth/referral/register:
+    post:
+      tags:
+        - Referral Registration
+      summary: Зарегистрироваться по реферальному коду
+      operationId: registerWithCode
+      security:
+        - BearerAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterWithCodeRequest'
+      responses:
+        '201':
+          description: Регистрация по коду успешна
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Referral'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /growth/referral/status/{player_id}:
+    get:
+      tags:
+        - Referral Registration
+      summary: Получить статус рефералов игрока
+      operationId: getReferralStatus
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum:
+              - PENDING
+              - ACTIVE
+              - COMPLETED
+              - INACTIVE
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Статус рефералов
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReferralStatusResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /growth/referral/milestones/{player_id}:
+    get:
+      tags:
+        - Referral Milestone
+      summary: Получить milestone игрока
+      operationId: getReferralMilestones
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Milestone игрока
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReferralMilestonesResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /growth/referral/milestones/{milestone_id}/claim:
+    post:
+      tags:
+        - Referral Milestone
+      summary: Получить награду за milestone
+      operationId: claimMilestoneReward
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: milestone_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClaimMilestoneRewardRequest'
+      responses:
+        '200':
+          description: Награда получена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MilestoneRewardResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /growth/referral/rewards/distribute:
+    post:
+      tags:
+        - Referral Rewards
+      summary: Распределить награды реферальной системы
+      operationId: distributeReferralRewards
+      security:
+        - BearerAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DistributeRewardsRequest'
+      responses:
+        '200':
+          description: Награды распределены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DistributeRewardsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /growth/referral/rewards/history/{player_id}:
+    get:
+      tags:
+        - Referral Rewards
+      summary: Получить историю наград игрока
+      operationId: getRewardHistory
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: reward_type
+          in: query
+          schema:
+            type: string
+            enum:
+              - WELCOME_BONUS
+              - REFERRER_BONUS
+              - MILESTONE_BONUS
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: История наград
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RewardHistoryResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /growth/referral/stats/{player_id}:
+    get:
+      tags:
+        - Referral Statistics
+      summary: Получить статистику рефералов игрока
+      operationId: getReferralStats
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Статистика рефералов
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReferralStats'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /growth/referral/stats/public/{code}:
+    get:
+      tags:
+        - Referral Statistics
+      summary: Получить публичную статистику по реферальному коду
+      operationId: getPublicReferralStats
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema:
+            type: string
+            maxLength: 12
+      responses:
+        '200':
+          description: Публичная статистика
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublicReferralStatsResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /growth/referral/leaderboard:
+    get:
+      tags:
+        - Referral Leaderboard
+      summary: Получить лидерборд рефералов
+      operationId: getReferralLeaderboard
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: leaderboard_type
+          in: query
+          schema:
+            type: string
+            enum:
+              - TOP_REFERRERS
+              - TOP_MILESTONE
+              - TOP_REWARDS
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Лидерборд рефералов
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReferralLeaderboardResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /growth/referral/leaderboard/{player_id}/position:
+    get:
+      tags:
+        - Referral Leaderboard
+      summary: Получить позицию игрока в лидерборде
+      operationId: getLeaderboardPosition
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: leaderboard_type
+          in: query
+          schema:
+            type: string
+            enum:
+              - TOP_REFERRERS
+              - TOP_MILESTONE
+              - TOP_REWARDS
+      responses:
+        '200':
+          description: Позиция игрока
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaderboardPositionResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /growth/referral/events/{player_id}:
+    get:
+      tags:
+        - Referral Events
+      summary: Получить события реферальной системы игрока
+      operationId: getReferralEvents
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: event_type
+          in: query
+          schema:
+            type: string
+            enum:
+              - referral:code-generated
+              - referral:registered
+              - referral:level-10-reached
+              - referral:milestone-achieved
+              - referral:reward-distributed
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: События реферальной системы
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReferralEventsResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    ReferralCode:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        code:
+          type: string
+          maxLength: 12
+        is_active:
+          type: boolean
+          default: true
+        created_at:
+          type: string
+          format: date-time
+    GenerateReferralCodeRequest:
+      type: object
+      required:
+        - player_id
+      properties:
+        player_id:
+          type: string
+          format: uuid
+    ReferralCodeValidationResponse:
+      type: object
+      properties:
+        code:
+          type: string
+        is_valid:
+          type: boolean
+        player_id:
+          type: string
+          format: uuid
+          nullable: true
+        message:
+          type: string
+          nullable: true
+    RegisterWithCodeRequest:
+      type: object
+      required:
+        - player_id
+        - referral_code
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        referral_code:
+          type: string
+          maxLength: 12
+    Referral:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        referrer_id:
+          type: string
+          format: uuid
+        referee_id:
+          type: string
+          format: uuid
+        referral_code_id:
+          type: string
+          format: uuid
+        registered_at:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum:
+            - PENDING
+            - ACTIVE
+            - COMPLETED
+            - INACTIVE
+        level_10_reached:
+          type: boolean
+          default: false
+        level_10_reached_at:
+          type: string
+          format: date-time
+          nullable: true
+        welcome_bonus_given:
+          type: boolean
+          default: false
+        referrer_bonus_given:
+          type: boolean
+          default: false
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    ReferralStatusResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        referrals:
+          type: array
+          items:
+            $ref: '#/components/schemas/Referral'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+    ReferralMilestone:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        milestone_type:
+          type: string
+          enum:
+            - MILESTONE_5
+            - MILESTONE_10
+            - MILESTONE_25
+            - MILESTONE_50
+            - MILESTONE_100
+        milestone_value:
+          type: integer
+        achieved_at:
+          type: string
+          format: date-time
+        reward_claimed:
+          type: boolean
+          default: false
+        reward_claimed_at:
+          type: string
+          format: date-time
+          nullable: true
+    ReferralMilestonesResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        milestones:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReferralMilestone'
+        current_milestone:
+          type: string
+          enum:
+            - NONE
+            - MILESTONE_5
+            - MILESTONE_10
+            - MILESTONE_25
+            - MILESTONE_50
+            - MILESTONE_100
+          nullable: true
+    ClaimMilestoneRewardRequest:
+      type: object
+      required:
+        - player_id
+      properties:
+        player_id:
+          type: string
+          format: uuid
+    MilestoneRewardResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        milestone_id:
+          type: string
+          format: uuid
+        reward_amount:
+          type: integer
+          format: int64
+        currency_type:
+          type: string
+    DistributeRewardsRequest:
+      type: object
+      required:
+        - referral_id
+        - reward_type
+      properties:
+        referral_id:
+          type: string
+          format: uuid
+        reward_type:
+          type: string
+          enum:
+            - WELCOME_BONUS
+            - REFERRER_BONUS
+            - MILESTONE_BONUS
+    DistributeRewardsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        rewards_distributed:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReferralReward'
+    ReferralReward:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        referral_id:
+          type: string
+          format: uuid
+          nullable: true
+        reward_type:
+          type: string
+          enum:
+            - WELCOME_BONUS
+            - REFERRER_BONUS
+            - MILESTONE_BONUS
+        reward_amount:
+          type: integer
+          format: int64
+        currency_type:
+          type: string
+        distributed_at:
+          type: string
+          format: date-time
+    RewardHistoryResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        rewards:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReferralReward'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+    ReferralStats:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        total_referrals:
+          type: integer
+        active_referrals:
+          type: integer
+        level_10_referrals:
+          type: integer
+        current_milestone:
+          type: string
+          enum:
+            - NONE
+            - MILESTONE_5
+            - MILESTONE_10
+            - MILESTONE_25
+            - MILESTONE_50
+            - MILESTONE_100
+          nullable: true
+        total_rewards:
+          type: integer
+          format: int64
+        last_updated:
+          type: string
+          format: date-time
+    PublicReferralStatsResponse:
+      type: object
+      properties:
+        code:
+          type: string
+        total_referrals:
+          type: integer
+        active_referrals:
+          type: integer
+        level_10_referrals:
+          type: integer
+        current_milestone:
+          type: string
+          enum:
+            - NONE
+            - MILESTONE_5
+            - MILESTONE_10
+            - MILESTONE_25
+            - MILESTONE_50
+            - MILESTONE_100
+          nullable: true
+    ReferralLeaderboardEntry:
+      type: object
+      properties:
+        rank:
+          type: integer
+        player_id:
+          type: string
+          format: uuid
+        player_name:
+          type: string
+        total_referrals:
+          type: integer
+        active_referrals:
+          type: integer
+        level_10_referrals:
+          type: integer
+        current_milestone:
+          type: string
+          enum:
+            - NONE
+            - MILESTONE_5
+            - MILESTONE_10
+            - MILESTONE_25
+            - MILESTONE_50
+            - MILESTONE_100
+          nullable: true
+        total_rewards:
+          type: integer
+          format: int64
+    ReferralLeaderboardResponse:
+      type: object
+      properties:
+        leaderboard_type:
+          type: string
+          enum:
+            - TOP_REFERRERS
+            - TOP_MILESTONE
+            - TOP_REWARDS
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReferralLeaderboardEntry'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+    LeaderboardPositionResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        leaderboard_type:
+          type: string
+          enum:
+            - TOP_REFERRERS
+            - TOP_MILESTONE
+            - TOP_REWARDS
+        position:
+          type: integer
+          nullable: true
+        entry:
+
+
+    ReferralEvent:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        event_type:
+          type: string
+          enum:
+            - referral:code-generated
+            - referral:registered
+            - referral:level-10-reached
+            - referral:milestone-achieved
+            - referral:reward-distributed
+        event_data:
+          type: object
+          additionalProperties: true
+        created_at:
+          type: string
+          format: date-time
+    ReferralEventsResponse:
+      type: object
+      properties:
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReferralEvent'
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+  responses:
+    BadRequest:
+      description: Неверный запрос
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Требуется аутентификация
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Ресурс не найден
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    InternalServerError:
+      description: Внутренняя ошибка сервера
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'

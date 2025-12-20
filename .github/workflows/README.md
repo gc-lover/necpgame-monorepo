@@ -3,88 +3,97 @@
 ## CI Workflows
 
 ### `ci-backend.yml`
+
 - **Триггер:** Изменения в `services/` или `proto/`
 - **Действия:** Тесты и сборка всех Go сервисов
-- **Matrix:** 16 сервисов (character, inventory, movement, social, achievement, economy, support, reset, gameplay, admin, clan-war, companion, voice-chat, realtime-gateway, ws-lobby, matchmaking)
+- **Matrix:** 16 сервисов (character, inventory, movement, social, achievement, economy, support, reset, gameplay,
+  admin, clan-war, companion, voice-chat, realtime-gateway, ws-lobby, matchmaking)
 
 ### `ci-client.yml`
+
 - **Триггер:** Изменения в `client/`
 - **Действия:** Валидация UE5 проекта
 
 ## CD Workflows
 
 ### `cd-deploy.yml`
+
 - **Триггер:** Push в `main` или `develop`, или ручной запуск
 - **Действия:**
-  - Сборка Docker образов для всех сервисов
-  - Push в GitHub Container Registry
-  - Деплой в Kubernetes (staging/production)
+    - Сборка Docker образов для всех сервисов
+    - Push в GitHub Container Registry
+    - Деплой в Kubernetes (staging/production)
 - **Требуемые секреты:**
-  - `KUBERNETES_CONFIG_STAGING` - kubeconfig для staging
-  - `KUBERNETES_CONFIG_PRODUCTION` - kubeconfig для production
+    - `KUBERNETES_CONFIG_STAGING` - kubeconfig для staging
+    - `KUBERNETES_CONFIG_PRODUCTION` - kubeconfig для production
 
 ### `cd-argocd-sync.yml`
+
 - **Триггер:** Push в `main` или `develop`, или ручной запуск
 - **Действия:** Синхронизация ArgoCD приложения
 - **Требуемые секреты:**
-  - `ARGOCD_SERVER` - URL ArgoCD сервера
-  - `ARGOCD_USERNAME` - Имя пользователя ArgoCD
-  - `ARGOCD_PASSWORD` - Пароль ArgoCD
+    - `ARGOCD_SERVER` - URL ArgoCD сервера
+    - `ARGOCD_USERNAME` - Имя пользователя ArgoCD
+    - `ARGOCD_PASSWORD` - Пароль ArgoCD
 
 ## Project Status Automation
 
 ### `project-status-automation.yml`
+
 - **Триггер:** При создании/обновлении Issues, комментариях, PR
 - **Действия:**
-  - Автоматическое добавление новых Issues в GitHub Project при создании
-  - Установка начального статуса "Todo" для новых Issues
-  - Проверка выполнения всех критериев приемки (чекбоксы) при комментариях
-  - Автоматические переходы между статусами при выполнении всех чекбоксов
-  - Уведомление о переходе через комментарий в Issue
+    - Автоматическое добавление новых Issues в GitHub Project при создании
+    - Установка начального статуса "Todo" для новых Issues
+    - Проверка выполнения всех критериев приемки (чекбоксы) при комментариях
+    - Автоматические переходы между статусами при выполнении всех чекбоксов
+    - Уведомление о переходе через комментарий в Issue
 - **Использует:** Project Status поле (Single Select) для отслеживания этапа задачи
 - **Логика переходов:** Определяет следующего агента на основе текущего статуса и меток задачи
 
 ### `github-api-batch-processor.yml`
+
 - **Триггер:** Ручной запуск или по расписанию (каждые 6 часов)
 - **Действия:**
-  - Массовая обработка Issues по фильтру статуса
-  - Операции: обновление статуса, добавление комментариев, переход к следующему статусу, анализ и авто-обновление статусов
+    - Массовая обработка Issues по фильтру статуса
+    - Операции: обновление статуса, добавление комментариев, переход к следующему статусу, анализ и авто-обновление
+      статусов
 - **Операции:**
-  - `update-status` - обновить статус на указанный
-  - `add-comments` - добавить комментарии
-  - `transfer-to-next-status` - передать к следующему агенту
-  - `analyze-and-update-status` - проанализировать Issues и автоматически определить правильный статус
+    - `update-status` - обновить статус на указанный
+    - `add-comments` - добавить комментарии
+    - `transfer-to-next-status` - передать к следующему агенту
+    - `analyze-and-update-status` - проанализировать Issues и автоматически определить правильный статус
 - **Параметры:**
-  - `status_filter` - фильтр по статусу (используйте "All" для analyze-and-update-status)
-  - `operation` - тип операции
-  - `batch_size` - размер батча (по умолчанию: 5)
+    - `status_filter` - фильтр по статусу (используйте "All" для analyze-and-update-status)
+    - `operation` - тип операции
+    - `batch_size` - размер батча (по умолчанию: 5)
 
 ## Automation Workflows
 
 ### `ci-monitor.yml`
-- **Триггер:** 
-  - После завершения `Backend CI` workflow (`workflow_run`)
-  - По расписанию (каждые 15 минут) для проверки статусов
-  - Ручной запуск (с опцией только очистки старых отчётов)
+
+- **Триггер:**
+    - После завершения `Backend CI` workflow (`workflow_run`)
+    - По расписанию (каждые 15 минут) для проверки статусов
+    - Ручной запуск (с опцией только очистки старых отчётов)
 - **Действия:**
-  - Мониторинг результатов CI workflow runs
-  - Создание/обновление Issues с детальными отчётами о статусе jobs
-  - Добавление Issues в GitHub Project со статусом "DevOps - Todo" (или "Backend - Todo")
-  - Автоматическая очистка старых отчётов (оставляет только последние 5 коммитов)
+    - Мониторинг результатов CI workflow runs
+    - Создание/обновление Issues с детальными отчётами о статусе jobs
+    - Добавление Issues в GitHub Project со статусом "DevOps - Todo" (или "Backend - Todo")
+    - Автоматическая очистка старых отчётов (оставляет только последние 5 коммитов)
 - **Параметры:**
-  - `cleanup_only` - только очистка старых отчётов без создания новых
+    - `cleanup_only` - только очистка старых отчётов без создания новых
 - **Метки Issues:** `ci-report`, `ci-report-{commit-sha}`, `automated`
 - **Хранение:** Отчёты за последние 5 коммитов, старые автоматически закрываются
 - **Интеграция:** Issues автоматически добавляются в GitHub Project для мониторинга агентами
 
 ### `migrate-ideas-to-issues.yml`
+
 - **Триггер:** Ручной запуск
 - **Действия:** Миграция идей из YAML файлов в GitHub Issues
 - **Параметры:**
-  - `idea_file` - путь к YAML файлу с идеей
-  - `create_issue` - создавать ли Issue
+    - `idea_file` - путь к YAML файлу с идеей
+    - `create_issue` - создавать ли Issue
 - **Автоматически:** Issue добавляется в Project через `project-status-automation.yml`
-
 
 ## Настройка секретов
 
@@ -158,6 +167,7 @@ kubectl get hpa -n necpgame
 ## Статусы в Project
 
 Все workflows работают через поле **Status** в GitHub Project, которое определяет:
+
 - Текущего агента (например: "Backend", "QA")
 - Этап работы (например: "Todo", "In Progress", "Review")
 - Готовность к переходу к следующему этапу

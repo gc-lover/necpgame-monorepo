@@ -3,8 +3,6 @@ package server
 
 import (
 	"context"
-	"net/http"
-	"sync"
 	"testing"
 	"time"
 
@@ -80,31 +78,4 @@ func TestConcurrentNoLeaks(t *testing.T) {
 	}
 
 	time.Sleep(100 * time.Millisecond)
-}
-
-type mockResponseWriter struct {
-	mu      sync.Mutex
-	headers http.Header
-	body    []byte
-	status  int
-}
-
-func (m *mockResponseWriter) Header() http.Header {
-	if m.headers == nil {
-		m.headers = make(http.Header)
-	}
-	return m.headers
-}
-
-func (m *mockResponseWriter) Write(data []byte) (int, error) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	m.body = append(m.body, data...)
-	return len(data), nil
-}
-
-func (m *mockResponseWriter) WriteHeader(statusCode int) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	m.status = statusCode
 }

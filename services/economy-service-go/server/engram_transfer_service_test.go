@@ -92,7 +92,7 @@ func setupTestEngramTransferService() (*EngramTransferService, *mockEngramTransf
 	redisClient := redis.NewClient(&redis.Options{
 		Addr:         "localhost:6379",
 		DB:           1,
-		DialTimeout:  1 * time.Second,  // Fast timeout for tests
+		DialTimeout:  1 * time.Second, // Fast timeout for tests
 		ReadTimeout:  1 * time.Second,
 		WriteTimeout: 1 * time.Second,
 		PoolTimeout:  1 * time.Second,
@@ -116,7 +116,7 @@ func TestEngramTransferService_TransferEngram_Success(t *testing.T) {
 
 	mockRepo.On("CreateTransfer", ctx, mock.AnythingOfType("*server.EngramTransfer")).Return(nil)
 
-	result, err := service.TransferEngram(ctx, engramID, fromCharacterID, toCharacterID, transferType, isCopy, nil, nil)
+	result, err := service.TransferEngram(ctx, engramID, fromCharacterID, toCharacterID, transferType, false, nil, nil)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
@@ -140,7 +140,7 @@ func TestEngramTransferService_TransferEngram_WithCopy(t *testing.T) {
 
 	mockRepo.On("CreateTransfer", ctx, mock.AnythingOfType("*server.EngramTransfer")).Return(nil)
 
-	result, err := service.TransferEngram(ctx, engramID, fromCharacterID, toCharacterID, transferType, isCopy, newAttitudeType, transferPrice)
+	result, err := service.TransferEngram(ctx, engramID, fromCharacterID, toCharacterID, transferType, true, newAttitudeType, transferPrice)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
@@ -308,5 +308,3 @@ func TestEngramTransferService_TradeEngram_InvalidType(t *testing.T) {
 	assert.Error(t, err)
 	assert.Equal(t, ErrInvalidTransferType, err)
 }
-
-

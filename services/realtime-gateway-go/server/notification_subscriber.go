@@ -1,4 +1,4 @@
-// Issue: #141889261
+// Package server Issue: #141889261
 package server
 
 import (
@@ -24,12 +24,12 @@ type NotificationEvent struct {
 }
 
 type NotificationSubscriber struct {
-	redis        *redis.Client
-	handler      *GatewayHandler
-	logger       *logrus.Logger
-	pubsub       *redis.PubSub
-	ctx          context.Context
-	cancel       context.CancelFunc
+	redis   *redis.Client
+	handler *GatewayHandler
+	logger  *logrus.Logger
+	pubsub  *redis.PubSub
+	ctx     context.Context
+	cancel  context.CancelFunc
 }
 
 func NewNotificationSubscriber(redisClient *redis.Client, handler *GatewayHandler) *NotificationSubscriber {
@@ -67,7 +67,7 @@ func (ns *NotificationSubscriber) Stop() error {
 
 func (ns *NotificationSubscriber) listen() {
 	ch := ns.pubsub.Channel()
-	
+
 	for {
 		select {
 		case <-ns.ctx.Done():
@@ -77,7 +77,7 @@ func (ns *NotificationSubscriber) listen() {
 			if msg == nil {
 				continue
 			}
-			
+
 			ns.handleNotificationEvent(msg.Channel, []byte(msg.Payload))
 		}
 	}
@@ -92,7 +92,7 @@ func (ns *NotificationSubscriber) handleNotificationEvent(channel string, data [
 
 	ns.logger.WithFields(logrus.Fields{
 		"channel":         channel,
-		"account_id":     notification.AccountID,
+		"account_id":      notification.AccountID,
 		"notification_id": notification.NotificationID,
 	}).Info("Received notification event")
 
@@ -150,7 +150,7 @@ func (ns *NotificationSubscriber) sendNotification(notification NotificationEven
 				ns.logger.WithField("account_id", notification.AccountID).Error("Failed to build notification message, skipping send")
 				break
 			}
-			
+
 			clientConn.mu.Lock()
 			conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
 			if err := conn.WriteMessage(websocket.TextMessage, notificationMessage); err != nil {
@@ -178,14 +178,14 @@ func (ns *NotificationSubscriber) sendNotification(notification NotificationEven
 // Issue: #1407 - Error handling: returns nil on marshal error, caller checks and skips send
 func (ns *NotificationSubscriber) buildNotificationMessage(notification NotificationEvent) []byte {
 	response := map[string]interface{}{
-		"type":            "notification",
-		"notification_id": notification.NotificationID,
-		"account_id":      notification.AccountID,
+		"type":              "notification",
+		"notification_id":   notification.NotificationID,
+		"account_id":        notification.AccountID,
 		"notification_type": notification.Type,
-		"priority":        notification.Priority,
-		"title":           notification.Title,
-		"content":         notification.Content,
-		"timestamp":       notification.Timestamp,
+		"priority":          notification.Priority,
+		"title":             notification.Title,
+		"content":           notification.Content,
+		"timestamp":         notification.Timestamp,
 	}
 
 	if notification.Data != nil {
@@ -199,4 +199,3 @@ func (ns *NotificationSubscriber) buildNotificationMessage(notification Notifica
 	}
 	return message
 }
-

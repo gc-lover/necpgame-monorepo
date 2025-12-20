@@ -54,4 +54,3 @@ func RecordTrade(status string) {
 func RecordTradeCompleted() {
 	TradesCompletedTotal.Inc()
 }
-

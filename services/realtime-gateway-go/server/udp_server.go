@@ -69,22 +69,8 @@ type QuantizedPos struct {
 }
 
 // Quantize converts Vec3 to QuantizedPos (Issue: #1580)
-func Quantize(pos Vec3) QuantizedPos {
-	return QuantizedPos{
-		X: int16(pos.X * 100), // 0.01m precision
-		Y: int16(pos.Y * 100),
-		Z: int16(pos.Z * 100),
-	}
-}
 
 // Dequantize converts QuantizedPos back to Vec3
-func Dequantize(qp QuantizedPos) Vec3 {
-	return Vec3{
-		X: float32(qp.X) / 100.0,
-		Y: float32(qp.Y) / 100.0,
-		Z: float32(qp.Z) / 100.0,
-	}
-}
 
 // NewUDPServer creates a new UDP server for game state
 func NewUDPServer(addr string, handler *GatewayHandler) (*UDPServer, error) {
@@ -172,14 +158,14 @@ func (s *UDPServer) readLoop(ctx context.Context) {
 			copy(packetData, buf[:n])
 			udpBufferPool.Put(bufPtr) // Return to pool
 
-			s.handlePacket(ctx, packetData, clientAddr)
+			s.handlePacket(packetData, clientAddr)
 		}
 	}
 }
 
 // handlePacket processes a UDP packet
 // Issue: #1580 - Uses protobuf for 2.5x faster encoding, 7.5x faster decoding
-func (s *UDPServer) handlePacket(ctx context.Context, data []byte, clientAddr *net.UDPAddr) {
+func (s *UDPServer) handlePacket(data []byte, clientAddr *net.UDPAddr) {
 	if len(data) < 1 {
 		return
 	}
@@ -198,9 +184,9 @@ func (s *UDPServer) handlePacket(ctx context.Context, data []byte, clientAddr *n
 	// Handle message based on payload type
 	switch payload := msg.Payload.(type) {
 	case *pb.ClientMessage_PlayerInput:
-		s.handlePlayerInput(ctx, session, payload.PlayerInput)
+		s.handlePlayerInput(session, payload.PlayerInput)
 	case *pb.ClientMessage_Heartbeat:
-		s.handleHeartbeat(ctx, session, payload.Heartbeat)
+		s.handleHeartbeat(session, payload.Heartbeat)
 	case *pb.ClientMessage_Echo:
 		// Echo back
 		ack := &pb.ServerMessage{
@@ -218,7 +204,7 @@ func (s *UDPServer) handlePacket(ctx context.Context, data []byte, clientAddr *n
 
 // handlePlayerInput handles player input (position, rotation, shooting)
 // Issue: #1580 - Uses protobuf PlayerInput
-func (s *UDPServer) handlePlayerInput(ctx context.Context, session *UDPSession, input *pb.PlayerInput) {
+func (s *UDPServer) handlePlayerInput(session *UDPSession, input *pb.PlayerInput) {
 	if input == nil {
 		return
 	}
@@ -257,7 +243,7 @@ func (s *UDPServer) handlePlayerInput(ctx context.Context, session *UDPSession, 
 
 // handleHeartbeat handles client heartbeat
 // Issue: #1580 - Uses protobuf Heartbeat
-func (s *UDPServer) handleHeartbeat(ctx context.Context, session *UDPSession, heartbeat *pb.Heartbeat) {
+func (s *UDPServer) handleHeartbeat(session *UDPSession, heartbeat *pb.Heartbeat) {
 	if heartbeat == nil {
 		return
 	}

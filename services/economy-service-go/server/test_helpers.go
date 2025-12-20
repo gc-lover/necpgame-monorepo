@@ -1,4 +1,4 @@
-// Issue: #140894175
+// Package server Issue: #140894175
 package server
 
 import (
@@ -21,4 +21,3 @@ func float64Ptr(f float64) *float64 {
 func intPtr(i int) *int {
 	return &i
 }
-

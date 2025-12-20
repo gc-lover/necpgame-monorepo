@@ -1,4 +1,4 @@
-// Issue: #139 - PostgreSQL integration for Party System
+// Package server Issue: #139 - PostgreSQL integration for Party System
 // BLOCKER: ACID transactions, context timeouts
 package server
 
@@ -26,7 +26,7 @@ type PartyInvite struct {
 	CreatedAt time.Time `json:"created_at"`
 }
 
-func NewPartyRepository(db *sql.DB) *PartyRepository {
+func NewPartyRepository() *PartyRepository {
 	return &PartyRepository{db: db}
 }
 

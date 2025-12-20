@@ -9,7 +9,8 @@ AGENT_HANDOFF_MAP = {
         "current_status_id": "d9960d37",  # Idea Writer - In Progress
         "handoff": [
             {"condition": "UI/UX задачи (labels ui, ux, client)", "status": "UI/UX - Todo", "status_id": "49689997"},
-            {"condition": "Контент-квесты (labels canon, lore, quest)", "status": "Content Writer - Todo", "status_id": "c62b60d3"},
+            {"condition": "Контент-квесты (labels canon, lore, quest)", "status": "Content Writer - Todo",
+             "status_id": "c62b60d3"},
             {"condition": "Системные задачи (default)", "status": "Architect - Todo", "status_id": "799d8a69"},
         ]
     },
@@ -108,23 +109,24 @@ AGENT_HANDOFF_MAP = {
     },
 }
 
+
 def generate_workflow_section(agent_key, agent_display_name):
     """Генерирует Workflow секцию для агента"""
-    
+
     config = AGENT_HANDOFF_MAP.get(agent_key)
     if not config:
         return None
-    
+
     current_status_id = config["current_status_id"]
     handoff_list = config["handoff"]
-    
+
     # Генерируем список передач
     handoff_lines = []
     for h in handoff_list:
         handoff_lines.append(f"- **{h['condition']}:** `{h['status']}` (`{h['status_id']}`)")
-    
+
     handoff_text = "\n".join(handoff_lines)
-    
+
     workflow_template = f"""## Workflow with Issues
 
 ### 📋 Понимание статуса
@@ -147,7 +149,7 @@ def generate_workflow_section(agent_key, agent_display_name):
 {handoff_text}
 
 **Пример обновления статуса:** См. `.cursor/AGENT_SIMPLE_GUIDE.md`"""
-    
+
     return workflow_template
 
 
@@ -175,8 +177,7 @@ if __name__ == "__main__":
     for agent_key, display_name in AGENT_DISPLAY_NAMES.items():
         workflow = generate_workflow_section(agent_key, display_name)
         if workflow:
-            print(f"\n{'='*60}")
+            print(f"\n{'=' * 60}")
             print(f"Agent: {display_name}")
-            print(f"{'='*60}")
+            print(f"{'=' * 60}")
             print(workflow)
-

@@ -1,10 +1,11 @@
-// Issue: #156 - Abilities synergy operations
+// Package server Issue: #156 - Abilities synergy operations
 package server
 
 import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"time"
 
 	"github.com/gc-lover/necpgame-monorepo/services/gameplay-service-go/pkg/api"
@@ -74,7 +75,7 @@ func (r *AbilityRepository) GetSynergy(ctx context.Context, synergyID uuid.UUID)
 		&abilityIDs, &bonuses, &requirements, &createdAt,
 	)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
 		}
 		return nil, err
@@ -111,7 +112,7 @@ func (r *AbilityRepository) CheckSynergyRequirements(ctx context.Context, charac
 }
 
 // ApplySynergy applies a synergy to a character
-func (r *AbilityRepository) ApplySynergy(ctx context.Context, characterID, synergyID uuid.UUID, synergy *api.Synergy) error {
+func (r *AbilityRepository) ApplySynergy(ctx context.Context, characterID, synergyID uuid.UUID, _ *api.Synergy) error {
 	query := `INSERT INTO gameplay.character_synergies
 			  (character_id, synergy_id, applied_at)
 			  VALUES ($1, $2, $3)

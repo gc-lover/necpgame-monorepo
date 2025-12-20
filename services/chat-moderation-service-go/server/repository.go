@@ -1,3 +1,4 @@
+// Package server provides database operations for chat moderation service.
 // Issue: #1911
 // Database operations for chat moderation with performance optimizations
 package server
@@ -53,7 +54,7 @@ func (r *Repository) GetModerationRules(ctx context.Context, params api.GetModer
 		FROM moderation_rules
 		WHERE 1=1`
 
-	args := []interface{}{}
+	var args []interface{}
 	argCount := 0
 
 	if params.Type.IsSet() {
@@ -225,7 +226,7 @@ func (r *Repository) GetModerationViolations(ctx context.Context, params api.Get
 		       status, reviewed_by, review_notes, created_at, updated_at
 		FROM moderation_violations WHERE 1=1`
 
-	args := []interface{}{}
+	var args []interface{}
 	argCount := 0
 
 	if params.PlayerID.IsSet() {
@@ -289,9 +290,17 @@ func (r *Repository) GetModerationViolations(ctx context.Context, params api.Get
 		}
 
 		// Parse JSON details (simplified)
-		violation.ViolationDetails = map[string]interface{}{}
-		violation.ReviewedBy = reviewedBy
-		violation.ReviewNotes = reviewNotes
+		violation.ViolationDetails = &api.ModerationViolationViolationDetails{}
+		if reviewedBy != nil {
+			violation.ReviewedBy = api.NewOptNilUUID(*reviewedBy)
+		} else {
+			violation.ReviewedBy.Null = true
+		}
+		if reviewNotes != nil {
+			violation.ReviewNotes = api.NewOptNilString(*reviewNotes)
+		} else {
+			violation.ReviewNotes.Null = true
+		}
 
 		violations = append(violations, violation)
 	}
@@ -332,9 +341,17 @@ func (r *Repository) GetModerationViolation(ctx context.Context, violationID str
 		return nil, err
 	}
 
-	violation.ViolationDetails = map[string]interface{}{}
-	violation.ReviewedBy = reviewedBy
-	violation.ReviewNotes = reviewNotes
+	violation.ViolationDetails = &api.ModerationViolationViolationDetails{}
+	if reviewedBy != nil {
+		violation.ReviewedBy = api.NewOptNilUUID(*reviewedBy)
+	} else {
+		violation.ReviewedBy.Null = true
+	}
+	if reviewNotes != nil {
+		violation.ReviewNotes = api.NewOptNilString(*reviewNotes)
+	} else {
+		violation.ReviewNotes.Null = true
+	}
 
 	return &violation, nil
 }
@@ -355,7 +372,7 @@ func (r *Repository) CreateModerationViolation(ctx context.Context, violation *a
 }
 
 // UpdateViolationStatus updates violation status
-func (r *Repository) UpdateViolationStatus(ctx context.Context, violationID string, req *api.UpdateViolationStatusRequest) (*api.ModerationViolation, error) {
+func (r *Repository) UpdateViolationStatus(ctx context.Context, violationID string, req *api.UpdateViolationStatusReq) (*api.ModerationViolation, error) {
 	query := `
 		UPDATE moderation_violations
 		SET status = $2, reviewed_by = $3, review_notes = $4, updated_at = $5
@@ -405,7 +422,7 @@ func (r *Repository) GetModerationLogs(ctx context.Context, params api.GetModera
 		SELECT id, player_id, action_type, rule_type, moderator_id, details, created_at
 		FROM moderation_logs WHERE 1=1`
 
-	args := []interface{}{}
+	var args []interface{}
 	argCount := 0
 
 	if params.PlayerID.IsSet() {
@@ -471,7 +488,7 @@ func (r *Repository) GetModerationLogs(ctx context.Context, params api.GetModera
 			return nil, 0, err
 		}
 
-		log.Details = map[string]interface{}{}
+		log.Details = &api.ModerationLogDetails{}
 		logs = append(logs, log)
 	}
 

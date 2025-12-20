@@ -1,4 +1,4 @@
-// SQL queries use prepared statements with placeholders (, , ?) for safety
+// Package server SQL queries use prepared statements with placeholders (, , ?) for safety
 // Issue: #1595, #1607
 // ogen handlers - TYPED responses (no interface{} boxing!)
 package server
@@ -12,20 +12,18 @@ import (
 	"github.com/google/uuid"
 )
 
-// Context timeout constants
 const (
-	DBTimeout    = 50 * time.Millisecond
-	CacheTimeout = 10 * time.Millisecond
+	DBTimeout = 50 * time.Millisecond
 )
 
 // Handlers implements api.Handler interface (ogen typed handlers!)
 // Issue: #1607 - Memory pooling for hot path structs (Level 2 optimization)
 type Handlers struct {
 	// Memory pooling for hot path structs (zero allocations target!)
-	hackSessionPool      sync.Pool
-	successResponsePool  sync.Pool
-	hackResultPool       sync.Pool
-	hackStepResultPool   sync.Pool
+	hackSessionPool       sync.Pool
+	successResponsePool   sync.Pool
+	hackResultPool        sync.Pool
+	hackStepResultPool    sync.Pool
 	hackProcessStatusPool sync.Pool
 }
 
@@ -94,7 +92,7 @@ func (h *Handlers) InitiateHack(ctx context.Context, req *api.InitiateHackReques
 }
 
 // CancelHack - TYPED response!
-func (h *Handlers) CancelHack(ctx context.Context, params api.CancelHackParams) (api.CancelHackRes, error) {
+func (h *Handlers) CancelHack(ctx context.Context, _ api.CancelHackParams) (api.CancelHackRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
@@ -108,7 +106,7 @@ func (h *Handlers) CancelHack(ctx context.Context, params api.CancelHackParams) 
 }
 
 // ExecuteHack - TYPED response!
-func (h *Handlers) ExecuteHack(ctx context.Context, req *api.ExecuteHackRequest, params api.ExecuteHackParams) (api.ExecuteHackRes, error) {
+func (h *Handlers) ExecuteHack(ctx context.Context, _ *api.ExecuteHackRequest, params api.ExecuteHackParams) (api.ExecuteHackRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
@@ -126,7 +124,7 @@ func (h *Handlers) ExecuteHack(ctx context.Context, req *api.ExecuteHackRequest,
 }
 
 // ExecuteHackStep - TYPED response!
-func (h *Handlers) ExecuteHackStep(ctx context.Context, req *api.HackStepRequest, params api.ExecuteHackStepParams) (api.ExecuteHackStepRes, error) {
+func (h *Handlers) ExecuteHackStep(ctx context.Context, req *api.HackStepRequest, _ api.ExecuteHackStepParams) (api.ExecuteHackStepRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
@@ -200,7 +198,7 @@ func (h *Handlers) GetHackStatus(ctx context.Context, params api.GetHackStatusPa
 }
 
 // RetryHackStep - TYPED response!
-func (h *Handlers) RetryHackStep(ctx context.Context, params api.RetryHackStepParams) (api.RetryHackStepRes, error) {
+func (h *Handlers) RetryHackStep(ctx context.Context, _ api.RetryHackStepParams) (api.RetryHackStepRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
@@ -215,7 +213,7 @@ func (h *Handlers) RetryHackStep(ctx context.Context, params api.RetryHackStepPa
 }
 
 // ApplyHackResult - TYPED response!
-func (h *Handlers) ApplyHackResult(ctx context.Context, params api.ApplyHackResultParams) (api.ApplyHackResultRes, error) {
+func (h *Handlers) ApplyHackResult(ctx context.Context, _ api.ApplyHackResultParams) (api.ApplyHackResultRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
@@ -227,4 +225,3 @@ func (h *Handlers) ApplyHackResult(ctx context.Context, params api.ApplyHackResu
 
 	return result, nil
 }
-

@@ -1,9 +1,10 @@
-// Issue: #164
+// Package server Issue: #164
 package server
 
 import (
-	"github.com/sirupsen/logrus"
 	"os"
+
+	"github.com/sirupsen/logrus"
 )
 
 var logger = logrus.New()
@@ -17,4 +18,3 @@ func init() {
 func GetLogger() *logrus.Logger {
 	return logger
 }
-

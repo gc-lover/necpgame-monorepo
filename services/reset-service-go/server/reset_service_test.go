@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/gc-lover/necpgame-monorepo/services/reset-service-go/models"
+	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 	"github.com/robfig/cron/v3"
 	"github.com/stretchr/testify/assert"
@@ -57,7 +57,7 @@ func (m *mockEventBus) PublishEvent(ctx context.Context, eventType string, paylo
 	return args.Error(0)
 }
 
-func setupTestResetService(t *testing.T) (*ResetService, *mockResetRepository, *mockEventBus, func()) {
+func setupTestResetService() (*ResetService, *mockResetRepository, *mockEventBus, func()) {
 	mockRepo := new(mockResetRepository)
 	mockEventBus := new(mockEventBus)
 
@@ -86,7 +86,7 @@ func setupTestResetService(t *testing.T) (*ResetService, *mockResetRepository, *
 }
 
 func TestResetService_ExecuteDailyReset_Success(t *testing.T) {
-	service, mockRepo, mockEventBus, cleanup := setupTestResetService(t)
+	service, mockRepo, mockEventBus, cleanup := setupTestResetService()
 	defer cleanup()
 
 	mockRepo.On("Create", context.Background(), mock.AnythingOfType("*models.ResetRecord")).Return(nil)
@@ -101,7 +101,7 @@ func TestResetService_ExecuteDailyReset_Success(t *testing.T) {
 }
 
 func TestResetService_ExecuteDailyReset_EventPublishError(t *testing.T) {
-	service, mockRepo, mockEventBus, cleanup := setupTestResetService(t)
+	service, mockRepo, mockEventBus, cleanup := setupTestResetService()
 	defer cleanup()
 
 	mockRepo.On("Create", context.Background(), mock.AnythingOfType("*models.ResetRecord")).Return(nil)
@@ -116,7 +116,7 @@ func TestResetService_ExecuteDailyReset_EventPublishError(t *testing.T) {
 }
 
 func TestResetService_ExecuteWeeklyReset_Success(t *testing.T) {
-	service, mockRepo, mockEventBus, cleanup := setupTestResetService(t)
+	service, mockRepo, mockEventBus, cleanup := setupTestResetService()
 	defer cleanup()
 
 	mockRepo.On("Create", context.Background(), mock.AnythingOfType("*models.ResetRecord")).Return(nil)
@@ -131,7 +131,7 @@ func TestResetService_ExecuteWeeklyReset_Success(t *testing.T) {
 }
 
 func TestResetService_TriggerReset_Daily(t *testing.T) {
-	service, mockRepo, mockEventBus, cleanup := setupTestResetService(t)
+	service, mockRepo, mockEventBus, cleanup := setupTestResetService()
 	defer cleanup()
 
 	mockRepo.On("Create", context.Background(), mock.AnythingOfType("*models.ResetRecord")).Return(nil)
@@ -146,7 +146,7 @@ func TestResetService_TriggerReset_Daily(t *testing.T) {
 }
 
 func TestResetService_TriggerReset_Weekly(t *testing.T) {
-	service, mockRepo, mockEventBus, cleanup := setupTestResetService(t)
+	service, mockRepo, mockEventBus, cleanup := setupTestResetService()
 	defer cleanup()
 
 	mockRepo.On("Create", context.Background(), mock.AnythingOfType("*models.ResetRecord")).Return(nil)
@@ -161,7 +161,7 @@ func TestResetService_TriggerReset_Weekly(t *testing.T) {
 }
 
 func TestResetService_GetResetStats_Success(t *testing.T) {
-	service, mockRepo, _, cleanup := setupTestResetService(t)
+	service, mockRepo, _, cleanup := setupTestResetService()
 	defer cleanup()
 
 	now := time.Now()
@@ -195,7 +195,7 @@ func TestResetService_GetResetStats_Success(t *testing.T) {
 }
 
 func TestResetService_GetResetHistory_Success(t *testing.T) {
-	service, mockRepo, _, cleanup := setupTestResetService(t)
+	service, mockRepo, _, cleanup := setupTestResetService()
 	defer cleanup()
 
 	records := []models.ResetRecord{
@@ -221,7 +221,7 @@ func TestResetService_GetResetHistory_Success(t *testing.T) {
 }
 
 func TestResetService_GetResetHistory_WithType(t *testing.T) {
-	service, mockRepo, _, cleanup := setupTestResetService(t)
+	service, mockRepo, _, cleanup := setupTestResetService()
 	defer cleanup()
 
 	resetType := models.ResetTypeDaily
@@ -248,7 +248,7 @@ func TestResetService_GetResetHistory_WithType(t *testing.T) {
 }
 
 func TestResetService_ExecuteDailyReset_DatabaseError(t *testing.T) {
-	service, mockRepo, mockEventBus, cleanup := setupTestResetService(t)
+	service, mockRepo, mockEventBus, cleanup := setupTestResetService()
 	defer cleanup()
 
 	mockRepo.On("Create", context.Background(), mock.AnythingOfType("*models.ResetRecord")).Return(assert.AnError)
@@ -261,7 +261,7 @@ func TestResetService_ExecuteDailyReset_DatabaseError(t *testing.T) {
 }
 
 func TestResetService_ExecuteDailyReset_UpdateError(t *testing.T) {
-	service, mockRepo, mockEventBus, cleanup := setupTestResetService(t)
+	service, mockRepo, mockEventBus, cleanup := setupTestResetService()
 	defer cleanup()
 
 	mockRepo.On("Create", context.Background(), mock.AnythingOfType("*models.ResetRecord")).Return(nil)
@@ -276,7 +276,7 @@ func TestResetService_ExecuteDailyReset_UpdateError(t *testing.T) {
 }
 
 func TestResetService_ExecuteWeeklyReset_DatabaseError(t *testing.T) {
-	service, mockRepo, mockEventBus, cleanup := setupTestResetService(t)
+	service, mockRepo, mockEventBus, cleanup := setupTestResetService()
 	defer cleanup()
 
 	mockRepo.On("Create", context.Background(), mock.AnythingOfType("*models.ResetRecord")).Return(assert.AnError)
@@ -289,7 +289,7 @@ func TestResetService_ExecuteWeeklyReset_DatabaseError(t *testing.T) {
 }
 
 func TestResetService_ExecuteWeeklyReset_UpdateError(t *testing.T) {
-	service, mockRepo, mockEventBus, cleanup := setupTestResetService(t)
+	service, mockRepo, mockEventBus, cleanup := setupTestResetService()
 	defer cleanup()
 
 	mockRepo.On("Create", context.Background(), mock.AnythingOfType("*models.ResetRecord")).Return(nil)
@@ -304,7 +304,7 @@ func TestResetService_ExecuteWeeklyReset_UpdateError(t *testing.T) {
 }
 
 func TestResetService_GetResetHistory_EmptyList(t *testing.T) {
-	service, mockRepo, _, cleanup := setupTestResetService(t)
+	service, mockRepo, _, cleanup := setupTestResetService()
 	defer cleanup()
 
 	mockRepo.On("List", context.Background(), (*models.ResetType)(nil), 10, 0).Return([]models.ResetRecord{}, nil)
@@ -320,7 +320,7 @@ func TestResetService_GetResetHistory_EmptyList(t *testing.T) {
 }
 
 func TestResetService_GetResetHistory_WithFilters(t *testing.T) {
-	service, mockRepo, _, cleanup := setupTestResetService(t)
+	service, mockRepo, _, cleanup := setupTestResetService()
 	defer cleanup()
 
 	resetType := models.ResetTypeWeekly
@@ -347,7 +347,7 @@ func TestResetService_GetResetHistory_WithFilters(t *testing.T) {
 }
 
 func TestResetService_GetResetHistory_DatabaseError_List(t *testing.T) {
-	service, mockRepo, _, cleanup := setupTestResetService(t)
+	service, mockRepo, _, cleanup := setupTestResetService()
 	defer cleanup()
 
 	mockRepo.On("List", context.Background(), (*models.ResetType)(nil), 10, 0).Return(nil, assert.AnError)
@@ -360,7 +360,7 @@ func TestResetService_GetResetHistory_DatabaseError_List(t *testing.T) {
 }
 
 func TestResetService_GetResetHistory_DatabaseError_Count(t *testing.T) {
-	service, mockRepo, _, cleanup := setupTestResetService(t)
+	service, mockRepo, _, cleanup := setupTestResetService()
 	defer cleanup()
 
 	records := []models.ResetRecord{
@@ -384,7 +384,7 @@ func TestResetService_GetResetHistory_DatabaseError_Count(t *testing.T) {
 }
 
 func TestResetService_GetResetStats_NotFound(t *testing.T) {
-	service, mockRepo, _, cleanup := setupTestResetService(t)
+	service, mockRepo, _, cleanup := setupTestResetService()
 	defer cleanup()
 
 	mockRepo.On("GetLastReset", context.Background(), models.ResetTypeDaily).Return(nil, nil)
@@ -400,7 +400,7 @@ func TestResetService_GetResetStats_NotFound(t *testing.T) {
 }
 
 func TestResetService_GetResetStats_DatabaseError_Daily(t *testing.T) {
-	service, mockRepo, _, cleanup := setupTestResetService(t)
+	service, mockRepo, _, cleanup := setupTestResetService()
 	defer cleanup()
 
 	mockRepo.On("GetLastReset", context.Background(), models.ResetTypeDaily).Return(nil, assert.AnError)
@@ -413,7 +413,7 @@ func TestResetService_GetResetStats_DatabaseError_Daily(t *testing.T) {
 }
 
 func TestResetService_GetResetStats_DatabaseError_Weekly(t *testing.T) {
-	service, mockRepo, _, cleanup := setupTestResetService(t)
+	service, mockRepo, _, cleanup := setupTestResetService()
 	defer cleanup()
 
 	now := time.Now()
@@ -437,7 +437,7 @@ func TestResetService_GetResetStats_DatabaseError_Weekly(t *testing.T) {
 }
 
 func TestResetService_TriggerReset_UnknownType(t *testing.T) {
-	service, _, _, cleanup := setupTestResetService(t)
+	service, _, _, cleanup := setupTestResetService()
 	defer cleanup()
 
 	unknownType := models.ResetType("unknown")
@@ -448,7 +448,7 @@ func TestResetService_TriggerReset_UnknownType(t *testing.T) {
 }
 
 func TestResetService_GetResetHistory_Pagination(t *testing.T) {
-	service, mockRepo, _, cleanup := setupTestResetService(t)
+	service, mockRepo, _, cleanup := setupTestResetService()
 	defer cleanup()
 
 	records := []models.ResetRecord{
@@ -479,4 +479,3 @@ func TestResetService_GetResetHistory_Pagination(t *testing.T) {
 	assert.Equal(t, 5, result.Total)
 	mockRepo.AssertExpectations(t)
 }
-

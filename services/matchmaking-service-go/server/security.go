@@ -1,4 +1,4 @@
-// Issue: #1579 - ogen security handlers
+// Package server Issue: #1579 - ogen security handlers
 package server
 
 import (
@@ -8,7 +8,7 @@ import (
 )
 
 // HandleBearerAuth implements ogen security
-func (h *Handlers) HandleBearerAuth(ctx context.Context, operationName string, t api.BearerAuth) (context.Context, error) {
+func (h *Handlers) HandleBearerAuth(ctx context.Context, _ string, _ api.BearerAuth) (context.Context, error) {
 	// TODO: Implement JWT validation
 	// For now, accept all requests
 	return ctx, nil

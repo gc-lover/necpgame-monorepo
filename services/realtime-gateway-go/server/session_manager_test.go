@@ -276,4 +276,3 @@ func TestSessionManager_GetActiveSessionsCount(t *testing.T) {
 
 	sm.CloseSession(ctx, session2.Token)
 }
-

@@ -1,4 +1,4 @@
-// Issue: #131
+// Package server Issue: #131
 package server
 
 import (
@@ -21,70 +21,34 @@ type PostgresRepository struct {
 	db *sql.DB
 }
 
-func NewPostgresRepository(db *sql.DB) Repository {
-	return &PostgresRepository{db: db}
-}
-
-func (r *PostgresRepository) CreateTradeSession(ctx context.Context, initiatorID, targetID string) (string, error) {
+func (r *PostgresRepository) CreateTradeSession(_ context.Context, _, _ string) (string, error) {
 	return "session-123", nil
 }
 
-func (r *PostgresRepository) GetTradeSession(ctx context.Context, sessionID string) (interface{}, error) {
+func (r *PostgresRepository) GetTradeSession(_ context.Context, _ string) (interface{}, error) {
 	return nil, nil
 }
 
-func (r *PostgresRepository) CancelSession(ctx context.Context, sessionID string) error {
+func (r *PostgresRepository) CancelSession(_ context.Context, _ string) error {
 	return nil
 }
 
-func (r *PostgresRepository) AddItems(ctx context.Context, sessionID, playerID string, items interface{}) error {
+func (r *PostgresRepository) AddItems(_ context.Context, _, _ string, _ interface{}) error {
 	return nil
 }
 
-func (r *PostgresRepository) AddCurrency(ctx context.Context, sessionID, playerID string, currency interface{}) error {
+func (r *PostgresRepository) AddCurrency(_ context.Context, _, _ string, _ interface{}) error {
 	return nil
 }
 
-func (r *PostgresRepository) SetReady(ctx context.Context, sessionID, playerID string, ready bool) error {
+func (r *PostgresRepository) SetReady(_ context.Context, _, _ string, _ bool) error {
 	return nil
 }
 
-func (r *PostgresRepository) CompleteTrade(ctx context.Context, sessionID string) error {
+func (r *PostgresRepository) CompleteTrade(_ context.Context, _ string) error {
 	return nil
 }
 
-func (r *PostgresRepository) SaveTradeHistory(ctx context.Context, sessionID string) error {
+func (r *PostgresRepository) SaveTradeHistory(_ context.Context, _ string) error {
 	return nil
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

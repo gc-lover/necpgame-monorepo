@@ -1,0 +1,479 @@
+# Issue: #2197 - Real-time Combat API - Connections
+openapi: 3.0.3
+info:
+  title: Real-time Combat API - Connections
+  version: 1.0.0
+  description: |
+    REST API for managing real-time combat interactions in MMOFPS RPG.
+
+    This API provides endpoints for managing WebSocket connections, event subscriptions,
+    real-time state synchronization, and server-sent events for combat systems.
+
+    ## Integration with WebSocket API
+
+    This REST API works alongside the WebSocket API (`combat-systems-wave1-websocket.yaml`)
+    to provide:
+    - Connection management and authentication
+    - Event subscription configuration
+    - Server-sent events fallback
+    - Administrative controls
+
+    ## Key Features
+
+    - WebSocket connection lifecycle management
+    - Event filtering and subscription management
+    - Real-time state synchronization
+    - Server-sent events (SSE) fallback
+    - Connection health monitoring
+    - Rate limiting and throttling controls
+
+    ## Performance Requirements
+
+    - Connection establishment: <50ms P99
+    - Event routing: <10ms P99
+    - Concurrent connections: 1000+ per server
+    - Memory efficient state management
+
+servers:
+  - url: http://localhost:8110
+    description: Local development
+  - url: https://api.necpgame.com/v1/realtime/combat
+    description: Production API
+
+tags:
+  - name: connections
+    description: WebSocket connection management
+
+security:
+  - BearerAuth: [ ]
+
+paths:
+
+  # ============================================================================
+  # CONNECTION MANAGEMENT
+  # ============================================================================
+
+  /api/v1/realtime/combat/connections:
+    post:
+      summary: Establish WebSocket connection token
+      operationId: createConnectionToken
+      tags: [ connections ]
+      security:
+        - BearerAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConnectionRequest'
+      responses:
+        '201':
+          description: Connection token created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnectionToken'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    get:
+      summary: List active connections
+      operationId: listActiveConnections
+      tags: [ connections ]
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: player_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by player ID
+        - name: session_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by combat session ID
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of connections to return
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          description: Pagination offset
+      responses:
+        '200':
+          description: Active connections retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnectionListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/realtime/combat/connections/{connection_id}:
+    get:
+      summary: Get connection details
+      operationId: getConnectionDetails
+      tags: [ connections ]
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: connection_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Connection ID
+      responses:
+        '200':
+          description: Connection details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnectionDetails'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    delete:
+      summary: Terminate connection
+      operationId: terminateConnection
+      tags: [ connections ]
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: connection_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Connection ID
+      responses:
+        '204':
+          description: Connection terminated
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    NotFound:
+      description: Not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    TooManyRequests:
+      description: Too many requests
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+  schemas:
+    # ============================================================================
+    # CONNECTION SCHEMAS
+    # ============================================================================
+
+    ConnectionRequest:
+      type: object
+      required:
+        - player_id
+        - session_id
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          description: Player identifier
+        session_id:
+          type: string
+          format: uuid
+          description: Combat session identifier
+        preferred_region:
+          type: string
+          enum: [ us-east, us-west, eu-central, asia-pacific ]
+          description: Preferred server region
+        client_version:
+          type: string
+          description: Client application version
+        capabilities:
+          type: array
+          items:
+            type: string
+            enum: [ websocket, sse, compression, encryption ]
+          description: Client capabilities
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Additional connection metadata
+
+    ConnectionToken:
+      type: object
+      required:
+        - token
+        - connection_id
+        - websocket_url
+        - expires_at
+      properties:
+        token:
+          type: string
+          description: JWT token for WebSocket authentication
+        connection_id:
+          type: string
+          format: uuid
+          description: Unique connection identifier
+        websocket_url:
+          type: string
+          format: uri
+          description: WebSocket endpoint URL
+        expires_at:
+          type: string
+          format: date-time
+          description: Token expiration timestamp
+        server_info:
+          type: object
+          properties:
+            region:
+              type: string
+              description: Server region
+            load_factor:
+              type: number
+              format: float
+              minimum: 0
+              maximum: 1
+              description: Server load factor (0-1)
+            max_connections:
+              type: integer
+              minimum: 1
+              description: Maximum concurrent connections
+        sse_fallback_url:
+          type: string
+          format: uri
+          description: Server-sent events fallback URL
+
+    ConnectionDetails:
+      type: object
+      required:
+        - connection_id
+        - player_id
+        - session_id
+        - status
+        - created_at
+        - last_activity
+      properties:
+        connection_id:
+          type: string
+          format: uuid
+          description: Unique connection identifier
+        player_id:
+          type: string
+          format: uuid
+          description: Player identifier
+        session_id:
+          type: string
+          format: uuid
+          description: Combat session identifier
+        status:
+          type: string
+          enum: [ connecting, connected, disconnected, error ]
+          description: Connection status
+        created_at:
+          type: string
+          format: date-time
+          description: Connection creation timestamp
+        last_activity:
+          type: string
+          format: date-time
+          description: Last activity timestamp
+        ping_latency:
+          type: integer
+          minimum: 0
+          description: Average ping latency in milliseconds
+        bytes_sent:
+          type: integer
+          minimum: 0
+          description: Total bytes sent
+        bytes_received:
+          type: integer
+          minimum: 0
+          description: Total bytes received
+        events_sent:
+          type: integer
+          minimum: 0
+          description: Number of events sent
+        events_received:
+          type: integer
+          minimum: 0
+          description: Number of events received
+        client_info:
+          type: object
+          properties:
+            user_agent:
+              type: string
+              description: Client user agent
+            ip_address:
+              type: string
+              description: Client IP address
+            region:
+              type: string
+              description: Client region
+        server_info:
+          type: object
+          properties:
+            server_id:
+              type: string
+              description: Server identifier
+            region:
+              type: string
+              description: Server region
+            load_factor:
+              type: number
+              format: float
+              minimum: 0
+              maximum: 1
+              description: Server load factor
+
+    ConnectionListResponse:
+      type: object
+      required:
+        - connections
+        - total_count
+        - limit
+        - offset
+      properties:
+        connections:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConnectionSummary'
+        total_count:
+          type: integer
+          minimum: 0
+          description: Total number of connections
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Requested limit
+        offset:
+          type: integer
+          minimum: 0
+          description: Requested offset
+
+    ConnectionSummary:
+      type: object
+      required:
+        - connection_id
+        - player_id
+        - session_id
+        - status
+        - created_at
+        - last_activity
+      properties:
+        connection_id:
+          type: string
+          format: uuid
+          description: Unique connection identifier
+        player_id:
+          type: string
+          format: uuid
+          description: Player identifier
+        session_id:
+          type: string
+          format: uuid
+          description: Combat session identifier
+        status:
+          type: string
+          enum: [ connecting, connected, disconnected, error ]
+          description: Connection status
+        created_at:
+          type: string
+          format: date-time
+          description: Connection creation timestamp
+        last_activity:
+          type: string
+          format: date-time
+          description: Last activity timestamp
+        ping_latency:
+          type: integer
+          minimum: 0
+          description: Average ping latency in milliseconds
+        region:
+          type: string
+          description: Server region
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - message
+        - timestamp
+      properties:
+        error:
+          type: string
+          description: Error code
+        message:
+          type: string
+          description: Human-readable error message
+        timestamp:
+          type: string
+          format: date-time
+          description: Error timestamp
+        details:
+          type: object
+          additionalProperties: true
+          description: Additional error details
+        request_id:
+          type: string
+          description: Request identifier for tracing

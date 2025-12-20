@@ -1,4 +1,4 @@
-// Issue: #150 - Matchmaking Service Handlers (ogen-based)
+// Package server Issue: #150 - Matchmaking Service Handlers (ogen-based)
 // Performance: TYPED responses, zero allocations target, memory pooling
 package server
 
@@ -8,7 +8,7 @@ import (
 
 	"github.com/google/uuid"
 
-	api "github.com/gc-lover/necpgame-monorepo/services/matchmaking-go/pkg/api"
+	"github.com/gc-lover/necpgame-monorepo/services/matchmaking-go/pkg/api"
 )
 
 // Context timeout constants (critical for hot path!)

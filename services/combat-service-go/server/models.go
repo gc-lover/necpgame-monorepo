@@ -4,20 +4,20 @@ import (
 	"time"
 )
 
-// OPTIMIZATION: Issue #1936 - Struct field alignment (large → small)
+// CombatSession OPTIMIZATION: Issue #1936 - Struct field alignment (large → small)
 type CombatSession struct {
-	CombatID     string                 `json:"combat_id"`     // 16 bytes
-	Status       string                 `json:"status"`        // 16 bytes
-	CombatType   string                 `json:"combat_type"`   // 16 bytes
-	Participants []*CombatParticipant   `json:"participants"`  // 24 bytes (slice)
-	CurrentTurn  string                 `json:"current_turn"`  // 16 bytes
-	Events       []*CombatEvent         `json:"events"`        // 24 bytes (slice)
-	StartTime    time.Time              `json:"start_time"`    // 24 bytes
-	TimeLimit    time.Duration          `json:"time_limit"`    // 8 bytes
-	Location     string                 `json:"location"`      // 16 bytes
+	CombatID     string               `json:"combat_id"`    // 16 bytes
+	Status       string               `json:"status"`       // 16 bytes
+	CombatType   string               `json:"combat_type"`  // 16 bytes
+	Participants []*CombatParticipant `json:"participants"` // 24 bytes (slice)
+	CurrentTurn  string               `json:"current_turn"` // 16 bytes
+	Events       []*CombatEvent       `json:"events"`       // 24 bytes (slice)
+	StartTime    time.Time            `json:"start_time"`   // 24 bytes
+	TimeLimit    time.Duration        `json:"time_limit"`   // 8 bytes
+	Location     string               `json:"location"`     // 16 bytes
 }
 
-// OPTIMIZATION: Issue #1936 - Struct field alignment (large → small)
+// CombatParticipant OPTIMIZATION: Issue #1936 - Struct field alignment (large → small)
 type CombatParticipant struct {
 	CharacterID   string          `json:"character_id"`   // 16 bytes
 	Health        int             `json:"health"`         // 8 bytes
@@ -28,44 +28,44 @@ type CombatParticipant struct {
 	Team          string          `json:"team"`           // 16 bytes
 }
 
-// OPTIMIZATION: Issue #1936 - Memory-aligned Vector3
+// Vector3 OPTIMIZATION: Issue #1936 - Memory-aligned Vector3
 type Vector3 struct {
 	X float64 `json:"x"` // 8 bytes
 	Y float64 `json:"y"` // 8 bytes
 	Z float64 `json:"z"` // 8 bytes
 }
 
-// OPTIMIZATION: Issue #1936 - Struct field alignment (large → small)
+// StatusEffect OPTIMIZATION: Issue #1936 - Struct field alignment (large → small)
 type StatusEffect struct {
-	EffectID   string                 `json:"effect_id"`   // 16 bytes
-	EffectType string                 `json:"effect_type"` // 16 bytes
-	Name       string                 `json:"name"`        // 16 bytes
+	EffectID    string                 `json:"effect_id"`   // 16 bytes
+	EffectType  string                 `json:"effect_type"` // 16 bytes
+	Name        string                 `json:"name"`        // 16 bytes
 	Description string                 `json:"description"` // 16 bytes
-	Duration   int                    `json:"duration"`    // 8 bytes (seconds, -1 for permanent)
-	Stacks     int                    `json:"stacks"`      // 8 bytes
-	Parameters map[string]interface{} `json:"parameters"`  // 8 bytes (map)
-	AppliedAt  time.Time              `json:"applied_at"`  // 24 bytes
+	Duration    int                    `json:"duration"`    // 8 bytes (seconds, -1 for permanent)
+	Stacks      int                    `json:"stacks"`      // 8 bytes
+	Parameters  map[string]interface{} `json:"parameters"`  // 8 bytes (map)
+	AppliedAt   time.Time              `json:"applied_at"`  // 24 bytes
 }
 
-// OPTIMIZATION: Issue #1936 - Struct field alignment (large → small)
+// CombatEvent OPTIMIZATION: Issue #1936 - Struct field alignment (large → small)
 type CombatEvent struct {
-	EventID    string                 `json:"event_id"`    // 16 bytes
-	EventType  string                 `json:"event_type"`  // 16 bytes
-	Timestamp  int64                  `json:"timestamp"`  // 8 bytes
-	Data       map[string]interface{} `json:"data"`       // 8 bytes (map)
+	EventID   string                 `json:"event_id"`   // 16 bytes
+	EventType string                 `json:"event_type"` // 16 bytes
+	Timestamp int64                  `json:"timestamp"`  // 8 bytes
+	Data      map[string]interface{} `json:"data"`       // 8 bytes (map)
 }
 
-// OPTIMIZATION: Issue #1936 - Struct field alignment (large → small)
+// DamageResult OPTIMIZATION: Issue #1936 - Struct field alignment (large → small)
 type DamageResult struct {
-	TotalDamage    int     `json:"total_damage"`    // 8 bytes
-	DamageType     string  `json:"damage_type"`     // 16 bytes
-	CriticalHit    bool    `json:"critical_hit"`    // 1 byte
-	Blocked        bool    `json:"blocked"`         // 1 byte
-	Mitigated      int     `json:"mitigated"`       // 8 bytes
+	TotalDamage        int     `json:"total_damage"`        // 8 bytes
+	DamageType         string  `json:"damage_type"`         // 16 bytes
+	CriticalHit        bool    `json:"critical_hit"`        // 1 byte
+	Blocked            bool    `json:"blocked"`             // 1 byte
+	Mitigated          int     `json:"mitigated"`           // 8 bytes
 	CriticalMultiplier float64 `json:"critical_multiplier"` // 8 bytes
 }
 
-// Request structs
+// InitiateCombatRequest Request structs
 type InitiateCombatRequest struct {
 	AttackerID string `json:"attacker_id"`
 	DefenderID string `json:"defender_id"`
@@ -87,11 +87,11 @@ type ApplyStatusEffectRequest struct {
 }
 
 type DamageCalculationRequest struct {
-	AttackerID string             `json:"attacker_id"`
-	DefenderID string             `json:"defender_id"`
-	AttackType string             `json:"attack_type"`
-	BaseDamage int                `json:"base_damage"`
-	Modifiers  []*DamageModifier  `json:"modifiers"`
+	AttackerID string            `json:"attacker_id"`
+	DefenderID string            `json:"defender_id"`
+	AttackType string            `json:"attack_type"`
+	BaseDamage int               `json:"base_damage"`
+	Modifiers  []*DamageModifier `json:"modifiers"`
 }
 
 type DamageModifier struct {
@@ -100,7 +100,7 @@ type DamageModifier struct {
 	Source string      `json:"source"`
 }
 
-// Response structs
+// InitiateCombatResponse Response structs
 type InitiateCombatResponse struct {
 	CombatID     string               `json:"combat_id"`
 	Status       string               `json:"status"`
@@ -108,28 +108,28 @@ type InitiateCombatResponse struct {
 }
 
 type CombatStatusResponse struct {
-	CombatID      string            `json:"combat_id"`
-	Status        string            `json:"status"`
+	CombatID      string               `json:"combat_id"`
+	Status        string               `json:"status"`
 	Participants  []*CombatParticipant `json:"participants"`
-	CurrentTurn   string            `json:"current_turn"`
-	TimeRemaining int               `json:"time_remaining"`
-	Events        []*CombatEvent    `json:"events"`
+	CurrentTurn   string               `json:"current_turn"`
+	TimeRemaining int                  `json:"time_remaining"`
+	Events        []*CombatEvent       `json:"events"`
 }
 
 type CombatActionResponse struct {
-	ActionID string        `json:"action_id"`
-	Success  bool          `json:"success"`
-	Damage   *DamageResult `json:"damage,omitempty"`
+	ActionID      string          `json:"action_id"`
+	Success       bool            `json:"success"`
+	Damage        *DamageResult   `json:"damage,omitempty"`
 	StatusEffects []*StatusEffect `json:"status_effects,omitempty"`
-	Cooldown int           `json:"cooldown"`
+	Cooldown      int             `json:"cooldown"`
 }
 
 type EndCombatResponse struct {
-	CombatID         string       `json:"combat_id"`
-	Winner           string       `json:"winner,omitempty"`
-	Duration         int          `json:"duration"`
-	ExperienceGained int          `json:"experience_gained"`
-	Loot             []*LootItem  `json:"loot,omitempty"`
+	CombatID         string      `json:"combat_id"`
+	Winner           string      `json:"winner,omitempty"`
+	Duration         int         `json:"duration"`
+	ExperienceGained int         `json:"experience_gained"`
+	Loot             []*LootItem `json:"loot,omitempty"`
 }
 
 type LootItem struct {

@@ -1,4 +1,4 @@
-// Issue: #1591 - ogen HTTP server integration
+// Package server Issue: #1591 - ogen HTTP server integration
 // OPTIMIZATION: 90% faster than oapi-codegen, typed handlers, zero allocations
 package server
 
@@ -82,12 +82,12 @@ func (s *HTTPServerOgen) Shutdown(ctx context.Context) error {
 }
 
 // Health check handlers
-func healthCheck(w http.ResponseWriter, r *http.Request) {
+func healthCheck(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(`{"status":"healthy"}`))
 }
 
-func readyCheck(w http.ResponseWriter, r *http.Request) {
+func readyCheck(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(`{"status":"ready"}`))
 }

@@ -8,55 +8,13 @@ import (
 
 type CosmeticCategory string
 
-const (
-	CosmeticCategoryCharacterSkin CosmeticCategory = "CHARACTER_SKIN"
-	CosmeticCategoryWeaponSkin    CosmeticCategory = "WEAPON_SKIN"
-	CosmeticCategoryEmote         CosmeticCategory = "EMOTE"
-	CosmeticCategoryTitle         CosmeticCategory = "TITLE"
-	CosmeticCategoryNamePlate     CosmeticCategory = "NAME_PLATE"
-)
-
 type CosmeticType string
-
-const (
-	CosmeticTypeSkin      CosmeticType = "SKIN"
-	CosmeticTypeEmote     CosmeticType = "EMOTE"
-	CosmeticTypeTitle     CosmeticType = "TITLE"
-	CosmeticTypeNamePlate CosmeticType = "NAME_PLATE"
-)
 
 type CosmeticRarity string
 
-const (
-	CosmeticRarityCommon    CosmeticRarity = "COMMON"
-	CosmeticRarityUncommon  CosmeticRarity = "UNCOMMON"
-	CosmeticRarityRare      CosmeticRarity = "RARE"
-	CosmeticRarityEpic      CosmeticRarity = "EPIC"
-	CosmeticRarityLegendary CosmeticRarity = "LEGENDARY"
-	CosmeticRarityExotic    CosmeticRarity = "EXOTIC"
-)
-
 type CosmeticSlot string
 
-const (
-	CosmeticSlotCharacterSkin CosmeticSlot = "CHARACTER_SKIN"
-	CosmeticSlotWeaponSkin    CosmeticSlot = "WEAPON_SKIN"
-	CosmeticSlotTitle         CosmeticSlot = "TITLE"
-	CosmeticSlotNamePlate     CosmeticSlot = "NAME_PLATE"
-	CosmeticSlotEmote1        CosmeticSlot = "EMOTE_1"
-	CosmeticSlotEmote2        CosmeticSlot = "EMOTE_2"
-	CosmeticSlotEmote3        CosmeticSlot = "EMOTE_3"
-	CosmeticSlotEmote4        CosmeticSlot = "EMOTE_4"
-)
-
 type CosmeticEventType string
-
-const (
-	CosmeticEventTypePurchased   CosmeticEventType = "cosmetic:purchased"
-	CosmeticEventTypeEquipped    CosmeticEventType = "cosmetic:equipped"
-	CosmeticEventTypeUnequipped  CosmeticEventType = "cosmetic:unequipped"
-	CosmeticEventTypeShopRotated CosmeticEventType = "cosmetic:shop-rotated"
-)
 
 type CosmeticItem struct {
 	ID            uuid.UUID              `json:"id" db:"id"`

@@ -41,11 +41,13 @@ inventory-service-go/
 ### Примеры запросов
 
 **Получить инвентарь:**
+
 ```bash
 curl http://localhost:8085/api/v1/inventory/{characterId}
 ```
 
 **Добавить предмет:**
+
 ```bash
 curl -X POST http://localhost:8085/api/v1/inventory/{characterId}/items \
   -H "Content-Type: application/json" \
@@ -53,6 +55,7 @@ curl -X POST http://localhost:8085/api/v1/inventory/{characterId}/items \
 ```
 
 **Экипировать предмет:**
+
 ```bash
 curl -X POST http://localhost:8085/api/v1/inventory/{characterId}/equip \
   -H "Content-Type: application/json" \
@@ -62,6 +65,7 @@ curl -X POST http://localhost:8085/api/v1/inventory/{characterId}/equip \
 ## База данных
 
 Миграция `V1_6__inventory_tables.sql` создает таблицы:
+
 - `mvp_core.character_inventory` - основной инвентарь
 - `mvp_core.character_items` - предметы в инвентаре
 - `mvp_core.item_templates` - шаблоны предметов (reference data)
@@ -77,6 +81,7 @@ go run .
 ```
 
 Или через скрипт:
+
 ```bash
 scripts\run\inventory-service.cmd
 ```
@@ -100,6 +105,7 @@ docker-compose up inventory-service
 ## Конфигурация
 
 Переменные окружения:
+
 - `ADDR` - адрес HTTP сервера (по умолчанию: `0.0.0.0:8085`)
 - `METRICS_ADDR` - адрес метрик (по умолчанию: `:9090`)
 - `DATABASE_URL` - URL подключения к PostgreSQL
@@ -109,6 +115,7 @@ docker-compose up inventory-service
 ## Метрики
 
 Prometheus метрики доступны на `/metrics`:
+
 - `inventory_requests_total` - количество запросов
 - `inventory_request_duration_seconds` - длительность обработки запросов
 - `inventory_items_total` - количество предметов в инвентаре
@@ -117,6 +124,7 @@ Prometheus метрики доступны на `/metrics`:
 ## Интеграция
 
 Интегрируется с:
+
 - **PostgreSQL** - хранение данных
 - **Redis** - кэширование (TTL 5 минут)
 - **Prometheus** - метрики

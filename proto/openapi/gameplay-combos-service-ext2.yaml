@@ -1,161 +1,161 @@
-            synergyPreferences:
-              type: object
-              description: Предпочтения синергий
-              additionalProperties:
-                type: boolean
-        createdAt:
-          type: string
-          format: date-time
-        updatedAt:
-          type: string
-          format: date-time
-      required:
-        - characterId
-        - activeCombos
+synergyPreferences:
+  type: object
+  description: Предпочтения синергий
+  additionalProperties:
+    type: boolean
+createdAt:
+  type: string
+  format: date-time
+updatedAt:
+  type: string
+  format: date-time
+required:
+  - characterId
+  - activeCombos
 
-    ComboLoadoutUpdate:
+ComboLoadoutUpdate:
+  type: object
+  description: Обновление лоадаута комбо
+  properties:
+    characterId:
+      type: string
+      format: uuid
+      description: ID персонажа
+    activeCombos:
+      type: array
+      items:
+        type: string
+        format: uuid
+      description: ID активных комбо
+      maxItems: 10
+    preferences:
       type: object
-      description: Обновление лоадаута комбо
+      description: Настройки предпочтений
       properties:
-        characterId:
-          type: string
-          format: uuid
-          description: ID персонажа
-        activeCombos:
+        autoActivate:
+          type: boolean
+          description: Автоматическая активация
+        priorityCombos:
           type: array
           items:
             type: string
             format: uuid
-          description: ID активных комбо
-          maxItems: 10
-        preferences:
+          description: Приоритетные комбо
+          maxItems: 5
+        synergyPreferences:
           type: object
-          description: Настройки предпочтений
-          properties:
-            autoActivate:
-              type: boolean
-              description: Автоматическая активация
-            priorityCombos:
-              type: array
-              items:
-                type: string
-                format: uuid
-              description: Приоритетные комбо
-              maxItems: 5
-            synergyPreferences:
-              type: object
-              description: Предпочтения синергий
-              additionalProperties:
-                type: boolean
-      required:
-        - characterId
+          description: Предпочтения синергий
+          additionalProperties:
+            type: boolean
+  required:
+    - characterId
 
-    Reward:
+Reward:
+  type: object
+  description: Награда за комбо
+  properties:
+    type:
+      type: string
+      enum: [ experience, currency, item, title, achievement ]
+      description: Тип награды
+    value:
+      oneOf:
+        - type: integer
+          description: Числовое значение
+        - type: string
+          description: Строковое значение
+        - type: object
+          description: Сложное значение
+    description:
+      type: string
+      description: Описание награды
+  required:
+    - type
+    - value
+
+PaginationInfo:
+  type: object
+  description: Информация о пагинации
+  properties:
+    limit:
+      type: integer
+      description: Размер страницы
+    offset:
+      type: integer
+      description: Смещение
+    hasNext:
+      type: boolean
+      description: Есть следующая страница
+    hasPrev:
+      type: boolean
+      description: Есть предыдущая страница
+  required:
+    - limit
+    - offset
+    - hasNext
+    - hasPrev
+
+Error:
+  type: object
+  description: Описание ошибки
+  properties:
+    code:
+      type: string
+      description: Код ошибки
+    message:
+      type: string
+      description: Сообщение об ошибке
+    details:
       type: object
-      description: Награда за комбо
-      properties:
-        type:
-          type: string
-          enum: [experience, currency, item, title, achievement]
-          description: Тип награды
-        value:
-          oneOf:
-            - type: integer
-              description: Числовое значение
-            - type: string
-              description: Строковое значение
-            - type: object
-              description: Сложное значение
-        description:
-          type: string
-          description: Описание награды
-      required:
-        - type
-        - value
+      description: Дополнительные детали ошибки
+      additionalProperties: true
+  required:
+    - code
+    - message
 
-    PaginationInfo:
-      type: object
-      description: Информация о пагинации
-      properties:
-        limit:
-          type: integer
-          description: Размер страницы
-        offset:
-          type: integer
-          description: Смещение
-        hasNext:
-          type: boolean
-          description: Есть следующая страница
-        hasPrev:
-          type: boolean
-          description: Есть предыдущая страница
-      required:
-        - limit
-        - offset
-        - hasNext
-        - hasPrev
+# Переиспользуемые ответы
+responses:
+  BadRequest:
+    description: Неверный запрос
+    content:
+      application/json:
+        schema:
+          $ref: "#/components/schemas/Error"
 
-    Error:
-      type: object
-      description: Описание ошибки
-      properties:
-        code:
-          type: string
-          description: Код ошибки
-        message:
-          type: string
-          description: Сообщение об ошибке
-        details:
-          type: object
-          description: Дополнительные детали ошибки
-          additionalProperties: true
-      required:
-        - code
-        - message
+  Unauthorized:
+    description: Не авторизован
+    content:
+      application/json:
+        schema:
+          $ref: "#/components/schemas/Error"
 
-  # Переиспользуемые ответы
-  responses:
-    BadRequest:
-      description: Неверный запрос
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/Error"
+  NotFound:
+    description: Ресурс не найден
+    content:
+      application/json:
+        schema:
+          $ref: "#/components/schemas/Error"
 
-    Unauthorized:
-      description: Не авторизован
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/Error"
+  InternalServerError:
+    description: Внутренняя ошибка сервера
+    content:
+      application/json:
+        schema:
+          $ref: "#/components/schemas/Error"
 
-    NotFound:
-      description: Ресурс не найден
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/Error"
+# Схемы безопасности
+securitySchemes:
+  BearerAuth:
+    type: http
+    scheme: bearer
+    bearerFormat: JWT
+    description: JWT токен авторизации
 
-    InternalServerError:
-      description: Внутренняя ошибка сервера
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/Error"
-
-  # Схемы безопасности
-  securitySchemes:
-    BearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
-      description: JWT токен авторизации
-
-    ApiKeyAuth:
-      type: apiKey
-      in: header
-      name: X-API-Key
-      description: API ключ для сервер-сервер коммуникации
+  ApiKeyAuth:
+    type: apiKey
+    in: header
+    name: X-API-Key
+    description: API ключ для сервер-сервер коммуникации
 
 # WebSocket спецификации (документация)
 x-websockets:
@@ -174,7 +174,7 @@ x-websockets:
         properties:
           type:
             type: string
-            enum: [combo_activated]
+            enum: [ combo_activated ]
           data:
             type: object
             properties:
@@ -215,13 +215,13 @@ x-websockets:
         properties:
           type:
             type: string
-            enum: [synergy_available]
+            enum: [ synergy_available ]
           data:
             type: object
             properties:
               synergyType:
                 type: string
-                enum: [ability, team, equipment, implant, timing]
+                enum: [ ability, team, equipment, implant, timing ]
               bonuses:
                 type: object
                 additionalProperties:
@@ -232,7 +232,7 @@ x-websockets:
         properties:
           type:
             type: string
-            enum: [chain_opportunity]
+            enum: [ chain_opportunity ]
           data:
             type: object
             properties:
@@ -250,7 +250,7 @@ x-websockets:
         properties:
           type:
             type: string
-            enum: [achievement_unlocked]
+            enum: [ achievement_unlocked ]
           data:
             type: object
             properties:
@@ -259,7 +259,7 @@ x-websockets:
                 format: uuid
               category:
                 type: string
-                enum: [Bronze, Silver, Gold, Platinum, Legendary]
+                enum: [ Bronze, Silver, Gold, Platinum, Legendary ]
               rewards:
                 type: array
                 items:

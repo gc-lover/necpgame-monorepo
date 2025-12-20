@@ -1,4 +1,4 @@
-// Issue: #1856
+// Package server Issue: #1856
 // OPTIMIZED: No chi dependency, standard http.ServeMux + middleware chain
 // PERFORMANCE: OGEN routes (hot path) already maximum speed, removed chi overhead from health/metrics
 package server
@@ -84,7 +84,7 @@ func chainMiddleware(handler http.Handler, middlewares ...func(http.Handler) htt
 type SecurityHandler struct{}
 
 // HandleBearerAuth handles Bearer token authentication
-func (s *SecurityHandler) HandleBearerAuth(ctx context.Context, operationName string, t api.BearerAuth) (context.Context, error) {
+func (s *SecurityHandler) HandleBearerAuth(ctx context.Context) (context.Context, error) {
 	// TODO: Implement JWT token validation
 	// For now, just extract user ID from token
 	userID, err := uuid.Parse("00000000-0000-0000-0000-000000000001") // Mock user ID
@@ -98,14 +98,14 @@ func (s *SecurityHandler) HandleBearerAuth(ctx context.Context, operationName st
 }
 
 // healthCheck provides basic health check endpoint
-func healthCheck(w http.ResponseWriter, r *http.Request) {
+func healthCheck(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(`{"status":"healthy","service":"guild-war-service"}`))
 }
 
 // metricsHandler provides basic metrics endpoint (TODO: integrate with Prometheus)
-func metricsHandler(w http.ResponseWriter, r *http.Request) {
+func metricsHandler(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(http.StatusOK)
 	// TODO: Implement proper Prometheus metrics

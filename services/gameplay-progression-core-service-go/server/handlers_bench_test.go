@@ -11,26 +11,26 @@ import (
 
 type mockProgressionService struct{}
 
-func (m *mockProgressionService) ValidateProgression(ctx context.Context, characterID uuid.UUID) (*api.ProgressionValidationResponse, error) {
+func (m *mockProgressionService) ValidateProgression(_ context.Context, _ uuid.UUID) (*api.ProgressionValidationResponse, error) {
 	return &api.ProgressionValidationResponse{
 		Valid:  api.NewOptBool(true),
 		Issues: []string{},
 	}, nil
 }
 
-func (m *mockProgressionService) GetCharacterProgression(ctx context.Context, characterID uuid.UUID) (*api.CharacterProgression, error) {
+func (m *mockProgressionService) GetCharacterProgression(_ context.Context, _ uuid.UUID) (*api.CharacterProgression, error) {
 	return &api.CharacterProgression{}, nil
 }
 
-func (m *mockProgressionService) DistributeAttributePoints(ctx context.Context, characterID uuid.UUID, attributes map[string]int) (*api.CharacterProgression, error) {
+func (m *mockProgressionService) DistributeAttributePoints(_ context.Context, _ uuid.UUID, _ map[string]int) (*api.CharacterProgression, error) {
 	return &api.CharacterProgression{}, nil
 }
 
-func (m *mockProgressionService) AddExperience(ctx context.Context, characterID uuid.UUID, amount int, source string) (*api.CharacterProgression, error) {
+func (m *mockProgressionService) AddExperience(_ context.Context, _ uuid.UUID, _ int, _ string) (*api.CharacterProgression, error) {
 	return &api.CharacterProgression{}, nil
 }
 
-func (m *mockProgressionService) DistributeSkillPoints(ctx context.Context, characterID uuid.UUID, skills map[string]int) (*api.CharacterProgression, error) {
+func (m *mockProgressionService) DistributeSkillPoints(_ context.Context, _ uuid.UUID, _ map[string]int) (*api.CharacterProgression, error) {
 	return &api.CharacterProgression{}, nil
 }
 
@@ -84,4 +84,3 @@ func BenchmarkDistributeAttributePoints(b *testing.B) {
 		_, _ = handlers.DistributeAttributePoints(ctx, req, params)
 	}
 }
-

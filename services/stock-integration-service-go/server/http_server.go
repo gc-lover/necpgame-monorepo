@@ -1,4 +1,4 @@
-// Issue: #1601 - ogen migration
+// Package server Issue: #1601 - ogen migration
 package server
 
 // HTTP handlers use context.WithTimeout for request timeouts (see handlers.go)
@@ -10,7 +10,7 @@ import (
 	"os"
 	"time"
 
-	api "github.com/gc-lover/necpgame-monorepo/services/stock-integration-service-go/pkg/api"
+	"github.com/gc-lover/necpgame-monorepo/services/stock-integration-service-go/pkg/api"
 	"github.com/sirupsen/logrus"
 )
 
@@ -63,7 +63,7 @@ func (s *HTTPServer) Start(ctx context.Context) error {
 
 	errChan := make(chan error, 1)
 	go func() {
-			defer close(errChan)
+		defer close(errChan)
 		if err := s.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			errChan <- err
 		}
@@ -84,7 +84,7 @@ func (s *HTTPServer) Shutdown(ctx context.Context) error {
 	return nil
 }
 
-func (s *HTTPServer) healthCheck(w http.ResponseWriter, r *http.Request) {
+func (s *HTTPServer) healthCheck(w http.ResponseWriter, _ *http.Request) {
 	s.respondJSON(w, http.StatusOK, map[string]string{"status": "healthy"})
 }
 
@@ -157,7 +157,3 @@ func getEnv(key, defaultValue string) string {
 	}
 	return defaultValue
 }
-
-
-
-

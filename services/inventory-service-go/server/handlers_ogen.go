@@ -1,4 +1,4 @@
-// Issue: #1591, #1867 - ogen typed handlers (HOT PATH - 10k RPS) + Memory Pooling Optimization
+// Package server Issue: #1591, #1867 - ogen typed handlers (HOT PATH - 10k RPS) + Memory Pooling Optimization
 // OPTIMIZATION: Typed responses, no interface{} boxing, ogen optimized JSON marshaling
 // Memory pooling for zero allocations target!
 package server
@@ -278,7 +278,7 @@ func (h *InventoryHandlersOgen) UpdateItem(ctx context.Context, req *api.UpdateI
 }
 
 // GetItem - TYPED ogen response
-func (h *InventoryHandlersOgen) GetItem(ctx context.Context, params api.GetItemParams) (api.GetItemRes, error) {
+func (h *InventoryHandlersOgen) GetItem(ctx context.Context, _ api.GetItemParams) (api.GetItemRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, CacheTimeout)
 	defer cancel()
 
@@ -287,7 +287,7 @@ func (h *InventoryHandlersOgen) GetItem(ctx context.Context, params api.GetItemP
 }
 
 // MoveItem - TYPED ogen response
-func (h *InventoryHandlersOgen) MoveItem(ctx context.Context, req *api.MoveItemRequest, params api.MoveItemParams) (api.MoveItemRes, error) {
+func (h *InventoryHandlersOgen) MoveItem(ctx context.Context, _ *api.MoveItemRequest, _ api.MoveItemParams) (api.MoveItemRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
@@ -298,7 +298,7 @@ func (h *InventoryHandlersOgen) MoveItem(ctx context.Context, req *api.MoveItemR
 }
 
 // GetVaults - TYPED ogen response
-func (h *InventoryHandlersOgen) GetVaults(ctx context.Context, params api.GetVaultsParams) (*api.VaultsListResponse, error) {
+func (h *InventoryHandlersOgen) GetVaults(ctx context.Context, _ api.GetVaultsParams) (*api.VaultsListResponse, error) {
 	ctx, cancel := context.WithTimeout(ctx, CacheTimeout)
 	defer cancel()
 
@@ -309,7 +309,7 @@ func (h *InventoryHandlersOgen) GetVaults(ctx context.Context, params api.GetVau
 }
 
 // GetVault - TYPED ogen response
-func (h *InventoryHandlersOgen) GetVault(ctx context.Context, params api.GetVaultParams) (api.GetVaultRes, error) {
+func (h *InventoryHandlersOgen) GetVault(ctx context.Context, _ api.GetVaultParams) (api.GetVaultRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, CacheTimeout)
 	defer cancel()
 
@@ -318,7 +318,7 @@ func (h *InventoryHandlersOgen) GetVault(ctx context.Context, params api.GetVaul
 }
 
 // RetrieveItem - TYPED ogen response
-func (h *InventoryHandlersOgen) RetrieveItem(ctx context.Context, params api.RetrieveItemParams) (api.RetrieveItemRes, error) {
+func (h *InventoryHandlersOgen) RetrieveItem(ctx context.Context, _ api.RetrieveItemParams) (api.RetrieveItemRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
@@ -329,7 +329,7 @@ func (h *InventoryHandlersOgen) RetrieveItem(ctx context.Context, params api.Ret
 }
 
 // StoreItem - TYPED ogen response
-func (h *InventoryHandlersOgen) StoreItem(ctx context.Context, req *api.StoreItemRequest, params api.StoreItemParams) (api.StoreItemRes, error) {
+func (h *InventoryHandlersOgen) StoreItem(ctx context.Context, _ *api.StoreItemRequest, _ api.StoreItemParams) (api.StoreItemRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 

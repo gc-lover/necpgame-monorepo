@@ -1,4 +1,4 @@
-// Issue: #141887883
+// Package server Issue: #141887883
 package server
 
 import (
@@ -14,22 +14,22 @@ import (
 )
 
 type EngramCreation struct {
-	ID                      uuid.UUID              `json:"id"`
-	CreationID              uuid.UUID              `json:"creation_id"`
-	EngramID                uuid.UUID              `json:"engram_id"`
-	CharacterID             uuid.UUID              `json:"character_id"`
-	TargetPersonID          *uuid.UUID             `json:"target_person_id,omitempty"`
-	ChipTier                int                    `json:"chip_tier"`
-	AttitudeType            string                 `json:"attitude_type"`
-	CustomAttitudeSettings  map[string]interface{} `json:"custom_attitude_settings,omitempty"`
-	CreationStage           string                 `json:"creation_stage"`
-	DataLossPercent         float64                `json:"data_loss_percent"`
-	IsComplete              bool                   `json:"is_complete"`
-	CreationCost            float64                `json:"creation_cost"`
-	ReputationSnapshot      map[string]interface{} `json:"reputation_snapshot,omitempty"`
-	CreatedAt               time.Time              `json:"created_at"`
-	UpdatedAt               time.Time              `json:"updated_at"`
-	CompletedAt             *time.Time             `json:"completed_at,omitempty"`
+	ID                     uuid.UUID              `json:"id"`
+	CreationID             uuid.UUID              `json:"creation_id"`
+	EngramID               uuid.UUID              `json:"engram_id"`
+	CharacterID            uuid.UUID              `json:"character_id"`
+	TargetPersonID         *uuid.UUID             `json:"target_person_id,omitempty"`
+	ChipTier               int                    `json:"chip_tier"`
+	AttitudeType           string                 `json:"attitude_type"`
+	CustomAttitudeSettings map[string]interface{} `json:"custom_attitude_settings,omitempty"`
+	CreationStage          string                 `json:"creation_stage"`
+	DataLossPercent        float64                `json:"data_loss_percent"`
+	IsComplete             bool                   `json:"is_complete"`
+	CreationCost           float64                `json:"creation_cost"`
+	ReputationSnapshot     map[string]interface{} `json:"reputation_snapshot,omitempty"`
+	CreatedAt              time.Time              `json:"created_at"`
+	UpdatedAt              time.Time              `json:"updated_at"`
+	CompletedAt            *time.Time             `json:"completed_at,omitempty"`
 }
 
 type EngramCreationRepositoryInterface interface {
@@ -228,4 +228,3 @@ func (r *EngramCreationRepository) CompleteCreation(ctx context.Context, creatio
 
 	return nil
 }
-

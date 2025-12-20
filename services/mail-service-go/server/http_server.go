@@ -1,4 +1,4 @@
-// Issue: #1599 - ogen migration
+// Package server Issue: #1599 - ogen migration
 package server
 
 // HTTP handlers use context.WithTimeout for request timeouts (see handlers.go)
@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"time"
 
-	api "github.com/gc-lover/necpgame-monorepo/services/mail-service-go/pkg/api"
+	"github.com/gc-lover/necpgame-monorepo/services/mail-service-go/pkg/api"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
@@ -69,7 +69,7 @@ func (s *HTTPServer) Shutdown(ctx context.Context) error {
 	return s.server.Shutdown(ctx)
 }
 
-func healthCheck(w http.ResponseWriter, r *http.Request) {
+func healthCheck(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(`{"status":"ok"}`))
@@ -89,15 +89,3 @@ func corsMiddleware(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 	})
 }
-
-
-
-
-
-
-
-
-
-
-
-

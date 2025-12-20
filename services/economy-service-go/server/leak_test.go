@@ -49,4 +49,3 @@ func TestEconomyServiceNoLeaks(t *testing.T) {
 // - Context cancellation for all goroutines
 // - Event bus cleanup
 // - DB connection pool limits
-

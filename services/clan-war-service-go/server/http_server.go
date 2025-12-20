@@ -1,4 +1,4 @@
-// SQL queries use prepared statements with placeholders (, , ?) for safety
+// Package server SQL queries use prepared statements with placeholders (, , ?) for safety
 // Issue: #141888786, ogen migration
 package server
 
@@ -185,7 +185,7 @@ func (s *HTTPServer) Start(ctx context.Context) error {
 
 	errChan := make(chan error, 1)
 	go func() {
-			defer close(errChan)
+		defer close(errChan)
 		if err := s.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			errChan <- err
 		}
@@ -267,7 +267,7 @@ func queryInt(r *http.Request, key string, def int) int {
 	return v
 }
 
-func (s *HTTPServer) healthCheck(w http.ResponseWriter, r *http.Request) {
+func (s *HTTPServer) healthCheck(w http.ResponseWriter, _ *http.Request) {
 	s.respondJSON(w, http.StatusOK, map[string]string{"status": "healthy"})
 }
 
@@ -281,7 +281,7 @@ func (s *HTTPServer) respondJSON(w http.ResponseWriter, status int, data interfa
 		json.NewEncoder(w).Encode(errorResponse)
 		return
 	}
-	
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	if _, err := w.Write(buf.Bytes()); err != nil {
@@ -582,7 +582,3 @@ func (r *responseRecorder) WriteHeader(statusCode int) {
 	r.statusCode = statusCode
 	r.ResponseWriter.WriteHeader(statusCode)
 }
-
-
-
-

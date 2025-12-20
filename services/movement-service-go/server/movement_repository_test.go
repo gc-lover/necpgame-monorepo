@@ -5,9 +5,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gc-lover/necpgame-monorepo/services/movement-service-go/models"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/gc-lover/necpgame-monorepo/services/movement-service-go/models"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -316,4 +316,3 @@ func TestMovementRepository_GetPositionHistory_ExceedsMaxLimit(t *testing.T) {
 	require.NoError(t, err)
 	assert.NotNil(t, history)
 }
-

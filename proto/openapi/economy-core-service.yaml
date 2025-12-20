@@ -1,400 +1,187 @@
-# Issue: #171
+# Issue: #104
+
 openapi: 3.0.3
 info:
-  title: Economy Core Service API
-  version: 1.0.0
+  title: Economy Service API
   description: |
-    Economy Core API for MMOFPS RPG - Inventory and P2P Trade Systems.
-
-    ## Core Components
-    - Inventory System: Item storage, equipment, transfer operations
-    - Trade System: P2P trading sessions with anti-fraud validation
-    - Stash System: Extended storage with organization features
-
-    ## Architecture Overview
-    - Server-authoritative economy with validation
-    - Event-driven architecture with Kafka
-    - Anti-fraud checks and audit logging
-    - Real-time inventory synchronization
-
-    ## Performance Requirements
-    - Inventory operations: 2000+ RPS with P99 <100ms
-    - Trade operations: 500+ RPS with P99 <200ms
-    - Memory optimized with field alignment
-    - Context timeouts for all operations
+    API для экономических механик: торговля, крафт, инвентарь, валюты, рынки, аукционы, биржа.
+    
+    **Основные модули:**
+    - Trading - P2P торговля
+    - Crafting - крафтинг предметов
+    - Inventory - управление инвентарем
+    - Currencies - валюты и ресурсы
+    - Markets - рынки и аукционы
+    - Stock Exchange - биржа
+    - Production Chains - производственные цепочки
+    
+    **Performance:**
+    - Hot endpoints: GET /economy/inventory, POST /economy/trade
+    - Expected load: 1k RPS, P99 <50ms
+    - Event-based для большинства операций
+  version: 2.0.0
+  contact:
+    name: NECPGAME API Support
+    email: api@necp.game
 
 servers:
-  - url: http://localhost:8200
-    description: Local development
-  - url: https://api.necpgame.com/v1
-    description: Production API
+  - url: http://localhost:8085/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
 
 tags:
-  - name: inventory
-    description: Inventory management operations
-  - name: equipment
-    description: Character equipment system
-  - name: stash
-    description: Extended storage system
-  - name: trade
-    description: P2P trading operations
-  - name: transfer
-    description: Item transfer operations
-
-security:
-  - BearerAuth: []
+  - name: Trading
+    description: Торговля
+  - name: Crafting
+    description: Крафтинг
+  - name: Inventory
+    description: Инвентарь
+  - name: Currencies
+    description: Валюты
+  - name: Markets
+    description: Рынки
+  - name: Stock Exchange
+    description: Биржа
+  - name: Currency Exchange
+    description: Валютная биржа
+  - name: Investments
+    description: Инвестиции
+  - name: Economy Events
+    description: Экономические события
 
 paths:
-  # ============================================================================
-  # INVENTORY SYSTEM
-  # ============================================================================
-
-  /gameplay/economy/inventory/{character_id}/slots:
+  /economy/overview:
+    $ref: "economy-core-service.yaml#/paths/~1economy~1overview"
+  
+  /economy/currencies:
+    $ref: "economy-core-service.yaml#/paths/~1economy~1currencies"
+  
+  # Inventory - Issue: #104
+  /economy/inventory/{characterId}:
+    $ref: "economy-inventory-core-service.yaml#/paths/~1economy~1inventory~1{characterId}"
+  
+  /economy/inventory/{characterId}/items:
+    $ref: "economy-inventory-core-service.yaml#/paths/~1economy~1inventory~1{characterId}~1items"
+  
+  /economy/inventory/{characterId}/equipment:
+    $ref: "economy-inventory-equipment-service.yaml#/paths/~1economy~1inventory~1{characterId}~1equipment"
+  
+  /economy/inventory/{characterId}/equipment/equip:
+    $ref: "economy-inventory-equipment-service.yaml#/paths/~1economy~1inventory~1{characterId}~1equipment~1equip"
+  
+  /economy/inventory/{characterId}/equipment/unequip:
+    $ref: "economy-inventory-equipment-service.yaml#/paths/~1economy~1inventory~1{characterId}~1equipment~1unequip"
+  
+  /economy/inventory/{characterId}/storage:
+    $ref: "economy-inventory-storage-service.yaml#/paths/~1economy~1inventory~1{characterId}~1storage"
+  
+  /economy/inventory/{characterId}/storage/items:
+    $ref: "economy-inventory-storage-service.yaml#/paths/~1economy~1inventory~1{characterId}~1storage~1items"
+  
+  /economy/trade/sessions:
+    $ref: "economy-trade-sessions-service.yaml#/paths/~1economy~1trade~1sessions"
+  
+  /economy/crafting/recipes:
     get:
-      tags: [inventory]
-      summary: Get character inventory slots
-      operationId: getInventorySlots
-      parameters:
-        - name: character_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: include_items
-          in: query
-          schema:
-            type: boolean
-            default: true
-        - $ref: common.yaml#/components/parameters/Limit
+      tags:
+        - Crafting
+      summary: Получить рецепты крафта
+      operationId: getCraftingRecipes
+      security:
+        - BearerAuth: [ ]
       responses:
         "200":
-          description: Inventory slots
+          description: Список рецептов
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/InventorySlot"
-        "404":
-          $ref: common.yaml#/components/responses/NotFound
+                type: object
+                properties:
+                  recipes:
+                    type: array
+        "401":
+          $ref: "common.yaml#/components/responses/Unauthorized"
+  
+  /economy/market/listings:
+    $ref: "economy-player-market-service.yaml#/paths/~1economy~1market~1listings"
+  
+  /economy/stock/exchange:
+    $ref: "economy-stock-exchange-core-service.yaml#/paths/~1economy~1stock~1exchange"
+  
+  # Currency Exchange - Issue: #224
+  /currency-exchange/rates:
+    $ref: "economy-currency-exchange-rates-service.yaml#/paths/~1currency-exchange~1rates"
+  
+  /currency-exchange/rates/{pair}:
+    $ref: "economy-currency-exchange-rates-service.yaml#/paths/~1currency-exchange~1rates~1{pair}"
+  
+  /currency-exchange/rates/history:
+    $ref: "economy-currency-exchange-rates-service.yaml#/paths/~1currency-exchange~1rates~1history"
+  
+  /currency-exchange/quote:
+    $ref: "economy-currency-exchange-rates-service.yaml#/paths/~1currency-exchange~1quote"
+  
+  /currency-exchange/orders/instant:
+    $ref: "economy-currency-exchange-orders-service.yaml#/paths/~1currency-exchange~1orders~1instant"
+  
+  /currency-exchange/orders/limit:
+    $ref: "economy-currency-exchange-orders-service.yaml#/paths/~1currency-exchange~1orders~1limit"
+  
+  /currency-exchange/orders:
+    $ref: "economy-currency-exchange-orders-service.yaml#/paths/~1currency-exchange~1orders"
+  
+  /currency-exchange/orders/{order_id}:
+    $ref: "economy-currency-exchange-orders-service.yaml#/paths/~1currency-exchange~1orders~1{order_id}"
+  
+  # Investments - Issue: #228
+  /economy/investments/buy:
+    $ref: "economy-investments-core-service.yaml#/paths/~1economy~1investments~1buy"
+  
+  /economy/investments/sell:
+    $ref: "economy-investments-core-service.yaml#/paths/~1economy~1investments~1sell"
+  
+  /economy/investments/positions:
+    $ref: "economy-investments-core-service.yaml#/paths/~1economy~1investments~1positions"
+  
+  /economy/investments/transactions:
+    $ref: "economy-investments-core-service.yaml#/paths/~1economy~1investments~1transactions"
+  
+  # Economy Events - Issue: #225
+  /economy/events:
+    $ref: "economy-events-service.yaml#/paths/~1economy~1events"
+  
+  /economy/events/{event_id}:
+    $ref: "economy-events-service.yaml#/paths/~1economy~1events~1{event_id}"
+  
+  /economy/events/{event_id}/announce:
+    $ref: "economy-events-service.yaml#/paths/~1economy~1events~1{event_id}~1announce"
+  
+  /economy/events/{event_id}/activate:
+    $ref: "economy-events-service.yaml#/paths/~1economy~1events~1{event_id}~1activate"
+  
+  /economy/events/{event_id}/archive:
+    $ref: "economy-events-service.yaml#/paths/~1economy~1events~1{event_id}~1archive"
+  
+  /economy/events/active:
+    $ref: "economy-events-service.yaml#/paths/~1economy~1events~1active"
+  
+  /economy/events/{event_id}/metrics:
+    $ref: "economy-events-service.yaml#/paths/~1economy~1events~1{event_id}~1metrics"
 
-    post:
-      tags: [inventory]
-      summary: Add item to inventory
-      operationId: addItemToInventory
-      parameters:
-        - name: character_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/AddItemRequest"
-      responses:
-        "201":
-          description: Item added
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/InventorySlot"
-        "400":
-          description: Invalid item or inventory full
-          content:
-            application/json:
-              schema:
-                $ref: common.yaml#/components/schemas/Error
-        "409":
-          description: Item conflicts
-          content:
-            application/json:
-              schema:
-                $ref: common.yaml#/components/schemas/Error
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: "common.yaml#/components/securitySchemes/BearerAuth"
 
-  /gameplay/economy/inventory/{character_id}/slots/{slot_id}:
-    get:
-      tags: [inventory]
-      summary: Get specific inventory slot
-      operationId: getInventorySlot
-      parameters:
-        - name: character_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: slot_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        "200":
-          description: Inventory slot details
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/InventorySlot"
-        "404":
-          $ref: common.yaml#/components/responses/NotFound
+  responses:
+    BadRequest:
+      $ref: "common.yaml#/components/responses/BadRequest"
+    Unauthorized:
+      $ref: "common.yaml#/components/responses/Unauthorized"
+    InternalServerError:
+      $ref: "common.yaml#/components/responses/InternalServerError"
 
-    put:
-      tags: [inventory]
-      summary: Update inventory slot
-      operationId: updateInventorySlot
-      parameters:
-        - name: character_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: slot_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/UpdateSlotRequest"
-      responses:
-        "200":
-          description: Slot updated
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/InventorySlot"
-        "400":
-          $ref: common.yaml#/components/responses/BadRequest
-
-    delete:
-      tags: [inventory]
-      summary: Remove item from slot
-      operationId: removeItemFromSlot
-      parameters:
-        - name: character_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: slot_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        "204":
-          description: Item removed
-        "404":
-          $ref: common.yaml#/components/responses/NotFound
-
-  /gameplay/economy/inventory/{character_id}/transfer:
-    post:
-      tags: [transfer]
-      summary: Transfer item between slots
-      operationId: transferItem
-      parameters:
-        - name: character_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/TransferRequest"
-      responses:
-        "200":
-          description: Transfer completed
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/TransferResult"
-        "400":
-          description: Invalid transfer
-          content:
-            application/json:
-              schema:
-                $ref: common.yaml#/components/schemas/Error
-
-  # ============================================================================
-  # EQUIPMENT SYSTEM
-  # ============================================================================
-
-  /gameplay/economy/equipment/{character_id}/slots:
-    get:
-      tags: [equipment]
-      summary: Get character equipment slots
-      operationId: getEquipmentSlots
-      parameters:
-        - name: character_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        "200":
-          description: Equipment slots
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/EquipmentSlot"
-
-  /gameplay/economy/equipment/{character_id}/slots/{slot_type}:
-    post:
-      tags: [equipment]
-      summary: Equip item to slot
-      operationId: equipItem
-      parameters:
-        - name: character_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: slot_type
-          in: path
-          required: true
-          schema:
-            type: string
-            enum:
-              [
-                head,
-                torso,
-                arms,
-                legs,
-                weapon_primary,
-                weapon_secondary,
-                cyberware,
-              ]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/EquipRequest"
-      responses:
-        "200":
-          description: Item equipped
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/EquipmentSlot"
-        "400":
-          description: Cannot equip item
-          content:
-            application/json:
-              schema:
-                $ref: common.yaml#/components/schemas/Error
-
-    delete:
-      tags: [equipment]
-      summary: Unequip item from slot
-      operationId: unequipItem
-      parameters:
-        - name: character_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: slot_type
-          in: path
-          required: true
-          schema:
-            type: string
-            enum:
-              [
-                head,
-                torso,
-                arms,
-                legs,
-                weapon_primary,
-                weapon_secondary,
-                cyberware,
-              ]
-      responses:
-        "200":
-          description: Item unequipped
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/UnequipResult"
-
-  # ============================================================================
-  # STASH SYSTEM
-  # ============================================================================
-
-  /gameplay/economy/stash/{character_id}/pages:
-    get:
-      tags: [stash]
-      summary: Get stash pages
-      operationId: getStashPages
-      parameters:
-        - name: character_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: page
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            default: 1
-        - $ref: common.yaml#/components/parameters/Limit
-      responses:
-        "200":
-          description: Stash pages
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/StashPage"
-
-  /gameplay/economy/stash/{character_id}/transfer:
-    post:
-      tags: [stash]
-      summary: Transfer item to/from stash
-      operationId: stashTransfer
-      parameters:
-        - name: character_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/StashTransferRequest"
-      responses:
-        "200":
-          description: Transfer completed
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/StashTransferResult"
+security:
+  - BearerAuth: [ ]
 

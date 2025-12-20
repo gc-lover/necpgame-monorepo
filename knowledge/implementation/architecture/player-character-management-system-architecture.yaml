@@ -1,0 +1,371 @@
+<!-- Issue: #389 -->
+
+# Architecture: Player Character Management System
+
+## Performance Requirements
+
+**Load:** 10000+ concurrent players, P99 <30ms for character operations
+**Data Model (optimized):**
+- CharacterProfile: 512 bytes (stats, inventory, progress, metadata)
+- PlayerAccount: 256 bytes (account info, preferences, security data)
+- CharacterSlot: 128 bytes (slot data, active status, timestamps)
+
+**Hot Path:** Character switching (300 RPS/player), stat updates (500 RPS/player)
+**Backend optimizations:** Level 2 - Database connection pooling, Redis caching, optimized queries
+
+## System Architecture
+
+### Core Components
+
+```mermaid
+graph TB
+    subgraph "Character Services"
+        CMS[Character Management Service]
+        CSS[Character Stats Service]
+        CIS[Character Inventory Service]
+        CQS[Character Quest Service]
+    end
+
+    subgraph "Account Services"
+        AMS[Account Management Service]
+        PMS[Player Management Service]
+        SSS[Session State Service]
+    end
+
+    subgraph "Integration Services"
+        IMS[Inventory Management Service]
+        QMS[Quest Management Service]
+        EMS[Economy Management Service]
+    end
+
+    subgraph "Data Layer"
+        PCD[Player Character Data]
+        ASD[Account Session Data]
+        ISD[Inventory State Data]
+        QSD[Quest State Data]
+    end
+
+    CMS --> AMS
+    CMS --> PMS
+    CSS --> CIS
+    CSS --> CQS
+    CIS --> IMS
+    CQS --> QMS
+    SSS --> EMS
+```
+
+### Microservice Architecture
+
+#### 1. Character Management Service (CMS)
+**Purpose:** Core character lifecycle management, creation, deletion, switching
+**Technology:** Go microservice with PostgreSQL
+**Scaling:** 4 pods, sharded by player_id
+
+**Key Endpoints:**
+- `POST /api/v1/characters/create` - Create new character
+- `DELETE /api/v1/characters/{id}` - Soft delete character
+- `PUT /api/v1/characters/{id}/switch` - Switch active character
+- `GET /api/v1/players/{player_id}/characters` - List player characters
+- `POST /api/v1/characters/{id}/restore` - Restore deleted character
+
+#### 2. Character Stats Service (CSS)
+**Purpose:** Character statistics, progression, attributes management
+**Technology:** Go microservice with Redis caching
+**Scaling:** 6 pods, event-driven scaling
+
+**Key Endpoints:**
+- `GET /api/v1/characters/{id}/stats` - Get character statistics
+- `PUT /api/v1/characters/{id}/stats/update` - Update character stats
+- `POST /api/v1/characters/{id}/levelup` - Process level advancement
+- `GET /api/v1/characters/{id}/attributes` - Get character attributes
+- `PUT /api/v1/characters/{id}/attributes/modify` - Modify attributes
+
+#### 3. Account Management Service (AMS)
+**Purpose:** Player account management, authentication, preferences
+**Technology:** Go microservice with secure session management
+**Scaling:** 3 pods, global singleton pattern
+
+**Key Endpoints:**
+- `POST /api/v1/accounts/register` - Register new account
+- `POST /api/v1/accounts/login` - Player authentication
+- `PUT /api/v1/accounts/{id}/preferences` - Update player preferences
+- `GET /api/v1/accounts/{id}/profile` - Get account profile
+- `POST /api/v1/accounts/{id}/security` - Security operations
+
+#### 4. Player Management Service (PMS)
+**Purpose:** Player session management, character slot allocation
+**Technology:** Go microservice with distributed sessions
+**Scaling:** 4 pods, geographically distributed
+
+**Key Endpoints:**
+- `POST /api/v1/players/session/start` - Start player session
+- `PUT /api/v1/players/session/update` - Update session state
+- `GET /api/v1/players/{id}/slots` - Get character slots
+- `POST /api/v1/players/{id}/slots/allocate` - Allocate character slot
+- `DELETE /api/v1/players/{id}/slots/{slot_id}` - Free character slot
+
+## Data Synchronization Patterns
+
+### CQRS Implementation
+
+```yaml
+cqrs_patterns:
+  command_side:
+    - CreateCharacter
+    - DeleteCharacter
+    - SwitchCharacter
+    - UpdateStats
+    - ModifyAttributes
+    - RegisterAccount
+
+  query_side:
+    - GetCharacterProfile
+    - GetPlayerCharacters
+    - GetAccountInfo
+    - GetSessionState
+    - GetCharacterStats
+    - GetCharacterSlots
+```
+
+### Event Sourcing for Character Management
+
+```yaml
+event_sourcing:
+  aggregates:
+    - PlayerAccount
+    - CharacterProfile
+    - CharacterSession
+
+  events:
+    - AccountCreated: {account_id, player_info, created_at}
+    - CharacterCreated: {character_id, player_id, template_id, initial_stats}
+    - CharacterSwitched: {player_id, from_character_id, to_character_id, timestamp}
+    - StatsUpdated: {character_id, stat_changes, reason, source}
+    - CharacterDeleted: {character_id, player_id, deleted_at, reason}
+    - SessionStarted: {session_id, player_id, character_id, start_time}
+```
+
+## Performance Optimizations
+
+### Memory Management
+- **Profile Caching:** Active character profiles cached in Redis
+- **Stat Optimization:** Frequently accessed stats pre-calculated
+- **Session Pooling:** Session objects recycled between operations
+
+### Network Optimization
+- **Delta Updates:** Only changed character data sent to clients
+- **Batch Operations:** Multiple character operations batched together
+- **Compression:** Character data compressed for network transmission
+
+### Database Optimization
+- **Sharding Strategy:** Characters sharded by player_id for locality
+- **Index Optimization:** Composite indexes on common query patterns
+- **Read Replicas:** Character queries use read replicas
+- **Archive Strategy:** Old character data moved to cold storage
+
+## Scaling Strategy
+
+### Horizontal Scaling
+- **Player-based Sharding:** Character data sharded by player ownership
+- **Regional Distribution:** Character services distributed by player region
+- **Load Balancing:** Character operations balanced across pods
+
+### Auto-scaling Triggers
+- **Concurrent Players:** Scale based on active player sessions
+- **Character Operations:** Scale based on create/switch/delete frequency
+- **Data Load:** Scale based on character data access patterns
+
+## Security Architecture
+
+### Authentication & Authorization
+- **JWT Tokens:** Secure player authentication
+- **Character Ownership:** Verify player owns character before operations
+- **Rate Limiting:** Prevent abuse of character operations
+
+### Data Protection
+- **Encryption:** Sensitive character data encrypted at rest
+- **Audit Logging:** All character operations logged for security review
+- **Access Control:** Role-based permissions for character management
+
+## Monitoring & Observability
+
+### Key Metrics
+- **Character Operations:** Success rates for create/switch/delete
+- **Session Management:** Active sessions and session duration
+- **Performance:** Response times for character queries
+- **Errors:** Failed character operations and error rates
+
+### Health Checks
+- **Service Health:** All character services respond within 25ms
+- **Database Health:** Character data queries complete within 20ms
+- **Cache Health:** Redis hit rate >95% for character data
+- **Session Health:** Active session validation works correctly
+
+## Implementation Roadmap
+
+### Phase 1: Core Character Management (Week 1-2)
+- Basic character creation and deletion
+- Character slot management
+- Account registration and authentication
+- Database schema implementation
+
+### Phase 2: Character Switching & Stats (Week 3-4)
+- Character switching mechanics
+- Statistics and attributes system
+- Session state management
+- Performance optimization
+
+### Phase 3: Advanced Features (Week 5-6)
+- Character progression and leveling
+- Inventory integration
+- Quest state management
+- Economy integration
+
+### Phase 4: Scaling & Optimization (Week 7-8)
+- Horizontal scaling implementation
+- Caching layer optimization
+- Database performance tuning
+- Monitoring and alerting setup
+
+## API Specifications (High Level)
+
+### Character Management API
+```yaml
+paths:
+  /api/v1/characters:
+    post:
+      summary: Create new character for player
+      parameters:
+        - player_id: string (required)
+        - template_id: string (required)
+        - character_name: string (required)
+        - starting_attributes: object
+      response:
+        character_id: string
+        initial_stats: object
+        slot_assigned: integer
+
+  /api/v1/characters/{id}:
+    put:
+      summary: Update character profile
+      parameters:
+        - id: string (path)
+        - updates: object (body)
+      response:
+        updated_fields: array
+        version: integer
+
+    delete:
+      summary: Soft delete character
+      parameters:
+        - id: string (path)
+        - reason: string
+      response:
+        deleted_at: string
+        recovery_window: integer
+```
+
+### Account Management API
+```yaml
+paths:
+  /api/v1/accounts:
+    post:
+      summary: Register new player account
+      parameters:
+        - email: string (required)
+        - username: string (required)
+        - password_hash: string (required)
+        - preferences: object
+      response:
+        account_id: string
+        verification_token: string
+
+  /api/v1/accounts/login:
+    post:
+      summary: Authenticate player
+      parameters:
+        - identifier: string (email/username)
+        - password_hash: string
+        - device_info: object
+      response:
+        access_token: string
+        refresh_token: string
+        session_info: object
+```
+
+## Risk Assessment
+
+### Technical Risks
+- **High:** Character data consistency across services
+- **Medium:** Session state management complexity
+- **Low:** Character creation performance under load
+
+### Mitigation Strategies
+- **Consistency:** Event sourcing with saga patterns
+- **Sessions:** Distributed session management with Redis
+- **Performance:** Database optimization and caching layers
+
+## Database Schema
+
+### Core Tables
+```sql
+-- Player accounts
+CREATE TABLE player_accounts (
+    account_id UUID PRIMARY KEY,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    username VARCHAR(100) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP NOT NULL,
+    last_login TIMESTAMP,
+    status VARCHAR(20) DEFAULT 'active'
+);
+
+-- Character slots per player
+CREATE TABLE character_slots (
+    slot_id UUID PRIMARY KEY,
+    account_id UUID NOT NULL REFERENCES player_accounts(account_id),
+    slot_number INTEGER NOT NULL,
+    character_id UUID,
+    is_locked BOOLEAN DEFAULT false,
+    created_at TIMESTAMP NOT NULL,
+    UNIQUE(account_id, slot_number)
+);
+
+-- Character profiles
+CREATE TABLE character_profiles (
+    character_id UUID PRIMARY KEY,
+    account_id UUID NOT NULL REFERENCES player_accounts(account_id),
+    template_id VARCHAR(100) NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    level INTEGER DEFAULT 1,
+    experience BIGINT DEFAULT 0,
+    created_at TIMESTAMP NOT NULL,
+    deleted_at TIMESTAMP,
+    status VARCHAR(20) DEFAULT 'active'
+);
+
+-- Character statistics
+CREATE TABLE character_stats (
+    character_id UUID PRIMARY KEY REFERENCES character_profiles(character_id),
+    health INTEGER DEFAULT 100,
+    max_health INTEGER DEFAULT 100,
+    stamina INTEGER DEFAULT 100,
+    max_stamina INTEGER DEFAULT 100,
+    strength INTEGER DEFAULT 10,
+    agility INTEGER DEFAULT 10,
+    intelligence INTEGER DEFAULT 10,
+    charisma INTEGER DEFAULT 10,
+    last_updated TIMESTAMP NOT NULL
+);
+```
+
+## Next Steps
+
+This architecture provides a comprehensive foundation for player character management in the cyberpunk MMOFPS RPG. The modular design enables scalable character operations while maintaining data consistency and performance.
+
+**Handed off to:** Database Agent for schema implementation (#2210), API Designer for detailed API specifications (#2197), Backend Agent for service implementation (#2220), Content Writer for character templates (#2223).
+
+---
+
+*Designed by Architect Agent for Character Management System*
+*Issue: #389*

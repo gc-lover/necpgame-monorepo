@@ -1,4 +1,4 @@
-// Issue: #1637 - P2P Trade Service business logic
+// Package server Issue: #1637 - P2P Trade Service business logic
 package server
 
 import (
@@ -7,33 +7,33 @@ import (
 	"sync"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/gc-lover/necpgame-monorepo/services/trade-p2p-service-go/pkg/api"
+	"github.com/google/uuid"
 )
 
 var (
-	ErrNotFound       = errors.New("not found")
-	ErrNotOwner       = errors.New("not owner of items")
-	ErrNotReady       = errors.New("trade offers not ready")
-	ErrNotConfirmed   = errors.New("both parties must confirm")
-	ErrAlreadyConfirmed = errors.New("already confirmed")
-	ErrSessionExpired = errors.New("session expired")
+	ErrNotFound     = errors.New("not found")
+	_               = errors.New("not owner of items")
+	ErrNotReady     = errors.New("trade offers not ready")
+	ErrNotConfirmed = errors.New("both parties must confirm")
+	_               = errors.New("already confirmed")
+	_               = errors.New("session expired")
 )
 
 // TradeSession represents a trade session
 type TradeSession struct {
-	ID                uuid.UUID
-	InitiatorID       uuid.UUID
-	TargetID          uuid.UUID
-	Status            api.TradeStatus
-	ZoneID            *string
-	Difficulty        *string
-	InitiatorOffer    *api.TradeOfferRequest
-	TargetOffer       *api.TradeOfferRequest
+	ID                 uuid.UUID
+	InitiatorID        uuid.UUID
+	TargetID           uuid.UUID
+	Status             api.TradeStatus
+	ZoneID             *string
+	Difficulty         *string
+	InitiatorOffer     *api.TradeOfferRequest
+	TargetOffer        *api.TradeOfferRequest
 	InitiatorConfirmed bool
-	TargetConfirmed   bool
-	ExpiresAt         time.Time
-	CreatedAt         time.Time
+	TargetConfirmed    bool
+	ExpiresAt          time.Time
+	CreatedAt          time.Time
 }
 
 // Service implements business logic for P2P Trade
@@ -150,7 +150,7 @@ func (s *Service) GetTradeSession(ctx context.Context, sessionID string) (*api.T
 }
 
 // CancelTradeSession cancels a trade session
-func (s *Service) CancelTradeSession(ctx context.Context, sessionID, reason string) error {
+func (s *Service) CancelTradeSession(ctx context.Context, sessionID string) error {
 	id, err := uuid.Parse(sessionID)
 	if err != nil {
 		return errors.New("invalid session ID")
@@ -160,7 +160,7 @@ func (s *Service) CancelTradeSession(ctx context.Context, sessionID, reason stri
 }
 
 // AddTradeOffer adds or updates a trade offer
-func (s *Service) AddTradeOffer(ctx context.Context, sessionID string, offer *api.TradeOfferRequest) (*api.TradeSessionResponse, error) {
+func (s *Service) AddTradeOffer(ctx context.Context, sessionID string) (*api.TradeSessionResponse, error) {
 	id, err := uuid.Parse(sessionID)
 	if err != nil {
 		return nil, errors.New("invalid session ID")
@@ -176,7 +176,7 @@ func (s *Service) AddTradeOffer(ctx context.Context, sessionID string, offer *ap
 	// This would require integration with inventory service
 
 	// Update offer in session (using request directly)
-	err = s.repo.UpdateTradeOffer(ctx, id, offer, true) // true for initiator
+	err = s.repo.UpdateTradeOffer(ctx, id, true) // true for initiator
 	if err != nil {
 		return nil, err
 	}
@@ -193,7 +193,7 @@ func (s *Service) AddTradeOffer(ctx context.Context, sessionID string, offer *ap
 // UpdateTradeOffer updates an existing trade offer
 func (s *Service) UpdateTradeOffer(ctx context.Context, sessionID string, offer *api.TradeOfferRequest) (*api.TradeSessionResponse, error) {
 	// Same as AddTradeOffer for now
-	return s.AddTradeOffer(ctx, sessionID, offer)
+	return s.AddTradeOffer(ctx, sessionID)
 }
 
 // RemoveTradeOffer removes a trade offer

@@ -1,4 +1,4 @@
-// Issue: #1595, #1607
+// Package server Issue: #1595, #1607
 // Performance: Memory pooling for hot path (Issue #1607)
 package server
 
@@ -42,8 +42,8 @@ func NewService(repo *Repository) *Service {
 
 // GetWeaponResources - HOT PATH
 // Issue: #1607 - Uses memory pooling for zero allocations
-func (s *Service) GetWeaponResources(ctx context.Context, weaponID string) (*api.WeaponResources, error) {
-	resources, err := s.repo.GetWeaponResources(ctx, weaponID)
+func (s *Service) GetWeaponResources(weaponID string) (*api.WeaponResources, error) {
+	resources, err := s.repo.GetWeaponResources(weaponID)
 	if err != nil {
 		return nil, err
 	}
@@ -53,9 +53,9 @@ func (s *Service) GetWeaponResources(ctx context.Context, weaponID string) (*api
 }
 
 // ConsumeResource consumes resource (ammo/heat/energy)
-func (s *Service) ConsumeResource(ctx context.Context, weaponID string, req *api.ConsumeResourceRequest) (*api.WeaponResources, error) {
+func (s *Service) ConsumeResource(ctx context.Context, weaponID string) (*api.WeaponResources, error) {
 	// Business logic: validate, consume resource
-	resources, err := s.repo.ConsumeResource(ctx, weaponID, req)
+	resources, err := s.repo.ConsumeResource(weaponID)
 	if err != nil {
 		return nil, err
 	}
@@ -63,8 +63,8 @@ func (s *Service) ConsumeResource(ctx context.Context, weaponID string, req *api
 }
 
 // ApplyCooldown applies cooldown to weapon/ability
-func (s *Service) ApplyCooldown(ctx context.Context, weaponID string, req *api.ApplyCooldownRequest) (*api.WeaponResources, error) {
-	resources, err := s.repo.ApplyCooldown(ctx, weaponID, req)
+func (s *Service) ApplyCooldown(ctx context.Context, weaponID string) (*api.WeaponResources, error) {
+	resources, err := s.repo.ApplyCooldown(weaponID)
 	if err != nil {
 		return nil, err
 	}
@@ -72,8 +72,8 @@ func (s *Service) ApplyCooldown(ctx context.Context, weaponID string, req *api.A
 }
 
 // ReloadWeapon reloads weapon ammunition
-func (s *Service) ReloadWeapon(ctx context.Context, weaponID string, req *api.ReloadWeaponRequest) (*api.WeaponResources, error) {
-	resources, err := s.repo.ReloadWeapon(ctx, weaponID, req)
+func (s *Service) ReloadWeapon(ctx context.Context, weaponID string) (*api.WeaponResources, error) {
+	resources, err := s.repo.ReloadWeapon(weaponID)
 	if err != nil {
 		return nil, err
 	}
@@ -82,13 +82,13 @@ func (s *Service) ReloadWeapon(ctx context.Context, weaponID string, req *api.Re
 
 // GetWeaponStatus - HOT PATH
 // Issue: #1607 - Uses memory pooling for zero allocations
-func (s *Service) GetWeaponStatus(ctx context.Context, weaponID string) (*api.WeaponStatus, error) {
+func (s *Service) GetWeaponStatus(weaponID string) (*api.WeaponStatus, error) {
 	weaponIDUUID, err := uuid.Parse(weaponID)
 	if err != nil {
 		return nil, err
 	}
 
-	resources, err := s.repo.GetWeaponResources(ctx, weaponID)
+	resources, err := s.repo.GetWeaponResources(weaponID)
 	if err != nil {
 		return nil, err
 	}
@@ -132,12 +132,3 @@ func (s *Service) GetWeaponStatus(ctx context.Context, weaponID string) (*api.We
 
 	return result, nil
 }
-
-
-
-
-
-
-
-
-

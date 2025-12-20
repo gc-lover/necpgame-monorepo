@@ -1,4 +1,4 @@
-// Issue: #1442
+// Package server Issue: #1442
 package server
 
 import (
@@ -40,7 +40,7 @@ func (r *Repository) CreateFaction(ctx context.Context, req api.CreateFactionReq
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Convert to OptUUID and OptString
 	idUUID, _ := uuid.Parse(idStr)
 	faction.ID = api.NewOptUUID(idUUID)
@@ -185,7 +185,7 @@ func (r *Repository) ListFactions(ctx context.Context, params api.ListFactionsPa
 	baseQuery := `SELECT id, name, type, ideology, description, leader_clan_id, status, created_at, updated_at FROM factions WHERE 1=1`
 	countQuery := `SELECT COUNT(*) FROM factions WHERE 1=1`
 
-	args := []interface{}{}
+	var args []interface{}
 	argIndex := 1
 
 	// Apply filters
@@ -268,7 +268,7 @@ func (r *Repository) ListFactions(ctx context.Context, params api.ListFactionsPa
 	return factions, total, nil
 }
 
-func (r *Repository) UpdateHierarchy(ctx context.Context, factionId string, req api.UpdateHierarchyRequest) error {
+func (r *Repository) UpdateHierarchy() error {
 	// Implementation of hierarchy updates
 	// This would update faction_hierarchy table
 	return nil
@@ -339,12 +339,3 @@ func (r *Repository) GetClanCount(ctx context.Context, factionId string) (int, e
 	err := r.db.QueryRowContext(ctx, query, factionId).Scan(&count)
 	return count, err
 }
-
-
-
-
-
-
-
-
-

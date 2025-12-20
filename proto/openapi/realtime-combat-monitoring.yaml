@@ -1,0 +1,291 @@
+# Issue: #2197 - Real-time Combat API - Monitoring
+openapi: 3.0.3
+info:
+  title: Real-time Combat API - Monitoring
+  version: 1.0.0
+  description: Connection and performance monitoring for real-time combat system
+
+servers:
+  - url: http://localhost:8110
+    description: Local development
+  - url: https://api.necpgame.com/v1/realtime/combat
+    description: Production API
+
+tags:
+  - name: monitoring
+    description: Connection and performance monitoring
+
+security:
+  - BearerAuth: [ ]
+
+paths:
+
+  # ============================================================================
+  # MONITORING
+  # ============================================================================
+
+  /api/v1/realtime/combat/monitoring/connections:
+    get:
+      summary: Get connection statistics
+      operationId: getConnectionStats
+      tags: [ monitoring ]
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: timeframe
+          in: query
+          schema:
+            type: string
+            enum: [ 1m, 5m, 15m, 1h, 24h ]
+            default: 5m
+          description: Timeframe for statistics
+      responses:
+        '200':
+          description: Connection statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnectionStats'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/realtime/combat/monitoring/performance:
+    get:
+      summary: Get performance metrics
+      operationId: getPerformanceMetrics
+      tags: [ monitoring ]
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: metric_type
+          in: query
+          schema:
+            type: string
+            enum: [ latency, throughput, error_rate, memory, cpu ]
+          description: Type of metrics to retrieve
+        - name: timeframe
+          in: query
+          schema:
+            type: string
+            enum: [ 1m, 5m, 15m, 1h, 24h ]
+            default: 5m
+          description: Timeframe for metrics
+      responses:
+        '200':
+          description: Performance metrics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PerformanceMetrics'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+  schemas:
+    # ============================================================================
+    # MONITORING SCHEMAS
+    # ============================================================================
+
+    ConnectionStats:
+      type: object
+      required:
+        - timeframe
+        - total_connections
+        - active_connections
+        - connections_created
+        - connections_terminated
+      properties:
+        timeframe:
+          type: string
+          enum: [ 1m, 5m, 15m, 1h, 24h ]
+          description: Statistics timeframe
+        total_connections:
+          type: integer
+          minimum: 0
+          description: Total connections ever created
+        active_connections:
+          type: integer
+          minimum: 0
+          description: Currently active connections
+        connections_created:
+          type: integer
+          minimum: 0
+          description: Connections created in timeframe
+        connections_terminated:
+          type: integer
+          minimum: 0
+          description: Connections terminated in timeframe
+        average_connection_duration:
+          type: integer
+          minimum: 0
+          description: Average connection duration (seconds)
+        peak_connections:
+          type: integer
+          minimum: 0
+          description: Peak concurrent connections
+        connection_types:
+          type: object
+          properties:
+            websocket:
+              type: integer
+              minimum: 0
+              description: WebSocket connections
+            sse:
+              type: integer
+              minimum: 0
+              description: Server-sent events connections
+            polling:
+              type: integer
+              minimum: 0
+              description: Polling connections
+          description: Breakdown by connection type
+        regions:
+          type: object
+          additionalProperties:
+            type: integer
+            minimum: 0
+          description: Connections by geographic region
+        errors:
+          type: object
+          properties:
+            connection_failures:
+              type: integer
+              minimum: 0
+              description: Failed connection attempts
+            authentication_failures:
+              type: integer
+              minimum: 0
+              description: Authentication failures
+            timeout_errors:
+              type: integer
+              minimum: 0
+              description: Connection timeouts
+          description: Connection error statistics
+
+    PerformanceMetrics:
+      type: object
+      required:
+        - metric_type
+        - timeframe
+        - data_points
+      properties:
+        metric_type:
+          type: string
+          enum: [ latency, throughput, error_rate, memory, cpu ]
+          description: Type of performance metrics
+        timeframe:
+          type: string
+          enum: [ 1m, 5m, 15m, 1h, 24h ]
+          description: Metrics timeframe
+        data_points:
+          type: array
+          items:
+            $ref: '#/components/schemas/MetricDataPoint'
+          description: Time-series metric data
+        summary:
+          type: object
+          properties:
+            average:
+              type: number
+              format: float
+              description: Average value across timeframe
+            minimum:
+              type: number
+              format: float
+              description: Minimum value in timeframe
+            maximum:
+              type: number
+              format: float
+              description: Maximum value in timeframe
+            percentile_95:
+              type: number
+              format: float
+              description: 95th percentile value
+            percentile_99:
+              type: number
+              format: float
+              description: 99th percentile value
+          description: Statistical summary of metrics
+
+    MetricDataPoint:
+      type: object
+      required:
+        - timestamp
+        - value
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          description: Metric timestamp
+        value:
+          type: number
+          format: float
+          description: Metric value
+        unit:
+          type: string
+          enum: [ ms, requests_per_second, percentage, bytes, percentage ]
+          description: Metric unit
+        labels:
+          type: object
+          additionalProperties:
+            type: string
+          description: Additional metric labels
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - message
+        - timestamp
+      properties:
+        error:
+          type: string
+          description: Error code
+        message:
+          type: string
+          description: Human-readable error message
+        timestamp:
+          type: string
+          format: date-time
+          description: Error timestamp
+        details:
+          type: object
+          additionalProperties: true
+          description: Additional error details
+        request_id:
+          type: string
+          description: Request identifier for tracing

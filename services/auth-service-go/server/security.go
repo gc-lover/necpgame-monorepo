@@ -1,4 +1,4 @@
-// Issue: #136
+// Package server Issue: #136
 package server
 
 import (
@@ -22,16 +22,10 @@ type SecurityHandler struct {
 }
 
 // NewSecurityHandler создает новый security handler
-func NewSecurityHandler(jwtSecret string, logger *zap.Logger) *SecurityHandler {
-	return &SecurityHandler{
-		jwtSecret: []byte(jwtSecret),
-		logger:    logger,
-	}
-}
 
 // HandleBearerAuth обрабатывает Bearer токен аутентификации
 func (s *SecurityHandler) HandleBearerAuth(ctx context.Context, operationName api.OperationName, t api.BearerAuth) (context.Context, error) {
-	s.logger.Debug("Processing Bearer token authentication", zap.String("operation", string(operationName)))
+	s.logger.Debug("Processing Bearer token authentication", zap.String("operation", operationName))
 
 	// Парсим и валидируем токен
 	token, err := jwt.Parse(t.Token, func(token *jwt.Token) (interface{}, error) {
@@ -85,7 +79,7 @@ func (s *SecurityHandler) HandleBearerAuth(ctx context.Context, operationName ap
 }
 
 // BearerAuth предоставляет токен для клиента (для тестирования)
-func (s *SecurityHandler) BearerAuth(ctx context.Context, operationName api.OperationName) (api.BearerAuth, error) {
+func (s *SecurityHandler) BearerAuth(ctx context.Context, _ api.OperationName) (api.BearerAuth, error) {
 	// Получаем токен из контекста (для тестирования)
 	token, ok := ctx.Value("bearer_token").(string)
 	if !ok {

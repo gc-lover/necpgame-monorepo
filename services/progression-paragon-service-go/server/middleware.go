@@ -15,10 +15,10 @@ func (s *HTTPServer) loggingMiddleware(next http.Handler) http.Handler {
 
 		duration := time.Since(start)
 		s.logger.WithFields(logrus.Fields{
-			"method":     r.Method,
-			"path":       r.URL.Path,
-			"duration":   duration.Milliseconds(),
-			"status":     w.Header().Get("Status"),
+			"method":      r.Method,
+			"path":        r.URL.Path,
+			"duration":    duration.Milliseconds(),
+			"status":      w.Header().Get("Status"),
 			"remote_addr": r.RemoteAddr,
 		}).Info("HTTP request")
 	})
@@ -44,4 +44,3 @@ func (s *HTTPServer) corsMiddleware(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 	})
 }
-

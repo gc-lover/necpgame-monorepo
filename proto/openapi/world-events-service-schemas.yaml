@@ -1,0 +1,444 @@
+# World Events Service API - Schemas
+
+Error:
+  type: object
+  required:
+    - error
+    - message
+  properties:
+    error:
+      type: string
+      description: Error code
+    message:
+      type: string
+      description: Human-readable error message
+    details:
+      type: object
+      description: Additional error details
+
+WorldEvent:
+  type: object
+  required:
+    - id
+    - title
+    - type
+    - scale
+    - frequency
+    - status
+    - created_at
+  properties:
+    id:
+      type: string
+      format: uuid
+      description: Уникальный идентификатор события
+    title:
+      type: string
+      description: Название события
+      maxLength: 200
+    description:
+      type: string
+      description: Описание события
+    type:
+      type: string
+      enum: [ STORY, TECHNOLOGICAL, ECONOMIC, POLITICAL, MILITARY, SPORTS, ENVIRONMENTAL ]
+      description: Тип события
+    scale:
+      type: string
+      enum: [ GLOBAL, REGIONAL, CITY, LOCAL ]
+      description: Масштаб события
+    frequency:
+      type: string
+      enum: [ ONE_TIME, PERIODIC, REGULAR ]
+      description: Частота события
+    status:
+      type: string
+      enum: [ PLANNED, ANNOUNCED, ACTIVE, COOLDOWN, ARCHIVED ]
+      description: Текущий статус события
+    start_time:
+      type: string
+      format: date-time
+      description: Время начала события
+    end_time:
+      type: string
+      format: date-time
+      description: Время окончания события
+    duration:
+      type: integer
+      description: Длительность события в секундах
+    effects:
+      type: array
+      items:
+        $ref: '#/EventEffect'
+      description: Список эффектов события
+    target_regions:
+      type: array
+      items:
+        type: string
+      description: Целевые регионы события
+    target_factions:
+      type: array
+      items:
+        type: string
+        format: uuid
+      description: Целевые фракции события
+    prerequisites:
+      type: array
+      items:
+        type: string
+        format: uuid
+      description: Предварительные условия (ID других событий)
+    cooldown_duration:
+      type: integer
+      description: Длительность cooldown периода в секундах
+    max_concurrent:
+      type: integer
+      description: Максимальное количество одновременных активных событий этого типа
+    created_at:
+      type: string
+      format: date-time
+      description: Время создания
+    updated_at:
+      type: string
+      format: date-time
+      description: Время последнего обновления
+    version:
+      type: integer
+      description: Версия события
+
+EventEffect:
+  type: object
+  required:
+    - id
+    - event_id
+    - target_system
+    - effect_type
+    - start_time
+    - end_time
+    - is_active
+  properties:
+    id:
+      type: string
+      format: uuid
+      description: Уникальный идентификатор эффекта
+    event_id:
+      type: string
+      format: uuid
+      description: ID события
+    target_system:
+      type: string
+      enum: [ ECONOMY, SOCIAL, GAMEPLAY, REPUTATION, QUEST ]
+      description: Целевая система для применения эффекта
+    effect_type:
+      type: string
+      description: Тип эффекта (например, "price_modifier", "reputation_change")
+    parameters:
+      type: object
+      description: Параметры эффекта в формате JSON
+      additionalProperties: true
+    start_time:
+      type: string
+      format: date-time
+      description: Время начала действия эффекта
+    end_time:
+      type: string
+      format: date-time
+      description: Время окончания действия эффекта
+    is_active:
+      type: boolean
+      description: Активен ли эффект
+    created_at:
+      type: string
+      format: date-time
+      description: Время создания эффекта
+
+EventAnnouncement:
+  type: object
+  required:
+    - id
+    - event_id
+    - title
+    - message
+    - type
+    - created_at
+  properties:
+    id:
+      type: string
+      format: uuid
+      description: Уникальный идентификатор объявления
+    event_id:
+      type: string
+      format: uuid
+      description: ID связанного события
+    title:
+      type: string
+      description: Заголовок объявления
+    message:
+      type: string
+      description: Текст объявления
+    type:
+      type: string
+      enum: [ BANNER, NEWS, NOTIFICATION, IN_GAME_MESSAGE ]
+      description: Тип объявления
+    target_audience:
+      type: string
+      enum: [ ALL_PLAYERS, REGION_PLAYERS, FACTION_MEMBERS, SPECIFIC_PLAYERS ]
+      description: Целевая аудитория
+    priority:
+      type: string
+      enum: [ LOW, MEDIUM, HIGH, CRITICAL ]
+      description: Приоритет объявления
+    expires_at:
+      type: string
+      format: date-time
+      description: Время истечения объявления
+    created_at:
+      type: string
+      format: date-time
+      description: Время создания объявления
+
+CreateWorldEventRequest:
+  type: object
+  required:
+    - title
+    - type
+    - scale
+    - frequency
+  properties:
+    title:
+      type: string
+      description: Название события
+      maxLength: 200
+    description:
+      type: string
+      description: Описание события
+    type:
+      type: string
+      enum: [ STORY, TECHNOLOGICAL, ECONOMIC, POLITICAL, MILITARY, SPORTS, ENVIRONMENTAL ]
+      description: Тип события
+    scale:
+      type: string
+      enum: [ GLOBAL, REGIONAL, CITY, LOCAL ]
+      description: Масштаб события
+    frequency:
+      type: string
+      enum: [ ONE_TIME, PERIODIC, REGULAR ]
+      description: Частота события
+    start_time:
+      type: string
+      format: date-time
+      description: Время начала события
+    duration:
+      type: integer
+      description: Длительность в секундах
+    target_regions:
+      type: array
+      items:
+        type: string
+      description: Целевые регионы
+    target_factions:
+      type: array
+      items:
+        type: string
+        format: uuid
+      description: Целевые фракции
+    prerequisites:
+      type: array
+      items:
+        type: string
+        format: uuid
+      description: Предварительные условия
+    cooldown_duration:
+      type: integer
+      description: Длительность cooldown периода в секундах
+    max_concurrent:
+      type: integer
+      description: Максимальное количество одновременных активных событий
+
+UpdateWorldEventRequest:
+  type: object
+  properties:
+    title:
+      type: string
+      maxLength: 200
+    description:
+      type: string
+    type:
+      type: string
+      enum: [ STORY, TECHNOLOGICAL, ECONOMIC, POLITICAL, MILITARY, SPORTS, ENVIRONMENTAL ]
+    scale:
+      type: string
+      enum: [ GLOBAL, REGIONAL, CITY, LOCAL ]
+    frequency:
+      type: string
+      enum: [ ONE_TIME, PERIODIC, REGULAR ]
+    start_time:
+      type: string
+      format: date-time
+    duration:
+      type: integer
+    target_regions:
+      type: array
+      items:
+        type: string
+    target_factions:
+      type: array
+      items:
+        type: string
+        format: uuid
+    prerequisites:
+      type: array
+      items:
+        type: string
+        format: uuid
+    cooldown_duration:
+      type: integer
+    max_concurrent:
+      type: integer
+
+CreateEventEffectRequest:
+  type: object
+  required:
+    - target_system
+    - effect_type
+    - parameters
+    - start_time
+    - end_time
+  properties:
+    target_system:
+      type: string
+      enum: [ ECONOMY, SOCIAL, GAMEPLAY, REPUTATION, QUEST ]
+      description: Целевая система для применения эффекта
+    effect_type:
+      type: string
+      description: Тип эффекта
+    parameters:
+      type: object
+      description: Параметры эффекта
+      additionalProperties: true
+    start_time:
+      type: string
+      format: date-time
+      description: Время начала действия эффекта
+    end_time:
+      type: string
+      format: date-time
+      description: Время окончания действия эффекта
+
+UpdateEventEffectRequest:
+  type: object
+  properties:
+    target_system:
+      type: string
+      enum: [ ECONOMY, SOCIAL, GAMEPLAY, REPUTATION, QUEST ]
+    effect_type:
+      type: string
+    parameters:
+      type: object
+      additionalProperties: true
+    start_time:
+      type: string
+      format: date-time
+    end_time:
+      type: string
+      format: date-time
+
+CreateAnnouncementRequest:
+  type: object
+  required:
+    - title
+    - message
+    - type
+  properties:
+    title:
+      type: string
+      description: Заголовок объявления
+    message:
+      type: string
+      description: Текст объявления
+    type:
+      type: string
+      enum: [ BANNER, NEWS, NOTIFICATION, IN_GAME_MESSAGE ]
+      description: Тип объявления
+    target_audience:
+      type: string
+      enum: [ ALL_PLAYERS, REGION_PLAYERS, FACTION_MEMBERS, SPECIFIC_PLAYERS ]
+      description: Целевая аудитория
+    priority:
+      type: string
+      enum: [ LOW, MEDIUM, HIGH, CRITICAL ]
+      description: Приоритет объявления
+    expires_at:
+      type: string
+      format: date-time
+      description: Время истечения объявления
+
+WorldEventsListResponse:
+  type: object
+  required:
+    - events
+    - total_count
+    - page
+    - page_size
+  properties:
+    events:
+      type: array
+      items:
+        $ref: '#/WorldEvent'
+      description: Список событий
+    total_count:
+      type: integer
+      minimum: 0
+      description: Общее количество событий
+    page:
+      type: integer
+      minimum: 1
+      default: 1
+      description: Текущая страница
+    page_size:
+      type: integer
+      minimum: 1
+      maximum: 100
+      default: 20
+      description: Размер страницы
+
+WorldEventEffectsResponse:
+  type: object
+  required:
+    - event_id
+    - effects
+    - total_count
+  properties:
+    event_id:
+      type: string
+      format: uuid
+      description: ID события
+    effects:
+      type: array
+      items:
+        $ref: '#/EventEffect'
+      description: Список эффектов
+    total_count:
+      type: integer
+      minimum: 0
+      description: Общее количество эффектов
+
+HealthResponse:
+  type: object
+  required:
+    - status
+    - timestamp
+  properties:
+    status:
+      type: string
+      example: healthy
+    timestamp:
+      type: string
+      format: date-time
+    version:
+      type: string
+    uptime:
+      type: integer
+    services:
+      type: object
+      additionalProperties:
+        type: string

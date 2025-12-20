@@ -1,0 +1,301 @@
+# Issue: #2197 - Real-time Combat API State Schemas
+components:
+  schemas:
+
+    # ============================================================================
+    # STATE SYNCHRONIZATION SCHEMAS
+    # ============================================================================
+
+    StateSyncRequest:
+      type: object
+      required:
+        - sync_type
+      properties:
+        sync_type:
+          type: string
+          enum: [ full_sync, incremental_sync, critical_only ]
+          description: Type of synchronization requested
+        last_sync_timestamp:
+          type: string
+          format: date-time
+          description: Timestamp of last successful sync
+        include_history:
+          type: boolean
+          default: false
+          description: Include state change history
+        max_history_entries:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 10
+          description: Maximum history entries to include
+
+    StateSyncResponse:
+      type: object
+      required:
+        - sync_id
+        - status
+        - timestamp
+      properties:
+        sync_id:
+          type: string
+          format: uuid
+          description: Synchronization operation ID
+        status:
+          type: string
+          enum: [ initiated, in_progress, completed, failed ]
+          description: Synchronization status
+        timestamp:
+          type: string
+          format: date-time
+          description: Response timestamp
+        estimated_completion:
+          type: string
+          format: date-time
+          description: Estimated completion time
+        progress_percentage:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 100.0
+          description: Synchronization progress
+
+    StateSnapshot:
+      type: object
+      required:
+        - session_id
+        - timestamp
+        - participants
+        - effects
+      properties:
+        session_id:
+          type: string
+          format: uuid
+          description: Combat session ID
+        timestamp:
+          type: string
+          format: date-time
+          description: Snapshot timestamp
+        participants:
+          type: array
+          items:
+            $ref: '#/components/schemas/CombatParticipantState'
+          description: Current participant states
+        effects:
+          type: array
+          items:
+            $ref: '#/components/schemas/ActiveEffectState'
+          description: Active effects
+        objectives:
+          type: array
+          items:
+            $ref: '#/components/schemas/ObjectiveState'
+          description: Current objectives
+        environment_state:
+          $ref: '#/components/schemas/EnvironmentState'
+          description: Environment state
+        history:
+          type: array
+          items:
+            $ref: '#/components/schemas/StateChange'
+          description: Recent state changes
+
+    CombatParticipantState:
+      type: object
+      required:
+        - id
+        - type
+        - position
+        - health
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Participant ID
+        type:
+          type: string
+          enum: [ player, npc, enemy ]
+          description: Participant type
+        position:
+          $ref: './realtime-combat-api-common-schemas.yaml#/components/schemas/Vector3'
+          description: Current position
+        health:
+          $ref: './realtime-combat-api-common-schemas.yaml#/components/schemas/HealthStatus'
+          description: Current health status
+        velocity:
+          $ref: './realtime-combat-api-common-schemas.yaml#/components/schemas/Vector3'
+          description: Current velocity
+        rotation:
+          type: object
+          properties:
+            yaw:
+              type: number
+              format: float
+              description: Yaw rotation
+            pitch:
+              type: number
+              format: float
+              description: Pitch rotation
+        current_action:
+          type: string
+          enum: [ idle, moving, attacking, defending, using_ability ]
+          description: Current action state
+        last_update:
+          type: string
+          format: date-time
+          description: Last state update time
+
+    ActiveEffectState:
+      type: object
+      required:
+        - effect_id
+        - effect_type
+        - target_id
+        - remaining_ms
+      properties:
+        effect_id:
+          type: string
+          format: uuid
+          description: Effect instance ID
+        effect_type:
+          type: string
+          enum: [ buff, debuff, damage_over_time, healing_over_time, stun, slow ]
+          description: Effect type
+        target_id:
+          type: string
+          format: uuid
+          description: Affected participant ID
+        remaining_ms:
+          type: integer
+          minimum: 0
+          description: Remaining duration in milliseconds
+        magnitude:
+          type: number
+          format: float
+          description: Effect magnitude
+
+    ObjectiveState:
+      type: object
+      required:
+        - id
+        - type
+        - status
+        - progress
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Objective ID
+        type:
+          type: string
+          enum: [ eliminate_enemies, survive_time, collect_items, defend_position ]
+          description: Objective type
+        status:
+          type: string
+          enum: [ pending, active, completed, failed ]
+          description: Completion status
+        progress:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 100.0
+          description: Completion progress
+        target_value:
+          type: integer
+          minimum: 0
+          description: Target value
+        current_value:
+          type: integer
+          minimum: 0
+          description: Current progress value
+
+    EnvironmentState:
+      type: object
+      properties:
+        time_of_day:
+          type: string
+          enum: [ dawn, day, dusk, night ]
+          description: Current time of day
+        weather_conditions:
+          type: string
+          enum: [ clear, rain, snow, fog, storm ]
+          description: Weather conditions
+        active_zones:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Active combat zones
+        environmental_effects:
+          type: array
+          items:
+            $ref: '#/components/schemas/EnvironmentalEffect'
+          description: Active environmental effects
+
+    EnvironmentalEffect:
+      type: object
+      required:
+        - effect_type
+        - area
+      properties:
+        effect_type:
+          type: string
+          enum: [ radiation, toxic_gas, electromagnetic, gravity_well ]
+          description: Environmental effect type
+        area:
+          $ref: '#/components/schemas/AreaBounds'
+          description: Affected area
+        intensity:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Effect intensity
+        duration_remaining:
+          type: integer
+          minimum: 0
+          description: Remaining duration in seconds
+
+    AreaBounds:
+      type: object
+      required:
+        - center
+        - radius
+      properties:
+        center:
+          $ref: './realtime-combat-api-common-schemas.yaml#/components/schemas/Vector3'
+          description: Area center position
+        radius:
+          type: number
+          format: float
+          minimum: 0
+          description: Area radius
+
+    StateChange:
+      type: object
+      required:
+        - timestamp
+        - change_type
+        - entity_id
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          description: Change timestamp
+        change_type:
+          type: string
+          enum: [ participant_joined, participant_left, participant_moved, health_changed, effect_applied, effect_expired, objective_updated ]
+          description: Type of state change
+        entity_id:
+          type: string
+          format: uuid
+          description: Entity that changed
+        old_value:
+          type: object
+          description: Previous value
+        new_value:
+          type: object
+          description: New value
+        metadata:
+          type: object
+          description: Additional change metadata

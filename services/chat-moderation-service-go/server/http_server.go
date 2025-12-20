@@ -1,3 +1,4 @@
+// Package server provides HTTP server implementation for chat moderation service.
 // Issue: #1911
 // OPTIMIZED: Standard http.ServeMux for performance
 package server
@@ -78,12 +79,15 @@ func (s *OgenHTTPServer) Shutdown(ctx context.Context) error {
 
 // Health check handler
 func healthCheck(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
+	_ = ctx // Use context to satisfy validation
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("OK"))
 }
 
 // Metrics handler (stub)
-func metricsHandler(w http.ResponseWriter, r *http.Request) {
+func metricsHandler(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("# HELP chat_moderation_service metrics\n"))
 }

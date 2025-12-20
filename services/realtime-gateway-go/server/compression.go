@@ -1,4 +1,4 @@
-// Issue: #1612 - Adaptive Compression
+// Package server Issue: #1612 - Adaptive Compression
 // LZ4 для real-time (fast!), Zstandard для bulk data (best ratio)
 package server
 
@@ -86,10 +86,3 @@ func (ac *AdaptiveCompressor) Close() error {
 }
 
 // isRealtimeData определяет, является ли данные real-time
-func isRealtimeData(data []byte) bool {
-	// Real-time: position updates, game state, shooting events
-	// Bulk: inventory, stats, logs, quest data
-	// Эвристика: маленький размер + частые обновления = real-time
-	return len(data) < 1024 // <1KB обычно real-time
-}
-

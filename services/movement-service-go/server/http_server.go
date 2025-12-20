@@ -1,4 +1,4 @@
-// Issue: #141888104
+// Package server Issue: #141888104
 package server
 
 // HTTP handlers use context.WithTimeout for request timeouts (see handlers.go)
@@ -68,7 +68,7 @@ func NewHTTPServer(addr string, movementService MovementServiceInterface) *HTTPS
 	return server
 }
 
-func (s *HTTPServer) Start(ctx context.Context) error {
+func (s *HTTPServer) Start() error {
 	s.logger.WithField("addr", s.addr).Info("Movement Service starting")
 	return s.server.ListenAndServe()
 }
@@ -78,7 +78,7 @@ func (s *HTTPServer) Shutdown(ctx context.Context) error {
 	return s.server.Shutdown(ctx)
 }
 
-func healthCheck(w http.ResponseWriter, r *http.Request) {
+func healthCheck(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("OK"))
 }
@@ -90,10 +90,10 @@ func loggingMiddleware(logger *logrus.Logger) func(http.Handler) http.Handler {
 			ww := &responseRecorder{ResponseWriter: w, statusCode: http.StatusOK}
 			next.ServeHTTP(ww, r)
 			logger.WithFields(logrus.Fields{
-				"method":    r.Method,
-				"path":      r.URL.Path,
-				"status":    ww.statusCode,
-				"duration":  time.Since(start).String(),
+				"method":   r.Method,
+				"path":     r.URL.Path,
+				"status":   ww.statusCode,
+				"duration": time.Since(start).String(),
 			}).Info("Request completed")
 		})
 	}
@@ -135,6 +135,3 @@ func (rr *responseRecorder) WriteHeader(code int) {
 	rr.statusCode = code
 	rr.ResponseWriter.WriteHeader(code)
 }
-
-
-

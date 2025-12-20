@@ -5,13 +5,15 @@
 
 ## Описание
 
-Директория содержит Protocol Buffer определения для realtime сетевой коммуникации, включая базовые сообщения, управление зонами, тикрейт и переключение протоколов.
+Директория содержит Protocol Buffer определения для realtime сетевой коммуникации, включая базовые сообщения, управление
+зонами, тикрейт и переключение протоколов.
 
 ## Файлы
 
 ### `realtime.proto`
 
 Базовые сообщения для realtime коммуникации:
+
 - Heartbeat/HeartbeatAck - для измерения задержки
 - Echo/EchoAck - для тестирования соединения
 - PlayerInput - входные данные от игрока
@@ -22,6 +24,7 @@
 ### `network-config.proto`
 
 Конфигурационные сообщения для сетевой инфраструктуры:
+
 - `TickRateConfig` - конфигурация тикрейта
 - `ZoneConfig` - конфигурация зоны
 - `ProtocolSwitchRequest/Response/Status` - переключение протоколов
@@ -37,6 +40,7 @@
 ### `network-messages.proto`
 
 Расширенные сообщения для сетевой коммуникации:
+
 - `NetworkConfigMessage` - обертка для конфигурационных сообщений
 - `ExtendedServerMessage` - расширенные серверные сообщения (включая новые типы)
 - `ExtendedClientMessage` - расширенные клиентские сообщения (включая новые типы)
@@ -44,6 +48,7 @@
 ### `udp-reliability.proto`
 
 Протокол надежности поверх UDP:
+
 - `UDPPacketHeader` - заголовок UDP пакета (sequence number, ACK, flags)
 - `UDPAck/UDPNack` - подтверждения и отрицательные подтверждения пакетов
 - `UDPConnectionRequest/Ack/Confirm` - установление UDP соединения (3-way handshake)
@@ -58,6 +63,7 @@
 ### Генерация кода
 
 Для Go:
+
 ```bash
 protoc --go_out=. --go_opt=paths=source_relative \
   proto/realtime/realtime.proto \
@@ -67,6 +73,7 @@ protoc --go_out=. --go_opt=paths=source_relative \
 ```
 
 Для C++ (UE5):
+
 ```bash
 protoc --cpp_out=. \
   proto/realtime/realtime.proto \
@@ -145,6 +152,7 @@ message UDPAck {
 ## Версионирование
 
 Все proto файлы используют `proto3` синтаксис и следуют правилам backward compatibility:
+
 - Новые поля добавляются в конец
 - Удаление полей запрещено (помечаются как deprecated)
 - Изменение типов полей запрещено

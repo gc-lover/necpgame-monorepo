@@ -349,4 +349,3 @@ func TestCharacterRepository_UpdateCharacter_Partial(t *testing.T) {
 	assert.Equal(t, newLevel, updatedChar.Level)
 	assert.Equal(t, char.Name, updatedChar.Name)
 }
-

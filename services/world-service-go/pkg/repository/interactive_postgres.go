@@ -1,4 +1,4 @@
-// Issue: #1844 - PostgreSQL repository for world interactives system
+// Package repository Issue: #1844 - PostgreSQL repository for world interactives system
 package repository
 
 import (
@@ -16,9 +16,6 @@ type PostgresInteractiveRepository struct {
 }
 
 // NewPostgresInteractiveRepository creates a new PostgreSQL repository
-func NewPostgresInteractiveRepository(db *sql.DB) *PostgresInteractiveRepository {
-	return &PostgresInteractiveRepository{db: db}
-}
 
 // SaveWorldInteractive saves a comprehensive world interactive object
 func (r *PostgresInteractiveRepository) SaveWorldInteractive(ctx context.Context, interactive *models.Interactive) (*models.Interactive, error) {
@@ -219,7 +216,7 @@ func (r *PostgresInteractiveRepository) GetWorldInteractives(ctx context.Context
 		LEFT JOIN interactive_locations il ON it.id = il.interactive_type_id`
 
 	whereClause := " WHERE 1=1"
-	args := []interface{}{}
+	var args []interface{}
 	argCount := 0
 
 	if filter.Category != nil {
@@ -450,13 +447,13 @@ func (r *PostgresInteractiveRepository) GetWorldInteractive(ctx context.Context,
 }
 
 // UpdateWorldInteractive updates a world interactive
-func (r *PostgresInteractiveRepository) UpdateWorldInteractive(ctx context.Context, interactiveID string, updates map[string]interface{}) (*models.Interactive, error) {
+func (r *PostgresInteractiveRepository) UpdateWorldInteractive(_ context.Context, _ string, _ map[string]interface{}) (*models.Interactive, error) {
 	// This is a simplified implementation. In production, you'd build dynamic update queries.
 	return nil, fmt.Errorf("UpdateWorldInteractive not implemented")
 }
 
 // DeleteWorldInteractive deletes a world interactive
-func (r *PostgresInteractiveRepository) DeleteWorldInteractive(ctx context.Context, interactiveID string) error {
+func (r *PostgresInteractiveRepository) DeleteWorldInteractive(_ context.Context, _ string) error {
 	// This is a simplified implementation. In production, you'd handle cascading deletes.
 	return fmt.Errorf("DeleteWorldInteractive not implemented")
 }
@@ -472,7 +469,7 @@ func (r *PostgresInteractiveRepository) GetInteractivesByFaction(ctx context.Con
 }
 
 // GetInteractivesByLocation retrieves interactives within a location radius
-func (r *PostgresInteractiveRepository) GetInteractivesByLocation(ctx context.Context, worldLocation string, radius float64) ([]models.Interactive, error) {
+func (r *PostgresInteractiveRepository) GetInteractivesByLocation(ctx context.Context, worldLocation string, _ float64) ([]models.Interactive, error) {
 	filter := &models.ListWorldInteractivesRequest{
 		WorldLocation: &worldLocation,
 	}
@@ -520,7 +517,7 @@ func (r *PostgresInteractiveRepository) UpdateInteractiveFactionControl(ctx cont
 	return err
 }
 
-// Legacy methods implementation (for compatibility)
+// SaveInteractive Legacy methods implementation (for compatibility)
 func (r *PostgresInteractiveRepository) SaveInteractive(ctx context.Context, interactiveID string, version int, name, description, location string, interactiveType models.InteractiveType, status models.InteractiveStatus, contentData map[string]interface{}) (*models.Interactive, error) {
 	// Convert legacy format to new format
 	interactive := &models.Interactive{

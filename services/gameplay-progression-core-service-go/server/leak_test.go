@@ -47,4 +47,3 @@ func TestProgressionCoreServiceNoLeaks(t *testing.T) {
 // - Channel close for all event channels
 // - Timeout for all DB operations
 // - Worker pool limits
-

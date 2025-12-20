@@ -1,4 +1,4 @@
-// Issue: #1598, #1607
+// Package server Issue: #1598, #1607
 // ogen handlers - TYPED responses (no interface{} boxing!)
 package server
 
@@ -10,10 +10,8 @@ import (
 	"github.com/google/uuid"
 )
 
-// Context timeout constants (Issue #1604)
 const (
-	DBTimeout    = 50 * time.Millisecond
-	CacheTimeout = 10 * time.Millisecond
+	DBTimeout = 50 * time.Millisecond
 )
 
 // ChatChannelsHandlers implements api.Handler interface (ogen typed handlers!)
@@ -24,7 +22,7 @@ func NewChatChannelsHandlers() *ChatChannelsHandlers {
 }
 
 // GetChannels - TYPED response!
-func (h *ChatChannelsHandlers) GetChannels(ctx context.Context, params api.GetChannelsParams) (api.GetChannelsRes, error) {
+func (h *ChatChannelsHandlers) GetChannels(ctx context.Context, _ api.GetChannelsParams) (api.GetChannelsRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 	_ = ctx // Will be used when DB operations are implemented
@@ -96,7 +94,7 @@ func (h *ChatChannelsHandlers) GetChannel(ctx context.Context, params api.GetCha
 }
 
 // JoinChannel - TYPED response!
-func (h *ChatChannelsHandlers) JoinChannel(ctx context.Context, req *api.JoinChannelRequest, params api.JoinChannelParams) (api.JoinChannelRes, error) {
+func (h *ChatChannelsHandlers) JoinChannel(ctx context.Context, _ *api.JoinChannelRequest, params api.JoinChannelParams) (api.JoinChannelRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 	_ = ctx // Will be used when DB operations are implemented
@@ -121,7 +119,7 @@ func (h *ChatChannelsHandlers) JoinChannel(ctx context.Context, req *api.JoinCha
 }
 
 // LeaveChannel - TYPED response!
-func (h *ChatChannelsHandlers) LeaveChannel(ctx context.Context, req *api.LeaveChannelRequest, params api.LeaveChannelParams) (api.LeaveChannelRes, error) {
+func (h *ChatChannelsHandlers) LeaveChannel(ctx context.Context, _ *api.LeaveChannelRequest, _ api.LeaveChannelParams) (api.LeaveChannelRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 	_ = ctx // Will be used when DB operations are implemented

@@ -1,4 +1,4 @@
-// Issue: #150 - Matchmaking Repository (Database Layer)
+// Package server Issue: #150 - Matchmaking Repository (Database Layer)
 // Performance: Connection pooling (25-50), covering indexes, batch operations
 package server
 
@@ -50,8 +50,8 @@ type LeaderboardEntry struct {
 
 // Repository handles database operations with performance optimizations
 type Repository struct {
-	db  *sql.DB
-	cb  *DBCircuitBreaker // Issue: #1588 - Circuit breaker for DB
+	db *sql.DB
+	cb *DBCircuitBreaker // Issue: #1588 - Circuit breaker for DB
 }
 
 // NewRepository creates new repository with optimized DB pool
@@ -63,8 +63,8 @@ func NewRepository(connStr string) (*Repository, error) {
 	}
 
 	// Connection pool configuration (Level 1 MANDATORY)
-	db.SetMaxOpenConns(50)        // Max connections
-	db.SetMaxIdleConns(25)        // Idle connections
+	db.SetMaxOpenConns(50) // Max connections
+	db.SetMaxIdleConns(25) // Idle connections
 	db.SetConnMaxLifetime(5 * time.Minute)
 	db.SetConnMaxIdleTime(1 * time.Minute)
 
@@ -105,7 +105,7 @@ func (r *Repository) InsertQueueEntry(ctx context.Context, entry *QueueEntry) er
 			entry.Status,
 			entry.EnteredAt,
 			entry.Rating,
-			entry.Rating-50,  // Initial range
+			entry.Rating-50, // Initial range
 			entry.Rating+50,
 		)
 	})
@@ -303,4 +303,3 @@ func (r *Repository) BatchInsertQueueEntries(ctx context.Context, entries []*Que
 
 	return tx.Commit()
 }
-

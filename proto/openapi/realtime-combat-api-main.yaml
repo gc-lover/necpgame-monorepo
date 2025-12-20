@@ -1,0 +1,645 @@
+# Issue: #2197 - Real-time Combat API Specification (Main file)
+openapi: 3.0.3
+info:
+  title: Real-time Combat API
+  version: 1.0.0
+  description: |
+    REST API for managing real-time combat interactions in MMOFPS RPG.
+
+    This API provides endpoints for managing WebSocket connections, event subscriptions,
+    real-time state synchronization, and server-sent events for combat systems.
+
+    ## Integration with WebSocket API
+
+    This REST API works alongside the WebSocket API (`combat-systems-wave1-websocket.yaml`)
+    to provide:
+    - Connection management and authentication
+    - Event subscription configuration
+    - Server-sent events fallback
+    - Administrative controls
+
+    ## Key Features
+
+    - WebSocket connection lifecycle management
+    - Event filtering and subscription management
+    - Real-time state synchronization
+    - Server-sent events (SSE) fallback
+    - Connection health monitoring
+    - Rate limiting and throttling controls
+
+    ## Performance Requirements
+
+    - Connection establishment: <50ms P99
+    - Event routing: <10ms P99
+    - Concurrent connections: 1000+ per server
+    - Memory efficient state management
+
+servers:
+  - url: http://localhost:8110
+    description: Local development
+  - url: https://api.necpgame.com/v1/realtime/combat
+    description: Production API
+
+tags:
+  - name: connections
+    description: WebSocket connection management
+  - name: subscriptions
+    description: Event subscription management
+  - name: events
+    description: Server-sent events (SSE)
+  - name: state
+    description: Real-time state synchronization
+  - name: monitoring
+    description: Connection and performance monitoring
+
+security:
+  - BearerAuth: [ ]
+
+paths:
+
+  # ============================================================================
+  # CONNECTION MANAGEMENT
+  # ============================================================================
+
+  /api/v1/realtime/combat/connections:
+    post:
+      summary: Establish WebSocket connection token
+      operationId: createConnectionToken
+      tags: [ connections ]
+      security:
+        - BearerAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './realtime-combat-api-connection-schemas.yaml#/components/schemas/ConnectionRequest'
+      responses:
+        '201':
+          description: Connection token created
+          content:
+            application/json:
+              schema:
+                $ref: './realtime-combat-api-connection-schemas.yaml#/components/schemas/ConnectionToken'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    get:
+      summary: List active connections
+      operationId: listActiveConnections
+      tags: [ connections ]
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: player_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by player ID
+        - name: session_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by combat session ID
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of connections to return
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          description: Pagination offset
+      responses:
+        '200':
+          description: Active connections retrieved
+          content:
+            application/json:
+              schema:
+                $ref: './realtime-combat-api-connection-schemas.yaml#/components/schemas/ConnectionListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/realtime/combat/connections/{connection_id}:
+    get:
+      summary: Get connection details
+      operationId: getConnectionDetails
+      tags: [ connections ]
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: connection_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Connection ID
+      responses:
+        '200':
+          description: Connection details
+          content:
+            application/json:
+              schema:
+                $ref: './realtime-combat-api-connection-schemas.yaml#/components/schemas/ConnectionDetails'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    delete:
+      summary: Terminate connection
+      operationId: terminateConnection
+      tags: [ connections ]
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: connection_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Connection ID
+      responses:
+        '204':
+          description: Connection terminated
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # ============================================================================
+  # EVENT SUBSCRIPTIONS
+  # ============================================================================
+
+  /api/v1/realtime/combat/subscriptions:
+    post:
+      summary: Create event subscription
+      operationId: createEventSubscription
+      tags: [ subscriptions ]
+      security:
+        - BearerAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './realtime-combat-api-subscription-schemas.yaml#/components/schemas/EventSubscriptionRequest'
+      responses:
+        '201':
+          description: Subscription created
+          content:
+            application/json:
+              schema:
+                $ref: './realtime-combat-api-subscription-schemas.yaml#/components/schemas/EventSubscription'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          description: Subscription already exists
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    get:
+      summary: List event subscriptions
+      operationId: listEventSubscriptions
+      tags: [ subscriptions ]
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: player_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by player ID
+        - name: event_type
+          in: query
+          schema:
+            type: string
+            enum: [ combat_actions, ability_usage, damage_events, player_movements, ai_updates ]
+          description: Filter by event type
+        - name: active_only
+          in: query
+          schema:
+            type: boolean
+            default: true
+          description: Return only active subscriptions
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of subscriptions to return
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          description: Pagination offset
+      responses:
+        '200':
+          description: Event subscriptions retrieved
+          content:
+            application/json:
+              schema:
+                $ref: './realtime-combat-api-subscription-schemas.yaml#/components/schemas/EventSubscriptionListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/realtime/combat/subscriptions/{subscription_id}:
+    get:
+      summary: Get subscription details
+      operationId: getEventSubscription
+      tags: [ subscriptions ]
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: subscription_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Subscription ID
+      responses:
+        '200':
+          description: Subscription details
+          content:
+            application/json:
+              schema:
+                $ref: './realtime-combat-api-subscription-schemas.yaml#/components/schemas/EventSubscription'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    patch:
+      summary: Update subscription
+      operationId: updateEventSubscription
+      tags: [ subscriptions ]
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: subscription_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Subscription ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './realtime-combat-api-subscription-schemas.yaml#/components/schemas/EventSubscriptionUpdate'
+      responses:
+        '200':
+          description: Subscription updated
+          content:
+            application/json:
+              schema:
+                $ref: './realtime-combat-api-subscription-schemas.yaml#/components/schemas/EventSubscription'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    delete:
+      summary: Delete subscription
+      operationId: deleteEventSubscription
+      tags: [ subscriptions ]
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: subscription_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Subscription ID
+      responses:
+        '204':
+          description: Subscription deleted
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # ============================================================================
+  # SERVER-SENT EVENTS (SSE)
+  # ============================================================================
+
+  /api/v1/realtime/combat/events:
+    get:
+      summary: Server-sent events stream
+      operationId: getServerSentEvents
+      tags: [ events ]
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: player_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Player ID for event filtering
+        - name: session_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Combat session ID
+        - name: event_types
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+              enum: [ combat_actions, ability_usage, damage_events, player_movements, ai_updates ]
+          description: Event types to subscribe to
+        - name: last_event_id
+          in: query
+          schema:
+            type: string
+          description: Last event ID for resuming stream
+      responses:
+        '200':
+          description: Server-sent events stream
+          content:
+            text/event-stream:
+              schema:
+                type: string
+                description: Server-sent events stream
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # ============================================================================
+  # STATE SYNCHRONIZATION
+  # ============================================================================
+
+  /api/v1/realtime/combat/state/{session_id}/sync:
+    post:
+      summary: Request state synchronization
+      operationId: requestStateSync
+      tags: [ state ]
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Combat session ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './realtime-combat-api-state-schemas.yaml#/components/schemas/StateSyncRequest'
+      responses:
+        '200':
+          description: State synchronization initiated
+          content:
+            application/json:
+              schema:
+                $ref: './realtime-combat-api-state-schemas.yaml#/components/schemas/StateSyncResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/realtime/combat/state/{session_id}/snapshot:
+    get:
+      summary: Get current state snapshot
+      operationId: getStateSnapshot
+      tags: [ state ]
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Combat session ID
+        - name: include_history
+          in: query
+          schema:
+            type: boolean
+            default: false
+          description: Include recent state history
+        - name: max_history_entries
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+          description: Maximum history entries to include
+      responses:
+        '200':
+          description: Current state snapshot
+          content:
+            application/json:
+              schema:
+                $ref: './realtime-combat-api-state-schemas.yaml#/components/schemas/StateSnapshot'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # ============================================================================
+  # MONITORING
+  # ============================================================================
+
+  /api/v1/realtime/combat/monitoring/connections:
+    get:
+      summary: Get connection statistics
+      operationId: getConnectionStats
+      tags: [ monitoring ]
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: timeframe
+          in: query
+          schema:
+            type: string
+            enum: [ 1m, 5m, 15m, 1h, 24h ]
+            default: 5m
+          description: Timeframe for statistics
+      responses:
+        '200':
+          description: Connection statistics
+          content:
+            application/json:
+              schema:
+                $ref: './realtime-combat-api-monitoring-schemas.yaml#/components/schemas/ConnectionStats'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/realtime/combat/monitoring/performance:
+    get:
+      summary: Get performance metrics
+      operationId: getPerformanceMetrics
+      tags: [ monitoring ]
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: metric_type
+          in: query
+          schema:
+            type: string
+            enum: [ latency, throughput, error_rate, memory, cpu ]
+          description: Type of metrics to retrieve
+        - name: timeframe
+          in: query
+          schema:
+            type: string
+            enum: [ 1m, 5m, 15m, 1h, 24h ]
+            default: 5m
+          description: Timeframe for metrics
+      responses:
+        '200':
+          description: Performance metrics
+          content:
+            application/json:
+              schema:
+                $ref: './realtime-combat-api-monitoring-schemas.yaml#/components/schemas/PerformanceMetrics'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - error
+            properties:
+              error:
+                type: string
+                example: "Invalid request parameters"
+
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - error
+            properties:
+              error:
+                type: string
+                example: "Authentication required"
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - error
+            properties:
+              error:
+                type: string
+                example: "Resource not found"
+
+    TooManyRequests:
+      description: Too many requests
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - error
+            properties:
+              error:
+                type: string
+                example: "Rate limit exceeded"
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - error
+            properties:
+              error:
+                type: string
+                example: "Internal server error"

@@ -54,4 +54,3 @@ func RecordTicket(status, priority, category string) {
 func RecordTicketResolved() {
 	TicketsResolvedTotal.Inc()
 }
-

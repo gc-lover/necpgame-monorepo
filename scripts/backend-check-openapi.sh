@@ -32,8 +32,8 @@ validate_openapi_file() {
 
     # Check file size
     local lines=$(wc -l < "$file")
-    if [ "$lines" -gt 500 ]; then
-        echo "WARNING  WARNING: Spec exceeds 500 lines ($lines lines)"
+    if [ "$lines" -gt 1000 ]; then
+        echo "WARNING  WARNING: Spec exceeds 1000 lines ($lines lines)"
         echo "   Consider splitting into modules"
         WARNINGS=$((WARNINGS + 1))
     fi

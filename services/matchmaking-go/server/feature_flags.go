@@ -1,4 +1,4 @@
-// Issue: #1588 - Feature Flags for graceful degradation
+// Package server Issue: #1588 - Feature Flags for graceful degradation
 package server
 
 import (
@@ -38,4 +38,3 @@ func (ff *FeatureFlags) Disable(feature string) {
 func (ff *FeatureFlags) Enable(feature string) {
 	ff.flags.Store(feature, true)
 }
-

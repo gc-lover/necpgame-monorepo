@@ -7,18 +7,18 @@ info:
     name: NECPGAME API Support
     email: api@necp.game
 servers:
-- url: http://localhost:8088/api/v1
-  description: Локальный сервер разработки
-- url: https://api.necp.game/api/v1
-  description: Продакшен сервер
+  - url: http://localhost:8088/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
 tags:
-- name: Reset
-  description: Управление сбросами
+  - name: Reset
+    description: Управление сбросами
 paths:
   /reset/stats:
     get:
       tags:
-      - Reset
+        - Reset
       summary: Получить статистику сбросов
       operationId: getResetStats
       responses:
@@ -33,30 +33,30 @@ paths:
   /reset/history:
     get:
       tags:
-      - Reset
+        - Reset
       summary: Получить историю сбросов
       operationId: getResetHistory
       parameters:
-      - name: type
-        in: query
-        schema:
-          $ref: '#/components/schemas/ResetType'
-        description: Тип сброса (daily или weekly)
-      - name: limit
-        in: query
-        schema:
-          type: integer
-          minimum: 1
-          maximum: 100
-          default: 50
-        description: Количество записей на странице
-      - name: offset
-        in: query
-        schema:
-          type: integer
-          minimum: 0
-          default: 0
-        description: Смещение для пагинации
+        - name: type
+          in: query
+          schema:
+            $ref: '#/components/schemas/ResetType'
+          description: Тип сброса (daily или weekly)
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+          description: Количество записей на странице
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          description: Смещение для пагинации
       responses:
         '200':
           description: История сбросов
@@ -69,7 +69,7 @@ paths:
   /reset/trigger:
     post:
       tags:
-      - Reset
+        - Reset
       summary: Запустить сброс
       operationId: triggerReset
       requestBody:
@@ -94,16 +94,16 @@ components:
     ResetType:
       type: string
       enum:
-      - daily
-      - weekly
+        - daily
+        - weekly
       description: Тип сброса
     ResetStatus:
       type: string
       enum:
-      - pending
-      - running
-      - completed
-      - failed
+        - pending
+        - running
+        - completed
+        - failed
       description: Статус сброса
     ResetRecord:
       type: object
@@ -151,21 +151,21 @@ components:
     TriggerResetRequest:
       type: object
       required:
-      - type
+        - type
       properties:
         type:
           $ref: '#/components/schemas/ResetType'
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     ResetListResponse:
       allOf:
-      - $ref: common.yaml#/components/schemas/PaginationResponse
-      - type: object
-        properties:
-          items:
-            type: array
+        - $ref: common.yaml#/components/schemas/PaginationResponse
+        - type: object
+          properties:
             items:
-              $ref: '#/components/schemas/ResetRecord'
-            description: Список сбросов
+              type: array
+              items:
+                $ref: '#/components/schemas/ResetRecord'
+              description: Список сбросов
   responses:
     BadRequest:
       $ref: common.yaml#/components/responses/BadRequest

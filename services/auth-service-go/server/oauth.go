@@ -1,4 +1,4 @@
-// Issue: #136
+// Package server Issue: #136
 package server
 
 import (
@@ -12,8 +12,6 @@ import (
 
 	"go.uber.org/zap"
 	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/github"
-	"golang.org/x/oauth2/google"
 )
 
 // OAuthProvider представляет OAuth провайдера
@@ -42,50 +40,6 @@ type OAuthClient struct {
 }
 
 // NewOAuthClient создает новый OAuth клиент
-func NewOAuthClient(config *OAuthConfig, logger *zap.Logger) *OAuthClient {
-	configs := make(map[OAuthProvider]*oauth2.Config)
-
-	// Google OAuth
-	if config.GoogleClientID != "" && config.GoogleClientSecret != "" {
-		configs[GoogleProvider] = &oauth2.Config{
-			ClientID:     config.GoogleClientID,
-			ClientSecret: config.GoogleClientSecret,
-			RedirectURL:  "http://localhost:8081/api/v1/auth/oauth/google/callback",
-			Scopes:       []string{"openid", "profile", "email"},
-			Endpoint:     google.Endpoint,
-		}
-	}
-
-	// GitHub OAuth
-	if config.GitHubClientID != "" && config.GitHubClientSecret != "" {
-		configs[GitHubProvider] = &oauth2.Config{
-			ClientID:     config.GitHubClientID,
-			ClientSecret: config.GitHubClientSecret,
-			RedirectURL:  "http://localhost:8081/api/v1/auth/oauth/github/callback",
-			Scopes:       []string{"user:email", "read:user"},
-			Endpoint:     github.Endpoint,
-		}
-	}
-
-	// Discord OAuth (custom endpoint)
-	if config.DiscordClientID != "" && config.DiscordClientSecret != "" {
-		configs[DiscordProvider] = &oauth2.Config{
-			ClientID:     config.DiscordClientID,
-			ClientSecret: config.DiscordClientSecret,
-			RedirectURL:  "http://localhost:8081/api/v1/auth/oauth/discord/callback",
-			Scopes:       []string{"identify", "email"},
-			Endpoint: oauth2.Endpoint{
-				AuthURL:  "https://discord.com/api/oauth2/authorize",
-				TokenURL: "https://discord.com/api/oauth2/token",
-			},
-		}
-	}
-
-	return &OAuthClient{
-		configs: configs,
-		logger:  logger,
-	}
-}
 
 // GetAuthURL возвращает URL для перенаправления пользователя к OAuth провайдеру
 func (c *OAuthClient) GetAuthURL(provider OAuthProvider, state string) (string, error) {
@@ -98,7 +52,7 @@ func (c *OAuthClient) GetAuthURL(provider OAuthProvider, state string) (string, 
 }
 
 // ExchangeCode обменивает authorization code на access token
-func (c *OAuthClient) ExchangeCode(ctx context.Context, provider OAuthProvider, code, state string) (*oauth2.Token, error) {
+func (c *OAuthClient) ExchangeCode(ctx context.Context, provider OAuthProvider, code string) (*oauth2.Token, error) {
 	config, exists := c.configs[provider]
 	if !exists {
 		return nil, fmt.Errorf("OAuth provider %s not configured", provider)
@@ -137,7 +91,7 @@ func (c *OAuthClient) getGoogleUserInfo(ctx context.Context, token *oauth2.Token
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("Google API returned status %d", resp.StatusCode)
+		return nil, fmt.Errorf("google API returned status %d", resp.StatusCode)
 	}
 
 	var googleUser struct {
@@ -242,7 +196,7 @@ func (c *OAuthClient) getDiscordUserInfo(ctx context.Context, token *oauth2.Toke
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("Discord API returned status %d", resp.StatusCode)
+		return nil, fmt.Errorf("discord API returned status %d", resp.StatusCode)
 	}
 
 	var discordUser struct {

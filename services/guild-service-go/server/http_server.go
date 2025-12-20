@@ -12,33 +12,33 @@ import (
 
 // GuildServiceConfig holds configuration for the Guild Service
 type GuildServiceConfig struct {
-	Port                   string
-	ReadTimeout            time.Duration
-	WriteTimeout           time.Duration
-	MaxHeaderBytes         int
-	RedisAddr              string
+	Port                    string
+	ReadTimeout             time.Duration
+	WriteTimeout            time.Duration
+	MaxHeaderBytes          int
+	RedisAddr               string
 	TerritoryUpdateInterval time.Duration
-	WarUpdateInterval      time.Duration
-	StatsCleanupInterval   time.Duration
+	WarUpdateInterval       time.Duration
+	StatsCleanupInterval    time.Duration
 }
 
 // GuildMetrics holds Prometheus metrics for the Guild Service
 type GuildMetrics struct {
 	// Metrics implementation would go here
 	// For now, using placeholder counters
-	ActiveGuilds      float64
-	ActiveMembers     float64
-	GuildCreations    float64
-	GuildJoins        float64
-	GuildLeaves       float64
-	ValidationErrors  float64
-	TerritoryClaims   float64
-	WarDeclarations   float64
+	ActiveGuilds       float64
+	ActiveMembers      float64
+	GuildCreations     float64
+	GuildJoins         float64
+	GuildLeaves        float64
+	ValidationErrors   float64
+	TerritoryClaims    float64
+	WarDeclarations    float64
 	AllianceFormations float64
-	ContractCreations float64
+	ContractCreations  float64
 }
 
-// HTTP server for Guild Service
+// HTTPServer HTTP server for Guild Service
 type HTTPServer struct {
 	service *GuildService
 	logger  *logrus.Logger
@@ -83,43 +83,43 @@ func (hs *HTTPServer) SetupRoutes() *chi.Mux {
 
 	// Guild management routes
 	r.Route("/guilds", func(r chi.Router) {
-		r.Post("/", hs.service.CreateGuild)           // Create guild
-		r.Get("/", hs.service.ListGuilds)             // List guilds with filtering
+		r.Post("/", hs.service.CreateGuild) // Create guild
+		r.Get("/", hs.service.ListGuilds)   // List guilds with filtering
 
 		r.Route("/{guildId}", func(r chi.Router) {
-			r.Get("/", hs.service.GetGuild)               // Get guild details
-			r.Put("/", hs.service.UpdateGuild)            // Update guild (leader only)
-			r.Delete("/", hs.service.DeleteGuild)         // Delete guild (leader only)
+			r.Get("/", hs.service.GetGuild)       // Get guild details
+			r.Put("/", hs.service.UpdateGuild)    // Update guild (leader only)
+			r.Delete("/", hs.service.DeleteGuild) // Delete guild (leader only)
 
 			// Member management
-			r.Post("/join", hs.service.RequestJoinGuild)    // Request to join guild
-			r.Post("/leave", hs.service.LeaveGuild)         // Leave guild
-			r.Get("/members", hs.service.GetGuildMembers)   // Get guild members
+			r.Post("/join", hs.service.RequestJoinGuild)              // Request to join guild
+			r.Post("/leave", hs.service.LeaveGuild)                   // Leave guild
+			r.Get("/members", hs.service.GetGuildMembers)             // Get guild members
 			r.Put("/members/{playerId}", hs.service.UpdateMemberRole) // Update member role (leader/officer only)
 
 			// Territory management
-			r.Post("/territories", hs.service.ClaimTerritory)     // Claim territory
-			r.Get("/territories", hs.service.ListGuildTerritories) // List guild territories
+			r.Post("/territories", hs.service.ClaimTerritory)                   // Claim territory
+			r.Get("/territories", hs.service.ListGuildTerritories)              // List guild territories
 			r.Delete("/territories/{territoryId}", hs.service.ReleaseTerritory) // Release territory
 
 			// War management
-			r.Post("/wars", hs.service.DeclareWar)          // Declare war
-			r.Get("/wars", hs.service.ListGuildWars)        // List active wars
-			r.Put("/wars/{warId}", hs.service.UpdateWar)    // Update war status
+			r.Post("/wars", hs.service.DeclareWar)       // Declare war
+			r.Get("/wars", hs.service.ListGuildWars)     // List active wars
+			r.Put("/wars/{warId}", hs.service.UpdateWar) // Update war status
 
 			// Alliance management
-			r.Post("/alliances", hs.service.FormAlliance)   // Form alliance
-			r.Get("/alliances", hs.service.ListGuildAlliances) // List alliances
+			r.Post("/alliances", hs.service.FormAlliance)                 // Form alliance
+			r.Get("/alliances", hs.service.ListGuildAlliances)            // List alliances
 			r.Delete("/alliances/{allianceId}", hs.service.BreakAlliance) // Break alliance
 
 			// Contract management
-			r.Post("/contracts", hs.service.CreateContract) // Create guild contract
-			r.Get("/contracts", hs.service.ListGuildContracts) // List guild contracts
+			r.Post("/contracts", hs.service.CreateContract)             // Create guild contract
+			r.Get("/contracts", hs.service.ListGuildContracts)          // List guild contracts
 			r.Put("/contracts/{contractId}", hs.service.UpdateContract) // Update contract
 
 			// Guild bank/resources
-			r.Get("/bank", hs.service.GetGuildBank)         // Get guild bank status
-			r.Post("/bank/deposit", hs.service.DepositToBank) // Deposit resources
+			r.Get("/bank", hs.service.GetGuildBank)               // Get guild bank status
+			r.Post("/bank/deposit", hs.service.DepositToBank)     // Deposit resources
 			r.Post("/bank/withdraw", hs.service.WithdrawFromBank) // Withdraw resources (authorized members only)
 		})
 	})
@@ -127,8 +127,8 @@ func (hs *HTTPServer) SetupRoutes() *chi.Mux {
 	// Global routes
 	r.Get("/leaderboard", hs.service.GetGuildLeaderboard) // Guild reputation/wealth leaderboard
 	r.Get("/territories", hs.service.ListAllTerritories)  // List all territories and owners
-	r.Get("/wars", hs.service.ListAllWars)               // List all active wars
-	r.Get("/alliances", hs.service.ListAllAlliances)     // List all alliances
+	r.Get("/wars", hs.service.ListAllWars)                // List all active wars
+	r.Get("/alliances", hs.service.ListAllAlliances)      // List all alliances
 
 	return r
 }

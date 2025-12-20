@@ -1,4 +1,4 @@
-// Issue: #42 - economy-player-market ogen typed handlers with business logic
+// Package server Issue: #42 - economy-player-market ogen typed handlers with business logic
 package server
 
 import (
@@ -20,13 +20,6 @@ const (
 type MarketHandlersOgen struct {
 	db         *pgxpool.Pool
 	repository *PlayerMarketRepository
-}
-
-func NewMarketHandlersOgen(db *pgxpool.Pool) *MarketHandlersOgen {
-	return &MarketHandlersOgen{
-		db:         db,
-		repository: NewPlayerMarketRepository(db),
-	}
 }
 
 // CreateMarketListing implements api.Handler
@@ -161,4 +154,3 @@ func (h *MarketHandlersOgen) GetMarketListingById(ctx context.Context, params ap
 
 	return &listing, nil
 }
-

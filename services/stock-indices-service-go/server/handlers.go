@@ -1,11 +1,11 @@
-// Issue: #1600 - ogen handlers (TYPED responses)
+// Package server Issue: #1600 - ogen handlers (TYPED responses)
 package server
 
 import (
 	"context"
 	"time"
 
-	api "github.com/necpgame/stock-indices-service-go/pkg/api"
+	"github.com/necpgame/stock-indices-service-go/pkg/api"
 	"github.com/sirupsen/logrus"
 )
 
@@ -32,4 +32,3 @@ func (h *StockHandlers) HealthCheck(ctx context.Context) (*api.HealthCheckOK, er
 		Status: api.NewOptString("ok"),
 	}, nil
 }
-

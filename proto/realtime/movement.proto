@@ -17,22 +17,22 @@ option go_package = "github.com/gc-lover/necpgame-monorepo/proto/realtime/moveme
 message PlayerPosition {
   // Player identification (required)
   fixed64 player_id = 1;  // fixed64 for UUID first 8 bytes (8 bytes)
-  
+
   // Quantized coordinates (int16 = -32768 to 32767, scale 0.01)
   // Range: -327.68 to 327.67 meters (sufficient for most zones)
   // Memory: 6 bytes vs 12 bytes for float32 = 50% savings!
   sint32 x = 2;  // quantized x * 100 (4 bytes, but varint encoded)
   sint32 y = 3;  // quantized y * 100
   sint32 z = 4;  // quantized z * 100
-  
+
   // Quantized rotation (int16 = 0-360 degrees, scale 0.01)
   // Memory: 2 bytes vs 4 bytes = 50% savings!
   uint32 yaw = 5;    // 0-36000 (0-360 degrees * 100)
   uint32 pitch = 6;  // -9000 to 9000 (-90 to 90 degrees * 100)
-  
+
   // Server timestamp (tick number for reconciliation)
   uint32 server_tick = 7;  // 4 bytes
-  
+
   // Movement flags (1 byte, packed)
   uint32 flags = 8;  // bit flags: jumping, crouching, sprinting, etc.
 }
@@ -40,7 +40,7 @@ message PlayerPosition {
 // PlayerVelocity - Separate message for interpolation
 message PlayerVelocity {
   fixed64 player_id = 1;
-  
+
   // Velocity in m/s (quantized)
   sint32 vx = 2;  // * 100
   sint32 vy = 3;
@@ -52,18 +52,18 @@ message PlayerVelocity {
 message PlayerMovementUpdate {
   // Client tick for lag compensation
   uint32 client_tick = 1;  // 4 bytes
-  
+
   // Movement input (normalized -1.0 to 1.0, quantized to -100 to 100)
   sint32 move_x = 2;  // varint: 1-2 bytes
   sint32 move_y = 3;
-  
+
   // View direction (quantized)
   uint32 yaw = 4;    // 0-36000
   uint32 pitch = 5;  // -9000 to 9000
-  
+
   // Action flags (1 byte)
   uint32 action_flags = 6;  // jump, crouch, sprint, etc.
-  
+
   // Sequence number for packet loss detection
   uint32 sequence = 7;
 }
@@ -73,13 +73,13 @@ message PlayerMovementUpdate {
 message MovementState {
   // Server tick
   uint32 server_tick = 1;
-  
+
   // Only players that moved! (delta compression)
   repeated PlayerPosition positions = 2;
-  
+
   // Optional: velocities for smooth interpolation
   repeated PlayerVelocity velocities = 3;
-  
+
   // Spatial partition ID (for interest management)
   uint32 zone_id = 4;
 }
@@ -92,16 +92,16 @@ message MovementState {
 // Only send updates to players in same/adjacent zones
 message SpatialZone {
   uint32 zone_id = 1;
-  
+
   // Zone bounds (quantized)
   sint32 min_x = 2;
   sint32 min_y = 3;
   sint32 max_x = 4;
   sint32 max_y = 5;
-  
+
   // Player count in zone
   uint32 player_count = 6;
-  
+
   // Tick rate for this zone (adaptive)
   uint32 tick_rate_ms = 7;  // 7.8ms for 128Hz, 16.6ms for 60Hz, etc.
 }
@@ -121,12 +121,12 @@ message PlayerZoneUpdate {
 // TeleportRequest - Client requests teleport
 message TeleportRequest {
   fixed64 player_id = 1;
-  
+
   // Target position
   sint32 x = 2;
   sint32 y = 3;
   sint32 z = 4;
-  
+
   // Teleport type (for validation)
   enum TeleportType {
     UNKNOWN = 0;
@@ -141,12 +141,12 @@ message TeleportRequest {
 // TeleportResponse - Server confirms/denies teleport
 message TeleportResponse {
   fixed64 player_id = 1;
-  
+
   bool success = 2;
-  
+
   // If successful, new position
   PlayerPosition position = 3;
-  
+
   // If failed, reason
   string error = 4;
 }
@@ -158,12 +158,12 @@ message TeleportResponse {
 // MovementValidationResult - Server-side validation
 message MovementValidationResult {
   fixed64 player_id = 1;
-  
+
   bool valid = 2;
-  
+
   // If invalid, correction
   PlayerPosition corrected_position = 3;
-  
+
   // Violation type (for anti-cheat)
   enum ViolationType {
     NONE = 0;

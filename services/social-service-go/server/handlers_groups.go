@@ -1,4 +1,4 @@
-// Issue: #1433, #1604
+// Package server Issue: #1433, #1604
 package server
 
 import (
@@ -20,12 +20,6 @@ type GroupHandlers struct {
 }
 
 // NewGroupHandlers creates new group handlers
-func NewGroupHandlers(logger *logrus.Logger, service GroupService) *GroupHandlers {
-	return &GroupHandlers{
-		logger:  logger,
-		service: service,
-	}
-}
 
 // CreateGroup implements POST /social/groups
 func (h *GroupHandlers) CreateGroup(w http.ResponseWriter, r *http.Request) {
@@ -268,7 +262,7 @@ func (h *GroupHandlers) UpdateGroupMemberRole(w http.ResponseWriter, r *http.Req
 }
 
 // GetGroupTasks implements GET /social/groups/{group_id}/tasks
-func (h *GroupHandlers) GetGroupTasks(w http.ResponseWriter, r *http.Request, groupId openapi_types.UUID, params groups.GetGroupTasksParams) {
+func (h *GroupHandlers) GetGroupTasks(w http.ResponseWriter, r *http.Request, groupId openapi_types.UUID, _ groups.GetGroupTasksParams) {
 	ctx, cancel := context.WithTimeout(r.Context(), DBTimeout)
 	defer cancel()
 
@@ -294,7 +288,7 @@ func (h *GroupHandlers) AddGroupTask(w http.ResponseWriter, r *http.Request, gro
 	defer cancel()
 
 	var req struct {
-		TaskId   openapi_types.UUID  `json:"task_id"`
+		TaskId   openapi_types.UUID   `json:"task_id"`
 		TaskType groups.GroupTaskType `json:"task_type"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -379,4 +373,3 @@ func (h *GroupHandlers) DeleteGroupTask(w http.ResponseWriter, r *http.Request, 
 
 	respondJSON(w, http.StatusOK, map[string]string{"message": "Task deleted"})
 }
-

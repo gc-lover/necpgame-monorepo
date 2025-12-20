@@ -8,7 +8,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// OPTIMIZATION: Issue #2030 - Voice chat moderation and abuse reporting
+// ReportVoiceAbuse OPTIMIZATION: Issue #2030 - Voice chat moderation and abuse reporting
 func (s *VoiceChatService) ReportVoiceAbuse(w http.ResponseWriter, r *http.Request) {
 	var req ReportAbuseRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -26,12 +26,12 @@ func (s *VoiceChatService) ReportVoiceAbuse(w http.ResponseWriter, r *http.Reque
 	s.metrics.ModerationActions.Inc()
 
 	resp := &ReportAbuseResponse{
-		ReportID:         generateReportID(),
-		ReportedUserID:   req.ReportedUserID,
-		ChannelID:        req.ChannelID,
-		AbuseType:        req.AbuseType,
-		Status:           "submitted",
-		SubmittedAt:      time.Now().Unix(),
+		ReportID:            generateReportID(),
+		ReportedUserID:      req.ReportedUserID,
+		ChannelID:           req.ChannelID,
+		AbuseType:           req.AbuseType,
+		Status:              "submitted",
+		SubmittedAt:         time.Now().Unix(),
 		EstimatedReviewTime: "2 hours",
 	}
 
@@ -40,9 +40,9 @@ func (s *VoiceChatService) ReportVoiceAbuse(w http.ResponseWriter, r *http.Reque
 	json.NewEncoder(w).Encode(resp)
 
 	s.logger.WithFields(logrus.Fields{
-		"reporter_id":     userID,
+		"reporter_id":      userID,
 		"reported_user_id": req.ReportedUserID,
-		"abuse_type":      req.AbuseType,
+		"abuse_type":       req.AbuseType,
 	}).Info("voice abuse reported")
 }
 

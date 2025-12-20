@@ -17,15 +17,15 @@ type PlayerAccount struct {
 }
 
 type Character struct {
-	ID         uuid.UUID  `json:"id" db:"id"`
-	AccountID  uuid.UUID  `json:"account_id" db:"account_id"`
-	Name       string     `json:"name" db:"name"`
-	ClassCode  *string    `json:"class_code,omitempty" db:"class_code"`
-	FactionCode *string   `json:"faction_code,omitempty" db:"faction_code"`
-	Level      int        `json:"level" db:"level"`
-	CreatedAt  time.Time  `json:"created_at" db:"created_at"`
-	UpdatedAt  time.Time  `json:"updated_at" db:"updated_at"`
-	DeletedAt  *time.Time `json:"deleted_at,omitempty" db:"deleted_at"`
+	ID          uuid.UUID  `json:"id" db:"id"`
+	AccountID   uuid.UUID  `json:"account_id" db:"account_id"`
+	Name        string     `json:"name" db:"name"`
+	ClassCode   *string    `json:"class_code,omitempty" db:"class_code"`
+	FactionCode *string    `json:"faction_code,omitempty" db:"faction_code"`
+	Level       int        `json:"level" db:"level"`
+	CreatedAt   time.Time  `json:"created_at" db:"created_at"`
+	UpdatedAt   time.Time  `json:"updated_at" db:"updated_at"`
+	DeletedAt   *time.Time `json:"deleted_at,omitempty" db:"deleted_at"`
 }
 
 type CreateAccountRequest struct {
@@ -61,6 +61,6 @@ type SwitchCharacterRequest struct {
 
 type SwitchCharacterResponse struct {
 	PreviousCharacterID *uuid.UUID `json:"previous_character_id,omitempty"`
-	CurrentCharacter    *Character  `json:"current_character"`
-	Success             bool        `json:"success"`
+	CurrentCharacter    *Character `json:"current_character"`
+	Success             bool       `json:"success"`
 }

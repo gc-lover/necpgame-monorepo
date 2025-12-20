@@ -35,4 +35,3 @@ func TestStockMarginServiceNoLeaks(t *testing.T) {
 
 	// If goroutines leaked from stock margin handlers, test FAILS
 }
-

@@ -1,4 +1,4 @@
-// Issue: #141888700
+// Package server Issue: #141888700
 package server
 
 import (
@@ -6,10 +6,9 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/gc-lover/necpgame-monorepo/services/voice-chat-service-go/models"
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/sirupsen/logrus"
 )
 

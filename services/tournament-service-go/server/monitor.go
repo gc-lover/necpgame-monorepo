@@ -1,4 +1,4 @@
-// Issue: #1585 - Goroutine leak detection for tournament service
+// Package server Issue: #1585 - Goroutine leak detection for tournament service
 package server
 
 import (
@@ -53,8 +53,8 @@ func (m *GoroutineMonitor) checkGoroutines() {
 	if int64(numGoroutines) > m.maxGoroutines {
 		m.logger.WithFields(logrus.Fields{
 			"current_goroutines": numGoroutines,
-			"max_allowed":       m.maxGoroutines,
-			"service":           "tournament-service",
+			"max_allowed":        m.maxGoroutines,
+			"service":            "tournament-service",
 		}).Warn("High goroutine count detected - potential leak")
 
 		// Log stack traces for debugging
@@ -64,8 +64,8 @@ func (m *GoroutineMonitor) checkGoroutines() {
 	} else {
 		m.logger.WithFields(logrus.Fields{
 			"current_goroutines": numGoroutines,
-			"max_allowed":       m.maxGoroutines,
-			"service":           "tournament-service",
+			"max_allowed":        m.maxGoroutines,
+			"service":            "tournament-service",
 		}).Debug("Goroutine count normal")
 	}
 }

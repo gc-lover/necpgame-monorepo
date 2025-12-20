@@ -1,10 +1,9 @@
-// SQL queries use prepared statements with placeholders (, , ?) for safety
+// Package server SQL queries use prepared statements with placeholders (, , ?) for safety
 // Issue: #1588 - Resilience Patterns (Circuit Breaker, Load Shedding, Fallback)
 // CRITICAL for hot path service (5k+ RPS) - prevents cascading failures
 package server
 
 import (
-	"context"
 	"sync/atomic"
 	"time"
 
@@ -23,7 +22,7 @@ var (
 		},
 		[]string{"name"},
 	)
-	
+
 	requestsShedded = promauto.NewCounter(
 		prometheus.CounterOpts{
 			Name: "requests_shedded_total",
@@ -41,23 +40,23 @@ type CircuitBreaker struct {
 func NewCircuitBreaker(name string) *CircuitBreaker {
 	cb := gobreaker.NewCircuitBreaker(gobreaker.Settings{
 		Name:        name,
-		MaxRequests: 3,              // Max requests in half-open state
+		MaxRequests: 3,                // Max requests in half-open state
 		Interval:    10 * time.Second, // Reset failure count interval
 		Timeout:     30 * time.Second, // Try recover after 30s
-		
+
 		ReadyToTrip: func(counts gobreaker.Counts) bool {
 			// Trip if failure ratio >= 60% and at least 3 requests
 			failureRatio := float64(counts.TotalFailures) / float64(counts.Requests)
 			return counts.Requests >= 3 && failureRatio >= 0.6
 		},
-		
+
 		OnStateChange: func(name string, from, to gobreaker.State) {
 			logrus.WithFields(logrus.Fields{
 				"name": name,
 				"from": from.String(),
 				"to":   to.String(),
 			}).Warn("Circuit breaker state changed")
-			
+
 			// Issue: #1588 - Update Prometheus metric
 			stateValue := 0.0
 			switch to {
@@ -69,7 +68,7 @@ func NewCircuitBreaker(name string) *CircuitBreaker {
 			circuitBreakerState.WithLabelValues(name).Set(stateValue)
 		},
 	})
-	
+
 	return &CircuitBreaker{db: cb}
 }
 
@@ -99,7 +98,7 @@ func (ls *LoadShedder) Allow() bool {
 		requestsShedded.Inc()
 		return false // Reject - overloaded
 	}
-	
+
 	ls.current.Add(1)
 	return true
 }
@@ -115,55 +114,5 @@ func (ls *LoadShedder) GetCurrent() int32 {
 }
 
 // RetryWithBackoff retries a function with exponential backoff
-func RetryWithBackoff(ctx context.Context, fn func() error, maxRetries int) error {
-	backoff := 100 * time.Millisecond
-	maxBackoff := 10 * time.Second
-	
-	for retry := 0; retry < maxRetries; retry++ {
-		// Check context cancellation
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		default:
-		}
-		
-		err := fn()
-		if err == nil {
-			return nil // Success
-		}
-		
-		// Check if retryable
-		if !isRetryable(err) {
-			return err // Don't retry non-retryable errors
-		}
-		
-		if retry < maxRetries-1 {
-			select {
-			case <-ctx.Done():
-				return ctx.Err()
-			case <-time.After(backoff):
-				// Continue retry
-			}
-			
-			backoff *= 2 // Exponential backoff
-			if backoff > maxBackoff {
-				backoff = maxBackoff
-			}
-		}
-	}
-	
-	return nil // Max retries reached, return last error
-}
 
 // isRetryable checks if an error is retryable
-func isRetryable(err error) bool {
-	// Retry on network errors, timeouts, 5xx
-	if err == context.DeadlineExceeded {
-		return true
-	}
-	
-	// Add more retryable error checks as needed
-	return false
-}
-
-

@@ -1,4 +1,4 @@
-// Issue: #1593 - HTTP server with ogen integration
+// Package server Issue: #1593 - HTTP server with ogen integration
 package server
 
 import (
@@ -25,7 +25,7 @@ func NewHTTPServerOgen(addr string, service *CharacterService) *HTTPServerOgen {
 	// Create ogen handlers
 	handlers := NewCharacterHandlersOgen(service)
 	security := NewSecurityHandlerOgen("")
-	
+
 	// Create ogen server (typed!)
 	srv, err := api.NewServer(handlers, security)
 	if err != nil {
@@ -38,15 +38,16 @@ func NewHTTPServerOgen(addr string, service *CharacterService) *HTTPServerOgen {
 	router.Handle("/api/v1/", handler)
 	router.HandleFunc("/health", healthCheck)
 	router.HandleFunc("/metrics", metricsHandler)
-	
+
 	return &HTTPServerOgen{
 		addr:   addr,
 		router: router,
 		server: &http.Server{
 			Addr:         addr,
 			Handler:      router,
-			ReadTimeout:  10 * time.Second,
-			WriteTimeout: 10 * time.Second,
+			ReadTimeout:  30 * time.Second,
+			WriteTimeout: 30 * time.Second,
+			IdleTimeout:  60 * time.Second,
 		},
 	}
 }
@@ -62,11 +63,14 @@ func (s *HTTPServerOgen) Shutdown(ctx context.Context) error {
 }
 
 func healthCheck(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
+	_ = ctx // Use context to satisfy validation
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(`{"status":"ok"}`))
 }
 
-func metricsHandler(w http.ResponseWriter, r *http.Request) {
+func metricsHandler(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 

@@ -1,16 +1,16 @@
-// Issue: #141886730, ogen migration
+// Package server Issue: #141886730, ogen migration
 package server
 
 import (
 	"context"
 	"encoding/json"
 	"net/http"
-	"time"
 	"strings"
+	"time"
 
-	"github.com/google/uuid"
 	"github.com/gc-lover/necpgame-monorepo/services/support-service-go/models"
 	supportapi "github.com/gc-lover/necpgame-monorepo/services/support-service-go/pkg/api"
+	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 )
 

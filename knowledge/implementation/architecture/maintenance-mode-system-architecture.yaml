@@ -1,0 +1,503 @@
+<!-- Issue: #316 -->
+
+# Architecture: Maintenance Mode System - Server Maintenance & Player Notifications
+
+## Performance Requirements
+
+**Load:** 10000+ concurrent players, P99 <30ms for maintenance checks
+**Data Model (optimized):**
+- MaintenanceWindow: 128 bytes (schedule, type, status, impact_level)
+- MaintenanceStatus: 96 bytes (current_state, start_time, estimated_end, affected_services)
+- NotificationLog: 64 bytes (player_id, message_type, sent_at, delivery_status)
+
+**Hot Path:** Connection blocking checks (1000 RPS/player), status queries (200 RPS)
+**Backend optimizations:** Level 2 - Connection pooling, Redis caching, optimized middleware
+
+## System Architecture
+
+### Core Components
+
+```mermaid
+graph TB
+    subgraph "Maintenance Control Plane"
+        MMS[Maintenance Management Service]
+        SMS[Schedule Management Service]
+        NMS[Notification Service]
+        GDS[Graceful Shutdown Service]
+    end
+
+    subgraph "Infrastructure Layer"
+        IMS[Infrastructure Monitoring Service]
+        LBS[Load Balancer Service]
+        GWS[Gateway Service]
+        CBS[Connection Blocking Service]
+    end
+
+    subgraph "Database Layer"
+        MWDB[(Maintenance Windows DB)]
+        MSDB[(Maintenance Status DB)]
+        NLDB[(Notification Logs DB)]
+    end
+
+    subgraph "External Systems"
+        K8S[Kubernetes API]
+        LB[Load Balancers]
+        MSG[Message Queue]
+        REDIS[(Redis Cache)]
+    end
+
+    MMS --> MWDB
+    MMS --> SMS
+    SMS --> NMS
+    NMS --> NLDB
+    GDS --> IMS
+    GDS --> K8S
+    CBS --> LB
+    CBS --> GWS
+    IMS --> REDIS
+    MSG --> NMS
+```
+
+### Maintenance Types & States
+
+#### Maintenance Types
+- **SCHEDULED:** Плановое обслуживание с предварительным уведомлением
+- **EMERGENCY:** Экстренное обслуживание без предварительного уведомления
+- **HOT_FIX:** Быстрое исправление критичных багов
+- **ROLLBACK:** Откат изменений при проблемах
+- **UPGRADE:** Обновление инфраструктуры или сервисов
+
+#### Maintenance States
+- **PLANNED:** Запланировано, но не активно
+- **ANNOUNCED:** Уведомления отправлены, обратный отсчет начат
+- **ACTIVE:** Режим обслуживания активен, новые соединения блокируются
+- **SHUTTING_DOWN:** Graceful shutdown в процессе
+- **COMPLETED:** Обслуживание завершено, система возвращается к нормальной работе
+
+## Microservice Architecture
+
+### Maintenance Management Service (MMS)
+**Purpose:** Центральный оркестратор режима обслуживания
+
+**Responsibilities:**
+- Создание и управление окнами обслуживания
+- Координация между сервисами
+- Управление жизненным циклом обслуживания
+- API для администраторов
+
+**Technology Stack:**
+- Go + Gin framework
+- PostgreSQL primary DB
+- Redis для кэширования состояний
+- Kafka для событий
+
+### Schedule Management Service (SMS)
+**Purpose:** Управление расписанием обслуживания
+
+**Responsibilities:**
+- Планирование окон обслуживания
+- Автоматические уведомления
+- Конфликт resolution для расписаний
+- Календарная интеграция
+
+**Key Features:**
+- Recurring schedules (еженедельное обслуживание)
+- Dependency management (сервисы зависят друг от друга)
+- Time zone handling
+- Automated scheduling based on usage patterns
+
+### Notification Service (NMS)
+**Purpose:** Уведомления игроков и администраторов
+
+**Responsibilities:**
+- Отправка push-уведомлений
+- Email notifications для зарегистрированных игроков
+- In-game announcements
+- Status page updates
+- Webhook notifications для внешних систем
+
+**Notification Types:**
+- **Advance Warning:** 24h, 6h, 1h до начала
+- **Immediate Alert:** Для экстренного обслуживания
+- **Progress Updates:** Статус обслуживания
+- **Completion Notice:** Завершение обслуживания
+
+### Graceful Shutdown Service (GDS)
+**Purpose:** Координированный shutdown сервисов
+
+**Responsibilities:**
+- Остановка приема новых запросов
+- Дождаться завершения активных сессий
+- Graceful termination соединений
+- Health checks и readiness probes
+
+**Shutdown Phases:**
+1. **Drain:** Прекратить прием новых соединений
+2. **Wait:** Дождаться завершения активных операций
+3. **Terminate:** Graceful shutdown с сохранением состояния
+4. **Verify:** Проверка корректности остановки
+
+### Connection Blocking Service (CBS)
+**Purpose:** Блокировка новых соединений во время обслуживания
+
+**Responsibilities:**
+- Middleware для всех API endpoints
+- Проверка статуса обслуживания
+- Возврат 503 Service Unavailable
+- Исключения для администраторов
+
+**Implementation:**
+```go
+func MaintenanceMiddleware() gin.HandlerFunc {
+    return func(c *gin.Context) {
+        if isMaintenanceMode() && !isAdmin(c) {
+            c.AbortWithStatusJSON(503, gin.H{
+                "error": "Service under maintenance",
+                "estimated_end": getEstimatedEnd(),
+                "retry_after": getRetryAfter(),
+            })
+            return
+        }
+        c.Next()
+    }
+}
+```
+
+## Database Architecture
+
+### Primary Database (PostgreSQL)
+
+```sql
+-- Maintenance windows table
+CREATE TABLE maintenance_windows (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    maintenance_type maintenance_type_enum NOT NULL,
+    status maintenance_status_enum DEFAULT 'planned',
+    scheduled_start TIMESTAMPTZ NOT NULL,
+    scheduled_end TIMESTAMPTZ NOT NULL,
+    actual_start TIMESTAMPTZ,
+    actual_end TIMESTAMPTZ,
+    estimated_duration INTERVAL,
+    impact_level impact_level_enum DEFAULT 'minor',
+    affected_services JSONB,
+    created_by UUID NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Maintenance status tracking
+CREATE TABLE maintenance_status (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    maintenance_id UUID REFERENCES maintenance_windows(id),
+    service_name VARCHAR(100) NOT NULL,
+    component_status VARCHAR(50) NOT NULL,
+    last_heartbeat TIMESTAMPTZ DEFAULT NOW(),
+    metadata JSONB,
+    UNIQUE(maintenance_id, service_name)
+);
+
+-- Notification logs
+CREATE TABLE notification_logs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    maintenance_id UUID REFERENCES maintenance_windows(id),
+    notification_type notification_type_enum NOT NULL,
+    recipient_type VARCHAR(50) NOT NULL, -- 'player', 'admin', 'webhook'
+    recipient_id UUID,
+    message TEXT,
+    sent_at TIMESTAMPTZ,
+    delivery_status VARCHAR(50),
+    error_message TEXT,
+    retry_count INTEGER DEFAULT 0,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Indexes
+CREATE INDEX idx_maintenance_windows_status ON maintenance_windows(status);
+CREATE INDEX idx_maintenance_windows_schedule ON maintenance_windows(scheduled_start, scheduled_end);
+CREATE INDEX idx_maintenance_status_maintenance ON maintenance_status(maintenance_id);
+CREATE INDEX idx_notification_logs_maintenance ON notification_logs(maintenance_id);
+CREATE INDEX idx_notification_logs_delivery ON notification_logs(delivery_status, sent_at);
+```
+
+### Redis Cache Schema
+
+```redis
+# Current maintenance status
+SET maintenance:active_status "scheduled"  # or "emergency", "none"
+
+# Maintenance window details
+HSET maintenance:window:12345 {
+  "id": "12345-uuid",
+  "type": "scheduled",
+  "start": "2025-12-20T10:00:00Z",
+  "end": "2025-12-20T12:00:00Z",
+  "impact": "major"
+}
+
+# Service health status
+HSET maintenance:service:health {
+  "api-gateway": "healthy",
+  "character-service": "healthy",
+  "inventory-service": "draining"
+}
+
+# Player notification tracking
+SADD maintenance:notified_players:12345 "player-uuid-1" "player-uuid-2"
+```
+
+## Scheduled Maintenance Flow
+
+### 1. Planning Phase
+```mermaid
+sequenceDiagram
+    participant Admin
+    participant MMS
+    participant SMS
+    participant DB
+
+    Admin->>MMS: Create maintenance window
+    MMS->>SMS: Schedule notifications
+    MMS->>DB: Store maintenance window
+    SMS->>DB: Schedule notification jobs
+```
+
+### 2. Announcement Phase (24h, 6h, 1h)
+```mermaid
+sequenceDiagram
+    participant SMS
+    participant NMS
+    participant Players
+    participant Cache
+
+    SMS->>NMS: Trigger notification batch
+    NMS->>Cache: Check notified players
+    NMS->>Players: Send notifications
+    NMS->>DB: Log notification delivery
+    Cache->>NMS: Mark players as notified
+```
+
+### 3. Activation Phase
+```mermaid
+sequenceDiagram
+    participant SMS
+    participant MMS
+    participant CBS
+    participant Services
+
+    SMS->>MMS: Trigger maintenance start
+    MMS->>CBS: Activate connection blocking
+    MMS->>Services: Broadcast maintenance event
+    CBS->>Services: Update middleware status
+    Services->>MMS: Confirm maintenance mode
+```
+
+### 4. Graceful Shutdown Phase
+```mermaid
+sequenceDiagram
+    participant MMS
+    participant GDS
+    participant K8S
+    participant LB
+
+    MMS->>GDS: Initiate shutdown
+    GDS->>LB: Stop accepting connections
+    GDS->>K8S: Scale down gracefully
+    GDS->>MMS: Report shutdown progress
+    K8S->>GDS: Confirm pod termination
+```
+
+## Emergency Maintenance Flow
+
+### Immediate Response
+1. **Detection:** Monitoring alerts or manual trigger
+2. **Immediate Block:** Connection blocking activated instantly
+3. **Notification:** Emergency broadcast to all players
+4. **Shutdown:** Rapid graceful shutdown within 5 minutes
+5. **Recovery:** Quick rollback or hotfix deployment
+
+### Emergency Notification
+```json
+{
+  "type": "emergency_maintenance",
+  "title": "Emergency Maintenance",
+  "message": "Server maintenance required. Please log out.",
+  "estimated_duration": "30 minutes",
+  "allow_reconnect": false,
+  "show_countdown": true
+}
+```
+
+## API Specifications
+
+### Management API
+```yaml
+openapi: 3.0.0
+paths:
+  /api/v1/maintenance/windows:
+    post:
+      summary: Create maintenance window
+    get:
+      summary: List maintenance windows
+  /api/v1/maintenance/windows/{id}:
+    put:
+      summary: Update maintenance window
+    delete:
+      summary: Cancel maintenance window
+  /api/v1/maintenance/status:
+    get:
+      summary: Get current maintenance status
+    post:
+      summary: Trigger emergency maintenance
+```
+
+### Monitoring API
+```yaml
+openapi: 3.0.0
+paths:
+  /api/v1/maintenance/health:
+    get:
+      summary: Service health status
+  /api/v1/maintenance/impact:
+    get:
+      summary: Current system impact assessment
+  /api/v1/maintenance/notifications:
+    get:
+      summary: Notification delivery statistics
+```
+
+## Implementation Roadmap
+
+### Phase 1: Core Infrastructure (2 weeks)
+- [ ] Deploy PostgreSQL and Redis clusters
+- [ ] Implement Maintenance Management Service
+- [ ] Create database schema and migrations
+- [ ] Set up monitoring and alerting
+
+### Phase 2: Scheduling System (2 weeks)
+- [ ] Build Schedule Management Service
+- [ ] Implement notification scheduling
+- [ ] Create calendar integration
+- [ ] Add conflict detection and resolution
+
+### Phase 3: Notification System (2 weeks)
+- [ ] Implement Notification Service
+- [ ] Add push notification support
+- [ ] Create email templates and delivery
+- [ ] Implement webhook notifications
+
+### Phase 4: Connection Management (2 weeks)
+- [ ] Build Connection Blocking Service
+- [ ] Implement middleware for all services
+- [ ] Add admin bypass functionality
+- [ ] Create health check endpoints
+
+### Phase 5: Graceful Shutdown (1 week)
+- [ ] Implement Graceful Shutdown Service
+- [ ] Integrate with Kubernetes API
+- [ ] Add load balancer coordination
+- [ ] Test shutdown scenarios
+
+### Phase 6: Production Ready (1 week)
+- [ ] End-to-end testing
+- [ ] Load testing (1000 concurrent players)
+- [ ] Failover testing
+- [ ] Documentation completion
+
+## Security Considerations
+
+### Access Control
+- **Admin Only:** Maintenance window creation/modification
+- **Service Accounts:** Automated operations
+- **Audit Trail:** Complete logging of all maintenance actions
+- **Approval Workflow:** Multi-step approval for critical maintenance
+
+### Data Protection
+- **Encryption:** Sensitive notification data encrypted
+- **Retention:** Maintenance logs retained for 1 year
+- **PII Handling:** Player data anonymized in logs
+
+## Monitoring & Observability
+
+### Key Metrics
+- **Maintenance Windows:** Success rate, duration accuracy
+- **Notifications:** Delivery rate, player engagement
+- **Connections:** Blocked connections, admin access
+- **Services:** Shutdown time, recovery time
+
+### Alerts
+- **Failed Maintenance:** Automatic rollback procedures
+- **Notification Failures:** Escalation to operations team
+- **Service Degradation:** Immediate investigation
+- **Security Incidents:** Audit trail analysis
+
+## Scaling Strategy
+
+### Horizontal Scaling
+- **Services:** Kubernetes HPA based on request load
+- **Database:** Read replicas for status queries
+- **Cache:** Redis Cluster for high availability
+- **Message Queue:** Kafka partitioning by maintenance ID
+
+### Geographic Distribution
+- **Regional Maintenance:** Per-region maintenance windows
+- **Global Coordination:** Centralized scheduling with regional overrides
+- **Cross-Region Notifications:** Localized messaging
+
+## Risk Assessment
+
+### High Risk Scenarios
+- **Failed Emergency Maintenance:** Player data loss
+- **Notification System Down:** Players unable to receive alerts
+- **Incorrect Connection Blocking:** Service unavailability
+
+### Mitigation Strategies
+- **Automated Testing:** Comprehensive test scenarios
+- **Gradual Rollout:** Feature flags for new functionality
+- **Backup Systems:** Manual override capabilities
+- **Runbooks:** Detailed operational procedures
+
+## Cost Optimization
+
+### Infrastructure Costs
+- **Database:** Aurora Serverless for variable maintenance load
+- **Cache:** Reserved Redis instances during peak hours
+- **Compute:** Spot instances for notification processing
+
+### Operational Costs
+- **Monitoring:** Centralized logging with retention policies
+- **Testing:** Automated testing reduces manual QA costs
+- **Training:** Self-service maintenance scheduling
+
+## Follow-up Tasks
+
+### Database Agent (#2210)
+- Implement PostgreSQL schema with proper indexing
+- Create Liquibase migrations for maintenance tables
+- Set up read replicas for monitoring queries
+- Design backup and recovery procedures
+
+### API Designer (#2197)
+- Design comprehensive OpenAPI specifications
+- Create notification webhook schemas
+- Define admin dashboard API endpoints
+- Document service integration contracts
+
+### Backend Agent (#2220)
+- Implement Maintenance Management Service
+- Build Notification Service with multi-channel support
+- Create Connection Blocking middleware
+- Develop Graceful Shutdown coordination
+
+### DevOps Agent (#2224)
+- Set up Kubernetes deployments and monitoring
+- Configure load balancer integration
+- Implement CI/CD pipelines for maintenance services
+- Create infrastructure as code templates
+
+### Network Agent (#2199)
+- Design connection draining protocols
+- Implement WebSocket notification delivery
+- Optimize notification bandwidth usage
+- Add network-level maintenance detection

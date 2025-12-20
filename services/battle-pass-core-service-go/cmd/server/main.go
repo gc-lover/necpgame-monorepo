@@ -16,10 +16,10 @@ import (
 	"github.com/gc-lover/necpgame-monorepo/services/battle-pass-core-service-go/server"
 )
 
-// Issue: #1636
+// Config Issue: #1636
 type Config struct {
-	Port           string `envconfig:"PORT" default:"8093"`
-	DatabaseURL    string `envconfig:"DATABASE_URL" required:"true"`
+	Port          string `envconfig:"PORT" default:"8093"`
+	DatabaseURL   string `envconfig:"DATABASE_URL" required:"true"`
 	IsDevelopment bool   `envconfig:"IS_DEVELOPMENT" default:"false"`
 }
 

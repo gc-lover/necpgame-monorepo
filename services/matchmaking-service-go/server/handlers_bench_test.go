@@ -11,31 +11,31 @@ import (
 // mockMatchmakingService implements Service interface for benchmarks
 type mockMatchmakingService struct{}
 
-func (m *mockMatchmakingService) EnterQueue(ctx context.Context, req *api.EnterQueueRequest) (*api.QueueResponse, error) {
+func (m *mockMatchmakingService) EnterQueue(_ context.Context, _ *api.EnterQueueRequest) (*api.QueueResponse, error) {
 	return nil, nil
 }
 
-func (m *mockMatchmakingService) GetQueueStatus(ctx context.Context, queueID string) (*api.QueueStatusResponse, error) {
+func (m *mockMatchmakingService) GetQueueStatus(_ context.Context, _ string) (*api.QueueStatusResponse, error) {
 	return nil, nil
 }
 
-func (m *mockMatchmakingService) LeaveQueue(ctx context.Context, queueID string) (*api.LeaveQueueResponse, error) {
+func (m *mockMatchmakingService) LeaveQueue(_ context.Context, _ string) (*api.LeaveQueueResponse, error) {
 	return nil, nil
 }
 
-func (m *mockMatchmakingService) GetPlayerRating(ctx context.Context, playerID string) (*api.PlayerRatingResponse, error) {
+func (m *mockMatchmakingService) GetPlayerRating(_ context.Context, _ string) (*api.PlayerRatingResponse, error) {
 	return nil, nil
 }
 
-func (m *mockMatchmakingService) GetLeaderboard(ctx context.Context, activityType string, params api.GetLeaderboardParams) (*api.LeaderboardResponse, error) {
+func (m *mockMatchmakingService) GetLeaderboard(_ context.Context, _ string, _ api.GetLeaderboardParams) (*api.LeaderboardResponse, error) {
 	return nil, nil
 }
 
-func (m *mockMatchmakingService) AcceptMatch(ctx context.Context, matchID string) error {
+func (m *mockMatchmakingService) AcceptMatch(_ context.Context, _ string) error {
 	return nil
 }
 
-func (m *mockMatchmakingService) DeclineMatch(ctx context.Context, matchID string) error {
+func (m *mockMatchmakingService) DeclineMatch(_ context.Context, _ string) error {
 	return nil
 }
 
@@ -63,8 +63,7 @@ func BenchmarkGetQueueStatus(b *testing.B) {
 	handlers := NewHandlers(mockService)
 
 	ctx := context.Background()
-	params := api.GetQueueStatusParams{
-	}
+	params := api.GetQueueStatusParams{}
 
 	b.ReportAllocs()
 	b.ResetTimer()
@@ -90,4 +89,3 @@ func BenchmarkLeaveQueue(b *testing.B) {
 		_, _ = handlers.LeaveQueue(ctx, params)
 	}
 }
-

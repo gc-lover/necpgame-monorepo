@@ -12,9 +12,9 @@ import (
 )
 
 var (
-	ErrInvalidChipTier    = errors.New("invalid chip tier (must be 1-5)")
-	ErrCreationFailed     = errors.New("engram creation failed")
-	ErrTechnologyNotAvailable = errors.New("technology not available")
+	ErrInvalidChipTier = errors.New("invalid chip tier (must be 1-5)")
+	_                  = errors.New("engram creation failed")
+	_                  = errors.New("technology not available")
 )
 
 type EngramCreationServiceInterface interface {
@@ -24,19 +24,19 @@ type EngramCreationServiceInterface interface {
 }
 
 type EngramCreationCost struct {
-	ChipTier                int     `json:"chip_tier"`
-	CreationCostMin         float64 `json:"creation_cost_min"`
-	CreationCostMax         float64 `json:"creation_cost_max"`
-	PurchaseCostMultiplier  float64 `json:"purchase_cost_multiplier"`
-	HistoricalMultiplier    *float64 `json:"historical_multiplier,omitempty"`
-	MarketFluctuation       float64 `json:"market_fluctuation"`
+	ChipTier               int      `json:"chip_tier"`
+	CreationCostMin        float64  `json:"creation_cost_min"`
+	CreationCostMax        float64  `json:"creation_cost_max"`
+	PurchaseCostMultiplier float64  `json:"purchase_cost_multiplier"`
+	HistoricalMultiplier   *float64 `json:"historical_multiplier,omitempty"`
+	MarketFluctuation      float64  `json:"market_fluctuation"`
 }
 
 type ValidateCreationResult struct {
-	IsValid          bool                     `json:"is_valid"`
-	ValidationErrors []string                 `json:"validation_errors"`
-	Requirements     *CreationRequirements    `json:"requirements,omitempty"`
-	EstimatedCost    *float64                 `json:"estimated_cost,omitempty"`
+	IsValid          bool                  `json:"is_valid"`
+	ValidationErrors []string              `json:"validation_errors"`
+	Requirements     *CreationRequirements `json:"requirements,omitempty"`
+	EstimatedCost    *float64              `json:"estimated_cost,omitempty"`
 }
 
 type CreationRequirements struct {
@@ -48,20 +48,20 @@ type CreationRequirements struct {
 }
 
 type CreateEngramResult struct {
-	EngramID        uuid.UUID   `json:"engram_id"`
-	CreationID      uuid.UUID   `json:"creation_id"`
-	Success         bool        `json:"success"`
-	CreationStage   string      `json:"creation_stage"`
-	DataLossPercent *float64    `json:"data_loss_percent,omitempty"`
-	IsComplete      bool        `json:"is_complete"`
-	CreationCost    float64     `json:"creation_cost"`
-	CreatedAt       time.Time   `json:"created_at"`
+	EngramID        uuid.UUID `json:"engram_id"`
+	CreationID      uuid.UUID `json:"creation_id"`
+	Success         bool      `json:"success"`
+	CreationStage   string    `json:"creation_stage"`
+	DataLossPercent *float64  `json:"data_loss_percent,omitempty"`
+	IsComplete      bool      `json:"is_complete"`
+	CreationCost    float64   `json:"creation_cost"`
+	CreatedAt       time.Time `json:"created_at"`
 }
 
 type EngramCreationService struct {
-	repo       EngramCreationRepositoryInterface
-	cache      *redis.Client
-	logger     *logrus.Logger
+	repo   EngramCreationRepositoryInterface
+	cache  *redis.Client
+	logger *logrus.Logger
 }
 
 var tierCosts = map[int]struct {
@@ -74,7 +74,7 @@ var tierCosts = map[int]struct {
 	5: {3000000, 5000000},
 }
 
-var tierNetrunnerRequirements = map[int]int{
+var _ = map[int]int{
 	1: 20,
 	2: 50,
 	3: 75,
@@ -90,7 +90,7 @@ func NewEngramCreationService(repo EngramCreationRepositoryInterface, cache *red
 	}
 }
 
-func (s *EngramCreationService) GetCreationCost(ctx context.Context, chipTier int) (*EngramCreationCost, error) {
+func (s *EngramCreationService) GetCreationCost(_ context.Context, chipTier int) (*EngramCreationCost, error) {
 	if chipTier < 1 || chipTier > 5 {
 		return nil, ErrInvalidChipTier
 	}
@@ -108,7 +108,7 @@ func (s *EngramCreationService) GetCreationCost(ctx context.Context, chipTier in
 	}, nil
 }
 
-func (s *EngramCreationService) ValidateCreation(ctx context.Context, characterID uuid.UUID, chipTier int, targetPersonID *uuid.UUID) (*ValidateCreationResult, error) {
+func (s *EngramCreationService) ValidateCreation(ctx context.Context, _ uuid.UUID, chipTier int, _ *uuid.UUID) (*ValidateCreationResult, error) {
 	if chipTier < 1 || chipTier > 5 {
 		return &ValidateCreationResult{
 			IsValid:          false,
@@ -120,9 +120,9 @@ func (s *EngramCreationService) ValidateCreation(ctx context.Context, characterI
 	requirements := &CreationRequirements{
 		TechnologyAvailable: true,
 		EquipmentAvailable:  true,
-		ReputationMet:        true,
-		SkillsMet:            true,
-		FundsAvailable:       true,
+		ReputationMet:       true,
+		SkillsMet:           true,
+		FundsAvailable:      true,
 	}
 
 	cost, err := s.GetCreationCost(ctx, chipTier)
@@ -206,4 +206,3 @@ func floatPtr(f float64) *float64 {
 func timePtr(t time.Time) *time.Time {
 	return &t
 }
-

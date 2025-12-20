@@ -1,4 +1,4 @@
-// Issue: #61 - Player Market Service Implementation
+// Package server Issue: #61 - Player Market Service Implementation
 package server
 
 // PlayerMarketService implements business logic
@@ -7,7 +7,3 @@ type PlayerMarketService struct {
 }
 
 // NewPlayerMarketService creates new service
-func NewPlayerMarketService(repo *PlayerMarketRepository) *PlayerMarketService {
-	return &PlayerMarketService{repo: repo}
-}
-

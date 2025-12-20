@@ -2,14 +2,15 @@
 # Issue: #1858
 # Automated OpenAPI specification validator
 
-import os
-import yaml
+import argparse
 import json
+import os
 import subprocess
 import sys
+import yaml
 from pathlib import Path
 from typing import Dict, List, Tuple
-import argparse
+
 
 class OpenAPIValidator:
     """Automated OpenAPI specification validation"""
@@ -157,7 +158,8 @@ class OpenAPIValidator:
                         for code, response in responses.items():
                             if isinstance(response, dict):
                                 if 'description' not in response:
-                                    self.errors.append(f"Missing description for {code} response in {method} {path}, {spec_file.name}")
+                                    self.errors.append(
+                                        f"Missing description for {code} response in {method} {path}, {spec_file.name}")
 
     def _run_redocly_lint(self, spec_file: Path) -> bool:
         """Run redocly lint on the specification"""

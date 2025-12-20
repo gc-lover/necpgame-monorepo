@@ -1,4 +1,4 @@
-// Issue: JWT Implementation for Chat Service
+// Package server Issue: JWT Implementation for Chat Service
 // Configuration for chat-service
 package server
 

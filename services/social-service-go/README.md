@@ -10,6 +10,7 @@
 ## API Endpoints
 
 ### Notifications
+
 - `POST /api/v1/social/notifications` - Создать уведомление
 - `GET /api/v1/social/notifications` - Получить список уведомлений
 - `GET /api/v1/social/notifications/{id}` - Получить уведомление
@@ -18,6 +19,7 @@
 - `PUT /api/v1/social/notifications/preferences` - Обновить настройки уведомлений
 
 ### Friends
+
 - `GET /api/v1/social/friends` - Получить список друзей
 - `POST /api/v1/social/friends/request` - Отправить запрос на дружбу
 - `PUT /api/v1/social/friends/{id}/accept` - Принять запрос на дружбу
@@ -25,6 +27,7 @@
 - `POST /api/v1/social/friends/{id}/block` - Заблокировать друга
 
 ### Guilds
+
 - `GET /api/v1/social/guilds` - Получить список гильдий
 - `POST /api/v1/social/guilds` - Создать гильдию
 - `GET /api/v1/social/guilds/{id}` - Получить информацию о гильдии

@@ -1,4 +1,4 @@
-// Issue: #1588 - Load Shedding middleware
+// Package server Issue: #1588 - Load Shedding middleware
 package server
 
 import (
@@ -39,7 +39,7 @@ func (ls *LoadShedder) Allow() bool {
 		requestsShedded.Inc()
 		return false // Reject
 	}
-	
+
 	ls.current.Add(1)
 	return true
 }
@@ -60,8 +60,7 @@ func (ls *LoadShedder) Middleware(next http.Handler) http.Handler {
 			return
 		}
 		defer ls.Done()
-		
+
 		next.ServeHTTP(w, r)
 	})
 }
-

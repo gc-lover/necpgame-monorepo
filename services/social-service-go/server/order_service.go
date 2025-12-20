@@ -1,4 +1,4 @@
-// Issue: #1509
+// Package server Issue: #1509
 package server
 
 import (
@@ -37,16 +37,16 @@ func NewOrderService(db *pgxpool.Pool, logger *logrus.Logger) *OrderService {
 func (s *OrderService) CreatePlayerOrder(ctx context.Context, customerID uuid.UUID, req *models.CreatePlayerOrderRequest) (*models.PlayerOrder, error) {
 	order := &models.PlayerOrder{
 		ID:           uuid.New(),
-		CustomerID:  customerID,
-		OrderType:   req.OrderType,
-		Title:       req.Title,
-		Description: req.Description,
-		Status:      models.OrderStatusOpen,
-		Reward:      req.Reward,
+		CustomerID:   customerID,
+		OrderType:    req.OrderType,
+		Title:        req.Title,
+		Description:  req.Description,
+		Status:       models.OrderStatusOpen,
+		Reward:       req.Reward,
 		Requirements: req.Requirements,
-		Deadline:    req.Deadline,
-		CreatedAt:   time.Now(),
-		UpdatedAt:   time.Now(),
+		Deadline:     req.Deadline,
+		CreatedAt:    time.Now(),
+		UpdatedAt:    time.Now(),
 	}
 
 	if err := s.repo.Create(ctx, order); err != nil {
@@ -112,4 +112,3 @@ func (s *OrderService) CancelPlayerOrder(ctx context.Context, orderID uuid.UUID)
 
 	return s.repo.GetByID(ctx, orderID)
 }
-

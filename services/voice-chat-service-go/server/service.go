@@ -3,7 +3,6 @@ package server
 import (
 	"encoding/json"
 	"fmt"
-	"math"
 	"net/http"
 	"sync"
 	"time"
@@ -16,65 +15,65 @@ import (
 	"golang.org/x/time/rate"
 )
 
-// OPTIMIZATION: Issue #2177 - Memory-aligned struct for voice chat service performance
+// VoiceChatService OPTIMIZATION: Issue #2177 - Memory-aligned struct for voice chat service performance
 type VoiceChatService struct {
-	logger          *logrus.Logger
-	metrics         *VoiceChatMetrics
-	config          *VoiceChatServiceConfig
+	logger  *logrus.Logger
+	metrics *VoiceChatMetrics
+	config  *VoiceChatServiceConfig
 
 	// OPTIMIZATION: Issue #2177 - Thread-safe storage for MMO voice chat management
-	channels        sync.Map // OPTIMIZATION: Concurrent channel management
-	connections     sync.Map // OPTIMIZATION: Concurrent WebSocket connection management
-	proximityZones  sync.Map // OPTIMIZATION: Concurrent proximity zone management
+	channels       sync.Map // OPTIMIZATION: Concurrent channel management
+	connections    sync.Map // OPTIMIZATION: Concurrent WebSocket connection management
+	proximityZones sync.Map // OPTIMIZATION: Concurrent proximity zone management
 
 	// OPTIMIZATION: Issue #2177 - Memory pooling for hot path structs (zero allocations target!)
-	channelResponsePool sync.Pool
-	audioStreamPool     sync.Pool
-	ttsResponsePool     sync.Pool
+	channelResponsePool  sync.Pool
+	audioStreamPool      sync.Pool
+	ttsResponsePool      sync.Pool
 	moderationReportPool sync.Pool
 }
 
-// OPTIMIZATION: Issue #2177 - Memory-aligned voice channel struct
+// VoiceChannel OPTIMIZATION: Issue #2177 - Memory-aligned voice channel struct
 type VoiceChannel struct {
-	ChannelID       string            `json:"channel_id"`        // 16 bytes
-	Name            string            `json:"name"`              // 16 bytes
-	Type            string            `json:"type"`              // 16 bytes (global, guild, group, proximity, private)
-	OwnerID         string            `json:"owner_id"`          // 16 bytes
-	ParticipantCount int              `json:"participant_count"` // 8 bytes
-	MaxParticipants int              `json:"max_participants"`  // 8 bytes
-	IsPublic        bool              `json:"is_public"`         // 1 byte
-	Settings        ChannelSettings   `json:"settings"`          // ~64 bytes
-	Participants    sync.Map          `json:"-"`                 // map[string]*WSVoiceConnection - thread-safe
-	CreatedAt       time.Time         `json:"created_at"`        // 24 bytes
-	UpdatedAt       time.Time         `json:"updated_at"`        // 24 bytes
-	LastActivity    time.Time         `json:"last_activity"`     // 24 bytes
+	ChannelID        string          `json:"channel_id"`        // 16 bytes
+	Name             string          `json:"name"`              // 16 bytes
+	Type             string          `json:"type"`              // 16 bytes (global, guild, group, proximity, private)
+	OwnerID          string          `json:"owner_id"`          // 16 bytes
+	ParticipantCount int             `json:"participant_count"` // 8 bytes
+	MaxParticipants  int             `json:"max_participants"`  // 8 bytes
+	IsPublic         bool            `json:"is_public"`         // 1 byte
+	Settings         ChannelSettings `json:"settings"`          // ~64 bytes
+	Participants     sync.Map        `json:"-"`                 // map[string]*WSVoiceConnection - thread-safe
+	CreatedAt        time.Time       `json:"created_at"`        // 24 bytes
+	UpdatedAt        time.Time       `json:"updated_at"`        // 24 bytes
+	LastActivity     time.Time       `json:"last_activity"`     // 24 bytes
 }
 
-// OPTIMIZATION: Issue #2177 - Memory-aligned WebSocket voice connection
+// WSVoiceConnection OPTIMIZATION: Issue #2177 - Memory-aligned WebSocket voice connection
 type WSVoiceConnection struct {
-	ConnectionID   string          `json:"connection_id"`    // 16 bytes
-	UserID         string          `json:"user_id"`          // 16 bytes
-	ClientID       string          `json:"client_id"`        // 16 bytes
-	ChannelID      string          `json:"channel_id"`       // 16 bytes
-	Conn           *websocket.Conn `json:"-"`                // 8 bytes (pointer)
-	ConnectedAt    time.Time       `json:"connected_at"`     // 24 bytes
-	LastHeartbeat  time.Time       `json:"last_heartbeat"`   // 24 bytes
-	IsMuted        bool            `json:"is_muted"`         // 1 byte
-	IsDeafened     bool            `json:"is_deafened"`      // 1 byte
-	SendChan       chan []byte      `json:"-"`                // 8 bytes (chan)
-	Location       *PlayerLocation  `json:"location"`         // 8 bytes (pointer)
-	SessionToken   string          `json:"session_token"`    // 16 bytes
+	ConnectionID  string          `json:"connection_id"`  // 16 bytes
+	UserID        string          `json:"user_id"`        // 16 bytes
+	ClientID      string          `json:"client_id"`      // 16 bytes
+	ChannelID     string          `json:"channel_id"`     // 16 bytes
+	Conn          *websocket.Conn `json:"-"`              // 8 bytes (pointer)
+	ConnectedAt   time.Time       `json:"connected_at"`   // 24 bytes
+	LastHeartbeat time.Time       `json:"last_heartbeat"` // 24 bytes
+	IsMuted       bool            `json:"is_muted"`       // 1 byte
+	IsDeafened    bool            `json:"is_deafened"`    // 1 byte
+	SendChan      chan []byte     `json:"-"`              // 8 bytes (chan)
+	Location      *PlayerLocation `json:"location"`       // 8 bytes (pointer)
+	SessionToken  string          `json:"session_token"`  // 16 bytes
 }
 
-// OPTIMIZATION: Issue #2177 - Memory-aligned player location for proximity audio
+// PlayerLocation OPTIMIZATION: Issue #2177 - Memory-aligned player location for proximity audio
 type PlayerLocation struct {
-	X     float64 `json:"x"`      // 8 bytes
-	Y     float64 `json:"y"`      // 8 bytes
-	Z     float64 `json:"z"`      // 8 bytes
-	Zone  string  `json:"zone"`   // 16 bytes
+	X    float64 `json:"x"`    // 8 bytes
+	Y    float64 `json:"y"`    // 8 bytes
+	Z    float64 `json:"z"`    // 8 bytes
+	Zone string  `json:"zone"` // 16 bytes
 }
 
-// OPTIMIZATION: Issue #2177 - Memory-aligned channel settings
+// ChannelSettings OPTIMIZATION: Issue #2177 - Memory-aligned channel settings
 type ChannelSettings struct {
 	ProximityRadius        float64 `json:"proximity_radius"`         // 8 bytes
 	Codec                  string  `json:"codec"`                    // 16 bytes
@@ -84,14 +83,14 @@ type ChannelSettings struct {
 	NoiseSuppression       bool    `json:"noise_suppression"`        // 1 byte
 }
 
-// OPTIMIZATION: Issue #2177 - Memory-aligned audio configuration
+// AudioConfig OPTIMIZATION: Issue #2177 - Memory-aligned audio configuration
 type AudioConfig struct {
-	SampleRate  int      `json:"sample_rate"`  // 8 bytes
-	Channels    int      `json:"channels"`     // 8 bytes
-	Codec       string   `json:"codec"`        // 16 bytes
-	Bitrate     int      `json:"bitrate"`      // 8 bytes
-	BufferSize  int      `json:"buffer_size"`  // 8 bytes
-	ICEServers  []string `json:"ice_servers"`  // 24 bytes (slice)
+	SampleRate int      `json:"sample_rate"` // 8 bytes
+	Channels   int      `json:"channels"`    // 8 bytes
+	Codec      string   `json:"codec"`       // 16 bytes
+	Bitrate    int      `json:"bitrate"`     // 8 bytes
+	BufferSize int      `json:"buffer_size"` // 8 bytes
+	ICEServers []string `json:"ice_servers"` // 24 bytes (slice)
 }
 
 // WebSocket upgrader with security settings for MMO cross-platform voice
@@ -140,7 +139,7 @@ func NewVoiceChatService(logger *logrus.Logger, metrics *VoiceChatMetrics, confi
 	return s
 }
 
-// OPTIMIZATION: Issue #2177 - Rate limiting middleware for voice chat protection
+// RateLimitMiddleware OPTIMIZATION: Issue #2177 - Rate limiting middleware for voice chat protection
 func (s *VoiceChatService) RateLimitMiddleware() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -164,25 +163,25 @@ func (s *VoiceChatService) RateLimitMiddleware() func(http.Handler) http.Handler
 	}
 }
 
-// Health check method
-func (s *VoiceChatService) HealthCheck(w http.ResponseWriter, r *http.Request) {
+// HealthCheck Health check method
+func (s *VoiceChatService) HealthCheck(w http.ResponseWriter) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]interface{}{
-		"status": "healthy",
-		"service": "voice-chat-service",
-		"version": "1.0.0",
-		"active_channels": s.metrics.ActiveChannels,
+		"status":             "healthy",
+		"service":            "voice-chat-service",
+		"version":            "1.0.0",
+		"active_channels":    s.metrics.ActiveChannels,
 		"active_connections": s.metrics.ActiveConnections,
-		"audio_streams": s.metrics.AudioStreams,
-		"websocket_errors": s.metrics.WebSocketErrors,
-		"bytes_sent": s.metrics.BytesSent,
-		"bytes_received": s.metrics.BytesReceived,
-		"timestamp": time.Now().Unix(),
+		"audio_streams":      s.metrics.AudioStreams,
+		"websocket_errors":   s.metrics.WebSocketErrors,
+		"bytes_sent":         s.metrics.BytesSent,
+		"bytes_received":     s.metrics.BytesReceived,
+		"timestamp":          time.Now().Unix(),
 	})
 }
 
-// Voice Channel Management Handlers
+// CreateChannel Voice Channel Management Handlers
 func (s *VoiceChatService) CreateChannel(w http.ResponseWriter, r *http.Request) {
 	var req CreateChannelRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -208,17 +207,17 @@ func (s *VoiceChatService) CreateChannel(w http.ResponseWriter, r *http.Request)
 	}
 
 	channel := &VoiceChannel{
-		ChannelID:       uuid.New().String(),
-		Name:            req.Name,
-		Type:            req.Type,
-		OwnerID:         "system", // Would be from auth context
+		ChannelID:        uuid.New().String(),
+		Name:             req.Name,
+		Type:             req.Type,
+		OwnerID:          "system", // Would be from auth context
 		ParticipantCount: 0,
-		MaxParticipants: req.MaxParticipants,
-		IsPublic:        req.IsPublic,
-		Settings:        req.Settings,
-		CreatedAt:       time.Now(),
-		UpdatedAt:       time.Now(),
-		LastActivity:    time.Now(),
+		MaxParticipants:  req.MaxParticipants,
+		IsPublic:         req.IsPublic,
+		Settings:         req.Settings,
+		CreatedAt:        time.Now(),
+		UpdatedAt:        time.Now(),
+		LastActivity:     time.Now(),
 	}
 
 	s.channels.Store(channel.ChannelID, channel)
@@ -358,7 +357,7 @@ func (s *VoiceChatService) UpdateChannel(w http.ResponseWriter, r *http.Request)
 	}
 
 	// Update channel settings
-	updatedFields := []string{}
+	var updatedFields []string
 	if req.Name != "" {
 		channel.Name = req.Name
 		updatedFields = append(updatedFields, "name")
@@ -376,9 +375,9 @@ func (s *VoiceChatService) UpdateChannel(w http.ResponseWriter, r *http.Request)
 	s.channels.Store(channelID, channel)
 
 	resp := &UpdateChannelResponse{
-		ChannelID:    channelID,
+		ChannelID:     channelID,
 		UpdatedFields: updatedFields,
-		UpdatedAt:    channel.UpdatedAt.Unix(),
+		UpdatedAt:     channel.UpdatedAt.Unix(),
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -397,4 +396,3 @@ func (s *VoiceChatService) DeleteChannel(w http.ResponseWriter, r *http.Request)
 	}
 
 	channel := channelValue.(*VoiceChannel)
-

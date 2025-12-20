@@ -1,4 +1,4 @@
-// Issue: #1510 - Combat Acrobatics Wall Run handlers (TYPED responses)
+// Package server Issue: #1510 - Combat Acrobatics Wall Run handlers (TYPED responses)
 package server
 
 import (
@@ -8,10 +8,8 @@ import (
 	"github.com/gc-lover/necpgame-monorepo/services/combat-acrobatics-wall-run-service-go/pkg/api"
 )
 
-// Context timeout constants
 const (
-	DBTimeout    = 50 * time.Millisecond
-	CacheTimeout = 10 * time.Millisecond
+	DBTimeout = 50 * time.Millisecond
 )
 
 type Handlers struct {
@@ -28,11 +26,11 @@ func NewHandlers(service *Service) *Handlers {
 // в текущей области персонажа.
 //
 // GET /wall-run/surfaces
-func (h *Handlers) GetWallRunSurfaces(ctx context.Context, params api.GetWallRunSurfacesParams) (api.GetWallRunSurfacesRes, error) {
+func (h *Handlers) GetWallRunSurfaces(ctx context.Context, _ api.GetWallRunSurfacesParams) (api.GetWallRunSurfacesRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	surfaces, err := h.service.GetWallRunSurfaces(ctx, params)
+	surfaces, err := h.service.GetWallRunSurfaces(ctx)
 	if err != nil {
 		return &api.GetWallRunSurfacesInternalServerError{
 			Error:   "InternalServerError",
@@ -51,11 +49,11 @@ func (h *Handlers) GetWallRunSurfaces(ctx context.Context, params api.GetWallRun
 // выносливости.
 //
 // POST /wall-run/start
-func (h *Handlers) StartWallRun(ctx context.Context, req api.OptStartWallRunRequest) (api.StartWallRunRes, error) {
+func (h *Handlers) StartWallRun(ctx context.Context, _ api.OptStartWallRunRequest) (api.StartWallRunRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	session, err := h.service.StartWallRun(ctx, req)
+	session, err := h.service.StartWallRun(ctx)
 	if err != nil {
 		return &api.StartWallRunBadRequest{
 			Error:   "BadRequest",

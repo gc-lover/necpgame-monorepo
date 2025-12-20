@@ -37,4 +37,3 @@ func TestSupportServiceNoLeaks(t *testing.T) {
 
 	// If goroutines leaked from support handlers, test FAILS
 }
-

@@ -1,11 +1,10 @@
-// Issue: #1943
+// Package server Issue: #1943
 package server
 
 import (
 	"context"
 	"database/sql"
 	"fmt"
-	"time"
 
 	_ "github.com/lib/pq"
 )
@@ -16,28 +15,6 @@ type TournamentRepository struct {
 }
 
 // NewTournamentRepository creates new repository with database connection
-func NewTournamentRepository() *TournamentRepository {
-	dbURL := getEnv("DATABASE_URL", "postgres://postgres:postgres@localhost:5432/necpgame?sslmode=disable")
-
-	db, err := sql.Open("postgres", dbURL)
-	if err != nil {
-		// For now, just log and continue without DB
-		fmt.Printf("Warning: Failed to connect to database: %v\n", err)
-		return &TournamentRepository{db: nil}
-	}
-
-	if err := db.Ping(); err != nil {
-		fmt.Printf("Warning: Failed to ping database: %v\n", err)
-		return &TournamentRepository{db: nil}
-	}
-
-	// OPTIMIZATION: Database connection pool configuration (Issue #300)
-	db.SetMaxOpenConns(25)           // Max 25 concurrent connections for tournament service
-	db.SetMaxIdleConns(5)            // Keep 5 idle connections
-	db.SetConnMaxLifetime(time.Hour) // Connection lifetime
-
-	return &TournamentRepository{db: db}
-}
 
 // CreateTournament creates new tournament in database
 func (r *TournamentRepository) CreateTournament(ctx context.Context, tournament *TournamentDefinition) error {

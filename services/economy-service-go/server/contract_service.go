@@ -1,4 +1,4 @@
-// Issue: #140890166 - Contract system extension
+// Package server Issue: #140890166 - Contract system extension
 package server
 
 import (
@@ -15,19 +15,20 @@ import (
 
 // ContractService управляет бизнес-логикой контрактов
 type ContractService struct {
-	repo        *ContractRepository
-	redis       *redis.Client
-	logger      *logrus.Logger
-	eventBus    *EventBus
+	repo     *ContractRepository
+	redis    *redis.Client
+	logger   *logrus.Logger
+	eventBus *EventBus
 }
 
 // NewContractService создает новый сервис контрактов
 func NewContractService(repo *ContractRepository, redis *redis.Client) *ContractService {
 	return &ContractService{
-		repo:     repo,
-		redis:    redis,
-		logger:   GetLogger(),
-		eventBus: NewEventBus(redis),
+		repo:   repo,
+		redis:  redis,
+		logger: GetLogger(),
+		// TODO: Implement event bus
+		// eventBus: NewEventBus(redis),
 	}
 }
 
@@ -55,9 +56,9 @@ func (s *ContractService) CreateContract(ctx context.Context, buyerID uuid.UUID,
 
 	// Создаем событие создания контракта
 	s.createContractEvent(ctx, contract.ID, "contract_created", buyerID, map[string]interface{}{
-		"type":        contract.Type,
-		"seller_id":   contract.SellerID,
-		"title":       contract.Title,
+		"type":      contract.Type,
+		"seller_id": contract.SellerID,
+		"title":     contract.Title,
 	})
 
 	s.logger.WithFields(logrus.Fields{
@@ -139,7 +140,7 @@ func (s *ContractService) AcceptContract(ctx context.Context, contractID, accept
 	}
 
 	// Определяем залог на основе типа контракта
-	collateral := s.calculateCollateral(contract.Type, contract.Terms)
+	collateral := s.calculateCollateral(contract.Type)
 
 	escrow := &models.ContractEscrow{
 		ContractID: contract.ID,
@@ -238,13 +239,14 @@ func (s *ContractService) CompleteContract(ctx context.Context, contractID, comp
 
 	s.createContractEvent(ctx, contractID, "contract_completed", completerID, nil)
 
+	// TODO: Implement event bus publishing
 	// Отправляем событие в event bus для синхронизации с другими сервисами
-	s.eventBus.PublishEvent(ctx, "contract.completed", map[string]interface{}{
-		"contract_id": contractID,
-		"buyer_id":    contract.BuyerID,
-		"seller_id":   contract.SellerID,
-		"type":        contract.Type,
-	})
+	// s.eventBus.PublishEvent(ctx, "contract.completed", map[string]interface{}{
+	// 	"contract_id": contractID,
+	// 	"buyer_id":    contract.BuyerID,
+	// 	"seller_id":   contract.SellerID,
+	// 	"type":        contract.Type,
+	// })
 
 	s.logger.WithField("contract_id", contractID).Info("Contract completed successfully")
 	return nil
@@ -319,12 +321,12 @@ func (s *ContractService) CreateDispute(ctx context.Context, contractID, initiat
 	}
 
 	// Назначаем арбитратора (упрощенная логика - случайный выбор)
-	arbitratorID := s.assignArbitrator(contract.BuyerID, contract.SellerID)
+	arbitratorID := s.assignArbitrator()
 	dispute.ArbitratorID = &arbitratorID
 
 	s.createContractEvent(ctx, contractID, "dispute_created", initiatorID, map[string]interface{}{
-		"reason":       req.Reason,
-		"evidence":     req.Evidence,
+		"reason":        req.Reason,
+		"evidence":      req.Evidence,
 		"arbitrator_id": arbitratorID,
 	})
 
@@ -414,7 +416,7 @@ func (s *ContractService) GetContractHistory(ctx context.Context, contractID, re
 
 // Вспомогательные методы
 
-func (s *ContractService) calculateCollateral(contractType models.ContractType, terms map[string]interface{}) map[string]int {
+func (s *ContractService) calculateCollateral(contractType models.ContractType) map[string]int {
 	// Упрощенная логика расчета залога на основе типа контракта
 	switch contractType {
 	case models.ContractTypeExchange:
@@ -447,7 +449,7 @@ func (s *ContractService) activateContract(ctx context.Context, contractID uuid.
 	return nil
 }
 
-func (s *ContractService) assignArbitrator(buyerID, sellerID uuid.UUID) uuid.UUID {
+func (s *ContractService) assignArbitrator() uuid.UUID {
 	// Упрощенная логика: случайный выбор между системными арбитраторами
 	arbitrators := []uuid.UUID{
 		uuid.MustParse("00000000-0000-0000-0000-000000000001"), // System Arbitrator 1

@@ -1,11 +1,11 @@
-// Issue: #1602
+// Package server Issue: #1602
 package server
 
 import (
 	"context"
 
-	"github.com/ogen-go/ogen/ogenerrors"
 	"github.com/necpgame/admin-service-go/pkg/api"
+	"github.com/ogen-go/ogen/ogenerrors"
 )
 
 type SecurityHandler struct {
@@ -20,7 +20,7 @@ func NewSecurityHandler(jwtValidator *JwtValidator, authEnabled bool) *SecurityH
 	}
 }
 
-func (h *SecurityHandler) HandleBearerAuth(ctx context.Context, operationName api.OperationName, t api.BearerAuth) (context.Context, error) {
+func (h *SecurityHandler) HandleBearerAuth(ctx context.Context, _ api.OperationName, t api.BearerAuth) (context.Context, error) {
 	if !h.authEnabled || h.jwtValidator == nil {
 		return ctx, nil
 	}
@@ -50,4 +50,3 @@ func (h *SecurityHandler) HandleBearerAuth(ctx context.Context, operationName ap
 
 	return ctx, nil
 }
-

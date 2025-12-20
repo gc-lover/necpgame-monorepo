@@ -1,4 +1,4 @@
-// Issue: #1442
+// Package server Issue: #1442
 // ogen handlers - TYPED responses (no interface{} boxing!)
 package server
 
@@ -9,7 +9,7 @@ import (
 	"github.com/gc-lover/necpgame-monorepo/services/faction-core-service-go/pkg/api"
 )
 
-// Context timeout constants (Issue #1604)
+// DBTimeout Context timeout constants (Issue #1604)
 const (
 	DBTimeout = 50 * time.Millisecond
 )
@@ -171,7 +171,7 @@ func (h *Handlers) UpdateHierarchy(ctx context.Context, req *api.UpdateHierarchy
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	hierarchy, err := h.service.UpdateHierarchy(ctx, params.FactionId.String(), *req)
+	hierarchy, err := h.service.UpdateHierarchy(ctx, params.FactionId.String())
 	if err != nil {
 		if err == ErrNotFound {
 			return &api.UpdateHierarchyNotFound{

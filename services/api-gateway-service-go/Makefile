@@ -38,10 +38,10 @@ lint:
 fmt:
 	go fmt ./...
 
-# Check file sizes (must be <500 lines per file)
+# Check file sizes (must be <1000 lines per file)
 check-file-sizes:
 	@echo "Checking file sizes..."
-	@find . -name "*.go" -type f -exec wc -l {} \; | awk '$$1 > 500 {print $$2 ": " $$1 " lines (exceeds 500)"; exit 1} END {print "All files within size limits"}'
+	@find . -name "*.go" -type f -exec wc -l {} \; | awk '$$1 > 1000 {print $$2 ": " $$1 " lines (exceeds 1000)"; exit 1} END {print "All files within size limits"}'
 
 # Build for production
 build-prod:

@@ -1,203 +1,203 @@
-      properties:
-        synchronization_status:
-          type: object
-          description: Статус синхронизации всех узлов
-        stability_contribution:
-          type: integer
-          minimum: 0
-          maximum: 100
-          description: Вклад узла в общую стабильность
-        node_placed:
-          type: boolean
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-    CorridorActivated:
+properties:
+  synchronization_status:
+    type: object
+    description: Статус синхронизации всех узлов
+  stability_contribution:
+    type: integer
+    minimum: 0
+    maximum: 100
+    description: Вклад узла в общую стабильность
+  node_placed:
+    type: boolean
+description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+CorridorActivated:
+  type: object
+  required:
+    - corridor_active
+    - initial_stability
+    - lifetime
+  properties:
+    warnings:
+      type: array
+      items:
+        type: string
+    lifetime:
+      type: integer
+      format: int64
+      description: Время жизни в секундах
+    initial_stability:
+      type: integer
+      minimum: 0
+      maximum: 100
+    corridor_active:
+      type: boolean
+  description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+CorridorStatus:
+  type: object
+  required:
+    - stability
+    - time_remaining
+  properties:
+    team_status:
+      type: array
+      items:
+        $ref: '#/components/schemas/TeamMemberStatus'
+    active_threats:
+      type: array
+      items:
+        $ref: '#/components/schemas/Threat'
+    warnings:
+      type: array
+      items:
+        type: string
+    time_remaining:
+      type: integer
+      format: int64
+      description: Оставшееся время в секундах
+    stability:
+      type: integer
+      minimum: 0
+      maximum: 100
+      description: Текущая стабильность (0-100%)
+  description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+TeamMemberStatus:
+  type: object
+  required:
+    - character_id
+    - role
+    - status
+  properties:
+    character_id:
+      type: string
+      format: uuid
+    role:
+      type: string
+      enum:
+        - stabilizer
+        - guard
+        - navigator
+        - coordinator
+    status:
+      type: string
+      enum:
+        - active
+        - afk
+        - disconnected
+  description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+Threat:
+  type: object
+  required:
+    - threat_type
+    - severity
+  properties:
+    threat_type:
+      type: string
+      enum:
+        - rogue_ai_attack
+        - netwatch_detection
+        - digital_anomaly
+    severity:
+      type: integer
+      minimum: 0
+      maximum: 100
+  description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+MaintainCorridorRequest:
+  type: object
+  required:
+    - character_id
+    - role
+  properties:
+    character_id:
+      type: string
+      format: uuid
+    role:
+      type: string
+      enum:
+        - stabilizer
+        - guard
+        - navigator
+        - coordinator
+    action_data:
       type: object
-      required:
-      - corridor_active
-      - initial_stability
-      - lifetime
-      properties:
-        warnings:
-          type: array
-          items:
-            type: string
-        lifetime:
-          type: integer
-          format: int64
-          description: Время жизни в секундах
-        initial_stability:
-          type: integer
-          minimum: 0
-          maximum: 100
-        corridor_active:
-          type: boolean
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-    CorridorStatus:
+      description: Данные действий для поддержания
+  description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+MaintenanceResult:
+  type: object
+  required:
+    - maintenance_success
+    - stability_change
+  properties:
+    team_sync:
       type: object
-      required:
-      - stability
-      - time_remaining
-      properties:
-        team_status:
-          type: array
-          items:
-            $ref: '#/components/schemas/TeamMemberStatus'
-        active_threats:
-          type: array
-          items:
-            $ref: '#/components/schemas/Threat'
-        warnings:
-          type: array
-          items:
-            type: string
-        time_remaining:
-          type: integer
-          format: int64
-          description: Оставшееся время в секундах
-        stability:
-          type: integer
-          minimum: 0
-          maximum: 100
-          description: Текущая стабильность (0-100%)
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-    TeamMemberStatus:
+      description: Синхронизация команды
+    stability_change:
+      type: integer
+      description: Изменение стабильности
+    maintenance_success:
+      type: boolean
+  description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+UseCorridorRequest:
+  type: object
+  required:
+    - usage_type
+  properties:
+    usage_type:
+      type: string
+      enum:
+        - data_transfer
+        - player_passage
+    character_ids:
+      type: array
+      items:
+        type: string
+        format: uuid
+      description: ID игроков для прохода (для player_passage)
+    data_volume:
+      type: integer
+      description: Объём данных в МБ (для data_transfer)
+  description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+CorridorUsageResult:
+  type: object
+  required:
+    - success
+    - stability_impact
+  properties:
+    rewards:
       type: object
-      required:
-      - character_id
-      - role
-      - status
-      properties:
-        character_id:
-          type: string
-          format: uuid
-        role:
-          type: string
-          enum:
-          - stabilizer
-          - guard
-          - navigator
-          - coordinator
-        status:
-          type: string
-          enum:
-          - active
-          - afk
-          - disconnected
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-    Threat:
+      description: Награды за использование
+    warnings:
+      type: array
+      items:
+        type: string
+    stability_impact:
+      type: integer
+      description: Влияние на стабильность (отрицательное = снижение)
+    success:
+      type: boolean
+  description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+CorridorClosed:
+  type: object
+  properties:
+    closure_reason:
+      type: string
+      enum:
+        - manual
+        - stability_zero
+        - netwatch
+        - ai_attack
+        - timeout
+    consequences:
       type: object
-      required:
-      - threat_type
-      - severity
-      properties:
-        threat_type:
-          type: string
-          enum:
-          - rogue_ai_attack
-          - netwatch_detection
-          - digital_anomaly
-        severity:
-          type: integer
-          minimum: 0
-          maximum: 100
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-    MaintainCorridorRequest:
-      type: object
-      required:
-      - character_id
-      - role
-      properties:
-        character_id:
-          type: string
-          format: uuid
-        role:
-          type: string
-          enum:
-          - stabilizer
-          - guard
-          - navigator
-          - coordinator
-        action_data:
-          type: object
-          description: Данные действий для поддержания
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-    MaintenanceResult:
-      type: object
-      required:
-      - maintenance_success
-      - stability_change
-      properties:
-        team_sync:
-          type: object
-          description: Синхронизация команды
-        stability_change:
-          type: integer
-          description: Изменение стабильности
-        maintenance_success:
-          type: boolean
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-    UseCorridorRequest:
-      type: object
-      required:
-      - usage_type
-      properties:
-        usage_type:
-          type: string
-          enum:
-          - data_transfer
-          - player_passage
-        character_ids:
-          type: array
-          items:
-            type: string
-            format: uuid
-          description: ID игроков для прохода (для player_passage)
-        data_volume:
-          type: integer
-          description: Объём данных в МБ (для data_transfer)
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-    CorridorUsageResult:
-      type: object
-      required:
-      - success
-      - stability_impact
-      properties:
-        rewards:
-          type: object
-          description: Награды за использование
-        warnings:
-          type: array
-          items:
-            type: string
-        stability_impact:
-          type: integer
-          description: Влияние на стабильность (отрицательное = снижение)
-        success:
-          type: boolean
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-    CorridorClosed:
-      type: object
-      properties:
-        closure_reason:
-          type: string
-          enum:
-          - manual
-          - stability_zero
-          - netwatch
-          - ai_attack
-          - timeout
-        consequences:
-          type: object
-          description: Последствия закрытия
-        players_trapped:
-          type: array
-          items:
-            type: string
-            format: uuid
-          description: Игроки, оставшиеся за Blackwall
-        equipment_lost:
-          type: array
-          items:
-            type: string
-            format: uuid
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+      description: Последствия закрытия
+    players_trapped:
+      type: array
+      items:
+        type: string
+        format: uuid
+      description: Игроки, оставшиеся за Blackwall
+    equipment_lost:
+      type: array
+      items:
+        type: string
+        format: uuid
+  description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'

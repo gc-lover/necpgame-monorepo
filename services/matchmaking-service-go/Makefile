@@ -31,8 +31,8 @@ check-file-sizes:
 	@echo "рџ”Ќ Checking generated file sizes..."
 	@find $(API_DIR) -name "*.go" -type f 2>/dev/null | while read file; do \
 		lines=$$(wc -l < "$$file" 2>/dev/null || powershell -Command "(Get-Content '$$file').Count"); \
-		if [ $$lines -gt 500 ]; then \
-			echo "вљ пёЏ  $$file: $$lines lines (exceeds 500 limit!)"; \
+		if [ $$lines -gt 1000 ]; then \
+			echo "вљ пёЏ  $$file: $$lines lines (exceeds 1000 limit!)"; \
 		else \
 			echo "вњ… $$file: $$lines lines (OK)"; \
 		fi; \

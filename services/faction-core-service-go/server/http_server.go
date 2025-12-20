@@ -1,34 +1,14 @@
-// Issue: #1442
+// Package server Issue: #1442
 package server
 
 // HTTP handlers use context.WithTimeout for request timeouts (see handlers.go)
 
 import (
 	"context"
-		"time"
 	"net/http"
 
 	"github.com/gc-lover/necpgame-monorepo/services/faction-core-service-go/pkg/api"
 )
-
-type responseRecorder struct {
-	http.ResponseWriter
-	status int
-}
-
-func (r *responseRecorder) WriteHeader(statusCode int) {
-	if r.status == 0 {
-		r.status = statusCode
-	}
-	r.ResponseWriter.WriteHeader(statusCode)
-}
-
-func (r *responseRecorder) Write(b []byte) (int, error) {
-	if r.status == 0 {
-		r.status = http.StatusOK
-	}
-	return r.ResponseWriter.Write(b)
-}
 
 type HTTPServer struct {
 	addr    string
@@ -76,16 +56,13 @@ func (s *HTTPServer) Shutdown(ctx context.Context) error {
 	return nil
 }
 
-func healthCheck(w http.ResponseWriter, r *http.Request) {
+func healthCheck(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("OK"))
 }
 
-func metricsHandler(w http.ResponseWriter, r *http.Request) {
+func metricsHandler(w http.ResponseWriter, _ *http.Request) {
 	// Prometheus metrics would go here
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("# Metrics\n"))
 }
-
-
-

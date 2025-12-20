@@ -1,394 +1,394 @@
-          type: integer
-          minimum: 0
-        page:    # integer → 8 bytes
-          type: integer
-          minimum: 1
-        limit:   # integer → 8 bytes
-          type: integer
-          minimum: 1
-          maximum: 100
+type: integer
+minimum: 0
+page: # integer → 8 bytes
+  type: integer
+  minimum: 1
+limit: # integer → 8 bytes
+  type: integer
+  minimum: 1
+  maximum: 100
 
-    InviteMemberRequest:
-      type: object
-      required:
-        - player_id
-      # BACKEND NOTE: Struct field alignment optimized (large → small)
-      properties:
-        player_id: # string → 16 bytes (БОЛЬШОЕ)
-          type: string
-          format: uuid
-          description: ID приглашаемого игрока
-        message:   # string → 16 bytes
-          type: string
-          maxLength: 500
-          description: Персональное сообщение с приглашением
+InviteMemberRequest:
+  type: object
+  required:
+    - player_id
+  # BACKEND NOTE: Struct field alignment optimized (large → small)
+  properties:
+    player_id: # string → 16 bytes (БОЛЬШОЕ)
+      type: string
+      format: uuid
+      description: ID приглашаемого игрока
+    message: # string → 16 bytes
+      type: string
+      maxLength: 500
+      description: Персональное сообщение с приглашением
 
-    UpdateMemberRoleRequest:
-      type: object
-      required:
-        - role
-      # BACKEND NOTE: Struct field alignment optimized (large → small)
-      properties:
-        role:      # string → 16 bytes (БОЛЬШОЕ)
-          type: string
-          enum: [leader, officer, member, recruit]
-          description: Новая роль
-        reason:    # string → 16 bytes
-          type: string
-          maxLength: 200
-          description: Причина изменения роли
+UpdateMemberRoleRequest:
+  type: object
+  required:
+    - role
+  # BACKEND NOTE: Struct field alignment optimized (large → small)
+  properties:
+    role: # string → 16 bytes (БОЛЬШОЕ)
+      type: string
+      enum: [ leader, officer, member, recruit ]
+      description: Новая роль
+    reason: # string → 16 bytes
+      type: string
+      maxLength: 200
+      description: Причина изменения роли
 
-    InvitationResponse:
-      type: object
-      required:
-        - id
-        - guild_id
-        - player_id
-        - status
-        - created_at
-      # BACKEND NOTE: Struct field alignment optimized (large → small)
-      properties:
-        id:          # string → 16 bytes (БОЛЬШОЕ)
-          type: string
-          format: uuid
-          description: ID приглашения
-        guild_id:    # string → 16 bytes
-          type: string
-          format: uuid
-          description: ID гильдии
-        player_id:   # string → 16 bytes
-          type: string
-          format: uuid
-          description: ID приглашенного игрока
-        invited_by:  # string → 16 bytes
-          type: string
-          format: uuid
-          description: ID отправившего приглашение
-        message:     # string → 16 bytes
-          type: string
-          description: Сообщение приглашения
-        status:      # string → 16 bytes
-          type: string
-          enum: [pending, accepted, declined, expired]
-          description: Статус приглашения
-        created_at:  # string → 16 bytes
-          type: string
-          format: date-time
-        expires_at:  # string → 16 bytes
-          type: string
-          format: date-time
-        responded_at:# string → 16 bytes
-          type: string
-          format: date-time
+InvitationResponse:
+  type: object
+  required:
+    - id
+    - guild_id
+    - player_id
+    - status
+    - created_at
+  # BACKEND NOTE: Struct field alignment optimized (large → small)
+  properties:
+    id: # string → 16 bytes (БОЛЬШОЕ)
+      type: string
+      format: uuid
+      description: ID приглашения
+    guild_id: # string → 16 bytes
+      type: string
+      format: uuid
+      description: ID гильдии
+    player_id: # string → 16 bytes
+      type: string
+      format: uuid
+      description: ID приглашенного игрока
+    invited_by: # string → 16 bytes
+      type: string
+      format: uuid
+      description: ID отправившего приглашение
+    message: # string → 16 bytes
+      type: string
+      description: Сообщение приглашения
+    status: # string → 16 bytes
+      type: string
+      enum: [ pending, accepted, declined, expired ]
+      description: Статус приглашения
+    created_at: # string → 16 bytes
+      type: string
+      format: date-time
+    expires_at: # string → 16 bytes
+      type: string
+      format: date-time
+    responded_at:# string → 16 bytes
+    type: string
+    format: date-time
 
-    InvitationListResponse:
-      type: object
-      required:
-        - invitations
-        - total
-        - page
-        - limit
-      # BACKEND NOTE: Struct field alignment optimized (large → small)
-      properties:
-        invitations: # array → 24 bytes (БОЛЬШОЕ)
-          type: array
-          items:
-            $ref: '#/components/schemas/InvitationResponse'
-        total:        # integer → 8 bytes (МАЛЕНЬКОЕ)
-          type: integer
-          minimum: 0
-        page:         # integer → 8 bytes
-          type: integer
-          minimum: 1
-        limit:        # integer → 8 bytes
-          type: integer
-          minimum: 1
-          maximum: 100
+InvitationListResponse:
+  type: object
+  required:
+    - invitations
+    - total
+    - page
+    - limit
+  # BACKEND NOTE: Struct field alignment optimized (large → small)
+  properties:
+    invitations: # array → 24 bytes (БОЛЬШОЕ)
+      type: array
+      items:
+        $ref: '#/components/schemas/InvitationResponse'
+    total: # integer → 8 bytes (МАЛЕНЬКОЕ)
+      type: integer
+      minimum: 0
+    page: # integer → 8 bytes
+      type: integer
+      minimum: 1
+    limit: # integer → 8 bytes
+      type: integer
+      minimum: 1
+      maximum: 100
 
-    RespondToInvitationRequest:
-      type: object
-      required:
-        - response
-      # BACKEND NOTE: Struct field alignment optimized (large → small)
-      properties:
-        response: # string → 16 bytes (БОЛЬШОЕ)
-          type: string
-          enum: [accept, decline]
-          description: Ответ на приглашение
+RespondToInvitationRequest:
+  type: object
+  required:
+    - response
+  # BACKEND NOTE: Struct field alignment optimized (large → small)
+  properties:
+    response: # string → 16 bytes (БОЛЬШОЕ)
+      type: string
+      enum: [ accept, decline ]
+      description: Ответ на приглашение
 
-    GuildRoleResponse:
-      type: object
-      required:
-        - id
-        - name
-        - permissions
-        - member_count
-      # BACKEND NOTE: Struct field alignment optimized (large → small)
-      properties:
-        id:           # string → 16 bytes (БОЛЬШОЕ)
-          type: string
-          format: uuid
-          description: ID роли
-        name:         # string → 16 bytes
-          type: string
-          minLength: 1
-          maxLength: 50
-          description: Название роли
-        description:  # string → 16 bytes
-          type: string
-          maxLength: 200
-          description: Описание роли
-        color:        # string → 16 bytes
-          type: string
-          pattern: '^#[0-9A-Fa-f]{6}$'
-          description: Цвет роли (hex)
-        permissions:  # array → 24 bytes
-          type: array
-          items:
-            type: string
-            enum: [invite_members, kick_members, manage_roles, manage_resources, create_events, edit_guild_info]
-          description: Разрешения роли
-        created_at:   # string → 16 bytes
-          type: string
-          format: date-time
-        member_count: # integer → 8 bytes (МАЛЕНЬКОЕ)
-          type: integer
-          minimum: 0
-          description: Количество членов с этой ролью
+GuildRoleResponse:
+  type: object
+  required:
+    - id
+    - name
+    - permissions
+    - member_count
+  # BACKEND NOTE: Struct field alignment optimized (large → small)
+  properties:
+    id: # string → 16 bytes (БОЛЬШОЕ)
+      type: string
+      format: uuid
+      description: ID роли
+    name: # string → 16 bytes
+      type: string
+      minLength: 1
+      maxLength: 50
+      description: Название роли
+    description: # string → 16 bytes
+      type: string
+      maxLength: 200
+      description: Описание роли
+    color: # string → 16 bytes
+      type: string
+      pattern: '^#[0-9A-Fa-f]{6}$'
+      description: Цвет роли (hex)
+    permissions: # array → 24 bytes
+      type: array
+      items:
+        type: string
+        enum: [ invite_members, kick_members, manage_roles, manage_resources, create_events, edit_guild_info ]
+      description: Разрешения роли
+    created_at: # string → 16 bytes
+      type: string
+      format: date-time
+    member_count: # integer → 8 bytes (МАЛЕНЬКОЕ)
+      type: integer
+      minimum: 0
+      description: Количество членов с этой ролью
 
-    GuildRoleListResponse:
-      type: object
-      required:
-        - roles
-      # BACKEND NOTE: Struct field alignment optimized (large → small)
-      properties:
-        roles: # array → 24 bytes (БОЛЬШОЕ)
-          type: array
-          items:
-            $ref: '#/components/schemas/GuildRoleResponse'
+GuildRoleListResponse:
+  type: object
+  required:
+    - roles
+  # BACKEND NOTE: Struct field alignment optimized (large → small)
+  properties:
+    roles: # array → 24 bytes (БОЛЬШОЕ)
+      type: array
+      items:
+        $ref: '#/components/schemas/GuildRoleResponse'
 
-    CreateGuildRoleRequest:
-      type: object
-      required:
-        - name
-        - permissions
-      # BACKEND NOTE: Struct field alignment optimized (large → small)
-      properties:
-        name:        # string → 16 bytes (БОЛЬШОЕ)
-          type: string
-          minLength: 1
-          maxLength: 50
-          description: Название роли
-        description: # string → 16 bytes
-          type: string
-          maxLength: 200
-          description: Описание роли
-        color:       # string → 16 bytes
-          type: string
-          pattern: '^#[0-9A-Fa-f]{6}$'
-          description: Цвет роли (hex)
-        permissions: # array → 24 bytes
-          type: array
-          items:
-            type: string
-            enum: [invite_members, kick_members, manage_roles, manage_resources, create_events, edit_guild_info]
-          description: Разрешения роли
+CreateGuildRoleRequest:
+  type: object
+  required:
+    - name
+    - permissions
+  # BACKEND NOTE: Struct field alignment optimized (large → small)
+  properties:
+    name: # string → 16 bytes (БОЛЬШОЕ)
+      type: string
+      minLength: 1
+      maxLength: 50
+      description: Название роли
+    description: # string → 16 bytes
+      type: string
+      maxLength: 200
+      description: Описание роли
+    color: # string → 16 bytes
+      type: string
+      pattern: '^#[0-9A-Fa-f]{6}$'
+      description: Цвет роли (hex)
+    permissions: # array → 24 bytes
+      type: array
+      items:
+        type: string
+        enum: [ invite_members, kick_members, manage_roles, manage_resources, create_events, edit_guild_info ]
+      description: Разрешения роли
 
-    GuildResourcesResponse:
-      type: object
-      required:
-        - currency
-        - premium_currency
-        - items
-        - last_updated
-      # BACKEND NOTE: Struct field alignment optimized (large → small)
-      properties:
-        items:            # array → 24 bytes (БОЛЬШОЕ)
-          type: array
-          items:
-            $ref: '#/components/schemas/GuildItem'
-          description: Предметы в хранилище
-        last_updated:     # string → 16 bytes
-          type: string
-          format: date-time
-        capacity:         # integer → 8 bytes (МАЛЕНЬКОЕ)
-          type: integer
-          minimum: 0
-          description: Вместимость хранилища
-        currency:         # integer → 8 bytes
-          type: integer
-          minimum: 0
-          description: Валюта в казне
-        premium_currency: # integer → 8 bytes
-          type: integer
-          minimum: 0
-          description: Премиум валюта
+GuildResourcesResponse:
+  type: object
+  required:
+    - currency
+    - premium_currency
+    - items
+    - last_updated
+  # BACKEND NOTE: Struct field alignment optimized (large → small)
+  properties:
+    items: # array → 24 bytes (БОЛЬШОЕ)
+      type: array
+      items:
+        $ref: '#/components/schemas/GuildItem'
+      description: Предметы в хранилище
+    last_updated: # string → 16 bytes
+      type: string
+      format: date-time
+    capacity: # integer → 8 bytes (МАЛЕНЬКОЕ)
+      type: integer
+      minimum: 0
+      description: Вместимость хранилища
+    currency: # integer → 8 bytes
+      type: integer
+      minimum: 0
+      description: Валюта в казне
+    premium_currency: # integer → 8 bytes
+      type: integer
+      minimum: 0
+      description: Премиум валюта
 
-    AddResourcesRequest:
-      type: object
-      required:
-        - type
-        - amount
-      # BACKEND NOTE: Struct field alignment optimized (large → small)
-      properties:
-        type:       # string → 16 bytes (БОЛЬШОЕ)
-          type: string
-          enum: [currency, premium_currency, item]
-          description: Тип ресурса
-        item_id:    # string → 16 bytes
-          type: string
-          description: ID предмета (если type = item)
-        amount:     # integer → 8 bytes (МАЛЕНЬКОЕ)
-          type: integer
-          minimum: 1
-          description: Количество (для валюты) или ID предмета
-        quantity:   # integer → 8 bytes
-          type: integer
-          minimum: 1
-          description: Количество предметов (если type = item)
+AddResourcesRequest:
+  type: object
+  required:
+    - type
+    - amount
+  # BACKEND NOTE: Struct field alignment optimized (large → small)
+  properties:
+    type: # string → 16 bytes (БОЛЬШОЕ)
+      type: string
+      enum: [ currency, premium_currency, item ]
+      description: Тип ресурса
+    item_id: # string → 16 bytes
+      type: string
+      description: ID предмета (если type = item)
+    amount: # integer → 8 bytes (МАЛЕНЬКОЕ)
+      type: integer
+      minimum: 1
+      description: Количество (для валюты) или ID предмета
+    quantity: # integer → 8 bytes
+      type: integer
+      minimum: 1
+      description: Количество предметов (если type = item)
 
-    GuildTournamentResponse:
+GuildTournamentResponse:
+  type: object
+  required:
+    - id
+    - name
+    - type
+    - status
+    - start_time
+    - max_participants
+  # BACKEND NOTE: Struct field alignment optimized (large → small)
+  properties:
+    id: # string → 16 bytes (БОЛЬШОЕ)
+      type: string
+      format: uuid
+      description: ID турнира
+    name: # string → 16 bytes
+      type: string
+      description: Название турнира
+    description: # string → 16 bytes
+      type: string
+      description: Описание турнира
+    type: # string → 16 bytes
+      type: string
+      enum: [ ffa, team_battle, elimination, points_race ]
+      description: Тип турнира
+    status: # string → 16 bytes
+      type: string
+      enum: [ upcoming, active, completed, cancelled ]
+      description: Статус турнира
+    location: # string → 16 bytes
+      type: string
+      description: Место проведения
+    rules: # object → 12 bytes
       type: object
-      required:
-        - id
-        - name
-        - type
-        - status
-        - start_time
-        - max_participants
-      # BACKEND NOTE: Struct field alignment optimized (large → small)
-      properties:
-        id:                # string → 16 bytes (БОЛЬШОЕ)
-          type: string
-          format: uuid
-          description: ID турнира
-        name:              # string → 16 bytes
-          type: string
-          description: Название турнира
-        description:       # string → 16 bytes
-          type: string
-          description: Описание турнира
-        type:              # string → 16 bytes
-          type: string
-          enum: [ffa, team_battle, elimination, points_race]
-          description: Тип турнира
-        status:            # string → 16 bytes
-          type: string
-          enum: [upcoming, active, completed, cancelled]
-          description: Статус турнира
-        location:          # string → 16 bytes
-          type: string
-          description: Место проведения
-        rules:             # object → 12 bytes
-          type: object
-          description: Правила турнира
-        prize_distribution:# object → 12 bytes
-          type: object
-          description: Распределение призов
-        start_time:        # string → 16 bytes
-          type: string
-          format: date-time
-          description: Время начала
-        end_time:          # string → 16 bytes
-          type: string
-          format: date-time
-          description: Время окончания
-        created_at:        # string → 16 bytes
-          type: string
-          format: date-time
-        max_participants:  # integer → 8 bytes (МАЛЕНЬКОЕ)
-          type: integer
-          minimum: 2
-          description: Максимум участников
-        current_participants:# integer → 8 bytes
-          type: integer
-          minimum: 0
-          description: Текущих участников
-        entry_fee:         # integer → 8 bytes
-          type: integer
-          minimum: 0
-          description: Взнос за участие
-        prize_pool:        # integer → 8 bytes
-          type: integer
-          minimum: 0
-          description: Призовой фонд
-        duration_minutes:  # integer → 8 bytes
-          type: integer
-          minimum: 5
-          maximum: 1440
-          description: Длительность в минутах
+      description: Правила турнира
+    prize_distribution:# object → 12 bytes
+    type: object
+    description: Распределение призов
+    start_time: # string → 16 bytes
+      type: string
+      format: date-time
+      description: Время начала
+    end_time: # string → 16 bytes
+      type: string
+      format: date-time
+      description: Время окончания
+    created_at: # string → 16 bytes
+      type: string
+      format: date-time
+    max_participants: # integer → 8 bytes (МАЛЕНЬКОЕ)
+      type: integer
+      minimum: 2
+      description: Максимум участников
+    current_participants:# integer → 8 bytes
+    type: integer
+    minimum: 0
+    description: Текущих участников
+    entry_fee: # integer → 8 bytes
+      type: integer
+      minimum: 0
+      description: Взнос за участие
+    prize_pool: # integer → 8 bytes
+      type: integer
+      minimum: 0
+      description: Призовой фонд
+    duration_minutes: # integer → 8 bytes
+      type: integer
+      minimum: 5
+      maximum: 1440
+      description: Длительность в минутах
 
-    GuildTournamentListResponse:
-      type: object
-      required:
-        - tournaments
-        - total
-        - page
-        - limit
-      # BACKEND NOTE: Struct field alignment optimized (large → small)
-      properties:
-        tournaments: # array → 24 bytes (БОЛЬШОЕ)
-          type: array
-          items:
-            $ref: '#/components/schemas/GuildTournamentResponse'
-        total:        # integer → 8 bytes (МАЛЕНЬКОЕ)
-          type: integer
-          minimum: 0
-        page:         # integer → 8 bytes
-          type: integer
-          minimum: 1
-        limit:        # integer → 8 bytes
-          type: integer
-          minimum: 1
-          maximum: 100
+GuildTournamentListResponse:
+  type: object
+  required:
+    - tournaments
+    - total
+    - page
+    - limit
+  # BACKEND NOTE: Struct field alignment optimized (large → small)
+  properties:
+    tournaments: # array → 24 bytes (БОЛЬШОЕ)
+      type: array
+      items:
+        $ref: '#/components/schemas/GuildTournamentResponse'
+    total: # integer → 8 bytes (МАЛЕНЬКОЕ)
+      type: integer
+      minimum: 0
+    page: # integer → 8 bytes
+      type: integer
+      minimum: 1
+    limit: # integer → 8 bytes
+      type: integer
+      minimum: 1
+      maximum: 100
 
-    CreateTournamentRequest:
+CreateTournamentRequest:
+  type: object
+  required:
+    - name
+    - type
+    - start_time
+    - max_participants
+  # BACKEND NOTE: Struct field alignment optimized (large → small)
+  properties:
+    name: # string → 16 bytes (БОЛЬШОЕ)
+      type: string
+      minLength: 3
+      maxLength: 100
+      description: Название турнира
+    description: # string → 16 bytes
+      type: string
+      maxLength: 1000
+      description: Описание турнира
+    type: # string → 16 bytes
+      type: string
+      enum: [ ffa, team_battle, elimination, points_race ]
+      description: Тип турнира
+    location: # string → 16 bytes
+      type: string
+      description: Место проведения
+    rules: # object → 12 bytes
       type: object
-      required:
-        - name
-        - type
-        - start_time
-        - max_participants
-      # BACKEND NOTE: Struct field alignment optimized (large → small)
-      properties:
-        name:               # string → 16 bytes (БОЛЬШОЕ)
-          type: string
-          minLength: 3
-          maxLength: 100
-          description: Название турнира
-        description:        # string → 16 bytes
-          type: string
-          maxLength: 1000
-          description: Описание турнира
-        type:               # string → 16 bytes
-          type: string
-          enum: [ffa, team_battle, elimination, points_race]
-          description: Тип турнира
-        location:           # string → 16 bytes
-          type: string
-          description: Место проведения
-        rules:              # object → 12 bytes
-          type: object
-          description: Дополнительные правила
-        prize_distribution: # object → 12 bytes
-          type: object
-          description: Распределение призов
-          example: {"1st": 50, "2nd": 30, "3rd": 20}
-        start_time:         # string → 16 bytes
-          type: string
-          format: date-time
-          description: Время начала
-        duration_minutes:   # integer → 8 bytes (МАЛЕНЬКОЕ)
-          type: integer
-          minimum: 5
-          maximum: 1440
-          description: Длительность в минутах
-        max_participants:   # integer → 8 bytes
-          type: integer
-          minimum: 2
-          maximum: 1000
-          description: Максимум участников
-        entry_fee:          # integer → 8 bytes
-          type: integer
-          minimum: 0
-          description: Взнос за участие
+      description: Дополнительные правила
+    prize_distribution: # object → 12 bytes
+      type: object
+      description: Распределение призов
+      example: { "1st": 50, "2nd": 30, "3rd": 20 }
+    start_time: # string → 16 bytes
+      type: string
+      format: date-time
+      description: Время начала
+    duration_minutes: # integer → 8 bytes (МАЛЕНЬКОЕ)
+      type: integer
+      minimum: 5
+      maximum: 1440
+      description: Длительность в минутах
+    max_participants: # integer → 8 bytes
+      type: integer
+      minimum: 2
+      maximum: 1000
+      description: Максимум участников
+    entry_fee: # integer → 8 bytes
+      type: integer
+      minimum: 0
+      description: Взнос за участие

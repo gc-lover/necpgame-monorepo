@@ -23,7 +23,7 @@ type mockInventoryService struct {
 	getErr      error
 }
 
-func (m *mockInventoryService) GetInventory(ctx context.Context, playerID string) (*api.InventoryResponse, error) {
+func (m *mockInventoryService) GetInventory(_ context.Context, playerID string) (*api.InventoryResponse, error) {
 	characterID, _ := uuid.Parse(playerID)
 	if m.getErr != nil {
 		return nil, m.getErr
@@ -153,7 +153,7 @@ func (m *mockInventoryService) AddItem(ctx context.Context, playerID string, req
 	}, nil
 }
 
-func (m *mockInventoryService) RemoveItem(ctx context.Context, playerID, itemID string) error {
+func (m *mockInventoryService) RemoveItem(_ context.Context, playerID, itemID string) error {
 	characterID, _ := uuid.Parse(playerID)
 	itemUUID, _ := uuid.Parse(itemID)
 	inv := m.inventories[characterID]
@@ -177,13 +177,13 @@ func (m *mockInventoryService) RemoveItem(ctx context.Context, playerID, itemID 
 	return errors.New("item not found")
 }
 
-func (m *mockInventoryService) EquipItem(ctx context.Context, playerID, itemID string, req *api.EquipItemRequest) (*api.EquipmentResponse, error) {
+func (m *mockInventoryService) EquipItem(_ context.Context, playerID, itemID string, req *api.EquipItemRequest) (*api.EquipmentResponse, error) {
 	characterID, _ := uuid.Parse(playerID)
 	itemUUID, err := uuid.Parse(itemID)
 	if err != nil {
 		return nil, errors.New("invalid item ID")
 	}
-	
+
 	inv := m.inventories[characterID]
 	if inv == nil {
 		return nil, errors.New("inventory not found")
@@ -223,7 +223,7 @@ func (m *mockInventoryService) EquipItem(ctx context.Context, playerID, itemID s
 	return &api.EquipmentResponse{}, nil
 }
 
-func (m *mockInventoryService) UnequipItem(ctx context.Context, playerID, itemID string) (*api.EquipmentResponse, error) {
+func (m *mockInventoryService) UnequipItem(_ context.Context, playerID, itemID string) (*api.EquipmentResponse, error) {
 	characterID, _ := uuid.Parse(playerID)
 	itemUUID, _ := uuid.Parse(itemID)
 	inv := m.inventories[characterID]
@@ -244,11 +244,11 @@ func (m *mockInventoryService) UnequipItem(ctx context.Context, playerID, itemID
 	return nil, errors.New("item not found")
 }
 
-func (m *mockInventoryService) UpdateItem(ctx context.Context, playerID, itemID string, req *api.UpdateItemRequest) (*api.InventoryItemResponse, error) {
+func (m *mockInventoryService) UpdateItem(_ context.Context, _, _ string, _ *api.UpdateItemRequest) (*api.InventoryItemResponse, error) {
 	return nil, nil
 }
 
-func (m *mockInventoryService) GetEquipment(ctx context.Context, playerID string) (*api.EquipmentResponse, error) {
+func (m *mockInventoryService) GetEquipment(_ context.Context, _ string) (*api.EquipmentResponse, error) {
 	return nil, nil
 }
 

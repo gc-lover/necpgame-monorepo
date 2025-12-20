@@ -1,4 +1,4 @@
-// Issue: #1595
+// Package server Issue: #1595
 // ogen handlers - TYPED responses (no interface{} boxing!)
 package server
 
@@ -70,11 +70,11 @@ func (h *Handlers) ActivateCombo(ctx context.Context, req *api.ActivateComboRequ
 }
 
 // ApplySynergy - TYPED response!
-func (h *Handlers) ApplySynergy(ctx context.Context, req *api.ApplySynergyRequest) (api.ApplySynergyRes, error) {
+func (h *Handlers) ApplySynergy(ctx context.Context, _ *api.ApplySynergyRequest) (api.ApplySynergyRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	response, err := h.service.ApplySynergy(ctx, req)
+	response, err := h.service.ApplySynergy()
 	if err != nil {
 		if err == ErrNotFound {
 			return &api.ApplySynergyNotFound{}, nil
@@ -118,11 +118,11 @@ func (h *Handlers) UpdateComboLoadout(ctx context.Context, req *api.UpdateLoadou
 }
 
 // SubmitComboScore - TYPED response!
-func (h *Handlers) SubmitComboScore(ctx context.Context, req *api.SubmitScoreRequest) (api.SubmitComboScoreRes, error) {
+func (h *Handlers) SubmitComboScore(ctx context.Context, _ *api.SubmitScoreRequest) (api.SubmitComboScoreRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	response, err := h.service.SubmitComboScore(ctx, req)
+	response, err := h.service.SubmitComboScore()
 	if err != nil {
 		if err == ErrNotFound {
 			return &api.SubmitComboScoreNotFound{}, nil

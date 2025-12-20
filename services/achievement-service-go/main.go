@@ -43,7 +43,7 @@ func main() {
 	config := server.NewConfig()
 
 	addr := getEnv("HTTP_ADDR", ":8097")
-	httpServer := server.NewHTTPServer(addr, service, config, logger)
+	httpServer := server.NewHTTPServer(addr, service)
 
 	go func() {
 		mux := http.NewServeMux()

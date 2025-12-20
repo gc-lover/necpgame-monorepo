@@ -11,13 +11,13 @@ import (
 
 type benchResetService struct{}
 
-func (b *benchResetService) GetResetStats(ctx context.Context) (*models.ResetStats, error) {
+func (b *benchResetService) GetResetStats(_ context.Context) (*models.ResetStats, error) {
 	return &models.ResetStats{}, nil
 }
-func (b *benchResetService) GetResetHistory(ctx context.Context, resetType *models.ResetType, limit, offset int) (*models.ResetListResponse, error) {
+func (b *benchResetService) GetResetHistory(_ context.Context, _ *models.ResetType, _, _ int) (*models.ResetListResponse, error) {
 	return &models.ResetListResponse{}, nil
 }
-func (b *benchResetService) TriggerReset(ctx context.Context, resetType models.ResetType) error {
+func (b *benchResetService) TriggerReset(_ context.Context, _ models.ResetType) error {
 	return nil
 }
 
@@ -69,4 +69,3 @@ func BenchmarkTriggerReset(b *testing.B) {
 		_, _ = handlers.TriggerReset(ctx, req)
 	}
 }
-

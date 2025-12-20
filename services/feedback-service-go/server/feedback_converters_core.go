@@ -1,11 +1,11 @@
-// Issue: ogen migration
+// Package server Issue: ogen migration
 package server
 
 import (
 	"net/url"
 
-	feedbackapi "github.com/gc-lover/necpgame-monorepo/services/feedback-service-go/pkg/api"
 	"github.com/gc-lover/necpgame-monorepo/services/feedback-service-go/models"
+	feedbackapi "github.com/gc-lover/necpgame-monorepo/services/feedback-service-go/pkg/api"
 )
 
 func convertSubmitFeedbackRequestFromAPI(req *feedbackapi.SubmitFeedbackRequest) *models.SubmitFeedbackRequest {
@@ -111,28 +111,6 @@ func convertUpdateStatusRequestFromAPI(req *feedbackapi.UpdateStatusRequest) *mo
 	return result
 }
 
-func convertGameContextToAPI(ctx *models.GameContext) *feedbackapi.GameContext {
-	result := &feedbackapi.GameContext{
-		GameVersion: feedbackapi.NewOptString(ctx.Version),
-		ActiveQuests: ctx.ActiveQuests,
-	}
-
-	if ctx.Location != "" {
-		result.Location = feedbackapi.NewOptString(ctx.Location)
-	}
-
-	if ctx.CharacterLevel != nil {
-		result.Level = feedbackapi.NewOptInt(*ctx.CharacterLevel)
-	}
-
-	if ctx.PlaytimeHours != nil {
-		seconds := int(*ctx.PlaytimeHours * 3600)
-		result.Playtime = feedbackapi.NewOptInt(seconds)
-	}
-
-	return result
-}
-
 func convertGameContextFromAPI(ctx *feedbackapi.GameContext) *models.GameContext {
 	result := &models.GameContext{}
 
@@ -159,8 +137,3 @@ func convertGameContextFromAPI(ctx *feedbackapi.GameContext) *models.GameContext
 
 	return result
 }
-
-
-
-
-

@@ -1,40 +1,40 @@
-// OPTIMIZATION: Issue #2202 - Memory-aligned struct definitions for circuit breaker performance
+// Package server OPTIMIZATION: Issue #2202 - Memory-aligned struct definitions for circuit breaker performance
 package server
 
 import (
 	"time"
 )
 
-// OPTIMIZATION: Field alignment - large to small (time.Time=24 bytes, string=16 bytes, int=8 bytes, bool=1 byte)
+// CircuitBreaker OPTIMIZATION: Field alignment - large to small (time.Time=24 bytes, string=16 bytes, int=8 bytes, bool=1 byte)
 type CircuitBreaker struct {
-	CreatedAt           time.Time                  `json:"created_at"`            // 24 bytes - largest
-	StateChangedAt      time.Time                  `json:"state_changed_at"`      // 24 bytes
-	LastFailureTime     time.Time                  `json:"last_failure_time"`     // 24 bytes
-	StateHistory        []StateChange              `json:"state_history"`         // 24 bytes (slice header)
-	CircuitID           string                     `json:"circuit_id"`            // 16 bytes
-	ServiceName         string                     `json:"service_name"`          // 16 bytes
-	Endpoint            string                     `json:"endpoint"`              // 16 bytes
-	State               string                     `json:"state"`                 // 16 bytes
-	Config              CircuitBreakerConfig       `json:"config"`                // 16 bytes (struct)
-	Metrics             CircuitBreakerMetricsData  `json:"metrics"`               // 16 bytes (struct)
-	FailureCount        int                        `json:"failure_count"`         // 8 bytes
-	SuccessCount        int                        `json:"success_count"`         // 8 bytes
-	ConsecutiveFailures int                        `json:"consecutive_failures"`  // 8 bytes
+	CreatedAt           time.Time                 `json:"created_at"`           // 24 bytes - largest
+	StateChangedAt      time.Time                 `json:"state_changed_at"`     // 24 bytes
+	LastFailureTime     time.Time                 `json:"last_failure_time"`    // 24 bytes
+	StateHistory        []StateChange             `json:"state_history"`        // 24 bytes (slice header)
+	CircuitID           string                    `json:"circuit_id"`           // 16 bytes
+	ServiceName         string                    `json:"service_name"`         // 16 bytes
+	Endpoint            string                    `json:"endpoint"`             // 16 bytes
+	State               string                    `json:"state"`                // 16 bytes
+	Config              CircuitBreakerConfig      `json:"config"`               // 16 bytes (struct)
+	Metrics             CircuitBreakerMetricsData `json:"metrics"`              // 16 bytes (struct)
+	FailureCount        int                       `json:"failure_count"`        // 8 bytes
+	SuccessCount        int                       `json:"success_count"`        // 8 bytes
+	ConsecutiveFailures int                       `json:"consecutive_failures"` // 8 bytes
 }
 
 type CircuitBreakerConfig struct {
-	MonitoringWindow      time.Duration `json:"monitoring_window"`       // 8 bytes
-	Timeout               time.Duration `json:"timeout"`                  // 8 bytes
-	RetryDelay            time.Duration `json:"retry_delay"`             // 8 bytes
-	MaxRetryDelay         time.Duration `json:"max_retry_delay"`         // 8 bytes
-	SlowCallThreshold     time.Duration `json:"slow_call_threshold"`      // 8 bytes
-	FailureThreshold      int           `json:"failure_threshold"`        // 8 bytes
-	SuccessThreshold      int           `json:"success_threshold"`        // 8 bytes
-	SlowCallRateThreshold float64       `json:"slow_call_rate_threshold"` // 8 bytes
-	AlertThresholds       AlertThresholds `json:"alert_thresholds"`       // 8 bytes (struct)
-	FallbackEnabled       bool          `json:"fallback_enabled"`         // 1 byte
-	MetricsEnabled        bool          `json:"metrics_enabled"`          // 1 byte
-	FallbackResponse      string        `json:"fallback_response"`        // 16 bytes (moved after bools for alignment)
+	MonitoringWindow      time.Duration   `json:"monitoring_window"`        // 8 bytes
+	Timeout               time.Duration   `json:"timeout"`                  // 8 bytes
+	RetryDelay            time.Duration   `json:"retry_delay"`              // 8 bytes
+	MaxRetryDelay         time.Duration   `json:"max_retry_delay"`          // 8 bytes
+	SlowCallThreshold     time.Duration   `json:"slow_call_threshold"`      // 8 bytes
+	FailureThreshold      int             `json:"failure_threshold"`        // 8 bytes
+	SuccessThreshold      int             `json:"success_threshold"`        // 8 bytes
+	SlowCallRateThreshold float64         `json:"slow_call_rate_threshold"` // 8 bytes
+	AlertThresholds       AlertThresholds `json:"alert_thresholds"`         // 8 bytes (struct)
+	FallbackEnabled       bool            `json:"fallback_enabled"`         // 1 byte
+	MetricsEnabled        bool            `json:"metrics_enabled"`          // 1 byte
+	FallbackResponse      string          `json:"fallback_response"`        // 16 bytes (moved after bools for alignment)
 }
 
 type CircuitBreakerMetricsData struct {
@@ -47,61 +47,61 @@ type CircuitBreakerMetricsData struct {
 }
 
 type AlertThresholds struct {
-	ErrorRate           float64 `json:"error_rate"`            // 8 bytes
-	ResponseTime        int64   `json:"response_time"`         // 8 bytes
-	ConsecutiveFailures int     `json:"consecutive_failures"`  // 8 bytes
-	SlowCallRate        float64 `json:"slow_call_rate"`        // 8 bytes
+	ErrorRate           float64 `json:"error_rate"`           // 8 bytes
+	ResponseTime        int64   `json:"response_time"`        // 8 bytes
+	ConsecutiveFailures int     `json:"consecutive_failures"` // 8 bytes
+	SlowCallRate        float64 `json:"slow_call_rate"`       // 8 bytes
 }
 
 type StateChange struct {
 	ChangedAt   time.Time `json:"changed_at"`   // 24 bytes - largest
 	FromState   string    `json:"from_state"`   // 16 bytes
-	ToState     string    `json:"to_state"`    // 16 bytes
-	Reason      string    `json:"reason"`      // 16 bytes
+	ToState     string    `json:"to_state"`     // 16 bytes
+	Reason      string    `json:"reason"`       // 16 bytes
 	TriggeredBy string    `json:"triggered_by"` // 16 bytes
 }
 
-// OPTIMIZATION: Field alignment for request/response structs
+// CreateCircuitRequest OPTIMIZATION: Field alignment for request/response structs
 type CreateCircuitRequest struct {
-	CircuitID           string                 `json:"circuit_id"`
-	ServiceName         string                 `json:"service_name"`
-	Endpoint            string                 `json:"endpoint"`
-	FailureThreshold    int                    `json:"failure_threshold"`
-	SuccessThreshold    int                    `json:"success_threshold"`
-	Timeout             int64                  `json:"timeout"`
-	RetryDelay          int64                  `json:"retry_delay"`
-	MaxRetryDelay       int64                  `json:"max_retry_delay"`
-	MonitoringWindow    int64                  `json:"monitoring_window"`
-	SlowCallThreshold   int64                  `json:"slow_call_threshold"`
-	SlowCallRateThreshold float64              `json:"slow_call_rate_threshold"`
-	FallbackEnabled     bool                   `json:"fallback_enabled"`
-	FallbackResponse    string                 `json:"fallback_response"`
-	MetricsEnabled      bool                   `json:"metrics_enabled"`
-	AlertThresholds     map[string]interface{} `json:"alert_thresholds"`
+	CircuitID             string                 `json:"circuit_id"`
+	ServiceName           string                 `json:"service_name"`
+	Endpoint              string                 `json:"endpoint"`
+	FailureThreshold      int                    `json:"failure_threshold"`
+	SuccessThreshold      int                    `json:"success_threshold"`
+	Timeout               int64                  `json:"timeout"`
+	RetryDelay            int64                  `json:"retry_delay"`
+	MaxRetryDelay         int64                  `json:"max_retry_delay"`
+	MonitoringWindow      int64                  `json:"monitoring_window"`
+	SlowCallThreshold     int64                  `json:"slow_call_threshold"`
+	SlowCallRateThreshold float64                `json:"slow_call_rate_threshold"`
+	FallbackEnabled       bool                   `json:"fallback_enabled"`
+	FallbackResponse      string                 `json:"fallback_response"`
+	MetricsEnabled        bool                   `json:"metrics_enabled"`
+	AlertThresholds       map[string]interface{} `json:"alert_thresholds"`
 }
 
 type CreateCircuitResponse struct {
-	CircuitID   string  `json:"circuit_id"`
-	ServiceName string  `json:"service_name"`
-	Endpoint    string  `json:"endpoint"`
-	State       string  `json:"state"`
-	CreatedAt   int64   `json:"created_at"`
+	CircuitID   string                `json:"circuit_id"`
+	ServiceName string                `json:"service_name"`
+	Endpoint    string                `json:"endpoint"`
+	State       string                `json:"state"`
+	CreatedAt   int64                 `json:"created_at"`
 	Config      *CircuitBreakerConfig `json:"config"`
 }
 
-// OPTIMIZATION: Field alignment for bulkhead structs
+// Bulkhead OPTIMIZATION: Field alignment for bulkhead structs
 type Bulkhead struct {
-	CreatedAt           time.Time          `json:"created_at"`            // 24 bytes - largest
-	BulkheadID          string             `json:"bulkhead_id"`           // 16 bytes
-	ServiceName         string             `json:"service_name"`          // 16 bytes
-	Config              BulkheadConfig     `json:"config"`                // 16 bytes (struct)
-	Metrics             BulkheadMetricsData `json:"metrics"`              // 16 bytes (struct)
-	ActiveThreads       int                `json:"active_threads"`        // 8 bytes
-	QueuedRequests      int                `json:"queued_requests"`       // 8 bytes
-	RejectedRequests    int                `json:"rejected_requests"`     // 8 bytes
-	CompletedRequests   int                `json:"completed_requests"`    // 8 bytes
-	AverageExecutionTime time.Duration     `json:"average_execution_time"` // 8 bytes
-	MaxExecutionTime    time.Duration     `json:"max_execution_time"`    // 8 bytes
+	CreatedAt            time.Time           `json:"created_at"`             // 24 bytes - largest
+	BulkheadID           string              `json:"bulkhead_id"`            // 16 bytes
+	ServiceName          string              `json:"service_name"`           // 16 bytes
+	Config               BulkheadConfig      `json:"config"`                 // 16 bytes (struct)
+	Metrics              BulkheadMetricsData `json:"metrics"`                // 16 bytes (struct)
+	ActiveThreads        int                 `json:"active_threads"`         // 8 bytes
+	QueuedRequests       int                 `json:"queued_requests"`        // 8 bytes
+	RejectedRequests     int                 `json:"rejected_requests"`      // 8 bytes
+	CompletedRequests    int                 `json:"completed_requests"`     // 8 bytes
+	AverageExecutionTime time.Duration       `json:"average_execution_time"` // 8 bytes
+	MaxExecutionTime     time.Duration       `json:"max_execution_time"`     // 8 bytes
 }
 
 type BulkheadConfig struct {
@@ -111,31 +111,31 @@ type BulkheadConfig struct {
 	ThreadPoolSize     int           `json:"thread_pool_size"`     // 8 bytes
 	IsolationStrategy  string        `json:"isolation_strategy"`   // 16 bytes
 	Fairness           bool          `json:"fairness"`             // 1 byte
-	MetricsEnabled     bool          `json:"metrics_enabled"`     // 1 byte
+	MetricsEnabled     bool          `json:"metrics_enabled"`      // 1 byte
 }
 
 type BulkheadMetricsData struct {
-	LastRequestTime    time.Time     `json:"last_request_time"`     // 24 bytes - largest
-	TotalRequests      int64         `json:"total_requests"`        // 8 bytes
-	RejectedRequests   int64         `json:"rejected_requests"`     // 8 bytes
-	QueuedRequests     int64         `json:"queued_requests"`       // 8 bytes
-	AverageQueueTime   time.Duration `json:"average_queue_time"`    // 8 bytes
+	LastRequestTime  time.Time     `json:"last_request_time"`  // 24 bytes - largest
+	TotalRequests    int64         `json:"total_requests"`     // 8 bytes
+	RejectedRequests int64         `json:"rejected_requests"`  // 8 bytes
+	QueuedRequests   int64         `json:"queued_requests"`    // 8 bytes
+	AverageQueueTime time.Duration `json:"average_queue_time"` // 8 bytes
 }
 
-// OPTIMIZATION: Field alignment for timeout structs
+// TimeoutConfig OPTIMIZATION: Field alignment for timeout structs
 type TimeoutConfig struct {
-	TimeoutID            string        `json:"timeout_id"`             // 16 bytes
-	ServiceName          string        `json:"service_name"`           // 16 bytes
-	Endpoint             string        `json:"endpoint"`               // 16 bytes
-	AverageResponseTime  time.Duration `json:"average_response_time"`  // 8 bytes
-	TimeoutsTriggered    int64         `json:"timeouts_triggered"`     // 8 bytes
-	TotalRequests        int64         `json:"total_requests"`         // 8 bytes
-	TimeoutThreshold     time.Duration `json:"timeout_threshold"`      // 8 bytes
-	CreatedAt            time.Time     `json:"created_at"`             // 24 bytes - largest
-	Enabled              bool          `json:"enabled"`                // 1 byte
+	TimeoutID           string        `json:"timeout_id"`            // 16 bytes
+	ServiceName         string        `json:"service_name"`          // 16 bytes
+	Endpoint            string        `json:"endpoint"`              // 16 bytes
+	AverageResponseTime time.Duration `json:"average_response_time"` // 8 bytes
+	TimeoutsTriggered   int64         `json:"timeouts_triggered"`    // 8 bytes
+	TotalRequests       int64         `json:"total_requests"`        // 8 bytes
+	TimeoutThreshold    time.Duration `json:"timeout_threshold"`     // 8 bytes
+	CreatedAt           time.Time     `json:"created_at"`            // 24 bytes - largest
+	Enabled             bool          `json:"enabled"`               // 1 byte
 }
 
-// OPTIMIZATION: Field alignment for service config
+// CircuitBreakerServiceConfig OPTIMIZATION: Field alignment for service config
 type CircuitBreakerServiceConfig struct {
 	StateSyncInterval       time.Duration `json:"state_sync_interval"`       // 8 bytes
 	ReadTimeout             time.Duration `json:"read_timeout"`              // 8 bytes
@@ -152,18 +152,18 @@ type CircuitBreakerServiceConfig struct {
 	DefaultFailureThreshold int           `json:"default_failure_threshold"` // 8 bytes
 }
 
-// OPTIMIZATION: Field alignment for degradation policy structs
+// DegradationPolicy OPTIMIZATION: Field alignment for degradation policy structs
 type DegradationPolicy struct {
-	PolicyID       string                 `json:"policy_id"`        // 16 bytes
-	ServiceName    string                 `json:"service_name"`     // 16 bytes
-	Status         string                 `json:"status"`           // 16 bytes
-	Config         DegradationConfig      `json:"config"`           // 16 bytes (struct)
-	Metrics        DegradationMetricsData `json:"metrics"`          // 16 bytes (struct)
-	TriggerCount   int                    `json:"trigger_count"`    // 8 bytes
-	RecoveryCount  int                    `json:"recovery_count"`   // 8 bytes
-	LastTriggeredAt time.Time             `json:"last_triggered_at"` // 24 bytes - largest
-	CreatedAt      time.Time              `json:"created_at"`       // 24 bytes
-	Enabled        bool                   `json:"enabled"`           // 1 byte
+	PolicyID        string                 `json:"policy_id"`         // 16 bytes
+	ServiceName     string                 `json:"service_name"`      // 16 bytes
+	Status          string                 `json:"status"`            // 16 bytes
+	Config          DegradationConfig      `json:"config"`            // 16 bytes (struct)
+	Metrics         DegradationMetricsData `json:"metrics"`           // 16 bytes (struct)
+	TriggerCount    int                    `json:"trigger_count"`     // 8 bytes
+	RecoveryCount   int                    `json:"recovery_count"`    // 8 bytes
+	LastTriggeredAt time.Time              `json:"last_triggered_at"` // 24 bytes - largest
+	CreatedAt       time.Time              `json:"created_at"`        // 24 bytes
+	Enabled         bool                   `json:"enabled"`           // 1 byte
 }
 
 type DegradationConfig struct {
@@ -175,30 +175,30 @@ type DegradationConfig struct {
 }
 
 type DegradationMetricsData struct {
-	ErrorRate          float64     `json:"error_rate"`           // 8 bytes
+	ErrorRate           float64       `json:"error_rate"`            // 8 bytes
 	AverageResponseTime time.Duration `json:"average_response_time"` // 8 bytes
-	RequestCount       int64       `json:"request_count"`        // 8 bytes
-	LastUpdated        time.Time   `json:"last_updated"`         // 24 bytes - largest
+	RequestCount        int64         `json:"request_count"`         // 8 bytes
+	LastUpdated         time.Time     `json:"last_updated"`          // 24 bytes - largest
 }
 
-// OPTIMIZATION: Field alignment for request/response structs
+// CreateBulkheadRequest OPTIMIZATION: Field alignment for request/response structs
 type CreateBulkheadRequest struct {
-	BulkheadID          string `json:"bulkhead_id"`
-	ServiceName         string `json:"service_name"`
-	MaxConcurrentCalls  int    `json:"max_concurrent_calls"`
-	MaxWaitDuration     int64  `json:"max_wait_duration"`
-	IsolationStrategy   string `json:"isolation_strategy"`
-	ThreadPoolSize      int    `json:"thread_pool_size"`
-	QueueSize           int    `json:"queue_size"`
-	Fairness            bool   `json:"fairness"`
-	MetricsEnabled      bool   `json:"metrics_enabled"`
+	BulkheadID         string `json:"bulkhead_id"`
+	ServiceName        string `json:"service_name"`
+	MaxConcurrentCalls int    `json:"max_concurrent_calls"`
+	MaxWaitDuration    int64  `json:"max_wait_duration"`
+	IsolationStrategy  string `json:"isolation_strategy"`
+	ThreadPoolSize     int    `json:"thread_pool_size"`
+	QueueSize          int    `json:"queue_size"`
+	Fairness           bool   `json:"fairness"`
+	MetricsEnabled     bool   `json:"metrics_enabled"`
 }
 
 type CreateBulkheadResponse struct {
-	BulkheadID  string           `json:"bulkhead_id"`
-	ServiceName string           `json:"service_name"`
-	CreatedAt   int64            `json:"created_at"`
-	Config      *BulkheadConfig  `json:"config"`
+	BulkheadID  string          `json:"bulkhead_id"`
+	ServiceName string          `json:"service_name"`
+	CreatedAt   int64           `json:"created_at"`
+	Config      *BulkheadConfig `json:"config"`
 }
 
 type CreateTimeoutRequest struct {
@@ -226,12 +226,12 @@ type CreateDegradationPolicyRequest struct {
 }
 
 type CreateDegradationPolicyResponse struct {
-	PolicyID   string `json:"policy_id"`
+	PolicyID    string `json:"policy_id"`
 	ServiceName string `json:"service_name"`
 	CreatedAt   int64  `json:"created_at"`
 }
 
-// Response structs for various endpoints
+// GetCircuitStateResponse Response structs for various endpoints
 type GetCircuitStateResponse struct {
 	CircuitID      string `json:"circuit_id"`
 	State          string `json:"state"`
@@ -240,17 +240,17 @@ type GetCircuitStateResponse struct {
 }
 
 type SetCircuitStateRequest struct {
-	State   string `json:"state"`
-	Reason  string `json:"reason"`
+	State  string `json:"state"`
+	Reason string `json:"reason"`
 }
 
 type SetCircuitStateResponse struct {
-	CircuitID      string `json:"circuit_id"`
-	PreviousState  string `json:"previous_state"`
-	NewState       string `json:"new_state"`
-	ChangedAt      int64  `json:"changed_at"`
-	ChangedBy      string `json:"changed_by"`
-	Reason         string `json:"reason"`
+	CircuitID     string `json:"circuit_id"`
+	PreviousState string `json:"previous_state"`
+	NewState      string `json:"new_state"`
+	ChangedAt     int64  `json:"changed_at"`
+	ChangedBy     string `json:"changed_by"`
+	Reason        string `json:"reason"`
 }
 
 type ListCircuitsResponse struct {
@@ -286,15 +286,15 @@ type DegradationPolicySummary struct {
 }
 
 type GetMetricsResponse struct {
-	Circuits           []*CircuitBreakerMetricsData `json:"circuits"`
-	Bulkheads          []*BulkheadMetricsData       `json:"bulkheads"`
-	Timeouts           []map[string]interface{}      `json:"timeouts"`
+	Circuits            []*CircuitBreakerMetricsData `json:"circuits"`
+	Bulkheads           []*BulkheadMetricsData       `json:"bulkheads"`
+	Timeouts            []map[string]interface{}     `json:"timeouts"`
 	DegradationPolicies []map[string]interface{}     `json:"degradation_policies"`
-	TimeRange          string                       `json:"time_range"`
-	GeneratedAt        int64                        `json:"generated_at"`
+	TimeRange           string                       `json:"time_range"`
+	GeneratedAt         int64                        `json:"generated_at"`
 }
 
-// Additional structures for handlers
+// BulkheadSummary Additional structures for handlers
 type BulkheadSummary struct {
 	BulkheadID       string `json:"bulkhead_id"`
 	ServiceName      string `json:"service_name"`
@@ -310,17 +310,17 @@ type ListBulkheadsResponse struct {
 }
 
 type BulkheadDetails struct {
-	BulkheadID           string              `json:"bulkhead_id"`
-	ServiceName          string              `json:"service_name"`
-	Config               *BulkheadConfig     `json:"config"`
+	BulkheadID           string               `json:"bulkhead_id"`
+	ServiceName          string               `json:"service_name"`
+	Config               *BulkheadConfig      `json:"config"`
 	Metrics              *BulkheadMetricsData `json:"metrics"`
-	ActiveThreads        int                 `json:"active_threads"`
-	QueuedRequests       int                 `json:"queued_requests"`
-	RejectedRequests     int                 `json:"rejected_requests"`
-	CompletedRequests    int                 `json:"completed_requests"`
-	AverageExecutionTime time.Duration       `json:"average_execution_time"`
-	MaxExecutionTime     time.Duration       `json:"max_execution_time"`
-	CreatedAt            int64               `json:"created_at"`
+	ActiveThreads        int                  `json:"active_threads"`
+	QueuedRequests       int                  `json:"queued_requests"`
+	RejectedRequests     int                  `json:"rejected_requests"`
+	CompletedRequests    int                  `json:"completed_requests"`
+	AverageExecutionTime time.Duration        `json:"average_execution_time"`
+	MaxExecutionTime     time.Duration        `json:"max_execution_time"`
+	CreatedAt            int64                `json:"created_at"`
 }
 
 type GetBulkheadResponse struct {
@@ -348,24 +348,30 @@ type GetCircuitResponse struct {
 }
 
 type UpdateCircuitRequest struct {
-	ServiceName      *string                 `json:"service_name,omitempty"`
-	Endpoint         *string                 `json:"endpoint,omitempty"`
-	FailureThreshold *int                    `json:"failure_threshold,omitempty"`
-	SuccessThreshold *int                    `json:"success_threshold,omitempty"`
-	Timeout          *int64                  `json:"timeout,omitempty"`
-	RetryDelay       *int64                  `json:"retry_delay,omitempty"`
-	MaxRetryDelay    *int64                  `json:"max_retry_delay,omitempty"`
-	MonitoringWindow *int64                  `json:"monitoring_window,omitempty"`
-	SlowCallThreshold *int64                 `json:"slow_call_threshold,omitempty"`
-	SlowCallRateThreshold *float64           `json:"slow_call_rate_threshold,omitempty"`
-	FallbackEnabled  *bool                   `json:"fallback_enabled,omitempty"`
-	FallbackResponse *string                 `json:"fallback_response,omitempty"`
-	MetricsEnabled   *bool                   `json:"metrics_enabled,omitempty"`
-	AlertThresholds  *map[string]interface{} `json:"alert_thresholds,omitempty"`
+	ServiceName           *string                 `json:"service_name,omitempty"`
+	Endpoint              *string                 `json:"endpoint,omitempty"`
+	FailureThreshold      *int                    `json:"failure_threshold,omitempty"`
+	SuccessThreshold      *int                    `json:"success_threshold,omitempty"`
+	Timeout               *int64                  `json:"timeout,omitempty"`
+	RetryDelay            *int64                  `json:"retry_delay,omitempty"`
+	MaxRetryDelay         *int64                  `json:"max_retry_delay,omitempty"`
+	MonitoringWindow      *int64                  `json:"monitoring_window,omitempty"`
+	SlowCallThreshold     *int64                  `json:"slow_call_threshold,omitempty"`
+	SlowCallRateThreshold *float64                `json:"slow_call_rate_threshold,omitempty"`
+	FallbackEnabled       *bool                   `json:"fallback_enabled,omitempty"`
+	FallbackResponse      *string                 `json:"fallback_response,omitempty"`
+	MetricsEnabled        *bool                   `json:"metrics_enabled,omitempty"`
+	AlertThresholds       *map[string]interface{} `json:"alert_thresholds,omitempty"`
 }
 
 type UpdateCircuitResponse struct {
-	CircuitID      string   `json:"circuit_id"`
-	UpdatedFields  []string `json:"updated_fields"`
-	UpdatedAt      int64    `json:"updated_at"`
+	CircuitID     string   `json:"circuit_id"`
+	UpdatedFields []string `json:"updated_fields"`
+	UpdatedAt     int64    `json:"updated_at"`
+}
+
+type ResetCircuitResponse struct {
+	CircuitID     string `json:"circuit_id"`
+	PreviousState string `json:"previous_state"`
+	ResetAt       int64  `json:"reset_at"`
 }

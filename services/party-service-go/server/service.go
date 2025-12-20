@@ -1,4 +1,4 @@
-// Issue: #139
+// Package server Issue: #139
 package server
 
 import (
@@ -77,7 +77,7 @@ func NewLootServiceClient(baseURL string) *LootServiceClient {
 	}
 }
 
-func NewPartyService(repo *PartyRepository, eventBus EventBus) *PartyService {
+func NewPartyService(repo *PartyRepository) *PartyService {
 	return &PartyService{
 		repo:       repo,
 		logger:     logrus.New(),

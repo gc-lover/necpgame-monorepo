@@ -35,4 +35,3 @@ func TestCombatTurnsServiceNoLeaks(t *testing.T) {
 
 	// If goroutines leaked from combat turns handlers, test FAILS
 }
-

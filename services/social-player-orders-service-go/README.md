@@ -15,6 +15,7 @@ Issue: #81
 ## Endpoints
 
 ### Core Operations
+
 - `GET /api/v1/social/orders` - список заказов
 - `POST /api/v1/social/orders/create` - создать заказ
 - `GET /api/v1/social/orders/{orderId}` - детали заказа
@@ -23,6 +24,7 @@ Issue: #81
 - `POST /api/v1/social/orders/{orderId}/cancel` - отменить заказ
 
 ### Multi-Executor Operations
+
 - `POST /api/v1/social/orders/multi/create` - создать групповой заказ
 - `POST /api/v1/social/orders/multi/{orderId}/join` - присоединиться к заказу
 - `POST /api/v1/social/orders/multi/{orderId}/leave` - покинуть заказ

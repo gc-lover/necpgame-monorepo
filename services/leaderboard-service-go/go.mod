@@ -2,8 +2,6 @@ module github.com/gc-lover/necpgame-monorepo/services/leaderboard-service-go
 
 go 1.24.0
 
-replace github.com/necpgame/leaderboard-service-go => .
-
 require (
 	github.com/go-faster/errors v0.7.1
 	github.com/go-faster/jx v1.2.0
@@ -17,8 +15,6 @@ require (
 	go.opentelemetry.io/otel/trace v1.38.0
 	go.uber.org/goleak v1.3.0
 )
-
-require github.com/necpgame/leaderboard-service-go v0.0.0-00010101000000-000000000000
 
 require (
 	github.com/beorn7/perks v1.0.1 // indirect

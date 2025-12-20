@@ -218,5 +218,3 @@ func TestHandlers_GetPositionHistory_Success(t *testing.T) {
 	assert.Len(t, *out, 1)
 	mockService.AssertExpectations(t)
 }
-
-

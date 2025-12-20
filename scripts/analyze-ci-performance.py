@@ -2,14 +2,15 @@
 # Issue: #1858
 # CI/CD Performance Analysis Tool
 
-import os
+import argparse
 import json
+import os
 import subprocess
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, List, Any
-import argparse
+
 
 class CIPerformanceAnalyzer:
     """Analyze CI/CD pipeline performance and suggest optimizations"""
@@ -196,13 +197,16 @@ class CIPerformanceAnalyzer:
             summary = analysis_results['workflows']['summary']
             for workflow_name, stats in summary.items():
                 if stats.get('avg_duration_seconds', 0) > 600:  # 10 minutes
-                    recommendations.append(f"⚡ {workflow_name}: High build time ({stats['avg_duration_seconds']:.1f}s) - consider caching")
+                    recommendations.append(
+                        f"⚡ {workflow_name}: High build time ({stats['avg_duration_seconds']:.1f}s) - consider caching")
 
                 if stats.get('success_rate', 1) < 0.9:
-                    recommendations.append(f"🔴 {workflow_name}: Low success rate ({stats['success_rate']:.1%}) - investigate failures")
+                    recommendations.append(
+                        f"🔴 {workflow_name}: Low success rate ({stats['success_rate']:.1%}) - investigate failures")
 
                 if stats.get('performance_score', 100) < 70:
-                    recommendations.append(f"📊 {workflow_name}: Poor performance score ({stats['performance_score']:.1f}) - optimize pipeline")
+                    recommendations.append(
+                        f"📊 {workflow_name}: Poor performance score ({stats['performance_score']:.1f}) - optimize pipeline")
 
         # Docker recommendations
         docker_results = analysis_results.get('docker', {})
@@ -236,9 +240,9 @@ class CIPerformanceAnalyzer:
 
     def print_report(self, results: Dict[str, Any]):
         """Print formatted analysis report"""
-        print("\n" + "="*80)
+        print("\n" + "=" * 80)
         print("🚀 CI/CD Performance Analysis Report")
-        print("="*80)
+        print("=" * 80)
         print(f"📅 Analysis Period: {results['analysis_period_days']} days")
         print(f"🕒 Generated: {results['timestamp']}")
 
@@ -254,32 +258,35 @@ class CIPerformanceAnalyzer:
 
                 status = "OK" if score > 80 else "WARNING" if score > 60 else "🔴"
                 print(f"{status} {name}")
-                print(".1f"                   ".1f"        else:
-            print("   No workflow data available")
+                print(".1f"                   ".1f" else:
+                print("   No workflow data available")
 
-        # Docker analysis
-        docker = results.get('docker', {})
-        if docker:
-            print(f"\n🐳 Docker Optimization Opportunities:")
-            print("-" * 40)
-            for dockerfile, analysis in docker.items():
-                if analysis.get('issues'):
-                    print(f"📋 {dockerfile}:")
-                    for issue in analysis['issues']:
-                        print(f"   WARNING  {issue}")
+                # Docker analysis
+                docker = results.get('docker', {})
+                if docker:
+                    print(f"\n🐳 Docker Optimization Opportunities:")
+                print("-" * 40)
+                for dockerfile, analysis in docker.items():
+                    if
+                analysis.get('issues'):
+                print(f"📋 {dockerfile}:")
+                for issue in analysis['issues']:
+                    print(f"   WARNING  {issue}")
                 if analysis.get('optimizations'):
-                    for opt in analysis['optimizations']:
-                        print(f"   OK {opt}")
+                    for
+                opt in analysis['optimizations']:
+                print(f"   OK {opt}")
 
-        # Recommendations
-        recommendations = results.get('recommendations', [])
-        if recommendations:
-            print(f"\n💡 Recommendations:")
-            print("-" * 40)
-            for rec in recommendations[:10]:  # Show top 10
-                print(f"   {rec}")
+                # Recommendations
+                recommendations = results.get('recommendations', [])
+                if recommendations:
+                    print(f"\n💡 Recommendations:")
+                print("-" * 40)
+                for rec in recommendations[:10]:  # Show top 10
+                    print(f"   {rec}")
 
-        print("\n" + "="*80)
+                print("\n" + "=" * 80)
+
 
 def main():
     parser = argparse.ArgumentParser(description="CI/CD Performance Analyzer")
@@ -302,6 +309,7 @@ def main():
 
     # Exit with success
     sys.exit(0)
+
 
 if __name__ == "__main__":
     main()

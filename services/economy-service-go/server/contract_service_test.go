@@ -3,10 +3,8 @@ package server
 
 import (
 	"testing"
-	"time"
 
 	"github.com/gc-lover/necpgame-monorepo/services/economy-service-go/models"
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 )
 

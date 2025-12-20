@@ -3,8 +3,9 @@ package server
 
 import (
 	"context"
-	"github.com/gc-lover/necpgame-monorepo/services/combat-hacking-service-go/pkg/api"
 	"testing"
+
+	"github.com/gc-lover/necpgame-monorepo/services/combat-hacking-service-go/pkg/api"
 )
 
 // BenchmarkHackTarget benchmarks HackTarget handler
@@ -53,4 +54,3 @@ func BenchmarkGetDemons(b *testing.B) {
 		_, _ = handlers.GetDemons(ctx)
 	}
 }
-

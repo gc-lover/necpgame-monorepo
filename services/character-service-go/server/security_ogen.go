@@ -1,4 +1,4 @@
-// Issue: #1592 - Character Service ogen Migration
+// Package server Issue: #1592 - Character Service ogen Migration
 // Security handler for ogen (JWT authentication with Keycloak)
 package server
 
@@ -21,14 +21,14 @@ func NewSecurityHandlerOgen(keycloakURL string) *SecurityHandlerOgen {
 }
 
 // HandleBearerAuth implements BearerAuth security scheme
-func (s *SecurityHandlerOgen) HandleBearerAuth(ctx context.Context, operationName string, t api.BearerAuth) (context.Context, error) {
+func (s *SecurityHandlerOgen) HandleBearerAuth(ctx context.Context, _ string, _ api.BearerAuth) (context.Context, error) {
 	// TODO: Implement JWT validation with Keycloak
 	// - Parse JWT token
 	// - Validate with Keycloak public keys
 	// - Check expiration
 	// - Extract user ID, roles
 	// - Store in context
-	
+
 	// For now, pass through (mock)
 	return ctx, nil
 }

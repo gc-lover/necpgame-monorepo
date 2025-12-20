@@ -12,8 +12,9 @@ import (
 
 	"go.uber.org/zap"
 
-	_ "github.com/jackc/pgx/v5/stdlib"
 	"necpgame/services/notification-service-go/server"
+
+	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 // main является точкой входа для notification-service

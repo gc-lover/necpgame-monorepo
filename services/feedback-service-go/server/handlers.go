@@ -1,4 +1,4 @@
-// Issue: #1607, ogen migration
+// Package server Issue: #1607, ogen migration
 // ogen handlers - TYPED responses (no interface{} boxing!)
 package server
 
@@ -7,16 +7,14 @@ import (
 	"sync"
 	"time"
 
-	"github.com/google/uuid"
-	"github.com/gc-lover/necpgame-monorepo/services/feedback-service-go/pkg/api"
 	"github.com/gc-lover/necpgame-monorepo/services/feedback-service-go/models"
+	"github.com/gc-lover/necpgame-monorepo/services/feedback-service-go/pkg/api"
+	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 )
 
-// Context timeout constants
 const (
-	DBTimeout    = 50 * time.Millisecond
-	CacheTimeout = 10 * time.Millisecond
+	DBTimeout = 50 * time.Millisecond
 )
 
 // Handlers implements api.Handler interface (ogen typed handlers!)
@@ -26,8 +24,8 @@ type Handlers struct {
 	logger          *logrus.Logger
 
 	// Memory pooling for hot path structs (zero allocations target!)
-	feedbackPool              sync.Pool
-	feedbackListResponsePool  sync.Pool
+	feedbackPool               sync.Pool
+	feedbackListResponsePool   sync.Pool
 	submitFeedbackResponsePool sync.Pool
 }
 
@@ -181,4 +179,3 @@ func (h *Handlers) UpdateFeedbackStatus(ctx context.Context, req *api.UpdateStat
 	*apiFeedback = convertFeedbackToAPI(feedback)
 	return apiFeedback, nil
 }
-

@@ -6,7 +6,7 @@ import (
 )
 
 var (
-	VoiceRequestsTotal = promauto.NewCounterVec(
+	_ = promauto.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "voice_chat_service_requests_total",
 			Help: "Total number of HTTP requests",
@@ -14,7 +14,7 @@ var (
 		[]string{"method", "path", "status"},
 	)
 
-	RequestDuration = promauto.NewHistogramVec(
+	_ = promauto.NewHistogramVec(
 		prometheus.HistogramOpts{
 			Name:    "voice_chat_service_request_duration_seconds",
 			Help:    "HTTP request duration in seconds",
@@ -40,14 +40,6 @@ var (
 	)
 )
 
-func RecordRequest(method, path, status string) {
-	VoiceRequestsTotal.WithLabelValues(method, path, status).Inc()
-}
-
-func RecordRequestDuration(method, path string, duration float64) {
-	RequestDuration.WithLabelValues(method, path).Observe(duration)
-}
-
 func SetChannelsTotal(channelType string, count float64) {
 	VoiceChannelsTotal.WithLabelValues(channelType).Set(count)
 }
@@ -55,4 +47,3 @@ func SetChannelsTotal(channelType string, count float64) {
 func SetParticipantsTotal(channelType string, count float64) {
 	VoiceParticipantsTotal.WithLabelValues(channelType).Set(count)
 }
-

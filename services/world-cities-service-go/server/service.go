@@ -1,4 +1,4 @@
-// Issue: #140875381
+// Package server Issue: #140875381
 package server
 
 import (
@@ -10,9 +10,9 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
-	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
@@ -27,22 +27,22 @@ type WorldCitiesService struct {
 
 // City представляет город в системе (согласно OpenAPI спецификации)
 type City struct {
-	ID              string                 `json:"id" db:"id"`
-	Name            string                 `json:"name" db:"name"`
-	Country         string                 `json:"country" db:"country"`
-	Region          string                 `json:"region" db:"region"`
-	Latitude        float64                `json:"latitude" db:"latitude"`
-	Longitude       float64                `json:"longitude" db:"longitude"`
-	Population      int                    `json:"population" db:"population"`
-	DevelopmentLevel string                `json:"development_level" db:"development_level"`
-	Description     string                 `json:"description" db:"description"`
-	Landmarks       []string               `json:"landmarks" db:"landmarks"`
-	EconomicData    map[string]interface{} `json:"economic_data" db:"economic_data"`
-	SocialData      map[string]interface{} `json:"social_data" db:"social_data"`
-	TimelineYear    int                    `json:"timeline_year" db:"timeline_year"`
-	IsActive        bool                   `json:"is_active" db:"is_active"`
-	CreatedAt       time.Time              `json:"created_at" db:"created_at"`
-	UpdatedAt       time.Time              `json:"updated_at" db:"updated_at"`
+	ID               string                 `json:"id" db:"id"`
+	Name             string                 `json:"name" db:"name"`
+	Country          string                 `json:"country" db:"country"`
+	Region           string                 `json:"region" db:"region"`
+	Latitude         float64                `json:"latitude" db:"latitude"`
+	Longitude        float64                `json:"longitude" db:"longitude"`
+	Population       int                    `json:"population" db:"population"`
+	DevelopmentLevel string                 `json:"development_level" db:"development_level"`
+	Description      string                 `json:"description" db:"description"`
+	Landmarks        []string               `json:"landmarks" db:"landmarks"`
+	EconomicData     map[string]interface{} `json:"economic_data" db:"economic_data"`
+	SocialData       map[string]interface{} `json:"social_data" db:"social_data"`
+	TimelineYear     int                    `json:"timeline_year" db:"timeline_year"`
+	IsActive         bool                   `json:"is_active" db:"is_active"`
+	CreatedAt        time.Time              `json:"created_at" db:"created_at"`
+	UpdatedAt        time.Time              `json:"updated_at" db:"updated_at"`
 }
 
 // Coordinates представляет географические координаты
@@ -184,7 +184,7 @@ func (s *WorldCitiesService) CreateCity(w http.ResponseWriter, r *http.Request) 
 		Name             string                 `json:"name"`
 		Country          string                 `json:"country"`
 		Region           string                 `json:"region"`
-		Coordinates      Coordinates           `json:"coordinates"`
+		Coordinates      Coordinates            `json:"coordinates"`
 		Population       int                    `json:"population"`
 		DevelopmentLevel string                 `json:"development_level"`
 		Description      string                 `json:"description"`
@@ -244,14 +244,14 @@ func (s *WorldCitiesService) UpdateCity(w http.ResponseWriter, r *http.Request) 
 	cityID := chi.URLParam(r, "cityID")
 
 	var req struct {
-		Name             *string                `json:"name"`
-		Population       *int                   `json:"population"`
-		DevelopmentLevel *string                `json:"development_level"`
-		Description      *string                `json:"description"`
-		Landmarks        *[]string              `json:"landmarks"`
+		Name             *string                 `json:"name"`
+		Population       *int                    `json:"population"`
+		DevelopmentLevel *string                 `json:"development_level"`
+		Description      *string                 `json:"description"`
+		Landmarks        *[]string               `json:"landmarks"`
 		EconomicData     *map[string]interface{} `json:"economic_data"`
 		SocialData       *map[string]interface{} `json:"social_data"`
-		IsActive         *bool                  `json:"is_active"`
+		IsActive         *bool                   `json:"is_active"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -406,7 +406,7 @@ func (s *WorldCitiesService) GetNearbyCities(w http.ResponseWriter, r *http.Requ
 }
 
 // GetRegions возвращает список регионов
-func (s *WorldCitiesService) GetRegions(w http.ResponseWriter, r *http.Request) {
+func (s *WorldCitiesService) GetRegions(w http.ResponseWriter) {
 	regions := []map[string]interface{}{
 		{
 			"id":          "North_America",
@@ -523,7 +523,7 @@ func (s *WorldCitiesService) calculateDistance(lat1, lon1, lat2, lon2 float64) f
 
 	a := math.Sin(deltaLat/2)*math.Sin(deltaLat/2) +
 		math.Cos(lat1Rad)*math.Cos(lat2Rad)*
-		math.Sin(deltaLon/2)*math.Sin(deltaLon/2)
+			math.Sin(deltaLon/2)*math.Sin(deltaLon/2)
 
 	c := 2 * math.Atan2(math.Sqrt(a), math.Sqrt(1-a))
 

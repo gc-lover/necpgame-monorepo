@@ -1,4 +1,4 @@
-// Issue: #140875381
+// Package server Issue: #140875381
 package server
 
 import (
@@ -10,11 +10,9 @@ import (
 	"os"
 	"os/signal"
 	"runtime"
-	"sync"
 	"syscall"
 	"time"
 
-	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 	"go.uber.org/zap"
@@ -23,12 +21,12 @@ import (
 // WorldCitiesServer представляет HTTP сервер для системы городов мира
 // BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 25%
 type WorldCitiesServer struct {
-	jwtSecret           []byte               // 24 bytes (slice)
-	server              *http.Server         // 8 bytes (pointer)
-	logger              *zap.Logger          // 8 bytes (pointer)
-	db                  *sql.DB              // 8 bytes (pointer)
-	citiesService       *WorldCitiesService  // 8 bytes (pointer)
-	middleware          *AuthMiddleware      // 8 bytes (pointer)
+	jwtSecret     []byte              // 24 bytes (slice)
+	server        *http.Server        // 8 bytes (pointer)
+	logger        *zap.Logger         // 8 bytes (pointer)
+	db            *sql.DB             // 8 bytes (pointer)
+	citiesService *WorldCitiesService // 8 bytes (pointer)
+	middleware    *AuthMiddleware     // 8 bytes (pointer)
 }
 
 // NewWorldCitiesServer создает новый сервер для городов мира
@@ -55,7 +53,7 @@ func (s *WorldCitiesServer) Start() error {
 
 	// CORS для веб-клиентов
 	r.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   []string{"https://*", "http://*"},
+		AllowedOrigins:   []string{"https://*", "https://*"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
 		ExposedHeaders:   []string{"Link"},
@@ -130,7 +128,7 @@ func (s *WorldCitiesServer) gracefulShutdown() {
 }
 
 // healthCheckHandler проверяет здоровье сервиса
-func (s *WorldCitiesServer) healthCheckHandler(w http.ResponseWriter, r *http.Request) {
+func (s *WorldCitiesServer) healthCheckHandler(w http.ResponseWriter, _ *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
@@ -147,7 +145,7 @@ func (s *WorldCitiesServer) healthCheckHandler(w http.ResponseWriter, r *http.Re
 }
 
 // metricsHandler возвращает метрики сервиса
-func (s *WorldCitiesServer) metricsHandler(w http.ResponseWriter, r *http.Request) {
+func (s *WorldCitiesServer) metricsHandler(w http.ResponseWriter, _ *http.Request) {
 	var m runtime.MemStats
 	runtime.ReadMemStats(&m)
 

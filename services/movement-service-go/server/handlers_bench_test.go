@@ -94,5 +94,3 @@ func BenchmarkGetPositionHistory(b *testing.B) {
 		_, _ = handlers.GetPositionHistory(ctx, params)
 	}
 }
-
-

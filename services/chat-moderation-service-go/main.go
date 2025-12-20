@@ -33,7 +33,7 @@ func main() {
 	service := server.NewService(repo)
 
 	// Create HTTP server
-	httpServer := server.NewHTTPServer(addr, service)
+	httpServer := server.NewOgenHTTPServer(addr, service)
 
 	// OPTIMIZATION: Issue #1911 - Start pprof server for profiling
 	go func() {

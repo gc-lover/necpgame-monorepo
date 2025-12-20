@@ -3,6 +3,7 @@ package server
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -24,24 +25,24 @@ func BenchmarkCircuitBreakerService_CreateCircuit(b *testing.B) {
 	service := NewCircuitBreakerService(logger, metrics, config)
 
 	reqData := CreateCircuitRequest{
-		CircuitID:           "bench_circuit",
-		ServiceName:         "bench_service",
-		Endpoint:            "/api/test",
-		FailureThreshold:    5,
-		SuccessThreshold:    3,
-		Timeout:             5000,
-		RetryDelay:          1000,
-		MaxRetryDelay:       30000,
-		MonitoringWindow:    60000,
-		SlowCallThreshold:   3000,
+		CircuitID:             "bench_circuit",
+		ServiceName:           "bench_service",
+		Endpoint:              "/api/test",
+		FailureThreshold:      5,
+		SuccessThreshold:      3,
+		Timeout:               5000,
+		RetryDelay:            1000,
+		MaxRetryDelay:         30000,
+		MonitoringWindow:      60000,
+		SlowCallThreshold:     3000,
 		SlowCallRateThreshold: 0.5,
-		FallbackEnabled:     true,
-		FallbackResponse:    map[string]interface{}{"error": "service unavailable"},
-		MetricsEnabled:      true,
-		AlertThresholds: AlertThresholds{
-			ErrorRate:           0.5,
-			SlowCallRate:        0.5,
-			ConsecutiveFailures: 10,
+		FallbackEnabled:       true,
+		FallbackResponse:      `{"error": "service unavailable"}`,
+		MetricsEnabled:        true,
+		AlertThresholds: map[string]interface{}{
+			"error_rate":           0.5,
+			"slow_call_rate":       0.5,
+			"consecutive_failures": 10,
 		},
 	}
 
@@ -128,7 +129,7 @@ func BenchmarkCircuitBreakerService_CreateBulkhead(b *testing.B) {
 		req.Header.Set("X-User-ID", "user_123")
 		w := httptest.NewRecorder()
 
-		service.CreateBulkhead(w, req)
+		service.CreateBulkhead(w)
 
 		if w.Code != http.StatusCreated {
 			b.Fatalf("Expected status 201, got %d", w.Code)
@@ -165,7 +166,7 @@ func BenchmarkCircuitBreakerService_GetMetrics(b *testing.B) {
 		bulkheadHttpReq := httptest.NewRequest("POST", "/cb/bulkheads", bytes.NewReader(bulkheadBody))
 		bulkheadHttpReq.Header.Set("X-User-ID", "user_123")
 		bulkheadW := httptest.NewRecorder()
-		service.CreateBulkhead(bulkheadW, bulkheadHttpReq)
+		service.CreateBulkhead(bulkheadW)
 	}
 
 	b.ResetTimer()
@@ -176,7 +177,7 @@ func BenchmarkCircuitBreakerService_GetMetrics(b *testing.B) {
 		req.Header.Set("X-User-ID", "user_123")
 		w := httptest.NewRecorder()
 
-		service.GetMetrics(w, req)
+		service.GetMetrics(w)
 
 		if w.Code != http.StatusOK {
 			b.Fatalf("Expected status 200, got %d", w.Code)
@@ -345,8 +346,8 @@ func TestCircuitBreakerService_ConcurrentOperations(t *testing.T) {
 
 			// Update circuit state
 			stateReq := SetCircuitStateRequest{
-				State:   "open",
-				Reason:  "testing concurrent operations",
+				State:  "open",
+				Reason: "testing concurrent operations",
 			}
 			stateBody, _ := json.Marshal(stateReq)
 			stateHttpReq := httptest.NewRequest("POST", "/cb/circuits/"+circuitID+"/state", bytes.NewReader(stateBody))
@@ -398,3 +399,4 @@ func TestCircuitBreakerService_StateTransitions(t *testing.T) {
 	if createW.Code != http.StatusCreated {
 		t.Fatalf("Failed to create circuit: %d", createW.Code)
 	}
+}

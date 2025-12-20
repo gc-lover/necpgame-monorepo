@@ -8,7 +8,7 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-// OPTIMIZATION: Issue #1978 - Presence management with real-time updates
+// GetUserPresence OPTIMIZATION: Issue #1978 - Presence management with real-time updates
 func (s *NetworkService) GetUserPresence(w http.ResponseWriter, r *http.Request) {
 	userID := chi.URLParam(r, "userId")
 
@@ -31,7 +31,7 @@ func (s *NetworkService) GetUserPresence(w http.ResponseWriter, r *http.Request)
 	json.NewEncoder(w).Encode(resp)
 }
 
-// OPTIMIZATION: Issue #1978 - Presence updates with broadcasting
+// UpdateUserPresence OPTIMIZATION: Issue #1978 - Presence updates with broadcasting
 func (s *NetworkService) UpdateUserPresence(w http.ResponseWriter, r *http.Request) {
 	userID := chi.URLParam(r, "userId")
 
@@ -45,11 +45,11 @@ func (s *NetworkService) UpdateUserPresence(w http.ResponseWriter, r *http.Reque
 	s.metrics.PresenceUpdates.Inc()
 
 	resp := &UpdatePresenceResponse{
-		UserID:             userID,
-		PreviousStatus:     "AWAY",
-		NewStatus:          req.Status,
-		UpdatedAt:          time.Now().Unix(),
-		Broadcasted:        true,
+		UserID:              userID,
+		PreviousStatus:      "AWAY",
+		NewStatus:           req.Status,
+		UpdatedAt:           time.Now().Unix(),
+		Broadcasted:         true,
 		AffectedSubscribers: 5,
 	}
 

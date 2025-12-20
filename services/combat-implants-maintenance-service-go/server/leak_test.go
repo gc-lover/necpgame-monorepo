@@ -35,4 +35,3 @@ func TestCombatImplantsMaintenanceServiceNoLeaks(t *testing.T) {
 
 	// If goroutines leaked from combat implants maintenance handlers, test FAILS
 }
-

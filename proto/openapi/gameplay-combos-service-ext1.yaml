@@ -1,151 +1,151 @@
-          description: Результаты scoring сохранены
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  scoreId:
-                    type: string
-                    format: uuid
-                    description: ID сохраненного scoring
-                  category:
-                    type: string
-                    enum: [Bronze, Silver, Gold, Platinum, Legendary]
-                    description: Категория достижения
-                  rewards:
-                    type: array
-                    items:
-                      $ref: "#/components/schemas/Reward"
-                    description: Доступные награды за достижение
-                required:
-                  - scoreId
-                  - category
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "404":
-          description: Активация комбо не найдена
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "409":
-          description: Scoring уже отправлен для данной активации
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
+description: Результаты scoring сохранены
+content:
+  application/json:
+    schema:
+      type: object
+      properties:
+        scoreId:
+          type: string
+          format: uuid
+          description: ID сохраненного scoring
+        category:
+          type: string
+          enum: [ Bronze, Silver, Gold, Platinum, Legendary ]
+          description: Категория достижения
+        rewards:
+          type: array
+          items:
+            $ref: "#/components/schemas/Reward"
+          description: Доступные награды за достижение
+      required:
+        - scoreId
+        - category
+"400":
+  $ref: "#/components/responses/BadRequest"
+"404":
+  description: Активация комбо не найдена
+  content:
+    application/json:
+      schema:
+        $ref: "#/components/schemas/Error"
+"409":
+  description: Scoring уже отправлен для данной активации
+  content:
+    application/json:
+      schema:
+        $ref: "#/components/schemas/Error"
+"500":
+  $ref: "#/components/responses/InternalServerError"
 
-  # Метрики эффективности
-  /gameplay/combat/combos/analytics:
-    get:
-      summary: Получить метрики эффективности комбо
-      description: |
-        Возвращает аналитику по использованию комбо для персонажа или команды.
-        Используется для оптимизации и балансировки.
-      operationId: getComboAnalytics
-      tags:
-        - Combo Analytics
-      parameters:
-        - name: characterId
-          in: query
-          schema:
-            type: string
-            format: uuid
-          description: ID персонажа (опционально, если не указан - статистика по всем)
-        - name: comboType
-          in: query
-          schema:
-            type: string
-            enum: [solo, team, legendary]
-          description: Фильтр по типу комбо
-        - name: timeRange
-          in: query
-          schema:
-            type: string
-            enum: [1h, 24h, 7d, 30d, all]
-            default: 7d
-          description: Временной диапазон для статистики
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 50
-            default: 10
-          description: Количество топ комбо для возврата
-      responses:
-        "200":
-          description: Успешный ответ с метриками комбо
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  characterId:
-                    type: string
-                    format: uuid
-                    description: ID персонажа
-                  timeRange:
-                    type: string
-                    description: Временной диапазон статистики
-                  totalActivations:
-                    type: integer
-                    description: Общее количество активаций
-                  successfulActivations:
-                    type: integer
-                    description: Успешных активаций
-                  averageScore:
-                    type: number
-                    format: float
-                    description: Средний score
-                  topCombos:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        comboId:
-                          type: string
-                          format: uuid
-                        comboName:
-                          type: string
-                        activationCount:
-                          type: integer
-                        averageScore:
-                          type: number
-                          format: float
-                        successRate:
-                          type: number
-                          format: float
-                          minimum: 0
-                          maximum: 1
-                      required:
-                        - comboId
-                        - comboName
-                        - activationCount
-                    description: Топ комбо по использованию
-                  synergyStats:
+# Метрики эффективности
+/gameplay/combat/combos/analytics:
+  get:
+    summary: Получить метрики эффективности комбо
+    description: |
+      Возвращает аналитику по использованию комбо для персонажа или команды.
+      Используется для оптимизации и балансировки.
+    operationId: getComboAnalytics
+    tags:
+      - Combo Analytics
+    parameters:
+      - name: characterId
+        in: query
+        schema:
+          type: string
+          format: uuid
+        description: ID персонажа (опционально, если не указан - статистика по всем)
+      - name: comboType
+        in: query
+        schema:
+          type: string
+          enum: [ solo, team, legendary ]
+        description: Фильтр по типу комбо
+      - name: timeRange
+        in: query
+        schema:
+          type: string
+          enum: [ 1h, 24h, 7d, 30d, all ]
+          default: 7d
+        description: Временной диапазон для статистики
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 50
+          default: 10
+        description: Количество топ комбо для возврата
+    responses:
+      "200":
+        description: Успешный ответ с метриками комбо
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                characterId:
+                  type: string
+                  format: uuid
+                  description: ID персонажа
+                timeRange:
+                  type: string
+                  description: Временной диапазон статистики
+                totalActivations:
+                  type: integer
+                  description: Общее количество активаций
+                successfulActivations:
+                  type: integer
+                  description: Успешных активаций
+                averageScore:
+                  type: number
+                  format: float
+                  description: Средний score
+                topCombos:
+                  type: array
+                  items:
                     type: object
-                    description: Статистика по синергиям
-                    additionalProperties:
-                      type: object
-                      properties:
-                        appliedCount:
-                          type: integer
-                        successRate:
-                          type: number
-                          format: float
-                required:
-                  - totalActivations
-                  - successfulActivations
-                  - topCombos
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
+                    properties:
+                      comboId:
+                        type: string
+                        format: uuid
+                      comboName:
+                        type: string
+                      activationCount:
+                        type: integer
+                      averageScore:
+                        type: number
+                        format: float
+                      successRate:
+                        type: number
+                        format: float
+                        minimum: 0
+                        maximum: 1
+                    required:
+                      - comboId
+                      - comboName
+                      - activationCount
+                  description: Топ комбо по использованию
+                synergyStats:
+                  type: object
+                  description: Статистика по синергиям
+                  additionalProperties:
+                    type: object
+                    properties:
+                      appliedCount:
+                        type: integer
+                      successRate:
+                        type: number
+                        format: float
+              required:
+                - totalActivations
+                - successfulActivations
+                - topCombos
+      "400":
+        $ref: "#/components/responses/BadRequest"
+      "404":
+        $ref: "#/components/responses/NotFound"
+      "500":
+        $ref: "#/components/responses/InternalServerError"
 
 components:
   schemas:
@@ -167,11 +167,11 @@ components:
           description: Описание комбо
         comboType:
           type: string
-          enum: [solo, team, legendary]
+          enum: [ solo, team, legendary ]
           description: Тип комбо
         complexity:
           type: string
-          enum: [Bronze, Silver, Gold, Platinum, Legendary]
+          enum: [ Bronze, Silver, Gold, Platinum, Legendary ]
           description: Уровень сложности
         requirements:
           $ref: "#/components/schemas/ComboRequirements"
@@ -252,7 +252,7 @@ components:
       properties:
         actionType:
           type: string
-          enum: [ability, movement, attack, defense, special]
+          enum: [ ability, movement, attack, defense, special ]
           description: Тип действия
         abilityId:
           type: string
@@ -314,7 +314,7 @@ components:
           description: ID синергии
         synergyType:
           type: string
-          enum: [ability, team, equipment, implant, timing]
+          enum: [ ability, team, equipment, implant, timing ]
           description: Тип синергии
         bonuses:
           type: object
@@ -359,7 +359,7 @@ components:
           minimum: 0
         category:
           type: string
-          enum: [Bronze, Silver, Gold, Platinum, Legendary]
+          enum: [ Bronze, Silver, Gold, Platinum, Legendary ]
           description: Категория достижения
       required:
         - executionDifficulty

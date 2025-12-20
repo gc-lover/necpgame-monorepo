@@ -24,15 +24,15 @@ func TestWebSocketNoLeaks(t *testing.T) {
 	defer goleak.VerifyNone(t,
 		goleak.IgnoreTopFunction("database/sql.(*DB).connectionOpener"),
 	)
-	
+
 	// TODO: Test WebSocket connection lifecycle
 	// conn := NewWebSocketConnection()
 	// conn.Handle()
 	// time.Sleep(100 * time.Millisecond)
 	// conn.Close()
-	
+
 	time.Sleep(100 * time.Millisecond)
-	
+
 	// If goroutines leaked from WebSocket handlers, test FAILS
 }
 
@@ -41,15 +41,15 @@ func TestRoomManagementNoLeaks(t *testing.T) {
 	defer goleak.VerifyNone(t,
 		goleak.IgnoreTopFunction("database/sql.(*DB).connectionOpener"),
 	)
-	
+
 	// TODO: Test room lifecycle
 	// room := NewRoom()
 	// room.Start()
 	// time.Sleep(100 * time.Millisecond)
 	// room.Stop()
-	
+
 	time.Sleep(100 * time.Millisecond)
-	
+
 	// Room management goroutines must be cleaned up
 }
 
@@ -64,4 +64,3 @@ func TestRoomManagementNoLeaks(t *testing.T) {
 // - Ticker.Stop() for all time.Ticker
 // - Channel close for all event channels
 // - Connection.Close() for all WebSocket conns
-

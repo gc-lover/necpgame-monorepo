@@ -332,7 +332,7 @@ type GuildRanking struct {
 	WinRate    float64 `json:"win_rate"`
 }
 
-// Error response model
+// ErrorResponse Error response model
 type ErrorResponse struct {
 	Code    int    `json:"code"`
 	Message string `json:"message"`

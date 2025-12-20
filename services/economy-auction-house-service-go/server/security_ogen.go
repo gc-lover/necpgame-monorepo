@@ -1,4 +1,4 @@
-// Issue: #1594 - Security handler for ogen
+// Package server Issue: #1594 - Security handler for ogen
 package server
 
 import (
@@ -13,12 +13,11 @@ func NewSecurityHandler() *SecurityHandler {
 	return &SecurityHandler{}
 }
 
-func (s *SecurityHandler) HandleBearerAuth(ctx context.Context, operationName string, t api.BearerAuth) (context.Context, error) {
+func (s *SecurityHandler) HandleBearerAuth(ctx context.Context, t api.BearerAuth) (context.Context, error) {
 	// TODO: JWT validation
 	token := t.GetToken()
 	_ = token
-	
+
 	ctx = context.WithValue(ctx, "user_id", "user-from-token")
 	return ctx, nil
 }
-

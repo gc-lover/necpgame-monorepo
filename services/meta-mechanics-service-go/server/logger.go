@@ -1,4 +1,4 @@
-// Issue: #1928 - Structured logging for Meta Mechanics Service
+// Package server Issue: #1928 - Structured logging for Meta Mechanics Service
 package server
 
 import (

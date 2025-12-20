@@ -1,4 +1,4 @@
-// Issue: #141889273
+// Package server Issue: #141889273
 package server
 
 import (
@@ -23,11 +23,11 @@ func (h *GatewayHandler) AddClientConnection(conn *websocket.Conn) {
 	h.clientConnsMu.Lock()
 	h.clientConns[conn] = &ClientConnection{conn: conn}
 	h.clientConnsMu.Unlock()
-	
+
 	h.deltaStatesMu.Lock()
 	h.clientDeltaStates[conn] = NewClientDeltaState()
 	h.deltaStatesMu.Unlock()
-	
+
 	SetActiveClients(float64(len(h.clientConns)))
 }
 
@@ -38,11 +38,11 @@ func (h *GatewayHandler) RemoveClientConnection(conn *websocket.Conn) {
 	clientConn, exists := h.clientConns[conn]
 	delete(h.clientConns, conn)
 	h.clientConnsMu.Unlock()
-	
+
 	h.deltaStatesMu.Lock()
 	delete(h.clientDeltaStates, conn)
 	h.deltaStatesMu.Unlock()
-	
+
 	// Закрываем соединение, если оно существует
 	if exists && clientConn != nil {
 		clientConn.mu.Lock()
@@ -57,34 +57,6 @@ func (h *GatewayHandler) RemoveClientConnection(conn *websocket.Conn) {
 		conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseGoingAway, "Connection closed"))
 		conn.Close()
 	}
-	
+
 	SetActiveClients(float64(len(h.clientConns)))
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

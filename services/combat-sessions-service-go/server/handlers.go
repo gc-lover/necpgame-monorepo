@@ -1,4 +1,4 @@
-// Issue: #1595, #1867
+// Package server Issue: #1595, #1867
 // ogen handlers - TYPED responses (no interface{} boxing!)
 // Memory pooling for hot path structs (zero allocations target!)
 package server
@@ -225,7 +225,7 @@ func (h *Handlers) EndCombatSession(ctx context.Context, params api.EndCombatSes
 	// TODO: Get playerID from context (from SecurityHandler)
 	playerID := uuid.New().String()
 
-	err := h.service.EndSession(ctx, params.SessionID.String(), playerID)
+	err := h.service.EndSession(ctx, params.SessionID.String())
 	if err != nil {
 		return &api.Error{
 			Error:   "NotFound",

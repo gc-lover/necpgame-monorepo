@@ -1,301 +1,301 @@
-          description: Notification content
-        data:
-          type: object
-          description: Additional notification data (achievement_id, quest_id, etc.)
-        status:
-          type: string
-          enum: [unread, read, archived]
-          default: unread
-        priority:
-          type: string
-          enum: [low, normal, high, critical]
-          default: normal
-        expires_at:
-          type: string
-          format: date-time
-          description: When notification expires (optional)
-        created_at:
-          type: string
-          format: date-time
-        read_at:
-          type: string
-          format: date-time
-          description: When notification was read (null if unread)
+description: Notification content
+data:
+  type: object
+  description: Additional notification data (achievement_id, quest_id, etc.)
+status:
+  type: string
+  enum: [ unread, read, archived ]
+  default: unread
+priority:
+  type: string
+  enum: [ low, normal, high, critical ]
+  default: normal
+expires_at:
+  type: string
+  format: date-time
+  description: When notification expires (optional)
+created_at:
+  type: string
+  format: date-time
+read_at:
+  type: string
+  format: date-time
+  description: When notification was read (null if unread)
 
-    SendNotificationRequest:
+SendNotificationRequest:
+  type: object
+  required:
+    - player_id
+    - type
+    - title
+    - message
+  properties:
+    player_id:
+      type: string
+      format: uuid
+      description: Target player ID
+    type:
+      type: string
+      enum: [ achievement, system, social, quest, combat, economy ]
+    title:
+      type: string
+      maxLength: 200
+    message:
+      type: string
+      maxLength: 1000
+    data:
       type: object
-      required:
-        - player_id
-        - type
-        - title
-        - message
+      description: Structured data for notification
+    priority:
+      type: string
+      enum: [ low, normal, high, critical ]
+      default: normal
+    expires_in:
+      type: integer
+      description: Expiration time in seconds (optional)
+      minimum: 300
+      maximum: 2592000 # 30 days
+
+NotificationResponse:
+  type: object
+  properties:
+    notification:
+      $ref: "#/components/schemas/Notification"
+
+NotificationsListResponse:
+  type: object
+  properties:
+    notifications:
+      type: array
+      items:
+        $ref: "#/components/schemas/Notification"
+    pagination:
+      type: object
       properties:
-        player_id:
-          type: string
-          format: uuid
-          description: Target player ID
-        type:
-          type: string
-          enum: [achievement, system, social, quest, combat, economy]
-        title:
-          type: string
-          maxLength: 200
-        message:
-          type: string
-          maxLength: 1000
-        data:
-          type: object
-          description: Structured data for notification
-        priority:
-          type: string
-          enum: [low, normal, high, critical]
-          default: normal
-        expires_in:
+        total:
           type: integer
-          description: Expiration time in seconds (optional)
-          minimum: 300
-          maximum: 2592000 # 30 days
+          example: 150
+        limit:
+          type: integer
+          example: 20
+        offset:
+          type: integer
+          example: 0
+        has_more:
+          type: boolean
+          example: true
 
-    NotificationResponse:
+NotificationHistoryResponse:
+  type: object
+  properties:
+    notifications:
+      type: array
+      items:
+        $ref: "#/components/schemas/Notification"
+    pagination:
+      $ref: "#/components/schemas/NotificationsListResponse/properties/pagination"
+
+NotificationSettings:
+  type: object
+  properties:
+    achievement_notifications:
+      type: boolean
+      default: true
+    system_notifications:
+      type: boolean
+      default: true
+    social_notifications:
+      type: boolean
+      default: true
+    quest_notifications:
+      type: boolean
+      default: true
+    combat_notifications:
+      type: boolean
+      default: true
+    economy_notifications:
+      type: boolean
+      default: true
+    email_notifications:
+      type: boolean
+      default: false
+    push_notifications:
+      type: boolean
+      default: true
+    sound_enabled:
+      type: boolean
+      default: true
+    vibration_enabled:
+      type: boolean
+      default: true
+
+NotificationSettingsResponse:
+  type: object
+  properties:
+    settings:
+      $ref: "#/components/schemas/NotificationSettings"
+
+UpdateNotificationSettingsRequest:
+  type: object
+  properties:
+    achievement_notifications:
+      type: boolean
+    system_notifications:
+      type: boolean
+    social_notifications:
+      type: boolean
+    quest_notifications:
+      type: boolean
+    combat_notifications:
+      type: boolean
+    economy_notifications:
+      type: boolean
+    email_notifications:
+      type: boolean
+    push_notifications:
+      type: boolean
+    sound_enabled:
+      type: boolean
+    vibration_enabled:
+      type: boolean
+
+NotificationStatsResponse:
+  type: object
+  properties:
+    total_notifications:
+      type: integer
+      example: 1250000
+    active_connections:
+      type: integer
+      example: 8500
+    notifications_per_minute:
+      type: number
+      example: 450.5
+    unread_percentage:
+      type: number
+      example: 23.4
+    by_type:
       type: object
       properties:
-        notification:
-          $ref: "#/components/schemas/Notification"
+        achievement:
+          type: integer
+          example: 450000
+        system:
+          type: integer
+          example: 350000
+        social:
+          type: integer
+          example: 250000
+        quest:
+          type: integer
+          example: 150000
+        combat:
+          type: integer
+          example: 25000
+        economy:
+          type: integer
+          example: 5000
 
-    NotificationsListResponse:
-      type: object
-      properties:
-        notifications:
-          type: array
-          items:
-            $ref: "#/components/schemas/Notification"
-        pagination:
+BroadcastNotificationRequest:
+  type: object
+  required:
+    - type
+    - title
+    - message
+  properties:
+    type:
+      type: string
+      enum: [ system, maintenance, event, emergency ]
+    title:
+      type: string
+      maxLength: 200
+    message:
+      type: string
+      maxLength: 1000
+    target_audience:
+      type: string
+      enum: [ all, online_only, region_specific ]
+      default: all
+    region_filter:
+      type: string
+      description: Region code for region_specific targeting
+    priority:
+      type: string
+      enum: [ normal, high, critical ]
+      default: normal
+    expires_in:
+      type: integer
+      description: Expiration time in seconds
+      minimum: 300
+      maximum: 3600
+      default: 3600
+
+responses:
+  BadRequest:
+    description: Invalid request parameters
+    content:
+      application/json:
+        schema:
           type: object
+          required:
+            - error
           properties:
-            total:
-              type: integer
-              example: 150
-            limit:
-              type: integer
-              example: 20
-            offset:
-              type: integer
-              example: 0
-            has_more:
-              type: boolean
-              example: true
+            error:
+              type: string
+              example: "invalid_request"
+            message:
+              type: string
+              example: "Notification title is required"
+            details:
+              type: object
 
-    NotificationHistoryResponse:
-      type: object
-      properties:
-        notifications:
-          type: array
-          items:
-            $ref: "#/components/schemas/Notification"
-        pagination:
-          $ref: "#/components/schemas/NotificationsListResponse/properties/pagination"
-
-    NotificationSettings:
-      type: object
-      properties:
-        achievement_notifications:
-          type: boolean
-          default: true
-        system_notifications:
-          type: boolean
-          default: true
-        social_notifications:
-          type: boolean
-          default: true
-        quest_notifications:
-          type: boolean
-          default: true
-        combat_notifications:
-          type: boolean
-          default: true
-        economy_notifications:
-          type: boolean
-          default: true
-        email_notifications:
-          type: boolean
-          default: false
-        push_notifications:
-          type: boolean
-          default: true
-        sound_enabled:
-          type: boolean
-          default: true
-        vibration_enabled:
-          type: boolean
-          default: true
-
-    NotificationSettingsResponse:
-      type: object
-      properties:
-        settings:
-          $ref: "#/components/schemas/NotificationSettings"
-
-    UpdateNotificationSettingsRequest:
-      type: object
-      properties:
-        achievement_notifications:
-          type: boolean
-        system_notifications:
-          type: boolean
-        social_notifications:
-          type: boolean
-        quest_notifications:
-          type: boolean
-        combat_notifications:
-          type: boolean
-        economy_notifications:
-          type: boolean
-        email_notifications:
-          type: boolean
-        push_notifications:
-          type: boolean
-        sound_enabled:
-          type: boolean
-        vibration_enabled:
-          type: boolean
-
-    NotificationStatsResponse:
-      type: object
-      properties:
-        total_notifications:
-          type: integer
-          example: 1250000
-        active_connections:
-          type: integer
-          example: 8500
-        notifications_per_minute:
-          type: number
-          example: 450.5
-        unread_percentage:
-          type: number
-          example: 23.4
-        by_type:
+  Forbidden:
+    description: Access denied
+    content:
+      application/json:
+        schema:
           type: object
+          required:
+            - error
           properties:
-            achievement:
-              type: integer
-              example: 450000
-            system:
-              type: integer
-              example: 350000
-            social:
-              type: integer
-              example: 250000
-            quest:
-              type: integer
-              example: 150000
-            combat:
-              type: integer
-              example: 25000
-            economy:
-              type: integer
-              example: 5000
+            error:
+              type: string
+              example: "forbidden"
+            message:
+              type: string
+              example: "Insufficient permissions"
 
-    BroadcastNotificationRequest:
-      type: object
-      required:
-        - type
-        - title
-        - message
-      properties:
-        type:
-          type: string
-          enum: [system, maintenance, event, emergency]
-        title:
-          type: string
-          maxLength: 200
-        message:
-          type: string
-          maxLength: 1000
-        target_audience:
-          type: string
-          enum: [all, online_only, region_specific]
-          default: all
-        region_filter:
-          type: string
-          description: Region code for region_specific targeting
-        priority:
-          type: string
-          enum: [normal, high, critical]
-          default: normal
-        expires_in:
-          type: integer
-          description: Expiration time in seconds
-          minimum: 300
-          maximum: 3600
-          default: 3600
+  NotFound:
+    description: Resource not found
+    content:
+      application/json:
+        schema:
+          type: object
+          required:
+            - error
+          properties:
+            error:
+              type: string
+              example: "not_found"
+            message:
+              type: string
+              example: "Notification not found"
 
-  responses:
-    BadRequest:
-      description: Invalid request parameters
-      content:
-        application/json:
-          schema:
-            type: object
-            required:
-              - error
-            properties:
-              error:
-                type: string
-                example: "invalid_request"
-              message:
-                type: string
-                example: "Notification title is required"
-              details:
-                type: object
-
-    Forbidden:
-      description: Access denied
-      content:
-        application/json:
-          schema:
-            type: object
-            required:
-              - error
-            properties:
-              error:
-                type: string
-                example: "forbidden"
-              message:
-                type: string
-                example: "Insufficient permissions"
-
-    NotFound:
-      description: Resource not found
-      content:
-        application/json:
-          schema:
-            type: object
-            required:
-              - error
-            properties:
-              error:
-                type: string
-                example: "not_found"
-              message:
-                type: string
-                example: "Notification not found"
-
-    TooManyRequests:
-      description: Rate limit exceeded
-      content:
-        application/json:
-          schema:
-            type: object
-            required:
-              - error
-            properties:
-              error:
-                type: string
-                example: "rate_limit_exceeded"
-              message:
-                type: string
-                example: "Too many requests"
-              retry_after:
-                type: integer
-                example: 60
+  TooManyRequests:
+    description: Rate limit exceeded
+    content:
+      application/json:
+        schema:
+          type: object
+          required:
+            - error
+          properties:
+            error:
+              type: string
+              example: "rate_limit_exceeded"
+            message:
+              type: string
+              example: "Too many requests"
+            retry_after:
+              type: integer
+              example: 60

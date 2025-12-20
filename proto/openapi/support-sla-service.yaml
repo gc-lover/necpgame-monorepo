@@ -7,24 +7,24 @@ info:
     name: NECPGAME API Support
     email: api@necp.game
 servers:
-- url: http://localhost:8088/api/v1
-  description: Локальный сервер разработки
-- url: https://api.necp.game/api/v1
-  description: Продакшен сервер
+  - url: http://localhost:8088/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
 tags:
-- name: SLA Monitoring
-  description: Мониторинг SLA
+  - name: SLA Monitoring
+    description: Мониторинг SLA
 paths:
   /support/tickets/{ticket_id}/sla:
     get:
       tags:
-      - SLA Monitoring
+        - SLA Monitoring
       summary: Получить статус SLA тикета
       operationId: getTicketSLA
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       parameters:
-      - $ref: common.yaml#/components/parameters/TicketId
+        - $ref: common.yaml#/components/parameters/TicketId
       responses:
         '200':
           description: Статус SLA тикета
@@ -41,26 +41,26 @@ paths:
   /support/sla/violations:
     get:
       tags:
-      - SLA Monitoring
+        - SLA Monitoring
       summary: Получить нарушения SLA
       operationId: getSLAViolations
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       parameters:
-      - name: priority
-        in: query
-        schema:
-          type: string
-          $ref: common.yaml#/components/schemas/TicketPriority
-      - name: violation_type
-        in: query
-        schema:
-          type: string
-          enum:
-          - FIRST_RESPONSE
-          - RESOLUTION
-      - $ref: common.yaml#/components/parameters/Limit
-      - $ref: common.yaml#/components/parameters/Offset
+        - name: priority
+          in: query
+          schema:
+            type: string
+            $ref: common.yaml#/components/schemas/TicketPriority
+        - name: violation_type
+          in: query
+          schema:
+            type: string
+            enum:
+              - FIRST_RESPONSE
+              - RESOLUTION
+        - $ref: common.yaml#/components/parameters/Limit
+        - $ref: common.yaml#/components/parameters/Offset
       responses:
         '200':
           description: Нарушения SLA
@@ -86,11 +86,11 @@ components:
         priority:
           type: string
           enum:
-          - LOW
-          - NORMAL
-          - HIGH
-          - URGENT
-          - CRITICAL
+            - LOW
+            - NORMAL
+            - HIGH
+            - URGENT
+            - CRITICAL
         first_response_target:
           type: string
           format: date-time
@@ -129,16 +129,16 @@ components:
         priority:
           type: string
           enum:
-          - LOW
-          - NORMAL
-          - HIGH
-          - URGENT
-          - CRITICAL
+            - LOW
+            - NORMAL
+            - HIGH
+            - URGENT
+            - CRITICAL
         violation_type:
           type: string
           enum:
-          - FIRST_RESPONSE
-          - RESOLUTION
+            - FIRST_RESPONSE
+            - RESOLUTION
         target_time:
           type: string
           format: date-time
@@ -152,13 +152,13 @@ components:
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     SLAViolationsResponse:
       allOf:
-      - $ref: common.yaml#/components/schemas/PaginationResponse
-      - type: object
-        properties:
-          items:
-            type: array
+        - $ref: common.yaml#/components/schemas/PaginationResponse
+        - type: object
+          properties:
             items:
-              $ref: '#/components/schemas/SLAViolation'
-            description: Список нарушений SLA
+              type: array
+              items:
+                $ref: '#/components/schemas/SLAViolation'
+              description: Список нарушений SLA
 security:
-- BearerAuth: []
+  - BearerAuth: [ ]

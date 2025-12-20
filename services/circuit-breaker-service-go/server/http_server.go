@@ -12,15 +12,15 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// OPTIMIZATION: Issue #2156 - Memory-aligned struct for circuit breaker performance
+// CircuitBreakerServer OPTIMIZATION: Issue #2156 - Memory-aligned struct for circuit breaker performance
 type CircuitBreakerServer struct {
-	router     *chi.Mux
-	logger     *logrus.Logger
-	service    *CircuitBreakerService
-	metrics    *CircuitBreakerMetrics
+	router  *chi.Mux
+	logger  *logrus.Logger
+	service *CircuitBreakerService
+	metrics *CircuitBreakerMetrics
 }
 
-// OPTIMIZATION: Issue #2156 - Struct field alignment (large → small)
+// CircuitBreakerMetrics OPTIMIZATION: Issue #2156 - Struct field alignment (large → small)
 type CircuitBreakerMetrics struct {
 	RequestsTotal         prometheus.Counter   `json:"-"` // 16 bytes (interface)
 	RequestDuration       prometheus.Histogram `json:"-"` // 16 bytes (interface)
@@ -186,10 +186,10 @@ func NewCircuitBreakerServer(config *CircuitBreakerServiceConfig, logger *logrus
 	r.Get("/cb/metrics", service.GetMetrics)
 
 	server := &CircuitBreakerServer{
-		router:   r,
-		logger:   logger,
-		service:  service,
-		metrics:  metrics,
+		router:  r,
+		logger:  logger,
+		service: service,
+		metrics: metrics,
 	}
 
 	return server, nil
@@ -199,7 +199,7 @@ func (s *CircuitBreakerServer) Router() *chi.Mux {
 	return s.router
 }
 
-func (s *CircuitBreakerServer) HealthCheck(w http.ResponseWriter, r *http.Request) {
+func (s *CircuitBreakerServer) HealthCheck(w http.ResponseWriter) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(`{"status":"healthy","service":"circuit-breaker-service","version":"1.0.0","active_circuits":15,"active_bulkheads":8,"degraded_services":2}`))

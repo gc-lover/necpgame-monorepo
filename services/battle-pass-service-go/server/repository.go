@@ -1,4 +1,4 @@
-// Issue: #227
+// Package server Issue: #227
 package server
 
 import (
@@ -6,8 +6,8 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/gc-lover/necpgame-monorepo/services/battle-pass-service-go/pkg/api"
+	"github.com/google/uuid"
 	"github.com/lib/pq"
 )
 
@@ -133,7 +133,7 @@ func (r *Repository) GetReward(ctx context.Context, seasonId string, level int, 
 	}
 
 	claimed := false
-	reward.Claimed = api.NewOptBool(claimed)
+	reward.Claimed = api.NewOptBool(false)
 
 	return &reward, nil
 }
@@ -221,7 +221,7 @@ func (r *Repository) GetWeeklyChallenges(ctx context.Context, playerId string) (
 		var startDate, endDate sql.NullTime
 		var currentProgress sql.NullInt64
 		var completedAt, claimedAt sql.NullTime
-		
+
 		err := rows.Scan(
 			&ch.ID, &ch.Title, &ch.Description, &ch.ObjectiveType, &ch.ObjectiveCount, &ch.XpReward,
 			&startDate, &endDate, &currentProgress, &completedAt, &claimedAt,
@@ -229,7 +229,7 @@ func (r *Repository) GetWeeklyChallenges(ctx context.Context, playerId string) (
 		if err != nil {
 			return nil, err
 		}
-		
+
 		// Set optional fields
 		if startDate.Valid {
 			ch.StartDate = api.NewOptDateTime(startDate.Time)
@@ -246,7 +246,7 @@ func (r *Repository) GetWeeklyChallenges(ctx context.Context, playerId string) (
 		if claimedAt.Valid {
 			ch.ClaimedAt = api.NewOptDateTime(claimedAt.Time)
 		}
-		
+
 		challenges = append(challenges, ch)
 	}
 
@@ -291,7 +291,7 @@ func (r *Repository) GetSeasonChallenges(ctx context.Context, playerId string, s
 		var startDate, endDate sql.NullTime
 		var currentProgress sql.NullInt64
 		var completedAt, claimedAt sql.NullTime
-		
+
 		err := rows.Scan(
 			&ch.ID, &ch.Title, &ch.Description, &ch.ObjectiveType, &ch.ObjectiveCount, &ch.XpReward,
 			&startDate, &endDate, &currentProgress, &completedAt, &claimedAt,
@@ -299,7 +299,7 @@ func (r *Repository) GetSeasonChallenges(ctx context.Context, playerId string, s
 		if err != nil {
 			return nil, err
 		}
-		
+
 		// Set optional fields
 		if startDate.Valid {
 			ch.StartDate = api.NewOptDateTime(startDate.Time)
@@ -316,7 +316,7 @@ func (r *Repository) GetSeasonChallenges(ctx context.Context, playerId string, s
 		if claimedAt.Valid {
 			ch.ClaimedAt = api.NewOptDateTime(claimedAt.Time)
 		}
-		
+
 		challenges = append(challenges, ch)
 	}
 
@@ -353,7 +353,7 @@ func (r *Repository) GetPlayerChallenge(ctx context.Context, playerId, challenge
 	var startDate, endDate sql.NullTime
 	var currentProgress sql.NullInt64
 	var completedAt, claimedAt sql.NullTime
-	
+
 	err := r.db.QueryRowContext(ctx, query, playerId, challengeId).Scan(
 		&ch.ID, &ch.Title, &ch.Description, &ch.ObjectiveType, &ch.ObjectiveCount, &ch.XpReward,
 		&startDate, &endDate, &currentProgress, &completedAt, &claimedAt,
@@ -394,12 +394,12 @@ func (r *Repository) GetChallengeDetails(ctx context.Context, challengeId string
 
 	var ch api.WeeklyChallenge
 	var startDate, endDate sql.NullTime
-	
+
 	err := r.db.QueryRowContext(ctx, query, challengeId).Scan(
 		&ch.ID, &ch.Title, &ch.Description, &ch.ObjectiveType, &ch.ObjectiveCount,
 		&ch.XpReward, &startDate, &endDate,
 	)
-	
+
 	if err == sql.ErrNoRows {
 		return nil, ErrNotFound
 	}
@@ -454,12 +454,3 @@ func (r *Repository) UpdateProgress(ctx context.Context, playerId string, newLev
 	_, err := r.db.ExecContext(ctx, query, newLevel, newXP, time.Now(), playerId)
 	return err
 }
-
-
-
-
-
-
-
-
-

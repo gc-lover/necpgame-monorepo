@@ -1,4 +1,4 @@
-// Issue: #146073424
+// Package server Issue: #146073424
 package server
 
 import (
@@ -262,7 +262,7 @@ func (g *APIGateway) circuitBreakerMiddleware(serviceName string, next http.Hand
 		duration := time.Since(start)
 
 		// Обновляем метрики circuit breaker
-		cb.RecordResult(duration < g.config.CircuitBreakerTimeout, nil)
+		cb.RecordResult(duration < g.config.CircuitBreakerTimeout)
 	})
 }
 

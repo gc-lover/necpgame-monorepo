@@ -1,14 +1,12 @@
-// Issue: #169
+// Package server Issue: #169
 package server
 
 import (
-	"context"
 	"net/http"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/segmentio/kafka-go"
 	"go.uber.org/zap"
 )
 
@@ -29,7 +27,7 @@ func NewCombatSessionManager(db *pgxpool.Pool, kafka *kafka.Writer, log *zap.Sug
 }
 
 // CleanupExpiredSessions removes expired combat sessions
-func (m *CombatSessionManager) CleanupExpiredSessions(ctx context.Context) error {
+func (m *CombatSessionManager) CleanupExpiredSessions() error {
 	// TODO: Implement cleanup logic
 	return nil
 }
@@ -277,8 +275,3 @@ type AIInstance struct {
 	SpawnedAt       time.Time              `json:"spawned_at"`
 	DestroyedAt     *time.Time             `json:"destroyed_at,omitempty"`
 }
-
-
-
-
-

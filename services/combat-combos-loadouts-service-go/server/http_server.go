@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -50,7 +49,7 @@ func NewServer(cfg *Config) (*Server, error) {
 	r := chi.NewRouter()
 
 	// Setup middleware
-	setupMiddleware(r, cfg)
+	setupMiddleware(r)
 
 	// Setup routes
 	setupRoutes(r, handler)
@@ -100,7 +99,7 @@ func (s *Server) Shutdown(ctx context.Context) error {
 }
 
 // setupMiddleware configures middleware for the router
-func setupMiddleware(r chi.Router, cfg *Config) {
+func setupMiddleware(r chi.Router) {
 	// Request ID
 	r.Use(middleware.RequestID)
 

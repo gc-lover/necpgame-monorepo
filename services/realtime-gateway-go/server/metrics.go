@@ -78,7 +78,7 @@ var (
 		},
 	)
 
-	messagesTotal = promauto.NewCounterVec(
+	_ = promauto.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "websocket_messages_total",
 			Help: "Total number of messages processed",
@@ -172,11 +172,6 @@ func RecordConnection(status string) {
 	}
 }
 
-
-func RecordMessage(msgType, status string) {
-	messagesTotal.WithLabelValues(msgType, status).Inc()
-}
-
 func RecordMessageLatency(msgType string, latency float64) {
 	messageLatency.WithLabelValues(msgType).Observe(latency)
 }
@@ -220,4 +215,3 @@ func SetActiveServerConnection(active bool) {
 func RecordMessageSize(msgType string, size int) {
 	messageSize.WithLabelValues(msgType).Observe(float64(size))
 }
-

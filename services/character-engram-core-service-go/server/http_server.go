@@ -1,11 +1,10 @@
-// Issue: ogen migration
+// Package server Issue: ogen migration
 package server
 
 // HTTP handlers use context.WithTimeout for request timeouts (see handlers.go)
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 	"time"
 
@@ -72,8 +71,8 @@ func NewHTTPServer(addr string) *HTTPServer {
 	server.server = &http.Server{
 		Addr:         addr,
 		Handler:      router,
-		ReadTimeout:  30 * time.Second,  // Prevent slowloris attacks,
-		WriteTimeout: 30 * time.Second,  // Prevent hanging writes,
+		ReadTimeout:  30 * time.Second, // Prevent slowloris attacks,
+		WriteTimeout: 30 * time.Second, // Prevent hanging writes,
 	}
 
 	return server
@@ -133,27 +132,6 @@ func (s *HTTPServer) corsMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func respondJSON(w http.ResponseWriter, statusCode int, data interface{}) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(statusCode)
-	if err := json.NewEncoder(w).Encode(data); err != nil {
-		GetLogger().WithError(err).Error("Failed to encode JSON response")
-	}
-}
-
-func respondError(w http.ResponseWriter, statusCode int, err error, details string) {
-	GetLogger().WithError(err).Error(details)
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(statusCode)
-	errorResponse := api.Error{
-		Code:    api.OptNilString{},
-		Message: details,
-	}
-	if err := json.NewEncoder(w).Encode(errorResponse); err != nil {
-		GetLogger().WithError(err).Error("Failed to encode JSON error response")
-	}
-}
-
 func requestIDMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		reqID := r.Header.Get("X-Request-ID")
@@ -175,6 +153,3 @@ func getRequestID(ctx context.Context) string {
 	}
 	return ""
 }
-
-
-

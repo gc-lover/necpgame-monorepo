@@ -1,4 +1,4 @@
-// Issue: #141889273
+// Package server Issue: #141889273
 package server
 
 import (
@@ -11,22 +11,22 @@ import (
 
 // GatewayHandler manages WebSocket connections and game state broadcasting
 type GatewayHandler struct {
-	tickRate         int
-	gameStateMgr     *GameStateManager
-	sessionMgr       SessionManagerInterface
-	serverConn       *websocket.Conn
-	serverConnMu     sync.RWMutex
-	serverWriteMu    sync.Mutex
-	clientConns      map[*websocket.Conn]*ClientConnection
-	clientConnsMu    sync.RWMutex
-	clientDeltaStates map[*websocket.Conn]*ClientDeltaState
-	deltaStatesMu    sync.RWMutex
-	useDeltaCompression bool
-	sessionTokens    map[*websocket.Conn]string
-	sessionTokensMu  sync.RWMutex
-	banNotifier      *BanNotificationSubscriber
+	tickRate               int
+	gameStateMgr           *GameStateManager
+	sessionMgr             SessionManagerInterface
+	serverConn             *websocket.Conn
+	serverConnMu           sync.RWMutex
+	serverWriteMu          sync.Mutex
+	clientConns            map[*websocket.Conn]*ClientConnection
+	clientConnsMu          sync.RWMutex
+	clientDeltaStates      map[*websocket.Conn]*ClientDeltaState
+	deltaStatesMu          sync.RWMutex
+	useDeltaCompression    bool
+	sessionTokens          map[*websocket.Conn]string
+	sessionTokensMu        sync.RWMutex
+	banNotifier            *BanNotificationSubscriber
 	notificationSubscriber *NotificationSubscriber
-	compressor       *AdaptiveCompressor // Issue: #1612 - Adaptive compression
+	compressor             *AdaptiveCompressor // Issue: #1612 - Adaptive compression
 }
 
 func NewGatewayHandler(tickRate int, sessionMgr SessionManagerInterface) *GatewayHandler {
@@ -80,21 +80,18 @@ func (h *GatewayHandler) GetServerConnection() *websocket.Conn {
 	return h.serverConn
 }
 
-
 func (h *GatewayHandler) SendToServer(data []byte) error {
 	h.serverConnMu.RLock()
 	conn := h.serverConn
 	h.serverConnMu.RUnlock()
-	
+
 	if conn == nil {
 		return fmt.Errorf("server connection not available")
 	}
-	
+
 	h.serverWriteMu.Lock()
 	defer h.serverWriteMu.Unlock()
-	
+
 	conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
 	return conn.WriteMessage(websocket.BinaryMessage, data)
 }
-
-

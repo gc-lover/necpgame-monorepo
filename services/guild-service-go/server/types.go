@@ -1,4 +1,4 @@
-// Issue: #1943
+// Package server Issue: #1943
 package server
 
 import (
@@ -7,7 +7,7 @@ import (
 	"github.com/google/uuid"
 )
 
-// Request/Response types for API
+// CreateGuildRequest Request/Response types for API
 type CreateGuildRequest struct {
 	Name        string    `json:"name"`
 	Description string    `json:"description"`
@@ -16,12 +16,12 @@ type CreateGuildRequest struct {
 }
 
 type GetGuildsParams struct {
-	Page      int    `json:"page"`
-	Limit     int    `json:"limit"`
-	Search    string `json:"search,omitempty"`
-	MinLevel  int    `json:"min_level,omitempty"`
-	MaxLevel  int    `json:"max_level,omitempty"`
-	Region    string `json:"region,omitempty"`
+	Page     int    `json:"page"`
+	Limit    int    `json:"limit"`
+	Search   string `json:"search,omitempty"`
+	MinLevel int    `json:"min_level,omitempty"`
+	MaxLevel int    `json:"max_level,omitempty"`
+	Region   string `json:"region,omitempty"`
 }
 
 type GetMembersParams struct {
@@ -31,7 +31,7 @@ type GetMembersParams struct {
 	Status string `json:"status,omitempty"`
 }
 
-// Response types
+// GuildResponse Response types
 type GuildResponse struct {
 	ID          string    `json:"id"`
 	Name        string    `json:"name"`
@@ -52,13 +52,13 @@ type GuildListResponse struct {
 }
 
 type GuildMemberResponse struct {
-	PlayerID         string    `json:"player_id"`
-	Username         string    `json:"username"`
-	Role             string    `json:"role"`
-	JoinedAt         time.Time `json:"joined_at"`
-	LastActive       time.Time `json:"last_active"`
-	ContributionScore int      `json:"contribution_score"`
-	Permissions      []string  `json:"permissions"`
+	PlayerID          string    `json:"player_id"`
+	Username          string    `json:"username"`
+	Role              string    `json:"role"`
+	JoinedAt          time.Time `json:"joined_at"`
+	LastActive        time.Time `json:"last_active"`
+	ContributionScore int       `json:"contribution_score"`
+	Permissions       []string  `json:"permissions"`
 }
 
 type InvitationResponse struct {
@@ -71,15 +71,15 @@ type InvitationResponse struct {
 	ExpiresAt time.Time `json:"expires_at"`
 }
 
-// Internal types
+// GuildMember Internal types
 type GuildMember struct {
-	PlayerID         string
-	Username         string
-	Role             string
-	JoinedAt         time.Time
-	LastActive       time.Time
+	PlayerID          string
+	Username          string
+	Role              string
+	JoinedAt          time.Time
+	LastActive        time.Time
 	ContributionScore int
-	Permissions      []string
+	Permissions       []string
 }
 
 type Invitation struct {

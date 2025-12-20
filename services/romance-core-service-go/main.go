@@ -42,7 +42,7 @@ func main() {
 	defer db.Close()
 
 	// Создаем HTTP сервер
-	srv := server.NewRomanceCoreServer(logger, db, config.JWTSecret)
+	srv := server.NewRomanceCoreServer(logger, db)
 
 	// Запускаем сервер
 	if err := srv.Start(); err != nil {

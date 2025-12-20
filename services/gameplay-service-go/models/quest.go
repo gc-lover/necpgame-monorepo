@@ -8,22 +8,7 @@ import (
 
 type QuestStatus string
 
-const (
-	QuestStatusNotStarted QuestStatus = "not_started"
-	QuestStatusInProgress QuestStatus = "in_progress"
-	QuestStatusCompleted  QuestStatus = "completed"
-	QuestStatusFailed     QuestStatus = "failed"
-	QuestStatusAbandoned  QuestStatus = "abandoned"
-)
-
 type ObjectiveStatus string
-
-const (
-	ObjectiveStatusPending    ObjectiveStatus = "pending"
-	ObjectiveStatusInProgress ObjectiveStatus = "in_progress"
-	ObjectiveStatusCompleted  ObjectiveStatus = "completed"
-	ObjectiveStatusFailed     ObjectiveStatus = "failed"
-)
 
 type QuestInstance struct {
 	// OPTIMIZATION: Field alignment - large fields first

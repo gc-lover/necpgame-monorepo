@@ -1,4 +1,4 @@
-// Issue: #1582 - Automatic Partition Management
+// Package server Issue: #1582 - Automatic Partition Management
 // OPTIMIZATION: Auto-create partitions 7 days ahead
 // OPTIMIZATION: Auto-drop partitions older than 30 days
 // GAINS: No manual partition management, automatic retention
@@ -21,14 +21,6 @@ type PartitionManager struct {
 }
 
 // NewPartitionManager creates partition manager
-func NewPartitionManager(db *sql.DB) *PartitionManager {
-	return &PartitionManager{
-		db:               db,
-		retentionDays:    30,
-		futurePartitions: 7,
-		checkInterval:    24 * time.Hour,
-	}
-}
 
 // Start начинает автоматическое управление партициями
 func (pm *PartitionManager) Start(ctx context.Context) {
@@ -36,11 +28,11 @@ func (pm *PartitionManager) Start(ctx context.Context) {
 	if err := pm.EnsurePartitions(ctx); err != nil {
 		log.Printf("Failed to ensure partitions: %v", err)
 	}
-	
+
 	// Then run periodically
 	ticker := time.NewTicker(pm.checkInterval)
 	defer ticker.Stop()
-	
+
 	for {
 		select {
 		case <-ticker.C:
@@ -64,14 +56,14 @@ func (pm *PartitionManager) EnsurePartitions(ctx context.Context) error {
 		{"matchmaking", "match_history"},
 		{"game_events", "game_events"},
 	}
-	
+
 	for _, tbl := range tables {
 		if err := pm.ensureTablePartitions(ctx, tbl.schema, tbl.table); err != nil {
 			log.Printf("Failed to manage partitions for %s.%s: %v", tbl.schema, tbl.table, err)
 			continue
 		}
 	}
-	
+
 	return nil
 }
 
@@ -84,13 +76,13 @@ func (pm *PartitionManager) ensureTablePartitions(ctx context.Context, schema, t
 			return err
 		}
 	}
-	
+
 	// Drop old partitions (older than retention)
 	oldDate := time.Now().AddDate(0, 0, -pm.retentionDays)
 	if err := pm.dropOldPartitions(ctx, schema, table, oldDate); err != nil {
 		return err
 	}
-	
+
 	return nil
 }
 
@@ -98,7 +90,7 @@ func (pm *PartitionManager) ensureTablePartitions(ctx context.Context, schema, t
 func (pm *PartitionManager) createPartition(ctx context.Context, schema, table string, date time.Time) error {
 	partitionName := fmt.Sprintf("%s_%s", table, date.Format("2006_01_02"))
 	fullPartitionName := fmt.Sprintf("%s.%s", schema, partitionName)
-	
+
 	// Check if partition exists
 	var exists bool
 	query := `
@@ -112,25 +104,25 @@ func (pm *PartitionManager) createPartition(ctx context.Context, schema, table s
 	if err != nil {
 		return fmt.Errorf("failed to check partition: %w", err)
 	}
-	
+
 	if exists {
 		return nil // Already exists
 	}
-	
+
 	// Create partition
 	startDate := date.Format("2006-01-02 15:04:05")
 	endDate := date.AddDate(0, 0, 1).Format("2006-01-02 15:04:05")
-	
+
 	createSQL := fmt.Sprintf(`
 		CREATE TABLE IF NOT EXISTS %s PARTITION OF %s.%s
 		FOR VALUES FROM ('%s') TO ('%s')
 	`, fullPartitionName, schema, table, startDate, endDate)
-	
+
 	_, err = pm.db.ExecContext(ctx, createSQL)
 	if err != nil {
 		return fmt.Errorf("failed to create partition %s: %w", partitionName, err)
 	}
-	
+
 	log.Printf("Created partition: %s (range: %s to %s)", fullPartitionName, startDate, endDate)
 	return nil
 }
@@ -148,27 +140,27 @@ func (pm *PartitionManager) dropOldPartitions(ctx context.Context, schema, table
 		AND parent.relname = $2
 		AND c.relname LIKE $3
 	`
-	
+
 	pattern := table + "_%"
 	rows, err := pm.db.QueryContext(ctx, query, schema, table, pattern)
 	if err != nil {
 		return fmt.Errorf("failed to list partitions: %w", err)
 	}
 	defer rows.Close()
-	
+
 	for rows.Next() {
 		var partitionName string
 		if err := rows.Scan(&partitionName); err != nil {
 			continue
 		}
-		
+
 		// Parse date from partition name (e.g., "combat_logs_2025_11_01")
 		partDate, err := parsePartitionDate(partitionName, table)
 		if err != nil {
 			log.Printf("Failed to parse partition date: %s", partitionName)
 			continue
 		}
-		
+
 		// Drop if older than cutoff
 		if partDate.Before(cutoffDate) {
 			dropSQL := fmt.Sprintf("DROP TABLE IF EXISTS %s.%s", schema, partitionName)
@@ -177,12 +169,12 @@ func (pm *PartitionManager) dropOldPartitions(ctx context.Context, schema, table
 				log.Printf("Failed to drop partition %s: %v", partitionName, err)
 				continue
 			}
-			
+
 			log.Printf("Dropped old partition: %s.%s (date: %s, retention: %d days)",
 				schema, partitionName, partDate.Format("2006-01-02"), pm.retentionDays)
 		}
 	}
-	
+
 	return nil
 }
 
@@ -191,13 +183,13 @@ func (pm *PartitionManager) dropOldPartitions(ctx context.Context, schema, table
 func parsePartitionDate(partitionName, tablePrefix string) (time.Time, error) {
 	// Remove table prefix and underscore
 	dateStr := partitionName[len(tablePrefix)+1:] // Skip "table_name_"
-	
+
 	// Parse YYYY_MM_DD format
 	date, err := time.Parse("2006_01_02", dateStr)
 	if err != nil {
 		return time.Time{}, fmt.Errorf("invalid partition date format: %s", dateStr)
 	}
-	
+
 	return date, nil
 }
 
@@ -216,13 +208,13 @@ func (pm *PartitionManager) GetPartitionInfo(ctx context.Context, schema, table 
 		AND parent.relname = $2
 		ORDER BY c.relname
 	`
-	
+
 	rows, err := pm.db.QueryContext(ctx, query, schema, table)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	
+
 	var partitions []PartitionInfo
 	for rows.Next() {
 		var p PartitionInfo
@@ -231,7 +223,7 @@ func (pm *PartitionManager) GetPartitionInfo(ctx context.Context, schema, table 
 		}
 		partitions = append(partitions, p)
 	}
-	
+
 	return partitions, nil
 }
 
@@ -241,5 +233,3 @@ type PartitionInfo struct {
 	Range string
 	Size  string
 }
-
-

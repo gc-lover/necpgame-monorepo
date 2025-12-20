@@ -87,7 +87,7 @@ func BenchmarkSkillBucketMatcher_GetQueueSize(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		_ = matcher.GetQueueSize("pvp_5v5", 1750)
 	}
-	
+
 	// Expected: <1μs per operation, 0 allocs
 }
 
@@ -111,7 +111,6 @@ func BenchmarkSkillBucketMatcher_AddToQueue(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		matcher.AddToQueue(entries[i])
 	}
-	
+
 	// Expected: <500ns per operation, 1-2 allocs
 }
-

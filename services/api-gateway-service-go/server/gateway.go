@@ -1,4 +1,4 @@
-// Issue: #146073424
+// Package server provides HTTP server implementation for the API gateway.
 package server
 
 import (
@@ -67,29 +67,6 @@ type APIGateway struct {
 }
 
 // NewAPIGateway создает новый API Gateway
-func NewAPIGateway(logger *zap.Logger, config *APIGatewayConfig) (*APIGateway, error) {
-	gateway := &APIGateway{
-		config: config,
-		logger: logger,
-	}
-
-	// Инициализируем компоненты
-	if err := gateway.initializeComponents(); err != nil {
-		return nil, fmt.Errorf("failed to initialize components: %w", err)
-	}
-
-	// Создаем reverse proxies
-	if err := gateway.initializeProxies(); err != nil {
-		return nil, fmt.Errorf("failed to initialize proxies: %w", err)
-	}
-
-	// Создаем HTTP сервер
-	if err := gateway.initializeServer(); err != nil {
-		return nil, fmt.Errorf("failed to initialize server: %w", err)
-	}
-
-	return gateway, nil
-}
 
 // initializeComponents инициализирует компоненты gateway
 func (g *APIGateway) initializeComponents() error {
@@ -100,7 +77,7 @@ func (g *APIGateway) initializeComponents() error {
 	g.circuitBreaker = NewCircuitBreakerManager(g.config, g.logger)
 
 	// Auth middleware
-	g.authMiddleware = NewAuthMiddleware(string(g.config.JWTSecret), g.logger)
+	g.authMiddleware = NewAuthMiddleware(g.config.JWTSecret, g.logger)
 
 	g.logger.Info("API Gateway components initialized",
 		zap.Int("rate_limit_rpm", g.config.RateLimitRPM),

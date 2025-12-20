@@ -32,10 +32,10 @@ RUN chown -R appuser:appuser /app
 
 USER appuser
 
-EXPOSE 8156/tcp
+EXPOSE 8097/tcp
 
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:8156/health || exit 1
+  CMD wget -q --spider http://localhost:8097/health || exit 1
 
 ENTRYPOINT ["/app/social-player-orders-service"]
 

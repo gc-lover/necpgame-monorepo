@@ -1,0 +1,148 @@
+# Voice Chat Service API - WebRTC Signaling
+openapi: 3.0.3
+info:
+  title: Voice Chat Service API - WebRTC Signaling
+  version: 1.0.0
+  description: WebRTC signaling endpoints for Voice Chat Service
+
+servers:
+  - url: https://voice-chat.necpgame.com/api/v1
+    description: Production server
+  - url: http://localhost:8080/api/v1
+    description: Local development
+
+security:
+  - BearerAuth: [ ]
+
+tags:
+  - name: signaling
+    description: WebRTC signaling messages
+
+paths:
+  /signal:
+    post:
+      tags: [ signaling ]
+      summary: Send WebRTC signaling message
+      operationId: sendSignal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebRTCSignal'
+      responses:
+        '200':
+          description: Signal sent successfully
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+  schemas:
+    # Signaling schemas
+    WebRTCSignal:
+      type: object
+      required:
+        - type
+        - room_id
+        - from_player_id
+        - to_player_id
+      properties:
+        type:
+          type: string
+          enum: [ offer, answer, ice_candidate, hangup ]
+          description: WebRTC signal type
+        room_id:
+          type: string
+          format: uuid
+          description: Voice room identifier
+        from_player_id:
+          type: string
+          format: uuid
+          description: Sender player identifier
+        to_player_id:
+          type: string
+          format: uuid
+          description: Receiver player identifier
+        session_description:
+          type: object
+          description: WebRTC session description (for offer/answer)
+          properties:
+            type:
+              type: string
+              enum: [ offer, answer, pranswer ]
+            sdp:
+              type: string
+              description: SDP content
+        ice_candidate:
+          type: object
+          description: ICE candidate information
+          properties:
+            candidate:
+              type: string
+              description: ICE candidate string
+            sdp_mid:
+              type: string
+              description: SDP media ID
+            sdp_mline_index:
+              type: integer
+              description: SDP m-line index
+        timestamp:
+          type: string
+          format: date-time
+          description: Signal timestamp
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Additional signaling metadata
+
+    Error:
+      type: object
+      required:
+        - error
+        - message
+        - timestamp
+      properties:
+        error:
+          type: string
+          description: Error code
+        message:
+          type: string
+          description: Human-readable error message
+        timestamp:
+          type: string
+          format: date-time
+          description: Error timestamp
+        details:
+          type: object
+          additionalProperties: true
+          description: Additional error details

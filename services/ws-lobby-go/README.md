@@ -25,6 +25,7 @@ go build -o ws-lobby .
 ```
 
 Для Windows:
+
 ```bash
 go build -o ws-lobby.exe .
 ```
@@ -32,6 +33,7 @@ go build -o ws-lobby.exe .
 ## Запуск
 
 Локально:
+
 ```bash
 ./ws-lobby
 # или
@@ -39,6 +41,7 @@ go run .
 ```
 
 Через скрипт:
+
 ```bash
 scripts\run\ws-lobby.cmd  # Windows
 ```
@@ -48,16 +51,19 @@ scripts\run\ws-lobby.cmd  # Windows
 ## Docker
 
 Сборка образа:
+
 ```bash
 docker build -t necpgame-ws-lobby-go:latest services/ws-lobby-go
 ```
 
 Запуск контейнера:
+
 ```bash
 docker run -p 18081:18081 necpgame-ws-lobby-go:latest
 ```
 
 Через docker-compose:
+
 ```bash
 docker-compose up ws-lobby
 ```
@@ -65,17 +71,20 @@ docker-compose up ws-lobby
 ## Протокол
 
 ### Подключение
+
 ```
 ws://localhost:18081/ws?token=YOUR_JWT
 ```
 
 ### Команды
+
 - `JOIN <room>` - присоединиться к комнате
 - `LEAVE` - покинуть комнату (вернуться в general)
 - `MSG <text>` - отправить сообщение в текущую комнату
 - Любой другой текст - эхо всем в комнате
 
 ### Пример
+
 ```bash
 wscat -c "ws://localhost:18081/ws?token=YOUR_JWT"
 > JOIN general

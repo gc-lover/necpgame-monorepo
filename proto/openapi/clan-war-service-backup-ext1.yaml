@@ -1,400 +1,400 @@
-            minimum: 0
-            default: 0
-          description: Смещение для пагинации
-      responses:
-        "200":
-          description: Успешный ответ со списком территорий
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  territories:
-                    type: array
-                    items:
-                      $ref: "#/components/schemas/Territory"
-                  pagination:
-                    $ref: "#/components/schemas/PaginationInfo"
-                  total:
-                    type: integer
-                    description: Общее количество территорий
-                required:
-                  - territories
-                  - total
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-
-  /world/clan-war/territories/{territoryId}:
-    get:
-      summary: Получить информацию о территории
-      description: Возвращает подробную информацию о территории
-      operationId: getTerritory
-      tags:
-        - Territories
-      parameters:
-        - name: territoryId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: ID территории
-      responses:
-        "200":
-          description: Успешный ответ с информацией о территории
-          content:
-            application/json:
-              schema:
+minimum: 0
+default: 0
+description: Смещение для пагинации
+responses:
+  "200":
+    description: Успешный ответ со списком территорий
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            territories:
+              type: array
+              items:
                 $ref: "#/components/schemas/Territory"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
+            pagination:
+              $ref: "#/components/schemas/PaginationInfo"
+            total:
+              type: integer
+              description: Общее количество территорий
+          required:
+            - territories
+            - total
+  "500":
+    $ref: "#/components/responses/InternalServerError"
 
-    post:
-      summary: Передать территорию (admin)
-      description: |
-        Передаёт территорию новому владельцу после победы в войне.
-        Доступно только для автоматической передачи системой.
-      operationId: transferTerritory
-      tags:
-        - Territories
-      parameters:
-        - name: territoryId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: ID территории
-      requestBody:
+/world/clan-war/territories/{territoryId}:
+  get:
+    summary: Получить информацию о территории
+    description: Возвращает подробную информацию о территории
+    operationId: getTerritory
+    tags:
+      - Territories
+    parameters:
+      - name: territoryId
+        in: path
         required: true
+        schema:
+          type: string
+          format: uuid
+        description: ID территории
+    responses:
+      "200":
+        description: Успешный ответ с информацией о территории
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Territory"
+      "404":
+        $ref: "#/components/responses/NotFound"
+      "500":
+        $ref: "#/components/responses/InternalServerError"
+
+  post:
+    summary: Передать территорию (admin)
+    description: |
+      Передаёт территорию новому владельцу после победы в войне.
+      Доступно только для автоматической передачи системой.
+    operationId: transferTerritory
+    tags:
+      - Territories
+    parameters:
+      - name: territoryId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: ID территории
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - newOwnerClanId
+            properties:
+              newOwnerClanId:
+                type: string
+                format: uuid
+                description: ID нового владельца
+              transferReason:
+                type: string
+                enum: [ WAR_VICTORY, ADMIN_OVERRIDE ]
+                default: WAR_VICTORY
+                description: Причина передачи
+              warId:
+                type: string
+                format: uuid
+                description: ID войны (для WAR_VICTORY)
+    responses:
+      "200":
+        description: Территория передана
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Territory"
+      "403":
+        description: Недостаточно прав для передачи территории
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Error"
+      "404":
+        $ref: "#/components/responses/NotFound"
+      "409":
+        description: Территорию нельзя передать в текущем состоянии
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Error"
+      "500":
+        $ref: "#/components/responses/InternalServerError"
+
+# Управление битвами
+/world/clan-war/battles/create:
+  post:
+    summary: Создать битву
+    description: |
+      Создает новую битву в рамках клановой войны.
+      Автоматически вызывается системой при переходе в активную фазу.
+    operationId: createBattle
+    tags:
+      - Battles
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - warId
+              - battleType
+            properties:
+              warId:
+                type: string
+                format: uuid
+                description: ID войны
+              battleType:
+                type: string
+                enum: [ TERRITORY_BATTLE, SIEGE, OPEN_WORLD_PVP ]
+                description: Тип битвы
+              territoryId:
+                type: string
+                format: uuid
+                description: ID территории (для TERRITORY_BATTLE и SIEGE)
+              participants:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    clanId:
+                      type: string
+                      format: uuid
+                    role:
+                      type: string
+                      enum: [ ATTACKER, DEFENDER, ALLY_ATTACKER, ALLY_DEFENDER ]
+                  required:
+                    - clanId
+                    - role
+                description: Участники битвы
+                maxItems: 10
+    responses:
+      "201":
+        description: Битва создана
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WarBattle"
+        headers:
+          Location:
+            schema:
+              type: string
+              format: uri
+            description: URL созданной битвы
+      "400":
+        $ref: "#/components/responses/BadRequest"
+      "403":
+        description: Недостаточно прав для создания битвы
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Error"
+      "409":
+        description: Битву нельзя создать в текущей фазе войны
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Error"
+      "500":
+        $ref: "#/components/responses/InternalServerError"
+
+/world/clan-war/battles/{battleId}/start:
+  post:
+    summary: Запустить битву
+    description: Запускает битву, активируя PvP зоны и уведомляя участников
+    operationId: startBattle
+    tags:
+      - Battles
+    parameters:
+      - name: battleId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: ID битвы
+    responses:
+      "200":
+        description: Битва запущена
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WarBattle"
+      "403":
+        description: Недостаточно прав для запуска битвы
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Error"
+      "404":
+        $ref: "#/components/responses/NotFound"
+      "409":
+        description: Битву нельзя запустить в текущем состоянии
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Error"
+      "500":
+        $ref: "#/components/responses/InternalServerError"
+
+/world/clan-war/battles/active:
+  get:
+    summary: Получить список активных битв
+    description: Возвращает список активных битв в клановых войнах
+    operationId: getActiveBattles
+    tags:
+      - Battles
+    parameters:
+      - name: warId
+        in: query
+        schema:
+          type: string
+          format: uuid
+        description: Фильтр по войне
+      - name: clanId
+        in: query
+        schema:
+          type: string
+          format: uuid
+        description: Фильтр по участию клана
+      - name: battleType
+        in: query
+        schema:
+          type: string
+          enum: [ TERRITORY_BATTLE, SIEGE, OPEN_WORLD_PVP ]
+        description: Фильтр по типу битвы
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 50
+          default: 20
+        description: Количество элементов
+    responses:
+      "200":
+        description: Успешный ответ со списком активных битв
         content:
           application/json:
             schema:
               type: object
-              required:
-                - newOwnerClanId
               properties:
-                newOwnerClanId:
-                  type: string
-                  format: uuid
-                  description: ID нового владельца
-                transferReason:
-                  type: string
-                  enum: [WAR_VICTORY, ADMIN_OVERRIDE]
-                  default: WAR_VICTORY
-                  description: Причина передачи
-                warId:
-                  type: string
-                  format: uuid
-                  description: ID войны (для WAR_VICTORY)
-      responses:
-        "200":
-          description: Территория передана
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Territory"
-        "403":
-          description: Недостаточно прав для передачи территории
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "409":
-          description: Территорию нельзя передать в текущем состоянии
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
+                battles:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/WarBattle"
+                total:
+                  type: integer
+                  description: Общее количество активных битв
+              required:
+                - battles
+                - total
+      "500":
+        $ref: "#/components/responses/InternalServerError"
 
-  # Управление битвами
-  /world/clan-war/battles/create:
-    post:
-      summary: Создать битву
-      description: |
-        Создает новую битву в рамках клановой войны.
-        Автоматически вызывается системой при переходе в активную фазу.
-      operationId: createBattle
-      tags:
-        - Battles
-      requestBody:
+/world/clan-war/battles/{battleId}/end:
+  post:
+    summary: Завершить битву
+    description: |
+      Завершает битву и рассчитывает результаты.
+      Вызывается автоматически по таймеру или принудительно.
+    operationId: endBattle
+    tags:
+      - Battles
+    parameters:
+      - name: battleId
+        in: path
         required: true
+        schema:
+          type: string
+          format: uuid
+        description: ID битвы
+    requestBody:
+      required: false
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              forced:
+                type: boolean
+                default: false
+                description: Принудительное завершение (admin)
+              reason:
+                type: string
+                enum: [ TIMEOUT, VICTORY, DRAW, ADMIN_FORCE ]
+                default: TIMEOUT
+                description: Причина завершения
+    responses:
+      "200":
+        description: Битва завершена
         content:
           application/json:
             schema:
               type: object
+              properties:
+                battle:
+                  $ref: "#/components/schemas/WarBattle"
+                scores:
+                  type: object
+                  description: Итоговые очки по кланам
+                  additionalProperties:
+                    type: integer
+                winnerClanId:
+                  type: string
+                  format: uuid
+                  description: ID победившего клана
               required:
-                - warId
-                - battleType
+                - battle
+                - scores
+      "403":
+        description: Недостаточно прав для завершения битвы
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Error"
+      "404":
+        $ref: "#/components/responses/NotFound"
+      "409":
+        description: Битву нельзя завершить в текущем состоянии
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Error"
+      "500":
+        $ref: "#/components/responses/InternalServerError"
+
+# Система очков
+/world/clan-war/{warId}/scores:
+  get:
+    summary: Получить очки войны
+    description: Возвращает текущие очки всех участников клановой войны
+    operationId: getWarScores
+    tags:
+      - Scoring
+    parameters:
+      - name: warId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: ID войны
+    responses:
+      "200":
+        description: Успешный ответ с очками войны
+        content:
+          application/json:
+            schema:
+              type: object
               properties:
                 warId:
                   type: string
                   format: uuid
                   description: ID войны
-                battleType:
-                  type: string
-                  enum: [TERRITORY_BATTLE, SIEGE, OPEN_WORLD_PVP]
-                  description: Тип битвы
-                territoryId:
-                  type: string
-                  format: uuid
-                  description: ID территории (для TERRITORY_BATTLE и SIEGE)
-                participants:
-                  type: array
-                  items:
+                scores:
+                  type: object
+                  description: Очки по кланам
+                  additionalProperties:
                     type: object
                     properties:
                       clanId:
                         type: string
                         format: uuid
-                      role:
-                        type: string
-                        enum: [ATTACKER, DEFENDER, ALLY_ATTACKER, ALLY_DEFENDER]
-                    required:
-                      - clanId
-                      - role
-                  description: Участники битвы
-                  maxItems: 10
-      responses:
-        "201":
-          description: Битва создана
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/WarBattle"
-          headers:
-            Location:
-              schema:
-                type: string
-                format: uri
-              description: URL созданной битвы
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "403":
-          description: Недостаточно прав для создания битвы
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "409":
-          description: Битву нельзя создать в текущей фазе войны
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-
-  /world/clan-war/battles/{battleId}/start:
-    post:
-      summary: Запустить битву
-      description: Запускает битву, активируя PvP зоны и уведомляя участников
-      operationId: startBattle
-      tags:
-        - Battles
-      parameters:
-        - name: battleId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: ID битвы
-      responses:
-        "200":
-          description: Битва запущена
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/WarBattle"
-        "403":
-          description: Недостаточно прав для запуска битвы
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "409":
-          description: Битву нельзя запустить в текущем состоянии
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-
-  /world/clan-war/battles/active:
-    get:
-      summary: Получить список активных битв
-      description: Возвращает список активных битв в клановых войнах
-      operationId: getActiveBattles
-      tags:
-        - Battles
-      parameters:
-        - name: warId
-          in: query
-          schema:
-            type: string
-            format: uuid
-          description: Фильтр по войне
-        - name: clanId
-          in: query
-          schema:
-            type: string
-            format: uuid
-          description: Фильтр по участию клана
-        - name: battleType
-          in: query
-          schema:
-            type: string
-            enum: [TERRITORY_BATTLE, SIEGE, OPEN_WORLD_PVP]
-          description: Фильтр по типу битвы
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 50
-            default: 20
-          description: Количество элементов
-      responses:
-        "200":
-          description: Успешный ответ со списком активных битв
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  battles:
-                    type: array
-                    items:
-                      $ref: "#/components/schemas/WarBattle"
-                  total:
-                    type: integer
-                    description: Общее количество активных битв
-                required:
-                  - battles
-                  - total
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-
-  /world/clan-war/battles/{battleId}/end:
-    post:
-      summary: Завершить битву
-      description: |
-        Завершает битву и рассчитывает результаты.
-        Вызывается автоматически по таймеру или принудительно.
-      operationId: endBattle
-      tags:
-        - Battles
-      parameters:
-        - name: battleId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: ID битвы
-      requestBody:
-        required: false
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                forced:
-                  type: boolean
-                  default: false
-                  description: Принудительное завершение (admin)
-                reason:
-                  type: string
-                  enum: [TIMEOUT, VICTORY, DRAW, ADMIN_FORCE]
-                  default: TIMEOUT
-                  description: Причина завершения
-      responses:
-        "200":
-          description: Битва завершена
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  battle:
-                    $ref: "#/components/schemas/WarBattle"
-                  scores:
-                    type: object
-                    description: Итоговые очки по кланам
-                    additionalProperties:
-                      type: integer
-                  winnerClanId:
-                    type: string
-                    format: uuid
-                    description: ID победившего клана
-                required:
-                  - battle
-                  - scores
-        "403":
-          description: Недостаточно прав для завершения битвы
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "409":
-          description: Битву нельзя завершить в текущем состоянии
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-
-  # Система очков
-  /world/clan-war/{warId}/scores:
-    get:
-      summary: Получить очки войны
-      description: Возвращает текущие очки всех участников клановой войны
-      operationId: getWarScores
-      tags:
-        - Scoring
-      parameters:
-        - name: warId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: ID войны
-      responses:
-        "200":
-          description: Успешный ответ с очками войны
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  warId:
-                    type: string
-                    format: uuid
-                    description: ID войны
-                  scores:
-                    type: object
-                    description: Очки по кланам
-                    additionalProperties:
-                      type: object
-                      properties:
-                        clanId:
-                          type: string
-                          format: uuid
-                        totalScore:
-                          type: integer
-                          description: Общий счет клана
-                        territoryScore:
+                      totalScore:
+                        type: integer
+                        description: Общий счет клана
+                      territoryScore:

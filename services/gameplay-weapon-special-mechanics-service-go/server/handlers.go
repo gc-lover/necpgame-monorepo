@@ -1,4 +1,4 @@
-// Issue: #1595 - ogen handlers (TYPED responses)
+// Package server Issue: #1595 - ogen handlers (TYPED responses)
 package server
 
 import (
@@ -9,8 +9,7 @@ import (
 )
 
 const (
-	DBTimeout    = 50 * time.Millisecond
-	CacheTimeout = 10 * time.Millisecond
+	DBTimeout = 50 * time.Millisecond
 )
 
 type Handlers struct {
@@ -25,7 +24,7 @@ func (h *Handlers) ApplySpecialMechanics(ctx context.Context, req *api.ApplySpec
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	result, err := h.service.ApplySpecialMechanics(ctx, req)
+	result, err := h.service.ApplySpecialMechanics(req)
 	if err != nil {
 		return &api.ApplySpecialMechanicsInternalServerError{}, err
 	}
@@ -33,11 +32,11 @@ func (h *Handlers) ApplySpecialMechanics(ctx context.Context, req *api.ApplySpec
 	return result, nil
 }
 
-func (h *Handlers) CalculateChainDamage(ctx context.Context, req *api.CalculateChainDamageRequest) (api.CalculateChainDamageRes, error) {
+func (h *Handlers) CalculateChainDamage(ctx context.Context, _ *api.CalculateChainDamageRequest) (api.CalculateChainDamageRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	result, err := h.service.CalculateChainDamage(ctx, req)
+	result, err := h.service.CalculateChainDamage()
 	if err != nil {
 		return &api.CalculateChainDamageInternalServerError{}, err
 	}
@@ -49,7 +48,7 @@ func (h *Handlers) CreatePersistentEffect(ctx context.Context, req *api.CreatePe
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	result, err := h.service.CreatePersistentEffect(ctx, req)
+	result, err := h.service.CreatePersistentEffect(req)
 	if err != nil {
 		return &api.CreatePersistentEffectInternalServerError{}, err
 	}
@@ -57,11 +56,11 @@ func (h *Handlers) CreatePersistentEffect(ctx context.Context, req *api.CreatePe
 	return result, nil
 }
 
-func (h *Handlers) DestroyEnvironment(ctx context.Context, req *api.DestroyEnvironmentRequest) (api.DestroyEnvironmentRes, error) {
+func (h *Handlers) DestroyEnvironment(ctx context.Context, _ *api.DestroyEnvironmentRequest) (api.DestroyEnvironmentRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	result, err := h.service.DestroyEnvironment(ctx, req)
+	result, err := h.service.DestroyEnvironment()
 	if err != nil {
 		return &api.DestroyEnvironmentInternalServerError{}, err
 	}
@@ -73,7 +72,7 @@ func (h *Handlers) GetPersistentEffects(ctx context.Context, params api.GetPersi
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	result, err := h.service.GetPersistentEffects(ctx, params.TargetId)
+	result, err := h.service.GetPersistentEffects(params.TargetId)
 	if err != nil {
 		return &api.GetPersistentEffectsInternalServerError{}, err
 	}
@@ -85,11 +84,10 @@ func (h *Handlers) GetWeaponSpecialMechanics(ctx context.Context, params api.Get
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	result, err := h.service.GetWeaponSpecialMechanics(ctx, params.WeaponId)
+	result, err := h.service.GetWeaponSpecialMechanics(params.WeaponId)
 	if err != nil {
 		return &api.GetWeaponSpecialMechanicsInternalServerError{}, err
 	}
 
 	return result, nil
 }
-

@@ -24,22 +24,22 @@ info:
     name: NECPGAME API Support
     email: api@necp.game
 servers:
-- url: http://localhost:8083/api/v1/gameplay/combat/acrobatics
-  description: Локальный сервер разработки
-- url: https://api.necp.game/api/v1/gameplay/combat/acrobatics
-  description: Продакшен сервер
+  - url: http://localhost:8083/api/v1/gameplay/combat/acrobatics
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1/gameplay/combat/acrobatics
+    description: Продакшен сервер
 tags:
-- name: Movement Attacks
-  description: Атаки в движении
-- name: Accuracy Modifiers
-  description: Модификаторы точности
-- name: Analytics
-  description: Аналитика атак
+  - name: Movement Attacks
+    description: Атаки в движении
+  - name: Accuracy Modifiers
+    description: Модификаторы точности
+  - name: Analytics
+    description: Аналитика атак
 paths:
   /attack/wall-run:
     post:
       tags:
-      - Movement Attacks
+        - Movement Attacks
       summary: Атака во время Wall Run
       description: 'Выполняет атаку (стрельба, удар или специальная атака) во время Wall Run.
 
@@ -48,7 +48,7 @@ paths:
         '
       operationId: attackWallRun
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       requestBody:
         required: true
         content:
@@ -83,7 +83,7 @@ paths:
   /attack/slide:
     post:
       tags:
-      - Movement Attacks
+        - Movement Attacks
       summary: Атака во время Slide
       description: 'Выполняет атаку во время Slide (стрельба, скользящие атаки, выход из Slide).
 
@@ -92,7 +92,7 @@ paths:
         '
       operationId: attackSlide
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       requestBody:
         required: true
         content:
@@ -127,7 +127,7 @@ paths:
   /attack/air:
     post:
       tags:
-      - Movement Attacks
+        - Movement Attacks
       summary: Атака в воздухе
       description: 'Выполняет атаку в воздухе (стрельба, удары, атаки во время Air Dash).
 
@@ -136,7 +136,7 @@ paths:
         '
       operationId: attackAir
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       requestBody:
         required: true
         content:
@@ -172,7 +172,7 @@ paths:
   /attack/vault:
     post:
       tags:
-      - Movement Attacks
+        - Movement Attacks
       summary: Атака во время Vault
       description: 'Выполняет атаку во время Vault (стрельба, удары, выход из Vault).
 
@@ -181,7 +181,7 @@ paths:
         '
       operationId: attackVault
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       requestBody:
         required: true
         content:
@@ -215,7 +215,7 @@ paths:
   /accuracy-modifiers:
     get:
       tags:
-      - Accuracy Modifiers
+        - Accuracy Modifiers
       summary: Получить модификаторы точности
       description: 'Возвращает модификаторы точности для всех типов движений
 
@@ -224,7 +224,7 @@ paths:
         '
       operationId: getAccuracyModifiers
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       responses:
         '200':
           description: Модификаторы точности
@@ -234,15 +234,15 @@ paths:
                 $ref: '#/components/schemas/AccuracyModifiersResponse'
               example:
                 modifiers:
-                - movement_type: wall_run
-                  base_modifier: -20.0
-                  skill_modifier: 10.0
-                  implant_modifier: 5.0
-                  final_modifier: -5.0
-                - movement_type: slide
-                  base_modifier: -10.0
-                  skill_modifier: 15.0
-                  final_modifier: 5.0
+                  - movement_type: wall_run
+                    base_modifier: -20.0
+                    skill_modifier: 10.0
+                    implant_modifier: 5.0
+                    final_modifier: -5.0
+                  - movement_type: slide
+                    base_modifier: -10.0
+                    skill_modifier: 15.0
+                    final_modifier: 5.0
         '401':
           $ref: common.yaml#/components/responses/Unauthorized
         '500':
@@ -250,7 +250,7 @@ paths:
   /analytics:
     get:
       tags:
-      - Analytics
+        - Analytics
       summary: Получить аналитику атак в движении
       description: 'Возвращает статистику атак в движении: количество атак по типам,
 
@@ -259,28 +259,28 @@ paths:
         '
       operationId: getMovementAttacksAnalytics
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       parameters:
-      - name: movement_type
-        in: query
-        required: false
-        description: Фильтр по типу движения
-        schema:
-          $ref: combat-acrobatics-schemas.yaml#/components/schemas/MovementType
-      - name: start_date
-        in: query
-        required: false
-        description: Начальная дата периода
-        schema:
-          type: string
-          format: date-time
-      - name: end_date
-        in: query
-        required: false
-        description: Конечная дата периода
-        schema:
-          type: string
-          format: date-time
+        - name: movement_type
+          in: query
+          required: false
+          description: Фильтр по типу движения
+          schema:
+            $ref: combat-acrobatics-schemas.yaml#/components/schemas/MovementType
+        - name: start_date
+          in: query
+          required: false
+          description: Начальная дата периода
+          schema:
+            type: string
+            format: date-time
+        - name: end_date
+          in: query
+          required: false
+          description: Конечная дата периода
+          schema:
+            type: string
+            format: date-time
       responses:
         '200':
           description: Аналитика атак в движении
@@ -291,14 +291,14 @@ paths:
               example:
                 total_attacks: 10000
                 attacks_by_movement:
-                - movement_type: wall_run
-                  count: 3000
-                  average_damage: 145.5
-                  average_accuracy: 0.75
-                - movement_type: slide
-                  count: 4000
-                  average_damage: 180.2
-                  average_accuracy: 0.85
+                  - movement_type: wall_run
+                    count: 3000
+                    average_damage: 145.5
+                    average_accuracy: 0.75
+                  - movement_type: slide
+                    count: 4000
+                    average_damage: 180.2
+                    average_accuracy: 0.85
                 combo_rate: 0.25
         '401':
           $ref: common.yaml#/components/responses/Unauthorized
@@ -312,7 +312,7 @@ components:
     MovementAttackRequest:
       type: object
       required:
-      - attack_type
+        - attack_type
       properties:
         target_id:
           type: string
@@ -344,13 +344,13 @@ components:
     MovementAttackResponse:
       type: object
       required:
-      - attack_id
-      - movement_type
-      - attack_type
-      - damage_dealt
-      - accuracy_modifier
-      - combo_triggered
-      - timestamp
+        - attack_id
+        - movement_type
+        - attack_type
+        - damage_dealt
+        - accuracy_modifier
+        - combo_triggered
+        - timestamp
       properties:
         attack_id:
           type: string
@@ -388,7 +388,7 @@ components:
     AccuracyModifiersResponse:
       type: object
       required:
-      - modifiers
+        - modifiers
       properties:
         modifiers:
           type: array
@@ -398,9 +398,9 @@ components:
     MovementAttacksAnalyticsResponse:
       type: object
       required:
-      - total_attacks
-      - attacks_by_movement
-      - combo_rate
+        - total_attacks
+        - attacks_by_movement
+        - combo_rate
       properties:
         attacks_by_movement:
           type: array
@@ -422,10 +422,10 @@ components:
     MovementAttackStats:
       type: object
       required:
-      - movement_type
-      - count
-      - average_damage
-      - average_accuracy
+        - movement_type
+        - count
+        - average_damage
+        - average_accuracy
       properties:
         movement_type:
           $ref: combat-acrobatics-schemas.yaml#/components/schemas/MovementType

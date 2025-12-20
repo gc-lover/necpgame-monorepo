@@ -26,7 +26,9 @@ mcp_github_list_project_items({
   query: 'Agent:"{Agent}" Status:"Todo"' // или добавь In Progress по необходимости
 });
 ```
-**Note:** Не используй `is:issue` в query - `list_project_items` работает только с issues. Не указывай `fields` - вернутся все поля.
+
+**Note:** Не используй `is:issue` в query - `list_project_items` работает только с issues. Не указывай `fields` -
+вернутся все поля.
 
 **Важно:** Если параметры проекта изменятся, обновить их здесь и во всех командах агентов.
 
@@ -54,6 +56,7 @@ const STATUS_OPTIONS = {
 ```
 
 **Использование:**
+
 ```javascript
 updated_field: {
   id: STATUS_FIELD_ID,
@@ -87,6 +90,7 @@ const AGENT_OPTIONS = {
 ```
 
 **Использование (назначить агенту Backend и поставить в работу):**
+
 ```javascript
 updated_field: [
   { id: STATUS_FIELD_ID, value: STATUS_OPTIONS['In Progress'] },

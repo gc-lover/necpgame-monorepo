@@ -1,11 +1,11 @@
-// Issue: Stock Margin Service implementation
+// Package server Issue: Stock Margin Service implementation
 package server
 
 import (
 	"context"
 
 	"github.com/google/uuid"
-	api "github.com/necpgame/stock-margin-service-go/pkg/api"
+	"github.com/necpgame/stock-margin-service-go/pkg/api"
 	"github.com/sirupsen/logrus"
 )
 
@@ -36,7 +36,7 @@ func NewMarginService(logger *logrus.Logger) MarginServiceInterface {
 }
 
 // GetMarginAccount returns margin account
-func (s *MarginService) GetMarginAccount(ctx context.Context, accountID uuid.UUID) (*api.MarginAccount, error) {
+func (s *MarginService) GetMarginAccount(_ context.Context, accountID uuid.UUID) (*api.MarginAccount, error) {
 	// TODO: Implement database query
 	account := &api.MarginAccount{
 		AccountID: api.NewOptUUID(accountID),
@@ -48,7 +48,7 @@ func (s *MarginService) GetMarginAccount(ctx context.Context, accountID uuid.UUI
 }
 
 // OpenMarginAccount creates new margin account
-func (s *MarginService) OpenMarginAccount(ctx context.Context, initialDeposit float64) (*api.MarginAccount, error) {
+func (s *MarginService) OpenMarginAccount(_ context.Context, initialDeposit float64) (*api.MarginAccount, error) {
 	// TODO: Implement database insert
 	account := &api.MarginAccount{
 		AccountID: api.NewOptUUID(uuid.New()),
@@ -60,7 +60,7 @@ func (s *MarginService) OpenMarginAccount(ctx context.Context, initialDeposit fl
 }
 
 // BorrowMargin borrows margin
-func (s *MarginService) BorrowMargin(ctx context.Context, accountID uuid.UUID, amount float64) (*api.BorrowMarginResponse, error) {
+func (s *MarginService) BorrowMargin(_ context.Context, _ uuid.UUID, amount float64) (*api.BorrowMarginResponse, error) {
 	// TODO: Implement database update and calculation
 	response := &api.BorrowMarginResponse{
 		BorrowedAmount:     api.NewOptFloat64(amount),
@@ -72,15 +72,15 @@ func (s *MarginService) BorrowMargin(ctx context.Context, accountID uuid.UUID, a
 }
 
 // RepayMargin repays margin
-func (s *MarginService) RepayMargin(ctx context.Context, accountID uuid.UUID, amount float64) error {
+func (s *MarginService) RepayMargin(_ context.Context, _ uuid.UUID, _ float64) error {
 	// TODO: Implement database update
 	return nil
 }
 
 // GetMarginCallHistory returns margin call history
-func (s *MarginService) GetMarginCallHistory(ctx context.Context, accountID uuid.UUID, limit, offset int) ([]api.MarginCall, *api.PaginationResponse, error) {
+func (s *MarginService) GetMarginCallHistory(_ context.Context, _ uuid.UUID, limit, offset int) ([]api.MarginCall, *api.PaginationResponse, error) {
 	// TODO: Implement database query
-	calls := []api.MarginCall{}
+	var calls []api.MarginCall
 	pagination := &api.PaginationResponse{
 		Total:   0,
 		Limit:   api.NewOptInt(limit),
@@ -91,7 +91,7 @@ func (s *MarginService) GetMarginCallHistory(ctx context.Context, accountID uuid
 }
 
 // GetRiskHealth returns risk health
-func (s *MarginService) GetRiskHealth(ctx context.Context, accountID uuid.UUID) (*api.RiskHealth, error) {
+func (s *MarginService) GetRiskHealth(_ context.Context, _ uuid.UUID) (*api.RiskHealth, error) {
 	// TODO: Implement calculation
 	health := &api.RiskHealth{
 		MarginHealth:      api.NewOptFloat64(1.0),
@@ -102,7 +102,7 @@ func (s *MarginService) GetRiskHealth(ctx context.Context, accountID uuid.UUID) 
 }
 
 // OpenShortPosition opens short position
-func (s *MarginService) OpenShortPosition(ctx context.Context, accountID uuid.UUID, ticker string, quantity int) (*api.ShortPosition, error) {
+func (s *MarginService) OpenShortPosition(_ context.Context, _ uuid.UUID, ticker string, quantity int) (*api.ShortPosition, error) {
 	// TODO: Implement database insert
 	position := &api.ShortPosition{
 		PositionID: api.NewOptUUID(uuid.New()),
@@ -114,9 +114,9 @@ func (s *MarginService) OpenShortPosition(ctx context.Context, accountID uuid.UU
 }
 
 // ListShortPositions lists short positions
-func (s *MarginService) ListShortPositions(ctx context.Context, accountID uuid.UUID, limit, offset int) ([]api.ShortPosition, *api.PaginationResponse, error) {
+func (s *MarginService) ListShortPositions(_ context.Context, _ uuid.UUID, limit, offset int) ([]api.ShortPosition, *api.PaginationResponse, error) {
 	// TODO: Implement database query
-	positions := []api.ShortPosition{}
+	var positions []api.ShortPosition
 	pagination := &api.PaginationResponse{
 		Total:   0,
 		Limit:   api.NewOptInt(limit),
@@ -127,7 +127,7 @@ func (s *MarginService) ListShortPositions(ctx context.Context, accountID uuid.U
 }
 
 // GetShortPosition returns short position
-func (s *MarginService) GetShortPosition(ctx context.Context, positionID uuid.UUID) (*api.ShortPosition, error) {
+func (s *MarginService) GetShortPosition(_ context.Context, positionID uuid.UUID) (*api.ShortPosition, error) {
 	// TODO: Implement database query
 	position := &api.ShortPosition{
 		PositionID: api.NewOptUUID(positionID),
@@ -136,13 +136,12 @@ func (s *MarginService) GetShortPosition(ctx context.Context, positionID uuid.UU
 }
 
 // CloseShortPosition closes short position
-func (s *MarginService) CloseShortPosition(ctx context.Context, positionID uuid.UUID) (*api.ClosePositionResponse, error) {
+func (s *MarginService) CloseShortPosition(_ context.Context, positionID uuid.UUID) (*api.ClosePositionResponse, error) {
 	// TODO: Implement database update and calculation
 	response := &api.ClosePositionResponse{
-		PositionID: api.NewOptUUID(positionID),
+		PositionID:  api.NewOptUUID(positionID),
 		RealizedPnl: api.NewOptFloat64(0.0),
 		ClosedAt:    api.OptDateTime{},
 	}
 	return response, nil
 }
-

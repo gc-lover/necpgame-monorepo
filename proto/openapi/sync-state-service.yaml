@@ -18,18 +18,18 @@ info:
     name: NECPGAME API Support
     email: api@necp.game
 servers:
-- url: http://localhost:8090/api/v1/sync
-  description: Локальный сервер разработки
-- url: https://api.necp.game/api/v1/sync
-  description: Продакшен сервер
+  - url: http://localhost:8090/api/v1/sync
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1/sync
+    description: Продакшен сервер
 tags:
-- name: State Sync
-  description: Синхронизация состояния
+  - name: State Sync
+    description: Синхронизация состояния
 paths:
   /state/sync:
     post:
       tags:
-      - State Sync
+        - State Sync
       summary: Синхронизировать состояние
       description: 'Синхронизирует состояние между сервисами. Обновляет состояние
 
@@ -38,7 +38,7 @@ paths:
         '
       operationId: syncState
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       requestBody:
         required: true
         content:
@@ -80,22 +80,22 @@ paths:
   /state/{key}:
     get:
       tags:
-      - State Sync
+        - State Sync
       summary: Получить состояние по ключу
       description: 'Возвращает текущее состояние по указанному ключу.
 
         '
       operationId: getState
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       parameters:
-      - name: key
-        in: path
-        required: true
-        description: Ключ состояния
-        schema:
-          type: string
-          example: character:12345:stats
+        - name: key
+          in: path
+          required: true
+          description: Ключ состояния
+          schema:
+            type: string
+            example: character:12345:stats
       responses:
         '200':
           description: Состояние
@@ -112,7 +112,7 @@ paths:
   /state/batch:
     post:
       tags:
-      - State Sync
+        - State Sync
       summary: Пакетная синхронизация состояния
       description: 'Синхронизирует несколько состояний за один запрос.
 
@@ -121,7 +121,7 @@ paths:
         '
       operationId: batchSyncState
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       requestBody:
         required: true
         content:
@@ -130,16 +130,16 @@ paths:
               $ref: '#/components/schemas/BatchSyncStateRequest'
             example:
               states:
-              - key: character:12345:stats
-                category: character
-                value:
-                  level: 50
-                version: 5
-              - key: inventory:12345:items
-                category: inventory
-                value:
-                  items: []
-                version: 3
+                - key: character:12345:stats
+                  category: character
+                  value:
+                    level: 50
+                  version: 5
+                - key: inventory:12345:items
+                  category: inventory
+                  value:
+                    items: [ ]
+                  version: 3
       responses:
         '200':
           description: Состояния синхронизированы
@@ -151,12 +151,12 @@ paths:
                 synced: 2
                 conflicts: 0
                 results:
-                - key: character:12345:stats
-                  version: 6
-                  status: synced
-                - key: inventory:12345:items
-                  version: 4
-                  status: synced
+                  - key: character:12345:stats
+                    version: 6
+                    status: synced
+                  - key: inventory:12345:items
+                    version: 4
+                    status: synced
         '400':
           $ref: common.yaml#/components/responses/BadRequest
         '401':
@@ -171,10 +171,10 @@ components:
     SyncStateRequest:
       type: object
       required:
-      - key
-      - category
-      - value
-      - version
+        - key
+        - category
+        - value
+        - version
       properties:
         key:
           type: string
@@ -197,10 +197,10 @@ components:
     SyncStateResponse:
       type: object
       required:
-      - key
-      - version
-      - synced_at
-      - status
+        - key
+        - version
+        - synced_at
+        - status
       properties:
         key:
           type: string
@@ -208,8 +208,8 @@ components:
         status:
           type: string
           enum:
-          - synced
-          - conflict
+            - synced
+            - conflict
           example: synced
         synced_at:
           type: string
@@ -224,7 +224,7 @@ components:
     BatchSyncStateRequest:
       type: object
       required:
-      - states
+        - states
       properties:
         states:
           type: array
@@ -236,9 +236,9 @@ components:
     BatchSyncStateResponse:
       type: object
       required:
-      - synced
-      - conflicts
-      - results
+        - synced
+        - conflicts
+        - results
       properties:
         results:
           type: array

@@ -1,12 +1,12 @@
-// Issue: #1595
+// Package server Issue: #1595
 package server
 
 // HTTP handlers use context.WithTimeout for request timeouts (see handlers.go)
 
 import (
 	"context"
-		"time"
 	"net/http"
+	"time"
 
 	"github.com/gc-lover/necpgame-monorepo/services/combat-actions-service-go/pkg/api"
 )
@@ -32,7 +32,7 @@ func NewHTTPServer(addr string, service *Service) *HTTPServer {
 	if err != nil {
 		panic(err)
 	}
-	
+
 	// Mount ogen server under /api/v1
 	var handler http.Handler = ogenServer
 	handler = LoggingMiddleware(handler)
@@ -48,8 +48,8 @@ func NewHTTPServer(addr string, service *Service) *HTTPServer {
 		addr:   addr,
 		router: router,
 		server: &http.Server{
-			Addr:    addr,
-			Handler: router,
+			Addr:         addr,
+			Handler:      router,
 			ReadTimeout:  30 * time.Second,  // Prevent slowloris attacks
 			WriteTimeout: 30 * time.Second,  // Prevent hanging writes
 			IdleTimeout:  120 * time.Second, // Keep connections alive for reuse
@@ -79,13 +79,13 @@ func (s *HTTPServer) Shutdown(ctx context.Context) error {
 }
 
 // Health check handler
-func healthCheck(w http.ResponseWriter, r *http.Request) {
+func healthCheck(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("OK"))
 }
 
 // Metrics handler (stub)
-func metricsHandler(w http.ResponseWriter, r *http.Request) {
+func metricsHandler(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("# HELP combat_actions_service metrics\n"))
 }
@@ -101,7 +101,3 @@ func RecoveryMiddleware(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 	})
 }
-
-
-
-

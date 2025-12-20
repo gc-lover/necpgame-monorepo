@@ -122,7 +122,7 @@ func (h *Handlers) GetAbilityById(ctx context.Context, params api.GetAbilityById
 
 // GetAbilityLoadouts implements GET /gameplay/combat/abilities/loadouts
 // Issue: #156
-func (h *Handlers) GetAbilityLoadouts(ctx context.Context, params api.GetAbilityLoadoutsParams) (api.GetAbilityLoadoutsRes, error) {
+func (h *Handlers) GetAbilityLoadouts(ctx context.Context, _ api.GetAbilityLoadoutsParams) (api.GetAbilityLoadoutsRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
@@ -250,7 +250,7 @@ func (h *Handlers) GetAbilityMetrics(ctx context.Context, params api.GetAbilityM
 }
 
 // GetAbilityCatalog implements GET /gameplay/combat/abilities/catalog
-func (h *Handlers) GetAbilityCatalog(ctx context.Context, params api.GetAbilityCatalogParams) (api.GetAbilityCatalogRes, error) {
+func (h *Handlers) GetAbilityCatalog(ctx context.Context, _ api.GetAbilityCatalogParams) (api.GetAbilityCatalogRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
@@ -259,7 +259,7 @@ func (h *Handlers) GetAbilityCatalog(ctx context.Context, params api.GetAbilityC
 }
 
 // GetAvailableSynergies implements GET /gameplay/combat/abilities/synergies
-func (h *Handlers) GetAvailableSynergies(ctx context.Context, params api.GetAvailableSynergiesParams) (api.GetAvailableSynergiesRes, error) {
+func (h *Handlers) GetAvailableSynergies(ctx context.Context, _ api.GetAvailableSynergiesParams) (api.GetAvailableSynergiesRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
@@ -329,7 +329,7 @@ func (h *Handlers) CheckCooldowns(ctx context.Context, req *api.CooldownCheckReq
 
 	// Filter cooldowns by requested ability IDs if provided
 	if req != nil && len(req.AbilityIds) > 0 {
-		filtered := []api.CooldownStatus{}
+		var filtered []api.CooldownStatus
 		requestedIDs := make(map[uuid.UUID]bool)
 		for _, id := range req.AbilityIds {
 			requestedIDs[id] = true
@@ -346,7 +346,7 @@ func (h *Handlers) CheckCooldowns(ctx context.Context, req *api.CooldownCheckReq
 }
 
 // GetInstalledImplants implements GET /gameplay/combat/implants
-func (h *Handlers) GetInstalledImplants(ctx context.Context, params api.GetInstalledImplantsParams) (api.GetInstalledImplantsRes, error) {
+func (h *Handlers) GetInstalledImplants(ctx context.Context, _ api.GetInstalledImplantsParams) (api.GetInstalledImplantsRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
@@ -355,7 +355,7 @@ func (h *Handlers) GetInstalledImplants(ctx context.Context, params api.GetInsta
 }
 
 // GetLoadouts implements GET /gameplay/loadouts
-func (h *Handlers) GetLoadouts(ctx context.Context, params api.GetLoadoutsParams) (api.GetLoadoutsRes, error) {
+func (h *Handlers) GetLoadouts(ctx context.Context, _ api.GetLoadoutsParams) (api.GetLoadoutsRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
@@ -364,7 +364,7 @@ func (h *Handlers) GetLoadouts(ctx context.Context, params api.GetLoadoutsParams
 }
 
 // GetStealthStatus implements GET /gameplay/stealth/status
-func (h *Handlers) GetStealthStatus(ctx context.Context, params api.GetStealthStatusParams) (api.GetStealthStatusRes, error) {
+func (h *Handlers) GetStealthStatus(ctx context.Context, _ api.GetStealthStatusParams) (api.GetStealthStatusRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
@@ -374,7 +374,7 @@ func (h *Handlers) GetStealthStatus(ctx context.Context, params api.GetStealthSt
 
 // UpdateCyberpsychosis implements POST /gameplay/combat/abilities/cyberpsychosis/update
 // Issue: #156
-func (h *Handlers) UpdateCyberpsychosis(ctx context.Context, req *api.CyberpsychosisUpdateRequest) (api.UpdateCyberpsychosisRes, error) {
+func (h *Handlers) UpdateCyberpsychosis(ctx context.Context, _ *api.CyberpsychosisUpdateRequest) (api.UpdateCyberpsychosisRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 

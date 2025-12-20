@@ -1,4 +1,4 @@
-// SQL queries use prepared statements with placeholders ($1, $2, ?) for safety
+// Package service SQL queries use prepared statements with placeholders ($1, $2, ?) for safety
 package service
 
 import (
@@ -212,13 +212,13 @@ func (s *AIService) ExecuteBehavior(ctx context.Context, enemyID string) error {
 	// Execute behavior tree logic based on enemy type
 	switch enemy.EnemyType {
 	case "elite_mercenary_boss":
-		err = s.executeMercenaryBossBehavior(ctx, enemy)
+		err = s.executeMercenaryBossBehavior()
 	case "cyberpsychic_elite":
-		err = s.executeCyberpsychicBehavior(ctx, enemy)
+		err = s.executeCyberpsychicBehavior()
 	case "corporate_elite_squad":
-		err = s.executeCorporateSquadBehavior(ctx, enemy)
+		err = s.executeCorporateSquadBehavior()
 	default:
-		err = s.executeStandardBehavior(ctx, enemy)
+		err = s.executeStandardBehavior()
 	}
 
 	if err != nil {
@@ -248,8 +248,8 @@ func (s *AIService) RemoveEnemy(ctx context.Context, enemyID string) error {
 }
 
 // GetTelemetry returns current service metrics
-func (s *AIService) GetTelemetry() *ServiceTelemetry {
-	return &ServiceTelemetry{
+func (s *AIService) GetTelemetry() *Telemetry {
+	return &Telemetry{
 		ActiveEnemies:     atomic.LoadInt64(&s.atomicStats.activeEnemies),
 		BehaviorDecisions: atomic.LoadInt64(&s.atomicStats.behaviorDecisions),
 		DamageDealt:       atomic.LoadInt64(&s.atomicStats.damageDealt),
@@ -267,8 +267,8 @@ type DamageResult struct {
 	NewHealth    repository.Health `json:"new_health"`
 }
 
-// ServiceTelemetry contains service performance metrics
-type ServiceTelemetry struct {
+// Telemetry ServiceTelemetry contains service performance metrics
+type Telemetry struct {
 	ActiveEnemies     int64         `json:"active_enemies"`
 	BehaviorDecisions int64         `json:"behavior_decisions"`
 	DamageDealt       int64         `json:"damage_dealt"`
@@ -338,7 +338,7 @@ func (s *AIService) calculateDamage(baseDamage int, damageType string, enemyType
 	return int(float64(baseDamage) * multiplier)
 }
 
-func (s *AIService) executeMercenaryBossBehavior(ctx context.Context, enemy *repository.Enemy) error {
+func (s *AIService) executeMercenaryBossBehavior() error {
 	// Complex behavior for elite mercenary bosses
 	// Implementation would include:
 	// - Teleportation mechanics
@@ -350,7 +350,7 @@ func (s *AIService) executeMercenaryBossBehavior(ctx context.Context, enemy *rep
 	return nil
 }
 
-func (s *AIService) executeCyberpsychicBehavior(ctx context.Context, enemy *repository.Enemy) error {
+func (s *AIService) executeCyberpsychicBehavior() error {
 	// Psychic ability behaviors
 	// - Illusion management
 	// - Mind control mechanics
@@ -360,7 +360,7 @@ func (s *AIService) executeCyberpsychicBehavior(ctx context.Context, enemy *repo
 	return nil
 }
 
-func (s *AIService) executeCorporateSquadBehavior(ctx context.Context, enemy *repository.Enemy) error {
+func (s *AIService) executeCorporateSquadBehavior() error {
 	// Squad coordination logic
 	// - Formation maintenance
 	// - Tactical positioning
@@ -370,7 +370,7 @@ func (s *AIService) executeCorporateSquadBehavior(ctx context.Context, enemy *re
 	return nil
 }
 
-func (s *AIService) executeStandardBehavior(ctx context.Context, enemy *repository.Enemy) error {
+func (s *AIService) executeStandardBehavior() error {
 	// Basic AI behavior for standard enemies
 	// - Patrolling patterns
 	// - Target acquisition

@@ -1,12 +1,12 @@
-// Issue: ogen migration
+// Package server Issue: ogen migration
 package server
 
 import (
 	"context"
 	"strings"
 
-	"github.com/go-faster/errors"
 	"github.com/gc-lover/necpgame-monorepo/services/voice-chat-service-go/pkg/api"
+	"github.com/go-faster/errors"
 	"github.com/ogen-go/ogen/ogenerrors"
 )
 
@@ -15,14 +15,7 @@ type SecurityHandler struct {
 	authEnabled  bool
 }
 
-func NewSecurityHandler(jwtValidator *JwtValidator, authEnabled bool) *SecurityHandler {
-	return &SecurityHandler{
-		jwtValidator: jwtValidator,
-		authEnabled:  authEnabled,
-	}
-}
-
-func (s *SecurityHandler) HandleBearerAuth(ctx context.Context, operationName api.OperationName, t api.BearerAuth) (context.Context, error) {
+func (s *SecurityHandler) HandleBearerAuth(ctx context.Context, t api.BearerAuth) (context.Context, error) {
 	if !s.authEnabled || s.jwtValidator == nil {
 		return ctx, nil
 	}
@@ -41,4 +34,3 @@ func (s *SecurityHandler) HandleBearerAuth(ctx context.Context, operationName ap
 
 	return ctx, nil
 }
-

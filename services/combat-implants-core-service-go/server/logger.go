@@ -1,4 +1,4 @@
-// Issue: #58
+// Package server Issue: #58
 package server
 
 import (
@@ -31,4 +31,3 @@ func init() {
 func GetLogger() *logrus.Logger {
 	return logger
 }
-

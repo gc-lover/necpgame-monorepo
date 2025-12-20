@@ -1,3 +1,4 @@
+// Package server provides logging utilities for chat moderation service.
 // Issue: #1911
 package server
 

@@ -7,24 +7,24 @@ info:
     name: NECPGAME API Support
     email: api@necp.game
 servers:
-- url: http://localhost:8088/api/v1
-  description: Локальный сервер разработки
-- url: https://api.necp.game/api/v1
-  description: Продакшен сервер
+  - url: http://localhost:8088/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
 tags:
-- name: Tickets
-  description: Управление тикетами поддержки
-- name: SLA Monitoring
-  description: Мониторинг SLA
+  - name: Tickets
+    description: Управление тикетами поддержки
+  - name: SLA Monitoring
+    description: Мониторинг SLA
 paths:
   /support/tickets:
     post:
       tags:
-      - Tickets
+        - Tickets
       summary: Создать тикет поддержки
       operationId: createTicket
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       requestBody:
         required: true
         content:
@@ -46,41 +46,41 @@ paths:
           $ref: common.yaml#/components/responses/InternalServerError
     get:
       tags:
-      - Tickets
+        - Tickets
       summary: Получить список тикетов
       operationId: getTickets
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       parameters:
-      - name: player_id
-        in: query
-        schema:
-          type: string
-          format: uuid
-      - name: status
-        in: query
-        schema:
-          type: string
-          enum:
-          - OPEN
-          - ASSIGNED
-          - IN_PROGRESS
-          - WAITING_FOR_PLAYER
-          - RESOLVED
-          - CLOSED
-          - CANCELLED
-      - name: priority
-        in: query
-        schema:
-          type: string
-          enum:
-          - LOW
-          - NORMAL
-          - HIGH
-          - URGENT
-          - CRITICAL
-      - $ref: common.yaml#/components/parameters/Limit
-      - $ref: common.yaml#/components/parameters/Offset
+        - name: player_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum:
+              - OPEN
+              - ASSIGNED
+              - IN_PROGRESS
+              - WAITING_FOR_PLAYER
+              - RESOLVED
+              - CLOSED
+              - CANCELLED
+        - name: priority
+          in: query
+          schema:
+            type: string
+            enum:
+              - LOW
+              - NORMAL
+              - HIGH
+              - URGENT
+              - CRITICAL
+        - $ref: common.yaml#/components/parameters/Limit
+        - $ref: common.yaml#/components/parameters/Offset
       responses:
         '200':
           description: Список тикетов
@@ -95,13 +95,13 @@ paths:
   /support/tickets/{ticket_id}:
     get:
       tags:
-      - Tickets
+        - Tickets
       summary: Получить тикет
       operationId: getTicket
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       parameters:
-      - $ref: common.yaml#/components/parameters/TicketId
+        - $ref: common.yaml#/components/parameters/TicketId
       responses:
         '200':
           description: Тикет
@@ -117,13 +117,13 @@ paths:
           $ref: common.yaml#/components/responses/InternalServerError
     put:
       tags:
-      - Tickets
+        - Tickets
       summary: Обновить тикет
       operationId: updateTicket
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       parameters:
-      - $ref: common.yaml#/components/parameters/TicketId
+        - $ref: common.yaml#/components/parameters/TicketId
       requestBody:
         required: true
         content:
@@ -148,13 +148,13 @@ paths:
   /support/tickets/{ticket_id}/close:
     post:
       tags:
-      - Tickets
+        - Tickets
       summary: Закрыть тикет
       operationId: closeTicket
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       parameters:
-      - $ref: common.yaml#/components/parameters/TicketId
+        - $ref: common.yaml#/components/parameters/TicketId
       requestBody:
         required: true
         content:
@@ -179,13 +179,13 @@ paths:
   /support/tickets/{ticket_id}/sla:
     get:
       tags:
-      - SLA Monitoring
+        - SLA Monitoring
       summary: Получить статус SLA тикета
       operationId: getTicketSLA
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       parameters:
-      - $ref: common.yaml#/components/parameters/TicketId
+        - $ref: common.yaml#/components/parameters/TicketId
       responses:
         '200':
           description: Статус SLA тикета
@@ -202,26 +202,26 @@ paths:
   /support/sla/violations:
     get:
       tags:
-      - SLA Monitoring
+        - SLA Monitoring
       summary: Получить нарушения SLA
       operationId: getSLAViolations
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       parameters:
-      - name: priority
-        in: query
-        schema:
-          type: string
-          $ref: common.yaml#/components/schemas/TicketPriority
-      - name: violation_type
-        in: query
-        schema:
-          type: string
-          enum:
-          - FIRST_RESPONSE
-          - RESOLUTION
-      - $ref: common.yaml#/components/parameters/Limit
-      - $ref: common.yaml#/components/parameters/Offset
+        - name: priority
+          in: query
+          schema:
+            type: string
+            $ref: common.yaml#/components/schemas/TicketPriority
+        - name: violation_type
+          in: query
+          schema:
+            type: string
+            enum:
+              - FIRST_RESPONSE
+              - RESOLUTION
+        - $ref: common.yaml#/components/parameters/Limit
+        - $ref: common.yaml#/components/parameters/Offset
       responses:
         '200':
           description: Нарушения SLA
@@ -241,8 +241,8 @@ components:
     CreateTicketRequest:
       type: object
       required:
-      - subject
-      - description
+        - subject
+        - description
       properties:
         subject:
           type: string
@@ -254,13 +254,13 @@ components:
         category:
           type: string
           enum:
-          - TECHNICAL
-          - BILLING
-          - ACCOUNT
-          - GAMEPLAY
-          - BUG_REPORT
-          - FEATURE_REQUEST
-          - OTHER
+            - TECHNICAL
+            - BILLING
+            - ACCOUNT
+            - GAMEPLAY
+            - BUG_REPORT
+            - FEATURE_REQUEST
+            - OTHER
         priority:
           $ref: common.yaml#/components/schemas/TicketPriority
           default: NORMAL
@@ -279,13 +279,13 @@ components:
         category:
           type: string
           enum:
-          - TECHNICAL
-          - BILLING
-          - ACCOUNT
-          - GAMEPLAY
-          - BUG_REPORT
-          - FEATURE_REQUEST
-          - OTHER
+            - TECHNICAL
+            - BILLING
+            - ACCOUNT
+            - GAMEPLAY
+            - BUG_REPORT
+            - FEATURE_REQUEST
+            - OTHER
         priority:
           $ref: common.yaml#/components/schemas/TicketPriority
         status:
@@ -314,13 +314,13 @@ components:
         category:
           type: string
           enum:
-          - TECHNICAL
-          - BILLING
-          - ACCOUNT
-          - GAMEPLAY
-          - BUG_REPORT
-          - FEATURE_REQUEST
-          - OTHER
+            - TECHNICAL
+            - BILLING
+            - ACCOUNT
+            - GAMEPLAY
+            - BUG_REPORT
+            - FEATURE_REQUEST
+            - OTHER
         created_at:
           type: string
           format: date-time
@@ -350,18 +350,18 @@ components:
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     TicketsResponse:
       allOf:
-      - $ref: common.yaml#/components/schemas/PaginationResponse
-      - type: object
-        properties:
-          items:
-            type: array
+        - $ref: common.yaml#/components/schemas/PaginationResponse
+        - type: object
+          properties:
             items:
-              $ref: '#/components/schemas/SupportTicket'
-            description: Список тикетов
+              type: array
+              items:
+                $ref: '#/components/schemas/SupportTicket'
+              description: Список тикетов
     CloseTicketRequest:
       type: object
       required:
-      - resolution
+        - resolution
       properties:
         resolution:
           type: string
@@ -377,11 +377,11 @@ components:
         priority:
           type: string
           enum:
-          - LOW
-          - NORMAL
-          - HIGH
-          - URGENT
-          - CRITICAL
+            - LOW
+            - NORMAL
+            - HIGH
+            - URGENT
+            - CRITICAL
         first_response_target:
           type: string
           format: date-time
@@ -420,16 +420,16 @@ components:
         priority:
           type: string
           enum:
-          - LOW
-          - NORMAL
-          - HIGH
-          - URGENT
-          - CRITICAL
+            - LOW
+            - NORMAL
+            - HIGH
+            - URGENT
+            - CRITICAL
         violation_type:
           type: string
           enum:
-          - FIRST_RESPONSE
-          - RESOLUTION
+            - FIRST_RESPONSE
+            - RESOLUTION
         target_time:
           type: string
           format: date-time
@@ -443,13 +443,13 @@ components:
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     SLAViolationsResponse:
       allOf:
-      - $ref: common.yaml#/components/schemas/PaginationResponse
-      - type: object
-        properties:
-          items:
-            type: array
+        - $ref: common.yaml#/components/schemas/PaginationResponse
+        - type: object
+          properties:
             items:
-              $ref: '#/components/schemas/SLAViolation'
-            description: Список нарушений SLA
+              type: array
+              items:
+                $ref: '#/components/schemas/SLAViolation'
+              description: Список нарушений SLA
 security:
-- BearerAuth: []
+  - BearerAuth: [ ]

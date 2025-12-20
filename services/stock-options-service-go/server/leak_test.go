@@ -35,4 +35,3 @@ func TestStockOptionsServiceNoLeaks(t *testing.T) {
 
 	// If goroutines leaked from stock options handlers, test FAILS
 }
-

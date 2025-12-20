@@ -1,4 +1,4 @@
-// Issue: #1585
+// Package server Issue: #1585
 package server
 
 import (
@@ -19,4 +19,3 @@ func init() {
 func GetLogger() *logrus.Logger {
 	return logger
 }
-

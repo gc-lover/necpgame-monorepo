@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"net/http"
-	"net/http/pprof"
 	"os"
 	"os/signal"
 	"runtime/debug"
@@ -14,8 +13,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
 )
-
-
 
 func main() {
 	logger := logrus.New()

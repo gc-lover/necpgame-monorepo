@@ -47,4 +47,3 @@ func TestWorldEventsServiceNoLeaks(t *testing.T) {
 // - Ticker.Stop() for all time.Ticker
 // - Partition manager cleanup
 // - Timeout for all DB operations
-

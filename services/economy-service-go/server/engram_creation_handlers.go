@@ -100,11 +100,11 @@ func (s *HTTPServer) getEngramCreationCost(w http.ResponseWriter, r *http.Reques
 	}
 
 	response := map[string]interface{}{
-		"chip_tier":               cost.ChipTier,
-		"creation_cost_min":       cost.CreationCostMin,
-		"creation_cost_max":       cost.CreationCostMax,
+		"chip_tier":                cost.ChipTier,
+		"creation_cost_min":        cost.CreationCostMin,
+		"creation_cost_max":        cost.CreationCostMax,
 		"purchase_cost_multiplier": cost.PurchaseCostMultiplier,
-		"market_fluctuation":      cost.MarketFluctuation,
+		"market_fluctuation":       cost.MarketFluctuation,
 	}
 
 	if cost.HistoricalMultiplier != nil {
@@ -173,4 +173,3 @@ func (s *HTTPServer) validateEngramCreation(w http.ResponseWriter, r *http.Reque
 
 	s.respondJSON(w, http.StatusOK, response)
 }
-

@@ -25,7 +25,7 @@ func TestInteractiveRepository(t *testing.T) {
 			"description": "A test interactive checkpoint",
 		}
 
-		saved, err := interactiveRepo.SaveInteractive(ctx, "test-checkpoint", 1, "Test Checkpoint", "A test interactive", "global", models.InteractiveTypeCheckpoint, models.InteractiveStatusActive, contentData)
+		saved, err := interactiveRepo.SaveInteractive("test-checkpoint", 1, "Test Checkpoint", "A test interactive", "global", models.InteractiveTypeCheckpoint, models.InteractiveStatusActive, contentData)
 		if err != nil {
 			t.Fatalf("SaveInteractive failed: %v", err)
 		}
@@ -43,7 +43,7 @@ func TestInteractiveRepository(t *testing.T) {
 			Type: &[]models.InteractiveType{models.InteractiveTypeCheckpoint}[0],
 		}
 
-		interactives, total, err := interactiveRepo.GetInteractives(ctx, filter)
+		interactives, total, err := interactiveRepo.GetInteractives(filter)
 		if err != nil {
 			t.Fatalf("GetInteractives failed: %v", err)
 		}
@@ -79,14 +79,14 @@ func TestInteractiveRepository(t *testing.T) {
 			"description": "A test interactive terminal",
 		}
 
-		_, err := interactiveRepo.SaveInteractive(ctx, "test-terminal", 1, "Test Terminal", "A test interactive", "urban", models.InteractiveTypeTerminal, models.InteractiveStatusActive, contentData2)
+		_, err := interactiveRepo.SaveInteractive("test-terminal", 1, "Test Terminal", "A test interactive", "urban", models.InteractiveTypeTerminal, models.InteractiveStatusActive, contentData2)
 		if err != nil {
 			t.Fatalf("SaveInteractive failed: %v", err)
 		}
 
 		// Get all interactives
 		filter := &models.ListInteractivesRequest{}
-		interactives, total, err := interactiveRepo.GetInteractives(ctx, filter)
+		interactives, total, err := interactiveRepo.GetInteractives(filter)
 		if err != nil {
 			t.Fatalf("GetInteractives failed: %v", err)
 		}
@@ -130,6 +130,6 @@ func BenchmarkInteractiveRepository(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		id := "benchmark-" + string(rune(i%10+'0'))
-		_, _ = interactiveRepo.SaveInteractive(ctx, id, 1, "Benchmark", "Benchmark interactive", "global", models.InteractiveTypeCheckpoint, models.InteractiveStatusActive, contentData)
+		_, _ = interactiveRepo.SaveInteractive(id, 1, "Benchmark", "Benchmark interactive", "global", models.InteractiveTypeCheckpoint, models.InteractiveStatusActive, contentData)
 	}
 }

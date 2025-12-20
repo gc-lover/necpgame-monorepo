@@ -1,4 +1,4 @@
-// Issue: #141886730, #141886751, #1607, ogen migration
+// Package server Issue: #141886730, #141886751, #1607, ogen migration
 package server
 
 import (
@@ -6,18 +6,17 @@ import (
 	"sync"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/gc-lover/necpgame-monorepo/services/support-service-go/models"
 	supportapi "github.com/gc-lover/necpgame-monorepo/services/support-service-go/pkg/api"
+	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 )
 
 const (
-	DBTimeout    = 50 * time.Millisecond
-	CacheTimeout = 10 * time.Millisecond
+	DBTimeout = 50 * time.Millisecond
 )
 
-// Issue: #1607 - Memory pooling for hot path structs (Level 2 optimization)
+// Handlers Issue: #1607 - Memory pooling for hot path structs (Level 2 optimization)
 // Issue: #1489 - SLA handlers
 type Handlers struct {
 	ticketService TicketServiceInterface
@@ -25,10 +24,10 @@ type Handlers struct {
 	logger        *logrus.Logger
 
 	// Memory pooling for hot path structs (zero allocations target!)
-	supportTicketPool      sync.Pool
-	ticketsResponsePool    sync.Pool
-	ticketSLAStatusPool    sync.Pool
-	slaViolationsPool     sync.Pool
+	supportTicketPool   sync.Pool
+	ticketsResponsePool sync.Pool
+	ticketSLAStatusPool sync.Pool
+	slaViolationsPool   sync.Pool
 }
 
 func NewHandlers(ticketService TicketServiceInterface, slaService SLAServiceInterface) *Handlers {
@@ -90,7 +89,7 @@ func (h *Handlers) CreateTicket(ctx context.Context, req *supportapi.CreateTicke
 		}, nil
 	}
 
-	internalReq := convertCreateTicketRequestFromAPI(req, playerID)
+	internalReq := convertCreateTicketRequestFromAPI(req)
 	ticket, err := h.ticketService.CreateTicket(ctx, playerID, internalReq)
 	if err != nil {
 		h.logger.WithError(err).Error("Failed to create ticket")
@@ -228,7 +227,7 @@ func (h *Handlers) UpdateTicket(ctx context.Context, req *supportapi.UpdateTicke
 	return apiTicket, nil
 }
 
-func (h *Handlers) CloseTicket(ctx context.Context, req *supportapi.CloseTicketRequest, params supportapi.CloseTicketParams) (supportapi.CloseTicketRes, error) {
+func (h *Handlers) CloseTicket(ctx context.Context, _ *supportapi.CloseTicketRequest, params supportapi.CloseTicketParams) (supportapi.CloseTicketRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
@@ -262,7 +261,7 @@ func (h *Handlers) CloseTicket(ctx context.Context, req *supportapi.CloseTicketR
 	return apiTicket, nil
 }
 
-// Issue: #1489 - GetTicketSLA implements getTicketSLA operation
+// GetTicketSLA Issue: #1489 - GetTicketSLA implements getTicketSLA operation
 func (h *Handlers) GetTicketSLA(ctx context.Context, params supportapi.GetTicketSLAParams) (supportapi.GetTicketSLARes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
@@ -290,7 +289,7 @@ func (h *Handlers) GetTicketSLA(ctx context.Context, params supportapi.GetTicket
 	return apiStatus, nil
 }
 
-// Issue: #1489 - GetSLAViolations implements getSLAViolations operation
+// GetSLAViolations Issue: #1489 - GetSLAViolations implements getSLAViolations operation
 func (h *Handlers) GetSLAViolations(ctx context.Context, params supportapi.GetSLAViolationsParams) (supportapi.GetSLAViolationsRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()

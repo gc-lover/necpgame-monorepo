@@ -140,7 +140,7 @@ func (h *Handlers) GetExtractZones(ctx context.Context) (api.GetExtractZonesRes,
 }
 
 // GetFreerunRoutes implements GET /gameplay/freerun/routes
-func (h *Handlers) GetFreerunRoutes(ctx context.Context, params api.GetFreerunRoutesParams) (api.GetFreerunRoutesRes, error) {
+func (h *Handlers) GetFreerunRoutes(ctx context.Context, _ api.GetFreerunRoutesParams) (api.GetFreerunRoutesRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 

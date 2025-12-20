@@ -1,0 +1,655 @@
+# Issue: #140890170 - Crafting Service API - Orders
+openapi: 3.0.3
+info:
+  title: Crafting Service API - Orders
+  version: 1.0.0
+  description: Crafting order management endpoints
+
+servers:
+  - url: http://localhost:8210
+    description: Local development
+  - url: https://api.necpgame.com/v1
+    description: Production API
+
+tags:
+  - name: orders
+    description: Production order management
+
+security:
+  - BearerAuth: [ ]
+
+paths:
+  # ============================================================================
+  # CRAFTING ORDERS
+  # ============================================================================
+
+  /api/v1/economy/crafting/orders:
+    get:
+      tags: [ orders ]
+      summary: Get player crafting orders
+      description: Retrieve active and completed crafting orders for the authenticated player
+      operationId: getPlayerOrders
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [ pending, active, completed, failed, cancelled ]
+          description: Order status filter
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of orders to return
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          description: Pagination offset
+      responses:
+        '200':
+          description: Orders retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      tags: [ orders ]
+      summary: Create crafting contract
+      description: Create a new crafting contract for production services
+      operationId: createCraftingContract
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateContractRequest'
+      responses:
+        '201':
+          description: Contract created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Contract'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/economy/crafting/start:
+    post:
+      tags: [ orders ]
+      summary: Start crafting order
+      description: Start a new crafting order with specified recipe and quality settings
+      operationId: startCraftingOrder
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartCraftingRequest'
+      responses:
+        '202':
+          description: Crafting order started successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/economy/crafting/orders/{orderId}:
+    get:
+      tags: [ orders ]
+      summary: Get crafting order details
+      description: Retrieve detailed information about a specific crafting order
+      operationId: getCraftingOrder
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Order unique identifier
+      responses:
+        '200':
+          description: Order retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/economy/crafting/orders/{orderId}/cancel:
+    post:
+      tags: [ orders ]
+      summary: Cancel crafting order
+      description: Cancel an active crafting order with refund calculation
+      operationId: cancelCraftingOrder
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Order unique identifier
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  description: Cancellation reason
+                  maxLength: 500
+      responses:
+        '200':
+          description: Order cancelled successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  refund_amount:
+                    type: number
+                    format: float
+                    description: Refunded currency amount
+                  message:
+                    type: string
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Conflict:
+      description: Conflict
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+  schemas:
+    # Order schemas
+    Order:
+      type: object
+      required:
+        - id
+        - player_id
+        - recipe_id
+        - status
+        - quality_target
+        - started_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique order identifier
+        player_id:
+          type: string
+          format: uuid
+          description: Player who placed the order
+        recipe_id:
+          type: string
+          format: uuid
+          description: Recipe being crafted
+        station_id:
+          type: string
+          format: uuid
+          description: Crafting station assigned
+        status:
+          type: string
+          enum: [ pending, active, completed, failed, cancelled ]
+          description: Current order status
+        quality_target:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Target quality percentage (1-100)
+        quality_achieved:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: Actual quality achieved
+        started_at:
+          type: string
+          format: date-time
+          description: Order start timestamp
+        completed_at:
+          type: string
+          format: date-time
+          description: Order completion timestamp
+        estimated_completion:
+          type: string
+          format: date-time
+          description: Estimated completion time
+        progress_percentage:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Completion progress percentage
+        materials_consumed:
+          type: array
+          items:
+            $ref: '#/components/schemas/MaterialConsumption'
+          description: Materials consumed during crafting
+        bonuses_applied:
+          type: array
+          items:
+            $ref: '#/components/schemas/CraftingBonus'
+          description: Bonuses applied during crafting
+        failure_reason:
+          type: string
+          description: Reason for failure (if applicable)
+        output_item:
+          $ref: '#/components/schemas/OrderOutput'
+
+    MaterialConsumption:
+      type: object
+      required:
+        - item_id
+        - quantity_used
+        - quality_used
+      properties:
+        item_id:
+          type: string
+          format: uuid
+          description: Material item identifier
+        quantity_used:
+          type: integer
+          minimum: 0
+          description: Quantity actually consumed
+        quality_used:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: Average quality of materials used
+
+    CraftingBonus:
+      type: object
+      required:
+        - type
+        - value
+        - source
+      properties:
+        type:
+          type: string
+          enum: [ quality, speed, efficiency, luck ]
+          description: Type of bonus applied
+        value:
+          type: number
+          format: float
+          description: Bonus value (multiplier or flat bonus)
+        source:
+          type: string
+          description: Source of the bonus (skill, equipment, station, etc.)
+
+    OrderOutput:
+      type: object
+      required:
+        - item_id
+        - quantity
+        - quality
+      properties:
+        item_id:
+          type: string
+          format: uuid
+          description: Output item identifier
+        quantity:
+          type: integer
+          minimum: 0
+          description: Quantity produced
+        quality:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: Quality of produced item
+
+    StartCraftingRequest:
+      type: object
+      required:
+        - recipe_id
+        - station_id
+        - quality_target
+      properties:
+        recipe_id:
+          type: string
+          format: uuid
+          description: Recipe to craft
+        station_id:
+          type: string
+          format: uuid
+          description: Crafting station to use
+        quality_target:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+          description: Target quality percentage (1-100)
+        priority:
+          type: string
+          enum: [ low, normal, high, rush ]
+          default: normal
+          description: Crafting priority affecting queue position
+        material_overrides:
+          type: array
+          items:
+            $ref: '#/components/schemas/MaterialOverride'
+          description: Override specific materials with alternatives
+        quality_modifiers:
+          type: array
+          items:
+            $ref: '#/components/schemas/QualityModifier'
+          description: Additional quality modifiers
+
+    MaterialOverride:
+      type: object
+      required:
+        - original_item_id
+        - override_item_id
+      properties:
+        original_item_id:
+          type: string
+          format: uuid
+          description: Original material to replace
+        override_item_id:
+          type: string
+          format: uuid
+          description: Replacement material
+        quality_adjustment:
+          type: number
+          format: float
+          minimum: 0.1
+          maximum: 2.0
+          default: 1.0
+          description: Quality adjustment multiplier
+
+    QualityModifier:
+      type: object
+      required:
+        - type
+        - value
+      properties:
+        type:
+          type: string
+          enum: [ skill_bonus, equipment_bonus, station_bonus, consumable_bonus ]
+          description: Type of quality modifier
+        value:
+          type: number
+          format: float
+          minimum: 0.5
+          maximum: 2.0
+          description: Quality multiplier
+
+    CreateContractRequest:
+      type: object
+      required:
+        - client_id
+        - recipe_id
+        - quantity
+        - deadline
+        - payment_terms
+      properties:
+        client_id:
+          type: string
+          format: uuid
+          description: Client requesting the contract
+        recipe_id:
+          type: string
+          format: uuid
+          description: Recipe to produce
+        quantity:
+          type: integer
+          minimum: 1
+          description: Quantity to produce
+        deadline:
+          type: string
+          format: date-time
+          description: Contract deadline
+        quality_requirements:
+          type: object
+          properties:
+            minimum_quality:
+              type: integer
+              minimum: 1
+              maximum: 100
+              default: 50
+            maximum_defects:
+              type: integer
+              minimum: 0
+              default: 0
+          description: Quality requirements for the contract
+        payment_terms:
+          $ref: '#/components/schemas/PaymentTerms'
+        special_requirements:
+          type: string
+          maxLength: 1000
+          description: Special requirements or notes
+
+    PaymentTerms:
+      type: object
+      required:
+        - currency
+        - base_rate
+        - payment_schedule
+      properties:
+        currency:
+          type: string
+          enum: [ eddies, eurobucks ]
+          description: Payment currency
+        base_rate:
+          type: number
+          format: float
+          minimum: 0
+          description: Base payment rate per unit
+        quality_bonus:
+          type: number
+          format: float
+          minimum: 0
+          description: Bonus payment per quality point above minimum
+        penalty_rate:
+          type: number
+          format: float
+          minimum: 0
+          description: Penalty per quality point below minimum
+        payment_schedule:
+          type: string
+          enum: [ on_completion, on_delivery, milestone_based ]
+          description: When payment is made
+        deposit_required:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Required deposit percentage
+
+    Contract:
+      type: object
+      required:
+        - id
+        - client_id
+        - contractor_id
+        - recipe_id
+        - quantity
+        - status
+        - deadline
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique contract identifier
+        client_id:
+          type: string
+          format: uuid
+          description: Client who requested the contract
+        contractor_id:
+          type: string
+          format: uuid
+          description: Contractor fulfilling the contract
+        recipe_id:
+          type: string
+          format: uuid
+          description: Recipe being produced
+        quantity:
+          type: integer
+          minimum: 1
+          description: Quantity to produce
+        status:
+          type: string
+          enum: [ pending, accepted, in_progress, completed, failed, cancelled ]
+          description: Contract status
+        deadline:
+          type: string
+          format: date-time
+          description: Contract deadline
+        quality_requirements:
+          type: object
+          properties:
+            minimum_quality:
+              type: integer
+              minimum: 1
+              maximum: 100
+            maximum_defects:
+              type: integer
+              minimum: 0
+          description: Quality requirements
+        payment_terms:
+          $ref: '#/components/schemas/PaymentTerms'
+        progress:
+          type: object
+          properties:
+            completed_quantity:
+              type: integer
+              minimum: 0
+              description: Quantity completed so far
+            quality_achieved:
+              type: number
+              format: float
+              minimum: 0
+              maximum: 100
+              description: Average quality achieved
+            defects_found:
+              type: integer
+              minimum: 0
+              description: Number of defects found
+          description: Contract progress
+        created_at:
+          type: string
+          format: date-time
+          description: Contract creation timestamp
+        accepted_at:
+          type: string
+          format: date-time
+          description: Contract acceptance timestamp
+
+    OrderListResponse:
+      type: object
+      required:
+        - orders
+        - total_count
+        - limit
+        - offset
+      properties:
+        orders:
+          type: array
+          items:
+            $ref: '#/components/schemas/Order'
+        total_count:
+          type: integer
+          minimum: 0
+          description: Total number of orders
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Requested limit
+        offset:
+          type: integer
+          minimum: 0
+          description: Requested offset
+
+    Error:
+      type: object
+      required:
+        - error
+        - message
+        - timestamp
+      properties:
+        error:
+          type: string
+          description: Error code
+        message:
+          type: string
+          description: Human-readable error message
+        timestamp:
+          type: string
+          format: date-time
+          description: Error timestamp
+        details:
+          type: object
+          additionalProperties: true
+          description: Additional error details

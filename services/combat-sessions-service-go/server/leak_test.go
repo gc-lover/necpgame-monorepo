@@ -24,15 +24,15 @@ func TestSessionNoLeaks(t *testing.T) {
 	defer goleak.VerifyNone(t,
 		goleak.IgnoreTopFunction("database/sql.(*DB).connectionOpener"),
 	)
-	
+
 	// TODO: Test session lifecycle
 	// session := NewGameSession()
 	// session.Start()
 	// time.Sleep(100 * time.Millisecond)
 	// session.Stop()
-	
+
 	time.Sleep(100 * time.Millisecond)
-	
+
 	// If goroutines leaked from session handlers, test FAILS
 }
 
@@ -41,16 +41,16 @@ func TestConcurrentSessionsNoLeaks(t *testing.T) {
 	defer goleak.VerifyNone(t,
 		goleak.IgnoreTopFunction("database/sql.(*DB).connectionOpener"),
 	)
-	
+
 	// TODO: Simulate 50 concurrent game sessions
 	// for i := 0; i < 50; i++ {
 	//     session := NewGameSession()
 	//     session.Start()
 	//     defer session.Stop()
 	// }
-	
+
 	time.Sleep(200 * time.Millisecond)
-	
+
 	// All session goroutines must be cleaned up
 }
 
@@ -65,4 +65,3 @@ func TestConcurrentSessionsNoLeaks(t *testing.T) {
 // - Ticker.Stop() for all time.Ticker
 // - Channel close for all event channels
 // - Session cleanup on disconnect
-

@@ -1,9 +1,8 @@
-// SQL queries use prepared statements with placeholders (, , ?) for safety
+// Package server SQL queries use prepared statements with placeholders (, , ?) for safety
 // Issue: #1578
 package server
 
 import (
-	"context"
 	"database/sql"
 	"time"
 
@@ -18,7 +17,7 @@ type Repository struct {
 	db *sql.DB // 8 bytes
 }
 
-// Internal models
+// Activation Internal models
 // OPTIMIZATION: Struct alignment - group by size (largest first)
 type Activation struct {
 	ActivatedAt time.Time // 24 bytes (time.Time has 24 bytes)
@@ -65,26 +64,26 @@ func (r *Repository) Close() error {
 }
 
 // GetComboCatalog returns catalog of combos with filtering (STUB)
-func (r *Repository) GetComboCatalog(ctx context.Context, params api.GetComboCatalogParams) ([]api.Combo, int32, error) {
+func (r *Repository) GetComboCatalog() ([]api.Combo, int32, error) {
 	// TODO: Implement real DB query
-	combos := []api.Combo{}
+	var combos []api.Combo
 	return combos, 0, nil
 }
 
 // GetComboDetails returns detailed combo information (STUB)
-func (r *Repository) GetComboDetails(ctx context.Context, comboId string) (*api.ComboDetails, error) {
+func (r *Repository) GetComboDetails() (*api.ComboDetails, error) {
 	// TODO: Implement real DB query
 	return nil, ErrNotFound
 }
 
 // GetComboByID returns combo by ID (STUB)
-func (r *Repository) GetComboByID(ctx context.Context, comboId string) (*api.Combo, error) {
+func (r *Repository) GetComboByID() (*api.Combo, error) {
 	// TODO: Implement real DB query
 	return nil, ErrNotFound
 }
 
 // CreateActivation creates combo activation record (STUB)
-func (r *Repository) CreateActivation(ctx context.Context, req *api.ActivateComboRequest) (*Activation, error) {
+func (r *Repository) CreateActivation(req *api.ActivateComboRequest) (*Activation, error) {
 	// TODO: Implement real DB insert
 	activation := &Activation{
 		ID:          "act-" + req.ComboID.String(),
@@ -96,7 +95,7 @@ func (r *Repository) CreateActivation(ctx context.Context, req *api.ActivateComb
 }
 
 // GetActivation returns activation by ID (STUB)
-func (r *Repository) GetActivation(ctx context.Context, activationId string) (*Activation, error) {
+func (r *Repository) GetActivation(activationId string) (*Activation, error) {
 	// TODO: Implement real DB query
 	activation := &Activation{
 		ID:          activationId,
@@ -108,25 +107,25 @@ func (r *Repository) GetActivation(ctx context.Context, activationId string) (*A
 }
 
 // GetSynergy returns synergy by ID (STUB)
-func (r *Repository) GetSynergy(ctx context.Context, synergyId string) (*api.Synergy, error) {
+func (r *Repository) GetSynergy() (*api.Synergy, error) {
 	// TODO: Implement real DB query
 	return nil, ErrNotFound
 }
 
 // SaveSynergyApplication saves synergy application (STUB)
-func (r *Repository) SaveSynergyApplication(ctx context.Context, activationId, synergyId string) error {
+func (r *Repository) SaveSynergyApplication() error {
 	// TODO: Implement real DB insert
 	return nil
 }
 
 // GetComboLoadout returns character's combo loadout (STUB)
-func (r *Repository) GetComboLoadout(ctx context.Context, CharacterID string) (*api.ComboLoadout, error) {
+func (r *Repository) GetComboLoadout(CharacterID string) (*api.ComboLoadout, error) {
 	// TODO: Implement real DB query
 	uuidVal := uuid.UUID{}
 	charUUID := uuid.UUID{}
 	_ = charUUID.UnmarshalText([]byte(CharacterID))
 
-	combos := []uuid.UUID{}
+	var combos []uuid.UUID
 
 	return &api.ComboLoadout{
 		ID:           uuidVal,
@@ -136,7 +135,7 @@ func (r *Repository) GetComboLoadout(ctx context.Context, CharacterID string) (*
 }
 
 // UpdateComboLoadout updates character's combo loadout (STUB)
-func (r *Repository) UpdateComboLoadout(ctx context.Context, req *api.UpdateLoadoutRequest) (*api.ComboLoadout, error) {
+func (r *Repository) UpdateComboLoadout(req *api.UpdateLoadoutRequest) (*api.ComboLoadout, error) {
 	// TODO: Implement real DB update
 	uuidVal := uuid.UUID{}
 
@@ -147,14 +146,14 @@ func (r *Repository) UpdateComboLoadout(ctx context.Context, req *api.UpdateLoad
 }
 
 // SaveScore saves combo score (STUB)
-func (r *Repository) SaveScore(ctx context.Context, score *ScoreRecord) error {
+func (r *Repository) SaveScore() error {
 	// TODO: Implement real DB insert
 	return nil
 }
 
 // GetComboAnalytics returns combo analytics (STUB)
-func (r *Repository) GetComboAnalytics(ctx context.Context, params api.GetComboAnalyticsParams) ([]api.ComboAnalytics, error) {
+func (r *Repository) GetComboAnalytics() ([]api.ComboAnalytics, error) {
 	// TODO: Implement real DB query with aggregation
-	analytics := []api.ComboAnalytics{}
+	var analytics []api.ComboAnalytics
 	return analytics, nil
 }

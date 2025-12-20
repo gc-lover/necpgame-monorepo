@@ -89,9 +89,9 @@ func TestWeaponCombinationsRepository_SaveWeaponModifier(t *testing.T) {
 	weaponID := uuid.New()
 	modifierID := uuid.New()
 	modifierData := map[string]interface{}{
-		"type":        "scope",
+		"type":         "scope",
 		"damage_bonus": 10,
-		"accuracy":    5,
+		"accuracy":     5,
 	}
 
 	ctx := context.Background()
@@ -115,4 +115,3 @@ func TestWeaponCombinationsRepository_GetWeaponModifiers(t *testing.T) {
 	assert.NotNil(t, modifiers)
 	assert.IsType(t, []map[string]interface{}{}, modifiers)
 }
-

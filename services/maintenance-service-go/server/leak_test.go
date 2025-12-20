@@ -35,4 +35,3 @@ func TestMaintenanceServiceNoLeaks(t *testing.T) {
 
 	// If goroutines leaked from maintenance handlers, test FAILS
 }
-

@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/necpgame/character-service-go/models"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/necpgame/character-service-go/models"
 	"github.com/redis/go-redis/v9"
 	"github.com/sirupsen/logrus"
 )
@@ -23,17 +23,17 @@ type CharacterRepositoryInterface interface {
 }
 
 type CharacterService struct {
-	repo                      CharacterRepositoryInterface
-	engramRepo                EngramRepositoryInterface
-	engramService             EngramServiceInterface
-	engramSecurityRepo        EngramSecurityRepositoryInterface
-	engramSecurityService     EngramSecurityServiceInterface
-	engramCyberpsychosisRepo  EngramCyberpsychosisRepositoryInterface
+	repo                        CharacterRepositoryInterface
+	engramRepo                  EngramRepositoryInterface
+	engramService               EngramServiceInterface
+	engramSecurityRepo          EngramSecurityRepositoryInterface
+	engramSecurityService       EngramSecurityServiceInterface
+	engramCyberpsychosisRepo    EngramCyberpsychosisRepositoryInterface
 	engramCyberpsychosisService EngramCyberpsychosisServiceInterface
-	cache                     *redis.Client
-	characterCache            *CharacterCache // Issue: #1609 - 3-tier cache
-	logger                    *logrus.Logger
-	keycloakURL               string
+	cache                       *redis.Client
+	characterCache              *CharacterCache // Issue: #1609 - 3-tier cache
+	logger                      *logrus.Logger
+	keycloakURL                 string
 }
 
 func NewCharacterService(dbURL, redisURL, keycloakURL string) (*CharacterService, error) {
@@ -46,7 +46,7 @@ func NewCharacterService(dbURL, redisURL, keycloakURL string) (*CharacterService
 	config.MinConns = 10
 	config.MaxConnLifetime = 5 * time.Minute
 	config.MaxConnIdleTime = 1 * time.Minute
-	
+
 	dbPool, err := pgxpool.NewWithConfig(context.Background(), config)
 	if err != nil {
 		return nil, err
@@ -62,7 +62,7 @@ func NewCharacterService(dbURL, redisURL, keycloakURL string) (*CharacterService
 	repo := NewCharacterRepository(dbPool)
 	engramRepo := NewEngramRepository(dbPool)
 	engramService := NewEngramService(engramRepo, repo, redisClient)
-	
+
 	engramSecurityRepo := NewEngramSecurityRepository(dbPool)
 	engramSecurityService := NewEngramSecurityService(engramSecurityRepo, redisClient)
 
@@ -73,17 +73,17 @@ func NewCharacterService(dbURL, redisURL, keycloakURL string) (*CharacterService
 	characterCache := NewCharacterCache(redisClient, repo)
 
 	return &CharacterService{
-		repo:                      repo,
-		engramRepo:                engramRepo,
-		engramService:             engramService,
-		engramSecurityRepo:        engramSecurityRepo,
-		engramSecurityService:     engramSecurityService,
-		engramCyberpsychosisRepo:  engramCyberpsychosisRepo,
+		repo:                        repo,
+		engramRepo:                  engramRepo,
+		engramService:               engramService,
+		engramSecurityRepo:          engramSecurityRepo,
+		engramSecurityService:       engramSecurityService,
+		engramCyberpsychosisRepo:    engramCyberpsychosisRepo,
 		engramCyberpsychosisService: engramCyberpsychosisService,
-		cache:                     redisClient,
-		characterCache:            characterCache, // Issue: #1609
-		logger:                    GetLogger(),
-		keycloakURL:               keycloakURL,
+		cache:                       redisClient,
+		characterCache:              characterCache, // Issue: #1609
+		logger:                      GetLogger(),
+		keycloakURL:                 keycloakURL,
 	}, nil
 }
 
@@ -101,7 +101,7 @@ func (s *CharacterService) GetEngramCyberpsychosisService() EngramCyberpsychosis
 
 func (s *CharacterService) GetAccount(ctx context.Context, accountID uuid.UUID) (*models.PlayerAccount, error) {
 	cacheKey := "account:" + accountID.String()
-	
+
 	cached, err := s.cache.Get(ctx, cacheKey).Result()
 	if err == nil && cached != "" {
 		var account models.PlayerAccount
@@ -252,7 +252,7 @@ func (s *CharacterService) SwitchCharacter(ctx context.Context, accountID, chara
 func (s *CharacterService) invalidateAccountCache(ctx context.Context, accountID uuid.UUID) {
 	// Issue: #1609 - Invalidate 3-tier cache
 	s.characterCache.InvalidateAccount(ctx, accountID)
-	
+
 	// Also invalidate account cache
 	cacheKey := "account:" + accountID.String()
 	s.cache.Del(ctx, cacheKey)

@@ -3,8 +3,9 @@ package server
 
 import (
 	"context"
-	"github.com/gc-lover/necpgame-monorepo/services/combat-implants-stats-service-go/pkg/api"
 	"testing"
+
+	"github.com/gc-lover/necpgame-monorepo/services/combat-implants-stats-service-go/pkg/api"
 )
 
 // BenchmarkGetEnergyStatus benchmarks GetEnergyStatus handler
@@ -13,8 +14,7 @@ func BenchmarkGetEnergyStatus(b *testing.B) {
 	handlers := NewHandlers()
 
 	ctx := context.Background()
-	params := api.GetEnergyStatusParams{
-	}
+	params := api.GetEnergyStatusParams{}
 
 	b.ReportAllocs()
 	b.ResetTimer()
@@ -30,8 +30,7 @@ func BenchmarkGetHumanityStatus(b *testing.B) {
 	handlers := NewHandlers()
 
 	ctx := context.Background()
-	params := api.GetHumanityStatusParams{
-	}
+	params := api.GetHumanityStatusParams{}
 
 	b.ReportAllocs()
 	b.ResetTimer()
@@ -56,4 +55,3 @@ func BenchmarkCheckCompatibility(b *testing.B) {
 		_, _ = handlers.CheckCompatibility(ctx, params)
 	}
 }
-

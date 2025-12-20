@@ -7,18 +7,18 @@ info:
     name: NECPGAME API Support
     email: api@necp.game
 servers:
-- url: http://localhost:8086/api/v1
-  description: Локальный сервер разработки
-- url: https://api.necp.game/api/v1
-  description: Продакшен сервер
+  - url: http://localhost:8086/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
 tags:
-- name: Penalties
-  description: Управление наказаниями
+  - name: Penalties
+    description: Управление наказаниями
 paths:
   /anti-cheat/penalties/apply:
     post:
       tags:
-      - Penalties
+        - Penalties
       summary: Применить наказание
       description: 'Применяет наказание к игроку за нарушения античита.
 
@@ -27,7 +27,7 @@ paths:
         '
       operationId: applyPenalty
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       requestBody:
         required: true
         content:
@@ -52,27 +52,27 @@ paths:
   /anti-cheat/penalties/{player_id}:
     get:
       tags:
-      - Penalties
+        - Penalties
       summary: Получить наказания игрока
       description: Возвращает список наказаний для указанного игрока с фильтрацией по активности.
       operationId: getPlayerPenalties
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       parameters:
-      - name: player_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: Идентификатор игрока
-        example: 550e8400-e29b-41d4-a716-446655440000
-      - name: is_active
-        in: query
-        schema:
-          type: boolean
-        description: Фильтр по активности наказания
-        example: true
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор игрока
+          example: 550e8400-e29b-41d4-a716-446655440000
+        - name: is_active
+          in: query
+          schema:
+            type: boolean
+          description: Фильтр по активности наказания
+          example: true
       responses:
         '200':
           description: Наказания игрока
@@ -89,12 +89,12 @@ paths:
   /anti-cheat/penalties/revoke:
     post:
       tags:
-      - Penalties
+        - Penalties
       summary: Отменить наказание
       description: Отменяет активное наказание для игрока.
       operationId: revokePenalty
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       requestBody:
         required: true
         content:
@@ -109,7 +109,7 @@ paths:
               schema:
                 type: object
                 required:
-                - status
+                  - status
                 properties:
                   status:
                     type: string
@@ -132,8 +132,8 @@ components:
     ApplyPenaltyRequest:
       type: object
       required:
-      - player_id
-      - penalty_type
+        - player_id
+        - penalty_type
       properties:
         player_id:
           type: string
@@ -147,10 +147,10 @@ components:
         penalty_type:
           type: string
           enum:
-          - WARNING
-          - TEMPORARY_BAN
-          - PERMANENT_BAN
-          - ROLLBACK
+            - WARNING
+            - TEMPORARY_BAN
+            - PERMANENT_BAN
+            - ROLLBACK
           description: Тип наказания
           example: TEMPORARY_BAN
         violation_ids:
@@ -160,7 +160,7 @@ components:
             format: uuid
           description: Связанные нарушения
           example:
-          - 550e8400-e29b-41d4-a716-446655440001
+            - 550e8400-e29b-41d4-a716-446655440001
         duration_seconds:
           type: integer
           minimum: 1
@@ -170,11 +170,11 @@ components:
     Penalty:
       type: object
       required:
-      - id
-      - player_id
-      - penalty_type
-      - is_active
-      - created_at
+        - id
+        - player_id
+        - penalty_type
+        - is_active
+        - created_at
       properties:
         id:
           type: string
@@ -199,10 +199,10 @@ components:
         penalty_type:
           type: string
           enum:
-          - WARNING
-          - TEMPORARY_BAN
-          - PERMANENT_BAN
-          - ROLLBACK
+            - WARNING
+            - TEMPORARY_BAN
+            - PERMANENT_BAN
+            - ROLLBACK
           description: Тип наказания
           example: TEMPORARY_BAN
         expires_at:
@@ -229,8 +229,8 @@ components:
     PlayerPenaltiesResponse:
       type: object
       required:
-      - penalties
-      - total
+        - penalties
+        - total
       properties:
         penalties:
           type: array
@@ -246,7 +246,7 @@ components:
     RevokePenaltyRequest:
       type: object
       required:
-      - penalty_id
+        - penalty_id
       properties:
         penalty_id:
           type: string
@@ -259,4 +259,4 @@ components:
           example: False positive detected
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
 security:
-- BearerAuth: []
+  - BearerAuth: [ ]

@@ -1,4 +1,4 @@
-// Issue: #1598
+// Package server Issue: #1598
 package server
 
 import (
@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/gc-lover/necpgame-monorepo/services/chat-service-go/pkg/api"
+	"github.com/google/uuid"
 )
 
 var (
@@ -53,16 +53,16 @@ func NewService(repo *Repository) *Service {
 // SendMessage sends a message to a channel
 func (s *Service) SendMessage(ctx context.Context, req *api.SendMessageRequest) (*api.MessageResponse, error) {
 	channelID := req.ChannelID
-	
+
 	// Get senderID from JWT token in context
 	senderID, err := getPlayerIDFromContext(ctx)
 	if err != nil {
 		return nil, ErrForbidden
 	}
-	
+
 	// TODO: Get senderName from character service (Issue: Character service integration)
 	senderName := "Player" // Should come from character service
-	
+
 	// Check if player is banned
 	banned, err := s.repo.IsPlayerBanned(ctx, senderID, &channelID)
 	if err != nil {
@@ -71,13 +71,13 @@ func (s *Service) SendMessage(ctx context.Context, req *api.SendMessageRequest) 
 	if banned {
 		return nil, ErrForbidden
 	}
-	
+
 	// Get channel to check permissions and get channel type
 	channel, err := s.repo.GetChannel(ctx, channelID)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Check if player is member (for private channels)
 	if channel.Type == "private" {
 		isMember, err := s.repo.IsChannelMember(ctx, channelID, senderID)
@@ -88,18 +88,18 @@ func (s *Service) SendMessage(ctx context.Context, req *api.SendMessageRequest) 
 			return nil, ErrForbidden
 		}
 	}
-	
+
 	// Validate message length
 	if len(req.Content) > channel.MaxLength {
 		return nil, ErrBadRequest
 	}
-	
+
 	// Create message
 	messageID, err := s.repo.CreateMessage(ctx, channelID, senderID, req.Content, req.Content, channel.Type, senderName)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	return &api.MessageResponse{
 		ID:         api.NewOptUUID(*messageID),
 		ChannelID:  api.NewOptUUID(channelID),
@@ -113,13 +113,13 @@ func (s *Service) SendMessage(ctx context.Context, req *api.SendMessageRequest) 
 // GetChannelMessages retrieves channel message history
 func (s *Service) GetChannelMessages(ctx context.Context, params api.GetChannelMessagesParams) (*api.MessagesHistoryResponse, error) {
 	channelID := params.ChannelID
-	
+
 	// Check if channel exists
 	_, err := s.repo.GetChannel(ctx, channelID)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	limit := 50
 	if params.Limit.Set {
 		limit = params.Limit.Value
@@ -127,7 +127,7 @@ func (s *Service) GetChannelMessages(ctx context.Context, params api.GetChannelM
 			limit = 100
 		}
 	}
-	
+
 	var before, after *uuid.UUID
 	if params.Before.Set {
 		before = &params.Before.Value
@@ -135,12 +135,12 @@ func (s *Service) GetChannelMessages(ctx context.Context, params api.GetChannelM
 	if params.After.Set {
 		after = &params.After.Value
 	}
-	
+
 	messages, err := s.repo.GetChannelMessages(ctx, channelID, limit, before, after)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	apiMessages := make([]api.MessageResponse, len(messages))
 	for i, msg := range messages {
 		apiMessages[i] = api.MessageResponse{
@@ -152,7 +152,7 @@ func (s *Service) GetChannelMessages(ctx context.Context, params api.GetChannelM
 			CreatedAt:  api.NewOptDateTime(msg.CreatedAt),
 		}
 	}
-	
+
 	return &api.MessagesHistoryResponse{
 		Messages: apiMessages,
 	}, nil
@@ -164,15 +164,15 @@ func (s *Service) GetChannels(ctx context.Context) (*api.ChannelsListResponse, e
 	if err != nil {
 		return nil, err
 	}
-	
+
 	apiChannels := make([]api.ChannelResponse, len(channels))
 	for i, ch := range channels {
 		apiChannels[i] = api.ChannelResponse{
-			ID:          api.NewOptUUID(ch.ID),
-			Name:        api.NewOptString(ch.Name),
-			CreatedAt:   api.NewOptDateTime(ch.CreatedAt),
+			ID:        api.NewOptUUID(ch.ID),
+			Name:      api.NewOptString(ch.Name),
+			CreatedAt: api.NewOptDateTime(ch.CreatedAt),
 		}
-		
+
 		// Convert channel type
 		switch ch.Type {
 		case "global":
@@ -190,18 +190,18 @@ func (s *Service) GetChannels(ctx context.Context) (*api.ChannelsListResponse, e
 		case "private":
 			apiChannels[i].ChannelType = api.NewOptChannelResponseChannelType(api.ChannelResponseChannelTypePrivate)
 		}
-		
+
 		if ch.OwnerID != nil {
 			apiChannels[i].OwnerID = api.NewOptUUID(*ch.OwnerID)
 		}
-		
+
 		// Get member count
 		memberCount, err := s.repo.GetChannelMemberCount(ctx, ch.ID)
 		if err == nil {
 			apiChannels[i].MemberCount = api.NewOptInt(memberCount)
 		}
 	}
-	
+
 	return &api.ChannelsListResponse{
 		Channels: apiChannels,
 	}, nil
@@ -215,7 +215,7 @@ func (s *Service) CreateChannel(ctx context.Context, req *api.CreateChannelReque
 		return nil, ErrForbidden
 	}
 	ownerIDPtr := &ownerID
-	
+
 	channelType := "private"
 	switch req.ChannelType {
 	case api.CreateChannelRequestChannelTypePrivate:
@@ -227,36 +227,36 @@ func (s *Service) CreateChannel(ctx context.Context, req *api.CreateChannelReque
 	case api.CreateChannelRequestChannelTypeTrade:
 		channelType = "trade"
 	}
-	
+
 	var description string
 	channelID, err := s.repo.CreateChannel(ctx, ownerIDPtr, channelType, req.Name, description)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Add initial members if provided
 	if len(req.Members) > 0 {
 		for _, memberID := range req.Members {
 			_ = s.repo.AddChannelMember(ctx, *channelID, memberID)
 		}
 	}
-	
+
 	// Get created channel
 	channel, err := s.repo.GetChannel(ctx, *channelID)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	response := &api.ChannelResponse{
 		ID:        api.NewOptUUID(channel.ID),
 		Name:      api.NewOptString(channel.Name),
 		CreatedAt: api.NewOptDateTime(channel.CreatedAt),
 	}
-	
+
 	if channel.OwnerID != nil {
 		response.OwnerID = api.NewOptUUID(*channel.OwnerID)
 	}
-	
+
 	switch channel.Type {
 	case "global":
 		response.ChannelType = api.NewOptChannelResponseChannelType(api.ChannelResponseChannelTypeGlobal)
@@ -273,12 +273,12 @@ func (s *Service) CreateChannel(ctx context.Context, req *api.CreateChannelReque
 	case "private":
 		response.ChannelType = api.NewOptChannelResponseChannelType(api.ChannelResponseChannelTypePrivate)
 	}
-	
+
 	memberCount, err := s.repo.GetChannelMemberCount(ctx, channel.ID)
 	if err == nil {
 		response.MemberCount = api.NewOptInt(memberCount)
 	}
-	
+
 	return response, nil
 }
 
@@ -288,17 +288,17 @@ func (s *Service) GetChannel(ctx context.Context, params api.GetChannelParams) (
 	if err != nil {
 		return nil, err
 	}
-	
+
 	response := &api.ChannelResponse{
 		ID:        api.NewOptUUID(channel.ID),
 		Name:      api.NewOptString(channel.Name),
 		CreatedAt: api.NewOptDateTime(channel.CreatedAt),
 	}
-	
+
 	if channel.OwnerID != nil {
 		response.OwnerID = api.NewOptUUID(*channel.OwnerID)
 	}
-	
+
 	switch channel.Type {
 	case "global":
 		response.ChannelType = api.NewOptChannelResponseChannelType(api.ChannelResponseChannelTypeGlobal)
@@ -315,12 +315,12 @@ func (s *Service) GetChannel(ctx context.Context, params api.GetChannelParams) (
 	case "private":
 		response.ChannelType = api.NewOptChannelResponseChannelType(api.ChannelResponseChannelTypePrivate)
 	}
-	
+
 	memberCount, err := s.repo.GetChannelMemberCount(ctx, channel.ID)
 	if err == nil {
 		response.MemberCount = api.NewOptInt(memberCount)
 	}
-	
+
 	return response, nil
 }
 
@@ -330,17 +330,17 @@ func (s *Service) UpdateChannel(ctx context.Context, params api.UpdateChannelPar
 	if err != nil {
 		return nil, err
 	}
-	
+
 	var name *string
 	if req.Name.Set {
 		name = &req.Name.Value
 	}
-	
+
 	err = s.repo.UpdateChannel(ctx, params.ChannelID, name, nil)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Get updated channel
 	getParams := api.GetChannelParams{ChannelID: params.ChannelID}
 	return s.GetChannel(ctx, getParams)
@@ -373,37 +373,37 @@ func (s *Service) BanPlayer(ctx context.Context, req *api.BanPlayerRequest) (*ap
 	if req.ChannelID.Set {
 		channelID = &req.ChannelID.Value
 	}
-	
+
 	var expiresAt *time.Time
 	if req.DurationMinutes.Set && req.DurationMinutes.Value > 0 {
 		exp := time.Now().Add(time.Duration(req.DurationMinutes.Value) * time.Minute)
 		expiresAt = &exp
 	}
-	
+
 	banID, err := s.repo.CreateBan(ctx, req.PlayerID, channelID, req.Reason, expiresAt)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	ban, err := s.repo.GetBan(ctx, *banID)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	response := &api.BanResponse{
 		ID:       api.NewOptUUID(ban.ID),
 		PlayerID: api.NewOptUUID(ban.CharacterID),
 		Reason:   api.NewOptString(ban.Reason),
 		BannedAt: api.NewOptDateTime(ban.CreatedAt),
 	}
-	
+
 	if ban.ChannelID != nil {
 		response.ChannelID = api.NewOptUUID(*ban.ChannelID)
 	}
 	if ban.ExpiresAt != nil {
 		response.ExpiresAt = api.NewOptDateTime(*ban.ExpiresAt)
 	}
-	
+
 	return response, nil
 }
 
@@ -416,4 +416,3 @@ func (s *Service) UnbanPlayer(ctx context.Context, params api.UnbanPlayerParams)
 func (s *Service) DeleteMessage(ctx context.Context, params api.DeleteMessageParams) error {
 	return s.repo.DeleteMessage(ctx, params.MessageID)
 }
-

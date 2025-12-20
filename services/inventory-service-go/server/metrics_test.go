@@ -55,4 +55,3 @@ func TestMetricsMiddlewareRecordsMetrics(t *testing.T) {
 		t.Fatalf("expected inventoryRequestDuration to have observations")
 	}
 }
-

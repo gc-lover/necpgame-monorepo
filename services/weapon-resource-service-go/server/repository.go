@@ -1,8 +1,7 @@
-// Issue: #1595
+// Package server Issue: #1595
 package server
 
 import (
-	"context"
 	"database/sql"
 	"time"
 
@@ -21,7 +20,7 @@ func NewRepository(db *sql.DB) *Repository {
 }
 
 // GetWeaponResources gets all resources from database
-func (r *Repository) GetWeaponResources(ctx context.Context, weaponID string) (*api.WeaponResources, error) {
+func (r *Repository) GetWeaponResources(weaponID string) (*api.WeaponResources, error) {
 	// TODO: implement database query
 	weaponIDUUID, err := uuid.Parse(weaponID)
 	if err != nil {
@@ -35,13 +34,13 @@ func (r *Repository) GetWeaponResources(ctx context.Context, weaponID string) (*
 			Max:     0,
 		},
 		Heat: api.HeatState{
-			Current:      0,
-			CoolingRate:  1.0,
-			Overheated:   false,
+			Current:     0,
+			CoolingRate: 1.0,
+			Overheated:  false,
 		},
 		Energy: api.EnergyState{
-			Current:    0,
-			RegenRate:  1.0,
+			Current:   0,
+			RegenRate: 1.0,
 		},
 		Cooldowns: make(api.WeaponResourcesCooldowns),
 		UpdatedAt: api.NewOptDateTime(time.Now()),
@@ -49,28 +48,19 @@ func (r *Repository) GetWeaponResources(ctx context.Context, weaponID string) (*
 }
 
 // ConsumeResource consumes resource (ammo/heat/energy)
-func (r *Repository) ConsumeResource(ctx context.Context, weaponID string, req *api.ConsumeResourceRequest) (*api.WeaponResources, error) {
+func (r *Repository) ConsumeResource(weaponID string) (*api.WeaponResources, error) {
 	// TODO: implement database update
-	return r.GetWeaponResources(ctx, weaponID)
+	return r.GetWeaponResources(weaponID)
 }
 
 // ApplyCooldown applies cooldown to weapon/ability
-func (r *Repository) ApplyCooldown(ctx context.Context, weaponID string, req *api.ApplyCooldownRequest) (*api.WeaponResources, error) {
+func (r *Repository) ApplyCooldown(weaponID string) (*api.WeaponResources, error) {
 	// TODO: implement database update
-	return r.GetWeaponResources(ctx, weaponID)
+	return r.GetWeaponResources(weaponID)
 }
 
 // ReloadWeapon reloads weapon ammunition
-func (r *Repository) ReloadWeapon(ctx context.Context, weaponID string, req *api.ReloadWeaponRequest) (*api.WeaponResources, error) {
+func (r *Repository) ReloadWeapon(weaponID string) (*api.WeaponResources, error) {
 	// TODO: implement database update
-	return r.GetWeaponResources(ctx, weaponID)
+	return r.GetWeaponResources(weaponID)
 }
-
-
-
-
-
-
-
-
-

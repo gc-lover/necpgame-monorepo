@@ -85,4 +85,3 @@ func TestParseGameStateMessage_Invalid(t *testing.T) {
 	_, err := ParseGameStateMessage([]byte{0x01, 0x02})
 	assert.Error(t, err)
 }
-

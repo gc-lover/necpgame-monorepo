@@ -30,63 +30,63 @@ func BenchmarkGetDashboard(b *testing.B) {
 // benchmarkAdminService implements AdminServiceInterface for benchmarks
 type benchmarkAdminService struct{}
 
-func (m *benchmarkAdminService) GetAnalytics(ctx context.Context) (*models.AnalyticsResponse, error) {
+func (m *benchmarkAdminService) GetAnalytics(_ context.Context) (*models.AnalyticsResponse, error) {
 	return &models.AnalyticsResponse{
 		OnlinePlayers: 100,
 	}, nil
 }
 
-func (m *benchmarkAdminService) GetAuditLogs(ctx context.Context, adminID *uuid.UUID, actionType *models.AdminActionType, limit, offset int) (*models.AuditLogListResponse, error) {
+func (m *benchmarkAdminService) GetAuditLogs(_ context.Context, _ *uuid.UUID, _ *models.AdminActionType, _, _ int) (*models.AuditLogListResponse, error) {
 	return &models.AuditLogListResponse{
 		Logs: []models.AdminAuditLog{},
 	}, nil
 }
 
 // Stub methods for AdminServiceInterface
-func (m *benchmarkAdminService) LogAction(ctx context.Context, adminID uuid.UUID, actionType models.AdminActionType, targetID *uuid.UUID, targetType string, details map[string]interface{}, ipAddress, userAgent string) error {
+func (m *benchmarkAdminService) LogAction(_ context.Context, _ uuid.UUID, _ models.AdminActionType, _ *uuid.UUID, _ string, _ map[string]interface{}, _, _ string) error {
 	return nil
 }
 
-func (m *benchmarkAdminService) BanPlayer(ctx context.Context, adminID uuid.UUID, req *models.BanPlayerRequest, ipAddress, userAgent string) (*models.AdminActionResponse, error) {
+func (m *benchmarkAdminService) BanPlayer(_ context.Context, _ uuid.UUID, _ *models.BanPlayerRequest, _, _ string) (*models.AdminActionResponse, error) {
 	return nil, nil
 }
 
-func (m *benchmarkAdminService) KickPlayer(ctx context.Context, adminID uuid.UUID, req *models.KickPlayerRequest, ipAddress, userAgent string) (*models.AdminActionResponse, error) {
+func (m *benchmarkAdminService) KickPlayer(_ context.Context, _ uuid.UUID, _ *models.KickPlayerRequest, _, _ string) (*models.AdminActionResponse, error) {
 	return nil, nil
 }
 
-func (m *benchmarkAdminService) MutePlayer(ctx context.Context, adminID uuid.UUID, req *models.MutePlayerRequest, ipAddress, userAgent string) (*models.AdminActionResponse, error) {
+func (m *benchmarkAdminService) MutePlayer(_ context.Context, _ uuid.UUID, _ *models.MutePlayerRequest, _, _ string) (*models.AdminActionResponse, error) {
 	return nil, nil
 }
 
-func (m *benchmarkAdminService) GiveItem(ctx context.Context, adminID uuid.UUID, req *models.GiveItemRequest, ipAddress, userAgent string) (*models.AdminActionResponse, error) {
+func (m *benchmarkAdminService) GiveItem(_ context.Context, _ uuid.UUID, _ *models.GiveItemRequest, _, _ string) (*models.AdminActionResponse, error) {
 	return nil, nil
 }
 
-func (m *benchmarkAdminService) RemoveItem(ctx context.Context, adminID uuid.UUID, req *models.RemoveItemRequest, ipAddress, userAgent string) (*models.AdminActionResponse, error) {
+func (m *benchmarkAdminService) RemoveItem(_ context.Context, _ uuid.UUID, _ *models.RemoveItemRequest, _, _ string) (*models.AdminActionResponse, error) {
 	return nil, nil
 }
 
-func (m *benchmarkAdminService) SetCurrency(ctx context.Context, adminID uuid.UUID, req *models.SetCurrencyRequest, ipAddress, userAgent string) (*models.AdminActionResponse, error) {
+func (m *benchmarkAdminService) SetCurrency(_ context.Context, _ uuid.UUID, _ *models.SetCurrencyRequest, _, _ string) (*models.AdminActionResponse, error) {
 	return nil, nil
 }
 
-func (m *benchmarkAdminService) AddCurrency(ctx context.Context, adminID uuid.UUID, req *models.AddCurrencyRequest, ipAddress, userAgent string) (*models.AdminActionResponse, error) {
+func (m *benchmarkAdminService) AddCurrency(_ context.Context, _ uuid.UUID, _ *models.AddCurrencyRequest, _, _ string) (*models.AdminActionResponse, error) {
 	return nil, nil
 }
 
-func (m *benchmarkAdminService) SetWorldFlag(ctx context.Context, adminID uuid.UUID, req *models.SetWorldFlagRequest, ipAddress, userAgent string) (*models.AdminActionResponse, error) {
+func (m *benchmarkAdminService) SetWorldFlag(_ context.Context, _ uuid.UUID, _ *models.SetWorldFlagRequest, _, _ string) (*models.AdminActionResponse, error) {
 	return nil, nil
 }
 
-func (m *benchmarkAdminService) CreateEvent(ctx context.Context, adminID uuid.UUID, req *models.CreateEventRequest, ipAddress, userAgent string) (*models.AdminActionResponse, error) {
+func (m *benchmarkAdminService) CreateEvent(_ context.Context, _ uuid.UUID, _ *models.CreateEventRequest, _, _ string) (*models.AdminActionResponse, error) {
 	return nil, nil
 }
 
-func (m *benchmarkAdminService) SearchPlayers(ctx context.Context, req *models.SearchPlayersRequest) (*models.PlayerSearchResponse, error) {
+func (m *benchmarkAdminService) SearchPlayers(_ context.Context, _ *models.SearchPlayersRequest) (*models.PlayerSearchResponse, error) {
 	return nil, nil
 }
 
-func (m *benchmarkAdminService) GetAuditLog(ctx context.Context, logID uuid.UUID) (*models.AdminAuditLog, error) {
+func (m *benchmarkAdminService) GetAuditLog(_ context.Context, _ uuid.UUID) (*models.AdminAuditLog, error) {
 	return nil, nil
 }

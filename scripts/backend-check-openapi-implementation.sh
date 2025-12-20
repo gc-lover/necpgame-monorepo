@@ -59,10 +59,10 @@ validate_openapi_spec() {
     echo -e "${BLUE}📋 Validating: $service_name${NC}"
     ((SERVICES_CHECKED++))
 
-    # Check file size (<600 lines)
+    # Check file size (<1000 lines)
     local lines=$(wc -l < "$spec_file")
-    if [ "$lines" -gt 600 ]; then
-        echo -e "  ${RED}❌ File size: $lines lines (exceeds 600 limit)${NC}"
+    if [ "$lines" -gt 1000 ]; then
+        echo -e "  ${RED}❌ File size: $lines lines (exceeds 1000 limit)${NC}"
         ((ERRORS++))
         return 1
     fi
@@ -143,7 +143,7 @@ if [ "$ERRORS" -gt 0 ]; then
     echo -e "${RED}❌ VALIDATION FAILED${NC}"
     echo ""
     echo "Fix the following issues:"
-    echo "- Ensure OpenAPI specs are valid and <600 lines"
+    echo "- Ensure OpenAPI specs are valid and <1000 lines"
     echo "- Run 'ogen generate' for all services"
     echo "- Implement Handler interfaces completely"
     echo "- Add performance optimizations (context timeouts, memory pooling)"

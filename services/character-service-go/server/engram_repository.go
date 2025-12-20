@@ -12,29 +12,29 @@ import (
 )
 
 type EngramSlot struct {
-	ID            uuid.UUID
-	CharacterID   uuid.UUID
-	SlotID        int
-	EngramID      *uuid.UUID
-	InstalledAt   *time.Time
+	ID             uuid.UUID
+	CharacterID    uuid.UUID
+	SlotID         int
+	EngramID       *uuid.UUID
+	InstalledAt    *time.Time
 	InfluenceLevel float64
-	UsagePoints   int
-	IsActive      bool
-	CreatedAt     time.Time
-	UpdatedAt     time.Time
+	UsagePoints    int
+	IsActive       bool
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
 }
 
 type EngramInfluenceHistory struct {
-	ID                  uuid.UUID
-	CharacterID         uuid.UUID
-	EngramID            uuid.UUID
-	SlotID              int
+	ID                   uuid.UUID
+	CharacterID          uuid.UUID
+	EngramID             uuid.UUID
+	SlotID               int
 	InfluenceLevelBefore float64
 	InfluenceLevelAfter  float64
-	ChangeAmount        float64
-	ChangeReason        string
-	ActionData          map[string]interface{}
-	CreatedAt           time.Time
+	ChangeAmount         float64
+	ChangeReason         string
+	ActionData           map[string]interface{}
+	CreatedAt            time.Time
 }
 
 type EngramRepositoryInterface interface {
@@ -139,14 +139,14 @@ func (r *EngramRepository) GetEngramSlotBySlotID(ctx context.Context, characterI
 
 func (r *EngramRepository) CreateEngramSlot(ctx context.Context, characterID uuid.UUID, slotID int) (*EngramSlot, error) {
 	slot := &EngramSlot{
-		ID:            uuid.New(),
-		CharacterID:   characterID,
-		SlotID:        slotID,
+		ID:             uuid.New(),
+		CharacterID:    characterID,
+		SlotID:         slotID,
 		InfluenceLevel: 0.0,
-		UsagePoints:   0,
-		IsActive:      false,
-		CreatedAt:     time.Now(),
-		UpdatedAt:     time.Now(),
+		UsagePoints:    0,
+		IsActive:       false,
+		CreatedAt:      time.Now(),
+		UpdatedAt:      time.Now(),
 	}
 
 	err := r.db.QueryRow(ctx,
@@ -303,4 +303,3 @@ func (r *EngramRepository) GetActiveEngrams(ctx context.Context, characterID uui
 
 	return slots, nil
 }
-

@@ -7,24 +7,24 @@ info:
     name: NECPGAME API Support
     email: api@necp.game
 servers:
-- url: http://localhost:8088/api/v1
-  description: Локальный сервер разработки
-- url: https://api.necp.game/api/v1
-  description: Продакшен сервер
+  - url: http://localhost:8088/api/v1
+    description: Локальный сервер разработки
+  - url: https://api.necp.game/api/v1
+    description: Продакшен сервер
 tags:
-- name: Ticket Responses
-  description: Ответы на тикеты
+  - name: Ticket Responses
+    description: Ответы на тикеты
 paths:
   /support/tickets/{ticket_id}/responses:
     post:
       tags:
-      - Ticket Responses
+        - Ticket Responses
       summary: Добавить ответ к тикету
       operationId: addTicketResponse
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       parameters:
-      - $ref: common.yaml#/components/parameters/TicketId
+        - $ref: common.yaml#/components/parameters/TicketId
       requestBody:
         required: true
         content:
@@ -48,15 +48,15 @@ paths:
           $ref: common.yaml#/components/responses/InternalServerError
     get:
       tags:
-      - Ticket Responses
+        - Ticket Responses
       summary: Получить ответы по тикету
       operationId: getTicketResponses
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       parameters:
-      - $ref: common.yaml#/components/parameters/TicketId
-      - $ref: common.yaml#/components/parameters/Limit
-      - $ref: common.yaml#/components/parameters/Offset
+        - $ref: common.yaml#/components/parameters/TicketId
+        - $ref: common.yaml#/components/parameters/Limit
+        - $ref: common.yaml#/components/parameters/Offset
       responses:
         '200':
           description: Список ответов
@@ -75,19 +75,19 @@ paths:
   /support/tickets/{ticket_id}/responses/{response_id}:
     put:
       tags:
-      - Ticket Responses
+        - Ticket Responses
       summary: Обновить ответ на тикет
       operationId: updateTicketResponse
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       parameters:
-      - $ref: common.yaml#/components/parameters/TicketId
-      - name: response_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+        - $ref: common.yaml#/components/parameters/TicketId
+        - name: response_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
       requestBody:
         required: true
         content:
@@ -119,7 +119,7 @@ components:
     CreateTicketResponseRequest:
       type: object
       required:
-      - content
+        - content
       properties:
         content:
           type: string
@@ -130,41 +130,41 @@ components:
     UpdateTicketResponseRequest:
       type: object
       required:
-      - content
+        - content
       properties:
         content:
           type: string
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     TicketResponse:
       allOf:
-      - $ref: common.yaml#/components/schemas/BaseEntityWithTimestamps
-      - type: object
-        properties:
-          ticket_id:
-            type: string
-            format: uuid
-          author_id:
-            type: string
-            format: uuid
-          author_type:
-            type: string
-            enum:
-            - player
-            - agent
-            - system
-          content:
-            type: string
-          is_internal:
-            type: boolean
+        - $ref: common.yaml#/components/schemas/BaseEntityWithTimestamps
+        - type: object
+          properties:
+            ticket_id:
+              type: string
+              format: uuid
+            author_id:
+              type: string
+              format: uuid
+            author_type:
+              type: string
+              enum:
+                - player
+                - agent
+                - system
+            content:
+              type: string
+            is_internal:
+              type: boolean
     TicketResponsesResponse:
       allOf:
-      - $ref: common.yaml#/components/schemas/PaginationResponse
-      - type: object
-        properties:
-          items:
-            type: array
+        - $ref: common.yaml#/components/schemas/PaginationResponse
+        - type: object
+          properties:
             items:
-              $ref: '#/components/schemas/TicketResponse'
-            description: Список ответов на тикет
+              type: array
+              items:
+                $ref: '#/components/schemas/TicketResponse'
+              description: Список ответов на тикет
 security:
-- BearerAuth: []
+  - BearerAuth: [ ]

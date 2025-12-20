@@ -256,4 +256,3 @@ func TestClanWarService_CompleteWar_NotOngoing(t *testing.T) {
 	assert.Contains(t, err.Error(), "war is not in ongoing status")
 	mockRepo.AssertNotCalled(t, "UpdateWar", mock.Anything, mock.Anything)
 }
-

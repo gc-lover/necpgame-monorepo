@@ -4,28 +4,28 @@ info:
   description: Service for managing weapon resources (ammunition, heat, energy, cooldowns)
   version: 1.0.0
 servers:
-- url: http://localhost:8091
-  description: Local development
-- url: https://api.necpgame.com
-  description: Production
+  - url: http://localhost:8091
+    description: Local development
+  - url: https://api.necpgame.com
+    description: Production
 tags:
-- name: resources
-  description: Weapon resource management
+  - name: resources
+    description: Weapon resource management
 paths:
   /api/v1/weapons/resources/{weaponId}:
     get:
       summary: Get weapon resources
       description: Retrieve current resource state for a weapon instance
       tags:
-      - resources
+        - resources
       parameters:
-      - name: weaponId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: Weapon instance ID
+        - name: weaponId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Weapon instance ID
       responses:
         '200':
           description: Weapon resource state
@@ -38,20 +38,20 @@ paths:
         '500':
           $ref: common.yaml#/components/responses/InternalServerError
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
   /api/v1/weapons/resources/{weaponId}/consume:
     post:
       summary: Consume weapon resources
       description: Consume ammunition, energy, or apply heat when weapon is used
       tags:
-      - resources
+        - resources
       parameters:
-      - name: weaponId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+        - name: weaponId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
       requestBody:
         required: true
         content:
@@ -72,20 +72,20 @@ paths:
         '500':
           $ref: common.yaml#/components/responses/InternalServerError
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
   /api/v1/weapons/resources/{weaponId}/reload:
     post:
       summary: Reload weapon
       description: Reload ammunition for a weapon
       tags:
-      - resources
+        - resources
       parameters:
-      - name: weaponId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+        - name: weaponId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
       requestBody:
         required: true
         content:
@@ -106,20 +106,20 @@ paths:
         '500':
           $ref: common.yaml#/components/responses/InternalServerError
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
   /api/v1/weapons/resources/{weaponId}/status:
     get:
       summary: Get weapon status
       description: Get current status including overheated state and active cooldowns
       tags:
-      - resources
+        - resources
       parameters:
-      - name: weaponId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+        - name: weaponId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
       responses:
         '200':
           description: Weapon status
@@ -132,20 +132,20 @@ paths:
         '500':
           $ref: common.yaml#/components/responses/InternalServerError
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
   /api/v1/weapons/resources/{weaponId}/cooldown:
     post:
       summary: Apply cooldown
       description: Apply cooldown to weapon or ability
       tags:
-      - resources
+        - resources
       parameters:
-      - name: weaponId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+        - name: weaponId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
       requestBody:
         required: true
         content:
@@ -166,7 +166,7 @@ paths:
         '500':
           $ref: common.yaml#/components/responses/InternalServerError
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
 components:
   schemas:
     WeaponResources:
@@ -191,11 +191,11 @@ components:
         heat:
           $ref: '#/components/schemas/HeatState'
       required:
-      - weaponInstanceId
-      - ammunition
-      - heat
-      - energy
-      - cooldowns
+        - weaponInstanceId
+        - ammunition
+        - heat
+        - energy
+        - cooldowns
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     AmmunitionState:
       type: object
@@ -203,12 +203,12 @@ components:
         type:
           type: string
           enum:
-          - standard
-          - fire
-          - ice
-          - poison
-          - electric
-          - explosive
+            - standard
+            - fire
+            - ice
+            - poison
+            - electric
+            - explosive
           description: Ammunition type
         current:
           type: integer
@@ -219,8 +219,8 @@ components:
           minimum: 0
           description: Maximum ammunition capacity
       required:
-      - current
-      - max
+        - current
+        - max
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     HeatState:
       type: object
@@ -243,9 +243,9 @@ components:
           type: boolean
           description: Whether weapon is currently overheated
       required:
-      - current
-      - coolingRate
-      - overheated
+        - current
+        - coolingRate
+        - overheated
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     EnergyState:
       type: object
@@ -265,8 +265,8 @@ components:
           format: float
           description: Energy cost per shot
       required:
-      - current
-      - regenRate
+        - current
+        - regenRate
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     ConsumeResourceRequest:
       type: object
@@ -274,16 +274,16 @@ components:
         resourceType:
           type: string
           enum:
-          - ammunition
-          - heat
-          - energy
+            - ammunition
+            - heat
+            - energy
         amount:
           type: number
           format: float
           minimum: 0
       required:
-      - resourceType
-      - amount
+        - resourceType
+        - amount
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     ReloadWeaponRequest:
       type: object
@@ -294,11 +294,11 @@ components:
         ammoSource:
           type: string
           enum:
-          - inventory
-          - pickup
+            - inventory
+            - pickup
           description: Source of ammunition for reload
       required:
-      - playerId
+        - playerId
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     WeaponStatus:
       type: object
@@ -319,8 +319,8 @@ components:
         overheated:
           type: boolean
       required:
-      - weaponInstanceId
-      - canFire
+        - weaponInstanceId
+        - canFire
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     CooldownInfo:
       type: object
@@ -335,9 +335,9 @@ components:
           type: number
           format: float
       required:
-      - abilityId
-      - expiresAt
-      - remainingSeconds
+        - abilityId
+        - expiresAt
+        - remainingSeconds
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     ApplyCooldownRequest:
       type: object
@@ -350,8 +350,8 @@ components:
           minimum: 1
           description: Cooldown duration in seconds
       required:
-      - abilityId
-      - durationSeconds
+        - abilityId
+        - durationSeconds
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
   securitySchemes:
     BearerAuth:

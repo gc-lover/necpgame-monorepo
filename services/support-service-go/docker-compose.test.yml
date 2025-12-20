@@ -11,22 +11,22 @@ services:
     volumes:
       - ./test-schema.sql:/docker-entrypoint-initdb.d/01-test-schema.sql:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U necpgame"]
+      test: [ "CMD-SHELL", "pg_isready -U necpgame" ]
       interval: 2s
       timeout: 2s
       retries: 10
     tmpfs:
       - /var/lib/postgresql/data  # In-memory for faster tests
-    command: ["postgres", "-c", "fsync=off", "-c", "synchronous_commit=off"]
+    command: [ "postgres", "-c", "fsync=off", "-c", "synchronous_commit=off" ]
 
   redis-test:
     image: redis:7-alpine
     container_name: support-service-redis-test
-    command: ["redis-server", "--appendonly", "no"]  # No persistence for tests
+    command: [ "redis-server", "--appendonly", "no" ]  # No persistence for tests
     ports:
       - "6380:6379"  # Different port to avoid conflicts
     healthcheck:
-      test: ["CMD", "redis-cli", "PING"]
+      test: [ "CMD", "redis-cli", "PING" ]
       interval: 2s
       timeout: 2s
       retries: 10

@@ -1,4 +1,4 @@
-// Issue: #1578
+// Package server Issue: #1578
 package server
 
 import (
@@ -11,8 +11,7 @@ import (
 type SecurityHandler struct{}
 
 // HandleBearerAuth implements Bearer auth (stub)
-func (s *SecurityHandler) HandleBearerAuth(ctx context.Context, operationName string, t api.BearerAuth) (context.Context, error) {
+func (s *SecurityHandler) HandleBearerAuth(ctx context.Context, _ string, _ api.BearerAuth) (context.Context, error) {
 	// TODO: Implement real auth
 	return ctx, nil
 }
-

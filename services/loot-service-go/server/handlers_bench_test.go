@@ -5,42 +5,42 @@ import (
 	"context"
 	"testing"
 
-	api "github.com/gc-lover/necpgame-monorepo/services/loot-service-go/pkg/api"
+	"github.com/gc-lover/necpgame-monorepo/services/loot-service-go/pkg/api"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 )
 
 type mockLootService struct{}
 
-func (m *mockLootService) DistributeLoot(ctx context.Context, req *api.DistributeLootRequest) (*api.DistributeLootResponse, error) {
+func (m *mockLootService) DistributeLoot(_ context.Context, _ *api.DistributeLootRequest) (*api.DistributeLootResponse, error) {
 	return &api.DistributeLootResponse{}, nil
 }
 
-func (m *mockLootService) GenerateLoot(ctx context.Context, req *api.GenerateLootRequest) (*api.GenerateLootResponse, error) {
+func (m *mockLootService) GenerateLoot(_ context.Context, _ *api.GenerateLootRequest) (*api.GenerateLootResponse, error) {
 	return &api.GenerateLootResponse{}, nil
 }
 
-func (m *mockLootService) GetPlayerLootHistory(ctx context.Context, playerID uuid.UUID, limit, offset int) ([]api.LootHistoryEntry, int, error) {
+func (m *mockLootService) GetPlayerLootHistory(_ context.Context, _ uuid.UUID, _, _ int) ([]api.LootHistoryEntry, int, error) {
 	return nil, 0, nil
 }
 
-func (m *mockLootService) GetRollStatus(ctx context.Context, rollID uuid.UUID) (*api.RollStatusResponse, error) {
+func (m *mockLootService) GetRollStatus(_ context.Context, _ uuid.UUID) (*api.RollStatusResponse, error) {
 	return &api.RollStatusResponse{}, nil
 }
 
-func (m *mockLootService) GetWorldDrops(ctx context.Context, limit, offset int) ([]api.WorldDrop, error) {
+func (m *mockLootService) GetWorldDrops(_ context.Context, _, _ int) ([]api.WorldDrop, error) {
 	return nil, nil
 }
 
-func (m *mockLootService) PassRoll(ctx context.Context, rollID uuid.UUID) error {
+func (m *mockLootService) PassRoll(_ context.Context, _ uuid.UUID) error {
 	return nil
 }
 
-func (m *mockLootService) PickupWorldDrop(ctx context.Context, dropID uuid.UUID) (*api.PickupDropResponse, error) {
+func (m *mockLootService) PickupWorldDrop(_ context.Context, _ uuid.UUID) (*api.PickupDropResponse, error) {
 	return &api.PickupDropResponse{}, nil
 }
 
-func (m *mockLootService) RollForItem(ctx context.Context, req *api.RollRequest) (*api.RollResponse, error) {
+func (m *mockLootService) RollForItem(_ context.Context, _ *api.RollRequest) (*api.RollResponse, error) {
 	return &api.RollResponse{}, nil
 }
 
@@ -100,4 +100,3 @@ func BenchmarkGetPlayerLootHistory(b *testing.B) {
 		_, _ = handlers.GetPlayerLootHistory(ctx, params)
 	}
 }
-

@@ -151,10 +151,10 @@ func TestAdminService_SetCurrency_EventBusError(t *testing.T) {
 	ctx := context.Background()
 
 	req := &models.SetCurrencyRequest{
-		CharacterID: characterID,
+		CharacterID:  characterID,
 		CurrencyType: "gold",
-		Amount:      1000,
-		Reason:      "Test set currency",
+		Amount:       1000,
+		Reason:       "Test set currency",
 	}
 
 	mockRepo.On("CreateAuditLog", ctx, mock.AnythingOfType("*models.AdminAuditLog")).Return(nil)
@@ -178,10 +178,10 @@ func TestAdminService_AddCurrency_EventBusError(t *testing.T) {
 	ctx := context.Background()
 
 	req := &models.AddCurrencyRequest{
-		CharacterID: characterID,
+		CharacterID:  characterID,
 		CurrencyType: "gold",
-		Amount:      500,
-		Reason:      "Test add currency",
+		Amount:       500,
+		Reason:       "Test add currency",
 	}
 
 	mockRepo.On("CreateAuditLog", ctx, mock.AnythingOfType("*models.AdminAuditLog")).Return(nil)
@@ -294,4 +294,3 @@ func TestAdminService_GetAuditLog_RepositoryError(t *testing.T) {
 	assert.Nil(t, result)
 	mockRepo.AssertExpectations(t)
 }
-

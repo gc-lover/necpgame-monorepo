@@ -1,4 +1,4 @@
-// Issue: JWT Implementation for Combat Damage Service
+// Package server Issue: JWT Implementation for Combat Damage Service
 // Configuration for combat-damage-service
 package server
 

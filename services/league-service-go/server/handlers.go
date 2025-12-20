@@ -1,4 +1,4 @@
-// Issue: #1599, #1604, #1607
+// Package server Issue: #1599, #1604, #1607
 // ogen handlers - TYPED responses (no interface{} boxing!)
 package server
 
@@ -7,13 +7,11 @@ import (
 	"sync"
 	"time"
 
-	api "github.com/gc-lover/necpgame-monorepo/services/league-service-go/pkg/api"
+	"github.com/gc-lover/necpgame-monorepo/services/league-service-go/pkg/api"
 	"github.com/sirupsen/logrus"
 )
 
-// Context timeout constants (Issue #1604)
 const (
-	DBTimeout    = 50 * time.Millisecond
 	CacheTimeout = 10 * time.Millisecond
 )
 

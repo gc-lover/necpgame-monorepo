@@ -1,4 +1,4 @@
-// Issue: #1928 - Business logic for Meta Mechanics Service
+// Package server Issue: #1928 - Business logic for Meta Mechanics Service
 // PERFORMANCE: Memory pooling, zero allocations, cached calculations
 package server
 
@@ -17,9 +17,9 @@ type Service struct {
 	repo *Repository
 
 	// Memory pooling for hot path structs (zero allocations target!)
-	leagueResponsePool    sync.Pool
-	prestigeResponsePool  sync.Pool
-	rankingsResponsePool  sync.Pool
+	leagueResponsePool     sync.Pool
+	prestigeResponsePool   sync.Pool
+	rankingsResponsePool   sync.Pool
 	metaEventsResponsePool sync.Pool
 }
 
@@ -54,14 +54,14 @@ func NewService(repo *Repository) *Service {
 
 // LeagueResponse - memory-aligned struct for league data
 type LeagueResponse struct {
-	LeagueID    uuid.UUID           `json:"league_id"`
-	Name        string              `json:"name"`
-	Description string              `json:"description"`
+	LeagueID     uuid.UUID          `json:"league_id"`
+	Name         string             `json:"name"`
+	Description  string             `json:"description"`
 	Requirements LeagueRequirements `json:"requirements"`
-	Rewards     LeagueRewards      `json:"rewards"`
-	MemberCount int                 `json:"member_count"`
-	MaxMembers  int                 `json:"max_members"`
-	CreatedAt   string              `json:"created_at"`
+	Rewards      LeagueRewards      `json:"rewards"`
+	MemberCount  int                `json:"member_count"`
+	MaxMembers   int                `json:"max_members"`
+	CreatedAt    string             `json:"created_at"`
 }
 
 // LeagueRequirements - league entry requirements
@@ -88,19 +88,19 @@ type RewardItem struct {
 
 // PrestigeResponse - prestige progression data
 type PrestigeResponse struct {
-	CurrentLevel       int             `json:"current_level"`
-	CurrentXP          int             `json:"current_xp"`
-	XPToNext           int             `json:"xp_to_next"`
-	TotalPrestigeResets int            `json:"total_prestige_resets"`
-	Bonuses            PrestigeBonuses `json:"bonuses"`
-	CanReset           bool            `json:"can_reset"`
+	CurrentLevel        int             `json:"current_level"`
+	CurrentXP           int             `json:"current_xp"`
+	XPToNext            int             `json:"xp_to_next"`
+	TotalPrestigeResets int             `json:"total_prestige_resets"`
+	Bonuses             PrestigeBonuses `json:"bonuses"`
+	CanReset            bool            `json:"can_reset"`
 }
 
 // PrestigeBonuses - prestige bonus multipliers
 type PrestigeBonuses struct {
-	XPMultiplier      float64 `json:"xp_multiplier"`
+	XPMultiplier       float64 `json:"xp_multiplier"`
 	CurrencyMultiplier float64 `json:"currency_multiplier"`
-	ItemDropRate      float64 `json:"item_drop_rate"`
+	ItemDropRate       float64 `json:"item_drop_rate"`
 }
 
 // LeagueRankingsResponse - league rankings data
@@ -159,7 +159,7 @@ type EventProgress struct {
 // HTTP Handlers
 
 // GetLeagues handles league listing
-func (s *Service) GetLeagues(w http.ResponseWriter, r *http.Request) {
+func (s *Service) GetLeagues(w http.ResponseWriter) {
 	// Get response from pool
 	resp := s.leagueResponsePool.Get().(*LeagueResponse)
 	defer s.leagueResponsePool.Put(resp)
@@ -176,7 +176,7 @@ func (s *Service) GetLeagues(w http.ResponseWriter, r *http.Request) {
 }
 
 // CreateLeague handles league creation
-func (s *Service) CreateLeague(w http.ResponseWriter, r *http.Request) {
+func (s *Service) CreateLeague(w http.ResponseWriter) {
 	// TODO: Implement league creation
 	w.WriteHeader(http.StatusNotImplemented)
 }
@@ -191,7 +191,7 @@ func (s *Service) JoinLeague(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetLeagueRankings handles league rankings retrieval
-func (s *Service) GetLeagueRankings(w http.ResponseWriter, r *http.Request) {
+func (s *Service) GetLeagueRankings(w http.ResponseWriter) {
 	// Get response from pool
 	resp := s.rankingsResponsePool.Get().(*LeagueRankingsResponse)
 	defer s.rankingsResponsePool.Put(resp)
@@ -206,7 +206,7 @@ func (s *Service) GetLeagueRankings(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetPrestige handles prestige information
-func (s *Service) GetPrestige(w http.ResponseWriter, r *http.Request) {
+func (s *Service) GetPrestige(w http.ResponseWriter) {
 	// Get response from pool
 	resp := s.prestigeResponsePool.Get().(*PrestigeResponse)
 	defer s.prestigeResponsePool.Put(resp)
@@ -222,13 +222,13 @@ func (s *Service) GetPrestige(w http.ResponseWriter, r *http.Request) {
 }
 
 // PrestigeReset handles prestige reset
-func (s *Service) PrestigeReset(w http.ResponseWriter, r *http.Request) {
+func (s *Service) PrestigeReset(w http.ResponseWriter) {
 	// TODO: Implement prestige reset
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
 // GetMetaEvents handles meta events retrieval
-func (s *Service) GetMetaEvents(w http.ResponseWriter, r *http.Request) {
+func (s *Service) GetMetaEvents(w http.ResponseWriter) {
 	// Get response from pool
 	resp := s.metaEventsResponsePool.Get().(*MetaEventsResponse)
 	defer s.metaEventsResponsePool.Put(resp)
@@ -250,13 +250,13 @@ func (s *Service) GetMetaEvents(w http.ResponseWriter, r *http.Request) {
 }
 
 // CreateMetaEvent handles meta event creation
-func (s *Service) CreateMetaEvent(w http.ResponseWriter, r *http.Request) {
+func (s *Service) CreateMetaEvent(w http.ResponseWriter) {
 	// TODO: Implement meta event creation
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
 // GetGlobalRankings handles global rankings
-func (s *Service) GetGlobalRankings(w http.ResponseWriter, r *http.Request) {
+func (s *Service) GetGlobalRankings(w http.ResponseWriter) {
 	// TODO: Implement global rankings
 	w.WriteHeader(http.StatusNotImplemented)
 }

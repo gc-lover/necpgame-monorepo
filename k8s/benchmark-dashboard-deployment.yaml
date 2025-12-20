@@ -17,41 +17,41 @@ spec:
         app: benchmark-dashboard
     spec:
       containers:
-      - name: dashboard
-        image: ghcr.io/necpgame/benchmark-dashboard:latest
-        ports:
-        - containerPort: 8080
-          name: http
-        env:
-        - name: PORT
-          value: "8080"
-        resources:
-          requests:
-            memory: "64Mi"
-            cpu: "50m"
-          limits:
-            memory: "128Mi"
-            cpu: "200m"
-        livenessProbe:
-          httpGet:
-            path: /
-            port: 8080
-          initialDelaySeconds: 10
-          periodSeconds: 30
-        readinessProbe:
-          httpGet:
-            path: /
-            port: 8080
-          initialDelaySeconds: 5
-          periodSeconds: 10
-        volumeMounts:
-        - name: benchmark-results
-          mountPath: /app/.benchmarks
-          readOnly: true
+        - name: dashboard
+          image: ghcr.io/necpgame/benchmark-dashboard:latest
+          ports:
+            - containerPort: 8080
+              name: http
+          env:
+            - name: PORT
+              value: "8080"
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "50m"
+            limits:
+              memory: "128Mi"
+              cpu: "200m"
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          volumeMounts:
+            - name: benchmark-results
+              mountPath: /app/.benchmarks
+              readOnly: true
       volumes:
-      - name: benchmark-results
-        persistentVolumeClaim:
-          claimName: benchmark-results-pvc
+        - name: benchmark-results
+          persistentVolumeClaim:
+            claimName: benchmark-results-pvc
 ---
 apiVersion: v1
 kind: Service
@@ -63,10 +63,10 @@ metadata:
 spec:
   type: ClusterIP
   ports:
-  - port: 80
-    targetPort: 8080
-    protocol: TCP
-    name: http
+    - port: 80
+      targetPort: 8080
+      protocol: TCP
+      name: http
   selector:
     app: benchmark-dashboard
 ---
@@ -77,7 +77,7 @@ metadata:
   namespace: monitoring
 spec:
   accessModes:
-  - ReadOnlyMany
+    - ReadOnlyMany
   resources:
     requests:
       storage: 1Gi

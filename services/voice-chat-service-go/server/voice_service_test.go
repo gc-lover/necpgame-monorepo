@@ -6,9 +6,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/google/uuid"
 	"github.com/gc-lover/necpgame-monorepo/services/voice-chat-service-go/models"
-	"github.com/redis/go-redis/v9"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -174,12 +173,12 @@ func TestVoiceService_GetChannel_Success(t *testing.T) {
 
 	channelID := uuid.New()
 	channel := &models.VoiceChannel{
-		ID:          channelID,
-		Type:        models.VoiceChannelTypeParty,
-		OwnerID:     uuid.New(),
-		Name:        "Test Party",
-		MaxMembers:  5,
-		Settings:    make(map[string]interface{}),
+		ID:         channelID,
+		Type:       models.VoiceChannelTypeParty,
+		OwnerID:    uuid.New(),
+		Name:       "Test Party",
+		MaxMembers: 5,
+		Settings:   make(map[string]interface{}),
 	}
 
 	mockRepo.On("GetChannel", mock.Anything, channelID).Return(channel, nil)
@@ -202,10 +201,10 @@ func TestVoiceService_ListChannels_Success(t *testing.T) {
 
 	channels := []models.VoiceChannel{
 		{
-			ID:          uuid.New(),
-			Type:        models.VoiceChannelTypeParty,
-			Name:        "Party 1",
-			MaxMembers:  5,
+			ID:         uuid.New(),
+			Type:       models.VoiceChannelTypeParty,
+			Name:       "Party 1",
+			MaxMembers: 5,
 		},
 	}
 
@@ -231,10 +230,10 @@ func TestVoiceService_JoinChannel_Success(t *testing.T) {
 	channelID := uuid.New()
 	characterID := uuid.New()
 	channel := &models.VoiceChannel{
-		ID:          channelID,
-		Type:        models.VoiceChannelTypeParty,
-		MaxMembers:  5,
-		Settings:    make(map[string]interface{}),
+		ID:         channelID,
+		Type:       models.VoiceChannelTypeParty,
+		MaxMembers: 5,
+		Settings:   make(map[string]interface{}),
 	}
 
 	req := &models.JoinChannelRequest{
@@ -268,10 +267,10 @@ func TestVoiceService_JoinChannel_ChannelFull(t *testing.T) {
 	channelID := uuid.New()
 	characterID := uuid.New()
 	channel := &models.VoiceChannel{
-		ID:          channelID,
-		Type:        models.VoiceChannelTypeParty,
-		MaxMembers:  5,
-		Settings:    make(map[string]interface{}),
+		ID:         channelID,
+		Type:       models.VoiceChannelTypeParty,
+		MaxMembers: 5,
+		Settings:   make(map[string]interface{}),
 	}
 
 	req := &models.JoinChannelRequest{
@@ -302,10 +301,10 @@ func TestVoiceService_JoinChannel_AlreadyParticipant(t *testing.T) {
 	channelID := uuid.New()
 	characterID := uuid.New()
 	channel := &models.VoiceChannel{
-		ID:          channelID,
-		Type:        models.VoiceChannelTypeParty,
-		MaxMembers:  5,
-		Settings:    make(map[string]interface{}),
+		ID:         channelID,
+		Type:       models.VoiceChannelTypeParty,
+		MaxMembers: 5,
+		Settings:   make(map[string]interface{}),
 	}
 
 	existingParticipant := &models.VoiceParticipant{
@@ -345,9 +344,9 @@ func TestVoiceService_LeaveChannel_Success(t *testing.T) {
 	channelID := uuid.New()
 	characterID := uuid.New()
 	channel := &models.VoiceChannel{
-		ID:          channelID,
-		Type:        models.VoiceChannelTypeParty,
-		Settings:    make(map[string]interface{}),
+		ID:       channelID,
+		Type:     models.VoiceChannelTypeParty,
+		Settings: make(map[string]interface{}),
 	}
 
 	req := &models.LeaveChannelRequest{
@@ -404,11 +403,11 @@ func TestVoiceService_GetChannelDetail_Success(t *testing.T) {
 
 	channelID := uuid.New()
 	channel := &models.VoiceChannel{
-		ID:          channelID,
-		Type:        models.VoiceChannelTypeParty,
-		Name:        "Test Party",
-		MaxMembers:  5,
-		Settings:    make(map[string]interface{}),
+		ID:         channelID,
+		Type:       models.VoiceChannelTypeParty,
+		Name:       "Test Party",
+		MaxMembers: 5,
+		Settings:   make(map[string]interface{}),
 	}
 
 	participants := []models.VoiceParticipant{
@@ -512,4 +511,3 @@ func TestVoiceService_CreateChannel_DatabaseError(t *testing.T) {
 	assert.Nil(t, channel)
 	mockRepo.AssertExpectations(t)
 }
-

@@ -1,11 +1,10 @@
-// Issue: #141886468
+// Package server Issue: #141886468
 package server
 
 import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 )
 
@@ -17,24 +16,17 @@ type WeaponEffectsHandlers struct {
 	logger  *logrus.Logger
 }
 
-func NewWeaponEffectsHandlers(service WeaponEffectsServiceInterface) *WeaponEffectsHandlers {
-	return &WeaponEffectsHandlers{
-		service: service,
-		logger:  GetLogger(),
-	}
-}
-
-// TODO: After running `make generate-weapon-effects-api`, implement these handlers
+// TriggerVisualEffect TODO: After running `make generate-weapon-effects-api`, implement these handlers
 // to match the generated weaponeffectsapi.ServerInterface interface
-func (h *WeaponEffectsHandlers) TriggerVisualEffect(w http.ResponseWriter, r *http.Request) {
+func (h *WeaponEffectsHandlers) TriggerVisualEffect(w http.ResponseWriter) {
 	h.respondError(w, http.StatusNotImplemented, "handler not implemented - run 'make generate-weapon-effects-api' first")
 }
 
-func (h *WeaponEffectsHandlers) TriggerAudioEffect(w http.ResponseWriter, r *http.Request) {
+func (h *WeaponEffectsHandlers) TriggerAudioEffect(w http.ResponseWriter) {
 	h.respondError(w, http.StatusNotImplemented, "handler not implemented - run 'make generate-weapon-effects-api' first")
 }
 
-func (h *WeaponEffectsHandlers) GetEffect(w http.ResponseWriter, r *http.Request, effectId uuid.UUID) {
+func (h *WeaponEffectsHandlers) GetEffect(w http.ResponseWriter) {
 	h.respondError(w, http.StatusNotImplemented, "handler not implemented - run 'make generate-weapon-effects-api' first")
 }
 
@@ -53,10 +45,3 @@ func (h *WeaponEffectsHandlers) respondError(w http.ResponseWriter, status int, 
 		h.logger.WithError(err).Error("Failed to encode JSON error response")
 	}
 }
-
-
-
-
-
-
-

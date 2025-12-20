@@ -1,4 +1,4 @@
-// Issue: #1597, #1607
+// Package server Issue: #1597, #1607
 // ogen handlers - TYPED responses (no interface{} boxing!)
 package server
 
@@ -7,15 +7,13 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/go-faster/jx"
 	"github.com/gc-lover/necpgame-monorepo/services/quest-rewards-events-service-go/pkg/api"
+	"github.com/go-faster/jx"
 	"github.com/google/uuid"
 )
 
-// Context timeout constants (Issue #1604)
 const (
-	DBTimeout    = 50 * time.Millisecond
-	CacheTimeout = 10 * time.Millisecond
+	DBTimeout = 50 * time.Millisecond
 )
 
 // QuestRewardsEventsHandlers implements api.Handler interface (ogen typed handlers!)
@@ -26,7 +24,7 @@ func NewQuestRewardsEventsHandlers() *QuestRewardsEventsHandlers {
 }
 
 // GetQuestRewards - TYPED response!
-func (h *QuestRewardsEventsHandlers) GetQuestRewards(ctx context.Context, params api.GetQuestRewardsParams) (api.GetQuestRewardsRes, error) {
+func (h *QuestRewardsEventsHandlers) GetQuestRewards(ctx context.Context, _ api.GetQuestRewardsParams) (api.GetQuestRewardsRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 	_ = ctx // Will be used when DB operations are implemented
@@ -61,7 +59,7 @@ func (h *QuestRewardsEventsHandlers) GetQuestRewards(ctx context.Context, params
 }
 
 // DistributeQuestRewards - TYPED response!
-func (h *QuestRewardsEventsHandlers) DistributeQuestRewards(ctx context.Context, params api.DistributeQuestRewardsParams) (api.DistributeQuestRewardsRes, error) {
+func (h *QuestRewardsEventsHandlers) DistributeQuestRewards(ctx context.Context, _ api.DistributeQuestRewardsParams) (api.DistributeQuestRewardsRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 	_ = ctx // Will be used when DB operations are implemented
@@ -103,7 +101,7 @@ func (h *QuestRewardsEventsHandlers) DistributeQuestRewards(ctx context.Context,
 	}
 
 	response := &api.DistributeQuestRewardsOK{
-		Success:             success,
+		Success:             true,
 		Rewards:             rewards,
 		DistributionDetails: api.NewOptDistributeQuestRewardsOKDistributionDetails(distributionDetails),
 	}
@@ -112,7 +110,7 @@ func (h *QuestRewardsEventsHandlers) DistributeQuestRewards(ctx context.Context,
 }
 
 // GetQuestEvents - TYPED response!
-func (h *QuestRewardsEventsHandlers) GetQuestEvents(ctx context.Context, params api.GetQuestEventsParams) (api.GetQuestEventsRes, error) {
+func (h *QuestRewardsEventsHandlers) GetQuestEvents(ctx context.Context, _ api.GetQuestEventsParams) (api.GetQuestEventsRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 	_ = ctx // Will be used when DB operations are implemented

@@ -5,10 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/gc-lover/necpgame-monorepo/services/voice-chat-service-go/models"
+	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 )
 
@@ -32,26 +30,6 @@ func NewSubchannelService(repo SubchannelRepositoryInterface) *SubchannelService
 		repo:   repo,
 		logger: GetLogger(),
 	}
-}
-
-func NewSubchannelServiceFromDB(dbURL string) (*SubchannelService, error) {
-	// Issue: #1605 - DB Connection Pool configuration
-	config, err := pgxpool.ParseConfig(dbURL)
-	if err != nil {
-		return nil, err
-	}
-	config.MaxConns = 50
-	config.MinConns = 10
-	config.MaxConnLifetime = 5 * time.Minute
-	config.MaxConnIdleTime = 1 * time.Minute
-	
-	dbPool, err := pgxpool.NewWithConfig(context.Background(), config)
-	if err != nil {
-		return nil, err
-	}
-
-	repo := NewSubchannelRepository(dbPool)
-	return NewSubchannelService(repo), nil
 }
 
 func (s *SubchannelService) CreateSubchannel(ctx context.Context, lobbyID uuid.UUID, req *models.CreateSubchannelRequest) (*models.Subchannel, error) {
@@ -198,4 +176,3 @@ func (s *SubchannelService) GetSubchannelParticipants(ctx context.Context, lobby
 		TotalCount:   len(participants),
 	}, nil
 }
-

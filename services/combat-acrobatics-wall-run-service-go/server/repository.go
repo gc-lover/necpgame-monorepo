@@ -1,4 +1,4 @@
-// Issue: #1510
+// Package server Issue: #1510
 package server
 
 import (
@@ -6,9 +6,9 @@ import (
 	"database/sql"
 	"errors"
 
+	"github.com/gc-lover/necpgame-monorepo/services/combat-acrobatics-wall-run-service-go/pkg/api"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/gc-lover/necpgame-monorepo/services/combat-acrobatics-wall-run-service-go/pkg/api"
 )
 
 type Repository struct {
@@ -19,7 +19,7 @@ func NewRepository(db *pgxpool.Pool) *Repository {
 	return &Repository{db: db}
 }
 
-func (r *Repository) GetSurfacesInZone(ctx context.Context, characterID uuid.UUID, zoneID string) ([]api.Surface, error) {
+func (r *Repository) GetSurfacesInZone(ctx context.Context, zoneID string) ([]api.Surface, error) {
 	query := `
 		SELECT surface_id, material, surface_type, normal_x, normal_y, normal_z,
 		       position_x, position_y, position_z, is_suitable

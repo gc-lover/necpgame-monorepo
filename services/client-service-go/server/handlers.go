@@ -1,4 +1,4 @@
-// Issue: #150, #1607 - Client Service ogen handlers
+// Package server Issue: #150, #1607 - Client Service ogen handlers
 package server
 
 import (
@@ -7,10 +7,10 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	api "github.com/necpgame/client-service-go/pkg/api"
+	"github.com/necpgame/client-service-go/pkg/api"
 )
 
-// Context timeout constants
+// DBTimeout Context timeout constants
 const (
 	DBTimeout = 50 * time.Millisecond
 )
@@ -65,7 +65,7 @@ func (h *Handlers) TriggerVisualEffect(ctx context.Context, req *api.TriggerVisu
 	}
 	var targetID *uuid.UUID
 	if req.TargetID.Set {
-		id := uuid.UUID(req.TargetID.Value)
+		id := req.TargetID.Value
 		targetID = &id
 	}
 	effectData := make(map[string]interface{})
@@ -133,7 +133,7 @@ func (h *Handlers) GetEffect(ctx context.Context, params api.GetEffectParams) (a
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
-	effectID := uuid.UUID(params.EffectId)
+	effectID := params.EffectId
 
 	// Service call
 	effect, err := h.service.GetEffect(ctx, effectID)
@@ -159,4 +159,3 @@ func (h *Handlers) GetEffect(ctx context.Context, params api.GetEffectParams) (a
 
 	return effectInfo, nil
 }
-

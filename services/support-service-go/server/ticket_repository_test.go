@@ -7,9 +7,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gc-lover/necpgame-monorepo/services/support-service-go/models"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/gc-lover/necpgame-monorepo/services/support-service-go/models"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -28,7 +28,7 @@ func getTestDatabaseURL() string {
 }
 
 // testContext creates a context with timeout for test operations
-func testContext(t *testing.T) (context.Context, context.CancelFunc) {
+func testContext() (context.Context, context.CancelFunc) {
 	return context.WithTimeout(context.Background(), 10*time.Second)
 }
 
@@ -168,7 +168,7 @@ func TestTicketRepository_GetByID_Success(t *testing.T) {
 	}
 	defer cleanup()
 
-	ctx, cancel := testContext(t)
+	ctx, cancel := testContext()
 	defer cancel()
 
 	playerID := uuid.New()
@@ -211,7 +211,7 @@ func TestTicketRepository_GetByPlayerID_Empty(t *testing.T) {
 	}
 	defer cleanup()
 
-	ctx, cancel := testContext(t)
+	ctx, cancel := testContext()
 	defer cancel()
 
 	playerID := uuid.New()
@@ -234,7 +234,7 @@ func TestTicketRepository_GetByAgentID_Empty(t *testing.T) {
 	}
 	defer cleanup()
 
-	ctx, cancel := testContext(t)
+	ctx, cancel := testContext()
 	defer cancel()
 
 	agentID := uuid.New()
@@ -257,7 +257,7 @@ func TestTicketRepository_GetByStatus_Empty(t *testing.T) {
 	}
 	defer cleanup()
 
-	ctx, cancel := testContext(t)
+	ctx, cancel := testContext()
 	defer cancel()
 
 	status := models.TicketStatusOpen
@@ -280,7 +280,7 @@ func TestTicketRepository_Update(t *testing.T) {
 	}
 	defer cleanup()
 
-	ctx, cancel := testContext(t)
+	ctx, cancel := testContext()
 	defer cancel()
 
 	playerID := uuid.New()
@@ -333,7 +333,7 @@ func TestTicketRepository_CountByPlayerID(t *testing.T) {
 	}
 	defer cleanup()
 
-	ctx, cancel := testContext(t)
+	ctx, cancel := testContext()
 	defer cancel()
 
 	playerID := uuid.New()
@@ -356,7 +356,7 @@ func TestTicketRepository_CountByStatus(t *testing.T) {
 	}
 	defer cleanup()
 
-	ctx, cancel := testContext(t)
+	ctx, cancel := testContext()
 	defer cancel()
 
 	status := models.TicketStatusOpen
@@ -379,7 +379,7 @@ func TestTicketRepository_CreateResponse(t *testing.T) {
 	}
 	defer cleanup()
 
-	ctx, cancel := testContext(t)
+	ctx, cancel := testContext()
 	defer cancel()
 
 	ticketID := uuid.New()
@@ -413,7 +413,7 @@ func TestTicketRepository_GetResponsesByTicketID_Empty(t *testing.T) {
 	}
 	defer cleanup()
 
-	ctx, cancel := testContext(t)
+	ctx, cancel := testContext()
 	defer cancel()
 
 	ticketID := uuid.New()
@@ -436,7 +436,7 @@ func TestTicketRepository_GetNextTicketNumber(t *testing.T) {
 	}
 	defer cleanup()
 
-	ctx, cancel := testContext(t)
+	ctx, cancel := testContext()
 	defer cancel()
 
 	number, err := repo.GetNextTicketNumber(ctx)
@@ -459,7 +459,7 @@ func TestTicketRepository_Create_DatabaseError(t *testing.T) {
 	}
 	defer cleanup()
 
-	ctx, cancel := testContext(t)
+	ctx, cancel := testContext()
 	defer cancel()
 
 	ticket := &models.SupportTicket{
@@ -493,7 +493,7 @@ func TestTicketRepository_GetByID_DatabaseError(t *testing.T) {
 	}
 	defer cleanup()
 
-	ctx, cancel := testContext(t)
+	ctx, cancel := testContext()
 	defer cancel()
 
 	ticketID := uuid.Nil
@@ -515,7 +515,7 @@ func TestTicketRepository_Update_NotFound(t *testing.T) {
 	}
 	defer cleanup()
 
-	ctx, cancel := testContext(t)
+	ctx, cancel := testContext()
 	defer cancel()
 
 	ticket := &models.SupportTicket{
@@ -549,7 +549,7 @@ func TestTicketRepository_GetByPlayerID_Pagination(t *testing.T) {
 	}
 	defer cleanup()
 
-	ctx, cancel := testContext(t)
+	ctx, cancel := testContext()
 	defer cancel()
 
 	playerID := uuid.New()
@@ -602,7 +602,7 @@ func TestTicketRepository_GetByAgentID_Pagination(t *testing.T) {
 	}
 	defer cleanup()
 
-	ctx, cancel := testContext(t)
+	ctx, cancel := testContext()
 	defer cancel()
 
 	agentID := uuid.New()
@@ -636,7 +636,7 @@ func TestTicketRepository_GetByStatus_Pagination(t *testing.T) {
 	}
 	defer cleanup()
 
-	ctx, cancel := testContext(t)
+	ctx, cancel := testContext()
 	defer cancel()
 
 	tickets, err := repo.GetByStatus(ctx, models.TicketStatusOpen, 2, 0)
@@ -668,7 +668,7 @@ func TestTicketRepository_GetResponsesByTicketID_WithResponses(t *testing.T) {
 	}
 	defer cleanup()
 
-	ctx, cancel := testContext(t)
+	ctx, cancel := testContext()
 	defer cancel()
 
 	playerID := uuid.New()
@@ -716,4 +716,3 @@ func TestTicketRepository_GetResponsesByTicketID_WithResponses(t *testing.T) {
 	assert.NoError(t, err)
 	assert.GreaterOrEqual(t, len(responses), 1)
 }
-

@@ -1,4 +1,4 @@
-// Issue: #75
+// Package server Issue: #75
 package server
 
 import (

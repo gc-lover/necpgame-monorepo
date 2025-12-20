@@ -72,22 +72,3 @@ func TestInMemoryEventStore_Limit(t *testing.T) {
 func uint64Ptr(v uint64) *uint64 {
 	return &v
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

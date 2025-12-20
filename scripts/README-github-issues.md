@@ -7,37 +7,40 @@
 ## Созданные Issues
 
 ### Категории (13 Issues всего):
+
 1. **Квесты America (_03-lore)** - 4 issues
-   - Seattle 2020-2029 (5 квестов)
-   - Los Angeles 2020-2029 (5 квестов)
-   - Las Vegas 2020-2029 (8 квестов)
-   - Miami, Detroit, Mexico City 2020-2029 (6 квестов)
+    - Seattle 2020-2029 (5 квестов)
+    - Los Angeles 2020-2029 (5 квестов)
+    - Las Vegas 2020-2029 (8 квестов)
+    - Miami, Detroit, Mexico City 2020-2029 (6 квестов)
 
 2. **Квесты Europe (_03-lore)** - 3 issues
-   - Berlin 2020-2039 (6 квестов)
-   - Amsterdam 2020-2029 (10 квестов)
-   - Brussels 2020-2029 (10 квестов)
+    - Berlin 2020-2039 (6 квестов)
+    - Amsterdam 2020-2029 (10 квестов)
+    - Brussels 2020-2029 (10 квестов)
 
 3. **Side Quests 2078** - 1 issue
-   - Side Quests 2078 период (5 квестов)
+    - Side Quests 2078 период (5 квестов)
 
 4. **Регионы (_03-lore)** - 3 issues
-   - Европейские города 2020-2093 (11 городов)
-   - Азиатские и Ближневосточные города (10 городов)
-   - Океания и континентальные регионы (9 документов)
+    - Европейские города 2020-2093 (11 городов)
+    - Азиатские и Ближневосточные города (10 городов)
+    - Океания и континентальные регионы (9 документов)
 
 5. **Implementation документы** - 1 issue
-   - Global State система (5 документов)
+    - Global State система (5 документов)
 
 6. **Analysis документы** - 1 issue
-   - Cursor Agents Syntax документация
+    - Cursor Agents Syntax документация
 
 ## Скрипты
 
 ### `create-github-issues-from-yaml.py`
+
 Основной скрипт для создания GitHub Issues.
 
 **Использование:**
+
 ```bash
 # Создать все issues
 python scripts/create-github-issues-from-yaml.py
@@ -47,15 +50,18 @@ python scripts/create-github-issues-from-yaml.py --category america_quests
 ```
 
 **Особенности:**
+
 - Парсит `github-issues-pending.yaml`
 - Создает структурированные Issues с checklist
 - Добавляет правильные метки и приоритеты
 - Сохраняет результат в `github-issues-created.json`
 
 ### `create-github-issues-simple.py`
+
 Простой анализатор для проверки структуры документа.
 
 **Использование:**
+
 ```bash
 python scripts/create-github-issues-simple.py
 ```
@@ -63,6 +69,7 @@ python scripts/create-github-issues-simple.py
 ## Структура Issue
 
 Каждый созданный Issue содержит:
+
 - **Заголовок**: Название группы задач
 - **Категория**: Тип контента (квесты, регионы, etc.)
 - **Список файлов**: Checkbox список для обработки

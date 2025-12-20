@@ -1,4 +1,4 @@
-// Issue: #1604
+// Package server Issue: #1604
 package server
 
 // HTTP handlers use context.WithTimeout for request timeouts (see handlers.go)
@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"time"
 
-	api "github.com/gc-lover/necpgame-monorepo/services/loot-service-go/pkg/api"
+	"github.com/gc-lover/necpgame-monorepo/services/loot-service-go/pkg/api"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
 )
@@ -73,7 +73,7 @@ func (s *HTTPServer) Shutdown(ctx context.Context) error {
 	return s.server.Shutdown(ctx)
 }
 
-func healthCheckHandler(w http.ResponseWriter, r *http.Request) {
+func healthCheckHandler(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(`{"status":"healthy"}`))
@@ -133,6 +133,3 @@ func (rr *responseRecorder) WriteHeader(code int) {
 	rr.statusCode = code
 	rr.ResponseWriter.WriteHeader(code)
 }
-
-
-

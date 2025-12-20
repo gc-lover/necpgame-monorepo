@@ -51,18 +51,3 @@ func TestSavePositionRequestFields(t *testing.T) {
 		t.Fatalf("unexpected values: %+v", req)
 	}
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

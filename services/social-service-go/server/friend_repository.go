@@ -1,4 +1,4 @@
-// Issue: Social Service ogen Migration - Friends Repository
+// Package server Issue: Social Service ogen Migration - Friends Repository
 package server
 
 import (

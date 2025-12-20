@@ -1,13 +1,13 @@
-// Issue: #1943
+// Package server Issue: #1943
 package server
 
 import (
+	"fmt"
+	"sync"
 	"time"
-
-	"github.com/google/uuid"
 )
 
-// Request/Response types for API
+// CreateTournamentRequest Request/Response types for API
 type CreateTournamentRequest struct {
 	Name              string                 `json:"name"`
 	Description       string                 `json:"description"`
@@ -23,17 +23,17 @@ type CreateTournamentRequest struct {
 
 type TournamentResponse struct {
 	TournamentID        string    `json:"tournament_id"`
-	Name               string    `json:"name"`
-	Description        string    `json:"description"`
-	GuildID            string    `json:"guild_id"`
-	Type               string    `json:"type"`
-	Status             string    `json:"status"`
-	StartTime          time.Time `json:"start_time"`
-	EndTime            time.Time `json:"end_time"`
-	MaxParticipants    int       `json:"max_participants"`
-	CurrentParticipants int      `json:"current_participants"`
-	EntryFee           int       `json:"entry_fee"`
-	PrizePool          int       `json:"prize_pool"`
+	Name                string    `json:"name"`
+	Description         string    `json:"description"`
+	GuildID             string    `json:"guild_id"`
+	Type                string    `json:"type"`
+	Status              string    `json:"status"`
+	StartTime           time.Time `json:"start_time"`
+	EndTime             time.Time `json:"end_time"`
+	MaxParticipants     int       `json:"max_participants"`
+	CurrentParticipants int       `json:"current_participants"`
+	EntryFee            int       `json:"entry_fee"`
+	PrizePool           int       `json:"prize_pool"`
 }
 
 type RegisterParticipantRequest struct {
@@ -91,20 +91,7 @@ type TournamentCache struct {
 	memoryCache sync.Map
 }
 
-const (
-	TournamentCacheTTL = 5 * time.Minute
-	ListCacheTTL       = 2 * time.Minute
-	MatchCacheTTL      = 10 * time.Minute
-)
-
-func NewTournamentCache(redisClient *redis.Client, repo *TournamentRepository) *TournamentCache {
-	return &TournamentCache{
-		redisClient: redisClient,
-		repo:        repo,
-	}
-}
-
-func (c *TournamentCache) GetTournament(ctx context.Context, tournamentID string) (*TournamentResponse, error) {
+func (c *TournamentCache) GetTournament(tournamentID string) (*TournamentResponse, error) {
 	// L1: Check memory cache
 	if cached, ok := c.memoryCache.Load(tournamentID); ok {
 		if response, ok := cached.(*TournamentResponse); ok {
@@ -119,11 +106,11 @@ func (c *TournamentCache) storeInMemoryTournament(tournamentID string, response 
 	c.memoryCache.Store(tournamentID, response)
 }
 
-func (c *TournamentCache) InvalidateTournament(ctx context.Context, tournamentID string) {
+func (c *TournamentCache) InvalidateTournament(tournamentID string) {
 	c.memoryCache.Delete(tournamentID)
 }
 
-func (c *TournamentCache) InvalidateTournamentList(ctx context.Context) {
+func (c *TournamentCache) InvalidateTournamentList() {
 	// Clear all tournament list caches from memory
 	c.memoryCache.Range(func(key, value interface{}) bool {
 		if keyStr, ok := key.(string); ok && len(keyStr) > 12 && keyStr[:12] == "tournaments:" {

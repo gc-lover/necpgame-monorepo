@@ -1,3 +1,4 @@
+// Package server provides goroutine monitoring for chat moderation service.
 // Issue: #1911 - Runtime Goroutine Leak Monitoring
 package server
 

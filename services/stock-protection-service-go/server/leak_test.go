@@ -35,4 +35,3 @@ func TestStockProtectionServiceNoLeaks(t *testing.T) {
 
 	// If goroutines leaked from stock protection handlers, test FAILS
 }
-

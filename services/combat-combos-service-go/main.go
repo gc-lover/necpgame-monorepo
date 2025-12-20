@@ -1,87 +1,137 @@
-// Issue: #1578, #1584
+// Issue: #158
 package main
 
 import (
 	"context"
+	"database/sql"
+	"fmt"
+	"log"
 	"net/http"
-	_ "net/http/pprof" // OPTIMIZATION: Issue #1584 - profiling endpoints
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
+	"github.com/eapache/go-resiliency/breaker"
+	_ "github.com/lib/pq"
+	"go.uber.org/zap"
+
 	"github.com/gc-lover/necpgame-monorepo/services/combat-combos-service-go/server"
 )
 
 func main() {
-	logger := server.GetLogger()
-	logger.Info("Combat Combos Service (Go) starting...")
-
-	// Configuration
-	addr := getEnv("SERVER_ADDR", ":8083")
-	dbConnStr := getEnv("DATABASE_URL", "postgres://necpgame:necpgame@localhost:5432/necpgame?sslmode=disable")
-
-	// Initialize repository
-	repo, err := server.NewRepository(dbConnStr)
+	// Initialize structured logger
+	logger, err := zap.NewProduction()
 	if err != nil {
-		logger.WithError(err).Fatal("Failed to initialize repository")
+		log.Fatal("Failed to initialize logger", err)
 	}
-	defer repo.Close()
+	defer logger.Sync()
 
-	// Initialize service
+	// Load configuration
+	config, err := loadConfig()
+	if err != nil {
+		logger.Fatal("Failed to load config", zap.Error(err))
+	}
+
+	// Connect to database
+	db, err := connectDatabase(config.DatabaseURL)
+	if err != nil {
+		logger.Fatal("Failed to connect to database", zap.Error(err))
+	}
+	defer db.Close()
+
+	// Initialize circuit breaker for resilience
+	circuitBreaker := breaker.New(3, 1, 5*time.Second)
+
+	// Create service components
+	repo := server.NewCombatCombosRepository(db, logger)
 	service := server.NewService(repo)
+	httpServer := server.NewCombatCombosServer(service, config.ServerPort, logger)
 
-	// OPTIMIZATION: Issue #1584 - Start pprof server for profiling
+	// Start HTTP server
 	go func() {
-		pprofAddr := getEnv("PPROF_ADDR", "localhost:6304")
-		logger.WithField("addr", pprofAddr).Info("pprof server starting")
-		// Endpoints: /debug/pprof/profile, /debug/pprof/heap, /debug/pprof/goroutine
-		if err := http.ListenAndServe(pprofAddr, nil); err != nil {
-			logger.WithError(err).Error("pprof server failed")
+		logger.Info("Starting Combat Combos Service",
+			zap.String("port", config.ServerPort),
+			zap.String("service", "combat-combos-service-go"))
+
+		if err := httpServer.Start(); err != nil && err != http.ErrServerClosed {
+			logger.Fatal("Failed to start server", zap.Error(err))
 		}
 	}()
 
-	// Issue: #1585 - Runtime Goroutine Monitoring
-	monitor := server.NewGoroutineMonitor(200, logger) // Max 200 goroutines for combat-combos service
-	go monitor.Start()
-	defer monitor.Stop()
-	logger.Info("OK Goroutine monitor started")
-
-	// Create HTTP server
-	httpServer := server.NewHTTPServer(addr, service)
-
-	// Graceful shutdown
-	stop := make(chan os.Signal, 1)
-	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
-
-	// Start server
+	// Enable pprof endpoints for profiling
 	go func() {
-		logger.WithField("addr", addr).Info("Starting Combat Combos Service")
-		if err := httpServer.Start(); err != nil {
-			logger.WithError(err).Fatal("Server failed")
+		logger.Info("Starting pprof server on :6060")
+		if err := http.ListenAndServe(":6060", nil); err != nil {
+			logger.Error("Failed to start pprof server", zap.Error(err))
 		}
 	}()
 
-	// Wait for shutdown signal
-	<-stop
-	logger.Info("Shutting down gracefully...")
+	// Wait for interrupt signal to gracefully shutdown the server
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
+	<-quit
 
-	// Shutdown timeout
+	logger.Info("Shutting down server...")
+
+	// Give outstanding requests 30 seconds to complete
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
 	if err := httpServer.Shutdown(ctx); err != nil {
-		logger.WithError(err).Error("Shutdown error")
+		logger.Error("Server forced to shutdown", zap.Error(err))
 	}
 
-	logger.Info("Server stopped")
+	logger.Info("Server exited")
 }
 
-func getEnv(key, defaultValue string) string {
-	if value := os.Getenv(key); value != "" {
-		return value
+type Config struct {
+	DatabaseURL string
+	JWTSecret   string
+	ServerPort  string
+}
+
+func loadConfig() (*Config, error) {
+	databaseURL := os.Getenv("DATABASE_URL")
+	if databaseURL == "" {
+		return nil, fmt.Errorf("DATABASE_URL environment variable is required")
 	}
-	return defaultValue
+
+	jwtSecret := os.Getenv("JWT_SECRET")
+	if jwtSecret == "" {
+		return nil, fmt.Errorf("JWT_SECRET environment variable is required")
+	}
+
+	serverPort := os.Getenv("SERVER_PORT")
+	if serverPort == "" {
+		serverPort = "8084" // Default port for combat combos service
+	}
+
+	return &Config{
+		DatabaseURL: databaseURL,
+		JWTSecret:   jwtSecret,
+		ServerPort:  serverPort,
+	}, nil
 }
 
+func connectDatabase(databaseURL string) (*sql.DB, error) {
+	db, err := sql.Open("postgres", databaseURL)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open database: %w", err)
+	}
 
+	// Configure connection pool
+	db.SetMaxOpenConns(25)
+	db.SetMaxIdleConns(10)
+	db.SetConnMaxLifetime(5 * time.Minute)
+
+	// Test connection with timeout
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	if err := db.PingContext(ctx); err != nil {
+		return nil, fmt.Errorf("failed to ping database: %w", err)
+	}
+
+	return db, nil
+}

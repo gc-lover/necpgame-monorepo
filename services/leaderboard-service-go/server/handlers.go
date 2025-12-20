@@ -1,4 +1,4 @@
-// Issue: ogen migration, #1607
+// Package server Issue: ogen migration, #1607
 // ogen handlers - TYPED responses (no interface{} boxing!)
 package server
 
@@ -15,20 +15,20 @@ import (
 const DBTimeout = 50 * time.Millisecond
 
 var (
-	ErrNotFound = errors.New("not found")
+	_ = errors.New("not found")
 )
 
 // Handlers implements api.Handler interface (ogen typed handlers!)
 // Issue: #1607 - Memory pooling for hot path structs (Level 2 optimization)
 type Handlers struct {
-	logger   *logrus.Logger
-	service  LeaderboardServiceInterface
+	logger  *logrus.Logger
+	service LeaderboardServiceInterface
 
 	// Memory pooling for hot path structs (zero allocations target!)
-	globalLeaderboardPool sync.Pool
+	globalLeaderboardPool  sync.Pool
 	factionLeaderboardPool sync.Pool
-	playerRankPool sync.Pool
-	leaderboardEntryPool sync.Pool
+	playerRankPool         sync.Pool
+	leaderboardEntryPool   sync.Pool
 }
 
 // NewHandlers creates new handlers with memory pooling
@@ -160,7 +160,7 @@ func (h *Handlers) GetPlayerRank(ctx context.Context, params api.GetPlayerRankPa
 
 	if h.service == nil {
 		return &api.PlayerRank{
-			PlayerID:  params.PlayerID,
+			PlayerID:   params.PlayerID,
 			GlobalRank: 0,
 			Score:      0,
 		}, nil
@@ -170,7 +170,7 @@ func (h *Handlers) GetPlayerRank(ctx context.Context, params api.GetPlayerRankPa
 	if err != nil {
 		h.logger.WithError(err).Error("GetPlayerRank: failed")
 		return &api.PlayerRank{
-			PlayerID:  params.PlayerID,
+			PlayerID:   params.PlayerID,
 			GlobalRank: 0,
 			Score:      0,
 		}, nil

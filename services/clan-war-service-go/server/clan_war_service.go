@@ -159,10 +159,10 @@ func (s *ClanWarService) CompleteWar(ctx context.Context, warID uuid.UUID) error
 	}
 
 	s.publishEvent(ctx, "clan_war:completed", map[string]interface{}{
-		"war_id":         war.ID,
+		"war_id":          war.ID,
 		"winner_guild_id": winnerGuildID,
-		"attacker_score": war.AttackerScore,
-		"defender_score": war.DefenderScore,
+		"attacker_score":  war.AttackerScore,
+		"defender_score":  war.DefenderScore,
 	})
 
 	RecordWarCompleted()
@@ -198,11 +198,11 @@ func (s *ClanWarService) CreateBattle(ctx context.Context, req *models.CreateBat
 	}
 
 	s.publishEvent(ctx, "clan_war:battle:created", map[string]interface{}{
-		"battle_id":   battle.ID,
-		"war_id":      battle.WarID,
-		"type":        battle.Type,
+		"battle_id":    battle.ID,
+		"war_id":       battle.WarID,
+		"type":         battle.Type,
 		"territory_id": battle.TerritoryID,
-		"start_time":  battle.StartTime,
+		"start_time":   battle.StartTime,
 	})
 
 	RecordBattleCreated(string(battle.Type))
@@ -357,4 +357,3 @@ func (s *ClanWarService) publishEvent(ctx context.Context, eventType string, dat
 		s.logger.WithError(err).Error("Failed to publish event")
 	}
 }
-

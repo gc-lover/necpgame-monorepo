@@ -11,23 +11,23 @@ import (
 
 type mockExperienceService struct{}
 
-func (m *mockExperienceService) AddExperience(ctx context.Context, playerID uuid.UUID, amount int, source string) (*api.CharacterProgression, error) {
+func (m *mockExperienceService) AddExperience(_ context.Context, _ uuid.UUID, _ int, _ string) (*api.CharacterProgression, error) {
 	return &api.CharacterProgression{}, nil
 }
 
-func (m *mockExperienceService) CalculateExperience(ctx context.Context, baseXP int, modifiers map[string]float32) (*api.ExperienceCalculationResponse, error) {
+func (m *mockExperienceService) CalculateExperience(_ context.Context, _ int, _ map[string]float32) (*api.ExperienceCalculationResponse, error) {
 	return &api.ExperienceCalculationResponse{}, nil
 }
 
-func (m *mockExperienceService) CheckLevelUp(ctx context.Context, playerID uuid.UUID) (*api.LevelUpCheckResponse, error) {
+func (m *mockExperienceService) CheckLevelUp(_ context.Context, _ uuid.UUID) (*api.LevelUpCheckResponse, error) {
 	return &api.LevelUpCheckResponse{}, nil
 }
 
-func (m *mockExperienceService) GetLevelRequirements(ctx context.Context, level int) (*api.LevelRequirementsResponse, error) {
+func (m *mockExperienceService) GetLevelRequirements(_ context.Context, _ int) (*api.LevelRequirementsResponse, error) {
 	return &api.LevelRequirementsResponse{}, nil
 }
 
-func (m *mockExperienceService) GetPlayerLevel(ctx context.Context, playerID uuid.UUID) (*api.PlayerLevelResponse, error) {
+func (m *mockExperienceService) GetPlayerLevel(_ context.Context, _ uuid.UUID) (*api.PlayerLevelResponse, error) {
 	return &api.PlayerLevelResponse{}, nil
 }
 
@@ -83,4 +83,3 @@ func BenchmarkCalculateExperience(b *testing.B) {
 		_, _ = handlers.CalculateExperience(ctx, req)
 	}
 }
-

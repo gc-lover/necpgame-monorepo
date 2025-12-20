@@ -3729,6 +3729,7 @@ type CooldownStatus struct {
 	RemainingSeconds OptNilInt `json:"remaining_seconds"`
 	// Находится ли способность на кулдауне.
 	IsOnCooldown bool `json:"is_on_cooldown"`
+	CreatedAt    time.Time
 }
 
 // GetAbilityID returns the value of AbilityID.
@@ -9327,8 +9328,9 @@ func NewOptSynergyRequirements(v SynergyRequirements) OptSynergyRequirements {
 
 // OptSynergyRequirements is optional SynergyRequirements.
 type OptSynergyRequirements struct {
-	Value SynergyRequirements
-	Set   bool
+	Value      SynergyRequirements
+	Set        bool
+	AbilityIDs any
 }
 
 // IsSet returns true if OptSynergyRequirements was set.
@@ -12218,6 +12220,8 @@ type Synergy struct {
 	ImplantIds OptNilUUIDArray `json:"implant_ids"`
 	// Список идентификаторов экипировки.
 	EquipmentIds OptNilUUIDArray `json:"equipment_ids"`
+	Name         any
+	Description  any
 }
 
 // GetID returns the value of ID.

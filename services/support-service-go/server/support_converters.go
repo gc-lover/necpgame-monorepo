@@ -1,13 +1,12 @@
-// Issue: ogen migration
+// Package server Issue: ogen migration
 package server
 
 import (
-	"github.com/google/uuid"
 	"github.com/gc-lover/necpgame-monorepo/services/support-service-go/models"
 	supportapi "github.com/gc-lover/necpgame-monorepo/services/support-service-go/pkg/api"
 )
 
-func convertCreateTicketRequestFromAPI(req *supportapi.CreateTicketRequest, playerID uuid.UUID) *models.CreateTicketRequest {
+func convertCreateTicketRequestFromAPI(req *supportapi.CreateTicketRequest) *models.CreateTicketRequest {
 	result := &models.CreateTicketRequest{
 		Subject:     req.Subject,
 		Description: req.Description,
@@ -317,9 +316,9 @@ func convertTicketSLAStatusToAPI(status *models.TicketSLAStatus) supportapi.Tick
 
 func convertSLAViolationToAPI(violation models.SLAViolation) supportapi.SLAViolation {
 	result := supportapi.SLAViolation{
-		TicketID:    supportapi.NewOptUUID(violation.TicketID),
+		TicketID:     supportapi.NewOptUUID(violation.TicketID),
 		TicketNumber: supportapi.NewOptString(violation.TicketNumber),
-		TargetTime:  supportapi.NewOptDateTime(violation.TargetTime),
+		TargetTime:   supportapi.NewOptDateTime(violation.TargetTime),
 	}
 
 	// Convert priority

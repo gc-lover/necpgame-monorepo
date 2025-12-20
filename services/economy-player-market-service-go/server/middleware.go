@@ -1,4 +1,4 @@
-// Issue: #42
+// Package server Issue: #42
 package server
 
 import (
@@ -22,7 +22,7 @@ func MetricsMiddleware(next http.Handler) http.Handler {
 		start := time.Now()
 		next.ServeHTTP(w, r)
 		duration := time.Since(start)
-		
+
 		// TODO: Add Prometheus metrics
 		_ = duration
 	})
@@ -39,4 +39,3 @@ func RecoveryMiddleware(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 	})
 }
-

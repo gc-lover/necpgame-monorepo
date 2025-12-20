@@ -1,0 +1,179 @@
+# Issue: #2197 - Real-time Combat API Connection Schemas
+components:
+  schemas:
+
+    # ============================================================================
+    # CONNECTION SCHEMAS
+    # ============================================================================
+
+    ConnectionRequest:
+      type: object
+      required:
+        - player_id
+        - session_id
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          description: Player requesting connection
+        session_id:
+          type: string
+          format: uuid
+          description: Combat session to connect to
+        connection_type:
+          type: string
+          enum: [ websocket, sse ]
+          default: websocket
+          description: Preferred connection type
+        client_info:
+          $ref: '#/components/schemas/ClientInfo'
+          description: Client information for compatibility
+
+    ClientInfo:
+      type: object
+      properties:
+        user_agent:
+          type: string
+          description: Client user agent
+        client_version:
+          type: string
+          description: Game client version
+        platform:
+          type: string
+          enum: [ pc, console, mobile ]
+          description: Client platform
+        network_type:
+          type: string
+          enum: [ wired, wifi, cellular ]
+          description: Network connection type
+        supports_binary:
+          type: boolean
+          default: true
+          description: Whether client supports binary messages
+
+    ConnectionToken:
+      type: object
+      required:
+        - token
+        - websocket_url
+        - expires_at
+      properties:
+        token:
+          type: string
+          description: JWT token for WebSocket authentication
+        websocket_url:
+          type: string
+          format: uri
+          description: WebSocket endpoint URL
+        expires_at:
+          type: string
+          format: date-time
+          description: Token expiration time
+        connection_id:
+          type: string
+          format: uuid
+          description: Unique connection identifier
+        server_info:
+          $ref: '#/components/schemas/ServerInfo'
+          description: Server information
+
+    ServerInfo:
+      type: object
+      required:
+        - server_id
+        - region
+      properties:
+        server_id:
+          type: string
+          format: uuid
+          description: Server identifier
+        region:
+          type: string
+          description: Server region
+        load_factor:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Current server load (0.0-1.0)
+        max_connections:
+          type: integer
+          minimum: 0
+          description: Maximum concurrent connections
+
+    ConnectionDetails:
+      type: object
+      required:
+        - id
+        - player_id
+        - status
+        - connected_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Connection identifier
+        player_id:
+          type: string
+          format: uuid
+          description: Connected player
+        session_id:
+          type: string
+          format: uuid
+          description: Associated combat session
+        status:
+          type: string
+          enum: [ connecting, connected, disconnected, error ]
+          description: Connection status
+        connected_at:
+          type: string
+          format: date-time
+          description: Connection establishment time
+        disconnected_at:
+          type: string
+          format: date-time
+          description: Disconnection time (if applicable)
+        last_activity:
+          type: string
+          format: date-time
+          description: Last activity timestamp
+        bytes_sent:
+          type: integer
+          minimum: 0
+          description: Total bytes sent
+        bytes_received:
+          type: integer
+          minimum: 0
+          description: Total bytes received
+        message_count:
+          type: integer
+          minimum: 0
+          description: Total messages exchanged
+        client_info:
+          $ref: '#/components/schemas/ClientInfo'
+          description: Client information
+
+    ConnectionListResponse:
+      type: object
+      required:
+        - connections
+        - total
+      properties:
+        connections:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConnectionDetails'
+          description: Active connections
+        total:
+          type: integer
+          minimum: 0
+          description: Total number of connections
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Items per page
+        offset:
+          type: integer
+          minimum: 0
+          description: Pagination offset

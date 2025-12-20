@@ -1,4 +1,4 @@
-// Issue: #1595
+// Package server Issue: #1595
 // ogen handlers - TYPED responses (no interface{} boxing!)
 package server
 
@@ -58,7 +58,7 @@ func (h *Handlers) DeactivateSandevistan(ctx context.Context, params api.Deactiv
 		return &api.DeactivateSandevistanInternalServerError{}, err
 	}
 
-		return &api.DeactivateSandevistanNotFound{}, nil
+	return &api.DeactivateSandevistanNotFound{}, nil
 }
 
 // GetSandevistanStatus - TYPED response!

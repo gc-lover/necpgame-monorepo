@@ -1,4 +1,4 @@
-// SQL queries use prepared statements with placeholders (, , ?) for safety
+// Package server SQL queries use prepared statements with placeholders (, , ?) for safety
 // Issue: #1599, #1604, #1607, #387, #388
 // ogen handlers - TYPED responses (no interface{} boxing!)
 package server
@@ -21,10 +21,8 @@ type cacheEntry struct {
 	accessCount int64 // atomic
 }
 
-// Context timeout constants (Issue #1604)
 const (
-	DBTimeout    = 50 * time.Millisecond
-	CacheTimeout = 10 * time.Millisecond
+	DBTimeout = 50 * time.Millisecond
 )
 
 // Handlers implements api.Handler interface (ogen typed handlers!)
@@ -211,7 +209,7 @@ func (h *Handlers) setCachedSession(sessionID string, data *api.CombatSessionRes
 	// Simple LRU: remove oldest entries if cache grows too large
 	if len(h.sessionCache) > 1000 { // max 1000 cached sessions
 		var oldestKey string
-		var oldestTime int64 = time.Now().UnixNano()
+		var oldestTime = time.Now().UnixNano()
 		for k, v := range h.sessionCache {
 			if v.timestamp < oldestTime {
 				oldestTime = v.timestamp
@@ -229,8 +227,8 @@ func (h *Handlers) setCachedSession(sessionID string, data *api.CombatSessionRes
 
 // GetCombatStats - получить боевые статистики игрока
 // func (h *Handlers) GetCombatStats(ctx context.Context, params api.GetCombatStatsParams) (api.GetCombatStatsRes, error) {
-	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
-	defer cancel()
+ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+defer cancel()
 
 // 	if h.mechanicsService == nil {
 // 		return &api.GetCombatStatsInternalServerError{}, nil
@@ -246,8 +244,8 @@ func (h *Handlers) setCachedSession(sessionID string, data *api.CombatSessionRes
 
 // ExecuteCombatAction - выполнить боевое действие
 // func (h *Handlers) ExecuteCombatAction(ctx context.Context, req *api.CombatActionReq, params api.ExecuteCombatActionParams) (api.ExecuteCombatActionRes, error) {
-	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
-	defer cancel()
+ctx, cancel := context.WithTimeout(ctx, DBTimeout)
+defer cancel()
 
 // 	if h.mechanicsService == nil {
 // 		return &api.ExecuteCombatActionInternalServerError{}, nil
@@ -319,7 +317,7 @@ func (h *Handlers) GetPlayerEconomy(ctx context.Context, params api.GetPlayerEco
 }
 
 // ExecuteTrade - выполнить торговую операцию
-func (h *Handlers) ExecuteTrade(ctx context.Context, req *api.TradeRequest, params api.ExecuteTradeParams) (api.ExecuteTradeRes, error) {
+func (h *Handlers) ExecuteTrade(ctx context.Context, req *api.TradeRequest) (api.ExecuteTradeRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, DBTimeout)
 	defer cancel()
 
@@ -402,4 +400,3 @@ func (h *Handlers) TriggerWorldEvent(ctx context.Context, params api.TriggerWorl
 
 	return result, nil
 }
-

@@ -1,4 +1,4 @@
-// Issue: #1587 - Server-Side Validation & Anti-Cheat Integration
+// Package server Issue: #1587 - Server-Side Validation & Anti-Cheat Integration
 // CRITICAL for combat services - prevents aimbots, wallhacks, speed hacks
 package server
 
@@ -15,9 +15,9 @@ import (
 var (
 	ErrTooFast        = errors.New("action rate too high (potential aimbot/macro)")
 	ErrImpossibleShot = errors.New("shot distance exceeds weapon range")
-	ErrWallhack       = errors.New("line of sight blocked (wallhack)")
+	_                 = errors.New("line of sight blocked (wallhack)")
 	ErrImpossibleTurn = errors.New("impossible turn angle (aimbot)")
-	ErrSpeedHack      = errors.New("movement speed exceeds maximum")
+	_                 = errors.New("movement speed exceeds maximum")
 )
 
 // ActionValidator validates combat actions (shots, attacks)
@@ -50,7 +50,7 @@ func (av *ActionValidator) ValidateAttack(playerID string, attack *AttackAction)
 		if time.Since(lastAction.Timestamp) < minInterval {
 			logrus.WithFields(logrus.Fields{
 				"player_id":    playerID,
-				"time_since":    time.Since(lastAction.Timestamp),
+				"time_since":   time.Since(lastAction.Timestamp),
 				"min_interval": minInterval,
 			}).Warn("Attack rate too high (potential macro)")
 			return ErrTooFast
@@ -77,7 +77,7 @@ func (av *ActionValidator) ValidateAttack(playerID string, attack *AttackAction)
 			logrus.WithFields(logrus.Fields{
 				"player_id":  playerID,
 				"angle_diff": angleDiff,
-				"time_since":  time.Since(lastAction.Timestamp),
+				"time_since": time.Since(lastAction.Timestamp),
 			}).Warn("Impossible turn angle (potential aimbot)")
 			return ErrImpossibleTurn
 		}
@@ -120,7 +120,7 @@ func (av *ActionValidator) getAttackRange(attackType string) float32 {
 
 // hasLineOfSight checks if there's a clear line of sight between two points
 // TODO: Integrate with world service for actual raycast
-func (av *ActionValidator) hasLineOfSight(from, to Vec3) bool {
+func (av *ActionValidator) hasLineOfSight() bool {
 	// Simplified check - in production, use actual raycast from world service
 	return true
 }
@@ -168,7 +168,7 @@ func (ad *AnomalyDetector) RecordAttack(playerID string, critical bool, reaction
 
 	// Update average reaction time
 	currentAvg := stats.AvgReaction.Load()
-	newAvg := (currentAvg + int64(reactionTime.Microseconds())) / 2
+	newAvg := (currentAvg + reactionTime.Microseconds()) / 2
 	stats.AvgReaction.Store(newAvg)
 
 	// Check anomalies
@@ -215,4 +215,3 @@ func (ad *AnomalyDetector) reportSuspicious(playerID string, criticalRate float6
 	// TODO: Send to anti-cheat service
 	// ad.antiCheatService.FlagPlayer(playerID, "anomaly_detection")
 }
-

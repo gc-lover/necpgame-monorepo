@@ -8,40 +8,22 @@ import (
 
 type TrialType string
 
-const (
-	TrialTypeSpeedrunRaid      TrialType = "speedrun_raid"
-	TrialTypeTimeAttackDungeon TrialType = "time_attack_dungeon"
-	TrialTypeWeeklyChallenge   TrialType = "weekly_challenge"
-)
-
 type SessionStatus string
-
-const (
-	SessionStatusInProgress SessionStatus = "in_progress"
-	SessionStatusCompleted  SessionStatus = "completed"
-	SessionStatusFailed      SessionStatus = "failed"
-)
 
 type ChallengeType string
 
-const (
-	ChallengeTypeSolo  ChallengeType = "solo_challenge"
-	ChallengeTypeTeam  ChallengeType = "team_challenge"
-	ChallengeTypeClass ChallengeType = "class_challenge"
-)
-
 type StartTimeTrialRequest struct {
 	TrialType TrialType  `json:"trial_type"`
-	ContentID uuid.UUID `json:"content_id"`
+	ContentID uuid.UUID  `json:"content_id"`
 	TeamID    *uuid.UUID `json:"team_id,omitempty"`
 }
 
 type CompleteTimeTrialRequest struct {
-	SessionID        uuid.UUID   `json:"session_id"`
-	CompletionTimeMs int64       `json:"completion_time_ms"`
-	DeathsCount      int         `json:"deaths_count,omitempty"`
-	AbilitiesUsed    []string    `json:"abilities_used,omitempty"`
-	RouteOptimization *float64   `json:"route_optimization,omitempty"`
+	SessionID         uuid.UUID `json:"session_id"`
+	CompletionTimeMs  int64     `json:"completion_time_ms"`
+	DeathsCount       int       `json:"deaths_count,omitempty"`
+	AbilitiesUsed     []string  `json:"abilities_used,omitempty"`
+	RouteOptimization *float64  `json:"route_optimization,omitempty"`
 }
 
 type TimeTrialSession struct {
@@ -51,7 +33,7 @@ type TimeTrialSession struct {
 	PlayerID         uuid.UUID     `json:"player_id"`
 	TeamID           *uuid.UUID    `json:"team_id,omitempty"`
 	StartTime        time.Time     `json:"start_time"`
-	EndTime          *time.Time     `json:"end_time,omitempty"`
+	EndTime          *time.Time    `json:"end_time,omitempty"`
 	ElapsedTimeMs    int64         `json:"elapsed_time_ms,omitempty"`
 	CompletionTimeMs *int64        `json:"completion_time_ms,omitempty"`
 	Status           SessionStatus `json:"status"`
@@ -75,15 +57,15 @@ type TimeTrialCompletionResponse struct {
 }
 
 type WeeklyTimeChallenge struct {
-	ID           uuid.UUID              `json:"id"`
-	WeekStart    time.Time              `json:"week_start"`
-	WeekEnd      time.Time              `json:"week_end"`
-	ChallengeType ChallengeType         `json:"challenge_type"`
-	ContentID    uuid.UUID              `json:"content_id"`
-	TimeLimitMs  int64                  `json:"time_limit_ms"`
-	Conditions   map[string]interface{} `json:"conditions,omitempty"`
-	Rewards      map[string]interface{} `json:"rewards,omitempty"`
-	CreatedAt    time.Time              `json:"created_at"`
+	ID            uuid.UUID              `json:"id"`
+	WeekStart     time.Time              `json:"week_start"`
+	WeekEnd       time.Time              `json:"week_end"`
+	ChallengeType ChallengeType          `json:"challenge_type"`
+	ContentID     uuid.UUID              `json:"content_id"`
+	TimeLimitMs   int64                  `json:"time_limit_ms"`
+	Conditions    map[string]interface{} `json:"conditions,omitempty"`
+	Rewards       map[string]interface{} `json:"rewards,omitempty"`
+	CreatedAt     time.Time              `json:"created_at"`
 }
 
 type WeeklyChallengeSummary struct {
@@ -101,4 +83,3 @@ type WeeklyChallengeHistoryResponse struct {
 	Limit  int                      `json:"limit"`
 	Offset int                      `json:"offset"`
 }
-

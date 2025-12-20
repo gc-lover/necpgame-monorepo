@@ -361,4 +361,3 @@ func TestClanWarService_CompleteBattle_NotActive(t *testing.T) {
 	assert.Contains(t, err.Error(), "battle is not in active status")
 	mockRepo.AssertNotCalled(t, "UpdateBattle", mock.Anything, mock.Anything)
 }
-

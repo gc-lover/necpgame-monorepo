@@ -1,7 +1,6 @@
 package server
 
 import (
-	"context"
 	"encoding/json"
 	"net/http"
 	"time"
@@ -27,7 +26,7 @@ func parseAlertThresholds(m map[string]interface{}) AlertThresholds {
 	return thresholds
 }
 
-// OPTIMIZATION: Issue #2202 - Circuit breaker management operations with context timeouts
+// CreateCircuit OPTIMIZATION: Issue #2202 - Circuit breaker management operations with context timeouts
 func (s *CircuitBreakerService) CreateCircuit(w http.ResponseWriter, r *http.Request) {
 	var req CreateCircuitRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -46,18 +45,18 @@ func (s *CircuitBreakerService) CreateCircuit(w http.ResponseWriter, r *http.Req
 		SuccessCount:        0,
 		ConsecutiveFailures: 0,
 		Config: CircuitBreakerConfig{
-			FailureThreshold:       req.FailureThreshold,
-			SuccessThreshold:       req.SuccessThreshold,
-			Timeout:                time.Duration(req.Timeout) * time.Millisecond,
-			RetryDelay:             time.Duration(req.RetryDelay) * time.Millisecond,
-			MaxRetryDelay:          time.Duration(req.MaxRetryDelay) * time.Millisecond,
-			MonitoringWindow:       time.Duration(req.MonitoringWindow) * time.Millisecond,
-			SlowCallThreshold:      time.Duration(req.SlowCallThreshold) * time.Millisecond,
-			SlowCallRateThreshold:  req.SlowCallRateThreshold,
-			FallbackEnabled:        req.FallbackEnabled,
-			FallbackResponse:       req.FallbackResponse,
-			MetricsEnabled:         req.MetricsEnabled,
-			AlertThresholds:        parseAlertThresholds(req.AlertThresholds),
+			FailureThreshold:      req.FailureThreshold,
+			SuccessThreshold:      req.SuccessThreshold,
+			Timeout:               time.Duration(req.Timeout) * time.Millisecond,
+			RetryDelay:            time.Duration(req.RetryDelay) * time.Millisecond,
+			MaxRetryDelay:         time.Duration(req.MaxRetryDelay) * time.Millisecond,
+			MonitoringWindow:      time.Duration(req.MonitoringWindow) * time.Millisecond,
+			SlowCallThreshold:     time.Duration(req.SlowCallThreshold) * time.Millisecond,
+			SlowCallRateThreshold: req.SlowCallRateThreshold,
+			FallbackEnabled:       req.FallbackEnabled,
+			FallbackResponse:      req.FallbackResponse,
+			MetricsEnabled:        req.MetricsEnabled,
+			AlertThresholds:       parseAlertThresholds(req.AlertThresholds),
 		},
 		StateHistory: []StateChange{},
 		Metrics:      CircuitBreakerMetricsData{},
@@ -119,8 +118,8 @@ func (s *CircuitBreakerService) ListCircuits(w http.ResponseWriter, r *http.Requ
 	})
 
 	resp := &ListCircuitsResponse{
-		Circuits:     circuits,
-		TotalCount:   len(circuits),
+		Circuits:   circuits,
+		TotalCount: len(circuits),
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -201,14 +200,14 @@ func (s *CircuitBreakerService) UpdateCircuit(w http.ResponseWriter, r *http.Req
 	if req.SlowCallRateThreshold != nil && *req.SlowCallRateThreshold > 0 {
 		circuit.Config.SlowCallRateThreshold = *req.SlowCallRateThreshold
 	}
-	if req.FallbackEnabled {
-		circuit.Config.FallbackEnabled = req.FallbackEnabled
+	if req.FallbackEnabled != nil {
+		circuit.Config.FallbackEnabled = *req.FallbackEnabled
 	}
 	if req.FallbackResponse != nil {
-		circuit.Config.FallbackResponse = req.FallbackResponse
+		circuit.Config.FallbackResponse = *req.FallbackResponse
 	}
-	if req.MetricsEnabled {
-		circuit.Config.MetricsEnabled = req.MetricsEnabled
+	if req.MetricsEnabled != nil {
+		circuit.Config.MetricsEnabled = *req.MetricsEnabled
 	}
 	if req.AlertThresholds != nil {
 		if errorRate, ok := (*req.AlertThresholds)["error_rate"].(float64); ok && errorRate > 0 {
@@ -226,7 +225,6 @@ func (s *CircuitBreakerService) UpdateCircuit(w http.ResponseWriter, r *http.Req
 		CircuitID:     circuit.CircuitID,
 		UpdatedFields: []string{"config"},
 		UpdatedAt:     time.Now().Unix(),
-		Config:        &circuit.Config,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -314,21 +312,21 @@ func (s *CircuitBreakerService) SetCircuitState(w http.ResponseWriter, r *http.R
 	}
 
 	resp := &SetCircuitStateResponse{
-		CircuitID:   circuit.CircuitID,
+		CircuitID:     circuit.CircuitID,
 		PreviousState: oldState,
-		NewState:    req.State,
-		ChangedAt:   circuit.StateChangedAt.Unix(),
-		ChangedBy:   r.Header.Get("X-User-ID"),
-		Reason:      req.Reason,
+		NewState:      req.State,
+		ChangedAt:     circuit.StateChangedAt.Unix(),
+		ChangedBy:     r.Header.Get("X-User-ID"),
+		Reason:        req.Reason,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(resp)
 
 	s.logger.WithFields(logrus.Fields{
-		"circuit_id":   circuit.CircuitID,
-		"old_state":    oldState,
-		"new_state":    req.State,
+		"circuit_id": circuit.CircuitID,
+		"old_state":  oldState,
+		"new_state":  req.State,
 	}).Info("circuit breaker state changed manually")
 }
 
@@ -371,11 +369,46 @@ func (s *CircuitBreakerService) ResetCircuit(w http.ResponseWriter, r *http.Requ
 		CircuitID:     circuit.CircuitID,
 		ResetAt:       circuit.StateChangedAt.Unix(),
 		PreviousState: oldState,
-		NewState:      "closed",
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(resp)
 
 	s.logger.WithField("circuit_id", circuit.CircuitID).Info("circuit breaker reset manually")
+}
+
+// ListBulkheads Bulkhead methods (TODO: implement)
+func (s *CircuitBreakerService) ListBulkheads(w http.ResponseWriter) {
+	http.Error(w, "Not implemented", http.StatusNotImplemented)
+}
+
+func (s *CircuitBreakerService) CreateBulkhead(w http.ResponseWriter) {
+	http.Error(w, "Not implemented", http.StatusNotImplemented)
+}
+
+func (s *CircuitBreakerService) GetBulkhead(w http.ResponseWriter) {
+	http.Error(w, "Not implemented", http.StatusNotImplemented)
+}
+
+func (s *CircuitBreakerService) DeleteBulkhead(w http.ResponseWriter) {
+	http.Error(w, "Not implemented", http.StatusNotImplemented)
+}
+
+// ListTimeouts Timeout methods (TODO: implement)
+func (s *CircuitBreakerService) ListTimeouts(w http.ResponseWriter) {
+	http.Error(w, "Not implemented", http.StatusNotImplemented)
+}
+
+func (s *CircuitBreakerService) CreateTimeout(w http.ResponseWriter) {
+	http.Error(w, "Not implemented", http.StatusNotImplemented)
+}
+
+// CreateDegradationPolicy Degradation policy methods (TODO: implement)
+func (s *CircuitBreakerService) CreateDegradationPolicy(w http.ResponseWriter) {
+	http.Error(w, "Not implemented", http.StatusNotImplemented)
+}
+
+// GetMetrics Metrics method (TODO: implement)
+func (s *CircuitBreakerService) GetMetrics(w http.ResponseWriter) {
+	http.Error(w, "Not implemented", http.StatusNotImplemented)
 }

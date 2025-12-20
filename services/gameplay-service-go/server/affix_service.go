@@ -1,4 +1,4 @@
-// Issue: #1515
+// Package server Issue: #1515
 package server
 
 import (

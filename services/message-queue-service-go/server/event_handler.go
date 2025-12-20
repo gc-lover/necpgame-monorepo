@@ -1,5 +1,3 @@
-package server
-
 import (
 	"encoding/json"
 	"net/http"
@@ -9,7 +7,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// OPTIMIZATION: Issue #2143 - Event publishing and subscription patterns
+// PublishEvent OPTIMIZATION: Issue #2143 - Event publishing and subscription patterns
 func (s *MessageQueueService) PublishEvent(w http.ResponseWriter, r *http.Request) {
 	var req PublishEventRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {

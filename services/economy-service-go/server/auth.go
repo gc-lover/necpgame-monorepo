@@ -17,20 +17,20 @@ import (
 )
 
 type JwtValidator struct {
-	issuer   string
-	jwksURL  string
-	logger   *logrus.Logger
-	keys     map[string]*rsa.PublicKey
-	keysMu   sync.RWMutex
+	issuer    string
+	jwksURL   string
+	logger    *logrus.Logger
+	keys      map[string]*rsa.PublicKey
+	keysMu    sync.RWMutex
 	lastFetch time.Time
-	fetchMu  sync.Mutex
+	fetchMu   sync.Mutex
 }
 
 type Claims struct {
 	jwt.RegisteredClaims
-	PreferredUsername string   `json:"preferred_username"`
-	Email            string   `json:"email"`
-	RealmAccess     struct {
+	PreferredUsername string `json:"preferred_username"`
+	Email             string `json:"email"`
+	RealmAccess       struct {
 		Roles []string `json:"roles"`
 	} `json:"realm_access"`
 }
@@ -174,4 +174,3 @@ func (v *JwtValidator) Verify(ctx context.Context, authHeader string) (*Claims, 
 
 	return claims, nil
 }
-

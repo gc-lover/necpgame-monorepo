@@ -1,4 +1,4 @@
-// Issue: #156 - Abilities catalog operations
+// Package server Issue: #156 - Abilities catalog operations
 package server
 
 import (
@@ -19,7 +19,7 @@ func (r *AbilityRepository) GetCatalog(ctx context.Context, abilityType *api.Abi
 			  requirements, modifiers, created_at
 			  FROM gameplay.abilities_catalog WHERE 1=1`
 
-	args := []interface{}{}
+	var args []interface{}
 	argIndex := 1
 
 	if abilityType != nil {
@@ -86,7 +86,7 @@ func (r *AbilityRepository) GetCatalog(ctx context.Context, abilityType *api.Abi
 
 	// Get total count
 	countQuery := `SELECT COUNT(*) FROM gameplay.abilities_catalog WHERE 1=1`
-	countArgs := []interface{}{}
+	var countArgs []interface{}
 	countArgIndex := 1
 
 	if abilityType != nil {

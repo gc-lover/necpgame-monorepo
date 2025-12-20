@@ -30,86 +30,86 @@ spec:
         seccompProfile:
           type: RuntimeDefault
       containers:
-      - name: clan-war-service-go
-        image: necpgame-clan-war-service-go:latest
-        imagePullPolicy: IfNotPresent
-        securityContext:
-          allowPrivilegeEscalation: false
-          readOnlyRootFilesystem: true
-          capabilities:
-            drop:
-            - ALL
-        ports:
-        - name: http
-          containerPort: 8092
-          protocol: TCP
-        - name: metrics
-          containerPort: 9092
-          protocol: TCP
-        env:
-        - name: HTTP_ADDR
-          value: ":8092"
-        - name: METRICS_ADDR
-          value: ":9092"
-        - name: DATABASE_URL
-          valueFrom:
-            secretKeyRef:
-              name: database-secrets
-              key: url
-        - name: REDIS_URL
-          valueFrom:
-            secretKeyRef:
-              name: redis-secrets
-              key: url
-        - name: KEYCLOAK_ISSUER
-          valueFrom:
-            configMapKeyRef:
-              name: common-config
-              key: keycloak-url
-        - name: KEYCLOAK_JWKS_URL
-          value: "http://keycloak:8080/realms/necpgame/protocol/openid-connect/certs"
-        - name: AUTH_ENABLED
-          valueFrom:
-            configMapKeyRef:
-              name: common-config
-              key: auth-enabled
-        resources:
-          requests:
-            memory: "128Mi"
-            cpu: "100m"
-          limits:
-            memory: "512Mi"
-            cpu: "500m"
-        startupProbe:
-          httpGet:
-            path: /metrics
-            port: 9092
-          initialDelaySeconds: 5
-          periodSeconds: 5
-          timeoutSeconds: 3
-          failureThreshold: 30
-        livenessProbe:
-          httpGet:
-            path: /metrics
-            port: 9092
-          initialDelaySeconds: 30
-          periodSeconds: 30
-          timeoutSeconds: 3
-          failureThreshold: 3
-        readinessProbe:
-          httpGet:
-            path: /metrics
-            port: 9092
-          initialDelaySeconds: 5
-          periodSeconds: 10
-          timeoutSeconds: 3
-          failureThreshold: 3
-        volumeMounts:
-        - name: tmp
-          mountPath: /tmp
+        - name: clan-war-service-go
+          image: necpgame-clan-war-service-go:latest
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          ports:
+            - name: http
+              containerPort: 8092
+              protocol: TCP
+            - name: metrics
+              containerPort: 9092
+              protocol: TCP
+          env:
+            - name: HTTP_ADDR
+              value: ":8092"
+            - name: METRICS_ADDR
+              value: ":9092"
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: database-secrets
+                  key: url
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: redis-secrets
+                  key: url
+            - name: KEYCLOAK_ISSUER
+              valueFrom:
+                configMapKeyRef:
+                  name: common-config
+                  key: keycloak-url
+            - name: KEYCLOAK_JWKS_URL
+              value: "http://keycloak:8080/realms/necpgame/protocol/openid-connect/certs"
+            - name: AUTH_ENABLED
+              valueFrom:
+                configMapKeyRef:
+                  name: common-config
+                  key: auth-enabled
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          startupProbe:
+            httpGet:
+              path: /metrics
+              port: 9092
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 30
+          livenessProbe:
+            httpGet:
+              path: /metrics
+              port: 9092
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 3
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /metrics
+              port: 9092
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
       volumes:
-      - name: tmp
-        emptyDir: {}
+        - name: tmp
+          emptyDir: { }
 ---
 apiVersion: v1
 kind: Service
@@ -122,13 +122,13 @@ metadata:
 spec:
   type: ClusterIP
   ports:
-  - name: http
-    port: 8092
-    targetPort: 8092
-    protocol: TCP
-  - name: metrics
-    port: 9092
-    targetPort: 9092
-    protocol: TCP
+    - name: http
+      port: 8092
+      targetPort: 8092
+      protocol: TCP
+    - name: metrics
+      port: 9092
+      targetPort: 9092
+      protocol: TCP
   selector:
     app: clan-war-service-go

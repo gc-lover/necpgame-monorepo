@@ -1,4 +1,4 @@
-// Issue: #1856
+// Package server Issue: #1856
 package server
 
 import (
@@ -151,7 +151,7 @@ func (r *Repository) GetGuildWarByID(ctx context.Context, id uuid.UUID) (*GuildW
 }
 
 // DeclareWar creates a new guild war declaration
-func (r *Repository) DeclareWar(ctx context.Context, attackerID, defenderID uuid.UUID, duration time.Duration) (*GuildWar, error) {
+func (r *Repository) DeclareWar(ctx context.Context, attackerID, defenderID uuid.UUID) (*GuildWar, error) {
 	query := `
 		INSERT INTO guilds.wars (id, attacker_id, defender_id, status, start_time, created_at)
 		VALUES (gen_random_uuid(), $1, $2, 'pending', NOW() + INTERVAL '1 hour', NOW())
