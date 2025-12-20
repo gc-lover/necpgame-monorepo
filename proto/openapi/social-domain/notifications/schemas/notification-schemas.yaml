@@ -1,0 +1,270 @@
+# Notification entity and management schemas
+# Issue: #1912
+
+components:
+  schemas:
+    # Notification entity - memory optimized (large → small types)
+    Notification:
+      type: object
+      required:
+        - id
+        - recipient_id
+        - type
+        - title
+        - message
+        - created_at
+        - priority
+        - is_read
+      properties:
+        # Large types first (for struct alignment)
+        id:
+          type: string
+          format: uuid
+          description: Notification unique identifier
+          example: "550e8400-e29b-41d4-a716-446655440000"
+
+        recipient_id:
+          type: string
+          format: uuid
+          description: Player ID who receives the notification
+          example: "550e8400-e29b-41d4-a716-446655440001"
+
+        title:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Notification title
+          example: "Achievement Unlocked!"
+
+        message:
+          type: string
+          minLength: 1
+          maxLength: 500
+          description: Notification message content
+          example: "Congratulations! You have unlocked the 'First Blood' achievement."
+
+        sender_id:
+          type: string
+          format: uuid
+          description: Optional: Player/system ID who sent the notification
+          example: "550e8400-e29b-41d4-a716-446655440002"
+
+        related_entity_id:
+          type: string
+          format: uuid
+          description: Optional: ID of related entity (quest, item, player, etc.)
+          example: "550e8400-e29b-41d4-a716-446655440003"
+
+        metadata:
+          type: object
+          description: Optional: Additional notification metadata
+          additionalProperties: true
+          example: {"quest_id": "q123", "reward_amount": 100}
+
+        created_at:
+          type: string
+          format: date-time
+          description: Timestamp of notification creation
+          example: "2025-12-20T14:30:00Z"
+
+        read_at:
+          type: string
+          format: date-time
+          description: Optional: Timestamp when notification was read
+          example: "2025-12-20T14:31:00Z"
+
+        expires_at:
+          type: string
+          format: date-time
+          description: Optional: When notification expires
+          example: "2025-12-27T14:30:00Z"
+
+        # Medium types
+        type:
+          type: string
+          enum: [system, social, combat, achievement, economic, event]
+          description: Notification type/category
+          example: "achievement"
+
+        priority:
+          type: string
+          enum: [low, normal, high, critical]
+          description: Notification priority level
+          example: "high"
+
+        delivery_channels:
+          type: array
+          items:
+            type: string
+            enum: [in_game, push, email, sms]
+          description: Channels for notification delivery
+          example: ["in_game", "push"]
+
+        # Small types
+        is_read:
+          type: boolean
+          description: Whether notification has been read
+          example: false
+
+        is_deleted:
+          type: boolean
+          description: Whether notification is marked as deleted
+          example: false
+
+        requires_action:
+          type: boolean
+          description: Whether notification requires user action
+          example: true
+
+    # Request to send notification
+    SendNotificationRequest:
+      type: object
+      required:
+        - recipient_ids
+        - type
+        - title
+        - message
+        - priority
+      properties:
+        recipient_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          minItems: 1
+          maxItems: 1000
+          description: List of player IDs to receive the notification
+        type:
+          type: string
+          enum: [system, social, combat, achievement, economic, event]
+          description: Notification type/category
+        title:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Notification title
+        message:
+          type: string
+          minLength: 1
+          maxLength: 500
+          description: Notification message content
+        priority:
+          type: string
+          enum: [low, normal, high, critical]
+          default: normal
+          description: Notification priority level
+        sender_id:
+          type: string
+          format: uuid
+          description: Optional: Player/system ID sending the notification
+        related_entity_id:
+          type: string
+          format: uuid
+          description: Optional: ID of related entity
+        metadata:
+          type: object
+          description: Optional: Additional notification metadata
+        delivery_channels:
+          type: array
+          items:
+            type: string
+            enum: [in_game, push, email, sms]
+          default: ["in_game"]
+          description: Channels for notification delivery
+        expires_in_hours:
+          type: integer
+          minimum: 1
+          maximum: 720  # 30 days
+          default: 168  # 7 days
+          description: Hours until notification expires
+
+    # Response for single notification
+    NotificationResponse:
+      type: object
+      required:
+        - notification
+      properties:
+        notification:
+          $ref: '#/components/schemas/Notification'
+
+    # Response for list of notifications
+    NotificationsListResponse:
+      type: object
+      required:
+        - notifications
+        - total_count
+      properties:
+        notifications:
+          type: array
+          items:
+            $ref: '#/components/schemas/Notification'
+          description: List of notifications
+        total_count:
+          type: integer
+          description: Total number of notifications matching criteria
+          example: 150
+        unread_count:
+          type: integer
+          description: Number of unread notifications
+          example: 12
+        has_more:
+          type: boolean
+          description: Whether there are more results available
+          example: true
+
+    # Batch operations
+    BatchReadRequest:
+      type: object
+      required:
+        - notification_ids
+      properties:
+        notification_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          minItems: 1
+          maxItems: 100
+          description: List of notification IDs to mark as read
+
+    BatchDeleteRequest:
+      type: object
+      required:
+        - notification_ids
+      properties:
+        notification_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          minItems: 1
+          maxItems: 100
+          description: List of notification IDs to delete
+
+    BatchOperationResponse:
+      type: object
+      required:
+        - success_count
+        - failure_count
+      properties:
+        success_count:
+          type: integer
+          description: Number of successful operations
+          example: 95
+        failure_count:
+          type: integer
+          description: Number of failed operations
+          example: 5
+        failures:
+          type: array
+          items:
+            type: object
+            properties:
+              notification_id:
+                type: string
+                format: uuid
+                description: ID of notification that failed
+              error:
+                type: string
+                description: Error message
+          description: Optional: Details of failed operations

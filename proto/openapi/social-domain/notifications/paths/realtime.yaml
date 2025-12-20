@@ -1,0 +1,181 @@
+# Real-time notification operations (WebSocket)
+# Issue: #1912
+
+paths:
+  # WebSocket connection for real-time notifications
+  /ws/notifications:
+    get:
+      summary: WebSocket connection for real-time notifications
+      description: |
+        Establishes a WebSocket connection for real-time notification delivery.
+
+        **BACKEND NOTE:** Long-lived connection (10k+ concurrent).
+        Use connection pooling and load balancing.
+        Heartbeat every 30 seconds, timeout after 5 minutes.
+        Message format: JSON with event types.
+      operationId: notificationWebSocket
+      tags:
+        - Real-time
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: token
+          in: query
+          required: true
+          schema:
+            type: string
+          description: JWT token for authentication
+        - name: client_version
+          in: query
+          schema:
+            type: string
+            default: "1.0.0"
+          description: Client application version
+        - name: supported_events
+          in: query
+          schema:
+            type: string
+          description: Comma-separated list of supported event types
+      responses:
+        '101':
+          description: WebSocket connection established
+          headers:
+            Sec-WebSocket-Accept:
+              schema:
+                type: string
+              description: WebSocket handshake confirmation
+        '400':
+          description: Invalid connection parameters
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+        '401':
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+        '429':
+          description: Connection rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+
+  # Real-time stats
+  /notifications/stats:
+    get:
+      summary: Get notification statistics
+      description: |
+        Retrieves real-time statistics about notifications.
+
+        **BACKEND NOTE:** Cached data updated every 30 seconds.
+        Use Redis for sub-second response times.
+      operationId: getNotificationStats
+      tags:
+        - Real-time
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: timeframe
+          in: query
+          schema:
+            type: string
+            enum: [1h, 24h, 7d, 30d]
+            default: 24h
+          description: Time period for statistics
+      responses:
+        '200':
+          description: Statistics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/stats-schemas.yaml#/components/schemas/NotificationStatsResponse'
+        '400':
+          description: Invalid timeframe parameter
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+        '403':
+          description: Not authorized to view statistics
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+
+  # Push notification registration
+  /notifications/push/register:
+    post:
+      summary: Register for push notifications
+      description: |
+        Registers a device for push notification delivery.
+
+        **BACKEND NOTE:** Supports multiple platforms (iOS, Android, Web).
+        Token validation and device management.
+      operationId: registerPushNotifications
+      tags:
+        - Real-time
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/realtime-schemas.yaml#/components/schemas/PushRegistrationRequest'
+      responses:
+        '201':
+          description: Device registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/realtime-schemas.yaml#/components/schemas/PushRegistrationResponse'
+        '400':
+          description: Invalid registration data
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+        '409':
+          description: Device already registered
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+
+  /notifications/push/unregister:
+    post:
+      summary: Unregister from push notifications
+      description: Removes a device from push notification delivery.
+      operationId: unregisterPushNotifications
+      tags:
+        - Real-time
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/realtime-schemas.yaml#/components/schemas/PushUnregistrationRequest'
+      responses:
+        '200':
+          description: Device unregistered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/realtime-schemas.yaml#/components/schemas/PushUnregistrationResponse'
+        '400':
+          description: Invalid unregistration data
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+        '404':
+          description: Device not found
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'

@@ -1,0 +1,275 @@
+# Notification CRUD and core operations
+# Issue: #1912
+
+paths:
+  # Health check
+  /health:
+    get:
+      summary: Notification service health check
+      operationId: notificationHealthCheck
+      tags:
+        - System
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/health-schemas.yaml#/components/schemas/HealthResponse'
+        '503':
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+
+  # Send notification
+  /notifications/send:
+    post:
+      summary: Send notification to player
+      description: |
+        Sends a notification to a specific player or group of players.
+
+        **BACKEND NOTE:** High-throughput endpoint (1000+ RPS).
+        Use async processing for bulk notifications.
+        Supports real-time delivery via WebSocket.
+      operationId: sendNotification
+      tags:
+        - Notifications
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/notification-schemas.yaml#/components/schemas/SendNotificationRequest'
+      responses:
+        '201':
+          description: Notification sent successfully
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/notification-schemas.yaml#/components/schemas/NotificationResponse'
+        '400':
+          description: Invalid request data
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+        '403':
+          description: Not authorized to send notifications
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+        '429':
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+
+  # Get notifications
+  /notifications:
+    get:
+      summary: Get player notifications
+      description: |
+        Retrieves notifications for the authenticated player.
+
+        **BACKEND NOTE:** Hot path endpoint (500+ RPS).
+        Use Redis caching for recent notifications.
+        Pagination required for performance.
+      operationId: getNotifications
+      tags:
+        - Notifications
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [unread, read, all]
+            default: unread
+          description: Filter by notification status
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [system, social, combat, achievement, economic, event]
+          description: Filter by notification type
+        - name: priority
+          in: query
+          schema:
+            type: string
+            enum: [low, normal, high, critical]
+          description: Filter by priority level
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of results per page
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          description: Pagination offset
+      responses:
+        '200':
+          description: Notifications retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/notification-schemas.yaml#/components/schemas/NotificationsListResponse'
+        '400':
+          description: Invalid query parameters
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+        '403':
+          description: Not authorized to view notifications
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+
+  # Single notification operations
+  /notifications/{notification_id}:
+    get:
+      summary: Get notification by ID
+      description: Retrieves a single notification by its unique identifier.
+      operationId: getNotificationById
+      tags:
+        - Notifications
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: notification_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Unique identifier of the notification
+      responses:
+        '200':
+          description: Notification retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/notification-schemas.yaml#/components/schemas/NotificationResponse'
+        '400':
+          description: Invalid notification ID format
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+        '403':
+          description: Not authorized to view this notification
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+        '404':
+          description: Notification not found
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+
+    delete:
+      summary: Delete notification
+      description: |
+        Deletes a notification permanently.
+
+        **BACKEND NOTE:** Soft delete in database, hard delete after retention period.
+        Use for spam filtering and user cleanup.
+      operationId: deleteNotification
+      tags:
+        - Notifications
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: notification_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Unique identifier of the notification to delete
+      responses:
+        '204':
+          description: Notification deleted successfully (No Content)
+        '400':
+          description: Invalid notification ID format
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+        '403':
+          description: Not authorized to delete this notification
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+        '404':
+          description: Notification not found
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+
+  # Mark as read
+  /notifications/{notification_id}/read:
+    post:
+      summary: Mark notification as read
+      description: |
+        Marks a notification as read by the player.
+
+        **BACKEND NOTE:** Updates read timestamp for analytics.
+        Batch operations supported via separate endpoint.
+      operationId: markNotificationRead
+      tags:
+        - Notifications
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: notification_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Unique identifier of the notification
+      responses:
+        '200':
+          description: Notification marked as read
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/notification-schemas.yaml#/components/schemas/NotificationResponse'
+        '400':
+          description: Invalid notification ID format
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+        '403':
+          description: Not authorized to modify this notification
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+        '404':
+          description: Notification not found
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'

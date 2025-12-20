@@ -1,0 +1,106 @@
+# Notification statistics schemas
+# Issue: #1912
+
+components:
+  schemas:
+    # Notification statistics response
+    NotificationStatsResponse:
+      type: object
+      required:
+        - timeframe
+        - total_sent
+        - total_read
+        - read_rate
+      properties:
+        timeframe:
+          type: string
+          description: Statistics timeframe
+          example: "24h"
+        total_sent:
+          type: integer
+          description: Total notifications sent
+          example: 1250
+        total_read:
+          type: integer
+          description: Total notifications read
+          example: 1100
+        read_rate:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Read rate percentage
+          example: 0.88
+        by_type:
+          type: object
+          description: Statistics broken down by notification type
+          properties:
+            system:
+              $ref: '#/components/schemas/TypeStats'
+            social:
+              $ref: '#/components/schemas/TypeStats'
+            combat:
+              $ref: '#/components/schemas/TypeStats'
+            achievement:
+              $ref: '#/components/schemas/TypeStats'
+            economic:
+              $ref: '#/components/schemas/TypeStats'
+            event:
+              $ref: '#/components/schemas/TypeStats'
+        by_priority:
+          type: object
+          description: Statistics broken down by priority level
+          properties:
+            low:
+              $ref: '#/components/schemas/PriorityStats'
+            normal:
+              $ref: '#/components/schemas/PriorityStats'
+            high:
+              $ref: '#/components/schemas/PriorityStats'
+            critical:
+              $ref: '#/components/schemas/PriorityStats'
+        active_connections:
+          type: integer
+          description: Number of active WebSocket connections
+          example: 1250
+        average_response_time:
+          type: number
+          description: Average notification delivery time in milliseconds
+          example: 45.7
+
+    TypeStats:
+      type: object
+      required:
+        - sent
+        - read
+        - read_rate
+      properties:
+        sent:
+          type: integer
+          description: Notifications sent of this type
+        read:
+          type: integer
+          description: Notifications read of this type
+        read_rate:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Read rate for this type
+
+    PriorityStats:
+      type: object
+      required:
+        - sent
+        - read
+        - read_rate
+      properties:
+        sent:
+          type: integer
+          description: Notifications sent with this priority
+        read:
+          type: integer
+          description: Notifications read with this priority
+        read_rate:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Read rate for this priority

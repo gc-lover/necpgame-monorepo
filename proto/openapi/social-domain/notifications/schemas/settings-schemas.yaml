@@ -1,0 +1,124 @@
+# Notification settings and preferences schemas
+# Issue: #1912
+
+components:
+  schemas:
+    # Notification settings entity
+    NotificationSettings:
+      type: object
+      required:
+        - player_id
+        - enable_notifications
+        - created_at
+        - updated_at
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          description: Player identifier
+        enable_notifications:
+          type: boolean
+          description: Master switch for all notifications
+          default: true
+        type_settings:
+          type: object
+          description: Settings per notification type
+          properties:
+            system:
+              $ref: '#/components/schemas/TypeSettings'
+            social:
+              $ref: '#/components/schemas/TypeSettings'
+            combat:
+              $ref: '#/components/schemas/TypeSettings'
+            achievement:
+              $ref: '#/components/schemas/TypeSettings'
+            economic:
+              $ref: '#/components/schemas/TypeSettings'
+            event:
+              $ref: '#/components/schemas/TypeSettings'
+        channel_settings:
+          type: object
+          description: Settings per delivery channel
+          properties:
+            in_game:
+              $ref: '#/components/schemas/ChannelSettings'
+            push:
+              $ref: '#/components/schemas/ChannelSettings'
+            email:
+              $ref: '#/components/schemas/ChannelSettings'
+            sms:
+              $ref: '#/components/schemas/ChannelSettings'
+        quiet_hours:
+          type: object
+          description: Time periods when notifications are muted
+          properties:
+            enabled:
+              type: boolean
+              default: false
+            start_time:
+              type: string
+              format: time
+              example: "22:00"
+            end_time:
+              type: string
+              format: time
+              example: "08:00"
+            timezone:
+              type: string
+              example: "UTC"
+        created_at:
+          type: string
+          format: date-time
+          description: Settings creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last settings update timestamp
+
+    TypeSettings:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+          default: true
+        priority_filter:
+          type: string
+          enum: [all, normal_and_above, high_and_above, critical_only]
+          default: all
+
+    ChannelSettings:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+          default: true
+        minimum_priority:
+          type: string
+          enum: [low, normal, high, critical]
+          default: normal
+
+    # Request to update settings
+    UpdateNotificationSettingsRequest:
+      type: object
+      properties:
+        enable_notifications:
+          type: boolean
+          description: Master switch for all notifications
+        type_settings:
+          type: object
+          description: Settings per notification type
+        channel_settings:
+          type: object
+          description: Settings per delivery channel
+        quiet_hours:
+          type: object
+          description: Quiet hours configuration
+
+    # Response for settings
+    NotificationSettingsResponse:
+      type: object
+      required:
+        - settings
+      properties:
+        settings:
+          $ref: '#/components/schemas/NotificationSettings'

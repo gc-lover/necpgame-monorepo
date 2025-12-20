@@ -1,0 +1,186 @@
+# Real-time notification schemas (WebSocket, Push)
+# Issue: #1912
+
+components:
+  schemas:
+    # WebSocket message formats
+    WebSocketMessage:
+      type: object
+      required:
+        - type
+        - timestamp
+        - message_id
+      properties:
+        type:
+          type: string
+          enum: [notification_new, notification_read, connection_pong, error]
+          description: Message type
+        timestamp:
+          type: string
+          format: date-time
+          description: Message timestamp
+        message_id:
+          type: string
+          format: uuid
+          description: Unique message identifier
+        data:
+          type: object
+          description: Message payload (varies by type)
+
+    NotificationWebSocketMessage:
+      type: object
+      required:
+        - type
+        - timestamp
+        - message_id
+        - notification
+      properties:
+        type:
+          type: string
+          enum: [notification_new]
+          example: "notification_new"
+        timestamp:
+          type: string
+          format: date-time
+          example: "2025-12-20T14:30:00Z"
+        message_id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        notification:
+          $ref: '../notification-schemas.yaml#/components/schemas/Notification'
+
+    WebSocketPongMessage:
+      type: object
+      required:
+        - type
+        - timestamp
+        - message_id
+      properties:
+        type:
+          type: string
+          enum: [connection_pong]
+          example: "connection_pong"
+        timestamp:
+          type: string
+          format: date-time
+          example: "2025-12-20T14:30:30Z"
+        message_id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440001"
+
+    # Push notification registration
+    PushRegistrationRequest:
+      type: object
+      required:
+        - device_token
+        - platform
+        - device_id
+      properties:
+        device_token:
+          type: string
+          minLength: 1
+          maxLength: 500
+          description: Platform-specific device token
+          example: "APA91bF8...device_token_here..."
+        platform:
+          type: string
+          enum: [ios, android, web, windows, macos]
+          description: Device platform
+          example: "android"
+        device_id:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Unique device identifier
+          example: "device-12345"
+        app_version:
+          type: string
+          description: Application version
+          example: "1.2.3"
+        locale:
+          type: string
+          description: User locale for localized notifications
+          example: "en-US"
+
+    PushRegistrationResponse:
+      type: object
+      required:
+        - registration_id
+        - status
+      properties:
+        registration_id:
+          type: string
+          format: uuid
+          description: Unique registration identifier
+          example: "550e8400-e29b-41d4-a716-446655440002"
+        status:
+          type: string
+          enum: [active]
+          example: "active"
+        registered_at:
+          type: string
+          format: date-time
+          description: Registration timestamp
+          example: "2025-12-20T14:30:00Z"
+
+    # Push notification unregistration
+    PushUnregistrationRequest:
+      type: object
+      required:
+        - device_id
+      properties:
+        device_id:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Device identifier to unregister
+          example: "device-12345"
+
+    PushUnregistrationResponse:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum: [unregistered]
+          example: "unregistered"
+        unregistered_at:
+          type: string
+          format: date-time
+          description: Unregistration timestamp
+          example: "2025-12-20T14:30:00Z"
+
+    # Push notification payload
+    PushNotificationPayload:
+      type: object
+      required:
+        - title
+        - body
+      properties:
+        title:
+          type: string
+          maxLength: 100
+          description: Push notification title
+          example: "Achievement Unlocked!"
+        body:
+          type: string
+          maxLength: 200
+          description: Push notification body
+          example: "Congratulations! You have unlocked the 'First Blood' achievement."
+        badge:
+          type: integer
+          minimum: 0
+          description: Badge count for iOS
+          example: 5
+        sound:
+          type: string
+          description: Sound to play
+          example: "default"
+        data:
+          type: object
+          description: Custom data payload
+          additionalProperties: true
+          example: {"notification_id": "550e8400-e29b-41d4-a716-446655440000"}

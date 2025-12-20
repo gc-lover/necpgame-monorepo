@@ -1,0 +1,219 @@
+# Notification history and settings operations
+# Issue: #1912
+
+paths:
+  # Notification history
+  /notifications/history:
+    get:
+      summary: Get notification history
+      description: |
+        Retrieves archived notifications for the authenticated player.
+
+        **BACKEND NOTE:** Uses separate archive table for performance.
+        Older notifications compressed and stored in cold storage.
+        Pagination mandatory for large datasets.
+      operationId: getNotificationHistory
+      tags:
+        - History
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: from_date
+          in: query
+          schema:
+            type: string
+            format: date
+          description: Start date for history (inclusive)
+        - name: to_date
+          in: query
+          schema:
+            type: string
+            format: date
+          description: End date for history (inclusive)
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [system, social, combat, achievement, economic, event]
+          description: Filter by notification type
+        - name: priority
+          in: query
+          schema:
+            type: string
+            enum: [low, normal, high, critical]
+          description: Filter by priority level
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+          description: Number of results per page
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          description: Pagination offset
+      responses:
+        '200':
+          description: Notification history retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/notification-schemas.yaml#/components/schemas/NotificationsListResponse'
+        '400':
+          description: Invalid query parameters
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+        '403':
+          description: Not authorized to view notification history
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+
+  # Notification settings
+  /notifications/settings:
+    get:
+      summary: Get notification preferences
+      description: Retrieves the player's notification preferences and settings.
+      operationId: getNotificationSettings
+      tags:
+        - Settings
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Settings retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/settings-schemas.yaml#/components/schemas/NotificationSettingsResponse'
+        '403':
+          description: Not authorized to view settings
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+
+    put:
+      summary: Update notification preferences
+      description: |
+        Updates the player's notification preferences.
+
+        **BACKEND NOTE:** Partial updates supported.
+        Changes applied immediately to active sessions.
+      operationId: updateNotificationSettings
+      tags:
+        - Settings
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/settings-schemas.yaml#/components/schemas/UpdateNotificationSettingsRequest'
+      responses:
+        '200':
+          description: Settings updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/settings-schemas.yaml#/components/schemas/NotificationSettingsResponse'
+        '400':
+          description: Invalid request data
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+        '403':
+          description: Not authorized to update settings
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+
+  # Batch operations
+  /notifications/batch/read:
+    post:
+      summary: Mark multiple notifications as read
+      description: |
+        Marks multiple notifications as read in a single operation.
+
+        **BACKEND NOTE:** High-throughput endpoint (100+ RPS).
+        Use database batch updates for performance.
+      operationId: batchMarkRead
+      tags:
+        - Notifications
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/notification-schemas.yaml#/components/schemas/BatchReadRequest'
+      responses:
+        '200':
+          description: Notifications marked as read successfully
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/notification-schemas.yaml#/components/schemas/BatchOperationResponse'
+        '400':
+          description: Invalid request data
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+        '403':
+          description: Not authorized to modify notifications
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+
+  /notifications/batch/delete:
+    post:
+      summary: Delete multiple notifications
+      description: |
+        Deletes multiple notifications in a single operation.
+
+        **BACKEND NOTE:** Use for bulk cleanup operations.
+        Soft delete with retention policy.
+      operationId: batchDeleteNotifications
+      tags:
+        - Notifications
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/notification-schemas.yaml#/components/schemas/BatchDeleteRequest'
+      responses:
+        '200':
+          description: Notifications deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/notification-schemas.yaml#/components/schemas/BatchOperationResponse'
+        '400':
+          description: Invalid request data
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+        '403':
+          description: Not authorized to delete notifications
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
