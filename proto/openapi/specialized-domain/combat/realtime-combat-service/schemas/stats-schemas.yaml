@@ -1,0 +1,258 @@
+# Combat statistics schemas
+# Issue: #2197
+
+components:
+  schemas:
+    # Combat session statistics response
+    CombatStatsResponse:
+      type: object
+      required:
+        - session_id
+        - duration_seconds
+        - total_players
+        - current_players
+        - stats
+      properties:
+        session_id:
+          type: string
+          format: uuid
+          description: Combat session identifier
+        duration_seconds:
+          type: integer
+          minimum: 0
+          description: Session duration in seconds
+          example: 1800
+        total_players:
+          type: integer
+          minimum: 0
+          description: Total players who joined
+          example: 20
+        current_players:
+          type: integer
+          minimum: 0
+          description: Currently active players
+          example: 15
+        stats:
+          type: object
+          required:
+            - kills
+            - deaths
+            - damage_dealt
+            - damage_received
+          properties:
+            kills:
+              type: integer
+              minimum: 0
+              description: Total kills in session
+              example: 150
+            deaths:
+              type: integer
+              minimum: 0
+              description: Total deaths in session
+              example: 150
+            damage_dealt:
+              type: integer
+              minimum: 0
+              description: Total damage dealt
+              example: 125000
+            damage_received:
+              type: integer
+              minimum: 0
+              description: Total damage received
+              example: 125000
+            headshots:
+              type: integer
+              minimum: 0
+              description: Total headshot kills
+              example: 25
+            longest_kill_distance:
+              type: number
+              format: float
+              description: Longest kill distance in meters
+              example: 125.5
+            average_match_time:
+              type: number
+              format: float
+              description: Average match duration in seconds
+              example: 420.5
+
+        player_stats:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlayerCombatStats'
+          description: Individual player statistics
+          maxItems: 50
+
+        team_stats:
+          type: array
+          items:
+            $ref: '#/components/schemas/TeamCombatStats'
+          description: Team statistics
+          maxItems: 10
+
+        performance_metrics:
+          type: object
+          description: Server performance metrics
+          properties:
+            average_tick_rate:
+              type: number
+              format: float
+              description: Average server tick rate (Hz)
+              example: 60.5
+            average_latency:
+              type: number
+              format: float
+              description: Average player latency (ms)
+              example: 45.2
+            packet_loss_percent:
+              type: number
+              format: float
+              minimum: 0
+              maximum: 100
+              description: Average packet loss percentage
+              example: 0.5
+            active_connections:
+              type: integer
+              description: Current WebSocket connections
+              example: 15
+
+    PlayerCombatStats:
+      type: object
+      required:
+        - player_id
+        - player_name
+        - kills
+        - deaths
+        - score
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          description: Player identifier
+        player_name:
+          type: string
+          description: Player display name
+        kills:
+          type: integer
+          minimum: 0
+          description: Player kill count
+        deaths:
+          type: integer
+          minimum: 0
+          description: Player death count
+        assists:
+          type: integer
+          minimum: 0
+          description: Player assist count
+        damage_dealt:
+          type: integer
+          minimum: 0
+          description: Damage dealt by player
+        damage_received:
+          type: integer
+          minimum: 0
+          description: Damage received by player
+        headshots:
+          type: integer
+          minimum: 0
+          description: Headshot kills
+        accuracy_percent:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Shot accuracy percentage
+        score:
+          type: integer
+          description: Player score
+        rank_change:
+          type: integer
+          description: Rank points gained/lost
+        longest_kill_streak:
+          type: integer
+          minimum: 0
+          description: Longest kill streak
+        playtime_seconds:
+          type: integer
+          minimum: 0
+          description: Total playtime in session
+
+    TeamCombatStats:
+      type: object
+      required:
+        - team_id
+        - team_name
+        - score
+        - players_count
+      properties:
+        team_id:
+          type: string
+          format: uuid
+          description: Team identifier
+        team_name:
+          type: string
+          description: Team display name
+        score:
+          type: integer
+          description: Team total score
+        players_count:
+          type: integer
+          description: Number of players in team
+        kills:
+          type: integer
+          minimum: 0
+          description: Team total kills
+        deaths:
+          type: integer
+          minimum: 0
+          description: Team total deaths
+        objectives_completed:
+          type: integer
+          minimum: 0
+          description: Objectives completed by team
+
+    # Real-time event schemas
+    CombatEvent:
+      type: object
+      required:
+        - event_type
+        - timestamp
+        - session_id
+      properties:
+        event_type:
+          type: string
+          enum: [player_kill, player_death, objective_captured, match_start, match_end, player_join, player_leave]
+          description: Type of combat event
+        timestamp:
+          type: integer
+          description: Event timestamp in milliseconds
+        session_id:
+          type: string
+          format: uuid
+          description: Combat session identifier
+        player_id:
+          type: string
+          format: uuid
+          description: Primary player involved in event
+        target_player_id:
+          type: string
+          format: uuid
+          description: Optional: Target player (for kills, etc.)
+        position:
+          type: object
+          description: Event location
+          properties:
+            x: { type: number, format: float }
+            y: { type: number, format: float }
+            z: { type: number, format: float }
+        weapon_id:
+          type: string
+          format: uuid
+          description: Optional: Weapon used
+        damage_amount:
+          type: integer
+          minimum: 0
+          description: Optional: Damage amount
+        event_data:
+          type: object
+          description: Additional event-specific data

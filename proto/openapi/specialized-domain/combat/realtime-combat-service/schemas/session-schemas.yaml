@@ -1,0 +1,324 @@
+# Combat session management schemas
+# Issue: #2197
+
+components:
+  schemas:
+    # Combat session entity - memory optimized (large → small types)
+    CombatSession:
+      type: object
+      required:
+        - session_id
+        - game_mode
+        - map_id
+        - status
+        - created_at
+        - max_players
+        - current_players
+      properties:
+        # Large types first (for struct alignment)
+        session_id:
+          type: string
+          format: uuid
+          description: Unique combat session identifier
+          example: "550e8400-e29b-41d4-a716-446655440000"
+
+        host_player_id:
+          type: string
+          format: uuid
+          description: Player who created the session
+          example: "550e8400-e29b-41d4-a716-446655440001"
+
+        winner_team_id:
+          type: string
+          format: uuid
+          description: Optional: Winning team identifier
+          example: "550e8400-e29b-41d4-a716-446655440002"
+
+        map_id:
+          type: string
+          format: uuid
+          description: Game map identifier
+          example: "550e8400-e29b-41d4-a716-446655440003"
+
+        map_name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Human-readable map name
+          example: "Night City Downtown"
+
+        session_name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Optional: Custom session name
+          example: "Epic Night City Battle"
+
+        game_settings:
+          type: object
+          description: Game mode specific settings
+          additionalProperties: true
+          example: {"time_limit": 1800, "score_limit": 100}
+
+        players:
+          type: array
+          items:
+            $ref: '#/components/schemas/SessionPlayer'
+          description: Current players in session
+          maxItems: 50
+
+        teams:
+          type: array
+          items:
+            $ref: '#/components/schemas/Team'
+          description: Teams in the session
+          maxItems: 10
+
+        created_at:
+          type: string
+          format: date-time
+          description: Session creation timestamp
+          example: "2025-12-20T14:30:00Z"
+
+        started_at:
+          type: string
+          format: date-time
+          description: Optional: Session start timestamp
+          example: "2025-12-20T14:31:00Z"
+
+        ended_at:
+          type: string
+          format: date-time
+          description: Optional: Session end timestamp
+          example: "2025-12-20T15:00:00Z"
+
+        # Medium types
+        game_mode:
+          type: string
+          enum: [deathmatch, team_deathmatch, capture_the_flag, domination, king_of_the_hill]
+          description: Combat game mode
+          example: "team_deathmatch"
+
+        status:
+          type: string
+          enum: [waiting, starting, active, paused, finished, cancelled]
+          description: Current session status
+          example: "active"
+
+        region:
+          type: string
+          description: Server region for matchmaking
+          example: "us-east-1"
+
+        # Small types
+        max_players:
+          type: integer
+          minimum: 2
+          maximum: 50
+          description: Maximum number of players
+          example: 20
+
+        current_players:
+          type: integer
+          minimum: 0
+          maximum: 50
+          description: Current number of players
+          example: 15
+
+        min_players:
+          type: integer
+          minimum: 2
+          maximum: 50
+          description: Minimum players to start
+          example: 4
+
+        is_ranked:
+          type: boolean
+          description: Whether session affects player ranking
+          example: true
+
+        is_private:
+          type: boolean
+          description: Whether session is private (invite-only)
+          example: false
+
+        allow_spectators:
+          type: boolean
+          description: Whether spectators are allowed
+          example: true
+
+    SessionPlayer:
+      type: object
+      required:
+        - player_id
+        - player_name
+        - team_id
+        - joined_at
+        - status
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          description: Player identifier
+        player_name:
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: Player display name
+        team_id:
+          type: string
+          format: uuid
+          description: Team identifier
+        joined_at:
+          type: string
+          format: date-time
+          description: When player joined session
+        status:
+          type: string
+          enum: [active, disconnected, spectating]
+          description: Player status in session
+        kills:
+          type: integer
+          minimum: 0
+          description: Player kill count
+        deaths:
+          type: integer
+          minimum: 0
+          description: Player death count
+        score:
+          type: integer
+          minimum: 0
+          description: Player score
+
+    Team:
+      type: object
+      required:
+        - team_id
+        - team_name
+        - color
+        - max_players
+      properties:
+        team_id:
+          type: string
+          format: uuid
+          description: Team identifier
+        team_name:
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: Team display name
+        color:
+          type: string
+          pattern: '^#[0-9A-Fa-f]{6}$'
+          description: Team color in hex format
+        max_players:
+          type: integer
+          minimum: 1
+          maximum: 25
+          description: Maximum players per team
+        current_players:
+          type: integer
+          minimum: 0
+          description: Current players in team
+        score:
+          type: integer
+          minimum: 0
+          description: Team score
+
+    # Request to create session
+    CreateSessionRequest:
+      type: object
+      required:
+        - game_mode
+        - map_id
+        - max_players
+      properties:
+        game_mode:
+          type: string
+          enum: [deathmatch, team_deathmatch, capture_the_flag, domination, king_of_the_hill]
+          description: Combat game mode
+        map_id:
+          type: string
+          format: uuid
+          description: Game map identifier
+        max_players:
+          type: integer
+          minimum: 2
+          maximum: 50
+          description: Maximum number of players
+        min_players:
+          type: integer
+          minimum: 2
+          maximum: 50
+          description: Minimum players to start
+        session_name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Optional: Custom session name
+        game_settings:
+          type: object
+          description: Game mode specific settings
+        is_ranked:
+          type: boolean
+          default: false
+          description: Whether session affects ranking
+        is_private:
+          type: boolean
+          default: false
+          description: Whether session is private
+        region:
+          type: string
+          description: Preferred server region
+
+    # Request to update session
+    UpdateSessionRequest:
+      type: object
+      properties:
+        session_name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: New session name
+        game_settings:
+          type: object
+          description: Updated game settings
+        max_players:
+          type: integer
+          minimum: 2
+          maximum: 50
+          description: New max players limit
+
+    # Request to join session
+    JoinSessionRequest:
+      type: object
+      properties:
+        preferred_team_id:
+          type: string
+          format: uuid
+          description: Preferred team to join
+        character_id:
+          type: string
+          format: uuid
+          description: Character to use in combat
+
+    # Response for join session
+    JoinSessionResponse:
+      type: object
+      required:
+        - session
+        - player
+        - websocket_url
+      properties:
+        session:
+          $ref: '#/components/schemas/CombatSession'
+        player:
+          $ref: '#/components/schemas/SessionPlayer'
+        websocket_url:
+          type: string
+          description: WebSocket URL for real-time updates
+          example: "wss://combat.necpgame.com/api/v1/ws/sessions/550e8400-e29b-41d4-a716-446655440000"
+        auth_token:
+          type: string
+          description: Session-specific auth token
+          example: "session_token_12345"
