@@ -26,18 +26,6 @@ fi
 
 echo "INFO: Checking staged files: $STAGED_FILES"
 
-# Load exemptions
-EXEMPTIONS_FILE=".githooks/pre-commit-exemptions.txt"
-EXEMPTIONS=()
-if [ -f "$EXEMPTIONS_FILE" ]; then
-    while IFS= read -r line || [ -n "$line" ]; do
-        # Skip comments and empty lines
-        [[ $line =~ ^[[:space:]]*# ]] && continue
-        [[ -z "$line" ]] && continue
-        EXEMPTIONS+=("$line")
-    done < "$EXEMPTIONS_FILE"
-fi
-
 # Check file sizes for staged files
 echo "INFO: Checking file sizes..."
 
@@ -46,35 +34,6 @@ CHECKED_COUNT=0
 
 for file in $STAGED_FILES; do
     if [ -f "$file" ]; then
-        # Check if file is exempt
-        is_exempt=false
-        for exemption in "${EXEMPTIONS[@]}"; do
-            # Remove leading/trailing whitespace
-            exemption=$(echo "$exemption" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
-            # Skip empty exemptions
-            [ -z "$exemption" ] && continue
-            # Check exact match first
-            if [ "$file" = "$exemption" ]; then
-                echo "INFO: $file is exempt from size checks (exact match: $exemption)"
-                is_exempt=true
-                break
-            fi
-            # Check simple wildcard patterns (* only)
-            if [[ "$exemption" == *"*"* ]]; then
-                # Convert glob to regex
-                regex=$(echo "$exemption" | sed 's/\*/.*/g')
-                if [[ "$file" =~ $regex ]]; then
-                    echo "INFO: $file is exempt from size checks (pattern: $exemption)"
-                    is_exempt=true
-                    break
-                fi
-            fi
-        done
-
-        if [ "$is_exempt" = true ]; then
-            continue
-        fi
-
         # Count lines
         lines=$(wc -l < "$file" 2>/dev/null || echo "0")
         ext="${file##*.}"
@@ -149,13 +108,13 @@ else
     echo "SUCCESS: All files are within size limits"
 fi
 
-# Run architecture validator if available (optional - won't block commit)
+# Run architecture validator if available
 if [ -f "$PROJECT_ROOT/scripts/architecture-validator.py" ]; then
     echo "INFO: Running architecture validation..."
-    # Capture both stdout and stderr to show detailed error info but don't block
+    # Capture both stdout and stderr to show detailed error info
     if ! python "$PROJECT_ROOT/scripts/architecture-validator.py" --project-root "$PROJECT_ROOT" 2>&1; then
-        echo "WARNING: Architecture validation found issues, but allowing commit."
-        echo "INFO: Use --no-verify to skip validation if needed."
+        echo "ERROR: Architecture validation failed. Please fix the issues above before committing."
+        exit 1
     fi
 fi
 

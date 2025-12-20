@@ -23,23 +23,47 @@ if [ "$BRANCH_CHECKOUT" = "1" ]; then
   if [ -n "$CURRENT_BRANCH" ] && [ "$CURRENT_BRANCH" != "$ALLOWED_BRANCH" ]; then
     echo ""
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    echo "[GIT_HOOK_INFO] BRANCH_INFO"
+    echo "[GIT_HOOK_ERROR] BRANCH_POLICY_VIOLATION"
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo ""
-    echo "INFO: You are on branch '$CURRENT_BRANCH'"
-    echo "RECOMMENDED: '$ALLOWED_BRANCH' branch for main development"
+    echo "ERROR_TYPE: branch_policy_violation"
+    echo "CURRENT_BRANCH: $CURRENT_BRANCH"
+    echo "ALLOWED_BRANCH: $ALLOWED_BRANCH"
+    echo "POLICY: Only 'develop' branch is allowed"
     echo ""
-    echo "NOTE: Branch flexibility allowed for development workflow"
-    echo "INFO: Continuing work on '$CURRENT_BRANCH'"
+    echo "RESTRICTIONS:"
+    echo "  - Branch creation is prohibited"
+    echo "  - Branch switching is prohibited"
+    echo "  - Only '$ALLOWED_BRANCH' branch can be used"
     echo ""
-    echo "FOR_AI_AGENTS:"
-    echo "  ℹ️ INFO: Multiple branches allowed for development"
-    echo "  OK ALLOWED: Work on feature branches"
-    echo "  OK ALLOWED: Create and switch branches as needed"
-    echo "  OK RECOMMENDED: Merge to '$ALLOWED_BRANCH' when ready"
+    echo "AUTOMATIC_ACTION: Switching back to '$ALLOWED_BRANCH' branch"
+    echo ""
+echo "FOR_AI_AGENTS:"
+echo "  WARNING CRITICAL: You MUST NEVER leave the '$ALLOWED_BRANCH' branch!"
+echo "  WARNING FORBIDDEN: Branch '$CURRENT_BRANCH' violates repository policy"
+echo "  WARNING FORBIDDEN: Creating branches is PROHIBITED"
+echo "  WARNING FORBIDDEN: Switching from '$ALLOWED_BRANCH' is PROHIBITED"
+echo "  OK REQUIRED: Only '$ALLOWED_BRANCH' branch is allowed"
+echo "  OK REQUIRED: Never run 'git checkout -b' or 'git checkout <other-branch>'"
+echo "  OK REQUIRED: Always work ONLY in '$ALLOWED_BRANCH' branch"
+echo "  This repository enforces a strict policy: ONLY '$ALLOWED_BRANCH' branch is allowed."
+echo "  You attempted to use '$CURRENT_BRANCH' which is automatically being corrected."
+echo "  System is switching you back to '$ALLOWED_BRANCH' and deleting prohibited branch."
+echo "  Do NOT attempt to create or switch to other branches. Stay in '$ALLOWED_BRANCH'."
     echo ""
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo ""
+    
+    if [ "$CURRENT_BRANCH" != "$ALLOWED_BRANCH" ]; then
+      git checkout "$ALLOWED_BRANCH" 2>/dev/null
+      if [ $? -eq 0 ]; then
+        echo "OK Automatically switched back to '$ALLOWED_BRANCH' branch"
+        if git show-ref --verify --quiet refs/heads/"$CURRENT_BRANCH" 2>/dev/null; then
+          git branch -D "$CURRENT_BRANCH" 2>/dev/null
+          echo "OK Deleted prohibited branch '$CURRENT_BRANCH'"
+        fi
+      fi
+    fi
   fi
 fi
 
