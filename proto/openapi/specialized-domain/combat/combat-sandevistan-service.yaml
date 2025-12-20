@@ -11,6 +11,7 @@ info:
     - Action Priority Budget
     - Перегрев и охлаждение
     - Temporal Marks (пометка целей)
+    - Temporal Overdrive (расширенная активация)
     - Контрплей механики
   version: 1.0.0
   contact:
@@ -55,17 +56,17 @@ paths:
               schema:
                 $ref: '#/components/schemas/SandevistanActivation'
         '400':
-          $ref: 'common.yaml#/components/responses/BadRequest'
+          $ref: '#/components/responses/BadRequest'
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: '#/components/responses/Unauthorized'
         '409':
           description: Невозможно активировать (перегрев или кулдаун)
           content:
             application/json:
               schema:
-                $ref: 'common.yaml#/components/schemas/Error'
+                $ref: '#/components/schemas/ErrorResponse'
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
+          $ref: '#/components/responses/InternalServerError'
 
   /combat/players/{player_id}/sandevistan/deactivate:
     post:
@@ -90,15 +91,15 @@ paths:
           content:
             application/json:
               schema:
-                $ref: 'common.yaml#/components/schemas/StatusResponse'
+                $ref: '#/components/schemas/StatusResponse'
         '400':
-          $ref: 'common.yaml#/components/responses/BadRequest'
+          $ref: '#/components/responses/BadRequest'
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: '#/components/responses/Unauthorized'
         '404':
-          $ref: 'common.yaml#/components/responses/NotFound'
+          $ref: '#/components/responses/NotFound'
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
+          $ref: '#/components/responses/InternalServerError'
 
   /combat/players/{player_id}/sandevistan/status:
     get:
@@ -125,11 +126,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/SandevistanStatus'
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: '#/components/responses/Unauthorized'
         '404':
-          $ref: 'common.yaml#/components/responses/NotFound'
+          $ref: '#/components/responses/NotFound'
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
+          $ref: '#/components/responses/InternalServerError'
 
   /combat/players/{player_id}/sandevistan/action-budget:
     post:
@@ -170,17 +171,17 @@ paths:
               schema:
                 $ref: '#/components/schemas/ActionBudgetResult'
         '400':
-          $ref: 'common.yaml#/components/responses/BadRequest'
+          $ref: '#/components/responses/BadRequest'
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: '#/components/responses/Unauthorized'
         '409':
           description: Action Budget исчерпан
           content:
             application/json:
               schema:
-                $ref: 'common.yaml#/components/schemas/Error'
+                $ref: '#/components/schemas/ErrorResponse'
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
+          $ref: '#/components/responses/InternalServerError'
 
   /combat/players/{player_id}/sandevistan/temporal-marks:
     post:
@@ -220,13 +221,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: 'common.yaml#/components/schemas/StatusResponse'
+                $ref: '#/components/schemas/StatusResponse'
         '400':
-          $ref: 'common.yaml#/components/responses/BadRequest'
+          $ref: '#/components/responses/BadRequest'
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: '#/components/responses/Unauthorized'
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
+          $ref: '#/components/responses/InternalServerError'
     get:
       tags:
         - sandevistan
@@ -256,11 +257,11 @@ paths:
                     items:
                       $ref: '#/components/schemas/TemporalMark'
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: '#/components/responses/Unauthorized'
         '404':
-          $ref: 'common.yaml#/components/responses/NotFound'
+          $ref: '#/components/responses/NotFound'
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
+          $ref: '#/components/responses/InternalServerError'
   /combat/players/{player_id}/sandevistan/apply-temporal-marks:
     post:
       tags:
@@ -286,9 +287,55 @@ paths:
               schema:
                 $ref: '#/components/schemas/TemporalMarksApplied'
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: '#/components/responses/Unauthorized'
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
+          $ref: '#/components/responses/InternalServerError'
+  /combat/players/{player_id}/sandevistan/temporal-overdrive:
+    post:
+      tags:
+        - sandevistan
+      summary: Активировать Temporal Overdrive (расширенный Sandevistan)
+      operationId: activateTemporalOverdrive
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Идентификатор игрока
+          example: "550e8400-e29b-41d4-a716-446655440000"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TemporalOverdriveRequest'
+      responses:
+        '200':
+          description: Temporal Overdrive активирован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TemporalOverdriveActivation'
+        '400':
+          description: Неверный запрос или недостаточно ресурсов
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          description: Слишком частые активации
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
   /combat/players/{player_id}/sandevistan/bonuses:
     get:
       tags:
@@ -314,9 +361,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/SandevistanBonuses'
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: '#/components/responses/Unauthorized'
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
+          $ref: '#/components/responses/InternalServerError'
   /combat/players/{player_id}/sandevistan/perception-drag:
     post:
       tags:
@@ -346,13 +393,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: 'common.yaml#/components/schemas/StatusResponse'
+                $ref: '#/components/schemas/StatusResponse'
         '400':
-          $ref: 'common.yaml#/components/responses/BadRequest'
+          $ref: '#/components/responses/BadRequest'
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: '#/components/responses/Unauthorized'
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
+          $ref: '#/components/responses/InternalServerError'
 
   /combat/players/{player_id}/sandevistan/cooling:
     post:
@@ -391,13 +438,13 @@ paths:
               schema:
                 $ref: '#/components/schemas/CoolingResult'
         '400':
-          $ref: 'common.yaml#/components/responses/BadRequest'
+          $ref: '#/components/responses/BadRequest'
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: '#/components/responses/Unauthorized'
         '404':
-          $ref: 'common.yaml#/components/responses/NotFound'
+          $ref: '#/components/responses/NotFound'
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
+          $ref: '#/components/responses/InternalServerError'
 
   /combat/players/{player_id}/sandevistan/heat:
     get:
@@ -424,11 +471,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/HeatStatus'
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: '#/components/responses/Unauthorized'
         '404':
-          $ref: 'common.yaml#/components/responses/NotFound'
+          $ref: '#/components/responses/NotFound'
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
+          $ref: '#/components/responses/InternalServerError'
 
   /combat/players/{player_id}/sandevistan/counterplay:
     post:
@@ -475,20 +522,77 @@ paths:
               schema:
                 $ref: '#/components/schemas/CounterplayResult'
         '400':
-          $ref: 'common.yaml#/components/responses/BadRequest'
+          $ref: '#/components/responses/BadRequest'
         '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+          $ref: '#/components/responses/Unauthorized'
         '404':
-          $ref: 'common.yaml#/components/responses/NotFound'
+          $ref: '#/components/responses/NotFound'
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
+          $ref: '#/components/responses/InternalServerError'
 
 components:
   securitySchemes:
     BearerAuth:
-      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
-
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Unauthorized:
+      description: Authentication failed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
   schemas:
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - code
+      properties:
+        error:
+          type: string
+          description: Error message
+        code:
+          type: integer
+          minimum: 1000
+          description: Error code
+        details:
+          type: object
+          description: Additional error details
+        timestamp:
+          type: string
+          format: date-time
+      description: 'BACKEND NOTE: Standard error response schema.'
+    StatusResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [ok, error]
+          example: ok
+        timestamp:
+          type: string
+          format: date-time
+      description: 'BACKEND NOTE: Standard status response schema.'
     SandevistanActivation:
       $ref: 'combat-sandevistan-service-schemas.yaml#/components/schemas/SandevistanActivation'
     SandevistanStatus:
@@ -511,8 +615,10 @@ components:
       $ref: 'combat-sandevistan-service-schemas.yaml#/components/schemas/SandevistanBonuses'
     PerceptionDragEvent:
       $ref: 'combat-sandevistan-service-schemas.yaml#/components/schemas/PerceptionDragEvent'
-    StatusResponse:
-      $ref: 'common.yaml#/components/schemas/StatusResponse'
+    TemporalOverdriveRequest:
+      $ref: 'combat-sandevistan-service-schemas.yaml#/components/schemas/TemporalOverdriveRequest'
+    TemporalOverdriveActivation:
+      $ref: 'combat-sandevistan-service-schemas.yaml#/components/schemas/TemporalOverdriveActivation'
 
 security:
   - BearerAuth: [ ]
