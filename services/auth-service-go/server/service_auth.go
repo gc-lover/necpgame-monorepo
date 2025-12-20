@@ -13,7 +13,7 @@ import (
 )
 
 // Register регистрирует нового пользователя
-func (s *Service) Register(ctx context.Context, req *api.RegisterRequest) (*api.RegisterResponse, error) {
+func (s *AuthService) Register(ctx context.Context, req *api.RegisterRequest) (*api.RegisterResponse, error) {
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
@@ -78,7 +78,7 @@ func (s *Service) Register(ctx context.Context, req *api.RegisterRequest) (*api.
 }
 
 // Login аутентифицирует пользователя
-func (s *Service) Login(ctx context.Context, req *api.LoginRequest) (*api.LoginResponse, error) {
+func (s *AuthService) Login(ctx context.Context, req *api.LoginRequest) (*api.LoginResponse, error) {
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
@@ -127,7 +127,7 @@ func (s *Service) Login(ctx context.Context, req *api.LoginRequest) (*api.LoginR
 }
 
 // Logout инвалидирует сессию пользователя
-func (s *Service) Logout(ctx context.Context, req *api.LogoutRequest) error {
+func (s *AuthService) Logout(ctx context.Context) error {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 

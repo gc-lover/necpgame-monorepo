@@ -11,24 +11,24 @@ import (
 )
 
 // GetUserRoles получает роли пользователя
-func (s *Service) GetUserRoles(ctx context.Context, req *api.GetUserRolesRequest) (*UserRolesResponse, error) {
+func (s *AuthService) GetUserRoles(ctx context.Context, userID string) (*api.UserRolesResponse, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	roles, err := s.getUserRoles(ctx, req.UserId)
+	roles, err := s.getUserRoles(ctx, userID)
 	if err != nil {
 		s.logger.Error("Failed to get user roles", zap.Error(err))
 		return nil, err
 	}
 
-	return &UserRolesResponse{
-		UserId: req.UserId,
+	return &api.UserRolesResponse{
+		UserID: userID,
 		Roles:  roles,
 	}, nil
 }
 
 // AssignRole назначает роль пользователю
-func (s *Service) AssignRole(ctx context.Context, req *api.AssignRoleRequest) error {
+func (s *AuthService) AssignRole(ctx context.Context, req *api.AssignRoleRequest) error {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
@@ -49,7 +49,7 @@ func (s *Service) AssignRole(ctx context.Context, req *api.AssignRoleRequest) er
 }
 
 // RevokeRole отзывает роль у пользователя
-func (s *Service) RevokeRole(ctx context.Context, req *api.RevokeRoleRequest) error {
+func (s *AuthService) RevokeRole(ctx context.Context, req *api.RevokeRoleRequest) error {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
@@ -65,7 +65,7 @@ func (s *Service) RevokeRole(ctx context.Context, req *api.RevokeRoleRequest) er
 }
 
 // CheckPermission проверяет разрешение пользователя
-func (s *Service) CheckPermission(ctx context.Context, req *api.CheckPermissionRequest) (*api.CheckPermissionResponse, error) {
+func (s *AuthService) CheckPermission(ctx context.Context, req *api.CheckPermissionRequest) (*api.CheckPermissionResponse, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
@@ -91,7 +91,7 @@ func (s *Service) CheckPermission(ctx context.Context, req *api.CheckPermissionR
 }
 
 // GetAllRoles получает список всех доступных ролей
-func (s *Service) GetAllRoles(ctx context.Context, req *api.GetAllRolesRequest) (*UserRolesResponse, error) {
+func (s *AuthService) GetAllRoles(ctx context.Context, req *api.GetAllRolesRequest) (*api.UserRolesResponse, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 

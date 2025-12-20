@@ -15,7 +15,7 @@ import (
 )
 
 // RefreshToken обновляет access token с помощью refresh token
-func (s *Service) RefreshToken(ctx context.Context, req *api.RefreshTokenRequest) (*RefreshTokenResponse, error) {
+func (s *AuthService) RefreshToken(ctx context.Context, req *api.RefreshTokenRequest) (*api.RefreshTokenResponse, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
@@ -47,7 +47,7 @@ func (s *Service) RefreshToken(ctx context.Context, req *api.RefreshTokenRequest
 }
 
 // ValidateAccessToken валидирует access token и возвращает user ID
-func (s *Service) ValidateAccessToken(ctx context.Context, req *api.ValidateTokenRequest) (*api.ValidateTokenResponse, error) {
+func (s *AuthService) ValidateAccessToken(ctx context.Context, req *api.ValidateTokenRequest) (*api.ValidateTokenResponse, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
@@ -67,7 +67,7 @@ func (s *Service) ValidateAccessToken(ctx context.Context, req *api.ValidateToke
 }
 
 // generateTokens генерирует access и refresh токены
-func (s *Service) generateTokens(ctx context.Context, userID uuid.UUID) (string, string, error) {
+func (s *AuthService) generateTokens(ctx context.Context, userID uuid.UUID) (string, string, error) {
 	// Generate access token
 	accessClaims := jwt.MapClaims{
 		"user_id": userID.String(),
@@ -98,7 +98,7 @@ func (s *Service) generateTokens(ctx context.Context, userID uuid.UUID) (string,
 }
 
 // validateAccessToken валидирует access token
-func (s *Service) validateAccessToken(tokenString string) (uuid.UUID, error) {
+func (s *AuthService) validateAccessToken(tokenString string) (uuid.UUID, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, jwt.ErrSignatureInvalid
@@ -124,11 +124,11 @@ func (s *Service) validateAccessToken(tokenString string) (uuid.UUID, error) {
 }
 
 // validateRefreshToken валидирует refresh token
-func (s *Service) validateRefreshToken(tokenString string) (uuid.UUID, error) {
+func (s *AuthService) validateRefreshToken(tokenString string) (uuid.UUID, error) {
 	return s.getUserIDFromRefreshToken(context.Background(), tokenString)
 }
 
 // invalidateRefreshToken инвалидирует refresh token
-func (s *Service) invalidateRefreshToken(ctx context.Context, tokenString string) error {
+func (s *AuthService) invalidateRefreshToken(ctx context.Context, tokenString string) error {
 	return s.deleteRefreshToken(ctx, tokenString)
 }

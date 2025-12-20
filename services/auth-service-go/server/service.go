@@ -9,13 +9,15 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/sirupsen/logrus"
+
+	"necpgame/services/auth-service-go/config"
 )
 
 // OPTIMIZATION: Issue #1998 - Memory-aligned struct for auth performance
 type AuthService struct {
 	logger          *logrus.Logger
 	metrics         *AuthMetrics
-	config          *AuthServiceConfig
+	config          *config.AuthServiceConfig
 
 	// OPTIMIZATION: Issue #1998 - Thread-safe session storage for MMO scale
 	sessions        sync.Map // OPTIMIZATION: Concurrent session management
@@ -49,7 +51,7 @@ type DeviceInfo struct {
 	Fingerprint string `json:"fingerprint"` // 16 bytes
 }
 
-func NewAuthService(logger *logrus.Logger, metrics *AuthMetrics, config *AuthServiceConfig) *AuthService {
+func NewAuthService(logger *logrus.Logger, metrics *AuthMetrics, config *config.AuthServiceConfig) *AuthService {
 	s := &AuthService{
 		logger:  logger,
 		metrics: metrics,

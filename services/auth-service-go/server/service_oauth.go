@@ -15,68 +15,66 @@ import (
 )
 
 // InitiateOAuth начинает OAuth процесс
-func (s *Service) InitiateOAuth(ctx context.Context, req *api.InitiateOAuthRequest) (*api.OAuthURLResponse, error) {
+func (s *AuthService) InitiateOAuth(ctx context.Context, params api.OauthLoginParams) (api.OauthLoginRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
 	var authURL string
 	var state string
 
-	switch req.Provider {
-	case "google":
-		authURL, state = s.buildGoogleOAuthURL(req.RedirectUri)
-	case "github":
-		authURL, state = s.buildGitHubOAuthURL(req.RedirectUri)
-	case "discord":
+	switch params.Provider {
+	case api.OauthLoginProviderGoogle:
+		authURL, state = s.buildGoogleOAuthURL("http://localhost:8080/auth/oauth/google/callback")
+	case api.OauthLoginProviderGithub:
+		authURL, state = s.buildGitHubOAuthURL("http://localhost:8080/auth/oauth/github/callback")
+	case api.OauthLoginProviderDiscord:
 		authURL, state = s.buildDiscordOAuthURL(req.RedirectUri)
 	default:
 		return nil, &ValidationError{Field: "provider", Message: "unsupported OAuth provider"}
 	}
 
 	// Store state for verification
-	if err := s.storeOAuthState(ctx, state, req.Provider, req.RedirectUri); err != nil {
+	if err := s.storeOAuthState(ctx, state, string(params.Provider), ""); err != nil {
 		s.logger.Error("Failed to store OAuth state", zap.Error(err))
 		return nil, err
 	}
 
-	return &api.OAuthURLResponse{
-		AuthUrl: authURL,
-		State:   state,
-	}, nil
+	// For now, return success - the actual redirect should be handled by the handler
+	return &api.OauthLoginFound{}, nil
 }
 
 // CompleteOAuth завершает OAuth процесс
-func (s *Service) CompleteOAuth(ctx context.Context, req *api.CompleteOAuthRequest) (*LoginResponse, error) {
+func (s *AuthService) CompleteOAuth(ctx context.Context, params api.OauthCallbackParams) (api.OauthCallbackRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
 	defer cancel()
 
 	// Verify state
-	stateData, err := s.getOAuthState(ctx, req.State)
+	stateData, err := s.getOAuthState(ctx, params.State)
 	if err != nil {
 		s.logger.Error("Failed to get OAuth state", zap.Error(err))
 		return nil, &AuthenticationError{Message: "invalid OAuth state"}
 	}
 
 	if stateData == nil || stateData.ExpiresAt.Before(time.Now()) {
-		return nil, &AuthenticationError{Message: "OAuth state expired"}
+		return &api.Unauthorized{}, nil
 	}
 
 	// Exchange code for token
-	var userInfo *OAuthUserInfo
+	var userInfo *api.OAuthUserInfo
 	switch stateData.Provider {
 	case "google":
-		userInfo, err = s.exchangeGoogleCode(req.Code, stateData.RedirectUri)
+		userInfo, err = s.exchangeGoogleCode(params.Code, stateData.RedirectUri)
 	case "github":
-		userInfo, err = s.exchangeGitHubCode(req.Code, stateData.RedirectUri)
+		userInfo, err = s.exchangeGitHubCode(params.Code, stateData.RedirectUri)
 	case "discord":
-		userInfo, err = s.exchangeDiscordCode(req.Code, stateData.RedirectUri)
+		userInfo, err = s.exchangeDiscordCode(params.Code, stateData.RedirectUri)
 	default:
-		return nil, &ValidationError{Field: "provider", Message: "unsupported OAuth provider"}
+		return &api.BadRequest{}, nil
 	}
 
 	if err != nil {
 		s.logger.Error("Failed to exchange OAuth code", zap.Error(err))
-		return nil, &AuthenticationError{Message: "OAuth authentication failed"}
+		return &api.InternalServerError{}, nil
 	}
 
 	// Find or create user
@@ -101,22 +99,23 @@ func (s *Service) CompleteOAuth(ctx context.Context, req *api.CompleteOAuthReque
 	}
 
 	// Clean up state
-	if err := s.deleteOAuthState(ctx, req.State); err != nil {
+	if err := s.deleteOAuthState(ctx, params.State); err != nil {
 		s.logger.Error("Failed to clean up OAuth state", zap.Error(err))
 		// Don't fail the auth for this
 	}
 
-	return &LoginResponse{
-		AccessToken:  accessToken,
-		RefreshToken: refreshToken,
-		TokenType:    "Bearer",
-		ExpiresIn:    3600,
-		User:         userAPIInfo,
+	return &api.OAuthCallbackResponse{
+		AccessToken:  &accessToken,
+		RefreshToken: &refreshToken,
+		TokenType:    &[]string{"Bearer"}[0],
+		ExpiresIn:    &[]int{3600}[0],
+		User:         &userAPIInfo,
+		IsNewUser:    &[]bool{false}[0], // TODO: Determine if new user
 	}, nil
 }
 
 // buildGoogleOAuthURL строит URL для Google OAuth
-func (s *Service) buildGoogleOAuthURL(redirectURI string) (string, string) {
+func (s *AuthService) buildGoogleOAuthURL(redirectURI string) (string, string) {
 	state := generateSecureToken()
 
 	baseURL := "https://accounts.google.com/o/oauth2/v2/auth"
@@ -132,7 +131,7 @@ func (s *Service) buildGoogleOAuthURL(redirectURI string) (string, string) {
 }
 
 // exchangeGoogleCode обменивает Google authorization code на access token
-func (s *Service) exchangeGoogleCode(code, redirectURI string) (*OAuthUserInfo, error) {
+func (s *AuthService) exchangeGoogleCode(code, redirectURI string) (*api.OAuthUserInfo, error) {
 	tokenURL := "https://oauth2.googleapis.com/token"
 
 	data := url.Values{

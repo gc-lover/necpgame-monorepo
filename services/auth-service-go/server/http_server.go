@@ -10,6 +10,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/sirupsen/logrus"
+
+	"necpgame/services/auth-service-go/config"
 )
 
 // OPTIMIZATION: Issue #1998 - Memory-aligned struct for auth performance
@@ -34,7 +36,7 @@ type AuthMetrics struct {
 	PasswordResets   prometheus.Counter   `json:"-"` // 16 bytes (interface)
 }
 
-func NewAuthServer(config *AuthServiceConfig, logger *logrus.Logger) (*AuthServer, error) {
+func NewAuthServer(config *config.AuthServiceConfig, logger *logrus.Logger) (*AuthServer, error) {
 	// Initialize metrics
 	metrics := &AuthMetrics{
 		RequestsTotal: promauto.NewCounter(prometheus.CounterOpts{

@@ -12,7 +12,7 @@ import (
 )
 
 // GetUserInfo получает информацию о пользователе
-func (s *Service) GetUserInfo(ctx context.Context, req *api.GetUserRequest) (*api.UserInfo, error) {
+func (s *AuthService) GetUserInfo(ctx context.Context, req *api.GetUserRequest) (*api.UserInfo, error) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
@@ -44,7 +44,7 @@ func (s *Service) GetUserInfo(ctx context.Context, req *api.GetUserRequest) (*ap
 }
 
 // UpdateUser обновляет информацию о пользователе
-func (s *Service) UpdateUser(ctx context.Context, req *api.UpdateUserRequest) (*api.UserInfo, error) {
+func (s *AuthService) UpdateUser(ctx context.Context, req *api.UpdateUserRequest) (*api.UserInfo, error) {
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
@@ -91,7 +91,7 @@ func (s *Service) UpdateUser(ctx context.Context, req *api.UpdateUserRequest) (*
 }
 
 // DeleteUser удаляет пользователя
-func (s *Service) DeleteUser(ctx context.Context, req *api.DeleteUserRequest) error {
+func (s *AuthService) DeleteUser(ctx context.Context, req *api.DeleteUserRequest) error {
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
@@ -123,7 +123,7 @@ func (s *Service) DeleteUser(ctx context.Context, req *api.DeleteUserRequest) er
 }
 
 // ChangePassword изменяет пароль пользователя
-func (s *Service) ChangePassword(ctx context.Context, req *api.ChangePasswordRequest) error {
+func (s *AuthService) ChangePassword(ctx context.Context, req *api.ChangePasswordRequest) error {
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 

@@ -16,12 +16,12 @@ import (
 
 // Handlers содержит обработчики HTTP запросов
 type Handlers struct {
-	service *Service
+	service *AuthService
 	logger  *zap.Logger
 }
 
 // NewHandlers создает новые обработчики
-func NewHandlers(service *Service, logger *zap.Logger) *Handlers {
+func NewHandlers(service *AuthService, logger *zap.Logger) *Handlers {
 	return &Handlers{
 		service: service,
 		logger:  logger,
