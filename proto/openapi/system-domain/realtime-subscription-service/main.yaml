@@ -1,0 +1,497 @@
+# Issue: #2048
+openapi: 3.0.3
+info:
+  title: System Domain - Real-time Subscription Patterns API
+  description: |
+    **Enterprise-Grade Real-time Subscription Patterns API** for NECPGAME MMOFPS RPG.
+
+    **Module Purpose:** Comprehensive subscription management system for live updates, real-time notifications, and event-driven communication with advanced filtering and pattern matching for 10k+ concurrent connections.
+
+    **Architecture:** High-performance subscription engine with WebSocket support, pattern-based filtering, event routing, and connection management for real-time gaming experiences.
+
+    **Core Features:**
+    - Advanced subscription patterns with wildcard and regex matching
+    - Real-time WebSocket connection management with heartbeat monitoring
+    - Event-driven notifications with priority queuing and delivery guarantees
+    - Pattern-based filtering for game events (combat, social, economy, system)
+    - Subscription lifecycle management (create, update, pause, resume, delete)
+    - Connection pooling and load balancing for high concurrency
+    - Event deduplication and compression for bandwidth optimization
+    - Cross-platform support (WebSocket, SSE, HTTP polling fallback)
+
+    **Performance Targets:**
+    - Subscription matching: 1000+ patterns/sec, P99 <10ms
+    - WebSocket connections: 10k+ concurrent, <50KB memory per connection
+    - Event delivery: <100ms end-to-end latency for high-priority events
+    - Pattern evaluation: <5ms for complex regex patterns
+    - Memory per subscription: <256 bytes (optimized storage)
+
+    **BACKEND NOTE:** Redis for subscription state, Kafka for event streaming.
+    WebSocket connection pools required. Pattern matching with compiled regex cache.
+    Event prioritization critical for gaming (combat > social > system).
+  version: 1.0.0
+  contact:
+    name: NECPGAME Real-time Subscription API Support
+    url: https://necpgame.com/support
+    email: api@realtime-subscription.necpgame.com
+
+servers:
+  - url: http://localhost:8088/api/v1/system-domain/realtime-subscription
+    description: Real-time Subscription Service Development Server
+  - url: https://realtime-subscription.necpgame.com/api/v1
+    description: Real-time Subscription Service Production Server
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Subscription Management
+    description: Core subscription CRUD operations and lifecycle management
+  - name: Pattern Matching
+    description: Advanced pattern-based filtering and matching rules
+  - name: Connection Management
+    description: WebSocket connection handling and monitoring
+  - name: Event Routing
+    description: Event distribution and delivery management
+  - name: Analytics & Monitoring
+    description: Subscription analytics and performance monitoring
+  - name: System
+    description: Health checks and system operations
+
+paths:
+  # Health and system endpoints
+  /health:
+    get:
+      summary: Real-time subscription service health check
+      operationId: realtimeSubscriptionHealth
+      tags:
+        - System
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/health-schemas.yaml#/components/schemas/HealthResponse'
+        '503':
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+
+  # Subscription management
+  /subscriptions:
+    post:
+      summary: Create a new subscription
+      description: |
+        Creates a new subscription for real-time event delivery.
+
+        **BACKEND NOTE:** Validates patterns, registers with Redis, sets up WebSocket routing.
+        Subscription becomes active immediately with configured filters.
+      operationId: createSubscription
+      tags:
+        - Subscription Management
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/subscription-schemas.yaml#/components/schemas/CreateSubscriptionRequest'
+      responses:
+        '201':
+          description: Subscription created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/subscription-schemas.yaml#/components/schemas/Subscription'
+        '400':
+          description: Invalid subscription configuration
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+        '409':
+          description: Subscription with this ID already exists
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+
+    get:
+      summary: List subscriptions for the authenticated user
+      description: Retrieve a paginated list of active subscriptions
+      operationId: listSubscriptions
+      tags:
+        - Subscription Management
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, paused, expired]
+          description: Filter by subscription status
+        - name: event_type
+          in: query
+          schema:
+            type: string
+          description: Filter by event type pattern
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of items per page
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          description: Number of items to skip
+      responses:
+        '200':
+          description: Subscriptions retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/subscription-schemas.yaml#/components/schemas/SubscriptionListResponse'
+
+  /subscriptions/{subscription_id}:
+    get:
+      summary: Get subscription details
+      description: Retrieve detailed information about a specific subscription
+      operationId: getSubscription
+      tags:
+        - Subscription Management
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: subscription_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Subscription unique identifier
+      responses:
+        '200':
+          description: Subscription details retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/subscription-schemas.yaml#/components/schemas/Subscription'
+        '404':
+          description: Subscription not found
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+
+    put:
+      summary: Update subscription configuration
+      description: |
+        Updates subscription filters, patterns, or delivery settings.
+
+        **BACKEND NOTE:** Validates new patterns, updates Redis state, reconfigures routing.
+        Changes apply immediately with potential brief interruption.
+      operationId: updateSubscription
+      tags:
+        - Subscription Management
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: subscription_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Subscription unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/subscription-schemas.yaml#/components/schemas/UpdateSubscriptionRequest'
+      responses:
+        '200':
+          description: Subscription updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/subscription-schemas.yaml#/components/schemas/Subscription'
+        '400':
+          description: Invalid subscription configuration
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+        '404':
+          description: Subscription not found
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+
+    delete:
+      summary: Delete subscription
+      description: |
+        Removes a subscription and stops event delivery.
+
+        **BACKEND NOTE:** Cleans up Redis state, closes WebSocket connections, removes routing.
+        Graceful shutdown with final event delivery if configured.
+      operationId: deleteSubscription
+      tags:
+        - Subscription Management
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: subscription_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Subscription unique identifier
+      responses:
+        '204':
+          description: Subscription deleted successfully
+        '404':
+          description: Subscription not found
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+
+  # Pattern matching and filtering
+  /patterns/validate:
+    post:
+      summary: Validate subscription patterns
+      description: |
+        Validates subscription patterns before creation.
+
+        **BACKEND NOTE:** Compiles regex patterns, checks syntax, estimates performance impact.
+        Returns detailed validation results with performance metrics.
+      operationId: validatePatterns
+      tags:
+        - Pattern Matching
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/pattern-schemas.yaml#/components/schemas/PatternValidationRequest'
+      responses:
+        '200':
+          description: Pattern validation results
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/pattern-schemas.yaml#/components/schemas/PatternValidationResponse'
+        '400':
+          description: Invalid pattern syntax
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+
+  /patterns/test:
+    post:
+      summary: Test patterns against sample events
+      description: Test subscription patterns against sample event data
+      operationId: testPatterns
+      tags:
+        - Pattern Matching
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/pattern-schemas.yaml#/components/schemas/PatternTestRequest'
+      responses:
+        '200':
+          description: Pattern test results
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/pattern-schemas.yaml#/components/schemas/PatternTestResponse'
+
+  # Connection management
+  /connections:
+    get:
+      summary: Get connection statistics
+      description: Retrieve WebSocket connection statistics and health metrics
+      operationId: getConnectionStats
+      tags:
+        - Connection Management
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Connection statistics retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/connection-schemas.yaml#/components/schemas/ConnectionStats'
+
+  /connections/{connection_id}:
+    delete:
+      summary: Force disconnect a WebSocket connection
+      description: |
+        Forcefully disconnects a WebSocket connection.
+
+        **BACKEND NOTE:** Sends close frame, cleans up connection state, triggers reconnection.
+        Administrative override for problematic connections.
+      operationId: disconnectConnection
+      tags:
+        - Connection Management
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: connection_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: WebSocket connection unique identifier
+      responses:
+        '204':
+          description: Connection disconnected successfully
+        '404':
+          description: Connection not found
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+
+  # Event routing and delivery
+  /events/broadcast:
+    post:
+      summary: Broadcast event to matching subscriptions
+      description: |
+        Broadcasts an event to all matching active subscriptions.
+
+        **BACKEND NOTE:** Pattern matching, priority queuing, delivery tracking.
+        High-throughput operation for gaming events (combat, social, system).
+      operationId: broadcastEvent
+      tags:
+        - Event Routing
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/event-schemas.yaml#/components/schemas/EventBroadcastRequest'
+      responses:
+        '202':
+          description: Event accepted for broadcasting
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/event-schemas.yaml#/components/schemas/EventBroadcastResponse'
+        '400':
+          description: Invalid event data
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+
+  /events/{event_id}/status:
+    get:
+      summary: Get event delivery status
+      description: Retrieve delivery status and metrics for a broadcast event
+      operationId: getEventDeliveryStatus
+      tags:
+        - Event Routing
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: event_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Event unique identifier
+      responses:
+        '200':
+          description: Event delivery status retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/event-schemas.yaml#/components/schemas/EventDeliveryStatus'
+        '404':
+          description: Event not found
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+
+  # Analytics and monitoring
+  /analytics/subscriptions:
+    get:
+      summary: Get subscription analytics
+      description: Retrieve comprehensive analytics for subscription usage and performance
+      operationId: getSubscriptionAnalytics
+      tags:
+        - Analytics & Monitoring
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: timeframe
+          in: query
+          schema:
+            type: string
+            enum: [1h, 6h, 24h, 7d]
+            default: 24h
+          description: Analytics timeframe
+        - name: event_type
+          in: query
+          schema:
+            type: string
+          description: Filter by event type
+      responses:
+        '200':
+          description: Subscription analytics retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/analytics-schemas.yaml#/components/schemas/SubscriptionAnalytics'
+
+  /analytics/performance:
+    get:
+      summary: Get system performance metrics
+      description: Retrieve real-time performance metrics for the subscription system
+      operationId: getPerformanceMetrics
+      tags:
+        - Analytics & Monitoring
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Performance metrics retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/analytics-schemas.yaml#/components/schemas/PerformanceMetrics'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      description: JWT Bearer token authentication

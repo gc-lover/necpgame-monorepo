@@ -1,0 +1,221 @@
+# Pattern matching and validation schemas
+# Issue: #2048
+
+components:
+  schemas:
+    # Pattern validation request
+    PatternValidationRequest:
+      type: object
+      required:
+        - patterns
+      properties:
+        patterns:
+          type: array
+          items:
+            $ref: '#/components/schemas/EventPattern'
+          minItems: 1
+          maxItems: 50
+          description: Patterns to validate
+        test_mode:
+          type: boolean
+          default: false
+          description: Whether to run performance tests on patterns
+
+    # Pattern validation response
+    PatternValidationResponse:
+      type: object
+      required:
+        - valid
+        - patterns
+      properties:
+        valid:
+          type: boolean
+          description: Whether all patterns are valid
+        patterns:
+          type: array
+          items:
+            type: object
+            required:
+              - pattern
+              - valid
+            properties:
+              pattern:
+                type: string
+                description: Original pattern string
+              valid:
+                type: boolean
+                description: Pattern validity
+              errors:
+                type: array
+                items:
+                  type: string
+                description: Validation errors (if any)
+              warnings:
+                type: array
+                items:
+                  type: string
+                description: Validation warnings
+              performance_estimate:
+                type: object
+                description: Performance metrics estimate
+                properties:
+                  avg_match_time_ns:
+                    type: integer
+                    description: Estimated average matching time in nanoseconds
+                    example: 2500
+                  memory_usage_kb:
+                    type: number
+                    format: float
+                    description: Estimated memory usage in KB
+                    example: 2.5
+                  complexity_score:
+                    type: integer
+                    minimum: 0
+                    maximum: 100
+                    description: Pattern complexity score (higher = slower)
+                    example: 35
+        overall_performance:
+          type: object
+          description: Combined performance metrics
+          properties:
+            total_memory_kb:
+              type: number
+              format: float
+              description: Total estimated memory for all patterns
+              example: 125.8
+            avg_match_time_ns:
+              type: integer
+              description: Average matching time across all patterns
+              example: 1800
+            recommended_batch_size:
+              type: integer
+              description: Recommended batch processing size
+              example: 1000
+
+    # Pattern test request
+    PatternTestRequest:
+      type: object
+      required:
+        - patterns
+        - test_events
+      properties:
+        patterns:
+          type: array
+          items:
+            $ref: '#/components/schemas/EventPattern'
+          minItems: 1
+          maxItems: 50
+          description: Patterns to test
+        test_events:
+          type: array
+          items:
+            type: object
+            required:
+              - event_type
+              - event_data
+            properties:
+              event_type:
+                type: string
+                description: Event type for testing
+                example: "combat.player_hit"
+              event_data:
+                type: object
+                description: Event payload for testing
+                additionalProperties: true
+                example:
+                  player_id: "p1a2b3c4-d5e6-7890-1234-567890abcdef"
+                  target_id: "p5a6b7c8-d9e0-1234-5678-90abcdef1234"
+                  damage: 75.5
+                  weapon: "plasma_rifle"
+          minItems: 1
+          maxItems: 100
+          description: Sample events to test against patterns
+
+    # Pattern test response
+    PatternTestResponse:
+      type: object
+      required:
+        - results
+        - summary
+      properties:
+        results:
+          type: array
+          items:
+            type: object
+            required:
+              - pattern
+              - event_type
+              - matched
+            properties:
+              pattern:
+                type: string
+                description: Pattern that was tested
+              event_type:
+                type: string
+                description: Event type that was tested
+              matched:
+                type: boolean
+                description: Whether pattern matched the event
+              match_time_ns:
+                type: integer
+                description: Time taken to match (nanoseconds)
+                example: 1250
+              extracted_data:
+                type: object
+                description: Data extracted by pattern (for jsonpath patterns)
+                additionalProperties: true
+          description: Individual test results
+        summary:
+          type: object
+          description: Test summary statistics
+          properties:
+            total_tests:
+              type: integer
+              description: Total number of pattern-event combinations tested
+              example: 150
+            total_matches:
+              type: integer
+              description: Total number of matches found
+              example: 45
+            avg_match_time_ns:
+              type: integer
+              description: Average matching time
+              example: 2100
+            patterns_tested:
+              type: integer
+              description: Number of unique patterns tested
+              example: 15
+            events_tested:
+              type: integer
+              description: Number of unique events tested
+              example: 10
+
+    # Event pattern (reference to subscription schema)
+    EventPattern:
+      type: object
+      required:
+        - type
+        - pattern
+      properties:
+        type:
+          type: string
+          enum: [exact, wildcard, regex, jsonpath]
+          description: Pattern matching type
+        pattern:
+          type: string
+          maxLength: 500
+          description: Pattern string for matching events
+        case_sensitive:
+          type: boolean
+          default: false
+          description: Whether pattern matching is case sensitive
+        priority:
+          type: integer
+          minimum: 0
+          maximum: 100
+          default: 50
+          description: Pattern priority within subscription
+        metadata:
+          type: object
+          description: Additional pattern metadata
+          additionalProperties: true
