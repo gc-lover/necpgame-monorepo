@@ -1,0 +1,290 @@
+# Service discovery and registration schemas
+# Issue: #2058
+
+components:
+  schemas:
+    # Service instance entity - memory optimized
+    ServiceInstance:
+      type: object
+      required:
+        - service_name
+        - instance_id
+        - endpoints
+        - status
+        - registered_at
+      properties:
+        # Large types first
+        service_name:
+          type: string
+          description: Name of the service
+          example: "guild-service"
+
+        instance_id:
+          type: string
+          format: uuid
+          description: Unique instance identifier
+          example: "inst1a2b3c4-d5e6-7890-1234-567890abcdef"
+
+        namespace:
+          type: string
+          description: Kubernetes namespace
+          example: "game-services"
+
+        pod_name:
+          type: string
+          description: Kubernetes pod name
+          example: "guild-service-7f8d9c4b2a"
+
+        node_name:
+          type: string
+          description: Kubernetes node name
+          example: "game-node-03"
+
+        registered_at:
+          type: string
+          format: date-time
+          description: Registration timestamp
+          example: "2025-12-20T21:45:00Z"
+
+        last_heartbeat:
+          type: string
+          format: date-time
+          description: Last heartbeat timestamp
+          example: "2025-12-20T21:45:30Z"
+
+        # Medium types
+        status:
+          type: string
+          enum: [healthy, unhealthy, unknown, draining]
+          description: Current service health status
+          example: "healthy"
+
+        health_check:
+          type: object
+          description: Health check configuration
+          properties:
+            path:
+              type: string
+              description: Health check endpoint path
+              example: "/health"
+            interval_seconds:
+              type: integer
+              minimum: 1
+              maximum: 300
+              description: Health check interval
+              example: 30
+            timeout_seconds:
+              type: integer
+              minimum: 1
+              maximum: 60
+              description: Health check timeout
+              example: 5
+            unhealthy_threshold:
+              type: integer
+              minimum: 1
+              maximum: 10
+              description: Failures before marking unhealthy
+              example: 3
+            healthy_threshold:
+              type: integer
+              minimum: 1
+              maximum: 10
+              description: Successes before marking healthy
+              example: 2
+
+        # Small types
+        endpoints:
+          type: array
+          items:
+            type: object
+            properties:
+              protocol:
+                type: string
+                enum: [http, https, grpc, tcp]
+                description: Protocol
+                example: "http"
+              port:
+                type: integer
+                minimum: 1
+                maximum: 65535
+                description: Service port
+                example: 8080
+              path:
+                type: string
+                description: Base path (optional)
+                example: "/api/v1"
+          description: Service endpoints
+
+        labels:
+          type: object
+          description: Service labels and metadata
+          additionalProperties: true
+          example:
+            version: "1.2.3"
+            environment: "production"
+            region: "us-east-1"
+
+    # Service registration request
+    ServiceRegistrationRequest:
+      type: object
+      required:
+        - service_name
+        - endpoints
+      properties:
+        service_name:
+          type: string
+          description: Name of the service to register
+          example: "guild-service"
+        namespace:
+          type: string
+          default: "default"
+          description: Kubernetes namespace
+        endpoints:
+          type: array
+          items:
+            type: object
+            required:
+              - protocol
+              - port
+            properties:
+              protocol:
+                type: string
+                enum: [http, https, grpc, tcp]
+                default: "http"
+                description: Protocol
+              port:
+                type: integer
+                minimum: 1
+                maximum: 65535
+                description: Service port
+                example: 8080
+              path:
+                type: string
+                description: Base path
+                example: "/api/v1"
+          minItems: 1
+          description: Service endpoints
+        health_check:
+          type: object
+          description: Health check configuration
+          properties:
+            path:
+              type: string
+              default: "/health"
+              description: Health check endpoint path
+            interval_seconds:
+              type: integer
+              minimum: 1
+              maximum: 300
+              default: 30
+              description: Health check interval
+            timeout_seconds:
+              type: integer
+              minimum: 1
+              maximum: 60
+              default: 5
+              description: Health check timeout
+            unhealthy_threshold:
+              type: integer
+              minimum: 1
+              maximum: 10
+              default: 3
+              description: Failures before marking unhealthy
+            healthy_threshold:
+              type: integer
+              minimum: 1
+              maximum: 10
+              default: 2
+              description: Successes before marking healthy
+        labels:
+          type: object
+          description: Service labels and metadata
+          additionalProperties: true
+        ttl_seconds:
+          type: integer
+          minimum: 30
+          maximum: 86400
+          default: 300
+          description: Time-to-live for registration (auto-deregister if no heartbeat)
+
+    # Service details response
+    ServiceDetails:
+      type: object
+      required:
+        - service_name
+        - instances
+        - total_instances
+      properties:
+        service_name:
+          type: string
+          description: Service name
+        namespace:
+          type: string
+          description: Kubernetes namespace
+        total_instances:
+          type: integer
+          minimum: 0
+          description: Total number of service instances
+        healthy_instances:
+          type: integer
+          minimum: 0
+          description: Number of healthy instances
+        instances:
+          type: array
+          items:
+            $ref: '#/components/schemas/ServiceInstance'
+          description: List of service instances
+        load_balancing_policy:
+          type: string
+          enum: [round_robin, least_connections, random, ip_hash]
+          description: Current load balancing policy
+          example: "round_robin"
+        circuit_breaker_status:
+          type: string
+          enum: [closed, open, half_open]
+          description: Overall circuit breaker status for service
+          example: "closed"
+
+    # Service list response
+    ServiceListResponse:
+      type: object
+      required:
+        - services
+        - total_count
+      properties:
+        services:
+          type: array
+          items:
+            type: object
+            properties:
+              service_name:
+                type: string
+                description: Service name
+              namespace:
+                type: string
+                description: Namespace
+              instance_count:
+                type: integer
+                description: Number of instances
+              healthy_instances:
+                type: integer
+                description: Number of healthy instances
+              status:
+                type: string
+                enum: [healthy, partially_healthy, unhealthy]
+                description: Overall service status
+              registered_at:
+                type: string
+                format: date-time
+                description: First registration time
+          description: List of services
+        total_count:
+          type: integer
+          minimum: 0
+          description: Total number of services
+        limit:
+          type: integer
+          description: Items per page
+        offset:
+          type: integer
+          description: Items skipped

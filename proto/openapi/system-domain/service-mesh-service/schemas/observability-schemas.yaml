@@ -1,0 +1,500 @@
+# Observability and monitoring schemas
+# Issue: #2058
+
+components:
+  schemas:
+    # Mesh-wide metrics response
+    MeshMetrics:
+      type: object
+      required:
+        - timeframe
+        - total_services
+        - total_connections
+        - request_metrics
+        - error_metrics
+        - latency_metrics
+      properties:
+        timeframe:
+          type: string
+          enum: [1m, 5m, 15m, 1h, 6h, 24h]
+          description: Metrics timeframe
+
+        total_services:
+          type: integer
+          minimum: 0
+          description: Total number of registered services
+          example: 47
+
+        total_connections:
+          type: integer
+          minimum: 0
+          description: Total active connections across mesh
+          example: 15420
+
+        healthy_services:
+          type: integer
+          minimum: 0
+          description: Number of healthy services
+          example: 45
+
+        request_metrics:
+          type: object
+          description: Request throughput and volume metrics
+          properties:
+            total_requests:
+              type: integer
+              minimum: 0
+              description: Total requests processed
+              example: 2500000
+            requests_per_second:
+              type: number
+              format: float
+              description: Average requests per second
+              example: 4166.67
+            requests_by_method:
+              type: object
+              description: Requests grouped by HTTP method
+              additionalProperties:
+                type: integer
+              example:
+                GET: 1800000
+                POST: 500000
+                PUT: 150000
+                DELETE: 50000
+            requests_by_service:
+              type: object
+              description: Requests grouped by service
+              additionalProperties:
+                type: integer
+              example:
+                "guild-service": 800000
+                "combat-service": 600000
+                "social-service": 400000
+                "inventory-service": 300000
+
+        error_metrics:
+          type: object
+          description: Error rate and types
+          properties:
+            total_errors:
+              type: integer
+              minimum: 0
+              description: Total errors across mesh
+              example: 2500
+            error_rate_percent:
+              type: number
+              format: float
+              minimum: 0
+              maximum: 100
+              description: Error rate as percentage
+              example: 0.1
+            errors_by_type:
+              type: object
+              description: Errors grouped by type
+              additionalProperties:
+                type: integer
+              example:
+                "502": 1200
+                "503": 800
+                "504": 300
+                "429": 200
+            errors_by_service:
+              type: object
+              description: Errors grouped by service
+              additionalProperties:
+                type: integer
+              example:
+                "guild-service": 1200
+                "combat-service": 800
+                "social-service": 300
+
+        latency_metrics:
+          type: object
+          description: Response time and latency metrics
+          properties:
+            p50_latency_ms:
+              type: number
+              format: float
+              description: 50th percentile latency
+              example: 45.2
+            p95_latency_ms:
+              type: number
+              format: float
+              description: 95th percentile latency
+              example: 120.8
+            p99_latency_ms:
+              type: number
+              format: float
+              description: 99th percentile latency
+              example: 250.5
+            max_latency_ms:
+              type: number
+              format: float
+              description: Maximum latency
+              example: 1500.0
+            avg_latency_ms:
+              type: number
+              format: float
+              description: Average latency
+              example: 67.3
+            latency_by_service:
+              type: object
+              description: Latency percentiles by service
+              additionalProperties:
+                type: object
+                properties:
+                  p50: { type: number, format: float }
+                  p95: { type: number, format: float }
+                  p99: { type: number, format: float }
+              example:
+                "guild-service": { "p50": 40.0, "p95": 110.0, "p99": 220.0 }
+                "combat-service": { "p50": 50.0, "p95": 130.0, "p99": 280.0 }
+
+        circuit_breaker_metrics:
+          type: object
+          description: Circuit breaker status across mesh
+          properties:
+            total_circuits:
+              type: integer
+              minimum: 0
+              description: Total circuit breakers configured
+              example: 156
+            circuits_by_state:
+              type: object
+              description: Circuit breakers grouped by state
+              properties:
+                closed:
+                  type: integer
+                  example: 140
+                open:
+                  type: integer
+                  example: 8
+                half_open:
+                  type: integer
+                  example: 8
+            recent_trips:
+              type: integer
+              minimum: 0
+              description: Circuit breakers tripped in timeframe
+              example: 3
+
+        traffic_distribution:
+          type: object
+          description: Traffic distribution across regions/services
+          properties:
+            by_region:
+              type: object
+              description: Requests by geographic region
+              additionalProperties:
+                type: integer
+              example:
+                "us-east-1": 1200000
+                "eu-west-1": 800000
+                "ap-south-1": 300000
+                "sa-east-1": 200000
+            by_namespace:
+              type: object
+              description: Requests by Kubernetes namespace
+              additionalProperties:
+                type: integer
+              example:
+                "game-services": 2000000
+                "system-services": 300000
+                "monitoring": 200000
+
+        resource_usage:
+          type: object
+          description: Resource usage metrics
+          properties:
+            cpu_usage_percent:
+              type: number
+              format: float
+              minimum: 0
+              maximum: 100
+              description: Average CPU usage across mesh
+              example: 45.2
+            memory_usage_gb:
+              type: number
+              format: float
+              description: Total memory usage
+              example: 12.5
+            network_traffic_mbps:
+              type: number
+              format: float
+              description: Network traffic in Mbps
+              example: 250.8
+            active_connections:
+              type: integer
+              description: Active connections to mesh
+              example: 15420
+
+        top_services_by_traffic:
+          type: array
+          items:
+            type: object
+            properties:
+              service_name:
+                type: string
+                example: "guild-service"
+              namespace:
+                type: string
+                example: "game-services"
+              request_count:
+                type: integer
+                example: 800000
+              error_count:
+                type: integer
+                example: 1200
+              avg_latency_ms:
+                type: number
+                format: float
+                example: 45.2
+              health_status:
+                type: string
+                enum: [healthy, degraded, unhealthy]
+                example: "healthy"
+          maxItems: 20
+          description: Top services by request volume
+
+    # Distributed trace details
+    TraceDetails:
+      type: object
+      required:
+        - trace_id
+        - root_span
+        - spans
+        - duration_ms
+        - service_count
+      properties:
+        trace_id:
+          type: string
+          format: uuid
+          description: Unique trace identifier
+          example: "trace1a2b3c4-d5e6-7890-1234-567890abcdef"
+
+        root_span:
+          type: object
+          description: Root span information
+          properties:
+            span_id:
+              type: string
+              format: uuid
+              description: Root span ID
+            operation_name:
+              type: string
+              description: Operation name
+              example: "POST /api/v1/guilds"
+            service_name:
+              type: string
+              description: Service name
+              example: "gateway-service"
+            start_time:
+              type: string
+              format: date-time
+              description: Span start time
+            duration_ms:
+              type: number
+              format: float
+              description: Span duration
+              example: 125.5
+
+        spans:
+          type: array
+          items:
+            type: object
+            properties:
+              span_id:
+                type: string
+                format: uuid
+                description: Span unique identifier
+              parent_span_id:
+                type: string
+                format: uuid
+                description: Parent span ID
+              operation_name:
+                type: string
+                description: Operation name
+                example: "validate_request"
+              service_name:
+                type: string
+                description: Service that executed this span
+                example: "auth-service"
+              start_time:
+                type: string
+                format: date-time
+                description: Span start time
+              duration_ms:
+                type: number
+                format: float
+                description: Span duration
+                example: 25.3
+              tags:
+                type: object
+                description: Span tags and metadata
+                additionalProperties: true
+                example:
+                  "http.method": "POST"
+                  "http.status_code": "200"
+                  "db.instance": "guilds-db"
+                  "error": false
+              logs:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    timestamp:
+                      type: string
+                      format: date-time
+                    fields:
+                      type: object
+                      additionalProperties: true
+                  example:
+                    - timestamp: "2025-12-20T21:45:00.123Z"
+                      fields: { "event": "db_query_start", "query": "SELECT * FROM guilds" }
+                    - timestamp: "2025-12-20T21:45:00.145Z"
+                      fields: { "event": "db_query_complete", "rows": 25 }
+          description: All spans in the trace
+
+        duration_ms:
+          type: number
+          format: float
+          description: Total trace duration
+          example: 125.5
+
+        service_count:
+          type: integer
+          description: Number of services involved in trace
+          example: 4
+
+        error_spans:
+          type: integer
+          description: Number of spans with errors
+          example: 0
+
+        services_involved:
+          type: array
+          items:
+            type: string
+          description: List of services involved
+          example: ["gateway-service", "auth-service", "guild-service", "cache-service"]
+
+        critical_path:
+          type: array
+          items:
+            type: object
+            properties:
+              span_id:
+                type: string
+                format: uuid
+              operation_name:
+                type: string
+              service_name:
+                type: string
+              duration_ms:
+                type: number
+                format: float
+          description: Critical path spans (longest execution path)
+
+        bottlenecks:
+          type: array
+          items:
+            type: object
+            properties:
+              span_id:
+                type: string
+                format: uuid
+              operation_name:
+                type: string
+              service_name:
+                type: string
+              duration_ms:
+                type: number
+                format: float
+              percentage_of_total:
+                type: number
+                format: float
+                description: Percentage of total trace time
+              potential_issue:
+                type: string
+                description: Identified performance issue
+                example: "N+1 query pattern"
+          description: Identified performance bottlenecks
+
+    # Service-level metrics
+    ServiceMetrics:
+      type: object
+      required:
+        - service_name
+        - namespace
+        - timeframe
+        - request_metrics
+        - health_metrics
+      properties:
+        service_name:
+          type: string
+          description: Service name
+        namespace:
+          type: string
+          description: Kubernetes namespace
+        timeframe:
+          type: string
+          enum: [1m, 5m, 15m, 1h, 6h, 24h]
+          description: Metrics timeframe
+
+        request_metrics:
+          type: object
+          properties:
+            total_requests:
+              type: integer
+              example: 50000
+            success_rate_percent:
+              type: number
+              format: float
+              minimum: 0
+              maximum: 100
+              example: 99.2
+            avg_response_time_ms:
+              type: number
+              format: float
+              example: 45.8
+            p95_response_time_ms:
+              type: number
+              format: float
+              example: 120.5
+            error_rate_percent:
+              type: number
+              format: float
+              minimum: 0
+              maximum: 100
+              example: 0.8
+
+        health_metrics:
+          type: object
+          properties:
+            instances_total:
+              type: integer
+              example: 5
+            instances_healthy:
+              type: integer
+              example: 4
+            instances_unhealthy:
+              type: integer
+              example: 1
+            last_health_check:
+              type: string
+              format: date-time
+              example: "2025-12-20T21:45:00Z"
+
+        resource_metrics:
+          type: object
+          properties:
+            cpu_usage_percent:
+              type: number
+              format: float
+              example: 65.2
+            memory_usage_mb:
+              type: integer
+              example: 512
+            active_connections:
+              type: integer
+              example: 1250

@@ -1,0 +1,549 @@
+# Issue: #2058
+openapi: 3.0.3
+info:
+  title: System Domain - Service Mesh Management API
+  description: |
+    **Enterprise-Grade Service Mesh Management API** for NECPGAME MMOFPS RPG.
+
+    **Module Purpose:** Comprehensive service mesh control system with traffic management, observability, security policies, and service discovery for 50+ microservices.
+
+    **Architecture:** High-performance service mesh management with Istio/Linkerd integration, distributed configuration, real-time monitoring, and automated policy enforcement.
+
+    **Core Features:**
+    - Traffic routing and load balancing (weighted, canary, blue-green)
+    - Service discovery and registration with health checks
+    - Circuit breaking and retry policies with adaptive algorithms
+    - Mutual TLS (mTLS) management and certificate rotation
+    - Traffic mirroring, fault injection, and chaos engineering
+    - Distributed tracing and observability integration
+    - Rate limiting and quota management per service
+    - Security policies (authentication, authorization, encryption)
+
+    **Performance Targets:**
+    - Service discovery: 1000+ lookups/sec, P99 <5ms
+    - Configuration updates: <50ms propagation across mesh
+    - Memory per service: <500KB (optimized routing tables)
+    - Throughput: 100k+ requests/sec per gateway
+    - Latency overhead: <2ms per hop
+
+    **BACKEND NOTE:** Istio/Linkerd integration required. Kubernetes CRDs for policies.
+    Configuration stored in etcd/Consul. Metrics streamed to Prometheus.
+  version: 1.0.0
+  contact:
+    name: NECPGAME Service Mesh API Support
+    url: https://necpgame.com/support
+    email: api@service-mesh.necpgame.com
+
+servers:
+  - url: http://localhost:8087/api/v1/system-domain/service-mesh
+    description: Service Mesh Management Service Development Server
+  - url: https://service-mesh.necpgame.com/api/v1
+    description: Service Mesh Management Service Production Server
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Service Discovery
+    description: Service registration, discovery, and health monitoring
+  - name: Traffic Management
+    description: Routing rules, load balancing, and traffic policies
+  - name: Security Policies
+    description: Authentication, authorization, and encryption policies
+  - name: Observability
+    description: Monitoring, tracing, and metrics collection
+  - name: Configuration Management
+    description: Mesh-wide configuration and policy management
+  - name: System
+    description: Health checks and system operations
+
+paths:
+  # Health and system endpoints
+  /health:
+    get:
+      summary: Service mesh management service health check
+      operationId: serviceMeshHealth
+      tags:
+        - System
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/health-schemas.yaml#/components/schemas/HealthResponse'
+        '503':
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+
+  # Service discovery and registration
+  /services:
+    post:
+      summary: Register a new service in the mesh
+      description: |
+        Registers a new service instance with the service mesh.
+
+        **BACKEND NOTE:** Creates Kubernetes service/endpoints, registers with service registry.
+        Service becomes available for discovery immediately.
+      operationId: registerService
+      tags:
+        - Service Discovery
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/service-discovery-schemas.yaml#/components/schemas/ServiceRegistrationRequest'
+      responses:
+        '201':
+          description: Service registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/service-discovery-schemas.yaml#/components/schemas/ServiceInstance'
+        '400':
+          description: Invalid service registration
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+        '409':
+          description: Service with this ID already exists
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+
+    get:
+      summary: List registered services
+      description: Retrieve a paginated list of all services in the mesh
+      operationId: listServices
+      tags:
+        - Service Discovery
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: namespace
+          in: query
+          schema:
+            type: string
+          description: Filter by Kubernetes namespace
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [healthy, unhealthy, unknown]
+          description: Filter by service health status
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of items per page
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          description: Number of items to skip
+      responses:
+        '200':
+          description: Services retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/service-discovery-schemas.yaml#/components/schemas/ServiceListResponse'
+
+  /services/{service_name}:
+    get:
+      summary: Get service details and instances
+      description: Retrieve detailed information about a service and its instances
+      operationId: getService
+      tags:
+        - Service Discovery
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: service_name
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Service name
+        - name: namespace
+          in: query
+          schema:
+            type: string
+          description: Kubernetes namespace
+      responses:
+        '200':
+          description: Service details retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/service-discovery-schemas.yaml#/components/schemas/ServiceDetails'
+        '404':
+          description: Service not found
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+
+    delete:
+      summary: Deregister a service
+      description: |
+        Removes a service from the mesh.
+
+        **BACKEND NOTE:** Graceful shutdown, traffic draining, cleanup resources.
+        Use with caution - affects dependent services.
+      operationId: deregisterService
+      tags:
+        - Service Discovery
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: service_name
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Service name to deregister
+      responses:
+        '204':
+          description: Service deregistered successfully
+        '404':
+          description: Service not found
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+
+  # Traffic management
+  /traffic/routes:
+    post:
+      summary: Create a traffic route rule
+      description: |
+        Creates a new traffic routing rule for service-to-service communication.
+
+        **BACKEND NOTE:** Applies routing configuration to Istio/Linkerd.
+        Supports canary deployments, traffic splitting, header-based routing.
+      operationId: createTrafficRoute
+      tags:
+        - Traffic Management
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/traffic-management-schemas.yaml#/components/schemas/TrafficRouteRequest'
+      responses:
+        '201':
+          description: Traffic route created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/traffic-management-schemas.yaml#/components/schemas/TrafficRoute'
+        '400':
+          description: Invalid route configuration
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+
+    get:
+      summary: List traffic routes
+      description: Retrieve all configured traffic routing rules
+      operationId: listTrafficRoutes
+      tags:
+        - Traffic Management
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: service_name
+          in: query
+          schema:
+            type: string
+          description: Filter by service name
+        - name: route_type
+          in: query
+          schema:
+            type: string
+            enum: [canary, blue_green, weighted, header_based, path_based]
+          description: Filter by route type
+      responses:
+        '200':
+          description: Traffic routes retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '../schemas/traffic-management-schemas.yaml#/components/schemas/TrafficRoute'
+
+  /traffic/routes/{route_id}:
+    put:
+      summary: Update traffic route
+      description: Update an existing traffic routing rule
+      operationId: updateTrafficRoute
+      tags:
+        - Traffic Management
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: route_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Traffic route ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/traffic-management-schemas.yaml#/components/schemas/TrafficRouteUpdateRequest'
+      responses:
+        '200':
+          description: Traffic route updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/traffic-management-schemas.yaml#/components/schemas/TrafficRoute'
+        '404':
+          description: Traffic route not found
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+
+    delete:
+      summary: Delete traffic route
+      description: Remove a traffic routing rule
+      operationId: deleteTrafficRoute
+      tags:
+        - Traffic Management
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: route_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Traffic route ID
+      responses:
+        '204':
+          description: Traffic route deleted successfully
+        '404':
+          description: Traffic route not found
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+
+  # Security policies
+  /security/policies:
+    post:
+      summary: Create a security policy
+      description: |
+        Creates a new security policy (authentication, authorization, encryption).
+
+        **BACKEND NOTE:** Applies security configuration to service mesh.
+        Supports RBAC, JWT validation, mTLS requirements.
+      operationId: createSecurityPolicy
+      tags:
+        - Security Policies
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/security-schemas.yaml#/components/schemas/SecurityPolicyRequest'
+      responses:
+        '201':
+          description: Security policy created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/security-schemas.yaml#/components/schemas/SecurityPolicy'
+        '400':
+          description: Invalid security policy
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+
+    get:
+      summary: List security policies
+      description: Retrieve all configured security policies
+      operationId: listSecurityPolicies
+      tags:
+        - Security Policies
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: policy_type
+          in: query
+          schema:
+            type: string
+            enum: [authentication, authorization, encryption, rate_limiting]
+          description: Filter by policy type
+        - name: service_name
+          in: query
+          schema:
+            type: string
+          description: Filter by service name
+      responses:
+        '200':
+          description: Security policies retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '../schemas/security-schemas.yaml#/components/schemas/SecurityPolicy'
+
+  # Observability
+  /observability/metrics:
+    get:
+      summary: Get service mesh metrics
+      description: Retrieve comprehensive metrics for the entire service mesh
+      operationId: getMeshMetrics
+      tags:
+        - Observability
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: timeframe
+          in: query
+          schema:
+            type: string
+            enum: [1m, 5m, 15m, 1h, 6h, 24h]
+            default: 5m
+          description: Metrics timeframe
+        - name: service_name
+          in: query
+          schema:
+            type: string
+          description: Filter metrics by service name
+      responses:
+        '200':
+          description: Mesh metrics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/observability-schemas.yaml#/components/schemas/MeshMetrics'
+        '403':
+          description: Not authorized to view metrics
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+
+  /observability/traces/{trace_id}:
+    get:
+      summary: Get distributed trace details
+      description: Retrieve detailed information about a specific distributed trace
+      operationId: getTraceDetails
+      tags:
+        - Observability
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: trace_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Distributed trace ID
+      responses:
+        '200':
+          description: Trace details retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/observability-schemas.yaml#/components/schemas/TraceDetails'
+        '404':
+          description: Trace not found
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+
+  # Configuration management
+  /config/global:
+    get:
+      summary: Get global mesh configuration
+      description: Retrieve the current global service mesh configuration
+      operationId: getGlobalConfig
+      tags:
+        - Configuration Management
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Global configuration retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/config-schemas.yaml#/components/schemas/GlobalMeshConfig'
+
+    put:
+      summary: Update global mesh configuration
+      description: |
+        Updates global service mesh configuration.
+
+        **BACKEND NOTE:** Propagates changes to all mesh components.
+        Requires careful validation to prevent mesh disruption.
+      operationId: updateGlobalConfig
+      tags:
+        - Configuration Management
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/config-schemas.yaml#/components/schemas/GlobalMeshConfigUpdate'
+      responses:
+        '200':
+          description: Global configuration updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/config-schemas.yaml#/components/schemas/GlobalMeshConfig'
+        '400':
+          description: Invalid configuration
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+        '403':
+          description: Not authorized for global config changes
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/error-schemas.yaml#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      description: JWT Bearer token authentication
