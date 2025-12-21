@@ -579,13 +579,13 @@ paths:
       security:
         - BearerAuth: [ ]
       parameters:
-        - name: example_id
+        - name: character_id
           in: path
           required: true
           schema:
             type: string
             format: uuid
-          description: Example unique identifier
+          description: Character unique identifier
         - name: If-Match
           in: header
           schema:
@@ -669,19 +669,19 @@ paths:
         Ensures referential integrity and cascading deletes.
 
         **Performance:** <15ms P95, includes cleanup operations
-      operationId: deleteExample
+      operationId: deleteCharacter
       tags:
-        - Example Domain
+        - Character Management
       security:
         - BearerAuth: [ ]
       parameters:
-        - name: example_id
+        - name: character_id
           in: path
           required: true
           schema:
             type: string
             format: uuid
-          description: Example unique identifier
+          description: Character unique identifier
       responses:
         "204":
           $ref: "#/components/responses/ExampleDeleted"
@@ -1207,168 +1207,483 @@ components:
           example: { "field": "name", "reason": "required" }
       description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
 
-    # Domain-specific schemas - ЗАМЕНИТЬ на реальные схемы домена
+    # Character Service schemas - Enterprise-grade character management
 
-    # Core Example entity - ОБЯЗАТЕЛЬНО оптимизировать порядок полей
-    Example:
+    # Core Character entity - Memory optimized field ordering (large → small)
+    Character:
       type: object
       required:
         - id
+        - player_id
         - name
+        - character_class
+        - level
+        - experience
         - created_at
         - status
-        - is_active
       properties:
-        # Large fields first for struct alignment
+        # Large fields first for struct alignment (strings, arrays)
         id:
           type: string
           format: uuid
-          description: Example unique identifier
+          description: Character unique identifier
           example: 550e8400-e29b-41d4-a716-446655440000
+        player_id:
+          type: string
+          format: uuid
+          description: Player account identifier
+          example: 123e4567-e89b-12d3-a456-426614174000
         name:
           type: string
-          minLength: 1
-          maxLength: 100
-          description: Example display name
-          example: Sample Example
-        description:
+          minLength: 3
+          maxLength: 32
+          description: Character display name (unique per player)
+          example: "Jaxx Silverhand"
+        biography:
           type: string
-          maxLength: 1000
-          description: Detailed description
-          example: This is a comprehensive example demonstrating best practices.
+          maxLength: 500
+          description: Character backstory and description
+          example: "A seasoned street samurai with a cybernetic arm and a chip on his shoulder."
+        character_class:
+          type: string
+          enum: [ solo, nomad, fixer, corporate, street_kid, techie, media, police, rockerboy, netrunner ]
+          description: Character archetype/class
+          example: solo
+        faction:
+          type: string
+          maxLength: 50
+          description: Current faction affiliation
+          example: "Maelstrom"
+        location:
+          type: string
+          maxLength: 100
+          description: Current location in Night City
+          example: "Watson - Claire"
+        # Medium fields (integers)
+        level:
+          type: integer
+          minimum: 1
+          maximum: 50
+          description: Character level (1-50)
+          example: 25
+        experience:
+          type: integer
+          minimum: 0
+          description: Total experience points
+          example: 15750
+        reputation:
+          type: integer
+          minimum: -1000
+          maximum: 1000
+          description: Street reputation (-1000 to 1000)
+          example: 450
+        # Small fields (booleans, enums)
+        status:
+          type: string
+          enum: [ active, inactive, deleted ]
+          default: active
+          description: Character status
+          example: active
+        is_online:
+          type: boolean
+          description: Whether character is currently online
+          example: true
+        # Timestamps
         created_at:
           type: string
           format: date-time
-          description: Creation timestamp
+          description: Character creation timestamp
           example: "2025-12-21T10:00:00Z"
         updated_at:
           type: string
           format: date-time
           description: Last update timestamp
-          example: "2025-12-21T10:00:00Z"
-        priority:
+          example: "2025-12-22T08:30:00Z"
+        last_login:
+          type: string
+          format: date-time
+          description: Last login timestamp
+          example: "2025-12-22T08:00:00Z"
+      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+
+    # Character summary for listings - optimized for list views
+    CharacterSummary:
+      type: object
+      required:
+        - id
+        - name
+        - character_class
+        - level
+        - status
+        - last_login
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Character unique identifier
+          example: 550e8400-e29b-41d4-a716-446655440000
+        name:
+          type: string
+          description: Character display name
+          example: "Jaxx Silverhand"
+        character_class:
+          type: string
+          enum: [ solo, nomad, fixer, corporate, street_kid, techie, media, police, rockerboy, netrunner ]
+          description: Character archetype/class
+          example: solo
+        level:
           type: integer
-          minimum: 1
-          maximum: 10
-          default: 5
-          description: Processing priority
-          example: 7
+          description: Character level
+          example: 25
         status:
           type: string
-          enum: [ active, inactive, pending, archived ]
-          default: active
-          description: Current status
+          enum: [ active, inactive, deleted ]
+          description: Character status
           example: active
-        is_active:
+        is_online:
           type: boolean
-          description: Whether this example is active
+          description: Whether character is currently online
           example: true
-        tags:
+        last_login:
+          type: string
+          format: date-time
+          description: Last login timestamp
+          example: "2025-12-22T08:00:00Z"
+      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%. Hot path optimization required."
+
+    # Character Statistics - detailed performance metrics
+    CharacterStats:
+      type: object
+      required:
+        - character_id
+        - attributes
+        - skills
+        - health
+        - level
+        - experience
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: Character identifier
+          example: 550e8400-e29b-41d4-a716-446655440000
+        attributes:
+          type: object
+          properties:
+            strength:
+              type: integer
+              minimum: 1
+              maximum: 20
+              description: Physical strength attribute
+              example: 15
+            dexterity:
+              type: integer
+              minimum: 1
+              maximum: 20
+              description: Agility and reflexes
+              example: 18
+            constitution:
+              type: integer
+              minimum: 1
+              maximum: 20
+              description: Health and endurance
+              example: 16
+            intelligence:
+              type: integer
+              minimum: 1
+              maximum: 20
+              description: Mental acuity and knowledge
+              example: 12
+            wisdom:
+              type: integer
+              minimum: 1
+              maximum: 20
+              description: Perception and insight
+              example: 14
+            charisma:
+              type: integer
+              minimum: 1
+              maximum: 20
+              description: Social skills and presence
+              example: 10
+        skills:
+          type: object
+          properties:
+            combat:
+              type: integer
+              minimum: 0
+              maximum: 100
+              description: General combat proficiency
+              example: 75
+            hacking:
+              type: integer
+              minimum: 0
+              maximum: 100
+              description: Cyberdeck and netrunning skills
+              example: 45
+            stealth:
+              type: integer
+              minimum: 0
+              maximum: 100
+              description: Infiltration and evasion
+              example: 82
+            engineering:
+              type: integer
+              minimum: 0
+              maximum: 100
+              description: Technical and repair skills
+              example: 38
+        health:
+          type: object
+          properties:
+            current_hp:
+              type: integer
+              minimum: 0
+              description: Current health points
+              example: 85
+            max_hp:
+              type: integer
+              minimum: 1
+              description: Maximum health points
+              example: 100
+            cyberware_slots_used:
+              type: integer
+              minimum: 0
+              maximum: 10
+              description: Number of cyberware slots occupied
+              example: 3
+        level:
+          type: integer
+          minimum: 1
+          maximum: 50
+          description: Character level
+          example: 25
+        experience:
+          type: integer
+          minimum: 0
+          description: Total experience points
+          example: 15750
+        experience_to_next_level:
+          type: integer
+          minimum: 0
+          description: Experience needed for next level
+          example: 2500
+      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+
+    # Character Appearance - visual customization data
+    CharacterAppearance:
+      type: object
+      required:
+        - character_id
+        - body_type
+        - hair_style
+        - clothing
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: Character identifier
+          example: 550e8400-e29b-41d4-a716-446655440000
+        body_type:
+          type: string
+          enum: [ athletic, bulky, slim, average ]
+          description: Character body build
+          example: athletic
+        hair_style:
+          type: string
+          maxLength: 50
+          description: Hair style description
+          example: "Short mohawk with neon highlights"
+        hair_color:
+          type: string
+          maxLength: 30
+          description: Hair color
+          example: "Neon blue"
+        eye_color:
+          type: string
+          maxLength: 30
+          description: Eye color (natural or cybernetic)
+          example: "Cybernetic red"
+        skin_tone:
+          type: string
+          maxLength: 30
+          description: Skin tone/mods
+          example: "Pale with circuit tattoos"
+        clothing:
+          type: object
+          properties:
+            head:
+              type: string
+              maxLength: 100
+              description: Headwear/helmet
+              example: "Techie visor"
+            torso:
+              type: string
+              maxLength: 100
+              description: Upper body clothing
+              example: "Leather jacket with LED panels"
+            legs:
+              type: string
+              maxLength: 100
+              description: Lower body clothing
+              example: "Cargo pants with armor plating"
+            feet:
+              type: string
+              maxLength: 100
+              description: Footwear
+              example: "Heavy boots"
+        cyberware_visible:
           type: array
           items:
             type: string
             maxLength: 50
-          maxItems: 10
-          description: Associated tags
-          example: [ "demo", "template", "best-practice" ]
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%. Hot path optimization required."
+          description: List of visible cyberware implants
+          example: ["Left cybernetic arm", "Neural implant ports"]
+        tattoos:
+          type: array
+          items:
+            type: string
+            maxLength: 100
+          description: Character tattoos and body modifications
+          example: ["Maelstrom gang tattoo", "Circuit board arm tattoo"]
+      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
 
     # Request/Response schemas
-    CreateExampleRequest:
+    CreateCharacterRequest:
       type: object
       required:
         - name
-        - description
+        - character_class
       properties:
         name:
           type: string
-          minLength: 1
-          maxLength: 100
-          description: Desired example name
-          example: My New Example
-        description:
+          minLength: 3
+          maxLength: 32
+          description: Desired character name (unique per player)
+          example: "Jaxx Silverhand"
+        character_class:
           type: string
-          maxLength: 1000
-          description: Example description
-          example: A new example following enterprise-grade patterns.
-        priority:
-          type: integer
-          minimum: 1
-          maximum: 10
-          default: 5
-          description: Processing priority
-        tags:
-          type: array
-          items:
-            type: string
-            maxLength: 50
-          maxItems: 10
-          description: Initial tags
+          enum: [ solo, nomad, fixer, corporate, street_kid, techie, media, police, rockerboy, netrunner ]
+          description: Character archetype/class
+          example: solo
+        biography:
+          type: string
+          maxLength: 500
+          description: Character backstory (optional)
+          example: "A seasoned street samurai with a cybernetic arm and a chip on his shoulder."
       description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
 
-    UpdateExampleRequest:
+    UpdateCharacterStatsRequest:
       type: object
       properties:
-        name:
-          type: string
-          minLength: 1
-          maxLength: 100
-          description: New example name
-          example: Updated Example Name
-        description:
-          type: string
-          maxLength: 1000
-          description: New description
-        priority:
+        experience_gain:
           type: integer
-          minimum: 1
-          maximum: 10
-          description: New priority
-        status:
-          type: string
-          enum: [ active, inactive, pending, archived ]
-          description: New status
-        is_active:
-          type: boolean
-          description: Update active status
-        tags:
-          type: array
-          items:
-            type: string
-            maxLength: 50
-          maxItems: 10
-          description: Replace all tags
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
-    ExampleResponse:
-      type: object
-      required:
-        - example
-      properties:
-        example:
-          $ref: "#/components/schemas/Example"
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
-    ExampleListResponse:
-      type: object
-      required:
-        - examples
-        - total_count
-        - has_more
-      properties:
-        examples:
-          type: array
-          items:
-            $ref: "#/components/schemas/Example"
-          description: List of examples
-        total_count:
-          type: integer
-          description: Total number of examples matching criteria
+          minimum: 0
+          description: Experience points to add
           example: 150
-        has_more:
-          type: boolean
-          description: Whether there are more results available
-          example: true
+        attribute_increases:
+          type: object
+          description: Attribute increases (limited by available points)
+          properties:
+            strength:
+              type: integer
+              minimum: 0
+              maximum: 5
+              description: Strength increase
+              example: 1
+            dexterity:
+              type: integer
+              minimum: 0
+              maximum: 5
+              description: Dexterity increase
+              example: 0
+            constitution:
+              type: integer
+              minimum: 0
+              maximum: 5
+              description: Constitution increase
+              example: 2
+        skill_increases:
+          type: object
+          description: Skill increases (limited by available points)
+          properties:
+            combat:
+              type: integer
+              minimum: 0
+              maximum: 10
+              description: Combat skill increase
+              example: 5
+            hacking:
+              type: integer
+              minimum: 0
+              maximum: 10
+              description: Hacking skill increase
+              example: 0
+        health_changes:
+          type: object
+          description: Health modifications
+          properties:
+            heal_amount:
+              type: integer
+              minimum: 0
+              description: Healing amount
+              example: 25
+            damage_amount:
+              type: integer
+              minimum: 0
+              description: Damage amount
+              example: 0
+
+    UpdateCharacterAppearanceRequest:
+      type: object
+      properties:
+        hair_style:
+          type: string
+          maxLength: 50
+          description: New hair style
+          example: "Long dreadlocks"
+        hair_color:
+          type: string
+          maxLength: 30
+          description: New hair color
+          example: "Electric purple"
+        clothing:
+          type: object
+          description: Clothing updates (must own items)
+          properties:
+            head:
+              type: string
+              maxLength: 100
+              description: New headwear
+              example: "Rockerboy shades"
+            torso:
+              type: string
+              maxLength: 100
+              description: New torso clothing
+              example: "Nomad armored vest"
+        cyberware_visibility:
+          type: object
+          description: Toggle cyberware visibility
+          properties:
+            left_cybernetic_arm:
+              type: boolean
+              description: Show/hide cybernetic arm
+              example: true
+            neural_ports:
+              type: boolean
+              description: Show/hide neural ports
+              example: false
+      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+
+    # Common pagination schema
+    PaginationInfo:
+      type: object
+      required:
+        - page
+        - limit
+        - total_count
+        - total_pages
+      properties:
         page:
           type: integer
           description: Current page number
@@ -1377,4 +1692,43 @@ components:
           type: integer
           description: Items per page
           example: 20
+        total_count:
+          type: integer
+          description: Total number of items
+          example: 150
+        total_pages:
+          type: integer
+          description: Total number of pages
+          example: 8
+        has_next:
+          type: boolean
+          description: Whether there is a next page
+          example: true
+        has_prev:
+          type: boolean
+          description: Whether there is a previous page
+          example: false
+
+    CharacterResponse:
+      type: object
+      required:
+        - character
+      properties:
+        character:
+          $ref: "#/components/schemas/Character"
+      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+
+    CharacterListResponse:
+      type: object
+      required:
+        - characters
+        - pagination
+      properties:
+        characters:
+          type: array
+          items:
+            $ref: "#/components/schemas/CharacterSummary"
+          description: List of characters
+        pagination:
+          $ref: "#/components/schemas/PaginationInfo"
       description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%. Paginated responses optimized for memory efficiency."
