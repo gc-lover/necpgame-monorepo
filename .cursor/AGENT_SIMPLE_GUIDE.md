@@ -31,8 +31,16 @@ mcp_github_list_project_items({
 
 ### 2️⃣ ВЗЯТЬ задачу = СРАЗУ обновить статус, тип и проверку
 
+**Используй скрипт для автоматического обновления полей:**
+
+```bash
+# Автоматически обновляет Status + Agent + Type + Check
+python scripts/update-github-fields.py --item-id {item_id} --type {TYPE} --check 0
+```
+
+**ИЛИ через MCP (если скрипт недоступен):**
+
 ```javascript
-// СРАЗУ меняй Todo → In Progress + проставь Type и Check
 mcp_github_update_project_item({
   owner_type: 'user',
   owner: 'gc-lover',
@@ -41,30 +49,38 @@ mcp_github_update_project_item({
   updated_field: [
     { id: 239690516, value: '83d488e7' }, // Status: In Progress
     { id: 243899542, value: '{id_моего_агента}' }, // Agent: из GITHUB_PROJECT_CONFIG.md
-    { id: TYPE_FIELD_ID, value: '{type_option_id}' }, // Type: API/MIGRATION/DATA/BACKEND/UE5
-    { id: CHECK_FIELD_ID, value: '0' } // Check: 0 (не проверялась)
+    { id: '246469155', value: '{type_option_id}' }, // Type: API/MIGRATION/DATA/BACKEND/UE5
+    { id: '246468990', value: '22932cc7' } // Check: 0 (не проверялась)
   ]
 });
 ```
 
 **Правила простановки Type:**
-- **API**: Создание OpenAPI спецификаций → `TYPE_OPTIONS.API`
-- **MIGRATION**: Создание БД миграций → `TYPE_OPTIONS.MIGRATION`
-- **DATA**: Импорт данных в БД → `TYPE_OPTIONS.DATA`
-- **BACKEND**: Написание Go кода → `TYPE_OPTIONS.BACKEND`
-- **UE5**: Разработка в UE5 → `TYPE_OPTIONS.UE5`
+- **API**: `--type API` - Создание OpenAPI спецификаций
+- **MIGRATION**: `--type MIGRATION` - Создание БД миграций
+- **DATA**: `--type DATA` - Импорт данных в БД
+- **BACKEND**: `--type BACKEND` - Написание Go кода
+- **UE5**: `--type UE5` - Разработка в UE5
 
 ### 3️⃣ ПРОВЕРИТЬ задачу = Обновить Check поле
 
+**После анализа выполнения задачи:**
+
+```bash
+# Обнови Check на 1 (задача проверена)
+python scripts/update-github-fields.py --item-id {item_id} --check 1
+```
+
+**ИЛИ через MCP:**
+
 ```javascript
-// ПОСЛЕ анализа задачи обнови Check на 1 (проверена)
 mcp_github_update_project_item({
   owner_type: 'user',
   owner: 'gc-lover',
   project_number: 1,
   item_id: project_item_id,
   updated_field: [
-    { id: CHECK_FIELD_ID, value: '1' } // Check: 1 (проверена)
+    { id: '246468990', value: '4e8cf8f5' } // Check: 1 (проверена)
   ]
 });
 ```
@@ -88,7 +104,7 @@ mcp_github_update_project_item({
 - `python scripts/batch-optimize-openapi-struct-alignment.py` - оптимизация структур OpenAPI
 - `python scripts/reorder-liquibase-columns.py` - оптимизация колонок БД
 - `python scripts/validate-backend-optimizations.sh` - проверка enterprise-grade оптимизаций
-- `python scripts/update-github-fields.py` - обновление TYPE и CHECK полей в GitHub
+- `python scripts/update-github-fields.py --item-id {id} --type {TYPE} --check {0|1}` - управление полями GitHub
 
 **КРИТИЧНО:** Forbidden создавать новые .sh/.ps1/.bat скрипты!
 - [OK] Используй: `scripts/core/base_script.py` (базовый фреймворк)
