@@ -2,7 +2,7 @@
 -- Import NPC from: important\song-so-mi-songbird.yaml
 -- Version: 0.2.0
 -- Generated: 2025-12-21T02:15:38.697766
--- WARNING  WARNING: Requires 'npc_definitions' table (create via Database agent)
+-- [WARNING]  WARNING: Requires 'npc_definitions' table (create via Database agent)
 
 BEGIN;
 

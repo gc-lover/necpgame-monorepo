@@ -2,7 +2,7 @@
 -- Import dialogue from: npc-sara-miller.yaml
 -- Version: 1.1.0
 -- Generated: 2025-12-21T02:15:39.016855
--- WARNING  WARNING: Requires 'dialogue_nodes' table (create via Database agent)
+-- [WARNING]  WARNING: Requires 'dialogue_nodes' table (create via Database agent)
 
 BEGIN;
 

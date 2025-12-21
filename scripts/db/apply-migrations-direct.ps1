@@ -8,12 +8,12 @@ $Database = "necpgame"
 $User = "postgres"
 $MigrationsDir = "infrastructure/liquibase/migrations"
 
-Write-Host "🚀 Applying migrations directly via psql..." -ForegroundColor Cyan
+Write-Host "[ROCKET] Applying migrations directly via psql..." -ForegroundColor Cyan
 Write-Host ""
 
 # Check container
 if (-not (docker ps --filter "name=$ContainerName" --format "{{.Names}}")) {
-    Write-Host "❌ Container '$ContainerName' not running!" -ForegroundColor Red
+    Write-Host "[ERROR] Container '$ContainerName' not running!" -ForegroundColor Red
     exit 1
 }
 
@@ -37,7 +37,7 @@ $dialogueFiles = Get-ChildItem "$MigrationsDir/data/dialogues" -Filter "*.sql" -
 
 $migrationFiles = $schemaFiles + $questFiles.FullName + $npcFiles.FullName + $dialogueFiles.FullName
 
-Write-Host "📊 Found $($migrationFiles.Count) migration files" -ForegroundColor Yellow
+Write-Host "[SYMBOL] Found $($migrationFiles.Count) migration files" -ForegroundColor Yellow
 Write-Host "  Schema: $($schemaFiles.Count)" -ForegroundColor Gray
 Write-Host "  Quests: $($questFiles.Count)" -ForegroundColor Gray
 Write-Host "  NPCs: $($npcFiles.Count)" -ForegroundColor Gray
@@ -67,26 +67,26 @@ foreach ($file in $migrationFiles) {
         
         $tableExists = docker exec $ContainerName psql -U $User -d $Database -t -c $checkQuery 2>&1
         if ($tableExists -match "ERROR" -or $tableExists -match "does not exist") {
-            Write-Host "WARNING  Table not created yet, skipping content migration: $fileName" -ForegroundColor Yellow
+            Write-Host "[WARNING]  Table not created yet, skipping content migration: $fileName" -ForegroundColor Yellow
             $skipped++
             continue
         }
     }
     
-    Write-Host "📝 Applying: $fileName" -ForegroundColor Cyan -NoNewline
+    Write-Host "[NOTE] Applying: $fileName" -ForegroundColor Cyan -NoNewline
     
     $sqlContent = Get-Content $file -Raw -Encoding UTF8
     $result = $sqlContent | docker exec -i $ContainerName psql -U $User -d $Database 2>&1
     
     if ($LASTEXITCODE -eq 0 -and $result -notmatch "ERROR") {
-        Write-Host " OK" -ForegroundColor Green
+        Write-Host " [OK]" -ForegroundColor Green
         $success++
     } else {
         if ($result -match "already exists" -or $result -match "duplicate key") {
             Write-Host " ⏭️  (already applied)" -ForegroundColor Yellow
             $skipped++
         } else {
-            Write-Host " ❌" -ForegroundColor Red
+            Write-Host " [ERROR]" -ForegroundColor Red
             $errorMsg = ($result | Select-Object -Last 2) -join " "
             Write-Host "   Error: $errorMsg" -ForegroundColor Red
             $failed++
@@ -102,21 +102,21 @@ foreach ($file in $migrationFiles) {
 Write-Host ""
 Write-Host ""
 Write-Host "=" * 80 -ForegroundColor Cyan
-Write-Host "📊 SUMMARY" -ForegroundColor Cyan
+Write-Host "[SYMBOL] SUMMARY" -ForegroundColor Cyan
 Write-Host "=" * 80 -ForegroundColor Cyan
-Write-Host "OK Success: $success" -ForegroundColor Green
+Write-Host "[OK] Success: $success" -ForegroundColor Green
 Write-Host "⏭️  Skipped: $skipped" -ForegroundColor Yellow
-Write-Host "❌ Failed: $failed" -ForegroundColor $(if ($failed -eq 0) { "Green" } else { "Red" })
+Write-Host "[ERROR] Failed: $failed" -ForegroundColor $(if ($failed -eq 0) { "Green" } else { "Red" })
 Write-Host ""
 
 # Show failed migrations details
 if ($failed -gt 0) {
     Write-Host "=" * 80 -ForegroundColor Red
-    Write-Host "❌ FAILED MIGRATIONS" -ForegroundColor Red
+    Write-Host "[ERROR] FAILED MIGRATIONS" -ForegroundColor Red
     Write-Host "=" * 80 -ForegroundColor Red
     foreach ($failedFile in $failedFiles) {
         Write-Host ""
-        Write-Host "📄 File: $($failedFile.File)" -ForegroundColor Yellow
+        Write-Host "[FILE] File: $($failedFile.File)" -ForegroundColor Yellow
         Write-Host "   Path: $($failedFile.Path)" -ForegroundColor Gray
         Write-Host "   Error: $($failedFile.Error)" -ForegroundColor Red
     }
@@ -124,11 +124,11 @@ if ($failed -gt 0) {
 }
 
 if ($failed -eq 0) {
-    Write-Host "OK All migrations completed!" -ForegroundColor Green
+    Write-Host "[OK] All migrations completed!" -ForegroundColor Green
     
     # Check results
     Write-Host ""
-    Write-Host "📊 Database status:" -ForegroundColor Cyan
+    Write-Host "[SYMBOL] Database status:" -ForegroundColor Cyan
     docker exec $ContainerName psql -U $User -d $Database -c "
     SELECT 
         'quests' as type, COUNT(*) as count FROM gameplay.quest_definitions
@@ -140,7 +140,7 @@ if ($failed -eq 0) {
         'dialogues', COUNT(*) FROM narrative.dialogue_nodes;
     " 2>&1
 } else {
-    Write-Host "❌ Some migrations failed!" -ForegroundColor Red
+    Write-Host "[ERROR] Some migrations failed!" -ForegroundColor Red
     exit 1
 }
 

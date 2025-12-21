@@ -312,13 +312,13 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ## Соответствие архитектуре
 
 Схема БД полностью соответствует архитектурам:
-- OK `npc-hiring-system-architecture.yaml` - все таблицы найма NPC созданы
-- OK `relationships-system-architecture.yaml` - все таблицы отношений созданы
-- OK `player-orders-database.yaml` - все таблицы заказов созданы
-- OK Индексы оптимизированы для частых запросов
-- OK Constraints обеспечивают целостность данных
-- OK Foreign Keys настроены с CASCADE для автоматической очистки
-- OK Поддержка JSONB для гибкого хранения данных
+- [OK] `npc-hiring-system-architecture.yaml` - все таблицы найма NPC созданы
+- [OK] `relationships-system-architecture.yaml` - все таблицы отношений созданы
+- [OK] `player-orders-database.yaml` - все таблицы заказов созданы
+- [OK] Индексы оптимизированы для частых запросов
+- [OK] Constraints обеспечивают целостность данных
+- [OK] Foreign Keys настроены с CASCADE для автоматической очистки
+- [OK] Поддержка JSONB для гибкого хранения данных
 
 ## Особенности реализации
 

@@ -2,7 +2,7 @@
 -- Import NPC from: factions\nomads\snake-nation\elder-snake-2040-2080.yaml
 -- Version: 1.0.0
 -- Generated: 2025-12-21T02:15:38.376073
--- WARNING  WARNING: Requires 'npc_definitions' table (create via Database agent)
+-- [WARNING]  WARNING: Requires 'npc_definitions' table (create via Database agent)
 
 BEGIN;
 

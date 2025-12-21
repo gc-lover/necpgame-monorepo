@@ -47,29 +47,29 @@ class GoCodeGenerator:
 
     def generate_all_domains(self) -> None:
         """Generate Go services for all enterprise-grade domains"""
-        print("🚀 Starting enterprise-grade Go service generation...")
+        print("[ROCKET] Starting enterprise-grade Go service generation...")
 
         generated_count = 0
         failed_domains = []
 
         for domain in self.domains:
             try:
-                print(f"\n🏗️  Generating {domain} service...")
+                print(f"\n[BUILDING]  Generating {domain} service...")
                 self.generate_domain_service(domain)
                 generated_count += 1
-                print(f"OK {domain} service generated successfully")
+                print(f"[OK] {domain} service generated successfully")
             except Exception as e:
-                print(f"❌ Failed to generate {domain}: {e}")
+                print(f"[ERROR] Failed to generate {domain}: {e}")
                 failed_domains.append(domain)
 
-        print("\n📊 Generation Summary:")
-        print(f"OK Successfully generated: {generated_count} services")
-        print(f"❌ Failed: {len(failed_domains)} services")
+        print("\n[SYMBOL] Generation Summary:")
+        print(f"[OK] Successfully generated: {generated_count} services")
+        print(f"[ERROR] Failed: {len(failed_domains)} services")
 
         if failed_domains:
             print(f"Failed domains: {', '.join(failed_domains)}")
 
-        print("\n🎯 All enterprise-grade domain services ready for Backend development!")
+        print("\n[TARGET] All enterprise-grade domain services ready for Backend development!")
 
     def generate_domain_service(self, domain: str) -> None:
         """Generate Go service for a specific domain"""

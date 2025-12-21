@@ -22,7 +22,7 @@ echo "========================================="
 
 # Check if deployment exists
 if ! kubectl get deployment "$SERVICE" -n "$NAMESPACE" >/dev/null 2>&1; then
-    echo "❌ Deployment $SERVICE not found in namespace $NAMESPACE"
+    echo "[ERROR] Deployment $SERVICE not found in namespace $NAMESPACE"
     exit 1
 fi
 
@@ -44,7 +44,7 @@ kubectl rollout status deployment/"$SERVICE" -n "$NAMESPACE" --timeout=5m
 NEW_REVISION=$(kubectl rollout history deployment/"$SERVICE" -n "$NAMESPACE" | tail -1 | awk '{print $1}')
 echo ""
 echo "========================================="
-echo "OK Rollback completed!"
+echo "[OK] Rollback completed!"
 echo "========================================="
 echo "New revision: $NEW_REVISION"
 

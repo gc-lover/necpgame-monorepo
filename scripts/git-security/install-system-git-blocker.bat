@@ -40,11 +40,11 @@ if %errorlevel% equ 0 (
     echo SYSTEM PROTECTION ACTIVATED:
     echo.
     echo BLOCKED COMMANDS (system-wide):
-    echo   ❌ git reset (any variant)  - COMPLETELY FORBIDDEN
-    echo   ❌ git clean (any variant)  - COMPLETELY FORBIDDEN
+    echo   [ERROR] git reset (any variant)  - COMPLETELY FORBIDDEN
+    echo   [ERROR] git clean (any variant)  - COMPLETELY FORBIDDEN
     echo.
     echo SAFE COMMANDS (allowed):
-    echo   OK git add, commit, push, pull, checkout, merge, etc.
+    echo   [OK] git add, commit, push, pull, checkout, merge, etc.
     echo.
     echo PROTECTION LEVEL: MAXIMUM
     echo COVERAGE: System-wide (all users, all programs)

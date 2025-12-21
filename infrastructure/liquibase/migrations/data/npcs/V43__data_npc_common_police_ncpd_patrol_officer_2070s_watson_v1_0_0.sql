@@ -2,7 +2,7 @@
 -- Import NPC from: common\police\ncpd-patrol-officer-2070s-watson.yaml
 -- Version: 1.0.0
 -- Generated: 2025-12-21T02:15:37.979196
--- WARNING  WARNING: Requires 'npc_definitions' table (create via Database agent)
+-- [WARNING]  WARNING: Requires 'npc_definitions' table (create via Database agent)
 
 BEGIN;
 

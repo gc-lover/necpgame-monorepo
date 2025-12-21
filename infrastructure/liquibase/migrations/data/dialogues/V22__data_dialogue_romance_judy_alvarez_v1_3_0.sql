@@ -2,7 +2,7 @@
 -- Import dialogue from: romance-judy-alvarez.yaml
 -- Version: 1.3.0
 -- Generated: 2025-12-21T02:15:39.056015
--- WARNING  WARNING: Requires 'dialogue_nodes' table (create via Database agent)
+-- [WARNING]  WARNING: Requires 'dialogue_nodes' table (create via Database agent)
 
 BEGIN;
 

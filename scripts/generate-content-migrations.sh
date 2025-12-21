@@ -232,9 +232,9 @@ print(f"\nTotal: {total_migrations} migrations, {total_quests} quests")
 EOF
 
     if [ $? -eq 0 ]; then
-        echo -e "${GREEN}OK Quests migrations generated${NC}"
+        echo -e "${GREEN}[OK] Quests migrations generated${NC}"
     else
-        echo -e "${RED}❌ Failed to generate quests migrations${NC}"
+        echo -e "${RED}[ERROR] Failed to generate quests migrations${NC}"
         exit 1
     fi
 }
@@ -243,7 +243,7 @@ EOF
 generate_npcs_migration() {
     local migration_num=$(get_next_migration_number)
     
-    echo -e "${YELLOW}WARNING  NPC migrations require 'npc_definitions' table (not created yet)${NC}"
+    echo -e "${YELLOW}[WARNING]  NPC migrations require 'npc_definitions' table (not created yet)${NC}"
     echo -e "${GREEN}Generating NPCs migrations...${NC}"
     
     python3 << EOF
@@ -324,7 +324,7 @@ for npc_file in sorted(npc_files):
             f"-- Import NPC from: {relative_path}",
             f"-- Version: {version}",
             f"-- Generated: {datetime.now().isoformat()}",
-            "-- WARNING  WARNING: Requires 'npc_definitions' table (create via Database agent)",
+            "-- [WARNING]  WARNING: Requires 'npc_definitions' table (create via Database agent)",
             "",
             "BEGIN;",
             "",
@@ -379,9 +379,9 @@ print(f"\nTotal: {total_migrations} migrations, {total_npcs} NPCs")
 EOF
 
     if [ $? -eq 0 ]; then
-        echo -e "${GREEN}OK NPCs migrations generated${NC}"
+        echo -e "${GREEN}[OK] NPCs migrations generated${NC}"
     else
-        echo -e "${YELLOW}WARNING  NPCs migrations skipped (check errors above)${NC}"
+        echo -e "${YELLOW}[WARNING]  NPCs migrations skipped (check errors above)${NC}"
     fi
 }
 
@@ -389,7 +389,7 @@ EOF
 generate_dialogues_migration() {
     local migration_num=$(get_next_migration_number)
     
-    echo -e "${YELLOW}WARNING  Dialogue migrations require 'dialogue_nodes' table (not created yet)${NC}"
+    echo -e "${YELLOW}[WARNING]  Dialogue migrations require 'dialogue_nodes' table (not created yet)${NC}"
     echo -e "${GREEN}Generating dialogues migrations...${NC}"
     
     python3 << EOF
@@ -470,7 +470,7 @@ for dialogue_file in sorted(dialogue_files):
             f"-- Import dialogue from: {relative_path}",
             f"-- Version: {version}",
             f"-- Generated: {datetime.now().isoformat()}",
-            "-- WARNING  WARNING: Requires 'dialogue_nodes' table (create via Database agent)",
+            "-- [WARNING]  WARNING: Requires 'dialogue_nodes' table (create via Database agent)",
             "",
             "BEGIN;",
             "",
@@ -525,9 +525,9 @@ print(f"\nTotal: {total_migrations} migrations, {total_dialogues} dialogues")
 EOF
 
     if [ $? -eq 0 ]; then
-        echo -e "${GREEN}OK Dialogues migrations generated${NC}"
+        echo -e "${GREEN}[OK] Dialogues migrations generated${NC}"
     else
-        echo -e "${YELLOW}WARNING  Dialogues migrations skipped (check errors above)${NC}"
+        echo -e "${YELLOW}[WARNING]  Dialogues migrations skipped (check errors above)${NC}"
     fi
 }
 
@@ -546,7 +546,7 @@ generate_npcs_migration
 # Generate dialogues migration (requires table - will generate but table must exist)
 generate_dialogues_migration
 
-echo -e "${GREEN}OK All migrations generated successfully!${NC}"
+echo -e "${GREEN}[OK] All migrations generated successfully!${NC}"
 echo ""
 echo "Next steps:"
 echo "1. Review generated migrations"

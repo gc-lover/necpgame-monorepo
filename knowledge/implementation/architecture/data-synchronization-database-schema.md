@@ -291,14 +291,14 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ## Соответствие архитектуре
 
 Схема БД полностью соответствует архитектуре из `knowledge/implementation/architecture/data-synchronization-consistency-architecture.yaml`:
-- OK Outbox Pattern (обновлена существующая таблица)
-- OK Saga Pattern (saga)
-- OK State Synchronization (sync_state)
-- OK Conflict Resolution (conflicts)
-- OK Consistency Checks (consistency_checks)
-- OK Индексы оптимизированы для частых запросов
-- OK CHECK constraints обеспечивают валидацию данных
-- OK ENUM типы соответствуют архитектуре
+- [OK] Outbox Pattern (обновлена существующая таблица)
+- [OK] Saga Pattern (saga)
+- [OK] State Synchronization (sync_state)
+- [OK] Conflict Resolution (conflicts)
+- [OK] Consistency Checks (consistency_checks)
+- [OK] Индексы оптимизированы для частых запросов
+- [OK] CHECK constraints обеспечивают валидацию данных
+- [OK] ENUM типы соответствуют архитектуре
 
 ## Особенности реализации
 

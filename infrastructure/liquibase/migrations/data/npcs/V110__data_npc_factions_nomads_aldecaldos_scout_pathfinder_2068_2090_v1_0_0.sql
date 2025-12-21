@@ -2,7 +2,7 @@
 -- Import NPC from: factions\nomads\aldecaldos\scout-pathfinder-2068-2090.yaml
 -- Version: 1.0.0
 -- Generated: 2025-12-21T02:15:38.364607
--- WARNING  WARNING: Requires 'npc_definitions' table (create via Database agent)
+-- [WARNING]  WARNING: Requires 'npc_definitions' table (create via Database agent)
 
 BEGIN;
 

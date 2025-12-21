@@ -2,7 +2,7 @@
 
 ## Issue #1335: Система обратной связи от игроков
 
-**Статус:** OK Архитектура готова, передано API Designer
+**Статус:** [OK] Архитектура готова, передано API Designer
 
 **Дата передачи:** 2025-11-23
 
@@ -100,12 +100,12 @@
 
 ### 4. Решения, принятые на этапе Architect
 
-1. OK Микросервисная архитектура с отдельным feedback-service
-2. OK PostgreSQL для хранения данных
-3. OK REST API для взаимодействия
-4. OK GitHub API для создания Issues
-5. OK 8 API endpoints для полной функциональности
-6. OK 4 таблицы в БД (player_feedback, feedback_votes, feedback_authors, feedback_moderation_queue)
+1. [OK] Микросервисная архитектура с отдельным feedback-service
+2. [OK] PostgreSQL для хранения данных
+3. [OK] REST API для взаимодействия
+4. [OK] GitHub API для создания Issues
+5. [OK] 8 API endpoints для полной функциональности
+6. [OK] 4 таблицы в БД (player_feedback, feedback_votes, feedback_authors, feedback_moderation_queue)
 
 ### 5. Следующие этапы после API Designer
 

@@ -44,8 +44,8 @@ if %errorlevel% equ 0 (
     echo SYSTEM PROTECTION REMOVED:
     echo.
     echo COMMANDS NOW ALLOWED:
-    echo   WARNING  git reset (any variant)  - NO LONGER BLOCKED
-    echo   WARNING  git clean (any variant)  - NO LONGER BLOCKED
+    echo   [WARNING]  git reset (any variant)  - NO LONGER BLOCKED
+    echo   [WARNING]  git clean (any variant)  - NO LONGER BLOCKED
     echo.
     echo WARNING: Use these commands CAREFULLY!
     echo They can destroy your work permanently.

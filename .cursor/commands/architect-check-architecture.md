@@ -4,14 +4,14 @@ Check architecture readiness before handoff to API Designer.
 
 ## Criteria
 
-- [ ] Architecture designed, components defined
-- [ ] Microservices identified, API endpoints described
+— [ ] Architecture designed, components defined
+— [ ] Microservices identified, API endpoints described
 - [ ] Requirements ready
 
 **Result:**
 
-- OK Ready → handoff to API: Status `Todo`, Agent `API`
-- ❌ Not ready → fix issues, don't handoff
+- [OK] Ready → handoff to API: Status `Todo`, Agent `API`
+- [ERROR] Not ready → fix issues, don't handoff
 
 **Update fields:**
 

@@ -1,4 +1,4 @@
----
+——-
 description: "Database Engineer rules for database schemas, Liquibase migrations, query optimization, indexes. Auto-applies to SQL and migration files."
 globs: ["**/*.sql", "**/liquibase/**/*.xml", "**/liquibase/**/*.yaml", "**/migrations/**", "**/schema/**"]
 priority: 1
@@ -7,7 +7,7 @@ tags: ["database", "sql", "migration", "schema"]
 
 # Database Engineer Agent Rules
 
-## 🚀 Быстрый старт
+## [ROCKET] Быстрый старт
 
 **Новичок?** `.cursor/AGENT_SIMPLE_GUIDE.md` - алгоритм в 4 шага!
 
@@ -62,7 +62,7 @@ Database Engineer проектирует схемы БД, создает Liquiba
 
 ## Workflow
 
-### 🔄 Простой алгоритм
+### [SYMBOL] Простой алгоритм
 
 1. **НАЙТИ:** `Agent:"DB" Status:"Todo"`
 2. **ВЗЯТЬ:** Status → `In Progress` (`83d488e7`), Agent → `DB` (`1e745162`)
@@ -71,21 +71,21 @@ Database Engineer проектирует схемы БД, создает Liquiba
 
 **Детали:** `.cursor/AGENT_SIMPLE_GUIDE.md`, `.cursor/GITHUB_PROJECT_CONFIG.md`
 
-## WARNING Разделение ответственности
+## [WARNING] Разделение ответственности
 
 **API Designer:** API схемы (request/response)  
 **Database Engineer:** Детальные схемы БД, миграции, оптимизация  
 **Backend:** Использует готовые миграции
 
-## ⚡ Performance (ОБЯЗАТЕЛЬНО!)
+## [FAST] Performance (ОБЯЗАТЕЛЬНО!)
 
 ### BLOCKER (без этого схема НЕ готова):
-- ❌ Columns НЕ упорядочены → FIX!
-- ❌ НЕТ indexes для hot queries → FIX!
-- ❌ НЕТ covering indexes → FIX!
-- ❌ НЕТ partial indexes → FIX!
+- [ERROR] Columns НЕ упорядочены → FIX!
+- [ERROR] НЕТ indexes для hot queries → FIX!
+- [ERROR] НЕТ covering indexes → FIX!
+- [ERROR] НЕТ partial indexes → FIX!
 
-### 🔧 Автоматическая оптимизация (ОБЯЗАТЕЛЬНО!)
+### [SYMBOL] Автоматическая оптимизация (ОБЯЗАТЕЛЬНО!)
 
 **После создания/изменения Liquibase миграции:**
 
@@ -98,17 +98,17 @@ python scripts/reorder-liquibase-columns.py infrastructure/liquibase/migrations/
 ```
 
 **Скрипт автоматически:**
-- OK Сортирует колонки по размеру типа (large → small)
-- OK Сохраняет PRIMARY KEY первым
-- OK Сохраняет все constraints (FOREIGN KEY, UNIQUE, CHECK)
-- OK Поддерживает все типы данных PostgreSQL
+- [OK] Сортирует колонки по размеру типа (large → small)
+- [OK] Сохраняет PRIMARY KEY первым
+- [OK] Сохраняет все constraints (FOREIGN KEY, UNIQUE, CHECK)
+- [OK] Поддерживает все типы данных PostgreSQL
 
 **Детали:** `scripts/README-STRUCT-ALIGNMENT.md`, `scripts/SUPPORTED_TYPES.md`
 
 ### 1. Column Order (large → small)
 
 ```sql
--- OK Оптимально
+-- [OK] Оптимально
 CREATE TABLE players (
     id BIGINT PRIMARY KEY,        -- 8 bytes
     position_x REAL,              -- 4 bytes
@@ -206,7 +206,7 @@ SELECT * FROM players WHERE metadata @> '{"vip": true}';
 
 **Детали:** `.cursor/performance/07a-postgresql-advanced.md`
 
-## 🔄 Рефакторинг existing таблиц
+## [SYMBOL] Рефакторинг existing таблиц
 
 ```bash
 /database-refactor-schema {table}
@@ -231,7 +231,7 @@ SELECT * FROM players WHERE metadata @> '{"vip": true}';
 - `python scripts/validate-all-migrations.py` - валидация всех миграций
 - `python scripts/generate-content-migrations.sh` - генерация миграций контента
 
-## WARNING Различие системных и контентных задач
+## [WARNING] Различие системных и контентных задач
 
 **КРИТИЧНО:** Database агент должен различать системные и контентные задачи для правильной передачи.
 
@@ -241,7 +241,7 @@ SELECT * FROM players WHERE metadata @> '{"vip": true}';
 - Оптимизация схемы
 - **Передача:** Status `Todo`, Agent `API Designer` (для создания OpenAPI)
 
-**Примеры:**
+**Examples:**
 - Создание таблицы `gameplay.quest_definitions` (миграция `V1_46__quest_definitions_tables.sql`)
 - Создание таблиц `narrative.npc_definitions`, `narrative.dialogue_nodes` (миграция `V1_89__narrative_npc_dialogue_tables.sql`)
 - Оптимизация индексов, партиционирование
@@ -256,7 +256,7 @@ SELECT * FROM players WHERE metadata @> '{"vip": true}';
 ### Если задача заблокирована (Status `Blocked`):
 - Backend создал Issue для Database и заблокировал свою задачу
 - После создания таблиц → разблокируй задачу Backend (Status `Todo`, Agent `Backend`)
-- Комментарий: "OK Tables created. Backend task unblocked. Issue: #{backend_issue_number}"
+- Комментарий: "[OK] Tables created. Backend task unblocked. Issue: #{backend_issue_number}"
 
 ---
 
@@ -281,7 +281,7 @@ SELECT * FROM players WHERE metadata @> '{"vip": true}';
 
 ### Комментарий при передаче:
 ```markdown
-OK Content quests migrations applied. {count} quests imported.
+[OK] Content quests migrations applied. {count} quests imported.
 Migrations: V*__data_quest_*.sql (1 file = 1 migration)
 Issue: #{number}
 ```
@@ -308,7 +308,7 @@ Issue: #{number}
 
 ### Комментарий при передаче:
 ```markdown
-OK NPC/Dialogue migrations applied. {npc_count} NPCs, {dialogue_count} dialogues imported.
+[OK] NPC/Dialogue migrations applied. {npc_count} NPCs, {dialogue_count} dialogues imported.
 Migrations: V*__data_npc_*.sql, V*__data_dialogue_*.sql
 Issue: #{number}
 ```
@@ -404,7 +404,7 @@ Issue: #{number}
 
 **Schema Design Handover (to API Designer):**
 ```markdown
-OK Database schema ready. Handed off to API Designer
+[OK] Database schema ready. Handed off to API Designer
 
 **Schema Details:**
 - Tables: {count} created/optimized
@@ -422,7 +422,7 @@ Issue: #123
 
 **Content Migration Handover (to Backend):**
 ```markdown
-OK Database migrations applied. Handed off to Backend
+[OK] Database migrations applied. Handed off to Backend
 
 **Content Imported:**
 - Quests: {count} records in gameplay.quest_definitions
@@ -444,11 +444,11 @@ Issue: #123
 ### Blocking Conditions
 
 **НЕ передавай если:**
-- ❌ Schema not reviewed/approved
-- ❌ Performance targets not met
-- ❌ Migrations not tested (forward/backward)
-- ❌ Security policies not implemented
-- ❌ No rollback procedures documented
+- [ERROR] Schema not reviewed/approved
+- [ERROR] Performance targets not met
+- [ERROR] Migrations not tested (forward/backward)
+- [ERROR] Security policies not implemented
+- [ERROR] No rollback procedures documented
 
 ---
 
@@ -482,7 +482,7 @@ Issue: #123
 - НЕ настраивай инфраструктуру (DevOps)
 - ТОЛЬКО проектирование БД
 
-## 📚 Документация
+## [BOOK] Документация
 
 **Performance:**
 - `.cursor/GO_BACKEND_PERFORMANCE_BIBLE.md` - Part 5A, 7A, 7B

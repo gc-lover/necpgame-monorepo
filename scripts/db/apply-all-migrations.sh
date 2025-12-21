@@ -10,13 +10,13 @@ USER="${USER:-postgres}"
 PASSWORD="${PASSWORD:-postgres}"
 USE_LIQUIBASE="${USE_LIQUIBASE:-false}"
 
-echo "🚀 Applying all Liquibase migrations..."
+echo "[ROCKET] Applying all Liquibase migrations..."
 echo ""
 
 # Check if container exists
 if ! docker ps -a --format "{{.Names}}" | grep -q "^${CONTAINER_NAME}$"; then
-    echo "❌ Container '${CONTAINER_NAME}' not found!"
-    echo "💡 Start PostgreSQL container first:"
+    echo "[ERROR] Container '${CONTAINER_NAME}' not found!"
+    echo "[IDEA] Start PostgreSQL container first:"
     echo "   cd infrastructure/docker/postgres"
     echo "   docker compose up -d"
     exit 1
@@ -24,7 +24,7 @@ fi
 
 # Check if container is running
 if ! docker ps --format "{{.Names}}" | grep -q "^${CONTAINER_NAME}$"; then
-    echo "WARNING  Container '${CONTAINER_NAME}' is not running. Starting..."
+    echo "[WARNING]  Container '${CONTAINER_NAME}' is not running. Starting..."
     docker start "${CONTAINER_NAME}"
     sleep 3
 fi
@@ -33,41 +33,41 @@ fi
 echo "⏳ Waiting for PostgreSQL to be ready..."
 for i in {1..30}; do
     if docker exec "${CONTAINER_NAME}" pg_isready -U "${USER}" > /dev/null 2>&1; then
-        echo "OK PostgreSQL is ready"
+        echo "[OK] PostgreSQL is ready"
         break
     fi
     sleep 1
 done
 
 if [ $i -eq 30 ]; then
-    echo "❌ PostgreSQL failed to start"
+    echo "[ERROR] PostgreSQL failed to start"
     exit 1
 fi
 
 if [ "$USE_LIQUIBASE" = "true" ]; then
     echo ""
-    echo "📦 Using Liquibase container..."
+    echo "[SYMBOL] Using Liquibase container..."
     
     COMPOSE_FILE="infrastructure/docker/postgres/docker-compose.migrations.yml"
     if [ ! -f "$COMPOSE_FILE" ]; then
-        echo "❌ docker-compose.migrations.yml not found"
+        echo "[ERROR] docker-compose.migrations.yml not found"
         exit 1
     fi
     
     docker compose -f "$COMPOSE_FILE" run --rm liquibase update
 else
     echo ""
-    echo "📝 Applying migrations via Liquibase CLI..."
+    echo "[NOTE] Applying migrations via Liquibase CLI..."
     
     CHANGELOG_FILE="infrastructure/liquibase/changelog.yaml"
     if [ ! -f "$CHANGELOG_FILE" ]; then
-        echo "❌ Changelog file not found: $CHANGELOG_FILE"
+        echo "[ERROR] Changelog file not found: $CHANGELOG_FILE"
         exit 1
     fi
     
     if ! command -v liquibase &> /dev/null; then
-        echo "WARNING  Liquibase CLI not found. Install it or set USE_LIQUIBASE=true"
-        echo "💡 Install: https://docs.liquibase.com/tools/home.html"
+        echo "[WARNING]  Liquibase CLI not found. Install it or set USE_LIQUIBASE=true"
+        echo "[IDEA] Install: https://docs.liquibase.com/tools/home.html"
         echo ""
         echo "Alternative: Use Docker Compose with Liquibase:"
         echo "   docker compose -f infrastructure/docker/postgres/docker-compose.migrations.yml up liquibase"
@@ -83,16 +83,16 @@ else
     
     if [ $? -eq 0 ]; then
         echo ""
-        echo "OK All migrations applied successfully!"
+        echo "[OK] All migrations applied successfully!"
     else
         echo ""
-        echo "❌ Migration failed!"
+        echo "[ERROR] Migration failed!"
         exit 1
     fi
 fi
 
 echo ""
-echo "📊 Checking migration status..."
+echo "[SYMBOL] Checking migration status..."
 docker exec "${CONTAINER_NAME}" psql -U "${USER}" -d "${DATABASE}" -c "
 SELECT 
     COUNT(*) as total_changesets,
@@ -101,5 +101,5 @@ FROM databasechangelog;
 "
 
 echo ""
-echo "OK Done!"
+echo "[OK] Done!"
 

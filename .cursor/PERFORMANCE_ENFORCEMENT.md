@@ -1,23 +1,23 @@
-# ⚡ Performance Enforcement Policy
+# [FAST] Performance Enforcement Policy
 
-**СТРОГИЕ требования к оптимизациям - ОБЯЗАТЕЛЬНО для всех агентов**
+**СТРОГИЕ требования к оптимизациям — ОБЯЗАТЕЛЬНО для всех агентов**
 
-## 🚫 ЗАПРЕТ ЭМОДЗИ И СПЕЦСИМВОЛОВ
+## [FORBIDDEN] EMOJI AND SPECIAL CHARACTERS ЗАПРЕТ
 
 **КРИТИЧНО:** Запрещено использовать эмодзи и специальные Unicode символы в коде!
 
 ### Почему запрещено:
-- 🚫 Ломают выполнение скриптов на Windows
-- 🚫 Могут вызывать ошибки в терминале
-- 🚫 Создают проблемы с кодировкой
-- 🚫 Нарушают совместимость между ОС
+— [FORBIDDEN] Ломают выполнение скриптов на Windows
+- [FORBIDDEN] Могут вызывать ошибки в терминале
+- [FORBIDDEN] Создают проблемы с кодировкой
+- [FORBIDDEN] Нарушают совместимость между ОС
 
-### Что использовать вместо:
-- OK `:smile:` вместо 😀
-- OK `[FORBIDDEN]` вместо 🚫
-- OK `[OK]` вместо OK
-- OK `[ERROR]` вместо ❌
-- OK `[WARNING]` вместо WARNING
+### Что use вместо:
+- [OK] `:smile:` вместо [EMOJI]
+- [OK] `[FORBIDDEN]` вместо [FORBIDDEN]
+- [OK] `[OK]` вместо [OK]
+- [OK] `[ERROR]` вместо [ERROR]
+- [OK] `[WARNING]` вместо [WARNING]
 
 ### Автоматическая проверка:
 - Pre-commit hooks блокируют коммиты с эмодзи
@@ -26,7 +26,7 @@
 
 ---
 
-## 🎯 Философия: Optimization-First
+## [TARGET] Философия: Optimization-First
 
 **Оптимизации ОБЯЗАТЕЛЬНЫ, а не опциональны.**
 
@@ -44,10 +44,10 @@
 
 **Benefits:**
 
-- OK Production-ready с первого дня
-- OK Нет technical debt
-- OK Performance targets с самого начала
-- OK Дешевле (оптимизировать сразу проще чем потом)
+- [OK] Production-ready с первого дня
+- [OK] Нет technical debt
+- [OK] Performance targets с самого начала
+- [OK] Дешевле (оптимизировать сразу проще чем потом)
 
 **Цель:**
 
@@ -57,7 +57,7 @@
 
 ---
 
-## 🔴 КРИТИЧНО: Backend Agent
+## [SYMBOL] КРИТИЧНО: Backend Agent
 
 ### BLOCKER - задачу НЕЛЬЗЯ передавать без этого:
 
@@ -69,26 +69,26 @@
 python scripts/generate-all-domains-go.py  # включает валидацию
 
 # Если хоть один BLOCKER → исправь и повтори
-# Передавай ТОЛЬКО после: OK All checks passed
+# Передавай ТОЛЬКО после: [OK] All checks passed
 ```
 
 **BLOCKER checklist:**
 
-- ❌ No context timeouts
-- ❌ No DB pool config
-- ❌ Goroutine leaks
-- ❌ No struct alignment
-- ❌ No structured logging
-- ❌ No profiling endpoints (pprof)
-- ❌ No health/metrics endpoints
-- ❌ Unbounded channels (для production)
+- [ERROR] No context timeouts
+- [ERROR] No DB pool config
+- [ERROR] Goroutine leaks
+- [ERROR] No struct alignment
+- [ERROR] No structured logging
+- [ERROR] No profiling endpoints (pprof)
+- [ERROR] No health/metrics endpoints
+- [ERROR] Unbounded channels (для production)
 
 **Что делать при BLOCKER:**
 
 1. Исправь проблемы
 2. Запусти валидацию снова
 3. Повтори пока не пройдет
-4. ТОЛЬКО после OK → передавай задачу
+4. ТОЛЬКО после [OK] → передавай задачу
 
 ---
 
@@ -109,7 +109,7 @@ python scripts/generate-all-domains-go.py  # включает валидацию
     - Пометь label `refactor` + `performance`
 
 3. **Приоритизируй:**
-    - 🔴 BLOCKER issues → исправь немедленно
+    - [SYMBOL] BLOCKER issues → исправь немедленно
     - 🟡 WARNING issues → создай Issue
     - 🟢 IMPROVEMENTS → backlog
 
@@ -117,14 +117,14 @@ python scripts/generate-all-domains-go.py  # включает валидацию
 
 ---
 
-## 💾 КРИТИЧНО: Database Agent
+## [SYMBOL] КРИТИЧНО: Database Agent
 
 ### Column Order Optimization
 
 **ОБЯЗАТЕЛЬНО при создании/рефакторинге таблиц:**
 
 ```sql
--- ❌ ПЛОХО: random order
+-- [ERROR] ПЛОХО: random order
 CREATE TABLE players (
     is_active BOOLEAN,     -- 1 byte + padding
     id BIGINT,            -- 8 bytes
@@ -132,7 +132,7 @@ CREATE TABLE players (
 );
 -- Row: ~24 bytes (из-за padding)
 
--- OK ХОРОШО: large → small
+-- [OK] ХОРОШО: large → small
 CREATE TABLE players (
     id BIGINT,            -- 8 bytes
     level INTEGER,        -- 4 bytes  
@@ -167,7 +167,7 @@ CREATE TABLE players (
 
 ---
 
-## 🎮 КРИТИЧНО: Performance Agent
+## [GAME] КРИТИЧНО: Performance Agent
 
 ### Обязанность:
 
@@ -193,14 +193,14 @@ CREATE TABLE players (
 
 ---
 
-## 📋 Enforcement Workflow
+## [SYMBOL] Enforcement Workflow
 
 ### Для новых сервисов:
 
 ```
 API Designer → Backend → (автоматическая проверка) →
-  ❌ BLOCKER? → Backend исправляет
-  OK Pass? → Network
+  [ERROR] BLOCKER? → Backend исправляет
+  [OK] Pass? → Network
 ```
 
 ### Для существующих сервисов:
@@ -215,7 +215,7 @@ Backend берет задачу →
 
 ---
 
-## 🛠️ Инструменты enforcement
+## [TRANSPORT]️ Инструменты enforcement
 
 ### 1. Pre-commit hook (будущее)
 
@@ -243,7 +243,7 @@ Backend берет задачу →
 
 ---
 
-## 📊 Метрики compliance
+## [SYMBOL] Метрики compliance
 
 **Отслеживай:**
 
@@ -257,13 +257,13 @@ Backend берет задачу →
 
 ---
 
-## 🚨 Escalation Process
+## [ALERT] Escalation Process
 
 ### Если Backend пытается передать без оптимизаций:
 
 1. **Автоматическая проверка блокирует:**
    ```
-   ❌ Validation failed: 3 BLOCKERS found
+   [ERROR] Validation failed: 3 BLOCKERS found
    → Cannot proceed to next stage
    ```
 
@@ -277,7 +277,7 @@ Backend берет задачу →
 
 3. **Backend исправляет → повторяет валидацию**
 
-4. **ТОЛЬКО после OK → может передавать**
+4. **ТОЛЬКО после [OK] → может передавать**
 
 ### Если агент игнорирует требования:
 
@@ -287,26 +287,26 @@ Backend берет задачу →
 
 ---
 
-## OK Success Criteria
+## [OK] Success Criteria
 
 **Backend сервис готов когда:**
 
-- OK Validation script passed (0 BLOCKERS)
-- OK Benchmarks show 0 allocs/op (hot path)
-- OK No goroutine leaks
-- OK Profiling endpoints enabled
-- OK Performance targets met
+- [OK] Validation script passed (0 BLOCKERS)
+- [OK] Benchmarks show 0 allocs/op (hot path)
+- [OK] No goroutine leaks
+- [OK] Profiling endpoints enabled
+- [OK] Performance targets met
 
 **Database schema готова когда:**
 
-- OK Columns ordered (large → small)
-- OK Covering indexes для hot queries
-- OK Partial indexes где применимо
-- OK Row size optimized
+- [OK] Columns ordered (large → small)
+- [OK] Covering indexes для hot queries
+- [OK] Partial indexes где применимо
+- [OK] Row size optimized
 
 ---
 
-## 📚 References
+## [BOOK] References
 
 **Для Backend:**
 
@@ -328,7 +328,7 @@ Backend берет задачу →
 
 ---
 
-## 💡 Key Principle
+## [IDEA] Key Principle
 
 **"Optimization is NOT optional - it's a requirement"**
 
@@ -340,8 +340,8 @@ Backend берет задачу →
 
 С оптимизациями:
 
-- OK Production-ready
-- OK Scalable
-- OK Cost-effective
-- OK Player experience: excellent
+- [OK] Production-ready
+- [OK] Scalable
+- [OK] Cost-effective
+- [OK] Player experience: excellent
 

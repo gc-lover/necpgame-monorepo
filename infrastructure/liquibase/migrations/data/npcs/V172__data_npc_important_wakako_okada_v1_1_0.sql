@@ -2,7 +2,7 @@
 -- Import NPC from: important\wakako-okada.yaml
 -- Version: 1.1.0
 -- Generated: 2025-12-21T02:15:38.725376
--- WARNING  WARNING: Requires 'npc_definitions' table (create via Database agent)
+-- [WARNING]  WARNING: Requires 'npc_definitions' table (create via Database agent)
 
 BEGIN;
 

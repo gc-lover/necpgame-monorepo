@@ -64,20 +64,20 @@ if %errorlevel% equ 0 (
     echo.
     echo ABSOLUTE PROTECTION ACTIVATED:
     echo.
-    echo 🚫 COMPLETELY BLOCKED (system-wide):
+    echo [FORBIDDEN] COMPLETELY BLOCKED (system-wide):
     echo    git reset (any variant) - IMPOSSIBLE
     echo    git clean (any variant) - IMPOSSIBLE
     echo.
-    echo OK SAFE COMMANDS (allowed):
+    echo [OK] SAFE COMMANDS (allowed):
     echo    git add, commit, push, pull, checkout, merge
     echo.
-    echo 🔄 NEXT STEPS:
+    echo [SYMBOL] NEXT STEPS:
     echo    1. Close ALL applications
     echo    2. RESTART YOUR COMPUTER
     echo    3. Open new command prompt
     echo    4. Test: git reset (should be blocked)
     echo.
-    echo 📋 TEST COMMAND:
+    echo [SYMBOL] TEST COMMAND:
     echo    test-system-blocking.bat
     echo.
     echo ========================================

@@ -2,7 +2,7 @@
 -- Import NPC from: common\enemies\sniper-drone-mimic.yaml
 -- Version: 1.1.0
 -- Generated: 2025-12-21T02:15:37.914809
--- WARNING  WARNING: Requires 'npc_definitions' table (create via Database agent)
+-- [WARNING]  WARNING: Requires 'npc_definitions' table (create via Database agent)
 
 BEGIN;
 

@@ -2,7 +2,7 @@
 -- Import dialogue from: npc-james-iron-reed.yaml
 -- Version: 1.1.0
 -- Generated: 2025-12-21T02:15:38.984198
--- WARNING  WARNING: Requires 'dialogue_nodes' table (create via Database agent)
+-- [WARNING]  WARNING: Requires 'dialogue_nodes' table (create via Database agent)
 
 BEGIN;
 

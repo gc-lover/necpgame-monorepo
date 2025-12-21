@@ -1,32 +1,32 @@
-# 🔍 Backend Optimization Checklist
+# [SEARCH] Backend Optimization Checklist
 
-**Чек-лист оптимизаций для Backend Agent перед передачей задачи**
+**Чек—лист оптимизаций для Backend Agent перед передачей задачи**
 
-## 🚫 ЗАПРЕТ ЭМОДЗИ И СПЕЦСИМВОЛОВ
+## [FORBIDDEN] EMOJI AND SPECIAL CHARACTERS ЗАПРЕТ
 
 **КРИТИЧНО:** Запрещено использовать эмодзи и специальные Unicode символы в коде!
 
 ### Почему запрещено:
-- 🚫 Ломают выполнение скриптов на Windows
-- 🚫 Могут вызывать ошибки в терминале
-- 🚫 Создают проблемы с кодировкой
-- 🚫 Нарушают совместимость между ОС
+— [FORBIDDEN] Ломают выполнение скриптов на Windows
+- [FORBIDDEN] Могут вызывать ошибки в терминале
+- [FORBIDDEN] Создают проблемы с кодировкой
+- [FORBIDDEN] Нарушают совместимость между ОС
 
-### Что использовать вместо:
-- OK `:smile:` вместо 😀
-- OK `[FORBIDDEN]` вместо 🚫
-- OK `[OK]` вместо OK
-- OK `[ERROR]` вместо ❌
-- OK `[WARNING]` вместо WARNING
+### Что use вместо:
+- [OK] `:smile:` вместо [EMOJI]
+- [OK] `[FORBIDDEN]` вместо [FORBIDDEN]
+- [OK] `[OK]` вместо [OK]
+- [OK] `[ERROR]` вместо [ERROR]
+- [OK] `[WARNING]` вместо [WARNING]
 
 ### Автоматическая проверка:
 - Pre-commit hooks блокируют коммиты с эмодзи
 - Git hooks проверяют staged файлы
 - Исключения: `.cursor/rules/*` (документация), `.githooks/*`
 
-## 📋 Обязательные проверки
+## [SYMBOL] Обязательные проверки
 
-### OK Уровень 1: Базовые (ВСЕГДА)
+### [OK] Уровень 1: Базовые (ВСЕГДА)
 
 **Применяется к:** Все сервисы, все endpoints
 
@@ -37,7 +37,7 @@
 - [ ] **Structured Logging** - JSON формат, нет `fmt.Println`
 - [ ] **Error Handling** - все ошибки обработаны, не игнорируются
 
-### OK Уровень 2: Hot Path (для частых операций >100 RPS)
+### [OK] Уровень 2: Hot Path (для частых операций >100 RPS)
 
 **Применяется к:** API endpoints с высокой нагрузкой
 
@@ -48,7 +48,7 @@
 - [ ] **String vs []byte** - в hot path используется `[]byte`
 - [ ] **Zero Allocations** - бенчмарки показывают 0 allocs/op для critical path
 
-### OK Уровень 3: Game Servers (для real-time сервисов)
+### [OK] Уровень 3: Game Servers (для real-time сервисов)
 
 **Применяется к:** Game state, matchmaking, voice chat, real-time сервисы
 
@@ -60,7 +60,7 @@
 - [ ] **GC Tuning** - `GOGC` настроен (обычно 50 для game servers)
 - [ ] **Profiling Enabled** - `pprof` endpoints доступны (на отдельном порту)
 
-### OK Уровень 4: MMO Patterns (для MMO/FPS игр)
+### [OK] Уровень 4: MMO Patterns (для MMO/FPS игр)
 
 **Применяется к:** MMO сервисы, inventory, guilds, trading
 
@@ -71,7 +71,7 @@
 - [ ] **Materialized Views** - для leaderboards (100x speedup)
 - [ ] **Time-Series Partitioning** - для >10M rows (query ↓90%)
 
-### OK Уровень 5: Advanced (опционально)
+### [OK] Уровень 5: Advanced (опционально)
 
 **Применяется к:** Bottlenecks после профилирования
 
@@ -84,9 +84,9 @@
 - [ ] **Load Shedding** - backpressure handling
 - [ ] **FlatBuffers** - ultra-low latency (если Protobuf bottleneck)
 
-## 🔍 Как проверять
+## [SEARCH] Как проверять
 
-### ⚡ Используй автоматическую команду:
+### [FAST] Используй автоматическую команду:
 
 ```bash
 # ОБЯЗАТЕЛЬНО перед передачей задачи!
@@ -102,18 +102,18 @@ python scripts/generate-all-domains-go.py  # включает автоматич
 **Output:**
 
 ```
-🔍 Validating optimizations for {service}-go...
+[SEARCH] Validating optimizations for {service}-go...
 
-OK Struct alignment: OK
-OK Goroutine leak tests: OK  
-OK Context timeouts: OK
-OK DB pool config: OK
-OK Structured logging: OK
-❌ Memory pooling: NOT FOUND (BLOCKER!)
-WARNING  Benchmarks: Missing
+[OK] Struct alignment: OK
+[OK] Goroutine leak tests: OK  
+[OK] Context timeouts: OK
+[OK] DB pool config: OK
+[OK] Structured logging: OK
+[ERROR] Memory pooling: NOT FOUND (BLOCKER!)
+[WARNING]  Benchmarks: Missing
 
 ━━━━━━━━━━━━━━━━━━━━━━━━
-RESULT: ❌ VALIDATION FAILED
+RESULT: [ERROR] VALIDATION FAILED
 BLOCKERS: 1
 WARNINGS: 1
 ━━━━━━━━━━━━━━━━━━━━━━━━
@@ -161,7 +161,7 @@ go tool pprof -top allocs.prof
 golangci-lint run
 ```
 
-## 📊 Метрики успеха
+## [SYMBOL] Метрики успеха
 
 **После применения оптимизаций проверь:**
 
@@ -174,11 +174,11 @@ golangci-lint run
 | Memory      | No leaks     | Memory over time (Grafana) |
 | DB Queries  | <10ms P95    | Slow query log             |
 
-## 🎯 Severity Levels
+## [TARGET] Severity Levels
 
 **Насколько критично:**
 
-### 🔴 BLOCKER (задачу нельзя передавать без этого):
+### [SYMBOL] BLOCKER (задачу нельзя передавать без этого):
 
 - Context deadlines отсутствуют
 - DB connection pool не настроен
@@ -197,12 +197,12 @@ golangci-lint run
 - SIMD optimizations
 - Advanced patterns
 
-## 💡 Шаблон комментария при передаче
+## [IDEA] Шаблон комментария при передаче
 
 **Backend → Network/QA:**
 
 ```markdown
-OK Backend ready. Handed off to {NextAgent}
+[OK] Backend ready. Handed off to {NextAgent}
 
 **Optimizations applied:**
 - [x] Memory pooling for response objects
@@ -212,14 +212,14 @@ OK Backend ready. Handed off to {NextAgent}
 - [x] Zero allocations in hot path (benchmarks)
 
 **Benchmarks:**
-- P99 latency: 8.5ms (target: <10ms) OK
-- Allocations: 0 allocs/op (hot path) OK
-- Throughput: 15,000 req/sec OK
+- P99 latency: 8.5ms (target: <10ms) [OK]
+- Allocations: 0 allocs/op (hot path) [OK]
+- Throughput: 15,000 req/sec [OK]
 
 Issue: #123
 ```
 
-## 🛠️ Инструменты для валидации
+## [TRANSPORT]️ Инструменты для валидации
 
 **Добавь в CI/CD:**
 
@@ -237,7 +237,7 @@ Issue: #123
   run: go test -v -run TestMain ./...
 ```
 
-## 🔄 Рефакторинг существующих сервисов
+## [SYMBOL] Рефакторинг существующих сервисов
 
 **Backend ОБЯЗАН рефакторить неоптимизированный код!**
 
@@ -254,7 +254,7 @@ Issue: #123
 # - Expected gains
 
 # 3. Приоритизируй:
-# 🔴 BLOCKER → исправь немедленно (в текущей задаче)
+# [SYMBOL] BLOCKER → исправь немедленно (в текущей задаче)
 # 🟡 WARNING → создай Issue для отдельного рефакторинга
 # 🟢 IMPROVEMENTS → backlog
 
@@ -274,7 +274,7 @@ Issue: #123
 
 ---
 
-## 📚 См. также:
+## [BOOK] См. также:
 
 - `.cursor/GO_BACKEND_PERFORMANCE_BIBLE.md` - **120+ оптимизаций (13 parts)**
 - `.cursor/BACKEND_CODE_TEMPLATES.md` - шаблоны оптимизированного кода

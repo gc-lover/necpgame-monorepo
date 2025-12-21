@@ -43,8 +43,8 @@ FORBIDDEN_RANGES=(
 
 # Specific forbidden characters
 FORBIDDEN_CHARS=(
-    "★" "♦" "♠" "♥" "♣" "►" "◄" "▲" "▼" "◆" "◇"
-    "✓" "✗" "✖" "✕" "✚" "✙" "✘" "✖" "✕" "✚" "✙"
+    "[SYMBOL]" "[SYMBOL]" "[SYMBOL]" "[SYMBOL]" "[SYMBOL]" "►" "◄" "▲" "▼" "◆" "◇"
+    "[OK]" "[ERROR]" "[DINGBAT]" "[DINGBAT]" "[DINGBAT]" "[DINGBAT]" "[DINGBAT]" "[DINGBAT]" "[DINGBAT]" "[DINGBAT]" "[DINGBAT]"
     "●" "○" "■" "□" "▲" "▼" "▶" "◀" "◆" "◇"
     "…" "–" "—" "―" "‖" "‗" "‘" "’" "‚" "‛" "‟"
     "†" "‡" "•" "‣" "․" "‥" "…" "‰" "‱" "′" "″" "‴" "‵"

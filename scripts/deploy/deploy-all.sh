@@ -64,7 +64,7 @@ kubectl rollout status deployment/movement-service-go -n "$NAMESPACE" --timeout=
 # Show status
 echo ""
 echo "========================================="
-echo "OK Deployment completed!"
+echo "[OK] Deployment completed!"
 echo "========================================="
 echo ""
 echo "Pods status:"

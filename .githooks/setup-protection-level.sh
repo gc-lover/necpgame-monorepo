@@ -21,18 +21,18 @@ case $choice in
         cp .githooks/pre-push .git/hooks/pre-push 2>/dev/null || true
         cp .githooks/commit-msg .git/hooks/commit-msg 2>/dev/null || true
         chmod +x .git/hooks/* 2>/dev/null || true
-        echo "✓ MAXIMUM PROTECTION activated - dangerous commands BLOCKED"
+        echo "[OK] MAXIMUM PROTECTION activated - dangerous commands BLOCKED"
         ;;
     2)
         echo "Setting TRAINING PROTECTION..."
         cp .githooks/pre-commit-safety-training .git/hooks/pre-commit 2>/dev/null || true
         chmod +x .git/hooks/pre-commit 2>/dev/null || true
-        echo "✓ TRAINING PROTECTION activated - educational warnings enabled"
+        echo "[OK] TRAINING PROTECTION activated - educational warnings enabled"
         ;;
     3)
         echo "DISABLING PROTECTION..."
         rm -f .git/hooks/pre-commit .git/hooks/pre-push .git/hooks/commit-msg
-        echo "✓ PROTECTION DISABLED - use at your own risk!"
+        echo "[OK] PROTECTION DISABLED - use at your own risk!"
         ;;
     *)
         echo "Invalid choice. Keeping current protection level."

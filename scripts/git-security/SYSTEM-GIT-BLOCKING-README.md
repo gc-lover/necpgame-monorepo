@@ -4,7 +4,7 @@
 
 This system provides **100% guaranteed blocking** of `git reset` and `git clean` commands at the operating system level.
 
-## 🚨 WHAT THIS DOES
+## [ALERT] WHAT THIS DOES
 
 **COMPLETELY BLOCKS** system-wide:
 - `git reset` (any variant: --hard, --soft, --mixed, HEAD~1, etc.)
@@ -13,7 +13,7 @@ This system provides **100% guaranteed blocking** of `git reset` and `git clean`
 **ALLOWS** all other git commands:
 - `git add`, `git commit`, `git push`, `git pull`, `git checkout`, etc.
 
-## 🛠️ INSTALLATION (Administrator Required)
+## [TRANSPORT]️ INSTALLATION (Administrator Required)
 
 ### Step 1: Install System Blocker
 ```cmd
@@ -33,43 +33,43 @@ install-system-git-blocker.bat
 test-system-blocking.bat
 ```
 
-## 🔍 HOW IT WORKS
+## [SEARCH] HOW IT WORKS
 
 1. **PATH Manipulation**: Our `git.bat` is placed before system git in PATH
 2. **Command Interception**: All git commands go through our wrapper first
 3. **Pattern Matching**: Dangerous commands are detected and blocked
 4. **Error Messages**: Clear explanations why commands are blocked
 
-## 📋 PROTECTION LEVELS
+## [SYMBOL] PROTECTION LEVELS
 
 ### System Level (This Installation)
-- OK Blocks at OS level
-- OK Works in all programs (VS Code, Git Bash, CMD, PowerShell)
-- OK Survives reboots
-- OK Administrator-only uninstall
+- [OK] Blocks at OS level
+- [OK] Works in all programs (VS Code, Git Bash, CMD, PowerShell)
+- [OK] Survives reboots
+- [OK] Administrator-only uninstall
 
 ### Project Level (Git Hooks)
-- OK Blocks in commits
-- OK Educational messages
-- OK Safe alternatives suggested
+- [OK] Blocks in commits
+- [OK] Educational messages
+- [OK] Safe alternatives suggested
 
-## 🚫 BLOCKED COMMANDS EXAMPLES
+## [FORBIDDEN] BLOCKED COMMANDS EXAMPLES
 
 ```cmd
-git reset --hard    ❌ BLOCKED
-git reset HEAD~1    ❌ BLOCKED
-git clean -fd       ❌ BLOCKED
-git clean -n        ❌ BLOCKED
+git reset --hard    [ERROR] BLOCKED
+git reset HEAD~1    [ERROR] BLOCKED
+git clean -fd       [ERROR] BLOCKED
+git clean -n        [ERROR] BLOCKED
 ```
 
 ```cmd
-git add .           OK WORKS
-git commit -m "msg" OK WORKS
-git push            OK WORKS
-git status          OK WORKS
+git add .           [OK] WORKS
+git commit -m "msg" [OK] WORKS
+git push            [OK] WORKS
+git status          [OK] WORKS
 ```
 
-## 🔧 UNINSTALLATION (Emergency Only)
+## [SYMBOL] UNINSTALLATION (Emergency Only)
 
 ```cmd
 # Run as Administrator
@@ -78,7 +78,7 @@ uninstall-system-git-blocker.bat
 
 **WARNING**: This removes ALL protection. Use only if absolutely necessary.
 
-## 🎯 RESULT
+## [TARGET] RESULT
 
 **GUARANTEED**: `git reset` and `git clean` commands can NEVER execute on this system.
 
@@ -86,7 +86,7 @@ uninstall-system-git-blocker.bat
 
 **COMPLETE**: No bypasses, no exceptions, no workarounds.
 
-## 📞 SUPPORT
+## [SYMBOL] SUPPORT
 
 If blocking doesn't work:
 1. Run `install-system-git-blocker.bat` as Administrator again
@@ -94,7 +94,7 @@ If blocking doesn't work:
 3. Test with `test-system-blocking.bat`
 4. Check PATH order: `C:\git-system-wrapper` should be first
 
-## ⚡ IMMEDIATE ACTION REQUIRED
+## [FAST] IMMEDIATE ACTION REQUIRED
 
 To activate protection NOW:
 1. Right-click `install-system-git-blocker.bat`

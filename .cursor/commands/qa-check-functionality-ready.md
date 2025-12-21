@@ -4,8 +4,8 @@ Check if functionality is ready for QA.
 
 ## Check
 
-- [ ] Agent = `QA`, Status = `Todo` или `In Progress`
-- [ ] Backend ready (from Backend Developer)
+— [ ] Agent = `QA`, Status = `Todo` или `In Progress`
+— [ ] Backend ready (from Backend Developer)
 - [ ] Client ready (from UE5 Developer, if applicable)
 - [ ] Content imported to DB (if content quest) - check via API `GET /api/v1/gameplay/quests/{quest_id}` or SQL query
 
@@ -13,21 +13,21 @@ Check if functionality is ready for QA.
 
 **Content quest (NOT imported to DB):**
 
-- ❌ Return to Backend: Status `Returned`, Agent `Backend`
-- Комментарий: "WARNING Quest not imported to DB. Backend must import first. Issue: #{number}"
+- [ERROR] Return to Backend: Status `Returned`, Agent `Backend`
+- Комментарий: "[WARNING] Quest not imported to DB. Backend must import first. Issue: #{number}"
 
 **Backend bugs:**
 
-- ❌ Return to Backend: Status `Returned`, Agent `Backend`
+- [ERROR] Return to Backend: Status `Returned`, Agent `Backend`
 
 **Client bugs:**
 
-- ❌ Return to UE5: Status `Returned`, Agent `UE5`
+- [ERROR] Return to UE5: Status `Returned`, Agent `UE5`
 
 **Result:**
 
-- OK Ready → can start QA
-- ❌ Not ready → return to determined agent, update Status/Agent accordingly
+- [OK] Ready → can start QA
+- [ERROR] Not ready → return to determined agent, update Status/Agent accordingly
 
 **Update fields (if returning):**
 

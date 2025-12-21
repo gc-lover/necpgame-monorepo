@@ -1,10 +1,10 @@
-# Backend Check OpenAPI - Validation Command
+# Backend Check OpenAPI — Validation Command
 
 # Issue: #1878
 
 **Purpose:** Validate OpenAPI specifications before backend development to ensure:
 
-- Schema compliance and required fields
+— Schema compliance and required fields
 - Security definitions completeness
 - ogen compatibility for code generation
 - Project standards adherence
@@ -29,7 +29,7 @@
 ```bash
 # Check OpenAPI compliance with Spectral
 if ! command -v spectral >/dev/null 2>&1; then
-    echo "❌ ERROR: spectral CLI not found"
+    echo "[ERROR] ERROR: spectral CLI not found"
     echo "Install with: npm install -g @stoplight/spectral-cli"
     exit 1
 fi
@@ -43,30 +43,30 @@ spectral lint "$spec_file" --ruleset .spectral.yaml
 ```bash
 # Check if ogen can generate code from spec
 if command -v ogen >/dev/null 2>&1; then
-    echo "🔧 Checking ogen compatibility..."
+    echo "[SYMBOL] Checking ogen compatibility..."
     if ! ogen validate "$spec_file"; then
-        echo "❌ ERROR: ogen validation failed"
+        echo "[ERROR] ERROR: ogen validation failed"
         echo "Fix OpenAPI spec for ogen compatibility"
         exit 1
     fi
 else
-    echo "WARNING WARNING: ogen not installed, skipping compatibility check"
+    echo "[WARNING] WARNING: ogen not installed, skipping compatibility check"
 fi
 ```
 
 ### 3. Schema Validation
 
-- OK Required fields present (title, version, paths)
-- OK Security schemes defined
-- OK Response schemas complete
-- OK Parameter definitions valid
+- [OK] Required fields present (title, version, paths)
+- [OK] Security schemes defined
+- [OK] Response schemas complete
+- [OK] Parameter definitions valid
 
 ### 4. Project Standards Check
 
-- OK File size <1000 lines (or properly modularized)
-- OK Consistent naming conventions
-- OK Error response schemas standardized
-- OK Pagination patterns followed
+- [OK] File size <1000 lines (or properly modularized)
+- [OK] Consistent naming conventions
+- [OK] Error response schemas standardized
+- [OK] Pagination patterns followed
 
 ## Implementation Script
 
@@ -81,7 +81,7 @@ set -e
 
 SPEC_PATH=${1:-"proto/openapi"}
 
-echo "🔍 Validating OpenAPI specifications..."
+echo "[SEARCH] Validating OpenAPI specifications..."
 echo "=========================================="
 echo ""
 
@@ -95,7 +95,7 @@ find_openapi_files() {
     elif [ -d "$SPEC_PATH" ]; then
         find "$SPEC_PATH" -name "*.yaml" -o -name "*.yml" | sort
     else
-        echo "❌ ERROR: Path not found: $SPEC_PATH"
+        echo "[ERROR] ERROR: Path not found: $SPEC_PATH"
         exit 1
     fi
 }
@@ -103,45 +103,45 @@ find_openapi_files() {
 # Validate single OpenAPI file
 validate_openapi_file() {
     local file="$1"
-    echo "📋 Validating: $file"
+    echo "[SYMBOL] Validating: $file"
 
     # Check file size
     local lines=$(wc -l < "$file")
     if [ "$lines" -gt 500 ]; then
-        echo "WARNING  WARNING: Spec exceeds 1000 lines ($lines lines)"
+        echo "[WARNING]  WARNING: Spec exceeds 1000 lines ($lines lines)"
         echo "   Consider splitting into modules"
         WARNINGS=$((WARNINGS + 1))
     fi
 
     # Spectral validation
     if command -v spectral >/dev/null 2>&1; then
-        echo "  🔍 Running Spectral validation..."
+        echo "  [SEARCH] Running Spectral validation..."
         if ! spectral lint "$file" --ruleset .spectral.yaml 2>/dev/null; then
-            echo "❌ ERROR: Spectral validation failed"
+            echo "[ERROR] ERROR: Spectral validation failed"
             spectral lint "$file" --ruleset .spectral.yaml || true
             ERRORS=$((ERRORS + 1))
             return 1
         fi
     else
-        echo "WARNING  WARNING: Spectral not installed, skipping validation"
+        echo "[WARNING]  WARNING: Spectral not installed, skipping validation"
         WARNINGS=$((WARNINGS + 1))
     fi
 
     # ogen compatibility check
     if command -v ogen >/dev/null 2>&1; then
-        echo "  🔧 Checking ogen compatibility..."
+        echo "  [SYMBOL] Checking ogen compatibility..."
         if ! ogen validate "$file" 2>/dev/null; then
-            echo "❌ ERROR: ogen validation failed"
+            echo "[ERROR] ERROR: ogen validation failed"
             ogen validate "$file" || true
             ERRORS=$((ERRORS + 1))
             return 1
         fi
     else
-        echo "WARNING  WARNING: ogen not installed, skipping compatibility check"
+        echo "[WARNING]  WARNING: ogen not installed, skipping compatibility check"
         WARNINGS=$((WARNINGS + 1))
     fi
 
-    echo "OK $file validation passed"
+    echo "[OK] $file validation passed"
     echo ""
 }
 
@@ -154,15 +154,15 @@ done
 
 # Summary
 echo "=========================================="
-echo "📊 VALIDATION SUMMARY"
+echo "[SYMBOL] VALIDATION SUMMARY"
 echo "=========================================="
 echo ""
-echo "❌ Errors: $ERRORS"
-echo "WARNING  Warnings: $WARNINGS"
+echo "[ERROR] Errors: $ERRORS"
+echo "[WARNING]  Warnings: $WARNINGS"
 echo ""
 
 if [ "$ERRORS" -gt 0 ]; then
-    echo "❌ VALIDATION FAILED"
+    echo "[ERROR] VALIDATION FAILED"
     echo ""
     echo "Fix errors before proceeding with backend development:"
     echo "- Install spectral: npm install -g @stoplight/spectral-cli"
@@ -171,12 +171,12 @@ if [ "$ERRORS" -gt 0 ]; then
     echo ""
     exit 1
 elif [ "$WARNINGS" -gt 0 ]; then
-    echo "WARNING  VALIDATION PASSED with warnings"
+    echo "[WARNING]  VALIDATION PASSED with warnings"
     echo ""
     echo "Consider addressing warnings for better code generation"
     exit 0
 else
-    echo "OK VALIDATION PASSED"
+    echo "[OK] VALIDATION PASSED"
     echo ""
     echo "OpenAPI specs ready for backend development!"
     exit 0
@@ -244,9 +244,9 @@ rules:
 
 # Validate OpenAPI specs before commit
 if git diff --cached --name-only | grep -q "proto/openapi/"; then
-    echo "🔍 Validating OpenAPI specs..."
+    echo "[SEARCH] Validating OpenAPI specs..."
     if ! ./scripts/backend-check-openapi.sh; then
-        echo "❌ OpenAPI validation failed. Fix issues before commit."
+        echo "[ERROR] OpenAPI validation failed. Fix issues before commit."
         exit 1
     fi
 fi
@@ -311,20 +311,20 @@ jobs:
 
 ## Success Criteria
 
-OK **All validations pass:**
+[OK] **All validations pass:**
 
 - Spectral linting successful
 - ogen compatibility confirmed
 - Project standards met
 - No blocking errors
 
-WARNING **Warnings acceptable:**
+[WARNING] **Warnings acceptable:**
 
 - Missing optional tools (spectral/ogen)
 - File size warnings (<1000 lines)
 - Minor style issues
 
-❌ **Blocking errors:**
+[ERROR] **Blocking errors:**
 
 - Invalid OpenAPI syntax
 - ogen incompatibility

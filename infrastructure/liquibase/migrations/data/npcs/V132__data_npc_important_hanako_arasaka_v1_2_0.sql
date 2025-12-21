@@ -2,7 +2,7 @@
 -- Import NPC from: important\hanako-arasaka.yaml
 -- Version: 1.2.0
 -- Generated: 2025-12-21T02:15:38.514214
--- WARNING  WARNING: Requires 'npc_definitions' table (create via Database agent)
+-- [WARNING]  WARNING: Requires 'npc_definitions' table (create via Database agent)
 
 BEGIN;
 

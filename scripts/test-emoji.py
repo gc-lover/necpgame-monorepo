@@ -1,1 +1,1 @@
-# Test script with emoji 🚀
+# Test script with emoji [ROCKET]

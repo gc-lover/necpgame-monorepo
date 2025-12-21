@@ -4,7 +4,7 @@
 $migrationsDir = "infrastructure/liquibase/migrations/data"
 $changelogFile = "infrastructure/liquibase/changelog-content.yaml"
 
-Write-Host "📝 Generating content migrations changelog..." -ForegroundColor Cyan
+Write-Host "[NOTE] Generating content migrations changelog..." -ForegroundColor Cyan
 
 # Find all content migration files
 $questFiles = Get-ChildItem -Path "$migrationsDir/quests" -Filter "*.sql" -Recurse | Sort-Object Name
@@ -58,10 +58,10 @@ if ($dialogueFiles.Count -gt 0) {
 $yamlContent = $yamlLines -join "`n"
 $yamlContent | Out-File -FilePath $changelogFile -Encoding UTF8 -NoNewline
 
-Write-Host "OK Generated: $changelogFile" -ForegroundColor Green
+Write-Host "[OK] Generated: $changelogFile" -ForegroundColor Green
 Write-Host "   Total migrations: $($questFiles.Count + $npcFiles.Count + $dialogueFiles.Count)" -ForegroundColor Gray
 Write-Host ""
-Write-Host "💡 Add to main changelog.yaml:" -ForegroundColor Yellow
+Write-Host "[IDEA] Add to main changelog.yaml:" -ForegroundColor Yellow
 Write-Host "   - include:" -ForegroundColor Gray
 Write-Host "       file: changelog-content.yaml" -ForegroundColor Gray
 

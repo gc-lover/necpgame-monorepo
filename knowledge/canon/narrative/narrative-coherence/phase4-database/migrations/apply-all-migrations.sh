@@ -27,9 +27,9 @@ apply_migration() {
     echo "Applying: $file"
     PGPASSWORD=$DB_PASSWORD psql -h $DB_HOST -p $DB_PORT -U $DB_USER -d $DB_NAME -f "$file"
     if [ $? -eq 0 ]; then
-        echo "OK Success: $file"
+        echo "[OK] Success: $file"
     else
-        echo "❌ Failed: $file"
+        echo "[ERROR] Failed: $file"
         exit 1
     fi
 }
@@ -57,7 +57,7 @@ apply_migration "005-create-world-state-system.sql"
 
 echo ""
 echo "========================================="
-echo "OK ALL MIGRATIONS APPLIED SUCCESSFULLY!"
+echo "[OK] ALL MIGRATIONS APPLIED SUCCESSFULLY!"
 echo "========================================="
 echo ""
 echo "Next steps:"

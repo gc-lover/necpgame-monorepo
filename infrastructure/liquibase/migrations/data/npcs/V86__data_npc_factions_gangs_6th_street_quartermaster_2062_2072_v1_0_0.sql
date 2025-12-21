@@ -2,7 +2,7 @@
 -- Import NPC from: factions\gangs\6th-street\quartermaster-2062-2072.yaml
 -- Version: 1.0.0
 -- Generated: 2025-12-21T02:15:38.234291
--- WARNING  WARNING: Requires 'npc_definitions' table (create via Database agent)
+-- [WARNING]  WARNING: Requires 'npc_definitions' table (create via Database agent)
 
 BEGIN;
 

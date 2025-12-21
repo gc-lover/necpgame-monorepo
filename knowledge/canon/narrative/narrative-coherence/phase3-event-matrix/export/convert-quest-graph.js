@@ -161,7 +161,7 @@ function main() {
         console.log(`\nConverting: ${path.basename(fileInfo.input)}`);
         
         if (!fs.existsSync(fileInfo.input)) {
-            console.log(`  WARNING  File not found: ${fileInfo.input}`);
+            console.log(`  [WARNING]  File not found: ${fileInfo.input}`);
             return;
         }
         
@@ -180,15 +180,15 @@ function main() {
             );
             
             const stats = fs.statSync(fileInfo.output);
-            console.log(`  OK Saved: ${path.basename(fileInfo.output)}`);
+            console.log(`  [OK] Saved: ${path.basename(fileInfo.output)}`);
             console.log(`     Size: ${stats.size} bytes`);
         } catch (error) {
-            console.log(`  ❌ Error: ${error.message}`);
+            console.log(`  [ERROR] Error: ${error.message}`);
         }
     });
     
     console.log('\n' + '='.repeat(50));
-    console.log('OK CONVERSION COMPLETED!');
+    console.log('[OK] CONVERSION COMPLETED!');
     console.log('='.repeat(50));
     console.log(`\nOutput directory: ${exportDir}`);
     console.log('\nGenerated files:');

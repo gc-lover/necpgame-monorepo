@@ -1,23 +1,23 @@
-# Content Workflow - Единый Guide
+# Content Workflow — Единый Guide
 
 **Единый документ для контентного workflow (квесты, лор, NPC, диалоги)**
 
-## 🚫 ЗАПРЕТ ЭМОДЗИ И СПЕЦСИМВОЛОВ
+## [FORBIDDEN] EMOJI AND SPECIAL CHARACTERS ЗАПРЕТ
 
 **КРИТИЧНО:** Запрещено использовать эмодзи и специальные Unicode символы в коде!
 
 ### Почему запрещено:
-- 🚫 Ломают выполнение скриптов на Windows
-- 🚫 Могут вызывать ошибки в терминале
-- 🚫 Создают проблемы с кодировкой
-- 🚫 Нарушают совместимость между ОС
+— [FORBIDDEN] Ломают выполнение скриптов на Windows
+- [FORBIDDEN] Могут вызывать ошибки в терминале
+- [FORBIDDEN] Создают проблемы с кодировкой
+- [FORBIDDEN] Нарушают совместимость между ОС
 
-### Что использовать вместо:
-- OK `:smile:` вместо 😀
-- OK `[FORBIDDEN]` вместо 🚫
-- OK `[OK]` вместо OK
-- OK `[ERROR]` вместо ❌
-- OK `[WARNING]` вместо WARNING
+### Что use вместо:
+- [OK] `:smile:` вместо [EMOJI]
+- [OK] `[FORBIDDEN]` вместо [FORBIDDEN]
+- [OK] `[OK]` вместо [OK]
+- [OK] `[ERROR]` вместо [ERROR]
+- [OK] `[WARNING]` вместо [WARNING]
 
 ### Автоматическая проверка:
 - Pre-commit hooks блокируют коммиты с эмодзи
@@ -62,7 +62,7 @@ Backend
 **Комментарий:**
 
 ```markdown
-OK Quest YAML ready. For Backend import to DB.
+[OK] Quest YAML ready. For Backend import to DB.
 Issue: #{number}
 ```
 
@@ -112,7 +112,7 @@ Issue: #{number}
 **Комментарий (для Database):**
 
 ```markdown
-OK Content migrations generated. Ready for Database agent.
+[OK] Content migrations generated. Ready for Database agent.
 Quest migrations: {count} files
 Issue: #{number}
 ```
@@ -128,7 +128,7 @@ Issue: #{number}
 **Комментарий:**
 
 ```markdown
-OK Content quests migrations applied. {count} quests imported.
+[OK] Content quests migrations applied. {count} quests imported.
 Migrations: V*__data_quest_*.sql
 Issue: #{number}
 ```
@@ -146,7 +146,7 @@ Issue: #{number}
 **Комментарий:**
 
 ```markdown
-OK Testing complete. Ready for release.
+[OK] Testing complete. Ready for release.
 Issue: #{number}
 ```
 

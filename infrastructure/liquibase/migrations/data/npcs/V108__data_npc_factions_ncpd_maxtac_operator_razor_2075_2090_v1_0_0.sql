@@ -2,7 +2,7 @@
 -- Import NPC from: factions\ncpd\maxtac\operator-razor-2075-2090.yaml
 -- Version: 1.0.0
 -- Generated: 2025-12-21T02:15:38.352491
--- WARNING  WARNING: Requires 'npc_definitions' table (create via Database agent)
+-- [WARNING]  WARNING: Requires 'npc_definitions' table (create via Database agent)
 
 BEGIN;
 

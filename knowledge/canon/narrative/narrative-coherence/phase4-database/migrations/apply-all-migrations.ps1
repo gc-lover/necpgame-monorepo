@@ -30,9 +30,9 @@ function Apply-Migration {
     psql -h $DB_HOST -p $DB_PORT -U $DB_USER -d $DB_NAME -f $File
     
     if ($LASTEXITCODE -eq 0) {
-        Write-Host "OK Success: $File" -ForegroundColor Green
+        Write-Host "[OK] Success: $File" -ForegroundColor Green
     } else {
-        Write-Host "❌ Failed: $File" -ForegroundColor Red
+        Write-Host "[ERROR] Failed: $File" -ForegroundColor Red
         exit 1
     }
 }
@@ -60,7 +60,7 @@ Apply-Migration "005-create-world-state-system.sql"
 
 Write-Host ""
 Write-Host "=========================================" -ForegroundColor Green
-Write-Host "OK ALL MIGRATIONS APPLIED SUCCESSFULLY!" -ForegroundColor Green
+Write-Host "[OK] ALL MIGRATIONS APPLIED SUCCESSFULLY!" -ForegroundColor Green
 Write-Host "=========================================" -ForegroundColor Green
 Write-Host ""
 Write-Host "Next steps:"

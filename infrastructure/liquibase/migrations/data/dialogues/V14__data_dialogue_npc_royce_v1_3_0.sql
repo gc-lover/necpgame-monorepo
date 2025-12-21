@@ -2,7 +2,7 @@
 -- Import dialogue from: npc-royce.yaml
 -- Version: 1.3.0
 -- Generated: 2025-12-21T02:15:39.011705
--- WARNING  WARNING: Requires 'dialogue_nodes' table (create via Database agent)
+-- [WARNING]  WARNING: Requires 'dialogue_nodes' table (create via Database agent)
 
 BEGIN;
 

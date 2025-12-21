@@ -408,12 +408,12 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ## Соответствие архитектуре
 
 Схема БД полностью соответствует архитектуре из `knowledge/implementation/architecture/loot-system-architecture.yaml`:
-- OK Все таблицы из архитектуры созданы
-- OK Все поля соответствуют описанию
-- OK Индексы оптимизированы для частых запросов
-- OK Constraints обеспечивают целостность данных
-- OK Foreign Keys настроены с CASCADE/SET NULL для автоматической очистки
-- OK Интеграция с существующими таблицами (characters, parties)
+- [OK] Все таблицы из архитектуры созданы
+- [OK] Все поля соответствуют описанию
+- [OK] Индексы оптимизированы для частых запросов
+- [OK] Constraints обеспечивают целостность данных
+- [OK] Foreign Keys настроены с CASCADE/SET NULL для автоматической очистки
+- [OK] Интеграция с существующими таблицами (characters, parties)
 
 ## Особенности реализации
 

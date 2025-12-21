@@ -318,12 +318,12 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ## Соответствие архитектуре
 
 Схема БД полностью соответствует архитектуре из `knowledge/implementation/architecture/economy-logistics-system-architecture.yaml`:
-- OK Все таблицы из архитектуры созданы
-- OK Все поля соответствуют описанию
-- OK Индексы оптимизированы для частых запросов
-- OK Foreign Keys настроены с CASCADE для автоматической очистки
-- OK ENUM типы соответствуют архитектуре
-- OK Использован PostGIS для геопозиций (POINT, GIST индексы)
+- [OK] Все таблицы из архитектуры созданы
+- [OK] Все поля соответствуют описанию
+- [OK] Индексы оптимизированы для частых запросов
+- [OK] Foreign Keys настроены с CASCADE для автоматической очистки
+- [OK] ENUM типы соответствуют архитектуре
+- [OK] Использован PostGIS для геопозиций (POINT, GIST индексы)
 
 ## Особенности реализации
 

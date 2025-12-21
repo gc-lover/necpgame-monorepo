@@ -321,14 +321,14 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ## Соответствие архитектуре
 
 Схема БД полностью соответствует архитектуре из `knowledge/implementation/architecture/voice-lobby-database.yaml`:
-- OK Голосовые лобби (5 типов: activity, clan, guild, raid, tournament)
-- OK Участники лобби с ролями и настройками
-- OK Подканалы лобби (4 типа: main, role_based, commander, party)
-- OK Поиск групп (Party Finder)
-- OK Телеметрия лобби
-- OK Индексы оптимизированы для частых запросов
-- OK CHECK constraints обеспечивают валидацию данных
-- OK ENUM типы соответствуют архитектуре
+- [OK] Голосовые лобби (5 типов: activity, clan, guild, raid, tournament)
+- [OK] Участники лобби с ролями и настройками
+- [OK] Подканалы лобби (4 типа: main, role_based, commander, party)
+- [OK] Поиск групп (Party Finder)
+- [OK] Телеметрия лобби
+- [OK] Индексы оптимизированы для частых запросов
+- [OK] CHECK constraints обеспечивают валидацию данных
+- [OK] ENUM типы соответствуют архитектуре
 
 ## Особенности реализации
 

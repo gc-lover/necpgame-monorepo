@@ -2,7 +2,7 @@
 -- Import NPC from: factions\gangs\valentinos\jefe-valentinos-2060-2070.yaml
 -- Version: 1.0.0
 -- Generated: 2025-12-21T02:15:38.307692
--- WARNING  WARNING: Requires 'npc_definitions' table (create via Database agent)
+-- [WARNING]  WARNING: Requires 'npc_definitions' table (create via Database agent)
 
 BEGIN;
 

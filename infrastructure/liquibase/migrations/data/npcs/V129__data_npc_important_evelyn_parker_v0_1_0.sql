@@ -2,7 +2,7 @@
 -- Import NPC from: important\evelyn-parker.yaml
 -- Version: 0.1.0
 -- Generated: 2025-12-21T02:15:38.492519
--- WARNING  WARNING: Requires 'npc_definitions' table (create via Database agent)
+-- [WARNING]  WARNING: Requires 'npc_definitions' table (create via Database agent)
 
 BEGIN;
 

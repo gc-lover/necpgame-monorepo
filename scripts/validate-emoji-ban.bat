@@ -11,7 +11,7 @@ echo [CHECK] Checking for forbidden emoji and special characters...
 
 REM Forbidden Unicode characters (basic check for common emoji)
 REM This is a simplified version for Windows CMD
-set "FORBIDDEN_CHARS=★ ♦ ♠ ♥ ♣ ► ◄ ▲ ▼ ◆ ◇ ✓ ✗ ✖ ✕ ● ○ ■ □ ▶ ◀"
+set "FORBIDDEN_CHARS=[SYMBOL] [SYMBOL] [SYMBOL] [SYMBOL] [SYMBOL] ► ◄ ▲ ▼ ◆ ◇ [OK] [ERROR] [DINGBAT] [DINGBAT] ● ○ ■ □ ▶ ◀"
 
 REM Files to exclude from checking
 set "EXCLUDED_EXTENSIONS=.png .jpg .jpeg .gif .svg .ico .woff .woff2 .ttf .eot .pdf .zip .tar .gz .7z .rar .mp3 .mp4 .avi .mkv .mov .wmv"

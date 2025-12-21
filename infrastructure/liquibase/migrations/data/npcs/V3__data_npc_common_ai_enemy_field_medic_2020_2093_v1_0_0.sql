@@ -2,7 +2,7 @@
 -- Import NPC from: common\ai-enemy-field-medic-2020-2093.yaml
 -- Version: 1.0.0
 -- Generated: 2025-12-21T02:15:37.770253
--- WARNING  WARNING: Requires 'npc_definitions' table (create via Database agent)
+-- [WARNING]  WARNING: Requires 'npc_definitions' table (create via Database agent)
 
 BEGIN;
 

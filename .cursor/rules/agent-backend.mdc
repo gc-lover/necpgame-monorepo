@@ -1,4 +1,4 @@
----
+——-
 description: "Backend Developer rules for Go services, OpenAPI code generation, database setup, business logic. Auto-applies to Go files and OpenAPI specs."
 globs: ["**/*.go", "**/Makefile", "**/go.mod", "**/go.sum", "**/openapi*.yaml", "services/**/pkg/**", "services/**/server/**"]
 priority: 1
@@ -7,7 +7,7 @@ tags: ["backend", "go", "api", "database"]
 
 # Backend Developer Agent Rules
 
-## 🚀 Быстрый старт
+## [ROCKET] Быстрый старт
 
 **Новичок?** `.cursor/AGENT_SIMPLE_GUIDE.md` - алгоритм в 4 шага!
 
@@ -30,7 +30,7 @@ Backend Developer реализует Go сервисы по OpenAPI специф
 npx --yes @redocly/cli bundle proto/openapi/{domain}/main.yaml -o openapi-bundled.yaml
 ogen --target pkg/api --package api --clean openapi-bundled.yaml
 
-# Примеры enterprise-grade доменов:
+# Examples enterprise-grade доменов:
 # proto/openapi/system-domain/main.yaml      (553 файла, инфраструктура)
 # proto/openapi/specialized-domain/main.yaml (157 файлов, игровые механики)
 # proto/openapi/social-domain/main.yaml      (91 файл, социальные функции)
@@ -95,7 +95,7 @@ ogen --target pkg/api --package api --clean openapi-bundled.yaml
 
 ## Workflow
 
-### 🔄 Простой алгоритм
+### [SYMBOL] Простой алгоритм
 
 1. **НАЙТИ:** `Agent:"Backend" Status:"Todo"`
 2. **ВЗЯТЬ:** Status → `In Progress` (`83d488e7`), Agent → `Backend` (`1fc13998`)
@@ -104,7 +104,7 @@ ogen --target pkg/api --package api --clean openapi-bundled.yaml
 
 **Детали:** `.cursor/AGENT_SIMPLE_GUIDE.md`, `.cursor/GITHUB_PROJECT_CONFIG.md`
 
-## ⚡ Валидация (ОБЯЗАТЕЛЬНО!)
+## [FAST] Валидация (ОБЯЗАТЕЛЬНО!)
 
 ### ПЕРЕД началом:
 ```bash
@@ -129,7 +129,7 @@ go build ./... && go test ./...
 /backend-validate-optimizations #123  # BLOCKER если failed!
 ```
 
-## WARNING Protocol Selection (CRITICAL!)
+## [WARNING] Protocol Selection (КРИТИЧНО!)
 
 **ЧИТАЙ ОБЯЗАТЕЛЬНО:** `.cursor/PROTOCOL_SELECTION_GUIDE.md`
 
@@ -146,16 +146,16 @@ go build ./... && go test ./...
 - **Gains:** 2.5x faster, 50% smaller, но сложнее debugging
 
 **Статус генераторов**
-- OK **НОВЫЕ REST сервисы** → `ogen` (90% faster!)
-- ⚡ **Real-time game state** → `protobuf` (см. guide)
-- 🔄 **Existing oapi-codegen** → Мигрируй на `ogen` (#1590)
-- ❌ **oapi-codegen для новых** → ЗАПРЕЩЕН
+- [OK] **НОВЫЕ REST сервисы** → `ogen` (90% faster!)
+- [FAST] **Real-time game state** → `protobuf` (см. guide)
+- [SYMBOL] **Existing oapi-codegen** → Мигрируй на `ogen` (#1590)
+- [ERROR] **oapi-codegen для новых** → ЗАПРЕЩЕН
 
 **Миграция:** `.cursor/ogen/README.md` и `.cursor/ogen/02-MIGRATION-STEPS.md` ⬅️ **Полная инструкция!**
 
-## 📦 Генерация кода
+## [SYMBOL] Генерация кода
 
-### ⚡ ogen (JSON REST) - ОБЯЗАТЕЛЬНО для enterprise-grade доменов
+### [FAST] ogen (JSON REST) - ОБЯЗАТЕЛЬНО для enterprise-grade доменов
 
 ```makefile
 # Новая генерация из доменов
@@ -163,7 +163,7 @@ generate-api:
 	npx --yes @redocly/cli bundle ../../proto/openapi/$(DOMAIN)-domain/main.yaml -o openapi-bundled.yaml
 	ogen --target pkg/api --package api --clean openapi-bundled.yaml
 
-# Примеры использования:
+# Examples использования:
 # make generate-api DOMAIN=system      # system-domain (553 файла)
 # make generate-api DOMAIN=specialized # specialized-domain (157 файлов)
 # make generate-api DOMAIN=social      # social-domain (91 файл)
@@ -175,15 +175,15 @@ generate-api:
 
 **Gains:** 90% faster, typed responses, no interface{} boxing
 
-**Когда использовать:**
-- OK REST API (matchmaking, inventory, profiles)
-- OK <1000 RPS
-- OK Latency >10ms acceptable
-- OK Need debugging/Swagger
+**Когда use:**
+- [OK] REST API (matchmaking, inventory, profiles)
+- [OK] <1000 RPS
+- [OK] Latency >10ms acceptable
+- [OK] Need debugging/Swagger
 
 **Гайд:** `.cursor/OGEN_MIGRATION_GUIDE.md`
 
-### ⚡ protobuf (Binary) - ТОЛЬКО для real-time game state
+### [FAST] protobuf (Binary) - ТОЛЬКО для real-time game state
 
 ```makefile
 generate-proto:
@@ -194,21 +194,21 @@ generate-proto:
 
 **Gains:** 2.5x faster encoding, 7.5x faster decoding, 50% smaller
 
-**Когда использовать:**
-- ⚡ Real-time game state (position, shooting) >1000 RPS
-- ⚡ Voice chat metadata
-- ⚡ Zone sync (internal microservices)
-- ⚡ ТОЛЬКО если в списке `.cursor/PROTOCOL_SELECTION_GUIDE.md`
+**Когда use:**
+- [FAST] Real-time game state (position, shooting) >1000 RPS
+- [FAST] Voice chat metadata
+- [FAST] Zone sync (internal microservices)
+- [FAST] ТОЛЬКО если в списке `.cursor/PROTOCOL_SELECTION_GUIDE.md`
 
 **НЕ используй protobuf для:**
-- ❌ Admin panel (debugging nightmare)
-- ❌ Public API (integration barrier)
-- ❌ Low traffic (<100 RPS)
-- ❌ Web browser clients
+- [ERROR] Admin panel (debugging nightmare)
+- [ERROR] Public API (integration barrier)
+- [ERROR] Low traffic (<100 RPS)
+- [ERROR] Web browser clients
 
 **Шаблон:** `.cursor/ogen/02-MIGRATION-STEPS.md` (Makefile template)
 
-## 🏗️ Структура сервиса (SOLID)
+## [BUILDING] Структура сервиса (SOLID)
 
 ```
 services/{service}-go/
@@ -227,13 +227,13 @@ services/{service}-go/
 
 **SOLID:** Каждый файл = одна ответственность, max 1000 строк
 
-## ⚡ Performance (ОБЯЗАТЕЛЬНО!)
+## [FAST] Performance (ОБЯЗАТЕЛЬНО!)
 
 ### BLOCKER (без этого НЕЛЬЗЯ передавать):
-- ❌ No context timeouts → FIX!
-- ❌ No DB pool config → FIX!
-- ❌ Goroutine leaks → FIX!
-- ❌ No struct alignment → FIX!
+- [ERROR] No context timeouts → FIX!
+- [ERROR] No DB pool config → FIX!
+- [ERROR] Goroutine leaks → FIX!
+- [ERROR] No struct alignment → FIX!
 
 ### Уровень 1: Базовые (ВСЕ сервисы)
 - Context timeouts
@@ -355,7 +355,7 @@ services/{service}-go/
 #### Если таблиц НЕТ:
 1. **Создай Issue для Database:** "Create migration for `gameplay.quest_definitions` table"
 2. **Текущую задачу:** Status `Blocked`, Agent `Backend`
-3. **Комментарий:** "WARNING Blocked: Tables missing. Waiting for Database migration. Related Issue: #{db_issue_number}"
+3. **Комментарий:** "[WARNING] Blocked: Tables missing. Waiting for Database migration. Related Issue: #{db_issue_number}"
 4. **После создания таблиц:** Database разблокирует задачу, вернись к импорту
 
 #### Если таблицы ЕСТЬ:
@@ -371,7 +371,7 @@ services/{service}-go/
 
 **Комментарий:**
 ```markdown
-OK Quest imported to DB via API. Ready for QA testing.
+[OK] Quest imported to DB via API. Ready for QA testing.
 Quest ID: {quest_id}
 Issue: #{number}
 ```
@@ -386,7 +386,7 @@ Issue: #{number}
 
 **Комментарий:**
 ```markdown
-OK Content migrations generated. Ready for Database agent.
+[OK] Content migrations generated. Ready for Database agent.
 Quest migrations: {count} files
 Issue: #{number}
 ```
@@ -411,7 +411,7 @@ Issue: #{number}
 #### Если таблиц НЕТ:
 1. **Создай Issue для Database:** "Create migration for `narrative.npc_definitions` and `narrative.dialogue_nodes` tables"
 2. **Текущую задачу:** Status `Blocked`, Agent `Backend`
-3. **Комментарий:** "WARNING Blocked: Tables missing. Waiting for Database migration. Related Issue: #{db_issue_number}"
+3. **Комментарий:** "[WARNING] Blocked: Tables missing. Waiting for Database migration. Related Issue: #{db_issue_number}"
 4. **После создания таблиц:** Database разблокирует задачу, вернись к генерации
 
 #### Если таблицы ЕСТЬ:
@@ -428,7 +428,7 @@ Issue: #{number}
 
 **Комментарий:**
 ```markdown
-OK NPC/Dialogue migrations generated. Ready for Database agent.
+[OK] NPC/Dialogue migrations generated. Ready for Database agent.
 NPC migrations: {count} files
 Dialogue migrations: {count} files
 Issue: #{number}
@@ -518,7 +518,7 @@ Issue: #{number}
 
 **System Services:**
 ```markdown
-OK Backend ready. Handed off to Network
+[OK] Backend ready. Handed off to Network
 
 **Optimizations Applied:**
 - [x] Context timeouts on all operations
@@ -527,10 +527,10 @@ OK Backend ready. Handed off to Network
 - [x] Zero allocations validated
 
 **Performance Results:**
-- P99 Latency: 12.5ms (target: <50ms) OK
-- Memory Allocs: 0 allocs/op (hot path) OK
-- Throughput: 8,500 req/sec OK
-- Goroutine Leaks: None OK
+- P99 Latency: 12.5ms (target: <50ms) [OK]
+- Memory Allocs: 0 allocs/op (hot path) [OK]
+- Throughput: 8,500 req/sec [OK]
+- Goroutine Leaks: None [OK]
 
 **API Endpoints:** Ready for network optimization
 **Security:** Input validation implemented
@@ -541,7 +541,7 @@ Issue: #123
 
 **Content Services:**
 ```markdown
-OK Backend ready. Handed off to QA
+[OK] Backend ready. Handed off to QA
 
 **Content Imported:**
 - Quests: {count} records in gameplay.quest_definitions
@@ -563,16 +563,16 @@ Issue: #123
 ### Blocking Conditions
 
 **НЕ передавай если:**
-- ❌ `/backend-validate-optimizations` fails
-- ❌ Goroutine leaks detected
-- ❌ Performance targets not met (MMOFPS)
-- ❌ Security vulnerabilities present
-- ❌ API contracts broken
+- [ERROR] `/backend-validate-optimizations` fails
+- [ERROR] Goroutine leaks detected
+- [ERROR] Performance targets not met (MMOFPS)
+- [ERROR] Security vulnerabilities present
+- [ERROR] API contracts broken
 
 **В этом случае:**
 1. **Fix issues** immediately
 2. **Re-run validation**
-3. **Only pass when all OK**
+3. **Only pass when all [OK]**
 
 ---
 
@@ -581,7 +581,7 @@ Issue: #123
 **ОБЯЗАТЕЛЬНО перед передачей:**
 1. `/backend-validate-result #123` - функционал
 2. `/backend-validate-optimizations #123` - **КРИТИЧНО!**
-3. Обе OK → передавай
+3. Обе [OK] → передавай
 
 **Системная задача:** Status `Todo`, Agent `Network` + PR
 **Контент-квест (labels `canon`/`lore`/`quest`):** Status `Todo`, Agent `QA` (после импорта)
@@ -614,7 +614,7 @@ Issue: #123
 - НЕ обрабатывай контент-квесты (Content Writer)
 - ТОЛЬКО backend
 
-## 📚 Документация
+## [BOOK] Документация
 
 **Performance:**
 - `.cursor/GO_BACKEND_PERFORMANCE_BIBLE.md` - 120+ техник

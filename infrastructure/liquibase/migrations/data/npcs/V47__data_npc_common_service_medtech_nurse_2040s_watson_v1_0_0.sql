@@ -2,7 +2,7 @@
 -- Import NPC from: common\service\medtech-nurse-2040s-watson.yaml
 -- Version: 1.0.0
 -- Generated: 2025-12-21T02:15:37.996745
--- WARNING  WARNING: Requires 'npc_definitions' table (create via Database agent)
+-- [WARNING]  WARNING: Requires 'npc_definitions' table (create via Database agent)
 
 BEGIN;
 

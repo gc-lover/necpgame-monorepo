@@ -640,12 +640,12 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ## Соответствие архитектуре
 
 Схема БД полностью соответствует архитектуре из `knowledge/implementation/architecture/mentorship-system-architecture.yaml`:
-- OK Все таблицы из архитектуры созданы
-- OK Все поля соответствуют описанию
-- OK Индексы оптимизированы для частых запросов
-- OK Foreign Keys настроены с правильными действиями (CASCADE, SET NULL)
-- OK ENUM типы соответствуют архитектуре
-- OK CHECK constraints обеспечивают валидацию данных
+- [OK] Все таблицы из архитектуры созданы
+- [OK] Все поля соответствуют описанию
+- [OK] Индексы оптимизированы для частых запросов
+- [OK] Foreign Keys настроены с правильными действиями (CASCADE, SET NULL)
+- [OK] ENUM типы соответствуют архитектуре
+- [OK] CHECK constraints обеспечивают валидацию данных
 
 ## Особенности реализации
 

@@ -40,7 +40,7 @@ docker-compose ps realtime-gateway
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Testing with 10 clients...
-OK PASSED: 10 clients - Error rate: 0.00%, Throughput: 600.00 msg/s
+[OK] PASSED: 10 clients - Error rate: 0.00%, Throughput: 600.00 msg/s
   Connections: 10 (failed: 0)
   PlayerInput sent: 12000 (600.00 msg/s)
   Errors: 0 (0.00%)
@@ -48,7 +48,7 @@ OK PASSED: 10 clients - Error rate: 0.00%, Throughput: 600.00 msg/s
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Testing with 30 clients...
-OK PASSED: 30 clients - Error rate: 0.00%, Throughput: 1800.00 msg/s
+[OK] PASSED: 30 clients - Error rate: 0.00%, Throughput: 1800.00 msg/s
 
 ...
 
@@ -58,7 +58,7 @@ OK PASSED: 30 clients - Error rate: 0.00%, Throughput: 1800.00 msg/s
 Maximum tested: 200 clients
 Maximum successful: 180 clients
 
-OK RECOMMENDED LIMIT: 180 clients
+[OK] RECOMMENDED LIMIT: 180 clients
    (with error threshold: 1.00%)
 ```
 
@@ -81,7 +81,7 @@ OK RECOMMENDED LIMIT: 180 clients
 ### Gateway не отвечает
 
 ```
-❌ Gateway is not available at http://127.0.0.1:9093
+[ERROR] Gateway is not available at http://127.0.0.1:9093
 ```
 
 **Решение**: Запустите Gateway:

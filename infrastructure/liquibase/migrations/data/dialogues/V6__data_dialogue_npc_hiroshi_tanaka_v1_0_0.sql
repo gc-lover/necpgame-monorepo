@@ -2,7 +2,7 @@
 -- Import dialogue from: npc-hiroshi-tanaka.yaml
 -- Version: 1.0.0
 -- Generated: 2025-12-21T02:15:38.962945
--- WARNING  WARNING: Requires 'dialogue_nodes' table (create via Database agent)
+-- [WARNING]  WARNING: Requires 'dialogue_nodes' table (create via Database agent)
 
 BEGIN;
 

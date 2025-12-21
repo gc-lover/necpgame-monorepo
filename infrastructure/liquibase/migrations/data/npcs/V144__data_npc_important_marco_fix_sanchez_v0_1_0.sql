@@ -2,7 +2,7 @@
 -- Import NPC from: important\marco-fix-sanchez.yaml
 -- Version: 0.1.0
 -- Generated: 2025-12-21T02:15:38.583240
--- WARNING  WARNING: Requires 'npc_definitions' table (create via Database agent)
+-- [WARNING]  WARNING: Requires 'npc_definitions' table (create via Database agent)
 
 BEGIN;
 

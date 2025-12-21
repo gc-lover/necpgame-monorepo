@@ -1,16 +1,16 @@
-# DevOps Agent - Architecture Validation Commands
+# DevOps Agent — Architecture Validation Commands
 
-## 🎯 Purpose
+## [TARGET] Purpose
 
 Commands for DevOps agent to validate NECPGAME project architecture and ensure code quality standards.
 
 **Issue:** #1866
 
-## 📋 Available Commands
+## [SYMBOL] Available Commands
 
 ### Architecture Validation
 
-#### `validate-architecture-simple`
+#### `validate—architecture-simple`
 
 **Purpose:** Run basic architecture validation (file sizes, structure)
 **Platform:** Windows PowerShell
@@ -90,7 +90,7 @@ echo "Exit code: $LASTEXITCODE"
 - `0`: Validation passed
 - `1`: Validation failed (errors found)
 
-## 🔧 Maintenance Commands
+## [SYMBOL] Maintenance Commands
 
 ### Update Validation Limits
 
@@ -120,44 +120,44 @@ echo "Testing bash compatibility..."
 powershell -c "Write-Host 'PowerShell available'"
 ```
 
-## 📊 Validation Results
+## [SYMBOL] Validation Results
 
 ### Success Output
 
 ```
-🔍 Starting NECPGAME Architecture Validation...
+[SEARCH] Starting NECPGAME Architecture Validation...
 ==================================================
 
-📏 Checking file sizes...
-OK File validation completed
+[SYMBOL] Checking file sizes...
+[OK] File validation completed
 
-🏗️ Checking project structure...
-OK Directory proto/openapi exists
-OK Directory services exists
-OK Directory knowledge exists
-OK Directory infrastructure exists
+[BUILDING] Checking project structure...
+[OK] Directory proto/openapi exists
+[OK] Directory services exists
+[OK] Directory knowledge exists
+[OK] Directory infrastructure exists
 
 ==================================================
-🏁 Architecture Validation Complete
+[SYMBOL] Architecture Validation Complete
 
 Results:
   Errors: 0
   Warnings: 0
 
-OK VALIDATION PASSED: No errors or warnings
+[OK] VALIDATION PASSED: No errors or warnings
 ```
 
 ### Error Output
 
 ```
-❌ ERROR: File large-file.go exceeds 1000 lines (1500 lines)
-❌ ERROR: Required directory missing: proto/openapi
+[ERROR] ERROR: File large-file.go exceeds 1000 lines (1500 lines)
+[ERROR] ERROR: Required directory missing: proto/openapi
 
-❌ VALIDATION FAILED: 2 errors found
+[ERROR] VALIDATION FAILED: 2 errors found
 Please fix all errors before committing
 ```
 
-## 🚨 Troubleshooting
+## [ALERT] Troubleshooting
 
 ### Common Issues
 
@@ -196,7 +196,7 @@ ls -la .git/hooks/
 - Consider excluding vendor directories
 - Use simple script for faster validation
 
-## 📈 Quality Metrics
+## [SYMBOL] Quality Metrics
 
 ### Coverage
 
@@ -212,7 +212,7 @@ ls -la .git/hooks/
 - **Git hooks:** < 10 seconds
 - **Memory usage:** Minimal (< 50MB)
 
-## 🔗 Integration Points
+## [SYMBOL] Integration Points
 
 ### GitHub Actions
 

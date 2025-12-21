@@ -27,25 +27,25 @@ proto/graphql-federation/
 
 ## Key Features
 
-### 🚀 Enterprise-Grade Federation
+### [ROCKET] Enterprise-Grade Federation
 - **Apollo Federation 2.0** with advanced composition
 - **50+ microservices** unified under single GraphQL API
 - **Cross-service queries** with automatic entity resolution
 - **Real-time subscriptions** via WebSocket integration
 
-### 🔧 Performance Optimizations
+### [SYMBOL] Performance Optimizations
 - **Smart entity batching** reduces N+1 query problems
 - **Reference resolution caching** for frequently accessed entities
 - **Lazy loading** for optional entity fields
 - **Query complexity limits** prevent abuse
 
-### 🛡️ Reliability Features
+### [SHIELD] Reliability Features
 - **Circuit breaker integration** for resilient queries
 - **Rate limiting** at gateway level
 - **Health checks** across all subgraphs
 - **Fallback mechanisms** for degraded services
 
-### 📊 Monitoring & Observability
+### [SYMBOL] Monitoring & Observability
 - **Distributed tracing** with Jaeger integration
 - **Metrics collection** via Prometheus
 - **Query analytics** and performance monitoring

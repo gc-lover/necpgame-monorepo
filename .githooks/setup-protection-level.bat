@@ -17,15 +17,15 @@ if "%choice%"=="1" (
     copy .githooks\pre-commit .git\hooks\pre-commit >nul 2>&1
     copy .githooks\pre-push .git\hooks\pre-push >nul 2>&1
     copy .githooks\commit-msg .git\hooks\commit-msg >nul 2>&1
-    echo ✓ MAXIMUM PROTECTION activated - dangerous commands BLOCKED
+    echo [OK] MAXIMUM PROTECTION activated - dangerous commands BLOCKED
 ) else if "%choice%"=="2" (
     echo Setting TRAINING PROTECTION...
     copy .githooks\pre-commit-safety-training .git\hooks\pre-commit >nul 2>&1
-    echo ✓ TRAINING PROTECTION activated - educational warnings enabled
+    echo [OK] TRAINING PROTECTION activated - educational warnings enabled
 ) else if "%choice%"=="3" (
     echo DISABLING PROTECTION...
     del .git\hooks\pre-commit .git\hooks\pre-push .git\hooks\commit-msg >nul 2>&1
-    echo ✓ PROTECTION DISABLED - use at your own risk!
+    echo [OK] PROTECTION DISABLED - use at your own risk!
 ) else (
     echo Invalid choice. Keeping current protection level.
     goto end

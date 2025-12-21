@@ -180,7 +180,7 @@ Examples:
 
 #### Communication:
 - **Comments Only:** Brief status updates
-- **Format:** `OK {Result}. Handed off to {NextAgent}. Issue: #{number}`
+- **Format:** `[OK] {Result}. Handed off to {NextAgent}. Issue: #{number}`
 - **No Reports:** Focus on execution, not documentation
 
 ### 3. File Placement Architecture

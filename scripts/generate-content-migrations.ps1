@@ -234,11 +234,11 @@ print(f'\nTotal: {total_migrations} migrations, {total_quests} quests')
     $output = python -c $pythonScript 2>&1
     
     if ($LASTEXITCODE -eq 0) {
-        Write-Host "OK Quests migrations generated" -ForegroundColor Green
+        Write-Host "[OK] Quests migrations generated" -ForegroundColor Green
         Write-Host $output
     }
     else {
-        Write-Host "❌ Failed to generate quests migrations" -ForegroundColor Red
+        Write-Host "[ERROR] Failed to generate quests migrations" -ForegroundColor Red
         Write-Host $output
         exit 1
     }
@@ -248,7 +248,7 @@ print(f'\nTotal: {total_migrations} migrations, {total_quests} quests')
 function Generate-NPCsMigration {
     $migrationNum = Get-NextMigrationNumber
     
-    Write-Host "WARNING  NPC migrations require 'npc_definitions' table (not created yet)" -ForegroundColor Yellow
+    Write-Host "[WARNING]  NPC migrations require 'npc_definitions' table (not created yet)" -ForegroundColor Yellow
     Write-Host "Generating NPCs migrations..." -ForegroundColor Green
     
     $pythonScript = @"
@@ -328,7 +328,7 @@ for npc_file in sorted(npc_files):
             f'-- Import NPC from: {relative_path}',
             f'-- Version: {version}',
             f'-- Generated: {datetime.now().isoformat()}',
-            "-- WARNING  WARNING: Requires 'npc_definitions' table (create via Database agent)",
+            "-- [WARNING]  WARNING: Requires 'npc_definitions' table (create via Database agent)",
             '',
             'BEGIN;',
             '',
@@ -386,11 +386,11 @@ print(f'\nTotal: {total_migrations} migrations, {total_npcs} NPCs')
     $output = python -c $pythonScript 2>&1
     
     if ($LASTEXITCODE -eq 0) {
-        Write-Host "OK NPCs migrations generated" -ForegroundColor Green
+        Write-Host "[OK] NPCs migrations generated" -ForegroundColor Green
         Write-Host $output
     }
     else {
-        Write-Host "WARNING  NPCs migrations skipped (check errors above)" -ForegroundColor Yellow
+        Write-Host "[WARNING]  NPCs migrations skipped (check errors above)" -ForegroundColor Yellow
         Write-Host $output
     }
 }
@@ -399,7 +399,7 @@ print(f'\nTotal: {total_migrations} migrations, {total_npcs} NPCs')
 function Generate-DialoguesMigration {
     $migrationNum = Get-NextMigrationNumber
     
-    Write-Host "WARNING  Dialogue migrations require 'dialogue_nodes' table (not created yet)" -ForegroundColor Yellow
+    Write-Host "[WARNING]  Dialogue migrations require 'dialogue_nodes' table (not created yet)" -ForegroundColor Yellow
     Write-Host "Generating dialogues migrations..." -ForegroundColor Green
     
     $pythonScript = @"
@@ -479,7 +479,7 @@ for dialogue_file in sorted(dialogue_files):
             f'-- Import dialogue from: {relative_path}',
             f'-- Version: {version}',
             f'-- Generated: {datetime.now().isoformat()}',
-            "-- WARNING  WARNING: Requires 'dialogue_nodes' table (create via Database agent)",
+            "-- [WARNING]  WARNING: Requires 'dialogue_nodes' table (create via Database agent)",
             '',
             'BEGIN;',
             '',
@@ -537,11 +537,11 @@ print(f'\nTotal: {total_migrations} migrations, {total_dialogues} dialogues')
     $output = python -c $pythonScript 2>&1
     
     if ($LASTEXITCODE -eq 0) {
-        Write-Host "OK Dialogues migrations generated" -ForegroundColor Green
+        Write-Host "[OK] Dialogues migrations generated" -ForegroundColor Green
         Write-Host $output
     }
     else {
-        Write-Host "WARNING  Dialogues migrations skipped (check errors above)" -ForegroundColor Yellow
+        Write-Host "[WARNING]  Dialogues migrations skipped (check errors above)" -ForegroundColor Yellow
         Write-Host $output
     }
 }
@@ -715,12 +715,12 @@ print(f'Generated {total_migrations} lore migrations with {total_lore} total lor
             Write-Host $output
         }
         catch {
-            Write-Host "❌ Lore migrations failed" -ForegroundColor Red
+            Write-Host "[ERROR] Lore migrations failed" -ForegroundColor Red
             Write-Host $_.Exception.Message
         }
     }
     else {
-        Write-Host "🔍 Dry run - would generate lore migrations" -ForegroundColor Cyan
+        Write-Host "[SEARCH] Dry run - would generate lore migrations" -ForegroundColor Cyan
     }
 }
 
@@ -747,7 +747,7 @@ Write-Host ""
 Generate-LoreMigration
 
 Write-Host ""
-Write-Host "OK All migrations generated successfully!" -ForegroundColor Green
+Write-Host "[OK] All migrations generated successfully!" -ForegroundColor Green
 Write-Host ""
 Write-Host "Next steps:"
 Write-Host "1. Review generated migrations"

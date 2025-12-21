@@ -402,21 +402,21 @@ class EmojiValidator(Validator):
         """Get human-readable description of a Unicode character."""
         descriptions = {
             # Common emojis
-            '🚫': 'prohibited sign',
-            'OK': 'check mark',
-            'WARNING': 'warning sign',
-            '📂': 'folder',
-            '🚨': 'rotating light',
-            '🤖': 'robot',
-            '🔍': 'magnifying glass',
-            '📋': 'clipboard',
-            '⚡': 'high voltage',
+            '[FORBIDDEN]': 'prohibited sign',
+            '[OK]': 'check mark',
+            '[WARNING]': 'warning sign',
+            '[SYMBOL]': 'folder',
+            '[ALERT]': 'rotating light',
+            '[ROBOT]': 'robot',
+            '[SEARCH]': 'magnifying glass',
+            '[SYMBOL]': 'clipboard',
+            '[FAST]': 'high voltage',
 
             # Card suits
-            '♠': 'spade suit',
-            '♥': 'heart suit',
-            '♦': 'diamond suit',
-            '♣': 'club suit',
+            '[SYMBOL]': 'spade suit',
+            '[SYMBOL]': 'heart suit',
+            '[SYMBOL]': 'diamond suit',
+            '[SYMBOL]': 'club suit',
 
             # Special symbols
             '©': 'copyright sign',

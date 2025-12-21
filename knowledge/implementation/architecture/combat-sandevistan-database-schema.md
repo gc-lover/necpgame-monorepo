@@ -246,17 +246,17 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ## Соответствие архитектуре
 
 Схема БД полностью соответствует архитектуре из `knowledge/implementation/architecture/combat-sandevistan-temporal-overdrive-architecture.yaml`:
-- OK Все таблицы из архитектуры созданы
-- OK Все поля соответствуют описанию
-- OK Индексы оптимизированы для частых запросов
-- OK Constraints обеспечивают целостность данных
-- OK Foreign Keys настроены с CASCADE для автоматической очистки
+- [OK] Все таблицы из архитектуры созданы
+- [OK] Все поля соответствуют описанию
+- [OK] Индексы оптимизированы для частых запросов
+- [OK] Constraints обеспечивают целостность данных
+- [OK] Foreign Keys настроены с CASCADE для автоматической очистки
 
 ## Соответствие OpenAPI
 
 Схема БД соответствует OpenAPI спецификации из `proto/openapi/combat-sandevistan-service.yaml`:
-- OK Все поля API могут быть отображены из БД
-- OK JSONB поля соответствуют структурам из схем
-- OK Типы данных совместимы с PostgreSQL
+- [OK] Все поля API могут быть отображены из БД
+- [OK] JSONB поля соответствуют структурам из схем
+- [OK] Типы данных совместимы с PostgreSQL
 
 

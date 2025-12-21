@@ -333,14 +333,14 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ## Соответствие архитектуре
 
 Схема БД соответствует механике из `knowledge/mechanics/economy/economy-resources-catalog.yaml`:
-- OK Расширена таблица `resources` с полями для tier, rarity, stack_size, weight, prices
-- OK Создана таблица `resource_sources` для источников добычи
-- OK Создана таблица `resource_applications` для применения ресурсов
-- OK Создана таблица `resource_mining_zones` для зон добычи
-- OK Создана таблица `resource_price_history` для истории цен
-- OK Индексы оптимизированы для частых запросов
-- OK Foreign Keys настроены с CASCADE для автоматической очистки
-- OK ENUM типы соответствуют механике
+- [OK] Расширена таблица `resources` с полями для tier, rarity, stack_size, weight, prices
+- [OK] Создана таблица `resource_sources` для источников добычи
+- [OK] Создана таблица `resource_applications` для применения ресурсов
+- [OK] Создана таблица `resource_mining_zones` для зон добычи
+- [OK] Создана таблица `resource_price_history` для истории цен
+- [OK] Индексы оптимизированы для частых запросов
+- [OK] Foreign Keys настроены с CASCADE для автоматической очистки
+- [OK] ENUM типы соответствуют механике
 
 ## Особенности реализации
 

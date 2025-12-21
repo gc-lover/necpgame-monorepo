@@ -256,14 +256,14 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ## Соответствие архитектуре
 
 Схема БД полностью соответствует архитектуре из `knowledge/implementation/architecture/combat-hacking-integration-architecture.yaml`:
-- OK Все таблицы из архитектуры созданы
-- OK Все поля соответствуют описанию
-- OK ENUM типы созданы для всех перечислений
-- OK Индексы оптимизированы для частых запросов
-- OK Constraints обеспечивают целостность данных
-- OK Foreign Keys настроены с CASCADE для автоматической очистки
-- OK Поддержка JSONB для гибкого хранения данных
-- OK Интеграция с существующими таблицами (combat_hacking_executions, combat_hacking_networks)
+- [OK] Все таблицы из архитектуры созданы
+- [OK] Все поля соответствуют описанию
+- [OK] ENUM типы созданы для всех перечислений
+- [OK] Индексы оптимизированы для частых запросов
+- [OK] Constraints обеспечивают целостность данных
+- [OK] Foreign Keys настроены с CASCADE для автоматической очистки
+- [OK] Поддержка JSONB для гибкого хранения данных
+- [OK] Интеграция с существующими таблицами (combat_hacking_executions, combat_hacking_networks)
 
 ## Особенности реализации
 

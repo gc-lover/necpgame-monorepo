@@ -2,7 +2,7 @@
 -- Import NPC from: common\service\nomad-mechanic-2060s-badlands.yaml
 -- Version: 1.0.0
 -- Generated: 2025-12-21T02:15:38.005617
--- WARNING  WARNING: Requires 'npc_definitions' table (create via Database agent)
+-- [WARNING]  WARNING: Requires 'npc_definitions' table (create via Database agent)
 
 BEGIN;
 

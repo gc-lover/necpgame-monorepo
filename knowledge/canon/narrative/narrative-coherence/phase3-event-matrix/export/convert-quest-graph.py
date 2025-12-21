@@ -198,7 +198,7 @@ def main():
         print(f"\nConverting: {input_file.name}")
         
         if not input_file.exists():
-            print(f"  WARNING  File not found: {input_file}")
+            print(f"  [WARNING]  File not found: {input_file}")
             continue
         
         # Load YAML
@@ -211,11 +211,11 @@ def main():
         with open(output_file, 'w', encoding='utf-8') as f:
             json.dump(json_data, f, indent=2, ensure_ascii=False)
         
-        print(f"  OK Saved: {output_file.name}")
+        print(f"  [OK] Saved: {output_file.name}")
         print(f"     Size: {output_file.stat().st_size} bytes")
     
     print("\n" + "=" * 50)
-    print("OK ALL FILES CONVERTED SUCCESSFULLY!")
+    print("[OK] ALL FILES CONVERTED SUCCESSFULLY!")
     print("=" * 50)
     print(f"\nOutput directory: {export_dir}")
     print("\nGenerated files:")

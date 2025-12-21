@@ -2,7 +2,7 @@
 -- Import NPC from: factions\gangs\mox\madame-2065-2080.yaml
 -- Version: 1.0.0
 -- Generated: 2025-12-21T02:15:38.268388
--- WARNING  WARNING: Requires 'npc_definitions' table (create via Database agent)
+-- [WARNING]  WARNING: Requires 'npc_definitions' table (create via Database agent)
 
 BEGIN;
 

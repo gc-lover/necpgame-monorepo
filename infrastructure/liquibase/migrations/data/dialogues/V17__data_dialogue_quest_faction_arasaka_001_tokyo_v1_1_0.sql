@@ -2,7 +2,7 @@
 -- Import dialogue from: quest-faction-arasaka-001-tokyo.yaml
 -- Version: 1.1.0
 -- Generated: 2025-12-21T02:15:39.026195
--- WARNING  WARNING: Requires 'dialogue_nodes' table (create via Database agent)
+-- [WARNING]  WARNING: Requires 'dialogue_nodes' table (create via Database agent)
 
 BEGIN;
 

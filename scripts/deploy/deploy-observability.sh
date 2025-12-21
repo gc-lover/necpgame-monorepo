@@ -46,7 +46,7 @@ kubectl rollout status deployment/tempo -n monitoring --timeout=5m || true
 # Show status
 echo ""
 echo "========================================="
-echo "OK Observability stack deployed!"
+echo "[OK] Observability stack deployed!"
 echo "========================================="
 echo ""
 echo "Pods status:"

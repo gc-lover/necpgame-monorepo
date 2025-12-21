@@ -2,7 +2,7 @@
 -- Import NPC from: media\ziggy-q-braindance-editor-2070-2090.yaml
 -- Version: 1.0.0
 -- Generated: 2025-12-21T02:15:38.769512
--- WARNING  WARNING: Requires 'npc_definitions' table (create via Database agent)
+-- [WARNING]  WARNING: Requires 'npc_definitions' table (create via Database agent)
 
 BEGIN;
 

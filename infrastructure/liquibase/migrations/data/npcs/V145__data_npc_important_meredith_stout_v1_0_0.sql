@@ -2,7 +2,7 @@
 -- Import NPC from: important\meredith-stout.yaml
 -- Version: 1.0.0
 -- Generated: 2025-12-21T02:15:38.588879
--- WARNING  WARNING: Requires 'npc_definitions' table (create via Database agent)
+-- [WARNING]  WARNING: Requires 'npc_definitions' table (create via Database agent)
 
 BEGIN;
 

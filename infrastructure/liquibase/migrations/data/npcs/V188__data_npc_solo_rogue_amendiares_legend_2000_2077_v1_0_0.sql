@@ -2,7 +2,7 @@
 -- Import NPC from: solo\rogue-amendiares-legend-2000-2077.yaml
 -- Version: 1.0.0
 -- Generated: 2025-12-21T02:15:38.825332
--- WARNING  WARNING: Requires 'npc_definitions' table (create via Database agent)
+-- [WARNING]  WARNING: Requires 'npc_definitions' table (create via Database agent)
 
 BEGIN;
 

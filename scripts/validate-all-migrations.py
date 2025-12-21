@@ -232,11 +232,11 @@ def main():
     migrations_dir = Path("infrastructure/liquibase/migrations")
 
     if not migrations_dir.exists():
-        print(f"❌ Migrations directory not found: {migrations_dir}")
+        print(f"[ERROR] Migrations directory not found: {migrations_dir}")
         return 1
 
-    print("🔍 Validating all Liquibase migrations...")
-    print(f"📁 Directory: {migrations_dir}")
+    print("[SEARCH] Validating all Liquibase migrations...")
+    print(f"[DIR] Directory: {migrations_dir}")
     print()
 
     # Find all migration files
@@ -244,7 +244,7 @@ def main():
     for ext in ['.sql', '.xml', '.yaml']:
         migration_files.extend(migrations_dir.rglob(f'*{ext}'))
 
-    print(f"📊 Found {len(migration_files)} migration files")
+    print(f"[SYMBOL] Found {len(migration_files)} migration files")
     print()
 
     # Validate each file
@@ -277,17 +277,17 @@ def main():
 
     # Print summary
     print("=" * 80)
-    print("📊 VALIDATION SUMMARY")
+    print("[SYMBOL] VALIDATION SUMMARY")
     print("=" * 80)
     print(f"Total files: {stats['total']}")
-    print(f"OK Valid: {stats['valid']}")
-    print(f"❌ Invalid: {stats['invalid']}")
-    print(f"WARNING  Total errors: {stats['errors']}")
-    print(f"WARNING  Total warnings: {stats['warnings']}")
+    print(f"[OK] Valid: {stats['valid']}")
+    print(f"[ERROR] Invalid: {stats['invalid']}")
+    print(f"[WARNING]  Total errors: {stats['errors']}")
+    print(f"[WARNING]  Total warnings: {stats['warnings']}")
     print()
 
     # Print by type
-    print("📁 By file type:")
+    print("[DIR] By file type:")
     for file_type, type_stats in sorted(stats['by_type'].items()):
         valid_pct = (type_stats['valid'] / type_stats['total'] * 100) if type_stats['total'] > 0 else 0
         print(f"  {file_type.upper()}: {type_stats['valid']}/{type_stats['total']} valid ({valid_pct:.1f}%)")
@@ -297,15 +297,15 @@ def main():
     error_files = [r for r in results if r['errors']]
     if error_files:
         print("=" * 80)
-        print("❌ FILES WITH ERRORS")
+        print("[ERROR] FILES WITH ERRORS")
         print("=" * 80)
         for result in error_files[:20]:  # Limit to first 20
-            print(f"\n📄 {result['file']}")
+            print(f"\n[FILE] {result['file']}")
             for error in result['errors']:
-                print(f"   ❌ {error}")
+                print(f"   [ERROR] {error}")
             if result['warnings']:
                 for warning in result['warnings'][:3]:  # Show first 3 warnings
-                    print(f"   WARNING  {warning}")
+                    print(f"   [WARNING]  {warning}")
         if len(error_files) > 20:
             print(f"\n... and {len(error_files) - 20} more files with errors")
         print()
@@ -314,12 +314,12 @@ def main():
     warning_only_files = [r for r in results if not r['errors'] and r['warnings']]
     if warning_only_files and len(warning_only_files) <= 50:
         print("=" * 80)
-        print("WARNING  FILES WITH WARNINGS (no errors)")
+        print("[WARNING]  FILES WITH WARNINGS (no errors)")
         print("=" * 80)
         for result in warning_only_files[:20]:  # Limit to first 20
-            print(f"\n📄 {result['file']}")
+            print(f"\n[FILE] {result['file']}")
             for warning in result['warnings'][:3]:  # Show first 3 warnings
-                print(f"   WARNING  {warning}")
+                print(f"   [WARNING]  {warning}")
         if len(warning_only_files) > 20:
             print(f"\n... and {len(warning_only_files) - 20} more files with warnings")
         print()
@@ -327,9 +327,9 @@ def main():
     # Final status
     print("=" * 80)
     if stats['invalid'] == 0:
-        print("OK ALL MIGRATIONS VALID!")
+        print("[OK] ALL MIGRATIONS VALID!")
     else:
-        print(f"❌ {stats['invalid']} FILES HAVE ERRORS")
+        print(f"[ERROR] {stats['invalid']} FILES HAVE ERRORS")
     print("=" * 80)
 
     return 0 if stats['invalid'] == 0 else 1

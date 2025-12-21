@@ -20,9 +20,9 @@ Write-Host ""
 Write-Host "Checking Gateway availability..." -ForegroundColor Yellow
 try {
     $response = Invoke-WebRequest -Uri "http://127.0.0.1:9093/metrics" -Method Get -TimeoutSec 5 -ErrorAction Stop
-    Write-Host "OK Gateway is running" -ForegroundColor Green
+    Write-Host "[OK] Gateway is running" -ForegroundColor Green
 } catch {
-    Write-Host "❌ Gateway is not available at http://127.0.0.1:9093" -ForegroundColor Red
+    Write-Host "[ERROR] Gateway is not available at http://127.0.0.1:9093" -ForegroundColor Red
     Write-Host "Please start Gateway first: docker-compose up -d realtime-gateway" -ForegroundColor Yellow
     exit 1
 }
@@ -44,10 +44,10 @@ if (-not (Test-Path $findlimitPath)) {
     try {
         go build -o findlimit.exe ./cmd/findlimit
         if ($LASTEXITCODE -ne 0) {
-            Write-Host "❌ Failed to build findlimit tool" -ForegroundColor Red
+            Write-Host "[ERROR] Failed to build findlimit tool" -ForegroundColor Red
             exit 1
         }
-        Write-Host "OK findlimit tool built successfully" -ForegroundColor Green
+        Write-Host "[OK] findlimit tool built successfully" -ForegroundColor Green
     } finally {
         Pop-Location
     }
@@ -75,10 +75,10 @@ $arguments = @(
 
 if ($LASTEXITCODE -ne 0) {
     Write-Host ""
-    Write-Host "❌ Limit search failed with exit code: $LASTEXITCODE" -ForegroundColor Red
+    Write-Host "[ERROR] Limit search failed with exit code: $LASTEXITCODE" -ForegroundColor Red
     exit $LASTEXITCODE
 }
 
 Write-Host ""
-Write-Host "OK Limit search completed" -ForegroundColor Green
+Write-Host "[OK] Limit search completed" -ForegroundColor Green
 
