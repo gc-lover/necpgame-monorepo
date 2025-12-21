@@ -66,8 +66,8 @@ mcp_github_list_project_items({
 - **Status Field Node ID:** `PVTSSF_lAHODCWAw84BIyiezg5JYxQ`
 - **Agent Field ID:** `243899542` (single_select)
 - **Agent Field Node ID:** `PVTSSF_lAHODCWAw84BIyiezg6JnJY`
-- **Type Field ID:** `[TO_BE_FILLED]` (single_select)
-- **Check Field ID:** `[TO_BE_FILLED]` (single_select)
+- **Type Field ID:** `246469155` (single_select)
+- **Check Field ID:** `246468990` (single_select)
 
 ## Status Option IDs
 
@@ -133,13 +133,13 @@ updated_field: [
 **Полный список опций поля Type (определяет тип технической задачи):**
 
 ```javascript
-const TYPE_FIELD_ID = [TO_BE_FILLED];
+const TYPE_FIELD_ID = 246469155;
 const TYPE_OPTIONS = {
-  API: '[TO_BE_FILLED]',         // Создание OpenAPI спецификаций
-  MIGRATION: '[TO_BE_FILLED]',   // Создание БД миграций
-  DATA: '[TO_BE_FILLED]',         // Импорт данных в БД
-  BACKEND: '[TO_BE_FILLED]',      // Написание backend кода
-  UE5: '[TO_BE_FILLED]',          // Разработка в Unreal Engine 5
+  API: '66f88b2c',         // Создание OpenAPI спецификаций
+  MIGRATION: 'd3702826',   // Создание БД миграций
+  DATA: 'b06014a2',         // Импорт данных в БД
+  BACKEND: '08174330',      // Написание backend кода
+  UE5: 'd4d523a0',          // Разработка в Unreal Engine 5
 };
 ```
 
@@ -155,10 +155,10 @@ const TYPE_OPTIONS = {
 **Поле Check (отслеживание проверки выполнения задачи):**
 
 ```javascript
-const CHECK_FIELD_ID = [TO_BE_FILLED];
+const CHECK_FIELD_ID = 246468990;
 const CHECK_OPTIONS = {
-  NOT_CHECKED: '0',  // Задача не проверялась на выполнение
-  CHECKED: '1',      // Задача проверена на выполнение
+  NOT_CHECKED: '22932cc7',  // Задача не проверялась на выполнение (0)
+  CHECKED: '4e8cf8f5',      // Задача проверена на выполнение (1)
 };
 ```
 

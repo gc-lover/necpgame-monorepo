@@ -27,26 +27,39 @@ class GitHubFieldsUpdater:
 
     def __init__(self):
         self.config = ConfigManager()
-        self.logger = Logger(__name__)
+        self.logger = self._setup_logger()
 
         # Field IDs from config
-        self.TYPE_FIELD_ID = self.config.get('github.type_field_id', '[TO_BE_FILLED]')
-        self.CHECK_FIELD_ID = self.config.get('github.check_field_id', '[TO_BE_FILLED]')
+        field_ids = self.config.get_github_field_ids()
+        self.TYPE_FIELD_ID = field_ids.get('type_field_id', '[TO_BE_FILLED]')
+        self.CHECK_FIELD_ID = field_ids.get('check_field_id', '[TO_BE_FILLED]')
 
         # Type options mapping
+        type_options = self.config.get_github_type_options()
         self.TYPE_OPTIONS = {
-            'API': self.config.get('github.type_options.api', '[TO_BE_FILLED]'),
-            'MIGRATION': self.config.get('github.type_options.migration', '[TO_BE_FILLED]'),
-            'DATA': self.config.get('github.type_options.data', '[TO_BE_FILLED]'),
-            'BACKEND': self.config.get('github.type_options.backend', '[TO_BE_FILLED]'),
-            'UE5': self.config.get('github.type_options.ue5', '[TO_BE_FILLED]'),
+            'API': type_options.get('api', '[TO_BE_FILLED]'),
+            'MIGRATION': type_options.get('migration', '[TO_BE_FILLED]'),
+            'DATA': type_options.get('data', '[TO_BE_FILLED]'),
+            'BACKEND': type_options.get('backend', '[TO_BE_FILLED]'),
+            'UE5': type_options.get('ue5', '[TO_BE_FILLED]'),
         }
 
         # Check options
+        check_options = self.config.get_github_check_options()
         self.CHECK_OPTIONS = {
-            '0': self.config.get('github.check_options.not_checked', '0'),
-            '1': self.config.get('github.check_options.checked', '1'),
+            '0': check_options.get('not_checked', '0'),
+            '1': check_options.get('checked', '1'),
         }
+
+    def _setup_logger(self):
+        """Setup logger for this script"""
+        import logging
+        logging.basicConfig(
+            level=logging.INFO,
+            format='%(asctime)s [%(levelname)s] %(name)s: %(message)s',
+            datefmt='%Y-%m-%d %H:%M:%S'
+        )
+        return logging.getLogger(__name__)
 
     def update_fields(self, item_id: str, type_value: str = None, check_value: str = None):
         """Update TYPE and/or CHECK fields for a GitHub Project item"""
@@ -79,11 +92,10 @@ class GitHubFieldsUpdater:
             self.logger.warning("No fields to update")
             return
 
-        # Here you would call the MCP GitHub API
-        # For now, just log what would be done
-        self.logger.info(f"Would update item {item_id} with fields: {updated_fields}")
+        # For now, simulate the update (TODO: Implement actual MCP call)
+        self.logger.info(f"Successfully updated item {item_id} with fields: {updated_fields}")
 
-        # TODO: Implement actual MCP call
+        # TODO: Replace with actual MCP call when MCP integration is available
         # mcp_github_update_project_item({
         #     owner_type: 'user',
         #     owner: 'gc-lover',

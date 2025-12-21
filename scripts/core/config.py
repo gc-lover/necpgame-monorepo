@@ -27,6 +27,7 @@ class ProjectConfig:
     domains: Dict[str, Any]
     backend: Dict[str, Any]
     content: Dict[str, Any]
+    github: Dict[str, Any]
 
 
 class ConfigManager:
@@ -97,3 +98,27 @@ class ConfigManager:
         """Check if file type is allowed"""
         forbidden = self.get_forbidden_extensions()
         return file_path.suffix not in forbidden
+
+    def get_github_field_ids(self) -> Dict[str, str]:
+        """Get GitHub field IDs"""
+        github_config = self.get('github')
+        if not github_config:
+            return {}
+        return {
+            'type_field_id': github_config.get('type_field_id'),
+            'check_field_id': github_config.get('check_field_id'),
+        }
+
+    def get_github_type_options(self) -> Dict[str, str]:
+        """Get GitHub TYPE field options"""
+        github_config = self.get('github')
+        if not github_config:
+            return {}
+        return github_config.get('type_options', {})
+
+    def get_github_check_options(self) -> Dict[str, str]:
+        """Get GitHub CHECK field options"""
+        github_config = self.get('github')
+        if not github_config:
+            return {}
+        return github_config.get('check_options', {})
