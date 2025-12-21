@@ -1,12 +1,12 @@
 openapi: 3.0.3
 info:
   title: World domain API
-  description: 'Consolidated world domain Domain API for NECPGAME.
+  description: "Consolidated world domain Domain API for NECPGAME.
 
 
     This domain consolidates all world functionality.
 
-    '
+    "
   version: 1.0.0
   license:
     name: MIT
@@ -16,39 +16,47 @@ info:
     url: https://necpgame.com/support
     email: api@necpgame.com
 servers:
-- url: http://localhost:8080/api/v1
-  description: Development server
-- url: https://api.necpgame.com/api/v1
-  description: Production server
+  - url: http://localhost:8080/api/v1
+    description: Development server
+  - url: https://api.necpgame.com/api/v1
+    description: Production server
 security:
-- BearerAuth: []
+  - BearerAuth: []
 tags:
-- name: World domain
-  description: world domain domain endpoints
+  - name: World domain
+    description: world domain domain endpoints
 paths:
   # Location Service Integration - enterprise-grade location management
   /api/v1/locations/health:
-    $ref: './locations/main.yaml#/paths/~1api~1v1~1locations~1health'
+    $ref: "./locations/main.yaml#/paths/~1api~1v1~1locations~1health"
   /api/v1/locations:
-    $ref: './locations/main.yaml#/paths/~1api~1v1~1locations'
+    $ref: "./locations/main.yaml#/paths/~1api~1v1~1locations"
   /api/v1/locations/{location_id}:
-    $ref: './locations/main.yaml#/paths/~1api~1v1~1locations~1{location_id}'
+    $ref: "./locations/main.yaml#/paths/~1api~1v1~1locations~1{location_id}"
   /api/v1/locations/{location_id}/nearby:
-    $ref: './locations/main.yaml#/paths/~1api~1v1~1locations~1{location_id}~1nearby'
+    $ref: "./locations/main.yaml#/paths/~1api~1v1~1locations~1{location_id}~1nearby"
+
+  # World Cities Service Integration - enterprise-grade global city management (requires components completion in world-cities-service.yaml)
+  # /api/v1/cities: $ref: "./cities/world-cities-service.yaml#/paths/~1api~1v1~1cities"
+  # /api/v1/cities/{city_id}: $ref: "./cities/world-cities-service.yaml#/paths/~1api~1v1~1cities~1{city_id}"
+  # /api/v1/cities/nearby: $ref: "./cities/world-cities-service.yaml#/paths/~1api~1v1~1cities~1nearby"
+  # /api/v1/cities/regions: $ref: "./cities/world-cities-service.yaml#/paths/~1api~1v1~1cities~1regions"
+  # /api/v1/cities/stats: $ref: "./cities/world-cities-service.yaml#/paths/~1api~1v1~1cities~1stats"
+  # /api/v1/cities/search: $ref: "./cities/world-cities-service.yaml#/paths/~1api~1v1~1cities~1search"
 
   /api/v1/world-domain/health:
     get:
       summary: world domain domain health check
       operationId: world-domainHealthCheck
       tags:
-      - World domain
+        - World domain
       responses:
-        '200':
+        "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HealthResponse'
+                $ref: "#/components/schemas/HealthResponse"
           headers:
             Cache-Control:
               schema:
@@ -62,16 +70,16 @@ paths:
               schema:
                 type: string
                 enum:
-                - gzip
-                - deflate
-                - br
+                  - gzip
+                  - deflate
+                  - br
   /api/v1/world-domain/health/batch:
     post:
       summary: Batch health check for multiple domains
       operationId: batchHealthCheck
       tags:
-      - System
-      description: 'Performance optimization: Check multiple domain health in single request'
+        - System
+      description: "Performance optimization: Check multiple domain health in single request"
       requestBody:
         required: true
         content:
@@ -79,7 +87,7 @@ paths:
             schema:
               type: object
               required:
-              - domains
+                - domains
               properties:
                 domains:
                   type: array
@@ -87,7 +95,7 @@ paths:
                     type: string
                   maxItems: 10
       responses:
-        '200':
+        "200":
           description: Batch health results
           content:
             application/json:
@@ -97,7 +105,7 @@ paths:
                   results:
                     type: array
                     items:
-                      $ref: '#/components/schemas/HealthResponse'
+                      $ref: "#/components/schemas/HealthResponse"
                   total_time_ms:
                     type: integer
                     description: Total processing time
@@ -106,10 +114,10 @@ paths:
       summary: Real-time health monitoring WebSocket
       operationId: healthWebSocket
       tags:
-      - System
+        - System
       description: Real-time health updates without polling
       responses:
-        '101':
+        "101":
           description: WebSocket connection established
 components:
   securitySchemes:
@@ -120,13 +128,13 @@ components:
   schemas:
     # Location Service Schemas Integration
     Location:
-      $ref: './locations/main.yaml#/components/schemas/Location'
+      $ref: "./locations/main.yaml#/components/schemas/Location"
     LocationDetailResponse:
-      $ref: './locations/main.yaml#/components/schemas/LocationDetailResponse'
+      $ref: "./locations/main.yaml#/components/schemas/LocationDetailResponse"
     LocationListResponse:
-      $ref: './locations/main.yaml#/components/schemas/LocationListResponse'
+      $ref: "./locations/main.yaml#/components/schemas/LocationListResponse"
     NearbyLocationsResponse:
-      $ref: './locations/main.yaml#/components/schemas/NearbyLocationsResponse'
+      $ref: "./locations/main.yaml#/components/schemas/NearbyLocationsResponse"
 
     HealthResponse:
       type: object
@@ -143,7 +151,7 @@ components:
           type: string
           format: date-time
           maxLength: 255
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
     Error:
       type: object
       properties:
@@ -165,24 +173,31 @@ components:
           format: int32
           minimum: 100
           maximum: 599
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
     WebSocketHealthMessage:
       type: object
       required:
-      - type
-      - message_timestamp
-      - health
+        - type
+        - message_timestamp
+        - health
       properties:
         type:
           type: string
           enum:
-          - health_update
-          - health_alert
-          - service_down
+            - health_update
+            - health_alert
+            - service_down
         message_timestamp:
           type: string
           format: date-time
           description: Timestamp of the health message
         health:
-          $ref: '#/components/schemas/HealthResponse'
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+          $ref: "#/components/schemas/HealthResponse"
+      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+
+    # World Cities Service Schemas Integration (requires schema completion in world-cities-service.yaml)
+    # City: $ref: "./cities/world-cities-service.yaml#/components/schemas/City"
+    # CreateCityRequest: $ref: "./cities/world-cities-service.yaml#/components/schemas/CreateCityRequest"
+    # UpdateCityRequest: $ref: "./cities/world-cities-service.yaml#/components/schemas/UpdateCityRequest"
+    # CitiesStats: $ref: "./cities/world-cities-service.yaml#/components/schemas/CitiesStats"
+    # Region: $ref: "./cities/world-cities-service.yaml#/components/schemas/Region"
