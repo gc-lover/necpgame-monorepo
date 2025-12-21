@@ -14,6 +14,10 @@ servers:
     description: Локальный сервер разработки
   - url: https://api.necp.game/api/v1
     description: Продакшен сервер
+
+security:
+  - BearerAuth: []
+
 tags:
   - name: Progression
     description: Управление прогрессией персонажей
@@ -32,7 +36,7 @@ paths:
       tags:
         - Progression
       summary: Получить информацию о прогрессии персонажа
-      operationId: getCharacterProgression
+      operationId: progressionGetCharacterProgression
       parameters:
         - name: characterId
           in: path
@@ -48,9 +52,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/CharacterProgressionResponse"
         "404":
-          $ref: "#/components/responses/NotFound"
+          $ref: "../main.yaml#/components/responses/NotFound"
         "500":
-          $ref: "#/components/responses/InternalServerError"
+          $ref: "../main.yaml#/components/responses/InternalServerError"
 
   # Начисление опыта персонажу
   /gameplay/progression/characters/{characterId}/experience:
@@ -58,7 +62,7 @@ paths:
       tags:
         - Experience
       summary: Начислить опыт персонажу
-      operationId: grantExperience
+      operationId: progressionGrantExperience
       parameters:
         - name: characterId
           in: path
@@ -80,11 +84,11 @@ paths:
               schema:
                 $ref: "#/components/schemas/ExperienceGrantedResponse"
         "400":
-          $ref: "#/components/responses/BadRequest"
+          $ref: "../main.yaml#/components/responses/BadRequest"
         "404":
-          $ref: "#/components/responses/NotFound"
+          $ref: "../main.yaml#/components/responses/NotFound"
         "500":
-          $ref: "#/components/responses/InternalServerError"
+          $ref: "../main.yaml#/components/responses/InternalServerError"
 
   # Повышение уровня персонажа
   /gameplay/progression/characters/{characterId}/level-up:
@@ -92,7 +96,7 @@ paths:
       tags:
         - Levels
       summary: Повысить уровень персонажа
-      operationId: levelUpCharacter
+      operationId: progressionLevelUpCharacter
       parameters:
         - name: characterId
           in: path
@@ -114,7 +118,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
         "404":
-          $ref: "#/components/responses/NotFound"
+          $ref: "../main.yaml#/components/responses/NotFound"
         "409":
           description: Персонаж уже максимального уровня
           content:
@@ -122,7 +126,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
         "500":
-          $ref: "#/components/responses/InternalServerError"
+          $ref: "../main.yaml#/components/responses/InternalServerError"
 
   # Распределение очков атрибутов
   /gameplay/progression/characters/{characterId}/attributes:
@@ -130,7 +134,7 @@ paths:
       tags:
         - Attributes
       summary: Распределить очки атрибутов
-      operationId: allocateAttributePoints
+      operationId: progressionAllocateAttributePoints
       parameters:
         - name: characterId
           in: path
@@ -152,9 +156,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/AttributesAllocatedResponse"
         "400":
-          $ref: "#/components/responses/BadRequest"
+          $ref: "../main.yaml#/components/responses/BadRequest"
         "404":
-          $ref: "#/components/responses/NotFound"
+          $ref: "../main.yaml#/components/responses/NotFound"
         "409":
           description: Недостаточно очков атрибутов
           content:
@@ -162,7 +166,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
         "500":
-          $ref: "#/components/responses/InternalServerError"
+          $ref: "../main.yaml#/components/responses/InternalServerError"
 
   # Повышение навыка
   /gameplay/progression/characters/{characterId}/skills/{skillId}:
@@ -170,7 +174,7 @@ paths:
       tags:
         - Skills
       summary: Повысить уровень навыка
-      operationId: upgradeSkill
+      operationId: progressionUpgradeSkill
       parameters:
         - name: characterId
           in: path
@@ -197,9 +201,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/SkillUpgradedResponse"
         "400":
-          $ref: "#/components/responses/BadRequest"
+          $ref: "../main.yaml#/components/responses/BadRequest"
         "404":
-          $ref: "#/components/responses/NotFound"
+          $ref: "../main.yaml#/components/responses/NotFound"
         "409":
           description: Недостаточно очков навыков или навык максимального уровня
           content:
@@ -207,7 +211,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
         "500":
-          $ref: "#/components/responses/InternalServerError"
+          $ref: "../main.yaml#/components/responses/InternalServerError"
 
   # Получение списка навыков персонажа
   /gameplay/progression/characters/{characterId}/skills:
@@ -215,7 +219,7 @@ paths:
       tags:
         - Skills
       summary: Получить навыки персонажа
-      operationId: getCharacterSkills
+      operationId: progressionGetCharacterSkills
       parameters:
         - name: characterId
           in: path
@@ -231,9 +235,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/CharacterSkillsResponse"
         "404":
-          $ref: "#/components/responses/NotFound"
+          $ref: "../main.yaml#/components/responses/NotFound"
         "500":
-          $ref: "#/components/responses/InternalServerError"
+          $ref: "../main.yaml#/components/responses/InternalServerError"
 
   # Пересчет статов персонажа
   /gameplay/progression/characters/{characterId}/recalculate:
@@ -241,7 +245,7 @@ paths:
       tags:
         - Progression
       summary: Пересчитать все статистики персонажа
-      operationId: recalculateCharacterStats
+      operationId: progressionRecalculateCharacterStats
       parameters:
         - name: characterId
           in: path
@@ -257,9 +261,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/RecalculateStatsResponse"
         "404":
-          $ref: "#/components/responses/NotFound"
+          $ref: "../main.yaml#/components/responses/NotFound"
         "500":
-          $ref: "#/components/responses/InternalServerError"
+          $ref: "../main.yaml#/components/responses/InternalServerError"
 
   # Получение требований к следующему уровню
   /gameplay/progression/levels/{level}/requirements:
@@ -267,7 +271,7 @@ paths:
       tags:
         - Levels
       summary: Получить требования к уровню
-      operationId: getLevelRequirements
+      operationId: progressionGetLevelRequirements
       parameters:
         - name: level
           in: path
@@ -284,9 +288,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/LevelRequirementsResponse"
         "400":
-          $ref: "#/components/responses/BadRequest"
+          $ref: "../main.yaml#/components/responses/BadRequest"
         "500":
-          $ref: "#/components/responses/InternalServerError"
+          $ref: "../main.yaml#/components/responses/InternalServerError"
 
   # Получение информации о навыке
   /gameplay/progression/skills/{skillId}:
@@ -294,7 +298,7 @@ paths:
       tags:
         - Skills
       summary: Получить информацию о навыке
-      operationId: getSkillInfo
+      operationId: progressionGetSkillInfo
       parameters:
         - name: skillId
           in: path
@@ -309,13 +313,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/SkillInfoResponse"
         "404":
-          $ref: "#/components/responses/NotFound"
+          $ref: "../main.yaml#/components/responses/NotFound"
         "500":
-          $ref: "#/components/responses/InternalServerError"
+          $ref: "../main.yaml#/components/responses/InternalServerError"
 
 components:
   securitySchemes:
-    bearerAuth:
+    BearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
@@ -401,3 +405,310 @@ components:
         - levels
       properties:
         levels:
+          type: integer
+          minimum: 1
+          maximum: 10
+          description: Количество уровней для повышения навыка
+
+    # Response schemas
+    CharacterProgressionResponse:
+      type: object
+      required:
+        - character_id
+        - level
+        - experience
+        - experience_to_next
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: ID персонажа
+        level:
+          type: integer
+          format: int32
+          description: Текущий уровень персонажа
+        experience:
+          type: integer
+          format: int32
+          description: Текущий опыт персонажа
+        experience_to_next:
+          type: integer
+          format: int32
+          description: Опыт до следующего уровня
+        attributes:
+          type: object
+          properties:
+            intelligence:
+              type: integer
+              format: int32
+            reflexes:
+              type: integer
+              format: int32
+            dexterity:
+              type: integer
+              format: int32
+            technology:
+              type: integer
+              format: int32
+            cool:
+              type: integer
+              format: int32
+            willpower:
+              type: integer
+              format: int32
+            luck:
+              type: integer
+              format: int32
+            movement:
+              type: integer
+              format: int32
+            body:
+              type: integer
+              format: int32
+            empathy:
+              type: integer
+              format: int32
+        skills:
+          type: array
+          items:
+            type: object
+            properties:
+              skill_id:
+                type: string
+                format: uuid
+              name:
+                type: string
+              level:
+                type: integer
+                format: int32
+              experience:
+                type: integer
+                format: int32
+
+    ExperienceGrantedResponse:
+      type: object
+      required:
+        - success
+        - experience_granted
+        - total_experience
+      properties:
+        success:
+          type: boolean
+          description: Успешность операции
+        experience_granted:
+          type: integer
+          format: int32
+          description: Начисленный опыт
+        total_experience:
+          type: integer
+          format: int32
+          description: Общий опыт персонажа после начисления
+        leveled_up:
+          type: boolean
+          description: Повысился ли уровень персонажа
+
+    LevelUpResponse:
+      type: object
+      required:
+        - success
+        - new_level
+        - attribute_points_gained
+      properties:
+        success:
+          type: boolean
+          description: Успешность повышения уровня
+        new_level:
+          type: integer
+          format: int32
+          description: Новый уровень персонажа
+        attribute_points_gained:
+          type: integer
+          format: int32
+          description: Полученные очки атрибутов
+        skill_points_gained:
+          type: integer
+          format: int32
+          description: Полученные очки навыков
+
+    AttributesAllocatedResponse:
+      type: object
+      required:
+        - success
+        - allocated_attributes
+      properties:
+        success:
+          type: boolean
+          description: Успешность распределения
+        allocated_attributes:
+          type: object
+          description: Распределенные атрибуты
+          properties:
+            intelligence:
+              type: integer
+              format: int32
+            reflexes:
+              type: integer
+              format: int32
+            dexterity:
+              type: integer
+              format: int32
+            technology:
+              type: integer
+              format: int32
+            cool:
+              type: integer
+              format: int32
+            willpower:
+              type: integer
+              format: int32
+            luck:
+              type: integer
+              format: int32
+            movement:
+              type: integer
+              format: int32
+            body:
+              type: integer
+              format: int32
+            empathy:
+              type: integer
+              format: int32
+
+    SkillUpgradedResponse:
+      type: object
+      required:
+        - success
+        - skill_id
+        - new_level
+        - experience_spent
+      properties:
+        success:
+          type: boolean
+          description: Успешность повышения навыка
+        skill_id:
+          type: string
+          format: uuid
+          description: ID навыка
+        new_level:
+          type: integer
+          format: int32
+          description: Новый уровень навыка
+        experience_spent:
+          type: integer
+          format: int32
+          description: Потраченный опыт
+
+    CharacterSkillsResponse:
+      type: object
+      required:
+        - character_id
+        - skills
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: ID персонажа
+        skills:
+          type: array
+          items:
+            type: object
+            properties:
+              skill_id:
+                type: string
+                format: uuid
+              name:
+                type: string
+              level:
+                type: integer
+                format: int32
+              experience:
+                type: integer
+                format: int32
+              max_level:
+                type: integer
+                format: int32
+
+    RecalculateStatsResponse:
+      type: object
+      required:
+        - success
+        - message
+      properties:
+        success:
+          type: boolean
+          description: Успешность пересчета
+        message:
+          type: string
+          description: Сообщение о результате
+        updated_stats:
+          type: object
+          description: Пересчитанные статы
+
+    LevelRequirementsResponse:
+      type: object
+      required:
+        - level
+        - experience_required
+        - total_experience_required
+      properties:
+        level:
+          type: integer
+          format: int32
+          description: Уровень
+        experience_required:
+          type: integer
+          format: int32
+          description: Опыт, необходимый для достижения уровня
+        total_experience_required:
+          type: integer
+          format: int32
+          description: Общий опыт, необходимый для достижения уровня
+        attribute_points_rewarded:
+          type: integer
+          format: int32
+          description: Очки атрибутов за уровень
+        skill_points_rewarded:
+          type: integer
+          format: int32
+          description: Очки навыков за уровень
+
+    SkillInfoResponse:
+      type: object
+      required:
+        - skill_id
+        - name
+        - description
+        - max_level
+      properties:
+        skill_id:
+          type: string
+          format: uuid
+          description: ID навыка
+        name:
+          type: string
+          description: Название навыка
+        description:
+          type: string
+          description: Описание навыка
+        max_level:
+          type: integer
+          format: int32
+          description: Максимальный уровень навыка
+        category:
+          type: string
+          enum: [combat, social, technical, physical]
+          description: Категория навыка
+
+    Error:
+      type: object
+      required:
+        - message
+        - code
+      properties:
+        message:
+          type: string
+          description: Сообщение об ошибке
+        code:
+          type: integer
+          format: int32
+          description: Код ошибки

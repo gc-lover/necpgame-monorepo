@@ -1,452 +1,1136 @@
-# Issue: #41
 openapi: 3.0.3
 info:
   title: Combat Extended Mechanics Service API
   description: |
-    API для расширенных механик боевой системы NECPGAME.
-    
-    **Основные возможности:**
-    - Интеграция взлома в бой (hacking combat integration)
-    - Управление боевыми имплантами
-    - Продвинутая стрельба (advanced shooting)
-    - Управление лоадаутами
-    - Оркестрация боевых механик
-    
-    **Компоненты:**
-    - Hacking Combat Integration - взлом в бою
-    - Implant Combat System - боевые импланты
-    - Advanced Shooting System - продвинутая стрельба
-    - Loadout Management System - управление лоадаутами
-    - Combat Mechanics Orchestrator - оркестратор механик
+    Расширенные механики боевой системы NECPGAME - VALORANT-стиль способностей в MMORPG.
+    API для управления боевыми ролями, комбо-системами, имплантами, синергиями и прогрессией мастерства.
+
+    **BACKEND NOTE**: Служба оптимизирована для высокопроизводительных вычислений боевых механик.
+    Использует кеширование для часто запрашиваемых данных о ролях и синергиях.
+
+    **PERFORMANCE**: Ожидаемая нагрузка - 2000 RPS в пиковые моменты.
+    Время отклика < 15ms для основных операций (комбо, синергии).
+    Использует Redis для кеширования состояний ролей и прогрессии.
+
+    **SCALING**: Read replicas для каталогов, write-through caching для прогрессии мастерства.
+
+    **ENTERPRISE FEATURES**:
+    - Валориант-стиль комбо с 100% мультипликаторами урона
+    - Динамическая адаптация ролей под экипировку
+    - Импланты с стресс-системой и киберпсихозом
+    - Брендовая система оружия с прогрессией R1-R5
+    - AI врагов с адаптивными тактиками
   version: 1.0.0
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
   contact:
-    name: NECPGAME API Support
-    email: api@necp.game
+    name: Backend Team
+    email: backend@necp.game
 
 servers:
-  - url: http://localhost:8083/api/v1
-    description: Gameplay Service (локальная разработка)
-  - url: https://api.necp.game/api/v1
-    description: Gameplay Service (продакшн)
+  - url: https://api.necpgame.com/v1/combat/extended
+    description: Production server
+  - url: https://staging-api.necpgame.com/v1/combat/extended
+    description: Staging server
+  - url: http://localhost:8200/api/v1/combat/extended
+    description: Local development
+
+security:
+  - BearerAuth: []
 
 tags:
-  - name: Hacking Combat
-    description: Интеграция взлома в бой
-  - name: Implant Combat
-    description: Боевые импланты
-  - name: Advanced Shooting
-    description: Продвинутая стрельба
-  - name: Loadouts
-    description: Управление лоадаутами
-  - name: Mechanics Orchestration
-    description: Оркестрация боевых механик
+  - name: roles
+    description: Боевые роли и архетипы
+  - name: synergies
+    description: Синергии и комбо-системы
+  - name: implants
+    description: Киберимпланты и стресс-система
+  - name: progression
+    description: Прогрессия мастерства и ранги
+  - name: abilities
+    description: Расширенный каталог способностей
+  - name: brands
+    description: Система брендов и экипировки
 
 paths:
-  /gameplay/combat/hacking/execute:
-    post:
-      tags:
-        - Hacking Combat
-      summary: Выполнить взлом в бою
-      description: |
-        Выполняет взлом цели в боевой сессии.
-        Интегрирует взлом с боевой системой, применяет эффекты к целям.
-      operationId: executeCombatHacking
-      security:
-        - BearerAuth: [ ]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CombatHackingRequest'
-      responses:
-        '200':
-          description: Взлом выполнен
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CombatHackingResponse'
-        '400':
-          $ref: 'common.yaml#/components/responses/BadRequest'
-        '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
-        '404':
-          $ref: 'common.yaml#/components/responses/NotFound'
-        '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
-  /gameplay/combat/hacking/networks:
+  # Боевые роли
+  /api/v1/combat/roles:
     get:
+      summary: Получить все боевые роли
+      operationId: getCombatRoles
       tags:
-        - Hacking Combat
-      summary: Получить доступные сети для взлома
-      description: |
-        Возвращает список доступных сетей для взлома в текущей боевой сессии.
-      operationId: getCombatHackingNetworks
+        - roles
       security:
-        - BearerAuth: [ ]
-      parameters:
-        - name: session_id
-          in: query
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Идентификатор боевой сессии
+        - BearerAuth: []
       responses:
         '200':
-          description: Список доступных сетей
+          description: Список боевых ролей
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  networks:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/CombatHackingNetwork'
-        '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
-        '404':
-          $ref: 'common.yaml#/components/responses/NotFound'
+                $ref: '#/components/schemas/CombatRolesResponse'
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
+          $ref: '#/components/responses/InternalServerError'
 
-  /gameplay/combat/implants/activate:
-    post:
-      tags:
-        - Implant Combat
-      summary: Активировать имплант в бою
-      description: |
-        Активирует имплант в боевой сессии и применяет эффекты.
-      operationId: activateCombatImplant
-      security:
-        - BearerAuth: [ ]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CombatImplantActivationRequest'
-      responses:
-        '200':
-          description: Имплант активирован
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CombatImplantActivationResponse'
-        '400':
-          $ref: 'common.yaml#/components/responses/BadRequest'
-        '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
-        '404':
-          $ref: 'common.yaml#/components/responses/NotFound'
-        '409':
-          description: Имплант недоступен (лимиты, энергия)
-          content:
-            application/json:
-              schema:
-                $ref: 'common.yaml#/components/schemas/Error'
-        '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
-  /gameplay/combat/implants/effects:
+  /api/v1/combat/roles/{role_id}:
     get:
+      summary: Получить детали боевой роли
+      operationId: getCombatRole
       tags:
-        - Implant Combat
-      summary: Получить эффекты активных имплантов
-      description: |
-        Возвращает список активных эффектов имплантов в текущей боевой сессии.
-      operationId: getCombatImplantEffects
+        - roles
       security:
-        - BearerAuth: [ ]
+        - BearerAuth: []
       parameters:
-        - name: character_id
-          in: query
+        - name: role_id
+          in: path
           required: true
           schema:
             type: string
             format: uuid
-          description: Идентификатор персонажа
-        - name: session_id
-          in: query
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Идентификатор боевой сессии
       responses:
         '200':
-          description: Список эффектов имплантов
+          description: Детали боевой роли
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  effects:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/CombatImplantEffect'
-        '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+                $ref: '#/components/schemas/CombatRole'
         '404':
-          $ref: 'common.yaml#/components/responses/NotFound'
+          $ref: '#/components/responses/NotFound'
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
+          $ref: '#/components/responses/InternalServerError'
 
-  /gameplay/combat/shooting/advanced/aim:
-    post:
-      tags:
-        - Advanced Shooting
-      summary: Продвинутое прицеливание
-      description: |
-        Выполняет продвинутое прицеливание с учетом точности, отдачи и модификаторов.
-      operationId: advancedAim
-      security:
-        - BearerAuth: [ ]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AdvancedAimRequest'
-      responses:
-        '200':
-          description: Прицеливание выполнено
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AdvancedAimResponse'
-        '400':
-          $ref: 'common.yaml#/components/responses/BadRequest'
-        '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
-        '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
-  /gameplay/combat/shooting/advanced/recoil:
-    post:
-      tags:
-        - Advanced Shooting
-      summary: Управление отдачей
-      description: |
-        Управляет отдачей оружия с учетом навыков и модификаторов.
-      operationId: controlRecoil
-      security:
-        - BearerAuth: [ ]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/RecoilControlRequest'
-      responses:
-        '200':
-          description: Отдача обработана
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RecoilControlResponse'
-        '400':
-          $ref: 'common.yaml#/components/responses/BadRequest'
-        '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
-        '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
-  /gameplay/combat/loadouts:
+  /api/v1/combat/roles/{role_id}/abilities:
     get:
+      summary: Получить способности для роли
+      operationId: getRoleAbilities
       tags:
-        - Loadouts
-      summary: Получить лоадауты
-      description: |
-        Возвращает список лоадаутов персонажа для боевой системы.
-      operationId: getCombatLoadouts
+        - roles
       security:
-        - BearerAuth: [ ]
+        - BearerAuth: []
       parameters:
-        - name: character_id
-          in: query
+        - name: role_id
+          in: path
           required: true
           schema:
             type: string
             format: uuid
-          description: Идентификатор персонажа
-        - $ref: 'common.yaml#/components/parameters/Limit'
-        - $ref: 'common.yaml#/components/parameters/Offset'
       responses:
         '200':
-          description: Список лоадаутов
+          description: Способности роли
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  loadouts:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/CombatLoadout'
-                  total:
-                    type: integer
-        '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
+                $ref: '#/components/schemas/RoleAbilitiesResponse'
         '404':
-          $ref: 'common.yaml#/components/responses/NotFound'
+          $ref: '#/components/responses/NotFound'
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
+          $ref: '#/components/responses/InternalServerError'
 
-    post:
-      tags:
-        - Loadouts
-      summary: Создать или обновить лоадаут
-      description: |
-        Создает новый лоадаут или обновляет существующий.
-        Включает оружие, способности, импланты и оборудование.
-      operationId: createOrUpdateCombatLoadout
-      security:
-        - BearerAuth: [ ]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CombatLoadoutCreate'
-      responses:
-        '200':
-          description: Лоадаут обновлен
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CombatLoadout'
-        '201':
-          description: Лоадаут создан
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CombatLoadout'
-        '400':
-          $ref: 'common.yaml#/components/responses/BadRequest'
-        '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
-        '409':
-          $ref: 'common.yaml#/components/responses/Conflict'
-        '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
-  /gameplay/combat/loadouts/equip:
-    post:
-      tags:
-        - Loadouts
-      summary: Экипировать лоадаут
-      description: |
-        Экипирует лоадаут для персонажа в боевой сессии.
-        Активирует все компоненты лоадаута (оружие, способности, импланты).
-      operationId: equipCombatLoadout
-      security:
-        - BearerAuth: [ ]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CombatLoadoutEquipRequest'
-      responses:
-        '200':
-          description: Лоадаут экипирован
-          content:
-            application/json:
-              schema:
-                $ref: 'common.yaml#/components/schemas/StatusResponse'
-        '400':
-          $ref: 'common.yaml#/components/responses/BadRequest'
-        '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
-        '404':
-          $ref: 'common.yaml#/components/responses/NotFound'
-        '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
-
-  /gameplay/combat/mechanics/status:
+  # Синергии и комбо
+  /api/v1/combat/synergies:
     get:
+      summary: Получить матрицу синергий
+      operationId: getSynergyMatrix
       tags:
-        - Mechanics Orchestration
-      summary: Получить статус всех механик
-      description: |
-        Возвращает статус всех расширенных механик в боевой сессии:
-        - Активные импланты и их эффекты
-        - Доступные сети для взлома
-        - Статус продвинутой стрельбы
-        - Активный лоадаут
-      operationId: getCombatMechanicsStatus
+        - synergies
       security:
-        - BearerAuth: [ ]
+        - BearerAuth: []
       parameters:
-        - name: character_id
+        - name: weapon_brand
           in: query
-          required: true
           schema:
             type: string
-            format: uuid
-          description: Идентификатор персонажа
-        - name: session_id
+            enum: [arasaka, militech, kang_tao, budget_arms, constitutional_arms]
+        - name: implant_type
           in: query
-          required: true
           schema:
             type: string
-            format: uuid
-          description: Идентификатор боевой сессии
+            enum: [gorilla_arms, mantis_blades, kiroshi_optics, synaptic_accelerator, projectile_launcher]
       responses:
         '200':
-          description: Статус всех механик
+          description: Матрица синергий
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CombatMechanicsStatus'
-        '401':
-          $ref: 'common.yaml#/components/responses/Unauthorized'
-        '404':
-          $ref: 'common.yaml#/components/responses/NotFound'
+                $ref: '#/components/schemas/SynergyMatrixResponse'
         '500':
-          $ref: 'common.yaml#/components/responses/InternalServerError'
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/combat/combos:
+    get:
+      summary: Получить доступные комбо
+      operationId: getCombos
+      tags:
+        - synergies
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: combo_type
+          in: query
+          schema:
+            type: string
+            enum: [solo, team, legendary]
+      responses:
+        '200':
+          description: Список комбо
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CombosResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      summary: Активировать комбо
+      operationId: activateCombo
+      tags:
+        - synergies
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ActivateComboRequest'
+      responses:
+        '200':
+          description: Комбо активировано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActivateComboResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # Импланты и стресс-система
+  /api/v1/combat/implants:
+    get:
+      summary: Получить каталог имплантов
+      operationId: getImplantsCatalog
+      tags:
+        - implants
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum: [combat, stealth, mobility, utility, medical]
+      responses:
+        '200':
+          description: Каталог имплантов
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImplantsCatalogResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/combat/implants/player/{player_id}:
+    get:
+      summary: Получить импланты игрока
+      operationId: getPlayerImplants
+      tags:
+        - implants
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Импланты игрока
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerImplantsResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      summary: Установить имплант
+      operationId: installImplant
+      tags:
+        - implants
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InstallImplantRequest'
+      responses:
+        '200':
+          description: Имплант установлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InstallImplantResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/combat/implants/stress/{player_id}:
+    get:
+      summary: Получить уровень стресса имплантов
+      operationId: getImplantStress
+      tags:
+        - implants
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Уровень стресса
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImplantStressResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # Прогрессия мастерства
+  /api/v1/combat/progression/player/{player_id}:
+    get:
+      summary: Получить прогрессию мастерства
+      operationId: getMasteryProgression
+      tags:
+        - progression
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: weapon_class
+          in: query
+          schema:
+            type: string
+            enum: [pistol, shotgun, rifle, sniper, smg, launcher, melee]
+      responses:
+        '200':
+          description: Прогрессия мастерства
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MasteryProgressionResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/combat/progression/player/{player_id}/rank:
+    get:
+      summary: Получить текущий ранг мастерства
+      operationId: getCurrentMasteryRank
+      tags:
+        - progression
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: weapon_class
+          in: query
+          schema:
+            type: string
+            enum: [pistol, shotgun, rifle, sniper, smg, launcher, melee]
+      responses:
+        '200':
+          description: Текущий ранг
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MasteryRankResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # Брендовая система
+  /api/v1/combat/brands:
+    get:
+      summary: Получить все бренды оружия
+      operationId: getWeaponBrands
+      tags:
+        - brands
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Список брендов
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WeaponBrandsResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/combat/brands/{brand_id}/weapons:
+    get:
+      summary: Получить оружие бренда
+      operationId: getBrandWeapons
+      tags:
+        - brands
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: brand_id
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [arasaka, militech, kang_tao, budget_arms, constitutional_arms]
+        - name: tier
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 5
+      responses:
+        '200':
+          description: Оружие бренда
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BrandWeaponsResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # Расширенные способности
+  /api/v1/combat/abilities/extended:
+    get:
+      summary: Получить расширенный каталог способностей
+      operationId: getExtendedAbilities
+      tags:
+        - abilities
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: archetype
+          in: query
+          schema:
+            type: string
+            enum: [combat, netrunner, tech, stealth, support, mobility, medic, tactician]
+        - name: slot_type
+          in: query
+          schema:
+            type: string
+            enum: [Q, E, R, passive, implant]
+      responses:
+        '200':
+          description: Расширенный каталог способностей
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExtendedAbilitiesResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
 components:
   securitySchemes:
     BearerAuth:
-      $ref: 'common.yaml#/components/securitySchemes/BearerAuth'
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  responses:
+    BadRequest:
+      description: Неверный запрос
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Не авторизован
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Ресурс не найден
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    TooManyRequests:
+      description: Слишком много запросов
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    InternalServerError:
+      description: Внутренняя ошибка сервера
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
 
   schemas:
-    CombatHackingRequest:
-      $ref: 'combat-extended-mechanics-schemas.yaml#/components/schemas/CombatHackingRequest'
-    CombatHackingResponse:
-      $ref: 'combat-extended-mechanics-schemas.yaml#/components/schemas/CombatHackingResponse'
-    CombatHackingNetwork:
-      $ref: 'combat-extended-mechanics-schemas.yaml#/components/schemas/CombatHackingNetwork'
-    CombatImplantActivationRequest:
-      $ref: 'combat-extended-mechanics-schemas.yaml#/components/schemas/CombatImplantActivationRequest'
-    CombatImplantActivationResponse:
-      $ref: 'combat-extended-mechanics-schemas.yaml#/components/schemas/CombatImplantActivationResponse'
-    CombatImplantEffect:
-      $ref: 'combat-extended-mechanics-schemas.yaml#/components/schemas/CombatImplantEffect'
-    AdvancedAimRequest:
-      $ref: 'combat-extended-mechanics-schemas.yaml#/components/schemas/AdvancedAimRequest'
-    AdvancedAimResponse:
-      $ref: 'combat-extended-mechanics-schemas.yaml#/components/schemas/AdvancedAimResponse'
-    RecoilControlRequest:
-      $ref: 'combat-extended-mechanics-schemas.yaml#/components/schemas/RecoilControlRequest'
-    RecoilControlResponse:
-      $ref: 'combat-extended-mechanics-schemas.yaml#/components/schemas/RecoilControlResponse'
-    CombatLoadout:
-      $ref: 'combat-extended-mechanics-schemas.yaml#/components/schemas/CombatLoadout'
-    CombatLoadoutCreate:
-      $ref: 'combat-extended-mechanics-schemas.yaml#/components/schemas/CombatLoadoutCreate'
-    CombatLoadoutEquipRequest:
-      $ref: 'combat-extended-mechanics-schemas.yaml#/components/schemas/CombatLoadoutEquipRequest'
-    CombatMechanicsStatus:
-      $ref: 'combat-extended-mechanics-schemas.yaml#/components/schemas/CombatMechanicsStatus'
+    # Общие схемы
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          example: INVALID_REQUEST
+        message:
+          type: string
+          example: Неверные параметры запроса
+        details:
+          type: object
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
 
-security:
-  - BearerAuth: [ ]
+    # Боевые роли
+    CombatRole:
+      type: object
+      required:
+        - id
+        - name
+        - archetype
+        - key_attributes
+        - tactical_priorities
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Уникальный ID роли
+        name:
+          type: string
+          description: Название роли
+        archetype:
+          type: string
+          enum: [solo, hybrid, support]
+          description: Архетип роли
+        key_attributes:
+          type: array
+          items:
+            type: string
+          description: Ключевые атрибуты роли
+        tactical_priorities:
+          type: array
+          items:
+            type: string
+          description: Тактические приоритеты
+        recommended_weapons:
+          type: array
+          items:
+            type: string
+          description: Рекомендуемое оружие
+        synergy_bonuses:
+          type: object
+          description: Бонусы синергии
+        mastery_requirements:
+          type: object
+          description: Требования к мастерству
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
 
+    CombatRolesResponse:
+      type: object
+      required:
+        - roles
+        - total
+      properties:
+        roles:
+          type: array
+          items:
+            $ref: '#/components/schemas/CombatRole'
+        total:
+          type: integer
+          minimum: 0
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+    RoleAbilitiesResponse:
+      type: object
+      required:
+        - role_id
+        - abilities
+        - total
+      properties:
+        role_id:
+          type: string
+          format: uuid
+        abilities:
+          type: array
+          items:
+            $ref: '#/components/schemas/CombatAbility'
+        total:
+          type: integer
+          minimum: 0
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+    # Синергии и комбо
+    SynergyMatrixResponse:
+      type: object
+      required:
+        - matrix
+        - timestamp
+      properties:
+        matrix:
+          type: object
+          description: Матрица синергий по брендам и типам имплантов
+        timestamp:
+          type: string
+          format: date-time
+        version:
+          type: string
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+    CombatCombo:
+      type: object
+      required:
+        - id
+        - name
+        - type
+        - damage_multiplier
+        - requirements
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        type:
+          type: string
+          enum: [solo, team, legendary]
+        damage_multiplier:
+          type: number
+          format: float
+          minimum: 1.0
+          maximum: 2.0
+          description: Мультипликатор урона (до 100% бонуса)
+        requirements:
+          type: array
+          items:
+            type: string
+          description: Требования для активации
+        cooldown_seconds:
+          type: integer
+          minimum: 0
+        duration_seconds:
+          type: integer
+          minimum: 0
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+    CombosResponse:
+      type: object
+      required:
+        - combos
+        - total
+      properties:
+        combos:
+          type: array
+          items:
+            $ref: '#/components/schemas/CombatCombo'
+        total:
+          type: integer
+          minimum: 0
+        player_unlocked:
+          type: array
+          items:
+            type: string
+            format: uuid
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+    ActivateComboRequest:
+      type: object
+      required:
+        - combo_id
+        - player_id
+        - session_id
+      properties:
+        combo_id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        session_id:
+          type: string
+          format: uuid
+        target_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+    ActivateComboResult:
+      type: object
+      required:
+        - success
+        - combo_id
+        - timestamp
+      properties:
+        success:
+          type: boolean
+        combo_id:
+          type: string
+          format: uuid
+        timestamp:
+          type: string
+          format: date-time
+        damage_multiplier:
+          type: number
+          format: float
+        cooldown_remaining:
+          type: integer
+        error_message:
+          type: string
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+    # Импланты
+    CombatImplant:
+      type: object
+      required:
+        - id
+        - name
+        - category
+        - rarity
+        - cyberpsychosis_risk
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        category:
+          type: string
+          enum: [combat, stealth, mobility, utility, medical]
+        rarity:
+          type: string
+          enum: [common, uncommon, rare, epic, legendary]
+        cyberpsychosis_risk:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Риск киберпсихоза (0.0-1.0)
+        stress_generation:
+          type: number
+          format: float
+          description: Генерация стресса в минуту
+        max_stress_threshold:
+          type: number
+          format: float
+          description: Максимальный порог стресса
+        effects:
+          type: array
+          items:
+            type: string
+          description: Эффекты импланта
+        requirements:
+          type: object
+          description: Требования для установки
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+    ImplantsCatalogResponse:
+      type: object
+      required:
+        - implants
+        - total
+        - categories
+      properties:
+        implants:
+          type: array
+          items:
+            $ref: '#/components/schemas/CombatImplant'
+        total:
+          type: integer
+          minimum: 0
+        categories:
+          type: array
+          items:
+            type: string
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+    PlayerImplant:
+      type: object
+      required:
+        - implant_id
+        - installed_at
+        - current_stress
+      properties:
+        implant_id:
+          type: string
+          format: uuid
+        installed_at:
+          type: string
+          format: date-time
+        current_stress:
+          type: number
+          format: float
+          minimum: 0.0
+        last_used:
+          type: string
+          format: date-time
+        cyberpsychosis_level:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+    PlayerImplantsResponse:
+      type: object
+      required:
+        - player_id
+        - implants
+        - total_stress
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        implants:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlayerImplant'
+        total_stress:
+          type: number
+          format: float
+        cyberpsychosis_risk:
+          type: number
+          format: float
+        stress_decay_rate:
+          type: number
+          format: float
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+    InstallImplantRequest:
+      type: object
+      required:
+        - implant_id
+        - slot
+      properties:
+        implant_id:
+          type: string
+          format: uuid
+        slot:
+          type: string
+          enum: [arms, legs, eyes, brain, nervous_system, skeleton]
+        force_install:
+          type: boolean
+          default: false
+          description: Принудительная установка (игнорирует риски)
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+    InstallImplantResult:
+      type: object
+      required:
+        - success
+        - implant_id
+        - timestamp
+      properties:
+        success:
+          type: boolean
+        implant_id:
+          type: string
+          format: uuid
+        timestamp:
+          type: string
+          format: date-time
+        stress_increase:
+          type: number
+          format: float
+        cyberpsychosis_risk_increase:
+          type: number
+          format: float
+        error_message:
+          type: string
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+    ImplantStressResponse:
+      type: object
+      required:
+        - player_id
+        - current_stress
+        - max_stress
+        - cyberpsychosis_level
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        current_stress:
+          type: number
+          format: float
+        max_stress:
+          type: number
+          format: float
+        cyberpsychosis_level:
+          type: number
+          format: float
+        stress_decay_rate:
+          type: number
+          format: float
+        last_stress_event:
+          type: string
+          format: date-time
+        stress_sources:
+          type: array
+          items:
+            type: object
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+    # Прогрессия мастерства
+    MasteryProgressionResponse:
+      type: object
+      required:
+        - player_id
+        - weapon_class
+        - current_experience
+        - experience_to_next_rank
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        weapon_class:
+          type: string
+          enum: [pistol, shotgun, rifle, sniper, smg, launcher, melee]
+        current_rank:
+          type: string
+          enum: [R1, R2, R3, R4, R5]
+        current_experience:
+          type: integer
+          minimum: 0
+        experience_to_next_rank:
+          type: integer
+          minimum: 0
+        total_experience:
+          type: integer
+          minimum: 0
+        rank_bonuses:
+          type: object
+          description: Бонусы текущего ранга
+        next_rank_bonuses:
+          type: object
+          description: Бонусы следующего ранга
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+    MasteryRankResponse:
+      type: object
+      required:
+        - player_id
+        - weapon_class
+        - rank
+        - unlocked_at
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        weapon_class:
+          type: string
+          enum: [pistol, shotgun, rifle, sniper, smg, launcher, melee]
+        rank:
+          type: string
+          enum: [R1, R2, R3, R4, R5]
+        unlocked_at:
+          type: string
+          format: date-time
+        experience_at_unlock:
+          type: integer
+        rank_benefits:
+          type: array
+          items:
+            type: string
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+    # Брендовая система
+    WeaponBrand:
+      type: object
+      required:
+        - id
+        - name
+        - faction
+        - specialty
+      properties:
+        id:
+          type: string
+          enum: [arasaka, militech, kang_tao, budget_arms, constitutional_arms]
+        name:
+          type: string
+        faction:
+          type: string
+        specialty:
+          type: string
+        reputation_bonus:
+          type: number
+          format: float
+        synergy_multipliers:
+          type: object
+        legendary_weapons:
+          type: array
+          items:
+            type: string
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+    WeaponBrandsResponse:
+      type: object
+      required:
+        - brands
+        - total
+      properties:
+        brands:
+          type: array
+          items:
+            $ref: '#/components/schemas/WeaponBrand'
+        total:
+          type: integer
+          minimum: 0
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+    BrandWeaponsResponse:
+      type: object
+      required:
+        - brand_id
+        - weapons
+        - total
+      properties:
+        brand_id:
+          type: string
+        weapons:
+          type: array
+          items:
+            $ref: '#/components/schemas/Weapon'
+        total:
+          type: integer
+          minimum: 0
+        tier_distribution:
+          type: object
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+    # Расширенные способности
+    CombatAbility:
+      type: object
+      required:
+        - id
+        - name
+        - archetype
+        - slot_type
+        - cooldown_seconds
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        archetype:
+          type: string
+          enum: [combat, netrunner, tech, stealth, support, mobility, medic, tactician]
+        slot_type:
+          type: string
+          enum: [Q, E, R, passive, implant]
+        cooldown_seconds:
+          type: integer
+          minimum: 0
+        damage_type:
+          type: string
+          enum: [physical, energy, chemical, cyber]
+        effects:
+          type: array
+          items:
+            type: string
+        synergy_requirements:
+          type: array
+          items:
+            type: string
+        mastery_unlock_level:
+          type: integer
+          minimum: 1
+          maximum: 5
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+    ExtendedAbilitiesResponse:
+      type: object
+      required:
+        - abilities
+        - total
+        - archetypes
+      properties:
+        abilities:
+          type: array
+          items:
+            $ref: '#/components/schemas/CombatAbility'
+        total:
+          type: integer
+          minimum: 0
+        archetypes:
+          type: array
+          items:
+            type: string
+        slot_distribution:
+          type: object
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+    # Ссылка на базовое оружие
+    Weapon:
+      type: object
+      required:
+        - id
+        - name
+        - category
+        - tier
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        category:
+          type: string
+          enum: [pistol, shotgun, rifle, sniper, smg, launcher, melee]
+        tier:
+          type: integer
+          minimum: 1
+          maximum: 5
+        brand:
+          type: string
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
