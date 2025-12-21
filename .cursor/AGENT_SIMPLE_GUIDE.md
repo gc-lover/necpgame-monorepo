@@ -54,11 +54,11 @@ mcp_github_update_project_item({
 **Оптимизированные скрипты (ТОЛЬКО PYTHON!):**
 - `python scripts/validate-domains-openapi.py` - валидация OpenAPI доменов
 - `python scripts/generate-all-domains-go.py` - генерация enterprise-grade сервисов
-- `python scripts/reorder-openapi-fields.py` - оптимизация структур OpenAPI
+- `python scripts/batch-optimize-openapi-struct-alignment.py` - оптимизация структур OpenAPI
 - `python scripts/reorder-liquibase-columns.py` - оптимизация колонок БД
 
 **КРИТИЧНО:** Forbidden создавать новые .sh/.ps1/.bat скрипты!
-- [OK] Используй: `python scripts/framework.py` (базовый фреймворк)
+- [OK] Используй: `scripts/core/base_script.py` (базовый фреймворк)
 - [ERROR] Forbidden: .sh, .ps1, .bat, .cmd, .pl, .rb, .js
 - Git hooks блокируют коммиты с запрещенными типами скриптов
     - Корень только для: `README.md`, `CHANGELOG*.md`, основные конфиги

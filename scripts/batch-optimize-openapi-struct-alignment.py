@@ -35,6 +35,15 @@ class BatchOpenAPIOptimizer(BaseScript):
 
     def add_script_args(self):
         """Add script-specific arguments"""
+        # Single file processing (replaces reorder-openapi-fields.py)
+        self.parser.add_argument(
+            'file',
+            nargs='?',
+            type=Path,
+            help='Single OpenAPI YAML file to optimize (alternative to batch processing)'
+        )
+
+        # Batch processing options
         self.parser.add_argument(
             '--pattern',
             default='*.yaml',
@@ -50,6 +59,11 @@ class BatchOpenAPIOptimizer(BaseScript):
     def run(self):
         """Main optimization logic"""
         args = self.parse_args()
+
+        # Single file processing (replaces reorder-openapi-fields.py functionality)
+        if args.file:
+            self._process_single_file(args.file, args.dry_run)
+            return
 
         openapi_dir = self.config.get_openapi_dir()
         if not openapi_dir.exists():
@@ -101,6 +115,38 @@ class BatchOpenAPIOptimizer(BaseScript):
                 continue
             files.append(yaml_file)
         return sorted(files)
+
+    def _process_single_file(self, file_path: Path, dry_run: bool):
+        """Process a single OpenAPI file (replaces reorder-openapi-fields.py)"""
+        if not file_path.exists():
+            self.logger.error(f"OpenAPI file not found: {file_path}")
+            return
+
+        self.logger.info(f"Processing single file: {file_path}")
+
+        if dry_run:
+            self.logger.info("DRY RUN mode - no changes will be saved")
+
+        try:
+            # Load and optimize
+            spec = self.openapi_manager.load_spec(file_path)
+            changes, schemas = self.openapi_manager.optimize_struct_alignment(spec)
+
+            if changes > 0:
+                self.logger.info(f"Optimized schemas: {changes}")
+                for schema in schemas:
+                    self.logger.info(f"  ✓ {schema}")
+
+                if not dry_run:
+                    self.openapi_manager.save_spec(file_path, spec)
+                    self.logger.info("Changes saved")
+                else:
+                    self.logger.info("Run without --dry-run to apply changes")
+            else:
+                self.logger.info("All schemas already optimized")
+
+        except Exception as e:
+            self.logger.error(f"Failed to process {file_path.name}: {e}")
 
     def _print_summary(self, total_files: int, files_changed: int, total_changes: int,
                       files_with_changes: List[Tuple[Path, int, List[str]]]):
