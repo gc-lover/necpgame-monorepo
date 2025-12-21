@@ -1,6 +1,228 @@
 # Guild CRUD operations and core management
 # Issue: #2235
 
+components:
+  schemas:
+    # Guild schemas (inline to avoid reference issues)
+    Guild:
+      type: object
+      required:
+        - id
+        - name
+        - created_at
+        - level
+        - member_count
+        - is_active
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Guild unique identifier
+          example: 550e8400-e29b-41d4-a716-446655440000
+        leader_id:
+          type: string
+          format: uuid
+          description: UUID of the guild leader
+          example: 550e8400-e29b-41d4-a716-446655440001
+        name:
+          type: string
+          minLength: 3
+          maxLength: 50
+          description: Guild display name
+          example: Shadow Hunters
+        description:
+          type: string
+          maxLength: 500
+          description: Guild description
+          example: Elite PvP guild focused on territory control and resource acquisition.
+        motto:
+          type: string
+          maxLength: 100
+          description: Guild motto/slogan
+          example: Conquer or Die
+        faction:
+          type: string
+          enum:
+            - corporate
+            - nomad
+            - street_kid
+            - mercenary
+            - other
+          description: Guild faction alignment
+          example: nomad
+        created_at:
+          type: string
+          format: date-time
+          description: Timestamp of guild creation
+          example: "2025-12-20T10:00:00Z"
+        last_activity:
+          type: string
+          format: date-time
+          description: Last guild activity timestamp
+          example: "2025-12-20T14:30:00Z"
+        win_rate:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Guild PvP win rate
+          example: 0.67
+        level:
+          type: integer
+          format: int32
+          minimum: 1
+          maximum: 100
+          description: Guild level
+          example: 15
+        member_count:
+          type: integer
+          format: int32
+          minimum: 1
+          maximum: 250
+          description: Current number of members
+          example: 75
+        max_members:
+          type: integer
+          format: int32
+          minimum: 1
+          maximum: 250
+          description: Maximum allowed members
+          example: 100
+        reputation_score:
+          type: integer
+          format: int32
+          minimum: -10000
+          maximum: 10000
+          description: Guild reputation score
+          example: 1250
+        territory_count:
+          type: integer
+          format: int32
+          minimum: 0
+          maximum: 50
+          description: Number of controlled territories
+          example: 3
+        is_recruiting:
+          type: boolean
+          description: Whether guild is accepting new members
+          example: true
+        is_active:
+          type: boolean
+          description: Indicates if the guild is active
+          example: true
+        has_bank:
+          type: boolean
+          description: Whether guild has bank functionality
+          example: true
+      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+    CreateGuildRequest:
+      type: object
+      required:
+        - name
+        - description
+        - faction
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 50
+          description: Desired guild name
+          example: Night City Legends
+        description:
+          type: string
+          maxLength: 500
+          description: Guild description
+          example: A new guild rising in Night City, seeking glory and wealth.
+        motto:
+          type: string
+          maxLength: 100
+          description: Guild motto
+          example: Power Through Unity
+        faction:
+          type: string
+          enum:
+            - corporate
+            - nomad
+            - street_kid
+            - mercenary
+            - other
+          description: Guild faction alignment
+          example: street_kid
+        max_members:
+          type: integer
+          minimum: 1
+          maximum: 250
+          default: 50
+          description: Maximum members allowed
+        is_recruiting:
+          type: boolean
+          default: true
+          description: Whether to accept new members immediately
+      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+    UpdateGuildRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 50
+          description: New guild name
+          example: Night City Elite
+        description:
+          type: string
+          maxLength: 500
+          description: New guild description
+          example: Updated description for the elite guild.
+        motto:
+          type: string
+          maxLength: 100
+          description: New guild motto
+        faction:
+          type: string
+          enum:
+            - corporate
+            - nomad
+            - street_kid
+            - mercenary
+            - other
+          description: New faction alignment
+        max_members:
+          type: integer
+          minimum: 1
+          maximum: 250
+          description: New maximum members
+        is_recruiting:
+          type: boolean
+          description: Update recruiting status
+      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+    GuildResponse:
+      type: object
+      required:
+        - guild
+      properties:
+        guild:
+          $ref: "#/components/schemas/Guild"
+      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+    GuildsListResponse:
+      type: object
+      required:
+        - guilds
+        - total_count
+      properties:
+        guilds:
+          type: array
+          items:
+            $ref: "#/components/schemas/Guild"
+          description: List of guilds
+        total_count:
+          type: integer
+          description: Total number of guilds matching criteria
+          example: 150
+        has_more:
+          type: boolean
+          description: Whether there are more results available
+          example: true
+      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+
 paths:
   # Health check
   /health:
@@ -10,13 +232,13 @@ paths:
       tags:
         - Guild Management
       responses:
-        '200':
+        "200":
           description: Service is healthy
           content:
             application/json:
               schema:
-                $ref: '../schemas/health-schemas.yaml#/components/schemas/HealthResponse'
-        '503':
+                $ref: "../schemas/health-schemas.yaml#/components/schemas/HealthResponse"
+        "503":
           description: Service is unhealthy
           content:
             application/json:
@@ -61,15 +283,15 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '../schemas/guild-schemas.yaml#/components/schemas/CreateGuildRequest'
+              $ref: "#/components/schemas/CreateGuildRequest"
       responses:
-        '201':
+        "201":
           description: Guild created successfully
           content:
             application/json:
               schema:
-                $ref: '../schemas/guild-schemas.yaml#/components/schemas/GuildResponse'
-        '400':
+                $ref: "#/components/schemas/GuildResponse"
+        "400":
           description: Invalid request data
           content:
             application/json:
@@ -90,7 +312,7 @@ paths:
                   details:
                     type: object
                     description: Additional error details (optional)
-        '403':
+        "403":
           description: Not authorized to create guild
           content:
             application/json:
@@ -111,7 +333,7 @@ paths:
                   details:
                     type: object
                     description: Additional error details (optional)
-        '409':
+        "409":
           description: Guild name already exists
           content:
             application/json:
@@ -213,13 +435,13 @@ paths:
             default: 0
           description: Pagination offset
       responses:
-        '200':
+        "200":
           description: Guilds retrieved successfully
           content:
             application/json:
               schema:
-                $ref: '../schemas/guild-schemas.yaml#/components/schemas/GuildsListResponse'
-        '400':
+                $ref: "#/components/schemas/GuildsListResponse"
+        "400":
           description: Invalid query parameters
           content:
             application/json:
@@ -257,13 +479,13 @@ paths:
             format: uuid
           description: Unique identifier of the guild
       responses:
-        '200':
+        "200":
           description: Guild retrieved successfully
           content:
             application/json:
               schema:
-                $ref: '../schemas/guild-schemas.yaml#/components/schemas/GuildResponse'
-        '400':
+                $ref: "#/components/schemas/GuildResponse"
+        "400":
           description: Invalid guild ID format
           content:
             application/json:
@@ -284,7 +506,7 @@ paths:
                   details:
                     type: object
                     description: Additional error details (optional)
-        '404':
+        "404":
           description: Guild not found
           content:
             application/json:
@@ -331,15 +553,15 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '../schemas/guild-schemas.yaml#/components/schemas/UpdateGuildRequest'
+              $ref: "#/components/schemas/UpdateGuildRequest"
       responses:
-        '200':
+        "200":
           description: Guild updated successfully
           content:
             application/json:
               schema:
-                $ref: '../schemas/guild-schemas.yaml#/components/schemas/GuildResponse'
-        '400':
+                $ref: "#/components/schemas/GuildResponse"
+        "400":
           description: Invalid request data or guild ID
           content:
             application/json:
@@ -360,7 +582,7 @@ paths:
                   details:
                     type: object
                     description: Additional error details (optional)
-        '403':
+        "403":
           description: Not authorized to update this guild
           content:
             application/json:
@@ -381,7 +603,7 @@ paths:
                   details:
                     type: object
                     description: Additional error details (optional)
-        '404':
+        "404":
           description: Guild not found
           content:
             application/json:
@@ -424,9 +646,9 @@ paths:
             format: uuid
           description: Unique identifier of the guild to disband
       responses:
-        '204':
+        "204":
           description: Guild disbanded successfully (No Content)
-        '400':
+        "400":
           description: Invalid guild ID format
           content:
             application/json:
@@ -447,7 +669,7 @@ paths:
                   details:
                     type: object
                     description: Additional error details (optional)
-        '403':
+        "403":
           description: Not authorized to disband this guild
           content:
             application/json:
@@ -468,7 +690,7 @@ paths:
                   details:
                     type: object
                     description: Additional error details (optional)
-        '404':
+        "404":
           description: Guild not found
           content:
             application/json:

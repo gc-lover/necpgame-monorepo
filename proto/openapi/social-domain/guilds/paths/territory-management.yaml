@@ -1,6 +1,102 @@
 # Guild territory management operations
 # Issue: #2235
 
+components:
+  schemas:
+    # Territory schemas (inline to avoid reference issues)
+    Territory:
+      type: object
+      required:
+      - id
+      - name
+      - type
+      - control_points
+      - is_contested
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Territory identifier
+        controlling_guild_id:
+          type: string
+          format: uuid
+          description: Currently controlling guild
+        name:
+          type: string
+          description: Territory display name
+          example: Night City District 7
+        type:
+          type: string
+          enum:
+          - district
+          - landmark
+          - resource_node
+          - strategic_point
+          description: Territory type
+        claimed_at:
+          type: string
+          format: date-time
+          description: When territory was claimed
+        control_points:
+          type: integer
+          minimum: 1
+          description: Number of control points
+        defense_rating:
+          type: integer
+          minimum: 0
+          description: Territory defense strength
+        resource_value:
+          type: integer
+          minimum: 0
+          description: Economic value of territory
+        is_contested:
+          type: boolean
+          description: Whether territory is under attack
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    GuildTerritoriesResponse:
+      type: object
+      required:
+      - territories
+      properties:
+        territories:
+          type: array
+          items:
+            $ref: '#/components/schemas/Territory'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    ClaimTerritoryRequest:
+      type: object
+      required:
+      - territory_id
+      properties:
+        territory_id:
+          type: string
+          format: uuid
+          description: Territory to claim
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    TerritoryClaimResponse:
+      type: object
+      required:
+      - claim_id
+      - status
+      properties:
+        claim_id:
+          type: string
+          format: uuid
+          description: Unique claim identifier
+        status:
+          type: string
+          enum:
+          - initiated
+          - processing
+          - completed
+          - failed
+          description: Claim status
+        estimated_completion:
+          type: string
+          format: date-time
+          description: When claim will complete
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
 paths:
   # Guild territories
   /guilds/{guild_id}/territories:
@@ -31,7 +127,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '../schemas/territory-schemas.yaml#/components/schemas/GuildTerritoriesResponse'
+                $ref: '#/components/schemas/GuildTerritoriesResponse'
         '403':
           description: Not authorized to view territories
           content:
@@ -103,14 +199,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '../schemas/territory-schemas.yaml#/components/schemas/ClaimTerritoryRequest'
+              $ref: '#/components/schemas/ClaimTerritoryRequest'
       responses:
         '201':
           description: Territory claim initiated successfully
           content:
             application/json:
               schema:
-                $ref: '../schemas/territory-schemas.yaml#/components/schemas/TerritoryClaimResponse'
+                $ref: '#/components/schemas/TerritoryClaimResponse'
         '400':
           description: Invalid request or territory not available
           content:

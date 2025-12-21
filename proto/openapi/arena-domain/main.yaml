@@ -8,6 +8,9 @@ info:
 
     '
   version: 1.0.0
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
   contact:
     name: NECPGAME API Support
     url: https://necpgame.com/support
@@ -32,11 +35,34 @@ paths:
       responses:
         '200':
           description: OK
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: max-age=300, s-maxage=600
+            ETag:
+              schema:
+                type: string
+                example: '"-api-v1-arena-domain-health-v1.0"'
+            Content-Encoding:
+              schema:
+                type: string
+                enum: [gzip, deflate, br]
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HealthResponse'
+        '429':
+          description: Too many requests - rate limit exceeded
           headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 60
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
             Cache-Control:
               schema:
                 type: string
@@ -88,6 +114,23 @@ paths:
                   total_time_ms:
                     type: integer
                     description: Total processing time
+        '400':
+          description: Invalid request - malformed domain list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Too many requests - rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 60
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /api/v1/arena-domain/health/ws:
     get:
       summary: Real-time health monitoring WebSocket
@@ -96,8 +139,40 @@ paths:
       - System
       description: Real-time health updates without polling
       responses:
+        '200':
+          description: WebSocket upgrade information returned
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  websocket_url:
+                    type: string
+                    example: "ws://localhost:8080/api/v1/arena-domain/health/ws"
+                  supported_protocols:
+                    type: array
+                    items:
+                      type: string
+                    example: ["health-monitoring-v1"]
         '101':
           description: WebSocket connection established
+        '400':
+          description: Invalid WebSocket upgrade request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Too many WebSocket connections - rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 30
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 components:
   securitySchemes:
     BearerAuth:
@@ -142,24 +217,4 @@ components:
           format: int32
           minimum: 100
           maximum: 599
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-    WebSocketHealthMessage:
-      type: object
-      required:
-      - type
-      - message_timestamp
-      - health
-      properties:
-        type:
-          type: string
-          enum:
-          - health_update
-          - health_alert
-          - service_down
-        message_timestamp:
-          type: string
-          format: date-time
-          description: Timestamp of the health message
-        health:
-          $ref: '#/components/schemas/HealthResponse'
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'

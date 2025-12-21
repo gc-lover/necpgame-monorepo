@@ -128,7 +128,7 @@ class GoCodeGenerator:
 
         try:
             result = subprocess.run([
-                "ogen", "--target", str(pkg_dir),
+                "npx", "--yes", "ogen", "--target", str(pkg_dir),
                 "--package", "api", "--clean", str(bundled_spec)
             ], capture_output=True, text=True, cwd=self.project_root, timeout=120)
 
@@ -243,13 +243,13 @@ import (
 
 type {domain.replace("-", "").title()}Service struct {{
 	api *api.Server
-}
+}}
 
 func New{domain.replace("-", "").title()}Service() *{domain.replace("-", "").title()}Service {{
 	return &{domain.replace("-", "").title()}Service{{
 		api: api.NewServer(&Handler{{}}),
 	}}
-}
+}}
 
 func (s *{domain.replace("-", "").title()}Service) Handler() http.Handler {{
 	return s.api
@@ -501,4 +501,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-'''

@@ -30,6 +30,9 @@ info:
     All schemas ordered for optimal memory layout in generated Go code.
     Expected memory savings: 30-50% for guild-related structs.
   version: 1.0.0
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
   contact:
     name: NECPGAME Guilds API Support
     url: https://necpgame.com/support
@@ -88,7 +91,7 @@ components:
     # Include schemas from separate files
     HealthResponse:
       $ref: "./schemas/health-schemas.yaml#/components/schemas/HealthResponse"
-    ErrorResponse:
+    Error:
       type: object
       required:
         - code
@@ -106,38 +109,433 @@ components:
           type: object
           description: Additional error details (optional)
 
-    # Guild schemas
+    # Guild schemas (inline to avoid reference issues)
     Guild:
-      $ref: "../schemas/guild-schemas.yaml#/components/schemas/Guild"
+      type: object
+      required:
+      - id
+      - name
+      - created_at
+      - level
+      - member_count
+      - is_active
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Guild unique identifier
+          example: 550e8400-e29b-41d4-a716-446655440000
+        leader_id:
+          type: string
+          format: uuid
+          description: UUID of the guild leader
+          example: 550e8400-e29b-41d4-a716-446655440001
+        name:
+          type: string
+          minLength: 3
+          maxLength: 50
+          description: Guild display name
+          example: Shadow Hunters
+        description:
+          type: string
+          maxLength: 500
+          description: Guild description
+          example: Elite PvP guild focused on territory control and resource acquisition.
+        motto:
+          type: string
+          maxLength: 100
+          description: Guild motto/slogan
+          example: Conquer or Die
+        faction:
+          type: string
+          enum:
+          - corporate
+          - nomad
+          - street_kid
+          - mercenary
+          - other
+          description: Guild faction alignment
+          example: nomad
+        created_at:
+          type: string
+          format: date-time
+          description: Timestamp of guild creation
+          example: '2025-12-20T10:00:00Z'
+        last_activity:
+          type: string
+          format: date-time
+          description: Last guild activity timestamp
+          example: '2025-12-20T14:30:00Z'
+        win_rate:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Guild PvP win rate
+          example: 0.67
+        level:
+          type: integer
+          format: int32
+          minimum: 1
+          maximum: 100
+          description: Guild level
+          example: 15
+        member_count:
+          type: integer
+          format: int32
+          minimum: 1
+          maximum: 250
+          description: Current number of members
+          example: 75
+        max_members:
+          type: integer
+          format: int32
+          minimum: 1
+          maximum: 250
+          description: Maximum allowed members
+          example: 100
+        reputation_score:
+          type: integer
+          format: int32
+          minimum: -10000
+          maximum: 10000
+          description: Guild reputation score
+          example: 1250
+        territory_count:
+          type: integer
+          format: int32
+          minimum: 0
+          maximum: 50
+          description: Number of controlled territories
+          example: 3
+        is_recruiting:
+          type: boolean
+          description: Whether guild is accepting new members
+          example: true
+        is_active:
+          type: boolean
+          description: Indicates if the guild is active
+          example: true
+        has_bank:
+          type: boolean
+          description: Whether guild has bank functionality
+          example: true
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     CreateGuildRequest:
-      $ref: "../schemas/guild-schemas.yaml#/components/schemas/CreateGuildRequest"
+      type: object
+      required:
+      - name
+      - description
+      - faction
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 50
+          description: Desired guild name
+          example: Night City Legends
+        description:
+          type: string
+          maxLength: 500
+          description: Guild description
+          example: A new guild rising in Night City, seeking glory and wealth.
+        motto:
+          type: string
+          maxLength: 100
+          description: Guild motto
+          example: Power Through Unity
+        faction:
+          type: string
+          enum:
+          - corporate
+          - nomad
+          - street_kid
+          - mercenary
+          - other
+          description: Guild faction alignment
+          example: street_kid
+        max_members:
+          type: integer
+          minimum: 1
+          maximum: 250
+          default: 50
+          description: Maximum members allowed
+        is_recruiting:
+          type: boolean
+          default: true
+          description: Whether to accept new members immediately
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     UpdateGuildRequest:
-      $ref: "../schemas/guild-schemas.yaml#/components/schemas/UpdateGuildRequest"
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 50
+          description: New guild name
+          example: Night City Elite
+        description:
+          type: string
+          maxLength: 500
+          description: New guild description
+          example: Updated description for the elite guild.
+        motto:
+          type: string
+          maxLength: 100
+          description: New guild motto
+        faction:
+          type: string
+          enum:
+          - corporate
+          - nomad
+          - street_kid
+          - mercenary
+          - other
+          description: New faction alignment
+        max_members:
+          type: integer
+          minimum: 1
+          maximum: 250
+          description: New maximum members
+        is_recruiting:
+          type: boolean
+          description: Update recruiting status
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     GuildResponse:
-      $ref: "../schemas/guild-schemas.yaml#/components/schemas/GuildResponse"
+      type: object
+      required:
+      - guild
+      properties:
+        guild:
+          $ref: '#/components/schemas/Guild'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     GuildsListResponse:
-      $ref: "../schemas/guild-schemas.yaml#/components/schemas/GuildsListResponse"
+      type: object
+      required:
+      - guilds
+      - total_count
+      properties:
+        guilds:
+          type: array
+          items:
+            $ref: '#/components/schemas/Guild'
+          description: List of guilds
+        total_count:
+          type: integer
+          description: Total number of guilds matching criteria
+          example: 150
+        has_more:
+          type: boolean
+          description: Whether there are more results available
+          example: true
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
 
     # Member schemas
     GuildMember:
-      $ref: "./schemas/member-schemas.yaml#/components/schemas/GuildMember"
-    GuildMembersResponse:
-      $ref: "./schemas/member-schemas.yaml#/components/schemas/GuildMembersResponse"
-    GuildMemberResponse:
-      $ref: "./schemas/member-schemas.yaml#/components/schemas/GuildMemberResponse"
-    InvitePlayerRequest:
-      $ref: "./schemas/member-schemas.yaml#/components/schemas/InvitePlayerRequest"
-    InvitationResponse:
-      $ref: "./schemas/member-schemas.yaml#/components/schemas/InvitationResponse"
-    UpdateMemberRoleRequest:
-      $ref: "./schemas/member-schemas.yaml#/components/schemas/UpdateMemberRoleRequest"
+      # Member schemas (inline to avoid reference issues)
+      GuildMember:
+        type: object
+        required:
+        - player_id
+        - username
+        - role
+        - joined_at
+        - is_active
+        properties:
+          player_id:
+            type: string
+            format: uuid
+            description: Player identifier
+          username:
+            type: string
+            description: Player display name
+            example: V_Judy
+          role:
+            type: string
+            enum:
+            - leader
+            - officer
+            - member
+            - recruit
+            description: Member role in guild
+          joined_at:
+            type: string
+            format: date-time
+            description: When player joined the guild
+          last_active:
+            type: string
+            format: date-time
+            description: Last activity timestamp
+          contribution_score:
+            type: integer
+            minimum: 0
+            description: Member contribution score
+          is_active:
+            type: boolean
+            description: Whether member is currently active
+        description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+      GuildMembersResponse:
+        type: object
+        required:
+        - members
+        - total_count
+        properties:
+          members:
+            type: array
+            items:
+              $ref: '#/components/schemas/GuildMember'
+          total_count:
+            type: integer
+            description: Total number of members
+        description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+      GuildMemberResponse:
+        type: object
+        required:
+        - member
+        properties:
+          member:
+            $ref: '#/components/schemas/GuildMember'
+        description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+      InvitePlayerRequest:
+        type: object
+        required:
+        - player_id
+        - message
+        properties:
+          player_id:
+            type: string
+            format: uuid
+            description: Player to invite
+          message:
+            type: string
+            maxLength: 200
+            description: Invitation message
+        description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+      InvitationResponse:
+        type: object
+        required:
+        - invitation_id
+        - expires_at
+        properties:
+          invitation_id:
+            type: string
+            format: uuid
+            description: Unique invitation identifier
+          expires_at:
+            type: string
+            format: date-time
+            description: When invitation expires
+        description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+      UpdateMemberRoleRequest:
+        type: object
+        required:
+        - new_role
+        properties:
+          reason:
+            type: string
+            maxLength: 200
+            description: Reason for role change
+          new_role:
+            type: string
+            enum:
+            - leader
+            - officer
+            - member
+            - recruit
+            description: New role for the member
+        description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
 
     # Territory schemas
     Territory:
-      $ref: "./schemas/territory-schemas.yaml#/components/schemas/Territory"
-    GuildTerritoriesResponse:
-      $ref: "./schemas/territory-schemas.yaml#/components/schemas/GuildTerritoriesResponse"
-    ClaimTerritoryRequest:
-      $ref: "./schemas/territory-schemas.yaml#/components/schemas/ClaimTerritoryRequest"
-    TerritoryClaimResponse:
-      $ref: "./schemas/territory-schemas.yaml#/components/schemas/TerritoryClaimResponse"
+      # Territory schemas (inline to avoid reference issues)
+      Territory:
+        type: object
+        required:
+        - id
+        - name
+        - type
+        - control_points
+        - is_contested
+        properties:
+          id:
+            type: string
+            format: uuid
+            description: Territory identifier
+          controlling_guild_id:
+            type: string
+            format: uuid
+            description: Currently controlling guild
+          name:
+            type: string
+            description: Territory display name
+            example: Night City District 7
+          type:
+            type: string
+            enum:
+            - district
+            - landmark
+            - resource_node
+            - strategic_point
+            description: Territory type
+          claimed_at:
+            type: string
+            format: date-time
+            description: When territory was claimed
+          control_points:
+            type: integer
+            minimum: 1
+            description: Number of control points
+          defense_rating:
+            type: integer
+            minimum: 0
+            description: Territory defense strength
+          resource_value:
+            type: integer
+            minimum: 0
+            description: Economic value of territory
+          is_contested:
+            type: boolean
+            description: Whether territory is under attack
+        description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+      GuildTerritoriesResponse:
+        type: object
+        required:
+        - territories
+        properties:
+          territories:
+            type: array
+            items:
+              $ref: '#/components/schemas/Territory'
+        description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+      ClaimTerritoryRequest:
+        type: object
+        required:
+        - territory_id
+        properties:
+          territory_id:
+            type: string
+            format: uuid
+            description: Territory to claim
+        description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+      TerritoryClaimResponse:
+        type: object
+        required:
+        - claim_id
+        - status
+        properties:
+          claim_id:
+            type: string
+            format: uuid
+            description: Unique claim identifier
+          status:
+            type: string
+            enum:
+            - initiated
+            - processing
+            - completed
+            - failed
+            description: Claim status
+          estimated_completion:
+            type: string
+            format: date-time
+            description: When claim will complete
+        description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'

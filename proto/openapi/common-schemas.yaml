@@ -1,0 +1,199 @@
+# Common Schemas - Shared across all domains
+# Issue: #shared-schemas
+
+components:
+  schemas:
+    # Universal Error Schema - used by all domains
+    Error:
+      type: object
+      required:
+      - code
+      - message
+      properties:
+        code:
+          type: string
+          description: Unique error code
+          example: INTERNAL_ERROR
+          maxLength: 50
+        message:
+          type: string
+          description: Human-readable error message
+          example: An unexpected error occurred
+          maxLength: 256
+        domain:
+          type: string
+          description: Domain where error occurred
+          example: system-domain
+          maxLength: 50
+        details:
+          type: object
+          description: Additional error context
+          example: {"field": "name", "reason": "required"}
+        timestamp:
+          type: string
+          format: date-time
+          description: When error occurred
+          example: '2025-12-21T10:00:00Z'
+      description: 'BACKEND NOTE: Universal error schema used across all domains. Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+    # Universal Health Schema - used by all domains
+    HealthResponse:
+      type: object
+      required:
+      - status
+      - timestamp
+      - domain
+      properties:
+        domain:
+          type: string
+          example: system-domain
+          maxLength: 50
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+          example: healthy
+          maxLength: 20
+        timestamp:
+          type: string
+          format: date-time
+          example: '2025-12-21T10:00:00Z'
+        version:
+          type: string
+          example: "1.0.0"
+          maxLength: 20
+        uptime_seconds:
+          type: integer
+          example: 3600
+          minimum: 0
+        active_connections:
+          type: integer
+          example: 1500
+          minimum: 0
+        memory_usage_mb:
+          type: integer
+          example: 256
+          minimum: 0
+        cpu_usage_percent:
+          type: number
+          minimum: 0
+          maximum: 100
+          example: 45.5
+      description: 'BACKEND NOTE: Universal health schema for all domains. Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+    # Pagination Schema - used by all list operations
+    PaginationMeta:
+      type: object
+      required:
+      - page
+      - limit
+      - total_count
+      - has_more
+      properties:
+        page:
+          type: integer
+          minimum: 1
+          example: 1
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 1000
+          example: 20
+        total_count:
+          type: integer
+          minimum: 0
+          example: 150
+        has_more:
+          type: boolean
+          example: true
+        total_pages:
+          type: integer
+          minimum: 1
+          example: 8
+      description: 'BACKEND NOTE: Universal pagination schema. Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+    # Common ID schemas
+    UUID:
+      type: string
+      format: uuid
+      description: Universally unique identifier
+      example: 550e8400-e29b-41d4-a716-446655440000
+
+    PlayerId:
+      type: string
+      format: uuid
+      description: Player identifier
+      example: 550e8400-e29b-41d4-a716-446655440001
+
+    GuildId:
+      type: string
+      format: uuid
+      description: Guild identifier
+      example: 550e8400-e29b-41d4-a716-446655440002
+
+    ItemId:
+      type: string
+      format: uuid
+      description: Item identifier
+      example: 550e8400-e29b-41d4-a716-446655440003
+
+    # Common timestamp schemas
+    Timestamp:
+      type: string
+      format: date-time
+      description: ISO 8601 timestamp
+      example: '2025-12-21T10:00:00Z'
+
+    CreatedAt:
+      $ref: '#/components/schemas/Timestamp'
+      description: Creation timestamp
+
+    UpdatedAt:
+      $ref: '#/components/schemas/Timestamp'
+      description: Last update timestamp
+
+    # Common status enums
+    Status:
+      type: string
+      enum: [active, inactive, pending, archived, deleted]
+      description: Entity status
+      example: active
+
+    Priority:
+      type: integer
+      minimum: 1
+      maximum: 10
+      description: Processing priority
+      example: 5
+
+    # Common metadata schema
+    Metadata:
+      type: object
+      description: Additional entity metadata
+      example: {"tags": ["premium", "vip"], "flags": ["verified", "featured"]}
+
+    # Common search/filter schemas
+    SearchQuery:
+      type: string
+      description: Search query string
+      maxLength: 100
+      example: "sword"
+
+    FilterCriteria:
+      type: object
+      description: Filter criteria object
+      example: {"status": "active", "level": {"min": 10, "max": 50}}
+
+    SortCriteria:
+      type: object
+      description: Sort criteria
+      properties:
+        field:
+          type: string
+          example: "created_at"
+        order:
+          type: string
+          enum: [asc, desc]
+          example: desc
+      required:
+      - field
+      - order

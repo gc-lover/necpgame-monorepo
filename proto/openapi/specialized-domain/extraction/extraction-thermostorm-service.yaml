@@ -35,6 +35,9 @@ info:
 
     '
   version: 1.0.0
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
   contact:
     name: NECPGAME Extraction API Support
     email: extraction@necp.game
@@ -78,6 +81,17 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/GlobalThermostormStatus'
+        '429':
+          description: Too many requests - rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 60
+          content:
+            application/json:
+              schema:
+                $ref: ../../common-schemas.yaml#/components/schemas/Error
   /thermostorm/zones/{zone_id}:
     get:
       summary: Get thermostorm data for specific zone
@@ -114,7 +128,18 @@ paths:
           content:
             application/json:
               schema:
-                $ref: ../common.yaml#/components/schemas/ErrorResponse
+                $ref: ../../common-schemas.yaml#/components/schemas/Error
+        '429':
+          description: Too many requests - rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 30
+          content:
+            application/json:
+              schema:
+                $ref: ../../common-schemas.yaml#/components/schemas/Error
   /thermostorm/zones/{zone_id}/stream:
     get:
       summary: Stream real-time thermostorm updates
@@ -152,6 +177,17 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ThermostormUpdateStream'
+        '429':
+          description: Too many requests - WebSocket connection limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 30
+          content:
+            application/json:
+              schema:
+                $ref: ../../common-schemas.yaml#/components/schemas/Error
   /thermostorm/zones/{zone_id}/evacuate:
     post:
       summary: Initiate emergency evacuation protocol
@@ -183,6 +219,12 @@ paths:
             schema:
               $ref: '#/components/schemas/EvacuationRequest'
       responses:
+        '200':
+          description: Emergency evacuation completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvacuationResponse'
         '202':
           description: Emergency evacuation initiated
           content:
@@ -194,7 +236,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: ../common.yaml#/components/schemas/ErrorResponse
+                $ref: ../../common-schemas.yaml#/components/schemas/Error
   /thermostorm/risk-assessment:
     post:
       summary: Calculate extraction risk-reward
@@ -224,6 +266,23 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RiskAssessmentResponse'
+        '400':
+          description: Invalid risk assessment request
+          content:
+            application/json:
+              schema:
+                $ref: ../../common-schemas.yaml#/components/schemas/Error
+        '429':
+          description: Too many requests - rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 60
+          content:
+            application/json:
+              schema:
+                $ref: ../../common-schemas.yaml#/components/schemas/Error
   /thermostorm/predictions:
     get:
       summary: Get thermostorm predictions
@@ -262,6 +321,17 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ThermostormPredictions'
+        '429':
+          description: Too many requests - rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 30
+          content:
+            application/json:
+              schema:
+                $ref: ../../common-schemas.yaml#/components/schemas/Error
   /thermostorm/heat-resistance:
     get:
       summary: Get player's heat resistance status
@@ -285,6 +355,17 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HeatResistanceStatus'
+        '429':
+          description: Too many requests - rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 30
+          content:
+            application/json:
+              schema:
+                $ref: ../../common-schemas.yaml#/components/schemas/Error
 components:
   schemas:
     GlobalThermostormStatus:
