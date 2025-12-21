@@ -1,0 +1,40 @@
+#!/bin/bash
+
+# Git Hook: Commit message safety check
+# Prevents commit messages that reference dangerous commands
+
+COMMIT_MSG_FILE=$1
+
+echo "📝 Git Commit Message Safety Check..."
+
+# Read commit message
+commit_msg=$(cat "$COMMIT_MSG_FILE")
+
+# Check for dangerous command references in commit message
+DANGEROUS_PATTERNS=(
+    "reset --hard"
+    "clean -fd"
+    "clean -fdx"
+    "checkout --force"
+    "branch -D"
+    "push --force"
+    "rebase --abort"
+    "stash drop"
+)
+
+for pattern in "${DANGEROUS_PATTERNS[@]}"; do
+    if echo "$commit_msg" | grep -i "$pattern" >/dev/null; then
+        echo "🚨 BLOCKED: Commit message contains dangerous command reference: '$pattern'"
+        echo ""
+        echo "Commit messages should not reference dangerous git commands."
+        echo "Please revise the commit message to remove this reference."
+        echo ""
+        echo "Safe workflow reminder:"
+        echo "  - Use: git add, git commit, git push, git pull"
+        echo "  - Avoid: any --force, --hard, or destructive operations"
+        exit 1
+    fi
+done
+
+echo "OK Git Commit Message Safety Check: Message appears safe."
+exit 0

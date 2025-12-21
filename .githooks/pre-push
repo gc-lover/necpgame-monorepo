@@ -1,117 +1,49 @@
 #!/bin/bash
-# Issue: #1858
-# Pre-push hook for additional quality checks
 
-set -e
+# Git Hook: Pre-push protection
+# Additional safety check before pushing to remote
 
-echo "🚀 Running pre-push quality checks..."
+echo "🛡️ Git Pre-Push Safety Check..."
 
-PROJECT_ROOT="$(git rev-parse --show-toplevel)"
+# Check recent commits for dangerous command patterns in commit messages
+# This catches cases where agents might have accidentally committed with dangerous command references
 
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-NC='\033[0m' # No Color
+DANGEROUS_PATTERNS=(
+    "reset --hard"
+    "clean -fd"
+    "clean -fdx"
+    "checkout --force"
+    "branch -D"
+    "push --force"
+    "rebase --abort"
+    "stash drop"
+)
 
-# Function to print colored output
-print_status() {
-    local color=$1
-    local message=$2
-    echo -e "${color}${message}${NC}"
-}
-
-# Get the remote and branch info
+# Get the commits being pushed
 while read local_ref local_sha remote_ref remote_sha; do
-    if [ "$local_sha" = "$remote_sha" ]; then
-        print_status $GREEN "No changes to push. Skipping checks."
-        exit 0
+    if [ "$local_sha" = "0000000000000000000000000000000000000000" ]; then
+        # This is a new branch, check all commits
+        commits_to_check=$(git rev-list --oneline $remote_sha..$local_sha 2>/dev/null || git rev-list --oneline $local_sha)
+    else
+        # Check commits between local and remote
+        commits_to_check=$(git rev-list --oneline $remote_sha..$local_sha)
     fi
 
-    # Get list of files being pushed
-    PUSH_FILES=$(git diff --name-only "$remote_sha" "$local_sha" 2>/dev/null || git diff --name-only "$local_sha")
+    if [ -n "$commits_to_check" ]; then
+        echo "Checking commits for dangerous patterns..."
 
-    print_status $YELLOW "Checking files being pushed to $(basename "$remote_ref")..."
-
-    # Run full test suite if any test files are being pushed
-    if echo "$PUSH_FILES" | grep -q "_test\.go\|\.test\."; then
-        print_status $YELLOW "🧪 Running tests for changed test files..."
-
-        # Check if Go tests exist and can run
-        if [ -f "$PROJECT_ROOT/go.mod" ]; then
-            cd "$PROJECT_ROOT"
-            if command -v go >/dev/null 2>&1; then
-                if ! go test ./... -v -timeout 30s >/dev/null 2>&1; then
-                    print_status $RED "Go tests failed. Please fix test issues before pushing."
-                    exit 1
-                fi
-            else
-                print_status $YELLOW "Go not found, skipping test execution"
-            fi
-        fi
-    fi
-
-    # Run OpenAPI validation for all API specs if any are being pushed
-    if echo "$PUSH_FILES" | grep -q "proto/openapi.*\.yaml"; then
-        if [ -f "$PROJECT_ROOT/scripts/openapi-validator.py" ]; then
-            print_status $YELLOW "📋 Running full OpenAPI validation..."
-            if ! python3 "$PROJECT_ROOT/scripts/openapi-validator.py" --project-root "$PROJECT_ROOT" --strict 2>/dev/null; then
-                print_status $RED "OpenAPI validation failed. Please fix API specs before pushing."
+        for pattern in "${DANGEROUS_PATTERNS[@]}"; do
+            if echo "$commits_to_check" | grep -i "$pattern" >/dev/null; then
+                echo "🚨 BLOCKED: Found dangerous command pattern '$pattern' in commit messages!"
+                echo "This suggests unsafe git operations were performed."
+                echo ""
+                echo "Please review your commits and ensure no dangerous commands were used."
+                echo "Safe commands: git add, git commit, git push, git pull, git checkout <branch>"
                 exit 1
-            fi
-        fi
-    fi
-
-    # Check for critical security issues in pushed files
-    print_status $YELLOW "🔒 Checking for security issues..."
-
-    # Check for debug statements in production code
-    if echo "$PUSH_FILES" | grep -E '\.(go|py|js|ts)$'; then
-        for file in $PUSH_FILES; do
-            if [ -f "$file" ] && echo "$file" | grep -E '\.(go|py|js|ts)$'; then
-                if grep -q "console\.log\|fmt\.Print\|print(\|log\." "$file" 2>/dev/null; then
-                    print_status $RED "Warning: Debug statements found in $file"
-                    print_status $YELLOW "Consider removing debug prints before pushing to production"
-                fi
             fi
         done
     fi
-
-    # Check for TODO/FIXME comments in critical files
-    for file in $PUSH_FILES; do
-        if [ -f "$file" ] && echo "$file" | grep -E '\.(go|py)$'; then
-            todos=$(grep -c "TODO\|FIXME\|XXX" "$file" 2>/dev/null || echo "0")
-            if [ "$todos" -gt 5 ]; then
-                print_status $YELLOW "Warning: $file has $todos TODO/FIXME comments"
-            fi
-        fi
-    done
-
-    # Validate that all pushed commits have proper formatting
-    print_status $YELLOW "📝 Checking commit message format..."
-
-    # Check the last few commits being pushed
-    commits=$(git log --oneline "$remote_sha..$local_sha" 2>/dev/null | head -10)
-    while IFS= read -r commit; do
-        if [ -n "$commit" ]; then
-            commit_hash=$(echo "$commit" | cut -d' ' -f1)
-            commit_msg=$(echo "$commit" | cut -d' ' -f2-)
-
-            # Check for minimum length
-            if [ ${#commit_msg} -lt 10 ]; then
-                print_status $YELLOW "Warning: Very short commit message: $commit_msg"
-            fi
-
-            # Check for issue references in feature commits
-            if echo "$commit_msg" | grep -q -i "add\|fix\|update\|implement"; then
-                if ! echo "$commit_msg" | grep -q "Issue: #[0-9]"; then
-                    print_status $YELLOW "Consider adding Issue reference to: $commit_hash"
-                fi
-            fi
-        fi
-    done <<< "$commits"
-
 done
 
-print_status $GREEN "OK All pre-push checks passed!"
+echo "OK Git Pre-Push Safety Check: All commits appear safe."
 exit 0

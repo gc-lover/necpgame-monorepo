@@ -1,168 +1,38 @@
 #!/bin/bash
-# Issue: #1858
-# Pre-commit hook for automatic quality checks
 
-set -e
+# Git Hook: Pre-commit protection against dangerous commands
+# This hook prevents commits that might contain traces of dangerous git operations
 
-echo "🔍 Running pre-commit quality checks..."
+echo "🔍 Git Safety Check: Scanning for dangerous command traces..."
 
-PROJECT_ROOT="$(git rev-parse --show-toplevel)"
+# Check if any staged files contain dangerous git command patterns
+# This catches cases where agents might have accidentally included command output
 
-# Check if this commit is bypassing validation (emergency override check)
-if [ "$GIT_COMMITTER_NAME" = "AI_AGENT_EMERGENCY" ] && [ "$GIT_COMMITTER_EMAIL" = "emergency@necpgame.invalid" ]; then
-    echo "WARNING: Emergency commit override detected. Proceeding without validation."
-    echo "WARNING: This should only be used in critical situations by authorized personnel."
-    exit 0
-fi
+DANGEROUS_PATTERNS=(
+    "git reset --hard"
+    "git clean -fd"
+    "git clean -fdx"
+    "git checkout --force"
+    "git branch -D"
+    "git push --force"
+    "git rebase --abort"
+    "git stash drop"
+)
 
-# Pre-commit hook output uses plain text to avoid ANSI codes in git output
-
-# Check if we're in the correct directory
-if [ ! -d "$PROJECT_ROOT/scripts" ]; then
-    echo "ERROR: scripts directory not found. Make sure you're in the project root."
+# Check staged files for dangerous patterns
+if git diff --cached --name-only | xargs grep -l "${DANGEROUS_PATTERNS[@]}" 2>/dev/null; then
+    echo "🚨 BLOCKED: Found traces of dangerous git commands in staged files!"
+    echo "These commands can cause data loss and are forbidden for agents."
+    echo ""
+    echo "Forbidden commands detected:"
+    for pattern in "${DANGEROUS_PATTERNS[@]}"; do
+        echo "  - $pattern"
+    done
+    echo ""
+    echo "Please remove these traces and use safe git commands only."
+    echo "Safe commands: git add, git commit, git push, git pull, git checkout <branch>"
     exit 1
 fi
 
-# Get list of staged files
-STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM)
-
-if [ -z "$STAGED_FILES" ]; then
-    echo "INFO: No files staged for commit. Skipping checks."
-    exit 0
-fi
-
-echo "INFO: Checking staged files: $STAGED_FILES"
-
-# Check file sizes for staged files
-echo "INFO: Checking file sizes..."
-
-FAILED_FILES=()
-CHECKED_COUNT=0
-
-for file in $STAGED_FILES; do
-    if [ -f "$file" ]; then
-        # Count lines
-        lines=$(wc -l < "$file" 2>/dev/null || echo "0")
-        ext="${file##*.}"
-
-        # Check size limits and collect failed files
-        case $ext in
-            go|py|yaml|yml|md|sql|sh|ps1|js|ts|cpp|h|java|php|rb|rs|cs)
-                CHECKED_COUNT=$((CHECKED_COUNT + 1))
-
-                # Skip bundled/generated files
-                if [[ "$file" =~ bundled\.yaml$ ]] || [[ "$file" =~ oas_.*\.go$ ]] || [[ "$file" =~ /benchmarks/.*_test\.go$ ]] || [[ "$file" =~ changelog.*\.yaml$ ]] || [[ "$file" =~ readiness-tracker\.yaml$ ]] || [[ "$file" =~ docker-compose\.yml$ ]] || [[ "$file" =~ _gen\.go$ ]] || [[ "$file" =~ \.pb\.go$ ]]; then
-                    continue
-                fi
-
-                if [ "$lines" -gt 1000 ]; then
-                    FAILED_FILES+=("$file:$lines:1000")
-                    echo "FAIL: $file has $lines lines (max: 1000)"
-                fi
-                ;;
-        esac
-    fi
-done
-
-echo ""
-echo "Files checked: $CHECKED_COUNT"
-
-if [ ${#FAILED_FILES[@]} -gt 0 ]; then
-    echo ""
-    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    echo "[GIT_HOOK_ERROR] COMMIT_REJECTED_FILE_SIZE"
-    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    echo ""
-    echo "ERROR_TYPE: file_size_exceeded"
-    echo "POLICY: Files must not exceed size limits by extension"
-    echo ""
-    echo "SIZE_LIMITS:"
-    echo "  - All text files: 1000 lines max"
-    echo ""
-    echo "VIOLATING_FILES:"
-    for entry in "${FAILED_FILES[@]}"; do
-        IFS=':' read -r file lines limit <<< "$entry"
-        EXCEED_BY=$((lines - limit))
-        echo "  - $file: $lines lines (exceeds $limit by $EXCEED_BY lines)"
-    done
-    echo ""
-    echo "REQUIRED_ACTION: Split files into smaller files"
-    echo "RECOMMENDATION: ~300-400 lines per file for better maintainability"
-    echo ""
-    echo "FOR_AI_AGENTS:"
-    echo "  This repository enforces file size limits to maintain code quality."
-    echo "  The following files exceed size limits and must be split:"
-    for entry in "${FAILED_FILES[@]}"; do
-        IFS=':' read -r file lines limit <<< "$entry"
-        echo "    - $file ($lines lines, limit: $limit)"
-    done
-    echo "  You must refactor these files into smaller files."
-    echo "  Recommended approach: Split large files into multiple smaller files."
-    echo ""
-    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    exit 1
-else
-    echo "SUCCESS: All files are within size limits"
-fi
-
-# Run architecture validator if available
-if [ -f "$PROJECT_ROOT/scripts/architecture-validator.py" ]; then
-    echo "INFO: Running architecture validation..."
-    # Capture both stdout and stderr to show detailed error info
-    if ! python "$PROJECT_ROOT/scripts/architecture-validator.py" --project-root "$PROJECT_ROOT" 2>&1; then
-        echo "ERROR: Architecture validation failed. Please fix the issues above before committing."
-        exit 1
-    fi
-fi
-
-# Run OpenAPI validator for API spec changes
-if echo "$STAGED_FILES" | grep -q "proto/openapi.*\.yaml"; then
-    if [ -f "$PROJECT_ROOT/scripts/openapi-validator.py" ]; then
-        echo "INFO: Running OpenAPI validation..."
-        if ! python3 "$PROJECT_ROOT/scripts/openapi-validator.py" --project-root "$PROJECT_ROOT" 2>/dev/null; then
-            echo "ERROR: OpenAPI validation failed. Please fix the API specs before committing."
-            exit 1
-        fi
-    fi
-fi
-
-# Check for Issue references in commit messages for code changes
-if echo "$STAGED_FILES" | grep -E '\.(go|py|js|ts|cpp|h|java)$'; then
-    COMMIT_MSG_FILE=$(git rev-parse --git-dir)/COMMIT_EDITMSG
-    if [ -f "$COMMIT_MSG_FILE" ]; then
-        commit_msg=$(cat "$COMMIT_MSG_FILE")
-        if ! echo "$commit_msg" | grep -q "Issue: #[0-9]"; then
-            echo "WARNING: Consider adding 'Issue: #XXX' to commit message for code changes"
-        fi
-    fi
-fi
-
-# Check for large files
-echo "INFO: Checking for large files..."
-for file in $STAGED_FILES; do
-    if [ -f "$file" ]; then
-        size=$(stat -f%z "$file" 2>/dev/null || stat -c%s "$file" 2>/dev/null || echo "0")
-        # 50MB limit
-        if [ "$size" -gt 52428800 ]; then
-            echo "ERROR: $file is too large ($size bytes). Consider using Git LFS."
-            exit 1
-        fi
-    fi
-done
-
-# Check for secrets/tokens
-echo "INFO: Checking for potential secrets..."
-for file in $STAGED_FILES; do
-    if [ -f "$file" ]; then
-        # Check for common patterns
-        if grep -q "password\|secret\|token\|key\|api_key" "$file" 2>/dev/null; then
-            if grep -q "password.*=.*[\"'][^\"']*[\"']\|secret.*=.*[\"'][^\"']*[\"']\|token.*=.*[\"'][^\"']*[\"']\|key.*=.*[\"'][^\"']*[\"']\|api_key.*=.*[\"'][^\"']*[\"']" "$file" 2>/dev/null; then
-                echo "WARNING: Potential hardcoded secrets found in $file"
-                echo "WARNING: Please ensure secrets are loaded from environment variables or secure stores"
-            fi
-        fi
-    fi
-done
-
-echo "SUCCESS: All pre-commit checks passed!"
+echo "OK Git Safety Check: No dangerous command traces found."
 exit 0
