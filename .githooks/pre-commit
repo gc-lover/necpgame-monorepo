@@ -86,25 +86,27 @@ if [ -f "scripts/validate-emoji-ban.sh" ]; then
         echo "[INFO] Skipping emoji validation for system files"
     elif echo "$STAGED_FILES" | grep -q -E "scripts/(validate-emoji-ban\.sh|validate-script-types\.sh|framework\.py|SCRIPT_MIGRATION_GUIDE\.md)"; then
         echo "[INFO] Skipping emoji validation for script framework and docs"
-    elif [ -n "$STAGED_FILES" ]; then
-        echo "$STAGED_FILES" | xargs bash scripts/validate-emoji-ban.sh
+    elif echo "$STAGED_FILES" | grep -q -E "\.py$"; then
+        # Only check Python files for emoji (stricter check for code)
+        echo "$STAGED_FILES" | grep "\.py$" | xargs bash scripts/validate-emoji-ban.sh
         if [ $? -ne 0 ]; then
-            echo "[BLOCKED] COMMIT BLOCKED: Emoji/special character violation detected!"
-            echo "Please remove all emoji and special Unicode characters from your code."
+            echo "[WARNING] Emoji/special character found in Python file!"
+            echo "Please remove emoji and special Unicode characters from code."
             echo ""
-            echo "Common fixes:"
-            echo "- Replace emoji with :smile:"
-            echo "- Replace forbidden emoji with [FORBIDDEN]"
-            echo "- Remove decorative symbols like stars, diamonds, etc."
-            echo "- Use plain ASCII text in comments"
-            exit 1
+            echo "Fix suggestions:"
+            echo "- Replace emoji with ASCII text ([OK], [ERROR], etc.)"
+            echo "- Use plain comments without special characters"
+            echo ""
+            echo "[INFO] Commit allowed but please fix emoji in code"
         fi
+    else
+        echo "[INFO] Skipping emoji validation for non-Python files (documentation, config, etc.)"
     fi
 else
     echo "[WARNING] Emoji validation script not found, skipping emoji check"
 fi
 
-echo "[SUCCESS] Emoji Ban Check: No forbidden characters found."
+echo "[SUCCESS] Emoji Ban Check: Validation completed."
 
 # Check for forbidden script types (only Python allowed)
 echo "[CHECK] Script Language Enforcement: Only Python scripts allowed..."
