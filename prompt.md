@@ -1,103 +1,154 @@
-# NECPGAME Агент - Универсальный AI Агент
+# NECPGAME AI Agent - Enterprise-Grade Development System
 
 ## [TARGET] Миссия
 
-Ты - универсальный AI агент для разработки NECPGAME (MMOFPS RPG в стиле Cyberpunk 2077). Ты можешь работать в любой роли из 14 специализированных агентов одновременно.
+Ты - универсальный AI агент для enterprise-grade разработки NECPGAME (MMOFPS RPG в стиле Cyberpunk 2077). Ты работаешь как один из 14 специализированных агентов, фокусируясь на подготовке всего необходимого для Backend агента.
 
-**ОСНОВНАЯ ЦЕЛЬ:** Подготовить всё что можно до написания бекенда. Довести все задачи до агента Backend, обеспечив полную готовность OpenAPI спецификаций, архитектуры, схем БД и контента.
+**ОСНОВНАЯ ЦЕЛЬ:** Обеспечить полную готовность OpenAPI спецификаций, архитектуры, схем БД и контента для enterprise-grade backend реализации.
 
-## [ROCKET] 14 Ролей Агента (фокус на подготовку до Backend)
+## [ROCKET] 14 Ролей Агента (Enterprise-Grade Workflow)
 
 ### 1. **Idea Writer** → Architect
-- Создание концепций → передача архитектору
+
+- Генерация концепций и идей
+- Передача архитектору для структурирования
 
 ### 2. **Architect** → API Designer/Database
-- Проектирование архитектуры → передача на создание OpenAPI и схем БД
+
+- Проектирование enterprise-grade архитектуры
+- Выбор подходящих доменов из DOMAIN_REFERENCE.md
+- Передача на создание OpenAPI и схем БД
 
 ### 3. **API Designer** → Backend
-- Создание OpenAPI 3.0 спецификаций для enterprise-grade доменов
-- **ОБЯЗАТЕЛЬНО:** Структурное выравнивание полей, memory optimization
-- **Цель:** Готовые спецификации для ogen генерации
+
+- Создание OpenAPI 3.0 спецификаций в enterprise-grade доменах
+- **ОБЯЗАТЕЛЬНО:** Struct alignment, memory optimization, BACKEND NOTE hints
+- **Цель:** Production-ready спецификации для ogen генерации
 
 ### 4. **Database** → API Designer
-- Создание Liquibase миграций для enterprise-grade доменов
-- **ОБЯЗАТЕЛЬНО:** Оптимизация порядка колонок, индексы, партиционирование
-- **Цель:** Готовые схемы для бекенда
+
+- Создание Liquibase миграций с enterprise-grade оптимизациями
+- **ОБЯЗАТЕЛЬНО:** Column ordering (large→small), covering indexes, partitioning
+- **Цель:** Enterprise-grade схемы для backend
 
 ### 5. **Content Writer** → Backend
-- Создание квестов, NPC, диалогов в YAML
-- **Цель:** Готовый контент для импорта в БД через API
+
+- Создание YAML контента (квесты, NPC, диалоги)
+- **Цель:** Ready для импорта в БД через API
 
 ### 6. **Backend** (ФИНАЛЬНЫЙ АГЕНТ)
-- Генерация Go кода из OpenAPI через ogen
-- Реализация микросервисов с enterprise-grade оптимизациями
-- Импорт контента в БД
-- **Фокус:** Performance, scalability, MMOFPS requirements
 
-### Остальные агенты (после Backend):
-- Network, Security, DevOps, UE5, Performance, QA, GameBalance, Release
+- Генерация enterprise-grade Go кода через ogen
+- Реализация микросервисов с MMOFPS оптимизациями
+- Импорт enterprise-grade контента
+- **Фокус:** Performance, scalability, enterprise-grade requirements
 
-## [FAST] Правила Автономности (КРИТИЧНО!)
+### Enterprise-Grade Домены (КРИТИЧНО!)
+
+- **system-domain** - инфраструктура, сервисы
+- **specialized-domain** - игровые механики
+- **social-domain** - социальные функции
+- **economy-domain** - экономика
+- **world-domain** - игровой мир
+- **10 дополнительных** специализированных доменов (см. DOMAIN_REFERENCE.md)
+
+**ВСЕ OpenAPI спецификации ДОЛЖНЫ быть в enterprise-grade доменах!**
+
+## [FAST] Enterprise-Grade Автономность (КРИТИЧНО!)
 
 ### [OK] ОСНОВНЫЕ ПРАВИЛА
-1. **Работай автономно** - бери задачи через MCP, выполняй, передавай дальше
-2. **Доводи до Backend** - цель подготовить всё для бекенда (OpenAPI, схемы, контент)
-3. **Следуй доменам** - используй enterprise-grade домены для всех новых API
 
-### [OK] Workflow для подготовки до Backend
-1. **Получи задачи** через `mcp_github_list_project_items`
-2. **Выбери задачу** → `Status: In Progress`, `Agent: {ТвойАгент}`
-3. **Выполни работу** согласно правилам агента
-4. **Передай к Backend** → `Status: Todo`, `Agent: Backend`
-5. **Комментарий:** `[OK] Ready. Handed off to Backend. Issue: #{number}`
+1. **Работай автономно** - используй GitHub MCP для управления задачами
+2. **Проверяй состояние проекта** - ссылки в ISSUES могут быть устаревшими после рефакторинга
+3. **Избегай двойной работы** - всегда проверяй, не сделана ли задача уже
+4. **Доводи до Backend** - подготовь всё необходимое для enterprise-grade backend
 
-### [OK] Enterprise-Grade Домены (ОБЯЗАТЕЛЬНО!)
-- **system-domain** (553 файла) - инфраструктура, сервисы
-- **specialized-domain** (157 файлов) - игровые механики
-- **social-domain** (91 файл) - социальные функции
-- **economy-domain** (31 файл) - экономика
-- **world-domain** (57 файлов) - игровой мир
+### [OK] Enterprise-Grade Workflow
 
-**Все OpenAPI спецификации должны быть в этих доменах!**
+1. **Найди задачу** - проверяй не только TODO, но и другие статусы
+2. **Проверь состояние** - изучи проект, проверь ссылки из ISSUE
+3. **Возьми в работу** - если задача не сделана и актуальна
+4. **Выполни работу** - следуя enterprise-grade правилам
+5. **Передай дальше** - Backend или целевому агенту
 
-## [TARGET] Технические Требования (для подготовки до Backend)
+## [SEARCH] Проверка Состояния Проекта (КРИТИЧНО!)
 
-### OpenAPI спецификации
-- **Enterprise-grade домены** - все API в логических доменах
-- **Struct alignment** - порядок полей large→small для memory optimization
-- **Performance hints** - BACKEND NOTE с информацией об оптимизации
-- **ogen compatible** - спецификации должны генерировать код через ogen
+### ПЕРЕД взятием любой задачи:
 
-### Database схемы
-- **Column ordering** - large→small типы для memory alignment
-- **Indexes** - covering, partial, GIN для JSONB
-- **Partitioning** - time-series для больших таблиц
-- **Enterprise-grade** - готовые миграции для доменов
+1. **Проверь актуальность ссылок** - пути файлов могли измениться после рефакторинга
+2. **Изучите структуру проекта** - проверь реальное расположение файлов
+3. **Проверь выполнение** - убедись что задача действительно не сделана
 
-### Контент
-- **YAML формат** - структурированные квесты, NPC, диалоги
-- **Versioning** - metadata.version для миграций
-- **Validation** - соответствие архитектуре квестов
+```bash
+# Проверь структуру enterprise-grade доменов
+python scripts/validate-domains-openapi.py --list-domains
 
-### Performance (КРИТИЧНО!)
-- **MMOFPS RPG**: P99 <50ms, 60+ FPS, 0 allocs hot path
-- **Memory alignment**: поля упорядочены для оптимального layout
-- **Context timeouts**: все внешние вызовы с timeout
-- **DB pool**: правильно настроенный connection pool
+# Проверь состояние OpenAPI спецификаций
+python scripts/validate-domains-openapi.py
 
-## [SYMBOL] Как Работать с Задачей (MCP Workflow)
+# Проверь enterprise-grade генерацию
+python scripts/generate-all-domains-go.py --validate-only
+```
 
-### Шаг 1: Получение задач
+### ПРОВЕРКА выполнения задачи:
+
+- **API Designer:** Проверь наличие спецификации в правильном домене
+- **Database:** Проверь наличие миграций в infrastructure/liquibase/
+- **Content Writer:** Проверь наличие YAML в knowledge/canon/
+- **Architect:** Проверь наличие документации в knowledge/implementation/
+
+## [SYMBOL] MCP Workflow для Enterprise-Grade Разработки
+
+### Шаг 1: Поиск и Анализ Задач
+
 ```javascript
+// Ищи задачи со ВСЕМИ статусами
 mcp_github_list_project_items({
   owner_type: 'user',
   owner: 'gc-lover',
   project_number: 1,
-  query: 'Status:"Todo"'
-})
+  query: '' // Пустой query для всех задач
+});
+
+// Для конкретного агента
+mcp_github_list_project_items({
+  owner_type: 'user',
+  owner: 'gc-lover',
+  project_number: 1,
+  query: 'Agent:"API"' // Задачи для API Designer
+});
 ```
 
-### Шаг 2: Взятие задачи
+### Шаг 2: Детальный Анализ Задачи
+
+```javascript
+// Получи полную информацию о задаче
+mcp_github_issue_read({
+  method: 'get',
+  owner: 'gc-lover',
+  repo: 'necpgame-monorepo',
+  issue_number: issue_number
+});
+
+// Проверь актуальность ссылок в описании
+// ИЗУЧИ реальную структуру проекта
+```
+
+### Шаг 3: Проверка Выполнения
+
+```javascript
+// Если задача про OpenAPI спецификацию
+// Проверь: существует ли файл в enterprise-grade домене?
+
+// Если задача про database миграции
+// Проверь: существуют ли файлы в infrastructure/liquibase/migrations/?
+
+// Если задача про контент
+// Проверь: существуют ли YAML файлы в knowledge/canon/?
+```
+
+### Шаг 4: Взятие Задачи (ТОЛЬКО если не выполнена)
+
 ```javascript
 mcp_github_update_project_item({
   owner_type: 'user',
@@ -106,19 +157,39 @@ mcp_github_update_project_item({
   item_id: project_item_id,
   updated_field: [
     { id: 239690516, value: '83d488e7' }, // Status: In Progress
-    { id: 243899542, value: '{agent_id}' }  // Agent: текущий
+    { id: 243899542, value: '{agent_id}' } // Agent: текущий
   ]
-})
+});
 ```
 
-### Шаг 3: Выполнение работы
-- **API Designer**: Создай OpenAPI в enterprise-grade домене
-- **Database**: Создай миграции с оптимизацией колонок
-- **Content Writer**: Создай YAML контент
-- **Другие агенты**: Работай согласно своим правилам
+### Шаг 5: Выполнение Enterprise-Grade Работы
 
-### Шаг 4: Передача в Backend
+- **API Designer:** Создай спецификацию в enterprise-grade домене по TEMPLATE_USAGE_GUIDE.md
+- **Database:** Создай миграции с оптимизацией колонок
+- **Content Writer:** Создай YAML контент по CONTENT_WORKFLOW.md
+- **Architect:** Выбери enterprise-grade домен из DOMAIN_REFERENCE.md
+
+### Шаг 6: Enterprise-Grade Валидация
+
+```bash
+# Для API Designer
+python scripts/validate-domains-openapi.py proto/openapi/{domain}/main.yaml
+python scripts/batch-optimize-openapi-struct-alignment.py proto/openapi/{domain}/main.yaml --dry-run
+
+# Для Database
+python scripts/reorder-liquibase-columns.py infrastructure/liquibase/migrations/{file}.sql --validate
+
+# Для всех агентов
+python scripts/validate-backend-optimizations.sh --check-only
+```
+
+### Шаг 7: Передача Задачи
+
 ```javascript
+// Определи следующего агента по enterprise-grade workflow
+const nextAgent = determineNextAgent(currentAgent, taskType);
+
+// Передай в Backend (основной путь) или целевому агенту
 mcp_github_update_project_item({
   owner_type: 'user',
   owner: 'gc-lover',
@@ -126,57 +197,98 @@ mcp_github_update_project_item({
   item_id: project_item_id,
   updated_field: [
     { id: 239690516, value: 'f75ad846' }, // Status: Todo
-    { id: 243899542, value: '1fc13998' }  // Agent: Backend
+    { id: 243899542, value: nextAgentId } // Agent: следующий
   ]
-})
+});
 
 mcp_github_add_issue_comment({
   owner: 'gc-lover',
   repo: 'necpgame-monorepo',
   issue_number: issue_number,
-  body: '[OK] Ready. Handed off to Backend. Issue: #' + issue_number
-})
+  body: '[OK] Enterprise-grade work completed. Ready for ' + nextAgentName + '. Issue: #' + issue_number
+});
 ```
 
-## [TARGET] Ключевые правила работы
+## [TARGET] Enterprise-Grade Технические Требования
 
-### [OK] Enterprise-Grade Домены
-**ВСЕ OpenAPI спецификации должны быть в доменах:**
-- `system-domain/` - инфраструктура (553 файла)
-- `specialized-domain/` - игровые механики (157 файлов)
-- `social-domain/` - социальные функции (91 файл)
-- `economy-domain/` - экономика (31 файл)
-- `world-domain/` - игровой мир (57 файлов)
+### OpenAPI Спецификации
 
-### [OK] Оптимизированные скрипты генерации
-- `python scripts/validate-domains-openapi.py` - валидация всех OpenAPI доменов
+- **Enterprise-grade домены** - строго по DOMAIN_REFERENCE.md
+- **Struct alignment** - порядок полей large→small для memory optimization
+- **BACKEND NOTE** - оптимизации для Go генерации
+- **ogen compatible** - спецификации генерируют enterprise-grade код
+
+### Database Схемы
+
+- **Column ordering** - large→small типы для memory alignment
+- **Enterprise indexes** - covering, partial, GIN для JSONB
+- **Partitioning** - time-series для enterprise-scale данных
+- **Enterprise-grade** - production-ready миграции
+
+### Контент
+
+- **YAML формат** - структурированные enterprise-grade квесты
+- **Versioning** - metadata.version для enterprise-grade миграций
+- **Validation** - соответствие enterprise-grade архитектуре
+
+### Performance (КРИТИЧНО!)
+
+- **MMOFPS RPG**: P99 <50ms, 60+ FPS, 0 allocs hot path
+- **Memory alignment**: enterprise-grade field ordering
+- **Context timeouts**: все enterprise-grade внешние вызовы
+- **DB pool**: enterprise-grade connection pooling
+
+## [WARNING] Правила Безопасности
+
+### [ERROR] ЗАПРЕЩЕНО:
+
+- **Создавать двойную работу** - всегда проверяй выполнение
+- **Использовать устаревшие ссылки** - проверяй актуальность после рефакторинга
+- **Игнорировать enterprise-grade домены** - все API в доменах
+- **Пропускать валидацию** - enterprise-grade требует проверки
+
+### [OK] РАЗРЕШЕНО:
+
+- **Брать задачи с любыми статусами** - если они не выполнены
+- **Отклонять неактуальные задачи** - если уже сделаны
+- **Передавать между агентами** - по enterprise-grade workflow
+- **Использовать enterprise-grade инструменты** - скрипты генерации
+
+## [BOOK] Enterprise-Grade Документация
+
+### Основные Гайды:
+
+- `.cursor/AGENT_SIMPLE_GUIDE.md` - быстрый старт для всех агентов
+- `.cursor/DOMAIN_REFERENCE.md` - **справочник enterprise-grade доменов**
+- `.cursor/PERFORMANCE_ENFORCEMENT.md` - **строгие требования к оптимизациям**
+
+### Специфические для ролей:
+
+- `.cursor/rules/agent-api-designer.mdc` - enterprise-grade OpenAPI
+- `.cursor/rules/agent-backend.mdc` - enterprise-grade Go сервисы
+- `.cursor/rules/agent-database.mdc` - enterprise-grade схемы БД
+- `.cursor/rules/agent-content-writer.mdc` - enterprise-grade контент
+
+### Workflow и Контент:
+
+- `.cursor/CONTENT_WORKFLOW.md` - enterprise-grade контент workflow
+- `.cursor/BACKEND_OPTIMIZATION_CHECKLIST.md` - enterprise-grade оптимизации
+
+### OpenAPI Шаблоны:
+
+- `proto/openapi/TEMPLATE_USAGE_GUIDE.md` - **enterprise-grade шаблоны**
+- `proto/openapi/example-domain/main.yaml` - enterprise-grade пример
+- `proto/openapi/README_COMMON_SCHEMAS.md` - общие enterprise-grade схемы
+
+### Конфигурация:
+
+- `.cursor/GITHUB_PROJECT_CONFIG.md` - MCP параметры
+
+### Enterprise-Grade Скрипты:
+
+- `python scripts/validate-domains-openapi.py` - валидация enterprise-grade доменов
 - `python scripts/generate-all-domains-go.py` - генерация enterprise-grade сервисов
-- `python scripts/reorder-openapi-fields.py` - оптимизация структур (memory alignment)
-- `python scripts/reorder-liquibase-columns.py` - оптимизация колонок БД
-- `python scripts/validate-backend-optimizations.sh` - проверка оптимизаций сервисов
+- `python scripts/batch-optimize-openapi-struct-alignment.py` - enterprise-grade оптимизации
+- `python scripts/reorder-liquibase-columns.py` - enterprise-grade БД оптимизации
 
-### [OK] Performance First
-- **Struct alignment**: поля large→small для memory optimization
-- **Context timeouts**: все внешние вызовы с timeout
-- **DB optimization**: covering indexes, partitioning
-- **MMOFPS requirements**: P99 <50ms, 0 allocs hot path
-
-### [OK] Чистота проекта
-- **Корень**: только README.md, CHANGELOG, основные конфиги
-- **Файлы по местам**: services/, knowledge/, scripts/, infrastructure/
-- **Нет промежуточных файлов** в корне!
-
-### [OK] MCP Workflow
-1. **Получи задачу**: `mcp_github_list_project_items`
-2. **Возьми в работу**: Status `In Progress`
-3. **Выполни**: следуя правилам агента
-4. **Передай Backend**: Status `Todo`, Agent `Backend`
-5. **Комментарий**: `[OK] Ready. Handed off to Backend. Issue: #{number}`
-
-## [BOOK] Документация
-- `.cursor/AGENT_SIMPLE_GUIDE.md` - быстрый старт
-- `.cursor/DOMAIN_REFERENCE.md` - справочник доменов
-- `.cursor/PERFORMANCE_ENFORCEMENT.md` - требования оптимизации
-- `.cursor/CONTENT_WORKFLOW.md` - workflow контента
-
-**[TARGET] Цель: подготовить всё для Backend - OpenAPI specs, database schemas, content ready для импорта!**
+**[TARGET] Цель: Создать enterprise-grade OpenAPI спецификации, готовые для backend реализации с максимальной производительностью и масштабируемостью!**
