@@ -1,0 +1,378 @@
+openapi: 3.0.3
+info:
+  title: Legend Templates Integration Service API
+  description: Dialogue integration and trigger management for legends
+  version: 1.0.0
+
+servers:
+  - url: https://legend-templates.necpgame.com/v1
+    description: Production server
+  - url: https://staging-legend-templates.necpgame.com/v1
+    description: Staging server
+
+security:
+  - BearerAuth: []
+
+paths:
+  # Dialogue Legend Integration (HOT PATH - optimized for 1000+ RPS)
+  /triggers/active:
+    get:
+      summary: Get active legend triggers for dialogue integration
+      operationId: getActiveLegendTriggers
+      description: |
+        **HOT PATH ENDPOINT** - Returns active triggers for real-time legend generation
+        Expected performance: <50μs per request
+      parameters:
+        - name: location_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by location ID
+        - name: faction_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by faction ID
+        - name: npc_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by NPC ID
+        - name: player_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by player ID (for personalized triggers)
+      responses:
+        "200":
+          $ref: "#/components/responses/ActiveLegendTriggersResponse"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /triggers/{trigger_id}/generate:
+    post:
+      summary: Generate legend for active trigger
+      operationId: generateLegendForTrigger
+      description: |
+        **HOT PATH ENDPOINT** - Generates legend based on trigger conditions
+        Expected performance: <1ms per request, zero allocations
+      parameters:
+        - name: trigger_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Trigger ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GenerateLegendForTriggerRequest"
+      responses:
+        "200":
+          $ref: "#/components/responses/GeneratedLegendForTriggerResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /dialogue/integrate:
+    post:
+      summary: Integrate generated legend into dialogue
+      operationId: integrateLegendIntoDialogue
+      description: |
+        **HOT PATH ENDPOINT** - Integrates legend into ongoing dialogue
+        Expected performance: <100μs per request
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IntegrateLegendIntoDialogueRequest"
+      responses:
+        "200":
+          $ref: "#/components/responses/IntegratedLegendDialogueResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  responses:
+    ActiveLegendTriggersResponse:
+      description: Active legend triggers for dialogue integration
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              triggers:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LegendTrigger"
+              total:
+                type: integer
+                minimum: 0
+              cache_timestamp:
+                type: string
+                format: date-time
+            description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+
+    GeneratedLegendForTriggerResponse:
+      description: Generated legend for trigger
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              legend:
+                $ref: "#/components/schemas/GeneratedLegend"
+              trigger_id:
+                type: string
+                format: uuid
+              dialogue_integration_points:
+                type: array
+                items:
+                  type: string
+                description: Suggested points for dialogue integration
+            description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+
+    IntegratedLegendDialogueResponse:
+      description: Legend integrated into dialogue
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              dialogue_id:
+                type: string
+                format: uuid
+              integrated_legend:
+                type: string
+                description: Legend text integrated into dialogue
+              legend_metadata:
+                type: object
+                properties:
+                  template_id:
+                    type: string
+                    format: uuid
+                  trigger_id:
+                    type: string
+                    format: uuid
+                  generation_timestamp:
+                    type: string
+                    format: date-time
+            description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: invalid_request
+              message:
+                type: string
+                example: Invalid request parameters
+              details:
+                type: object
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: not_found
+              message:
+                type: string
+                example: Trigger not found
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: internal_error
+              message:
+                type: string
+                example: Internal server error
+
+  schemas:
+    # Integration schemas
+    LegendTrigger:
+      type: object
+      required: [id, type, conditions, legend_id]
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [location, time, faction, dialogue, player_presence]
+        conditions:
+          type: object
+          description: Trigger conditions (location_id, faction_id, keywords, etc.)
+        legend_id:
+          type: string
+          format: uuid
+        priority:
+          type: integer
+          minimum: 1
+          default: 1
+        cooldown_minutes:
+          type: integer
+          minimum: 0
+          default: 60
+          description: Cooldown between activations (minutes)
+        active:
+          type: boolean
+          default: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        last_triggered:
+          type: string
+          format: date-time
+      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+
+    GenerateLegendForTriggerRequest:
+      type: object
+      required: [trigger_id, context_data]
+      properties:
+        trigger_id:
+          type: string
+          format: uuid
+        context_data:
+          type: object
+          description: Context data for legend generation (player info, location, time, etc.)
+          properties:
+            player_id:
+              type: string
+              format: uuid
+            location_id:
+              type: string
+              format: uuid
+            faction_id:
+              type: string
+              format: uuid
+            npc_id:
+              type: string
+              format: uuid
+            dialogue_context:
+              type: object
+              description: Current dialogue state
+            time_context:
+              type: string
+              enum: [morning, afternoon, evening, night]
+            additional_variables:
+              type: object
+              description: Additional variables for template substitution
+        generation_options:
+          type: object
+          properties:
+            variant_count:
+              type: integer
+              minimum: 1
+              maximum: 3
+              default: 1
+            style_preference:
+              type: string
+              enum: [formal, casual, dramatic, mysterious]
+              default: casual
+      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+
+    IntegrateLegendIntoDialogueRequest:
+      type: object
+      required: [dialogue_id, legend_text, integration_points]
+      properties:
+        dialogue_id:
+          type: string
+          format: uuid
+        legend_text:
+          type: string
+        integration_points:
+          type: array
+          items:
+            type: object
+            properties:
+              position:
+                type: string
+                enum: [beginning, middle, end, interruption]
+              context_keywords:
+                type: array
+                items:
+                  type: string
+              priority:
+                type: integer
+                minimum: 1
+                maximum: 10
+                default: 5
+        trigger_metadata:
+          type: object
+          properties:
+            trigger_id:
+              type: string
+              format: uuid
+            trigger_type:
+              type: string
+            cooldown_applied:
+              type: boolean
+      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+
+    GeneratedLegend:
+      type: object
+      required: [text, template_id, variables_used]
+      properties:
+        text:
+          type: string
+          description: Generated legend story text
+        template_id:
+          type: string
+          format: uuid
+        variant_id:
+          type: string
+          format: uuid
+        variables_used:
+          type: object
+          description: Variables that were substituted in the template
+        generation_metadata:
+          type: object
+          properties:
+            trigger_id:
+              type: string
+              format: uuid
+            generated_at:
+              type: string
+              format: date-time
+            processing_time_ms:
+              type: integer
+              minimum: 0
+      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."

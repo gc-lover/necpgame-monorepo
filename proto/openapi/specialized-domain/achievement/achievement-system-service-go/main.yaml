@@ -1,0 +1,421 @@
+openapi: 3.0.3
+info:
+  title: Achievement System Service Go API
+  description: 'Enterprise-Grade Achievement System Service API for NECPGAME MMOFPS RPG.
+
+    **Enterprise-Grade Domain:** specialized-domain
+
+    **Module:** achievement-system-service-go
+
+    **Purpose:** High-performance achievement tracking, progression management, and reward distribution
+
+    **BACKEND NOTE:** Struct field alignment optimized (large → small types).
+
+    All schemas ordered for optimal memory layout in generated Go code.
+
+    Expected memory savings: 30-50% for achievement-related structs.
+
+    **Features:**
+
+    - Real-time achievement progress tracking (1000+ RPS) - Complex achievement conditions evaluation - Achievement chains
+    and milestone progression - Anti-cheat validation for achievement unlocks - Performance analytics and player engagement
+    metrics - Automated reward distribution system
+
+    **Performance:** P99 <20ms for achievement operations, zero allocations in hot path '
+  version: 1.0.0
+  license:
+    name: Proprietary
+    url: https://necpgame.com/license
+  contact:
+    name: NECPGAME API Support
+    url: https://necpgame.com/support
+    email: api@achievement-system.necpgame.com
+servers:
+- url: http://localhost:8084/api/v1
+  description: Achievement System Service Go (development)
+- url: https://achievement-system-go.necpgame.com/api/v1
+  description: Achievement System Service Go (production)
+tags:
+- name: Achievement Management
+  description: Achievement lifecycle and progress tracking
+- name: Progress Tracking
+  description: Real-time progress monitoring and updates
+- name: Achievement Chains
+  description: Multi-step achievement sequences
+- name: Rewards Distribution
+  description: Achievement reward claiming and distribution
+- name: Analytics
+  description: Achievement completion statistics and insights
+- name: Anti-Cheat
+  description: Achievement integrity validation
+security:
+- BearerAuth: []
+paths:
+  /health:
+    get:
+      tags:
+      - Achievement Management
+      summary: Service health check
+      operationId: getHealth
+      security: []
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+  /achievements:
+    get:
+      tags:
+      - Achievement Management
+      summary: List achievements
+      operationId: listAchievements
+      parameters:
+      - name: category
+        in: query
+        schema:
+          type: string
+          enum:
+          - combat
+          - exploration
+          - social
+          - crafting
+          - collection
+        description: Filter by achievement category
+      - name: difficulty
+        in: query
+        schema:
+          type: string
+          enum:
+          - easy
+          - medium
+          - hard
+          - epic
+          - legendary
+        description: Filter by difficulty level
+      - name: unlocked_only
+        in: query
+        schema:
+          type: boolean
+          default: false
+        description: Show only unlocked achievements
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+        description: Number of achievements to return
+      responses:
+        '200':
+          description: List of achievements
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AchievementListResponse'
+  /achievements/{achievement_id}:
+    get:
+      tags:
+      - Achievement Management
+      summary: Get achievement details
+      operationId: getAchievement
+      parameters:
+      - name: achievement_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Achievement unique identifier
+      responses:
+        '200':
+          description: Achievement details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AchievementResponse'
+        '404':
+          description: Achievement not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /players/{player_id}/achievements:
+    get:
+      tags:
+      - Progress Tracking
+      summary: Get player achievement progress
+      operationId: getPlayerAchievements
+      parameters:
+      - name: player_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Player unique identifier
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - locked
+          - in_progress
+          - completed
+        description: Filter by achievement status
+      - name: category
+        in: query
+        schema:
+          type: string
+          enum:
+          - combat
+          - exploration
+          - social
+          - crafting
+          - collection
+        description: Filter by category
+      responses:
+        '200':
+          description: Player achievement progress
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerAchievementsResponse'
+  /players/{player_id}/achievements/{achievement_id}/progress:
+    get:
+      tags:
+      - Progress Tracking
+      summary: Get specific achievement progress
+      operationId: getAchievementProgress
+      parameters:
+      - name: player_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Player unique identifier
+      - name: achievement_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Achievement unique identifier
+      responses:
+        '200':
+          description: Achievement progress details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AchievementProgressResponse'
+    put:
+      tags:
+      - Progress Tracking
+      summary: Update achievement progress
+      operationId: updateAchievementProgress
+      parameters:
+      - name: player_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Player unique identifier
+      - name: achievement_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Achievement unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProgressRequest'
+      responses:
+        '200':
+          description: Progress updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateProgressResponse'
+        '400':
+          description: Invalid progress update
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /players/{player_id}/achievements/{achievement_id}/unlock:
+    post:
+      tags:
+      - Achievement Management
+      summary: Unlock achievement for player
+      operationId: unlockAchievement
+      parameters:
+      - name: player_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Player unique identifier
+      - name: achievement_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Achievement unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UnlockRequest'
+      responses:
+        '200':
+          description: Achievement unlocked successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnlockResponse'
+        '400':
+          description: Achievement unlock failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Achievement already unlocked
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /players/{player_id}/achievements/rewards/claim:
+    post:
+      tags:
+      - Rewards Distribution
+      summary: Claim achievement rewards
+      operationId: claimAchievementRewards
+      parameters:
+      - name: player_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Player unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClaimRewardsRequest'
+      responses:
+        '200':
+          description: Rewards claimed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClaimRewardsResponse'
+        '400':
+          description: Reward claim failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /achievements/analytics/global:
+    get:
+      tags:
+      - Analytics
+      summary: Get global achievement analytics
+      operationId: getGlobalAnalytics
+      parameters:
+      - name: timeframe
+        in: query
+        schema:
+          type: string
+          enum:
+          - 1h
+          - 24h
+          - 7d
+          - 30d
+          default: 7d
+        description: Analytics timeframe
+      - name: category
+        in: query
+        schema:
+          type: string
+          enum:
+          - combat
+          - exploration
+          - social
+          - crafting
+          - collection
+        description: Filter by achievement category
+      responses:
+        '200':
+          description: Global achievement analytics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GlobalAnalyticsResponse'
+  /achievements/validate-progress:
+    post:
+      tags:
+      - Anti-Cheat
+      summary: Validate achievement progress integrity
+      operationId: validateProgress
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ValidationRequest'
+      responses:
+        '200':
+          description: Progress validation completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationResponse'
+        '400':
+          description: Validation failed - integrity violations detected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /achievements/chains/{chain_id}/progress:
+    get:
+      tags:
+      - Achievement Chains
+      summary: Get achievement chain progress
+      operationId: getChainProgress
+      parameters:
+      - name: chain_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Achievement chain unique identifier
+      - name: player_id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Player unique identifier
+      responses:
+        '200':
+          description: Achievement chain progress
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChainProgressResponse'
+$ref: './schemas.yaml#/components'

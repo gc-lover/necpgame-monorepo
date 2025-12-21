@@ -1,0 +1,127 @@
+openapi: 3.0.3
+info:
+  title: World Events Management Service API
+  description: 'World events management functionality - create, update, end events'
+  version: 1.0.0
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  contact:
+    name: NECPGAME World Events API Support
+    url: https://necpgame.com/support
+    email: api@world-events.necpgame.com
+
+servers:
+  - url: http://localhost:8080/api/v1/world/events
+    description: Development server
+  - url: https://api.necpgame.com/api/v1/world/events
+    description: Production server
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Management
+    description: Event management operations
+
+paths:
+  /create:
+    post:
+      summary: Create new world event
+      operationId: createEvent
+      tags:
+        - Management
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './schemas/world-events-schemas.yaml#/components/schemas/CreateEventRequest'
+      responses:
+        '201':
+          description: Event created successfully
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/world-events-schemas.yaml#/components/schemas/CreateEventResponse'
+        '400':
+          description: Invalid event configuration
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/world-events-schemas.yaml#/components/schemas/ErrorResponse'
+
+  /{eventId}/update:
+    put:
+      summary: Update world event
+      operationId: updateEvent
+      tags:
+        - Management
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Event unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './schemas/world-events-schemas.yaml#/components/schemas/UpdateEventRequest'
+      responses:
+        '200':
+          description: Event updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/world-events-schemas.yaml#/components/schemas/UpdateEventResponse'
+        '404':
+          description: Event not found
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/world-events-schemas.yaml#/components/schemas/ErrorResponse'
+
+  /{eventId}/end:
+    post:
+      summary: End world event
+      operationId: endEvent
+      tags:
+        - Management
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Event unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './schemas/world-events-schemas.yaml#/components/schemas/EndEventRequest'
+      responses:
+        '200':
+          description: Event ended successfully
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/world-events-schemas.yaml#/components/schemas/EndEventResponse'
+        '404':
+          description: Event not found
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/world-events-schemas.yaml#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      description: JWT Bearer token authentication

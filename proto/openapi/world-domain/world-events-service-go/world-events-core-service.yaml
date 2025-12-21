@@ -1,0 +1,122 @@
+openapi: 3.0.3
+info:
+  title: World Events Core Service API
+  description: 'Core world events functionality - health checks, active events, event details'
+  version: 1.0.0
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  contact:
+    name: NECPGAME World Events API Support
+    url: https://necpgame.com/support
+    email: api@world-events.necpgame.com
+
+servers:
+  - url: http://localhost:8080/api/v1/world/events
+    description: Development server
+  - url: https://api.necpgame.com/api/v1/world/events
+    description: Production server
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Health
+    description: Service health monitoring
+  - name: Events
+    description: Core event operations
+
+paths:
+  /health:
+    get:
+      summary: Service health check
+      operationId: healthCheck
+      tags:
+        - Health
+      security: []
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "healthy"
+                  timestamp:
+                    type: string
+                    format: date-time
+                  version:
+                    type: string
+                    example: "1.0.0"
+
+  /active:
+    get:
+      summary: Get active world events
+      operationId: getActiveEvents
+      tags:
+        - Events
+      parameters:
+        - name: region
+          in: query
+          schema:
+            type: string
+          description: Filter by region
+        - name: event_type
+          in: query
+          schema:
+            type: string
+            enum: [raid, invasion, festival, disaster, tournament]
+          description: Filter by event type
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 20
+          description: Number of events to return
+      responses:
+        '200':
+          description: List of active world events
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/world-events-schemas.yaml#/components/schemas/ActiveEventsResponse'
+
+  /{eventId}:
+    get:
+      summary: Get event details
+      operationId: getEventDetails
+      tags:
+        - Events
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Event unique identifier
+      responses:
+        '200':
+          description: Event details
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/world-events-schemas.yaml#/components/schemas/EventDetailsResponse'
+        '404':
+          description: Event not found
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/world-events-schemas.yaml#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      description: JWT Bearer token authentication

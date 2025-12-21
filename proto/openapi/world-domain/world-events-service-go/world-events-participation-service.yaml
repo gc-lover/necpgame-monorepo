@@ -1,0 +1,163 @@
+openapi: 3.0.3
+info:
+  title: World Events Participation Service API
+  description: 'World events participation functionality - join, leave, status tracking'
+  version: 1.0.0
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  contact:
+    name: NECPGAME World Events API Support
+    url: https://necpgame.com/support
+    email: api@world-events.necpgame.com
+
+servers:
+  - url: http://localhost:8080/api/v1/world/events
+    description: Development server
+  - url: https://api.necpgame.com/api/v1/world/events
+    description: Production server
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Participation
+    description: Event participation operations
+  - name: Progress
+    description: Event progress tracking
+
+paths:
+  /{eventId}/participate:
+    post:
+      summary: Join world event
+      operationId: joinEvent
+      tags:
+        - Participation
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Event unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './schemas/world-events-schemas.yaml#/components/schemas/JoinEventRequest'
+      responses:
+        '200':
+          description: Successfully joined event
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/world-events-schemas.yaml#/components/schemas/JoinEventResponse'
+        '400':
+          description: Cannot join event
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/world-events-schemas.yaml#/components/schemas/ErrorResponse'
+
+  /{eventId}/leave:
+    post:
+      summary: Leave world event
+      operationId: leaveEvent
+      tags:
+        - Participation
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Event unique identifier
+      responses:
+        '200':
+          description: Successfully left event
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/world-events-schemas.yaml#/components/schemas/LeaveEventResponse'
+
+  /{eventId}/status:
+    get:
+      summary: Get participant status
+      operationId: getParticipantStatus
+      tags:
+        - Participation
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Event unique identifier
+      responses:
+        '200':
+          description: Participant status
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/world-events-schemas.yaml#/components/schemas/ParticipantStatusResponse'
+
+  /{eventId}/progress:
+    get:
+      summary: Get event progress
+      operationId: getEventProgress
+      tags:
+        - Progress
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Event unique identifier
+        - name: participant_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Specific participant ID
+      responses:
+        '200':
+          description: Event progress information
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/world-events-schemas.yaml#/components/schemas/EventProgressResponse'
+
+  /{eventId}/rewards:
+    get:
+      summary: Get event rewards
+      operationId: getEventRewards
+      tags:
+        - Progress
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Event unique identifier
+      responses:
+        '200':
+          description: Available rewards
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/world-events-schemas.yaml#/components/schemas/EventRewardsResponse'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      description: JWT Bearer token authentication

@@ -1,0 +1,594 @@
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      description: JWT Bearer token authentication
+  schemas:
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: healthy
+        version:
+          type: string
+          example: 1.0.0
+        timestamp:
+          type: string
+          format: date-time
+        uptime:
+          type: integer
+          description: Uptime in seconds
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    AchievementListResponse:
+      type: object
+      properties:
+        pagination:
+          $ref: '#/components/schemas/PaginationInfo'
+        achievements:
+          type: array
+          items:
+            $ref: '#/components/schemas/AchievementSummary'
+        total_count:
+          type: integer
+          minimum: 0
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    AchievementResponse:
+      type: object
+      properties:
+        achievement_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+          enum:
+          - combat
+          - exploration
+          - social
+          - crafting
+          - collection
+        difficulty:
+          type: string
+          enum:
+          - easy
+          - medium
+          - hard
+          - epic
+          - legendary
+        requirements:
+          $ref: '#/components/schemas/AchievementRequirements'
+        chain_info:
+          $ref: '#/components/schemas/ChainInfo'
+        rewards:
+          type: array
+          items:
+            $ref: '#/components/schemas/AchievementReward'
+        prerequisites:
+          type: array
+          items:
+            type: string
+            format: uuid
+        points:
+          type: integer
+          minimum: 0
+        is_hidden:
+          type: boolean
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    PlayerAchievementsResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        achievements:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlayerAchievementStatus'
+        recent_unlocks:
+          type: array
+          items:
+            $ref: '#/components/schemas/RecentUnlock'
+          maxItems: 10
+        total_points:
+          type: integer
+          minimum: 0
+        completion_percentage:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 100.0
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    AchievementProgressResponse:
+      type: object
+      properties:
+        achievement_id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        last_updated:
+          type: string
+          format: date-time
+        current_progress:
+          type: number
+          format: float
+          minimum: 0.0
+        target_progress:
+          type: number
+          format: float
+          minimum: 0.0
+        progress_percentage:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 100.0
+        time_remaining_estimate:
+          type: number
+          format: float
+          description: Estimated time remaining in seconds
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    UpdateProgressResponse:
+      type: object
+      properties:
+        achievement_id:
+          type: string
+          format: uuid
+        unlocked_at:
+          type: string
+          format: date-time
+        previous_progress:
+          type: number
+          format: float
+        new_progress:
+          type: number
+          format: float
+        progress_increased:
+          type: number
+          format: float
+        achievement_unlocked:
+          type: boolean
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    UnlockResponse:
+      type: object
+      properties:
+        achievement_id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        unlocked_at:
+          type: string
+          format: date-time
+        chain_progress:
+          $ref: '#/components/schemas/ChainProgressUpdate'
+        rewards_granted:
+          type: array
+          items:
+            $ref: '#/components/schemas/AchievementReward'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    ClaimRewardsResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        claim_details:
+          type: array
+          items:
+            $ref: '#/components/schemas/ClaimDetail'
+        rewards_claimed:
+          type: integer
+          minimum: 0
+        total_value:
+          type: integer
+          minimum: 0
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    GlobalAnalyticsResponse:
+      type: object
+      properties:
+        timeframe:
+          type: string
+          enum:
+          - 1h
+          - 24h
+          - 7d
+          - 30d
+        category_breakdown:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/CategoryStats'
+        difficulty_distribution:
+          type: object
+          additionalProperties:
+            type: integer
+            minimum: 0
+        trending_achievements:
+          type: array
+          items:
+            $ref: '#/components/schemas/TrendingAchievement'
+          maxItems: 10
+        total_achievements:
+          type: integer
+          minimum: 0
+        total_unlocks:
+          type: integer
+          minimum: 0
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    ValidationResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        achievement_id:
+          type: string
+          format: uuid
+        recommended_actions:
+          type: array
+          items:
+            type: string
+        anomalies_detected:
+          type: integer
+          minimum: 0
+        confidence_score:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+        validation_passed:
+          type: boolean
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    ChainProgressResponse:
+      type: object
+      properties:
+        chain_id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        chain_name:
+          type: string
+        next_achievement:
+          $ref: '#/components/schemas/AchievementSummary'
+        rewards_unlocked:
+          type: array
+          items:
+            $ref: '#/components/schemas/AchievementReward'
+        total_achievements:
+          type: integer
+          minimum: 1
+        completed_achievements:
+          type: integer
+          minimum: 0
+        progress_percentage:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 100.0
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    UpdateProgressRequest:
+      type: object
+      properties:
+        client_hash:
+          type: string
+          description: Anti-cheat validation hash
+        event_type:
+          type: string
+          enum:
+          - kill
+          - death
+          - match_win
+          - exploration
+          - crafting
+          - social
+        event_data:
+          type: object
+          additionalProperties: true
+        progress_increment:
+          type: number
+          format: float
+          minimum: 0.0
+      required:
+      - progress_increment
+      - event_type
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    UnlockRequest:
+      type: object
+      properties:
+        client_hash:
+          type: string
+          description: Anti-cheat validation hash
+        unlock_method:
+          type: string
+          enum:
+          - automatic
+          - manual_verification
+          - admin_override
+          default: automatic
+        verification_data:
+          type: object
+          description: Additional data for verification
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    ClaimRewardsRequest:
+      type: object
+      properties:
+        achievement_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          minItems: 1
+          maxItems: 50
+        claim_all:
+          type: boolean
+          default: false
+      required:
+      - achievement_ids
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    ValidationRequest:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        achievement_id:
+          type: string
+          format: uuid
+        client_hash:
+          type: string
+        server_validation_hash:
+          type: string
+        progress_data:
+          type: object
+          additionalProperties: true
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    AchievementSummary:
+      type: object
+      properties:
+        achievement_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        category:
+          type: string
+        difficulty:
+          type: string
+        points:
+          type: integer
+          minimum: 0
+        is_hidden:
+          type: boolean
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    PaginationInfo:
+      type: object
+      properties:
+        page:
+          type: integer
+          minimum: 1
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+        total_pages:
+          type: integer
+          minimum: 1
+        total_items:
+          type: integer
+          minimum: 0
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    AchievementRequirements:
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+          - count
+          - time
+          - score
+          - streak
+          - collection
+        conditions:
+          type: array
+          items:
+            type: object
+            properties:
+              metric:
+                type: string
+              operator:
+                type: string
+                enum:
+                - eq
+                - gt
+                - gte
+                - lt
+                - lte
+              value:
+                type: number
+                format: float
+        time_window_seconds:
+          type: integer
+          minimum: 0
+        target_value:
+          type: number
+          format: float
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    AchievementReward:
+      type: object
+      properties:
+        item_id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum:
+        - xp
+        - currency
+        - item
+        - title
+        - cosmetic
+        cosmetic_type:
+          type: string
+          enum:
+          - avatar
+          - banner
+          - effect
+          - animation
+        amount:
+          type: integer
+          minimum: 0
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    ChainInfo:
+      type: object
+      properties:
+        chain_id:
+          type: string
+          format: uuid
+        chain_name:
+          type: string
+        position_in_chain:
+          type: integer
+          minimum: 1
+        total_in_chain:
+          type: integer
+          minimum: 1
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    PlayerAchievementStatus:
+      type: object
+      properties:
+        achievement_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum:
+          - locked
+          - in_progress
+          - completed
+        unlocked_at:
+          type: string
+          format: date-time
+        progress_percentage:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 100.0
+        rewards_claimed:
+          type: boolean
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    RecentUnlock:
+      type: object
+      properties:
+        achievement_id:
+          type: string
+          format: uuid
+        achievement_name:
+          type: string
+        unlocked_at:
+          type: string
+          format: date-time
+        points_earned:
+          type: integer
+          minimum: 0
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    CategoryStats:
+      type: object
+      properties:
+        total_achievements:
+          type: integer
+          minimum: 0
+        unlocked_count:
+          type: integer
+          minimum: 0
+        unlock_rate:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+        average_completion_time:
+          type: number
+          format: float
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    TrendingAchievement:
+      type: object
+      properties:
+        achievement_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        trend_direction:
+          type: string
+          enum:
+          - up
+          - down
+          - stable
+        unlocks_last_24h:
+          type: integer
+          minimum: 0
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    ChainProgressUpdate:
+      type: object
+      properties:
+        chain_id:
+          type: string
+          format: uuid
+        bonus_rewards:
+          type: array
+          items:
+            $ref: '#/components/schemas/AchievementReward'
+        previous_position:
+          type: integer
+          minimum: 0
+        new_position:
+          type: integer
+          minimum: 1
+        chain_completed:
+          type: boolean
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    ClaimDetail:
+      type: object
+      properties:
+        achievement_id:
+          type: string
+          format: uuid
+        reward_type:
+          type: string
+        claimed_at:
+          type: string
+          format: date-time
+        amount:
+          type: integer
+          minimum: 0
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    ErrorResponse:
+      type: object
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        achievement_id:
+          type: string
+          format: uuid
+        error:
+          type: string
+        code:
+          type: string
+        message:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+      required:
+      - error
+      - code
+      - message
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'

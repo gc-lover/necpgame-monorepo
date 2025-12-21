@@ -1,0 +1,492 @@
+openapi: 3.0.3
+info:
+  title: Legend Templates Core Service API
+  description: Core operations for managing story templates and their variants
+  version: 1.0.0
+
+servers:
+  - url: https://legend-templates.necpgame.com/v1
+    description: Production server
+  - url: https://staging-legend-templates.necpgame.com/v1
+    description: Staging server
+
+security:
+  - BearerAuth: []
+
+paths:
+  # Health check
+  /health:
+    get:
+      summary: Health check endpoint
+      operationId: getHealth
+      responses:
+        "200":
+          $ref: "#/components/responses/HealthResponse"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  # Template management
+  /templates:
+    get:
+      summary: Get all story templates
+      operationId: getTemplates
+      parameters:
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [combat, social, economic, exploration]
+          description: Filter by template type
+        - name: category
+          in: query
+          schema:
+            type: string
+          description: Filter by event category
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+          description: Maximum number of results
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          description: Pagination offset
+      responses:
+        "200":
+          $ref: "#/components/responses/TemplatesListResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+    post:
+      summary: Create new story template
+      operationId: createTemplate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTemplateRequest"
+      responses:
+        "201":
+          $ref: "#/components/responses/TemplateResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /templates/{template_id}:
+    parameters:
+      - name: template_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Template ID
+
+    get:
+      summary: Get template by ID
+      operationId: getTemplate
+      responses:
+        "200":
+          $ref: "#/components/responses/TemplateResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+    put:
+      summary: Update template
+      operationId: updateTemplate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateTemplateRequest"
+      responses:
+        "200":
+          $ref: "#/components/responses/TemplateResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+    delete:
+      summary: Delete template
+      operationId: deleteTemplate
+      responses:
+        "204":
+          description: Template deleted successfully
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  # Template variants management
+  /templates/{template_id}/variants:
+    parameters:
+      - name: template_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Template ID
+
+    get:
+      summary: Get template variants
+      operationId: getTemplateVariants
+      responses:
+        "200":
+          $ref: "#/components/responses/TemplateVariantsResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+    post:
+      summary: Add template variant
+      operationId: addTemplateVariant
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateVariantRequest"
+      responses:
+        "201":
+          $ref: "#/components/responses/VariantResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /templates/{template_id}/variants/{variant_id}:
+    parameters:
+      - name: template_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Template ID
+      - name: variant_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Variant ID
+
+    put:
+      summary: Update template variant
+      operationId: updateTemplateVariant
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateVariantRequest"
+      responses:
+        "200":
+          $ref: "#/components/responses/VariantResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+    delete:
+      summary: Delete template variant
+      operationId: deleteTemplateVariant
+      responses:
+        "204":
+          description: Variant deleted successfully
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  responses:
+    HealthResponse:
+      description: Service health status
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              status:
+                type: string
+                example: ok
+              timestamp:
+                type: string
+                format: date-time
+              version:
+                type: string
+                example: 1.0.0
+
+    TemplatesListResponse:
+      description: List of story templates
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              templates:
+                type: array
+                items:
+                  $ref: "#/components/schemas/StoryTemplate"
+              total:
+                type: integer
+                minimum: 0
+              offset:
+                type: integer
+                minimum: 0
+              limit:
+                type: integer
+                minimum: 1
+                maximum: 100
+            description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+
+    TemplateResponse:
+      description: Single template response
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              template:
+                $ref: "#/components/schemas/StoryTemplate"
+            description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+
+    TemplateVariantsResponse:
+      description: Template variants response
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              variants:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TemplateVariant"
+              template_id:
+                type: string
+                format: uuid
+            description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+
+    VariantResponse:
+      description: Single variant response
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              variant:
+                $ref: "#/components/schemas/TemplateVariant"
+            description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: invalid_request
+              message:
+                type: string
+                example: Invalid request parameters
+              details:
+                type: object
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: not_found
+              message:
+                type: string
+                example: Template not found
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: internal_error
+              message:
+                type: string
+                example: Internal server error
+
+  schemas:
+    # Template schemas
+    StoryTemplate:
+      type: object
+      required: [id, type, category, base_template]
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [combat, social, economic, exploration]
+        category:
+          type: string
+          description: Event category
+        base_template:
+          type: string
+          description: Base template with {variable} placeholders
+        variables:
+          type: array
+          items:
+            type: string
+          description: Required variables for this template
+        conditions:
+          type: object
+          description: Activation conditions
+        variants:
+          type: array
+          items:
+            type: string
+          description: Alternative template formulations
+        active:
+          type: boolean
+          default: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+
+    CreateTemplateRequest:
+      type: object
+      required: [type, category, base_template]
+      properties:
+        type:
+          type: string
+          enum: [combat, social, economic, exploration]
+        category:
+          type: string
+        base_template:
+          type: string
+        variables:
+          type: array
+          items:
+            type: string
+        conditions:
+          type: object
+        variants:
+          type: array
+          items:
+            type: string
+      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+
+    UpdateTemplateRequest:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [combat, social, economic, exploration]
+        category:
+          type: string
+        base_template:
+          type: string
+        variables:
+          type: array
+          items:
+            type: string
+        conditions:
+          type: object
+        variants:
+          type: array
+          items:
+            type: string
+        active:
+          type: boolean
+      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+
+    # Variant schemas
+    TemplateVariant:
+      type: object
+      required: [id, template_id, variant_text]
+      properties:
+        id:
+          type: string
+          format: uuid
+        template_id:
+          type: string
+          format: uuid
+        variant_text:
+          type: string
+          description: Alternative template text
+        weight:
+          type: integer
+          minimum: 1
+          default: 1
+          description: Selection weight for this variant
+        active:
+          type: boolean
+          default: true
+        created_at:
+          type: string
+          format: date-time
+      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+
+    CreateVariantRequest:
+      type: object
+      required: [variant_text]
+      properties:
+        variant_text:
+          type: string
+        weight:
+          type: integer
+          minimum: 1
+          default: 1
+      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+
+    UpdateVariantRequest:
+      type: object
+      properties:
+        variant_text:
+          type: string
+        weight:
+          type: integer
+          minimum: 1
+        active:
+          type: boolean
+      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."

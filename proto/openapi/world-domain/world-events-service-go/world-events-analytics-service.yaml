@@ -1,0 +1,97 @@
+openapi: 3.0.3
+info:
+  title: World Events Analytics Service API
+  description: 'World events analytics and validation functionality'
+  version: 1.0.0
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  contact:
+    name: NECPGAME World Events API Support
+    url: https://necpgame.com/support
+    email: api@world-events.necpgame.com
+
+servers:
+  - url: http://localhost:8080/api/v1/world/events
+    description: Development server
+  - url: https://api.necpgame.com/api/v1/world/events
+    description: Production server
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Analytics
+    description: Event analytics operations
+  - name: Validation
+    description: Event validation operations
+
+paths:
+  /analytics:
+    get:
+      summary: Get event analytics
+      operationId: getEventAnalytics
+      tags:
+        - Analytics
+      parameters:
+        - name: event_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Specific event ID
+        - name: timeframe
+          in: query
+          schema:
+            type: string
+            enum: [1h, 24h, 7d, 30d]
+            default: 24h
+          description: Analytics timeframe
+        - name: metrics
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+              enum: [participation, completion, performance, engagement]
+          description: Metrics to include
+      responses:
+        '200':
+          description: Event analytics data
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/world-events-schemas.yaml#/components/schemas/EventAnalyticsResponse'
+
+  /validate:
+    post:
+      summary: Validate event participation
+      operationId: validateParticipation
+      tags:
+        - Validation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './schemas/world-events-schemas.yaml#/components/schemas/ValidationRequest'
+      responses:
+        '200':
+          description: Validation completed
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/world-events-schemas.yaml#/components/schemas/ValidationResponse'
+        '400':
+          description: Validation failed
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/world-events-schemas.yaml#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      description: JWT Bearer token authentication

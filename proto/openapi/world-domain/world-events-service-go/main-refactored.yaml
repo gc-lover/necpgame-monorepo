@@ -1,0 +1,90 @@
+openapi: 3.0.3
+info:
+  title: World Domain - World Events Service Go API (Modular)
+  description: |
+    **Enterprise-Grade World Events Service API** for NECPGAME MMOFPS RPG.
+
+    **Enterprise-Grade Domain:** world-domain
+    **Module:** world-events-service-go
+    **Purpose:** Dynamic world event management and player engagement
+
+    **BACKEND NOTE:** Struct field alignment optimized (large → small types).
+    All schemas ordered for optimal memory layout in generated Go code.
+    Expected memory savings: 30-50% for event-related structs.
+    Hot paths: /events/active, /events/{eventId}/status, /events/participate
+    Expected RPS: 1000+ for hot paths, zero allocations.
+
+    **Architecture:** Service split into specialized modules for better maintainability.
+
+    **Core Features:**
+    - Dynamic world event creation and management
+    - Real-time event participation and tracking
+    - Event-based quests and objectives
+    - World state synchronization across players
+    - Event rewards and achievements
+    - Cross-region event coordination
+    - Anti-cheat validation for event participation
+
+    **Performance Targets:**
+    - Hot paths: 1000+ RPS, P99 <15ms
+    - Memory per event: <10MB
+    - Cache hit rate: >95%
+    - Event throughput: 200+ events/sec
+  version: 1.0.0
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  contact:
+    name: NECPGAME World Events API Support
+    url: https://necpgame.com/support
+    email: api@world-events.necpgame.com
+
+servers:
+  - url: http://localhost:8080/api/v1/world/events
+    description: Development server
+  - url: https://api.necpgame.com/api/v1/world/events
+    description: Production server
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Health
+    description: Service health monitoring
+  - name: Events
+    description: Core event operations
+  - name: Participation
+    description: Event participation operations
+  - name: Progress
+    description: Event progress tracking
+  - name: Management
+    description: Event management operations
+  - name: Analytics
+    description: Event analytics operations
+  - name: Validation
+    description: Event validation operations
+
+# Core functionality
+paths:
+  $ref: './world-events-core-service.yaml#/paths'
+
+# Participation and progress tracking
+  $ref: './world-events-participation-service.yaml#/paths'
+
+# Event management (admin operations)
+  $ref: './world-events-management-service.yaml#/paths'
+
+# Analytics and validation
+  $ref: './world-events-analytics-service.yaml#/paths'
+
+components:
+  # Schemas
+  schemas:
+    $ref: './schemas/world-events-schemas.yaml#/components/schemas'
+
+  # Security schemes
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      description: JWT Bearer token authentication

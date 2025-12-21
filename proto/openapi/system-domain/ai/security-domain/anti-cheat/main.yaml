@@ -3,22 +3,89 @@ info:
   title: Security Anti-Cheat API Module
   description: Anti-cheat and game integrity systems
   version: 1.0.0
+  license:
+    name: Proprietary
+    url: https://necpgame.com/license
+  contact:
+    name: NECPGAME Security Team
+    email: security@necpgame.com
+
+servers:
+  - url: https://api.necpgame.com/security/anti-cheat
+    description: Production server
+
+tags:
+  - name: anti-cheat
+    description: Anti-cheat and security endpoints
+
+security:
+  - BearerAuth: []
 
 paths:
-  # Anti-cheat monitoring
-  $ref: './anti-cheat-monitoring-service.yaml#/paths'
-  $ref: './anti-cheat-action-rate-service.yaml#/paths'
-
-  # Anti-cheat detection
-  $ref: './anti-cheat-position-service.yaml#/paths'
-  $ref: './anti-cheat-speed-service.yaml#/paths'
-  $ref: './anti-cheat-violations-service.yaml#/paths'
-
-  # Anti-cheat response
-  $ref: './anti-cheat-penalties-service.yaml#/paths'
-  $ref: './anti-cheat-reconciliation-service.yaml#/paths'
+  /security/anti-cheat/health:
+    get:
+      summary: Anti-cheat health check
+      operationId: getAntiCheatHealth
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: healthy
+        '401':
+          $ref: '#/components/responses/Unauthorized'
 
 components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT токен для доступа к anti-cheat API
+
   schemas:
-    $ref: './anti-cheat-common.yaml#/components/schemas'
-    $ref: './anti-cheat-schemas.yaml#/components/schemas'
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Код ошибки
+        message:
+          type: string
+          description: Описание ошибки
+      required:
+        - error
+        - message
+
+    AntiCheatViolation:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        player_id:
+          type: string
+          format: uuid
+        violation_type:
+          type: string
+          enum: [speed_hack, position_hack, aimbot, wallhack]
+        timestamp:
+          type: string
+          format: date-time
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).'
+
+  responses:
+    Unauthorized:
+      description: Неавторизован
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
