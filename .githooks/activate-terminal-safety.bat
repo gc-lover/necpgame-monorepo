@@ -20,7 +20,7 @@ echo TERMINAL PROTECTION ACTIVATED!
 echo All git commands in this CMD session are now protected.
 echo.
 echo PROTECTED COMMANDS WILL BE BLOCKED:
-echo   git reset --hard, git clean -fd, git push --force, etc.
+echo   git reset (ANY), git clean (ANY), git push --force, etc.
 echo.
 echo This protection lasts only for this CMD session.
 echo To activate in new CMD windows: call .githooks\activate-terminal-safety.bat

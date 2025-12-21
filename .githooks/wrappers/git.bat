@@ -3,14 +3,13 @@ REM Git Safe Wrapper for Windows
 REM This script intercepts ALL git commands and blocks dangerous ones
 
 REM Dangerous command patterns to block
-set "DANGEROUS_COMMANDS[0]=reset --hard"
-set "DANGEROUS_COMMANDS[1]=clean -fd"
-set "DANGEROUS_COMMANDS[2]=clean -fdx"
-set "DANGEROUS_COMMANDS[3]=checkout --force"
-set "DANGEROUS_COMMANDS[4]=branch -D"
-set "DANGEROUS_COMMANDS[5]=push --force"
-set "DANGEROUS_COMMANDS[6]=rebase --abort"
-set "DANGEROUS_COMMANDS[7]=stash drop"
+set "DANGEROUS_COMMANDS[0]=reset"
+set "DANGEROUS_COMMANDS[1]=clean"
+set "DANGEROUS_COMMANDS[2]=checkout --force"
+set "DANGEROUS_COMMANDS[3]=branch -D"
+set "DANGEROUS_COMMANDS[4]=push --force"
+set "DANGEROUS_COMMANDS[5]=rebase --abort"
+set "DANGEROUS_COMMANDS[6]=stash drop"
 
 REM Check if command line contains dangerous patterns
 set "CMD_LINE=%*"

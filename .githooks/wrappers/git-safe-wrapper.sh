@@ -5,9 +5,8 @@
 
 # Dangerous command patterns to block
 DANGEROUS_COMMANDS=(
-    "reset --hard"
-    "clean -fd"
-    "clean -fdx"
+    "reset"
+    "clean"
     "checkout --force"
     "branch -D"
     "push --force"

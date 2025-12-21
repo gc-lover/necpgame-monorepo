@@ -8,9 +8,8 @@
 
 Эти команды **КАТЕГОРИЧЕСКИ ЗАПРЕЩЕНЫ** для всех агентов:
 
-- `git reset --hard` - откатывает все изменения без возможности восстановления
-- `git clean -fd` - удаляет неотслеживаемые файлы
-- `git clean -fdx` - удаляет ВСЕ неотслеживаемые файлы включая игнорируемые
+- `git reset` - ЛЮБАЯ команда reset (даже без --hard может потерять работу)
+- `git clean` - ЛЮБАЯ команда clean (даже с -n может удалить файлы)
 - `git checkout --force` - принудительный чекаут с перезаписью локальных изменений
 - `git branch -D` - принудительное удаление ветки
 - `git push --force` - принудительный пуш с перезаписью удаленной ветки
@@ -82,10 +81,10 @@ git config core.hooksPath .githooks
 ## 📋 Примеры блокировки
 
 ```bash
-$ git reset --hard HEAD~1
+$ git reset HEAD~1
 🚨 DANGER: Git command BLOCKED!
 
-Blocked command: git reset --hard HEAD~1
+Blocked command: git reset HEAD~1
 
 This command can cause IRREVERSIBLE DATA LOSS!
 It is FORBIDDEN for agents to prevent project damage.
@@ -95,6 +94,14 @@ OK SAFE git commands you can use:
   git commit -m "message"   Commit staged changes
   git push                  Push to remote repository
   ...
+
+$ git clean -n
+🚨 DANGER: Git command BLOCKED!
+
+Blocked command: git clean -n
+
+This command can cause IRREVERSIBLE DATA LOSS!
+It is FORBIDDEN for agents to prevent project damage.
 ```
 
 ## 🔧 Техническое обслуживание

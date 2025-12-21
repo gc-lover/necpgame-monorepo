@@ -25,8 +25,8 @@ call .githooks\activate-terminal-safety.bat
 ### 3. Verify Protection
 Test that dangerous commands are blocked:
 ```bash
-git reset --hard  # Should be BLOCKED
-git clean -fd     # Should be BLOCKED
+git reset HEAD~1  # Should be BLOCKED (ANY reset)
+git clean -n      # Should be BLOCKED (ANY clean)
 git --version     # Should work (safe command)
 ```
 

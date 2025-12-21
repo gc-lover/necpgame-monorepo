@@ -10,9 +10,8 @@ echo ""
 git() {
     # Dangerous command patterns to block
     local DANGEROUS_COMMANDS=(
-        "reset --hard"
-        "clean -fd"
-        "clean -fdx"
+        "reset"
+        "clean"
         "checkout --force"
         "branch -D"
         "push --force"
