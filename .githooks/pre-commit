@@ -149,4 +149,41 @@ else
 fi
 
 echo "[SUCCESS] Script Language Enforcement: Only Python scripts detected."
+
+# Check OpenAPI specifications for validity
+echo "[CHECK] OpenAPI Validation: Checking OpenAPI specs..."
+
+if command -v redocly >/dev/null 2>&1; then
+    # Find OpenAPI files in staged changes
+    STAGED_OPENAPI_FILES=$(echo "$STAGED_FILES" | grep -E "\.yaml$|\.yml$" | grep -E "proto/openapi/" || true)
+
+    if [ -n "$STAGED_OPENAPI_FILES" ]; then
+        echo "Found OpenAPI files to validate: $STAGED_OPENAPI_FILES"
+        for api_file in $STAGED_OPENAPI_FILES; do
+            if [ -f "$api_file" ]; then
+                echo "Validating $api_file..."
+                if ! redocly lint "$api_file" --format=stylish; then
+                    echo "[ERROR] OpenAPI validation failed for $api_file!"
+                    echo ""
+                    echo "OpenAPI VALIDATION FAILED:"
+                    echo "• Fix syntax errors in the OpenAPI specification"
+                    echo "• Ensure all required fields are present"
+                    echo "• Check $ref references are valid"
+                    echo "• Verify schema definitions are correct"
+                    echo ""
+                    echo "[BLOCKED] Commit blocked due to OpenAPI validation failure"
+                    exit 1
+                fi
+            fi
+        done
+        echo "[SUCCESS] All OpenAPI files passed validation"
+    else
+        echo "[INFO] No OpenAPI files to validate in this commit"
+    fi
+else
+    echo "[WARNING] redocly not found, skipping OpenAPI validation"
+    echo "[INFO] Install redocly: npm install -g @redocly/cli"
+fi
+
+echo "[SUCCESS] OpenAPI Validation: All checks passed."
 exit 0
