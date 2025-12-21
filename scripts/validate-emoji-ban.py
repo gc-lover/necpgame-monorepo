@@ -124,18 +124,18 @@ def main():
 
         for file_path, violation in all_violations:
             print(f"File: {file_path}:{violation['line']}:{violation['column']}")
-            print(f"Character: [FORBIDDEN_CHAR] (U+{violation['code']:04X})")
+            print(f"Character: FORBIDDEN_CHAR (U+{violation['code']:04X})")
             print(f"Context: {violation['context']}")
             print()
 
         print("WHY THIS IS FORBIDDEN:")
-        print("- [FORBIDDEN] Emoji break script execution on Windows")
-        print("- [FORBIDDEN] Special Unicode characters cause terminal issues")
-        print("- [FORBIDDEN] Compatibility problems across platforms")
+        print("- FORBIDDEN: Emoji break script execution on Windows")
+        print("- FORBIDDEN: Special Unicode characters cause terminal issues")
+        print("- FORBIDDEN: Compatibility problems across platforms")
         print()
 
         print("SOLUTIONS:")
-        print("- Replace emoji with ASCII: [OK], [ERROR], [WARNING], [SYMBOL]")
+        print("- Replace emoji with ASCII: OK, ERROR, WARNING, SYMBOL")
         print("- Remove decorative Unicode characters")
         print("- Use plain text comments")
         print()
