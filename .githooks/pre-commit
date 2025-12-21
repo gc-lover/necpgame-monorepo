@@ -77,27 +77,28 @@ echo "[SUCCESS] Git Safety Check: No dangerous command traces found."
 # Check for emoji and special characters in staged files
 echo "[CHECK] Emoji Ban Check: Scanning for forbidden Unicode characters..."
 
-if [ -f "scripts/validate-emoji-ban.sh" ]; then
+if [ -f "scripts/validate-emoji-ban.py" ]; then
     # Run emoji validation on staged files
     STAGED_FILES=$(git diff --cached --name-only)
 
     # Skip validation for git hook files (system files)
     if echo "$STAGED_FILES" | grep -q -E "\.githooks/|\.cursor/"; then
         echo "[INFO] Skipping emoji validation for system files"
-    elif echo "$STAGED_FILES" | grep -q -E "scripts/(validate-emoji-ban\.sh|validate-script-types\.sh|framework\.py|SCRIPT_MIGRATION_GUIDE\.md)"; then
+    elif echo "$STAGED_FILES" | grep -q -E "scripts/(validate-emoji-ban\.py|validate-script-types\.py|framework\.py|SCRIPT_MIGRATION_GUIDE\.md)"; then
         echo "[INFO] Skipping emoji validation for script framework and docs"
     elif echo "$STAGED_FILES" | grep -q -E "\.py$"; then
         # Only check Python files for emoji (stricter check for code)
-        echo "$STAGED_FILES" | grep "\.py$" | xargs bash scripts/validate-emoji-ban.sh
+        echo "$STAGED_FILES" | grep "\.py$" | xargs python scripts/validate-emoji-ban.py
         if [ $? -ne 0 ]; then
-            echo "[WARNING] Emoji/special character found in Python file!"
+            echo "[ERROR] Emoji/special character found in Python file!"
             echo "Please remove emoji and special Unicode characters from code."
             echo ""
             echo "Fix suggestions:"
             echo "- Replace emoji with ASCII text ([OK], [ERROR], etc.)"
             echo "- Use plain comments without special characters"
             echo ""
-            echo "[INFO] Commit allowed but please fix emoji in code"
+            echo "[BLOCKED] Commit blocked due to emoji violation"
+            exit 1
         fi
     else
         echo "[INFO] Skipping emoji validation for non-Python files (documentation, config, etc.)"
@@ -111,12 +112,12 @@ echo "[SUCCESS] Emoji Ban Check: Validation completed."
 # Check for forbidden script types (only Python allowed)
 echo "[CHECK] Script Language Enforcement: Only Python scripts allowed..."
 
-if [ -f "scripts/validate-script-types.sh" ]; then
+if [ -f "scripts/validate-script-types.py" ]; then
     # Run script type validation on staged files
     STAGED_FILES=$(git diff --cached --name-only)
 
     if [ -n "$STAGED_FILES" ]; then
-        echo "$STAGED_FILES" | xargs bash scripts/validate-script-types.sh
+        echo "$STAGED_FILES" | xargs python scripts/validate-script-types.py
         if [ $? -ne 0 ]; then
             echo "[BLOCKED] COMMIT BLOCKED: FORBIDDEN SCRIPT TYPE DETECTED!"
             echo ""
