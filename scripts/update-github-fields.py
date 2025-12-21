@@ -44,8 +44,8 @@ class GitHubFieldsUpdater:
 
         # Check options
         self.CHECK_OPTIONS = {
-            '0': '0',  # NOT_CHECKED
-            '1': '1',  # CHECKED
+            '0': self.config.get('github.check_options.not_checked', '0'),
+            '1': self.config.get('github.check_options.checked', '1'),
         }
 
     def update_fields(self, item_id: str, type_value: str = None, check_value: str = None):
