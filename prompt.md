@@ -157,12 +157,36 @@ mcp_github_update_project_item({
   item_id: project_item_id,
   updated_field: [
     { id: 239690516, value: '83d488e7' }, // Status: In Progress
-    { id: 243899542, value: '{agent_id}' } // Agent: текущий
+    { id: 243899542, value: '{agent_id}' }, // Agent: текущий
+    { id: TYPE_FIELD_ID, value: '{type_option_id}' }, // Type: API/MIGRATION/DATA/BACKEND/UE5
+    { id: CHECK_FIELD_ID, value: '0' } // Check: 0 (не проверялась)
   ]
 });
 ```
 
-### Шаг 5: Выполнение Enterprise-Grade Работы
+### Шаг 5: Проверка Выполнения и Обновление Check
+
+**ОБЯЗАТЕЛЬНО перед работой:**
+
+```javascript
+// Обнови Check на 1 (задача проверена)
+mcp_github_update_project_item({
+  owner_type: 'user',
+  owner: 'gc-lover',
+  project_number: 1,
+  item_id: project_item_id,
+  updated_field: [
+    { id: CHECK_FIELD_ID, value: '1' } // Check: 1 (проверена)
+  ]
+});
+```
+
+**Логика принятия решения:**
+- **Если задача СДЕЛАНА** → передай следующему агенту без выполнения работы
+- **Если задача НЕ СДЕЛАНА** → выполняй enterprise-grade работу
+- **ВСЕГДА ставь Check = 1 после проверки!**
+
+### Шаг 6: Выполнение Enterprise-Grade Работы
 
 - **API Designer:** Создай спецификацию в enterprise-grade домене по TEMPLATE_USAGE_GUIDE.md
 - **Database:** Создай миграции с оптимизацией колонок
@@ -197,7 +221,9 @@ mcp_github_update_project_item({
   item_id: project_item_id,
   updated_field: [
     { id: 239690516, value: 'f75ad846' }, // Status: Todo
-    { id: 243899542, value: nextAgentId } // Agent: следующий
+    { id: 243899542, value: nextAgentId }, // Agent: следующий
+    { id: TYPE_FIELD_ID, value: nextTypeOptionId }, // Type: обнови если изменился тип работы
+    { id: CHECK_FIELD_ID, value: '1' } // Check: остается 1 (уже проверена)
   ]
 });
 
@@ -242,17 +268,20 @@ mcp_github_add_issue_comment({
 
 ### [ERROR] ЗАПРЕЩЕНО:
 
-- **Создавать двойную работу** - всегда проверяй выполнение
+- **Создавать двойную работу** - всегда проверяй выполнение через CHECK поле
 - **Использовать устаревшие ссылки** - проверяй актуальность после рефакторинга
 - **Игнорировать enterprise-grade домены** - все API в доменах
 - **Пропускать валидацию** - enterprise-grade требует проверки
+- **Не проставлять TYPE и CHECK поля** - все задачи должны быть классифицированы
+- **Ставить CHECK = 1 без реальной проверки** - только после анализа выполнения
 
 ### [OK] РАЗРЕШЕНО:
 
-- **Брать задачи с любыми статусами** - если они не выполнены
-- **Отклонять неактуальные задачи** - если уже сделаны
-- **Передавать между агентами** - по enterprise-grade workflow
+- **Брать задачи с любыми статусами** - если они не выполнены (CHECK поможет определить)
+- **Отклонять неактуальные задачи** - если уже сделаны (ставь CHECK = 1 и передавай)
+- **Передавать между агентами** - по enterprise-grade workflow с правильным TYPE
 - **Использовать enterprise-grade инструменты** - скрипты генерации
+- **Обновлять TYPE при передаче** - если тип работы изменился (API → BACKEND)
 
 ## [BOOK] Enterprise-Grade Документация
 

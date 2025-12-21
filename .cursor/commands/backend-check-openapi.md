@@ -34,6 +34,10 @@ python scripts/validate-domains-openapi.py proto/openapi/your-domain/main.yaml
 
 # Check if optimizations are applied
 python scripts/batch-optimize-openapi-struct-alignment.py proto/openapi/your-domain/main.yaml --dry-run
+
+# Update TYPE and CHECK fields in GitHub project
+# TYPE: API (since we're working with OpenAPI)
+# CHECK: 1 (validated and ready)
 ```
 
 ### 2. Spectral Linting

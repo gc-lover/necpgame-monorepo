@@ -1,16 +1,18 @@
 # [TARGET] Простое руководство для агентов
 
-## [SYMBOL] Что такое Status и Agent?
+## [SYMBOL] Что такое Status, Agent, Type и Check?
 
 — **Status** — стадия задачи: `Todo`, `In Progress`, `Review`, `Blocked`, `Returned`, `Done`.
 - **Agent** - кто отвечает сейчас: `Idea`, `Content`, `Backend`, `Architect`, `API`, `DB`, `QA`, `Performance`,
   `Security`, `Network`, `DevOps`, `UI/UX`, `UE5`, `GameBalance`, `Release`.
+- **Type** - тип технической задачи: `API`, `MIGRATION`, `DATA`, `BACKEND`, `UE5`.
+- **Check** - проверка выполнения: `0` (не проверялась), `1` (проверена).
 
 Examples:
 
-- `Status: Todo + Agent: Backend` → Backend должен взять.
-- `Status: In Progress + Agent: Backend` → Backend работает.
-- `Status: Todo + Agent: QA` → задача передана QA.
+- `Status: Todo + Agent: Backend + Type: API + Check: 0` → API задача для Backend, не проверялась.
+- `Status: In Progress + Agent: Backend + Type: BACKEND + Check: 1` → Backend работает над кодом, задача проверена.
+- `Status: Todo + Agent: QA + Type: DATA + Check: 1` → QA тестирует импорт данных.
 
 ---
 
@@ -27,10 +29,10 @@ mcp_github_list_project_items({
 });
 ```
 
-### 2️⃣ ВЗЯТЬ задачу = СРАЗУ обновить статус
+### 2️⃣ ВЗЯТЬ задачу = СРАЗУ обновить статус, тип и проверку
 
 ```javascript
-// СРАЗУ меняй Todo → In Progress
+// СРАЗУ меняй Todo → In Progress + проставь Type и Check
 mcp_github_update_project_item({
   owner_type: 'user',
   owner: 'gc-lover',
@@ -38,12 +40,41 @@ mcp_github_update_project_item({
   item_id: project_item_id,  // из list_project_items
   updated_field: [
     { id: 239690516, value: '83d488e7' }, // Status: In Progress
-    { id: 243899542, value: '{id_моего_агента}' } // Agent: из GITHUB_PROJECT_CONFIG.md
+    { id: 243899542, value: '{id_моего_агента}' }, // Agent: из GITHUB_PROJECT_CONFIG.md
+    { id: TYPE_FIELD_ID, value: '{type_option_id}' }, // Type: API/MIGRATION/DATA/BACKEND/UE5
+    { id: CHECK_FIELD_ID, value: '0' } // Check: 0 (не проверялась)
   ]
 });
 ```
 
-### 3️⃣ РАБОТАТЬ
+**Правила простановки Type:**
+- **API**: Создание OpenAPI спецификаций → `TYPE_OPTIONS.API`
+- **MIGRATION**: Создание БД миграций → `TYPE_OPTIONS.MIGRATION`
+- **DATA**: Импорт данных в БД → `TYPE_OPTIONS.DATA`
+- **BACKEND**: Написание Go кода → `TYPE_OPTIONS.BACKEND`
+- **UE5**: Разработка в UE5 → `TYPE_OPTIONS.UE5`
+
+### 3️⃣ ПРОВЕРИТЬ задачу = Обновить Check поле
+
+```javascript
+// ПОСЛЕ анализа задачи обнови Check на 1 (проверена)
+mcp_github_update_project_item({
+  owner_type: 'user',
+  owner: 'gc-lover',
+  project_number: 1,
+  item_id: project_item_id,
+  updated_field: [
+    { id: CHECK_FIELD_ID, value: '1' } // Check: 1 (проверена)
+  ]
+});
+```
+
+**Логика проверки:**
+- Если задача **сделана** → передай следующему агенту
+- Если задача **не сделана** → выполняй работу
+- **ВСЕГДА** ставь Check = 1 после проверки!
+
+### 4️⃣ РАБОТАТЬ
 
     - **НЕ МУСОРИТЬ В КОРНЕ ПРОЕКТА!**
 - **OpenAPI:** `proto/openapi/{domain}/` (enterprise-grade домены!)
@@ -57,6 +88,7 @@ mcp_github_update_project_item({
 - `python scripts/batch-optimize-openapi-struct-alignment.py` - оптимизация структур OpenAPI
 - `python scripts/reorder-liquibase-columns.py` - оптимизация колонок БД
 - `python scripts/validate-backend-optimizations.sh` - проверка enterprise-grade оптимизаций
+- `python scripts/update-github-fields.py` - обновление TYPE и CHECK полей в GitHub
 
 **КРИТИЧНО:** Forbidden создавать новые .sh/.ps1/.bat скрипты!
 - [OK] Используй: `scripts/core/base_script.py` (базовый фреймворк)
@@ -80,7 +112,7 @@ mcp_github_update_project_item({
 - Коммить с префиксом `[agent]`
 - Пример: `[backend] feat: добавить API`
 
-### 4️⃣ ЗАКОНЧИТЬ = Передать следующему
+### 5️⃣ ЗАКОНЧИТЬ = Передать следующему
 
 ```javascript
 // Меняй In Progress → Status: Todo + Agent: {СледующийАгент}
@@ -91,7 +123,9 @@ mcp_github_update_project_item({
   item_id: project_item_id,
   updated_field: [
     { id: 239690516, value: 'f75ad846' }, // Status: Todo
-    { id: 243899542, value: '{id_следующего_агента}' } // Agent: next
+    { id: 243899542, value: '{id_следующего_агента}' }, // Agent: next
+    { id: TYPE_FIELD_ID, value: '{new_type_option_id}' }, // Type: обнови если изменился тип работы
+    { id: CHECK_FIELD_ID, value: '1' } // Check: остается 1 (уже проверена)
   ]
 });
 
@@ -176,18 +210,21 @@ Status всегда: Todo → In Progress → Review/Returned/Blocked → Todo (
 
 ### [OK] ДЕЛАЙ:
 
-1. **СРАЗУ** обновляй статус при взятии задачи (Todo → In Progress)
-2. **ВСЕГДА** обновляй Agent при передаче (назначай следующего)
-3. **ВСЕГДА** добавляй комментарий при передаче задачи
-4. **ИСПОЛЬЗУЙ** константы из GITHUB_PROJECT_CONFIG.md
-5. **ПИШИ** номер Issue (#123) в комментариях, НЕ item_id
+1. **СРАЗУ** обновляй статус, Type и Check при взятии задачи
+2. **ОБЯЗАТЕЛЬНО** проверяй выполнение задачи перед работой (Check = 1)
+3. **ВСЕГДА** обновляй Agent при передаче (назначай следующего)
+4. **ВСЕГДА** добавляй комментарий при передаче задачи
+5. **ИСПОЛЬЗУЙ** константы из GITHUB_PROJECT_CONFIG.md (включая TYPE и CHECK)
+6. **ПИШИ** номер Issue (#123) в комментариях, НЕ item_id
+7. **ПРОСТАВЛЯЙ** правильный Type исходя из типа работы
 
 ### [ERROR] НЕ ДЕЛАЙ:
 
-1. Не работай без обновления статуса
+1. Не работай без обновления всех полей (Status, Agent, Type, Check)
 2. Не передавай задачу без комментария
 3. Не используй item_id в комментариях (только #123)
 4. Не создавай файлы >1000 строк
+5. **НЕ** ставь Check = 1 без реальной проверки выполнения задачи
 
 ---
 

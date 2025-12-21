@@ -66,6 +66,8 @@ mcp_github_list_project_items({
 - **Status Field Node ID:** `PVTSSF_lAHODCWAw84BIyiezg5JYxQ`
 - **Agent Field ID:** `243899542` (single_select)
 - **Agent Field Node ID:** `PVTSSF_lAHODCWAw84BIyiezg6JnJY`
+- **Type Field ID:** `[TO_BE_FILLED]` (single_select)
+- **Check Field ID:** `[TO_BE_FILLED]` (single_select)
 
 ## Status Option IDs
 
@@ -125,6 +127,51 @@ updated_field: [
   { id: AGENT_FIELD_ID, value: AGENT_OPTIONS.Backend },
 ]
 ```
+
+## Type Option IDs
+
+**Полный список опций поля Type (определяет тип технической задачи):**
+
+```javascript
+const TYPE_FIELD_ID = [TO_BE_FILLED];
+const TYPE_OPTIONS = {
+  API: '[TO_BE_FILLED]',         // Создание OpenAPI спецификаций
+  MIGRATION: '[TO_BE_FILLED]',   // Создание БД миграций
+  DATA: '[TO_BE_FILLED]',         // Импорт данных в БД
+  BACKEND: '[TO_BE_FILLED]',      // Написание backend кода
+  UE5: '[TO_BE_FILLED]',          // Разработка в Unreal Engine 5
+};
+```
+
+**Правила простановки TYPE:**
+- **API**: Задачи на создание/изменение OpenAPI спецификаций в enterprise-grade доменах
+- **MIGRATION**: Задачи на создание Liquibase миграций схемы БД
+- **DATA**: Задачи на импорт контента/NPC/квестов в БД
+- **BACKEND**: Задачи на написание Go сервисов, генерацию кода из OpenAPI
+- **UE5**: Задачи на разработку клиентской части в Unreal Engine
+
+## Check Option IDs
+
+**Поле Check (отслеживание проверки выполнения задачи):**
+
+```javascript
+const CHECK_FIELD_ID = [TO_BE_FILLED];
+const CHECK_OPTIONS = {
+  NOT_CHECKED: '0',  // Задача не проверялась на выполнение
+  CHECKED: '1',      // Задача проверена на выполнение
+};
+```
+
+**Правила простановки CHECK:**
+- **0 (NOT_CHECKED)**: Задача взята в работу впервые, статус не проверялся
+- **1 (CHECKED)**: Агент проверил актуальность задачи и её выполнение в проекте
+
+**Алгоритм проверки:**
+1. Взять задачу → CHECK = 0
+2. Проанализировать задачу и проверить в проекте
+3. Если задача сделана → передать следующему агенту
+4. Если задача не сделана → CHECK = 1, выполнить работу
+5. После выполнения → передать следующему агенту
 
 ## Project Details
 
