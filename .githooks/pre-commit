@@ -82,8 +82,10 @@ if [ -f "scripts/validate-emoji-ban.sh" ]; then
     STAGED_FILES=$(git diff --cached --name-only)
 
     # Skip validation for git hook files (system files)
-    if echo "$STAGED_FILES" | grep -q -E "\.githooks/|\.cursor/|scripts/"; then
-        echo "[INFO] Skipping emoji validation for system and script files"
+    if echo "$STAGED_FILES" | grep -q -E "\.githooks/|\.cursor/"; then
+        echo "[INFO] Skipping emoji validation for system files"
+    elif echo "$STAGED_FILES" | grep -q -E "scripts/(validate-emoji-ban\.sh|validate-script-types\.sh|framework\.py|SCRIPT_MIGRATION_GUIDE\.md)"; then
+        echo "[INFO] Skipping emoji validation for script framework and docs"
     elif [ -n "$STAGED_FILES" ]; then
         echo "$STAGED_FILES" | xargs bash scripts/validate-emoji-ban.sh
         if [ $? -ne 0 ]; then

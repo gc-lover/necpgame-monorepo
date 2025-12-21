@@ -295,9 +295,9 @@ if __name__ == "__main__":
                     capture_output=True,
                     check=True
                 )
-                print(f"✓ {script.relative_to(scripts_dir.parent)}")
+                print(f"[OK] {script.relative_to(scripts_dir.parent)}")
             except subprocess.CalledProcessError:
-                print(f"✗ {script.relative_to(scripts_dir.parent)}")
+                print(f"[ERROR] {script.relative_to(scripts_dir.parent)}")
                 failed.append(script)
 
         if failed:
