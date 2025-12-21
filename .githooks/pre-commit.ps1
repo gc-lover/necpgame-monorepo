@@ -14,6 +14,37 @@ if ($committerName -eq "AI_AGENT_EMERGENCY" -and $committerEmail -eq "emergency@
     exit 0
 }
 
+# Check for emoji and special characters first
+Write-Host "🔍 Running Emoji Ban Check..." -ForegroundColor Cyan
+if (Test-Path "scripts/validate-emoji-ban.bat") {
+    try {
+        $stagedFiles = git diff --cached --name-only
+        if ($stagedFiles) {
+            $emojiCheck = & cmd /c "scripts\validate-emoji-ban.bat $stagedFiles" 2>&1
+            $emojiExitCode = $LASTEXITCODE
+            Write-Host $emojiCheck
+            if ($emojiExitCode -ne 0) {
+                Write-Host ""
+                Write-Host "🚨 COMMIT BLOCKED: Emoji/special character violation detected!" -ForegroundColor Red
+                Write-Host "Please remove all emoji and special Unicode characters from your code." -ForegroundColor Red
+                Write-Host ""
+                Write-Host "Common fixes:" -ForegroundColor Yellow
+                Write-Host "• Replace 😀 with :smile:" -ForegroundColor Yellow
+                Write-Host "• Replace 🚫 with [FORBIDDEN]" -ForegroundColor Yellow
+                Write-Host "• Remove decorative symbols ★ ♦ ♠ ♥" -ForegroundColor Yellow
+                Write-Host "• Use plain ASCII text in comments" -ForegroundColor Yellow
+                exit 1
+            }
+        }
+    } catch {
+        Write-Host "WARNING  Could not run emoji validation" -ForegroundColor Yellow
+    }
+} else {
+    Write-Host "WARNING  Emoji validation script not found, skipping emoji check" -ForegroundColor Yellow
+}
+
+Write-Host "OK Emoji Ban Check: No forbidden characters found" -ForegroundColor Green
+
 # Check if validation script exists
 if (-not (Test-Path "scripts/validate-architecture.sh")) {
     Write-Host "WARNING  Validation script not found, skipping validation" -ForegroundColor Yellow

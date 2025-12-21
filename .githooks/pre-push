@@ -60,4 +60,37 @@ while read local_ref local_sha remote_ref remote_sha; do
 done
 
 echo "OK Git Pre-Push Safety Check: All commits appear safe."
+
+# Check for emoji and special characters in commits being pushed
+echo "🔍 Pre-Push Emoji Ban Check: Scanning commits for forbidden Unicode characters..."
+
+if [ -f "scripts/validate-emoji-ban.sh" ]; then
+    # Get files from commits being pushed
+    while read local_ref local_sha remote_ref remote_sha; do
+        if [ "$local_sha" = "0000000000000000000000000000000000000000" ]; then
+            # This is a new branch, check all commits
+            commit_files=$(git diff --name-only $remote_sha..$local_sha 2>/dev/null || git diff --name-only $local_sha)
+        else
+            # Check commits between local and remote
+            commit_files=$(git diff --name-only $remote_sha..$local_sha)
+        fi
+
+        if [ -n "$commit_files" ]; then
+            echo "$commit_files" | xargs bash scripts/validate-emoji-ban.sh
+            if [ $? -ne 0 ]; then
+                echo "🚨 PUSH BLOCKED: Emoji/special character violation detected in commits!"
+                echo "Please remove all emoji and special Unicode characters from your code before pushing."
+                echo ""
+                echo "Common fixes:"
+                echo "• Replace 😀 with :smile:"
+                echo "• Replace 🚫 with [FORBIDDEN]"
+                echo "• Remove decorative symbols ★ ♦ ♠ ♥"
+                echo "• Use plain ASCII text in comments"
+                exit 1
+            fi
+        fi
+    done <<< "$(cat)"
+fi
+
+echo "OK Pre-Push Emoji Ban Check: No forbidden characters found."
 exit 0

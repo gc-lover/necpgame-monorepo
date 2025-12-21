@@ -62,4 +62,30 @@ if [ -n "$DANGEROUS_FOUND" ]; then
 fi
 
 echo "OK Git Safety Check: No dangerous command traces found."
+
+# Check for emoji and special characters in staged files
+echo "🔍 Emoji Ban Check: Scanning for forbidden Unicode characters..."
+
+if [ -f "scripts/validate-emoji-ban.sh" ]; then
+    # Run emoji validation on staged files
+    STAGED_FILES=$(git diff --cached --name-only)
+    if [ -n "$STAGED_FILES" ]; then
+        echo "$STAGED_FILES" | xargs bash scripts/validate-emoji-ban.sh
+        if [ $? -ne 0 ]; then
+            echo "🚨 COMMIT BLOCKED: Emoji/special character violation detected!"
+            echo "Please remove all emoji and special Unicode characters from your code."
+            echo ""
+            echo "Common fixes:"
+            echo "• Replace 😀 with :smile:"
+            echo "• Replace 🚫 with [FORBIDDEN]"
+            echo "• Remove decorative symbols ★ ♦ ♠ ♥"
+            echo "• Use plain ASCII text in comments"
+            exit 1
+        fi
+    fi
+else
+    echo "WARNING  Emoji validation script not found, skipping emoji check"
+fi
+
+echo "OK Emoji Ban Check: No forbidden characters found."
 exit 0
