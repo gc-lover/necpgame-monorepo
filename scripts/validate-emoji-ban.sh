@@ -62,7 +62,8 @@ EXCLUDED_FILES=(
 )
 
 EXCLUDED_PATTERNS=(
-    ".cursor/rules/"  # Rules may contain emoji examples for documentation
+    ".cursor/"  # All documentation may contain emoji examples for illustration
+    ".githooks/"  # Git hooks may contain emoji in comments
     "scripts/validate-emoji-ban"  # This script contains forbidden character lists for validation
 )
 

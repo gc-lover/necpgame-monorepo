@@ -16,7 +16,7 @@ set "FORBIDDEN_CHARS=★ ♦ ♠ ♥ ♣ ► ◄ ▲ ▼ ◆ ◇ ✓ ✗ ✖ ✕
 REM Files to exclude from checking
 set "EXCLUDED_EXTENSIONS=.png .jpg .jpeg .gif .svg .ico .woff .woff2 .ttf .eot .pdf .zip .tar .gz .7z .rar .mp3 .mp4 .avi .mkv .mov .wmv"
 set "EXCLUDED_FILES=.git node_modules"
-set "EXCLUDED_PATTERNS=.cursor\rules\ scripts\validate-emoji-ban"
+set "EXCLUDED_PATTERNS=.cursor\ .githooks\ scripts\validate-emoji-ban"
 
 set "HAS_ERRORS=0"
 set "TOTAL_FILES=0"
