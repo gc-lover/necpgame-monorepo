@@ -319,7 +319,36 @@ paths:
           description: Filter by friendship level
       responses:
         "200":
-          $ref: "#/components/responses/ExampleListSuccess"
+          description: Friends retrieved successfully
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: max-age=30, private
+            X-Total-Count:
+              schema:
+                type: integer
+                example: 150
+              description: Total number of friends
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - friends
+                  - online_count
+                properties:
+                  friends:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/FriendSummary"
+                    description: List of friends
+                  online_count:
+                    type: integer
+                    description: Number of online friends
+                    example: 42
+                  pagination:
+                    $ref: "#/components/schemas/PaginationInfo"
         "400":
           description: Invalid request - malformed query parameters
           content:
@@ -608,6 +637,196 @@ paths:
               schema:
                 type: integer
                 example: 60
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  # Messaging Operations - Private and group messaging
+  /messages:
+    get:
+      summary: Get message history with pagination
+      description: |
+        **Enterprise-grade messaging endpoint**
+
+        Retrieves message history with support for private messages, group chats, and filtering.
+        Optimized for chat applications with proper indexing and caching.
+        Critical for messaging UI and conversation history.
+
+        **Performance:** <25ms P95 for message retrieval
+        **Memory optimization:** Efficient pagination for large chat histories
+      operationId: getMessages
+      tags:
+        - Messaging
+      parameters:
+        - name: conversation_id
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Conversation identifier (private chat or group)
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Page number for pagination
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 20
+          description: Messages per page
+        - name: before_timestamp
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Get messages before this timestamp (for pagination)
+      responses:
+        "200":
+          description: Messages retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - messages
+                  - pagination
+                properties:
+                  messages:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Message"
+                    description: List of messages
+                  pagination:
+                    $ref: "#/components/schemas/PaginationInfo"
+        "404":
+          description: Conversation not found or access denied
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+    post:
+      summary: Send a new message
+      description: |
+        **Enterprise-grade message sending endpoint**
+
+        Sends messages to private conversations or group chats with validation and spam protection.
+        Supports rich text, attachments, and real-time delivery.
+        Critical for social communication and gameplay coordination.
+
+        **Performance:** <10ms P95 for message sending
+        **Business rules:** Rate limiting, content moderation, spam detection
+      operationId: sendMessage
+      tags:
+        - Messaging
+      security:
+        - BearerAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendMessageRequest"
+      responses:
+        "201":
+          description: Message sent successfully
+          headers:
+            Location:
+              schema:
+                type: string
+                example: "/api/v1/social/messages/123e4567-e89b-12d3-a456-426614174000"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+        "400":
+          description: Invalid request - malformed message data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Too many requests - messaging rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 5
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  # Status Updates - Online presence and activity
+  /status:
+    get:
+      summary: Get current user status
+      description: |
+        **Enterprise-grade status endpoint**
+
+        Retrieves current online status, activity, and presence information.
+        Used for friends lists, matchmaking, and social features.
+
+        **Performance:** <5ms P95 (HOT PATH), Redis cached
+      operationId: getUserStatus
+      tags:
+        - Status Updates
+      responses:
+        "200":
+          description: Status retrieved successfully
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: max-age=10, private
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserStatus"
+        "404":
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+    put:
+      summary: Update user status
+      description: |
+        **Enterprise-grade status update endpoint**
+
+        Updates online status, activity, and custom status messages.
+        Triggers real-time notifications to friends and social systems.
+
+        **Performance:** <15ms P95, includes notification broadcasting
+        **Business rules:** Status validation, profanity filtering
+      operationId: updateUserStatus
+      tags:
+        - Status Updates
+      security:
+        - BearerAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateStatusRequest"
+      responses:
+        "200":
+          description: Status updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserStatus"
+        "400":
+          description: Invalid status data
           content:
             application/json:
               schema:
@@ -917,10 +1136,10 @@ components:
           example: { "field": "name", "reason": "required" }
       description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
 
-    # Domain-specific schemas - ЗАМЕНИТЬ на реальные схемы домена
+    # Social Service schemas - Enterprise-grade social interactions
 
-    # Core Example entity - ОБЯЗАТЕЛЬНО оптимизировать порядок полей
-    Example:
+    # Friend summary for listings - Memory optimized for social features
+    FriendSummary:
       type: object
       required:
         - id
