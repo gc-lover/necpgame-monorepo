@@ -103,4 +103,45 @@ else
 fi
 
 echo "[SUCCESS] Emoji Ban Check: No forbidden characters found."
+
+# Check for forbidden script types (only Python allowed)
+echo "[CHECK] Script Language Enforcement: Only Python scripts allowed..."
+
+if [ -f "scripts/validate-script-types.sh" ]; then
+    # Run script type validation on staged files
+    STAGED_FILES=$(git diff --cached --name-only)
+
+    if [ -n "$STAGED_FILES" ]; then
+        echo "$STAGED_FILES" | xargs bash scripts/validate-script-types.sh
+        if [ $? -ne 0 ]; then
+            echo "[BLOCKED] COMMIT BLOCKED: FORBIDDEN SCRIPT TYPE DETECTED!"
+            echo ""
+            echo "SCRIPT LANGUAGE POLICY ENFORCEMENT:"
+            echo "• OK ALLOWED: .py (Python scripts)"
+            echo "• ❌ FORBIDDEN: .sh, .ps1, .bat, .cmd, .pl, .rb, .js (shell scripts)"
+            echo ""
+            echo "WHY THIS IS ENFORCED:"
+            echo "• Python is cross-platform and maintainable"
+            echo "• Shell scripts cause platform compatibility issues"
+            echo "• Python has better error handling and testing"
+            echo "• Single language reduces cognitive load"
+            echo ""
+            echo "MIGRATION REQUIRED:"
+            echo "1. Convert shell scripts to Python equivalents"
+            echo "2. Use python scripts/framework.py for new scripts"
+            echo "3. Remove old shell scripts after migration"
+            echo ""
+            echo "EXCEPTIONS (system files only):"
+            echo "• .githooks/*.sh - Git hooks (system infrastructure)"
+            echo "• infrastructure/**/*.sh - Infrastructure automation"
+            echo "• scripts/git-security/*.bat - Git security tools"
+            echo ""
+            exit 1
+        fi
+    fi
+else
+    echo "[WARNING] Script type validation script not found, skipping check"
+fi
+
+echo "[SUCCESS] Script Language Enforcement: Only Python scripts detected."
 exit 0
