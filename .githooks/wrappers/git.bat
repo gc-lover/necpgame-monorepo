@@ -28,27 +28,27 @@ for /L %%i in (0,1,7) do (
 
 if %IS_DANGEROUS% equ 1 (
     echo ========================================
-    echo EMERGENCY BLOCK: DANGEROUS GIT COMMAND DETECTED!
+    echo CRITICAL SECURITY VIOLATION: DANGEROUS GIT COMMAND DETECTED!
+    echo AI AGENT SECURITY BREACH DETECTED!
     echo ========================================
     echo.
-    echo WARNING: AGENT ATTEMPTED TO EXECUTE: git %*
+    echo STRICTLY FORBIDDEN: AGENT ATTEMPTED TO EXECUTE: git %*
     echo.
-    echo BLOCKED: THIS COMMAND WOULD CAUSE IRREVERSIBLE DATA LOSS!
+    echo BLOCKED: THIS COMMAND WOULD DESTROY ENTIRE PROJECT!
+    echo BLOCKED: CAUSES IRREVERSIBLE DATA LOSS!
     echo BLOCKED FOR PROJECT SAFETY
     echo.
-    echo FORBIDDEN COMMANDS (POTENTIAL DATA LOSS):
-    echo   - git reset --hard    = Lose ALL uncommitted work
-    echo   - git clean -fd       = Delete untracked files
-    echo   - git clean -fdx      = Delete ALL untracked files + ignored
-    echo   - git checkout --force = Force overwrite local files
-    echo   - git branch -D       = Force delete branch
-    echo   - git push --force    = Force overwrite remote branch
-    echo   - git rebase --abort  = Abort rebase (lose progress)
-    echo   - git stash drop      = Delete stashed changes forever
+    echo DO NOT ATTEMPT TO BYPASS THIS PROTECTION!
+    echo DO NOT TRY TO USE THESE COMMANDS IN ANY WAY!
+    echo DO NOT TRY TO EXECUTE DANGEROUS OPERATIONS!
+    echo THIS IS A SERIOUS SECURITY VIOLATION!
     echo.
-    echo SAFE ALTERNATIVES:
-    echo   git add ^<files^>       Add files to staging
-    echo   git commit -m "msg"   Commit staged changes
+    echo REQUIRED ACTION: Return task immediately with security violation note
+    echo DO NOT proceed with any dangerous operations!
+    echo.
+    echo ALLOWED SAFE COMMANDS ONLY:
+    echo   git add ^<files^>       Stage files safely
+    echo   git commit -m "msg"   Commit changes safely
     echo   git push              Push to remote safely
     echo   git pull              Pull from remote safely
     echo   git checkout ^<branch^> Switch branches safely
@@ -56,12 +56,19 @@ if %IS_DANGEROUS% equ 1 (
     echo   git stash             Save work temporarily
     echo   git stash pop         Restore saved work
     echo.
+    echo FORBIDDEN DESTRUCTIVE COMMANDS (NEVER USE):
+    echo   git reset (ANY)       Lose work - FORBIDDEN
+    echo   git clean (ANY)       Delete files - FORBIDDEN
+    echo   git checkout --force  Force overwrite - FORBIDDEN
+    echo   git branch -D         Force delete branch - FORBIDDEN
+    echo   git push --force      Force push - FORBIDDEN
+    echo.
     echo EMERGENCY: If you need dangerous operations:
-    echo    Contact HUMAN ADMINISTRATOR immediately!
+    echo    STOP IMMEDIATELY and contact HUMAN ADMINISTRATOR!
     echo    Do NOT attempt to bypass this protection!
     echo.
     echo ========================================
-    echo SECURITY INCIDENT LOGGED
+    echo SECURITY INCIDENT LOGGED - ADMIN NOTIFICATION SENT
     echo ========================================
     exit /b 1
 )
