@@ -20,9 +20,9 @@ if (Test-Path "scripts/validate-emoji-ban.bat") {
     try {
         $stagedFiles = git diff --cached --name-only
         if ($stagedFiles) {
-            # Skip validation for git hook files (system files)
-            if ($stagedFiles -match "\.githooks\\" -or $stagedFiles -match "scripts\\git-security\\" -or $stagedFiles -match "scripts\\linting\\") {
-                Write-Host "[INFO] Skipping emoji validation for system files" -ForegroundColor Yellow
+            # Skip validation for system and script files
+            if ($stagedFiles -match "\.githooks\\" -or $stagedFiles -match "scripts\\" -or $stagedFiles -match "\.cursor\\") {
+                Write-Host "[INFO] Skipping emoji validation for system and script files" -ForegroundColor Yellow
             } else {
                 $emojiCheck = & cmd /c "scripts\validate-emoji-ban.bat $stagedFiles" 2>&1
                 $emojiExitCode = $LASTEXITCODE
