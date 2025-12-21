@@ -58,14 +58,9 @@ echo "  Do NOT bypass quality checks with --no-verify. Fix validation errors ins
     echo ""
     
     if [ "$CURRENT_BRANCH" != "$ALLOWED_BRANCH" ]; then
-      git checkout "$ALLOWED_BRANCH" 2>/dev/null
-      if [ $? -eq 0 ]; then
-        echo "[OK] Automatically switched back to '$ALLOWED_BRANCH' branch"
-        if git show-ref --verify --quiet refs/heads/"$CURRENT_BRANCH" 2>/dev/null; then
-          git branch -D "$CURRENT_BRANCH" 2>/dev/null
-          echo "[OK] Deleted prohibited branch '$CURRENT_BRANCH'"
-        fi
-      fi
+      echo "[ERROR] Branch '$CURRENT_BRANCH' is not allowed. Please switch to '$ALLOWED_BRANCH' manually."
+      echo "[ERROR] Branch deletion is forbidden for safety reasons."
+      exit 1
     fi
   fi
 fi
