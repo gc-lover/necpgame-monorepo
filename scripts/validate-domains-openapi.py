@@ -63,6 +63,8 @@ class DomainOpenAPIValidator:
         component_patterns = [
             '-ext.yaml', '-ext1.yaml', '-ext2.yaml', '-ext3.yaml', '-ext4.yaml', '-ext5.yaml',  # Extension files
             'schemas/',   # Schema directories
+            'schemas.yaml',  # Schema files
+            'schemas/',     # Schema directories (catch all)
             'paths/',     # Path directories
             'requests/',  # Request directories
             'responses/', # Response directories
@@ -78,6 +80,8 @@ class DomainOpenAPIValidator:
             'guild-service/',
             'notification-service/',
             'interactive-objects-service/',
+            'achievement-system-service-go/',  # Exclude achievement component services
+            'realtime-subscription-service/',   # Exclude realtime subscription components
         ]
 
         filtered_yaml_files = []

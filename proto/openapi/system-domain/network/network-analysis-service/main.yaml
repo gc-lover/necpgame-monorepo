@@ -1,0 +1,433 @@
+openapi: 3.0.3
+info:
+  title: Network Analysis Service API - Enterprise-Grade MMORPG Architecture Analysis
+  description: |
+    **Enterprise-Grade Network Analysis API for NECPGAME MMORPG**
+
+    Specialized service for real-time network architecture analysis, performance monitoring,
+    and optimization insights for MMOFPS RPG systems.
+
+    ## Key Features
+    - **Real-time network metrics** collection and analysis
+    - **Performance bottleneck detection** with automated recommendations
+    - **Connection pattern analysis** for load balancing optimization
+    - **Latency monitoring** across geographic regions
+    - **Bandwidth utilization** tracking and forecasting
+    - **Security threat detection** in network traffic patterns
+    - **Enterprise-grade monitoring** with alerting and reporting
+
+    ## Domain Purpose
+    Provides comprehensive network analysis capabilities for MMORPG architecture,
+    enabling data-driven optimization of real-time multiplayer systems.
+
+    ## Performance Targets
+    - Analysis latency: <10ms for real-time metrics
+    - Memory footprint: <100MB for analysis state
+    - Concurrent analysis sessions: 1000+ simultaneous
+    - Data retention: 30 days rolling window
+    - Alert response time: <1 second
+  version: "1.0.0"
+  contact:
+    name: NECPGAME Network Team
+    url: https://necpgame.com/network-support
+    email: network@necpgame.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://api.necpgame.com/v1/system-domain/network-analysis
+    description: Production network analysis server
+  - url: https://staging-api.necpgame.com/v1/system-domain/network-analysis
+    description: Staging network analysis server
+  - url: http://localhost:8080/api/v1/system-domain/network-analysis
+    description: Local development network analysis server
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Network Analysis
+    description: Core network architecture analysis operations
+  - name: Performance Monitoring
+    description: Real-time performance metrics and bottleneck detection
+  - name: Connection Analytics
+    description: Connection pattern analysis and optimization
+  - name: Geographic Insights
+    description: Geographic distribution and latency analysis
+  - name: Bandwidth Management
+    description: Bandwidth utilization and capacity planning
+  - name: Security Analysis
+    description: Network security threat detection and analysis
+
+paths:
+  # Health Check - ОБЯЗАТЕЛЬНО для всех доменов
+  /health:
+    get:
+      summary: Network Analysis service health check
+      description: |
+        **Enterprise-grade health check endpoint**
+
+        Provides real-time health status of the network analysis microservice.
+        Critical for service discovery, load balancing, and monitoring.
+
+        **Performance:** <1ms response time, cached for 30 seconds
+      operationId: networkAnalysisHealthCheck
+      tags:
+        - Network Analysis
+      parameters:
+        - name: Accept-Encoding
+          in: header
+          schema:
+            type: string
+            enum: [gzip, deflate, br]
+      responses:
+        "200":
+          description: Service is healthy
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: max-age=30, s-maxage=60
+            ETag:
+              schema:
+                type: string
+                example: '"network-analysis-health-v1.0"'
+            Content-Encoding:
+              schema:
+                type: string
+                enum: [gzip, deflate, br]
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+        "503":
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+        "429":
+          description: Rate limited
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  # Network Architecture Analysis
+  /analysis/architecture/overview:
+    get:
+      summary: Get comprehensive network architecture analysis
+      description: |
+        **Enterprise-grade network architecture overview**
+
+        Provides complete analysis of current MMORPG network architecture including:
+        - Topology mapping and optimization recommendations
+        - Performance bottleneck identification
+        - Scalability assessment and capacity planning
+        - Security posture evaluation
+
+        **BACKEND NOTE:** Struct alignment optimized for large response payloads
+      operationId: getNetworkArchitectureAnalysis
+      tags:
+        - Network Analysis
+      parameters:
+        - name: include_recommendations
+          in: query
+          schema:
+            type: boolean
+            default: true
+          description: Include optimization recommendations
+        - name: analysis_depth
+          in: query
+          schema:
+            type: string
+            enum: [basic, detailed, comprehensive]
+            default: detailed
+          description: Depth of analysis to perform
+      responses:
+        "200":
+          description: Network architecture analysis completed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NetworkArchitectureAnalysis"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+
+  # Real-time Performance Metrics
+  /analysis/performance/metrics:
+    get:
+      summary: Get real-time network performance metrics
+      description: |
+        **Real-time performance monitoring for MMORPG systems**
+
+        Collects and analyzes current network performance metrics including:
+        - Connection latency distributions
+        - Packet loss rates by region
+        - Bandwidth utilization patterns
+        - Error rates and retry statistics
+
+        **BACKEND NOTE:** Optimized for high-frequency polling with caching
+      operationId: getRealtimePerformanceMetrics
+      tags:
+        - Performance Monitoring
+      parameters:
+        - name: time_window
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 3600
+            default: 300
+          description: Time window in seconds for metrics collection
+        - name: granularity
+          in: query
+          schema:
+            type: string
+            enum: [1s, 10s, 1m, 5m]
+            default: 10s
+          description: Metrics granularity
+        - name: regions
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+          description: Specific regions to analyze (empty for all)
+      responses:
+        "200":
+          description: Real-time performance metrics retrieved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PerformanceMetrics"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  # Connection Pattern Analysis
+  /analysis/connections/patterns:
+    get:
+      summary: Analyze connection patterns and behaviors
+      description: |
+        **Advanced connection pattern analysis for MMORPG**
+
+        Analyzes player connection behaviors and patterns:
+        - Peak concurrent user analysis
+        - Geographic distribution patterns
+        - Session duration statistics
+        - Connection churn analysis
+
+        **BACKEND NOTE:** Large dataset processing with pagination support
+      operationId: analyzeConnectionPatterns
+      tags:
+        - Connection Analytics
+      parameters:
+        - name: start_date
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Start date for analysis (ISO 8601)
+        - name: end_date
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: End date for analysis (ISO 8601)
+        - name: pattern_type
+          in: query
+          schema:
+            type: string
+            enum: [peak_usage, geographic, session_duration, churn]
+            default: peak_usage
+          description: Type of pattern analysis to perform
+      responses:
+        "200":
+          description: Connection pattern analysis completed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConnectionPatternAnalysis"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  # Geographic Latency Analysis
+  /analysis/geographic/latency:
+    get:
+      summary: Geographic latency analysis and optimization
+      description: |
+        **Geographic network latency analysis**
+
+        Analyzes latency patterns across geographic regions:
+        - Inter-region latency matrices
+        - Optimal server placement recommendations
+        - CDN optimization suggestions
+        - Cross-region failover analysis
+
+        **BACKEND NOTE:** Memory-aligned structures for large geographic datasets
+      operationId: analyzeGeographicLatency
+      tags:
+        - Geographic Insights
+      parameters:
+        - name: regions
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+          description: Specific regions to analyze
+        - name: include_recommendations
+          in: query
+          schema:
+            type: boolean
+            default: true
+          description: Include infrastructure recommendations
+      responses:
+        "200":
+          description: Geographic latency analysis completed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GeographicLatencyAnalysis"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  # Bandwidth Utilization Analysis
+  /analysis/bandwidth/utilization:
+    get:
+      summary: Bandwidth utilization analysis and forecasting
+      description: |
+        **Comprehensive bandwidth utilization analysis**
+
+        Analyzes current and forecasted bandwidth usage:
+        - Peak usage pattern identification
+        - Bandwidth forecasting models
+        - Cost optimization recommendations
+        - Capacity planning insights
+
+        **BACKEND NOTE:** Optimized for time-series data processing
+      operationId: analyzeBandwidthUtilization
+      tags:
+        - Bandwidth Management
+      parameters:
+        - name: forecast_period
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 365
+            default: 30
+          description: Forecast period in days
+        - name: include_cost_analysis
+          in: query
+          schema:
+            type: boolean
+            default: false
+          description: Include bandwidth cost analysis
+      responses:
+        "200":
+          description: Bandwidth utilization analysis completed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BandwidthUtilizationAnalysis"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  # Security Threat Analysis
+  /analysis/security/threats:
+    get:
+      summary: Network security threat detection and analysis
+      description: |
+        **Advanced network security analysis**
+
+        Detects and analyzes security threats in network traffic:
+        - DDoS attack pattern recognition
+        - Suspicious connection anomalies
+        - Authentication abuse detection
+        - Data exfiltration attempts
+
+        **BACKEND NOTE:** High-security processing with audit logging
+      operationId: analyzeSecurityThreats
+      tags:
+        - Security Analysis
+      parameters:
+        - name: threat_types
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+              enum: [ddos, anomaly, auth_abuse, exfiltration]
+          description: Specific threat types to analyze
+        - name: severity_threshold
+          in: query
+          schema:
+            type: string
+            enum: [low, medium, high, critical]
+            default: medium
+          description: Minimum severity threshold for reporting
+      responses:
+        "200":
+          description: Security threat analysis completed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SecurityThreatAnalysis"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token for API authentication
+
+  responses:
+    BadRequest:
+      description: Bad request - invalid parameters
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    RateLimited:
+      description: Too many requests - rate limited
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+  schemas:
+    # Common schemas
+    $ref: './schemas/common-schemas.yaml'
+
+    # Analysis schemas
+    $ref: './schemas/analysis-schemas.yaml'
+
+    # Metrics schemas
+    $ref: './schemas/metrics-schemas.yaml'
+
+    # Connection schemas
+    $ref: './schemas/connection-schemas.yaml'
+
+    # Geographic schemas
+    $ref: './schemas/geographic-schemas.yaml'
+
+    # Bandwidth schemas
+    $ref: './schemas/bandwidth-schemas.yaml'
+
+    # Security schemas
+    $ref: './schemas/security-schemas.yaml'

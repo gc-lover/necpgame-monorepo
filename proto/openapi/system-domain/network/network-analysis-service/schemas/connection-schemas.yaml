@@ -1,0 +1,113 @@
+# Connection Analysis schemas
+# Connection pattern analysis and user behavior schemas
+
+ConnectionPatternAnalysis:
+  type: object
+  required:
+    - analysis_period
+    - peak_concurrent_users
+    - geographic_distribution
+    - session_duration_stats
+    - churn_analysis
+  properties:
+    analysis_period:
+      type: object
+      properties:
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
+    peak_concurrent_users:
+      type: object
+      properties:
+        peak_count:
+          type: integer
+          description: Maximum concurrent users
+          example: 25000
+        peak_timestamp:
+          type: string
+          format: date-time
+          description: When peak occurred
+        average_concurrent:
+          type: integer
+          description: Average concurrent users
+          example: 18500
+    geographic_distribution:
+      type: array
+      items:
+        $ref: '#/components/schemas/GeographicDistribution'
+    session_duration_stats:
+      $ref: '#/components/schemas/SessionDurationStats'
+    churn_analysis:
+      $ref: '#/components/schemas/ChurnAnalysis'
+
+# BACKEND NOTE: Large connection datasets optimized for streaming processing
+GeographicDistribution:
+  type: object
+  required:
+    - region
+    - user_percentage
+    - connection_count
+  properties:
+    region:
+      type: string
+      description: Geographic region
+      example: "North America"
+    user_percentage:
+      type: number
+      format: float
+      description: Percentage of total users
+      example: 35.2
+    connection_count:
+      type: integer
+      description: Number of connections
+      example: 8750
+
+SessionDurationStats:
+  type: object
+  required:
+    - average_duration
+    - median_duration
+    - p95_duration
+    - total_sessions
+  properties:
+    average_duration:
+      type: integer
+      description: Average session duration in minutes
+      example: 45
+    median_duration:
+      type: integer
+      description: Median session duration in minutes
+      example: 32
+    p95_duration:
+      type: integer
+      description: 95th percentile session duration in minutes
+      example: 120
+    total_sessions:
+      type: integer
+      description: Total number of sessions analyzed
+      example: 500000
+
+ChurnAnalysis:
+  type: object
+  required:
+    - churn_rate
+    - retention_rate
+    - average_lifespan
+  properties:
+    churn_rate:
+      type: number
+      format: float
+      description: User churn rate (0.0 to 1.0)
+      example: 0.15
+    retention_rate:
+      type: number
+      format: float
+      description: User retention rate (0.0 to 1.0)
+      example: 0.85
+    average_lifespan:
+      type: integer
+      description: Average user lifespan in days
+      example: 90

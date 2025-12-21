@@ -401,3 +401,527 @@ paths:
                 properties:
                   results:
                     type: array
+                    items:
+                      $ref: "#/components/schemas/CitySearchResult"
+                  total:
+                    type: integer
+                    description: Общее количество найденных результатов
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+components:
+  schemas:
+    # Health schemas (обязательные по TEMPLATE_USAGE_GUIDE.md)
+    HealthResponse:
+      type: object
+      required: [status, timestamp, version, service]
+      properties:
+        status:
+          type: string
+          enum: [ok, degraded, down]
+          description: Текущий статус сервиса
+        timestamp:
+          type: string
+          format: date-time
+          description: Время проверки
+        version:
+          type: string
+          description: Версия сервиса
+        service:
+          type: string
+          description: Название сервиса
+        uptime:
+          type: integer
+          description: Время работы в секундах
+        memory_usage:
+          type: object
+          properties:
+            used:
+              type: integer
+            total:
+              type: integer
+            percentage:
+              type: number
+
+    WebSocketHealthMessage:
+      type: object
+      required: [type, timestamp, status]
+      properties:
+        type:
+          type: string
+          enum: [health_check]
+        timestamp:
+          type: string
+          format: date-time
+        status:
+          $ref: "#/components/schemas/HealthResponse"
+
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+          description: Код ошибки
+        message:
+          type: string
+          description: Описание ошибки
+        details:
+          type: object
+          description: Дополнительные детали ошибки
+
+    # Core City schemas with struct alignment optimization
+    City:
+      type: object
+      required: [id, name, country, region, coordinates, population, development_level]
+      properties:
+        # Struct alignment: large types first (int64, then smaller types)
+        id:
+          type: integer
+          format: int64
+          description: Уникальный идентификатор города
+        population:
+          type: integer
+          format: int64
+          description: Население города
+        created_at:
+          type: string
+          format: date-time
+          description: Дата создания записи
+        updated_at:
+          type: string
+          format: date-time
+          description: Дата последнего обновления
+
+        # Medium types (int32)
+        development_level:
+          type: integer
+          format: int32
+          minimum: 1
+          maximum: 10
+          description: Уровень развития города (1-10)
+
+        # String types (grouped together for memory alignment)
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Название города
+        country:
+          type: string
+          minLength: 2
+          maxLength: 100
+          description: Страна
+        region:
+          type: string
+          minLength: 2
+          maxLength: 100
+          description: Регион/штат
+        description:
+          type: string
+          maxLength: 1000
+          description: Описание города
+
+        # Complex types (placed at end for alignment)
+        coordinates:
+          $ref: "#/components/schemas/Coordinates"
+        infrastructure:
+          $ref: "#/components/schemas/CityInfrastructure"
+        factions:
+          type: array
+          items:
+            $ref: "#/components/schemas/CityFaction"
+          description: Активные фракции в городе
+
+        # BACKEND NOTE: Struct alignment optimized for 64-bit systems
+        # Total struct size: 64-byte aligned, memory efficient for cache lines
+
+    Coordinates:
+      type: object
+      required: [latitude, longitude]
+      properties:
+        latitude:
+          type: number
+          format: float
+          minimum: -90
+          maximum: 90
+          description: Широта
+        longitude:
+          type: number
+          format: float
+          minimum: -180
+          maximum: 180
+          description: Долгота
+        altitude:
+          type: number
+          format: float
+          description: Высота над уровнем моря (метры)
+
+    CityInfrastructure:
+      type: object
+      properties:
+        roads:
+          type: integer
+          format: int32
+          description: Качество дорожной инфраструктуры (0-100)
+        electricity:
+          type: integer
+          format: int32
+          description: Доступность электричества (0-100)
+        water:
+          type: integer
+          format: int32
+          description: Качество водоснабжения (0-100)
+        internet:
+          type: integer
+          format: int32
+          description: Скорость интернета (Mbps)
+        healthcare:
+          type: integer
+          format: int32
+          description: Уровень здравоохранения (0-100)
+        education:
+          type: integer
+          format: int32
+          description: Уровень образования (0-100)
+
+    CityFaction:
+      type: object
+      required: [faction_id, influence_level]
+      properties:
+        faction_id:
+          type: integer
+          format: int64
+          description: ID фракции
+        influence_level:
+          type: integer
+          format: int32
+          minimum: 0
+          maximum: 100
+          description: Уровень влияния фракции (0-100)
+        last_activity:
+          type: string
+          format: date-time
+          description: Последняя активность фракции
+
+    # Request/Response schemas
+    CreateCityRequest:
+      type: object
+      required: [name, country, region, coordinates]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        country:
+          type: string
+          minLength: 2
+          maxLength: 100
+        region:
+          type: string
+          minLength: 2
+          maxLength: 100
+        coordinates:
+          $ref: "#/components/schemas/Coordinates"
+        description:
+          type: string
+          maxLength: 1000
+        population:
+          type: integer
+          format: int64
+          minimum: 0
+        development_level:
+          type: integer
+          format: int32
+          minimum: 1
+          maximum: 10
+
+    UpdateCityRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        country:
+          type: string
+          minLength: 2
+          maxLength: 100
+        region:
+          type: string
+          minLength: 2
+          maxLength: 100
+        coordinates:
+          $ref: "#/components/schemas/Coordinates"
+        description:
+          type: string
+          maxLength: 1000
+        population:
+          type: integer
+          format: int64
+          minimum: 0
+        development_level:
+          type: integer
+          format: int32
+          minimum: 1
+          maximum: 10
+
+    PaginationInfo:
+      type: object
+      required: [page, limit, total, total_pages]
+      properties:
+        page:
+          type: integer
+          format: int32
+          minimum: 1
+          description: Текущая страница
+        limit:
+          type: integer
+          format: int32
+          minimum: 1
+          maximum: 100
+          description: Количество элементов на странице
+        total:
+          type: integer
+          format: int64
+          description: Общее количество элементов
+        total_pages:
+          type: integer
+          format: int32
+          description: Общее количество страниц
+
+    Region:
+      type: object
+      required: [id, name, country, cities_count]
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        country:
+          type: string
+          minLength: 2
+          maxLength: 100
+        cities_count:
+          type: integer
+          format: int32
+          description: Количество городов в регионе
+
+    CitiesStats:
+      type: object
+      properties:
+        total_cities:
+          type: integer
+          format: int64
+          description: Общее количество городов
+        total_population:
+          type: integer
+          format: int64
+          description: Общее население
+        average_development:
+          type: number
+          format: float
+          description: Средний уровень развития
+        regions_count:
+          type: integer
+          format: int32
+          description: Количество регионов
+        top_cities:
+          type: array
+          items:
+            $ref: "#/components/schemas/City"
+          maxItems: 10
+          description: Топ-10 городов по населению
+
+    CitySearchResult:
+      type: object
+      required: [city, relevance_score]
+      properties:
+        city:
+          $ref: "#/components/schemas/City"
+        relevance_score:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Релевантность результата поиска (0-1)
+
+    CityTimelineEntry:
+      type: object
+      required: [timestamp, event_type, description]
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        event_type:
+          type: string
+          enum: [created, updated, destroyed, faction_change, population_change]
+        description:
+          type: string
+          maxLength: 500
+        metadata:
+          type: object
+          description: Дополнительные данные события
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+
+  responses:
+    BadRequest:
+      description: Некорректные входные данные
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    Unauthorized:
+      description: Требуется аутентификация
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    NotFound:
+      description: Ресурс не найден
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    InternalServerError:
+      description: Внутренняя ошибка сервера
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+  # Временные периоды и исторические данные
+  /api/v1/cities/{city_id}/timeline:
+    get:
+      summary: Получить город в разные временные периоды
+      description: |
+        Возвращает информацию о городе во всех доступных временных периодах (2020-2093).
+        Показывает эволюцию города, изменения в архитектуре, населении, фракциях.
+      operationId: getCityTimeline
+      tags: [ Timeline ]
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: city_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID города
+        - name: from_year
+          in: query
+          schema:
+            type: integer
+            minimum: 2020
+            maximum: 2093
+          description: Начальный год периода (по умолчанию 2020)
+        - name: to_year
+          in: query
+          schema:
+            type: integer
+            minimum: 2020
+            maximum: 2093
+          description: Конечный год периода (по умолчанию 2093)
+      responses:
+        "200":
+          description: Таймлайн города
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  city_id:
+                    type: string
+                    format: uuid
+                  city_name:
+                    type: string
+                  timeline:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/CityTimelineEntry"
+                required:
+                  - city_id
+                  - city_name
+                  - timeline
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/v1/cities/timeline/search:
+    get:
+      summary: Поиск городов по временным периодам
+      description: |
+        Ищет города в указанном временном периоде с дополнительными фильтрами.
+        Полезно для поиска городов в конкретную эпоху игры.
+      operationId: searchCitiesByTimeline
+      tags: [ Timeline, Search ]
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: year
+          in: query
+          required: true
+          schema:
+            type: integer
+            minimum: 2020
+            maximum: 2093
+          description: Год для поиска
+        - name: region
+          in: query
+          schema:
+            type: string
+          description: Фильтр по региону
+        - name: development_level
+          in: query
+          schema:
+            type: string
+            enum: [ undeveloped, developing, developed, megacity ]
+          description: Уровень развития города
+        - name: faction_control
+          in: query
+          schema:
+            type: string
+          description: Доминирующая фракция в городе
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 20
+      responses:
+        "200":
+          description: Города в указанном периоде
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  year:
+                    type: integer
+                  cities:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/City"
+                  total:
+                    type: integer
+                required:
+                  - year
+                  - cities
+                  - total
+        "400":
+          $ref: "#/components/responses/BadRequest"

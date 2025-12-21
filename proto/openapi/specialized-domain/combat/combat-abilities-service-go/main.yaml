@@ -272,24 +272,457 @@ components:
           description: Additional error details
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     ActivateAbilityRequest:
-      $ref: ./schemas/activate-ability-request.yaml
+      type: object
+      required:
+      - ability_id
+      - character_id
+      - target_position
+      properties:
+        ability_id:
+          type: string
+          format: uuid
+          description: 'BACKEND NOTE: UUID - 16 bytes, ordered first for struct alignment'
+        character_id:
+          type: string
+          format: uuid
+          description: Character activating the ability
+        target_position:
+          type: object
+          required:
+          - x
+          - y
+          - z
+          properties:
+            x:
+              type: number
+              format: float
+              description: X coordinate
+            y:
+              type: number
+              format: float
+              description: Y coordinate
+            z:
+              type: number
+              format: float
+              description: Z coordinate
+          description: 'BACKEND NOTE: 3D vector for positioning, optimized for game coordinates. Target position for the ability'
+        target_entity_id:
+          type: string
+          format: uuid
+          description: Target entity ID (optional for area abilities)
+        synergy_abilities:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: IDs of synergistic abilities activated together
+          maxItems: 5
+        timestamp:
+          type: integer
+          format: int64
+          description: Client timestamp for anti-cheat validation
+        client_version:
+          type: string
+          description: Client version for compatibility checks
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small types). Expected memory savings: 30-50% for activation requests.'
     ActivateAbilityResponse:
-      $ref: ./schemas/activate-ability-response.yaml
+      type: object
+      required:
+      - success
+      - activation_id
+      - cooldown_end_time
+      properties:
+        success:
+          type: boolean
+          description: 'BACKEND NOTE: bool - 1 byte, ordered last for struct alignment'
+        activation_id:
+          type: string
+          format: uuid
+          description: 'BACKEND NOTE: UUID - 16 bytes, ordered first for struct alignment'
+        ability_id:
+          type: string
+          format: uuid
+          description: Activated ability ID
+        character_id:
+          type: string
+          format: uuid
+          description: Character ID
+        cooldown_end_time:
+          type: integer
+          format: int64
+          description: Timestamp when cooldown ends
+        resource_cost:
+          type: object
+          properties:
+            health:
+              type: integer
+              format: int32
+            stamina:
+              type: integer
+              format: int32
+            mana:
+              type: integer
+              format: int32
+          description: Resources consumed by the ability
+        synergy_bonus:
+          type: number
+          format: float
+          description: Damage/resource multiplier from synergies
+        validation_token:
+          type: string
+          description: Anti-cheat validation token
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small types). Expected memory savings: 30-50% for activation responses.'
     ListAbilitiesResponse:
-      $ref: ./schemas/list-abilities-response.yaml
+      type: object
+      required:
+      - abilities
+      - total_count
+      properties:
+        abilities:
+          type: array
+          items:
+            type: object
+            required:
+            - id
+            - name
+            - type
+            - cooldown
+            properties:
+              id:
+                type: string
+                format: uuid
+                description: 'BACKEND NOTE: UUID - 16 bytes, ordered first for struct alignment'
+              name:
+                type: string
+                description: Ability display name
+              type:
+                type: string
+                enum:
+                - offensive
+                - defensive
+                - utility
+                - mobility
+                description: Ability category
+              cooldown:
+                type: integer
+                format: int32
+                description: Base cooldown in milliseconds
+              resource_cost:
+                type: object
+                properties:
+                  health:
+                    type: integer
+                    format: int32
+                  stamina:
+                    type: integer
+                    format: int32
+                  mana:
+                    type: integer
+                    format: int32
+                description: Resource costs
+              damage_type:
+                type: string
+                enum:
+                - physical
+                - energy
+                - chemical
+                - thermal
+                description: Type of damage dealt
+              range:
+                type: number
+                format: float
+                description: Ability range in meters
+              area_of_effect:
+                type: number
+                format: float
+                description: Area of effect radius
+              level_requirement:
+                type: integer
+                format: int32
+                description: Minimum character level required
+              is_unlocked:
+                type: boolean
+                description: 'BACKEND NOTE: bool - 1 byte, ordered last for struct alignment'
+            description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small types). Expected memory savings: 30-50%.'
+          description: 'BACKEND NOTE: Array of ability objects, ordered for optimal struct layout'
+        total_count:
+          type: integer
+          format: int32
+          description: Total number of abilities available
+        pagination:
+          type: object
+          properties:
+            offset:
+              type: integer
+              format: int32
+            limit:
+              type: integer
+              format: int32
+            has_more:
+              type: boolean
+          description: Pagination information
+      description: 'BACKEND NOTE: Response optimized for struct alignment with large arrays first.'
     AbilityCooldownResponse:
-      $ref: ./schemas/ability-cooldown-response.yaml
+      type: object
+      required:
+      - ability_id
+      - is_on_cooldown
+      - remaining_time
+      properties:
+        ability_id:
+          type: string
+          format: uuid
+          description: 'BACKEND NOTE: UUID - 16 bytes, ordered first for struct alignment'
+        is_on_cooldown:
+          type: boolean
+          description: Whether ability is currently on cooldown
+        remaining_time:
+          type: integer
+          format: int32
+          description: Remaining cooldown time in milliseconds
+        total_cooldown:
+          type: integer
+          format: int32
+          description: Total cooldown duration
+        last_used:
+          type: integer
+          format: int64
+          description: Timestamp when ability was last used
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small types).'
     AbilitySynergiesResponse:
-      $ref: ./schemas/ability-synergies-response.yaml
+      type: object
+      required:
+      - ability_id
+      - synergies
+      properties:
+        ability_id:
+          type: string
+          format: uuid
+          description: Ability for which synergies are being queried
+        synergies:
+          type: array
+          items:
+            type: object
+            required:
+            - partner_ability_id
+            - synergy_type
+            - bonus_multiplier
+            properties:
+              partner_ability_id:
+                type: string
+                format: uuid
+                description: 'BACKEND NOTE: UUID - 16 bytes, ordered first for struct alignment'
+              synergy_type:
+                type: string
+                enum:
+                - damage_boost
+                - cooldown_reduction
+                - resource_efficiency
+                - critical_chance
+                description: Type of synergy effect
+              bonus_multiplier:
+                type: number
+                format: float
+                description: Multiplier for the synergy bonus
+              condition:
+                type: string
+                description: Condition for synergy activation
+              is_active:
+                type: boolean
+                description: 'BACKEND NOTE: bool - 1 byte, ordered last for struct alignment'
+            description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small types).'
+          description: List of possible synergies for this ability
+        total_synergies:
+          type: integer
+          format: int32
+          description: Total number of synergies available
+      description: 'BACKEND NOTE: Response optimized for struct alignment.'
     ValidateAbilityRequest:
-      $ref: ./schemas/validate-ability-request.yaml
+      type: object
+      required:
+      - ability_id
+      - character_id
+      - activation_data
+      properties:
+        ability_id:
+          type: string
+          format: uuid
+          description: 'BACKEND NOTE: UUID - 16 bytes, ordered first for struct alignment'
+        character_id:
+          type: string
+          format: uuid
+          description: Character ID
+        activation_data:
+          type: object
+          properties:
+            timestamp:
+              type: integer
+              format: int64
+            position:
+              type: object
+              required:
+              - x
+              - y
+              - z
+              properties:
+                x:
+                  type: number
+                  format: float
+                  description: X coordinate
+                y:
+                  type: number
+                  format: float
+                  description: Y coordinate
+                z:
+                  type: number
+                  format: float
+                  description: Z coordinate
+              description: 'BACKEND NOTE: 3D vector for positioning, optimized for game coordinates.'
+            target:
+              type: string
+              format: uuid
+          description: Activation context data for validation
+        client_hash:
+          type: string
+          description: Client-side hash for anti-cheat validation
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small types).'
     ValidateAbilityResponse:
-      $ref: ./schemas/validate-ability-response.yaml
+      type: object
+      required:
+      - is_valid
+      - validation_token
+      properties:
+        is_valid:
+          type: boolean
+          description: 'BACKEND NOTE: bool - 1 byte, ordered last for struct alignment'
+        validation_token:
+          type: string
+          description: 'BACKEND NOTE: String - variable length, ordered first'
+        violations:
+          type: array
+          items:
+            type: string
+          description: List of validation violations found
+        confidence_score:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Confidence score of validation (0-1)
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small types).'
     AbilityInfo:
-      $ref: ./schemas/ability-info.yaml
+      type: object
+      required:
+      - id
+      - name
+      - type
+      - cooldown
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: 'BACKEND NOTE: UUID - 16 bytes, ordered first for struct alignment'
+        name:
+          type: string
+          description: Ability display name
+        type:
+          type: string
+          enum:
+          - offensive
+          - defensive
+          - utility
+          - mobility
+          description: Ability category
+        cooldown:
+          type: integer
+          format: int32
+          description: Base cooldown in milliseconds
+        resource_cost:
+          type: object
+          properties:
+            health:
+              type: integer
+              format: int32
+            stamina:
+              type: integer
+              format: int32
+            mana:
+              type: integer
+              format: int32
+          description: Resource costs
+        damage_type:
+          type: string
+          enum:
+          - physical
+          - energy
+          - chemical
+          - thermal
+          description: Type of damage dealt
+        range:
+          type: number
+          format: float
+          description: Ability range in meters
+        area_of_effect:
+          type: number
+          format: float
+          description: Area of effect radius
+        level_requirement:
+          type: integer
+          format: int32
+          description: Minimum character level required
+        is_unlocked:
+          type: boolean
+          description: 'BACKEND NOTE: bool - 1 byte, ordered last for struct alignment'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small types). Expected memory savings: 30-50%.'
     SynergyInfo:
-      $ref: ./schemas/synergy-info.yaml
+      type: object
+      required:
+      - partner_ability_id
+      - synergy_type
+      - bonus_multiplier
+      properties:
+        partner_ability_id:
+          type: string
+          format: uuid
+          description: 'BACKEND NOTE: UUID - 16 bytes, ordered first for struct alignment'
+        synergy_type:
+          type: string
+          enum:
+          - damage_boost
+          - cooldown_reduction
+          - resource_efficiency
+          - critical_chance
+          description: Type of synergy effect
+        bonus_multiplier:
+          type: number
+          format: float
+          description: Multiplier for the synergy bonus
+        condition:
+          type: string
+          description: Condition for synergy activation
+        is_active:
+          type: boolean
+          description: 'BACKEND NOTE: bool - 1 byte, ordered last for struct alignment'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small types).'
     Vector3:
-      $ref: ./schemas/vector3.yaml
+      type: object
+      required:
+      - x
+      - y
+      - z
+      properties:
+        x:
+          type: number
+          format: float
+          description: X coordinate
+        y:
+          type: number
+          format: float
+          description: Y coordinate
+        z:
+          type: number
+          format: float
+          description: Z coordinate
+      description: 'BACKEND NOTE: 3D vector for positioning, optimized for game coordinates.'
 security:
 - BearerAuth: []

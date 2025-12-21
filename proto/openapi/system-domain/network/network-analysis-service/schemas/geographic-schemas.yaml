@@ -1,0 +1,56 @@
+# Geographic Analysis schemas
+# Geographic latency and infrastructure optimization schemas
+
+GeographicLatencyAnalysis:
+  type: object
+  required:
+    - analysis_timestamp
+    - latency_matrix
+    - optimization_recommendations
+  properties:
+    analysis_timestamp:
+      type: string
+      format: date-time
+      description: When analysis was performed
+    latency_matrix:
+      type: object
+      description: Inter-region latency matrix
+      additionalProperties:
+        type: object
+        additionalProperties:
+          type: number
+          format: float
+          description: Latency in milliseconds
+    optimization_recommendations:
+      type: array
+      items:
+        $ref: '#/components/schemas/InfrastructureRecommendation'
+
+# BACKEND NOTE: Geographic data structures optimized for large matrix operations
+InfrastructureRecommendation:
+  type: object
+  required:
+    - recommendation_type
+    - priority
+    - description
+    - estimated_cost
+    - estimated_benefit
+  properties:
+    recommendation_type:
+      type: string
+      enum: [server_placement, cdn_optimization, region_expansion, network_upgrade]
+      description: Type of infrastructure recommendation
+    priority:
+      type: string
+      enum: [low, medium, high, critical]
+      description: Implementation priority
+    description:
+      type: string
+      description: Detailed recommendation
+    estimated_cost:
+      type: number
+      format: float
+      description: Estimated implementation cost in USD
+    estimated_benefit:
+      type: object
+      description: Expected benefits
