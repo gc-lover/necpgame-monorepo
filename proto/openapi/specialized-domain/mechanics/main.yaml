@@ -37,10 +37,8 @@ servers:
     description: Production server
   - url: https://staging-api.necpgame.com/v1/mechanics
     description: Staging server
-  - url: http://localhost:8240/api/v1/mechanics
-    description: Local development server
 security:
-  - BearerAuth: []
+  - BearerAuth: [ ]
 
 tags:
   - name: Game Mechanics
@@ -68,6 +66,30 @@ paths:
     $ref: './game-mechanics-service.yaml#/paths/~1api~1v1~1mechanics~1validate'
   /api/v1/mechanics/conflicts:
     $ref: './game-mechanics-service.yaml#/paths/~1api~1v1~1mechanics~1conflicts'
+
+  # Game Mechanics Systems Service Integration - enterprise-grade mechanics systems management
+  /api/v1/mechanics/systems/health:
+    $ref: './game-mechanics-systems-service.yaml#/paths/~1api~1v1~1mechanics~1systems~1health'
+  /api/v1/mechanics/systems/health/batch:
+    $ref: './game-mechanics-systems-service.yaml#/paths/~1api~1v1~1mechanics~1systems~1health~1batch'
+  /api/v1/mechanics/systems/health/ws:
+    $ref: './game-mechanics-systems-service.yaml#/paths/~1api~1v1~1mechanics~1systems~1health~1ws'
+  /api/v1/mechanics/systems:
+    $ref: './game-mechanics-systems-service.yaml#/paths/~1api~1v1~1mechanics~1systems'
+  /api/v1/mechanics/systems/{system_id}:
+    $ref: './game-mechanics-systems-service.yaml#/paths/~1api~1v1~1mechanics~1systems~1{system_id}'
+  /api/v1/mechanics/systems/rules:
+    $ref: './game-mechanics-systems-service.yaml#/paths/~1api~1v1~1mechanics~1systems~1rules'
+  /api/v1/mechanics/systems/rules/validate:
+    $ref: './game-mechanics-systems-service.yaml#/paths/~1api~1v1~1mechanics~1systems~1rules~1validate'
+  /api/v1/mechanics/systems/balance/analyze:
+    $ref: './game-mechanics-systems-service.yaml#/paths/~1api~1v1~1mechanics~1systems~1balance~1analyze'
+  /api/v1/mechanics/systems/balance/optimize:
+    $ref: './game-mechanics-systems-service.yaml#/paths/~1api~1v1~1mechanics~1systems~1balance~1optimize'
+  /api/v1/mechanics/systems/interactions:
+    $ref: './game-mechanics-systems-service.yaml#/paths/~1api~1v1~1mechanics~1systems~1interactions'
+  /api/v1/mechanics/systems/analytics/performance:
+    $ref: './game-mechanics-systems-service.yaml#/paths/~1api~1v1~1mechanics~1systems~1analytics~1performance'
 
   # Economy Mechanics Integration
   /api/v1/mechanics/economy/resources/health:
@@ -107,8 +129,8 @@ paths:
       summary: Weapon mechanics health check
       description: Health check for weapon mechanics service
       operationId: weaponMechanicsHealthCheck
-      tags: [Weapon Mechanics]
-      security: []
+      tags: [ Weapon Mechanics ]
+      security: [ ]
       responses:
         "200":
           description: Weapon mechanics healthy
@@ -116,6 +138,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HealthResponse'
+        "400":
+          $ref: '#/components/responses/BadRequest'
 
   # Economy Weapon Combinations Integration
   /api/v1/mechanics/economy/weapons/health:
@@ -123,8 +147,8 @@ paths:
       summary: Economy weapon combinations health check
       description: Health check for economy weapon combinations service
       operationId: economyWeaponCombinationsHealthCheck
-      tags: [Economy Mechanics]
-      security: []
+      tags: [ Economy Mechanics ]
+      security: [ ]
       responses:
         "200":
           description: Economy weapon combinations healthy
@@ -132,6 +156,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HealthResponse'
+        "400":
+          $ref: '#/components/responses/BadRequest'
 
   # Gameplay Weapon Special Mechanics Integration
   /api/v1/mechanics/gameplay/weapons/health:
@@ -139,8 +165,8 @@ paths:
       summary: Gameplay weapon special mechanics health check
       description: Health check for gameplay weapon special mechanics service
       operationId: gameplayWeaponMechanicsHealthCheck
-      tags: [Gameplay Mechanics]
-      security: []
+      tags: [ Gameplay Mechanics ]
+      security: [ ]
       responses:
         "200":
           description: Gameplay weapon mechanics healthy
@@ -148,6 +174,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HealthResponse'
+        "400":
+          $ref: '#/components/responses/BadRequest'
 
 components:
   securitySchemes:
@@ -160,11 +188,11 @@ components:
     # Health Response
     HealthResponse:
       type: object
-      required: [status, timestamp, version, service]
+      required: [ status, timestamp, version, service ]
       properties:
         status:
           type: string
-          enum: [healthy, degraded, unhealthy]
+          enum: [ healthy, degraded, unhealthy ]
         timestamp:
           type: string
           format: date-time
@@ -178,6 +206,26 @@ components:
             type: string
       description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
 
+    Error:
+      type: object
+      required: [ message, code ]
+      properties:
+        message:
+          type: string
+          maxLength: 1000
+        code:
+          type: integer
+          minimum: 100
+          maximum: 599
+        domain:
+          type: string
+          maxLength: 255
+          default: mechanics
+        timestamp:
+          type: string
+          format: date-time
+      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+
     # Game Mechanics Service Integration
     GameMechanic:
       $ref: './game-mechanics-service.yaml#/components/schemas/GameMechanic'
@@ -186,22 +234,42 @@ components:
     MechanicConflict:
       $ref: './game-mechanics-service.yaml#/components/schemas/MechanicConflict'
 
-    # Legacy Weapon Mechanic Schema (for backward compatibility)
-    WeaponMechanic:
-      type: object
-      properties:
-        mechanic_id:
-          type: string
-          format: uuid
-        weapon_type:
-          type: string
-        special_ability:
-          type: string
-        damage_modifier:
-          type: number
-        cooldown_seconds:
-          type: integer
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    # Game Mechanics Systems Service Integration
+    MechanicsSystem:
+      $ref: './game-mechanics-systems-service.yaml#/components/schemas/MechanicsSystem'
+    MechanicsSystemDetail:
+      $ref: './game-mechanics-systems-service.yaml#/components/schemas/MechanicsSystemDetail'
+    MechanicsRule:
+      $ref: './game-mechanics-systems-service.yaml#/components/schemas/MechanicsRule'
+    SystemInteraction:
+      $ref: './game-mechanics-systems-service.yaml#/components/schemas/SystemInteraction'
+    BalanceAnalysisResult:
+      $ref: './game-mechanics-systems-service.yaml#/components/schemas/BalanceAnalysisResult'
+    BalanceIssue:
+      $ref: './game-mechanics-systems-service.yaml#/components/schemas/BalanceIssue'
+    BalanceRecommendation:
+      $ref: './game-mechanics-systems-service.yaml#/components/schemas/BalanceRecommendation'
+    BalanceChange:
+      $ref: './game-mechanics-systems-service.yaml#/components/schemas/BalanceChange'
+    SystemPerformanceMetrics:
+      $ref: './game-mechanics-systems-service.yaml#/components/schemas/SystemPerformanceMetrics'
+    PerformanceImpact:
+      $ref: './game-mechanics-systems-service.yaml#/components/schemas/PerformanceImpact'
+    BalanceValidationResult:
+      $ref: './game-mechanics-systems-service.yaml#/components/schemas/BalanceValidationResult'
+    RuleValidationIssue:
+      $ref: './game-mechanics-systems-service.yaml#/components/schemas/RuleValidationIssue'
+    SystemConflict:
+      $ref: './game-mechanics-systems-service.yaml#/components/schemas/SystemConflict'
+
+
+  responses:
+    BadRequest:
+      description: Invalid request parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
 
 # BACKEND NOTE: All mechanics integrated for enterprise-grade management.
 # PERFORMANCE: Centralized mechanics domain with optimized cross-domain integration.
