@@ -7,7 +7,7 @@ setlocal enabledelayedexpansion
 REM Colors for Windows CMD (limited support)
 REM We'll use plain text since CMD color support is limited
 
-echo 🔍 Checking for forbidden emoji and special characters...
+echo [CHECK] Checking for forbidden emoji and special characters...
 
 REM Forbidden Unicode characters (basic check for common emoji)
 REM This is a simplified version for Windows CMD
@@ -15,7 +15,8 @@ set "FORBIDDEN_CHARS=★ ♦ ♠ ♥ ♣ ► ◄ ▲ ▼ ◆ ◇ ✓ ✗ ✖ ✕
 
 REM Files to exclude from checking
 set "EXCLUDED_EXTENSIONS=.png .jpg .jpeg .gif .svg .ico .woff .woff2 .ttf .eot .pdf .zip .tar .gz .7z .rar .mp3 .mp4 .avi .mkv .mov .wmv"
-set "EXCLUDED_FILES=.git node_modules .cursor\rules\linter-emoji-ban.mdc"
+set "EXCLUDED_FILES=.git node_modules"
+set "EXCLUDED_PATTERNS=.cursor\rules\*"
 
 set "HAS_ERRORS=0"
 set "TOTAL_FILES=0"
@@ -69,11 +70,11 @@ for /f "delims=" %%l in ('type "%file%" 2^>nul') do (
 )
 
 if defined FOUND_ERRORS (
-    echo   ❌ ERRORS FOUND
+    echo   [ERROR] ERRORS FOUND
     echo !FOUND_ERRORS!
     set "HAS_ERRORS=1"
 ) else (
-    echo   OK OK
+    echo   [OK] OK
 )
 
 goto :eof
@@ -120,6 +121,19 @@ for %%e in (%EXCLUDED_FILES%) do (
     )
 )
 
+REM Check excluded patterns
+for %%p in (%EXCLUDED_PATTERNS%) do (
+    REM Simple pattern matching for .cursor\rules\*
+    echo %%p | find ".cursor\rules\*" >nul 2>&1
+    if !errorlevel!==0 (
+        echo %file% | find ".cursor\rules\" >nul 2>&1
+        if !errorlevel!==0 (
+            set "EXCLUDE_RESULT=1"
+            goto :eof
+        )
+    )
+)
+
 REM Check excluded extensions
 for %%e in (%EXCLUDED_EXTENSIONS%) do (
     echo %file% | find "%%e" >nul 2>&1
@@ -134,7 +148,7 @@ goto :eof
 :results
 echo ==================================================
 if !HAS_ERRORS!==1 (
-    echo 🚨 CRITICAL: Forbidden emoji/special characters detected!
+    echo [CRITICAL] Forbidden emoji/special characters detected!
     echo.
     echo Why this matters:
     echo • Emojis break script execution on Windows
@@ -142,13 +156,13 @@ if !HAS_ERRORS!==1 (
     echo • Cross-platform compatibility problems
     echo.
     echo Fix suggestions:
-    echo • Replace emoji with ASCII text (:smile: instead of 😀)
+    echo • Replace emoji with ASCII text (:smile: instead of emoji)
     echo • Remove decorative Unicode symbols
     echo • Use plain text for all code comments
     echo.
     echo COMMIT BLOCKED: Fix the issues and try again
     exit /b 1
 ) else (
-    echo OK No forbidden emoji/special characters found
+    echo [SUCCESS] No forbidden emoji/special characters found
     exit /b 0
 )

@@ -3,7 +3,7 @@
 # Git Hook: Pre-commit protection against dangerous commands
 # This hook prevents commits that might contain traces of dangerous git operations
 
-echo "🔍 Git Safety Check: Scanning for dangerous command traces..."
+echo "[CHECK] Git Safety Check: Scanning for dangerous command traces..."
 
 # Check if any staged files contain dangerous git command patterns
 # This catches cases where agents might have accidentally included command output
@@ -35,7 +35,7 @@ for file in $(git diff --cached --name-only); do
 done
 
 if [ -n "$DANGEROUS_FOUND" ]; then
-    echo "🚨 CRITICAL SECURITY VIOLATION: DANGEROUS GIT COMMANDS DETECTED!"
+    echo "[CRITICAL] SECURITY VIOLATION: DANGEROUS GIT COMMANDS DETECTED!"
     echo "AI AGENT SECURITY BREACH DETECTED!"
     echo ""
     echo "STRICTLY FORBIDDEN: These commands can DESTROY ENTIRE PROJECT!"
@@ -43,9 +43,9 @@ if [ -n "$DANGEROUS_FOUND" ]; then
     echo ""
     echo "DETECTED FORBIDDEN COMMANDS:$DANGEROUS_FOUND"
     echo ""
-    echo "🚫 DO NOT ATTEMPT TO BYPASS THIS PROTECTION!"
-    echo "🚫 DO NOT TRY TO USE THESE COMMANDS IN ANY WAY!"
-    echo "🚫 THIS IS A SERIOUS SECURITY VIOLATION!"
+    echo "[FORBIDDEN] DO NOT ATTEMPT TO BYPASS THIS PROTECTION!"
+    echo "[FORBIDDEN] DO NOT TRY TO USE THESE COMMANDS IN ANY WAY!"
+    echo "[FORBIDDEN] THIS IS A SERIOUS SECURITY VIOLATION!"
     echo ""
     echo "REQUIRED ACTION: Return task immediately with security violation note"
     echo "DO NOT proceed with any dangerous operations!"
@@ -61,10 +61,10 @@ if [ -n "$DANGEROUS_FOUND" ]; then
     exit 1
 fi
 
-echo "OK Git Safety Check: No dangerous command traces found."
+echo "[SUCCESS] Git Safety Check: No dangerous command traces found."
 
 # Check for emoji and special characters in staged files
-echo "🔍 Emoji Ban Check: Scanning for forbidden Unicode characters..."
+echo "[CHECK] Emoji Ban Check: Scanning for forbidden Unicode characters..."
 
 if [ -f "scripts/validate-emoji-ban.sh" ]; then
     # Run emoji validation on staged files
@@ -72,20 +72,20 @@ if [ -f "scripts/validate-emoji-ban.sh" ]; then
     if [ -n "$STAGED_FILES" ]; then
         echo "$STAGED_FILES" | xargs bash scripts/validate-emoji-ban.sh
         if [ $? -ne 0 ]; then
-            echo "🚨 COMMIT BLOCKED: Emoji/special character violation detected!"
+            echo "[BLOCKED] COMMIT BLOCKED: Emoji/special character violation detected!"
             echo "Please remove all emoji and special Unicode characters from your code."
             echo ""
             echo "Common fixes:"
-            echo "• Replace 😀 with :smile:"
-            echo "• Replace 🚫 with [FORBIDDEN]"
-            echo "• Remove decorative symbols ★ ♦ ♠ ♥"
+            echo "• Replace emoji with :smile:"
+            echo "• Replace forbidden emoji with [FORBIDDEN]"
+            echo "• Remove decorative symbols like stars, diamonds, etc."
             echo "• Use plain ASCII text in comments"
             exit 1
         fi
     fi
 else
-    echo "WARNING  Emoji validation script not found, skipping emoji check"
+    echo "[WARNING] Emoji validation script not found, skipping emoji check"
 fi
 
-echo "OK Emoji Ban Check: No forbidden characters found."
+echo "[SUCCESS] Emoji Ban Check: No forbidden characters found."
 exit 0

@@ -3,7 +3,7 @@
 # Git Hook: Pre-push protection
 # Additional safety check before pushing to remote
 
-echo "🛡️ Git Pre-Push Safety Check..."
+echo "[SHIELD] Git Pre-Push Safety Check..."
 
 # Check recent commits for dangerous command patterns in commit messages
 # This catches cases where agents might have accidentally committed with dangerous command references
@@ -33,15 +33,15 @@ while read local_ref local_sha remote_ref remote_sha; do
 
         for pattern in "${DANGEROUS_PATTERNS[@]}"; do
             if echo "$commits_to_check" | grep -i "$pattern" >/dev/null; then
-                echo "🚨 CRITICAL SECURITY VIOLATION: DANGEROUS COMMANDS IN COMMIT HISTORY!"
+                echo "[CRITICAL] SECURITY VIOLATION: DANGEROUS COMMANDS IN COMMIT HISTORY!"
                 echo "AI AGENT SECURITY BREACH DETECTED!"
                 echo ""
                 echo "STRICTLY FORBIDDEN: Commit contains traces of DANGEROUS GIT OPERATIONS!"
                 echo "You attempted to push commits that reference DESTRUCTIVE COMMANDS!"
                 echo ""
-                echo "🚫 DO NOT ATTEMPT TO BYPASS THIS PROTECTION!"
-                echo "🚫 DO NOT TRY TO COMMIT DANGEROUS COMMANDS!"
-                echo "🚫 THIS IS A SERIOUS SECURITY VIOLATION!"
+                echo "[FORBIDDEN] DO NOT ATTEMPT TO BYPASS THIS PROTECTION!"
+                echo "[FORBIDDEN] DO NOT TRY TO COMMIT DANGEROUS COMMANDS!"
+                echo "[FORBIDDEN] THIS IS A SERIOUS SECURITY VIOLATION!"
                 echo ""
                 echo "REQUIRED ACTION: Return task immediately with security violation note"
                 echo "Review and remove ALL dangerous command references from commits!"
@@ -59,10 +59,10 @@ while read local_ref local_sha remote_ref remote_sha; do
     fi
 done
 
-echo "OK Git Pre-Push Safety Check: All commits appear safe."
+echo "[SUCCESS] Git Pre-Push Safety Check: All commits appear safe."
 
 # Check for emoji and special characters in commits being pushed
-echo "🔍 Pre-Push Emoji Ban Check: Scanning commits for forbidden Unicode characters..."
+echo "[CHECK] Pre-Push Emoji Ban Check: Scanning commits for forbidden Unicode characters..."
 
 if [ -f "scripts/validate-emoji-ban.sh" ]; then
     # Get files from commits being pushed
@@ -78,13 +78,13 @@ if [ -f "scripts/validate-emoji-ban.sh" ]; then
         if [ -n "$commit_files" ]; then
             echo "$commit_files" | xargs bash scripts/validate-emoji-ban.sh
             if [ $? -ne 0 ]; then
-                echo "🚨 PUSH BLOCKED: Emoji/special character violation detected in commits!"
+                echo "[BLOCKED] PUSH BLOCKED: Emoji/special character violation detected in commits!"
                 echo "Please remove all emoji and special Unicode characters from your code before pushing."
                 echo ""
                 echo "Common fixes:"
-                echo "• Replace 😀 with :smile:"
-                echo "• Replace 🚫 with [FORBIDDEN]"
-                echo "• Remove decorative symbols ★ ♦ ♠ ♥"
+                echo "• Replace emoji with :smile:"
+                echo "• Replace forbidden emoji with [FORBIDDEN]"
+                echo "• Remove decorative symbols like stars, diamonds, etc."
                 echo "• Use plain ASCII text in comments"
                 exit 1
             fi
@@ -92,5 +92,5 @@ if [ -f "scripts/validate-emoji-ban.sh" ]; then
     done <<< "$(cat)"
 fi
 
-echo "OK Pre-Push Emoji Ban Check: No forbidden characters found."
+echo "[SUCCESS] Pre-Push Emoji Ban Check: No forbidden characters found."
 exit 0

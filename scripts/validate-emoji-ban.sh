@@ -59,7 +59,10 @@ EXCLUDED_EXTENSIONS=(
 EXCLUDED_FILES=(
     ".git"
     "node_modules"
-    ".cursor/rules/linter-emoji-ban.mdc"  # This file contains emoji examples
+)
+
+EXCLUDED_PATTERNS=(
+    ".cursor/rules/*"  # Rules may contain emoji examples for documentation
 )
 
 # Function to check if file should be excluded
@@ -69,6 +72,15 @@ should_exclude_file() {
     # Check excluded files
     for excluded in "${EXCLUDED_FILES[@]}"; do
         if [[ "$file" == *"$excluded"* ]]; then
+            return 0
+        fi
+    done
+
+    # Check excluded patterns
+    for pattern in "${EXCLUDED_PATTERNS[@]}"; do
+        # Simple glob matching - convert * to .* for regex
+        local regex_pattern="${pattern//\*/.*}"
+        if [[ "$file" =~ $regex_pattern ]]; then
             return 0
         fi
     done
@@ -158,7 +170,7 @@ validate_file() {
     done < "$file"
 
     if [[ -n "$found_errors" ]]; then
-        echo -e "${RED}🚫 EMOJI/SPECIAL CHARACTERS FOUND in $file:${NC}"
+        echo -e "${RED}[FORBIDDEN] EMOJI/SPECIAL CHARACTERS FOUND in $file:${NC}"
         echo -e "$found_errors"
         return 1
     fi
@@ -168,7 +180,7 @@ validate_file() {
 
 # Main validation function
 main() {
-    echo -e "${BLUE}🔍 Checking for forbidden emoji and special characters...${NC}"
+    echo -e "${BLUE}[CHECK] Checking for forbidden emoji and special characters...${NC}"
 
     local files_to_check
     local has_errors=0
@@ -192,9 +204,9 @@ main() {
         echo -n "Checking $checked_files/$total_files: $file... "
 
         if validate_file "$file"; then
-            echo -e "${GREEN}OK${NC}"
+            echo -e "${GREEN}[OK]${NC}"
         else
-            echo -e "${RED}❌${NC}"
+            echo -e "${RED}[ERROR]${NC}"
             has_errors=1
         fi
     done
@@ -202,7 +214,7 @@ main() {
     echo -e "${BLUE}==================================================${NC}"
 
     if [[ $has_errors -eq 1 ]]; then
-        echo -e "${RED}🚨 CRITICAL: Forbidden emoji/special characters detected!${NC}"
+        echo -e "${RED}[CRITICAL] Forbidden emoji/special characters detected!${NC}"
         echo ""
         echo -e "${YELLOW}Why this matters:${NC}"
         echo "• Emojis break script execution on Windows"
@@ -210,14 +222,14 @@ main() {
         echo "• Cross-platform compatibility problems"
         echo ""
         echo -e "${YELLOW}Fix suggestions:${NC}"
-        echo "• Replace emoji with ASCII text (😀 → :smile:)"
+        echo "• Replace emoji with ASCII text (:smile: instead of emoji)"
         echo "• Remove decorative Unicode symbols"
         echo "• Use plain text for all code comments"
         echo ""
         echo -e "${RED}COMMIT BLOCKED: Fix the issues and try again${NC}"
         exit 1
     else
-        echo -e "${GREEN}OK No forbidden emoji/special characters found${NC}"
+        echo -e "${GREEN}[SUCCESS] No forbidden emoji/special characters found${NC}"
         exit 0
     fi
 }
