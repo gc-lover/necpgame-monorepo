@@ -50,45 +50,45 @@ info:
     name: NECPGAME Network Team
     email: network@necpgame.com
 servers:
-- url: ws://realtime-gateway.necpgame.svc.cluster.local:8080
-  description: Kubernetes internal WebSocket
-- url: udp://realtime-gateway.necpgame.svc.cluster.local:8081
-  description: Kubernetes internal UDP
-- url: https://realtime.necpgame.com
-  description: Production WebSocket endpoint
+  - url: ws://realtime-gateway.necpgame.svc.cluster.local:8080
+    description: Kubernetes internal WebSocket
+  - url: udp://realtime-gateway.necpgame.svc.cluster.local:8081
+    description: Kubernetes internal UDP
+  - url: https://realtime.necpgame.com
+    description: Production WebSocket endpoint
 security:
-- BearerAuth: []
+  - BearerAuth: [ ]
 tags:
-- name: Connection
-  description: Connection management endpoints
-- name: Messaging
-  description: Real-time messaging endpoints
-- name: Monitoring
-  description: Connection monitoring endpoints
+  - name: Connection
+    description: Connection management endpoints
+  - name: Messaging
+    description: Real-time messaging endpoints
+  - name: Monitoring
+    description: Connection monitoring endpoints
 paths:
   /ws:
     get:
       summary: Establish WebSocket connection
       operationId: connectWebSocket
       tags:
-      - Connection
+        - Connection
       parameters:
-      - name: token
-        in: query
-        required: true
-        schema:
-          type: string
-          description: JWT authentication token
-      - name: region
-        in: query
-        schema:
-          type: string
-          enum:
-          - us-east
-          - eu-west
-          - asia-pacific
-          default: us-east
-          description: Preferred region for connection
+        - name: token
+          in: query
+          required: true
+          schema:
+            type: string
+            description: JWT authentication token
+        - name: region
+          in: query
+          schema:
+            type: string
+            enum:
+              - us-east
+              - eu-west
+              - asia-pacific
+            default: us-east
+            description: Preferred region for connection
       responses:
         '101':
           description: WebSocket connection established
@@ -113,7 +113,7 @@ paths:
       summary: UDP connection handshake
       operationId: udpHandshake
       tags:
-      - Connection
+        - Connection
       requestBody:
         required: true
         content:
@@ -144,14 +144,14 @@ paths:
       summary: Get connection status
       operationId: getConnectionStatus
       tags:
-      - Monitoring
+        - Monitoring
       parameters:
-      - name: connection_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+        - name: connection_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
       responses:
         '200':
           description: Connection status
@@ -176,7 +176,7 @@ paths:
       summary: Send real-time message
       operationId: sendMessage
       tags:
-      - Messaging
+        - Messaging
       requestBody:
         required: true
         content:
@@ -212,9 +212,9 @@ components:
     ConnectionResponse:
       type: object
       required:
-      - connection_id
-      - region
-      - protocol
+        - connection_id
+        - region
+        - protocol
       properties:
         connection_id:
           type: string
@@ -223,15 +223,15 @@ components:
         region:
           type: string
           enum:
-          - us-east
-          - eu-west
-          - asia-pacific
+            - us-east
+            - eu-west
+            - asia-pacific
           description: Assigned region
         protocol:
           type: string
           enum:
-          - websocket
-          - udp
+            - websocket
+            - udp
           description: Connection protocol
         server_time:
           type: string
@@ -247,8 +247,8 @@ components:
     UDPHandshakeRequest:
       type: object
       required:
-      - client_token
-      - client_public_key
+        - client_token
+        - client_public_key
       properties:
         client_token:
           type: string
@@ -259,9 +259,9 @@ components:
         preferred_region:
           type: string
           enum:
-          - us-east
-          - eu-west
-          - asia-pacific
+            - us-east
+            - eu-west
+            - asia-pacific
           default: us-east
         client_ip:
           type: string
@@ -276,9 +276,9 @@ components:
     UDPHandshakeResponse:
       type: object
       required:
-      - connection_id
-      - server_public_key
-      - assigned_port
+        - connection_id
+        - server_public_key
+        - assigned_port
       properties:
         connection_id:
           type: string
@@ -305,9 +305,9 @@ components:
     ConnectionStatusResponse:
       type: object
       required:
-      - connection_id
-      - status
-      - latency_ms
+        - connection_id
+        - status
+        - latency_ms
       properties:
         connection_id:
           type: string
@@ -315,21 +315,21 @@ components:
         status:
           type: string
           enum:
-          - connected
-          - connecting
-          - disconnected
-          - error
+            - connected
+            - connecting
+            - disconnected
+            - error
         protocol:
           type: string
           enum:
-          - websocket
-          - udp
+            - websocket
+            - udp
         region:
           type: string
           enum:
-          - us-east
-          - eu-west
-          - asia-pacific
+            - us-east
+            - eu-west
+            - asia-pacific
         connected_at:
           type: string
           format: date-time
@@ -349,8 +349,8 @@ components:
     MessageRequest:
       type: object
       required:
-      - type
-      - payload
+        - type
+        - payload
       properties:
         room_id:
           type: string
@@ -359,19 +359,19 @@ components:
         type:
           type: string
           enum:
-          - movement
-          - combat
-          - chat
-          - inventory
-          - quest
+            - movement
+            - combat
+            - chat
+            - inventory
+            - quest
           description: Message type for routing
         priority:
           type: string
           enum:
-          - low
-          - normal
-          - high
-          - critical
+            - low
+            - normal
+            - high
+            - critical
           default: normal
           description: Message priority
         payload:
@@ -393,8 +393,8 @@ components:
     MessageResponse:
       type: object
       required:
-      - message_id
-      - status
+        - message_id
+        - status
       properties:
         message_id:
           type: string
@@ -402,10 +402,10 @@ components:
         status:
           type: string
           enum:
-          - queued
-          - sent
-          - delivered
-          - failed
+            - queued
+            - sent
+            - delivered
+            - failed
         queued_at:
           type: string
           format: date-time
@@ -416,8 +416,8 @@ components:
     Error:
       type: object
       required:
-      - error
-      - code
+        - error
+        - code
       properties:
         error:
           type: string

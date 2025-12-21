@@ -21,22 +21,22 @@ info:
     name: NECPGAME Proprietary
     url: https://api.necp.game/legal/proprietary
 servers:
-- url: https://dev-api.necp.game/api/v1/economy
-  description: Dev сервер
-- url: https://api.necp.game/api/v1/economy
-  description: Продакшен сервер
+  - url: https://dev-api.necp.game/api/v1/economy
+    description: Dev сервер
+  - url: https://api.necp.game/api/v1/economy
+    description: Продакшен сервер
 tags:
-- name: Equipment Generation
-  description: Процедурная генерация предметов
-- name: Equipment Matrix
-  description: Матрица характеристик
-- name: Brands
-  description: Бренды и корпорации
+  - name: Equipment Generation
+    description: Процедурная генерация предметов
+  - name: Equipment Matrix
+    description: Матрица характеристик
+  - name: Brands
+    description: Бренды и корпорации
 paths:
   /equipment/generate:
     post:
       tags:
-      - Equipment Generation
+        - Equipment Generation
       summary: Сгенерировать предмет процедурно
       description: 'Генерирует предмет (оружие, имплант, броню или аксессуар) процедурно на основе матрицы характеристик.
 
@@ -45,7 +45,7 @@ paths:
         '
       operationId: generateEquipment
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       requestBody:
         required: true
         content:
@@ -86,11 +86,11 @@ paths:
                   range: 45.0
                   fire_rate: 12.5
                 modifiers:
-                - id: 550e8400-e29b-41d4-a716-446655440003
-                  name: Critical Damage Boost
-                  modifier_type: CRIT_DAMAGE
-                  value: 1.25
-                  rarity: RARE
+                  - id: 550e8400-e29b-41d4-a716-446655440003
+                    name: Critical Damage Boost
+                    modifier_type: CRIT_DAMAGE
+                    value: 1.25
+                    rarity: RARE
                 mod_slots: 2
                 generated_at: '2025-11-29T10:00:00Z'
         '400':
@@ -102,7 +102,7 @@ paths:
   /equipment/matrix:
     get:
       tags:
-      - Equipment Matrix
+        - Equipment Matrix
       summary: Получить матрицу характеристик
       description: 'Возвращает матрицу характеристик для указанных параметров.
 
@@ -111,27 +111,27 @@ paths:
         '
       operationId: getEquipmentMatrix
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       parameters:
-      - name: brand_id
-        in: query
-        description: ID бренда для фильтрации
-        required: false
-        schema:
-          type: string
-          format: uuid
-      - name: item_type
-        in: query
-        description: Тип предмета для фильтрации
-        required: false
-        schema:
-          $ref: '#/components/schemas/ItemType'
-      - name: rarity
-        in: query
-        description: Редкость для фильтрации
-        required: false
-        schema:
-          $ref: '#/components/schemas/Rarity'
+        - name: brand_id
+          in: query
+          description: ID бренда для фильтрации
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - name: item_type
+          in: query
+          description: Тип предмета для фильтрации
+          required: false
+          schema:
+            $ref: '#/components/schemas/ItemType'
+        - name: rarity
+          in: query
+          description: Редкость для фильтрации
+          required: false
+          schema:
+            $ref: '#/components/schemas/Rarity'
       responses:
         '200':
           description: Матрица характеристик успешно получена
@@ -145,18 +145,18 @@ paths:
                 item_type: WEAPON
                 rarity: RARE
                 stat_pools:
-                - id: 550e8400-e29b-41d4-a716-446655440005
-                  name: Damage Pool
-                  stat_type: DAMAGE
-                  min_value: 100.0
-                  max_value: 150.0
-                  distribution: NORMAL
+                  - id: 550e8400-e29b-41d4-a716-446655440005
+                    name: Damage Pool
+                    stat_type: DAMAGE
+                    min_value: 100.0
+                    max_value: 150.0
+                    distribution: NORMAL
                 modifiers:
-                - id: 550e8400-e29b-41d4-a716-446655440003
-                  name: Critical Damage Boost
-                  modifier_type: CRIT_DAMAGE
-                  value: 1.25
-                  rarity: RARE
+                  - id: 550e8400-e29b-41d4-a716-446655440003
+                    name: Critical Damage Boost
+                    modifier_type: CRIT_DAMAGE
+                    value: 1.25
+                    rarity: RARE
                 brand_bonuses:
                   damage_multiplier: 1.1
                   accuracy_bonus: 0.05
@@ -168,14 +168,14 @@ paths:
   /equipment/brands:
     get:
       tags:
-      - Brands
+        - Brands
       summary: Получить список брендов
       description: 'Возвращает список всех доступных брендов (корпораций) для процедурной генерации.
 
         '
       operationId: getBrands
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       responses:
         '200':
           description: Список брендов успешно получен
@@ -186,12 +186,12 @@ paths:
                 items:
                   $ref: '#/components/schemas/Brand'
               example:
-              - id: 550e8400-e29b-41d4-a716-446655440000
-                name: Arasaka
-                identity: Precision and reliability
-                bonuses:
-                  accuracy_bonus: 0.1
-                  damage_multiplier: 0.95
+                - id: 550e8400-e29b-41d4-a716-446655440000
+                  name: Arasaka
+                  identity: Precision and reliability
+                  bonuses:
+                    accuracy_bonus: 0.1
+                    damage_multiplier: 0.95
         '401':
           $ref: common.yaml#/components/responses/Unauthorized
         '500':
@@ -199,14 +199,14 @@ paths:
   /equipment/rarities:
     get:
       tags:
-      - Equipment Matrix
+        - Equipment Matrix
       summary: Получить список редкостей
       description: 'Возвращает список всех доступных редкостей предметов с их характеристиками.
 
         '
       operationId: getRarities
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       responses:
         '200':
           description: Список редкостей успешно получен
@@ -217,21 +217,21 @@ paths:
                 items:
                   $ref: '#/components/schemas/RarityInfo'
               example:
-              - rarity: COMMON
-                name: Обычный
-                stat_multiplier: 1.0
-                modifier_chance: 0.1
-                mod_slots: 0
-              - rarity: RARE
-                name: Редкий
-                stat_multiplier: 1.25
-                modifier_chance: 0.35
-                mod_slots: 2
-              - rarity: LEGENDARY
-                name: Легендарный
-                stat_multiplier: 2.0
-                modifier_chance: 0.75
-                mod_slots: 4
+                - rarity: COMMON
+                  name: Обычный
+                  stat_multiplier: 1.0
+                  modifier_chance: 0.1
+                  mod_slots: 0
+                - rarity: RARE
+                  name: Редкий
+                  stat_multiplier: 1.25
+                  modifier_chance: 0.35
+                  mod_slots: 2
+                - rarity: LEGENDARY
+                  name: Легендарный
+                  stat_multiplier: 2.0
+                  modifier_chance: 0.75
+                  mod_slots: 4
         '401':
           $ref: common.yaml#/components/responses/Unauthorized
         '500':
@@ -244,7 +244,7 @@ components:
     GenerateEquipmentRequest:
       type: object
       required:
-      - item_type
+        - item_type
       properties:
         brand_id:
           type: string
@@ -257,8 +257,8 @@ components:
         item_type:
           $ref: '#/components/schemas/ItemType'
         rarity:
-          $ref: '#/components/schemas/Rarity'
-          description: Редкость (опционально, если не указана - случайная)
+
+
         force_rarity:
           type: boolean
           description: Принудительно использовать указанную редкость
@@ -278,9 +278,9 @@ components:
         distribution:
           type: string
           enum:
-          - UNIFORM
-          - NORMAL
-          - EXPONENTIAL
+            - UNIFORM
+            - NORMAL
+            - EXPONENTIAL
         rarity_modifiers:
           type: object
           additionalProperties:
@@ -290,23 +290,23 @@ components:
         max_value:
           type: number
       required:
-      - id
-      - name
-      - stat_type
-      - min_value
-      - max_value
-      - distribution
+        - id
+        - name
+        - stat_type
+        - min_value
+        - max_value
+        - distribution
       additionalProperties: false
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     GeneratedItem:
       type: object
       required:
-      - id
-      - seed
-      - item_type
-      - rarity
-      - stats
-      - generated_at
+        - id
+        - seed
+        - item_type
+        - rarity
+        - stats
+        - generated_at
       properties:
         id:
           type: string
@@ -351,10 +351,10 @@ components:
     EquipmentMatrix:
       type: object
       required:
-      - id
-      - item_type
-      - rarity
-      - version
+        - id
+        - item_type
+        - rarity
+        - version
       properties:
         id:
           type: string
@@ -392,9 +392,9 @@ components:
     Brand:
       type: object
       required:
-      - id
-      - name
-      - identity
+        - id
+        - name
+        - identity
       properties:
         id:
           type: string
@@ -422,11 +422,11 @@ components:
     RarityInfo:
       type: object
       required:
-      - rarity
-      - name
-      - stat_multiplier
-      - modifier_chance
-      - mod_slots
+        - rarity
+        - name
+        - stat_multiplier
+        - modifier_chance
+        - mod_slots
       properties:
         name:
           type: string
@@ -451,11 +451,11 @@ components:
     Modifier:
       type: object
       required:
-      - id
-      - name
-      - modifier_type
-      - value
-      - rarity
+        - id
+        - name
+        - modifier_type
+        - value
+        - rarity
       properties:
         id:
           type: string
@@ -484,33 +484,33 @@ components:
     ItemType:
       type: string
       enum:
-      - WEAPON
-      - IMPLANT
-      - ARMOR
-      - ACCESSORY
+        - WEAPON
+        - IMPLANT
+        - ARMOR
+        - ACCESSORY
       description: Тип предмета
     Rarity:
       type: string
       enum:
-      - COMMON
-      - UNCOMMON
-      - RARE
-      - EPIC
-      - LEGENDARY
+        - COMMON
+        - UNCOMMON
+        - RARE
+        - EPIC
+        - LEGENDARY
       description: Редкость предмета
     ModifierType:
       type: string
       enum:
-      - DAMAGE_BOOST
-      - CRIT_CHANCE
-      - CRIT_DAMAGE
-      - ELEMENTAL_DAMAGE
-      - FIRE_RATE_BOOST
-      - ACCURACY_BOOST
-      - RANGE_BOOST
-      - HANDLING_BOOST
-      - STABILITY_BOOST
-      - PENETRATION_BOOST
+        - DAMAGE_BOOST
+        - CRIT_CHANCE
+        - CRIT_DAMAGE
+        - ELEMENTAL_DAMAGE
+        - FIRE_RATE_BOOST
+        - ACCURACY_BOOST
+        - RANGE_BOOST
+        - HANDLING_BOOST
+        - STABILITY_BOOST
+        - PENETRATION_BOOST
       description: Тип модификатора
   responses:
     BadRequest:

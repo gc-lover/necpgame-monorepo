@@ -73,25 +73,38 @@ echo "[SUCCESS] Script Language Enforcement: Only Python scripts detected."
 
 # 4. OpenAPI Validation
 echo "[CHECK] OpenAPI Validation: Checking OpenAPI specs..."
-if command -v redocly >/dev/null 2>&1 && [ -n "$STAGED_FILES" ]; then
+if command -v npx >/dev/null 2>&1 && [ -n "$STAGED_FILES" ]; then
     OPENAPI_FILES=$(echo "$STAGED_FILES" | grep -E "\.yaml$|\.yml$" | grep -E "proto/openapi/" || true)
 
     if [ -n "$OPENAPI_FILES" ]; then
         echo "Found OpenAPI files to validate: $OPENAPI_FILES"
-        for api_file in $OPENAPI_FILES; do
-            if [ -f "$api_file" ]; then
-                echo "Validating $api_file..."
-                if ! redocly lint "$api_file" --format=stylish; then
-                    echo "[ERROR] OpenAPI validation failed for $api_file!"
-                    echo "[BLOCKED] Commit blocked due to OpenAPI validation failure"
-                    exit 1
-                fi
-            fi
-        done
-        echo "[SUCCESS] All OpenAPI files passed validation"
+        echo "Running validation..."
+
+        # Run redocly and save output to temp file
+        TEMP_FILE="/tmp/redocly_validation_$$.txt"
+        npx redocly lint --format=codeframe $OPENAPI_FILES > "$TEMP_FILE" 2>&1
+        VALIDATION_EXIT_CODE=$?
+        VALIDATION_EXIT_CODE=$?
+
+        if [ $VALIDATION_EXIT_CODE -ne 0 ]; then
+            echo "[ERROR] OpenAPI validation failed!"
+            echo "OPENAPI VALIDATION RESULT"
+            echo "========================================"
+            echo ""
+            echo "Validation failed with errors."
+            echo "Check the redocly output above for details."
+            echo ""
+            echo "COMMIT STATUS: BLOCKED"
+            echo "Fix the OpenAPI validation errors before committing."
+            rm -f "$TEMP_FILE"
+            exit 1
+        else
+            echo "[SUCCESS] All OpenAPI files passed validation"
+            rm -f "$TEMP_FILE"
+        fi
     fi
 else
-    echo "[WARNING] redocly not found or no files to validate, skipping OpenAPI validation"
+    echo "[WARNING] npx not found or no files to validate, skipping OpenAPI validation"
 fi
 
 echo "[SUCCESS] Unified Pre-commit Validation: All checks passed."

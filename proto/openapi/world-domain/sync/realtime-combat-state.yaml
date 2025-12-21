@@ -7,32 +7,32 @@ info:
     url: https://opensource.org/licenses/MIT
   description: State synchronization management for real-time combat system
 servers:
-- url: http://localhost:8110
-  description: Local development
-- url: https://api.necpgame.com/v1/realtime/combat
-  description: Production API
+  - url: http://localhost:8110
+    description: Local development
+  - url: https://api.necpgame.com/v1/realtime/combat
+    description: Production API
 tags:
-- name: state
-  description: Real-time state synchronization
+  - name: state
+    description: Real-time state synchronization
 security:
-- BearerAuth: []
+  - BearerAuth: [ ]
 paths:
   /api/v1/realtime/combat/state/{session_id}/sync:
     post:
       summary: Request state synchronization
       operationId: requestStateSync
       tags:
-      - state
+        - state
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       parameters:
-      - name: session_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: Combat session ID
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Combat session ID
       requestBody:
         required: true
         content:
@@ -59,31 +59,31 @@ paths:
       summary: Get current state snapshot
       operationId: getStateSnapshot
       tags:
-      - state
+        - state
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       parameters:
-      - name: session_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: Combat session ID
-      - name: include_history
-        in: query
-        schema:
-          type: boolean
-          default: false
-        description: Include recent state history
-      - name: max_history_entries
-        in: query
-        schema:
-          type: integer
-          minimum: 1
-          maximum: 100
-          default: 10
-        description: Maximum history entries to include
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Combat session ID
+        - name: include_history
+          in: query
+          schema:
+            type: boolean
+            default: false
+          description: Include recent state history
+        - name: max_history_entries
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+          description: Maximum history entries to include
       responses:
         '200':
           description: Current state snapshot
@@ -132,8 +132,8 @@ components:
     StateSyncRequest:
       type: object
       required:
-      - player_id
-      - client_state_version
+        - player_id
+        - client_state_version
       properties:
         player_id:
           type: string
@@ -142,10 +142,10 @@ components:
         priority:
           type: string
           enum:
-          - low
-          - normal
-          - high
-          - urgent
+            - low
+            - normal
+            - high
+            - urgent
           default: normal
           description: Synchronization priority
         metadata:
@@ -157,12 +157,12 @@ components:
           items:
             type: string
             enum:
-            - player_states
-            - combat_entities
-            - environment
-            - ai_states
-            - items
-            - effects
+              - player_states
+              - combat_entities
+              - environment
+              - ai_states
+              - items
+              - effects
           description: Specific state components to sync
         client_state_version:
           type: integer
@@ -176,11 +176,11 @@ components:
     StateSyncResponse:
       type: object
       required:
-      - sync_id
-      - session_id
-      - server_state_version
-      - status
-      - initiated_at
+        - sync_id
+        - session_id
+        - server_state_version
+        - status
+        - initiated_at
       properties:
         sync_id:
           type: string
@@ -196,10 +196,10 @@ components:
         status:
           type: string
           enum:
-          - initiated
-          - in_progress
-          - completed
-          - failed
+            - initiated
+            - in_progress
+            - completed
+            - failed
           description: Synchronization status
         initiated_at:
           type: string
@@ -218,12 +218,12 @@ components:
           items:
             type: string
             enum:
-            - player_states
-            - combat_entities
-            - environment
-            - ai_states
-            - items
-            - effects
+              - player_states
+              - combat_entities
+              - environment
+              - ai_states
+              - items
+              - effects
           description: State components included in sync
         server_state_version:
           type: integer
@@ -237,11 +237,11 @@ components:
     StateSnapshot:
       type: object
       required:
-      - session_id
-      - state_version
-      - timestamp
-      - players
-      - entities
+        - session_id
+        - state_version
+        - timestamp
+        - players
+        - entities
       properties:
         session_id:
           type: string
@@ -309,11 +309,11 @@ components:
     PlayerState:
       type: object
       required:
-      - player_id
-      - position
-      - health
-      - status
-      - last_update
+        - player_id
+        - position
+        - health
+        - status
+        - last_update
       properties:
         player_id:
           type: string
@@ -322,10 +322,10 @@ components:
         status:
           type: string
           enum:
-          - alive
-          - dead
-          - incapacitated
-          - spectating
+            - alive
+            - dead
+            - incapacitated
+            - spectating
           description: Player status
         last_update:
           type: string
@@ -339,12 +339,12 @@ components:
               items:
                 type: string
                 enum:
-                - w
-                - a
-                - s
-                - d
-                - space
-                - shift
+                  - w
+                  - a
+                  - s
+                  - d
+                  - space
+                  - shift
               description: Currently pressed movement keys
             mouse_position:
               $ref: '#/components/schemas/Vector2'
@@ -353,12 +353,12 @@ components:
               items:
                 type: string
                 enum:
-                - attack
-                - defend
-                - ability1
-                - ability2
-                - ability3
-                - ultimate
+                  - attack
+                  - defend
+                  - ability1
+                  - ability2
+                  - ability3
+                  - ultimate
               description: Currently active actions
           description: Current input state
         health:
@@ -389,12 +389,12 @@ components:
     CombatEntityState:
       type: object
       required:
-      - entity_id
-      - entity_type
-      - position
-      - health
-      - status
-      - last_update
+        - entity_id
+        - entity_type
+        - position
+        - health
+        - status
+        - last_update
       properties:
         entity_id:
           type: string
@@ -407,29 +407,29 @@ components:
         entity_type:
           type: string
           enum:
-          - enemy
-          - npc
-          - projectile
-          - trap
-          - environmental
+            - enemy
+            - npc
+            - projectile
+            - trap
+            - environmental
           description: Type of combat entity
         status:
           type: string
           enum:
-          - active
-          - inactive
-          - destroyed
-          - spawning
+            - active
+            - inactive
+            - destroyed
+            - spawning
           description: Entity status
         ai_state:
           type: string
           enum:
-          - idle
-          - patrolling
-          - chasing
-          - attacking
-          - fleeing
-          - stunned
+            - idle
+            - patrolling
+            - chasing
+            - attacking
+            - fleeing
+            - stunned
           description: AI behavior state
         last_update:
           type: string
@@ -450,11 +450,11 @@ components:
         weather:
           type: string
           enum:
-          - clear
-          - rainy
-          - stormy
-          - foggy
-          - snowy
+            - clear
+            - rainy
+            - stormy
+            - foggy
+            - snowy
           description: Current weather conditions
         time_of_day:
           type: string
@@ -480,9 +480,9 @@ components:
     AIState:
       type: object
       required:
-      - ai_id
-      - behavior_tree_state
-      - last_update
+        - ai_id
+        - behavior_tree_state
+        - last_update
       properties:
         ai_id:
           type: string
@@ -540,10 +540,10 @@ components:
     ItemState:
       type: object
       required:
-      - item_id
-      - item_type
-      - position
-      - status
+        - item_id
+        - item_type
+        - position
+        - status
       properties:
         item_id:
           type: string
@@ -556,19 +556,19 @@ components:
         item_type:
           type: string
           enum:
-          - weapon
-          - armor
-          - consumable
-          - currency
-          - quest_item
+            - weapon
+            - armor
+            - consumable
+            - currency
+            - quest_item
           description: Type of item
         status:
           type: string
           enum:
-          - available
-          - picked_up
-          - destroyed
-          - respawning
+            - available
+            - picked_up
+            - destroyed
+            - respawning
           description: Item availability status
         position:
           $ref: '#/components/schemas/Vector3'
@@ -582,12 +582,12 @@ components:
     EffectState:
       type: object
       required:
-      - effect_id
-      - effect_type
-      - position
-      - radius
-      - duration
-      - remaining_time
+        - effect_id
+        - effect_type
+        - position
+        - radius
+        - duration
+        - remaining_time
       properties:
         effect_id:
           type: string
@@ -596,11 +596,11 @@ components:
         effect_type:
           type: string
           enum:
-          - damage_over_time
-          - healing
-          - buff
-          - debuff
-          - environmental
+            - damage_over_time
+            - healing
+            - buff
+            - debuff
+            - environmental
           description: Type of effect
         parameters:
           type: object
@@ -633,10 +633,10 @@ components:
     StateChange:
       type: object
       required:
-      - change_id
-      - change_type
-      - timestamp
-      - entity_id
+        - change_id
+        - change_type
+        - timestamp
+        - entity_id
       properties:
         change_id:
           type: string
@@ -652,12 +652,12 @@ components:
         change_type:
           type: string
           enum:
-          - position_update
-          - health_change
-          - status_change
-          - equipment_change
-          - effect_applied
-          - effect_removed
+            - position_update
+            - health_change
+            - status_change
+            - equipment_change
+            - effect_applied
+            - effect_removed
           description: Type of state change
         timestamp:
           type: string
@@ -679,9 +679,9 @@ components:
     EquipmentItem:
       type: object
       required:
-      - item_id
-      - slot
-      - item_type
+        - item_id
+        - slot
+        - item_type
       properties:
         item_id:
           type: string
@@ -693,13 +693,13 @@ components:
         slot:
           type: string
           enum:
-          - weapon_primary
-          - weapon_secondary
-          - armor_head
-          - armor_body
-          - armor_legs
-          - accessory1
-          - accessory2
+            - weapon_primary
+            - weapon_secondary
+            - armor_head
+            - armor_body
+            - armor_legs
+            - accessory1
+            - accessory2
           description: Equipment slot
         durability:
           type: number
@@ -711,10 +711,10 @@ components:
     StatusEffect:
       type: object
       required:
-      - effect_id
-      - effect_type
-      - duration
-      - remaining_time
+        - effect_id
+        - effect_type
+        - duration
+        - remaining_time
       properties:
         effect_id:
           type: string
@@ -726,8 +726,8 @@ components:
         effect_type:
           type: string
           enum:
-          - buff
-          - debuff
+            - buff
+            - debuff
           description: Effect type
         parameters:
           type: object
@@ -747,10 +747,10 @@ components:
     ZoneState:
       type: object
       required:
-      - zone_id
-      - zone_type
-      - bounds
-      - active
+        - zone_id
+        - zone_type
+        - bounds
+        - active
       properties:
         zone_id:
           type: string
@@ -759,10 +759,10 @@ components:
         zone_type:
           type: string
           enum:
-          - safe
-          - danger
-          - objective
-          - restricted
+            - safe
+            - danger
+            - objective
+            - restricted
           description: Type of zone
         bounds:
           type: object
@@ -786,10 +786,10 @@ components:
     DestructibleObjectState:
       type: object
       required:
-      - object_id
-      - position
-      - health
-      - destroyed
+        - object_id
+        - position
+        - health
+        - destroyed
       properties:
         object_id:
           type: string
@@ -810,8 +810,8 @@ components:
     Vector2:
       type: object
       required:
-      - x
-      - y
+        - x
+        - y
       properties:
         x:
           type: number
@@ -825,9 +825,9 @@ components:
     Vector3:
       type: object
       required:
-      - x
-      - y
-      - z
+        - x
+        - y
+        - z
       properties:
         x:
           type: number
@@ -845,8 +845,8 @@ components:
     HealthState:
       type: object
       required:
-      - current
-      - maximum
+        - current
+        - maximum
       properties:
         current:
           type: integer
@@ -869,9 +869,9 @@ components:
     Error:
       type: object
       required:
-      - error
-      - message
-      - timestamp
+        - error
+        - message
+        - timestamp
       properties:
         error:
           type: string

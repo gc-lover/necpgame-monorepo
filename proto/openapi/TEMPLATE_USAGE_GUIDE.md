@@ -3,6 +3,7 @@
 ## 📋 **Для AI Агентов: Правила Создания Новых Спецификаций**
 
 ### 🎯 **Цель**
+
 Этот гайд обеспечивает **консистентность** и **качество** всех OpenAPI спецификаций в NECPGAME проекте.
 
 ---
@@ -10,6 +11,7 @@
 ## 🔧 **Обязательные Шаги Создания Новой Спецификации**
 
 ### Шаг 1: Выбор Домена
+
 ```bash
 # Проверьте доступные enterprise-grade домены
 cat .cursor/DOMAIN_REFERENCE.md
@@ -19,6 +21,7 @@ python scripts/list-domains.py
 ```
 
 ### Шаг 2: Копирование Шаблона
+
 ```bash
 # Создайте директорию домена
 DOMAIN_NAME="your-new-domain"  # kebab-case
@@ -30,6 +33,7 @@ cp proto/openapi/example-domain/README.md proto/openapi/$DOMAIN_NAME/README.md
 ```
 
 ### Шаг 3: Настройка Основных Метаданных
+
 ```yaml
 # ОБЯЗАТЕЛЬНО заменить в info:
 info:
@@ -50,6 +54,7 @@ info:
 ```
 
 ### Шаг 4: Настройка Servers
+
 ```yaml
 servers:
   - url: https://api.necpgame.com/v1/[domain-name]      # production
@@ -61,6 +66,7 @@ servers:
 ```
 
 ### Шаг 5: Добавление Domain-Specific Операций
+
 ```yaml
 # ЗАМЕНИТЬ примеры на реальные endpoints
 paths:
@@ -83,6 +89,7 @@ paths:
 ## 📊 **Обязательные Схемы**
 
 ### 1. Health Schemas (ОБЯЗАТЕЛЬНО)
+
 ```yaml
 components:
   schemas:
@@ -92,6 +99,7 @@ components:
 ```
 
 ### 2. Domain Entity Schemas
+
 ```yaml
 # ДОБАВИТЬ основные сущности домена
 YourEntity:
@@ -109,6 +117,7 @@ YourEntity:
 ```
 
 ### 3. Request/Response Schemas
+
 ```yaml
 CreateYourEntityRequest:
   # Для создания сущностей
@@ -133,6 +142,7 @@ YourEntityListResponse:
 ### ОБЯЗАТЕЛЬНЫЕ Оптимизации
 
 #### 1. Struct Alignment (КРИТИЧНО)
+
 ```yaml
 # ПРАВИЛЬНЫЙ порядок полей:
 properties:
@@ -154,6 +164,7 @@ description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small
 ```
 
 #### 2. Pagination для List Operations
+
 ```yaml
 parameters:
   - name: page
@@ -177,6 +188,7 @@ responses:
 ```
 
 #### 3. Caching Headers
+
 ```yaml
 responses:
   '200':
@@ -198,6 +210,7 @@ responses:
 ### ОБЯЗАТЕЛЬНЫЕ Элементы
 
 #### 1. Authentication
+
 ```yaml
 security:
   - BearerAuth: []
@@ -211,6 +224,7 @@ components:
 ```
 
 #### 2. Error Responses
+
 ```yaml
 responses:
   '400':
@@ -231,6 +245,7 @@ responses:
 ```
 
 #### 3. Input Validation
+
 ```yaml
 properties:
   name:
@@ -250,6 +265,7 @@ properties:
 ### ОБЯЗАТЕЛЬНЫЕ Правила
 
 #### 1. Уникальность
+
 ```yaml
 # ДОЛЖНЫ БЫТЬ уникальными в рамках домена
 operationId: createUser          # OK Good
@@ -258,6 +274,7 @@ operationId: listUsers           # OK Good
 ```
 
 #### 2. Согласованность
+
 ```yaml
 # Использовать camelCase
 operationId: createUser          # OK
@@ -266,6 +283,7 @@ operationId: GetUserById         # ❌ PascalCase
 ```
 
 #### 3. Паттерны
+
 ```yaml
 # CRUD operations:
 operationId: create[Entity]      # createUser
@@ -285,24 +303,28 @@ operationId: [action][Entity]    # activateUser, deactivateUser
 ### ОБЯЗАТЕЛЬНЫЕ Шаги
 
 #### 1. Redocly Lint
+
 ```bash
 npx @redocly/cli lint proto/openapi/your-domain/main.yaml
 # ДОЛЖЕН ПРОХОДИТЬ без ошибок
 ```
 
 #### 2. Bundle Test
+
 ```bash
 npx @redocly/cli bundle proto/openapi/your-domain/main.yaml -o test-bundle.yaml
 # ДОЛЖЕН создавать bundled файл
 ```
 
 #### 3. Go Code Generation
+
 ```bash
 ogen --target test-gen --package api --clean test-bundle.yaml
 # ДОЛЖЕН генерировать код без ошибок
 ```
 
 #### 4. Go Compilation
+
 ```bash
 cd test-gen
 go mod init test && go mod tidy && go build .
@@ -310,6 +332,7 @@ go mod init test && go mod tidy && go build .
 ```
 
 #### 5. Domain Validation Script
+
 ```bash
 python scripts/validate-domains-openapi.py
 # ДОЛЖЕН проходить для вашего домена
@@ -320,6 +343,7 @@ python scripts/validate-domains-openapi.py
 ## 📋 **Чек-лист Готовности**
 
 ### OK **Обязательные Элементы**
+
 - [ ] OpenAPI 3.0.3 header
 - [ ] Полная info секция с contact/license
 - [ ] 3 сервера (prod, staging, local)
@@ -333,6 +357,7 @@ python scripts/validate-domains-openapi.py
 - [ ] Pagination для list операций
 
 ### OK **Валидация**
+
 - [ ] Redocly lint проходит (warnings разрешены)
 - [ ] Bundle создается успешно
 - [ ] Go код генерируется без ошибок
@@ -340,6 +365,7 @@ python scripts/validate-domains-openapi.py
 - [ ] Domain validation script проходит
 
 ### OK **Документация**
+
 - [ ] README.md создан и заполнен
 - [ ] Performance targets задокументированы
 - [ ] Domain зарегистрирован в DOMAIN_REFERENCE.md
@@ -350,16 +376,19 @@ python scripts/validate-domains-openapi.py
 ## 🚀 **Примеры Реальных Доментов**
 
 ### System Domain (553 файла)
+
 - Назначение: Infrastructure, monitoring, configuration
 - Endpoints: `/health`, `/metrics`, `/config`
 - Особенности: Batch operations, WebSocket monitoring
 
 ### Specialized Domain (157 файлов)
+
 - Назначение: Game mechanics, combat, inventory
 - Endpoints: `/combat`, `/inventory`, `/quests`
 - Особенности: Real-time operations, complex schemas
 
 ### Social Domain (91 файл)
+
 - Назначение: Players interaction, guilds, messaging
 - Endpoints: `/guilds`, `/friends`, `/chat`
 - Особенности: Social graphs, notifications
@@ -369,11 +398,13 @@ python scripts/validate-domains-openapi.py
 ## 🔗 **Связанные Ресурсы**
 
 ### 📋 **Основные Документы**
+
 - `proto/openapi/example-domain/main.yaml` - Полный рабочий шаблон
 - `proto/openapi/TEMPLATE_USAGE_GUIDE.md` - Это руководство (текущий файл)
 - `proto/openapi/example-domain/README.md` - Детальное объяснение шаблона
 
 ### 🔧 **Правила AI Агентов**
+
 - `.cursor/AGENT_SIMPLE_GUIDE.md` - Простой алгоритм работы агентов
 - `.cursor/rules/agent-api-designer.mdc` - Правила API Designer агента
 - `.cursor/rules/agent-architect.mdc` - Правила Architect агента
@@ -395,20 +426,24 @@ python scripts/validate-domains-openapi.py
 - `.cursor/rules/agent-ui-ux-designer.mdc` - Правила UI/UX Designer агента
 
 ### ⚙️ **Глобальные Правила**
+
 - `.cursor/rules/always.mdc` - Глобальные правила проекта
 - `.cursor/rules/linter-emoji-ban.mdc` - Запрет на эмодзи
 
 ### 🎯 **Оптимизации и Производительность**
+
 - `.cursor/BACKEND_OPTIMIZATION_CHECKLIST.md` - Чек-лист оптимизаций Backend
 - `.cursor/PERFORMANCE_ENFORCEMENT.md` - Требования к производительности
 - `.cursor/DOMAIN_REFERENCE.md` - Справочник enterprise-grade доменов
 
 ### 📊 **Workflow и Конфигурация**
+
 - `.cursor/CONTENT_WORKFLOW.md` - Workflow для контентных задач
 - `.cursor/GITHUB_PROJECT_CONFIG.md` - Конфигурация GitHub проекта
 - `.cursor/commands/` - Специфичные команды агентов
 
 ### 🛠️ **Скрипты и Инструменты**
+
 - `scripts/validate-domains-openapi.py` - Валидация OpenAPI доменов
 - `scripts/generate-all-domains-go.py` - Генерация Go кода для всех доменов
 - `scripts/reorder-openapi-fields.py` - Оптимизация порядка полей OpenAPI
@@ -419,6 +454,7 @@ python scripts/validate-domains-openapi.py
 ## WARNING **Критически Важно**
 
 **НЕ** коммитьте спецификацию, которая:
+
 - ❌ Не проходит Redocly lint
 - ❌ Не генерирует Go код
 - ❌ Не компилируется

@@ -1,0 +1,113 @@
+# Agent Validate Result — OpenAPI Validation Command
+
+# Issue: #OPENAPI-VALIDATION
+
+**Purpose:** Validate OpenAPI specifications and provide clear, actionable feedback for AI agents to fix validation issues.
+
+## Usage
+
+```bash
+# Parse existing validation output for clean format
+echo "validation output here" | python scripts/parse-openapi-output.py
+
+# Or from file
+python scripts/parse-openapi-output.py --file validation_output.txt
+```
+
+## Clean Output Format
+
+Instead of ANSI-colored output with emojis, provides structured output showing only files with issues:
+
+```
+OPENAPI VALIDATION RESULT
+========================================
+
+Files validated: 4
+Files with issues: 2
+Total errors: 3
+Total warnings: 2
+
+CRITICAL ERRORS (MUST FIX):
+------------------------------
+File: proto/openapi/specialized-domain/mechanics/main.yaml
+  1. Line 146: no-unresolved-refs - Can't resolve $ref
+     Solution: Add missing schema/component or fix reference path
+  2. Line 168: no-unresolved-refs - Can't resolve $ref
+     Solution: Add missing schema/component or fix reference path
+  3. Line 184: no-unresolved-refs - Can't resolve $ref
+     Solution: Add missing schema/component or fix reference path
+
+WARNINGS (SHOULD FIX):
+------------------------------
+File: proto/openapi/specialized-domain/mechanics/main.yaml
+  1. Line 178: operation-4xx-response - Operation must have at least one `4XX` response.
+     Solution: Add 400 Bad Request or other appropriate 4XX response to operation
+  2. Line 252: no-unused-components - Component: "WeaponMechanic" is never used.
+     Solution: Remove unused schema/component or add reference to it
+
+COMMIT STATUS: BLOCKED
+Reason: Critical errors must be fixed before committing
+
+NEXT STEPS:
+1. Fix all errors listed above
+2. Consider fixing warnings
+3. Run validation again
+4. Commit when all errors resolved
+```
+
+## Key Improvements
+
+- **Only shows files with issues** - no clutter from successfully validated files
+- **Grouped by file** - errors and warnings organized by the file they affect
+- **Clear solutions** - each error includes actionable fix instructions
+- **Clean format** - no ANSI codes, emojis, or special characters
+- **Structured numbering** - easy to reference specific issues
+
+## Error Classification
+
+### Critical Errors (Block Commit)
+- `no-unresolved-refs` - Invalid schema/component references
+- `invalid-ref` - Malformed reference syntax
+- Unsupported specification version
+
+### Warnings (Should Fix)
+- `operation-4xx-response` - Missing error responses
+- `no-server-example.com` - Development servers in prod specs
+- `no-unused-components` - Dead code
+
+## Implementation
+
+### Parser Script
+
+Located at `scripts/parse-openapi-output.py`
+
+Features:
+- Removes ANSI color codes and emojis
+- Shows only files with validation issues
+- Groups errors and warnings by file
+- Provides specific solutions for each error type
+- Clean, structured output for AI agents
+- Appropriate exit codes for CI/CD integration
+
+### Pre-commit Hook Integration
+
+Updated `.githooks/pre-commit` to use clean validation output.
+
+## Success Criteria
+
+[OK] **Clean Output:**
+- No ANSI escape codes
+- No emojis or special Unicode
+- Clear error classification
+- Actionable solutions provided
+- Appropriate exit codes
+
+[ERROR] **Parse Failures:**
+- Malformed input
+- Unable to parse error formats
+- Missing required information
+
+---
+
+**Issue:** #OPENAPI-VALIDATION
+**Status:** Ready for AI agent usage

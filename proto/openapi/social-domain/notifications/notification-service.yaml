@@ -27,34 +27,34 @@ info:
     name: MIT
     url: https://opensource.org/licenses/MIT
 servers:
-- url: http://localhost:8080
-  description: Development server
-- url: https://api.necpgame.com/notifications
-  description: Production server
+  - url: http://localhost:8080
+    description: Development server
+  - url: https://api.necpgame.com/notifications
+    description: Production server
 security:
-- BearerAuth: []
+  - BearerAuth: [ ]
 tags:
-- name: Notifications
-  description: Core notification operations
-- name: History
-  description: Notification history and archives
-- name: Settings
-  description: User notification preferences
-- name: Real-time
-  description: WebSocket and real-time features
-- name: Admin
-  description: Administrative notification management
-- name: Stats
-  description: Notification analytics and metrics
+  - name: Notifications
+    description: Core notification operations
+  - name: History
+    description: Notification history and archives
+  - name: Settings
+    description: User notification preferences
+  - name: Real-time
+    description: WebSocket and real-time features
+  - name: Admin
+    description: Administrative notification management
+  - name: Stats
+    description: Notification analytics and metrics
 paths:
   /notifications/send:
     post:
       tags:
-      - Notifications
+        - Notifications
       summary: Send notification to player
       operationId: sendNotification
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       requestBody:
         required: true
         content:
@@ -77,35 +77,35 @@ paths:
   /notifications:
     get:
       tags:
-      - Notifications
+        - Notifications
       summary: Get player notifications
       operationId: getNotifications
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       parameters:
-      - $ref: '#/components/parameters/Limit'
-      - $ref: '#/components/parameters/Offset'
-      - name: status
-        in: query
-        description: Filter by notification status
-        schema:
-          type: string
-          enum:
-          - unread
-          - read
-          - archived
-      - name: type
-        in: query
-        description: Filter by notification type
-        schema:
-          type: string
-          enum:
-          - achievement
-          - system
-          - social
-          - quest
-          - combat
-          - economy
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+        - name: status
+          in: query
+          description: Filter by notification status
+          schema:
+            type: string
+            enum:
+              - unread
+              - read
+              - archived
+        - name: type
+          in: query
+          description: Filter by notification type
+          schema:
+            type: string
+            enum:
+              - achievement
+              - system
+              - social
+              - quest
+              - combat
+              - economy
       responses:
         '200':
           description: List of notifications
@@ -117,19 +117,19 @@ paths:
           $ref: '#/components/responses/Forbidden'
   /notifications/{notification_id}:
     parameters:
-    - name: notification_id
-      in: path
-      required: true
-      schema:
-        type: string
-        format: uuid
+      - name: notification_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
     get:
       tags:
-      - Notifications
+        - Notifications
       summary: Get notification details
       operationId: getNotification
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       responses:
         '200':
           description: Notification details
@@ -143,19 +143,19 @@ paths:
           $ref: '#/components/responses/NotFound'
   /notifications/{notification_id}/read:
     parameters:
-    - name: notification_id
-      in: path
-      required: true
-      schema:
-        type: string
-        format: uuid
+      - name: notification_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
     put:
       tags:
-      - Notifications
+        - Notifications
       summary: Mark notification as read
       operationId: markAsRead
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       responses:
         '200':
           description: Notification marked as read
@@ -170,11 +170,11 @@ paths:
   /notifications/bulk/read:
     put:
       tags:
-      - Notifications
+        - Notifications
       summary: Mark multiple notifications as read
       operationId: bulkMarkAsRead
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       requestBody:
         required: true
         content:
@@ -182,7 +182,7 @@ paths:
             schema:
               type: object
               required:
-              - notification_ids
+                - notification_ids
               properties:
                 notification_ids:
                   type: array
@@ -208,38 +208,38 @@ paths:
   /notifications/history:
     get:
       tags:
-      - History
+        - History
       summary: Get notification history with pagination
       operationId: getNotificationHistory
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       parameters:
-      - $ref: '#/components/parameters/Limit'
-      - $ref: '#/components/parameters/Offset'
-      - name: start_date
-        in: query
-        description: Start date for history filter (ISO 8601)
-        schema:
-          type: string
-          format: date-time
-      - name: end_date
-        in: query
-        description: End date for history filter (ISO 8601)
-        schema:
-          type: string
-          format: date-time
-      - name: type
-        in: query
-        description: Filter by notification type
-        schema:
-          type: string
-          enum:
-          - achievement
-          - system
-          - social
-          - quest
-          - combat
-          - economy
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+        - name: start_date
+          in: query
+          description: Start date for history filter (ISO 8601)
+          schema:
+            type: string
+            format: date-time
+        - name: end_date
+          in: query
+          description: End date for history filter (ISO 8601)
+          schema:
+            type: string
+            format: date-time
+        - name: type
+          in: query
+          description: Filter by notification type
+          schema:
+            type: string
+            enum:
+              - achievement
+              - system
+              - social
+              - quest
+              - combat
+              - economy
       responses:
         '200':
           description: Paginated notification history
@@ -252,11 +252,11 @@ paths:
   /notifications/settings:
     get:
       tags:
-      - Settings
+        - Settings
       summary: Get notification settings
       operationId: getNotificationSettings
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       responses:
         '200':
           description: User notification settings
@@ -268,11 +268,11 @@ paths:
           $ref: '#/components/responses/Forbidden'
     put:
       tags:
-      - Settings
+        - Settings
       summary: Update notification settings
       operationId: updateNotificationSettings
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       requestBody:
         required: true
         content:
@@ -293,11 +293,11 @@ paths:
   /ws/notifications:
     get:
       tags:
-      - Real-time
+        - Real-time
       summary: WebSocket connection for real-time notifications
       operationId: websocketNotifications
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       description: 'Establishes WebSocket connection for real-time notification delivery.
 
 
@@ -323,11 +323,11 @@ paths:
   /admin/notifications/stats:
     get:
       tags:
-      - Stats
+        - Stats
       summary: Get notification system statistics
       operationId: getNotificationStats
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       responses:
         '200':
           description: Notification statistics
@@ -340,11 +340,11 @@ paths:
   /admin/notifications/broadcast:
     post:
       tags:
-      - Admin
+        - Admin
       summary: Broadcast notification to all players
       operationId: broadcastNotification
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       requestBody:
         required: true
         content:
@@ -397,11 +397,11 @@ components:
     Notification:
       type: object
       required:
-      - id
-      - type
-      - title
-      - message
-      - created_at
+        - id
+        - type
+        - title
+        - message
+        - created_at
       properties:
         id:
           type: string
@@ -417,20 +417,20 @@ components:
         type:
           type: string
           enum:
-          - achievement
-          - system
-          - social
-          - quest
-          - combat
-          - economy
+            - achievement
+            - system
+            - social
+            - quest
+            - combat
+            - economy
           description: Notification category
         priority:
           type: string
           enum:
-          - low
-          - normal
-          - high
-          - urgent
+            - low
+            - normal
+            - high
+            - urgent
           default: normal
         created_at:
           type: string
@@ -449,10 +449,10 @@ components:
     SendNotificationRequest:
       type: object
       required:
-      - recipient_id
-      - type
-      - title
-      - message
+        - recipient_id
+        - type
+        - title
+        - message
       properties:
         recipient_id:
           type: string
@@ -466,19 +466,19 @@ components:
         type:
           type: string
           enum:
-          - achievement
-          - system
-          - social
-          - quest
-          - combat
-          - economy
+            - achievement
+            - system
+            - social
+            - quest
+            - combat
+            - economy
         priority:
           type: string
           enum:
-          - low
-          - normal
-          - high
-          - urgent
+            - low
+            - normal
+            - high
+            - urgent
           default: normal
         data:
           type: object
@@ -518,21 +518,21 @@ components:
           items:
             type: string
             enum:
-            - achievement
-            - system
-            - social
-            - quest
-            - combat
-            - economy
+              - achievement
+              - system
+              - social
+              - quest
+              - combat
+              - economy
         enabled_priorities:
           type: array
           items:
             type: string
             enum:
-            - low
-            - normal
-            - high
-            - urgent
+              - low
+              - normal
+              - high
+              - urgent
         email_enabled:
           type: boolean
           default: true
@@ -557,21 +557,21 @@ components:
           items:
             type: string
             enum:
-            - achievement
-            - system
-            - social
-            - quest
-            - combat
-            - economy
+              - achievement
+              - system
+              - social
+              - quest
+              - combat
+              - economy
         enabled_priorities:
           type: array
           items:
             type: string
             enum:
-            - low
-            - normal
-            - high
-            - urgent
+              - low
+              - normal
+              - high
+              - urgent
         email_enabled:
           type: boolean
         push_enabled:

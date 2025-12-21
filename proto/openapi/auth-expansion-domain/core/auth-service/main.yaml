@@ -13,26 +13,26 @@ info:
 
     '
 servers:
-- url: http://localhost:8080
-  description: Development server
+  - url: http://localhost:8080
+    description: Development server
 security:
-- BearerAuth: []
+  - BearerAuth: [ ]
 tags:
-- name: Authentication
-  description: User login, registration, and authentication operations
-- name: Authorization
-  description: Token validation, permissions, and access control
-- name: Sessions
-  description: Session management and lifecycle operations
-- name: OAuth2
-  description: OAuth2 flows and third-party authentication
-- name: Tokens
-  description: JWT token operations and refresh mechanisms
+  - name: Authentication
+    description: User login, registration, and authentication operations
+  - name: Authorization
+    description: Token validation, permissions, and access control
+  - name: Sessions
+    description: Session management and lifecycle operations
+  - name: OAuth2
+    description: OAuth2 flows and third-party authentication
+  - name: Tokens
+    description: JWT token operations and refresh mechanisms
 paths:
   /auth/health:
     get:
       tags:
-      - Authentication
+        - Authentication
       summary: Health check for Authentication Service
       operationId: healthCheck
       responses:
@@ -49,7 +49,7 @@ paths:
   /auth/register:
     post:
       tags:
-      - Authentication
+        - Authentication
       summary: Register new user account
       operationId: registerUser
       requestBody:
@@ -85,7 +85,7 @@ paths:
   /auth/login:
     post:
       tags:
-      - Authentication
+        - Authentication
       summary: User login with credentials
       operationId: loginUser
       requestBody:
@@ -136,11 +136,11 @@ paths:
   /auth/logout:
     post:
       tags:
-      - Authentication
+        - Authentication
       summary: User logout and session invalidation
       operationId: logoutUser
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       responses:
         '200':
           description: Logout successful
@@ -159,7 +159,7 @@ paths:
   /auth/refresh:
     post:
       tags:
-      - Tokens
+        - Tokens
       summary: Refresh JWT access token
       operationId: refreshToken
       requestBody:
@@ -188,11 +188,11 @@ paths:
   /auth/validate:
     post:
       tags:
-      - Authorization
+        - Authorization
       summary: Validate JWT token and return user info
       operationId: validateToken
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       responses:
         '200':
           description: Token is valid
@@ -211,11 +211,11 @@ paths:
   /auth/sessions:
     get:
       tags:
-      - Sessions
+        - Sessions
       summary: Get user active sessions
       operationId: getUserSessions
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       responses:
         '200':
           description: Sessions retrieved successfully
@@ -233,11 +233,11 @@ paths:
           $ref: '#/components/responses/InternalError'
     delete:
       tags:
-      - Sessions
+        - Sessions
       summary: Invalidate all user sessions
       operationId: invalidateAllSessions
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       responses:
         '200':
           description: All sessions invalidated
@@ -256,18 +256,18 @@ paths:
   /auth/sessions/{sessionId}:
     delete:
       tags:
-      - Sessions
+        - Sessions
       summary: Invalidate specific session
       operationId: invalidateSession
       security:
-      - BearerAuth: []
+        - BearerAuth: [ ]
       parameters:
-      - name: sessionId
-        in: path
-        required: true
-        schema:
-          type: string
-        description: Session identifier
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Session identifier
       responses:
         '200':
           description: Session invalidated
@@ -292,21 +292,21 @@ paths:
   /auth/oauth2/{provider}/authorize:
     get:
       tags:
-      - OAuth2
+        - OAuth2
       summary: Initiate OAuth2 authorization flow
       operationId: oauth2Authorize
       parameters:
-      - name: provider
-        in: path
-        required: true
-        schema:
-          type: string
-          enum:
-          - google
-          - discord
-          - steam
-          - epic_games
-        description: OAuth2 provider
+        - name: provider
+          in: path
+          required: true
+          schema:
+            type: string
+            enum:
+              - google
+              - discord
+              - steam
+              - epic_games
+          description: OAuth2 provider
       responses:
         '302':
           description: Redirect to OAuth2 provider
@@ -319,33 +319,33 @@ paths:
   /auth/oauth2/{provider}/callback:
     get:
       tags:
-      - OAuth2
+        - OAuth2
       summary: OAuth2 provider callback
       operationId: oauth2Callback
       parameters:
-      - name: provider
-        in: path
-        required: true
-        schema:
-          type: string
-          enum:
-          - google
-          - discord
-          - steam
-          - epic_games
-        description: OAuth2 provider
-      - name: code
-        in: query
-        required: true
-        schema:
-          type: string
-        description: Authorization code
-      - name: state
-        in: query
-        required: true
-        schema:
-          type: string
-        description: State parameter for CSRF protection
+        - name: provider
+          in: path
+          required: true
+          schema:
+            type: string
+            enum:
+              - google
+              - discord
+              - steam
+              - epic_games
+          description: OAuth2 provider
+        - name: code
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Authorization code
+        - name: state
+          in: query
+          required: true
+          schema:
+            type: string
+          description: State parameter for CSRF protection
       responses:
         '200':
           description: OAuth2 authentication successful
@@ -366,7 +366,7 @@ paths:
   /auth/password/reset:
     post:
       tags:
-      - Authentication
+        - Authentication
       summary: Request password reset
       operationId: requestPasswordReset
       requestBody:
@@ -404,7 +404,7 @@ paths:
   /auth/password/reset/confirm:
     post:
       tags:
-      - Authentication
+        - Authentication
       summary: Confirm password reset with token
       operationId: confirmPasswordReset
       requestBody:
@@ -459,8 +459,8 @@ components:
           type: integer
           format: int32
       required:
-      - code
-      - message
+        - code
+        - message
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     RegisterRequest:
       $ref: ./schemas/requests.yaml#/RegisterRequest

@@ -3,48 +3,4 @@
 # Purpose: Paths for dialogue import operations
 # Related: #1547
 
-paths:
-  /api/v1/system-domain/ai/content-domain/import/dialogues:
-    post:
-      summary: Import dialogue definitions from YAML
-      description: |
-        Import dialogue definitions from YAML content. Supports validation and rollback on error.
 
-        BACKEND NOTE: Memory-aligned schemas for efficient dialogue tree processing.
-        Expected throughput: 25 dialogues/minute with branching validation.
-      operationId: importDialogues
-      tags: ["Content Import"]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '../schemas/import-schemas.yaml#/components/schemas/DialogueImportRequest'
-      responses:
-        '200':
-          description: "Dialogue imported successfully"
-          content:
-            application/json:
-              schema:
-                $ref: '../schemas/import-schemas.yaml#/components/schemas/DialogueImportResponse'
-        '400':
-          $ref: '../../../../../../../common-schemas.yaml#/components/responses/BadRequest'
-        '422':
-          description: "Validation failed"
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    type: string
-                    example: "validation_failed"
-                  details:
-                    type: array
-                    items:
-                      type: string
-                    example: ["Missing root node", "Circular reference detected", "Invalid choice structure"]
-        '500':
-          $ref: '../../../../../../../common-schemas.yaml#/components/responses/InternalServerError'
-      security:
-        - BearerAuth: []

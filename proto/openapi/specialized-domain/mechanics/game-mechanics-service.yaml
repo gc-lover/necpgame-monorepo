@@ -37,10 +37,8 @@ servers:
     description: Production server
   - url: https://staging-api.necpgame.com/v1/mechanics
     description: Staging server
-  - url: http://localhost:8240/api/v1/mechanics
-    description: Local development server
 security:
-  - BearerAuth: []
+  - BearerAuth: [ ]
 tags:
   - name: Game Mechanics
     description: Core mechanics management and integration
@@ -68,14 +66,14 @@ paths:
 
         **Performance:** <1ms response time, cached for 30 seconds
       operationId: mechanicsHealthCheck
-      tags: [Game Mechanics]
-      security: []
+      tags: [ Game Mechanics ]
+      security: [ ]
       parameters:
         - name: Accept-Encoding
           in: header
           schema:
             type: string
-            enum: [gzip, deflate, br]
+            enum: [ gzip, deflate, br ]
       responses:
         "200":
           description: Service is healthy
@@ -91,7 +89,7 @@ paths:
             Content-Encoding:
               schema:
                 type: string
-                enum: [gzip, deflate, br]
+                enum: [ gzip, deflate, br ]
           content:
             application/json:
               schema:
@@ -126,7 +124,7 @@ paths:
 
         **Performance:** Aggregated response <10ms, parallel checks
       operationId: mechanicsBatchHealthCheck
-      tags: [Game Mechanics]
+      tags: [ Game Mechanics ]
       requestBody:
         required: true
         content:
@@ -138,7 +136,7 @@ paths:
                   type: array
                   items:
                     type: string
-                    enum: [economy, social, world, combat]
+                    enum: [ economy, social, world, combat ]
                   description: List of mechanics domains to check
               required:
                 - domains
@@ -157,14 +155,14 @@ paths:
                       properties:
                         domain:
                           type: string
-                          enum: [economy, social, world, combat]
+                          enum: [ economy, social, world, combat ]
                         status:
                           type: string
-                          enum: [healthy, degraded, unhealthy]
+                          enum: [ healthy, degraded, unhealthy ]
                         details:
                           type: string
-                      required: [domain, status]
-                required: [domains]
+                      required: [ domain, status ]
+                required: [ domains ]
         "400":
           $ref: '#/components/responses/BadRequest'
         "429":
@@ -191,7 +189,7 @@ paths:
 
         **Performance:** Instant connection, low overhead
       operationId: mechanicsWebSocketHealthCheck
-      tags: [Game Mechanics]
+      tags: [ Game Mechanics ]
       responses:
         "200":
           description: WebSocket infrastructure is healthy
@@ -225,15 +223,15 @@ paths:
         Retrieves a comprehensive list of all game mechanics across all domains.
         Includes filtering and pagination for performance optimization.
       operationId: getAllMechanics
-      tags: [Game Mechanics]
+      tags: [ Game Mechanics ]
       security:
-        - BearerAuth: []
+        - BearerAuth: [ ]
       parameters:
         - name: domain
           in: query
           schema:
             type: string
-            enum: [economy, social, world, combat]
+            enum: [ economy, social, world, combat ]
           description: Filter by mechanics domain
         - name: category
           in: query
@@ -300,9 +298,9 @@ paths:
         Retrieves detailed information about a specific game mechanic,
         including its configuration, state, and domain-specific parameters.
       operationId: getMechanicDetails
-      tags: [Game Mechanics]
+      tags: [ Game Mechanics ]
       security:
-        - BearerAuth: []
+        - BearerAuth: [ ]
       parameters:
         - name: mechanic_id
           in: path
@@ -337,8 +335,8 @@ paths:
       summary: Economy resources mechanics health check
       description: Health check for resources mechanics integration
       operationId: resourcesMechanicsHealthCheck
-      tags: [Economy Mechanics]
-      security: []
+      tags: [ Economy Mechanics ]
+      security: [ ]
       responses:
         "200":
           description: Resources mechanics healthy
@@ -346,6 +344,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HealthResponse'
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         "503":
           description: Resources mechanics unhealthy
           content:
@@ -358,8 +362,8 @@ paths:
       summary: Economy trade mechanics health check
       description: Health check for trade mechanics integration
       operationId: tradeMechanicsHealthCheck
-      tags: [Economy Mechanics]
-      security: []
+      tags: [ Economy Mechanics ]
+      security: [ ]
       responses:
         "200":
           description: Trade mechanics healthy
@@ -367,6 +371,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HealthResponse'
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         "503":
           description: Trade mechanics unhealthy
           content:
@@ -379,8 +389,8 @@ paths:
       summary: Economy production mechanics health check
       description: Health check for production mechanics integration
       operationId: productionMechanicsHealthCheck
-      tags: [Economy Mechanics]
-      security: []
+      tags: [ Economy Mechanics ]
+      security: [ ]
       responses:
         "200":
           description: Production mechanics healthy
@@ -388,6 +398,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HealthResponse'
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         "503":
           description: Production mechanics unhealthy
           content:
@@ -401,8 +417,8 @@ paths:
       summary: Social guilds mechanics health check
       description: Health check for guilds mechanics integration
       operationId: guildsMechanicsHealthCheck
-      tags: [Social Mechanics]
-      security: []
+      tags: [ Social Mechanics ]
+      security: [ ]
       responses:
         "200":
           description: Guilds mechanics healthy
@@ -410,6 +426,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HealthResponse'
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         "503":
           description: Guilds mechanics unhealthy
           content:
@@ -422,8 +444,8 @@ paths:
       summary: Social relationships mechanics health check
       description: Health check for relationships mechanics integration
       operationId: relationshipsMechanicsHealthCheck
-      tags: [Social Mechanics]
-      security: []
+      tags: [ Social Mechanics ]
+      security: [ ]
       responses:
         "200":
           description: Relationships mechanics healthy
@@ -431,6 +453,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HealthResponse'
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         "503":
           description: Relationships mechanics unhealthy
           content:
@@ -443,8 +471,8 @@ paths:
       summary: Social reputation mechanics health check
       description: Health check for reputation mechanics integration
       operationId: reputationMechanicsHealthCheck
-      tags: [Social Mechanics]
-      security: []
+      tags: [ Social Mechanics ]
+      security: [ ]
       responses:
         "200":
           description: Reputation mechanics healthy
@@ -452,6 +480,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HealthResponse'
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         "503":
           description: Reputation mechanics unhealthy
           content:
@@ -465,8 +499,8 @@ paths:
       summary: World locations mechanics health check
       description: Health check for locations mechanics integration
       operationId: locationsMechanicsHealthCheck
-      tags: [World Mechanics]
-      security: []
+      tags: [ World Mechanics ]
+      security: [ ]
       responses:
         "200":
           description: Locations mechanics healthy
@@ -474,6 +508,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HealthResponse'
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         "503":
           description: Locations mechanics unhealthy
           content:
@@ -486,8 +526,8 @@ paths:
       summary: World cities mechanics health check
       description: Health check for cities mechanics integration
       operationId: citiesMechanicsHealthCheck
-      tags: [World Mechanics]
-      security: []
+      tags: [ World Mechanics ]
+      security: [ ]
       responses:
         "200":
           description: Cities mechanics healthy
@@ -495,6 +535,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HealthResponse'
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         "503":
           description: Cities mechanics unhealthy
           content:
@@ -507,8 +553,8 @@ paths:
       summary: World factions mechanics health check
       description: Health check for factions mechanics integration
       operationId: factionsMechanicsHealthCheck
-      tags: [World Mechanics]
-      security: []
+      tags: [ World Mechanics ]
+      security: [ ]
       responses:
         "200":
           description: Factions mechanics healthy
@@ -516,6 +562,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HealthResponse'
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         "503":
           description: Factions mechanics unhealthy
           content:
@@ -529,8 +581,8 @@ paths:
       summary: Combat system mechanics health check
       description: Health check for combat system mechanics integration
       operationId: combatSystemMechanicsHealthCheck
-      tags: [Combat Mechanics]
-      security: []
+      tags: [ Combat Mechanics ]
+      security: [ ]
       responses:
         "200":
           description: Combat system mechanics healthy
@@ -538,6 +590,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HealthResponse'
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         "503":
           description: Combat system mechanics unhealthy
           content:
@@ -550,8 +608,8 @@ paths:
       summary: Combat abilities mechanics health check
       description: Health check for abilities mechanics integration
       operationId: combatAbilitiesMechanicsHealthCheck
-      tags: [Combat Mechanics]
-      security: []
+      tags: [ Combat Mechanics ]
+      security: [ ]
       responses:
         "200":
           description: Abilities mechanics healthy
@@ -559,6 +617,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HealthResponse'
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         "503":
           description: Abilities mechanics unhealthy
           content:
@@ -571,8 +635,8 @@ paths:
       summary: Combat weapons mechanics health check
       description: Health check for weapons mechanics integration
       operationId: weaponsMechanicsHealthCheck
-      tags: [Combat Mechanics]
-      security: []
+      tags: [ Combat Mechanics ]
+      security: [ ]
       responses:
         "200":
           description: Weapons mechanics healthy
@@ -580,6 +644,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HealthResponse'
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         "503":
           description: Weapons mechanics unhealthy
           content:
@@ -595,9 +665,9 @@ paths:
         Validates a mechanics configuration for conflicts and consistency.
         Ensures that mechanics settings don't create gameplay imbalances.
       operationId: validateMechanicsConfig
-      tags: [Mechanics Validation]
+      tags: [ Mechanics Validation ]
       security:
-        - BearerAuth: []
+        - BearerAuth: [ ]
       requestBody:
         required: true
         content:
@@ -611,7 +681,7 @@ paths:
                   description: Mechanics configuration to validate
                 domain:
                   type: string
-                  enum: [economy, social, world, combat]
+                  enum: [ economy, social, world, combat ]
                   description: Primary domain for validation
                 strict_mode:
                   type: boolean
@@ -677,21 +747,21 @@ paths:
         Retrieves a list of current mechanics conflicts that need resolution.
         Helps identify gameplay balance issues and mechanic interactions.
       operationId: getMechanicsConflicts
-      tags: [Mechanics Validation]
+      tags: [ Mechanics Validation ]
       security:
-        - BearerAuth: []
+        - BearerAuth: [ ]
       parameters:
         - name: domain
           in: query
           schema:
             type: string
-            enum: [economy, social, world, combat]
+            enum: [ economy, social, world, combat ]
           description: Filter conflicts by domain
         - name: severity
           in: query
           schema:
             type: string
-            enum: [low, medium, high, critical]
+            enum: [ low, medium, high, critical ]
           description: Filter by conflict severity
         - name: resolved
           in: query
@@ -748,11 +818,11 @@ components:
     # Health and Common Schemas
     HealthResponse:
       type: object
-      required: [status, timestamp, version, service]
+      required: [ status, timestamp, version, service ]
       properties:
         status:
           type: string
-          enum: [healthy, degraded, unhealthy]
+          enum: [ healthy, degraded, unhealthy ]
           description: Current health status of the service
         timestamp:
           type: string
@@ -773,7 +843,7 @@ components:
 
     Error:
       type: object
-      required: [message, code]
+      required: [ message, code ]
       properties:
         message:
           type: string
@@ -811,7 +881,7 @@ components:
     # Core Game Mechanics Schemas
     GameMechanic:
       type: object
-      required: [id, name, domain, category, active, created_at]
+      required: [ id, name, domain, category, active, created_at ]
       properties:
         id:
           type: string
@@ -823,7 +893,7 @@ components:
           description: Human-readable name of the mechanic
         domain:
           type: string
-          enum: [economy, social, world, combat]
+          enum: [ economy, social, world, combat ]
           description: Primary domain this mechanic belongs to
         category:
           type: string
@@ -894,12 +964,12 @@ components:
               format: date-time
             validation_status:
               type: string
-              enum: [valid, warning, error]
+              enum: [ valid, warning, error ]
       description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
 
     MechanicConflict:
       type: object
-      required: [id, mechanic_a_id, mechanic_b_id, conflict_type, severity, description]
+      required: [ id, mechanic_a_id, mechanic_b_id, conflict_type, severity, description ]
       properties:
         id:
           type: string
@@ -915,11 +985,11 @@ components:
           description: ID of the second mechanic in conflict
         conflict_type:
           type: string
-          enum: [balance, dependency, resource, timing, state]
+          enum: [ balance, dependency, resource, timing, state ]
           description: Type of conflict
         severity:
           type: string
-          enum: [low, medium, high, critical]
+          enum: [ low, medium, high, critical ]
           description: Severity level of the conflict
         description:
           type: string

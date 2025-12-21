@@ -13,17 +13,17 @@ components:
 
     EntityType:
       type: string
-      enum: [character, inventory, quest, combat, economy]
+      enum: [ character, inventory, quest, combat, economy ]
       description: Type of game entity
 
     ConsistencyLevel:
       type: string
-      enum: [strong, eventual]
+      enum: [ strong, eventual ]
       description: Required consistency level
 
     ConflictStrategy:
       type: string
-      enum: [latest_wins, merge, manual, reject]
+      enum: [ latest_wins, merge, manual, reject ]
       description: Strategy for resolving conflicts
 
     # State Synchronization
@@ -47,8 +47,8 @@ components:
           description: Data integrity checksum
         layer:
           type: string
-          enum: [client, server, database]
-      required: [entityId, entityType, version, data, lastModified]
+          enum: [ client, server, database ]
+      required: [ entityId, entityType, version, data, lastModified ]
 
     StateUpdateRequest:
       type: object
@@ -66,7 +66,7 @@ components:
           type: boolean
           default: false
           description: Force update ignoring conflicts
-      required: [data]
+      required: [ data ]
 
     StateUpdateResponse:
       type: object
@@ -81,7 +81,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Conflict'
-      required: [entityId, newVersion, appliedAt]
+      required: [ entityId, newVersion, appliedAt ]
 
     StateVersionHistory:
       type: object
@@ -96,7 +96,7 @@ components:
             $ref: '#/components/schemas/StateVersion'
         totalCount:
           type: integer
-      required: [entityId, entityType, versions]
+      required: [ entityId, entityType, versions ]
 
     StateVersion:
       type: object
@@ -111,7 +111,7 @@ components:
           $ref: '#/components/schemas/Timestamp'
         changeReason:
           type: string
-      required: [version, data, modifiedAt]
+      required: [ version, data, modifiedAt ]
 
     BatchStateSyncRequest:
       type: object
@@ -129,14 +129,14 @@ components:
                 type: object
               consistency:
                 $ref: '#/components/schemas/ConsistencyLevel'
-            required: [entityId, entityType, data]
+            required: [ entityId, entityType, data ]
         transactionId:
           $ref: '#/components/schemas/UUID'
         atomic:
           type: boolean
           default: true
           description: Whether all updates should be atomic
-      required: [entities]
+      required: [ entities ]
 
     BatchStateSyncResponse:
       type: object
@@ -151,7 +151,7 @@ components:
           type: boolean
         processedAt:
           $ref: '#/components/schemas/Timestamp'
-      required: [transactionId, results, overallSuccess]
+      required: [ transactionId, results, overallSuccess ]
 
     BatchSyncResult:
       type: object
@@ -164,7 +164,7 @@ components:
           type: string
         newVersion:
           type: integer
-      required: [entityId, success]
+      required: [ entityId, success ]
 
     # Event Bus
     EventPublishRequest:
@@ -190,7 +190,7 @@ components:
         metadata:
           type: object
           description: Additional metadata
-      required: [eventType, aggregateId, aggregateType, payload]
+      required: [ eventType, aggregateId, aggregateType, payload ]
 
     EventPublishResponse:
       type: object
@@ -202,7 +202,7 @@ components:
         partition:
           type: string
           description: Event bus partition/shard
-      required: [eventId, publishedAt]
+      required: [ eventId, publishedAt ]
 
     EventSubscriptionRequest:
       type: object
@@ -220,11 +220,11 @@ components:
           description: Event filtering criteria
         deliveryGuarantee:
           type: string
-          enum: [at_least_once, exactly_once]
+          enum: [ at_least_once, exactly_once ]
           default: at_least_once
         retryPolicy:
           $ref: '#/components/schemas/RetryPolicy'
-      required: [serviceId, eventTypes]
+      required: [ serviceId, eventTypes ]
 
     EventSubscriptionResponse:
       type: object
@@ -239,7 +239,7 @@ components:
             type: string
         createdAt:
           $ref: '#/components/schemas/Timestamp'
-      required: [subscriptionId, serviceId, eventTypes, createdAt]
+      required: [ subscriptionId, serviceId, eventTypes, createdAt ]
 
     EventSubscriptionsList:
       type: object
@@ -250,7 +250,7 @@ components:
             $ref: '#/components/schemas/EventSubscriptionResponse'
         totalCount:
           type: integer
-      required: [subscriptions, totalCount]
+      required: [ subscriptions, totalCount ]
 
     EventAcknowledgment:
       type: object
@@ -265,7 +265,7 @@ components:
           type: boolean
           default: false
           description: Whether to retry processing
-      required: []
+      required: [ ]
 
     # Conflict Resolution
     Conflict:
@@ -286,11 +286,11 @@ components:
           $ref: '#/components/schemas/Timestamp'
         priority:
           type: string
-          enum: [low, medium, high, critical]
+          enum: [ low, medium, high, critical ]
         status:
           type: string
-          enum: [pending, in_progress, resolved]
-      required: [conflictId, entityId, entityType, conflictingVersions, detectedAt]
+          enum: [ pending, in_progress, resolved ]
+      required: [ conflictId, entityId, entityType, conflictingVersions, detectedAt ]
 
     ConflictsList:
       type: object
@@ -303,7 +303,7 @@ components:
           type: integer
         pagination:
           $ref: '#/components/schemas/PaginationInfo'
-      required: [conflicts, totalCount]
+      required: [ conflicts, totalCount ]
 
     ConflictResolutionRequest:
       type: object
@@ -316,7 +316,7 @@ components:
         force:
           type: boolean
           default: false
-      required: [strategy]
+      required: [ strategy ]
 
     ConflictResolutionResponse:
       type: object
@@ -329,7 +329,7 @@ components:
           $ref: '#/components/schemas/Timestamp'
         appliedStrategy:
           $ref: '#/components/schemas/ConflictStrategy'
-      required: [conflictId, resolvedVersion, resolvedAt, appliedStrategy]
+      required: [ conflictId, resolvedVersion, resolvedAt, appliedStrategy ]
 
     ResolutionStrategies:
       type: object
@@ -348,8 +348,8 @@ components:
               recommended:
                 type: boolean
                 default: false
-            required: [strategy, description]
-      required: [conflictId, availableStrategies]
+            required: [ strategy, description ]
+      required: [ conflictId, availableStrategies ]
 
     # Saga Coordination
     SagaCreationRequest:
@@ -376,9 +376,9 @@ components:
           description: Timeout in seconds
         compensationStrategy:
           type: string
-          enum: [rollback, partial_compensation, manual]
+          enum: [ rollback, partial_compensation, manual ]
           default: rollback
-      required: [sagaType, initiatorService, participants, steps]
+      required: [ sagaType, initiatorService, participants, steps ]
 
     SagaStep:
       type: object
@@ -403,7 +403,7 @@ components:
           items:
             type: string
           description: Step IDs this step depends on
-      required: [stepId, service, operation]
+      required: [ stepId, service, operation ]
 
     SagaResponse:
       type: object
@@ -414,14 +414,14 @@ components:
           type: string
         status:
           type: string
-          enum: [pending, in_progress, compensating, completed, failed]
+          enum: [ pending, in_progress, compensating, completed, failed ]
         createdAt:
           $ref: '#/components/schemas/Timestamp'
         participants:
           type: array
           items:
             type: string
-      required: [sagaId, sagaType, status, createdAt, participants]
+      required: [ sagaId, sagaType, status, createdAt, participants ]
 
     SagaDetails:
       type: object
@@ -432,7 +432,7 @@ components:
           type: string
         status:
           type: string
-          enum: [pending, in_progress, compensating, completed, failed]
+          enum: [ pending, in_progress, compensating, completed, failed ]
         initiatorService:
           type: string
         participants:
@@ -449,7 +449,7 @@ components:
           $ref: '#/components/schemas/Timestamp'
         timeoutAt:
           $ref: '#/components/schemas/Timestamp'
-      required: [sagaId, sagaType, status, initiatorService, participants, steps, createdAt]
+      required: [ sagaId, sagaType, status, initiatorService, participants, steps, createdAt ]
 
     SagaStepExecution:
       type: object
@@ -460,7 +460,7 @@ components:
           type: string
         status:
           type: string
-          enum: [pending, in_progress, completed, failed, compensated]
+          enum: [ pending, in_progress, completed, failed, compensated ]
         startedAt:
           $ref: '#/components/schemas/Timestamp'
         completedAt:
@@ -469,8 +469,8 @@ components:
           type: string
         compensationStatus:
           type: string
-          enum: [not_needed, pending, in_progress, completed, failed]
-      required: [stepId, service, status]
+          enum: [ not_needed, pending, in_progress, completed, failed ]
+      required: [ stepId, service, status ]
 
     SagasList:
       type: object
@@ -483,7 +483,7 @@ components:
           type: integer
         pagination:
           $ref: '#/components/schemas/PaginationInfo'
-      required: [sagas, totalCount]
+      required: [ sagas, totalCount ]
 
     SagaCompensationRequest:
       type: object
@@ -497,7 +497,7 @@ components:
         compensationData:
           type: object
           description: Additional data for compensation
-      required: [reason]
+      required: [ reason ]
 
     SagaStepCompletion:
       type: object
@@ -511,7 +511,7 @@ components:
         error:
           type: string
           description: Error message if step failed
-      required: []
+      required: [ ]
 
     # Data Consistency
     ConsistencyCheckRequest:
@@ -525,7 +525,7 @@ components:
             $ref: '#/components/schemas/UUID'
         checkType:
           type: string
-          enum: [full, partial, custom]
+          enum: [ full, partial, custom ]
           default: full
         rules:
           type: array
@@ -537,7 +537,7 @@ components:
           minimum: 1
           default: 30
           description: Timeout in seconds
-      required: [entityType, entityIds]
+      required: [ entityType, entityIds ]
 
     ConsistencyCheckResponse:
       type: object
@@ -546,7 +546,7 @@ components:
           $ref: '#/components/schemas/UUID'
         status:
           type: string
-          enum: [completed, failed, timeout]
+          enum: [ completed, failed, timeout ]
         violations:
           type: array
           items:
@@ -558,7 +558,7 @@ components:
           description: Duration in milliseconds
         completedAt:
           $ref: '#/components/schemas/Timestamp'
-      required: [checkId, status, violations, checkedEntities]
+      required: [ checkId, status, violations, checkedEntities ]
 
     ConsistencyViolation:
       type: object
@@ -569,15 +569,15 @@ components:
           type: string
         violationType:
           type: string
-          enum: [missing_data, inconsistent_data, stale_data, orphaned_data]
+          enum: [ missing_data, inconsistent_data, stale_data, orphaned_data ]
         description:
           type: string
         severity:
           type: string
-          enum: [low, medium, high, critical]
+          enum: [ low, medium, high, critical ]
         detectedAt:
           $ref: '#/components/schemas/Timestamp'
-      required: [entityId, ruleId, violationType, description, severity]
+      required: [ entityId, ruleId, violationType, description, severity ]
 
     ConsistencyCheckResults:
       type: object
@@ -586,7 +586,7 @@ components:
           $ref: '#/components/schemas/UUID'
         status:
           type: string
-          enum: [pending, in_progress, completed, failed]
+          enum: [ pending, in_progress, completed, failed ]
         progress:
           type: number
           minimum: 0
@@ -613,7 +613,7 @@ components:
                   type: integer
                 critical:
                   type: integer
-      required: [checkId, status, violations]
+      required: [ checkId, status, violations ]
 
     ConsistencyRule:
       type: object
@@ -628,17 +628,17 @@ components:
           $ref: '#/components/schemas/EntityType'
         checkType:
           type: string
-          enum: [existence, referential_integrity, data_consistency, business_rules]
+          enum: [ existence, referential_integrity, data_consistency, business_rules ]
         query:
           type: string
           description: SQL or validation query
         severity:
           type: string
-          enum: [low, medium, high, critical]
+          enum: [ low, medium, high, critical ]
         enabled:
           type: boolean
           default: true
-      required: [ruleId, name, entityType, checkType, severity]
+      required: [ ruleId, name, entityType, checkType, severity ]
 
     ConsistencyRules:
       type: object
@@ -649,7 +649,7 @@ components:
             $ref: '#/components/schemas/ConsistencyRule'
         totalCount:
           type: integer
-      required: [rules, totalCount]
+      required: [ rules, totalCount ]
 
     # Health and Monitoring
     HealthStatus:
@@ -657,7 +657,7 @@ components:
       properties:
         status:
           type: string
-          enum: [healthy, degraded, unhealthy]
+          enum: [ healthy, degraded, unhealthy ]
         timestamp:
           $ref: '#/components/schemas/Timestamp'
         version:
@@ -669,7 +669,7 @@ components:
             properties:
               status:
                 type: string
-                enum: [up, down, degraded]
+                enum: [ up, down, degraded ]
               responseTime:
                 type: integer
                 description: Response time in milliseconds
@@ -678,7 +678,7 @@ components:
         metrics:
           type: object
           description: Key health metrics
-      required: [status, timestamp]
+      required: [ status, timestamp ]
 
     SyncMetrics:
       type: object
@@ -734,7 +734,7 @@ components:
               type: integer
             avgCheckDuration:
               type: integer
-      required: [period]
+      required: [ period ]
 
     # Common components
     RetryPolicy:
@@ -758,7 +758,7 @@ components:
           minimum: 1000
           default: 30000
           description: Maximum delay in milliseconds
-      required: []
+      required: [ ]
 
     PaginationInfo:
       type: object
@@ -777,7 +777,7 @@ components:
           type: boolean
         hasPrevious:
           type: boolean
-      required: [page, pageSize, totalPages, totalItems, hasNext, hasPrevious]
+      required: [ page, pageSize, totalPages, totalItems, hasNext, hasPrevious ]
 
   securitySchemes:
     BearerAuth:
@@ -790,8 +790,8 @@ components:
       name: X-API-Key
 
 security:
-  - BearerAuth: []
-  - ApiKeyAuth: []
+  - BearerAuth: [ ]
+  - ApiKeyAuth: [ ]
 
 # WebSocket channels for real-time updates
 x-websockets:

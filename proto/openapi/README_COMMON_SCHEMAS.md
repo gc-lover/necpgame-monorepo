@@ -2,7 +2,8 @@
 
 ## Обзор
 
-В проекте NECPGAME используется централизованная система общих схем для обеспечения консистентности API между всеми доменами.
+В проекте NECPGAME используется централизованная система общих схем для обеспечения консистентности API между всеми
+доменами.
 
 ## Структура файлов
 
@@ -27,6 +28,7 @@ $ref: ../../common-schemas.yaml#/components/schemas/Error
 ### Примеры использования
 
 #### Error схема
+
 ```yaml
 responses:
   '404':
@@ -38,6 +40,7 @@ responses:
 ```
 
 #### UUID схема
+
 ```yaml
 properties:
   id:
@@ -45,6 +48,7 @@ properties:
 ```
 
 #### Timestamp поля
+
 ```yaml
 properties:
   created_at:
@@ -56,18 +60,21 @@ properties:
 ## Доступные общие схемы
 
 ### Базовые типы
+
 - `UUID` - стандартный UUID формат
 - `Timestamp` - ISO 8601 timestamp
 - `Email` - email формат
 - `URL` - URL формат
 
 ### Общие структуры
+
 - `Error` - универсальная схема ошибок
 - `BaseEntity` - базовая сущность с ID и timestamps
 - `PaginationParams` - параметры пагинации
 - `PaginationResponse` - ответ с пагинацией
 
 ### Специфические
+
 - `Status` - enum статусов
 - `Metadata` - дополнительная информация
 - `CreatedAt`, `UpdatedAt` - timestamp поля
@@ -75,21 +82,25 @@ properties:
 ## Инструменты
 
 ### Исправление ссылок
+
 ```powershell
 .\scripts\fix-common-refs.ps1
 ```
 
 ### Проверка валидности
+
 ```bash
 npx @redocly/cli lint proto/openapi/[domain]/[service]/main.yaml
 ```
 
 ### Bundling
+
 ```bash
 npx @redocly/cli bundle proto/openapi/[domain]/[service]/main.yaml -o bundle.yaml
 ```
 
 ### Генерация Go кода
+
 ```bash
 ogen --target pkg/api --package api --clean bundle.yaml
 ```
@@ -104,13 +115,16 @@ ogen --target pkg/api --package api --clean bundle.yaml
 ## Troubleshooting
 
 ### Ошибка "Can't resolve $ref"
+
 - Проверьте правильность пути: `../../common-schemas.yaml`
 - Убедитесь, что файл `common-schemas.yaml` существует в корне `proto/openapi/`
 
 ### Неправильные пути после копирования
+
 - Запустите `.\scripts\fix-common-refs.ps1` для автоматического исправления
 
 ### Конфликты схем
+
 - Используйте уникальные имена для локальных схем
 - Общие схемы имеют приоритет над локальными
 

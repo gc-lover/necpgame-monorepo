@@ -35,33 +35,33 @@ info:
     url: https://necpgame.com/support
     email: api@tournament-system.necpgame.com
 servers:
-- url: http://localhost:8084/api/v1
-  description: Tournament System Service Go (development)
-- url: https://tournament-system-go.necpgame.com/api/v1
-  description: Tournament System Service Go (production)
+  - url: http://localhost:8084/api/v1
+    description: Tournament System Service Go (development)
+  - url: https://tournament-system-go.necpgame.com/api/v1
+    description: Tournament System Service Go (production)
 tags:
-- name: Tournament Management
-  description: Tournament lifecycle operations
-- name: Matchmaking
-  description: Tournament participant matching and balancing
-- name: Brackets
-  description: Tournament bracket management and progression
-- name: Leaderboards
-  description: Tournament rankings and statistics
-- name: Anti-Cheat
-  description: Tournament integrity validation
-- name: Rewards
-  description: Tournament rewards and prize distribution
+  - name: Tournament Management
+    description: Tournament lifecycle operations
+  - name: Matchmaking
+    description: Tournament participant matching and balancing
+  - name: Brackets
+    description: Tournament bracket management and progression
+  - name: Leaderboards
+    description: Tournament rankings and statistics
+  - name: Anti-Cheat
+    description: Tournament integrity validation
+  - name: Rewards
+    description: Tournament rewards and prize distribution
 security:
-- BearerAuth: []
+  - BearerAuth: [ ]
 paths:
   /health:
     get:
       tags:
-      - Tournament Management
+        - Tournament Management
       summary: Service health check
       operationId: getHealth
-      security: []
+      security: [ ]
       responses:
         '200':
           description: Service is healthy
@@ -73,30 +73,30 @@ paths:
   /tournaments:
     get:
       tags:
-      - Tournament Management
+        - Tournament Management
       summary: List tournaments
       operationId: listTournaments
       parameters:
-      - name: status
-        in: query
-        schema:
-          type: string
-          enum: [upcoming, active, completed]
-        description: Filter by tournament status
-      - name: game_mode
-        in: query
-        schema:
-          type: string
-          enum: [solo, team, battle_royale, ranked]
-        description: Filter by game mode
-      - name: limit
-        in: query
-        schema:
-          type: integer
-          minimum: 1
-          maximum: 100
-          default: 20
-        description: Number of tournaments to return
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [ upcoming, active, completed ]
+          description: Filter by tournament status
+        - name: game_mode
+          in: query
+          schema:
+            type: string
+            enum: [ solo, team, battle_royale, ranked ]
+          description: Filter by game mode
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: Number of tournaments to return
       responses:
         '200':
           description: List of tournaments
@@ -106,7 +106,7 @@ paths:
                 $ref: '#/components/schemas/TournamentListResponse'
     post:
       tags:
-      - Tournament Management
+        - Tournament Management
       summary: Create new tournament
       operationId: createTournament
       requestBody:
@@ -132,17 +132,17 @@ paths:
   /tournaments/{tournament_id}:
     get:
       tags:
-      - Tournament Management
+        - Tournament Management
       summary: Get tournament details
       operationId: getTournament
       parameters:
-      - name: tournament_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: Tournament unique identifier
+        - name: tournament_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Tournament unique identifier
       responses:
         '200':
           description: Tournament details
@@ -160,17 +160,17 @@ paths:
   /tournaments/{tournament_id}/register:
     post:
       tags:
-      - Tournament Management
+        - Tournament Management
       summary: Register for tournament
       operationId: registerForTournament
       parameters:
-      - name: tournament_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: Tournament unique identifier
+        - name: tournament_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Tournament unique identifier
       requestBody:
         required: true
         content:
@@ -194,17 +194,17 @@ paths:
   /tournaments/{tournament_id}/matchmaking:
     post:
       tags:
-      - Matchmaking
+        - Matchmaking
       summary: Start matchmaking for tournament round
       operationId: startMatchmaking
       parameters:
-      - name: tournament_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: Tournament unique identifier
+        - name: tournament_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Tournament unique identifier
       requestBody:
         required: true
         content:
@@ -228,24 +228,24 @@ paths:
   /tournaments/{tournament_id}/matches/{match_id}/result:
     post:
       tags:
-      - Tournament Management
+        - Tournament Management
       summary: Submit match result
       operationId: submitMatchResult
       parameters:
-      - name: tournament_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: Tournament unique identifier
-      - name: match_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: Match unique identifier
+        - name: tournament_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Tournament unique identifier
+        - name: match_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Match unique identifier
       requestBody:
         required: true
         content:
@@ -269,23 +269,23 @@ paths:
   /tournaments/{tournament_id}/leaderboard:
     get:
       tags:
-      - Leaderboards
+        - Leaderboards
       summary: Get tournament leaderboard
       operationId: getTournamentLeaderboard
       parameters:
-      - name: tournament_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: Tournament unique identifier
-      - name: round
-        in: query
-        schema:
-          type: integer
-          minimum: 1
-        description: Specific round number (optional)
+        - name: tournament_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Tournament unique identifier
+        - name: round
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+          description: Specific round number (optional)
       responses:
         '200':
           description: Tournament leaderboard
@@ -297,17 +297,17 @@ paths:
   /tournaments/{tournament_id}/validate-integrity:
     post:
       tags:
-      - Anti-Cheat
+        - Anti-Cheat
       summary: Validate tournament integrity
       operationId: validateTournamentIntegrity
       parameters:
-      - name: tournament_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: Tournament unique identifier
+        - name: tournament_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Tournament unique identifier
       requestBody:
         required: true
         content:
@@ -331,17 +331,17 @@ paths:
   /tournaments/{tournament_id}/rewards/distribute:
     post:
       tags:
-      - Rewards
+        - Rewards
       summary: Distribute tournament rewards
       operationId: distributeRewards
       parameters:
-      - name: tournament_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: Tournament unique identifier
+        - name: tournament_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Tournament unique identifier
       responses:
         '200':
           description: Rewards distributed successfully
@@ -406,10 +406,10 @@ components:
           type: string
         game_mode:
           type: string
-          enum: [solo, team, battle_royale, ranked]
+          enum: [ solo, team, battle_royale, ranked ]
         status:
           type: string
-          enum: [upcoming, registration_open, active, completed, cancelled]
+          enum: [ upcoming, registration_open, active, completed, cancelled ]
         max_participants:
           type: integer
           minimum: 2
@@ -445,7 +445,7 @@ components:
           minimum: 1
         status:
           type: string
-          enum: [confirmed, waitlist, cancelled]
+          enum: [ confirmed, waitlist, cancelled ]
 
     MatchmakingResponse:
       type: object
@@ -565,7 +565,7 @@ components:
           maxLength: 1000
         game_mode:
           type: string
-          enum: [solo, team, battle_royale, ranked]
+          enum: [ solo, team, battle_royale, ranked ]
         max_participants:
           type: integer
           minimum: 2
@@ -590,9 +590,9 @@ components:
           items:
             $ref: '#/components/schemas/CosmeticReward'
       required:
-      - name
-      - game_mode
-      - max_participants
+        - name
+        - game_mode
+        - max_participants
 
     RegistrationRequest:
       type: object
@@ -621,7 +621,7 @@ components:
           minimum: 1
         matchmaking_algorithm:
           type: string
-          enum: [random, skill_based, region_based, balanced]
+          enum: [ random, skill_based, region_based, balanced ]
           default: skill_based
         max_match_size:
           type: integer
@@ -658,15 +658,15 @@ components:
           type: string
           format: uri
       required:
-      - winner_id
-      - loser_id
+        - winner_id
+        - loser_id
 
     IntegrityCheckRequest:
       type: object
       properties:
         check_type:
           type: string
-          enum: [full_audit, spot_check, statistical_analysis]
+          enum: [ full_audit, spot_check, statistical_analysis ]
           default: spot_check
         target_participants:
           type: array
@@ -691,10 +691,10 @@ components:
           type: string
         game_mode:
           type: string
-          enum: [solo, team, battle_royale, ranked]
+          enum: [ solo, team, battle_royale, ranked ]
         status:
           type: string
-          enum: [upcoming, active, completed]
+          enum: [ upcoming, active, completed ]
         participant_count:
           type: integer
           minimum: 0
@@ -771,7 +771,7 @@ components:
       properties:
         type:
           type: string
-          enum: [single_elimination, double_elimination, round_robin, swiss]
+          enum: [ single_elimination, double_elimination, round_robin, swiss ]
         total_rounds:
           type: integer
           minimum: 1
@@ -831,13 +831,13 @@ components:
       properties:
         violation_type:
           type: string
-          enum: [cheating_detected, unusual_performance, statistical_anomaly]
+          enum: [ cheating_detected, unusual_performance, statistical_anomaly ]
         participant_id:
           type: string
           format: uuid
         severity:
           type: string
-          enum: [low, medium, high, critical]
+          enum: [ low, medium, high, critical ]
         description:
           type: string
         evidence:
@@ -848,12 +848,12 @@ components:
       properties:
         type:
           type: string
-          enum: [title, banner, avatar_frame, name_color]
+          enum: [ title, banner, avatar_frame, name_color ]
         name:
           type: string
         rarity:
           type: string
-          enum: [common, rare, epic, legendary]
+          enum: [ common, rare, epic, legendary ]
         duration_days:
           type: integer
           minimum: 1
@@ -874,6 +874,6 @@ components:
           type: string
           format: uuid
       required:
-      - error
-      - code
-      - message
+        - error
+        - code
+        - message
