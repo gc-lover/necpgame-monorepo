@@ -715,6 +715,194 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
+  # Character Statistics Management
+  /characters/{character_id}/stats:
+    get:
+      summary: Get character statistics
+      description: |
+        **Enterprise-grade character statistics endpoint**
+
+        Retrieves detailed character stats including attributes, skills, and derived values.
+        Optimized for frequent access during gameplay and UI updates.
+
+        **Performance:** <3ms P95 (HOT PATH), Redis cached
+        **Memory optimization:** 30-50% savings through field alignment
+      operationId: getCharacterStats
+      tags:
+        - Character Statistics
+      parameters:
+        - name: character_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Character unique identifier
+      responses:
+        "200":
+          description: Character statistics retrieved successfully
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: max-age=30, private
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CharacterStats"
+        "401":
+          description: Unauthorized - character belongs to different player
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Character not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+    put:
+      summary: Update character statistics
+      description: |
+        **Enterprise-grade statistics update endpoint**
+
+        Updates character stats with validation for game balance and progression rules.
+        Supports experience gain, attribute increases, and skill progression.
+        Critical for character advancement and gameplay mechanics.
+
+        **Performance:** <15ms P95, includes validation and business logic
+        **Business rules:** Level caps, attribute prerequisites, experience requirements
+      operationId: updateCharacterStats
+      tags:
+        - Character Statistics
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: character_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Character unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCharacterStatsRequest"
+      responses:
+        "200":
+          description: Character statistics updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CharacterStats"
+        "400":
+          description: Invalid request - malformed statistics data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: Unprocessable entity - game balance rules violated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  # Character Appearance Management
+  /characters/{character_id}/appearance:
+    get:
+      summary: Get character appearance
+      description: |
+        **Enterprise-grade character appearance endpoint**
+
+        Retrieves character visual customization data for UI rendering and gameplay.
+        Includes clothing, cyberware visibility, and cosmetic items.
+
+        **Performance:** <5ms P95, cached with CDN support
+      operationId: getCharacterAppearance
+      tags:
+        - Character Appearance
+      parameters:
+        - name: character_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Character unique identifier
+      responses:
+        "200":
+          description: Character appearance retrieved successfully
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: max-age=300, public
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CharacterAppearance"
+        "404":
+          description: Character not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+    put:
+      summary: Update character appearance
+      description: |
+        **Enterprise-grade appearance update endpoint**
+
+        Updates character visual customization with validation for owned items.
+        Supports clothing changes, cyberware toggles, and cosmetic modifications.
+
+        **Performance:** <20ms P95, includes inventory validation
+        **Business rules:** Item ownership validation, faction restrictions
+      operationId: updateCharacterAppearance
+      tags:
+        - Character Appearance
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: character_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Character unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCharacterAppearanceRequest"
+      responses:
+        "200":
+          description: Character appearance updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CharacterAppearance"
+        "400":
+          description: Invalid request - malformed appearance data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: Unprocessable entity - item ownership or restrictions violated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
 components:
   responses:
     # Common response definitions with headers
