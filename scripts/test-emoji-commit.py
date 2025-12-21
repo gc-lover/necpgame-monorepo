@@ -1,0 +1,1 @@
+print('test with emoji 🚀')
