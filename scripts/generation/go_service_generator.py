@@ -74,6 +74,24 @@ class GoServiceGenerator:
 
         return bundled_file
 
+    def _get_ogen_path(self) -> str:
+        """Get full path to ogen binary"""
+        import os
+        import shutil
+
+        # Try common locations
+        possible_paths = [
+            r"C:\Users\zzzle\go\bin\ogen.exe",  # Windows
+            "/usr/local/go/bin/ogen",           # Linux/Mac
+            "ogen",                            # In PATH
+        ]
+
+        for path in possible_paths:
+            if shutil.which(path) or os.path.exists(path):
+                return path
+
+        raise FileNotFoundError("ogen binary not found. Install with: go install github.com/ogen-go/ogen/cmd/ogen@latest")
+
     def _generate_go_code(self, service_dir: Path, bundled_spec: Path,
                          domain: str, dry_run: bool) -> None:
         """Generate Go code using ogen"""
@@ -82,8 +100,10 @@ class GoServiceGenerator:
             pkg_dir.mkdir(parents=True, exist_ok=True)
 
         if not dry_run:
+            # Use full path to ogen binary
+            ogen_path = self._get_ogen_path()
             self.command_runner.run([
-                'npx', '--yes', 'ogen', '--target', str(pkg_dir),
+                ogen_path, '--target', str(pkg_dir),
                 '--package', 'api', '--clean', str(bundled_spec)
             ])
 
@@ -289,6 +309,7 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"sync"
 	"time"
@@ -322,35 +343,16 @@ func NewHandler() *Handler {{
 }}
 
 // Implement generated API interface methods here
-// This will be populated based on the OpenAPI spec operations
+// NOTE: This file contains stubs that need to be implemented based on your OpenAPI spec
+// After ogen generates the API types, run the handler generator script to populate this file
 
-// Example health check endpoint with PERFORMANCE optimizations
-func (h *Handler) Health(ctx context.Context) (*api.HealthResponse, error) {{
-	// PERFORMANCE: Get pre-allocated response from pool
-	resp := h.pool.Get().(*api.HealthResponse)
-	resp.Status = "healthy" // Zero allocation assignment
+// TODO: Implement handlers based on generated API interfaces
+// Use: python scripts/generate-api-handlers.py {domain}
 
-	// PERFORMANCE: Check context timeout to prevent hanging
-	select {{
-	case <-ctx.Done():
-		h.pool.Put(resp) // Return to pool on cancellation
-		return nil, ctx.Err()
-	default:
-		// Continue processing
-	}}
-
-	// PERFORMANCE: Context timeout for business logic (100ms for health check)
-	timeoutCtx, cancel := context.WithTimeout(ctx, 100*time.Millisecond)
-	defer cancel()
-
-	// Call service with timeout context
-	err := h.service.HealthCheck(timeoutCtx)
-	if err != nil {{
-		h.pool.Put(resp) // Return to pool on error
-		return nil, err
-	}}
-
-	return resp, nil
+// Example stub - replace with actual implementations:
+func (h *Handler) ExampleDomainHealthCheck(ctx context.Context, params api.ExampleDomainHealthCheckParams) (api.ExampleDomainHealthCheckRes, error) {{
+	// TODO: Implement health check logic
+	return nil, fmt.Errorf("not implemented")
 }}
 '''
 
@@ -565,10 +567,13 @@ docker-run:
 
         try:
             # Initialize go mod
-            self.command_runner.run(['go', 'mod', 'init', service_name], cwd=service_dir)
-
-            # Tidy dependencies
-            self.command_runner.run(['go', 'mod', 'tidy'], cwd=service_dir)
+            old_cwd = self.command_runner.cwd
+            self.command_runner.cwd = service_dir
+            try:
+                self.command_runner.run(['go', 'mod', 'init', service_name])
+                self.command_runner.run(['go', 'mod', 'tidy'])
+            finally:
+                self.command_runner.cwd = old_cwd
 
         except Exception as e:
             raise RuntimeError(f"Go module initialization failed: {e}")
@@ -576,6 +581,11 @@ docker-run:
     def _test_compilation(self, service_dir: Path, service_name: str) -> None:
         """Test that the generated code compiles"""
         try:
-            self.command_runner.run(['go', 'build', './...'], cwd=service_dir)
+            old_cwd = self.command_runner.cwd
+            self.command_runner.cwd = service_dir
+            try:
+                self.command_runner.run(['go', 'build', './...'])
+            finally:
+                self.command_runner.cwd = old_cwd
         except Exception as e:
             raise RuntimeError(f"Compilation failed: {e}")

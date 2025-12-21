@@ -70,12 +70,7 @@ Issue: #{number}
 
 ### 2. Backend: Решение способа импорта (НОВАЯ ДОМЕННАЯ АРХИТЕКТУРА!)
 
-**Backend теперь работает с enterprise-grade доменами:**
-- `system-domain` (инфраструктура) - для системных сервисов
-- `specialized-domain` (механики) - для игровых механик
-- `social-domain` (социал) - для социальных функций
-- `economy-domain` (экономика) - для экономических систем
-- `world-domain` (мир) - для игрового мира
+**Backend теперь работает с enterprise-grade доменами (see .cursor/DOMAIN_REFERENCE.md)**
 
 **Backend проверяет:**
 
@@ -104,9 +99,10 @@ Issue: #{number}
   - NPC: `infrastructure/liquibase/migrations/data/npcs/V*__data_npc_*.sql` (→ `specialized-domain`)
   - Диалоги: `infrastructure/liquibase/migrations/data/dialogues/V*__data_dialogue_*.sql` (→ `social-domain`)
 - **Связанные enterprise-grade домены:**
-  - Квесты → `specialized-domain` (gameplay mechanics)
-  - NPC → `specialized-domain` (NPC systems)
-  - Диалоги → `social-domain` (social interactions)
+  - Квесты → specialized-domain (gameplay mechanics)
+  - NPC → specialized-domain (NPC systems)
+  - Диалоги → social-domain (social interactions)
+  - See .cursor/DOMAIN_REFERENCE.md for complete list
 - **Передача:** Status `Todo`, Agent `DB`
 
 **Комментарий (для Database):**

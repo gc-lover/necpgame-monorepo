@@ -41,6 +41,9 @@ class BaseScript:
         # Add common arguments
         self._add_common_args()
 
+        # Add script-specific arguments
+        self.add_script_args()
+
     def _add_common_args(self):
         """Add common arguments to all scripts"""
         self.parser.add_argument(

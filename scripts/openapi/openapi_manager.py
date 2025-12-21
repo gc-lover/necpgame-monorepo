@@ -123,12 +123,23 @@ class OpenAPIManager:
         if output_file is None:
             output_file = main_file.parent / f"{main_file.stem}-bundled.yaml"
 
-        self.command_runner.run([
-            'npx', '--yes', '@redocly/cli', 'bundle',
-            str(main_file),
-            '-o', str(output_file)
-        ])
+        # Try different approaches for redocly with dereference
+        commands = [
+            ['npx', '--yes', '@redocly/cli', 'bundle', '--dereferenced', str(main_file), '-o', str(output_file)],
+            ['redocly', 'bundle', '--dereferenced', str(main_file), '-o', str(output_file)],
+        ]
 
+        for cmd in commands:
+            try:
+                self.command_runner.run(cmd, check=True, timeout=30)
+                return output_file
+            except Exception:
+                continue
+
+        # Fallback: just copy the file if bundling fails
+        self.logger.warning(f"Redocly bundling failed, copying file as-is: {main_file}")
+        import shutil
+        shutil.copy2(main_file, output_file)
         return output_file
 
     def validate_with_ogen(self, file_path: Path) -> Tuple[bool, List[str]]:

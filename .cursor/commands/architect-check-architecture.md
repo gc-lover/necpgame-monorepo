@@ -6,7 +6,20 @@ Check architecture readiness before handoff to API Designer.
 
 — [ ] Architecture designed, components defined
 — [ ] Microservices identified, API endpoints described
-- [ ] Requirements ready
+— [ ] Requirements ready
+— [ ] Enterprise-grade domain selected (see .cursor/DOMAIN_REFERENCE.md)
+
+## Enterprise-Grade Domain Validation
+
+**Before handoff, validate domain selection:**
+
+```bash
+# Check if selected domain is enterprise-grade
+python scripts/validate-domains-openapi.py --list-domains | grep "your-domain-name"
+
+# Validate domain structure
+python scripts/validate-domains-openapi.py proto/openapi/your-domain-name/main.yaml
+```
 
 **Result:**
 

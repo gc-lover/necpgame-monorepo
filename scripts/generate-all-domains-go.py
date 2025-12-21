@@ -95,8 +95,8 @@ class GenerateAllDomainsGo(BaseScript):
             self.logger.error("No domains specified and none found in config")
             return
 
-        self.logger.info("🚀 Starting enterprise-grade Go service generation...")
-        self.logger.info(f"⚡ Using {args.parallel} parallel workers")
+        self.logger.info("Starting enterprise-grade Go service generation...")
+        self.logger.info(f"Using {args.parallel} parallel workers")
 
         # PERFORMANCE: Parallel domain processing (3-5x speedup)
         if args.parallel > 1 and len(domains) > 1:
@@ -112,7 +112,7 @@ class GenerateAllDomainsGo(BaseScript):
 
     def _generate_parallel(self, domains: List[str], args):
         """PERFORMANCE: Parallel domain generation with thread pool"""
-        self.logger.info(f"🔄 Processing {len(domains)} domains in parallel...")
+        self.logger.info(f"Processing {len(domains)} domains in parallel...")
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=args.parallel) as executor:
             # PERFORMANCE: Submit all tasks at once to avoid overhead
@@ -130,14 +130,14 @@ class GenerateAllDomainsGo(BaseScript):
                         self._results[domain] = result
 
                     if result['success']:
-                        self.logger.info(f"OK {domain} completed")
+                        self.logger.info(f"[OK] {domain} completed")
                     else:
-                        self.logger.error(f"❌ {domain} failed: {result.get('error', 'Unknown error')}")
+                        self.logger.error(f"[FAIL] {domain} failed: {result.get('error', 'Unknown error')}")
 
                 except Exception as e:
                     with self._lock:
                         self._results[domain] = {'success': False, 'error': str(e)}
-                    self.logger.error(f"❌ {domain} exception: {e}")
+                    self.logger.error(f"[FAIL] {domain} exception: {e}")
 
     def _generate_sequential(self, domains: List[str], args):
         """Sequential generation for single-threaded or debugging"""
@@ -146,14 +146,14 @@ class GenerateAllDomainsGo(BaseScript):
             self._results[domain] = result
 
             if result['success']:
-                self.logger.info(f"OK {domain} completed")
+                self.logger.info(f"[OK] {domain} completed")
             else:
-                self.logger.error(f"❌ {domain} failed: {result.get('error', 'Unknown error')}")
+                self.logger.error(f"[FAIL] {domain} failed: {result.get('error', 'Unknown error')}")
 
     def _generate_domain_worker(self, domain: str, args) -> Dict[str, Any]:
         """Worker function for domain generation - PERFORMANCE optimized"""
         try:
-            self.logger.debug(f"🏗️  Generating {domain} service...")
+            self.logger.debug(f"Generating {domain} service...")
 
             # PERFORMANCE: Memory pooling - reuse spec cache
             spec = None
@@ -200,18 +200,18 @@ class GenerateAllDomainsGo(BaseScript):
         print("\n" + "=" * 60)
         print("GENERATION SUMMARY")
         print("=" * 60)
-        print(f"OK Successfully generated: {generated_count} services")
-        print(f"❌ Failed: {len(failed_domains)} services")
+        print(f"[OK] Successfully generated: {generated_count} services")
+        print(f"[FAIL] Failed: {len(failed_domains)} services")
 
         if failed_domains:
             print(f"Failed domains: {', '.join(failed_domains)}")
 
         # PERFORMANCE: Report parallel processing benefits
         if len(self._results) > 1:
-            print(f"\n⚡ Performance: Parallel processing enabled")
-            print(f"📊 Cache hits: {len([r for r in self._results.values() if r.get('spec')])} domains")
+            print(f"\n[PERF] Parallel processing enabled")
+            print(f"[CACHE] Cache hits: {len([r for r in self._results.values() if r.get('spec')])} domains")
 
-        print("\n🎯 All enterprise-grade domain services ready for Backend development!")
+        print("\n[SUCCESS] All enterprise-grade domain services ready for Backend development!")
 
 
 def main():

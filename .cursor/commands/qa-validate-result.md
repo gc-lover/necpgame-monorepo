@@ -61,6 +61,7 @@ all requirements are met, bugs documented, and system ready for production.
 - [ ] **Scalability:** Handles expected concurrent users
 - [ ] **No memory leaks:** Basic leak detection passed
 - [ ] **Network efficiency:** Reasonable bandwidth usage
+- [ ] **Enterprise optimizations:** All services pass `python scripts/validate-backend-optimizations.sh`
 
 ### [OK] Bug Classification & Documentation
 

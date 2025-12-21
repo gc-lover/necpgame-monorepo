@@ -97,9 +97,9 @@ class BatchOpenAPIOptimizer(BaseScript):
                     total_changed += changes
                     total_files_changed += 1
                     files_with_changes.append((file_path, changes, schemas))
-                    self.logger.info(f"  ✓ Optimized {changes} schemas")
+                    self.logger.info(f"  [OPT] Optimized {changes} schemas")
                 else:
-                    self.logger.info("  ✓ Already optimized")
+                    self.logger.info("  [SKIP] Already optimized")
 
             except Exception as e:
                 self.logger.error(f"  ✗ Failed to process: {e}")
@@ -135,7 +135,7 @@ class BatchOpenAPIOptimizer(BaseScript):
             if changes > 0:
                 self.logger.info(f"Optimized schemas: {changes}")
                 for schema in schemas:
-                    self.logger.info(f"  ✓ {schema}")
+                    self.logger.info(f"  [OPT] {schema}")
 
                 if not dry_run:
                     self.openapi_manager.save_spec(file_path, spec)

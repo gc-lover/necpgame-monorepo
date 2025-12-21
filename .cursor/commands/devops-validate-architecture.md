@@ -26,6 +26,8 @@ Commands for DevOps agent to validate NECPGAME project architecture and ensure c
 - File sizes (max 1000 lines, excludes generated files)
 - Required directory structure
 - Basic project integrity
+- Enterprise-grade domain validation
+- Service optimization checks
 
 #### `validate-architecture-advanced`
 

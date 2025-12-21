@@ -8,6 +8,7 @@ Check if functionality is ready for QA.
 — [ ] Backend ready (from Backend Developer)
 - [ ] Client ready (from UE5 Developer, if applicable)
 - [ ] Content imported to DB (if content quest) - check via API `GET /api/v1/gameplay/quests/{quest_id}` or SQL query
+- [ ] Enterprise-grade service optimizations validated (run `python scripts/validate-backend-optimizations.sh`)
 
 ## Return To
 

@@ -8,6 +8,8 @@
 - Security definitions completeness
 - ogen compatibility for code generation
 - Project standards adherence
+- Enterprise-grade domain structure
+- Performance optimizations applied
 
 ## Usage
 
@@ -24,7 +26,17 @@
 
 ## Validation Steps
 
-### 1. Spectral Linting
+### 1. Enterprise-Grade Domain Check
+
+```bash
+# Validate domain structure and enterprise-grade compliance
+python scripts/validate-domains-openapi.py proto/openapi/your-domain/main.yaml
+
+# Check if optimizations are applied
+python scripts/batch-optimize-openapi-struct-alignment.py proto/openapi/your-domain/main.yaml --dry-run
+```
+
+### 2. Spectral Linting
 
 ```bash
 # Check OpenAPI compliance with Spectral

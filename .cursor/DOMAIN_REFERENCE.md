@@ -28,7 +28,7 @@
 
 ## [WIN] МИРОВОЙ РЕКОРД ПО ОРГАНИЗАЦИИ API
 
-- **Всего файлов:** 1,037 API спецификаций
+- **Всего доменов:** 15 enterprise-grade доменов
 - **Уровень организации:** 100% (все файлы в логических доменах)
 - **Enterprise-grade архитектура:** Fortune 500 уровень
 
@@ -122,24 +122,20 @@
 
 ---
 
-## [TARGET] СПЕЦИАЛИЗИРОВАННЫЕ ДОМЕНЫ (10 дополнительных)
+## [TARGET] СПЕЦИАЛИЗИРОВАННЫЕ ДОМЕНЫ (10 доменов)
 
-| Домен | Файлы | Назначение | API |
-|-------|-------|------------|-----|
-| **security-domain** | 48 | Безопасность и защита | `proto/openapi/security-domain/main.yaml` |
-| **inventory-domain** | 39 | Инвентарь и предметы | `proto/openapi/inventory-domain/main.yaml` |
-| **tournament-domain** | 68 | Турниры и соревнования | `proto/openapi/tournament-domain/main.yaml` |
-| **content-domain** | 55 | Игровой контент | `proto/openapi/content-domain/main.yaml` |
-| **cyberpunk-domain** | 27 | Киберпанковские механики | `proto/openapi/cyberpunk-domain/main.yaml` |
-| **faction-domain** | 27 | Фракции и корпорации | `proto/openapi/faction-domain/main.yaml` |
-| **auth-expansion-domain** | 20 | Расширенная аутентификация | `proto/openapi/auth-expansion-domain/main.yaml` |
-| **progression-domain** | 18 | Прогрессия персонажей | `proto/openapi/progression-domain/main.yaml` |
-| **arena-domain** | 12 | Арены и PvP | `proto/openapi/arena-domain/main.yaml` |
-| **referral-domain** | 10 | Реферальные системы | `proto/openapi/referral-domain/main.yaml` |
-| **legacy-domain** | 13 | Устаревшие API | `proto/openapi/legacy-domain/main.yaml` |
-| **misc-domain** | 9 | Утилиты и вспомогательные | `proto/openapi/misc-domain/main.yaml` |
-| **cosmetic-domain** | 8 | Косметические предметы | `proto/openapi/cosmetic-domain/main.yaml` |
-| **integration-domain** | 4 | Внешние интеграции | `proto/openapi/integration-domain/main.yaml` |
+| Домен | Назначение | API |
+|-------|------------|-----|
+| **arena-domain** | Арены и PvP | `proto/openapi/arena-domain/main.yaml` |
+| **auth-expansion-domain** | Расширенная аутентификация | `proto/openapi/auth-expansion-domain/main.yaml` |
+| **cosmetic-domain** | Косметические предметы | `proto/openapi/cosmetic-domain/main.yaml` |
+| **cyberpunk-domain** | Киберпанковские механики | `proto/openapi/cyberpunk-domain/main.yaml` |
+| **economy-domain** | Экономика | `proto/openapi/economy-domain/main.yaml` |
+| **faction-domain** | Фракции и корпорации | `proto/openapi/faction-domain/main.yaml` |
+| **integration-domain** | Внешние интеграции | `proto/openapi/integration-domain/main.yaml` |
+| **misc-domain** | Утилиты и вспомогательные | `proto/openapi/misc-domain/main.yaml` |
+| **progression-domain** | Прогрессия персонажей | `proto/openapi/progression-domain/main.yaml` |
+| **referral-domain** | Реферальные системы | `proto/openapi/referral-domain/main.yaml` |
 
 ---
 

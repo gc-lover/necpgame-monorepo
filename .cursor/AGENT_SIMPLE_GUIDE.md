@@ -52,10 +52,11 @@ mcp_github_update_project_item({
 - **Скрипты:** `scripts/` (автоматизация, оптимизация)
 
 **Оптимизированные скрипты (ТОЛЬКО PYTHON!):**
-- `python scripts/validate-domains-openapi.py` - валидация OpenAPI доменов
+- `python scripts/validate-domains-openapi.py` - валидация enterprise-grade доменов
 - `python scripts/generate-all-domains-go.py` - генерация enterprise-grade сервисов
 - `python scripts/batch-optimize-openapi-struct-alignment.py` - оптимизация структур OpenAPI
 - `python scripts/reorder-liquibase-columns.py` - оптимизация колонок БД
+- `python scripts/validate-backend-optimizations.sh` - проверка enterprise-grade оптимизаций
 
 **КРИТИЧНО:** Forbidden создавать новые .sh/.ps1/.bat скрипты!
 - [OK] Используй: `scripts/core/base_script.py` (базовый фреймворк)
@@ -64,12 +65,9 @@ mcp_github_update_project_item({
     - Корень только для: `README.md`, `CHANGELOG*.md`, основные конфиги
     - НЕ создавать промежуточные/тестовые файлы в корне!
     - **OpenAPI ДОМЕНЫ (КРИТИЧНО! Новая enterprise-grade архитектура):**
-      - `system-domain/` (553 файла) - инфраструктура, сервисы
-      - `specialized-domain/` (157 файлов) - игровые механики
-      - `social-domain/` (91 файл) - социальные функции
-      - `economy-domain/` (31 файл) - экономика
-      - `world-domain/` (57 файлов) - игровой мир
-      - Остальные 10 доменов для специализированных функций
+      - Все enterprise-grade домены (see .cursor/DOMAIN_REFERENCE.md)
+      - Основные: system, specialized, social, economy, world domains
+      - Специализированные: arena, cosmetic, cyberpunk, faction, etc.
     - **СТРОГО соблюдать структуру knowledge/ (КРИТИЧНО!):**
       - `knowledge/analysis/` - аналитика и исследования
       - `knowledge/canon/` - канонический лор (YAML квесты, NPC, диалоги)
