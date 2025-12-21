@@ -32,7 +32,7 @@ while read local_ref local_sha remote_ref remote_sha; do
         echo "Checking commits for dangerous patterns..."
 
         # Get files modified in these commits that might contain dangerous patterns
-        commit_files=$(git show --name-only $commits_to_check | grep "^scripts/git-security/" | grep -E "\.(bat|md|txt)$" || true)
+        commit_files=$(echo "$commits_to_check" | xargs -n1 git show --name-only | grep "^scripts/git-security/" | grep -E "\.(bat|md|txt)$" || true)
 
         # Skip dangerous command check if only security/documentation files were modified
         if [ -z "$commit_files" ]; then
