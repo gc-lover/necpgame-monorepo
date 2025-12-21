@@ -80,11 +80,7 @@ echo "[CHECK] Emoji Ban Check: Scanning for forbidden Unicode characters..."
 if [ -f "scripts/validate-emoji-ban.sh" ]; then
     # Run emoji validation on staged files
     STAGED_FILES=$(git diff --cached --name-only)
-
-    # Temporary bypass for security/system files during merge resolution
-    if echo "$STAGED_FILES" | grep -q -E "\.(bat|sh|md|txt)$" && echo "$STAGED_FILES" | grep -q -E "(ACTIVATE|SYSTEM|demo|install|test|uninstall)"; then
-        echo "[INFO] Temporarily skipping emoji validation for security system files"
-    elif [ -n "$STAGED_FILES" ]; then
+    if [ -n "$STAGED_FILES" ]; then
         echo "$STAGED_FILES" | xargs bash scripts/validate-emoji-ban.sh
         if [ $? -ne 0 ]; then
             echo "[BLOCKED] COMMIT BLOCKED: Emoji/special character violation detected!"
