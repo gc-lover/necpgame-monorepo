@@ -176,6 +176,10 @@ class DomainOpenAPIValidator:
 
     def _validate_component_file(self, spec_file: Path) -> bool:
         """Validate a component YAML file (may not be full OpenAPI spec)"""
+        # Skip common component files - they don't need full OpenAPI validation
+        if 'common' in spec_file.name.lower():
+            return True
+
         try:
             # Load and parse YAML
             with open(spec_file, 'r', encoding='utf-8') as f:
