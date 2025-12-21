@@ -20,14 +20,26 @@ DANGEROUS_PATTERNS=(
 )
 
 # Check staged files for dangerous patterns
-if git diff --cached --name-only | xargs grep -l "${DANGEROUS_PATTERNS[@]}" 2>/dev/null; then
+DANGEROUS_FOUND=""
+for file in $(git diff --cached --name-only); do
+    if [ -f "$file" ]; then
+        # Skip system files that contain safety documentation
+        if [[ "$file" == .githooks/* ]] || [[ "$file" == .cursor/rules/* ]]; then
+            continue
+        fi
+        for pattern in "${DANGEROUS_PATTERNS[@]}"; do
+            if grep -q "$pattern" "$file" 2>/dev/null; then
+                DANGEROUS_FOUND="$DANGEROUS_FOUND\n  - $pattern (in $file)"
+            fi
+        done
+    fi
+done
+
+if [ -n "$DANGEROUS_FOUND" ]; then
     echo "🚨 BLOCKED: Found traces of dangerous git commands in staged files!"
     echo "These commands can cause data loss and are forbidden for agents."
     echo ""
-    echo "Forbidden commands detected:"
-    for pattern in "${DANGEROUS_PATTERNS[@]}"; do
-        echo "  - $pattern"
-    done
+    echo "Forbidden commands detected:$DANGEROUS_FOUND"
     echo ""
     echo "Please remove these traces and use safe git commands only."
     echo "Safe commands: git add, git commit, git push, git pull, git checkout <branch>"
