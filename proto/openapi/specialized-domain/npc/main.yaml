@@ -1,6 +1,66 @@
-paths: {}
+openapi: 3.0.3
+info:
+  title: NPC Domain API
+  description: |
+    Consolidated NPC Domain API for NECPGAME.
+    Unified API for all NPC-related functionality including generic NPCs and specific characters.
+
+    **BACKEND NOTE**: Domain optimized for NPC interactions and AI behavior management.
+  version: 1.0.0
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  contact:
+    name: NECPGAME API Support
+    url: https://necpgame.com/support
+    email: api@necpgame.com
+
+servers:
+  - url: https://api.necpgame.com/v1/npc
+    description: Production server
+  - url: https://staging-api.necpgame.com/v1/npc
+    description: Staging server
+  - url: http://localhost:8080/api/v1/npc
+    description: Local development
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: NPC Domain
+    description: NPC domain domain endpoints
+
+paths:
+  # Jackie Welles Service Integration - enterprise-grade Jackie Welles NPC management
+  /api/v1/npc/jackie-welles/profile:
+    $ref: "./jackie-wells-service.yaml#/paths/~1api~1v1~1npc~1jackie-welles~1profile"
+  /api/v1/npc/jackie-welles/status:
+    $ref: "./jackie-wells-service.yaml#/paths/~1api~1v1~1npc~1jackie-welles~1status"
+  /api/v1/npc/jackie-welles/interact:
+    $ref: "./jackie-wells-service.yaml#/paths/~1api~1v1~1npc~1jackie-welles~1interact"
+  /api/v1/npc/jackie-welles/relationship:
+    $ref: "./jackie-wells-service.yaml#/paths/~1api~1v1~1npc~1jackie-welles~1relationship"
+  /api/v1/npc/jackie-welles/trade:
+    $ref: "./jackie-wells-service.yaml#/paths/~1api~1v1~1npc~1jackie-welles~1trade"
+  /api/v1/npc/jackie-welles/inventory:
+    $ref: "./jackie-wells-service.yaml#/paths/~1api~1v1~1npc~1jackie-welles~1inventory"
+  /api/v1/npc/jackie-welles/quests/available:
+    $ref: "./jackie-wells-service.yaml#/paths/~1api~1v1~1npc~1jackie-welles~1quests~1available"
+  /api/v1/npc/jackie-welles/quests/{quest_id}/accept:
+    $ref: "./jackie-wells-service.yaml#/paths/~1api~1v1~1npc~1jackie-welles~1quests~1{quest_id}~1accept"
+  /api/v1/npc/jackie-welles/dialogue/start:
+    $ref: "./jackie-wells-service.yaml#/paths/~1api~1v1~1npc~1jackie-welles~1dialogue~1start"
+  /api/v1/npc/jackie-welles/dialogue/{dialogue_id}/respond:
+    $ref: "./jackie-wells-service.yaml#/paths/~1api~1v1~1npc~1jackie-welles~1dialogue~1{dialogue_id}~1respond"
 components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
   schemas:
+    # Общие NPC схемы
     NPCProfile:
       type: object
       properties:
@@ -27,3 +87,15 @@ components:
         dialogue_tree:
           type: object
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+    # Jackie Welles схемы
+    JackieProfile:
+      $ref: "./jackie-wells-service.yaml#/components/schemas/JackieProfile"
+    JackieStatus:
+      $ref: "./jackie-wells-service.yaml#/components/schemas/JackieStatus"
+    JackieRelationship:
+      $ref: "./jackie-wells-service.yaml#/components/schemas/JackieRelationship"
+    JackieCombatStats:
+      $ref: "./jackie-wells-service.yaml#/components/schemas/JackieCombatStats"
+    JackieQuest:
+      $ref: "./jackie-wells-service.yaml#/components/schemas/JackieQuest"
