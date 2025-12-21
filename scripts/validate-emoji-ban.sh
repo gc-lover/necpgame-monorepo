@@ -62,7 +62,8 @@ EXCLUDED_FILES=(
 )
 
 EXCLUDED_PATTERNS=(
-    ".cursor/rules/*"  # Rules may contain emoji examples for documentation
+    ".cursor/rules/"  # Rules may contain emoji examples for documentation
+    "scripts/validate-emoji-ban"  # This script contains forbidden character lists for validation
 )
 
 # Function to check if file should be excluded
@@ -78,9 +79,8 @@ should_exclude_file() {
 
     # Check excluded patterns
     for pattern in "${EXCLUDED_PATTERNS[@]}"; do
-        # Simple glob matching - convert * to .* for regex
-        local regex_pattern="${pattern//\*/.*}"
-        if [[ "$file" =~ $regex_pattern ]]; then
+        # Simple string matching for excluded directories/files
+        if [[ "$file" == ${pattern}* ]]; then
             return 0
         fi
     done

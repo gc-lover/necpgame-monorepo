@@ -16,7 +16,7 @@ set "FORBIDDEN_CHARS=★ ♦ ♠ ♥ ♣ ► ◄ ▲ ▼ ◆ ◇ ✓ ✗ ✖ ✕
 REM Files to exclude from checking
 set "EXCLUDED_EXTENSIONS=.png .jpg .jpeg .gif .svg .ico .woff .woff2 .ttf .eot .pdf .zip .tar .gz .7z .rar .mp3 .mp4 .avi .mkv .mov .wmv"
 set "EXCLUDED_FILES=.git node_modules"
-set "EXCLUDED_PATTERNS=.cursor\rules\*"
+set "EXCLUDED_PATTERNS=.cursor\rules\ scripts\validate-emoji-ban"
 
 set "HAS_ERRORS=0"
 set "TOTAL_FILES=0"
@@ -123,14 +123,11 @@ for %%e in (%EXCLUDED_FILES%) do (
 
 REM Check excluded patterns
 for %%p in (%EXCLUDED_PATTERNS%) do (
-    REM Simple pattern matching for .cursor\rules\*
-    echo %%p | find ".cursor\rules\*" >nul 2>&1
+    REM Simple string prefix matching
+    echo %file% | find "%%p" >nul 2>&1
     if !errorlevel!==0 (
-        echo %file% | find ".cursor\rules\" >nul 2>&1
-        if !errorlevel!==0 (
-            set "EXCLUDE_RESULT=1"
-            goto :eof
-        )
+        set "EXCLUDE_RESULT=1"
+        goto :eof
     )
 )
 
