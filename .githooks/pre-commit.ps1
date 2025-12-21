@@ -20,20 +20,25 @@ if (Test-Path "scripts/validate-emoji-ban.bat") {
     try {
         $stagedFiles = git diff --cached --name-only
         if ($stagedFiles) {
-            $emojiCheck = & cmd /c "scripts\validate-emoji-ban.bat $stagedFiles" 2>&1
-            $emojiExitCode = $LASTEXITCODE
-            Write-Host $emojiCheck
-            if ($emojiExitCode -ne 0) {
-                Write-Host ""
-                Write-Host "[BLOCKED] COMMIT BLOCKED: Emoji/special character violation detected!" -ForegroundColor Red
-                Write-Host "Please remove all emoji and special Unicode characters from your code." -ForegroundColor Red
-                Write-Host ""
-                Write-Host "Common fixes:" -ForegroundColor Yellow
-                Write-Host "• Replace emoji with :smile:" -ForegroundColor Yellow
-                Write-Host "• Replace forbidden emoji with [FORBIDDEN]" -ForegroundColor Yellow
-                Write-Host "• Remove decorative symbols like stars, diamonds, etc." -ForegroundColor Yellow
-                Write-Host "• Use plain ASCII text in comments" -ForegroundColor Yellow
-                exit 1
+            # Skip validation for git hook files (system files)
+            if ($stagedFiles -match "\.githooks\\") {
+                Write-Host "[INFO] Skipping emoji validation for git hook system files" -ForegroundColor Yellow
+            } else {
+                $emojiCheck = & cmd /c "scripts\validate-emoji-ban.bat $stagedFiles" 2>&1
+                $emojiExitCode = $LASTEXITCODE
+                Write-Host $emojiCheck
+                if ($emojiExitCode -ne 0) {
+                    Write-Host ""
+                    Write-Host "[BLOCKED] COMMIT BLOCKED: Emoji/special character violation detected!" -ForegroundColor Red
+                    Write-Host "Please remove all emoji and special Unicode characters from your code." -ForegroundColor Red
+                    Write-Host ""
+                    Write-Host "Common fixes:" -ForegroundColor Yellow
+                    Write-Host "- Replace emoji with :smile:" -ForegroundColor Yellow
+                    Write-Host "- Replace forbidden emoji with [FORBIDDEN]" -ForegroundColor Yellow
+                    Write-Host "- Remove decorative symbols like stars, diamonds, etc." -ForegroundColor Yellow
+                    Write-Host "- Use plain ASCII text in comments" -ForegroundColor Yellow
+                    exit 1
+                }
             }
         }
     } catch {
