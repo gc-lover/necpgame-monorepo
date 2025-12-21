@@ -28,6 +28,7 @@ FORBIDDEN_RANGES=(
     "1F9C0-1F9FF"  # Even more emoticons
     "0020-007E"    # Basic ASCII (allowed)
     "00A0-00FF"    # Latin-1 Supplement (mostly allowed)
+    "0400-04FF"    # Cyrillic (allowed - Russian text)
     "2000-206F"    # General Punctuation (some special chars)
     "2190-21FF"    # Arrows
     "2200-22FF"    # Mathematical Operators
@@ -119,15 +120,20 @@ is_forbidden_char() {
         fi
     done
 
-    # Check Unicode ranges (simplified check for common emoji ranges)
-    # This is a basic check - in production you'd want more sophisticated Unicode range checking
+    # Check Unicode ranges
     if [[ "$code" =~ ^1F[0-9A-F]{3}$ ]]; then
         # Emoji range 1F000-1FFFF
         return 0
     fi
 
     if [[ "$code" =~ ^2[0-9A-F]{3}$ ]]; then
-        # Various symbol ranges
+        # Various symbol ranges (but allow Cyrillic in 0400-04FF)
+        # Convert to decimal for range check
+        decimal=$(printf "%d" "0x$code" 2>/dev/null || echo "0")
+        if [[ $decimal -ge 1024 && $decimal -le 1279 ]]; then
+            # Cyrillic range U+0400-U+04FF (1024-1279 decimal) - ALLOWED
+            return 1
+        fi
         return 0
     fi
 

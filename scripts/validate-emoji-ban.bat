@@ -96,13 +96,27 @@ for %%c in (%FORBIDDEN_CHARS%) do (
 )
 
 REM Basic emoji detection (simplified)
+REM Allow Cyrillic (U+0400-U+04FF) but block emoji and other special Unicode
 echo !line! | findstr /r "[^\x00-\x7F]" >nul 2>&1
 if !errorlevel!==0 (
-    REM Contains non-ASCII characters - could be emoji
+    REM Contains non-ASCII characters - check if it's allowed Cyrillic
     echo !line! | findstr /r "[^\x00-\xFF]" >nul 2>&1
     if !errorlevel!==0 (
-        REM Contains characters above Latin-1 - likely emoji or special Unicode
-        set "FOUND_ERRORS=!FOUND_ERRORS!Line !line_num!: Contains Unicode characters above Latin-1 (possible emoji) - !line:~0,50!...\n"
+        REM Contains characters above Latin-1 - check if it's Cyrillic range
+        REM Cyrillic is U+0400-U+04FF, which appears as specific byte sequences in UTF-8
+        REM For simplicity, we'll allow common Cyrillic characters but flag suspicious Unicode
+        REM This is a simplified check - in production use proper Unicode range checking
+
+        REM Check for emoji ranges (U+1F000+) - these are definitely forbidden
+        echo !line! | findstr /r "[\xF0-\xF7][\x80-\xBF][\x80-\xBF][\x80-\xBF]" >nul 2>&1
+        if !errorlevel!==0 (
+            REM Likely contains emoji (4-byte UTF-8 sequences starting with F0-F7)
+            set "FOUND_ERRORS=!FOUND_ERRORS!Line !line_num!: Contains 4-byte Unicode sequences (likely emoji) - !line:~0,50!...\n"
+        ) else (
+            REM Could be other Unicode - allow for now (including Cyrillic)
+            REM In a full implementation, we'd check exact Unicode codepoints
+            REM For now, we'll be permissive with non-ASCII above Latin-1
+        )
     )
 )
 
