@@ -16,8 +16,6 @@ info:
     url: https://necpgame.com/support
     email: api@necpgame.com
 servers:
-  - url: http://localhost:8080/api/v1
-    description: Development server
   - url: https://api.necpgame.com/api/v1
     description: Production server
 security:
@@ -49,10 +47,28 @@ paths:
     $ref: "./cities/world-cities-service.yaml#/paths/~1api~1v1~1cities~1stats"
   /api/v1/cities/search:
     $ref: "./cities/world-cities-service.yaml#/paths/~1api~1v1~1cities~1search"
-  /api/v1/cities/{city_id}/timeline:
-    $ref: "./cities/world-cities-service.yaml#/paths/~1api~1v1~1cities~1{city_id}~1timeline"
-  /api/v1/cities/timeline/search:
-    $ref: "./cities/world-cities-service.yaml#/paths/~1api~1v1~1cities~1timeline~1search"
+
+  # World Bosses Service Integration - enterprise-grade world boss events management
+  /api/v1/world/bosses/catalog:
+    $ref: "./world-bosses-service.yaml#/paths/~1api~1v1~1world~1bosses~1catalog"
+  /api/v1/world/bosses/{boss_id}:
+    $ref: "./world-bosses-service.yaml#/paths/~1api~1v1~1world~1bosses~1{boss_id}"
+  /api/v1/world/bosses/schedule:
+    $ref: "./world-bosses-service.yaml#/paths/~1api~1v1~1world~1bosses~1schedule"
+  /api/v1/world/bosses/events/{event_id}:
+    $ref: "./world-bosses-service.yaml#/paths/~1api~1v1~1world~1bosses~1events~1{event_id}"
+  /api/v1/world/bosses/events/{event_id}/register:
+    $ref: "./world-bosses-service.yaml#/paths/~1api~1v1~1world~1bosses~1events~1{event_id}~1register"
+  /api/v1/world/bosses/events/{event_id}/participants:
+    $ref: "./world-bosses-service.yaml#/paths/~1api~1v1~1world~1bosses~1events~1{event_id}~1participants"
+  /api/v1/world/bosses/events/{event_id}/status:
+    $ref: "./world-bosses-service.yaml#/paths/~1api~1v1~1world~1bosses~1events~1{event_id}~1status"
+  /api/v1/world/bosses/events/{event_id}/telemetry:
+    $ref: "./world-bosses-service.yaml#/paths/~1api~1v1~1world~1bosses~1events~1{event_id}~1telemetry"
+  /api/v1/world/bosses/events/{event_id}/aftermath:
+    $ref: "./world-bosses-service.yaml#/paths/~1api~1v1~1world~1bosses~1events~1{event_id}~1aftermath"
+  /api/v1/world/bosses/events/{event_id}/rewards/{player_id}:
+    $ref: "./world-bosses-service.yaml#/paths/~1api~1v1~1world~1bosses~1events~1{event_id}~1rewards~1{player_id}"
 
   /api/v1/world-domain/health:
     get:
@@ -162,48 +178,6 @@ components:
           format: date-time
           maxLength: 255
       description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-    Error:
-      type: object
-      properties:
-        message:
-          type: string
-          example: Internal server error
-          maxLength: 1000
-        domain:
-          type: string
-          example: world-domain
-          maxLength: 255
-        timestamp:
-          type: string
-          format: date-time
-          maxLength: 255
-        code:
-          type: integer
-          example: 500
-          format: int32
-          minimum: 100
-          maximum: 599
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-    WebSocketHealthMessage:
-      type: object
-      required:
-        - type
-        - message_timestamp
-        - health
-      properties:
-        type:
-          type: string
-          enum:
-            - health_update
-            - health_alert
-            - service_down
-        message_timestamp:
-          type: string
-          format: date-time
-          description: Timestamp of the health message
-        health:
-          $ref: "#/components/schemas/HealthResponse"
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
 
     # World Cities Service Schemas Integration
     City:
@@ -218,3 +192,75 @@ components:
       $ref: "./cities/world-cities-service.yaml#/components/schemas/Region"
     CityTimelineEntry:
       $ref: "./cities/world-cities-service.yaml#/components/schemas/CityTimelineEntry"
+
+    # World Bosses Service Schemas Integration - enterprise-grade world boss events management
+    WorldBossesCatalogResponse:
+      $ref: "./world-bosses-service.yaml#/components/schemas/WorldBossesCatalogResponse"
+    WorldBossSummary:
+      $ref: "./world-bosses-service.yaml#/components/schemas/WorldBossSummary"
+    BossRotationCycle:
+      $ref: "./world-bosses-service.yaml#/components/schemas/BossRotationCycle"
+    WorldBossDetailResponse:
+      $ref: "./world-bosses-service.yaml#/components/schemas/WorldBossDetailResponse"
+    WorldBoss:
+      $ref: "./world-bosses-service.yaml#/components/schemas/WorldBoss"
+    BossPhase:
+      $ref: "./world-bosses-service.yaml#/components/schemas/BossPhase"
+    BossAbility:
+      $ref: "./world-bosses-service.yaml#/components/schemas/BossAbility"
+    SkillCheck:
+      $ref: "./world-bosses-service.yaml#/components/schemas/SkillCheck"
+    BossRewards:
+      $ref: "./world-bosses-service.yaml#/components/schemas/BossRewards"
+    LootEntry:
+      $ref: "./world-bosses-service.yaml#/components/schemas/LootEntry"
+    WorldFlagChange:
+      $ref: "./world-bosses-service.yaml#/components/schemas/WorldFlagChange"
+    BossStatistics:
+      $ref: "./world-bosses-service.yaml#/components/schemas/BossStatistics"
+    WorldBossesScheduleResponse:
+      $ref: "./world-bosses-service.yaml#/components/schemas/WorldBossesScheduleResponse"
+    WorldBossEventSummary:
+      $ref: "./world-bosses-service.yaml#/components/schemas/WorldBossEventSummary"
+    ScheduleWorldBossRequest:
+      $ref: "./world-bosses-service.yaml#/components/schemas/ScheduleWorldBossRequest"
+    WorldBossEventScheduledResponse:
+      $ref: "./world-bosses-service.yaml#/components/schemas/WorldBossEventScheduledResponse"
+    WorldBossEventDetailResponse:
+      $ref: "./world-bosses-service.yaml#/components/schemas/WorldBossEventDetailResponse"
+    WorldBossEvent:
+      $ref: "./world-bosses-service.yaml#/components/schemas/WorldBossEvent"
+    EventParticipant:
+      $ref: "./world-bosses-service.yaml#/components/schemas/EventParticipant"
+    EventTelemetrySummary:
+      $ref: "./world-bosses-service.yaml#/components/schemas/EventTelemetrySummary"
+    UpdateWorldBossEventRequest:
+      $ref: "./world-bosses-service.yaml#/components/schemas/UpdateWorldBossEventRequest"
+    WorldBossEventResponse:
+      $ref: "./world-bosses-service.yaml#/components/schemas/WorldBossEventResponse"
+    RegisterForEventRequest:
+      $ref: "./world-bosses-service.yaml#/components/schemas/RegisterForEventRequest"
+    RegistrationResponse:
+      $ref: "./world-bosses-service.yaml#/components/schemas/RegistrationResponse"
+    EventParticipantsResponse:
+      $ref: "./world-bosses-service.yaml#/components/schemas/EventParticipantsResponse"
+    WorldBossEventStatusResponse:
+      $ref: "./world-bosses-service.yaml#/components/schemas/WorldBossEventStatusResponse"
+    TelemetryEvent:
+      $ref: "./world-bosses-service.yaml#/components/schemas/TelemetryEvent"
+    WorldBossTelemetryResponse:
+      $ref: "./world-bosses-service.yaml#/components/schemas/WorldBossTelemetryResponse"
+    WorldBossAftermathResponse:
+      $ref: "./world-bosses-service.yaml#/components/schemas/WorldBossAftermathResponse"
+    AftermathEffects:
+      $ref: "./world-bosses-service.yaml#/components/schemas/AftermathEffects"
+    EconomicImpacts:
+      $ref: "./world-bosses-service.yaml#/components/schemas/EconomicImpacts"
+    ProcessAftermathRequest:
+      $ref: "./world-bosses-service.yaml#/components/schemas/ProcessAftermathRequest"
+    AftermathProcessedResponse:
+      $ref: "./world-bosses-service.yaml#/components/schemas/AftermathProcessedResponse"
+    PlayerRewardsResponse:
+      $ref: "./world-bosses-service.yaml#/components/schemas/PlayerRewardsResponse"
+    PlayerRewards:
+      $ref: "./world-bosses-service.yaml#/components/schemas/PlayerRewards"
