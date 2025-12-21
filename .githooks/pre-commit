@@ -1,189 +1,98 @@
 #!/bin/bash
 
-# Git Hook: Pre-commit protection against dangerous commands
-# This hook prevents commits that might contain traces of dangerous git operations
+# Git Hook: Unified Pre-commit Validation
+# Uses Python scripts for all validation checks
 
+echo "[CHECK] Unified Pre-commit Validation: Starting checks..."
+
+# Get staged files
+STAGED_FILES=$(git diff --cached --name-only)
+
+# 1. Git Safety Check: Scan for dangerous command traces
 echo "[CHECK] Git Safety Check: Scanning for dangerous command traces..."
-
-# Check if any staged files contain dangerous git command patterns
-# This catches cases where agents might have accidentally included command output
-
-DANGEROUS_PATTERNS=(
-    "git reset"
-    "git clean"
-    "git checkout --force"
-    "git branch -D"
-    "git push --force"
-    "git rebase --abort"
-    "git stash drop"
-)
-
-# Check staged files for dangerous patterns
-DANGEROUS_FOUND=""
-for file in $(git diff --cached --name-only); do
-    if [ -f "$file" ]; then
-        # Skip system files that contain safety documentation
-        if [[ "$file" == .githooks/* ]] || [[ "$file" == .cursor/rules/* ]] || [[ "$file" == scripts/git-security/* ]] || [[ "$file" == scripts/linting/* ]]; then
-            continue
-        fi
-        for pattern in "${DANGEROUS_PATTERNS[@]}"; do
-            if grep -q "$pattern" "$file" 2>/dev/null; then
-                DANGEROUS_FOUND="$DANGEROUS_FOUND\n  - $pattern (in $file)"
+if [ -n "$STAGED_FILES" ]; then
+    DANGEROUS_FOUND=""
+    for file in $STAGED_FILES; do
+        if [ -f "$file" ]; then
+            # Skip system files that contain safety documentation
+            if [[ "$file" == .githooks/* ]] || [[ "$file" == .cursor/rules/* ]] || [[ "$file" == scripts/git-security/* ]] || [[ "$file" == scripts/linting/* ]]; then
+                continue
             fi
-        done
+            # Check for dangerous git commands in file content
+            if grep -q "git reset\|git clean\|git checkout --force\|git branch -D\|git push --force\|git rebase --abort\|git stash drop" "$file" 2>/dev/null; then
+                DANGEROUS_FOUND="$DANGEROUS_FOUND\n  - Dangerous git command found in $file"
+            fi
+        fi
+    done
+
+    if [ -n "$DANGEROUS_FOUND" ]; then
+        echo "[CRITICAL] SECURITY VIOLATION: DANGEROUS GIT COMMANDS DETECTED!"
+        echo "COMMIT REJECTED - PROJECT PROTECTED$DANGEROUS_FOUND"
+        exit 1
     fi
-done
-
-if [ -n "$DANGEROUS_FOUND" ]; then
-    echo "[CRITICAL] SECURITY VIOLATION: DANGEROUS GIT COMMANDS DETECTED!"
-    echo "AI AGENT SECURITY BREACH DETECTED!"
-    echo "PROJECT SAFETY PROTOCOL ACTIVATED!"
-    echo ""
-    echo "FORBIDDEN COMMANDS DETECTED IN FILES:$DANGEROUS_FOUND"
-    echo ""
-    echo "WHY THIS IS BLOCKED:"
-    echo "- git reset (any)  -> LOSES WORK irreversibly"
-    echo "- git clean (any)  -> DELETES FILES permanently"
-    echo "- git push --force -> DESTROYS shared history"
-    echo "- git branch -D    -> DELETES branches permanently"
-    echo ""
-    echo "[FORBIDDEN] DO NOT ATTEMPT TO BYPASS THIS PROTECTION!"
-    echo "[FORBIDDEN] DO NOT TRY TO USE THESE COMMANDS IN ANY WAY!"
-    echo "[FORBIDDEN] THIS IS A SERIOUS SECURITY VIOLATION!"
-    echo ""
-    echo "REQUIRED IMMEDIATE ACTION:"
-    echo "1. STOP what you are doing"
-    echo "2. Return task with security violation note"
-    echo "3. DO NOT attempt to bypass this protection"
-    echo "4. Contact human administrator if needed"
-    echo ""
-    echo "SAFE ALTERNATIVES INSTEAD:"
-    echo "- To undo file changes:    git restore <file>"
-    echo "- To undo last commit:     git revert HEAD"
-    echo "- To clean safely:         git clean -n (preview first)"
-    echo "- To force push safely:    git push --force-with-lease"
-    echo ""
-    echo "EDUCATION: Git reset/clean are powerful but DANGEROUS tools."
-    echo "They can destroy hours/days/weeks of work instantly."
-    echo "This protection saves your project from catastrophic loss."
-    echo ""
-    echo "SECURITY INCIDENT LOGGED - VIOLATION REPORTED"
-    echo "COMMIT REJECTED - PROJECT PROTECTED"
-    exit 1
 fi
-
 echo "[SUCCESS] Git Safety Check: No dangerous command traces found."
 
-# Check for emoji and special characters in staged files
+# 2. Emoji Ban Check
 echo "[CHECK] Emoji Ban Check: Scanning for forbidden Unicode characters..."
+if [ -f "scripts/validate-emoji-ban.py" ] && [ -n "$STAGED_FILES" ]; then
+    # Filter files for emoji validation (Python files and OpenAPI specs)
+    PYTHON_FILES=$(echo "$STAGED_FILES" | grep "\.py$" | grep -v -E "\.githooks/|\.cursor/|scripts/framework\.py|scripts/SCRIPT_MIGRATION_GUIDE\.md" || true)
+    OPENAPI_FILES=$(echo "$STAGED_FILES" | grep -E "\.yaml$|\.yml$" | grep -E "proto/openapi/" || true)
 
-if [ -f "scripts/validate-emoji-ban.py" ]; then
-    # Run emoji validation on staged files
-    STAGED_FILES=$(git diff --cached --name-only)
-
-    # Skip validation for git hook files (system files)
-    if echo "$STAGED_FILES" | grep -q -E "\.githooks/|\.cursor/"; then
-        echo "[INFO] Skipping emoji validation for system files"
-    elif echo "$STAGED_FILES" | grep -q -E "scripts/(validate-emoji-ban\.py|validate-script-types\.py|framework\.py|SCRIPT_MIGRATION_GUIDE\.md)"; then
-        echo "[INFO] Skipping emoji validation for script framework and docs"
-    elif echo "$STAGED_FILES" | grep -q -E "\.py$"; then
-        # Only check Python files for emoji (stricter check for code)
-        echo "$STAGED_FILES" | grep "\.py$" | xargs python scripts/validate-emoji-ban.py
+    if [ -n "$PYTHON_FILES" ]; then
+        echo "$PYTHON_FILES" | xargs python scripts/validate-emoji-ban.py
         if [ $? -ne 0 ]; then
-            echo "[ERROR] Emoji/special character found in Python file!"
-            echo "Please remove emoji and special Unicode characters from code."
-            echo ""
-            echo "Fix suggestions:"
-            echo "- Replace emoji with ASCII text ([OK], [ERROR], etc.)"
-            echo "- Use plain comments without special characters"
-            echo ""
-            echo "[BLOCKED] Commit blocked due to emoji violation"
+            echo "[BLOCKED] Commit blocked due to emoji violation in Python files"
             exit 1
         fi
-    else
-        echo "[INFO] Skipping emoji validation for non-Python files (documentation, config, etc.)"
+    fi
+
+    if [ -n "$OPENAPI_FILES" ]; then
+        echo "$OPENAPI_FILES" | xargs python scripts/validate-emoji-ban.py --openapi
+        if [ $? -ne 0 ]; then
+            echo "[BLOCKED] Commit blocked due to emoji violation in OpenAPI files"
+            exit 1
+        fi
     fi
 else
     echo "[WARNING] Emoji validation script not found, skipping emoji check"
 fi
-
 echo "[SUCCESS] Emoji Ban Check: Validation completed."
 
-# Check for forbidden script types (only Python allowed)
+# 3. Script Language Enforcement
 echo "[CHECK] Script Language Enforcement: Only Python scripts allowed..."
-
-if [ -f "scripts/validate-script-types.py" ]; then
-    # Run script type validation on staged files
-    STAGED_FILES=$(git diff --cached --name-only)
-
-    if [ -n "$STAGED_FILES" ]; then
-        echo "$STAGED_FILES" | xargs python scripts/validate-script-types.py
-        if [ $? -ne 0 ]; then
-            echo "[BLOCKED] COMMIT BLOCKED: FORBIDDEN SCRIPT TYPE DETECTED!"
-            echo ""
-            echo "SCRIPT LANGUAGE POLICY ENFORCEMENT:"
-            echo "• [OK] ALLOWED: .py (Python scripts)"
-            echo "• [ERROR] FORBIDDEN: .sh, .ps1, .bat, .cmd, .pl, .rb, .js (shell scripts)"
-            echo ""
-            echo "WHY THIS IS ENFORCED:"
-            echo "• Python is cross-platform and maintainable"
-            echo "• Shell scripts cause platform compatibility issues"
-            echo "• Python has better error handling and testing"
-            echo "• Single language reduces cognitive load"
-            echo ""
-            echo "MIGRATION REQUIRED:"
-            echo "1. Convert shell scripts to Python equivalents"
-            echo "2. Use python scripts/framework.py for new scripts"
-            echo "3. Remove old shell scripts after migration"
-            echo ""
-            echo "EXCEPTIONS (system files only):"
-            echo "• .githooks/*.sh - Git hooks (system infrastructure)"
-            echo "• infrastructure/**/*.sh - Infrastructure automation"
-            echo "• scripts/git-security/*.bat - Git security tools"
-            echo ""
-            exit 1
-        fi
+if [ -f "scripts/validate-script-types.py" ] && [ -n "$STAGED_FILES" ]; then
+    echo "$STAGED_FILES" | xargs python scripts/validate-script-types.py
+    if [ $? -ne 0 ]; then
+        echo "[BLOCKED] COMMIT BLOCKED: FORBIDDEN SCRIPT TYPE DETECTED!"
+        exit 1
     fi
-else
-    echo "[WARNING] Script type validation script not found, skipping check"
 fi
-
 echo "[SUCCESS] Script Language Enforcement: Only Python scripts detected."
 
-# Check OpenAPI specifications for validity
+# 4. OpenAPI Validation
 echo "[CHECK] OpenAPI Validation: Checking OpenAPI specs..."
+if command -v redocly >/dev/null 2>&1 && [ -n "$STAGED_FILES" ]; then
+    OPENAPI_FILES=$(echo "$STAGED_FILES" | grep -E "\.yaml$|\.yml$" | grep -E "proto/openapi/" || true)
 
-if command -v redocly >/dev/null 2>&1; then
-    # Find OpenAPI files in staged changes
-    STAGED_OPENAPI_FILES=$(echo "$STAGED_FILES" | grep -E "\.yaml$|\.yml$" | grep -E "proto/openapi/" || true)
-
-    if [ -n "$STAGED_OPENAPI_FILES" ]; then
-        echo "Found OpenAPI files to validate: $STAGED_OPENAPI_FILES"
-        for api_file in $STAGED_OPENAPI_FILES; do
+    if [ -n "$OPENAPI_FILES" ]; then
+        echo "Found OpenAPI files to validate: $OPENAPI_FILES"
+        for api_file in $OPENAPI_FILES; do
             if [ -f "$api_file" ]; then
                 echo "Validating $api_file..."
                 if ! redocly lint "$api_file" --format=stylish; then
                     echo "[ERROR] OpenAPI validation failed for $api_file!"
-                    echo ""
-                    echo "OpenAPI VALIDATION FAILED:"
-                    echo "• Fix syntax errors in the OpenAPI specification"
-                    echo "• Ensure all required fields are present"
-                    echo "• Check $ref references are valid"
-                    echo "• Verify schema definitions are correct"
-                    echo ""
                     echo "[BLOCKED] Commit blocked due to OpenAPI validation failure"
                     exit 1
                 fi
             fi
         done
         echo "[SUCCESS] All OpenAPI files passed validation"
-    else
-        echo "[INFO] No OpenAPI files to validate in this commit"
     fi
 else
-    echo "[WARNING] redocly not found, skipping OpenAPI validation"
-    echo "[INFO] Install redocly: npm install -g @redocly/cli"
+    echo "[WARNING] redocly not found or no files to validate, skipping OpenAPI validation"
 fi
 
-echo "[SUCCESS] OpenAPI Validation: All checks passed."
+echo "[SUCCESS] Unified Pre-commit Validation: All checks passed."
 exit 0

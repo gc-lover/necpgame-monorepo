@@ -82,14 +82,22 @@ def check_file_for_emoji(file_path):
     return violations
 
 def main():
-    if len(sys.argv) < 2:
-        print("Usage: python scripts/validate-emoji-ban.py <file1> [file2] ...")
+    import argparse
+
+    parser = argparse.ArgumentParser(description='Validate files for forbidden emoji and special characters')
+    parser.add_argument('--openapi', action='store_true', help='Check OpenAPI files only')
+    parser.add_argument('files', nargs='*', help='Files to check')
+
+    args = parser.parse_args()
+
+    if not args.files:
+        print("Usage: python scripts/validate-emoji-ban.py [--openapi] <file1> [file2] ...")
         sys.exit(1)
 
     all_violations = []
     files_checked = 0
 
-    for file_path in sys.argv[1:]:
+    for file_path in args.files:
         if not os.path.exists(file_path):
             continue
 
@@ -99,6 +107,10 @@ def main():
 
         # Skip framework and migration docs
         if any(skip in file_path for skip in ['scripts/framework.py', 'scripts/SCRIPT_MIGRATION_GUIDE.md']):
+            continue
+
+        # If --openapi flag is used, only check OpenAPI files
+        if args.openapi and not (file_path.endswith(('.yaml', '.yml')) and 'proto/openapi/' in file_path):
             continue
 
         violations = check_file_for_emoji(file_path)
