@@ -35,32 +35,84 @@
 - Node.js инструменты для линтинга
 - Пакетный менеджмент
 
-## [SYMBOL] Миграция существующих скриптов
+## [SYMBOL] OK РЕФАКТОРИНГ ЗАВЕРШЕН - НОВАЯ АРХИТЕКТУРА
 
-### Приоритет миграции:
+### Архитектура по SOLID принципам:
 
-1. **Высокий приоритет** (мигрировать первыми):
-   - `scripts/lint.sh` → `scripts/lint.py`
-   - `scripts/generate-content-migrations.sh` → `scripts/generate-content-migrations.py`
-   - `scripts/validate-backend-optimizations.sh` → `scripts/validate-backend-optimizations.py`
+#### 🎯 **Принципы SOLID реализованы:**
+- **Single Responsibility**: Каждый класс делает только одно дело
+- **Open/Closed**: Легко расширять без изменения существующего кода
+- **Liskov Substitution**: Все наследники совместимы с базовыми классами
+- **Interface Segregation**: Минимальные интерфейсы для каждого компонента
+- **Dependency Inversion**: Зависимости инжектируются через конструкторы
 
-2. **Средний приоритет**:
-   - `scripts/deploy/*.sh` → `scripts/deploy/*.py`
-   - `scripts/db/*.sh` → `scripts/db/*.py`
+#### 🏗️ **Новая структура скриптов:**
 
-3. **Низкий приоритет** (системные):
-   - `scripts/local/*.sh` - оставить как есть
-   - `scripts/testing/*.ps1` - конвертировать по мере необходимости
+```
+scripts/
+├── core/                          # Базовые компоненты
+│   ├── __init__.py
+│   ├── base_script.py            # Базовый класс для всех скриптов
+│   ├── config.py                 # Управление конфигурацией
+│   ├── file_manager.py           # Работа с файлами
+│   ├── logger.py                 # Логирование
+│   └── command_runner.py         # Запуск команд
+├── openapi/                      # Работа с OpenAPI
+│   ├── __init__.py
+│   └── openapi_manager.py        # Управление OpenAPI спецификациями
+├── sql/                          # Работа с SQL
+│   ├── __init__.py
+│   └── liquibase_processor.py    # Обработка Liquibase миграций
+├── validation/                   # Валидация
+│   ├── __init__.py
+│   ├── base_validator.py         # Базовый валидатор
+│   └── openapi_validator.py      # Валидатор OpenAPI
+├── generation/                   # Генерация кода
+│   ├── __init__.py
+│   └── go_service_generator.py   # Генератор Go сервисов
+└── [скрипты]                     # Конкретные скрипты
+```
+
+#### 📊 **Рефакторенные скрипты:**
+
+| Скрипт | Статус | Описание |
+|--------|--------|----------|
+| `batch-optimize-openapi-struct-alignment.py` | OK | Массовый оптимизатор OpenAPI |
+| `fix-all-openapi-warnings.py` | OK | Исправление всех OpenAPI warnings |
+| `fix-common-refs.py` | OK | Исправление общих ссылок |
+| `fix-openapi-warnings.py` | OK | Исправление OpenAPI warnings |
+| `generate-all-domains-go.py` | OK | Генератор Go сервисов |
+| `reorder-liquibase-columns.py` | OK | Оптимизация порядка колонок SQL |
+| `reorder-openapi-fields.py` | OK | Оптимизация порядка полей OpenAPI |
+| `validate-kafka-schemas.py` | ⏳ | Валидация Kafka схем |
+| `validate-all-migrations.py` | ⏳ | Валидация всех миграций |
+| `validate-domains-openapi.py` | ⏳ | Валидация OpenAPI доменов |
+| `framework.py` | ⏳ | Фреймворк скриптов |
+
+#### ⚙️ **Глобальный конфиг проекта:**
+
+Создан `project-config.yaml` с настройками:
+- Ограничения на размер файлов (1000 строк)
+- Запрещенные расширения файлов
+- Настройки OpenAPI, базы данных, валидации
+- Параметры логирования и производительности
 
 ## [TRANSPORT]️ Как создать новый Python скрипт
 
-### Используй базовый фреймворк:
+### Используй новую архитектуру:
 
 ```python
 #!/usr/bin/env python3
-from scripts.framework import ScriptFramework
+from scripts.core.base_script import BaseScript
+from scripts.openapi.openapi_manager import OpenAPIManager
 
-class MyScript(ScriptFramework):
+class MyScript(BaseScript):
+    def __init__(self):
+        super().__init__("my-script", "Description of what it does")
+        self.openapi_manager = OpenAPIManager(
+            self.file_manager, self.command_runner, self.logger
+        )
+
     def add_script_args(self):
         self.parser.add_argument('--input', required=True, help='Input file')
         self.parser.add_argument('--output', help='Output file')
@@ -68,17 +120,17 @@ class MyScript(ScriptFramework):
     def run(self):
         args = self.parse_args()
 
-        # Твоя логика здесь
+        # Используй компоненты
         self.logger.info(f"Processing {args.input}")
 
         if args.dry_run:
-            self.logger.info("DRY RUN: бы не выполнил изменения")
+            self.logger.info("DRY RUN: no changes will be made")
             return
 
-        # Выполняй работу...
+        # Твоя логика здесь...
 
 if __name__ == "__main__":
-    script = MyScript("My Script", "Description of what it does")
+    script = MyScript()
     script.main()
 ```
 
@@ -89,7 +141,7 @@ python scripts/my_script.py --input file.txt --verbose
 python scripts/my_script.py --dry-run  # безопасный тест
 ```
 
-## [BOOK] Возможности фреймворка
+## [BOOK] Возможности новой архитектуры
 
 ### Автоматически предоставляется:
 
@@ -97,9 +149,15 @@ python scripts/my_script.py --dry-run  # безопасный тест
 - **Обработка аргументов**: `--verbose`, `--dry-run`, `--config`
 - **Валидация окружения**: проверка Python версии, наличия проекта
 - **Обработка ошибок**: понятные сообщения и exit codes
-- **Запуск команд**: `self.run_command(['git', 'status'])`
-- **Работа с файлами**: `self.read_file()`, `self.write_file()`
-- **Подтверждения**: `self.get_confirmation("Continue?")`
+- **Запуск команд**: `self.command_runner.run(['git', 'status'])`
+- **Работа с файлами**: `self.file_manager.read_yaml()`, `write_yaml()`
+- **OpenAPI операции**: `self.openapi_manager.validate_with_redocly()`
+- **SQL обработка**: специализированные процессоры для разных типов SQL
+
+### Специализированные менеджеры:
+- **OpenAPIManager**: валидация, оптимизация, генерация
+- **LiquibaseProcessor**: обработка SQL миграций
+- **GoServiceGenerator**: генерация Go кода
 
 ### Утилиты:
 ```bash
@@ -108,6 +166,9 @@ python scripts/framework.py --list-scripts
 
 # Проверить синтаксис всех скриптов
 python scripts/framework.py --validate-scripts
+
+# Проверить конфиг
+python -c "from scripts.core.config import ConfigManager; print(ConfigManager().load_config())"
 ```
 
 ## [SYMBOL] Конвертация существующих скриптов
