@@ -697,6 +697,286 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
+  # Inventory Reset Operations - Player inventory cleanup
+  /inventory:
+    post:
+      summary: Request inventory reset
+      description: |
+        **Enterprise-grade inventory reset endpoint**
+
+        Initiates inventory reset operation with selective item preservation and cleanup.
+        Supports different reset scopes and inventory organization options.
+
+        **Performance:** <50ms P95, includes inventory validation
+        **Business rules:** Item preservation rules, reset scope validation
+      operationId: requestInventoryReset
+      tags:
+        - Inventory Reset
+      security:
+        - BearerAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - reset_scope
+                - confirmation_token
+              properties:
+                reset_scope:
+                  type: string
+                  enum: [ all_items, equipped_only, consumables_only, materials_only, by_rarity ]
+                  description: Scope of inventory reset
+                  example: all_items
+                confirmation_token:
+                  type: string
+                  description: User confirmation token
+                  example: "CONFIRM-INVENTORY-RESET-123456"
+                preserve_rarities:
+                  type: array
+                  items:
+                    type: string
+                    enum: [ common, uncommon, rare, epic, legendary, mythic ]
+                  description: Item rarities to preserve during reset
+                  example: ["legendary", "mythic"]
+                preserve_equipped:
+                  type: boolean
+                  default: true
+                  description: Whether to preserve currently equipped items
+                  example: true
+                max_preserve_count:
+                  type: integer
+                  minimum: 0
+                  maximum: 100
+                  default: 50
+                  description: Maximum number of items to preserve
+      responses:
+        "202":
+          description: Inventory reset request accepted
+          headers:
+            Location:
+              schema:
+                type: string
+                example: "/api/v1/reset/inventory/reset-1234567890"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - reset_id
+                  - items_to_remove
+                  - items_to_preserve
+                  - estimated_completion
+                properties:
+                  reset_id:
+                    type: string
+                    format: uuid
+                    example: "550e8400-e29b-41d4-a716-446655440001"
+                  items_to_remove:
+                    type: integer
+                    description: Number of items that will be removed
+                    example: 245
+                  items_to_preserve:
+                    type: integer
+                    description: Number of items that will be preserved
+                    example: 12
+                  estimated_completion:
+                    type: string
+                    format: date-time
+                    example: "2025-12-22T10:32:00Z"
+        "400":
+          description: Invalid inventory reset request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  # Achievement Reset Operations - Player achievement cleanup
+  /achievements:
+    post:
+      summary: Request achievement reset
+      description: |
+        **Enterprise-grade achievement reset endpoint**
+
+        Initiates achievement progress reset with selective preservation options.
+        Supports different reset scopes for achievement categories and progress levels.
+
+        **Performance:** <30ms P95, includes achievement validation
+        **Business rules:** Achievement preservation rules, reset scope limitations
+      operationId: requestAchievementReset
+      tags:
+        - Achievement Reset
+      security:
+        - BearerAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - reset_scope
+                - confirmation_token
+              properties:
+                reset_scope:
+                  type: string
+                  enum: [ all_achievements, category_specific, progress_only, unlocks_only ]
+                  description: Scope of achievement reset
+                  example: progress_only
+                confirmation_token:
+                  type: string
+                  description: User confirmation token
+                  example: "CONFIRM-ACHIEVEMENT-RESET-123456"
+                preserve_categories:
+                  type: array
+                  items:
+                    type: string
+                    enum: [ combat, exploration, social, collection, progression, seasonal ]
+                  description: Achievement categories to preserve
+                  example: ["seasonal", "progression"]
+                preserve_completed:
+                  type: boolean
+                  default: true
+                  description: Whether to preserve completed achievements
+                  example: true
+      responses:
+        "202":
+          description: Achievement reset request accepted
+          headers:
+            Location:
+              schema:
+                type: string
+                example: "/api/v1/reset/achievements/reset-1234567890"
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - reset_id
+                  - achievements_to_reset
+                  - achievements_to_preserve
+                  - estimated_completion
+                properties:
+                  reset_id:
+                    type: string
+                    format: uuid
+                    example: "550e8400-e29b-41d4-a716-446655440002"
+                  achievements_to_reset:
+                    type: integer
+                    description: Number of achievements that will be reset
+                    example: 45
+                  achievements_to_preserve:
+                    type: integer
+                    description: Number of achievements that will be preserved
+                    example: 23
+                  estimated_completion:
+                    type: string
+                    format: date-time
+                    example: "2025-12-22T10:33:00Z"
+        "400":
+          description: Invalid achievement reset request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  # Reset Status and History - Reset operation monitoring
+  /resets/{reset_id}:
+    get:
+      summary: Get reset operation status
+      description: |
+        **Enterprise-grade reset status endpoint**
+
+        Retrieves detailed status of ongoing or completed reset operations.
+        Provides progress tracking and completion confirmation.
+
+        **Performance:** <15ms P95 (HOT PATH), Redis cached
+        **Security:** Users can only access their own reset operations
+      operationId: getResetStatus
+      tags:
+        - Game State Reset
+      parameters:
+        - name: reset_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Reset operation unique identifier
+      responses:
+        "200":
+          description: Reset status retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - reset_id
+                  - reset_type
+                  - status
+                  - created_at
+                  - progress
+                properties:
+                  reset_id:
+                    type: string
+                    format: uuid
+                    example: "550e8400-e29b-41d4-a716-446655440000"
+                  reset_type:
+                    type: string
+                    enum: [ character_reset, inventory_reset, achievement_reset, full_reset ]
+                    example: character_reset
+                  status:
+                    type: string
+                    enum: [ queued, processing, completed, failed, cancelled ]
+                    example: completed
+                  created_at:
+                    type: string
+                    format: date-time
+                    example: "2025-12-22T10:30:00Z"
+                  started_at:
+                    type: string
+                    format: date-time
+                    example: "2025-12-22T10:30:05Z"
+                  completed_at:
+                    type: string
+                    format: date-time
+                    example: "2025-12-22T10:35:00Z"
+                  progress:
+                    type: object
+                    required:
+                      - percentage
+                      - current_step
+                      - total_steps
+                    properties:
+                      percentage:
+                        type: number
+                        format: float
+                        minimum: 0
+                        maximum: 100
+                        example: 85.5
+                      current_step:
+                        type: string
+                        example: "Processing character attributes"
+                      total_steps:
+                        type: integer
+                        example: 12
+                  rollback_available:
+                    type: boolean
+                    description: Whether reset can be rolled back
+                    example: true
+                  rollback_deadline:
+                    type: string
+                    format: date-time
+                    description: Deadline for rollback operations
+                    example: "2025-12-23T10:30:00Z"
+        "404":
+          description: Reset operation not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
 components:
   responses:
     # Common response definitions with headers
