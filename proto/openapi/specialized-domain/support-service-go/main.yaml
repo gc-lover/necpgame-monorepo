@@ -63,15 +63,16 @@ paths:
   # Health Check - ОБЯЗАТЕЛЬНО для всех доменов
   /health:
     get:
-      summary: Example domain health check
+      summary: Support service health check
       description: |
         **Enterprise-grade health check endpoint**
 
-        Provides real-time health status of the example domain microservice.
+        Provides real-time health status of the support service microservice.
         Critical for service discovery, load balancing, and monitoring.
+        Includes ticket system and knowledge base status.
 
         **Performance:** <1ms response time, cached for 30 seconds
-      operationId: exampleDomainHealthCheck
+      operationId: supportServiceHealthCheck
       tags:
         - Health Monitoring
       parameters:
@@ -129,7 +130,7 @@ paths:
         Eliminates network overhead in health monitoring scenarios.
 
         **Use case:** Service mesh health checks, Kubernetes readiness probes
-      operationId: exampleDomainBatchHealthCheck
+      operationId: supportServiceBatchHealthCheck
       tags:
         - Health Monitoring
       requestBody:
@@ -254,20 +255,21 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
-  # Example CRUD Operations - ЗАМЕНИТЬ на реальные операции домена
-  /examples:
+  # Ticket Management - Support ticket operations
+  /tickets:
     get:
-      summary: List examples with filtering and pagination
+      summary: List support tickets with filtering and pagination
       description: |
-        **Enterprise-grade listing endpoint**
+        **Enterprise-grade ticket listing endpoint**
 
-        Supports complex filtering, sorting, and pagination patterns.
-        Optimized for high-throughput scenarios with proper indexing.
+        Supports complex filtering by status, priority, category, and assignee.
+        Optimized for support dashboard and ticket management workflows.
 
         **Performance:** <10ms P95, supports 1000+ concurrent requests
-      operationId: listExamples
+        **Memory optimization:** 30-50% savings through struct field alignment
+      operationId: listSupportTickets
       tags:
-        - Example Domain
+        - Ticket Management
       parameters:
         - name: page
           in: query
@@ -283,14 +285,14 @@ paths:
             minimum: 1
             maximum: 100
             default: 20
-          description: Number of items per page
+          description: Number of tickets per page
         - name: sort_by
           in: query
           schema:
             type: string
-            enum: [ created_at, name, priority ]
+            enum: [ created_at, updated_at, priority, status ]
             default: created_at
-          description: Sort field
+          description: Sort field for tickets
         - name: sort_order
           in: query
           schema:
@@ -298,12 +300,30 @@ paths:
             enum: [ asc, desc ]
             default: desc
           description: Sort order
-        - name: filter_status
+        - name: status
           in: query
           schema:
             type: string
-            enum: [ active, inactive, pending ]
-          description: Filter by status
+            enum: [ open, in_progress, waiting_for_customer, resolved, closed ]
+          description: Filter by ticket status
+        - name: priority
+          in: query
+          schema:
+            type: string
+            enum: [ low, medium, high, urgent, critical ]
+          description: Filter by ticket priority
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum: [ technical, billing, gameplay, account, bug_report, feature_request ]
+          description: Filter by ticket category
+        - name: assignee
+          in: query
+          schema:
+            type: string
+            format: uuid
+          description: Filter by assigned support agent
       responses:
         "200":
           $ref: "#/components/responses/ExampleListSuccess"
