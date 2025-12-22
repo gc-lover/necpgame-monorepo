@@ -288,27 +288,45 @@ paths:
             minimum: 1
             maximum: 100
             default: 20
-          description: Number of items per page
+          description: Number of achievements per page
         - name: sort_by
           in: query
           schema:
             type: string
-            enum: [ created_at, name, priority ]
-            default: created_at
-          description: Sort field
+            enum: [ name, difficulty, reward_value, completion_rate, created_at ]
+            default: name
+          description: Sort field for achievements
         - name: sort_order
           in: query
           schema:
             type: string
             enum: [ asc, desc ]
-            default: desc
+            default: asc
           description: Sort order
-        - name: filter_status
+        - name: category
           in: query
           schema:
             type: string
-            enum: [ active, inactive, pending ]
-          description: Filter by status
+            enum: [ combat, exploration, social, collection, progression, seasonal, hidden ]
+          description: Filter by achievement category
+        - name: difficulty
+          in: query
+          schema:
+            type: string
+            enum: [ easy, medium, hard, legendary ]
+          description: Filter by difficulty level
+        - name: player_progress
+          in: query
+          schema:
+            type: string
+            enum: [ not_started, in_progress, completed, locked ]
+          description: Filter by player's progress status
+        - name: seasonal
+          in: query
+          schema:
+            type: boolean
+            default: false
+          description: Include only seasonal achievements
       responses:
         "200":
           $ref: "#/components/responses/ExampleListSuccess"
@@ -373,6 +391,240 @@ paths:
               schema:
                 type: integer
                 example: 60
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  # Player Achievement Progress - Individual player tracking
+  /players/{player_id}/achievements:
+    get:
+      summary: Get player achievement progress
+      description: |
+        **Enterprise-grade player achievement endpoint**
+
+        Retrieves detailed achievement progress for a specific player including completion status,
+        progress percentages, timestamps, and reward claims.
+        Critical for achievement UI and player progression tracking.
+
+        **Performance:** <15ms P95 (HOT PATH), Redis cached
+        **Memory optimization:** 30-50% savings through struct field alignment
+      operationId: getPlayerAchievements
+      tags:
+        - Progress Tracking
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Player unique identifier
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [ all, completed, in_progress, locked ]
+            default: all
+          description: Filter by achievement status
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum: [ combat, exploration, social, collection, progression, seasonal, hidden ]
+          description: Filter by achievement category
+      responses:
+        "200":
+          description: Player achievements retrieved successfully
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: max-age=30, private
+            X-Total-Achievements:
+              schema:
+                type: integer
+                example: 150
+              description: Total achievements available
+            X-Completed-Achievements:
+              schema:
+                type: integer
+                example: 45
+              description: Number of completed achievements
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - achievements
+                  - statistics
+                properties:
+                  achievements:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/PlayerAchievement"
+                    description: Player's achievement progress
+                  statistics:
+                    $ref: "#/components/schemas/PlayerAchievementStats"
+        "401":
+          description: Unauthorized - cannot access other player's achievements
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Player not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  # Achievement Progress Updates - Real-time progress tracking
+  /players/{player_id}/achievements/{achievement_id}/progress:
+    post:
+      summary: Update achievement progress
+      description: |
+        **Enterprise-grade progress update endpoint**
+
+        Updates achievement progress based on player actions and game events.
+        Supports incremental progress, completion triggers, and reward unlocking.
+        Critical for real-time achievement tracking and gamification.
+
+        **Performance:** <10ms P95 for progress updates
+        **Business rules:** Progress validation, completion triggers, reward distribution
+      operationId: updateAchievementProgress
+      tags:
+        - Progress Tracking
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Player unique identifier
+        - name: achievement_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Achievement unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateProgressRequest"
+      responses:
+        "200":
+          description: Achievement progress updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlayerAchievement"
+        "400":
+          description: Invalid progress data or achievement requirements not met
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Achievement or player not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Achievement already completed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  # Reward Claims - Achievement reward management
+  /players/{player_id}/achievements/{achievement_id}/claim-reward:
+    post:
+      summary: Claim achievement reward
+      description: |
+        **Enterprise-grade reward claiming endpoint**
+
+        Allows players to claim rewards for completed achievements.
+        Supports multiple reward types: currency, items, cosmetics, titles.
+        Critical for player engagement and reward distribution systems.
+
+        **Performance:** <20ms P95, includes inventory integration
+        **Business rules:** One-time claims, reward validation, inventory capacity
+      operationId: claimAchievementReward
+      tags:
+        - Rewards System
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: player_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Player unique identifier
+        - name: achievement_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Achievement unique identifier
+      responses:
+        "200":
+          description: Reward claimed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - achievement_id
+                  - rewards_granted
+                  - claimed_at
+                properties:
+                  achievement_id:
+                    type: string
+                    format: uuid
+                    example: 550e8400-e29b-41d4-a716-446655440000
+                  rewards_granted:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/AchievementReward"
+                    description: List of rewards granted
+                  claimed_at:
+                    type: string
+                    format: date-time
+                    example: "2025-12-22T10:30:00Z"
+          headers:
+            X-Reward-Transaction-Id:
+              schema:
+                type: string
+                example: "reward-tx-123456"
+              description: Transaction ID for reward delivery tracking
+        "400":
+          description: Achievement not completed or reward already claimed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Achievement or player not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Too many reward claims - rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 30
           content:
             application/json:
               schema:
