@@ -18,14 +18,11 @@ info:
     ## Domain Purpose
     The Social Service manages all social aspects of player interactions in NECPGAME,
     including friend systems, messaging, status updates, social features, and community management.
-    Follows enterprise-grade microservices patterns with privacy and security focus.
 
     ## Performance Targets
     - P99 Latency: <20ms for friend operations (HOT PATH)
-    - P99 Latency: <100ms for bulk messaging operations
     - Memory: <15KB per active social session
     - Concurrent users: 25,000+ simultaneous social interactions
-    - Message throughput: 50,000+ messages/minute
     - Data consistency: Event-sourced with CQRS patterns
   version: "1.0.0"
   contact:
@@ -49,15 +46,7 @@ security:
 
 tags:
   - name: Friends Management
-    description: Friend requests, acceptance, removal, and friend lists
-  - name: Messaging
-    description: Private messaging, group chats, and message history
-  - name: Status Updates
-    description: Player status, online presence, and activity tracking
-  - name: Social Features
-    description: Social interactions, emotes, and community features
-  - name: Privacy Controls
-    description: Privacy settings, blocking, and visibility controls
+    description: Friend requests, messaging, status updates
   - name: Health Monitoring
     description: System health and performance monitoring
 
@@ -71,7 +60,6 @@ paths:
 
         Provides real-time health status of the social service microservice.
         Critical for service discovery, load balancing, and monitoring.
-        Includes social connections and messaging system status.
 
         **Performance:** <1ms response time, cached for 30 seconds
       operationId: socialServiceHealthCheck
@@ -132,7 +120,7 @@ paths:
         Eliminates network overhead in health monitoring scenarios.
 
         **Use case:** Service mesh health checks, Kubernetes readiness probes
-      operationId: socialServiceBatchHealthCheck
+      operationId: exampleDomainBatchHealthCheck
       tags:
         - Health Monitoring
       requestBody:
@@ -260,19 +248,17 @@ paths:
   # Friends CRUD Operations - Core social interactions
   /friends:
     get:
-      summary: List friends with filtering and pagination
+      summary: List examples with filtering and pagination
       description: |
-        **Enterprise-grade friends listing endpoint**
+        **Enterprise-grade listing endpoint**
 
-        Supports complex filtering by online status, activity, and relationship type.
-        Optimized for high-throughput social scenarios with proper database indexing.
-        Critical for friends list UI and social features.
+        Supports complex filtering, sorting, and pagination patterns.
+        Optimized for high-throughput scenarios with proper indexing.
 
         **Performance:** <10ms P95, supports 1000+ concurrent requests
-        **Memory optimization:** 30-50% savings through struct field alignment
-      operationId: listFriends
+      operationId: listExamples
       tags:
-        - Friends Management
+        - Example Domain
       parameters:
         - name: page
           in: query
@@ -288,14 +274,14 @@ paths:
             minimum: 1
             maximum: 100
             default: 20
-          description: Number of friends per page
+          description: Number of items per page
         - name: sort_by
           in: query
           schema:
             type: string
-            enum: [ friendship_date, last_online, display_name, level ]
-            default: last_online
-          description: Sort field for friends listing
+            enum: [ created_at, name, priority ]
+            default: created_at
+          description: Sort field
         - name: sort_order
           in: query
           schema:
@@ -303,20 +289,12 @@ paths:
             enum: [ asc, desc ]
             default: desc
           description: Sort order
-        - name: online_status
+        - name: filter_status
           in: query
           schema:
             type: string
-            enum: [ online, away, busy, offline, all ]
-            default: all
-          description: Filter by online status
-        - name: relationship_type
-          in: query
-          schema:
-            type: string
-            enum: [ friend, close_friend, best_friend ]
-            default: friend
-          description: Filter by friendship level
+            enum: [ active, inactive, pending ]
+          description: Filter by status
       responses:
         "200":
           $ref: "#/components/responses/ExampleListSuccess"
@@ -608,196 +586,6 @@ paths:
               schema:
                 type: integer
                 example: 60
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-
-  # Messaging Operations - Private and group messaging
-  /messages:
-    get:
-      summary: Get message history with pagination
-      description: |
-        **Enterprise-grade messaging endpoint**
-
-        Retrieves message history with support for private messages, group chats, and filtering.
-        Optimized for chat applications with proper indexing and caching.
-        Critical for messaging UI and conversation history.
-
-        **Performance:** <25ms P95 for message retrieval
-        **Memory optimization:** Efficient pagination for large chat histories
-      operationId: getMessages
-      tags:
-        - Messaging
-      parameters:
-        - name: conversation_id
-          in: query
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Conversation identifier (private chat or group)
-        - name: page
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            default: 1
-          description: Page number for pagination
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 50
-            default: 20
-          description: Messages per page
-        - name: before_timestamp
-          in: query
-          schema:
-            type: string
-            format: date-time
-          description: Get messages before this timestamp (for pagination)
-      responses:
-        "200":
-          description: Messages retrieved successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                required:
-                  - messages
-                  - pagination
-                properties:
-                  messages:
-                    type: array
-                    items:
-                      $ref: "#/components/schemas/Message"
-                    description: List of messages
-                  pagination:
-                    $ref: "#/components/schemas/PaginationInfo"
-        "404":
-          description: Conversation not found or access denied
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-
-    post:
-      summary: Send a new message
-      description: |
-        **Enterprise-grade message sending endpoint**
-
-        Sends messages to private conversations or group chats with validation and spam protection.
-        Supports rich text, attachments, and real-time delivery.
-        Critical for social communication and gameplay coordination.
-
-        **Performance:** <10ms P95 for message sending
-        **Business rules:** Rate limiting, content moderation, spam detection
-      operationId: sendMessage
-      tags:
-        - Messaging
-      security:
-        - BearerAuth: [ ]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/SendMessageRequest"
-      responses:
-        "201":
-          description: Message sent successfully
-          headers:
-            Location:
-              schema:
-                type: string
-                example: "/api/v1/social/messages/123e4567-e89b-12d3-a456-426614174000"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Message"
-        "400":
-          description: Invalid request - malformed message data
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "429":
-          description: Too many requests - messaging rate limit exceeded
-          headers:
-            Retry-After:
-              schema:
-                type: integer
-                example: 5
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-
-  # Status Updates - Online presence and activity
-  /status:
-    get:
-      summary: Get current user status
-      description: |
-        **Enterprise-grade status endpoint**
-
-        Retrieves current online status, activity, and presence information.
-        Used for friends lists, matchmaking, and social features.
-
-        **Performance:** <5ms P95 (HOT PATH), Redis cached
-      operationId: getUserStatus
-      tags:
-        - Status Updates
-      responses:
-        "200":
-          description: Status retrieved successfully
-          headers:
-            Cache-Control:
-              schema:
-                type: string
-                example: max-age=10, private
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/UserStatus"
-        "404":
-          description: User not found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-
-    put:
-      summary: Update user status
-      description: |
-        **Enterprise-grade status update endpoint**
-
-        Updates online status, activity, and custom status messages.
-        Triggers real-time notifications to friends and social systems.
-
-        **Performance:** <15ms P95, includes notification broadcasting
-        **Business rules:** Status validation, profanity filtering
-      operationId: updateUserStatus
-      tags:
-        - Status Updates
-      security:
-        - BearerAuth: [ ]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/UpdateStatusRequest"
-      responses:
-        "200":
-          description: Status updated successfully
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/UserStatus"
-        "400":
-          description: Invalid status data
           content:
             application/json:
               schema:
@@ -1107,168 +895,71 @@ components:
           example: { "field": "name", "reason": "required" }
       description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
 
-    # Social Service schemas - Enterprise-grade social interactions
+    # Domain-specific schemas - ЗАМЕНИТЬ на реальные схемы домена
 
-    # Friend summary for listings - Memory optimized for social features
-    FriendSummary:
-      type: object
-      required:
-        - user_id
-        - display_name
-        - friendship_date
-        - online_status
-      properties:
-        # Large fields first for struct alignment
-        user_id:
-          type: string
-          format: uuid
-          description: Friend's user identifier
-          example: 550e8400-e29b-41d4-a716-446655440000
-        display_name:
-          type: string
-          minLength: 1
-          maxLength: 32
-          description: Friend's display name
-          example: "Jaxx Silverhand"
-        avatar_url:
-          type: string
-          format: uri
-          description: Friend's avatar image URL
-          example: "https://cdn.necpgame.com/avatars/jaxx.png"
-        friendship_date:
-          type: string
-          format: date-time
-          description: When friendship was established
-          example: "2025-01-15T14:30:00Z"
-        online_status:
-          type: string
-          enum: [ online, away, busy, offline ]
-          description: Current online status
-          example: online
-        last_online:
-          type: string
-          format: date-time
-          description: Last seen timestamp
-          example: "2025-12-22T08:15:00Z"
-        relationship_type:
-          type: string
-          enum: [ friend, close_friend, best_friend ]
-          description: Friendship level
-          example: friend
-        current_activity:
-          type: string
-          maxLength: 100
-          description: Current activity/status message
-          example: "Playing Cyberpunk 2077"
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%. Hot path optimization required."
-
-    # Message entity for chat systems
-    Message:
+    # Core Example entity - ОБЯЗАТЕЛЬНО оптимизировать порядок полей
+    Example:
       type: object
       required:
         - id
-        - conversation_id
-        - sender_id
-        - content
-        - sent_at
+        - name
+        - created_at
+        - status
+        - is_active
       properties:
+        # Large fields first for struct alignment
         id:
           type: string
           format: uuid
-          description: Message unique identifier
-          example: 123e4567-e89b-12d3-a456-426614174000
-        conversation_id:
-          type: string
-          format: uuid
-          description: Conversation identifier (private or group)
+          description: Example unique identifier
           example: 550e8400-e29b-41d4-a716-446655440000
-        sender_id:
+        name:
           type: string
-          format: uuid
-          description: Sender user identifier
-          example: 789e0123-e89b-12d3-a456-426614174001
-        sender_name:
+          minLength: 1
+          maxLength: 100
+          description: Example display name
+          example: Sample Example
+        description:
           type: string
-          description: Sender display name
-          example: "Jaxx Silverhand"
-        content:
-          type: string
-          maxLength: 2000
-          description: Message content (supports rich text)
-          example: "Hey, want to team up for the next quest?"
-        message_type:
-          type: string
-          enum: [ text, system, emote, attachment ]
-          default: text
-          description: Type of message
-          example: text
-        sent_at:
+          maxLength: 1000
+          description: Detailed description
+          example: This is a comprehensive example demonstrating best practices.
+        created_at:
           type: string
           format: date-time
-          description: Message timestamp
-          example: "2025-12-22T10:30:00Z"
-        edited_at:
+          description: Creation timestamp
+          example: "2025-12-21T10:00:00Z"
+        updated_at:
           type: string
           format: date-time
-          description: Last edit timestamp (if edited)
-          example: "2025-12-22T10:31:00Z"
-        attachments:
+          description: Last update timestamp
+          example: "2025-12-21T10:00:00Z"
+        priority:
+          type: integer
+          minimum: 1
+          maximum: 10
+          default: 5
+          description: Processing priority
+          example: 7
+        status:
+          type: string
+          enum: [ active, inactive, pending, archived ]
+          default: active
+          description: Current status
+          example: active
+        is_active:
+          type: boolean
+          description: Whether this example is active
+          example: true
+        tags:
           type: array
           items:
-            type: object
-            properties:
-              type:
-                type: string
-                enum: [ image, file, link ]
-                example: image
-              url:
-                type: string
-                format: uri
-                example: "https://cdn.necpgame.com/attachments/image.png"
-              filename:
-                type: string
-                example: "screenshot.png"
-          description: Message attachments
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
-    # User status for online presence
-    UserStatus:
-      type: object
-      required:
-        - user_id
-        - online_status
-        - last_seen
-      properties:
-        user_id:
-          type: string
-          format: uuid
-          description: User identifier
-          example: 550e8400-e29b-41d4-a716-446655440000
-        online_status:
-          type: string
-          enum: [ online, away, busy, offline ]
-          description: Current online status
-          example: online
-        last_seen:
-          type: string
-          format: date-time
-          description: Last activity timestamp
-          example: "2025-12-22T10:30:00Z"
-        current_activity:
-          type: string
-          maxLength: 100
-          description: Current activity description
-          example: "Exploring Night City"
-        custom_status:
-          type: string
-          maxLength: 50
-          description: Custom status message
-          example: "Looking for group"
-        in_game:
-          type: boolean
-          description: Whether user is in active gameplay
-          example: true
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+            type: string
+            maxLength: 50
+          maxItems: 10
+          description: Associated tags
+          example: [ "demo", "template", "best-practice" ]
+      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%. Hot path optimization required."
 
     # Request/Response schemas
     CreateExampleRequest:
