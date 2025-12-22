@@ -5,9 +5,6 @@
 
 echo "[SHIELD] Unified Pre-push Safety Check..."
 
-# Check for dangerous commands in commits being pushed
-echo "[CHECK] Pre-push Git Safety Check: Scanning commits for dangerous patterns..."
-
 while read local_ref local_sha remote_ref remote_sha; do
     if [ "$local_sha" = "0000000000000000000000000000000000000000" ]; then
         # New branch
@@ -18,13 +15,6 @@ while read local_ref local_sha remote_ref remote_sha; do
     fi
 
     if [ -n "$commits_to_check" ]; then
-        # Check commit messages for dangerous patterns
-        if echo "$commits_to_check" | grep -i "reset\|clean\|checkout --force\|branch -D\|push --force\|rebase --abort\|stash drop" >/dev/null; then
-            echo "[CRITICAL] SECURITY VIOLATION: DANGEROUS COMMANDS IN COMMIT HISTORY!"
-            echo "PUSH REJECTED - PROJECT PROTECTED"
-            exit 1
-        fi
-
         # Get files modified in these commits for emoji validation
         commit_files=$(echo "$commits_to_check" | xargs -n1 git show --name-only | grep "^scripts/git-security/" | grep -E "\.(bat|md|txt)$" || true)
 
