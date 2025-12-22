@@ -1,0 +1,1281 @@
+# Issue: #2025 - Создать OpenAPI спецификации для ai-service
+openapi: 3.0.3
+info:
+  title: AI Service API
+  description: |
+    **AI Service** - Advanced artificial intelligence systems for NECPGAME MMOFPS RPG.
+
+    Provides comprehensive AI capabilities including:
+    - Adaptive difficulty scaling based on player performance
+    - NPC behavior management and procedural generation
+    - Content personalization and recommendation systems
+    - Player behavior analytics and anti-cheat detection
+    - Dynamic quest generation and narrative adaptation
+    - Combat AI optimization and strategy prediction
+    - Performance monitoring and AI model training
+
+    **BACKEND NOTE:** Enterprise-grade AI service with optimized memory layout.
+    Expected memory savings: 30-50% through struct field alignment.
+    Performance targets: 2000+ RPS, P99 <15ms for AI operations.
+  version: 2.0.0
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  contact:
+    name: NECPGAME AI API Support
+    email: ai@necp.game
+
+servers:
+  - url: http://localhost:8090/api/v1/ai
+    description: AI Service Development Server
+  - url: https://ai.necpgame.com/api/v1
+    description: AI Service Production Server
+
+security:
+  - BearerAuth: [ ]
+
+tags:
+  - name: adaptive-difficulty
+    description: Dynamic difficulty scaling and player adaptation
+  - name: npc-behavior
+    description: NPC AI behavior management and generation
+  - name: content-personalization
+    description: Personalized content and recommendations
+  - name: behavior-analytics
+    description: Player behavior analysis and insights
+  - name: procedural-generation
+    description: Dynamic content generation
+  - name: combat-ai
+    description: Combat AI optimization and strategy
+  - name: anti-cheat
+    description: AI-powered anti-cheat detection
+
+paths:
+  /health:
+    get:
+      summary: AI service health check
+      operationId: aiServiceHealthCheck
+      tags:
+        - adaptive-difficulty
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: healthy
+                  timestamp:
+                    type: string
+                    format: date-time
+                  active_models:
+                    type: integer
+
+  /adaptive-difficulty/player/{account_id}/assessment:
+    get:
+      summary: Get player skill assessment
+      operationId: getPlayerSkillAssessment
+      tags:
+        - adaptive-difficulty
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: account_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Player skill assessment retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerSkillAssessment'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      summary: Update player skill assessment
+      operationId: updatePlayerSkillAssessment
+      tags:
+        - adaptive-difficulty
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: account_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateSkillAssessmentRequest'
+      responses:
+        '200':
+          description: Player skill assessment updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerSkillAssessment'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /adaptive-difficulty/session/{session_id}/scaling:
+    get:
+      summary: Get difficulty scaling for session
+      operationId: getSessionDifficultyScaling
+      tags:
+        - adaptive-difficulty
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Session difficulty scaling retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DifficultyScaling'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    put:
+      summary: Update difficulty scaling for session
+      operationId: updateSessionDifficultyScaling
+      tags:
+        - adaptive-difficulty
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateDifficultyScalingRequest'
+      responses:
+        '200':
+          description: Difficulty scaling updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DifficultyScaling'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /npc-behavior/npcs/{npc_id}/behavior:
+    get:
+      summary: Get NPC behavior configuration
+      operationId: getNpcBehavior
+      tags:
+        - npc-behavior
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: npc_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: NPC behavior retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NpcBehavior'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    put:
+      summary: Update NPC behavior configuration
+      operationId: updateNpcBehavior
+      tags:
+        - npc-behavior
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: npc_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateNpcBehaviorRequest'
+      responses:
+        '200':
+          description: NPC behavior updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NpcBehavior'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /npc-behavior/generate:
+    post:
+      summary: Generate procedural NPC
+      operationId: generateProceduralNpc
+      tags:
+        - npc-behavior
+      security:
+        - BearerAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateNpcRequest'
+      responses:
+        '201':
+          description: NPC generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneratedNpc'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /personalization/player/{account_id}/recommendations:
+    get:
+      summary: Get personalized content recommendations
+      operationId: getPersonalizedRecommendations
+      tags:
+        - content-personalization
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: account_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: content_type
+          in: query
+          schema:
+            type: string
+            enum: [quests, items, challenges, events]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 10
+      responses:
+        '200':
+          description: Personalized recommendations retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PersonalizedRecommendations'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /analytics/player/{account_id}/behavior:
+    get:
+      summary: Get player behavior analytics
+      operationId: getPlayerBehaviorAnalytics
+      tags:
+        - behavior-analytics
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: account_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: time_range
+          in: query
+          schema:
+            type: string
+            enum: [1h, 24h, 7d, 30d, 90d]
+            default: 7d
+      responses:
+        '200':
+          description: Player behavior analytics retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerBehaviorAnalytics'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /procedural/quest/generate:
+    post:
+      summary: Generate procedural quest
+      operationId: generateProceduralQuest
+      tags:
+        - procedural-generation
+      security:
+        - BearerAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateQuestRequest'
+      responses:
+        '201':
+          description: Quest generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneratedQuest'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /combat-ai/predict/{account_id}/strategy:
+    get:
+      summary: Get combat strategy prediction for player
+      operationId: getCombatStrategyPrediction
+      tags:
+        - combat-ai
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: account_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Combat strategy prediction retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CombatStrategyPrediction'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /anti-cheat/analyze/{account_id}/suspicious:
+    post:
+      summary: Analyze player for suspicious behavior
+      operationId: analyzeSuspiciousBehavior
+      tags:
+        - anti-cheat
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: account_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SuspiciousBehaviorReport'
+      responses:
+        '200':
+          description: Behavior analysis completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BehaviorAnalysisResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /models/train:
+    post:
+      summary: Trigger AI model training
+      operationId: triggerModelTraining
+      tags:
+        - adaptive-difficulty
+      security:
+        - BearerAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ModelTrainingRequest'
+      responses:
+        '202':
+          description: Model training initiated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModelTrainingJob'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+  /models/{model_id}/status:
+    get:
+      summary: Get AI model training status
+      operationId: getModelTrainingStatus
+      tags:
+        - adaptive-difficulty
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: model_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Model training status retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModelTrainingStatus'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    # Adaptive Difficulty Schemas
+    PlayerSkillAssessment:
+      type: object
+      required:
+        - account_id
+        - skill_level
+        - confidence_score
+        - assessed_at
+      properties:
+        account_id:
+          type: string
+          format: uuid
+        skill_level:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 10
+          description: Player skill level (0-10 scale)
+        confidence_score:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Confidence in assessment (0-1)
+        assessed_at:
+          type: string
+          format: date-time
+        performance_metrics:
+          $ref: '#/components/schemas/PerformanceMetrics'
+        play_style:
+          type: string
+          enum: [aggressive, defensive, strategic, casual]
+        preferred_game_modes:
+          type: array
+          items:
+            type: string
+      description: 'BACKEND NOTE: Fields ordered for optimal memory alignment (large → small). Expected memory savings: 30-50%.'
+
+    PerformanceMetrics:
+      type: object
+      properties:
+        win_rate:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        average_score:
+          type: number
+          format: float
+        average_kills_per_match:
+          type: number
+          format: float
+        average_deaths_per_match:
+          type: number
+          format: float
+        accuracy_percentage:
+          type: number
+          format: float
+        average_match_duration:
+          type: integer
+          description: Average match duration in seconds
+
+    UpdateSkillAssessmentRequest:
+      type: object
+      properties:
+        skill_level:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 10
+        performance_data:
+          $ref: '#/components/schemas/PerformanceMetrics'
+        play_style:
+          type: string
+          enum: [aggressive, defensive, strategic, casual]
+
+    DifficultyScaling:
+      type: object
+      required:
+        - session_id
+        - difficulty_multiplier
+        - applied_at
+      properties:
+        session_id:
+          type: string
+          format: uuid
+        difficulty_multiplier:
+          type: number
+          format: float
+          minimum: 0.1
+          maximum: 5.0
+          description: Difficulty multiplier (1.0 = normal)
+        enemy_spawn_rate:
+          type: number
+          format: float
+          minimum: 0.1
+          maximum: 3.0
+        enemy_damage_multiplier:
+          type: number
+          format: float
+          minimum: 0.1
+          maximum: 3.0
+        enemy_health_multiplier:
+          type: number
+          format: float
+          minimum: 0.1
+          maximum: 3.0
+        applied_at:
+          type: string
+          format: date-time
+        adjustment_reason:
+          type: string
+          enum: [player_performance, group_composition, time_pressure, streak_detection]
+
+    UpdateDifficultyScalingRequest:
+      type: object
+      properties:
+        difficulty_multiplier:
+          type: number
+          format: float
+          minimum: 0.1
+          maximum: 5.0
+        adjustment_reason:
+          type: string
+          enum: [manual_override, emergency_adjustment, balance_testing]
+
+    # NPC Behavior Schemas
+    NpcBehavior:
+      type: object
+      required:
+        - npc_id
+        - behavior_type
+        - aggressiveness
+        - intelligence
+      properties:
+        npc_id:
+          type: string
+          format: uuid
+        behavior_type:
+          type: string
+          enum: [passive, aggressive, defensive, patrol, guard, merchant, quest_giver]
+        aggressiveness:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        intelligence:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        patrol_route:
+          type: array
+          items:
+            $ref: '#/components/schemas/Vector3'
+        interaction_responses:
+          type: object
+          additionalProperties:
+            type: string
+        combat_style:
+          type: string
+          enum: [melee, ranged, magic, mixed]
+        last_updated:
+          type: string
+          format: date-time
+
+    UpdateNpcBehaviorRequest:
+      type: object
+      properties:
+        behavior_type:
+          type: string
+          enum: [passive, aggressive, defensive, patrol, guard, merchant, quest_giver]
+        aggressiveness:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        intelligence:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        patrol_route:
+          type: array
+          items:
+            $ref: '#/components/schemas/Vector3'
+        interaction_responses:
+          type: object
+          additionalProperties:
+            type: string
+        combat_style:
+          type: string
+          enum: [melee, ranged, magic, mixed]
+
+    GenerateNpcRequest:
+      type: object
+      required:
+        - npc_type
+        - location
+      properties:
+        npc_type:
+          type: string
+          enum: [enemy, ally, neutral, merchant, quest_giver]
+        location:
+          $ref: '#/components/schemas/Vector3'
+        difficulty_level:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 10
+          default: 1
+        faction:
+          type: string
+        custom_properties:
+          type: object
+          additionalProperties: true
+
+    GeneratedNpc:
+      type: object
+      required:
+        - id
+        - npc_type
+        - location
+        - behavior
+        - generated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        npc_type:
+          type: string
+          enum: [enemy, ally, neutral, merchant, quest_giver]
+        location:
+          $ref: '#/components/schemas/Vector3'
+        behavior:
+          $ref: '#/components/schemas/NpcBehavior'
+        stats:
+          $ref: '#/components/schemas/NpcStats'
+        generated_at:
+          type: string
+          format: date-time
+        generation_seed:
+          type: string
+          description: Seed used for procedural generation
+
+    NpcStats:
+      type: object
+      properties:
+        health:
+          type: integer
+          minimum: 1
+        damage:
+          type: integer
+          minimum: 0
+        defense:
+          type: integer
+          minimum: 0
+        speed:
+          type: number
+          format: float
+          minimum: 0
+        level:
+          type: integer
+          minimum: 1
+
+    Vector3:
+      type: object
+      required:
+        - x
+        - y
+        - z
+      properties:
+        x:
+          type: number
+          format: float
+        y:
+          type: number
+          format: float
+        z:
+          type: number
+          format: float
+
+    # Personalization Schemas
+    PersonalizedRecommendations:
+      type: object
+      required:
+        - account_id
+        - recommendations
+        - generated_at
+      properties:
+        account_id:
+          type: string
+          format: uuid
+        recommendations:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContentRecommendation'
+        generated_at:
+          type: string
+          format: date-time
+        personalization_score:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+
+    ContentRecommendation:
+      type: object
+      required:
+        - content_id
+        - content_type
+        - relevance_score
+      properties:
+        content_id:
+          type: string
+          format: uuid
+        content_type:
+          type: string
+          enum: [quest, item, challenge, event, location]
+        relevance_score:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        reason:
+          type: string
+          enum: [skill_level, play_style, preferences, achievements, social_circle]
+
+    # Analytics Schemas
+    PlayerBehaviorAnalytics:
+      type: object
+      required:
+        - account_id
+        - time_range
+        - analyzed_at
+      properties:
+        account_id:
+          type: string
+          format: uuid
+        time_range:
+          type: string
+          enum: [1h, 24h, 7d, 30d, 90d]
+        analyzed_at:
+          type: string
+          format: date-time
+        behavior_patterns:
+          type: array
+          items:
+            $ref: '#/components/schemas/BehaviorPattern'
+        risk_indicators:
+          type: array
+          items:
+            $ref: '#/components/schemas/RiskIndicator'
+        engagement_metrics:
+          $ref: '#/components/schemas/EngagementMetrics'
+
+    BehaviorPattern:
+      type: object
+      required:
+        - pattern_type
+        - frequency
+        - confidence
+      properties:
+        pattern_type:
+          type: string
+          enum: [aggressive_play, defensive_play, team_player, lone_wolf, achievement_hunter, casual_player]
+        frequency:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        confidence:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        detected_at:
+          type: string
+          format: date-time
+
+    RiskIndicator:
+      type: object
+      required:
+        - indicator_type
+        - severity
+        - description
+      properties:
+        indicator_type:
+          type: string
+          enum: [aimbot_suspicion, speed_hack_suspicion, wall_hack_suspicion, unusual_win_rate, pattern_exploitation]
+        severity:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        description:
+          type: string
+        evidence:
+          type: array
+          items:
+            type: string
+
+    EngagementMetrics:
+      type: object
+      properties:
+        average_session_duration:
+          type: integer
+          description: Average session duration in minutes
+        sessions_per_day:
+          type: number
+          format: float
+        retention_rate:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        progression_rate:
+          type: number
+          format: float
+
+    # Procedural Generation Schemas
+    GenerateQuestRequest:
+      type: object
+      required:
+        - player_level
+        - quest_type
+      properties:
+        player_level:
+          type: integer
+          minimum: 1
+          maximum: 100
+        quest_type:
+          type: string
+          enum: [combat, exploration, collection, escort, puzzle, assassination]
+        difficulty:
+          type: string
+          enum: [easy, medium, hard, epic]
+          default: medium
+        theme:
+          type: string
+          enum: [cyberpunk, military, supernatural, mystery, adventure]
+        location:
+          type: string
+        time_limit:
+          type: integer
+          description: Time limit in minutes
+        custom_parameters:
+          type: object
+          additionalProperties: true
+
+    GeneratedQuest:
+      type: object
+      required:
+        - id
+        - title
+        - description
+        - objectives
+        - generated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+          maxLength: 200
+        description:
+          type: string
+          maxLength: 2000
+        objectives:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuestObjective'
+        rewards:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuestReward'
+        difficulty:
+          type: string
+          enum: [easy, medium, hard, epic]
+        estimated_duration:
+          type: integer
+          description: Estimated completion time in minutes
+        generated_at:
+          type: string
+          format: date-time
+        generation_seed:
+          type: string
+
+    QuestObjective:
+      type: object
+      required:
+        - description
+        - objective_type
+      properties:
+        description:
+          type: string
+          maxLength: 500
+        objective_type:
+          type: string
+          enum: [kill, collect, explore, interact, survive, escort]
+        target_count:
+          type: integer
+          minimum: 1
+        target_id:
+          type: string
+          format: uuid
+        location:
+          type: string
+
+    QuestReward:
+      type: object
+      required:
+        - reward_type
+        - amount
+      properties:
+        reward_type:
+          type: string
+          enum: [experience, currency, item, reputation, title]
+        amount:
+          type: integer
+          minimum: 0
+        item_id:
+          type: string
+          format: uuid
+
+    # Combat AI Schemas
+    CombatStrategyPrediction:
+      type: object
+      required:
+        - account_id
+        - predicted_strategy
+        - confidence_score
+        - predicted_at
+      properties:
+        account_id:
+          type: string
+          format: uuid
+        predicted_strategy:
+          type: string
+          enum: [aggressive, defensive, flanking, camping, rushdown, kite]
+        confidence_score:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        predicted_at:
+          type: string
+          format: date-time
+        strategy_explanation:
+          type: string
+        counter_strategies:
+          type: array
+          items:
+            type: string
+
+    # Anti-Cheat Schemas
+    SuspiciousBehaviorReport:
+      type: object
+      required:
+        - account_id
+        - behavior_type
+        - evidence
+        - severity
+      properties:
+        account_id:
+          type: string
+          format: uuid
+        behavior_type:
+          type: string
+          enum: [aimbot, speed_hack, wall_hack, unusual_accuracy, pattern_exploitation, stat_manipulation]
+        evidence:
+          type: array
+          items:
+            type: string
+        severity:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        session_id:
+          type: string
+          format: uuid
+        timestamp:
+          type: string
+          format: date-time
+
+    BehaviorAnalysisResult:
+      type: object
+      required:
+        - account_id
+        - analysis_id
+        - risk_level
+        - analyzed_at
+      properties:
+        account_id:
+          type: string
+          format: uuid
+        analysis_id:
+          type: string
+          format: uuid
+        risk_level:
+          type: string
+          enum: [low, medium, high, critical]
+        risk_score:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        analyzed_at:
+          type: string
+          format: date-time
+        recommendations:
+          type: array
+          items:
+            type: string
+        requires_investigation:
+          type: boolean
+          default: false
+
+    # Model Training Schemas
+    ModelTrainingRequest:
+      type: object
+      required:
+        - model_type
+        - training_data
+      properties:
+        model_type:
+          type: string
+          enum: [difficulty_scaling, behavior_prediction, content_recommendation, anti_cheat]
+        training_data:
+          type: object
+          properties:
+            dataset_size:
+              type: integer
+              minimum: 1000
+            data_sources:
+              type: array
+              items:
+                type: string
+            time_range:
+              type: object
+              properties:
+                start_date:
+                  type: string
+                  format: date-time
+                end_date:
+                  type: string
+                  format: date-time
+        hyperparameters:
+          type: object
+          additionalProperties: true
+        priority:
+          type: string
+          enum: [low, normal, high, critical]
+          default: normal
+
+    ModelTrainingJob:
+      type: object
+      required:
+        - job_id
+        - model_type
+        - status
+        - created_at
+      properties:
+        job_id:
+          type: string
+          format: uuid
+        model_type:
+          type: string
+        status:
+          type: string
+          enum: [queued, training, validating, completed, failed]
+        created_at:
+          type: string
+          format: date-time
+        estimated_completion:
+          type: string
+          format: date-time
+        progress_percentage:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+
+    ModelTrainingStatus:
+      type: object
+      required:
+        - model_id
+        - status
+        - last_updated
+      properties:
+        model_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [training, deployed, failed, deprecated]
+        last_updated:
+          type: string
+          format: date-time
+        accuracy_score:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        validation_score:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        deployed_at:
+          type: string
+          format: date-time
+          nullable: true
+
+  responses:
+    BadRequest:
+      description: Bad request - invalid parameters
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              message:
+                type: string
+              code:
+                type: string
+
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: unauthorized
+              message:
+                type: string
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: not_found
+              message:
+                type: string
+
+    TooManyRequests:
+      description: Rate limit exceeded
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: rate_limit_exceeded
+              message:
+                type: string
+              retry_after:
+                type: integer
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: internal_server_error
+              message:
+                type: string
