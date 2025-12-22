@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Fix common.yaml references in OpenAPI specifications - Version 2
+Fix common.yaml references in OpenAPI specifications
 """
 import os
 import re
