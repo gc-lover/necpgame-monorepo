@@ -52,25 +52,25 @@ def main():
     pull_result = run_command(f"git pull --rebase origin {current_branch}", "Pulling with rebase")
 
     if pull_result and pull_result.returncode == 0:
-        print("✅ Pull successful, now trying push...")
+        print("[SUCCESS] Pull successful, now trying push...")
         # Try push again
         push_result = run_command(f"git push origin {current_branch}:{current_branch}", "Pushing to remote")
         if push_result and push_result.returncode == 0:
-            print("✅ Push successful!")
+            print("[SUCCESS] Push successful!")
             return
         else:
-            print("❌ Push still failed")
+            print("[ERROR] Push still failed")
     else:
-        print("❌ Pull failed, trying alternative approaches...")
+        print("[ERROR] Pull failed, trying alternative approaches...")
 
     # 7. Try force push with lease (safer than --force)
     print("\n[FIX] Trying force push with lease...")
     force_push = run_command(f"git push --force-with-lease origin {current_branch}:{current_branch}", "Force pushing with lease")
 
     if force_push and force_push.returncode == 0:
-        print("✅ Force push successful!")
+        print("[SUCCESS] Force push successful!")
     else:
-        print("❌ Force push failed")
+        print("[ERROR] Force push failed")
         print("\n[INFO] Possible solutions:")
         print("1. Check GitHub branch protection rules")
         print("2. Ensure you have write access to the repository")

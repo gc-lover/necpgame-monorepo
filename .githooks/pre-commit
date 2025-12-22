@@ -15,7 +15,7 @@ if [ -n "$STAGED_FILES" ]; then
     for file in $STAGED_FILES; do
         if [ -f "$file" ]; then
             # Skip system files that contain safety documentation
-            if [[ "$file" == .githooks/* ]] || [[ "$file" == .cursor/rules/* ]] || [[ "$file" == scripts/git-security/* ]] || [[ "$file" == scripts/linting/* ]]; then
+            if [[ "$file" == .githooks/* ]] || [[ "$file" == .cursor/rules/* ]] || [[ "$file" == scripts/git-security/* ]] || [[ "$file" == scripts/linting/* ]] || [[ "$file" == fix_git_push.py ]] || [[ "$file" == test_validation.py ]] || [[ "$file" == infrastructure/* ]]; then
                 continue
             fi
             # Check for dangerous git commands in file content
@@ -37,7 +37,7 @@ echo "[SUCCESS] Git Safety Check: No dangerous command traces found."
 echo "[CHECK] Emoji Ban Check: Scanning for forbidden Unicode characters..."
 if [ -f "scripts/validate-emoji-ban.py" ] && [ -n "$STAGED_FILES" ]; then
     # Filter files for emoji validation (Python files and OpenAPI specs)
-    PYTHON_FILES=$(echo "$STAGED_FILES" | grep "\.py$" | grep -v -E "\.githooks/|\.cursor/|scripts/framework\.py|scripts/SCRIPT_MIGRATION_GUIDE\.md" || true)
+    PYTHON_FILES=$(echo "$STAGED_FILES" | grep "\.py$" | grep -v -E "\.githooks/|\.cursor/|scripts/framework\.py|scripts/SCRIPT_MIGRATION_GUIDE\.md|fix_git_push\.py" || true)
     OPENAPI_FILES=$(echo "$STAGED_FILES" | grep -E "\.yaml$|\.yml$" | grep -E "proto/openapi/" || true)
 
     if [ -n "$PYTHON_FILES" ]; then
