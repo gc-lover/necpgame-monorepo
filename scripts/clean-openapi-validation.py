@@ -192,7 +192,7 @@ def log_debug(message, data=None):
         "message": message,
         "data": data or {},
         "sessionId": "debug-session",
-        "runId": "validation-run-1",
+        "runId": "git-push-validation",
         "hypothesisId": "H1"
     }
     try:
