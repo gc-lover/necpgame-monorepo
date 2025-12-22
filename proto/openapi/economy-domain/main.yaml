@@ -21,6 +21,104 @@ tags:
   - name: Economy domain
     description: economy domain domain endpoints
 paths:
+  /api/v1/economy/health:
+    get:
+      summary: Health check
+      operationId: getEconomyHealth
+      tags:
+        - Economy domain
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    limit:
+      name: limit
+      in: query
+      description: Maximum number of items to return
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+    offset:
+      name: offset
+      in: query
+      description: Number of items to skip
+      required: false
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+  schemas:
+    HealthResponse:
+      type: object
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+      properties:
+        status:
+          type: string
+          example: healthy
+          maxLength: 255
+        domain:
+          type: string
+          example: economy-domain
+          maxLength: 255
+        timestamp:
+          type: string
+          format: date-time
+          maxLength: 255
+    Error:
+      type: object
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+      properties:
+        message:
+          type: string
+          example: Internal server error
+          maxLength: 1000
+        domain:
+          type: string
+          example: economy-domain
+          maxLength: 255
+        timestamp:
+          type: string
+          format: date-time
+          maxLength: 255
+        code:
+          type: integer
+          example: 500
+          format: int32
+          minimum: 100
+          maximum: 599
+    WebSocketHealthMessage:
+      type: object
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+      required:
+        - type
+        - message_timestamp
+        - health
+      properties:
+        type:
+          type: string
+          enum:
+            - health_update
+            - health_alert
+            - service_down
+        message_timestamp:
+          type: string
+          format: date-time
+          description: Timestamp of the health message
+        health:
+          $ref: '#/components/schemas/HealthResponse'
   # Trading System Integration - enterprise-grade market management
   /api/v1/trading/health:
     $ref: './trading/main.yaml#/paths/~1api~1v1~1trading~1health'
@@ -169,17 +267,28 @@ paths:
     post:
     summary: Batch health check for multiple domains
     description: 'Performance optimization: Check multiple domain health in single request'
-    description: Batch health results
-    type: object
-    type: array
-    $ref: '#/components/schemas/HealthResponse'
-    type: integer
-    description: Total processing time
+    responses:
+      '200':
+        description: Batch health results
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                results:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/HealthResponse'
+                processingTime:
+                  type: integer
+                  description: Total processing time
   /api/v1/economy-domain/health/ws:
     get:
     summary: Real-time health monitoring WebSocket
     description: Real-time health updates without polling
-    description: WebSocket connection established
+    responses:
+      '101':
+        description: WebSocket connection established
 components:
   securitySchemes:
     BearerAuth:
@@ -188,25 +297,25 @@ components:
     bearerFormat: JWT
 
   parameters:
-    Limit:
-    name: limit
-    in: query
-    description: Maximum number of items to return
-    required: false
-    schema:
-    type: integer
-    minimum: 1
-    maximum: 100
-    default: 20
-    Offset:
-    name: offset
-    in: query
-    description: Number of items to skip
-    required: false
-    schema:
-    type: integer
-    minimum: 0
-    default: 0
+    limit:
+      name: limit
+      in: query
+      description: Maximum number of items to return
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+    offset:
+      name: offset
+      in: query
+      description: Number of items to skip
+      required: false
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
 
   schemas:
     # Trading System Schemas Integration
@@ -215,63 +324,63 @@ components:
 
 
     HealthResponse:
-    type: object
-    properties:
-    status:
-    type: string
-    example: healthy
-    maxLength: 255
-    domain:
-    type: string
-    example: economy-domain
-    maxLength: 255
-    timestamp:
-    type: string
-    format: date-time
-    maxLength: 255
-    description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+      type: object
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+      properties:
+        status:
+          type: string
+          example: healthy
+          maxLength: 255
+        domain:
+          type: string
+          example: economy-domain
+          maxLength: 255
+        timestamp:
+          type: string
+          format: date-time
+          maxLength: 255
     Error:
-    type: object
-    properties:
-    message:
-    type: string
-    example: Internal server error
-    maxLength: 1000
-    domain:
-    type: string
-    example: economy-domain
-    maxLength: 255
-    timestamp:
-    type: string
-    format: date-time
-    maxLength: 255
-    code:
-    type: integer
-    example: 500
-    format: int32
-    minimum: 100
-    maximum: 599
-    description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+      type: object
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+      properties:
+        message:
+          type: string
+          example: Internal server error
+          maxLength: 1000
+        domain:
+          type: string
+          example: economy-domain
+          maxLength: 255
+        timestamp:
+          type: string
+          format: date-time
+          maxLength: 255
+        code:
+          type: integer
+          example: 500
+          format: int32
+          minimum: 100
+          maximum: 599
     WebSocketHealthMessage:
-    type: object
-    required:
-      - type
-      - message_timestamp
-      - health
-    properties:
-    type:
-    type: string
-    enum:
-      - health_update
-      - health_alert
-      - service_down
-    message_timestamp:
-    type: string
-    format: date-time
-    description: Timestamp of the health message
-    health:
-    $ref: '#/components/schemas/HealthResponse'
-    description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+      type: object
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+      required:
+        - type
+        - message_timestamp
+        - health
+      properties:
+        type:
+          type: string
+          enum:
+            - health_update
+            - health_alert
+            - service_down
+        message_timestamp:
+          type: string
+          format: date-time
+          description: Timestamp of the health message
+        health:
+          $ref: '#/components/schemas/HealthResponse'
 
     # Economy Contracts and Deals Service Integration - safe P2P trading with escrow and arbitration
     /api/v1/economy/contracts:

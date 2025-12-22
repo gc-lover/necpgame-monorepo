@@ -181,8 +181,30 @@ def format_output(result):
 
     return "\n".join(output)
 
+def log_debug(message, data=None):
+    """Log debug information to NDJSON file"""
+    import json
+    import time
+    log_entry = {
+        "id": f"log_{int(time.time()*1000)}_debug",
+        "timestamp": int(time.time()*1000),
+        "location": "scripts/clean-openapi-validation.py",
+        "message": message,
+        "data": data or {},
+        "sessionId": "debug-session",
+        "runId": "validation-run-1",
+        "hypothesisId": "H1"
+    }
+    try:
+        with open(r"c:\NECPGAME\.cursor\debug.log", "a", encoding="utf-8") as f:
+            f.write(json.dumps(log_entry, ensure_ascii=False) + "\n")
+    except:
+        pass  # Ignore logging errors
+
 def main():
     """Main function"""
+    log_debug("Starting OpenAPI validation", {"files_count": len(sys.argv[1:]) if len(sys.argv) > 1 else 0})
+
     # Get files to validate from arguments
     files_to_validate = sys.argv[1:] if len(sys.argv) > 1 else []
 
@@ -190,13 +212,21 @@ def main():
         print("No files to validate")
         return 0
 
+    log_debug("Files to validate", {"files": files_to_validate})
+
     # Try to run redocly lint
     try:
         # First try npx redocly with shell=True for Windows compatibility
         cmd = f"npx redocly lint {' '.join(files_to_validate)}"
+        log_debug("Running redocly command", {"command": cmd})
         result = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=60)
 
         raw_output = result.stdout + result.stderr
+        log_debug("Redocly output received", {
+            "stdout_length": len(result.stdout),
+            "stderr_length": len(result.stderr),
+            "returncode": result.returncode
+        })
 
     except (subprocess.TimeoutExpired, subprocess.SubprocessError):
         # If redocly is not available, show helpful message
