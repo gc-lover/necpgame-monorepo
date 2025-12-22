@@ -1,0 +1,424 @@
+# Issue: #2242 - Crafting System OpenAPI Specification
+components:
+  schemas:
+    # Base types
+    UUID:
+      type: string
+      format: uuid
+      description: Universally unique identifier
+      example: "550e8400-e29b-41d4-a716-446655440000"
+
+    Timestamp:
+      type: string
+      format: date-time
+      description: ISO 8601 timestamp
+      example: "2024-01-01T12:00:00Z"
+
+    # Material schema
+    Material:
+      type: object
+      required:
+        - id
+        - name
+        - quantity
+        - quality
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        name:
+          type: string
+          description: Material name
+          example: "Titanium Alloy"
+        quantity:
+          type: integer
+          minimum: 1
+          description: Required quantity
+          example: 5
+        quality:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Minimum quality requirement
+          example: 85
+        rarity:
+          type: string
+          enum: [common, uncommon, rare, epic, legendary, mythic]
+          description: Material rarity
+          example: "rare"
+
+    # Recipe schema
+    Recipe:
+      type: object
+      required:
+        - id
+        - name
+        - category
+        - tier
+        - materials
+        - output
+        - crafting_time
+        - required_station
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        name:
+          type: string
+          description: Recipe name
+          example: "MK-5 Assault Rifle"
+        description:
+          type: string
+          description: Recipe description
+          example: "High-tier assault rifle with enhanced accuracy"
+        category:
+          type: string
+          enum: [weapons, armor, implants, vehicles, consumables, tools]
+          description: Item category
+          example: "weapons"
+        tier:
+          type: integer
+          minimum: 1
+          maximum: 5
+          description: Recipe tier (difficulty level)
+          example: 4
+        materials:
+          type: array
+          items:
+            $ref: '#/components/schemas/Material'
+          description: Required materials
+        output:
+          type: object
+          required:
+            - item_id
+            - quantity
+            - base_quality
+          properties:
+            item_id:
+              $ref: '#/components/schemas/UUID'
+            item_name:
+              type: string
+              example: "MK-5 Assault Rifle"
+            quantity:
+              type: integer
+              minimum: 1
+              example: 1
+            base_quality:
+              type: integer
+              minimum: 1
+              maximum: 100
+              description: Base quality of crafted item
+              example: 75
+        crafting_time:
+          type: integer
+          minimum: 1
+          description: Crafting time in seconds
+          example: 180
+        required_station:
+          type: string
+          enum: [basic_workbench, advanced_forge, cybernetic_lab, vehicle_bay, pharmaceutical_lab, tool_shop]
+          description: Required crafting station
+          example: "advanced_forge"
+        skill_requirements:
+          type: object
+          properties:
+            crafting_skill:
+              type: integer
+              minimum: 0
+              description: Required crafting skill level
+              example: 45
+            specialization:
+              type: string
+              enum: [weaponsmith, armorsmith, cybernetics, engineering, chemistry, mechanics]
+              description: Required specialization
+              example: "weaponsmith"
+        success_rate:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Base success rate (0.0 - 1.0)
+          example: 0.85
+        failure_penalty:
+          type: string
+          enum: [none, partial_materials, all_materials, station_damage]
+          description: Penalty on crafting failure
+          example: "partial_materials"
+
+    # Crafting station schema
+    CraftingStation:
+      type: object
+      required:
+        - id
+        - type
+        - level
+        - efficiency
+        - status
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        type:
+          type: string
+          enum: [basic_workbench, advanced_forge, cybernetic_lab, vehicle_bay, pharmaceutical_lab, tool_shop]
+          description: Station type
+          example: "advanced_forge"
+        level:
+          type: integer
+          minimum: 1
+          maximum: 10
+          description: Station level
+          example: 3
+        name:
+          type: string
+          description: Station name
+          example: "Advanced Forge #7"
+        efficiency:
+          type: number
+          minimum: 0.1
+          maximum: 2.0
+          description: Crafting speed multiplier
+          example: 1.2
+        quality_bonus:
+          type: integer
+          minimum: 0
+          maximum: 50
+          description: Quality bonus percentage
+          example: 15
+        status:
+          type: string
+          enum: [operational, maintenance, damaged, upgrading]
+          description: Station operational status
+          example: "operational"
+        location:
+          type: object
+          properties:
+            zone:
+              type: string
+              example: "Industrial District"
+            coordinates:
+              type: object
+              properties:
+                x:
+                  type: number
+                  example: 123.45
+                y:
+                  type: number
+                  example: 67.89
+                z:
+                  type: number
+                  example: 10.0
+        owner_id:
+          $ref: '#/components/schemas/UUID'
+        last_maintenance:
+          $ref: '#/components/schemas/Timestamp'
+
+    # Crafting order schema
+    CraftingOrder:
+      type: object
+      required:
+        - id
+        - recipe_id
+        - station_id
+        - player_id
+        - status
+        - created_at
+      properties:
+        id:
+          $ref: '#/components/schemas/UUID'
+        recipe_id:
+          $ref: '#/components/schemas/UUID'
+        station_id:
+          $ref: '#/components/schemas/UUID'
+        player_id:
+          $ref: '#/components/schemas/UUID'
+        status:
+          type: string
+          enum: [queued, in_progress, completed, failed, cancelled]
+          description: Order status
+          example: "in_progress"
+        quality_modifier:
+          type: number
+          minimum: -0.5
+          maximum: 0.5
+          description: Quality modifier (-0.5 to +0.5)
+          example: 0.15
+        priority:
+          type: integer
+          minimum: 1
+          maximum: 10
+          description: Order priority (higher = processed first)
+          example: 5
+        created_at:
+          $ref: '#/components/schemas/Timestamp'
+        started_at:
+          $ref: '#/components/schemas/Timestamp'
+        completed_at:
+          $ref: '#/components/schemas/Timestamp'
+        estimated_completion:
+          $ref: '#/components/schemas/Timestamp'
+        actual_quality:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: Actual quality achieved
+        materials_consumed:
+          type: array
+          items:
+            $ref: '#/components/schemas/Material'
+          description: Materials actually consumed
+        failure_reason:
+          type: string
+          description: Reason for failure (if applicable)
+          example: "Insufficient skill level"
+
+    # Response schemas
+    RecipeListResponse:
+      type: object
+      required:
+        - recipes
+        - total_count
+        - page
+        - page_size
+      properties:
+        recipes:
+          type: array
+          items:
+            $ref: '#/components/schemas/Recipe'
+        total_count:
+          type: integer
+          minimum: 0
+          description: Total number of recipes matching criteria
+          example: 150
+        page:
+          type: integer
+          minimum: 1
+          description: Current page number
+          example: 1
+        page_size:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Number of recipes per page
+          example: 20
+        has_next:
+          type: boolean
+          description: Whether there are more pages
+          example: true
+
+    RecipeResponse:
+      type: object
+      required:
+        - recipe
+      properties:
+        recipe:
+          $ref: '#/components/schemas/Recipe'
+
+    OrderListResponse:
+      type: object
+      required:
+        - orders
+        - total_count
+      properties:
+        orders:
+          type: array
+          items:
+            $ref: '#/components/schemas/CraftingOrder'
+        total_count:
+          type: integer
+          minimum: 0
+          description: Total number of orders
+          example: 25
+
+    OrderResponse:
+      type: object
+      required:
+        - order
+      properties:
+        order:
+          $ref: '#/components/schemas/CraftingOrder'
+
+    StationListResponse:
+      type: object
+      required:
+        - stations
+        - total_count
+      properties:
+        stations:
+          type: array
+          items:
+            $ref: '#/components/schemas/CraftingStation'
+        total_count:
+          type: integer
+          minimum: 0
+          description: Total number of stations
+          example: 15
+
+    StationResponse:
+      type: object
+      required:
+        - station
+      properties:
+        station:
+          $ref: '#/components/schemas/CraftingStation'
+
+    CreateOrderRequest:
+      type: object
+      required:
+        - recipe_id
+        - station_id
+      properties:
+        recipe_id:
+          $ref: '#/components/schemas/UUID'
+        station_id:
+          $ref: '#/components/schemas/UUID'
+        quality_modifier:
+          type: number
+          minimum: -0.5
+          maximum: 0.5
+          description: Quality modifier (-0.5 to +0.5)
+          example: 0.1
+        priority:
+          type: integer
+          minimum: 1
+          maximum: 10
+          description: Order priority
+          default: 5
+          example: 7
+
+    CreateOrderResponse:
+      type: object
+      required:
+        - order
+        - estimated_completion
+      properties:
+        order:
+          $ref: '#/components/schemas/CraftingOrder'
+        estimated_completion:
+          $ref: '#/components/schemas/Timestamp'
+        queue_position:
+          type: integer
+          minimum: 0
+          description: Position in crafting queue
+          example: 3
+
+    UpdateOrderRequest:
+      type: object
+      properties:
+        priority:
+          type: integer
+          minimum: 1
+          maximum: 10
+          description: New priority level
+          example: 8
+        status:
+          type: string
+          enum: [cancelled]
+          description: Only cancellation is allowed for updates
+          example: "cancelled"
+
+    # Performance and memory optimization notes for Backend
+    # - UUID fields should be indexed for fast lookups
+    # - Material arrays should use object pooling to reduce GC pressure
+    # - Timestamps should use int64 unix timestamps for memory efficiency
+    # - Enum fields should be stored as small integers (1-2 bytes) not strings
+    # - Quality values (0-100) should use uint8 for memory optimization
+    # - Recipe materials should be cached in Redis for hot path performance
+    # - Station status should use bit flags for multiple states
+    # - Order priority should use priority queues for efficient processing

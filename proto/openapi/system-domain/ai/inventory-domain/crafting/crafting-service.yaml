@@ -51,6 +51,7 @@ security:
 
 # Paths are defined inline to keep file size under 500 lines
 paths:
+  # Recipe endpoints
   /api/v1/economy/crafting/recipes:
     get:
       tags: [ recipes ]
@@ -93,11 +94,243 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RecipeListResponse'
-          description:
+          description: Recipes retrieved successfully
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/economy/crafting/recipes/{recipeId}:
+    get:
+      tags: [ recipes ]
+      summary: Get recipe by ID
+      operationId: getRecipeById
+      parameters:
+        - name: recipeId
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/UUID'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecipeResponse'
+          description: Recipe retrieved successfully
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # Order endpoints
+  /api/v1/economy/crafting/orders:
+    get:
+      tags: [ orders ]
+      summary: Get crafting orders
+      operationId: getCraftingOrders
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [ queued, in_progress, completed, failed, cancelled ]
+        - name: player_id
+          in: query
+          schema:
+            $ref: '#/components/schemas/UUID'
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderListResponse'
+          description: Orders retrieved successfully
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      tags: [ orders ]
+      summary: Create crafting order
+      operationId: createCraftingOrder
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOrderRequest'
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateOrderResponse'
+          description: Order created successfully
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/economy/crafting/orders/{orderId}:
+    get:
+      tags: [ orders ]
+      summary: Get crafting order by ID
+      operationId: getCraftingOrderById
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/UUID'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponse'
+          description: Order retrieved successfully
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    patch:
+      tags: [ orders ]
+      summary: Update crafting order
+      operationId: updateCraftingOrder
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/UUID'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateOrderRequest'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponse'
+          description: Order updated successfully
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # Station endpoints
+  /api/v1/economy/crafting/stations:
+    get:
+      tags: [ stations ]
+      summary: Get crafting stations
+      operationId: getCraftingStations
+      parameters:
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [ basic_workbench, advanced_forge, cybernetic_lab, vehicle_bay, pharmaceutical_lab, tool_shop ]
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [ operational, maintenance, damaged, upgrading ]
+        - name: player_id
+          in: query
+          schema:
+            $ref: '#/components/schemas/UUID'
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StationListResponse'
+          description: Stations retrieved successfully
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/v1/economy/crafting/stations/{stationId}:
+    get:
+      tags: [ stations ]
+      summary: Get crafting station by ID
+      operationId: getCraftingStationById
+      parameters:
+        - name: stationId
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/UUID'
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StationResponse'
+          description: Station retrieved successfully
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
 

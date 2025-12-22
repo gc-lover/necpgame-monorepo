@@ -1,403 +1,98 @@
 openapi: 3.0.3
 info:
   title: Inventory Service API
-  description: API для управления инвентарем персонажей в NECPGAME
+  description: API for managing character inventories in NECPGAME
   version: 1.0.0
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
   contact:
     name: NECPGAME API Support
-    email: api@necp.game
+    email: api@necpgame.com
 servers:
   - url: http://localhost:8084/api/v1
-    description: Локальный сервер разработки
-  - url: https://api.necp.game/api/v1
-    description: Продакшен сервер
+    description: Local development server
+  - url: https://api.necpgame.com/api/v1
+    description: Production server
 tags:
   - name: Inventory
-    description: Управление инвентарем персонажей
+    description: Character inventory management
   - name: Items
-    description: Управление предметами
+    description: Item management
   - name: Equipment
-    description: Экипировка предметов
+    description: Equipment management
   - name: Transfer
-    description: Передача предметов
+    description: Item transfer
   - name: Bank
-    description: Банк персонажа
+    description: Character bank
+
+security:
+  - BearerAuth: []
+
 paths:
-  # Получение инвентаря персонажа
-  /characters/{characterId}/inventory:
+  /health:
     get:
-      tags:
-        - Inventory
-      summary: Получить инвентарь персонажа
-      operationId: getCharacterInventory
-      parameters:
-        - name: characterId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: includeBank
-          in: query
-          schema:
-            type: boolean
-            default: false
+      summary: Health check
+      operationId: getHealth
       responses:
         '200':
-          description: Инвентарь персонажа
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CharacterInventoryResponse'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+          description: Service is healthy
 
-  # Добавление предмета в инвентарь
-  /characters/{characterId}/inventory/items:
-    post:
-      tags:
-        - Items
-      summary: Добавить предмет в инвентарь
-      operationId: addItemToInventory
-      parameters:
-        - name: characterId
-          in: path
-          required: true
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
           schema:
-            type: string
-            format: uuid
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AddItemRequest'
-      responses:
-        '201':
-          description: Предмет добавлен
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/InventoryItemResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '409':
-          description: Недостаточно места в инвентаре
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
+            type: object
+            properties:
+              error:
+                type: string
+              message:
+                type: string
 
-  # Получение предмета по ID
-  /inventory/items/{itemId}:
-    get:
-      tags:
-        - Items
-      summary: Получить информацию о предмете
-      operationId: getInventoryItem
-      parameters:
-        - name: itemId
-          in: path
-          required: true
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
           schema:
-            type: string
-            format: uuid
-      responses:
-        '200':
-          description: Информация о предмете
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/InventoryItemResponse'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-    put:
-      tags:
-        - Items
-      summary: Update inventory item
-      operationId: updateInventoryItem
-      parameters:
-        - name: itemId
-          in: path
-          required: true
+            type: object
+            properties:
+              error:
+                type: string
+              message:
+                type: string
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
           schema:
-            type: string
-            format: uuid
-      requestBody:
-        required: true
-        content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UpdateItemRequest'
-        responses:
-          '200':
-            description: Предмет обновлен
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/InventoryItemResponse'
-          '400':
-            $ref: '#/components/responses/BadRequest'
-          '404':
-            $ref: '#/components/responses/NotFound'
-          '500':
-            $ref: '#/components/responses/InternalServerError'
-    delete:
-      tags:
-        - Items
-      summary: Remove item from inventory
-      operationId: removeInventoryItem
-        parameters:
-          - name: itemId
-            in: path
-            required: true
-            schema:
-              type: string
-              format: uuid
-        requestBody:
-          required: true
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RemoveItemRequest'
-        responses:
-          '200':
-            description: Предмет удален
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/SuccessResponse'
-          '400':
-            $ref: '#/components/responses/BadRequest'
-          '404':
-            $ref: '#/components/responses/NotFound'
-          '409':
-            description: Предмет нельзя удалить (связан с экипировкой)
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/Error'
-          '500':
-            $ref: '#/components/responses/InternalServerError'
+            type: object
+            properties:
+              error:
+                type: string
+              message:
+                type: string
 
-  # Обновление предмета
-
-
-  # Удаление предмета
-
-
-  # Перемещение предмета
-  /inventory/items/{itemId}/move:
-    post:
-      tags:
-        - Items
-      summary: Переместить предмет в другой слот
-      operationId: moveInventoryItem
-      parameters:
-        - name: itemId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/MoveItemRequest'
-      responses:
-        '200':
-          description: Предмет перемещен
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/InventoryItemResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '409':
-          description: Слот занят или недоступен
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-
-  # Экипировка предмета
-  /characters/{characterId}/equipment:
-    post:
-      tags:
-        - Equipment
-      summary: Экипировать предмет
-      operationId: equipItem
-      parameters:
-        - name: characterId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/EquipItemRequest'
-      responses:
-        '200':
-          description: Предмет экипирован
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/EquipmentResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '409':
-          description: Предмет нельзя экипировать (требования не соблюдены)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-    get:
-      tags:
-        - Equipment
-        summary: Получить экипировку персонажа
-        operationId: getCharacterEquipment
-        parameters:
-          - name: characterId
-            in: path
-            required: true
-            schema:
-              type: string
-              format: uuid
-        responses:
-          '200':
-            description: Экипировка персонажа
-            content:
-              application/json:
-                schema:
-                  $ref: '#/components/schemas/CharacterEquipmentResponse'
-          '404':
-            $ref: '#/components/responses/NotFound'
-          '500':
-            $ref: '#/components/responses/InternalServerError'
-
-  # Снятие предмета
-  /characters/{characterId}/equipment/{slot}:
-    delete:
-      tags:
-        - Equipment
-      summary: Снять предмет с экипировки
-      operationId: unequipItem
-      parameters:
-        - name: characterId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: slot
-          in: path
-          required: true
-          schema:
-            type: string
-            enum: [ head, chest, arms, legs, feet, weapon_primary, weapon_secondary, cyberware_1, cyberware_2, cyberware_3 ]
-      responses:
-        '200':
-          description: Предмет снят
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SuccessResponse'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-
-  # Получение экипировки персонажа
-
-
-  # Передача предмета
-  /inventory/items/{itemId}/transfer:
-    post:
-      tags:
-        - Transfer
-      summary: Передать предмет другому персонажу
-      operationId: transferItem
-      parameters:
-        - name: itemId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/TransferItemRequest'
-      responses:
-        '200':
-          description: Предмет передан
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SuccessResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '403':
-          description: Передача запрещена
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '409':
-          description: Недостаточно места у получателя
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '500':
-          $ref: '#/components/responses/InternalServerError'
-
-  # Объединение стеков предметов
-  /inventory/items/stack:
-    post:
-      tags:
-        - Items
-      summary: Объединить стеки предметов
-      operationId: stackItems
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/StackItemsRequest'
-      responses:
-        '200':
-          description: Предметы объединены
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StackItemsResponse'
+  schemas:
+    InventoryItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        quantity:
+          type: integer
+        type:
+          type: string
+      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."

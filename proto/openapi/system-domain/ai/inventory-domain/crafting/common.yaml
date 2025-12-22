@@ -1,0 +1,123 @@
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT Bearer token for authentication
+
+  responses:
+    BadRequest:
+      description: Invalid request parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: "Invalid request parameters"
+            code: "INVALID_PARAMS"
+            timestamp: "2024-01-01T12:00:00Z"
+
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: "Authentication required"
+            code: "UNAUTHORIZED"
+            timestamp: "2024-01-01T12:00:00Z"
+
+    Forbidden:
+      description: Access denied
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: "Access denied"
+            code: "FORBIDDEN"
+            timestamp: "2024-01-01T12:00:00Z"
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: "Resource not found"
+            code: "NOT_FOUND"
+            timestamp: "2024-01-01T12:00:00Z"
+
+    Conflict:
+      description: Resource conflict
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: "Resource conflict"
+            code: "CONFLICT"
+            timestamp: "2024-01-01T12:00:00Z"
+
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            error: "Internal server error"
+            code: "INTERNAL_ERROR"
+            timestamp: "2024-01-01T12:00:00Z"
+
+  schemas:
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - code
+        - timestamp
+      properties:
+        error:
+          type: string
+          description: Human-readable error message
+          example: "Invalid request parameters"
+        code:
+          type: string
+          description: Machine-readable error code
+          example: "INVALID_PARAMS"
+        timestamp:
+          type: string
+          format: date-time
+          description: Error timestamp in ISO 8601 format
+          example: "2024-01-01T12:00:00Z"
+        details:
+          type: object
+          description: Additional error details
+          example:
+            field: "category"
+            value: "invalid_category"
+            constraint: "must be one of [weapons, armor, implants, vehicles, consumables, tools]"
+
+    SuccessResponse:
+      type: object
+      required:
+        - success
+        - timestamp
+      properties:
+        success:
+          type: boolean
+          description: Operation success status
+          example: true
+        timestamp:
+          type: string
+          format: date-time
+          description: Response timestamp in ISO 8601 format
+          example: "2024-01-01T12:00:00Z"
+        message:
+          type: string
+          description: Optional success message
+          example: "Operation completed successfully"
