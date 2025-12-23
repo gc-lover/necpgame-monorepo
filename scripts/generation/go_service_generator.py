@@ -46,7 +46,7 @@ class GoServiceGenerator:
         # PERFORMANCE: Bundle OpenAPI spec with timeout
         bundled_spec = None
         if not skip_bundle:
-            bundled_spec = self._bundle_openapi_spec(domain, dry_run)
+            bundled_spec = self._bundle_openapi_spec(domain, service_dir, dry_run)
 
         # PERFORMANCE: Generate Go code with memory optimization
         if bundled_spec:
@@ -62,13 +62,14 @@ class GoServiceGenerator:
         if not skip_test and not dry_run:
             self._test_compilation(service_dir, service_name)
 
-    def _bundle_openapi_spec(self, domain: str, dry_run: bool) -> Optional[Path]:
-        """Bundle OpenAPI spec using redocly"""
+    def _bundle_openapi_spec(self, domain: str, service_dir: Path, dry_run: bool) -> Optional[Path]:
+        """Bundle OpenAPI spec using redocly in service directory"""
         main_yaml = self.config.get_openapi_dir() / domain / "main.yaml"
         if not main_yaml.exists():
             raise FileNotFoundError(f"Main YAML not found: {main_yaml}")
 
-        bundled_file = self.config.get_project_root() / f"openapi-{domain}-bundled.yaml"
+        # PERFORMANCE: Create bundled file in service directory, not project root
+        bundled_file = service_dir / "openapi-bundled.yaml"
 
         if not dry_run:
             bundled_file = self.openapi.bundle_spec(main_yaml, bundled_file)
