@@ -116,20 +116,20 @@ mcp_github_update_project_item({
 - [OK] Используй: `scripts/core/base_script.py` (базовый фреймворк)
 - [ERROR] Forbidden: .sh, .ps1, .bat, .cmd, .pl, .rb, .js
 - Git hooks блокируют коммиты с запрещенными типами скриптов
-  - Корень только для: `README.md`, `CHANGELOG*.md`, основные конфиги
-    - НЕ создавать промежуточные/тестовые файлы в корне!
-    - **OpenAPI ДОМЕНЫ (КРИТИЧНО! Новая enterprise-grade архитектура):**
-        - Все enterprise-grade домены (see .cursor/DOMAIN_REFERENCE.md)
-        - Основные: system, specialized, social, economy, world domains
-        - Специализированные: arena, cosmetic, cyberpunk, faction, etc.
-    - **СТРОГО соблюдать структуру knowledge/ (КРИТИЧНО!):**
-        - `knowledge/analysis/` - аналитика и исследования
-        - `knowledge/canon/` - канонический лор (YAML квесты, NPC, диалоги)
-        - `knowledge/content/` - игровые ассеты (враги, интерактивы, квесты)
-        - `knowledge/design/` - дизайн-документы UI/UX
-        - `knowledge/implementation/` - техническая реализация
-        - `knowledge/mechanics/` - игровые механики
-        - **ЗАПРЕЩЕНО:** создавать файлы напрямую в `knowledge/` (только в поддиректориях!)
+    - Корень только для: `README.md`, `CHANGELOG*.md`, основные конфиги
+        - НЕ создавать промежуточные/тестовые файлы в корне!
+        - **OpenAPI ДОМЕНЫ (КРИТИЧНО! Новая enterprise-grade архитектура):**
+            - Все enterprise-grade домены (see .cursor/DOMAIN_REFERENCE.md)
+            - Основные: system, specialized, social, economy, world domains
+            - Специализированные: arena, cosmetic, cyberpunk, faction, etc.
+        - **СТРОГО соблюдать структуру knowledge/ (КРИТИЧНО!):**
+            - `knowledge/analysis/` - аналитика и исследования
+            - `knowledge/canon/` - канонический лор (YAML квесты, NPC, диалоги)
+            - `knowledge/content/` - игровые ассеты (враги, интерактивы, квесты)
+            - `knowledge/design/` - дизайн-документы UI/UX
+            - `knowledge/implementation/` - техническая реализация
+            - `knowledge/mechanics/` - игровые механики
+            - **ЗАПРЕЩЕНО:** создавать файлы напрямую в `knowledge/` (только в поддиректориях!)
 - Создавай файлы с `# Issue: #123` в начале
 - Коммить с префиксом `[agent]`
 - Пример: `[backend] feat: добавить API`

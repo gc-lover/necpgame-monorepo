@@ -1,79 +1,79 @@
 # Issue: #1848
 # Архитектура системы управления сессиями
 
-metadata:
-  version: "1.1.0"
-  created_at: "2025-12-13"
-  updated_at: "2025-12-13"
-  author: "API Designer Agent"
-  status: "completed"
-  priority: "high"
+            metadata:
+              version: "1.1.0"
+              created_at: "2025-12-13"
+              updated_at: "2025-12-13"
+              author: "API Designer Agent"
+              status: "completed"
+              priority: "high"
 
-## Обзор системы
+              ## Обзор системы
 
-  Система управления сессиями обеспечивает полный жизненный цикл игровых сессий в MMOFPS RPG,
-  включая создание, мониторинг, переподключение и очистку с гарантией высокой производительности
-  и безопасности.
+              Система управления сессиями обеспечивает полный жизненный цикл игровых сессий в MMOFPS RPG,
+              включая создание, мониторинг, переподключение и очистку с гарантией высокой производительности
+              и безопасности.
 
-### Ключевые требования
-- **Производительность** : P99 <50ms, поддержка 10k+ одновременных сессий
-- **Надежность** : Автоматическое переподключение ≤5 мин, zero-downtime
-- **Безопасность** : Token binding, rate limiting, audit logging
-- **Масштабируемость** : Горизонтальное масштабирование session-service
+              ### Ключевые требования
+              - **Производительность** : P99 <50ms, поддержка 10k+ одновременных сессий
+              - **Надежность** : Автоматическое переподключение ≤5 мин, zero-downtime
+              - **Безопасность** : Token binding, rate limiting, audit logging
+              - **Масштабируемость** : Горизонтальное масштабирование session-service
 
 ## Архитектурные компоненты
 
 ### 1. Session Service (Core)
-**Технологии** : Go + ogen, PostgreSQL + Redis кластер
-**Масштаб** : 3+ инстансов за load balancer
-
-#### API Endpoints (OpenAPI 3.0)
-  ```yaml
-  # Основные операции (session-management-service.yaml)
-  POST /auth/session/create          # Создание сессии
-  POST /auth/session/heartbeat       # Heartbeat (batch до 100)
-  POST /auth/session/reconnect       # Переподключение (≤5 мин окно)
-  POST /auth/session/logout          # Выход
-  GET  /auth/session/{id}            # Получение сессии
-  ```
-  
-  #### Модель данных (PostgreSQL)
-  ```sql
--- player_sessions: основная таблица сессий
-  CREATE TABLE player_sessions (
-  id UUID PRIMARY KEY,
-  player_id UUID NOT NULL,
-  token TEXT UNIQUE NOT NULL,
-  status session_status_enum NOT NULL,
-  region VARCHAR(50),
-  shard_id VARCHAR(50),
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  last_seen_at TIMESTAMPTZ,
-  expires_at TIMESTAMPTZ,
-  reconnect_until TIMESTAMPTZ,
-  client_version VARCHAR(20),
-  device_fp TEXT,
-  ip INET,
-  user_agent TEXT
-  );
-  
-  -- Индексы для высокой производительности
-  CREATE INDEX idx_player_sessions_player_status ON player_sessions(player_id, status);
-  CREATE INDEX idx_player_sessions_status_last_seen ON player_sessions(status, last_seen_at);
-  CREATE INDEX idx_player_sessions_expires_at ON player_sessions(expires_at);
-  CREATE INDEX idx_player_sessions_reconnect_until ON player_sessions(reconnect_until);
-  ```
-  
-  #### Кеш (Redis Cluster)
-  ```redis
-  # session:{token} → быстрый lookup сессии
-  SET session:abc123def456 {
-"session_id": "uuid",
-"player_id": "uuid",
-"status": "ACTIVE",
-"expires_at": "2025-12-13T20:00:00Z",
-"reconnect_until": "2025-12-13T20:05:00Z",
-"shard_id": "shard-01"
+            **Технологии** : Go + ogen, PostgreSQL + Redis кластер
+            **Масштаб** : 3+ инстансов за load balancer
+              
+              #### API Endpoints (OpenAPI 3.0)
+              ```yaml
+              # Основные операции (session-management-service.yaml)
+              POST /auth/session/create          # Создание сессии
+              POST /auth/session/heartbeat       # Heartbeat (batch до 100)
+              POST /auth/session/reconnect       # Переподключение (≤5 мин окно)
+              POST /auth/session/logout          # Выход
+              GET  /auth/session/{id}            # Получение сессии
+              ```
+              
+              #### Модель данных (PostgreSQL)
+              ```sql
+            -- player_sessions: основная таблица сессий
+              CREATE TABLE player_sessions (
+              id UUID PRIMARY KEY,
+              player_id UUID NOT NULL,
+              token TEXT UNIQUE NOT NULL,
+              status session_status_enum NOT NULL,
+              region VARCHAR(50),
+              shard_id VARCHAR(50),
+              created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+              last_seen_at TIMESTAMPTZ,
+              expires_at TIMESTAMPTZ,
+              reconnect_until TIMESTAMPTZ,
+              client_version VARCHAR(20),
+              device_fp TEXT,
+              ip INET,
+              user_agent TEXT
+              );
+              
+              -- Индексы для высокой производительности
+              CREATE INDEX idx_player_sessions_player_status ON player_sessions(player_id, status);
+              CREATE INDEX idx_player_sessions_status_last_seen ON player_sessions(status, last_seen_at);
+              CREATE INDEX idx_player_sessions_expires_at ON player_sessions(expires_at);
+              CREATE INDEX idx_player_sessions_reconnect_until ON player_sessions(reconnect_until);
+              ```
+              
+              #### Кеш (Redis Cluster)
+              ```redis
+              # session:{token} → быстрый lookup сессии
+              SET session:abc123def456 {
+            "session_id": "uuid",
+            "player_id": "uuid",
+            "status": "ACTIVE",
+            "expires_at": "2025-12-13T20:00:00Z",
+            "reconnect_until": "2025-12-13T20:05:00Z",
+            "shard_id": "shard-01"
 } EX 3600
   
   # active_players:{shard} → set активных игроков
@@ -86,7 +86,7 @@ metadata:
 } EX 300
   ```
 
-  ### 2. Event Bus (Kafka/NATS)
+### 2. Event Bus (Kafka/NATS)
   **События сессий**:
               - `session.created` - сессия создана
               - `session.heartbeat` - heartbeat получен
@@ -99,9 +99,9 @@ metadata:
                 - Gameplay Service: очистка состояния при disconnect
                 - Notification Service: push уведомления
 
-  ### 3. Monitoring & Observability
+### 3. Monitoring & Observability
 
-  #### Метрики (Prometheus)
+#### Метрики (Prometheus)
   ```prometheus
   # RPS метрики
   session_create_total{status="success"} 1500
@@ -117,39 +117,39 @@ metadata:
   session_expired_total 25
   ```
 
-  #### Алерты (Alertmanager)
+#### Алерты (Alertmanager)
             - Heartbeat P99 >100ms за 5 мин
             - Reconnect fail rate >5% за 5 мин
             - Expired sessions surge >20% за 10 мин
             - Redis/PostgreSQL error rate >1%
 
-  ### 4. Security Layer
+### 4. Security Layer
 
-  #### Token Security
+#### Token Security
             - **JWT tokens** с RSA подписанием
             - **Token rotation** при reconnect
             - **IP binding** с optional step-up auth
             - **Device fingerprinting** для anomaly detection
 
-  #### Rate Limiting
+#### Rate Limiting
   ```yaml
-  # На игрока
+# На игрока
             create_session: 5/hour
             reconnect_session: 20/day
 
-  # Глобальные лимиты
+# Глобальные лимиты
             heartbeat_global: 15k RPS
   ```
 
-  ### 5. Cleanup System
+### 5. Cleanup System
 
-  #### Автоматическая очистка
+#### Автоматическая очистка
             - **Cleanup Worker**: каждые 5 минут
             - **Expired sessions**: TTL > 24 часа
             - **Idle sessions**: нет heartbeat > 5 минут
             - **Old sessions**: >7 дней в CLOSED статусе
 
-  #### Ручная очистка
+#### Ручная очистка
   ```bash
   # Admin API для принудительной очистки
   POST /auth/session/cleanup
@@ -159,64 +159,64 @@ metadata:
   }
   ```
 
-  ## Производительность и оптимизации
+## Производительность и оптимизации
 
-  ### Backend Optimizations
+### Backend Optimizations
             - **Struct alignment**: поля отсортированы large→small (экономия 30-50% памяти)
             - **Memory pooling**: сессии используют object pool
             - **Batch operations**: heartbeat до 100 записей за раз
             - **Connection pooling**: Redis/PostgreSQL pools с keepalive
 
-  ### Database Optimizations
+### Database Optimizations
             - **Partitioning** : сессии по дате создания
             - **Archiving** : старые сессии в archive таблицы
             - **Read replicas**: analytics читает из replicas
             - **Index optimization**: covering indexes для hot queries
 
-  ### Cache Optimizations
+### Cache Optimizations
             - **TTL strategy**: expires_at = session TTL
             - **Redis cluster**: horizontal scaling
             - **Cache warming**: preload active sessions on startup
 
-  ## Масштабирование
+## Масштабирование
 
-  ### Horizontal Scaling
+### Horizontal Scaling
             - **Session affinity**: sticky sessions по player_id
             - **Shard-based** : sessions pinned to specific shards
             - **Load balancing**: round-robin с health checks
 
-  ### Vertical Scaling Limits
+### Vertical Scaling Limits
             - **Single instance**: 5k concurrent sessions
             - **Cluster** : unlimited (Redis cluster limits)
 
-  ## Резервное копирование и восстановление
+## Резервное копирование и восстановление
 
-  ### Backup Strategy
+### Backup Strategy
             - **PostgreSQL** : ежедневные full backups + WAL shipping
             - **Redis** : AOF + snapshots каждые 5 минут
             - **Event logs**: Kafka retention 30 дней
 
-  ### Disaster Recovery
+### Disaster Recovery
             - **RTO** : 15 минут для critical sessions
             - **RPO** : 5 минут data loss tolerance
             - **Failover** : automated PostgreSQL failover
 
-  ## Интеграции
+## Интеграции
 
-  ### Внешние системы
+### Внешние системы
             - **Auth Service**: валидация токенов, user info
             - **Gameplay Service**: session state sync
             - **Analytics Service**: session metrics aggregation
             - **Notification Service**: disconnect notifications
 
-  ### Внутренние компоненты
+### Внутренние компоненты
             - **World Service**: zone assignment
             - **Matchmaking Service**: session validation
             - **Inventory Service**: session-scoped items
 
-  ## Мониторинг и поддержка
+## Мониторинг и поддержка
 
-  ### Health Checks
+### Health Checks
   ```yaml
   # Readiness probe
   GET /health/ready
@@ -235,19 +235,19 @@ metadata:
   GET /debug/cleanup/status
   ```
 
-  ## Безопасность и compliance
+## Безопасность и compliance
 
-  ### Data Protection
+### Data Protection
             - **Encryption at rest**: PostgreSQL TDE
             - **Encryption in transit**: TLS 1.3
             - **PII masking**: sensitive data masked in logs
 
-  ### Audit Logging
+### Audit Logging
             - **Session events**: все CRUD операции логируются
             - **Admin actions**: privileged operations auditable
             - **Security events**: token rotation, IP changes
 
-  ### Compliance
+### Compliance
             - **GDPR** : session data retention policies
             - **CCPA** : data deletion on user request
             - **Security audits**: quarterly security reviews
