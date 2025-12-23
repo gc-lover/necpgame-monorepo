@@ -1,4 +1,4 @@
-// Issue: #backend-arena_domain
+// Issue: #backend-economy_domain
 
 package server
 
@@ -6,7 +6,7 @@ import (
 	"context"
 	"net/http"
 
-	"arena-domain-service-go/pkg/api"
+	"economy-domain-service-go/pkg/api"
 )
 
 // SecurityHandler implements the security interface for Bearer token authentication
@@ -14,18 +14,18 @@ type SecurityHandler struct{}
 
 func (s *SecurityHandler) HandleBearerAuth(ctx context.Context, operationName api.OperationName, t api.BearerAuth) (context.Context, error) {
 	// For health check endpoint, allow anonymous access
-	if operationName == api.ArenaDomainHealthCheckOperation {
+	if operationName == api.GetEconomyHealthOperation {
 		return ctx, nil
 	}
 	// TODO: Implement proper JWT token validation for other endpoints
 	return ctx, nil
 }
 
-type ArenadomainService struct {
+type EconomydomainService struct {
 	api *api.Server
 }
 
-func NewArenadomainService() *ArenadomainService {
+func NewEconomydomainService() *EconomydomainService {
 	handler := NewHandler()
 	securityHandler := &SecurityHandler{}
 
@@ -34,11 +34,11 @@ func NewArenadomainService() *ArenadomainService {
 		panic("Failed to create API server: " + err.Error())
 	}
 
-	return &ArenadomainService{
+	return &EconomydomainService{
 		api: server,
 	}
 }
 
-func (s *ArenadomainService) Handler() http.Handler {
+func (s *EconomydomainService) Handler() http.Handler {
 	return s.api
 }

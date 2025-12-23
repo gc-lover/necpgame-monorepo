@@ -1,4 +1,4 @@
-// Issue: #backend-arena_domain
+// Issue: #backend-economy_domain
 // PERFORMANCE: Memory pooling, context timeouts, zero allocations
 
 package server
@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"arena-domain-service-go/pkg/api"
+	"economy-domain-service-go/pkg/api"
 )
 
 // Logger interface for structured logging
@@ -20,7 +20,7 @@ type Logger interface {
 // PERFORMANCE: Memory pool for response objects to reduce GC pressure
 var responsePool = sync.Pool{
 	New: func() interface{} {
-		return &api.ArenaDomainHealthCheckOK{}
+		return &api.HealthResponse{}
 	},
 }
 
@@ -42,26 +42,24 @@ func NewHandler() *Handler {
 	}
 }
 
-// ArenaDomainHealthCheck implements the health check endpoint
+// GetEconomyHealth implements the health check endpoint
 // PERFORMANCE: Uses memory pool to reduce GC pressure, context timeout for reliability
-func (h *Handler) ArenaDomainHealthCheck(ctx context.Context) (api.ArenaDomainHealthCheckRes, error) {
+func (h *Handler) GetEconomyHealth(ctx context.Context) (*api.HealthResponse, error) {
 	// PERFORMANCE: Context timeout to prevent hanging requests
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
 	// PERFORMANCE: Get response from pool instead of allocating new
-	response := responsePool.Get().(*api.ArenaDomainHealthCheckOK)
+	response := responsePool.Get().(*api.HealthResponse)
 	defer responsePool.Put(response)
 
 	// Reset response for reuse
-	*response = api.ArenaDomainHealthCheckOK{}
+	*response = api.HealthResponse{}
 
 	// Implement health check logic
 	response.Status.SetTo("healthy")
-	response.Domain.SetTo("arena")
+	response.Domain.SetTo("economy")
 	response.Timestamp.SetTo(time.Now())
 
 	return response, nil
-}
-	return nil, fmt.Errorf("not implemented")
 }
