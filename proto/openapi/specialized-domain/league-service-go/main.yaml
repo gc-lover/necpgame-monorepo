@@ -1062,8 +1062,44 @@ paths:
                   maxItems: 3
                   description: Team member IDs (for duo/squad modes)
       responses:
-        '202':
+        '200':
           description: Successfully joined matchmaking queue
+          headers:
+            X-Queue-Id:
+              schema:
+                type: string
+                example: queue-1234567890
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                - queue_id
+                - position
+                - estimated_wait_time
+                properties:
+                  queue_id:
+                    type: string
+                    example: queue-1234567890
+                  position:
+                    type: integer
+                    minimum: 1
+                    example: 15
+                  estimated_wait_time:
+                    type: integer
+                    minimum: 0
+                    example: 180
+                    description: Estimated wait time in seconds
+                  game_mode:
+                    type: string
+                    enum:
+                    - ranked_solo
+                    - ranked_duo
+                    - ranked_squad
+                    - casual
+                    example: ranked_solo
+        '202':
+          description: Successfully joined matchmaking queue (asynchronous processing)
           headers:
             X-Queue-Id:
               schema:
