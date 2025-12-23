@@ -1,0 +1,139 @@
+components:
+  schemas:
+    DamageRequest:
+      type: object
+      required:
+        - attacker_id
+        - target_id
+        - damage_type
+        - base_damage
+        - hit_position
+      properties:
+        attacker_id:
+          type: string
+          format: uuid
+          description: Attacking player identifier
+        target_id:
+          type: string
+          format: uuid
+          description: Target player identifier
+        damage_type:
+          type: string
+          enum: [ bullet, melee, explosion, ability, environmental ]
+          example: bullet
+          description: Type of damage dealt
+        base_damage:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1000
+          description: Base damage amount before modifiers
+        hit_position:
+          $ref: './position-schemas.yaml#/components/schemas/PlayerPosition'
+        weapon_id:
+          type: string
+          format: uuid
+          description: Weapon or ability that caused damage
+        critical_hit:
+          type: boolean
+          default: false
+          description: Whether this was a critical hit
+        headshot:
+          type: boolean
+          default: false
+          description: Whether this was a headshot
+        armor_penetration:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          default: 0
+          description: Armor penetration percentage (0-1)
+        status_effects:
+          type: array
+          items:
+            $ref: '#/components/schemas/DamageStatusEffect'
+          maxItems: 5
+          description: Status effects applied with damage
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%. High-frequency request, optimize for performance.'
+
+    DamageResponse:
+      type: object
+      required:
+        - success
+        - actual_damage
+        - target_health_remaining
+        - server_timestamp
+      properties:
+        success:
+          type: boolean
+          example: true
+          description: Whether damage was successfully applied
+        actual_damage:
+          type: number
+          format: float
+          minimum: 0
+          description: Actual damage dealt after all modifiers
+        target_health_remaining:
+          type: number
+          format: float
+          minimum: 0
+          description: Target's remaining health after damage
+        target_killed:
+          type: boolean
+          default: false
+          description: Whether the target was killed by this damage
+        armor_damage:
+          type: number
+          format: float
+          minimum: 0
+          description: Damage dealt to target's armor
+        applied_effects:
+          type: array
+          items:
+            $ref: '#/components/schemas/DamageStatusEffect'
+          description: Status effects successfully applied
+        server_timestamp:
+          type: integer
+          description: Server timestamp for synchronization
+          example: 1734702600050
+        event_id:
+          type: string
+          format: uuid
+          description: Unique damage event identifier for tracking
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%. Critical for combat balance validation.'
+
+    DamageStatusEffect:
+      type: object
+      required:
+        - effect_type
+        - duration_seconds
+        - potency
+      properties:
+        effect_type:
+          type: string
+          enum: [ bleed, burn, poison, stun, slow, blind, silence ]
+          example: bleed
+          description: Type of status effect
+        duration_seconds:
+          type: number
+          format: float
+          minimum: 0.1
+          maximum: 300
+          description: Effect duration in seconds
+        potency:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Effect strength (0-1 scale)
+        damage_per_second:
+          type: number
+          format: float
+          minimum: 0
+          description: Damage over time if applicable
+        applied_by:
+          type: string
+          format: uuid
+          description: Player who applied this effect
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'

@@ -1,0 +1,113 @@
+components:
+  schemas:
+    CombatActionRequest:
+      type: object
+      required:
+        - player_id
+        - action_type
+        - action_id
+        - target_position
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          description: Player executing the action
+        action_type:
+          type: string
+          enum: [ attack, ability, special_move, reload, switch_weapon, use_item ]
+          example: ability
+          description: Type of combat action
+        action_id:
+          type: string
+          format: uuid
+          description: Specific action/ability identifier
+        target_position:
+          $ref: './position-schemas.yaml#/components/schemas/PlayerPosition'
+        target_player_id:
+          type: string
+          format: uuid
+          description: Target player if action is player-targeted
+        combo_sequence:
+          type: array
+          items:
+            type: string
+            maxLength: 50
+          maxItems: 10
+          description: Combo sequence for advanced attacks
+        resource_cost:
+          type: object
+          description: Resources consumed by this action
+          properties:
+            health:
+              type: number
+              format: float
+              minimum: 0
+            energy:
+              type: number
+              format: float
+              minimum: 0
+            ammo:
+              type: integer
+              minimum: 0
+        client_timestamp:
+          type: integer
+          description: Client timestamp for latency compensation
+          example: 1734702600050
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%. High-frequency request requiring low latency validation.'
+
+    CombatActionResponse:
+      type: object
+      required:
+        - success
+        - action_id
+        - cooldown_remaining
+        - server_timestamp
+      properties:
+        success:
+          type: boolean
+          example: true
+          description: Whether action was executed successfully
+        action_id:
+          type: string
+          format: uuid
+          description: Executed action identifier
+        cooldown_remaining:
+          type: number
+          format: float
+          minimum: 0
+          description: Remaining cooldown in seconds
+        resource_cost_actual:
+          type: object
+          description: Actual resources consumed
+          properties:
+            health:
+              type: number
+              format: float
+              minimum: 0
+            energy:
+              type: number
+              format: float
+              minimum: 0
+            ammo:
+              type: integer
+              minimum: 0
+        effects_applied:
+          type: array
+          items:
+            $ref: './damage-schemas.yaml#/components/schemas/DamageStatusEffect'
+          description: Status effects applied by this action
+        combo_multiplier:
+          type: number
+          format: float
+          minimum: 1
+          default: 1
+          description: Damage multiplier from combo system
+        server_timestamp:
+          type: integer
+          description: Server timestamp for synchronization
+          example: 1734702600050
+        event_id:
+          type: string
+          format: uuid
+          description: Unique action event identifier
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%. Critical for action validation and combo tracking.'

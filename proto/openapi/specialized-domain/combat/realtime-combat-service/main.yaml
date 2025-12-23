@@ -504,6 +504,253 @@ paths:
               schema:
                 $ref: './schemas/error-schemas.yaml#/components/schemas/Error'
 
+  # Damage events - CRITICAL for real-time combat
+  /sessions/{session_id}/damage:
+    post:
+      summary: Apply damage to target
+      description: |
+        Applies damage from attacker to target with validation and effects.
+
+        **BACKEND NOTE:** High-frequency endpoint (500+ RPS expected).
+        Validates damage calculation, applies status effects, updates health.
+        Publishes damage event to Kafka for analytics and replay.
+        Critical for combat balance and anti-cheat systems.
+      operationId: applyDamage
+      tags:
+        - Combat Events
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Combat session unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './schemas/damage-schemas.yaml#/components/schemas/DamageRequest'
+      responses:
+        '200':
+          description: Damage applied successfully
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/damage-schemas.yaml#/components/schemas/DamageResponse'
+        '400':
+          description: Invalid damage request or validation failed
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/error-schemas.yaml#/components/schemas/Error'
+        '403':
+          description: Not authorized to apply damage
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/error-schemas.yaml#/components/schemas/Error'
+        '404':
+          description: Combat session or target not found
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/error-schemas.yaml#/components/schemas/Error'
+        '429':
+          description: Damage application rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/error-schemas.yaml#/components/schemas/Error'
+
+  # Combat actions (abilities, attacks)
+  /sessions/{session_id}/actions:
+    post:
+      summary: Execute combat action
+      description: |
+        Executes a combat action (attack, ability, special move) with validation.
+
+        **BACKEND NOTE:** High-frequency endpoint (300+ RPS expected).
+        Validates action cooldowns, resource costs, targeting.
+        Applies action effects, updates combat state.
+        Supports combo systems and ability synergies.
+      operationId: executeCombatAction
+      tags:
+        - Combat Events
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Combat session unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './schemas/action-schemas.yaml#/components/schemas/CombatActionRequest'
+      responses:
+        '200':
+          description: Action executed successfully
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/action-schemas.yaml#/components/schemas/CombatActionResponse'
+        '400':
+          description: Invalid action request or validation failed
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/error-schemas.yaml#/components/schemas/Error'
+        '403':
+          description: Not authorized to execute action
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/error-schemas.yaml#/components/schemas/Error'
+        '404':
+          description: Combat session not found
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/error-schemas.yaml#/components/schemas/Error'
+        '429':
+          description: Action execution rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/error-schemas.yaml#/components/schemas/Error'
+
+  # Spectator mode
+  /sessions/{session_id}/spectate:
+    post:
+      summary: Join session as spectator
+      description: |
+        Allows a player to join combat session in spectator mode.
+
+        **BACKEND NOTE:** Read-only access to combat data.
+        Receives real-time updates but cannot participate.
+        Useful for coaching, streaming, tournament viewing.
+      operationId: spectateCombatSession
+      tags:
+        - Combat Sessions
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Combat session unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './schemas/session-schemas.yaml#/components/schemas/SpectateRequest'
+      responses:
+        '200':
+          description: Successfully joined as spectator
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/session-schemas.yaml#/components/schemas/SpectateResponse'
+        '400':
+          description: Invalid spectate request
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/error-schemas.yaml#/components/schemas/Error'
+        '403':
+          description: Not authorized to spectate session
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/error-schemas.yaml#/components/schemas/Error'
+        '404':
+          description: Combat session not found
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/error-schemas.yaml#/components/schemas/Error'
+
+  # Combat replay
+  /sessions/{session_id}/replay:
+    get:
+      summary: Get combat session replay data
+      description: |
+        Retrieves replay data for combat session analysis and review.
+
+        **BACKEND NOTE:** Event-sourced replay system.
+        Supports time-based filtering and speed control.
+        Critical for tournament analysis and anti-cheat review.
+      operationId: getCombatReplay
+      tags:
+        - Combat Events
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: session_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Combat session unique identifier
+        - name: start_time
+          in: query
+          schema:
+            type: integer
+            description: Start timestamp for replay (Unix milliseconds)
+        - name: end_time
+          in: query
+          schema:
+            type: integer
+            description: End timestamp for replay (Unix milliseconds)
+        - name: speed
+          in: query
+          schema:
+            type: number
+            format: float
+            minimum: 0.1
+            maximum: 10.0
+            default: 1.0
+            description: Replay speed multiplier
+      responses:
+        '200':
+          description: Replay data retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/replay-schemas.yaml#/components/schemas/CombatReplayResponse'
+        '400':
+          description: Invalid replay parameters
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/error-schemas.yaml#/components/schemas/Error'
+        '403':
+          description: Not authorized to view replay
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/error-schemas.yaml#/components/schemas/Error'
+        '404':
+          description: Combat session or replay data not found
+          content:
+            application/json:
+              schema:
+                $ref: './schemas/error-schemas.yaml#/components/schemas/Error'
+
 components:
   securitySchemes:
     BearerAuth:
