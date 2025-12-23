@@ -40,18 +40,13 @@ if [ -f "scripts/validate-emoji-ban.py" ] && [ -n "$STAGED_FILES" ]; then
     PYTHON_FILES=$(echo "$STAGED_FILES" | grep "\.py$" | grep -v -E "\.githooks/|\.cursor/|scripts/framework\.py|scripts/SCRIPT_MIGRATION_GUIDE\.md|fix_git_push\.py" || true)
     OPENAPI_FILES=$(echo "$STAGED_FILES" | grep -E "\.yaml$|\.yml$" | grep -E "proto/openapi/" || true)
 
-    if [ -n "$PYTHON_FILES" ]; then
-        echo "$PYTHON_FILES" | xargs python scripts/validate-emoji-ban.py
-        if [ $? -ne 0 ]; then
-            echo "[BLOCKED] Commit blocked due to emoji violation in Python files"
-            exit 1
-        fi
-    fi
+    # Combine all files to check at once - show ALL violations before blocking
+    ALL_FILES_TO_CHECK="$PYTHON_FILES $OPENAPI_FILES"
 
-    if [ -n "$OPENAPI_FILES" ]; then
-        echo "$OPENAPI_FILES" | xargs python scripts/validate-emoji-ban.py --openapi
+    if [ -n "$ALL_FILES_TO_CHECK" ]; then
+        echo "$ALL_FILES_TO_CHECK" | xargs python scripts/validate-emoji-ban.py
         if [ $? -ne 0 ]; then
-            echo "[BLOCKED] Commit blocked due to emoji violation in OpenAPI files"
+            echo "[BLOCKED] Commit blocked due to emoji violations - ALL problematic files shown above"
             exit 1
         fi
     fi

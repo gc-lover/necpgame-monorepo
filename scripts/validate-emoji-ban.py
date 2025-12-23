@@ -94,7 +94,8 @@ def main():
     import argparse
 
     parser = argparse.ArgumentParser(description='Validate files for forbidden emoji and special characters')
-    parser.add_argument('--openapi', action='store_true', help='Check OpenAPI files only')
+    parser.add_argument('--openapi', action='store_true', help='Check only OpenAPI files in proto/openapi/ directory')
+    parser.add_argument('--python', action='store_true', help='Check only Python files')
     parser.add_argument('files', nargs='*', help='Files to check')
 
     args = parser.parse_args()
@@ -118,8 +119,10 @@ def main():
         if any(skip in file_path for skip in ['scripts/framework.py', 'scripts/SCRIPT_MIGRATION_GUIDE.md']):
             continue
 
-        # If --openapi flag is used, only check OpenAPI files
+        # Filter by file type if flags are specified
         if args.openapi and not (file_path.endswith(('.yaml', '.yml')) and 'proto/openapi/' in file_path):
+            continue
+        if args.python and not file_path.endswith('.py'):
             continue
 
         violations = check_file_for_emoji(file_path)
