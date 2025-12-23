@@ -5,18 +5,22 @@ package server
 
 import (
 	"context"
-	"fmt"
-	"net/http"
 	"sync"
 	"time"
 
 	"system-domain-service-go/pkg/api"
 )
 
+// Logger interface for structured logging
+type Logger interface {
+	Info(msg string, args ...interface{})
+	Error(msg string, args ...interface{})
+}
+
 // PERFORMANCE: Memory pool for response objects to reduce GC pressure
 var responsePool = sync.Pool{
 	New: func() interface{} {
-		return &api.HealthResponse{}
+		return &api.HealthResponseHeaders{}
 	},
 }
 
@@ -38,15 +42,35 @@ func NewHandler() *Handler {
 	}
 }
 
-// Implement generated API interface methods here
-// NOTE: This file contains stubs that need to be implemented based on your OpenAPI spec
-// After ogen generates the API types, run the handler generator script to populate this file
+// SystemDomainHealthCheck implements the health check endpoint
+func (h *Handler) SystemDomainHealthCheck(ctx context.Context, params api.SystemDomainHealthCheckParams) (*api.HealthResponseHeaders, error) {
+	// PERFORMANCE: Context timeout to prevent hanging requests
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
 
-// TODO: Implement handlers based on generated API interfaces
-// Use: python scripts/generate-api-handlers.py system-domain
+	// PERFORMANCE: Get response from pool instead of allocating new
+	response := responsePool.Get().(*api.HealthResponseHeaders)
+	defer responsePool.Put(response)
 
-// Example stub - replace with actual implementations:
-func (h *Handler) ExampleDomainHealthCheck(ctx context.Context, params api.ExampleDomainHealthCheckParams) (api.ExampleDomainHealthCheckRes, error) {
-	// TODO: Implement health check logic
-	return nil, fmt.Errorf("not implemented")
+	// Reset response for reuse
+	*response = api.HealthResponseHeaders{}
+
+	// Implement health check logic
+	response.Response.Status = "healthy"
+	response.Response.Domain.SetTo("system")
+	response.Response.Timestamp = time.Now()
+
+	return response, nil
+}
+
+// SystemDomainBatchHealthCheck implements batch health check
+func (h *Handler) SystemDomainBatchHealthCheck(ctx context.Context, req *api.SystemDomainBatchHealthCheckReq) (*api.SystemDomainBatchHealthCheckOKHeaders, error) {
+	// TODO: Implement batch health check logic
+	return nil, nil
+}
+
+// SystemDomainHealthWebSocket implements WebSocket health updates
+func (h *Handler) SystemDomainHealthWebSocket(ctx context.Context, params api.SystemDomainHealthWebSocketParams) (*api.WebSocketHealthMessageHeaders, error) {
+	// TODO: Implement WebSocket health updates
+	return nil, nil
 }

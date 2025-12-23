@@ -20,7 +20,7 @@ type Logger interface {
 // PERFORMANCE: Memory pool for response objects to reduce GC pressure
 var responsePool = sync.Pool{
 	New: func() interface{} {
-		return &api.ArenaDomainHealthCheckOK{}
+		return &api.HealthResponseHeaders{}
 	},
 }
 
@@ -50,18 +50,28 @@ func (h *Handler) ArenaDomainHealthCheck(ctx context.Context) (api.ArenaDomainHe
 	defer cancel()
 
 	// PERFORMANCE: Get response from pool instead of allocating new
-	response := responsePool.Get().(*api.ArenaDomainHealthCheckOK)
+	response := responsePool.Get().(*api.HealthResponseHeaders)
 	defer responsePool.Put(response)
 
 	// Reset response for reuse
-	*response = api.ArenaDomainHealthCheckOK{}
+	*response = api.HealthResponseHeaders{}
 
 	// Implement health check logic
-	response.Status.SetTo("healthy")
-	response.Domain.SetTo("arena")
-	response.Timestamp.SetTo(time.Now())
+	response.Response.Status.SetTo("healthy")
+	response.Response.Domain.SetTo("arena")
+	response.Response.Timestamp.SetTo(time.Now())
 
 	return response, nil
 }
-	return nil, fmt.Errorf("not implemented")
+
+// BatchHealthCheck implements batch health check for multiple domains
+func (h *Handler) BatchHealthCheck(ctx context.Context, req *api.BatchHealthCheckReq) (api.BatchHealthCheckRes, error) {
+	// TODO: Implement batch health check logic
+	return nil, nil
+}
+
+// HealthWebSocket implements real-time health updates
+func (h *Handler) HealthWebSocket(ctx context.Context) (api.HealthWebSocketRes, error) {
+	// TODO: Implement WebSocket health updates
+	return nil, nil
 }

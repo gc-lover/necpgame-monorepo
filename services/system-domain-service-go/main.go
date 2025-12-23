@@ -10,11 +10,9 @@ import (
 	"os"
 	"os/signal"
 	"runtime"
-	"sync"
 	"syscall"
 	"time"
 
-	"system-domain-service-go/pkg/api"
 	"system-domain-service-go/server"
 )
 
@@ -28,7 +26,7 @@ func main() {
 	logger := log.New(os.Stdout, "[system-domain] ", log.LstdFlags)
 
 	// PERFORMANCE: Context with timeout for initialization
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	_, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	// PERFORMANCE: Initialize service with memory pooling

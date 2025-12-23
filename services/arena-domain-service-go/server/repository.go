@@ -9,8 +9,6 @@ import (
 	"sync"
 	"time"
 
-	"arena-domain-service-go/pkg/api"
-
 	_ "github.com/lib/pq" // PostgreSQL driver
 )
 
