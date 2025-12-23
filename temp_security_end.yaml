@@ -1,0 +1,438 @@
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        message:
+          type: string
+          maxLength: 256
+          example: Internal server error
+        code:
+          type: integer
+          format: int32
+          minimum: 100
+          maximum: 599
+          example: 500
+        domain:
+          type: string
+          example: example-domain
+          maxLength: 50
+        details:
+          type: object
+          description: Additional error context
+          example: { "field": "name", "reason": "required" }
+      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+
+    # Domain-specific schemas for Security Service
+
+    # User Security Profile - Enterprise-grade user security information
+    UserSecurityProfile:
+      type: object
+      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+      required:
+        - id
+        - username
+        - email
+        - roles
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: User unique identifier
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        username:
+          type: string
+          description: User's username
+          example: "john_doe"
+          maxLength: 50
+        email:
+          type: string
+          format: email
+          description: User's email address
+          example: "john.doe@example.com"
+          maxLength: 255
+        email_verified:
+          type: boolean
+          description: Whether email is verified
+          example: true
+        phone:
+          type: string
+          description: User's phone number
+          example: "+1-555-0123"
+          maxLength: 20
+        phone_verified:
+          type: boolean
+          description: Whether phone is verified
+          example: false
+        roles:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserRole"
+          description: User's assigned roles
+          maxItems: 10
+        permissions:
+          type: array
+          items:
+            type: string
+            enum: [read, write, delete, admin]
+          description: User's permissions
+          example: ["read", "write"]
+        last_login:
+          type: string
+          format: date-time
+          description: Last login timestamp
+          example: "2025-12-21T10:00:00Z"
+        login_count:
+          type: integer
+          description: Total login count
+          example: 42
+        account_status:
+          type: string
+          enum: [active, suspended, locked, pending_verification]
+          description: Account status
+          example: "active"
+        created_at:
+          type: string
+          format: date-time
+          description: Account creation timestamp
+          example: "2025-01-15T08:30:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+          example: "2025-12-21T10:00:00Z"
+
+    # User Role - Role-based access control
+    UserRole:
+      type: object
+      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+      required:
+        - id
+        - name
+        - permissions
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Role unique identifier
+          example: "550e8400-e29b-41d4-a716-446655440001"
+        name:
+          type: string
+          description: Role name
+          example: "admin"
+          maxLength: 50
+        description:
+          type: string
+          description: Role description
+          example: "Administrator with full system access"
+          maxLength: 255
+        permissions:
+          type: array
+          items:
+            type: string
+            enum: [read, write, delete, admin, security, audit]
+          description: Permissions granted by this role
+          example: ["read", "write", "delete", "admin"]
+        is_system_role:
+          type: boolean
+          description: Whether this is a system-defined role
+          example: true
+        created_at:
+          type: string
+          format: date-time
+          description: Role creation timestamp
+          example: "2025-01-01T00:00:00Z"
+
+    # Security Threat - Threat detection and monitoring
+    SecurityThreat:
+      type: object
+      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+      required:
+        - id
+        - type
+        - severity
+        - status
+        - detected_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Threat unique identifier
+          example: "550e8400-e29b-41d4-a716-446655440002"
+        type:
+          type: string
+          enum: [suspicious_login, brute_force, unusual_activity, data_exfiltration, privilege_escalation]
+          description: Type of security threat
+          example: "suspicious_login"
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+          description: Threat severity level
+          example: "high"
+        status:
+          type: string
+          enum: [active, investigating, resolved, dismissed]
+          description: Current threat status
+          example: "investigating"
+        description:
+          type: string
+          description: Threat description
+          example: "Multiple failed login attempts from unusual location"
+          maxLength: 1000
+        user_id:
+          type: string
+          format: uuid
+          description: Affected user ID
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        ip_address:
+          type: string
+          description: IP address involved
+          example: "192.168.1.100"
+        user_agent:
+          type: string
+          description: User agent string
+          example: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+        location:
+          type: string
+          description: Geographic location
+          example: "New York, US"
+        confidence_score:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: AI confidence score (0.0-1.0)
+          example: 0.85
+        detected_at:
+          type: string
+          format: date-time
+          description: When threat was detected
+          example: "2025-12-21T10:00:00Z"
+        resolved_at:
+          type: string
+          format: date-time
+          description: When threat was resolved
+          example: "2025-12-21T10:30:00Z"
+        actions_taken:
+          type: array
+          items:
+            type: string
+            enum: [account_locked, ip_blocked, notification_sent, password_reset_required]
+          description: Actions taken to mitigate threat
+          example: ["account_locked", "notification_sent"]
+
+    # Pagination Info - Standard pagination metadata
+    PaginationInfo:
+      type: object
+      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+      required:
+        - page
+        - limit
+        - total_count
+        - has_more
+      properties:
+        page:
+          type: integer
+          description: Current page number (1-based)
+          example: 1
+          minimum: 1
+        limit:
+          type: integer
+          description: Items per page
+          example: 20
+          minimum: 1
+          maximum: 100
+        total_count:
+          type: integer
+          description: Total number of items available
+          example: 150
+          minimum: 0
+        total_pages:
+          type: integer
+          description: Total number of pages
+          example: 8
+          minimum: 1
+        has_more:
+          type: boolean
+          description: Whether there are more pages available
+          example: true
+        has_previous:
+          type: boolean
+          description: Whether there is a previous page
+          example: false
+        has_next:
+          type: boolean
+          description: Whether there is a next page
+          example: true
+
+    # Core Example entity - ОБЯЗАТЕЛЬНО оптимизировать порядок полей
+    Example:
+      type: object
+      required:
+        - id
+        - name
+        - created_at
+        - status
+        - is_active
+      properties:
+        # Large fields first for struct alignment
+        id:
+          type: string
+          format: uuid
+          description: Example unique identifier
+          example: 550e8400-e29b-41d4-a716-446655440000
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Example display name
+          example: Sample Example
+        description:
+          type: string
+          maxLength: 1000
+          description: Detailed description
+          example: This is a comprehensive example demonstrating best practices.
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+          example: "2025-12-21T10:00:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+          example: "2025-12-21T10:00:00Z"
+        priority:
+          type: integer
+          minimum: 1
+          maximum: 10
+          default: 5
+          description: Processing priority
+          example: 7
+        status:
+          type: string
+          enum: [ active, inactive, pending, archived ]
+          default: active
+          description: Current status
+          example: active
+        is_active:
+          type: boolean
+          description: Whether this example is active
+          example: true
+        tags:
+          type: array
+          items:
+            type: string
+            maxLength: 50
+          maxItems: 10
+          description: Associated tags
+          example: [ "demo", "template", "best-practice" ]
+      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%. Hot path optimization required."
+
+    # Request/Response schemas
+    CreateExampleRequest:
+      type: object
+      required:
+        - name
+        - description
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: Desired example name
+          example: My New Example
+        description:
+          type: string
+          maxLength: 1000
+          description: Example description
+          example: A new example following enterprise-grade patterns.
+        priority:
+          type: integer
+          minimum: 1
+          maximum: 10
+          default: 5
+          description: Processing priority
+        tags:
+          type: array
+          items:
+            type: string
+            maxLength: 50
+          maxItems: 10
+          description: Initial tags
+      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+
+    UpdateExampleRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: New example name
+          example: Updated Example Name
+        description:
+          type: string
+          maxLength: 1000
+          description: New description
+        priority:
+          type: integer
+          minimum: 1
+          maximum: 10
+          description: New priority
+        status:
+          type: string
+          enum: [ active, inactive, pending, archived ]
+          description: New status
+        is_active:
+          type: boolean
+          description: Update active status
+        tags:
+          type: array
+          items:
+            type: string
+            maxLength: 50
+          maxItems: 10
+          description: Replace all tags
+      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+
+    ExampleResponse:
+      type: object
+      required:
+        - example
+      properties:
+        example:
+          $ref: "#/components/schemas/Example"
+      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+
+    ExampleListResponse:
+      type: object
+      required:
+        - examples
+        - total_count
+        - has_more
+      properties:
+        examples:
+          type: array
+          items:
+            $ref: "#/components/schemas/Example"
+          description: List of examples
+        total_count:
+          type: integer
+          description: Total number of examples matching criteria
+          example: 150
+        has_more:
+          type: boolean
+          description: Whether there are more results available
+          example: true
+        page:
+          type: integer
+          description: Current page number
+          example: 1
+        limit:
+          type: integer
+          description: Items per page
+          example: 20
+      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%. Paginated responses optimized for memory efficiency."

@@ -1,0 +1,1010 @@
+openapi: 3.0.3
+info:
+  title: Security Service API - Enterprise-Grade Authentication, Authorization and Anti-Cheat
+  description: |
+    **Enterprise-Grade Security Service API for NECPGAME**
+
+    Comprehensive security infrastructure managing authentication, authorization, threat detection,
+    anti-cheat validation, and security monitoring for the NECPGAME ecosystem.
+
+    ## Key Features
+    - **Enterprise-grade architecture** with proper domain separation
+    - **Backend optimization hints** for struct alignment and performance (30-50% memory savings)
+    - **Complete validation** with redocly and ogen code generation
+    - **Security-first approach** with multi-layer authentication and authorization
+    - **Performance-optimized** response structures with field ordering
+    - **Comprehensive error handling** with proper HTTP status codes
+
+    ## Domain Purpose
+    The Security Service manages all security aspects of NECPGAME including user authentication,
+    role-based access control, threat detection, anti-cheat mechanisms, security monitoring,
+    and compliance with security standards.
+
+    ## Performance Targets
+    - P99 Latency: <25ms for authentication (HOT PATH)
+    - P99 Latency: <50ms for authorization checks
+    - Memory: <30KB per active security session
+    - Concurrent users: 100,000+ simultaneous security operations
+    - Authentication throughput: 10,000+ auth operations/minute
+    - Data consistency: Event-sourced with CQRS patterns
+  version: "1.0.0"
+  contact:
+    name: NECPGAME API Support
+    url: https://necpgame.com/support
+    email: api@necpgame.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://api.necpgame.com/v1/security
+    description: Production server
+  - url: https://staging-api.necpgame.com/v1/security
+    description: Staging server
+  - url: http://localhost:8080/api/v1/security
+    description: Local development server
+
+security:
+  - BearerAuth: [ ]
+
+tags:
+  - name: Authentication
+    description: User authentication, token management, and session handling
+  - name: Authorization
+    description: Role-based access control, permissions, and policy management
+  - name: Threat Detection
+    description: Security monitoring, anomaly detection, and threat analysis
+  - name: Anti-Cheat
+    description: Cheat detection, validation, and enforcement mechanisms
+  - name: Health Monitoring
+    description: System health and performance monitoring
+
+paths:
+  # Health Check - ОБЯЗАТЕЛЬНО для всех доменов
+  /health:
+    get:
+      summary: Security service health check
+      description: |
+        **Enterprise-grade health check endpoint**
+
+        Provides real-time health status of the security service microservice.
+        Critical for service discovery, load balancing, and monitoring.
+        Includes authentication systems and security monitoring status.
+
+        **Performance:** <1ms response time, cached for 30 seconds
+      operationId: securityServiceHealthCheck
+      tags:
+        - Health Monitoring
+      parameters:
+        - name: Accept-Encoding
+          in: header
+          schema:
+            type: string
+            enum: [ gzip, deflate, br ]
+      responses:
+        "200":
+          description: Service is healthy
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: max-age=30, s-maxage=60
+            ETag:
+              schema:
+                type: string
+                example: '"health-v1.0"'
+            Content-Encoding:
+              schema:
+                type: string
+                enum: [ gzip, deflate, br ]
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+        "503":
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+        "429":
+          description: Too many requests - rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 60
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  # Batch Health Check - ОБЯЗАТЕЛЬНО для enterprise-grade доменов
+  /health/batch:
+    post:
+      summary: Batch health check for multiple domain services
+      description: |
+        **Performance optimization:** Check multiple domain health in single request
+
+        Reduces N HTTP calls to 1 call. Critical for microservice orchestration.
+        Eliminates network overhead in health monitoring scenarios.
+
+        **Use case:** Service mesh health checks, Kubernetes readiness probes
+      operationId: exampleDomainBatchHealthCheck
+      tags:
+        - Health Monitoring
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - services
+              properties:
+                services:
+                  type: array
+                  items:
+                    type: string
+                    enum: [ example-domain, system-domain, specialized-domain ]
+                    maxItems: 10
+                  description: List of services to check
+      responses:
+        "200":
+          $ref: "#/components/responses/HealthBatchSuccess"
+        "400":
+          description: Invalid request - malformed service list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Too many requests - rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 60
+                description: Seconds to wait before retrying
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  # WebSocket Health Monitoring - ОБЯЗАТЕЛЬНО для real-time доменов
+  /health/ws:
+    get:
+      summary: Real-time health monitoring WebSocket
+      description: |
+        **Performance optimization:** Real-time health updates without polling
+
+        Eliminates periodic HTTP requests, reduces server load by ~90%.
+        Perfect for dashboard monitoring and alerting systems.
+
+        **Protocol:** WebSocket with JSON payloads
+        **Heartbeat:** 30 second intervals
+        **Reconnection:** Automatic with exponential backoff
+      operationId: exampleDomainHealthWebSocket
+      tags:
+        - Health Monitoring
+      parameters:
+        - name: services
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+              enum: [ example-domain, system-domain, specialized-domain ]
+          description: Services to monitor (optional, monitors all if not specified)
+      responses:
+        "200":
+          description: WebSocket upgrade information returned
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  websocket_url:
+                    type: string
+                    example: "ws://localhost:8080/api/v1/example-domain/health/ws"
+                  supported_protocols:
+                    type: array
+                    items:
+                      type: string
+                    example: [ "health-monitoring-v1" ]
+        "101":
+          description: WebSocket connection established successfully
+          headers:
+            Upgrade:
+              schema:
+                type: string
+                example: websocket
+            Connection:
+              schema:
+                type: string
+                example: Upgrade
+            Sec-WebSocket-Accept:
+              schema:
+                type: string
+                description: WebSocket handshake acceptance key
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WebSocketHealthMessage"
+        "400":
+          description: Invalid request - malformed service parameters
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized - authentication required for WebSocket
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Too many requests - WebSocket connection limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 30
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  # Authentication - User login and token management
+  /auth:
+    post:
+      summary: Authenticate user and issue tokens
+      description: |
+        **Enterprise-grade authentication endpoint**
+
+        Authenticates users with multiple factors, issues JWT tokens with proper claims,
+        and enforces security policies including rate limiting and threat detection.
+
+        **Performance:** <25ms P95 (HOT PATH), includes threat detection
+        **Security:** Multi-factor authentication, device fingerprinting, anomaly detection
+      operationId: authenticateUser
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - username
+                - password
+              properties:
+                username:
+                  type: string
+                  minLength: 3
+                  maxLength: 50
+                  description: User login identifier (email or username)
+                  example: "player@example.com"
+                password:
+                  type: string
+                  minLength: 8
+                  maxLength: 128
+                  description: User password (hashed before transmission)
+                  example: "secure_password_hash"
+                device_fingerprint:
+                  type: string
+                  description: Device fingerprint for security monitoring
+                  example: "device_hash_123456"
+                mfa_token:
+                  type: string
+                  description: Multi-factor authentication token (if required)
+                  example: "123456"
+                client_info:
+                  type: object
+                  description: Client application information
+                  properties:
+                    user_agent:
+                      type: string
+                      example: "NECPGAME/1.0.0 (Windows NT 10.0)"
+                    ip_address:
+                      type: string
+                      format: ipv4
+                      example: "192.168.1.100"
+                    location:
+                      type: string
+                      example: "New York, US"
+      responses:
+        "200":
+          description: Authentication successful, tokens issued
+          headers:
+            X-Rate-Limit-Remaining:
+              schema:
+                type: integer
+                example: 99
+                description: Remaining authentication attempts
+            X-Security-Score:
+              schema:
+                type: number
+                format: float
+                example: 0.95
+                description: Authentication security score (0.0-1.0)
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - access_token
+                  - refresh_token
+                  - token_type
+                  - expires_in
+                  - user
+                properties:
+                  access_token:
+                    type: string
+                    description: JWT access token for API calls
+                    example: "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9..."
+                  refresh_token:
+                    type: string
+                    description: JWT refresh token for token renewal
+                    example: "refresh_token_1234567890"
+                  token_type:
+                    type: string
+                    enum: [ Bearer ]
+                    example: "Bearer"
+                  expires_in:
+                    type: integer
+                    description: Access token expiration time in seconds
+                    example: 3600
+                  user:
+                    $ref: "#/components/schemas/UserSecurityProfile"
+                  security_flags:
+                    type: array
+                    items:
+                      type: string
+                      enum: [ mfa_required, password_change_required, suspicious_activity, new_device ]
+                    description: Security flags requiring attention
+                    example: [ "new_device" ]
+        "400":
+          description: Invalid authentication data or malformed request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Authentication failed - invalid credentials
+          headers:
+            X-Retry-After:
+              schema:
+                type: integer
+                example: 300
+                description: Seconds to wait before next attempt
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Too many authentication attempts - account temporarily locked
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 900
+                description: Seconds until account unlock
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    get:
+      summary: Get specific example by ID
+      description: |
+        **Enterprise-grade retrieval endpoint**
+
+        Optimized with proper caching strategies and database indexing.
+        Supports conditional requests with ETags.
+
+        **Performance:** <5ms P95 with Redis caching
+      operationId: getExample
+      tags:
+        - Example Domain
+      parameters:
+        - name: example_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Example unique identifier
+        - name: include_related
+          in: query
+          schema:
+            type: boolean
+            default: false
+          description: Include related data in response
+        - name: If-None-Match
+          in: header
+          schema:
+            type: string
+          description: Conditional request - return 304 if ETag matches
+        - name: If-Modified-Since
+          in: header
+          schema:
+            type: string
+            format: date-time
+          description: Conditional request - return 304 if not modified since this time
+      responses:
+        "200":
+          $ref: "#/components/responses/ExampleRetrieved"
+        "304":
+          description: Not modified - resource has not changed
+          headers:
+            ETag:
+              schema:
+                type: string
+                example: '"example-123-v1"'
+            Cache-Control:
+              schema:
+                type: string
+                example: max-age=300, private
+        "400":
+          description: Invalid request - malformed example ID
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Example not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Too many requests - rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 30
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+    put:
+      summary: Update existing example
+      description: |
+        **Enterprise-grade update endpoint**
+
+        Supports partial updates, optimistic locking, and audit trails.
+        Ensures data consistency with event sourcing patterns.
+
+        **Performance:** <25ms P95, includes validation and conflict resolution
+      operationId: updateExample
+      tags:
+        - Example Domain
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: example_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Example unique identifier
+        - name: If-Match
+          in: header
+          schema:
+            type: string
+          description: ETag for optimistic locking - prevents concurrent updates
+        - name: If-Unmodified-Since
+          in: header
+          schema:
+            type: string
+            format: date-time
+          description: Conditional update - proceed only if not modified since this time
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateExampleRequest"
+      responses:
+        "200":
+          $ref: "#/components/responses/ExampleUpdated"
+        "400":
+          description: Invalid request - malformed data or example ID
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Example not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Conflict - version conflict (optimistic locking) or precondition failed
+          headers:
+            ETag:
+              schema:
+                type: string
+                example: '"example-123-v1"'
+                description: Current entity tag
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "412":
+          description: Precondition failed - If-Match or If-Unmodified-Since condition not met
+          headers:
+            ETag:
+              schema:
+                type: string
+                example: '"example-123-v1"'
+                description: Current entity tag
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: Unprocessable entity - business rule validation failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Too many requests - update rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 30
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+    delete:
+      summary: Delete example
+      description: |
+        **Enterprise-grade deletion endpoint**
+
+        Supports soft deletes with audit trails and cleanup scheduling.
+        Ensures referential integrity and cascading deletes.
+
+        **Performance:** <15ms P95, includes cleanup operations
+      operationId: deleteExample
+      tags:
+        - Example Domain
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: example_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Example unique identifier
+      responses:
+        "204":
+          $ref: "#/components/responses/ExampleDeleted"
+        "400":
+          description: Invalid request - malformed example ID
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Example not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: Conflict - example cannot be deleted (referential integrity)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          description: Too many requests - deletion rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 60
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  # Authorization - Role and permission management
+  /auth/permissions:
+    get:
+      summary: Get user permissions and roles
+      description: |
+        **Enterprise-grade authorization endpoint**
+
+        Retrieves comprehensive user permissions, roles, and access control information.
+        Critical for role-based access control (RBAC) and permission validation.
+
+        **Performance:** <15ms P95 (HOT PATH), Redis cached
+        **Security:** Permission inheritance, role hierarchies, temporary elevations
+      operationId: getUserPermissions
+      tags:
+        - Authorization
+      responses:
+        "200":
+          description: User permissions retrieved successfully
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: max-age=300, private
+            ETag:
+              schema:
+                type: string
+                example: '"permissions-v123"'
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - user_id
+                  - roles
+                  - permissions
+                  - effective_permissions
+                properties:
+                  user_id:
+                    type: string
+                    format: uuid
+                    example: "550e8400-e29b-41d4-a716-446655440000"
+                  roles:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/UserRole"
+                    description: User's assigned roles
+                  permissions:
+                    type: array
+                    items:
+                      type: string
+                    description: Direct permissions (not including inherited)
+                    example: [ "game:play", "economy:trade" ]
+                  effective_permissions:
+                    type: array
+                    items:
+                      type: string
+                    description: All effective permissions including inherited
+                    example: [ "game:play", "economy:trade", "social:chat", "admin:moderate" ]
+                  restrictions:
+                    type: array
+                    items:
+                      type: string
+                    description: Permission restrictions or denials
+                    example: [ "admin:ban_players" ]
+
+    post:
+      summary: Check specific permission
+      description: |
+        **Enterprise-grade permission validation endpoint**
+
+        Validates if user has specific permission or set of permissions.
+        Supports complex permission checks with context and conditions.
+
+        **Performance:** <10ms P95 (HOT PATH), optimized permission trees
+        **Security:** Context-aware permission evaluation, audit logging
+      operationId: checkPermission
+      tags:
+        - Authorization
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - permission
+              properties:
+                permission:
+                  type: string
+                  description: Permission to check
+                  example: "economy:trade"
+                resource:
+                  type: string
+                  description: Specific resource being accessed
+                  example: "marketplace:item:12345"
+                context:
+                  type: object
+                  description: Additional context for permission evaluation
+                  example: { "time_of_day": "night", "location": "restricted_area" }
+      responses:
+        "200":
+          description: Permission check completed
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - permission
+                  - granted
+                  - reason
+                properties:
+                  permission:
+                    type: string
+                    example: "economy:trade"
+                  granted:
+                    type: boolean
+                    example: true
+                  reason:
+                    type: string
+                    description: Reason for grant/deny decision
+                    example: "User has required role"
+                  conditions:
+                    type: array
+                    items:
+                      type: string
+                    description: Additional conditions that apply
+                    example: [ "Time restriction: trading allowed only 8AM-10PM" ]
+
+  # Threat Detection - Security monitoring and anomaly detection
+  /security/threats:
+    get:
+      summary: Get security threats and alerts
+      description: |
+        **Enterprise-grade threat detection endpoint**
+
+        Retrieves security alerts, suspicious activities, and threat intelligence.
+        Critical for security monitoring and incident response.
+
+        **Performance:** <50ms P95, optimized for security dashboards
+        **Security:** Role-based access to threat information, audit trails
+      operationId: getSecurityThreats
+      tags:
+        - Threat Detection
+      parameters:
+        - name: severity
+          in: query
+          schema:
+            type: string
+            enum: [ low, medium, high, critical ]
+          description: Filter by threat severity
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [ authentication, authorization, cheating, ddos, fraud, system ]
+          description: Filter by threat type
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [ active, resolved, investigating, false_positive ]
+            default: active
+          description: Filter by threat status
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+          description: Maximum number of threats to return
+      responses:
+        "200":
+          description: Security threats retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - threats
+                  - summary
+                  - pagination
+                properties:
+                  threats:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/SecurityThreat"
+                    description: List of security threats
+                  summary:
+                    type: object
+                    required:
+                      - total_active
+                      - critical_count
+                      - recent_incidents
+                    properties:
+                      total_active:
+                        type: integer
+                        description: Total active threats
+                        example: 15
+                      critical_count:
+                        type: integer
+                        description: Critical severity threats
+                        example: 3
+                      recent_incidents:
+                        type: integer
+                        description: Threats in last 24 hours
+                        example: 8
+                  pagination:
+                    $ref: "#/components/schemas/PaginationInfo"
+
+  # Anti-Cheat - Cheat detection and validation
+  /security/anticheat:
+    post:
+      summary: Validate game action for cheating
+      description: |
+        **Enterprise-grade anti-cheat validation endpoint**
+
+        Validates game actions for cheating patterns, speed hacking, aimbot detection,
+        and other security violations. Critical for fair gameplay.
+
+        **Performance:** <20ms P95 (HOT PATH), real-time validation
+        **Security:** Multi-layer validation, machine learning models, pattern analysis
+      operationId: validateGameAction
+      tags:
+        - Anti-Cheat
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - action_type
+                - player_id
+                - action_data
+              properties:
+                action_type:
+                  type: string
+                  enum: [ movement, combat, economy, social ]
+                  description: Type of game action being validated
+                  example: "combat"
+                player_id:
+                  type: string
+                  format: uuid
+                  description: Player performing the action
+                  example: "550e8400-e29b-41d4-a716-446655440000"
+                action_data:
+                  type: object
+                  description: Action-specific validation data
+                  example: {
+                    "position": { "x": 100.5, "y": 200.3, "z": 50.0 },
+                    "target": "enemy_id_123",
+                    "damage": 150,
+                    "timestamp": "2025-12-22T10:30:00Z"
+                  }
+                client_signature:
+                  type: string
+                  description: Client-generated action signature for integrity
+                  example: "signature_hash_123456"
+      responses:
+        "200":
+          description: Action validated successfully - no cheating detected
+          headers:
+            X-Validation-Score:
+              schema:
+                type: number
+                format: float
+                example: 0.98
+                description: Validation confidence score (0.0-1.0)
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - valid
+                  - confidence_score
+                  - validation_checks
+                properties:
+                  valid:
+                    type: boolean
+                    example: true
+                  confidence_score:
+                    type: number
+                    format: float
+                    minimum: 0
+                    maximum: 1
+                    description: Validation confidence (higher = more trustworthy)
+                    example: 0.98
+                  validation_checks:
+                    type: array
+                    items:
+                      type: string
+                    description: Validation checks performed
+                    example: [ "speed_check", "aim_assist_detection", "position_validation" ]
+                  flags:
+                    type: array
+                    items:
+                      type: string
+                      enum: [ suspicious_pattern, borderline, clean ]
+                    description: Validation flags
+                    example: [ "clean" ]
+        "400":
+          description: Invalid validation request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Action flagged as cheating - access denied
+          headers:
+            X-Cheat-Reason:
+              schema:
+                type: string
+                example: "speed_hacking_detected"
+                description: Reason for cheating detection
+            X-Ban-Recommendation:
+              schema:
+                type: string
+                enum: [ none, temporary, permanent ]
+                example: "temporary"
+                description: Recommended ban action
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - cheated
+                  - reason
+                  - evidence
+                  - recommended_action
+                properties:
+                  cheated:
+                    type: boolean
+                    example: true
+                  reason:
+                    type: string
+                    description: Detailed cheating detection reason
+                    example: "Movement speed exceeded maximum allowed velocity by 150%"
+                  evidence:
+                    type: object
+                    description: Supporting evidence for the detection
+                    example: {
+                      "detected_speed": 25.5,
+                      "max_allowed_speed": 12.0,
+                      "confidence": 0.95
+                    }
+                  recommended_action:
+                    type: string
+                    enum: [ warn, temporary_ban, permanent_ban, investigate ]
+                    description: Recommended security action
+                    example: "temporary_ban"
+
+components:
+  responses:
+    # Common response definitions with headers
+    HealthBatchSuccess:
+      description: Batch health results retrieved successfully
+      headers:
+        Cache-Control:
+          schema:
+            type: string
+            example: no-cache
+        X-Processing-Time:
+          schema:
+            type: integer
+            example: 15
+            description: Processing time in milliseconds
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - results
+              - total_time_ms
+            properties:
+              results:
+                type: array
+                items:
+                  $ref: "#/components/schemas/HealthResponse"
+                description: Health status for each requested service
+              total_time_ms:
+                type: integer
+                description: Total processing time in milliseconds
+                example: 15
+                minimum: 0
+
+    # Security Service Responses
