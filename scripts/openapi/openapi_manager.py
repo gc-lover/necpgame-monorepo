@@ -9,9 +9,9 @@ import threading
 from pathlib import Path
 from typing import List, Dict, Any, Optional, Tuple
 
-from scripts.core.command_runner import CommandRunner
-from scripts.core.file_manager import FileManager
-from scripts.core.logger import Logger
+from core.command_runner import CommandRunner
+from core.file_manager import FileManager
+from core.logger import Logger
 
 
 class OpenAPIManager:

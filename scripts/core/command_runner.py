@@ -9,7 +9,7 @@ import subprocess
 from pathlib import Path
 from typing import List, Optional, Union
 
-from scripts.core.logger import Logger
+from core.logger import Logger
 
 
 class CommandRunner:

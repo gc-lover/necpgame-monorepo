@@ -13,8 +13,8 @@ SOLID Architecture:
 from pathlib import Path
 from typing import List, Tuple
 
-from scripts.core.base_script import BaseScript
-from scripts.openapi.openapi_manager import OpenAPIManager
+from core.base_script import BaseScript
+from openapi.openapi_manager import OpenAPIManager
 
 
 class BatchOpenAPIOptimizer(BaseScript):

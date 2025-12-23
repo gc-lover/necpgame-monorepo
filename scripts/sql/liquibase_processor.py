@@ -9,7 +9,7 @@ SOLID: Single Responsibility - processes SQL and optimizes column order
 import re
 from typing import List, Dict, Any, Tuple, Optional
 
-from scripts.core.logger import Logger
+from core.logger import Logger
 
 
 class LiquibaseProcessor:

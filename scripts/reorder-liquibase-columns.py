@@ -12,8 +12,8 @@ SOLID Architecture:
 
 from pathlib import Path
 
-from scripts.core.base_script import BaseScript
-from scripts.sql.liquibase_processor import LiquibaseProcessor
+from core.base_script import BaseScript
+from sql.liquibase_processor import LiquibaseProcessor
 
 
 class ReorderLiquibaseColumns(BaseScript):

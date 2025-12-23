@@ -6,7 +6,7 @@ SOLID: Base class for all validators
 
 from typing import List, Dict, Any, Tuple
 
-from scripts.core.logger import Logger
+from core.logger import Logger
 
 
 class ValidationResult:

@@ -9,11 +9,11 @@ SOLID: Single Responsibility - generates Go service structure
 from pathlib import Path
 from typing import Optional
 
-from scripts.core.command_runner import CommandRunner
-from scripts.core.config import ConfigManager
-from scripts.core.file_manager import FileManager
-from scripts.core.logger import Logger
-from scripts.openapi.openapi_manager import OpenAPIManager
+from core.command_runner import CommandRunner
+from core.config import ConfigManager
+from core.file_manager import FileManager
+from core.logger import Logger
+from openapi.openapi_manager import OpenAPIManager
 
 
 class GoServiceGenerator:

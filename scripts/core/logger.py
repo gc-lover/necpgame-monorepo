@@ -8,7 +8,7 @@ import logging
 import sys
 from typing import Optional
 
-from scripts.core.config import ConfigManager
+from core.config import ConfigManager
 
 
 class Logger:

@@ -22,9 +22,9 @@ import threading
 from pathlib import Path
 from typing import List, Dict, Any, Optional
 
-from scripts.core.base_script import BaseScript
-from scripts.generation.go_service_generator import GoServiceGenerator
-from scripts.openapi.openapi_manager import OpenAPIManager
+from core.base_script import BaseScript
+from generation.go_service_generator import GoServiceGenerator
+from openapi.openapi_manager import OpenAPIManager
 
 
 class GenerateAllDomainsGo(BaseScript):

@@ -9,10 +9,10 @@ import sys
 from pathlib import Path
 from typing import Optional
 
-from scripts.core.command_runner import CommandRunner
-from scripts.core.config import ConfigManager
-from scripts.core.file_manager import FileManager
-from scripts.core.logger import Logger
+from core.command_runner import CommandRunner
+from core.config import ConfigManager
+from core.file_manager import FileManager
+from core.logger import Logger
 
 
 class BaseScript:
