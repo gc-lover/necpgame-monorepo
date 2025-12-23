@@ -1,0 +1,275 @@
+openapi: 3.0.3
+info:
+  title: Economy domain API
+  description: Consolidated economy domain API for NECPGAME. This domain consolidates all economy functionality.
+  version: 1.0.0
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  contact:
+    name: NECPGAME API Support
+    url: https://necpgame.com/support
+    email: api@necpgame.com
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Development server
+  - url: https://api.necpgame.com/api/v1
+    description: Production server
+security:
+  - BearerAuth: []
+tags:
+  - name: Economy domain
+    description: economy domain domain endpoints
+paths:
+  /api/v1/economy/health:
+    get:
+      summary: Health check
+      operationId: getEconomyHealth
+      tags:
+        - Economy domain
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    limit:
+      name: limit
+      in: query
+      description: Maximum number of items to return
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+    offset:
+      name: offset
+      in: query
+      description: Number of items to skip
+      required: false
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+  schemas:
+    HealthResponse:
+      type: object
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+      properties:
+        status:
+          type: string
+          example: healthy
+          maxLength: 255
+        domain:
+          type: string
+          example: economy-domain
+          maxLength: 255
+        timestamp:
+          type: string
+          format: date-time
+          maxLength: 255
+    Error:
+      type: object
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+      properties:
+        message:
+          type: string
+          example: Internal server error
+          maxLength: 1000
+        domain:
+          type: string
+          example: economy-domain
+          maxLength: 255
+        timestamp:
+          type: string
+          format: date-time
+          maxLength: 255
+        code:
+          type: integer
+          example: 500
+          format: int32
+          minimum: 100
+          maximum: 599
+    WebSocketHealthMessage:
+      type: object
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+      required:
+        - type
+        - message_timestamp
+        - health
+      properties:
+        type:
+          type: string
+          enum:
+            - health_update
+            - health_alert
+            - service_down
+        message_timestamp:
+          type: string
+          format: date-time
+          description: Timestamp of the health message
+        health:
+          $ref: '#/components/schemas/HealthResponse'
+  /api/v1/trading/health:
+    $ref: ./trading/main.yaml#/paths/~1api~1v1~1trading~1health
+  /api/v1/trading/markets:
+    $ref: ./trading/main.yaml#/paths/~1api~1v1~1trading~1markets
+  /api/v1/economy/auction-house/auctions:
+    $ref: ./auctions/economy-auction-house.yaml#/paths/~1economy~1auction-house~1auctions
+  /api/v1/economy/analytics/health:
+    $ref: ./analytics/economy-analytics-service.yaml#/paths/~1api~1v1~1economy~1analytics~1health
+  /api/v1/economy/analytics/market/trends:
+    $ref: ./analytics/economy-analytics-service.yaml#/paths/~1api~1v1~1economy~1analytics~1market~1trends
+  /api/v1/economy/analytics/trade/volume:
+    $ref: ./analytics/economy-analytics-service.yaml#/paths/~1api~1v1~1economy~1analytics~1trade~1volume
+  /api/v1/economy/analytics/forecast:
+    $ref: ./analytics/economy-analytics-service.yaml#/paths/~1api~1v1~1economy~1analytics~1forecast
+  /api/v1/economy/analytics/dashboard:
+    $ref: ./analytics/economy-analytics-service.yaml#/paths/~1api~1v1~1economy~1analytics~1dashboard
+  /api/v1/economy/analytics/performance:
+    $ref: ./analytics/economy-analytics-service.yaml#/paths/~1api~1v1~1economy~1analytics~1performance
+  /api/v1/economy/logistics/shipments/quote:
+    $ref: ./economy-logistics-service.yaml#/paths/~1api~1v1~1economy~1logistics~1shipments~1quote
+  /api/v1/economy/logistics/shipments:
+    $ref: ./economy-logistics-service.yaml#/paths/~1api~1v1~1economy~1logistics~1shipments
+  /api/v1/economy/logistics/shipments/{shipment_id}:
+    $ref: ./economy-logistics-service.yaml#/paths/~1api~1v1~1economy~1logistics~1shipments~1{shipment_id}
+  /api/v1/economy/logistics/shipments/{shipment_id}/schedule:
+    $ref: ./economy-logistics-service.yaml#/paths/~1api~1v1~1economy~1logistics~1shipments~1{shipment_id}~1schedule
+  /api/v1/economy/logistics/shipments/{shipment_id}/start:
+    $ref: ./economy-logistics-service.yaml#/paths/~1api~1v1~1economy~1logistics~1shipments~1{shipment_id}~1start
+  /api/v1/economy/logistics/shipments/{shipment_id}/complete:
+    $ref: ./economy-logistics-service.yaml#/paths/~1api~1v1~1economy~1logistics~1shipments~1{shipment_id}~1complete
+  /api/v1/economy/logistics/risks/assess:
+    $ref: ./economy-logistics-service.yaml#/paths/~1api~1v1~1economy~1logistics~1risks~1assess
+  /api/v1/economy/logistics/insurance/quote:
+    $ref: ./economy-logistics-service.yaml#/paths/~1api~1v1~1economy~1logistics~1insurance~1quote
+  /api/v1/economy/logistics/escorts/quote:
+    $ref: ./economy-logistics-service.yaml#/paths/~1api~1v1~1economy~1logistics~1escorts~1quote
+  /api/v1/economy/logistics/tracking/{shipment_id}:
+    $ref: ./economy-logistics-service.yaml#/paths/~1api~1v1~1economy~1logistics~1tracking~1{shipment_id}
+  /api/v1/economy/logistics/tracking/{shipment_id}/history:
+    $ref: ./economy-logistics-service.yaml#/paths/~1api~1v1~1economy~1logistics~1tracking~1{shipment_id}~1history
+  /api/v1/economy/logistics/incidents/{shipment_id}:
+    $ref: ./economy-logistics-service.yaml#/paths/~1api~1v1~1economy~1logistics~1incidents~1{shipment_id}
+  /api/v1/economy/production/health:
+    $ref: ./production/economy-production-service.yaml#/paths/~1api~1v1~1economy~1production~1health
+  /api/v1/economy/production/facilities:
+    $ref: ./production/economy-production-service.yaml#/paths/~1api~1v1~1economy~1production~1facilities
+  /api/v1/economy/production/facilities/{facility_id}:
+    $ref: ./production/economy-production-service.yaml#/paths/~1api~1v1~1economy~1production~1facilities~1{facility_id}
+  /api/v1/economy/production/supply-chains:
+    $ref: ./production/economy-production-service.yaml#/paths/~1api~1v1~1economy~1production~1supply-chains
+  /api/v1/economy/production/manufacturing/orders:
+    $ref: ./production/economy-production-service.yaml#/paths/~1api~1v1~1economy~1production~1manufacturing~1orders
+  /api/v1/economy/production/optimization/resource:
+    $ref: ./production/economy-production-service.yaml#/paths/~1api~1v1~1economy~1production~1optimization~1resource
+  /api/v1/economy/production/planning/capacity:
+    $ref: ./production/economy-production-service.yaml#/paths/~1api~1v1~1economy~1production~1planning~1capacity
+  /api/v1/economy/resources/catalog:
+    $ref: ./economy-resources-catalog-service.yaml#/paths/~1api~1v1~1economy~1resources~1catalog
+  /api/v1/economy/resources/catalog/{resource_id}:
+    $ref: ./economy-resources-catalog-service.yaml#/paths/~1api~1v1~1economy~1resources~1catalog~1{resource_id}
+  /api/v1/economy/resources/pricing/{resource_id}:
+    $ref: ./economy-resources-catalog-service.yaml#/paths/~1api~1v1~1economy~1resources~1pricing~1{resource_id}
+  /api/v1/economy/resources/sources/{resource_id}:
+    $ref: ./economy-resources-catalog-service.yaml#/paths/~1api~1v1~1economy~1resources~1sources~1{resource_id}
+  /api/v1/economy/resources/zones:
+    $ref: ./economy-resources-catalog-service.yaml#/paths/~1api~1v1~1economy~1resources~1zones
+  /api/v1/economy/resources/zones/{zone_id}/resources:
+    $ref: ./economy-resources-catalog-service.yaml#/paths/~1api~1v1~1economy~1resources~1zones~1{zone_id}~1resources
+  /api/v1/economy/resources/inventory/{player_id}:
+    $ref: ./economy-resources-catalog-service.yaml#/paths/~1api~1v1~1economy~1resources~1inventory~1{player_id}
+  /api/v1/economy/resources/inventory/{player_id}/transfer:
+    $ref: ./economy-resources-catalog-service.yaml#/paths/~1api~1v1~1economy~1resources~1inventory~1{player_id}~1transfer
+  /api/v1/economy/resources/search:
+    $ref: ./economy-resources-catalog-service.yaml#/paths/~1api~1v1~1economy~1resources~1search
+  /api/v1/economy/resources/analytics:
+    $ref: ./economy-resources-catalog-service.yaml#/paths/~1api~1v1~1economy~1resources~1analytics
+  /api/v1/economy/production/recipes:
+    $ref: ./economy-production-chains-service.yaml#/paths/~1api~1v1~1economy~1production~1recipes
+  /api/v1/economy/production/recipes/{recipe_id}:
+    $ref: ./economy-production-chains-service.yaml#/paths/~1api~1v1~1economy~1production~1recipes~1{recipe_id}
+  /api/v1/economy/production/stations:
+    $ref: ./economy-production-chains-service.yaml#/paths/~1api~1v1~1economy~1production~1stations
+  /api/v1/economy/production/stations/{station_id}:
+    $ref: ./economy-production-chains-service.yaml#/paths/~1api~1v1~1economy~1production~1stations~1{station_id}
+  /api/v1/economy/production/stations/{station_id}/produce:
+    $ref: ./economy-production-chains-service.yaml#/paths/~1api~1v1~1economy~1production~1stations~1{station_id}
+  /api/v1/economy/production/jobs/{job_id}:
+    $ref: ./economy-production-chains-service.yaml#/paths/~1api~1v1~1economy~1production~1jobs~1{job_id}
+  /api/v1/economy/production/guilds/{guild_id}/chains:
+    $ref: ./economy-production-chains-service.yaml#/paths/~1api~1v1~1economy~1production~1guilds~1{guild_id}~1chains
+  /api/v1/economy/production/guilds/{guild_id}/chains/{chain_id}/join:
+    $ref: ./economy-production-chains-service.yaml#/paths/~1api~1v1~1economy~1production~1guilds~1{guild_id}~1chains~1{chain_id}~1join
+  /api/v1/economy/production/bulk:
+    $ref: ./economy-production-chains-service.yaml#/paths/~1api~1v1~1economy~1production~1bulk
+  /api/v1/economy/production/rush/{job_id}:
+    $ref: ./economy-production-chains-service.yaml#/paths/~1api~1v1~1economy~1production~1rush~1{job_id}
+  /api/v1/economy/production/boosters:
+    $ref: ./economy-production-chains-service.yaml#/paths/~1api~1v1~1economy~1production~1boosters
+  /api/v1/economy/production/legendary/quests:
+    $ref: ./economy-production-chains-service.yaml#/paths/~1api~1v1~1economy~1production~1legendary~1quests
+  /api/v1/economy/production/legendary/{quest_id}/progress:
+    $ref: ./economy-production-chains-service.yaml#/paths/~1api~1v1~1economy~1production~1legendary~1{quest_id}~1progress
+  /api/v1/economy/production/analytics:
+    $ref: ./economy-production-chains-service.yaml#/paths/~1api~1v1~1economy~1production~1analytics
+  /api/v1/economy/production/analytics/profitability:
+    $ref: ./economy-production-chains-service.yaml#/paths/~1api~1v1~1economy~1production~1analytics~1profitability
+  /api/v1/economy/analytics/charts/{asset_id}:
+    $ref: ./economy-analytics-service.yaml#/paths/~1api~1v1~1economy~1analytics~1charts~1{asset_id}
+  /api/v1/economy/analytics/charts/comparison:
+    $ref: ./economy-analytics-service.yaml#/paths/~1api~1v1~1economy~1analytics~1charts~1comparison
+  /api/v1/economy/analytics/indicators/{asset_id}:
+    $ref: ./economy-analytics-service.yaml#/paths/~1api~1v1~1economy~1analytics~1indicators~1{asset_id}
+  /api/v1/economy/analytics/indicators/signals/{asset_id}:
+    $ref: ./economy-analytics-service.yaml#/paths/~1api~1v1~1economy~1analytics~1indicators~1signals~1{asset_id}
+  /api/v1/economy/analytics/sentiment:
+    $ref: ./economy-analytics-service.yaml#/paths/~1api~1v1~1economy~1analytics~1sentiment
+  /api/v1/economy/analytics/sentiment/heatmap:
+    $ref: ./economy-analytics-service.yaml#/paths/~1api~1v1~1economy~1analytics~1sentiment~1heatmap
+  /api/v1/economy/analytics/portfolio/{player_id}:
+    $ref: ./economy-analytics-service.yaml#/paths/~1api~1v1~1economy~1analytics~1portfolio~1{player_id}
+  /api/v1/economy/analytics/portfolio/{player_id}/performance:
+    $ref: ./economy-analytics-service.yaml#/paths/~1api~1v1~1economy~1analytics~1portfolio~1{player_id}~1performance
+  /api/v1/economy/analytics/alerts:
+    $ref: ./economy-analytics-service.yaml#/paths/~1api~1v1~1economy~1analytics~1alerts
+  /api/v1/economy/analytics/alerts/{alert_id}:
+    $ref: ./economy-analytics-service.yaml#/paths/~1api~1v1~1economy~1analytics~1alerts~1{alert_id}
+  /api/v1/economy/analytics/market/summary:
+    $ref: ./economy-analytics-service.yaml#/paths/~1api~1v1~1economy~1analytics~1market~1summary
+  /api/v1/economy-domain/health/batch:
+    post: null
+    summary: Batch health check for multiple domains
+    description: 'Performance optimization: Check multiple domain health in single request'
+    responses:
+      '200':
+        description: Batch health results
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                results:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/HealthResponse'
+                processingTime:
+                  type: integer
+                  description: Total processing time
+  /api/v1/economy-domain/health/ws:
+    get: null
+    summary: Real-time health monitoring WebSocket
+    description: Real-time health updates without polling
+    responses:
+      '101':
+        description: WebSocket connection established
