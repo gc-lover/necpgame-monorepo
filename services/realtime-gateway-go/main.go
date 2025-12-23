@@ -17,7 +17,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/gc-lover/necpgame-monorepo/services/realtime-gateway-go/server"
+	"realtime-gateway-go/server"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/zap"
 )

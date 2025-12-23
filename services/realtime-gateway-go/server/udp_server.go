@@ -12,8 +12,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/gc-lover/necpgame-monorepo/services/realtime-gateway-go/pkg/proto"
-	"github.com/gc-lover/necpgame-monorepo/services/realtime-gateway-go/pkg/proto/realtime"
+	"realtime-gateway-go/pkg/proto"
+	"realtime-gateway-go/pkg/proto/realtime"
 	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
 )
