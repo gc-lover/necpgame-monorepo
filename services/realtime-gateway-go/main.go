@@ -7,24 +7,22 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
 	"log"
-	"net"
 	"net/http"
 	"os"
 	"os/signal"
 	"sync"
 	"syscall"
-	"time"
 
 	"realtime-gateway-go/server"
+
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/zap"
 )
 
 var (
-	httpAddr = flag.String("http", ":8080", "HTTP server address")
-	udpAddr  = flag.String("udp", ":18080", "UDP server address")
+	httpAddr  = flag.String("http", ":8080", "HTTP server address")
+	udpAddr   = flag.String("udp", ":18080", "UDP server address")
 	redisAddr = flag.String("redis", "localhost:6379", "Redis server address")
 )
 
