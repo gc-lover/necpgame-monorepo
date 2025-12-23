@@ -38,32 +38,32 @@ func (r *LegendRepository) GetTemplates(ctx context.Context, params api.GetTempl
 	argCount := 0
 
 	// Add filters
-	if params.Type != nil {
+	if params.Type.Set {
 		argCount++
 		baseQuery += fmt.Sprintf(" AND type = $%d", argCount)
-		args = append(args, *params.Type)
+		args = append(args, params.Type.Value)
 	}
 
-	if params.Category != nil {
+	if params.Category.Set {
 		argCount++
 		baseQuery += fmt.Sprintf(" AND category = $%d", argCount)
-		args = append(args, *params.Category)
+		args = append(args, params.Category.Value)
 	}
 
 	// Add ordering and pagination
 	baseQuery += " ORDER BY created_at DESC"
 
 	limit := int32(50) // default
-	if params.Limit != nil && *params.Limit <= 100 {
-		limit = *params.Limit
+	if params.Limit.Set && int32(params.Limit.Value) <= 100 {
+		limit = int32(params.Limit.Value)
 	}
 	argCount++
 	baseQuery += fmt.Sprintf(" LIMIT $%d", argCount)
 	args = append(args, limit)
 
 	offset := int32(0) // default
-	if params.Offset != nil {
-		offset = *params.Offset
+	if params.Offset.Set {
+		offset = int32(params.Offset.Value)
 	}
 	argCount++
 	baseQuery += fmt.Sprintf(" OFFSET $%d", argCount)
@@ -99,24 +99,23 @@ func (r *LegendRepository) GetTemplates(ctx context.Context, params api.GetTempl
 
 	// Get total count
 	countQuery := "SELECT COUNT(*) FROM legend_templates WHERE 1=1"
-	if params.Type != nil {
+	countArgs := []interface{}{}
+	if params.Type.Set {
 		countQuery += " AND type = $1"
-		args = []interface{}{*params.Type}
-	} else {
-		args = []interface{}{}
+		countArgs = append(countArgs, string(params.Type.Value))
 	}
 
 	var totalCount int64
-	err = r.db.QueryRowContext(ctx, countQuery, args...).Scan(&totalCount)
+	err = r.db.QueryRowContext(ctx, countQuery, countArgs...).Scan(&totalCount)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get total count: %w", err)
 	}
 
 	response := &api.TemplatesListResponse{
 		Templates: templates,
-		Total:     totalCount,
-		Offset:    offset,
-		Limit:     limit,
+		Total:     api.NewOptInt(int(totalCount)),
+		Offset:    api.NewOptInt(int(offset)),
+		Limit:     api.NewOptInt(int(limit)),
 	}
 
 	return response, nil
@@ -132,7 +131,6 @@ func (r *LegendRepository) CreateTemplate(ctx context.Context, req *api.CreateTe
 			variants, active, created_at, updated_at`
 
 	templateID := uuid.New()
-	now := time.Now()
 
 	var template api.StoryTemplate
 	err := r.db.QueryRowContext(ctx, query,
@@ -271,26 +269,26 @@ func (r *LegendRepository) GetVariables(ctx context.Context, params api.GetVaria
 	argCount := 0
 
 	// Add filters
-	if params.Type != nil {
+	if params.Type.Set {
 		argCount++
 		baseQuery += fmt.Sprintf(" AND type = $%d", argCount)
-		args = append(args, *params.Type)
+		args = append(args, string(params.Type.Value))
 	}
 
 	// Add ordering and pagination
 	baseQuery += " ORDER BY created_at DESC"
 
 	limit := int32(50) // default
-	if params.Limit != nil && *params.Limit <= 100 {
-		limit = *params.Limit
+	if params.Limit.Set && int32(params.Limit.Value) <= 100 {
+		limit = int32(params.Limit.Value)
 	}
 	argCount++
 	baseQuery += fmt.Sprintf(" LIMIT $%d", argCount)
 	args = append(args, limit)
 
 	offset := int32(0) // default
-	if params.Offset != nil {
-		offset = *params.Offset
+	if params.Offset.Set {
+		offset = int32(params.Offset.Value)
 	}
 	argCount++
 	baseQuery += fmt.Sprintf(" OFFSET $%d", argCount)
@@ -330,9 +328,9 @@ func (r *LegendRepository) GetVariables(ctx context.Context, params api.GetVaria
 
 	response := &api.VariablesListResponse{
 		Variables: variables,
-		Total:     totalCount,
-		Offset:    offset,
-		Limit:     limit,
+		Total:     api.NewOptInt(int(totalCount)),
+		Offset:    api.NewOptInt(int(offset)),
+		Limit:     api.NewOptInt(int(limit)),
 	}
 
 	return response, nil

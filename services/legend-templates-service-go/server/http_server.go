@@ -44,7 +44,7 @@ func (h *HTTPServer) Handler() http.Handler {
 	})
 
 	// Apply middleware stack
-	handler := baseHandler
+	handler := http.HandlerFunc(baseHandler)
 
 	// Add CORS middleware
 	handler = corsMiddleware(handler)
@@ -67,8 +67,8 @@ func (h *HTTPServer) Handler() http.Handler {
 // Middleware implementations
 
 // corsMiddleware adds CORS headers
-func corsMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+func corsMiddleware(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
@@ -78,30 +78,30 @@ func corsMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		next.ServeHTTP(w, r)
-	})
+		next(w, r)
+	}
 }
 
 // loggingMiddleware logs HTTP requests
-func loggingMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+func loggingMiddleware(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 
 		// Create a response writer wrapper to capture status code
 		wrapped := &responseWriter{ResponseWriter: w, statusCode: http.StatusOK}
 
-		next.ServeHTTP(wrapped, r)
+		next(wrapped, r)
 
 		duration := time.Since(start)
 
 		// BACKEND NOTE: Structured logging for performance monitoring
 		log.Printf("[HTTP] %s %s %d %v", r.Method, r.URL.Path, wrapped.statusCode, duration)
-	})
+	}
 }
 
 // authMiddleware handles JWT authentication
-func authMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+func authMiddleware(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		// BACKEND NOTE: JWT validation for template operations
 		// Extract and validate JWT token
 		authHeader := r.Header.Get("Authorization")
@@ -116,34 +116,34 @@ func authMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		next.ServeHTTP(w, r)
-	})
+		next(w, r)
+	}
 }
 
 // rateLimitMiddleware implements rate limiting
-func rateLimitMiddleware(next http.Handler) http.Handler {
+func rateLimitMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	// BACKEND NOTE: Rate limiting for template operations (1000+ RPS protection)
 	// Simple in-memory rate limiter - in production use Redis
 	limiter := NewRateLimiter(1000, time.Minute) // 1000 requests per minute
 
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
 		if !limiter.Allow(r.RemoteAddr) {
 			http.Error(w, "Rate limit exceeded", http.StatusTooManyRequests)
 			return
 		}
 
-		next.ServeHTTP(w, r)
-	})
+		next(w, r)
+	}
 }
 
 // metricsMiddleware collects HTTP metrics
-func metricsMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+func metricsMiddleware(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		// BACKEND NOTE: Metrics collection for monitoring and alerting
 		// In production, integrate with Prometheus/statsd
 
-		next.ServeHTTP(w, r)
-	})
+		next(w, r)
+	}
 }
 
 // SecurityHandler implements security for the API

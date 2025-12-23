@@ -3,8 +3,6 @@ package server
 
 import (
 	"context"
-	"fmt"
-	"net/http"
 	"time"
 
 	"github.com/google/uuid"
@@ -57,8 +55,8 @@ func (h *LegendTemplatesHandler) CreateTemplate(ctx context.Context, req *api.Cr
 }
 
 // GetTemplate implements GET /templates/{template_id}
-func (h *LegendTemplatesHandler) GetTemplate(ctx context.Context, templateID string) (api.GetTemplateRes, error) {
-	template, err := h.service.repo.GetTemplateByID(ctx, templateID)
+func (h *LegendTemplatesHandler) GetTemplate(ctx context.Context, params api.GetTemplateParams) (api.GetTemplateRes, error) {
+	template, err := h.service.repo.GetTemplateByID(ctx, params.TemplateID.String())
 	if err != nil {
 		return &api.NotFound{
 			Error:   api.NewOptString("not_found"),
@@ -69,8 +67,8 @@ func (h *LegendTemplatesHandler) GetTemplate(ctx context.Context, templateID str
 }
 
 // UpdateTemplate implements PUT /templates/{template_id}
-func (h *LegendTemplatesHandler) UpdateTemplate(ctx context.Context, templateID string, req *api.UpdateTemplateRequest) (api.UpdateTemplateRes, error) {
-	template, err := h.service.repo.UpdateTemplate(ctx, templateID, req)
+func (h *LegendTemplatesHandler) UpdateTemplate(ctx context.Context, req *api.UpdateTemplateRequest, params api.UpdateTemplateParams) (api.UpdateTemplateRes, error) {
+	template, err := h.service.repo.UpdateTemplate(ctx, params.TemplateID.String(), req)
 	if err != nil {
 		return &api.BadRequest{
 			Error:   api.NewOptString("VALIDATION_ERROR"),
@@ -85,8 +83,8 @@ func (h *LegendTemplatesHandler) UpdateTemplate(ctx context.Context, templateID 
 }
 
 // DeleteTemplate implements DELETE /templates/{template_id}
-func (h *LegendTemplatesHandler) DeleteTemplate(ctx context.Context, templateID string) (api.DeleteTemplateRes, error) {
-	err := h.service.repo.DeleteTemplate(ctx, templateID)
+func (h *LegendTemplatesHandler) DeleteTemplate(ctx context.Context, params api.DeleteTemplateParams) (api.DeleteTemplateRes, error) {
+	err := h.service.repo.DeleteTemplate(ctx, params.TemplateID.String())
 	if err != nil {
 		return &api.NotFound{
 			Error:   api.NewOptString("not_found"),
@@ -101,7 +99,9 @@ func (h *LegendTemplatesHandler) DeleteTemplate(ctx context.Context, templateID 
 }
 
 // GetTemplateVariants implements GET /templates/{template_id}/variants
-func (h *LegendTemplatesHandler) GetTemplateVariants(ctx context.Context, templateID string) (api.GetTemplateVariantsRes, error) {
+func (h *LegendTemplatesHandler) GetTemplateVariants(ctx context.Context, params api.GetTemplateVariantsParams) (api.GetTemplateVariantsRes, error) {
+	templateID := params.TemplateID.String()
+
 	// Get template first to check existence
 	template, err := h.service.repo.GetTemplateByID(ctx, templateID)
 	if err != nil {
@@ -116,7 +116,7 @@ func (h *LegendTemplatesHandler) GetTemplateVariants(ctx context.Context, templa
 	for i, variantText := range template.Variants {
 		variants = append(variants, api.TemplateVariant{
 			ID:          uuid.New(), // Generate ID for response
-			TemplateID:  uuid.MustParse(templateID),
+			TemplateID:  params.TemplateID,
 			VariantText: variantText,
 			Weight:      api.NewOptInt(1),
 			Active:      api.NewOptBool(true),
@@ -127,14 +127,16 @@ func (h *LegendTemplatesHandler) GetTemplateVariants(ctx context.Context, templa
 
 	response := &api.TemplateVariantsResponse{
 		Variants:   variants,
-		TemplateID: uuid.MustParse(templateID),
+		TemplateID: api.NewOptUUID(params.TemplateID),
 	}
 
 	return response, nil
 }
 
 // AddTemplateVariant implements POST /templates/{template_id}/variants
-func (h *LegendTemplatesHandler) AddTemplateVariant(ctx context.Context, templateID string, req *api.CreateVariantRequest) (api.AddTemplateVariantRes, error) {
+func (h *LegendTemplatesHandler) AddTemplateVariant(ctx context.Context, req *api.CreateVariantRequest, params api.AddTemplateVariantParams) (api.AddTemplateVariantRes, error) {
+	templateID := params.TemplateID.String()
+
 	// Verify template exists
 	_, err := h.service.repo.GetTemplateByID(ctx, templateID)
 	if err != nil {
@@ -147,7 +149,7 @@ func (h *LegendTemplatesHandler) AddTemplateVariant(ctx context.Context, templat
 	// Create variant response (in production, would save to database)
 	variant := &api.TemplateVariant{
 		ID:          uuid.New(),
-		TemplateID:  uuid.MustParse(templateID),
+		TemplateID:  params.TemplateID,
 		VariantText: req.VariantText, // Already string
 		Weight:      req.Weight,
 		Active:      api.NewOptBool(true),
@@ -158,7 +160,9 @@ func (h *LegendTemplatesHandler) AddTemplateVariant(ctx context.Context, templat
 }
 
 // UpdateTemplateVariant implements PUT /templates/{template_id}/variants/{variant_id}
-func (h *LegendTemplatesHandler) UpdateTemplateVariant(ctx context.Context, templateID string, variantID string, req *api.UpdateVariantRequest) (api.UpdateTemplateVariantRes, error) {
+func (h *LegendTemplatesHandler) UpdateTemplateVariant(ctx context.Context, req *api.UpdateVariantRequest, params api.UpdateTemplateVariantParams) (api.UpdateTemplateVariantRes, error) {
+	templateID := params.TemplateID.String()
+
 	// Verify template exists
 	_, err := h.service.repo.GetTemplateByID(ctx, templateID)
 	if err != nil {
@@ -168,11 +172,16 @@ func (h *LegendTemplatesHandler) UpdateTemplateVariant(ctx context.Context, temp
 		}, nil
 	}
 
+	variantText := req.VariantText.Value // Default value
+	if req.VariantText.Set {
+		variantText = req.VariantText.Value
+	}
+
 	// Create updated variant response
 	variant := &api.TemplateVariant{
-		ID:          uuid.MustParse(variantID),
-		TemplateID:  uuid.MustParse(templateID),
-		VariantText: req.VariantText, // Already string
+		ID:          params.VariantID,
+		TemplateID:  params.TemplateID,
+		VariantText: variantText,
 		Weight:      req.Weight,
 		Active:      req.Active,
 		CreatedAt:   api.NewOptDateTime(time.Now()),
@@ -182,7 +191,9 @@ func (h *LegendTemplatesHandler) UpdateTemplateVariant(ctx context.Context, temp
 }
 
 // DeleteTemplateVariant implements DELETE /templates/{template_id}/variants/{variant_id}
-func (h *LegendTemplatesHandler) DeleteTemplateVariant(ctx context.Context, templateID string, variantID string) (api.DeleteTemplateVariantRes, error) {
+func (h *LegendTemplatesHandler) DeleteTemplateVariant(ctx context.Context, params api.DeleteTemplateVariantParams) (api.DeleteTemplateVariantRes, error) {
+	templateID := params.TemplateID.String()
+
 	// Verify template exists
 	_, err := h.service.repo.GetTemplateByID(ctx, templateID)
 	if err != nil {
@@ -216,17 +227,21 @@ func (h *LegendTemplatesHandler) CreateVariable(ctx context.Context, req *api.Cr
 			Message: api.NewOptString("Invalid variable data"),
 		}, nil
 	}
-	return &api.VariableResponse{Variable: *variable}, nil
+	return &api.VariableResponse{Variable: api.NewOptVariableRule(*variable)}, nil
 }
 
 // GetVariable implements GET /variables/{variable_id}
-func (h *LegendTemplatesHandler) GetVariable(ctx context.Context, variableID string) (api.GetVariableRes, error) {
+func (h *LegendTemplatesHandler) GetVariable(ctx context.Context, params api.GetVariableParams) (api.GetVariableRes, error) {
 	// Mock implementation - in production would query database
+	rules := api.VariableRuleRules{
+		Synonyms: []string{"character", "mercenary"},
+	}
+
 	variable := &api.VariableRule{
-		ID:        uuid.MustParse(variableID),
+		ID:        params.VariableID,
 		Type:      "player_name",
 		Name:      "player_name",
-		Rules:     api.VariableRuleRules(map[string]interface{}{"synonyms": []string{"character", "mercenary"}}),
+		Rules:     rules,
 		Active:    api.NewOptBool(true),
 		CreatedAt: api.NewOptDateTime(time.Now()),
 		UpdatedAt: api.NewOptDateTime(time.Now()),
@@ -236,12 +251,16 @@ func (h *LegendTemplatesHandler) GetVariable(ctx context.Context, variableID str
 }
 
 // UpdateVariable implements PUT /variables/{variable_id}
-func (h *LegendTemplatesHandler) UpdateVariable(ctx context.Context, variableID string, req *api.UpdateVariableRequest) (api.UpdateVariableRes, error) {
+func (h *LegendTemplatesHandler) UpdateVariable(ctx context.Context, req *api.UpdateVariableRequest, params api.UpdateVariableParams) (api.UpdateVariableRes, error) {
+	rules := api.VariableRuleRules{
+		Synonyms: []string{"character", "mercenary"}, // Default rules
+	}
+
 	variable := &api.VariableRule{
-		ID:        uuid.MustParse(variableID),
+		ID:        params.VariableID,
 		Type:      "player_name",
 		Name:      "player_name",
-		Rules:     api.VariableRuleRules(req.Rules),
+		Rules:     rules,
 		Active:    req.Active,
 		CreatedAt: api.NewOptDateTime(time.Now()),
 		UpdatedAt: api.NewOptDateTime(time.Now()),
@@ -251,7 +270,7 @@ func (h *LegendTemplatesHandler) UpdateVariable(ctx context.Context, variableID 
 }
 
 // DeleteVariable implements DELETE /variables/{variable_id}
-func (h *LegendTemplatesHandler) DeleteVariable(ctx context.Context, variableID string) (api.DeleteVariableRes, error) {
+func (h *LegendTemplatesHandler) DeleteVariable(ctx context.Context, params api.DeleteVariableParams) (api.DeleteVariableRes, error) {
 	return &api.DeleteVariableNoContent{}, nil
 }
 
@@ -270,8 +289,9 @@ func (h *LegendTemplatesHandler) GenerateLegend(ctx context.Context, req *api.Ge
 // GetActiveTemplates implements GET /templates/active (HOT PATH)
 func (h *LegendTemplatesHandler) GetActiveTemplates(ctx context.Context, params api.GetActiveTemplatesParams) (api.GetActiveTemplatesRes, error) {
 	var eventType *string
-	if params.Type != nil {
-		eventType = &params.Type
+	if params.Type.Set {
+		eventTypeStr := string(params.Type.Value)
+		eventType = &eventTypeStr
 	}
 	return h.service.GetActiveTemplates(ctx, eventType)
 }

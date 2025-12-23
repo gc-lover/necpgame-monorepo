@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"net/http"
 	"time"
-
-	"github.com/gc-lover/necpgame-monorepo/services/legend-templates-service-go/pkg/api"
 )
 
 // DialogueClient handles integration with dialogue service for legend generation

@@ -21,9 +21,12 @@ func main() {
 	}
 
 	// Create HTTP server
-	httpServer := &http.Server{
+	httpServer := server.NewHTTPServer(svc)
+
+	// Create the actual HTTP server
+	server := &http.Server{
 		Addr:         ":8086",
-		Handler:      svc.Handler(),
+		Handler:      httpServer.Handler(),
 		ReadTimeout:  30 * time.Second,
 		WriteTimeout: 30 * time.Second,
 		IdleTimeout:  120 * time.Second,
@@ -32,7 +35,7 @@ func main() {
 	// Start server in goroutine
 	go func() {
 		log.Printf("Legend Templates Service starting on :8086")
-		if err := httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("Failed to start server: %v", err)
 		}
 	}()
@@ -47,7 +50,7 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	if err := httpServer.Shutdown(ctx); err != nil {
+	if err := server.Shutdown(ctx); err != nil {
 		log.Fatalf("Server forced to shutdown: %v", err)
 	}
 
