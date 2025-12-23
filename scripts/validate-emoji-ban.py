@@ -152,10 +152,17 @@ def main():
         print("- FORBIDDEN: Compatibility problems across platforms")
         print()
 
+        print("WHAT IS ALLOWED:")
+        print("- ALLOWED: Cyrillic text (Russian): Привет мир!")
+        print("- ALLOWED: ASCII characters: a-z, 0-9, symbols")
+        print("- ALLOWED: Regular Unicode text in comments/strings")
+        print()
+
         print("SOLUTIONS:")
         print("- Replace emoji with ASCII: OK, ERROR, WARNING, SYMBOL")
         print("- Remove decorative Unicode characters")
         print("- Use plain text comments")
+        print("- Keep Cyrillic text as-is (it is allowed)")
         print()
 
         sys.exit(1)

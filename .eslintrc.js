@@ -16,12 +16,12 @@ module.exports = {
         // Запрет нерегулярных пробелов и Unicode символов
         "no-irregular-whitespace": "error",
 
-        // Предупреждение о необходимости использовать только ASCII
+        // Предупреждение: только эмодзи запрещены, кириллица разрешена
         "no-restricted-syntax": [
             "warn",
             {
                 "selector": "Program",
-                "message": "Remember: Use only ASCII characters (0-127). No emoji, special symbols, or Unicode characters allowed."
+                "message": "EMOJI FORBIDDEN: No emoji or special Unicode symbols. Cyrillic text (Russian) is ALLOWED."
             }
         ]
     },
