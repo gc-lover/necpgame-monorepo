@@ -1,23 +1,36 @@
 openapi: 3.0.3
 info:
   title: Economy Extended Events Service API
-  description: |
-    Расширенный API для управления экономическими событиями в NECPGAME.
+  description: 'Расширенный API для управления экономическими событиями в NECPGAME.
+
     Полная реализация кризисов, бумов, инфляции, эмбарго и других рыночных катаклизмов.
 
+
     **BACKEND NOTE**: Служба оптимизирована для высоконагруженных экономических симуляций.
+
     Использует Redis для кеширования состояний событий и PostgreSQL для аналитики.
 
+
     **PERFORMANCE**: Ожидаемая нагрузка - 500 RPS в пиковые моменты.
+
     Время отклика < 25ms для основных операций (активация событий, расчет эффектов).
 
+
     **FEATURES**:
+
     - 8 типов экономических событий (кризисы, бумы, инфляция, эмбарго, санкции, тарифы, скандалы, технологические прорывы)
+
     - Полный жизненный цикл (PLANNED → ANNOUNCED → ACTIVE → COOLDOWN → ARCHIVED)
+
     - Автоматическое планирование и триггеры
+
     - Эффекты на цены, ликвидность, курсы валют
+
     - Интеграция с биржами, торговлей и аналитикой
+
     - Мониторинг KPI и аудит изменений
+
+    '
   version: 1.0.0
   license:
     name: MIT
@@ -25,70 +38,83 @@ info:
   contact:
     name: Backend Team
     email: backend@necp.game
-
 servers:
-  - url: https://api.necpgame.com/v1/economy/events/extended
-    description: Production server
-  - url: https://staging-api.necpgame.com/v1/economy/events/extended
-    description: Staging server
-  - url: http://localhost:8400/api/v1/economy/events/extended
-    description: Local development
-
+- url: https://api.necpgame.com/v1/economy/events/extended
+  description: Production server
+- url: https://staging-api.necpgame.com/v1/economy/events/extended
+  description: Staging server
+- url: http://localhost:8400/api/v1/economy/events/extended
+  description: Local development
 security:
-  - BearerAuth: [ ]
-
+- BearerAuth: []
 tags:
-  - name: economic-events
-    description: Управление экономическими событиями
-  - name: event-lifecycle
-    description: Жизненный цикл событий
-  - name: event-effects
-    description: Эффекты и влияние на рынок
-  - name: event-planning
-    description: Планирование и триггеры
-  - name: event-monitoring
-    description: Мониторинг и аналитика
-  - name: crisis-management
-    description: Управление кризисами
-  - name: market-booms
-    description: Управление экономическими бумами
-
+- name: economic-events
+  description: Управление экономическими событиями
+- name: event-lifecycle
+  description: Жизненный цикл событий
+- name: event-effects
+  description: Эффекты и влияние на рынок
+- name: event-planning
+  description: Планирование и триггеры
+- name: event-monitoring
+  description: Мониторинг и аналитика
+- name: crisis-management
+  description: Управление кризисами
+- name: market-booms
+  description: Управление экономическими бумами
 paths:
-  # Основные события
   /api/v1/economy/events/extended:
     get:
       summary: Получить список экономических событий
       operationId: getEconomicEvents
       tags:
-        - economic-events
+      - economic-events
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: status
-          in: query
-          schema:
-            type: string
-            enum: [ planned, announced, active, cooldown, archived ]
-          description: Фильтр по статусу события
-        - name: type
-          in: query
-          schema:
-            type: string
-            enum: [ crisis, boom, inflation, embargo, sanctions, tariffs, scandal, tech_breakthrough ]
-          description: Фильтр по типу события
-        - name: region
-          in: query
-          schema:
-            type: string
-            enum: [ global, america, asia, europe, cis ]
-          description: Фильтр по региону
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 20
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - planned
+          - announced
+          - active
+          - cooldown
+          - archived
+        description: Фильтр по статусу события
+      - name: type
+        in: query
+        schema:
+          type: string
+          enum:
+          - crisis
+          - boom
+          - inflation
+          - embargo
+          - sanctions
+          - tariffs
+          - scandal
+          - tech_breakthrough
+        description: Фильтр по типу события
+      - name: region
+        in: query
+        schema:
+          type: string
+          enum:
+          - global
+          - america
+          - asia
+          - europe
+          - cis
+        description: Фильтр по региону
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
       responses:
         '200':
           description: Список экономических событий
@@ -100,14 +126,13 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
     post:
       summary: Создать новое экономическое событие
       operationId: createEconomicEvent
       tags:
-        - economic-events
+      - economic-events
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -127,23 +152,21 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
-  # Конкретное событие
   /api/v1/economy/events/extended/{event_id}:
     get:
       summary: Получить детали экономического события
       operationId: getEconomicEvent
       tags:
-        - economic-events
+      - economic-events
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: event_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: event_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
         '200':
           description: Детали события
@@ -155,21 +178,20 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
     patch:
       summary: Обновить экономическое событие
       operationId: updateEconomicEvent
       tags:
-        - economic-events
+      - economic-events
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: event_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: event_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       requestBody:
         required: true
         content:
@@ -189,29 +211,33 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
-  # Жизненный цикл события
   /api/v1/economy/events/extended/{event_id}/lifecycle/{action}:
     post:
       summary: Выполнить действие жизненного цикла события
       operationId: executeEventLifecycleAction
       tags:
-        - event-lifecycle
+      - event-lifecycle
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: event_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: action
-          in: path
-          required: true
-          schema:
-            type: string
-            enum: [ announce, activate, pause, resume, cooldown, archive ]
+      - name: event_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: action
+        in: path
+        required: true
+        schema:
+          type: string
+          enum:
+          - announce
+          - activate
+          - pause
+          - resume
+          - cooldown
+          - archive
       requestBody:
         content:
           application/json:
@@ -236,28 +262,26 @@ paths:
                 $ref: '#/components/responses/Conflict'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
-  # Эффекты события
   /api/v1/economy/events/extended/{event_id}/effects:
     get:
       summary: Получить текущие эффекты события
       operationId: getEventEffects
       tags:
-        - event-effects
+      - event-effects
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: event_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: include_historical
-          in: query
-          schema:
-            type: boolean
-            default: false
+      - name: event_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: include_historical
+        in: query
+        schema:
+          type: boolean
+          default: false
       responses:
         '200':
           description: Эффекты события
@@ -269,21 +293,20 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
     post:
       summary: Применить эффекты события
       operationId: applyEventEffects
       tags:
-        - event-effects
+      - event-effects
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: event_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: event_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       requestBody:
         required: true
         content:
@@ -303,34 +326,35 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
-  # Планирование событий
   /api/v1/economy/events/extended/schedule:
     get:
       summary: Получить расписание событий
       operationId: getEventSchedule
       tags:
-        - event-planning
+      - event-planning
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: from_date
-          in: query
-          schema:
-            type: string
-            format: date
-          description: Начальная дата
-        - name: to_date
-          in: query
-          schema:
-            type: string
-            format: date
-          description: Конечная дата
-        - name: status
-          in: query
-          schema:
-            type: string
-            enum: [ planned, announced, active ]
+      - name: from_date
+        in: query
+        schema:
+          type: string
+          format: date
+        description: Начальная дата
+      - name: to_date
+        in: query
+        schema:
+          type: string
+          format: date
+        description: Конечная дата
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - planned
+          - announced
+          - active
       responses:
         '200':
           description: Расписание событий
@@ -342,14 +366,13 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
     post:
       summary: Запланировать событие
       operationId: scheduleEconomicEvent
       tags:
-        - event-planning
+      - event-planning
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -373,29 +396,32 @@ paths:
                 $ref: '#/components/responses/Conflict'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
-  # Мониторинг и аналитика
   /api/v1/economy/events/extended/{event_id}/metrics:
     get:
       summary: Получить метрики события
       operationId: getEventMetrics
       tags:
-        - event-monitoring
+      - event-monitoring
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: event_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: period
-          in: query
-          schema:
-            type: string
-            enum: [ 1h, 6h, 24h, 7d, 30d ]
-            default: 24h
+      - name: event_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: period
+        in: query
+        schema:
+          type: string
+          enum:
+          - 1h
+          - 6h
+          - 24h
+          - 7d
+          - 30d
+          default: 24h
       responses:
         '200':
           description: Метрики события
@@ -407,32 +433,48 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
   /api/v1/economy/events/extended/analytics:
     get:
       summary: Получить аналитику по событиям
       operationId: getEventsAnalytics
       tags:
-        - event-monitoring
+      - event-monitoring
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: period
-          in: query
-          schema:
-            type: string
-            enum: [ 7d, 30d, 90d, 1y ]
-            default: 30d
-        - name: event_type
-          in: query
-          schema:
-            type: string
-            enum: [ crisis, boom, inflation, embargo, sanctions, tariffs, scandal, tech_breakthrough ]
-        - name: region
-          in: query
-          schema:
-            type: string
-            enum: [ global, america, asia, europe, cis ]
+      - name: period
+        in: query
+        schema:
+          type: string
+          enum:
+          - 7d
+          - 30d
+          - 90d
+          - 1y
+          default: 30d
+      - name: event_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - crisis
+          - boom
+          - inflation
+          - embargo
+          - sanctions
+          - tariffs
+          - scandal
+          - tech_breakthrough
+      - name: region
+        in: query
+        schema:
+          type: string
+          enum:
+          - global
+          - america
+          - asia
+          - europe
+          - cis
       responses:
         '200':
           description: Аналитика событий
@@ -442,16 +484,14 @@ paths:
                 $ref: '#/components/schemas/EventsAnalyticsResponse'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
-  # Специфические типы событий
   /api/v1/economy/events/extended/crises:
     get:
       summary: Получить активные кризисы
       operationId: getActiveCrises
       tags:
-        - crisis-management
+      - crisis-management
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       responses:
         '200':
           description: Активные кризисы
@@ -461,15 +501,14 @@ paths:
                 $ref: '#/components/schemas/CrisesResponse'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
   /api/v1/economy/events/extended/booms:
     get:
       summary: Получить активные экономические бумы
       operationId: getActiveBooms
       tags:
-        - market-booms
+      - market-booms
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       responses:
         '200':
           description: Активные бумы
@@ -479,14 +518,12 @@ paths:
                 $ref: '#/components/schemas/BoomsResponse'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
 components:
   securitySchemes:
     BearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
-
   responses:
     BadRequest:
       description: Неверный запрос
@@ -520,14 +557,12 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-
   schemas:
-    # Общие схемы
     Error:
       type: object
       required:
-        - code
-        - message
+      - code
+      - message
       properties:
         code:
           type: string
@@ -538,17 +573,15 @@ components:
         details:
           type: object
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
-    # Экономические события
     EconomicEvent:
       type: object
       required:
-        - id
-        - name
-        - type
-        - status
-        - region
-        - created_at
+      - id
+      - name
+      - type
+      - status
+      - region
+      - created_at
       properties:
         id:
           type: string
@@ -559,25 +592,37 @@ components:
           description: Название события
         type:
           type: string
-          enum: [ crisis, boom, inflation, embargo, sanctions, tariffs, scandal, tech_breakthrough ]
+          enum:
+          - crisis
+          - boom
+          - inflation
+          - embargo
+          - sanctions
+          - tariffs
+          - scandal
+          - tech_breakthrough
           description: Тип события
         status:
           type: string
-          enum: [ planned, announced, active, cooldown, archived ]
+          enum:
+          - planned
+          - announced
+          - active
+          - cooldown
+          - archived
           description: Текущий статус
         region:
           type: string
-          enum: [ global, america, asia, europe, cis ]
+          enum:
+          - global
+          - america
+          - asia
+          - europe
+          - cis
           description: Регион воздействия
         description:
           type: string
           description: Описание события
-        severity:
-          type: number
-          format: float
-          minimum: 0.1
-          maximum: 1.0
-          description: Серьезность события (0.1-1.0)
         planned_start:
           type: string
           format: date-time
@@ -594,6 +639,12 @@ components:
           type: string
           format: date-time
           description: Фактическое время окончания
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
         effects:
           $ref: '#/components/schemas/EventEffects'
         triggers:
@@ -601,14 +652,13 @@ components:
           items:
             $ref: '#/components/schemas/EventTrigger'
           description: Триггеры события
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
+        severity:
+          type: number
+          format: float
+          minimum: 0.1
+          maximum: 1.0
+          description: Серьезность события (0.1-1.0)
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     EventEffects:
       type: object
       properties:
@@ -621,25 +671,29 @@ components:
         currency_rates:
           type: object
           description: Изменения курсов валют
+        player_impacts:
+          type: object
+          description: Влияние на игроков
         trading_restrictions:
           type: array
           items:
             type: string
           description: Торговые ограничения
-        player_impacts:
-          type: object
-          description: Влияние на игроков
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     EventTrigger:
       type: object
       required:
-        - type
-        - condition
+      - type
+      - condition
       properties:
         type:
           type: string
-          enum: [ manual, scheduled, quest, market_condition, external_api ]
+          enum:
+          - manual
+          - scheduled
+          - quest
+          - market_condition
+          - external_api
           description: Тип триггера
         condition:
           type: object
@@ -649,14 +703,15 @@ components:
           minimum: 0
           description: Время восстановления в минутах
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     EconomicEventsResponse:
       type: object
       required:
-        - events
-        - total
-        - pagination
+      - events
+      - total
+      - pagination
       properties:
+        pagination:
+          $ref: '#/components/schemas/PaginationInfo'
         events:
           type: array
           items:
@@ -664,13 +719,14 @@ components:
         total:
           type: integer
           minimum: 0
-        pagination:
-          $ref: '#/components/schemas/PaginationInfo'
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     PaginationInfo:
       type: object
       properties:
+        has_next:
+          type: boolean
+        has_prev:
+          type: boolean
         page:
           type: integer
           minimum: 1
@@ -680,21 +736,16 @@ components:
         total_pages:
           type: integer
           minimum: 0
-        has_next:
-          type: boolean
-        has_prev:
-          type: boolean
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     CreateEconomicEventRequest:
       type: object
       required:
-        - name
-        - type
-        - region
-        - severity
-        - planned_start
-        - planned_end
+      - name
+      - type
+      - region
+      - severity
+      - planned_start
+      - planned_end
       properties:
         name:
           type: string
@@ -702,15 +753,23 @@ components:
           maxLength: 100
         type:
           type: string
-          enum: [ crisis, boom, inflation, embargo, sanctions, tariffs, scandal, tech_breakthrough ]
+          enum:
+          - crisis
+          - boom
+          - inflation
+          - embargo
+          - sanctions
+          - tariffs
+          - scandal
+          - tech_breakthrough
         region:
           type: string
-          enum: [ global, america, asia, europe, cis ]
-        severity:
-          type: number
-          format: float
-          minimum: 0.1
-          maximum: 1.0
+          enum:
+          - global
+          - america
+          - asia
+          - europe
+          - cis
         planned_start:
           type: string
           format: date-time
@@ -726,14 +785,18 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/EventTrigger'
+        severity:
+          type: number
+          format: float
+          minimum: 0.1
+          maximum: 1.0
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     EconomicEventDetail:
       type: object
       required:
-        - event
-        - metrics
-        - history
+      - event
+      - metrics
+      - history
       properties:
         event:
           $ref: '#/components/schemas/EconomicEvent'
@@ -748,7 +811,6 @@ components:
           items:
             $ref: '#/components/schemas/EconomicEvent'
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     UpdateEconomicEventRequest:
       type: object
       properties:
@@ -756,11 +818,6 @@ components:
           type: string
           minLength: 3
           maxLength: 100
-        severity:
-          type: number
-          format: float
-          minimum: 0.1
-          maximum: 1.0
         planned_start:
           type: string
           format: date-time
@@ -772,9 +829,12 @@ components:
           maxLength: 1000
         effects:
           $ref: '#/components/schemas/EventEffects'
+        severity:
+          type: number
+          format: float
+          minimum: 0.1
+          maximum: 1.0
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
-    # Жизненный цикл
     EventLifecycleActionRequest:
       type: object
       properties:
@@ -782,27 +842,29 @@ components:
           type: string
           maxLength: 500
           description: Причина действия
+        parameters:
+          type: object
+          description: Дополнительные параметры
         force:
           type: boolean
           default: false
           description: Принудительное выполнение
-        parameters:
-          type: object
-          description: Дополнительные параметры
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     EventLifecycleResult:
       type: object
       required:
-        - success
-        - new_status
-        - timestamp
+      - success
+      - new_status
+      - timestamp
       properties:
-        success:
-          type: boolean
         new_status:
           type: string
-          enum: [ planned, announced, active, cooldown, archived ]
+          enum:
+          - planned
+          - announced
+          - active
+          - cooldown
+          - archived
         timestamp:
           type: string
           format: date-time
@@ -812,55 +874,58 @@ components:
           type: array
           items:
             type: string
+        success:
+          type: boolean
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
-    # Эффекты
     EventEffectsResponse:
       type: object
       required:
-        - event_id
-        - current_effects
-        - applied_at
+      - event_id
+      - current_effects
+      - applied_at
       properties:
         event_id:
           type: string
           format: uuid
-        current_effects:
-          $ref: '#/components/schemas/EventEffects'
         applied_at:
           type: string
           format: date-time
+        current_effects:
+          $ref: '#/components/schemas/EventEffects'
         historical_effects:
           type: array
           items:
             $ref: '#/components/schemas/HistoricalEffect'
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     HistoricalEffect:
       type: object
       required:
-        - timestamp
-        - effects
+      - timestamp
+      - effects
       properties:
         timestamp:
           type: string
           format: date-time
-        effects:
-          $ref: '#/components/schemas/EventEffects'
         applied_by:
           type: string
+        effects:
+          $ref: '#/components/schemas/EventEffects'
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     ApplyEventEffectsRequest:
       type: object
       required:
-        - target_systems
+      - target_systems
       properties:
         target_systems:
           type: array
           items:
             type: string
-            enum: [ pricing_engine, stock_exchange, currency_exchange, player_market, trading_system ]
+            enum:
+            - pricing_engine
+            - stock_exchange
+            - currency_exchange
+            - player_market
+            - trading_system
         immediate:
           type: boolean
           default: true
@@ -870,16 +935,16 @@ components:
           default: false
           description: Тестовый запуск без применения
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     ApplyEventEffectsResult:
       type: object
       required:
-        - success
-        - applied_at
-        - affected_systems
+      - success
+      - applied_at
+      - affected_systems
       properties:
-        success:
-          type: boolean
+        rollback_id:
+          type: string
+          format: uuid
         applied_at:
           type: string
           format: date-time
@@ -887,19 +952,16 @@ components:
           type: array
           items:
             type: string
+        success:
+          type: boolean
         rollback_available:
           type: boolean
-        rollback_id:
-          type: string
-          format: uuid
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
-    # Планирование
     EventScheduleResponse:
       type: object
       required:
-        - scheduled_events
-        - conflicts
+      - scheduled_events
+      - conflicts
       properties:
         scheduled_events:
           type: array
@@ -915,13 +977,12 @@ components:
             type: string
             format: date-time
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     ScheduledEvent:
       type: object
       required:
-        - event_id
-        - scheduled_time
-        - status
+      - event_id
+      - scheduled_time
+      - status
       properties:
         event_id:
           type: string
@@ -931,38 +992,41 @@ components:
           format: date-time
         status:
           type: string
-          enum: [ pending, confirmed, executing, completed, failed ]
+          enum:
+          - pending
+          - confirmed
+          - executing
+          - completed
+          - failed
         priority:
           type: integer
           minimum: 1
           maximum: 10
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     ScheduleConflict:
       type: object
       required:
-        - conflicting_events
-        - conflict_reason
+      - conflicting_events
+      - conflict_reason
       properties:
+        conflict_reason:
+          type: string
         conflicting_events:
           type: array
           items:
             type: string
             format: uuid
-        conflict_reason:
-          type: string
         suggested_alternatives:
           type: array
           items:
             type: string
             format: date-time
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     ScheduleEventRequest:
       type: object
       required:
-        - event_id
-        - scheduled_time
+      - event_id
+      - scheduled_time
       properties:
         event_id:
           type: string
@@ -970,18 +1034,19 @@ components:
         scheduled_time:
           type: string
           format: date-time
+        conflict_resolution:
+          type: string
+          enum:
+          - cancel_existing
+          - postpone_existing
+          - ignore_conflicts
+          default: ignore_conflicts
         priority:
           type: integer
           minimum: 1
           maximum: 10
           default: 5
-        conflict_resolution:
-          type: string
-          enum: [ cancel_existing, postpone_existing, ignore_conflicts ]
-          default: ignore_conflicts
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
-    # Мониторинг
     EventMetrics:
       type: object
       properties:
@@ -1006,32 +1071,30 @@ components:
           format: float
           description: Время работы события
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     EventMetricsResponse:
       type: object
       required:
-        - event_id
-        - metrics
-        - period
+      - event_id
+      - metrics
+      - period
       properties:
         event_id:
           type: string
           format: uuid
-        metrics:
-          $ref: '#/components/schemas/EventMetrics'
         period:
           type: string
+        metrics:
+          $ref: '#/components/schemas/EventMetrics'
         historical_data:
           type: array
           items:
             $ref: '#/components/schemas/MetricsDataPoint'
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     MetricsDataPoint:
       type: object
       required:
-        - timestamp
-        - metrics
+      - timestamp
+      - metrics
       properties:
         timestamp:
           type: string
@@ -1039,37 +1102,35 @@ components:
         metrics:
           $ref: '#/components/schemas/EventMetrics'
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     EventsAnalyticsResponse:
       type: object
       required:
-        - period
-        - summary
-        - by_type
-        - by_region
+      - period
+      - summary
+      - by_type
+      - by_region
       properties:
         period:
           type: string
-        summary:
-          $ref: '#/components/schemas/EventMetrics'
         by_type:
           type: object
           description: Метрики по типам событий
         by_region:
           type: object
           description: Метрики по регионам
+        summary:
+          $ref: '#/components/schemas/EventMetrics'
         top_events:
           type: array
           items:
             $ref: '#/components/schemas/EventRanking'
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     EventRanking:
       type: object
       required:
-        - event_id
-        - name
-        - impact_score
+      - event_id
+      - name
+      - impact_score
       properties:
         event_id:
           type: string
@@ -1080,45 +1141,39 @@ components:
           type: number
           format: float
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
-    # Специфические типы
     CrisesResponse:
       type: object
       required:
-        - crises
-        - total
-        - market_impact
+      - crises
+      - total
+      - market_impact
       properties:
+        market_impact:
+          type: object
+          description: Общее влияние на рынок
         crises:
           type: array
           items:
             $ref: '#/components/schemas/EconomicEvent'
-        total:
-          type: integer
-          minimum: 0
-        market_impact:
-          type: object
-          description: Общее влияние на рынок
         recovery_predictions:
           type: array
           items:
             type: string
+        total:
+          type: integer
+          minimum: 0
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     BoomsResponse:
       type: object
       required:
-        - booms
-        - total
-        - profit_opportunities
+      - booms
+      - total
+      - profit_opportunities
       properties:
         booms:
           type: array
           items:
             $ref: '#/components/schemas/EconomicEvent'
-        total:
-          type: integer
-          minimum: 0
         profit_opportunities:
           type: array
           items:
@@ -1128,16 +1183,21 @@ components:
           type: array
           items:
             type: string
+        total:
+          type: integer
+          minimum: 0
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     EventHistoryEntry:
       type: object
       required:
-        - timestamp
-        - action
-        - status_before
-        - status_after
+      - timestamp
+      - action
+      - status_before
+      - status_after
       properties:
+        user_id:
+          type: string
+          format: uuid
         timestamp:
           type: string
           format: date-time
@@ -1147,9 +1207,6 @@ components:
           type: string
         status_after:
           type: string
-        user_id:
-          type: string
-          format: uuid
         details:
           type: object
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'

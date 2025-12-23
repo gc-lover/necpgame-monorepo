@@ -17,15 +17,11 @@ info:
 
     **Features:**
 
-    - Real-time mail delivery and notification (1000+ RPS)
-    - Rich message content with attachments and formatting
-    - Mail categorization and filtering system
-    - Anti-spam protection and content moderation
-    - Bulk mail operations for system announcements
-    - Mail analytics and engagement tracking
+    - Real-time mail delivery and notification (1000+ RPS) - Rich message content with attachments and formatting - Mail categorization
+    and filtering system - Anti-spam protection and content moderation - Bulk mail operations for system announcements - Mail
+    analytics and engagement tracking
 
-    **Performance:** P99 <15ms for mail operations, zero allocations in hot path
-    '
+    **Performance:** P99 <15ms for mail operations, zero allocations in hot path '
   version: 1.0.0
   license:
     name: Proprietary
@@ -35,33 +31,33 @@ info:
     url: https://necpgame.com/support
     email: api@mail-system.necpgame.com
 servers:
-  - url: http://localhost:8084/api/v1
-    description: Mail System Service Go (development)
-  - url: https://mail-system-go.necpgame.com/api/v1
-    description: Mail System Service Go (production)
+- url: http://localhost:8084/api/v1
+  description: Mail System Service Go (development)
+- url: https://mail-system-go.necpgame.com/api/v1
+  description: Mail System Service Go (production)
 tags:
-  - name: Mail Management
-    description: Mail lifecycle operations
-  - name: Message Delivery
-    description: Sending and receiving messages
-  - name: Mail Organization
-    description: Categorization and filtering
-  - name: Attachments
-    description: Mail attachments and media
-  - name: Bulk Operations
-    description: Mass mail operations
-  - name: Analytics
-    description: Mail usage statistics
+- name: Mail Management
+  description: Mail lifecycle operations
+- name: Message Delivery
+  description: Sending and receiving messages
+- name: Mail Organization
+  description: Categorization and filtering
+- name: Attachments
+  description: Mail attachments and media
+- name: Bulk Operations
+  description: Mass mail operations
+- name: Analytics
+  description: Mail usage statistics
 security:
-  - BearerAuth: [ ]
+- BearerAuth: []
 paths:
   /health:
     get:
       tags:
-        - Mail Management
+      - Mail Management
       summary: Service health check
       operationId: getHealth
-      security: [ ]
+      security: []
       responses:
         '200':
           description: Service is healthy
@@ -69,49 +65,62 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HealthResponse'
-
   /mail:
     get:
       tags:
-        - Mail Management
+      - Mail Management
       summary: Get user mailbox
       operationId: getMailbox
       parameters:
-        - name: folder
-          in: query
-          schema:
-            type: string
-            enum: [ inbox, sent, archived, trash, system ]
-            default: inbox
-          description: Mail folder to retrieve
-        - name: status
-          in: query
-          schema:
-            type: string
-            enum: [ unread, read, all ]
-            default: all
-          description: Filter by read status
-        - name: category
-          in: query
-          schema:
-            type: string
-            enum: [ personal, system, trade, guild, event, reward ]
-          description: Filter by mail category
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 50
-          description: Number of mails to return
-        - name: offset
-          in: query
-          schema:
-            type: integer
-            minimum: 0
-            default: 0
-          description: Pagination offset
+      - name: folder
+        in: query
+        schema:
+          type: string
+          enum:
+          - inbox
+          - sent
+          - archived
+          - trash
+          - system
+          default: inbox
+        description: Mail folder to retrieve
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - unread
+          - read
+          - all
+          default: all
+        description: Filter by read status
+      - name: category
+        in: query
+        schema:
+          type: string
+          enum:
+          - personal
+          - system
+          - trade
+          - guild
+          - event
+          - reward
+        description: Filter by mail category
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+        description: Number of mails to return
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+        description: Pagination offset
       responses:
         '200':
           description: User mailbox contents
@@ -121,7 +130,7 @@ paths:
                 $ref: '#/components/schemas/MailboxResponse'
     post:
       tags:
-        - Message Delivery
+      - Message Delivery
       summary: Send new mail
       operationId: sendMail
       requestBody:
@@ -143,21 +152,20 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-
   /mail/{mail_id}:
     get:
       tags:
-        - Mail Management
+      - Mail Management
       summary: Get mail details
       operationId: getMail
       parameters:
-        - name: mail_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Mail unique identifier
+      - name: mail_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Mail unique identifier
       responses:
         '200':
           description: Mail details
@@ -173,17 +181,17 @@ paths:
                 $ref: '#/components/schemas/Error'
     delete:
       tags:
-        - Mail Management
+      - Mail Management
       summary: Delete mail
       operationId: deleteMail
       parameters:
-        - name: mail_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Mail unique identifier
+      - name: mail_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Mail unique identifier
       responses:
         '204':
           description: Mail deleted successfully
@@ -193,21 +201,20 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-
   /mail/{mail_id}/read:
     post:
       tags:
-        - Mail Management
+      - Mail Management
       summary: Mark mail as read
       operationId: markAsRead
       parameters:
-        - name: mail_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Mail unique identifier
+      - name: mail_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Mail unique identifier
       responses:
         '200':
           description: Mail marked as read
@@ -221,21 +228,20 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-
   /mail/{mail_id}/archive:
     post:
       tags:
-        - Mail Organization
+      - Mail Organization
       summary: Archive mail
       operationId: archiveMail
       parameters:
-        - name: mail_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Mail unique identifier
+      - name: mail_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Mail unique identifier
       responses:
         '200':
           description: Mail archived successfully
@@ -243,11 +249,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ArchiveResponse'
-
   /mail/bulk:
     post:
       tags:
-        - Bulk Operations
+      - Bulk Operations
       summary: Send bulk mail
       operationId: sendBulkMail
       requestBody:
@@ -275,21 +280,20 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-
   /mail/attachments/{attachment_id}:
     get:
       tags:
-        - Attachments
+      - Attachments
       summary: Download mail attachment
       operationId: downloadAttachment
       parameters:
-        - name: attachment_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Attachment unique identifier
+      - name: attachment_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Attachment unique identifier
       responses:
         '200':
           description: Attachment file
@@ -304,27 +308,36 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-
   /mail/analytics:
     get:
       tags:
-        - Analytics
+      - Analytics
       summary: Get mail analytics
       operationId: getMailAnalytics
       parameters:
-        - name: timeframe
-          in: query
-          schema:
-            type: string
-            enum: [ 1h, 24h, 7d, 30d ]
-            default: 7d
-          description: Analytics timeframe
-        - name: category
-          in: query
-          schema:
-            type: string
-            enum: [ personal, system, trade, guild, event, reward ]
-          description: Filter by mail category
+      - name: timeframe
+        in: query
+        schema:
+          type: string
+          enum:
+          - 1h
+          - 24h
+          - 7d
+          - 30d
+          default: 7d
+        description: Analytics timeframe
+      - name: category
+        in: query
+        schema:
+          type: string
+          enum:
+          - personal
+          - system
+          - trade
+          - guild
+          - event
+          - reward
+        description: Filter by mail category
       responses:
         '200':
           description: Mail analytics data
@@ -332,21 +345,20 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AnalyticsResponse'
-
   /mail/moderation/{mail_id}/report:
     post:
       tags:
-        - Mail Management
+      - Mail Management
       summary: Report mail for moderation
       operationId: reportMail
       parameters:
-        - name: mail_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Mail unique identifier
+      - name: mail_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Mail unique identifier
       requestBody:
         required: true
         content:
@@ -360,11 +372,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ReportResponse'
-
   /mail/system/announcement:
     post:
       tags:
-        - Bulk Operations
+      - Bulk Operations
       summary: Send system-wide announcement
       operationId: sendSystemAnnouncement
       requestBody:
@@ -386,35 +397,33 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SystemAnnouncementResponse'
-
 components:
   securitySchemes:
     BearerAuth:
       type: http
       scheme: bearer
       description: JWT Bearer token authentication
-
   schemas:
-    # Response schemas
     HealthResponse:
       type: object
       properties:
         status:
           type: string
-          example: "healthy"
+          example: healthy
         timestamp:
           type: string
           format: date-time
+        version:
+          type: string
+          example: 1.0.0
         uptime:
           type: integer
           description: Uptime in seconds
-        version:
-          type: string
-          example: "1.0.0"
-
     MailboxResponse:
       type: object
       properties:
+        pagination:
+          $ref: '#/components/schemas/PaginationInfo'
         mails:
           type: array
           items:
@@ -425,9 +434,6 @@ components:
         unread_count:
           type: integer
           minimum: 0
-        pagination:
-          $ref: '#/components/schemas/PaginationInfo'
-
     MailResponse:
       type: object
       properties:
@@ -437,27 +443,29 @@ components:
         sender_id:
           type: string
           format: uuid
-        sender_name:
-          type: string
         recipient_id:
           type: string
           format: uuid
+        sender_name:
+          type: string
         subject:
           type: string
-        content:
-          $ref: '#/components/schemas/MailContent'
         category:
           type: string
-          enum: [ personal, system, trade, guild, event, reward ]
+          enum:
+          - personal
+          - system
+          - trade
+          - guild
+          - event
+          - reward
         priority:
           type: string
-          enum: [ low, normal, high, urgent ]
-        has_attachments:
-          type: boolean
-        attachments:
-          type: array
-          items:
-            $ref: '#/components/schemas/Attachment'
+          enum:
+          - low
+          - normal
+          - high
+          - urgent
         sent_at:
           type: string
           format: date-time
@@ -467,7 +475,14 @@ components:
         expires_at:
           type: string
           format: date-time
-
+        content:
+          $ref: '#/components/schemas/MailContent'
+        attachments:
+          type: array
+          items:
+            $ref: '#/components/schemas/Attachment'
+        has_attachments:
+          type: boolean
     SendMailResponse:
       type: object
       properties:
@@ -479,11 +494,13 @@ components:
           format: date-time
         delivery_status:
           type: string
-          enum: [ sent, queued, failed ]
+          enum:
+          - sent
+          - queued
+          - failed
         recipient_count:
           type: integer
           minimum: 1
-
     MarkReadResponse:
       type: object
       properties:
@@ -495,8 +512,9 @@ components:
           format: date-time
         previous_status:
           type: string
-          enum: [ unread, read ]
-
+          enum:
+          - unread
+          - read
     ArchiveResponse:
       type: object
       properties:
@@ -508,53 +526,63 @@ components:
           format: date-time
         folder:
           type: string
-          enum: [ inbox, sent, archived, trash, system ]
-
+          enum:
+          - inbox
+          - sent
+          - archived
+          - trash
+          - system
     BulkMailResponse:
       type: object
       properties:
         operation_id:
           type: string
           format: uuid
-        total_recipients:
-          type: integer
-          minimum: 0
         estimated_completion:
           type: string
           format: date-time
         status:
           type: string
-          enum: [ queued, processing, completed, failed ]
-
+          enum:
+          - queued
+          - processing
+          - completed
+          - failed
+        total_recipients:
+          type: integer
+          minimum: 0
     AnalyticsResponse:
       type: object
       properties:
         timeframe:
           type: string
-          enum: [ 1h, 24h, 7d, 30d ]
+          enum:
+          - 1h
+          - 24h
+          - 7d
+          - 30d
+        category_breakdown:
+          type: object
+          additionalProperties:
+            type: integer
+            minimum: 0
+        average_response_time:
+          type: number
+          format: float
+        delivery_success_rate:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
         total_mails_sent:
           type: integer
           minimum: 0
         total_mails_received:
           type: integer
           minimum: 0
-        average_response_time:
-          type: number
-          format: float
-        category_breakdown:
-          type: object
-          additionalProperties:
-            type: integer
-            minimum: 0
         spam_reports:
           type: integer
           minimum: 0
-        delivery_success_rate:
-          type: number
-          format: float
-          minimum: 0.0
-          maximum: 1.0
-
     ReportResponse:
       type: object
       properties:
@@ -569,28 +597,56 @@ components:
           format: date-time
         status:
           type: string
-          enum: [ submitted, under_review, resolved ]
-
+          enum:
+          - submitted
+          - under_review
+          - resolved
     SystemAnnouncementResponse:
       type: object
       properties:
         announcement_id:
           type: string
           format: uuid
-        recipient_count:
-          type: integer
-          minimum: 0
         scheduled_delivery:
           type: string
           format: date-time
         priority:
           type: string
-          enum: [ low, normal, high, critical ]
-
-    # Request schemas
+          enum:
+          - low
+          - normal
+          - high
+          - critical
+        recipient_count:
+          type: integer
+          minimum: 0
     SendMailRequest:
       type: object
       properties:
+        subject:
+          type: string
+          minLength: 1
+          maxLength: 200
+        category:
+          type: string
+          enum:
+          - personal
+          - system
+          - trade
+          - guild
+          - event
+          - reward
+          default: personal
+        priority:
+          type: string
+          enum:
+          - low
+          - normal
+          - high
+          - urgent
+          default: normal
+        content:
+          $ref: '#/components/schemas/MailContent'
         recipient_ids:
           type: array
           items:
@@ -598,20 +654,6 @@ components:
             format: uuid
           minItems: 1
           maxItems: 50
-        subject:
-          type: string
-          minLength: 1
-          maxLength: 200
-        content:
-          $ref: '#/components/schemas/MailContent'
-        category:
-          type: string
-          enum: [ personal, system, trade, guild, event, reward ]
-          default: personal
-        priority:
-          type: string
-          enum: [ low, normal, high, urgent ]
-          default: normal
         attachments:
           type: array
           items:
@@ -623,57 +665,70 @@ components:
           maximum: 168
           default: 168
       required:
-        - recipient_ids
-        - subject
-        - content
-
+      - recipient_ids
+      - subject
+      - content
     BulkMailRequest:
       type: object
       properties:
-        recipient_criteria:
-          $ref: '#/components/schemas/RecipientCriteria'
         subject:
           type: string
           minLength: 1
           maxLength: 200
-        content:
-          $ref: '#/components/schemas/MailContent'
         category:
           type: string
-          enum: [ system, event, reward, announcement ]
+          enum:
+          - system
+          - event
+          - reward
+          - announcement
           default: system
         priority:
           type: string
-          enum: [ low, normal, high, urgent ]
+          enum:
+          - low
+          - normal
+          - high
+          - urgent
           default: normal
         scheduled_send:
           type: string
           format: date-time
+        content:
+          $ref: '#/components/schemas/MailContent'
+        recipient_criteria:
+          $ref: '#/components/schemas/RecipientCriteria'
         max_recipients:
           type: integer
           minimum: 1
           maximum: 100000
       required:
-        - recipient_criteria
-        - subject
-        - content
-
+      - recipient_criteria
+      - subject
+      - content
     ReportRequest:
       type: object
       properties:
         reason:
           type: string
-          enum: [ spam, harassment, inappropriate_content, scam, other ]
+          enum:
+          - spam
+          - harassment
+          - inappropriate_content
+          - scam
+          - other
         description:
           type: string
           maxLength: 500
         severity:
           type: string
-          enum: [ low, medium, high ]
+          enum:
+          - low
+          - medium
+          - high
           default: medium
       required:
-        - reason
-
+      - reason
     SystemAnnouncementRequest:
       type: object
       properties:
@@ -681,29 +736,35 @@ components:
           type: string
           minLength: 1
           maxLength: 200
-        content:
-          $ref: '#/components/schemas/MailContent'
         target_audience:
           type: string
-          enum: [ all_players, active_players, new_players, vip_players ]
+          enum:
+          - all_players
+          - active_players
+          - new_players
+          - vip_players
           default: all_players
         priority:
           type: string
-          enum: [ low, normal, high, critical ]
+          enum:
+          - low
+          - normal
+          - high
+          - critical
           default: normal
         scheduled_delivery:
           type: string
           format: date-time
+        content:
+          $ref: '#/components/schemas/MailContent'
         expires_in_hours:
           type: integer
           minimum: 1
           maximum: 168
           default: 24
       required:
-        - subject
-        - content
-
-    # Nested schemas
+      - subject
+      - content
     MailSummary:
       type: object
       properties:
@@ -718,20 +779,21 @@ components:
           type: string
         priority:
           type: string
-        has_attachments:
-          type: boolean
-        is_read:
-          type: boolean
         sent_at:
           type: string
           format: date-time
         expires_at:
           type: string
           format: date-time
-
+        has_attachments:
+          type: boolean
+        is_read:
+          type: boolean
     PaginationInfo:
       type: object
       properties:
+        has_more:
+          type: boolean
         offset:
           type: integer
           minimum: 0
@@ -742,9 +804,6 @@ components:
         total_items:
           type: integer
           minimum: 0
-        has_more:
-          type: boolean
-
     MailContent:
       type: object
       properties:
@@ -756,11 +815,13 @@ components:
           maxLength: 50000
         format:
           type: string
-          enum: [ plain, html, markdown ]
+          enum:
+          - plain
+          - html
+          - markdown
           default: plain
       required:
-        - text
-
+      - text
     Attachment:
       type: object
       properties:
@@ -771,65 +832,65 @@ components:
           type: string
         content_type:
           type: string
-        size_bytes:
-          type: integer
-          minimum: 0
         download_url:
           type: string
           format: uri
-
+        size_bytes:
+          type: integer
+          minimum: 0
     AttachmentUpload:
       type: object
       properties:
+        data:
+          type: string
+          format: byte
+          description: Base64 encoded file data
         filename:
           type: string
           minLength: 1
           maxLength: 255
         content_type:
           type: string
-        data:
-          type: string
-          format: byte
-          description: Base64 encoded file data
         size_bytes:
           type: integer
           minimum: 1
           maximum: 10485760
       required:
-        - filename
-        - content_type
-        - data
-
+      - filename
+      - content_type
+      - data
     RecipientCriteria:
       type: object
       properties:
-        player_level_min:
-          type: integer
-          minimum: 1
-        player_level_max:
-          type: integer
-          minimum: 1
         regions:
           type: array
           items:
             type: string
-        last_active_within_days:
-          type: integer
-          minimum: 1
-        vip_status:
-          type: boolean
-        guild_members:
-          type: boolean
         specific_player_ids:
           type: array
           items:
             type: string
             format: uuid
           maxItems: 1000
-
+        vip_status:
+          type: boolean
+        guild_members:
+          type: boolean
+        player_level_min:
+          type: integer
+          minimum: 1
+        player_level_max:
+          type: integer
+          minimum: 1
+        last_active_within_days:
+          type: integer
+          minimum: 1
     Error:
       type: object
       properties:
+        mail_id:
+          type: string
+          format: uuid
         error:
           type: string
         code:
@@ -839,10 +900,7 @@ components:
         timestamp:
           type: string
           format: date-time
-        mail_id:
-          type: string
-          format: uuid
       required:
-        - error
-        - code
-        - message
+      - error
+      - code
+      - message

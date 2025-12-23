@@ -1,34 +1,56 @@
 openapi: 3.0.3
 info:
   title: Game Mechanics Systems Service API
-  description: |
-    **Enterprise-Grade Game Mechanics Systems Service for NECPGAME**
+  description: '**Enterprise-Grade Game Mechanics Systems Service for NECPGAME**
+
 
     This service provides centralized management of all game mechanics systems,
+
     including rules, configurations, interactions, balancing, and analytics.
+
     Supports 175+ documented game mechanics across all domains.
 
+
     **Core Capabilities:**
+
     - **Mechanics Registry**: Complete catalog of all game mechanics (175+ systems)
+
     - **Rules Engine**: Dynamic rules management and validation
+
     - **Balance Management**: Automated balancing algorithms and conflict resolution
+
     - **Interaction Matrix**: Cross-mechanics interaction mapping and validation
+
     - **Performance Analytics**: Real-time mechanics performance monitoring
+
     - **Configuration Management**: Versioned mechanics configurations
 
+
     **BACKEND NOTE**: Enterprise-grade mechanics systems management with AI-powered
+
     balancing algorithms and real-time validation. Optimized for high-performance
+
     MMOFPS RPG with complex mechanics interactions.
 
+
     **PERFORMANCE**:
+
     - Real-time mechanics validation and conflict detection
+
     - AI-powered balance optimization algorithms
+
     - Optimized queries with advanced indexing for 175+ mechanics
+
     - P99 latency < 50ms for critical mechanics operations
+
     - Caching strategies for frequently accessed mechanics data
 
+
     **SCALING**: Designed for horizontal scaling to handle complex mechanics
+
     operations across millions of concurrent players and game sessions.
+
+    '
   version: 1.0.0
   license:
     name: MIT
@@ -38,49 +60,55 @@ info:
     url: https://necpgame.com/support
     email: api@necpgame.com
 servers:
-  - url: https://api.necpgame.com/v1/mechanics/systems
-    description: Production server
-  - url: https://staging-api.necpgame.com/v1/mechanics/systems
-    description: Staging server
+- url: https://api.necpgame.com/v1/mechanics/systems
+  description: Production server
+- url: https://staging-api.necpgame.com/v1/mechanics/systems
+  description: Staging server
 security:
-  - BearerAuth: [ ]
+- BearerAuth: []
 tags:
-  - name: Mechanics Registry
-    description: Complete catalog and management of game mechanics
-  - name: Rules Engine
-    description: Dynamic rules management and validation
-  - name: Balance Management
-    description: Automated balancing and conflict resolution
-  - name: Interaction Matrix
-    description: Cross-mechanics interaction mapping
-  - name: Configuration Management
-    description: Versioned mechanics configurations
-  - name: Performance Analytics
-    description: Real-time mechanics performance monitoring
-
+- name: Mechanics Registry
+  description: Complete catalog and management of game mechanics
+- name: Rules Engine
+  description: Dynamic rules management and validation
+- name: Balance Management
+  description: Automated balancing and conflict resolution
+- name: Interaction Matrix
+  description: Cross-mechanics interaction mapping
+- name: Configuration Management
+  description: Versioned mechanics configurations
+- name: Performance Analytics
+  description: Real-time mechanics performance monitoring
 paths:
-  # Health Check - ОБЯЗАТЕЛЬНО для всех доменов
   /api/v1/mechanics/systems/health:
     get:
       summary: Game mechanics systems service health check
-      description: |
-        **Enterprise-grade health check endpoint**
+      description: '**Enterprise-grade health check endpoint**
+
 
         Provides real-time health status of the game mechanics systems microservice.
+
         Critical for service discovery, load balancing, and monitoring.
 
+
         **Performance:** <1ms response time, cached for 30 seconds
+
+        '
       operationId: mechanicsSystemsHealthCheck
-      tags: [ Performance Analytics ]
-      security: [ ]
+      tags:
+      - Performance Analytics
+      security: []
       parameters:
-        - name: Accept-Encoding
-          in: header
-          schema:
-            type: string
-            enum: [ gzip, deflate, br ]
+      - name: Accept-Encoding
+        in: header
+        schema:
+          type: string
+          enum:
+          - gzip
+          - deflate
+          - br
       responses:
-        "200":
+        '200':
           description: Service is healthy
           headers:
             Cache-Control:
@@ -94,18 +122,21 @@ paths:
             Content-Encoding:
               schema:
                 type: string
-                enum: [ gzip, deflate, br ]
+                enum:
+                - gzip
+                - deflate
+                - br
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HealthResponse'
-        "503":
+        '503':
           description: Service is unhealthy
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HealthResponse'
-        "429":
+        '429':
           description: Too many requests - rate limit exceeded
           headers:
             Retry-After:
@@ -116,20 +147,23 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-
-  # Batch Health Check - ОБЯЗАТЕЛЬНО для enterprise-grade доменов
   /api/v1/mechanics/systems/health/batch:
     post:
       summary: Batch health check for mechanics systems
-      description: |
-        **Enterprise-grade batch health check**
+      description: '**Enterprise-grade batch health check**
+
 
         Allows checking the health of multiple mechanics systems in a single request.
+
         Optimizes network overhead for monitoring systems.
 
+
         **Performance:** Aggregated response <10ms, parallel checks
+
+        '
       operationId: mechanicsSystemsBatchHealthCheck
-      tags: [ Performance Analytics ]
+      tags:
+      - Performance Analytics
       requestBody:
         required: true
         content:
@@ -144,9 +178,9 @@ paths:
                   description: List of mechanics systems to check
                   maxItems: 50
               required:
-                - systems
+              - systems
       responses:
-        "200":
+        '200':
           description: Batch health status
           content:
             application/json:
@@ -162,10 +196,15 @@ paths:
                           type: string
                         status:
                           type: string
-                          enum: [ healthy, degraded, unhealthy ]
+                          enum:
+                          - healthy
+                          - degraded
+                          - unhealthy
                         details:
                           type: string
-                      required: [ system, status ]
+                      required:
+                      - system
+                      - status
                   summary:
                     type: object
                     properties:
@@ -177,42 +216,51 @@ paths:
                         type: integer
                       unhealthy:
                         type: integer
-                    required: [ total, healthy, degraded, unhealthy ]
-                required: [ systems, summary ]
-        "400":
+                    required:
+                    - total
+                    - healthy
+                    - degraded
+                    - unhealthy
+                required:
+                - systems
+                - summary
+        '400':
           $ref: '#/components/responses/BadRequest'
-        "429":
+        '429':
           $ref: '#/components/responses/TooManyRequests'
-        "500":
+        '500':
           $ref: '#/components/responses/InternalServerError'
-
-  # WebSocket Health Monitoring - ОБЯЗАТЕЛЬНО для real-time доменов
   /api/v1/mechanics/systems/health/ws:
     get:
       summary: WebSocket health check for real-time mechanics systems
-      description: |
-        **Enterprise-grade WebSocket health check**
+      description: '**Enterprise-grade WebSocket health check**
+
 
         Verifies the connectivity and responsiveness of the WebSocket infrastructure
+
         used for real-time mechanics systems monitoring.
 
+
         **Performance:** Instant connection, low overhead
+
+        '
       operationId: mechanicsSystemsWebSocketHealthCheck
-      tags: [ Performance Analytics ]
+      tags:
+      - Performance Analytics
       responses:
-        "200":
+        '200':
           description: WebSocket infrastructure is healthy
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HealthResponse'
-        "503":
+        '503':
           description: WebSocket service unavailable
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/HealthResponse'
-        "429":
+        '429':
           description: Too many requests - WebSocket connection limit exceeded
           headers:
             Retry-After:
@@ -223,61 +271,74 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-
-  # Mechanics Registry - Core Management
-
   /api/v1/mechanics/systems:
     get:
       summary: Get all game mechanics systems
-      description: |
-        Retrieves comprehensive catalog of all 175+ game mechanics systems.
+      description: 'Retrieves comprehensive catalog of all 175+ game mechanics systems.
+
         Includes filtering, pagination, and detailed system information.
+
+        '
       operationId: getAllMechanicsSystems
-      tags: [ Mechanics Registry ]
+      tags:
+      - Mechanics Registry
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: domain
-          in: query
-          schema:
-            type: string
-            enum: [ economy, social, world, combat, progression, crafting ]
-          description: Filter by mechanics domain
-        - name: category
-          in: query
-          schema:
-            type: string
-          description: Filter by specific category within domain
-        - name: status
-          in: query
-          schema:
-            type: string
-            enum: [ active, deprecated, experimental ]
-            default: active
-          description: Filter by system status
-        - name: complexity
-          in: query
-          schema:
-            type: string
-            enum: [ simple, medium, complex, advanced ]
-          description: Filter by system complexity
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 500
-            default: 50
-          description: Maximum number of systems to return
-        - name: offset
-          in: query
-          schema:
-            type: integer
-            minimum: 0
-            default: 0
-          description: Pagination offset
+      - name: domain
+        in: query
+        schema:
+          type: string
+          enum:
+          - economy
+          - social
+          - world
+          - combat
+          - progression
+          - crafting
+        description: Filter by mechanics domain
+      - name: category
+        in: query
+        schema:
+          type: string
+        description: Filter by specific category within domain
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - active
+          - deprecated
+          - experimental
+          default: active
+        description: Filter by system status
+      - name: complexity
+        in: query
+        schema:
+          type: string
+          enum:
+          - simple
+          - medium
+          - complex
+          - advanced
+        description: Filter by system complexity
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 500
+          default: 50
+        description: Maximum number of systems to return
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+        description: Pagination offset
       responses:
-        "200":
+        '200':
           description: List of game mechanics systems
           content:
             application/json:
@@ -309,92 +370,96 @@ paths:
                         additionalProperties:
                           type: integer
                 required:
-                  - systems
-                  - pagination
-                  - total_count
-                  - summary
-        "400":
+                - systems
+                - pagination
+                - total_count
+                - summary
+        '400':
           $ref: '#/components/responses/BadRequest'
-        "401":
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        "403":
+        '403':
           $ref: '#/components/responses/Forbidden'
-        "429":
+        '429':
           $ref: '#/components/responses/TooManyRequests'
-        "500":
+        '500':
           $ref: '#/components/responses/InternalServerError'
-
   /api/v1/mechanics/systems/{system_id}:
     get:
       summary: Get detailed mechanics system information
-      description: |
-        Retrieves comprehensive information about a specific mechanics system,
+      description: 'Retrieves comprehensive information about a specific mechanics system,
+
         including rules, configurations, dependencies, and performance metrics.
+
+        '
       operationId: getMechanicsSystemDetails
-      tags: [ Mechanics Registry ]
+      tags:
+      - Mechanics Registry
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: system_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Unique identifier of the mechanics system
-        - name: include_dependencies
-          in: query
-          schema:
-            type: boolean
-            default: false
-          description: Include dependency information
-        - name: include_interactions
-          in: query
-          schema:
-            type: boolean
-            default: false
-          description: Include interaction matrix
-        - name: include_history
-          in: query
-          schema:
-            type: boolean
-            default: false
-          description: Include configuration history
+      - name: system_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Unique identifier of the mechanics system
+      - name: include_dependencies
+        in: query
+        schema:
+          type: boolean
+          default: false
+        description: Include dependency information
+      - name: include_interactions
+        in: query
+        schema:
+          type: boolean
+          default: false
+        description: Include interaction matrix
+      - name: include_history
+        in: query
+        schema:
+          type: boolean
+          default: false
+        description: Include configuration history
       responses:
-        "200":
+        '200':
           description: Detailed mechanics system information
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/MechanicsSystemDetail'
-        "404":
+        '404':
           $ref: '#/components/responses/NotFound'
-        "401":
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        "403":
+        '403':
           $ref: '#/components/responses/Forbidden'
-        "429":
+        '429':
           $ref: '#/components/responses/TooManyRequests'
-        "500":
+        '500':
           $ref: '#/components/responses/InternalServerError'
-
     put:
       summary: Update mechanics system configuration
-      description: |
-        Updates the configuration of a mechanics system with validation
+      description: 'Updates the configuration of a mechanics system with validation
+
         and conflict checking.
+
+        '
       operationId: updateMechanicsSystem
-      tags: [ Configuration Management ]
+      tags:
+      - Configuration Management
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: system_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Unique identifier of the mechanics system
+      - name: system_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Unique identifier of the mechanics system
       requestBody:
         required: true
         content:
@@ -419,9 +484,9 @@ paths:
                   default: true
                   description: Notify dependent systems
               required:
-                - configuration
+              - configuration
       responses:
-        "200":
+        '200':
           description: System configuration updated successfully
           content:
             application/json:
@@ -439,9 +504,9 @@ paths:
                       format: uuid
                     description: IDs of affected dependent systems
                 required:
-                  - system
-                  - validation_results
-        "400":
+                - system
+                - validation_results
+        '400':
           description: Invalid configuration or validation failed
           content:
             application/json:
@@ -457,10 +522,10 @@ paths:
                     items:
                       $ref: '#/components/schemas/BalanceIssue'
                 required:
-                  - errors
-        "404":
+                - errors
+        '404':
           $ref: '#/components/responses/NotFound'
-        "409":
+        '409':
           description: Configuration conflict detected
           content:
             application/json:
@@ -472,57 +537,62 @@ paths:
                     items:
                       $ref: '#/components/schemas/SystemConflict'
                 required:
-                  - conflicts
-        "401":
+                - conflicts
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        "403":
+        '403':
           $ref: '#/components/responses/Forbidden'
-        "429":
+        '429':
           $ref: '#/components/responses/TooManyRequests'
-        "500":
+        '500':
           $ref: '#/components/responses/InternalServerError'
-
-  # Rules Engine
-
   /api/v1/mechanics/systems/rules:
     get:
       summary: Get mechanics rules catalog
-      description: |
-        Retrieves catalog of all mechanics rules across all systems.
+      description: 'Retrieves catalog of all mechanics rules across all systems.
+
         Rules define game logic and can be dynamically modified.
+
+        '
       operationId: getMechanicsRules
-      tags: [ Rules Engine ]
+      tags:
+      - Rules Engine
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: system_id
-          in: query
-          schema:
-            type: string
-            format: uuid
-          description: Filter by specific system
-        - name: rule_type
-          in: query
-          schema:
-            type: string
-            enum: [ validation, calculation, interaction, balance, progression ]
-          description: Filter by rule type
-        - name: active
-          in: query
-          schema:
-            type: boolean
-            default: true
-          description: Filter by active rules only
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 200
-            default: 50
-          description: Maximum number of rules to return
+      - name: system_id
+        in: query
+        schema:
+          type: string
+          format: uuid
+        description: Filter by specific system
+      - name: rule_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - validation
+          - calculation
+          - interaction
+          - balance
+          - progression
+        description: Filter by rule type
+      - name: active
+        in: query
+        schema:
+          type: boolean
+          default: true
+        description: Filter by active rules only
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 200
+          default: 50
+        description: Maximum number of rules to return
       responses:
-        "200":
+        '200':
           description: List of mechanics rules
           content:
             application/json:
@@ -539,30 +609,32 @@ paths:
                     type: integer
                     minimum: 0
                 required:
-                  - rules
-                  - pagination
-                  - total_count
-        "400":
+                - rules
+                - pagination
+                - total_count
+        '400':
           $ref: '#/components/responses/BadRequest'
-        "401":
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        "403":
+        '403':
           $ref: '#/components/responses/Forbidden'
-        "429":
+        '429':
           $ref: '#/components/responses/TooManyRequests'
-        "500":
+        '500':
           $ref: '#/components/responses/InternalServerError'
-
   /api/v1/mechanics/systems/rules/validate:
     post:
       summary: Validate mechanics rules
-      description: |
-        Validates a set of mechanics rules for consistency and conflicts.
-        Ensures that new or modified rules don't break game balance.
+      description: 'Validates a set of mechanics rules for consistency and conflicts.
+
+        Ensures that new or modified rules don''t break game balance.
+
+        '
       operationId: validateMechanicsRules
-      tags: [ Rules Engine ]
+      tags:
+      - Rules Engine
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -585,9 +657,9 @@ paths:
                   default: false
                   description: Enable strict validation rules
               required:
-                - rules
+              - rules
       responses:
-        "200":
+        '200':
           description: Rules validation completed
           content:
             application/json:
@@ -607,32 +679,32 @@ paths:
                   performance_impact:
                     $ref: '#/components/schemas/PerformanceImpact'
                 required:
-                  - valid
-                  - issues
-                  - suggestions
-        "400":
+                - valid
+                - issues
+                - suggestions
+        '400':
           $ref: '#/components/responses/BadRequest'
-        "401":
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        "403":
+        '403':
           $ref: '#/components/responses/Forbidden'
-        "429":
+        '429':
           $ref: '#/components/responses/TooManyRequests'
-        "500":
+        '500':
           $ref: '#/components/responses/InternalServerError'
-
-  # Balance Management
-
   /api/v1/mechanics/systems/balance/analyze:
     post:
       summary: Analyze game balance
-      description: |
-        Performs comprehensive balance analysis across all mechanics systems.
+      description: 'Performs comprehensive balance analysis across all mechanics systems.
+
         Uses AI algorithms to detect imbalances and suggest optimizations.
+
+        '
       operationId: analyzeGameBalance
-      tags: [ Balance Management ]
+      tags:
+      - Balance Management
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -642,12 +714,21 @@ paths:
               properties:
                 scope:
                   type: string
-                  enum: [ global, domain, system ]
+                  enum:
+                  - global
+                  - domain
+                  - system
                   default: global
                   description: Analysis scope
                 target_domain:
                   type: string
-                  enum: [ economy, social, world, combat, progression, crafting ]
+                  enum:
+                  - economy
+                  - social
+                  - world
+                  - combat
+                  - progression
+                  - crafting
                   description: Target domain for domain-scoped analysis
                 target_system:
                   type: string
@@ -668,35 +749,37 @@ paths:
                   default: false
                   description: Include player behavior data in analysis
               required:
-                - scope
+              - scope
       responses:
-        "200":
+        '200':
           description: Balance analysis completed
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/BalanceAnalysisResult'
-        "400":
+        '400':
           $ref: '#/components/responses/BadRequest'
-        "401":
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        "403":
+        '403':
           $ref: '#/components/responses/Forbidden'
-        "429":
+        '429':
           $ref: '#/components/responses/TooManyRequests'
-        "500":
+        '500':
           $ref: '#/components/responses/InternalServerError'
-
   /api/v1/mechanics/systems/balance/optimize:
     post:
       summary: Auto-optimize game balance
-      description: |
-        Automatically optimizes game balance using AI algorithms.
+      description: 'Automatically optimizes game balance using AI algorithms.
+
         Applies recommended changes with safety controls and rollback capabilities.
+
+        '
       operationId: optimizeGameBalance
-      tags: [ Balance Management ]
+      tags:
+      - Balance Management
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -708,7 +791,10 @@ paths:
                   $ref: '#/components/schemas/BalanceAnalysisResult'
                 optimization_level:
                   type: string
-                  enum: [ conservative, moderate, aggressive ]
+                  enum:
+                  - conservative
+                  - moderate
+                  - aggressive
                   default: moderate
                   description: Level of optimization aggressiveness
                 dry_run:
@@ -720,9 +806,9 @@ paths:
                   default: true
                   description: Create configuration backup before changes
               required:
-                - analysis_result
+              - analysis_result
       responses:
-        "200":
+        '200':
           description: Balance optimization completed
           content:
             application/json:
@@ -744,61 +830,67 @@ paths:
                       rollback_window:
                         type: integer
                         description: Hours available for rollback
-                    required: [ backup_id, can_rollback ]
+                    required:
+                    - backup_id
+                    - can_rollback
                   performance_impact:
                     $ref: '#/components/schemas/PerformanceImpact'
                   validation_results:
                     $ref: '#/components/schemas/BalanceValidationResult'
                 required:
-                  - applied_changes
-                  - rollback_info
-        "400":
+                - applied_changes
+                - rollback_info
+        '400':
           $ref: '#/components/responses/BadRequest'
-        "401":
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        "403":
+        '403':
           $ref: '#/components/responses/Forbidden'
-        "429":
+        '429':
           $ref: '#/components/responses/TooManyRequests'
-        "500":
+        '500':
           $ref: '#/components/responses/InternalServerError'
-
-  # Interaction Matrix
-
   /api/v1/mechanics/systems/interactions:
     get:
       summary: Get mechanics interaction matrix
-      description: |
-        Retrieves the complete interaction matrix showing how different
+      description: 'Retrieves the complete interaction matrix showing how different
+
         mechanics systems interact with each other.
+
+        '
       operationId: getInteractionsMatrix
-      tags: [ Interaction Matrix ]
+      tags:
+      - Interaction Matrix
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: system_id
-          in: query
-          schema:
-            type: string
-            format: uuid
-          description: Filter interactions for specific system
-        - name: interaction_type
-          in: query
-          schema:
-            type: string
-            enum: [ dependency, conflict, synergy, neutral ]
-          description: Filter by interaction type
-        - name: strength_threshold
-          in: query
-          schema:
-            type: number
-            format: float
-            minimum: 0
-            maximum: 1
-            default: 0.1
-          description: Minimum interaction strength to include
+      - name: system_id
+        in: query
+        schema:
+          type: string
+          format: uuid
+        description: Filter interactions for specific system
+      - name: interaction_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - dependency
+          - conflict
+          - synergy
+          - neutral
+        description: Filter by interaction type
+      - name: strength_threshold
+        in: query
+        schema:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          default: 0.1
+        description: Minimum interaction strength to include
       responses:
-        "200":
+        '200':
           description: Mechanics interaction matrix
           content:
             application/json:
@@ -824,53 +916,64 @@ paths:
                           $ref: '#/components/schemas/SystemInteraction'
                         maxItems: 10
                 required:
-                  - matrix
-                  - summary
-        "400":
+                - matrix
+                - summary
+        '400':
           $ref: '#/components/responses/BadRequest'
-        "401":
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        "403":
+        '403':
           $ref: '#/components/responses/Forbidden'
-        "429":
+        '429':
           $ref: '#/components/responses/TooManyRequests'
-        "500":
+        '500':
           $ref: '#/components/responses/InternalServerError'
-
-  # Performance Analytics
-
   /api/v1/mechanics/systems/analytics/performance:
     get:
       summary: Get mechanics performance analytics
-      description: |
-        Retrieves real-time performance analytics for all mechanics systems.
+      description: 'Retrieves real-time performance analytics for all mechanics systems.
+
         Monitors latency, throughput, error rates, and resource usage.
+
+        '
       operationId: getMechanicsPerformanceAnalytics
-      tags: [ Performance Analytics ]
+      tags:
+      - Performance Analytics
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: time_range
-          in: query
-          schema:
-            type: string
-            enum: [ 5m, 15m, 1h, 6h, 24h, 7d ]
-            default: 1h
-          description: Time range for analytics
-        - name: system_id
-          in: query
-          schema:
-            type: string
-            format: uuid
-          description: Filter by specific system
-        - name: metric_type
-          in: query
-          schema:
-            type: string
-            enum: [ latency, throughput, errors, resources, balance ]
-          description: Filter by metric type
+      - name: time_range
+        in: query
+        schema:
+          type: string
+          enum:
+          - 5m
+          - 15m
+          - 1h
+          - 6h
+          - 24h
+          - 7d
+          default: 1h
+        description: Time range for analytics
+      - name: system_id
+        in: query
+        schema:
+          type: string
+          format: uuid
+        description: Filter by specific system
+      - name: metric_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - latency
+          - throughput
+          - errors
+          - resources
+          - balance
+        description: Filter by metric type
       responses:
-        "200":
+        '200':
           description: Performance analytics data
           content:
             application/json:
@@ -901,20 +1004,19 @@ paths:
                         type: number
                         format: float
                 required:
-                  - time_range
-                  - systems
-                  - aggregated
-        "400":
+                - time_range
+                - systems
+                - aggregated
+        '400':
           $ref: '#/components/responses/BadRequest'
-        "401":
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        "403":
+        '403':
           $ref: '#/components/responses/Forbidden'
-        "429":
+        '429':
           $ref: '#/components/responses/TooManyRequests'
-        "500":
+        '500':
           $ref: '#/components/responses/InternalServerError'
-
 components:
   securitySchemes:
     BearerAuth:
@@ -925,16 +1027,21 @@ components:
       type: apiKey
       in: header
       name: X-API-Key
-
   schemas:
-    # Common Schemas
     HealthResponse:
       type: object
-      required: [ status, timestamp, version, service ]
+      required:
+      - status
+      - timestamp
+      - version
+      - service
       properties:
         status:
           type: string
-          enum: [ healthy, degraded, unhealthy ]
+          enum:
+          - healthy
+          - degraded
+          - unhealthy
         timestamp:
           type: string
           format: date-time
@@ -946,19 +1053,16 @@ components:
           type: object
           additionalProperties:
             type: string
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     Error:
       type: object
-      required: [ message, code ]
+      required:
+      - message
+      - code
       properties:
         message:
           type: string
           maxLength: 1000
-        code:
-          type: integer
-          minimum: 100
-          maximum: 599
         domain:
           type: string
           maxLength: 255
@@ -966,8 +1070,11 @@ components:
         timestamp:
           type: string
           format: date-time
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
+        code:
+          type: integer
+          minimum: 100
+          maximum: 599
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     PaginationInfo:
       type: object
       properties:
@@ -983,13 +1090,18 @@ components:
         total_pages:
           type: integer
           minimum: 0
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
-    # Core Mechanics System Schemas
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     MechanicsSystem:
       type: object
-      required: [ id, name, domain, category, status, complexity, version, created_at ]
+      required:
+      - id
+      - name
+      - domain
+      - category
+      - status
+      - complexity
+      - version
+      - created_at
       properties:
         id:
           type: string
@@ -1001,7 +1113,13 @@ components:
           description: Human-readable system name
         domain:
           type: string
-          enum: [ economy, social, world, combat, progression, crafting ]
+          enum:
+          - economy
+          - social
+          - world
+          - combat
+          - progression
+          - crafting
           description: Primary domain this system belongs to
         category:
           type: string
@@ -1013,16 +1131,29 @@ components:
           description: Detailed system description
         status:
           type: string
-          enum: [ active, deprecated, experimental ]
+          enum:
+          - active
+          - deprecated
+          - experimental
           description: Current system status
         complexity:
           type: string
-          enum: [ simple, medium, complex, advanced ]
+          enum:
+          - simple
+          - medium
+          - complex
+          - advanced
           description: System complexity level
         version:
           type: string
           maxLength: 50
           description: Current version of the system
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
         dependencies:
           type: array
           items:
@@ -1034,49 +1165,48 @@ components:
           items:
             type: string
           description: System tags for categorization
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     MechanicsSystemDetail:
       allOf:
-        - $ref: '#/components/schemas/MechanicsSystem'
-        - type: object
-          properties:
-            rules:
-              type: array
-              items:
-                $ref: '#/components/schemas/MechanicsRule'
-              description: System rules and logic
-            configuration:
-              type: object
-              additionalProperties: true
-              description: Current system configuration
-            interactions:
-              type: array
-              items:
-                $ref: '#/components/schemas/SystemInteraction'
-              description: Interactions with other systems
-            performance_metrics:
-              $ref: '#/components/schemas/SystemPerformanceMetrics'
-            balance_score:
-              type: number
-              format: float
-              minimum: 0
-              maximum: 1
-              description: Current balance score (0-1, higher is better)
-            last_balance_check:
-              type: string
-              format: date-time
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
+      - $ref: '#/components/schemas/MechanicsSystem'
+      - type: object
+        properties:
+          rules:
+            type: array
+            items:
+              $ref: '#/components/schemas/MechanicsRule'
+            description: System rules and logic
+          configuration:
+            type: object
+            additionalProperties: true
+            description: Current system configuration
+          interactions:
+            type: array
+            items:
+              $ref: '#/components/schemas/SystemInteraction'
+            description: Interactions with other systems
+          performance_metrics:
+            $ref: '#/components/schemas/SystemPerformanceMetrics'
+          balance_score:
+            type: number
+            format: float
+            minimum: 0
+            maximum: 1
+            description: Current balance score (0-1, higher is better)
+          last_balance_check:
+            type: string
+            format: date-time
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     MechanicsRule:
       type: object
-      required: [ id, system_id, name, type, logic, active, created_at ]
+      required:
+      - id
+      - system_id
+      - name
+      - type
+      - logic
+      - active
+      - created_at
       properties:
         id:
           type: string
@@ -1092,24 +1222,27 @@ components:
           description: Human-readable rule name
         type:
           type: string
-          enum: [ validation, calculation, interaction, balance, progression ]
+          enum:
+          - validation
+          - calculation
+          - interaction
+          - balance
+          - progression
           description: Type of rule
-        logic:
-          type: object
-          additionalProperties: true
-          description: Rule logic definition (conditions, actions, parameters)
         description:
           type: string
           maxLength: 1000
           description: Rule description
-        active:
-          type: boolean
-          description: Whether the rule is active
-        priority:
-          type: integer
-          minimum: 0
-          maximum: 1000
-          description: Rule execution priority (higher = executed first)
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        logic:
+          type: object
+          additionalProperties: true
+          description: Rule logic definition (conditions, actions, parameters)
         conditions:
           type: array
           items:
@@ -1122,17 +1255,23 @@ components:
             type: object
             additionalProperties: true
           description: Rule actions to execute
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
+        active:
+          type: boolean
+          description: Whether the rule is active
+        priority:
+          type: integer
+          minimum: 0
+          maximum: 1000
+          description: Rule execution priority (higher = executed first)
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     SystemInteraction:
       type: object
-      required: [ source_system_id, target_system_id, type, strength, description ]
+      required:
+      - source_system_id
+      - target_system_id
+      - type
+      - strength
+      - description
       properties:
         source_system_id:
           type: string
@@ -1144,21 +1283,16 @@ components:
           description: Target system ID
         type:
           type: string
-          enum: [ dependency, conflict, synergy, neutral ]
+          enum:
+          - dependency
+          - conflict
+          - synergy
+          - neutral
           description: Type of interaction
-        strength:
-          type: number
-          format: float
-          minimum: 0
-          maximum: 1
-          description: Interaction strength (0-1)
         description:
           type: string
           maxLength: 1000
           description: Interaction description
-        bidirectional:
-          type: boolean
-          description: Whether the interaction is bidirectional
         conditions:
           type: object
           additionalProperties: true
@@ -1167,13 +1301,25 @@ components:
           type: object
           additionalProperties: true
           description: Effects of the interaction
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
-    # Balance Management Schemas
-
+        strength:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Interaction strength (0-1)
+        bidirectional:
+          type: boolean
+          description: Whether the interaction is bidirectional
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     BalanceAnalysisResult:
       type: object
-      required: [ analysis_id, timestamp, scope, overall_score, issues, recommendations ]
+      required:
+      - analysis_id
+      - timestamp
+      - scope
+      - overall_score
+      - issues
+      - recommendations
       properties:
         analysis_id:
           type: string
@@ -1185,14 +1331,13 @@ components:
           description: Analysis timestamp
         scope:
           type: string
-          enum: [ global, domain, system ]
+          enum:
+          - global
+          - domain
+          - system
           description: Analysis scope
-        overall_score:
-          type: number
-          format: float
-          minimum: 0
-          maximum: 1
-          description: Overall balance score (0-1)
+        performance_impact:
+          $ref: '#/components/schemas/PerformanceImpact'
         issues:
           type: array
           items:
@@ -1203,13 +1348,21 @@ components:
           items:
             $ref: '#/components/schemas/BalanceRecommendation'
           description: Balance improvement recommendations
-        performance_impact:
-          $ref: '#/components/schemas/PerformanceImpact'
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
+        overall_score:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Overall balance score (0-1)
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     BalanceIssue:
       type: object
-      required: [ issue_id, type, severity, description, affected_systems ]
+      required:
+      - issue_id
+      - type
+      - severity
+      - description
+      - affected_systems
       properties:
         issue_id:
           type: string
@@ -1217,22 +1370,25 @@ components:
           description: Unique identifier of the issue
         type:
           type: string
-          enum: [ overpowered, underpowered, imbalance, exploit, progression_block ]
+          enum:
+          - overpowered
+          - underpowered
+          - imbalance
+          - exploit
+          - progression_block
           description: Type of balance issue
         severity:
           type: string
-          enum: [ low, medium, high, critical ]
+          enum:
+          - low
+          - medium
+          - high
+          - critical
           description: Issue severity
         description:
           type: string
           maxLength: 2000
           description: Detailed issue description
-        affected_systems:
-          type: array
-          items:
-            type: string
-            format: uuid
-          description: IDs of affected systems
         metrics:
           type: object
           additionalProperties:
@@ -1242,11 +1398,20 @@ components:
           type: object
           additionalProperties: true
           description: Supporting evidence for the issue
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
+        affected_systems:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: IDs of affected systems
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     BalanceRecommendation:
       type: object
-      required: [ recommendation_id, type, description, expected_impact ]
+      required:
+      - recommendation_id
+      - type
+      - description
+      - expected_impact
       properties:
         recommendation_id:
           type: string
@@ -1254,37 +1419,49 @@ components:
           description: Unique identifier of the recommendation
         type:
           type: string
-          enum: [ parameter_adjustment, rule_change, system_rebalance, new_mechanic ]
+          enum:
+          - parameter_adjustment
+          - rule_change
+          - system_rebalance
+          - new_mechanic
           description: Type of recommendation
         description:
           type: string
           maxLength: 2000
           description: Detailed recommendation description
-        expected_impact:
-          type: number
-          format: float
-          minimum: -1
-          maximum: 1
-          description: Expected impact on balance (-1 to 1)
+        implementation_complexity:
+          type: string
+          enum:
+          - low
+          - medium
+          - high
+          description: Implementation complexity
+        proposed_changes:
+          type: object
+          additionalProperties: true
+          description: Specific proposed changes
         affected_systems:
           type: array
           items:
             type: string
             format: uuid
           description: IDs of systems that would be affected
-        implementation_complexity:
-          type: string
-          enum: [ low, medium, high ]
-          description: Implementation complexity
-        proposed_changes:
-          type: object
-          additionalProperties: true
-          description: Specific proposed changes
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
+        expected_impact:
+          type: number
+          format: float
+          minimum: -1
+          maximum: 1
+          description: Expected impact on balance (-1 to 1)
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     BalanceChange:
       type: object
-      required: [ change_id, system_id, parameter_path, old_value, new_value, reason ]
+      required:
+      - change_id
+      - system_id
+      - parameter_path
+      - old_value
+      - new_value
+      - reason
       properties:
         change_id:
           type: string
@@ -1314,13 +1491,15 @@ components:
           minimum: -1
           maximum: 1
           description: Expected impact on balance
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
-    # Performance and Validation Schemas
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     SystemPerformanceMetrics:
       type: object
-      required: [ system_id, timestamp, response_time_ms, throughput_per_second, error_rate_percent ]
+      required:
+      - system_id
+      - timestamp
+      - response_time_ms
+      - throughput_per_second
+      - error_rate_percent
       properties:
         system_id:
           type: string
@@ -1345,7 +1524,11 @@ components:
             p99:
               type: number
               format: float
-          required: [ avg, p50, p95, p99 ]
+          required:
+          - avg
+          - p50
+          - p95
+          - p99
         throughput_per_second:
           type: number
           format: float
@@ -1365,12 +1548,22 @@ components:
         active_connections:
           type: integer
           description: Number of active connections
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     PerformanceImpact:
       type: object
-      required: [ response_time_change_ms, throughput_change_percent, memory_change_mb ]
+      required:
+      - response_time_change_ms
+      - throughput_change_percent
+      - memory_change_mb
       properties:
+        estimated_user_impact:
+          type: string
+          enum:
+          - none
+          - minor
+          - moderate
+          - significant
+          description: Estimated impact on user experience
         response_time_change_ms:
           type: number
           format: float
@@ -1387,25 +1580,30 @@ components:
           type: number
           format: float
           description: Change in CPU usage (%)
-        estimated_user_impact:
-          type: string
-          enum: [ none, minor, moderate, significant ]
-          description: Estimated impact on user experience
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     BalanceValidationResult:
       type: object
-      required: [ valid, score, issues_count, critical_issues_count ]
+      required:
+      - valid
+      - score
+      - issues_count
+      - critical_issues_count
       properties:
-        valid:
-          type: boolean
-          description: Whether the balance is acceptable
+        affected_systems:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: IDs of systems affected by balance issues
         score:
           type: number
           format: float
           minimum: 0
           maximum: 1
           description: Balance score (0-1)
+        valid:
+          type: boolean
+          description: Whether the balance is acceptable
         issues_count:
           type: integer
           minimum: 0
@@ -1418,38 +1616,38 @@ components:
           type: integer
           minimum: 0
           description: Number of balance warnings
-        affected_systems:
-          type: array
-          items:
-            type: string
-            format: uuid
-          description: IDs of systems affected by balance issues
         recommendations_count:
           type: integer
           minimum: 0
           description: Number of improvement recommendations
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     RuleValidationIssue:
       type: object
-      required: [ issue_id, severity, message, rule_id ]
+      required:
+      - issue_id
+      - severity
+      - message
+      - rule_id
       properties:
         issue_id:
           type: string
           format: uuid
           description: Unique identifier of the validation issue
+        rule_id:
+          type: string
+          format: uuid
+          description: ID of the rule with the issue
         severity:
           type: string
-          enum: [ error, warning, info ]
+          enum:
+          - error
+          - warning
+          - info
           description: Issue severity
         message:
           type: string
           maxLength: 1000
           description: Issue description
-        rule_id:
-          type: string
-          format: uuid
-          description: ID of the rule with the issue
         field_path:
           type: string
           maxLength: 500
@@ -1458,28 +1656,21 @@ components:
           type: string
           maxLength: 1000
           description: Suggested fix for the issue
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     SystemConflict:
       type: object
-      required: [ conflict_id, type, severity, description, system_a_id, system_b_id ]
+      required:
+      - conflict_id
+      - type
+      - severity
+      - description
+      - system_a_id
+      - system_b_id
       properties:
         conflict_id:
           type: string
           format: uuid
           description: Unique identifier of the conflict
-        type:
-          type: string
-          enum: [ parameter_conflict, rule_conflict, dependency_conflict, resource_conflict ]
-          description: Type of conflict
-        severity:
-          type: string
-          enum: [ low, medium, high, critical ]
-          description: Conflict severity
-        description:
-          type: string
-          maxLength: 2000
-          description: Detailed conflict description
         system_a_id:
           type: string
           format: uuid
@@ -1488,17 +1679,36 @@ components:
           type: string
           format: uuid
           description: Second system involved in conflict
+        type:
+          type: string
+          enum:
+          - parameter_conflict
+          - rule_conflict
+          - dependency_conflict
+          - resource_conflict
+          description: Type of conflict
+        severity:
+          type: string
+          enum:
+          - low
+          - medium
+          - high
+          - critical
+          description: Conflict severity
+        description:
+          type: string
+          maxLength: 2000
+          description: Detailed conflict description
+        resolution_suggestion:
+          type: string
+          maxLength: 1000
+          description: Suggested resolution for the conflict
         affected_parameters:
           type: array
           items:
             type: string
           description: Parameters affected by the conflict
-        resolution_suggestion:
-          type: string
-          maxLength: 1000
-          description: Suggested resolution for the conflict
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
   responses:
     BadRequest:
       description: Invalid request parameters
@@ -1506,28 +1716,24 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-
     Unauthorized:
       description: Authentication required
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-
     Forbidden:
       description: Access denied
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-
     NotFound:
       description: Resource not found
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-
     TooManyRequests:
       description: Rate limit exceeded
       headers:
@@ -1539,14 +1745,9 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-
     InternalServerError:
       description: Internal server error
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-
-# BACKEND NOTE: All schemas optimized for struct alignment. Expected memory savings: 30-50%.
-# PERFORMANCE: Enterprise-grade mechanics systems management with AI-powered balancing.
-# SCALING: Designed for horizontal scaling across 175+ mechanics systems.

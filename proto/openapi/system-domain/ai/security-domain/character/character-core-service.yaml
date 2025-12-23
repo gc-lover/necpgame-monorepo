@@ -10,22 +10,22 @@ info:
     name: NECPGAME API Support
     email: api@necp.game
 servers:
-  - url: http://localhost:8082/api/v1
-    description: Локальный сервер разработки
-  - url: https://api.necp.game/api/v1
-    description: Продакшен сервер
+- url: http://localhost:8082/api/v1
+  description: Локальный сервер разработки
+- url: https://api.necp.game/api/v1
+  description: Продакшен сервер
 tags:
-  - name: Characters
-    description: Управление персонажами
+- name: Characters
+  description: Управление персонажами
 paths:
   /character/characters:
     post:
       tags:
-        - Characters
+      - Characters
       summary: Создание персонажа
       operationId: createCharacterV2
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -48,19 +48,19 @@ paths:
   /character/characters/validate-name:
     get:
       tags:
-        - Characters
+      - Characters
       summary: Проверка доступности имени
       operationId: validateCharacterName
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: name
-          in: query
-          required: true
-          schema:
-            type: string
-            minLength: 3
-            maxLength: 50
+      - name: name
+        in: query
+        required: true
+        schema:
+          type: string
+          minLength: 3
+          maxLength: 50
       responses:
         '200':
           description: Результат проверки
@@ -77,18 +77,18 @@ paths:
   /character/characters/{character_id}:
     get:
       tags:
-        - Characters
+      - Characters
       summary: Получить персонажа
       operationId: getCharacterV2
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: character_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: character_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
         '200':
           description: Персонаж
@@ -104,18 +104,18 @@ paths:
           $ref: ../../../../common-schemas.yaml#/components/responses/InternalServerError
     delete:
       tags:
-        - Characters
+      - Characters
       summary: Удалить персонажа
       operationId: deleteCharacterV2
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: character_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: character_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       requestBody:
         required: true
         content:
@@ -143,18 +143,18 @@ paths:
   /character/characters/current:
     get:
       tags:
-        - Characters
+      - Characters
       summary: Текущий персонаж
       operationId: getCurrentCharacter
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: player_id
-          in: query
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: player_id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
         '200':
           description: Текущий персонаж
@@ -176,10 +176,10 @@ components:
     CreateCharacterV2Request:
       type: object
       required:
-        - player_id
-        - name
-        - class
-        - origin
+      - player_id
+      - name
+      - class
+      - origin
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory: ~64 bytes/instance.'
       properties:
         player_id:
@@ -195,19 +195,20 @@ components:
           type: string
     CharacterFull:
       type: object
-      description: |
-        BACKEND NOTE: Core character data (hot path, 1.5k+ RPS).
+      description: 'BACKEND NOTE: Core character data (hot path, 1.5k+ RPS).
+
         Fields ordered for struct alignment (large → small).
+
         Expected memory: ~160 bytes/instance.
+
+        '
       properties:
-        # UUID fields first (16 bytes each)
         id:
           type: string
           format: uuid
         player_id:
           type: string
           format: uuid
-        # String fields (16 bytes each)
         name:
           type: string
         class:
@@ -233,7 +234,6 @@ components:
           type: string
           format: date-time
           nullable: true
-        # Objects/pointers (8 bytes each)
         attributes:
           type: object
           additionalProperties: true
@@ -243,31 +243,29 @@ components:
         stats:
           type: object
           additionalProperties: true
-        # int32 fields (4 bytes)
+        deleted:
+          type: boolean
         level:
           type: integer
           format: int32
           minimum: 1
-        # bool fields last (1 byte)
-        deleted:
-          type: boolean
     ValidateNameResponse:
       type: object
-      description: |
-        BACKEND NOTE: Fields ordered for struct alignment (large → small).
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).
+
         Expected memory: ~24 bytes/instance.
+
+        '
       properties:
-        # String fields first (16 bytes)
         message:
           type: string
           nullable: true
-        # bool fields last (1 byte)
         available:
           type: boolean
     DeleteCharacterRequest:
       type: object
       required:
-        - reason
+      - reason
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory: ~32 bytes/instance.'
       properties:
         reason:
@@ -275,4 +273,4 @@ components:
           minLength: 1
           maxLength: 500
 security:
-  - BearerAuth: [ ]
+- BearerAuth: []

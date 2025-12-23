@@ -1,13 +1,18 @@
 openapi: 3.0.3
 info:
   title: Crafting System Service API
-  description: |
-    Enterprise-grade crafting system for Cyberpunk RPG.
+  description: 'Enterprise-grade crafting system for Cyberpunk RPG.
+
     Supports recipes, orders, stations, contracts, and production chains.
 
+
     **BACKEND NOTE:** Optimized for struct alignment (30-50% memory savings).
+
     **Performance Targets:** 2000+ RPS sustained, P99 <15ms response time.
+
     **Security:** BearerAuth with role-based access control.
+
+    '
   version: 2.0.0
   license:
     name: MIT
@@ -16,72 +21,71 @@ info:
     name: NECPGAME API Support
     email: api@necp.game
 servers:
-  - url: http://localhost:8210/api/v1
-    description: Local development server
-  - url: https://api.necp.game/api/v1
-    description: Production server
+- url: http://localhost:8210/api/v1
+  description: Local development server
+- url: https://api.necp.game/api/v1
+  description: Production server
 tags:
-  - name: recipes
-    description: Recipe management and retrieval
-  - name: orders
-    description: Production order management
-  - name: stations
-    description: Crafting station management
-  - name: crafting
-    description: General crafting operations
+- name: recipes
+  description: Recipe management and retrieval
+- name: orders
+  description: Production order management
+- name: stations
+  description: Crafting station management
+- name: crafting
+  description: General crafting operations
 paths:
-  # Recipes endpoints
   /api/v1/economy/crafting/recipes:
     get:
       tags:
-        - recipes
+      - recipes
       summary: Get recipes by category
       description: Retrieve recipes filtered by category, tier, and quality
       operationId: getRecipesByCategory
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: category
-          in: query
-          schema:
-            type: string
-            enum:
-              - weapons
-              - armor
-              - implants
-              - vehicles
-              - consumables
-              - tools
-          description: Recipe category filter
-        - name: tier
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 5
-          description: Recipe tier filter (1-5)
-        - name: quality
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-          description: Minimum quality filter
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 20
-          description: Number of recipes to return
-        - name: offset
-          in: query
-          schema:
-            type: integer
-            minimum: 0
-            default: 0
-          description: Pagination offset
+      - name: category
+        in: query
+        schema:
+          type: string
+          enum:
+          - weapons
+          - armor
+          - implants
+          - vehicles
+          - consumables
+          - tools
+        description: Recipe category filter
+      - name: tier
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 5
+        description: Recipe tier filter (1-5)
+      - name: quality
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+        description: Minimum quality filter
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+        description: Number of recipes to return
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+        description: Pagination offset
       responses:
         '200':
           description: Recipes retrieved successfully
@@ -97,12 +101,12 @@ paths:
           $ref: '#/components/responses/InternalServerError'
     post:
       tags:
-        - recipes
+      - recipes
       summary: Create recipe
       description: Create a new crafting recipe
       operationId: createRecipe
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -125,20 +129,20 @@ paths:
   /api/v1/economy/crafting/recipes/{recipeId}:
     get:
       tags:
-        - recipes
+      - recipes
       summary: Get recipe by ID
       description: Retrieve detailed recipe information including materials and requirements
       operationId: getRecipeById
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: recipeId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Recipe unique identifier
+      - name: recipeId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Recipe unique identifier
       responses:
         '200':
           description: Recipe retrieved successfully
@@ -155,38 +159,38 @@ paths:
   /api/v1/economy/crafting/recipes/{recipeId}/cost:
     get:
       tags:
-        - recipes
+      - recipes
       summary: Calculate crafting cost
       description: Calculate total crafting cost including materials and fees
       operationId: calculateCraftingCost
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: recipeId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Recipe unique identifier
-        - name: station_bonus
-          in: query
-          schema:
-            type: number
-            format: float
-            minimum: 0.0
-            maximum: 2.0
-            default: 1.0
-          description: Station efficiency bonus multiplier
-        - name: quality_modifier
-          in: query
-          schema:
-            type: number
-            format: float
-            minimum: 0.1
-            maximum: 2.0
-            default: 1.0
-          description: Quality modifier for cost calculation
+      - name: recipeId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Recipe unique identifier
+      - name: station_bonus
+        in: query
+        schema:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 2.0
+          default: 1.0
+        description: Station efficiency bonus multiplier
+      - name: quality_modifier
+        in: query
+        schema:
+          type: number
+          format: float
+          minimum: 0.1
+          maximum: 2.0
+          default: 1.0
+        description: Quality modifier for cost calculation
       responses:
         '200':
           description: Cost calculated successfully
@@ -200,44 +204,42 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
-  # Orders endpoints
   /api/v1/economy/crafting/orders:
     get:
       tags:
-        - orders
+      - orders
       summary: Get player crafting orders
       description: Retrieve active and completed crafting orders for the authenticated player
       operationId: getPlayerOrders
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: status
-          in: query
-          schema:
-            type: string
-            enum:
-              - pending
-              - active
-              - completed
-              - failed
-              - cancelled
-          description: Order status filter
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 20
-          description: Number of orders to return
-        - name: offset
-          in: query
-          schema:
-            type: integer
-            minimum: 0
-            default: 0
-          description: Pagination offset
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - pending
+          - active
+          - completed
+          - failed
+          - cancelled
+        description: Order status filter
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+        description: Number of orders to return
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+        description: Pagination offset
       responses:
         '200':
           description: Orders retrieved successfully
@@ -251,12 +253,12 @@ paths:
           $ref: '#/components/responses/InternalServerError'
     post:
       tags:
-        - orders
+      - orders
       summary: Create crafting contract
       description: Create a new crafting contract for production services
       operationId: createCraftingContract
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -279,12 +281,12 @@ paths:
   /api/v1/economy/crafting/start:
     post:
       tags:
-        - orders
+      - orders
       summary: Start crafting order
       description: Start a new crafting order with specified recipe and quality settings
       operationId: startCraftingOrder
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -309,20 +311,20 @@ paths:
   /api/v1/economy/crafting/orders/{orderId}:
     get:
       tags:
-        - orders
+      - orders
       summary: Get crafting order details
       description: Retrieve detailed information about a specific crafting order
       operationId: getCraftingOrder
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: orderId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Order unique identifier
+      - name: orderId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Order unique identifier
       responses:
         '200':
           description: Order retrieved successfully
@@ -339,20 +341,20 @@ paths:
   /api/v1/economy/crafting/orders/{orderId}/cancel:
     post:
       tags:
-        - orders
+      - orders
       summary: Cancel crafting order
       description: Cancel an active crafting order with refund calculation
       operationId: cancelCraftingOrder
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: orderId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Order unique identifier
+      - name: orderId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Order unique identifier
       requestBody:
         required: false
         content:
@@ -386,34 +388,32 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
-  # Stations endpoints
   /api/v1/economy/crafting/stations:
     get:
       tags:
-        - stations
+      - stations
       summary: Get available crafting stations
       description: Retrieve crafting stations available to the player
       operationId: getCraftingStations
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: zone_id
-          in: query
-          schema:
-            type: string
-            format: uuid
-          description: Zone filter for stations
-        - name: category
-          in: query
-          schema:
-            type: string
-            enum:
-              - basic
-              - professional
-              - factory
-              - specialized
-          description: Station category filter
+      - name: zone_id
+        in: query
+        schema:
+          type: string
+          format: uuid
+        description: Zone filter for stations
+      - name: category
+        in: query
+        schema:
+          type: string
+          enum:
+          - basic
+          - professional
+          - factory
+          - specialized
+        description: Station category filter
       responses:
         '200':
           description: Stations retrieved successfully
@@ -428,20 +428,20 @@ paths:
   /api/v1/economy/crafting/stations/{stationId}/book:
     post:
       tags:
-        - stations
+      - stations
       summary: Book crafting station
       description: Reserve a crafting station for exclusive use
       operationId: bookCraftingStation
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: stationId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Station unique identifier
+      - name: stationId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Station unique identifier
       requestBody:
         required: true
         content:
@@ -466,20 +466,20 @@ paths:
   /api/v1/economy/crafting/stations/{stationId}/release:
     post:
       tags:
-        - stations
+      - stations
       summary: Release crafting station
       description: Release a previously booked crafting station
       operationId: releaseCraftingStation
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: stationId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Station unique identifier
+      - name: stationId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Station unique identifier
       responses:
         '200':
           description: Station released successfully
@@ -489,35 +489,33 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
-  # Production chains endpoints
   /api/v1/economy/crafting/chains:
     get:
       tags:
-        - crafting
+      - crafting
       summary: Get production chains
       description: Retrieve available production chains for multi-stage manufacturing
       operationId: getProductionChains
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: category
-          in: query
-          schema:
-            type: string
-            enum:
-              - weapons
-              - armor
-              - vehicles
-              - electronics
-          description: Chain category filter
-        - name: complexity
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 5
-          description: Chain complexity filter (1-5 stages)
+      - name: category
+        in: query
+        schema:
+          type: string
+          enum:
+          - weapons
+          - armor
+          - vehicles
+          - electronics
+        description: Chain category filter
+      - name: complexity
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 5
+        description: Chain complexity filter (1-5 stages)
       responses:
         '200':
           description: Production chains retrieved successfully
@@ -531,12 +529,12 @@ paths:
           $ref: '#/components/responses/InternalServerError'
     post:
       tags:
-        - crafting
+      - crafting
       summary: Start production chain
       description: Initiate a multi-stage production chain
       operationId: startProductionChain
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -556,7 +554,6 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
 components:
   securitySchemes:
     BearerAuth:
@@ -595,15 +592,14 @@ components:
           schema:
             $ref: '#/components/schemas/Error'
   schemas:
-    # Recipe schemas
     CraftingRecipe:
       type: object
       required:
-        - id
-        - name
-        - result_item
-        - materials
-        - crafting_time_seconds
+      - id
+      - name
+      - result_item
+      - materials
+      - crafting_time_seconds
       properties:
         id:
           type: string
@@ -618,43 +614,13 @@ components:
         category:
           type: string
           enum:
-            - weapons
-            - armor
-            - implants
-            - vehicles
-            - consumables
-            - tools
+          - weapons
+          - armor
+          - implants
+          - vehicles
+          - consumables
+          - tools
           description: Recipe category
-        tier:
-          type: integer
-          minimum: 1
-          maximum: 5
-          description: Recipe tier (1-5)
-        result_item:
-          $ref: '#/components/schemas/CraftedItem'
-        materials:
-          type: array
-          items:
-            $ref: '#/components/schemas/CraftingMaterial'
-          description: Required materials
-        crafting_time_seconds:
-          type: integer
-          minimum: 1
-          description: Base crafting time in seconds
-        skill_requirement:
-          type: integer
-          minimum: 0
-          description: Required crafting skill level
-        station_requirements:
-          type: array
-          items:
-            type: string
-            enum:
-              - basic
-              - professional
-              - factory
-              - specialized
-          description: Required station types
         quality_requirements:
           type: object
           properties:
@@ -668,6 +634,23 @@ components:
               minimum: 0
               default: 0
           description: Quality requirements for successful crafting
+        result_item:
+          $ref: '#/components/schemas/CraftedItem'
+        materials:
+          type: array
+          items:
+            $ref: '#/components/schemas/CraftingMaterial'
+          description: Required materials
+        station_requirements:
+          type: array
+          items:
+            type: string
+            enum:
+            - basic
+            - professional
+            - factory
+            - specialized
+          description: Required station types
         success_rate:
           type: number
           format: float
@@ -675,17 +658,36 @@ components:
           maximum: 1.0
           default: 1.0
           description: Base success rate (0.0-1.0)
+        tier:
+          type: integer
+          minimum: 1
+          maximum: 5
+          description: Recipe tier (1-5)
+        crafting_time_seconds:
+          type: integer
+          minimum: 1
+          description: Base crafting time in seconds
+        skill_requirement:
+          type: integer
+          minimum: 0
+          description: Required crafting skill level
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     CraftingMaterial:
       type: object
       required:
-        - item_id
-        - quantity
+      - item_id
+      - quantity
       properties:
         item_id:
           type: string
           format: uuid
           description: Material item identifier
+        alternatives:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Alternative material IDs that can be used
         quantity:
           type: integer
           minimum: 1
@@ -695,28 +697,17 @@ components:
           minimum: 1
           maximum: 100
           description: Minimum material quality required
-        alternatives:
-          type: array
-          items:
-            type: string
-            format: uuid
-          description: Alternative material IDs that can be used
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     CraftedItem:
       type: object
       required:
-        - item_id
-        - base_quality
+      - item_id
+      - base_quality
       properties:
         item_id:
           type: string
           format: uuid
           description: Result item identifier
-        base_quality:
-          type: integer
-          minimum: 1
-          maximum: 100
-          description: Base quality of crafted item
         quality_range:
           type: object
           properties:
@@ -735,14 +726,19 @@ components:
           minimum: 0.5
           maximum: 2.0
           description: Durability multiplier for crafted item
+        base_quality:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Base quality of crafted item
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     CreateRecipeRequest:
       type: object
       required:
-        - name
-        - result_item
-        - materials
-        - crafting_time_seconds
+      - name
+      - result_item
+      - materials
+      - crafting_time_seconds
       properties:
         name:
           type: string
@@ -756,45 +752,13 @@ components:
         category:
           type: string
           enum:
-            - weapons
-            - armor
-            - implants
-            - vehicles
-            - consumables
-            - tools
+          - weapons
+          - armor
+          - implants
+          - vehicles
+          - consumables
+          - tools
           description: Recipe category
-        tier:
-          type: integer
-          minimum: 1
-          maximum: 5
-          description: Recipe tier (1-5)
-        result_item:
-          $ref: '#/components/schemas/CraftedItem'
-        materials:
-          type: array
-          items:
-            $ref: '#/components/schemas/CraftingMaterial'
-          minItems: 1
-          description: Required materials
-        crafting_time_seconds:
-          type: integer
-          minimum: 1
-          description: Base crafting time in seconds
-        skill_requirement:
-          type: integer
-          minimum: 0
-          default: 0
-          description: Required crafting skill level
-        station_requirements:
-          type: array
-          items:
-            type: string
-            enum:
-              - basic
-              - professional
-              - factory
-              - specialized
-          description: Required station types
         quality_requirements:
           type: object
           properties:
@@ -808,6 +772,24 @@ components:
               minimum: 0
               default: 0
           description: Quality requirements
+        result_item:
+          $ref: '#/components/schemas/CraftedItem'
+        materials:
+          type: array
+          items:
+            $ref: '#/components/schemas/CraftingMaterial'
+          minItems: 1
+          description: Required materials
+        station_requirements:
+          type: array
+          items:
+            type: string
+            enum:
+            - basic
+            - professional
+            - factory
+            - specialized
+          description: Required station types
         success_rate:
           type: number
           format: float
@@ -815,14 +797,28 @@ components:
           maximum: 1.0
           default: 1.0
           description: Base success rate (0.0-1.0)
+        tier:
+          type: integer
+          minimum: 1
+          maximum: 5
+          description: Recipe tier (1-5)
+        crafting_time_seconds:
+          type: integer
+          minimum: 1
+          description: Base crafting time in seconds
+        skill_requirement:
+          type: integer
+          minimum: 0
+          default: 0
+          description: Required crafting skill level
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     RecipeListResponse:
       type: object
       required:
-        - recipes
-        - total_count
-        - limit
-        - offset
+      - recipes
+      - total_count
+      - limit
+      - offset
       properties:
         recipes:
           type: array
@@ -846,11 +842,17 @@ components:
     CraftingCost:
       type: object
       required:
-        - total_cost
-        - material_cost
-        - station_fee
-        - time_cost
+      - total_cost
+      - material_cost
+      - station_fee
+      - time_cost
       properties:
+        breakdown:
+          type: object
+          additionalProperties:
+            type: number
+            format: float
+          description: Detailed cost breakdown by component
         total_cost:
           type: number
           format: float
@@ -871,24 +873,16 @@ components:
           type: number
           format: float
           description: Additional cost for quality modifiers
-        breakdown:
-          type: object
-          additionalProperties:
-            type: number
-            format: float
-          description: Detailed cost breakdown by component
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
-    # Order schemas
     Order:
       type: object
       required:
-        - id
-        - player_id
-        - recipe_id
-        - status
-        - quality_target
-        - started_at
+      - id
+      - player_id
+      - recipe_id
+      - status
+      - quality_target
+      - started_at
       properties:
         id:
           type: string
@@ -912,11 +906,11 @@ components:
         status:
           type: string
           enum:
-            - pending
-            - active
-            - completed
-            - failed
-            - cancelled
+          - pending
+          - active
+          - completed
+          - failed
+          - cancelled
           description: Current order status
         started_at:
           type: string
@@ -942,6 +936,12 @@ components:
           items:
             $ref: '#/components/schemas/CraftingBonus'
           description: Bonuses applied during crafting
+        progress_percentage:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Completion progress percentage
         quality_target:
           type: integer
           minimum: 1
@@ -952,19 +952,13 @@ components:
           minimum: 0
           maximum: 100
           description: Actual quality achieved
-        progress_percentage:
-          type: number
-          format: float
-          minimum: 0
-          maximum: 100
-          description: Completion progress percentage
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     MaterialConsumption:
       type: object
       required:
-        - item_id
-        - quantity_used
-        - quality_used
+      - item_id
+      - quantity_used
+      - quality_used
       properties:
         item_id:
           type: string
@@ -983,9 +977,9 @@ components:
     CraftingBonus:
       type: object
       required:
-        - type
-        - value
-        - source
+      - type
+      - value
+      - source
       properties:
         source:
           type: string
@@ -993,10 +987,10 @@ components:
         type:
           type: string
           enum:
-            - quality
-            - speed
-            - efficiency
-            - luck
+          - quality
+          - speed
+          - efficiency
+          - luck
           description: Type of bonus applied
         value:
           type: number
@@ -1006,9 +1000,9 @@ components:
     OrderOutput:
       type: object
       required:
-        - item_id
-        - quantity
-        - quality
+      - item_id
+      - quantity
+      - quality
       properties:
         item_id:
           type: string
@@ -1027,9 +1021,9 @@ components:
     StartCraftingRequest:
       type: object
       required:
-        - recipe_id
-        - station_id
-        - quality_target
+      - recipe_id
+      - station_id
+      - quality_target
       properties:
         recipe_id:
           type: string
@@ -1042,10 +1036,10 @@ components:
         priority:
           type: string
           enum:
-            - low
-            - normal
-            - high
-            - rush
+          - low
+          - normal
+          - high
+          - rush
           default: normal
           description: Crafting priority affecting queue position
         material_overrides:
@@ -1068,8 +1062,8 @@ components:
     MaterialOverride:
       type: object
       required:
-        - original_item_id
-        - override_item_id
+      - original_item_id
+      - override_item_id
       properties:
         original_item_id:
           type: string
@@ -1090,16 +1084,16 @@ components:
     QualityModifier:
       type: object
       required:
-        - type
-        - value
+      - type
+      - value
       properties:
         type:
           type: string
           enum:
-            - skill_bonus
-            - equipment_bonus
-            - station_bonus
-            - consumable_bonus
+          - skill_bonus
+          - equipment_bonus
+          - station_bonus
+          - consumable_bonus
           description: Type of quality modifier
         value:
           type: number
@@ -1111,11 +1105,11 @@ components:
     CreateContractRequest:
       type: object
       required:
-        - client_id
-        - recipe_id
-        - quantity
-        - deadline
-        - payment_terms
+      - client_id
+      - recipe_id
+      - quantity
+      - deadline
+      - payment_terms
       properties:
         client_id:
           type: string
@@ -1156,22 +1150,22 @@ components:
     PaymentTerms:
       type: object
       required:
-        - currency
-        - base_rate
-        - payment_schedule
+      - currency
+      - base_rate
+      - payment_schedule
       properties:
         currency:
           type: string
           enum:
-            - eddies
-            - eurobucks
+          - eddies
+          - eurobucks
           description: Payment currency
         payment_schedule:
           type: string
           enum:
-            - on_completion
-            - on_delivery
-            - milestone_based
+          - on_completion
+          - on_delivery
+          - milestone_based
           description: When payment is made
         base_rate:
           type: number
@@ -1198,14 +1192,14 @@ components:
     Contract:
       type: object
       required:
-        - id
-        - client_id
-        - contractor_id
-        - recipe_id
-        - quantity
-        - status
-        - deadline
-        - created_at
+      - id
+      - client_id
+      - contractor_id
+      - recipe_id
+      - quantity
+      - status
+      - deadline
+      - created_at
       properties:
         id:
           type: string
@@ -1226,12 +1220,12 @@ components:
         status:
           type: string
           enum:
-            - pending
-            - accepted
-            - in_progress
-            - completed
-            - failed
-            - cancelled
+          - pending
+          - accepted
+          - in_progress
+          - completed
+          - failed
+          - cancelled
           description: Contract status
         deadline:
           type: string
@@ -1284,10 +1278,10 @@ components:
     OrderListResponse:
       type: object
       required:
-        - orders
-        - total_count
-        - limit
-        - offset
+      - orders
+      - total_count
+      - limit
+      - offset
       properties:
         orders:
           type: array
@@ -1307,13 +1301,11 @@ components:
           minimum: 0
           description: Requested offset
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
-    # Station schemas
     StationListResponse:
       type: object
       required:
-        - stations
-        - total_count
+      - stations
+      - total_count
       properties:
         stations:
           type: array
@@ -1328,32 +1320,56 @@ components:
     CraftingStation:
       type: object
       required:
-        - id
-        - name
-        - category
-        - zone_id
-        - efficiency_bonus
-        - status
+      - id
+      - name
+      - category
+      - zone_id
+      - efficiency_bonus
+      - status
       properties:
         id:
           type: string
           format: uuid
           description: Unique station identifier
+        zone_id:
+          type: string
+          format: uuid
+          description: Zone where station is located
         name:
           type: string
           description: Station name
         category:
           type: string
           enum:
-            - basic
-            - professional
-            - factory
-            - specialized
+          - basic
+          - professional
+          - factory
+          - specialized
           description: Station category
-        zone_id:
+        status:
           type: string
-          format: uuid
-          description: Zone where station is located
+          enum:
+          - available
+          - booked
+          - maintenance
+          - offline
+          description: Current station status
+        booked_until:
+          type: string
+          format: date-time
+          description: When current booking expires
+        supported_categories:
+          type: array
+          items:
+            type: string
+            enum:
+            - weapons
+            - armor
+            - implants
+            - vehicles
+            - consumables
+            - tools
+          description: Item categories this station can craft
         efficiency_bonus:
           type: number
           format: float
@@ -1366,56 +1382,32 @@ components:
           minimum: 0.0
           maximum: 2.0
           description: Quality multiplier for this station
-        status:
-          type: string
-          enum:
-            - available
-            - booked
-            - maintenance
-            - offline
-          description: Current station status
-        booked_until:
-          type: string
-          format: date-time
-          description: When current booking expires
-        supported_categories:
-          type: array
-          items:
-            type: string
-            enum:
-              - weapons
-              - armor
-              - implants
-              - vehicles
-              - consumables
-              - tools
-          description: Item categories this station can craft
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     BookStationRequest:
       type: object
       required:
-        - duration_hours
+      - duration_hours
       properties:
+        priority:
+          type: string
+          enum:
+          - low
+          - normal
+          - high
+          default: normal
+          description: Booking priority
         duration_hours:
           type: integer
           minimum: 1
           maximum: 168
           description: Booking duration in hours (1-168)
-        priority:
-          type: string
-          enum:
-            - low
-            - normal
-            - high
-          default: normal
-          description: Booking priority
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     BookingConfirmation:
       type: object
       required:
-        - station_id
-        - booked_until
-        - cost
+      - station_id
+      - booked_until
+      - cost
       properties:
         station_id:
           type: string
@@ -1425,21 +1417,19 @@ components:
           type: string
           format: date-time
           description: Booking expiration time
+        confirmation_code:
+          type: string
+          description: Booking confirmation code
         cost:
           type: number
           format: float
           description: Booking cost in eddies
-        confirmation_code:
-          type: string
-          description: Booking confirmation code
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
-    # Production chains schemas
     ProductionChainListResponse:
       type: object
       required:
-        - chains
-        - total_count
+      - chains
+      - total_count
       properties:
         chains:
           type: array
@@ -1454,11 +1444,11 @@ components:
     ProductionChain:
       type: object
       required:
-        - id
-        - name
-        - stages
-        - complexity
-        - estimated_duration_hours
+      - id
+      - name
+      - stages
+      - complexity
+      - estimated_duration_hours
       properties:
         id:
           type: string
@@ -1473,34 +1463,31 @@ components:
         category:
           type: string
           enum:
-            - weapons
-            - armor
-            - vehicles
-            - electronics
+          - weapons
+          - armor
+          - vehicles
+          - electronics
           description: Chain category
-        complexity:
-          type: integer
-          minimum: 1
-          maximum: 5
-          description: Chain complexity (1-5 stages)
+        status:
+          type: string
+          enum:
+          - available
+          - deprecated
+          description: Chain availability status
         stages:
           type: array
           items:
             $ref: '#/components/schemas/ChainStage'
           description: Production stages in order
-        estimated_duration_hours:
-          type: integer
-          minimum: 1
-          description: Total estimated duration in hours
         required_stations:
           type: array
           items:
             type: string
             enum:
-              - basic
-              - professional
-              - factory
-              - specialized
+            - basic
+            - professional
+            - factory
+            - specialized
           description: Required station types for this chain
         success_rate:
           type: number
@@ -1508,78 +1495,81 @@ components:
           minimum: 0.0
           maximum: 1.0
           description: Overall chain success rate
-        status:
-          type: string
-          enum:
-            - available
-            - deprecated
-          description: Chain availability status
+        complexity:
+          type: integer
+          minimum: 1
+          maximum: 5
+          description: Chain complexity (1-5 stages)
+        estimated_duration_hours:
+          type: integer
+          minimum: 1
+          description: Total estimated duration in hours
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     ChainStage:
       type: object
       required:
-        - stage_number
-        - name
-        - recipe_id
-        - duration_hours
+      - stage_number
+      - name
+      - recipe_id
+      - duration_hours
       properties:
-        stage_number:
-          type: integer
-          minimum: 1
-          description: Stage sequence number
+        recipe_id:
+          type: string
+          format: uuid
+          description: Recipe used in this stage
         name:
           type: string
           description: Stage name
         description:
           type: string
           description: Stage description
-        recipe_id:
-          type: string
-          format: uuid
-          description: Recipe used in this stage
-        duration_hours:
-          type: integer
-          minimum: 1
-          description: Stage duration in hours
         required_station:
           type: string
           enum:
-            - basic
-            - professional
-            - factory
-            - specialized
+          - basic
+          - professional
+          - factory
+          - specialized
           description: Required station type for this stage
         dependencies:
           type: array
           items:
             type: integer
           description: Stage numbers this stage depends on
+        stage_number:
+          type: integer
+          minimum: 1
+          description: Stage sequence number
+        duration_hours:
+          type: integer
+          minimum: 1
+          description: Stage duration in hours
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     StartProductionChainRequest:
       type: object
       required:
-        - chain_id
-        - station_assignments
+      - chain_id
+      - station_assignments
       properties:
         chain_id:
           type: string
           format: uuid
           description: Production chain to start
+        priority:
+          type: string
+          enum:
+          - low
+          - normal
+          - high
+          - rush
+          default: normal
+          description: Chain priority
         station_assignments:
           type: object
           additionalProperties:
             type: string
             format: uuid
           description: Station assignments for each stage (stage_number -> station_id)
-        priority:
-          type: string
-          enum:
-            - low
-            - normal
-            - high
-            - rush
-          default: normal
-          description: Chain priority
         quality_targets:
           type: object
           additionalProperties:
@@ -1588,14 +1578,12 @@ components:
             maximum: 100
           description: Quality targets for each stage (stage_number -> quality)
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
-    # Common schemas
     Error:
       type: object
       required:
-        - error
-        - message
-        - timestamp
+      - error
+      - message
+      - timestamp
       properties:
         error:
           type: string
@@ -1612,6 +1600,5 @@ components:
           additionalProperties: true
           description: Additional error details
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
 security:
-  - BearerAuth: [ ]
+- BearerAuth: []

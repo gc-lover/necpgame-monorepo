@@ -1,21 +1,31 @@
-# Issue: #2043 - Реализовать OpenAPI спецификации для combat-service
 openapi: 3.0.3
 info:
   title: Combat Service API
-  description: |
-    **Combat Service** - Core combat system service for NECPGAME MMOFPS RPG.
+  description: '**Combat Service** - Core combat system service for NECPGAME MMOFPS RPG.
+
 
     Provides unified interface for all combat-related operations including:
+
     - Combat session management
+
     - Ability activation and validation
+
     - Damage calculation and application
+
     - Real-time position tracking
+
     - Combat statistics and leaderboards
+
     - Anti-cheat validation
 
+
     **BACKEND NOTE:** Enterprise-grade combat service with optimized memory layout.
+
     Expected memory savings: 30-50% through struct field alignment.
+
     Performance targets: 2000+ RPS, P99 <15ms.
+
+    '
   version: 2.0.0
   license:
     name: MIT
@@ -23,35 +33,31 @@ info:
   contact:
     name: NECPGAME Combat API Support
     email: combat@necp.game
-
 servers:
-  - url: http://localhost:8050/api/v1/combat
-    description: Combat Service Development Server
-  - url: https://combat.necpgame.com/api/v1
-    description: Combat Service Production Server
-
+- url: http://localhost:8050/api/v1/combat
+  description: Combat Service Development Server
+- url: https://combat.necpgame.com/api/v1
+  description: Combat Service Production Server
 security:
-  - BearerAuth: [ ]
-
+- BearerAuth: []
 tags:
-  - name: combat-session
-    description: Combat session management
-  - name: abilities
-    description: Ability activation and management
-  - name: damage
-    description: Damage calculation and application
-  - name: positions
-    description: Real-time position tracking
-  - name: stats
-    description: Combat statistics
-
+- name: combat-session
+  description: Combat session management
+- name: abilities
+  description: Ability activation and management
+- name: damage
+  description: Damage calculation and application
+- name: positions
+  description: Real-time position tracking
+- name: stats
+  description: Combat statistics
 paths:
   /health:
     get:
       summary: Combat service health check
       operationId: combatServiceHealthCheck
       tags:
-        - combat-session
+      - combat-session
       responses:
         '200':
           description: Service is healthy
@@ -66,15 +72,14 @@ paths:
                   timestamp:
                     type: string
                     format: date-time
-
   /sessions:
     post:
       summary: Create new combat session
       operationId: createCombatSession
       tags:
-        - combat-session
+      - combat-session
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -94,33 +99,35 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
     get:
       summary: List combat sessions
       operationId: listCombatSessions
       tags:
-        - combat-session
+      - combat-session
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: status
-          in: query
-          schema:
-            type: string
-            enum: [ active, completed, cancelled ]
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 20
-        - name: offset
-          in: query
-          schema:
-            type: integer
-            minimum: 0
-            default: 0
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - active
+          - completed
+          - cancelled
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
       responses:
         '200':
           description: Combat sessions list
@@ -130,22 +137,21 @@ paths:
                 $ref: '#/components/schemas/CombatSessionsList'
         '401':
           $ref: '#/components/responses/Unauthorized'
-
   /sessions/{session_id}:
     get:
       summary: Get combat session details
       operationId: getCombatSession
       tags:
-        - combat-session
+      - combat-session
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: session_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
         '200':
           description: Combat session details
@@ -157,21 +163,20 @@ paths:
           $ref: '#/components/responses/NotFound'
         '401':
           $ref: '#/components/responses/Unauthorized'
-
     put:
       summary: Update combat session
       operationId: updateCombatSession
       tags:
-        - combat-session
+      - combat-session
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: session_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       requestBody:
         required: true
         content:
@@ -189,22 +194,21 @@ paths:
           $ref: '#/components/responses/NotFound'
         '400':
           $ref: '#/components/responses/BadRequest'
-
   /sessions/{session_id}/join:
     post:
       summary: Join combat session
       operationId: joinCombatSession
       tags:
-        - combat-session
+      - combat-session
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: session_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       requestBody:
         required: true
         content:
@@ -222,22 +226,21 @@ paths:
           $ref: '#/components/responses/NotFound'
         '409':
           $ref: '#/components/responses/Conflict'
-
   /sessions/{session_id}/abilities:
     post:
       summary: Activate ability in combat session
       operationId: activateAbility
       tags:
-        - abilities
+      - abilities
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: session_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       requestBody:
         required: true
         content:
@@ -257,22 +260,21 @@ paths:
           $ref: '#/components/responses/NotFound'
         '429':
           $ref: '#/components/responses/TooManyRequests'
-
   /sessions/{session_id}/damage:
     post:
       summary: Apply damage in combat session
       operationId: applyDamage
       tags:
-        - damage
+      - damage
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: session_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       requestBody:
         required: true
         content:
@@ -290,22 +292,21 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '404':
           $ref: '#/components/responses/NotFound'
-
   /sessions/{session_id}/positions:
     post:
       summary: Update player position
       operationId: updatePosition
       tags:
-        - positions
+      - positions
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: session_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       requestBody:
         required: true
         content:
@@ -319,21 +320,20 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '404':
           $ref: '#/components/responses/NotFound'
-
     get:
       summary: Get positions of all players in session
       operationId: getPositions
       tags:
-        - positions
+      - positions
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: session_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
         '200':
           description: Player positions retrieved
@@ -343,27 +343,30 @@ paths:
                 $ref: '#/components/schemas/PlayerPositions'
         '404':
           $ref: '#/components/responses/NotFound'
-
   /stats:
     get:
       summary: Get combat statistics
       operationId: getCombatStatistics
       tags:
-        - stats
+      - stats
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: account_id
-          in: query
-          schema:
-            type: string
-            format: uuid
-        - name: period
-          in: query
-          schema:
-            type: string
-            enum: [ daily, weekly, monthly, all_time ]
-            default: all_time
+      - name: account_id
+        in: query
+        schema:
+          type: string
+          format: uuid
+      - name: period
+        in: query
+        schema:
+          type: string
+          enum:
+          - daily
+          - weekly
+          - monthly
+          - all_time
+          default: all_time
       responses:
         '200':
           description: Combat statistics retrieved
@@ -373,39 +376,39 @@ paths:
                 $ref: '#/components/schemas/CombatStatistics'
         '401':
           $ref: '#/components/responses/Unauthorized'
-
 components:
   securitySchemes:
     BearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
-
   schemas:
-    # Combat Session Schemas
     CombatSession:
       type: object
       required:
-        - id
-        - status
-        - created_at
-        - participants
+      - id
+      - status
+      - created_at
+      - participants
       properties:
         id:
           type: string
           format: uuid
         status:
           type: string
-          enum: [ waiting, active, paused, completed, cancelled ]
+          enum:
+          - waiting
+          - active
+          - paused
+          - completed
+          - cancelled
         game_mode:
           type: string
-          enum: [ deathmatch, team_deathmatch, capture_the_flag, domination ]
-        max_participants:
-          type: integer
-          minimum: 2
-          maximum: 100
-        current_participants:
-          type: integer
+          enum:
+          - deathmatch
+          - team_deathmatch
+          - capture_the_flag
+          - domination
         created_at:
           type: string
           format: date-time
@@ -417,19 +420,24 @@ components:
           type: string
           format: date-time
           nullable: true
+        settings:
+          $ref: '#/components/schemas/CombatSettings'
         participants:
           type: array
           items:
             $ref: '#/components/schemas/CombatSessionParticipant'
-        settings:
-          $ref: '#/components/schemas/CombatSettings'
+        max_participants:
+          type: integer
+          minimum: 2
+          maximum: 100
+        current_participants:
+          type: integer
       description: 'BACKEND NOTE: Fields ordered for optimal memory alignment (large → small). Expected memory savings: 30-50%.'
-
     CombatSessionParticipant:
       type: object
       required:
-        - account_id
-        - joined_at
+      - account_id
+      - joined_at
       properties:
         account_id:
           type: string
@@ -442,10 +450,16 @@ components:
           format: date-time
         team:
           type: string
-          enum: [ red, blue, neutral ]
+          enum:
+          - red
+          - blue
+          - neutral
         status:
           type: string
-          enum: [ active, eliminated, disconnected ]
+          enum:
+          - active
+          - eliminated
+          - disconnected
         score:
           type: integer
           default: 0
@@ -456,69 +470,73 @@ components:
           type: integer
           default: 0
       description: 'BACKEND NOTE: Struct field alignment optimized for combat performance.'
-
     CombatSettings:
       type: object
       properties:
-        time_limit:
-          type: integer
-          description: Time limit in seconds
-        score_limit:
-          type: integer
-          description: Score limit to win
         friendly_fire:
           type: boolean
           default: false
         respawn_enabled:
           type: boolean
           default: true
+        time_limit:
+          type: integer
+          description: Time limit in seconds
+        score_limit:
+          type: integer
+          description: Score limit to win
         respawn_time:
           type: integer
           default: 5
-
-    # Request/Response Schemas
     CreateCombatSessionRequest:
       type: object
       required:
-        - game_mode
+      - game_mode
       properties:
         game_mode:
           type: string
-          enum: [ deathmatch, team_deathmatch, capture_the_flag, domination ]
-        max_participants:
-          type: integer
-          minimum: 2
-          maximum: 100
-          default: 10
+          enum:
+          - deathmatch
+          - team_deathmatch
+          - capture_the_flag
+          - domination
+        password:
+          type: string
+          maxLength: 50
         settings:
           $ref: '#/components/schemas/CombatSettings'
         is_private:
           type: boolean
           default: false
-        password:
-          type: string
-          maxLength: 50
-
+        max_participants:
+          type: integer
+          minimum: 2
+          maximum: 100
+          default: 10
     UpdateCombatSessionRequest:
       type: object
       properties:
         status:
           type: string
-          enum: [ active, paused, cancelled ]
+          enum:
+          - active
+          - paused
+          - cancelled
         settings:
           $ref: '#/components/schemas/CombatSettings'
-
     JoinCombatSessionRequest:
       type: object
       properties:
-        team:
-          type: string
-          enum: [ red, blue, auto ]
-          default: auto
         character_id:
           type: string
           format: uuid
-
+        team:
+          type: string
+          enum:
+          - red
+          - blue
+          - auto
+          default: auto
     CombatSessionsList:
       type: object
       properties:
@@ -532,80 +550,90 @@ components:
           type: integer
         offset:
           type: integer
-
-    # Ability Schemas
     ActivateAbilityRequest:
       type: object
       required:
-        - ability_id
-        - target_position
+      - ability_id
+      - target_position
       properties:
         ability_id:
           type: string
           format: uuid
-        target_position:
-          $ref: '#/components/schemas/Vector3'
         target_account_id:
           type: string
           format: uuid
         parameters:
           type: object
           additionalProperties: true
-
+        target_position:
+          $ref: '#/components/schemas/Vector3'
     AbilityActivationResult:
       type: object
       required:
-        - success
-        - ability_id
+      - success
+      - ability_id
       properties:
-        success:
-          type: boolean
         ability_id:
           type: string
           format: uuid
+        error_message:
+          type: string
+        success:
+          type: boolean
         cooldown_remaining:
           type: integer
           description: Remaining cooldown in milliseconds
         mana_cost:
           type: integer
-        error_message:
-          type: string
-
-    # Damage Schemas
     ApplyDamageRequest:
       type: object
       required:
-        - target_account_id
-        - damage_amount
-        - damage_type
+      - target_account_id
+      - damage_amount
+      - damage_type
       properties:
         target_account_id:
           type: string
           format: uuid
-        damage_amount:
-          type: integer
-          minimum: 1
-        damage_type:
-          type: string
-          enum: [ physical, energy, chemical, thermal, electrical, radiation ]
         source_ability_id:
           type: string
           format: uuid
+        damage_type:
+          type: string
+          enum:
+          - physical
+          - energy
+          - chemical
+          - thermal
+          - electrical
+          - radiation
         critical_hit:
           type: boolean
           default: false
+        damage_amount:
+          type: integer
+          minimum: 1
         armor_penetration:
           type: integer
           minimum: 0
           maximum: 100
           default: 0
-
     DamageResult:
       type: object
       required:
-        - success
-        - actual_damage
+      - success
+      - actual_damage
       properties:
+        target_status:
+          type: string
+          enum:
+          - alive
+          - eliminated
+          - critical
+        effects_applied:
+          type: array
+          items:
+            type: string
         success:
           type: boolean
         actual_damage:
@@ -613,21 +641,12 @@ components:
         mitigated_damage:
           type: integer
           default: 0
-        target_status:
-          type: string
-          enum: [ alive, eliminated, critical ]
-        effects_applied:
-          type: array
-          items:
-            type: string
-
-    # Position Schemas
     Vector3:
       type: object
       required:
-        - x
-        - y
-        - z
+      - x
+      - y
+      - z
       properties:
         x:
           type: number
@@ -638,12 +657,11 @@ components:
         z:
           type: number
           format: float
-
     UpdatePositionRequest:
       type: object
       required:
-        - position
-        - rotation
+      - position
+      - rotation
       properties:
         position:
           $ref: '#/components/schemas/Vector3'
@@ -654,22 +672,19 @@ components:
         timestamp:
           type: integer
           description: Client timestamp for lag compensation
-
     PlayerPositions:
       type: object
       properties:
         session_id:
           type: string
           format: uuid
-        timestamp:
-          type: integer
         positions:
           type: array
           items:
             type: object
             required:
-              - account_id
-              - position
+            - account_id
+            - position
             properties:
               account_id:
                 type: string
@@ -680,14 +695,23 @@ components:
                 $ref: '#/components/schemas/Vector3'
               velocity:
                 $ref: '#/components/schemas/Vector3'
-
-    # Statistics Schemas
+        timestamp:
+          type: integer
     CombatStatistics:
       type: object
       properties:
         account_id:
           type: string
           format: uuid
+        favorite_game_mode:
+          type: string
+        achievements:
+          type: array
+          items:
+            type: string
+        win_rate:
+          type: number
+          format: float
         total_sessions:
           type: integer
         total_kills:
@@ -696,24 +720,14 @@ components:
           type: integer
         total_score:
           type: integer
-        win_rate:
-          type: number
-          format: float
         average_session_duration:
           type: integer
           description: Average session duration in seconds
-        favorite_game_mode:
-          type: string
         rank:
           type: integer
         leaderboard_position:
           type: integer
-        achievements:
-          type: array
-          items:
-            type: string
       description: 'BACKEND NOTE: Statistics optimized for leaderboard queries and caching.'
-
   responses:
     BadRequest:
       description: Bad request - invalid parameters
@@ -728,7 +742,6 @@ components:
                 type: string
               code:
                 type: string
-
     Unauthorized:
       description: Authentication required
       content:
@@ -741,7 +754,6 @@ components:
                 example: unauthorized
               message:
                 type: string
-
     NotFound:
       description: Resource not found
       content:
@@ -754,7 +766,6 @@ components:
                 example: not_found
               message:
                 type: string
-
     Conflict:
       description: Resource conflict
       content:
@@ -767,7 +778,6 @@ components:
                 example: conflict
               message:
                 type: string
-
     TooManyRequests:
       description: Rate limit exceeded
       content:
@@ -782,7 +792,6 @@ components:
                 type: string
               retry_after:
                 type: integer
-
     InternalServerError:
       description: Internal server error
       content:

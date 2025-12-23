@@ -1,7 +1,7 @@
 /gameplay/economy/trade/sessions:
   post:
     tags:
-      - trade
+    - trade
     summary: Create trade session
     operationId: createTradeSession
     requestBody:
@@ -27,25 +27,25 @@
               $ref: ../../../../common-schemas.yaml#/components/schemas/Error
   get:
     tags:
-      - trade
+    - trade
     summary: List active trade sessions
     operationId: listTradeSessions
     parameters:
-      - name: participant_id
-        in: query
-        schema:
-          type: string
-          format: uuid
-      - name: status
-        in: query
-        schema:
-          type: string
-          enum:
-            - pending
-            - active
-            - completed
-            - cancelled
-      - $ref: common.yaml#/components/parameters/Limit
+    - name: participant_id
+      in: query
+      schema:
+        type: string
+        format: uuid
+    - name: status
+      in: query
+      schema:
+        type: string
+        enum:
+        - pending
+        - active
+        - completed
+        - cancelled
+    - $ref: common.yaml#/components/parameters/Limit
     responses:
       '200':
         description: Trade sessions
@@ -58,16 +58,16 @@
 /gameplay/economy/trade/sessions/{session_id}:
   get:
     tags:
-      - trade
+    - trade
     summary: Get trade session details
     operationId: getTradeSession
     parameters:
-      - name: session_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+    - name: session_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
     responses:
       '200':
         description: Trade session details
@@ -79,16 +79,16 @@
         $ref: ../../../../common-schemas.yaml#/components/responses/NotFound
   delete:
     tags:
-      - trade
+    - trade
     summary: Cancel trade session
     operationId: cancelTradeSession
     parameters:
-      - name: session_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+    - name: session_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
     requestBody:
       required: true
       content:
@@ -107,16 +107,16 @@
 /gameplay/economy/trade/sessions/{session_id}/offers:
   post:
     tags:
-      - trade
+    - trade
     summary: Add offer to trade session
     operationId: addTradeOffer
     parameters:
-      - name: session_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+    - name: session_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
     requestBody:
       required: true
       content:
@@ -139,16 +139,16 @@
 /gameplay/economy/trade/sessions/{session_id}/confirm:
   post:
     tags:
-      - trade
+    - trade
     summary: Confirm trade session
     operationId: confirmTradeSession
     parameters:
-      - name: session_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+    - name: session_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
     requestBody:
       required: true
       content:
@@ -171,22 +171,22 @@
 /gameplay/economy/trade/history:
   get:
     tags:
-      - trade
+    - trade
     summary: Get trade history
     operationId: getTradeHistory
     parameters:
-      - name: character_id
-        in: query
-        required: true
-        schema:
-          type: string
-          format: uuid
-      - name: since
-        in: query
-        schema:
-          type: string
-          format: date-time
-      - $ref: common.yaml#/components/parameters/Limit
+    - name: character_id
+      in: query
+      required: true
+      schema:
+        type: string
+        format: uuid
+    - name: since
+      in: query
+      schema:
+        type: string
+        format: date-time
+    - $ref: common.yaml#/components/parameters/Limit
     responses:
       '200':
         description: Trade history
@@ -206,10 +206,10 @@ components:
     InventorySlot:
       type: object
       required:
-        - slot_id
-        - slot_type
-        - position_x
-        - position_y
+      - slot_id
+      - slot_type
+      - position_x
+      - position_y
       properties:
         slot_id:
           type: string
@@ -217,31 +217,31 @@ components:
         slot_type:
           type: string
           enum:
-            - inventory
-            - equipment
-            - stash
+          - inventory
+          - equipment
+          - stash
         last_updated:
           type: string
           format: date-time
         item:
           $ref: '#/components/schemas/InventoryItem'
+        is_locked:
+          type: boolean
+          default: false
         position_x:
           type: integer
           minimum: 0
         position_y:
           type: integer
           minimum: 0
-        is_locked:
-          type: boolean
-          default: false
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     InventoryItem:
       type: object
       required:
-        - item_id
-        - template_id
-        - quantity
-        - quality
+      - item_id
+      - template_id
+      - quantity
+      - quality
       properties:
         item_id:
           type: string
@@ -252,24 +252,27 @@ components:
         quality:
           type: string
           enum:
-            - common
-            - uncommon
-            - rare
-            - epic
-            - legendary
-            - iconic
+          - common
+          - uncommon
+          - rare
+          - epic
+          - legendary
+          - iconic
         bound_on:
           type: string
           enum:
-            - pickup
-            - equip
-            - account
+          - pickup
+          - equip
+          - account
         created_at:
           type: string
           format: date-time
         custom_properties:
           type: object
           additionalProperties: true
+        is_bound:
+          type: boolean
+          default: false
         quantity:
           type: integer
           minimum: 1
@@ -279,15 +282,12 @@ components:
         max_durability:
           type: integer
           minimum: 1
-        is_bound:
-          type: boolean
-          default: false
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     AddItemRequest:
       type: object
       required:
-        - template_id
-        - quantity
+      - template_id
+      - quantity
       properties:
         template_id:
           type: string
@@ -295,21 +295,21 @@ components:
         quality:
           type: string
           enum:
-            - common
-            - uncommon
-            - rare
-            - epic
-            - legendary
-            - iconic
+          - common
+          - uncommon
+          - rare
+          - epic
+          - legendary
+          - iconic
           default: common
         source:
           type: string
           enum:
-            - loot
-            - craft
-            - purchase
-            - reward
-            - admin
+          - loot
+          - craft
+          - purchase
+          - reward
+          - admin
         custom_properties:
           type: object
           additionalProperties: true
@@ -333,9 +333,9 @@ components:
     TransferRequest:
       type: object
       required:
-        - from_slot_id
-        - to_slot_id
-        - quantity
+      - from_slot_id
+      - to_slot_id
+      - quantity
       properties:
         from_slot_id:
           type: string
@@ -343,19 +343,19 @@ components:
         to_slot_id:
           type: string
           format: uuid
-        quantity:
-          type: integer
-          minimum: 1
         split_stack:
           type: boolean
           default: false
+        quantity:
+          type: integer
+          minimum: 1
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     TransferResult:
       type: object
       required:
-        - from_slot
-        - to_slot
-        - transferred_quantity
+      - from_slot
+      - to_slot
+      - transferred_quantity
       properties:
         from_slot:
           $ref: '#/components/schemas/InventorySlot'
@@ -370,19 +370,19 @@ components:
     EquipmentSlot:
       type: object
       required:
-        - slot_type
-        - is_equipped
+      - slot_type
+      - is_equipped
       properties:
         slot_type:
           type: string
           enum:
-            - head
-            - torso
-            - arms
-            - legs
-            - weapon_primary
-            - weapon_secondary
-            - cyberware
+          - head
+          - torso
+          - arms
+          - legs
+          - weapon_primary
+          - weapon_secondary
+          - cyberware
         equipped_at:
           type: string
           format: date-time
@@ -400,7 +400,7 @@ components:
     EquipRequest:
       type: object
       required:
-        - item_id
+      - item_id
       properties:
         item_id:
           type: string
@@ -412,8 +412,8 @@ components:
     UnequipResult:
       type: object
       required:
-        - slot_type
-        - unequipped_item
+      - slot_type
+      - unequipped_item
       properties:
         slot_type:
           type: string

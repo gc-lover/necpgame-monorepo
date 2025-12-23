@@ -29,23 +29,22 @@ components:
               type: number
               format: float
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     CombatStatsResponse:
       type: object
       required:
-        - session_id
-        - total_events
-        - player_stats
-        - team_stats
+      - session_id
+      - total_events
+      - player_stats
+      - team_stats
       properties:
         session_id:
           type: string
           format: uuid
           description: Combat session identifier
-        total_events:
-          type: integer
-          minimum: 0
-          description: Total number of combat events in session
+        winner_team_id:
+          type: string
+          format: uuid
+          description: 'Optional: Winning team identifier'
         player_stats:
           type: array
           items:
@@ -56,36 +55,27 @@ components:
           items:
             $ref: '#/components/schemas/TeamCombatStats'
           description: Team-based statistics
+        total_events:
+          type: integer
+          minimum: 0
+          description: Total number of combat events in session
         session_duration_seconds:
           type: integer
           minimum: 0
           description: Session duration in seconds
-        winner_team_id:
-          type: string
-          format: uuid
-          description: 'Optional: Winning team identifier'
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     PlayerCombatStats:
       type: object
       required:
-        - player_id
-        - kills
-        - deaths
-        - damage_dealt
-        - damage_received
+      - player_id
+      - kills
+      - deaths
+      - damage_dealt
+      - damage_received
       properties:
         player_id:
           type: string
           format: uuid
-        kills:
-          type: integer
-          minimum: 0
-          default: 0
-        deaths:
-          type: integer
-          minimum: 0
-          default: 0
         damage_dealt:
           type: number
           format: float
@@ -102,23 +92,35 @@ components:
           minimum: 0
           maximum: 100
           default: 0
+        kills:
+          type: integer
+          minimum: 0
+          default: 0
+        deaths:
+          type: integer
+          minimum: 0
+          default: 0
         headshots:
           type: integer
           minimum: 0
           default: 0
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     TeamCombatStats:
       type: object
       required:
-        - team_id
-        - total_kills
-        - total_deaths
-        - objectives_completed
+      - team_id
+      - total_kills
+      - total_deaths
+      - objectives_completed
       properties:
         team_id:
           type: string
           format: uuid
+        total_damage:
+          type: number
+          format: float
+          minimum: 0
+          default: 0
         total_kills:
           type: integer
           minimum: 0
@@ -129,11 +131,6 @@ components:
           default: 0
         objectives_completed:
           type: integer
-          minimum: 0
-          default: 0
-        total_damage:
-          type: number
-          format: float
           minimum: 0
           default: 0
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'

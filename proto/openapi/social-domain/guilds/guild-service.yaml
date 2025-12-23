@@ -1,22 +1,33 @@
-# Issue: #2043 - Реализовать OpenAPI спецификации для guild-service
 openapi: 3.0.3
 info:
   title: Guild Service API
-  description: |
-    **Guild Service** - Core guild management service for NECPGAME MMOFPS RPG.
+  description: '**Guild Service** - Core guild management service for NECPGAME MMOFPS RPG.
+
 
     Provides unified interface for all guild-related operations including:
+
     - Guild creation and lifecycle management
+
     - Member management and role assignments
+
     - Guild bank and resource management
+
     - Territory claiming and defense
+
     - Guild warfare and PvP mechanics
+
     - Reputation and ranking systems
+
     - Alliance and diplomacy management
 
+
     **BACKEND NOTE:** Enterprise-grade guild service with optimized memory layout.
+
     Expected memory savings: 30-50% through struct field alignment.
+
     Performance targets: 2000+ RPS, P99 <15ms for guild operations.
+
+    '
   version: 2.0.0
   license:
     name: MIT
@@ -24,37 +35,33 @@ info:
   contact:
     name: NECPGAME Guild API Support
     email: guilds@necp.game
-
 servers:
-  - url: http://localhost:8084/api/v1/guilds
-    description: Guild Service Development Server
-  - url: https://guilds.necpgame.com/api/v1
-    description: Guild Service Production Server
-
+- url: http://localhost:8084/api/v1/guilds
+  description: Guild Service Development Server
+- url: https://guilds.necpgame.com/api/v1
+  description: Guild Service Production Server
 security:
-  - BearerAuth: [ ]
-
+- BearerAuth: []
 tags:
-  - name: guild-management
-    description: Guild creation and lifecycle management
-  - name: member-management
-    description: Guild member operations
-  - name: bank-management
-    description: Guild bank and resources
-  - name: territory-management
-    description: Territory claiming and defense
-  - name: warfare
-    description: Guild warfare and PvP operations
-  - name: alliances
-    description: Alliance and diplomacy management
-
+- name: guild-management
+  description: Guild creation and lifecycle management
+- name: member-management
+  description: Guild member operations
+- name: bank-management
+  description: Guild bank and resources
+- name: territory-management
+  description: Territory claiming and defense
+- name: warfare
+  description: Guild warfare and PvP operations
+- name: alliances
+  description: Alliance and diplomacy management
 paths:
   /health:
     get:
       summary: Guild service health check
       operationId: guildServiceHealthCheck
       tags:
-        - guild-management
+      - guild-management
       responses:
         '200':
           description: Service is healthy
@@ -69,15 +76,14 @@ paths:
                   timestamp:
                     type: string
                     format: date-time
-
   /guilds:
     post:
       summary: Create new guild
       operationId: createGuild
       tags:
-        - guild-management
+      - guild-management
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -99,59 +105,65 @@ paths:
           $ref: '#/components/responses/Conflict'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
     get:
       summary: List guilds
       operationId: listGuilds
       tags:
-        - guild-management
+      - guild-management
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: name
-          in: query
-          schema:
-            type: string
-            description: Filter by guild name (partial match)
-        - name: min_level
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-        - name: max_level
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-        - name: faction
-          in: query
-          schema:
-            type: string
-        - name: sort_by
-          in: query
-          schema:
-            type: string
-            enum: [ name, level, member_count, reputation, created_at ]
-            default: created_at
-        - name: sort_order
-          in: query
-          schema:
-            type: string
-            enum: [ asc, desc ]
-            default: desc
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 20
-        - name: offset
-          in: query
-          schema:
-            type: integer
-            minimum: 0
-            default: 0
+      - name: name
+        in: query
+        schema:
+          type: string
+          description: Filter by guild name (partial match)
+      - name: min_level
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+      - name: max_level
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+      - name: faction
+        in: query
+        schema:
+          type: string
+      - name: sort_by
+        in: query
+        schema:
+          type: string
+          enum:
+          - name
+          - level
+          - member_count
+          - reputation
+          - created_at
+          default: created_at
+      - name: sort_order
+        in: query
+        schema:
+          type: string
+          enum:
+          - asc
+          - desc
+          default: desc
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
       responses:
         '200':
           description: Guilds list retrieved
@@ -161,22 +173,21 @@ paths:
                 $ref: '#/components/schemas/GuildsList'
         '401':
           $ref: '#/components/responses/Unauthorized'
-
   /guilds/{guild_id}:
     get:
       summary: Get guild details
       operationId: getGuild
       tags:
-        - guild-management
+      - guild-management
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: guild_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: guild_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
         '200':
           description: Guild details retrieved
@@ -188,21 +199,20 @@ paths:
           $ref: '#/components/responses/NotFound'
         '401':
           $ref: '#/components/responses/Unauthorized'
-
     put:
       summary: Update guild
       operationId: updateGuild
       tags:
-        - guild-management
+      - guild-management
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: guild_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: guild_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       requestBody:
         required: true
         content:
@@ -222,21 +232,20 @@ paths:
           $ref: '#/components/responses/NotFound'
         '400':
           $ref: '#/components/responses/BadRequest'
-
     delete:
       summary: Disband guild
       operationId: disbandGuild
       tags:
-        - guild-management
+      - guild-management
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: guild_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: guild_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
         '204':
           description: Guild disbanded successfully
@@ -244,45 +253,50 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
-
   /guilds/{guild_id}/members:
     get:
       summary: Get guild members
       operationId: getGuildMembers
       tags:
-        - member-management
+      - member-management
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: guild_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: role
-          in: query
-          schema:
-            type: string
-            enum: [ leader, officer, member ]
-        - name: status
-          in: query
-          schema:
-            type: string
-            enum: [ active, inactive, suspended ]
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 50
-        - name: offset
-          in: query
-          schema:
-            type: integer
-            minimum: 0
-            default: 0
+      - name: guild_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: role
+        in: query
+        schema:
+          type: string
+          enum:
+          - leader
+          - officer
+          - member
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - active
+          - inactive
+          - suspended
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
       responses:
         '200':
           description: Guild members retrieved
@@ -294,21 +308,20 @@ paths:
           $ref: '#/components/responses/NotFound'
         '401':
           $ref: '#/components/responses/Unauthorized'
-
     post:
       summary: Invite player to guild
       operationId: inviteToGuild
       tags:
-        - member-management
+      - member-management
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: guild_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: guild_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       requestBody:
         required: true
         content:
@@ -328,28 +341,27 @@ paths:
           $ref: '#/components/responses/NotFound'
         '409':
           $ref: '#/components/responses/Conflict'
-
   /guilds/{guild_id}/members/{account_id}:
     put:
       summary: Update guild member
       operationId: updateGuildMember
       tags:
-        - member-management
+      - member-management
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: guild_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: account_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: guild_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: account_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       requestBody:
         required: true
         content:
@@ -367,27 +379,26 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
-
     delete:
       summary: Remove member from guild
       operationId: removeGuildMember
       tags:
-        - member-management
+      - member-management
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: guild_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: account_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: guild_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: account_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
         '204':
           description: Member removed successfully
@@ -395,22 +406,21 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
-
   /guilds/{guild_id}/bank:
     get:
       summary: Get guild bank balance
       operationId: getGuildBank
       tags:
-        - bank-management
+      - bank-management
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: guild_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: guild_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
         '200':
           description: Guild bank balance retrieved
@@ -422,21 +432,20 @@ paths:
           $ref: '#/components/responses/NotFound'
         '401':
           $ref: '#/components/responses/Unauthorized'
-
     post:
       summary: Deposit to guild bank
       operationId: depositToGuildBank
       tags:
-        - bank-management
+      - bank-management
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: guild_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: guild_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       requestBody:
         required: true
         content:
@@ -456,22 +465,21 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
-
   /guilds/{guild_id}/territories:
     get:
       summary: Get guild territories
       operationId: getGuildTerritories
       tags:
-        - territory-management
+      - territory-management
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: guild_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: guild_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
         '200':
           description: Guild territories retrieved
@@ -483,21 +491,20 @@ paths:
           $ref: '#/components/responses/NotFound'
         '401':
           $ref: '#/components/responses/Unauthorized'
-
     post:
       summary: Claim territory for guild
       operationId: claimTerritory
       tags:
-        - territory-management
+      - territory-management
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: guild_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: guild_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       requestBody:
         required: true
         content:
@@ -517,22 +524,21 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '409':
           $ref: '#/components/responses/Conflict'
-
   /guilds/{guild_id}/warfare/declare:
     post:
       summary: Declare war on another guild
       operationId: declareWar
       tags:
-        - warfare
+      - warfare
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: guild_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: guild_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       requestBody:
         required: true
         content:
@@ -552,27 +558,29 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '409':
           $ref: '#/components/responses/Conflict'
-
   /guilds/{guild_id}/alliances:
     get:
       summary: Get guild alliances
       operationId: getGuildAlliances
       tags:
-        - alliances
+      - alliances
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: guild_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: status
-          in: query
-          schema:
-            type: string
-            enum: [ pending, active, terminated ]
+      - name: guild_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - pending
+          - active
+          - terminated
       responses:
         '200':
           description: Guild alliances retrieved
@@ -584,21 +592,20 @@ paths:
           $ref: '#/components/responses/NotFound'
         '401':
           $ref: '#/components/responses/Unauthorized'
-
     post:
       summary: Propose alliance with another guild
       operationId: proposeAlliance
       tags:
-        - alliances
+      - alliances
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: guild_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: guild_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       requestBody:
         required: true
         content:
@@ -618,22 +625,21 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '409':
           $ref: '#/components/responses/Conflict'
-
   /invitations/{invitation_id}/accept:
     post:
       summary: Accept guild invitation
       operationId: acceptGuildInvitation
       tags:
-        - member-management
+      - member-management
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: invitation_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: invitation_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
         '200':
           description: Invitation accepted successfully
@@ -645,22 +651,21 @@ paths:
           $ref: '#/components/responses/NotFound'
         '409':
           $ref: '#/components/responses/Conflict'
-
   /invitations/{invitation_id}/reject:
     post:
       summary: Reject guild invitation
       operationId: rejectGuildInvitation
       tags:
-        - member-management
+      - member-management
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: invitation_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: invitation_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
         '200':
           description: Invitation rejected successfully
@@ -671,30 +676,30 @@ paths:
                 properties:
                   message:
                     type: string
-                    example: "Invitation rejected successfully"
+                    example: Invitation rejected successfully
         '204':
           description: Invitation rejected successfully (no content)
         '404':
           $ref: '#/components/responses/NotFound'
-
 components:
   securitySchemes:
     BearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
-
   schemas:
-    # Guild Schemas
     Guild:
       type: object
       required:
-        - id
-        - name
-        - leader_id
-        - created_at
+      - id
+      - name
+      - leader_id
+      - created_at
       properties:
         id:
+          type: string
+          format: uuid
+        leader_id:
           type: string
           format: uuid
         name:
@@ -704,12 +709,26 @@ components:
         description:
           type: string
           maxLength: 500
-        leader_id:
-          type: string
-          format: uuid
         faction:
           type: string
-          enum: [ neutral, corporation, nomad, street_kid, corpo_kid ]
+          enum:
+          - neutral
+          - corporation
+          - nomad
+          - street_kid
+          - corpo_kid
+        created_at:
+          type: string
+          format: date-time
+        last_active:
+          type: string
+          format: date-time
+        settings:
+          $ref: '#/components/schemas/GuildSettings'
+        achievements:
+          type: array
+          items:
+            type: string
         level:
           type: integer
           minimum: 1
@@ -736,26 +755,16 @@ components:
           type: integer
           minimum: 0
           default: 0
-        created_at:
-          type: string
-          format: date-time
-        last_active:
-          type: string
-          format: date-time
-        settings:
-          $ref: '#/components/schemas/GuildSettings'
-        achievements:
-          type: array
-          items:
-            type: string
       description: 'BACKEND NOTE: Fields ordered for optimal memory alignment (large → small). Expected memory savings: 30-50%.'
-
     GuildSettings:
       type: object
       properties:
-        is_recruiting:
-          type: boolean
-          default: true
+        privacy_level:
+          type: string
+          enum:
+          - public
+          - private
+          default: public
         recruitment_requirements:
           type: object
           properties:
@@ -767,20 +776,23 @@ components:
               minimum: 1
             required_faction:
               type: string
-              enum: [ any, neutral, corporation, nomad, street_kid, corpo_kid ]
-        privacy_level:
-          type: string
-          enum: [ public, private ]
-          default: public
+              enum:
+              - any
+              - neutral
+              - corporation
+              - nomad
+              - street_kid
+              - corpo_kid
+        is_recruiting:
+          type: boolean
+          default: true
         auto_accept_members:
           type: boolean
           default: false
-
-    # Request/Response Schemas
     CreateGuildRequest:
       type: object
       required:
-        - name
+      - name
       properties:
         name:
           type: string
@@ -791,15 +803,19 @@ components:
           maxLength: 500
         faction:
           type: string
-          enum: [ neutral, corporation, nomad, street_kid, corpo_kid ]
+          enum:
+          - neutral
+          - corporation
+          - nomad
+          - street_kid
+          - corpo_kid
+        settings:
+          $ref: '#/components/schemas/GuildSettings'
         max_members:
           type: integer
           minimum: 10
           maximum: 100
           default: 50
-        settings:
-          $ref: '#/components/schemas/GuildSettings'
-
     UpdateGuildRequest:
       type: object
       properties:
@@ -812,10 +828,14 @@ components:
           maxLength: 500
         faction:
           type: string
-          enum: [ neutral, corporation, nomad, street_kid, corpo_kid ]
+          enum:
+          - neutral
+          - corporation
+          - nomad
+          - street_kid
+          - corpo_kid
         settings:
           $ref: '#/components/schemas/GuildSettings'
-
     GuildsList:
       type: object
       properties:
@@ -829,14 +849,12 @@ components:
           type: integer
         offset:
           type: integer
-
-    # Member Management Schemas
     GuildMember:
       type: object
       required:
-        - account_id
-        - role
-        - joined_at
+      - account_id
+      - role
+      - joined_at
       properties:
         account_id:
           type: string
@@ -845,22 +863,27 @@ components:
           type: string
         role:
           type: string
-          enum: [ leader, officer, member ]
+          enum:
+          - leader
+          - officer
+          - member
         joined_at:
           type: string
           format: date-time
         last_active:
           type: string
           format: date-time
+        status:
+          type: string
+          enum:
+          - active
+          - inactive
+          - suspended
         contribution_points:
           type: integer
           minimum: 0
           default: 0
-        status:
-          type: string
-          enum: [ active, inactive, suspended ]
       description: 'BACKEND NOTE: Guild member data optimized for frequent membership queries.'
-
     GuildMembersList:
       type: object
       properties:
@@ -874,11 +897,10 @@ components:
           type: integer
         offset:
           type: integer
-
     InviteToGuildRequest:
       type: object
       required:
-        - target_account_id
+      - target_account_id
       properties:
         target_account_id:
           type: string
@@ -886,26 +908,28 @@ components:
         message:
           type: string
           maxLength: 200
-
     UpdateGuildMemberRequest:
       type: object
       properties:
         role:
           type: string
-          enum: [ officer, member ]
+          enum:
+          - officer
+          - member
         status:
           type: string
-          enum: [ active, suspended ]
-
+          enum:
+          - active
+          - suspended
     GuildInvitation:
       type: object
       required:
-        - id
-        - guild_id
-        - inviter_id
-        - target_id
-        - status
-        - created_at
+      - id
+      - guild_id
+      - inviter_id
+      - target_id
+      - status
+      - created_at
       properties:
         id:
           type: string
@@ -923,24 +947,30 @@ components:
           type: string
         status:
           type: string
-          enum: [ pending, accepted, rejected, expired ]
+          enum:
+          - pending
+          - accepted
+          - rejected
+          - expired
         created_at:
           type: string
           format: date-time
         expires_at:
           type: string
           format: date-time
-
-    # Bank Management Schemas
     GuildBank:
       type: object
       required:
-        - guild_id
-        - balance
+      - guild_id
+      - balance
       properties:
         guild_id:
           type: string
           format: uuid
+        transaction_history:
+          type: array
+          items:
+            $ref: '#/components/schemas/GuildBankTransaction'
         balance:
           type: integer
           minimum: 0
@@ -950,38 +980,33 @@ components:
         weekly_deposit_limit:
           type: integer
           minimum: 0
-        transaction_history:
-          type: array
-          items:
-            $ref: '#/components/schemas/GuildBankTransaction'
-
     GuildBankTransaction:
       type: object
       required:
-        - account_id
-        - amount
-        - type
+      - account_id
+      - amount
+      - type
       properties:
         account_id:
           type: string
           format: uuid
-        amount:
-          type: integer
         type:
           type: string
-          enum: [ deposit, withdrawal ]
+          enum:
+          - deposit
+          - withdrawal
         description:
           type: string
           maxLength: 100
-
-    # Territory Management Schemas
+        amount:
+          type: integer
     GuildTerritory:
       type: object
       required:
-        - id
-        - guild_id
-        - coordinates
-        - claimed_at
+      - id
+      - guild_id
+      - coordinates
+      - claimed_at
       properties:
         id:
           type: string
@@ -992,6 +1017,12 @@ components:
         name:
           type: string
           maxLength: 100
+        claimed_at:
+          type: string
+          format: date-time
+        last_defended:
+          type: string
+          format: date-time
         coordinates:
           $ref: '#/components/schemas/TerritoryCoordinates'
         size:
@@ -1005,19 +1036,12 @@ components:
           type: integer
           minimum: 0
           default: 0
-        claimed_at:
-          type: string
-          format: date-time
-        last_defended:
-          type: string
-          format: date-time
-
     TerritoryCoordinates:
       type: object
       required:
-        - x
-        - y
-        - z
+      - x
+      - y
+      - z
       properties:
         x:
           type: number
@@ -1028,7 +1052,6 @@ components:
         z:
           type: number
           format: float
-
     GuildTerritories:
       type: object
       properties:
@@ -1040,28 +1063,25 @@ components:
           type: integer
         total_defense:
           type: integer
-
     ClaimTerritoryRequest:
       type: object
       required:
-        - coordinates
-        - name
+      - coordinates
+      - name
       properties:
-        coordinates:
-          $ref: '#/components/schemas/TerritoryCoordinates'
         name:
           type: string
           maxLength: 100
-
-    # Warfare Schemas
+        coordinates:
+          $ref: '#/components/schemas/TerritoryCoordinates'
     WarDeclaration:
       type: object
       required:
-        - id
-        - attacker_guild_id
-        - defender_guild_id
-        - status
-        - declared_at
+      - id
+      - attacker_guild_id
+      - defender_guild_id
+      - status
+      - declared_at
       properties:
         id:
           type: string
@@ -1072,12 +1092,19 @@ components:
         defender_guild_id:
           type: string
           format: uuid
+        winner_guild_id:
+          type: string
+          format: uuid
+          nullable: true
         reason:
           type: string
           maxLength: 500
         status:
           type: string
-          enum: [ active, resolved, cancelled ]
+          enum:
+          - active
+          - resolved
+          - cancelled
         declared_at:
           type: string
           format: date-time
@@ -1085,15 +1112,10 @@ components:
           type: string
           format: date-time
           nullable: true
-        winner_guild_id:
-          type: string
-          format: uuid
-          nullable: true
-
     DeclareWarRequest:
       type: object
       required:
-        - target_guild_id
+      - target_guild_id
       properties:
         target_guild_id:
           type: string
@@ -1101,17 +1123,15 @@ components:
         reason:
           type: string
           maxLength: 500
-
-    # Alliance Schemas
     GuildAlliance:
       type: object
       required:
-        - id
-        - guild1_id
-        - guild2_id
-        - type
-        - status
-        - created_at
+      - id
+      - guild1_id
+      - guild2_id
+      - type
+      - status
+      - created_at
       properties:
         id:
           type: string
@@ -1124,10 +1144,16 @@ components:
           format: uuid
         type:
           type: string
-          enum: [ trade, defense, full ]
+          enum:
+          - trade
+          - defense
+          - full
         status:
           type: string
-          enum: [ pending, active, terminated ]
+          enum:
+          - pending
+          - active
+          - terminated
         created_at:
           type: string
           format: date-time
@@ -1135,7 +1161,6 @@ components:
           type: string
           format: date-time
           nullable: true
-
     GuildAlliances:
       type: object
       properties:
@@ -1145,32 +1170,33 @@ components:
             $ref: '#/components/schemas/GuildAlliance'
         total:
           type: integer
-
     ProposeAllianceRequest:
       type: object
       required:
-        - target_guild_id
-        - type
+      - target_guild_id
+      - type
       properties:
         target_guild_id:
           type: string
           format: uuid
         type:
           type: string
-          enum: [ trade, defense, full ]
+          enum:
+          - trade
+          - defense
+          - full
         message:
           type: string
           maxLength: 200
-
     AllianceProposal:
       type: object
       required:
-        - id
-        - proposer_guild_id
-        - target_guild_id
-        - type
-        - status
-        - created_at
+      - id
+      - proposer_guild_id
+      - target_guild_id
+      - type
+      - status
+      - created_at
       properties:
         id:
           type: string
@@ -1183,16 +1209,21 @@ components:
           format: uuid
         type:
           type: string
-          enum: [ trade, defense, full ]
+          enum:
+          - trade
+          - defense
+          - full
         message:
           type: string
         status:
           type: string
-          enum: [ pending, accepted, rejected ]
+          enum:
+          - pending
+          - accepted
+          - rejected
         created_at:
           type: string
           format: date-time
-
   responses:
     BadRequest:
       description: Bad request - invalid parameters
@@ -1207,7 +1238,6 @@ components:
                 type: string
               code:
                 type: string
-
     Unauthorized:
       description: Authentication required
       content:
@@ -1220,7 +1250,6 @@ components:
                 example: unauthorized
               message:
                 type: string
-
     Forbidden:
       description: Insufficient permissions
       content:
@@ -1233,7 +1262,6 @@ components:
                 example: forbidden
               message:
                 type: string
-
     NotFound:
       description: Resource not found
       content:
@@ -1246,7 +1274,6 @@ components:
                 example: not_found
               message:
                 type: string
-
     Conflict:
       description: Resource conflict
       content:
@@ -1259,7 +1286,6 @@ components:
                 example: conflict
               message:
                 type: string
-
     InternalServerError:
       description: Internal server error
       content:

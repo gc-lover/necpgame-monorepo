@@ -6,60 +6,53 @@ info:
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
-
 servers:
-  - url: https://legend-templates.necpgame.com/v1
-    description: Production server
-  - url: https://staging-legend-templates.necpgame.com/v1
-    description: Staging server
-
+- url: https://legend-templates.necpgame.com/v1
+  description: Production server
+- url: https://staging-legend-templates.necpgame.com/v1
+  description: Staging server
 security:
-  - BearerAuth: [ ]
-
+- BearerAuth: []
 paths:
-  # Variable rules management
   /variables:
     get:
       summary: Get all variable rules
       operationId: getVariables
       parameters:
-        - name: type
-          in: query
-          schema:
-            type: string
-            enum:
-              [
-                player_name,
-                action_verb,
-                enemy_type,
-                location,
-                number,
-                time_context,
-                faction,
-                emotion,
-              ]
-          description: Filter by variable type
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 50
-          description: Maximum number of results
-        - name: offset
-          in: query
-          schema:
-            type: integer
-            minimum: 0
-            default: 0
-          description: Pagination offset
+      - name: type
+        in: query
+        schema:
+          type: string
+          enum:
+          - player_name
+          - action_verb
+          - enemy_type
+          - location
+          - number
+          - time_context
+          - faction
+          - emotion
+        description: Filter by variable type
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+        description: Maximum number of results
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+        description: Pagination offset
       responses:
-        "200":
-          $ref: "#/components/responses/VariablesListResponse"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-
+        '200':
+          $ref: '#/components/responses/VariablesListResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
     post:
       summary: Create variable rule
       operationId: createVariable
@@ -68,36 +61,33 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateVariableRequest"
+              $ref: '#/components/schemas/CreateVariableRequest'
       responses:
-        "201":
-          $ref: "#/components/responses/VariableResponse"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-
+        '201':
+          $ref: '#/components/responses/VariableResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
   /variables/{variable_id}:
     parameters:
-      - name: variable_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: Variable ID
-
+    - name: variable_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Variable ID
     get:
       summary: Get variable by ID
       operationId: getVariable
       responses:
-        "200":
-          $ref: "#/components/responses/VariableResponse"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-
+        '200':
+          $ref: '#/components/responses/VariableResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
     put:
       summary: Update variable rule
       operationId: updateVariable
@@ -106,35 +96,32 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UpdateVariableRequest"
+              $ref: '#/components/schemas/UpdateVariableRequest'
       responses:
-        "200":
-          $ref: "#/components/responses/VariableResponse"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-
+        '200':
+          $ref: '#/components/responses/VariableResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
     delete:
       summary: Delete variable rule
       operationId: deleteVariable
       responses:
-        "204":
+        '204':
           description: Variable deleted successfully
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 components:
   securitySchemes:
     BearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
-
   responses:
     VariablesListResponse:
       description: List of variable rules
@@ -146,7 +133,7 @@ components:
               variables:
                 type: array
                 items:
-                  $ref: "#/components/schemas/VariableRule"
+                  $ref: '#/components/schemas/VariableRule'
               total:
                 type: integer
                 minimum: 0
@@ -157,8 +144,7 @@ components:
                 type: integer
                 minimum: 1
                 maximum: 100
-            description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
+            description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     VariableResponse:
       description: Single variable response
       content:
@@ -167,9 +153,8 @@ components:
             type: object
             properties:
               variable:
-                $ref: "#/components/schemas/VariableRule"
-            description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
+                $ref: '#/components/schemas/VariableRule'
+            description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     BadRequest:
       description: Bad request
       content:
@@ -185,7 +170,6 @@ components:
                 example: Invalid request parameters
               details:
                 type: object
-
     NotFound:
       description: Resource not found
       content:
@@ -199,7 +183,6 @@ components:
               message:
                 type: string
                 example: Variable not found
-
     InternalServerError:
       description: Internal server error
       content:
@@ -213,12 +196,14 @@ components:
               message:
                 type: string
                 example: Internal server error
-
   schemas:
-    # Variable schemas
     VariableRule:
       type: object
-      required: [ id, type, name, rules ]
+      required:
+      - id
+      - type
+      - name
+      - rules
       properties:
         id:
           type: string
@@ -226,19 +211,23 @@ components:
         type:
           type: string
           enum:
-            [
-              player_name,
-              action_verb,
-              enemy_type,
-              location,
-              number,
-              time_context,
-              faction,
-              emotion,
-            ]
+          - player_name
+          - action_verb
+          - enemy_type
+          - location
+          - number
+          - time_context
+          - faction
+          - emotion
         name:
           type: string
           description: Variable placeholder name
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
         rules:
           type: object
           description: Substitution rules (synonyms, transformations, etc.)
@@ -254,7 +243,10 @@ components:
               properties:
                 case:
                   type: string
-                  enum: [ lower, upper, title ]
+                  enum:
+                  - lower
+                  - upper
+                  - title
                 plural:
                   type: boolean
                 gender_adapt:
@@ -267,57 +259,48 @@ components:
         active:
           type: boolean
           default: true
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     CreateVariableRequest:
       type: object
-      required: [ type, name, rules ]
+      required:
+      - type
+      - name
+      - rules
       properties:
         type:
           type: string
           enum:
-            [
-              player_name,
-              action_verb,
-              enemy_type,
-              location,
-              number,
-              time_context,
-              faction,
-              emotion,
-            ]
+          - player_name
+          - action_verb
+          - enemy_type
+          - location
+          - number
+          - time_context
+          - faction
+          - emotion
         name:
           type: string
         rules:
           type: object
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     UpdateVariableRequest:
       type: object
       properties:
         type:
           type: string
           enum:
-            [
-              player_name,
-              action_verb,
-              enemy_type,
-              location,
-              number,
-              time_context,
-              faction,
-              emotion,
-            ]
+          - player_name
+          - action_verb
+          - enemy_type
+          - location
+          - number
+          - time_context
+          - faction
+          - emotion
         name:
           type: string
         rules:
           type: object
         active:
           type: boolean
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'

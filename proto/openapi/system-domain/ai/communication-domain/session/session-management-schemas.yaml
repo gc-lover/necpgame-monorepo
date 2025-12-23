@@ -6,20 +6,20 @@ info:
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
-servers: [ ]
-paths: { }
+servers: []
+paths: {}
 components:
   schemas:
     SessionState:
       type: string
       enum:
-        - CREATED
-        - ACTIVE
-        - IDLE
-        - AFK
-        - DISCONNECTED
-        - EXPIRED
-        - CLOSED
+      - CREATED
+      - ACTIVE
+      - IDLE
+      - AFK
+      - DISCONNECTED
+      - EXPIRED
+      - CLOSED
       description: 'Состояние сессии:
 
         - `CREATED` - сессия создана
@@ -40,7 +40,7 @@ components:
     CreateSessionRequest:
       type: object
       required:
-        - player_id
+      - player_id
       properties:
         player_id:
           type: string
@@ -162,6 +162,8 @@ components:
           type: string
           format: date-time
           nullable: true
+        is_active:
+          type: boolean
         inactivity_timeout_seconds:
           type: integer
           description: Таймаут неактивности в секундах (5 минут)
@@ -174,14 +176,12 @@ components:
         time_until_absolute_timeout:
           type: integer
           description: Секунд до абсолютного таймаута
-        is_active:
-          type: boolean
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     ReconnectRequest:
       type: object
       required:
-        - session_token
-        - reconnection_token
+      - session_token
+      - reconnection_token
       properties:
         session_token:
           type: string
@@ -211,14 +211,14 @@ components:
       properties:
         session_state:
           $ref: '#/components/schemas/SessionState'
+        can_reconnect:
+          type: boolean
         reconnection_window_seconds:
           type: integer
           description: Окно переподключения в секундах (5 минут)
         time_until_window_expires:
           type: integer
           description: Секунд до истечения окна переподключения
-        can_reconnect:
-          type: boolean
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     SessionStateData:
       type: object
@@ -243,7 +243,7 @@ components:
     UpdateSessionStateRequest:
       type: object
       required:
-        - state_data
+      - state_data
       properties:
         state_data:
           type: object
@@ -264,9 +264,9 @@ components:
               resource_type:
                 type: string
                 enum:
-                  - party
-                  - combat
-                  - trade
+                - party
+                - combat
+                - trade
               resource_count:
                 type: integer
           description: Освобожденные ресурсы
@@ -307,8 +307,8 @@ components:
     SecurityValidationRequest:
       type: object
       required:
-        - session_id
-        - ip_address
+      - session_id
+      - ip_address
       properties:
         session_id:
           type: string
@@ -329,11 +329,6 @@ components:
           items:
             type: string
           description: Предупреждения безопасности
-        security_score:
-          type: integer
-          description: Оценка безопасности (0-100)
-          minimum: 0
-          maximum: 100
         is_valid:
           type: boolean
         ip_match:
@@ -345,6 +340,11 @@ components:
         rate_limit_ok:
           type: boolean
           description: Не превышен ли rate limit
+        security_score:
+          type: integer
+          description: Оценка безопасности (0-100)
+          minimum: 0
+          maximum: 100
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     TokenRotationResult:
       type: object
@@ -400,8 +400,8 @@ components:
     TerminateSessionRequest:
       type: object
       required:
-        - session_id
-        - reason
+      - session_id
+      - reason
       properties:
         session_id:
           type: string

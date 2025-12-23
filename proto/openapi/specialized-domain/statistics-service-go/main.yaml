@@ -1,31 +1,50 @@
 openapi: 3.0.3
 info:
   title: Statistics Service API - Enterprise-Grade Analytics & Metrics
-  description: |
-    **Enterprise-Grade Statistics Service API for NECPGAME**
+  description: '**Enterprise-Grade Statistics Service API for NECPGAME**
+
 
     Comprehensive real-time statistics and analytics system providing performance metrics,
+
     player analytics, game statistics, and data-driven insights for the NECPGAME ecosystem.
 
+
     ## Key Features
+
     - **Enterprise-grade architecture** with proper analytics domain separation
+
     - **Backend optimization hints** for struct alignment and performance (30-50% memory savings)
+
     - **Complete validation** with redocly and ogen code generation
+
     - **Security-first approach** with data privacy and access control
+
     - **Performance-optimized** response structures with field ordering
+
     - **Comprehensive error handling** with proper HTTP status codes
 
+
     ## Domain Purpose
+
     The Statistics Service manages all analytics and metrics operations in NECPGAME,
+
     providing real-time statistics aggregation, player behavior analytics, performance monitoring,
+
     and data-driven insights for game balancing and business intelligence.
 
+
     ## Performance Targets
+
     - P99 Latency: <50ms for real-time stats queries (HOT PATH)
+
     - Memory: <30KB per active statistics session
+
     - Concurrent queries: 2000+ simultaneous analytics requests
+
     - Data throughput: 10k+ metrics/sec sustained
-  version: "1.0.0"
+
+    '
+  version: 1.0.0
   contact:
     name: NECPGAME API Support
     url: https://necpgame.com/support
@@ -33,57 +52,59 @@ info:
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
-
 servers:
-  - url: https://api.necpgame.com/v1/statistics
-    description: Production server
-  - url: https://staging-api.necpgame.com/v1/statistics
-    description: Staging server
-  - url: http://localhost:8080/api/v1/statistics
-    description: Local development server
-
+- url: https://api.necpgame.com/v1/statistics
+  description: Production server
+- url: https://staging-api.necpgame.com/v1/statistics
+  description: Staging server
+- url: http://localhost:8080/api/v1/statistics
+  description: Local development server
 security:
-  - BearerAuth: [ ]
-
+- BearerAuth: []
 tags:
-  - name: Real-time Statistics
-    description: Live statistics and metrics aggregation
-  - name: Player Analytics
-    description: Player behavior and performance analytics
-  - name: Game Statistics
-    description: Game session and match statistics
-  - name: Performance Metrics
-    description: System and service performance monitoring
-  - name: Leaderboards
-    description: Competitive rankings and leaderboards
-  - name: Analytics Reports
-    description: Historical analytics and reporting
-  - name: Health Monitoring
-    description: System health and performance monitoring
-
+- name: Real-time Statistics
+  description: Live statistics and metrics aggregation
+- name: Player Analytics
+  description: Player behavior and performance analytics
+- name: Game Statistics
+  description: Game session and match statistics
+- name: Performance Metrics
+  description: System and service performance monitoring
+- name: Leaderboards
+  description: Competitive rankings and leaderboards
+- name: Analytics Reports
+  description: Historical analytics and reporting
+- name: Health Monitoring
+  description: System health and performance monitoring
 paths:
-  # Health Check - ОБЯЗАТЕЛЬНО для всех доменов
   /health:
     get:
       summary: Statistics service health check
-      description: |
-        **Enterprise-grade health check endpoint**
+      description: '**Enterprise-grade health check endpoint**
+
 
         Provides real-time health status of the statistics microservice.
+
         Critical for service discovery, load balancing, and monitoring.
 
+
         **Performance:** <1ms response time, cached for 30 seconds
+
+        '
       operationId: statisticsHealthCheck
       tags:
-        - Health Monitoring
+      - Health Monitoring
       parameters:
-        - name: Accept-Encoding
-          in: header
-          schema:
-            type: string
-            enum: [ gzip, deflate, br ]
+      - name: Accept-Encoding
+        in: header
+        schema:
+          type: string
+          enum:
+          - gzip
+          - deflate
+          - br
       responses:
-        "200":
+        '200':
           description: Service is healthy
           headers:
             Cache-Control:
@@ -97,43 +118,49 @@ paths:
             Content-Encoding:
               schema:
                 type: string
-                enum: [ gzip, deflate, br ]
+                enum:
+                - gzip
+                - deflate
+                - br
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/HealthResponse"
-        "503":
+                $ref: '#/components/schemas/HealthResponse'
+        '503':
           description: Service is unhealthy
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/HealthResponse"
-        "429":
+                $ref: '#/components/schemas/HealthResponse'
+        '429':
           description: Rate limit exceeded
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "500":
+                $ref: '#/components/schemas/Error'
+        '500':
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-
+                $ref: '#/components/schemas/Error'
   /health/batch:
     post:
       summary: Batch health check for statistics subsystems
-      description: |
-        **Enterprise-grade batch health monitoring**
+      description: '**Enterprise-grade batch health monitoring**
+
 
         Performs health checks across multiple statistics-related services simultaneously.
+
         Optimized for analytics orchestration and dependency monitoring.
 
+
         **Performance:** <5ms for batch of 10 services
+
+        '
       operationId: statisticsBatchHealthCheck
       tags:
-        - Health Monitoring
+      - Health Monitoring
       requestBody:
         required: true
         content:
@@ -145,687 +172,786 @@ paths:
                   type: array
                   items:
                     type: string
-                    enum: [ realtime, analytics, leaderboards, reports ]
+                    enum:
+                    - realtime
+                    - analytics
+                    - leaderboards
+                    - reports
                   minItems: 1
                   maxItems: 10
-                  example: [ "realtime", "analytics" ]
+                  example:
+                  - realtime
+                  - analytics
       responses:
-        "200":
+        '200':
           description: Batch health check completed
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/BatchHealthResponse"
-        "400":
+                $ref: '#/components/schemas/BatchHealthResponse'
+        '400':
           description: Invalid request parameters
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-
+                $ref: '#/components/schemas/Error'
   /health/ws:
     get:
       summary: WebSocket health monitoring
-      description: |
-        **Real-time health monitoring via WebSocket**
+      description: '**Real-time health monitoring via WebSocket**
+
 
         Establishes WebSocket connection for continuous health monitoring.
+
         Critical for real-time statistics monitoring and failover detection.
 
+
         **Performance:** <10ms connection establishment, <1ms ping-pong
+
+        '
       operationId: statisticsWebSocketHealth
       tags:
-        - Health Monitoring
+      - Health Monitoring
       parameters:
-        - name: token
-          in: query
-          required: true
-          schema:
-            type: string
-            description: JWT token for authentication
+      - name: token
+        in: query
+        required: true
+        schema:
+          type: string
+          description: JWT token for authentication
       responses:
-        "101":
+        '101':
           description: WebSocket connection established
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/WebSocketHealthMessage"
-
-  # Real-time Statistics
+                $ref: '#/components/schemas/WebSocketHealthMessage'
   /realtime/player/{playerId}:
     get:
       summary: Get real-time player statistics
-      description: |
-        **Get live player performance metrics**
+      description: '**Get live player performance metrics**
+
 
         Retrieves real-time statistics for a specific player including current session data.
+
         Critical for live dashboards and player monitoring.
 
+
         **Performance:** <10ms lookup, HOT PATH (2000+ RPS)
+
+        '
       operationId: getRealtimePlayerStats
       tags:
-        - Real-time Statistics
+      - Real-time Statistics
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: playerId
-          in: path
-          required: true
-          schema:
+      - name: playerId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174000
+      - name: metrics
+        in: query
+        schema:
+          type: array
+          items:
             type: string
-            format: uuid
-            example: "123e4567-e89b-12d3-a456-426614174000"
-        - name: metrics
-          in: query
-          schema:
-            type: array
-            items:
-              type: string
-              enum: [ kdr, accuracy, score, kills, deaths, assists, playtime ]
-            description: Specific metrics to retrieve
+            enum:
+            - kdr
+            - accuracy
+            - score
+            - kills
+            - deaths
+            - assists
+            - playtime
+          description: Specific metrics to retrieve
       responses:
-        "200":
+        '200':
           description: Real-time player statistics retrieved
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/RealtimePlayerStats"
-        "404":
+                $ref: '#/components/schemas/RealtimePlayerStats'
+        '404':
           description: Player not found or no active session
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-
+                $ref: '#/components/schemas/Error'
   /realtime/match/{matchId}:
     get:
       summary: Get real-time match statistics
-      description: |
-        **Get live match performance data**
+      description: '**Get live match performance data**
+
 
         Retrieves real-time statistics for an active match including all participants.
+
         Critical for live match viewing and tournament monitoring.
 
+
         **Performance:** <20ms aggregation, optimized for concurrent viewers
+
+        '
       operationId: getRealtimeMatchStats
       tags:
-        - Real-time Statistics
+      - Real-time Statistics
       parameters:
-        - name: matchId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-            example: "123e4567-e89b-12d3-a456-426614174001"
-        - name: includeParticipants
-          in: query
-          schema:
-            type: boolean
-            default: true
-            description: Include detailed participant statistics
+      - name: matchId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174001
+      - name: includeParticipants
+        in: query
+        schema:
+          type: boolean
+          default: true
+          description: Include detailed participant statistics
       responses:
-        "200":
+        '200':
           description: Real-time match statistics retrieved
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/RealtimeMatchStats"
-        "404":
+                $ref: '#/components/schemas/RealtimeMatchStats'
+        '404':
           description: Match not found or not active
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-
+                $ref: '#/components/schemas/Error'
   /realtime/global:
     get:
       summary: Get global real-time statistics
-      description: |
-        **Get system-wide real-time metrics**
+      description: '**Get system-wide real-time metrics**
+
 
         Retrieves aggregated real-time statistics across the entire game ecosystem.
+
         Used for monitoring dashboards and system health indicators.
 
+
         **Performance:** <50ms global aggregation, cached with short TTL
+
+        '
       operationId: getGlobalRealtimeStats
       tags:
-        - Real-time Statistics
+      - Real-time Statistics
       parameters:
-        - name: categories
-          in: query
-          schema:
-            type: array
-            items:
-              type: string
-              enum: [ players, matches, servers, performance ]
-            description: Categories of statistics to include
+      - name: categories
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - players
+            - matches
+            - servers
+            - performance
+          description: Categories of statistics to include
       responses:
-        "200":
+        '200':
           description: Global real-time statistics retrieved
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/GlobalRealtimeStats"
-        "400":
+                $ref: '#/components/schemas/GlobalRealtimeStats'
+        '400':
           description: Invalid categories requested
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-
-  # Player Analytics
+                $ref: '#/components/schemas/Error'
   /analytics/player/{playerId}/behavior:
     get:
       summary: Get player behavior analytics
-      description: |
-        **Analyze player behavior patterns**
+      description: '**Analyze player behavior patterns**
+
 
         Provides detailed analytics on player behavior, play patterns, and engagement metrics.
+
         Critical for game balancing, personalization, and retention analysis.
 
+
         **Performance:** <100ms complex analytics computation
+
+        '
       operationId: getPlayerBehaviorAnalytics
       tags:
-        - Player Analytics
+      - Player Analytics
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: playerId
-          in: path
-          required: true
-          schema:
+      - name: playerId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174000
+      - name: period
+        in: query
+        schema:
+          type: string
+          enum:
+          - day
+          - week
+          - month
+          - all_time
+          default: week
+          example: week
+      - name: insights
+        in: query
+        schema:
+          type: array
+          items:
             type: string
-            format: uuid
-            example: "123e4567-e89b-12d3-a456-426614174000"
-        - name: period
-          in: query
-          schema:
-            type: string
-            enum: [ day, week, month, all_time ]
-            default: week
-            example: week
-        - name: insights
-          in: query
-          schema:
-            type: array
-            items:
-              type: string
-              enum: [ playtime, preferences, performance, social, progression ]
-            description: Types of behavioral insights to include
+            enum:
+            - playtime
+            - preferences
+            - performance
+            - social
+            - progression
+          description: Types of behavioral insights to include
       responses:
-        "200":
+        '200':
           description: Player behavior analytics retrieved
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PlayerBehaviorAnalytics"
-        "403":
+                $ref: '#/components/schemas/PlayerBehaviorAnalytics'
+        '403':
           description: Insufficient permissions to access player data
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "404":
+                $ref: '#/components/schemas/Error'
+        '404':
           description: Player not found
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-
+                $ref: '#/components/schemas/Error'
   /analytics/player/{playerId}/performance:
     get:
       summary: Get player performance analytics
-      description: |
-        **Analyze player performance metrics**
+      description: '**Analyze player performance metrics**
+
 
         Provides comprehensive performance analytics including skill progression,
+
         win rates, and comparative statistics against player base.
 
+
         **Performance:** <80ms performance analysis with historical data
+
+        '
       operationId: getPlayerPerformanceAnalytics
       tags:
-        - Player Analytics
+      - Player Analytics
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: playerId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-            example: "123e4567-e89b-12d3-a456-426614174000"
-        - name: gameMode
-          in: query
-          schema:
-            type: string
-            enum: [ ranked, casual, tournament ]
-            description: Filter by specific game mode
-        - name: compareTo
-          in: query
-          schema:
-            type: string
-            enum: [ similar_skill, global_average, top_percentile ]
-            description: Comparison baseline
-            default: similar_skill
+      - name: playerId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174000
+      - name: gameMode
+        in: query
+        schema:
+          type: string
+          enum:
+          - ranked
+          - casual
+          - tournament
+          description: Filter by specific game mode
+      - name: compareTo
+        in: query
+        schema:
+          type: string
+          enum:
+          - similar_skill
+          - global_average
+          - top_percentile
+          description: Comparison baseline
+          default: similar_skill
       responses:
-        "200":
+        '200':
           description: Player performance analytics retrieved
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PlayerPerformanceAnalytics"
-        "403":
+                $ref: '#/components/schemas/PlayerPerformanceAnalytics'
+        '403':
           description: Insufficient permissions
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "404":
+                $ref: '#/components/schemas/Error'
+        '404':
           description: Player not found
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-
-  # Game Statistics
+                $ref: '#/components/schemas/Error'
   /game/matches/{matchId}/stats:
     get:
       summary: Get detailed match statistics
-      description: |
-        **Get comprehensive match statistics**
+      description: '**Get comprehensive match statistics**
+
 
         Retrieves detailed statistics for a completed match including all participants,
+
         events, and performance metrics for post-match analysis.
 
+
         **Performance:** <30ms detailed stats retrieval
+
+        '
       operationId: getMatchDetailedStats
       tags:
-        - Game Statistics
+      - Game Statistics
       parameters:
-        - name: matchId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-            example: "123e4567-e89b-12d3-a456-426614174001"
-        - name: includeEvents
-          in: query
-          schema:
-            type: boolean
-            default: false
-            description: Include detailed event timeline
+      - name: matchId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174001
+      - name: includeEvents
+        in: query
+        schema:
+          type: boolean
+          default: false
+          description: Include detailed event timeline
       responses:
-        "200":
+        '200':
           description: Match detailed statistics retrieved
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/MatchDetailedStats"
-        "404":
+                $ref: '#/components/schemas/MatchDetailedStats'
+        '404':
           description: Match not found
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-
+                $ref: '#/components/schemas/Error'
   /game/sessions/player/{playerId}:
     get:
       summary: Get player session history
-      description: |
-        **Get player gaming session history**
+      description: '**Get player gaming session history**
+
 
         Retrieves historical gaming sessions for a player with aggregated statistics.
+
         Used for player progress tracking and behavior analysis.
 
+
         **Performance:** <60ms session history with pagination
+
+        '
       operationId: getPlayerSessionHistory
       tags:
-        - Game Statistics
+      - Game Statistics
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: playerId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-            example: "123e4567-e89b-12d3-a456-426614174000"
-        - name: from
-          in: query
-          schema:
-            type: string
-            format: date-time
-            description: Start date for session history
-        - name: to
-          in: query
-          schema:
-            type: string
-            format: date-time
-            description: End date for session history
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 20
+      - name: playerId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174000
+      - name: from
+        in: query
+        schema:
+          type: string
+          format: date-time
+          description: Start date for session history
+      - name: to
+        in: query
+        schema:
+          type: string
+          format: date-time
+          description: End date for session history
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
       responses:
-        "200":
+        '200':
           description: Player session history retrieved
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PlayerSessionHistory"
-        "403":
+                $ref: '#/components/schemas/PlayerSessionHistory'
+        '403':
           description: Insufficient permissions
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "404":
+                $ref: '#/components/schemas/Error'
+        '404':
           description: Player not found
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-
-  # Leaderboards
+                $ref: '#/components/schemas/Error'
   /leaderboards/{leaderboardId}:
     get:
       summary: Get leaderboard rankings
-      description: |
-        **Get competitive leaderboard rankings**
+      description: '**Get competitive leaderboard rankings**
+
 
         Retrieves current rankings for a specific leaderboard with pagination.
+
         Critical for competitive gaming visibility and player engagement.
 
+
         **Performance:** <40ms leaderboard query, cached (1000+ RPS)
+
+        '
       operationId: getLeaderboard
       tags:
-        - Leaderboards
+      - Leaderboards
       parameters:
-        - name: leaderboardId
-          in: path
-          required: true
-          schema:
-            type: string
-            example: "global-kdr-weekly"
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 1000
-            default: 100
-        - name: offset
-          in: query
-          schema:
-            type: integer
-            minimum: 0
-            default: 0
-        - name: aroundPlayer
-          in: query
-          schema:
-            type: string
-            format: uuid
-            description: Get rankings around specific player
+      - name: leaderboardId
+        in: path
+        required: true
+        schema:
+          type: string
+          example: global-kdr-weekly
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 1000
+          default: 100
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+      - name: aroundPlayer
+        in: query
+        schema:
+          type: string
+          format: uuid
+          description: Get rankings around specific player
       responses:
-        "200":
+        '200':
           description: Leaderboard rankings retrieved
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/LeaderboardResponse"
-        "404":
+                $ref: '#/components/schemas/LeaderboardResponse'
+        '404':
           description: Leaderboard not found
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-
+                $ref: '#/components/schemas/Error'
   /leaderboards/player/{playerId}/rankings:
     get:
       summary: Get player's leaderboard positions
-      description: |
-        **Get player rankings across leaderboards**
+      description: '**Get player rankings across leaderboards**
 
-        Retrieves a player's current ranking positions across all relevant leaderboards.
+
+        Retrieves a player''s current ranking positions across all relevant leaderboards.
+
         Used for player profile displays and competitive status.
 
+
         **Performance:** <25ms multi-leaderboard lookup
+
+        '
       operationId: getPlayerRankings
       tags:
-        - Leaderboards
+      - Leaderboards
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: playerId
-          in: path
-          required: true
-          schema:
+      - name: playerId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174000
+      - name: categories
+        in: query
+        schema:
+          type: array
+          items:
             type: string
-            format: uuid
-            example: "123e4567-e89b-12d3-a456-426614174000"
-        - name: categories
-          in: query
-          schema:
-            type: array
-            items:
-              type: string
-              enum: [ global, regional, game_mode, seasonal ]
-            description: Categories of leaderboards to include
+            enum:
+            - global
+            - regional
+            - game_mode
+            - seasonal
+          description: Categories of leaderboards to include
       responses:
-        "200":
+        '200':
           description: Player rankings retrieved
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PlayerRankingsResponse"
-        "403":
+                $ref: '#/components/schemas/PlayerRankingsResponse'
+        '403':
           description: Cannot access other player's rankings
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "404":
+                $ref: '#/components/schemas/Error'
+        '404':
           description: Player not found
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-
-  # Performance Metrics
+                $ref: '#/components/schemas/Error'
   /metrics/system:
     get:
       summary: Get system performance metrics
-      description: |
-        **Get system-wide performance metrics**
+      description: '**Get system-wide performance metrics**
+
 
         Retrieves comprehensive performance metrics across all game systems.
+
         Critical for monitoring, alerting, and capacity planning.
 
+
         **Performance:** <70ms system metrics aggregation
+
+        '
       operationId: getSystemPerformanceMetrics
       tags:
-        - Performance Metrics
+      - Performance Metrics
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: timeRange
-          in: query
-          schema:
+      - name: timeRange
+        in: query
+        schema:
+          type: string
+          enum:
+          - 1h
+          - 6h
+          - 24h
+          - 7d
+          default: 1h
+          example: 1h
+      - name: metrics
+        in: query
+        schema:
+          type: array
+          items:
             type: string
-            enum: [ 1h, 6h, 24h, 7d ]
-            default: 1h
-            example: "1h"
-        - name: metrics
-          in: query
-          schema:
-            type: array
-            items:
-              type: string
-              enum: [ cpu, memory, network, disk, latency, throughput, errors ]
-            description: Specific metrics to include
+            enum:
+            - cpu
+            - memory
+            - network
+            - disk
+            - latency
+            - throughput
+            - errors
+          description: Specific metrics to include
       responses:
-        "200":
+        '200':
           description: System performance metrics retrieved
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SystemPerformanceMetrics"
-        "403":
+                $ref: '#/components/schemas/SystemPerformanceMetrics'
+        '403':
           description: Insufficient permissions
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-
+                $ref: '#/components/schemas/Error'
   /metrics/services/{serviceName}:
     get:
       summary: Get service-specific performance metrics
-      description: |
-        **Get detailed metrics for specific service**
+      description: '**Get detailed metrics for specific service**
+
 
         Retrieves performance metrics for a specific microservice.
+
         Used for service monitoring and troubleshooting.
 
+
         **Performance:** <20ms service metrics lookup
+
+        '
       operationId: getServicePerformanceMetrics
       tags:
-        - Performance Metrics
+      - Performance Metrics
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: serviceName
-          in: path
-          required: true
-          schema:
-            type: string
-            example: "matchmaking-service"
-        - name: timeRange
-          in: query
-          schema:
-            type: string
-            enum: [ 1h, 6h, 24h, 7d ]
-            default: 1h
+      - name: serviceName
+        in: path
+        required: true
+        schema:
+          type: string
+          example: matchmaking-service
+      - name: timeRange
+        in: query
+        schema:
+          type: string
+          enum:
+          - 1h
+          - 6h
+          - 24h
+          - 7d
+          default: 1h
       responses:
-        "200":
+        '200':
           description: Service performance metrics retrieved
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ServicePerformanceMetrics"
-        "403":
+                $ref: '#/components/schemas/ServicePerformanceMetrics'
+        '403':
           description: Insufficient permissions
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "404":
+                $ref: '#/components/schemas/Error'
+        '404':
           description: Service not found
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-
-  # Analytics Reports
+                $ref: '#/components/schemas/Error'
   /reports/player-retention:
     get:
       summary: Get player retention analytics
-      description: |
-        **Generate player retention report**
+      description: '**Generate player retention report**
+
 
         Provides detailed analytics on player retention rates, churn analysis,
+
         and engagement metrics for business intelligence.
 
+
         **Performance:** <200ms report generation with caching
+
+        '
       operationId: getPlayerRetentionReport
       tags:
-        - Analytics Reports
+      - Analytics Reports
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: period
-          in: query
-          schema:
+      - name: period
+        in: query
+        schema:
+          type: string
+          enum:
+          - weekly
+          - monthly
+          - quarterly
+          default: monthly
+      - name: cohort
+        in: query
+        schema:
+          type: string
+          format: date
+          description: Starting date for cohort analysis
+          example: '2024-01-01'
+      - name: segments
+        in: query
+        schema:
+          type: array
+          items:
             type: string
-            enum: [ weekly, monthly, quarterly ]
-            default: monthly
-        - name: cohort
-          in: query
-          schema:
-            type: string
-            format: date
-            description: Starting date for cohort analysis
-            example: "2024-01-01"
-        - name: segments
-          in: query
-          schema:
-            type: array
-            items:
-              type: string
-              enum: [ new_players, returning, high_value, at_risk ]
-            description: Player segments to analyze
+            enum:
+            - new_players
+            - returning
+            - high_value
+            - at_risk
+          description: Player segments to analyze
       responses:
-        "200":
+        '200':
           description: Player retention report generated
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/PlayerRetentionReport"
-        "403":
+                $ref: '#/components/schemas/PlayerRetentionReport'
+        '403':
           description: Insufficient permissions
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-
+                $ref: '#/components/schemas/Error'
   /reports/game-balance:
     get:
       summary: Get game balance analytics
-      description: |
-        **Generate game balance report**
+      description: '**Generate game balance report**
+
 
         Provides analytics on game balance including win rates, item usage,
+
         character popularity, and balance recommendations.
 
+
         **Performance:** <150ms balance analysis computation
+
+        '
       operationId: getGameBalanceReport
       tags:
-        - Analytics Reports
+      - Analytics Reports
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: gameMode
-          in: query
-          schema:
-            type: string
-            enum: [ ranked, casual, all ]
-            default: all
-        - name: timeFrame
-          in: query
-          schema:
-            type: string
-            enum: [ week, month, season ]
-            default: week
+      - name: gameMode
+        in: query
+        schema:
+          type: string
+          enum:
+          - ranked
+          - casual
+          - all
+          default: all
+      - name: timeFrame
+        in: query
+        schema:
+          type: string
+          enum:
+          - week
+          - month
+          - season
+          default: week
       responses:
-        "200":
+        '200':
           description: Game balance report generated
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/GameBalanceReport"
-        "403":
+                $ref: '#/components/schemas/GameBalanceReport'
+        '403':
           description: Insufficient permissions
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-
+                $ref: '#/components/schemas/Error'
 components:
   securitySchemes:
     BearerAuth:
@@ -833,24 +959,32 @@ components:
       scheme: bearer
       bearerFormat: JWT
       description: JWT authorization token
-
   schemas:
-    # Health schemas - ОБЯЗАТЕЛЬНЫ
     HealthResponse:
       type: object
-      required: [ status, timestamp, version ]
+      required:
+      - status
+      - timestamp
+      - version
       properties:
         status:
           type: string
-          enum: [ healthy, degraded, unhealthy ]
+          enum:
+          - healthy
+          - degraded
+          - unhealthy
           example: healthy
         timestamp:
           type: string
           format: date-time
-          example: "2024-01-01T12:00:00Z"
+          example: '2024-01-01T12:00:00Z'
         version:
           type: string
-          example: "1.0.0"
+          example: 1.0.0
+        cacheHitRate:
+          type: number
+          format: float
+          example: 0.95
         uptime:
           type: integer
           format: int64
@@ -863,78 +997,92 @@ components:
           type: integer
           format: int64
           example: 1000000
-        cacheHitRate:
-          type: number
-          format: float
-          example: 0.95
-
     BatchHealthResponse:
       type: object
-      required: [ overallStatus, services, timestamp ]
+      required:
+      - overallStatus
+      - services
+      - timestamp
       properties:
         overallStatus:
           type: string
-          enum: [ healthy, degraded, unhealthy ]
+          enum:
+          - healthy
+          - degraded
+          - unhealthy
           example: healthy
-        services:
-          type: object
-          additionalProperties:
-            $ref: "#/components/schemas/HealthResponse"
         timestamp:
           type: string
           format: date-time
-          example: "2024-01-01T12:00:00Z"
-
+          example: '2024-01-01T12:00:00Z'
+        services:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/HealthResponse'
     WebSocketHealthMessage:
       type: object
-      required: [ type, timestamp ]
+      required:
+      - type
+      - timestamp
       properties:
         type:
           type: string
-          enum: [ ping, pong, health_update, metrics_update, leaderboard_update ]
+          enum:
+          - ping
+          - pong
+          - health_update
+          - metrics_update
+          - leaderboard_update
           example: metrics_update
         timestamp:
           type: string
           format: date-time
-          example: "2024-01-01T12:00:00Z"
+          example: '2024-01-01T12:00:00Z'
         data:
-          $ref: "#/components/schemas/HealthResponse"
-
+          $ref: '#/components/schemas/HealthResponse'
     Error:
       type: object
-      required: [ code, message ]
+      required:
+      - code
+      - message
       properties:
-        code:
-          type: string
-          example: "VALIDATION_ERROR"
-        message:
-          type: string
-          example: "Invalid request parameters"
-        details:
-          type: object
-          additionalProperties: true
-        timestamp:
-          type: string
-          format: date-time
-          example: "2024-01-01T12:00:00Z"
         requestId:
           type: string
           format: uuid
-          example: "123e4567-e89b-12d3-a456-426614174000"
-
-    # Real-time Statistics schemas
+          example: 123e4567-e89b-12d3-a456-426614174000
+        code:
+          type: string
+          example: VALIDATION_ERROR
+        message:
+          type: string
+          example: Invalid request parameters
+        timestamp:
+          type: string
+          format: date-time
+          example: '2024-01-01T12:00:00Z'
+        details:
+          type: object
+          additionalProperties: true
     RealtimePlayerStats:
       type: object
-      required: [ playerId, sessionId, currentStats, lastUpdated ]
+      required:
+      - playerId
+      - sessionId
+      - currentStats
+      - lastUpdated
       properties:
         playerId:
           type: string
           format: uuid
-          example: "123e4567-e89b-12d3-a456-426614174000"
+          example: 123e4567-e89b-12d3-a456-426614174000
         sessionId:
           type: string
           format: uuid
-          example: "123e4567-e89b-12d3-a456-426614174001"
+          example: 123e4567-e89b-12d3-a456-426614174001
+        lastUpdated:
+          type: string
+          format: date-time
+          example: '2024-01-01T12:00:00Z'
         currentStats:
           type: object
           properties:
@@ -959,55 +1107,61 @@ components:
               description: Playtime in seconds
               example: 1800
         performance:
-          $ref: "#/components/schemas/PlayerPerformanceMetrics"
-        lastUpdated:
-          type: string
-          format: date-time
-          example: "2024-01-01T12:00:00Z"
-
+          $ref: '#/components/schemas/PlayerPerformanceMetrics'
     RealtimeMatchStats:
       type: object
-      required: [ matchId, status, duration, participants, teamStats, lastUpdated ]
+      required:
+      - matchId
+      - status
+      - duration
+      - participants
+      - teamStats
+      - lastUpdated
       properties:
         matchId:
           type: string
           format: uuid
-          example: "123e4567-e89b-12d3-a456-426614174001"
+          example: 123e4567-e89b-12d3-a456-426614174001
         status:
           type: string
-          enum: [ preparing, in_progress, finished, cancelled ]
-          example: "in_progress"
+          enum:
+          - preparing
+          - in_progress
+          - finished
+          - cancelled
+          example: in_progress
+        lastUpdated:
+          type: string
+          format: date-time
+          example: '2024-01-01T12:00:00Z'
+        teamStats:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/TeamStats'
+        participants:
+          type: array
+          items:
+            $ref: '#/components/schemas/MatchParticipantStats'
+        gameEvents:
+          type: array
+          items:
+            $ref: '#/components/schemas/GameEvent'
+          maxItems: 50
+          description: Recent game events
         duration:
           type: integer
           description: Match duration in seconds
           example: 1200
-        participants:
-          type: array
-          items:
-            $ref: "#/components/schemas/MatchParticipantStats"
-        teamStats:
-          type: object
-          additionalProperties:
-            $ref: "#/components/schemas/TeamStats"
-        gameEvents:
-          type: array
-          items:
-            $ref: "#/components/schemas/GameEvent"
-          maxItems: 50
-          description: Recent game events
-        lastUpdated:
-          type: string
-          format: date-time
-          example: "2024-01-01T12:00:00Z"
-
     GlobalRealtimeStats:
       type: object
-      required: [ timestamp, categories ]
+      required:
+      - timestamp
+      - categories
       properties:
         timestamp:
           type: string
           format: date-time
-          example: "2024-01-01T12:00:00Z"
+          example: '2024-01-01T12:00:00Z'
         categories:
           type: object
           properties:
@@ -1065,57 +1219,75 @@ components:
                   type: integer
                   description: Requests per second
                   example: 2500
-
-    # Player Analytics schemas
     PlayerBehaviorAnalytics:
       type: object
-      required: [ playerId, period, insights, lastCalculated ]
+      required:
+      - playerId
+      - period
+      - insights
+      - lastCalculated
       properties:
         playerId:
           type: string
           format: uuid
-          example: "123e4567-e89b-12d3-a456-426614174000"
+          example: 123e4567-e89b-12d3-a456-426614174000
         period:
           type: string
-          enum: [ day, week, month, all_time ]
-          example: "week"
+          enum:
+          - day
+          - week
+          - month
+          - all_time
+          example: week
+        lastCalculated:
+          type: string
+          format: date-time
+          example: '2024-01-01T12:00:00Z'
         insights:
           type: object
           properties:
             playtime:
-              $ref: "#/components/schemas/PlaytimeInsights"
+              $ref: '#/components/schemas/PlaytimeInsights'
             preferences:
-              $ref: "#/components/schemas/PlayerPreferences"
+              $ref: '#/components/schemas/PlayerPreferences'
             performance:
-              $ref: "#/components/schemas/PerformanceInsights"
+              $ref: '#/components/schemas/PerformanceInsights'
             social:
-              $ref: "#/components/schemas/SocialInsights"
+              $ref: '#/components/schemas/SocialInsights'
             progression:
-              $ref: "#/components/schemas/ProgressionInsights"
+              $ref: '#/components/schemas/ProgressionInsights'
         recommendations:
           type: array
           items:
             type: string
-          example: [ "Consider playing more team-based game modes", "Try different character classes" ]
-        lastCalculated:
-          type: string
-          format: date-time
-          example: "2024-01-01T12:00:00Z"
-
+          example:
+          - Consider playing more team-based game modes
+          - Try different character classes
     PlayerPerformanceAnalytics:
       type: object
-      required: [ playerId, gameMode, currentStats, trends, comparison, lastCalculated ]
+      required:
+      - playerId
+      - gameMode
+      - currentStats
+      - trends
+      - comparison
+      - lastCalculated
       properties:
         playerId:
           type: string
           format: uuid
-          example: "123e4567-e89b-12d3-a456-426614174000"
+          example: 123e4567-e89b-12d3-a456-426614174000
         gameMode:
           type: string
-          enum: [ ranked, casual, tournament ]
-          example: "ranked"
-        currentStats:
-          $ref: "#/components/schemas/DetailedPerformanceStats"
+          enum:
+          - ranked
+          - casual
+          - tournament
+          example: ranked
+        lastCalculated:
+          type: string
+          format: date-time
+          example: '2024-01-01T12:00:00Z'
         trends:
           type: object
           properties:
@@ -1128,8 +1300,11 @@ components:
                   example: 0.65
                 trend:
                   type: string
-                  enum: [ improving, declining, stable ]
-                  example: "improving"
+                  enum:
+                  - improving
+                  - declining
+                  - stable
+                  example: improving
                 change:
                   type: number
                   format: float
@@ -1142,8 +1317,11 @@ components:
                   example: 1850
                 trend:
                   type: string
-                  enum: [ improving, declining, stable ]
-                  example: "stable"
+                  enum:
+                  - improving
+                  - declining
+                  - stable
+                  example: stable
                 change:
                   type: integer
                   example: 25
@@ -1165,51 +1343,51 @@ components:
                 averageRating:
                   type: integer
                   example: 1720
+        currentStats:
+          $ref: '#/components/schemas/DetailedPerformanceStats'
         strengths:
           type: array
           items:
             type: string
-          example: [ "High accuracy", "Good map control" ]
+          example:
+          - High accuracy
+          - Good map control
         areasForImprovement:
           type: array
           items:
             type: string
-          example: [ "Team communication", "Resource management" ]
-        lastCalculated:
-          type: string
-          format: date-time
-          example: "2024-01-01T12:00:00Z"
-
-    # Game Statistics schemas
+          example:
+          - Team communication
+          - Resource management
     MatchDetailedStats:
       type: object
-      required: [ matchId, gameMode, duration, winner, participants, events, summary ]
+      required:
+      - matchId
+      - gameMode
+      - duration
+      - winner
+      - participants
+      - events
+      - summary
       properties:
         matchId:
           type: string
           format: uuid
-          example: "123e4567-e89b-12d3-a456-426614174001"
+          example: 123e4567-e89b-12d3-a456-426614174001
         gameMode:
           type: string
-          enum: [ ranked, casual, tournament ]
-          example: "ranked"
-        duration:
-          type: integer
-          description: Match duration in seconds
-          example: 1456
+          enum:
+          - ranked
+          - casual
+          - tournament
+          example: ranked
         winner:
           type: string
-          enum: [ team1, team2, draw ]
-          example: "team1"
-        participants:
-          type: array
-          items:
-            $ref: "#/components/schemas/MatchParticipantDetailedStats"
-        events:
-          type: array
-          items:
-            $ref: "#/components/schemas/MatchEvent"
-          description: Chronological list of match events
+          enum:
+          - team1
+          - team2
+          - draw
+          example: team1
         summary:
           type: object
           properties:
@@ -1228,23 +1406,32 @@ components:
             mvp:
               type: string
               format: uuid
-              example: "123e4567-e89b-12d3-a456-426614174000"
-
+              example: 123e4567-e89b-12d3-a456-426614174000
+        participants:
+          type: array
+          items:
+            $ref: '#/components/schemas/MatchParticipantDetailedStats'
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/MatchEvent'
+          description: Chronological list of match events
+        duration:
+          type: integer
+          description: Match duration in seconds
+          example: 1456
     PlayerSessionHistory:
       type: object
-      required: [ playerId, sessions, totalSessions, summary ]
+      required:
+      - playerId
+      - sessions
+      - totalSessions
+      - summary
       properties:
         playerId:
           type: string
           format: uuid
-          example: "123e4567-e89b-12d3-a456-426614174000"
-        sessions:
-          type: array
-          items:
-            $ref: "#/components/schemas/PlayerSession"
-        totalSessions:
-          type: integer
-          example: 150
+          example: 123e4567-e89b-12d3-a456-426614174000
         summary:
           type: object
           properties:
@@ -1258,59 +1445,74 @@ components:
               example: 576
             favoriteGameMode:
               type: string
-              example: "ranked"
+              example: ranked
             winRate:
               type: number
               format: float
               example: 0.67
-
-    # Leaderboards schemas
+        sessions:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlayerSession'
+        totalSessions:
+          type: integer
+          example: 150
     LeaderboardResponse:
       type: object
-      required: [ leaderboardId, name, rankings, total, lastUpdated ]
+      required:
+      - leaderboardId
+      - name
+      - rankings
+      - total
+      - lastUpdated
       properties:
         leaderboardId:
           type: string
-          example: "global-kdr-weekly"
+          example: global-kdr-weekly
         name:
           type: string
-          example: "Global K/D Ratio - Weekly"
+          example: Global K/D Ratio - Weekly
         description:
           type: string
-          example: "Top players by kill-to-death ratio this week"
-        rankings:
-          type: array
-          items:
-            $ref: "#/components/schemas/LeaderboardEntry"
-        total:
-          type: integer
-          example: 50000
+          example: Top players by kill-to-death ratio this week
         lastUpdated:
           type: string
           format: date-time
-          example: "2024-01-01T12:00:00Z"
+          example: '2024-01-01T12:00:00Z'
         nextReset:
           type: string
           format: date-time
-          example: "2024-01-07T00:00:00Z"
-
+          example: '2024-01-07T00:00:00Z'
+        rankings:
+          type: array
+          items:
+            $ref: '#/components/schemas/LeaderboardEntry'
+        total:
+          type: integer
+          example: 50000
     PlayerRankingsResponse:
       type: object
-      required: [ playerId, rankings ]
+      required:
+      - playerId
+      - rankings
       properties:
         playerId:
           type: string
           format: uuid
-          example: "123e4567-e89b-12d3-a456-426614174000"
+          example: 123e4567-e89b-12d3-a456-426614174000
         rankings:
           type: array
           items:
             type: object
-            required: [ leaderboardId, rank, value, percentile ]
+            required:
+            - leaderboardId
+            - rank
+            - value
+            - percentile
             properties:
               leaderboardId:
                 type: string
-                example: "global-kdr-weekly"
+                example: global-kdr-weekly
               rank:
                 type: integer
                 example: 1250
@@ -1326,21 +1528,25 @@ components:
                 example: 87.5
               trend:
                 type: string
-                enum: [ up, down, stable ]
-                example: "up"
-
-    # Performance Metrics schemas
+                enum:
+                - up
+                - down
+                - stable
+                example: up
     SystemPerformanceMetrics:
       type: object
-      required: [ timeRange, metrics, timestamp ]
+      required:
+      - timeRange
+      - metrics
+      - timestamp
       properties:
         timeRange:
           type: string
-          example: "1h"
+          example: 1h
         timestamp:
           type: string
           format: date-time
-          example: "2024-01-01T12:00:00Z"
+          example: '2024-01-01T12:00:00Z'
         metrics:
           type: object
           properties:
@@ -1403,21 +1609,24 @@ components:
                   type: object
                   additionalProperties:
                     type: integer
-
     ServicePerformanceMetrics:
       type: object
-      required: [ serviceName, timeRange, metrics, timestamp ]
+      required:
+      - serviceName
+      - timeRange
+      - metrics
+      - timestamp
       properties:
         serviceName:
           type: string
-          example: "matchmaking-service"
+          example: matchmaking-service
         timeRange:
           type: string
-          example: "1h"
+          example: 1h
         timestamp:
           type: string
           format: date-time
-          example: "2024-01-01T12:00:00Z"
+          example: '2024-01-01T12:00:00Z'
         metrics:
           type: object
           properties:
@@ -1455,25 +1664,30 @@ components:
                   type: number
                   format: float
                   example: 0.67
-
-    # Analytics Reports schemas
     PlayerRetentionReport:
       type: object
-      required: [ period, cohort, segments, retention, generatedAt ]
+      required:
+      - period
+      - cohort
+      - segments
+      - retention
+      - generatedAt
       properties:
         period:
           type: string
-          enum: [ weekly, monthly, quarterly ]
-          example: "monthly"
+          enum:
+          - weekly
+          - monthly
+          - quarterly
+          example: monthly
         cohort:
           type: string
           format: date
-          example: "2024-01-01"
-        segments:
-          type: array
-          items:
-            type: string
-          example: [ "new_players", "returning" ]
+          example: '2024-01-01'
+        generatedAt:
+          type: string
+          format: date-time
+          example: '2024-01-01T12:00:00Z'
         retention:
           type: object
           properties:
@@ -1518,23 +1732,40 @@ components:
               type: object
               additionalProperties:
                 type: integer
-        generatedAt:
-          type: string
-          format: date-time
-          example: "2024-01-01T12:00:00Z"
-
+        segments:
+          type: array
+          items:
+            type: string
+          example:
+          - new_players
+          - returning
     GameBalanceReport:
       type: object
-      required: [ gameMode, timeFrame, balanceMetrics, recommendations, generatedAt ]
+      required:
+      - gameMode
+      - timeFrame
+      - balanceMetrics
+      - recommendations
+      - generatedAt
       properties:
         gameMode:
           type: string
-          enum: [ ranked, casual, all ]
-          example: "ranked"
+          enum:
+          - ranked
+          - casual
+          - all
+          example: ranked
         timeFrame:
           type: string
-          enum: [ week, month, season ]
-          example: "week"
+          enum:
+          - week
+          - month
+          - season
+          example: week
+        generatedAt:
+          type: string
+          format: date-time
+          example: '2024-01-01T12:00:00Z'
         balanceMetrics:
           type: object
           properties:
@@ -1568,24 +1799,25 @@ components:
             properties:
               type:
                 type: string
-                enum: [ nerf, buff, balance, monitor ]
-                example: "nerf"
+                enum:
+                - nerf
+                - buff
+                - balance
+                - monitor
+                example: nerf
               target:
                 type: string
-                example: "shotgun_damage"
+                example: shotgun_damage
               reason:
                 type: string
-                example: "Win rate 15% above average"
+                example: Win rate 15% above average
               priority:
                 type: string
-                enum: [ high, medium, low ]
-                example: "high"
-        generatedAt:
-          type: string
-          format: date-time
-          example: "2024-01-01T12:00:00Z"
-
-    # Shared sub-schemas
+                enum:
+                - high
+                - medium
+                - low
+                example: high
     PlayerPerformanceMetrics:
       type: object
       properties:
@@ -1605,21 +1837,22 @@ components:
           type: number
           format: float
           example: 0.78
-
     MatchParticipantStats:
       type: object
-      required: [ playerId, team, stats ]
+      required:
+      - playerId
+      - team
+      - stats
       properties:
         playerId:
           type: string
           format: uuid
-          example: "123e4567-e89b-12d3-a456-426614174000"
+          example: 123e4567-e89b-12d3-a456-426614174000
         team:
           type: string
-          example: "team1"
+          example: team1
         stats:
-          $ref: "#/components/schemas/PlayerPerformanceMetrics"
-
+          $ref: '#/components/schemas/PlayerPerformanceMetrics'
     TeamStats:
       type: object
       properties:
@@ -1635,63 +1868,77 @@ components:
         objectives:
           type: integer
           example: 6
-
     GameEvent:
       type: object
-      required: [ timestamp, type, description ]
+      required:
+      - timestamp
+      - type
+      - description
       properties:
+        playerId:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174000
         timestamp:
           type: string
           format: date-time
-          example: "2024-01-01T12:05:30Z"
+          example: '2024-01-01T12:05:30Z'
         type:
           type: string
-          enum: [ kill, death, objective, item_use, ability_use ]
-          example: "kill"
+          enum:
+          - kill
+          - death
+          - objective
+          - item_use
+          - ability_use
+          example: kill
         description:
           type: string
-          example: "Player eliminated opponent"
-        playerId:
-          type: string
-          format: uuid
-          example: "123e4567-e89b-12d3-a456-426614174000"
-
+          example: Player eliminated opponent
     LeaderboardEntry:
       type: object
-      required: [ rank, playerId, playerName, value ]
+      required:
+      - rank
+      - playerId
+      - playerName
+      - value
       properties:
-        rank:
-          type: integer
-          example: 1
         playerId:
           type: string
           format: uuid
-          example: "123e4567-e89b-12d3-a456-426614174000"
+          example: 123e4567-e89b-12d3-a456-426614174000
         playerName:
           type: string
-          example: "CyberPunkMaster"
+          example: CyberPunkMaster
         value:
           type: number
           format: float
           example: 2.85
+        rank:
+          type: integer
+          example: 1
         change:
           type: integer
           description: Rank change from last update
           example: 5
-
     MatchParticipantDetailedStats:
       type: object
-      required: [ playerId, team, performance, items, abilities ]
+      required:
+      - playerId
+      - team
+      - performance
+      - items
+      - abilities
       properties:
         playerId:
           type: string
           format: uuid
-          example: "123e4567-e89b-12d3-a456-426614174000"
+          example: 123e4567-e89b-12d3-a456-426614174000
         team:
           type: string
-          example: "team1"
+          example: team1
         performance:
-          $ref: "#/components/schemas/DetailedPerformanceStats"
+          $ref: '#/components/schemas/DetailedPerformanceStats'
         items:
           type: array
           items:
@@ -1700,10 +1947,10 @@ components:
               itemId:
                 type: string
                 format: uuid
-                example: "123e4567-e89b-12d3-a456-426614174001"
+                example: 123e4567-e89b-12d3-a456-426614174001
               name:
                 type: string
-                example: "Assault Rifle"
+                example: Assault Rifle
               usage:
                 type: object
                 properties:
@@ -1722,10 +1969,10 @@ components:
               abilityId:
                 type: string
                 format: uuid
-                example: "123e4567-e89b-12d3-a456-426614174002"
+                example: 123e4567-e89b-12d3-a456-426614174002
               name:
                 type: string
-                example: "Dash"
+                example: Dash
               uses:
                 type: integer
                 example: 8
@@ -1733,25 +1980,28 @@ components:
                 type: number
                 format: float
                 example: 0.75
-
     MatchEvent:
       type: object
-      required: [ timestamp, type, playerId, description ]
+      required:
+      - timestamp
+      - type
+      - playerId
+      - description
       properties:
-        timestamp:
-          type: string
-          format: date-time
-          example: "2024-01-01T12:05:30Z"
-        type:
-          type: string
-          example: "kill"
         playerId:
           type: string
           format: uuid
-          example: "123e4567-e89b-12d3-a456-426614174000"
+          example: 123e4567-e89b-12d3-a456-426614174000
+        timestamp:
+          type: string
+          format: date-time
+          example: '2024-01-01T12:05:30Z'
+        type:
+          type: string
+          example: kill
         description:
           type: string
-          example: "Eliminated opponent with headshot"
+          example: Eliminated opponent with headshot
         position:
           type: object
           properties:
@@ -1763,44 +2013,63 @@ components:
               type: number
               format: float
               example: 67.89
-
     PlayerSession:
       type: object
-      required: [ sessionId, startTime, endTime, duration, gameMode, stats ]
+      required:
+      - sessionId
+      - startTime
+      - endTime
+      - duration
+      - gameMode
+      - stats
       properties:
         sessionId:
           type: string
           format: uuid
-          example: "123e4567-e89b-12d3-a456-426614174003"
+          example: 123e4567-e89b-12d3-a456-426614174003
         startTime:
           type: string
           format: date-time
-          example: "2024-01-01T11:30:00Z"
+          example: '2024-01-01T11:30:00Z'
         endTime:
           type: string
           format: date-time
-          example: "2024-01-01T12:15:00Z"
+          example: '2024-01-01T12:15:00Z'
+        gameMode:
+          type: string
+          enum:
+          - ranked
+          - casual
+          - tournament
+          example: ranked
+        result:
+          type: string
+          enum:
+          - victory
+          - defeat
+          - draw
+          - disconnected
+          example: victory
+        map:
+          type: string
+          example: Downtown Cyberpunk
+        stats:
+          $ref: '#/components/schemas/DetailedPerformanceStats'
         duration:
           type: integer
           description: Session duration in seconds
           example: 2700
-        gameMode:
-          type: string
-          enum: [ ranked, casual, tournament ]
-          example: "ranked"
-        result:
-          type: string
-          enum: [ victory, defeat, draw, disconnected ]
-          example: "victory"
-        stats:
-          $ref: "#/components/schemas/DetailedPerformanceStats"
-        map:
-          type: string
-          example: "Downtown Cyberpunk"
-
     DetailedPerformanceStats:
       type: object
       properties:
+        accuracy:
+          type: number
+          format: float
+          example: 0.72
+        headshotRate:
+          type: number
+          format: float
+          example: 0.33
         kills:
           type: integer
           example: 24
@@ -1813,17 +2082,9 @@ components:
         score:
           type: integer
           example: 4850
-        accuracy:
-          type: number
-          format: float
-          example: 0.72
         headshots:
           type: integer
           example: 8
-        headshotRate:
-          type: number
-          format: float
-          example: 0.33
         damageDealt:
           type: integer
           example: 15420
@@ -1836,23 +2097,9 @@ components:
         objectivesCompleted:
           type: integer
           example: 5
-
     PlaytimeInsights:
       type: object
       properties:
-        totalHours:
-          type: number
-          format: float
-          example: 156.5
-        averageSession:
-          type: number
-          format: float
-          example: 45.2
-        peakHours:
-          type: array
-          items:
-            type: string
-          example: [ "20:00-22:00", "14:00-16:00" ]
         weekdayVsWeekend:
           type: object
           properties:
@@ -1864,68 +2111,100 @@ components:
               type: number
               format: float
               example: 0.35
-
+        peakHours:
+          type: array
+          items:
+            type: string
+          example:
+          - 20:00-22:00
+          - 14:00-16:00
+        totalHours:
+          type: number
+          format: float
+          example: 156.5
+        averageSession:
+          type: number
+          format: float
+          example: 45.2
     PlayerPreferences:
       type: object
       properties:
         favoriteGameMode:
           type: string
-          example: "ranked"
+          example: ranked
         favoriteMap:
           type: string
-          example: "Cyberpunk Downtown"
+          example: Cyberpunk Downtown
         preferredRole:
           type: string
-          example: "assault"
+          example: assault
         playstyle:
           type: string
-          enum: [ aggressive, defensive, supportive, balanced ]
-          example: "aggressive"
+          enum:
+          - aggressive
+          - defensive
+          - supportive
+          - balanced
+          example: aggressive
         timePreference:
           type: string
-          enum: [ morning, afternoon, evening, night ]
-          example: "evening"
-
+          enum:
+          - morning
+          - afternoon
+          - evening
+          - night
+          example: evening
     PerformanceInsights:
       type: object
       properties:
         skillProgression:
           type: string
-          enum: [ improving, declining, stable ]
-          example: "improving"
+          enum:
+          - improving
+          - declining
+          - stable
+          example: improving
+        strengths:
+          type: array
+          items:
+            type: string
+          example:
+          - High accuracy
+          - Good positioning
+        weaknesses:
+          type: array
+          items:
+            type: string
+          example:
+          - Team communication
+          - Resource management
         consistency:
           type: number
           format: float
           minimum: 0
           maximum: 1
           example: 0.78
-        strengths:
-          type: array
-          items:
-            type: string
-          example: [ "High accuracy", "Good positioning" ]
-        weaknesses:
-          type: array
-          items:
-            type: string
-          example: [ "Team communication", "Resource management" ]
-
     SocialInsights:
       type: object
       properties:
         friendActivity:
           type: string
-          enum: [ high, medium, low ]
-          example: "high"
+          enum:
+          - high
+          - medium
+          - low
+          example: high
+        communicationStyle:
+          type: string
+          enum:
+          - talkative
+          - moderate
+          - quiet
+          example: moderate
         groupPlayFrequency:
           type: number
           format: float
           example: 0.75
-        communicationStyle:
-          type: string
-          enum: [ talkative, moderate, quiet ]
-          example: "moderate"
-
     ProgressionInsights:
       type: object
       properties:

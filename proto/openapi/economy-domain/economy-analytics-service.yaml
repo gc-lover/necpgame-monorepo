@@ -1,23 +1,36 @@
 openapi: 3.0.3
 info:
   title: Economy Analytics Service API
-  description: |
-    Полная система экономической аналитики для NECPGAME.
+  description: 'Полная система экономической аналитики для NECPGAME.
+
     Графики, индикаторы, анализ настроений, портфельная аналитика и оповещения.
 
+
     **BACKEND NOTE**: Enterprise-grade analytics для MMOFPS RPG.
+
     Использует TimescaleDB для временных рядов и Redis для кеширования.
 
+
     **PERFORMANCE**: Ожидаемая нагрузка - 5000+ RPS в пиковые моменты.
+
     Время отклика < 50ms для основных запросов (графики, индикаторы).
 
+
     **FEATURES**:
+
     - 4 типа графиков: линейные, свечные, OHLC, area с объемами
+
     - 10+ технических индикаторов: MA, RSI, MACD, Bollinger Bands
+
     - Анализ настроений: индекс страха/жадности, тепловые карты
+
     - Портфельная аналитика: Sharpe ratio, win rate, profit factor
+
     - Система оповещений: ценовые, событийные, push-уведомления
+
     - Историческая аналитика с временными рядами
+
+    '
   version: 1.0.0
   license:
     name: MIT
@@ -25,75 +38,89 @@ info:
   contact:
     name: Backend Team
     email: backend@necp.game
-
 servers:
-  - url: https://api.necpgame.com/v1/economy/analytics
-    description: Production server
-  - url: https://staging-api.necpgame.com/v1/economy/analytics
-    description: Staging server
-  - url: http://localhost:8410/api/v1/economy/analytics
-    description: Local development
-
+- url: https://api.necpgame.com/v1/economy/analytics
+  description: Production server
+- url: https://staging-api.necpgame.com/v1/economy/analytics
+  description: Staging server
+- url: http://localhost:8410/api/v1/economy/analytics
+  description: Local development
 security:
-  - BearerAuth: [ ]
-
+- BearerAuth: []
 tags:
-  - name: charts
-    description: Графики и временные ряды
-  - name: indicators
-    description: Технические индикаторы
-  - name: sentiment
-    description: Анализ настроений рынка
-  - name: portfolio
-    description: Аналитика портфеля
-  - name: alerts
-    description: Оповещения и уведомления
-  - name: market
-    description: Рыночная аналитика
-
+- name: charts
+  description: Графики и временные ряды
+- name: indicators
+  description: Технические индикаторы
+- name: sentiment
+  description: Анализ настроений рынка
+- name: portfolio
+  description: Аналитика портфеля
+- name: alerts
+  description: Оповещения и уведомления
+- name: market
+  description: Рыночная аналитика
 paths:
-  # Основные графики
   /api/v1/economy/analytics/charts/{asset_id}:
     get:
       summary: Получить график актива
       operationId: getAssetChart
       tags:
-        - charts
+      - charts
       parameters:
-        - name: asset_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: ID актива
-        - name: chart_type
-          in: query
-          schema:
-            type: string
-            enum: [ line, candlestick, ohlc, area, histogram ]
-            default: candlestick
-          description: Тип графика
-        - name: timeframe
-          in: query
-          schema:
-            type: string
-            enum: [ 1m, 5m, 15m, 1h, 4h, 1d, 1w, 1M ]
-            default: 1h
-          description: Временной интервал
-        - name: period
-          in: query
-          schema:
-            type: string
-            enum: [ 1d, 7d, 30d, 90d, 1y, 2y ]
-            default: 30d
-          description: Период данных
-        - name: include_volume
-          in: query
-          schema:
-            type: boolean
-            default: true
-          description: Включить объемы торгов
+      - name: asset_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: ID актива
+      - name: chart_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - line
+          - candlestick
+          - ohlc
+          - area
+          - histogram
+          default: candlestick
+        description: Тип графика
+      - name: timeframe
+        in: query
+        schema:
+          type: string
+          enum:
+          - 1m
+          - 5m
+          - 15m
+          - 1h
+          - 4h
+          - 1d
+          - 1w
+          - 1M
+          default: 1h
+        description: Временной интервал
+      - name: period
+        in: query
+        schema:
+          type: string
+          enum:
+          - 1d
+          - 7d
+          - 30d
+          - 90d
+          - 1y
+          - 2y
+          default: 30d
+        description: Период данных
+      - name: include_volume
+        in: query
+        schema:
+          type: boolean
+          default: true
+        description: Включить объемы торгов
       responses:
         '200':
           description: Данные графика
@@ -107,13 +134,12 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
   /api/v1/economy/analytics/charts/comparison:
     post:
       summary: Сравнить графики активов
       operationId: compareAssetsCharts
       tags:
-        - charts
+      - charts
       requestBody:
         required: true
         content:
@@ -131,42 +157,63 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
-  # Технические индикаторы
   /api/v1/economy/analytics/indicators/{asset_id}:
     get:
       summary: Получить технические индикаторы актива
       operationId: getAssetIndicators
       tags:
-        - indicators
+      - indicators
       parameters:
-        - name: asset_id
-          in: path
-          required: true
-          schema:
+      - name: asset_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: ID актива
+      - name: indicators
+        in: query
+        schema:
+          type: array
+          items:
             type: string
-            format: uuid
-          description: ID актива
-        - name: indicators
-          in: query
-          schema:
-            type: array
-            items:
-              type: string
-              enum: [ ma, ema, sma, rsi, macd, bollinger, stochastic, williams, cci, adx ]
-          description: Список индикаторов для расчета
-        - name: timeframe
-          in: query
-          schema:
-            type: string
-            enum: [ 1m, 5m, 15m, 1h, 4h, 1d, 1w, 1M ]
-            default: 1h
-        - name: period
-          in: query
-          schema:
-            type: string
-            enum: [ 1d, 7d, 30d, 90d, 1y ]
-            default: 30d
+            enum:
+            - ma
+            - ema
+            - sma
+            - rsi
+            - macd
+            - bollinger
+            - stochastic
+            - williams
+            - cci
+            - adx
+        description: Список индикаторов для расчета
+      - name: timeframe
+        in: query
+        schema:
+          type: string
+          enum:
+          - 1m
+          - 5m
+          - 15m
+          - 1h
+          - 4h
+          - 1d
+          - 1w
+          - 1M
+          default: 1h
+      - name: period
+        in: query
+        schema:
+          type: string
+          enum:
+          - 1d
+          - 7d
+          - 30d
+          - 90d
+          - 1y
+          default: 30d
       responses:
         '200':
           description: Данные индикаторов
@@ -180,35 +227,45 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
   /api/v1/economy/analytics/indicators/signals/{asset_id}:
     get:
       summary: Получить торговые сигналы индикаторов
       operationId: getIndicatorSignals
       tags:
-        - indicators
+      - indicators
       parameters:
-        - name: asset_id
-          in: path
-          required: true
-          schema:
+      - name: asset_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: ID актива
+      - name: indicator_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - rsi
+          - macd
+          - bollinger
+          - stochastic
+        description: Тип индикатора для сигналов
+      - name: signal_types
+        in: query
+        schema:
+          type: array
+          items:
             type: string
-            format: uuid
-          description: ID актива
-        - name: indicator_type
-          in: query
-          schema:
-            type: string
-            enum: [ rsi, macd, bollinger, stochastic ]
-          description: Тип индикатора для сигналов
-        - name: signal_types
-          in: query
-          schema:
-            type: array
-            items:
-              type: string
-              enum: [ buy, sell, neutral, overbought, oversold, bullish, bearish ]
-          description: Типы сигналов для фильтрации
+            enum:
+            - buy
+            - sell
+            - neutral
+            - overbought
+            - oversold
+            - bullish
+            - bearish
+        description: Типы сигналов для фильтрации
       responses:
         '200':
           description: Торговые сигналы
@@ -220,34 +277,42 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
-  # Анализ настроений
   /api/v1/economy/analytics/sentiment:
     get:
       summary: Получить анализ настроений рынка
       operationId: getMarketSentiment
       tags:
-        - sentiment
+      - sentiment
       parameters:
-        - name: scope
-          in: query
-          schema:
-            type: string
-            enum: [ global, sector, asset ]
-            default: global
-          description: Область анализа
-        - name: asset_id
-          in: query
-          schema:
-            type: string
-            format: uuid
-          description: ID актива (для scope=asset)
-        - name: sector
-          in: query
-          schema:
-            type: string
-            enum: [ technology, energy, healthcare, finance, industrial, consumer, materials ]
-          description: Сектор (для scope=sector)
+      - name: scope
+        in: query
+        schema:
+          type: string
+          enum:
+          - global
+          - sector
+          - asset
+          default: global
+        description: Область анализа
+      - name: asset_id
+        in: query
+        schema:
+          type: string
+          format: uuid
+        description: ID актива (для scope=asset)
+      - name: sector
+        in: query
+        schema:
+          type: string
+          enum:
+          - technology
+          - energy
+          - healthcare
+          - finance
+          - industrial
+          - consumer
+          - materials
+        description: Сектор (для scope=sector)
       responses:
         '200':
           description: Анализ настроений
@@ -259,28 +324,33 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
   /api/v1/economy/analytics/sentiment/heatmap:
     get:
       summary: Получить тепловую карту настроений
       operationId: getSentimentHeatmap
       tags:
-        - sentiment
+      - sentiment
       parameters:
-        - name: dimension
-          in: query
-          schema:
-            type: string
-            enum: [ sectors, assets, regions ]
-            default: sectors
-          description: Измерение для тепловой карты
-        - name: period
-          in: query
-          schema:
-            type: string
-            enum: [ 1d, 7d, 30d ]
-            default: 1d
-          description: Период агрегации
+      - name: dimension
+        in: query
+        schema:
+          type: string
+          enum:
+          - sectors
+          - assets
+          - regions
+          default: sectors
+        description: Измерение для тепловой карты
+      - name: period
+        in: query
+        schema:
+          type: string
+          enum:
+          - 1d
+          - 7d
+          - 30d
+          default: 1d
+        description: Период агрегации
       responses:
         '200':
           description: Тепловая карта настроений
@@ -290,37 +360,41 @@ paths:
                 $ref: '#/components/schemas/SentimentHeatmapResponse'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
-  # Аналитика портфеля
   /api/v1/economy/analytics/portfolio/{player_id}:
     get:
       summary: Получить аналитику портфеля игрока
       operationId: getPortfolioAnalytics
       tags:
-        - portfolio
+      - portfolio
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: player_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: ID игрока
-        - name: period
-          in: query
-          schema:
-            type: string
-            enum: [ 1d, 7d, 30d, 90d, 1y, all ]
-            default: 30d
-          description: Период анализа
-        - name: include_history
-          in: query
-          schema:
-            type: boolean
-            default: true
-          description: Включить историю сделок
+      - name: player_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: ID игрока
+      - name: period
+        in: query
+        schema:
+          type: string
+          enum:
+          - 1d
+          - 7d
+          - 30d
+          - 90d
+          - 1y
+          - all
+          default: 30d
+        description: Период анализа
+      - name: include_history
+        in: query
+        schema:
+          type: boolean
+          default: true
+        description: Включить историю сделок
       responses:
         '200':
           description: Аналитика портфеля
@@ -334,37 +408,47 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
   /api/v1/economy/analytics/portfolio/{player_id}/performance:
     get:
       summary: Получить метрики производительности портфеля
       operationId: getPortfolioPerformance
       tags:
-        - portfolio
+      - portfolio
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: player_id
-          in: path
-          required: true
-          schema:
+      - name: player_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: metrics
+        in: query
+        schema:
+          type: array
+          items:
             type: string
-            format: uuid
-        - name: metrics
-          in: query
-          schema:
-            type: array
-            items:
-              type: string
-              enum: [ total_return, sharpe_ratio, win_rate, profit_factor, max_drawdown, volatility, alpha, beta ]
-          description: Список метрик для расчета
-        - name: benchmark
-          in: query
-          schema:
-            type: string
-            enum: [ market_index, sector_index, player_average ]
-            default: market_index
-          description: Бenchmark для сравнения
+            enum:
+            - total_return
+            - sharpe_ratio
+            - win_rate
+            - profit_factor
+            - max_drawdown
+            - volatility
+            - alpha
+            - beta
+        description: Список метрик для расчета
+      - name: benchmark
+        in: query
+        schema:
+          type: string
+          enum:
+          - market_index
+          - sector_index
+          - player_average
+          default: market_index
+        description: Бenchmark для сравнения
       responses:
         '200':
           description: Метрики производительности
@@ -378,35 +462,41 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
-  # Оповещения и уведомления
   /api/v1/economy/analytics/alerts:
     get:
       summary: Получить активные оповещения
       operationId: getActiveAlerts
       tags:
-        - alerts
+      - alerts
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: player_id
-          in: query
-          schema:
-            type: string
-            format: uuid
-          description: ID игрока (для персональных оповещений)
-        - name: alert_type
-          in: query
-          schema:
-            type: string
-            enum: [ price, volume, indicator, event, portfolio ]
-          description: Тип оповещения для фильтрации
-        - name: status
-          in: query
-          schema:
-            type: string
-            enum: [ active, triggered, expired ]
-            default: active
+      - name: player_id
+        in: query
+        schema:
+          type: string
+          format: uuid
+        description: ID игрока (для персональных оповещений)
+      - name: alert_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - price
+          - volume
+          - indicator
+          - event
+          - portfolio
+        description: Тип оповещения для фильтрации
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - active
+          - triggered
+          - expired
+          default: active
       responses:
         '200':
           description: Активные оповещения
@@ -416,14 +506,13 @@ paths:
                 $ref: '#/components/schemas/AlertsResponse'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
     post:
       summary: Создать новое оповещение
       operationId: createAlert
       tags:
-        - alerts
+      - alerts
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -441,22 +530,21 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
   /api/v1/economy/analytics/alerts/{alert_id}:
     put:
       summary: Обновить оповещение
       operationId: updateAlert
       tags:
-        - alerts
+      - alerts
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: alert_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: alert_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       requestBody:
         required: true
         content:
@@ -478,21 +566,20 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
     delete:
       summary: Удалить оповещение
       operationId: deleteAlert
       tags:
-        - alerts
+      - alerts
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: alert_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: alert_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
         '204':
           description: Оповещение удалено
@@ -502,29 +589,33 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
-  # Рыночная аналитика
   /api/v1/economy/analytics/market/summary:
     get:
       summary: Получить рыночную сводку
       operationId: getMarketSummary
       tags:
-        - market
+      - market
       parameters:
-        - name: scope
-          in: query
-          schema:
-            type: string
-            enum: [ global, sector, regional ]
-            default: global
-          description: Область анализа
-        - name: period
-          in: query
-          schema:
-            type: string
-            enum: [ 1d, 7d, 30d ]
-            default: 1d
-          description: Период анализа
+      - name: scope
+        in: query
+        schema:
+          type: string
+          enum:
+          - global
+          - sector
+          - regional
+          default: global
+        description: Область анализа
+      - name: period
+        in: query
+        schema:
+          type: string
+          enum:
+          - 1d
+          - 7d
+          - 30d
+          default: 1d
+        description: Период анализа
       responses:
         '200':
           description: Рыночная сводка
@@ -534,35 +625,41 @@ paths:
                 $ref: '#/components/schemas/MarketSummaryResponse'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
   /api/v1/economy/analytics/market/trends:
     get:
       summary: Получить рыночные тренды
       operationId: getMarketTrends
       tags:
-        - market
+      - market
       parameters:
-        - name: category
-          in: query
-          schema:
-            type: string
-            enum: [ gainers, losers, volume_leaders, volatility ]
-            default: gainers
-          description: Категория трендов
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 20
-          description: Количество результатов
-        - name: period
-          in: query
-          schema:
-            type: string
-            enum: [ 1h, 24h, 7d ]
-            default: 24h
+      - name: category
+        in: query
+        schema:
+          type: string
+          enum:
+          - gainers
+          - losers
+          - volume_leaders
+          - volatility
+          default: gainers
+        description: Категория трендов
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+        description: Количество результатов
+      - name: period
+        in: query
+        schema:
+          type: string
+          enum:
+          - 1h
+          - 24h
+          - 7d
+          default: 24h
       responses:
         '200':
           description: Рыночные тренды
@@ -574,14 +671,12 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
 components:
   securitySchemes:
     BearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
-
   responses:
     BadRequest:
       description: Неверный запрос
@@ -613,14 +708,12 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-
   schemas:
-    # Общие схемы
     Error:
       type: object
       required:
-        - code
-        - message
+      - code
+      - message
       properties:
         code:
           type: string
@@ -631,24 +724,29 @@ components:
         details:
           type: object
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
-    # Графики
     ChartDataResponse:
       type: object
       required:
-        - asset_id
-        - chart_type
-        - timeframe
-        - data
+      - asset_id
+      - chart_type
+      - timeframe
+      - data
       properties:
         asset_id:
           type: string
           format: uuid
         chart_type:
           type: string
-          enum: [ line, candlestick, ohlc, area, histogram ]
+          enum:
+          - line
+          - candlestick
+          - ohlc
+          - area
+          - histogram
         timeframe:
           type: string
+        metadata:
+          $ref: '#/components/schemas/ChartMetadata'
         data:
           type: array
           items:
@@ -657,18 +755,15 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/VolumeDataPoint'
-        metadata:
-          $ref: '#/components/schemas/ChartMetadata'
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     ChartDataPoint:
       type: object
       required:
-        - timestamp
-        - open
-        - high
-        - low
-        - close
+      - timestamp
+      - open
+      - high
+      - low
+      - close
       properties:
         timestamp:
           type: string
@@ -686,12 +781,11 @@ components:
           type: number
           format: float
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     VolumeDataPoint:
       type: object
       required:
-        - timestamp
-        - volume
+      - timestamp
+      - volume
       properties:
         timestamp:
           type: string
@@ -700,28 +794,43 @@ components:
           type: integer
           minimum: 0
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     ChartMetadata:
       type: object
       properties:
-        total_points:
-          type: integer
         data_quality:
           type: string
-          enum: [ high, medium, low ]
+          enum:
+          - high
+          - medium
+          - low
         last_updated:
           type: string
           format: date-time
         source:
           type: string
+        total_points:
+          type: integer
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     ChartComparisonRequest:
       type: object
       required:
-        - asset_ids
-        - timeframe
+      - asset_ids
+      - timeframe
       properties:
+        timeframe:
+          type: string
+          enum:
+          - 1h
+          - 4h
+          - 1d
+          - 1w
+        period:
+          type: string
+          enum:
+          - 7d
+          - 30d
+          - 90d
+          default: 30d
         asset_ids:
           type: array
           items:
@@ -729,47 +838,38 @@ components:
             format: uuid
           minItems: 2
           maxItems: 5
-        timeframe:
-          type: string
-          enum: [ 1h, 4h, 1d, 1w ]
-        period:
-          type: string
-          enum: [ 7d, 30d, 90d ]
-          default: 30d
         normalize:
           type: boolean
           default: true
           description: Нормализовать цены к базовому значению
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     ChartComparisonResponse:
       type: object
       required:
-        - assets
-        - timeframe
-        - comparison_data
+      - assets
+      - timeframe
+      - comparison_data
       properties:
+        timeframe:
+          type: string
+        correlation_matrix:
+          type: object
+          description: Матрица корреляций между активами
         assets:
           type: array
           items:
             $ref: '#/components/schemas/AssetInfo'
-        timeframe:
-          type: string
         comparison_data:
           type: array
           items:
             $ref: '#/components/schemas/ComparisonDataPoint'
-        correlation_matrix:
-          type: object
-          description: Матрица корреляций между активами
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     AssetInfo:
       type: object
       required:
-        - id
-        - name
-        - symbol
+      - id
+      - name
+      - symbol
       properties:
         id:
           type: string
@@ -779,12 +879,11 @@ components:
         symbol:
           type: string
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     ComparisonDataPoint:
       type: object
       required:
-        - timestamp
-        - values
+      - timestamp
+      - values
       properties:
         timestamp:
           type: string
@@ -795,14 +894,12 @@ components:
             type: number
             format: float
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
-    # Индикаторы
     IndicatorsDataResponse:
       type: object
       required:
-        - asset_id
-        - indicators
-        - data
+      - asset_id
+      - indicators
+      - data
       properties:
         asset_id:
           type: string
@@ -816,12 +913,11 @@ components:
           items:
             $ref: '#/components/schemas/IndicatorDataPoint'
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     IndicatorDataPoint:
       type: object
       required:
-        - timestamp
-        - values
+      - timestamp
+      - values
       properties:
         timestamp:
           type: string
@@ -832,54 +928,61 @@ components:
             type: number
             format: float
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     SignalsResponse:
       type: object
       required:
-        - asset_id
-        - signals
+      - asset_id
+      - signals
       properties:
         asset_id:
           type: string
           format: uuid
+        summary:
+          $ref: '#/components/schemas/SignalsSummary'
         signals:
           type: array
           items:
             $ref: '#/components/schemas/TradingSignal'
-        summary:
-          $ref: '#/components/schemas/SignalsSummary'
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     TradingSignal:
       type: object
       required:
-        - timestamp
-        - type
-        - strength
+      - timestamp
+      - type
+      - strength
       properties:
         timestamp:
           type: string
           format: date-time
         type:
           type: string
-          enum: [ buy, sell, neutral, overbought, oversold, bullish, bearish ]
+          enum:
+          - buy
+          - sell
+          - neutral
+          - overbought
+          - oversold
+          - bullish
+          - bearish
+        indicator:
+          type: string
+        description:
+          type: string
         strength:
           type: number
           format: float
           minimum: 0
           maximum: 1
-        indicator:
-          type: string
         value:
           type: number
           format: float
-        description:
-          type: string
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     SignalsSummary:
       type: object
       properties:
+        average_strength:
+          type: number
+          format: float
         total_signals:
           type: integer
         bullish_signals:
@@ -888,40 +991,40 @@ components:
           type: integer
         neutral_signals:
           type: integer
-        average_strength:
-          type: number
-          format: float
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
-    # Анализ настроений
     SentimentAnalysisResponse:
       type: object
       required:
-        - scope
-        - sentiment_score
-        - components
+      - scope
+      - sentiment_score
+      - components
       properties:
         scope:
           type: string
-          enum: [ global, sector, asset ]
+          enum:
+          - global
+          - sector
+          - asset
+        trend:
+          type: string
+          enum:
+          - bullish
+          - bearish
+          - neutral
+        components:
+          $ref: '#/components/schemas/SentimentComponents'
         sentiment_score:
           type: number
           format: float
           minimum: -1
           maximum: 1
           description: Общий индекс настроений (-1 медвежий, +1 бычий)
-        components:
-          $ref: '#/components/schemas/SentimentComponents'
-        trend:
-          type: string
-          enum: [ bullish, bearish, neutral ]
         confidence:
           type: number
           format: float
           minimum: 0
           maximum: 1
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     SentimentComponents:
       type: object
       properties:
@@ -952,20 +1055,18 @@ components:
           minimum: -1
           maximum: 1
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     SentimentHeatmapResponse:
       type: object
       required:
-        - dimension
-        - data
+      - dimension
+      - data
       properties:
         dimension:
           type: string
-          enum: [ sectors, assets, regions ]
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/HeatmapDataPoint'
+          enum:
+          - sectors
+          - assets
+          - regions
         color_scale:
           type: object
           properties:
@@ -978,14 +1079,17 @@ components:
             neutral:
               type: number
               format: float
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/HeatmapDataPoint'
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     HeatmapDataPoint:
       type: object
       required:
-        - id
-        - name
-        - sentiment_score
+      - id
+      - name
+      - sentiment_score
       properties:
         id:
           type: string
@@ -1002,27 +1106,25 @@ components:
         volume_24h:
           type: integer
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
-    # Аналитика портфеля
     PortfolioAnalyticsResponse:
       type: object
       required:
-        - player_id
-        - summary
-        - holdings
-        - performance
+      - player_id
+      - summary
+      - holdings
+      - performance
       properties:
         player_id:
           type: string
           format: uuid
+        performance:
+          $ref: '#/components/schemas/PortfolioPerformance'
         summary:
           $ref: '#/components/schemas/PortfolioSummary'
         holdings:
           type: array
           items:
             $ref: '#/components/schemas/Holding'
-        performance:
-          $ref: '#/components/schemas/PortfolioPerformance'
         recommendations:
           type: array
           items:
@@ -1032,15 +1134,16 @@ components:
           items:
             $ref: '#/components/schemas/Alert'
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     PortfolioSummary:
       type: object
       required:
-        - total_value
-        - total_invested
-        - total_return
-        - total_return_percent
+      - total_value
+      - total_invested
+      - total_return
+      - total_return_percent
       properties:
+        sector_diversification:
+          type: object
         total_value:
           type: number
           format: float
@@ -1061,17 +1164,14 @@ components:
           format: float
         asset_count:
           type: integer
-        sector_diversification:
-          type: object
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     Holding:
       type: object
       required:
-        - asset_id
-        - quantity
-        - average_cost
-        - current_price
+      - asset_id
+      - quantity
+      - average_cost
+      - current_price
       properties:
         asset_id:
           type: string
@@ -1100,7 +1200,6 @@ components:
           type: number
           format: float
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     PortfolioPerformance:
       type: object
       properties:
@@ -1134,13 +1233,12 @@ components:
         losing_trades:
           type: integer
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     PortfolioPerformanceResponse:
       type: object
       required:
-        - player_id
-        - period
-        - metrics
+      - player_id
+      - period
+      - metrics
       properties:
         player_id:
           type: string
@@ -1157,7 +1255,6 @@ components:
         risk_metrics:
           $ref: '#/components/schemas/RiskMetrics'
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     BenchmarkComparison:
       type: object
       properties:
@@ -1171,25 +1268,22 @@ components:
           type: number
           format: float
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     RiskMetrics:
       type: object
       properties:
+        stress_test_results:
+          type: object
         value_at_risk:
           type: number
           format: float
         expected_shortfall:
           type: number
           format: float
-        stress_test_results:
-          type: object
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
-    # Оповещения
     AlertsResponse:
       type: object
       required:
-        - alerts
+      - alerts
       properties:
         alerts:
           type: array
@@ -1198,27 +1292,33 @@ components:
         total_active:
           type: integer
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     Alert:
       type: object
       required:
-        - id
-        - type
-        - condition
-        - status
-        - created_at
+      - id
+      - type
+      - condition
+      - status
+      - created_at
       properties:
         id:
           type: string
           format: uuid
         type:
           type: string
-          enum: [ price, volume, indicator, event, portfolio ]
-        condition:
-          $ref: '#/components/schemas/AlertCondition'
+          enum:
+          - price
+          - volume
+          - indicator
+          - event
+          - portfolio
         status:
           type: string
-          enum: [ active, triggered, expired, paused ]
+          enum:
+          - active
+          - triggered
+          - expired
+          - paused
         created_at:
           type: string
           format: date-time
@@ -1228,72 +1328,94 @@ components:
         last_checked:
           type: string
           format: date-time
+        condition:
+          $ref: '#/components/schemas/AlertCondition'
         notification_channels:
           type: array
           items:
             type: string
-            enum: [ push, email, in_game ]
+            enum:
+            - push
+            - email
+            - in_game
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     AlertCondition:
       type: object
       required:
-        - asset_id
-        - operator
-        - value
+      - asset_id
+      - operator
+      - value
       properties:
         asset_id:
           type: string
           format: uuid
         operator:
           type: string
-          enum: [ above, below, crosses_above, crosses_below, equals, changes_by_percent ]
+          enum:
+          - above
+          - below
+          - crosses_above
+          - crosses_below
+          - equals
+          - changes_by_percent
+        timeframe:
+          type: string
+          enum:
+          - 1m
+          - 5m
+          - 15m
+          - 1h
+          - 1d
+        additional_params:
+          type: object
         value:
           type: number
           format: float
-        timeframe:
-          type: string
-          enum: [ 1m, 5m, 15m, 1h, 1d ]
-        additional_params:
-          type: object
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     CreateAlertRequest:
       type: object
       required:
-        - type
-        - condition
+      - type
+      - condition
       properties:
         type:
           type: string
-          enum: [ price, volume, indicator, event, portfolio ]
-        condition:
-          $ref: '#/components/schemas/AlertCondition'
+          enum:
+          - price
+          - volume
+          - indicator
+          - event
+          - portfolio
         name:
           type: string
           maxLength: 100
         description:
           type: string
           maxLength: 500
+        expires_at:
+          type: string
+          format: date-time
+        condition:
+          $ref: '#/components/schemas/AlertCondition'
         notification_channels:
           type: array
           items:
             type: string
-            enum: [ push, email, in_game ]
-          default: [ push ]
+            enum:
+            - push
+            - email
+            - in_game
+          default:
+          - push
         is_active:
           type: boolean
           default: true
-        expires_at:
-          type: string
-          format: date-time
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     AlertCreatedResponse:
       type: object
       required:
-        - alert_id
-        - created_at
+      - alert_id
+      - created_at
       properties:
         alert_id:
           type: string
@@ -1305,68 +1427,64 @@ components:
           type: number
           format: float
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     UpdateAlertRequest:
       type: object
       properties:
-        condition:
-          $ref: '#/components/schemas/AlertCondition'
         name:
           type: string
           maxLength: 100
         description:
           type: string
           maxLength: 500
+        expires_at:
+          type: string
+          format: date-time
+        condition:
+          $ref: '#/components/schemas/AlertCondition'
         notification_channels:
           type: array
           items:
             type: string
-            enum: [ push, email, in_game ]
+            enum:
+            - push
+            - email
+            - in_game
         is_active:
           type: boolean
-        expires_at:
-          type: string
-          format: date-time
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     AlertResponse:
       type: object
       required:
-        - alert
+      - alert
       properties:
         alert:
           $ref: '#/components/schemas/Alert'
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
-    # Рыночная аналитика
     MarketSummaryResponse:
       type: object
       required:
-        - scope
-        - period
-        - summary
+      - scope
+      - period
+      - summary
       properties:
         scope:
           type: string
         period:
           type: string
+        sector_performance:
+          type: object
+        market_breadth:
+          $ref: '#/components/schemas/MarketBreadth'
         summary:
           $ref: '#/components/schemas/MarketSummary'
         top_movers:
           type: array
           items:
             $ref: '#/components/schemas/AssetMovement'
-        sector_performance:
-          type: object
-        market_breadth:
-          $ref: '#/components/schemas/MarketBreadth'
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     MarketSummary:
       type: object
       properties:
-        total_assets:
-          type: integer
         total_volume:
           type: number
           format: float
@@ -1376,6 +1494,8 @@ components:
         average_change_percent:
           type: number
           format: float
+        total_assets:
+          type: integer
         advancing_assets:
           type: integer
         declining_assets:
@@ -1383,48 +1503,45 @@ components:
         unchanged_assets:
           type: integer
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     AssetMovement:
       type: object
       required:
-        - asset_id
-        - change_percent
+      - asset_id
+      - change_percent
       properties:
         asset_id:
           type: string
           format: uuid
         asset_name:
           type: string
+        reason:
+          type: string
         change_percent:
           type: number
           format: float
         volume:
           type: integer
-        reason:
-          type: string
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     MarketBreadth:
       type: object
       properties:
         advance_decline_ratio:
           type: number
           format: float
+        volume_ratio:
+          type: number
+          format: float
         new_highs:
           type: integer
         new_lows:
           type: integer
-        volume_ratio:
-          type: number
-          format: float
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     MarketTrendsResponse:
       type: object
       required:
-        - category
-        - period
-        - trends
+      - category
+      - period
+      - trends
       properties:
         category:
           type: string
@@ -1437,28 +1554,26 @@ components:
         total_results:
           type: integer
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     TrendData:
       type: object
       required:
-        - asset_id
-        - rank
-        - value
+      - asset_id
+      - rank
+      - value
       properties:
         asset_id:
           type: string
           format: uuid
         asset_name:
           type: string
-        rank:
-          type: integer
+        category:
+          type: string
         value:
           type: number
           format: float
         change_percent:
           type: number
           format: float
-        category:
-          type: string
+        rank:
+          type: integer
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-

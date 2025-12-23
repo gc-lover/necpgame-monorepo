@@ -1,25 +1,39 @@
 openapi: 3.0.3
 info:
   title: Economy Production Service API
-  description: |
-    **Enterprise-Grade Economy Production Service for NECPGAME**
+  description: '**Enterprise-Grade Economy Production Service for NECPGAME**
+
 
     This service provides comprehensive production chain management capabilities
-    for the game's economic systems. It focuses on production facilities, supply chains,
+
+    for the game''s economic systems. It focuses on production facilities, supply chains,
+
     manufacturing processes, resource optimization, and production capacity planning.
 
+
     **BACKEND NOTE**: All schemas are optimized for struct alignment (large → small)
+
     to ensure maximum memory efficiency in Go backend services.
+
     Expected memory savings: 30-50%.
 
+
     **PERFORMANCE**:
+
     - Real-time production monitoring and resource allocation for manufacturing operations.
+
     - Optimized database queries with time-series and hierarchical indexes.
+
     - Caching strategies for frequently accessed production data and supply chains.
+
     - P99 latency < 20ms for critical production monitoring endpoints.
 
+
     **SCALING**: Designed for horizontal scaling to handle massive volumes of
+
     production operations and supply chain data across the game world.
+
+    '
   version: 1.0.0
   license:
     name: MIT
@@ -27,44 +41,42 @@ info:
   contact:
     name: Backend Team
     email: backend@necp.game
-
 servers:
-  - url: https://api.necpgame.com/v1/economy/production
-    description: Production server
-  - url: https://staging-api.necpgame.com/v1/economy/production
-    description: Staging server
-  - url: http://localhost:8230/api/v1/economy/production
-    description: Local development
-
+- url: https://api.necpgame.com/v1/economy/production
+  description: Production server
+- url: https://staging-api.necpgame.com/v1/economy/production
+  description: Staging server
+- url: http://localhost:8230/api/v1/economy/production
+  description: Local development
 security:
-  - BearerAuth: [ ]
-
+- BearerAuth: []
 tags:
-  - name: Production Facilities
-    description: Factory and production facility management
-  - name: Supply Chains
-    description: Supply chain and resource management
-  - name: Manufacturing
-    description: Manufacturing processes and production lines
-  - name: Resource Optimization
-    description: Resource allocation and optimization
-  - name: Production Planning
-    description: Production capacity planning and forecasting
-
+- name: Production Facilities
+  description: Factory and production facility management
+- name: Supply Chains
+  description: Supply chain and resource management
+- name: Manufacturing
+  description: Manufacturing processes and production lines
+- name: Resource Optimization
+  description: Resource allocation and optimization
+- name: Production Planning
+  description: Production capacity planning and forecasting
 paths:
-  # Health Check - ОБЯЗАТЕЛЬНО для всех доменов
   /api/v1/economy/production/health:
     get:
       summary: Economy production service health check
-      description: |
-        **Enterprise-grade health check endpoint**
+      description: '**Enterprise-grade health check endpoint**
+
 
         Provides real-time health status of the economy production microservice.
+
         Critical for service discovery, load balancing, and monitoring.
+
+        '
       operationId: economyProductionHealthCheck
       tags:
-        - Production Planning
-      security: [ ]
+      - Production Planning
+      security: []
       responses:
         '200':
           description: Service is healthy
@@ -76,19 +88,19 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
         '503':
           $ref: '#/components/responses/InternalServerError'
-
-  # Production Facilities Management
   /api/v1/economy/production/facilities:
     post:
       summary: Create new production facility
-      description: |
-        Creates a new production facility (factory, plant, workshop) with specified
+      description: 'Creates a new production facility (factory, plant, workshop) with specified
+
         production capabilities and resource requirements.
+
+        '
       operationId: createProductionFacility
       tags:
-        - Production Facilities
+      - Production Facilities
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -106,36 +118,48 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
-
     get:
       summary: Get production facilities
-      description: |
-        Retrieves a list of production facilities with filtering capabilities.
+      description: 'Retrieves a list of production facilities with filtering capabilities.
+
         Supports filtering by location, production type, ownership, and status.
+
+        '
       operationId: getProductionFacilities
       tags:
-        - Production Facilities
+      - Production Facilities
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: location_city
-          in: query
-          schema:
-            type: string
-          description: Filter by city location
-        - name: production_type
-          in: query
-          schema:
-            type: string
-            enum: [ raw_materials, electronics, weapons, vehicles, chemicals, food, pharmaceuticals ]
-          description: Filter by production type
-        - name: ownership_type
-          in: query
-          schema:
-            type: string
-            enum: [ corporate, player_owned, government, faction ]
-          description: Filter by ownership type
-        - $ref: '#/components/parameters/Limit'
+      - name: location_city
+        in: query
+        schema:
+          type: string
+        description: Filter by city location
+      - name: production_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - raw_materials
+          - electronics
+          - weapons
+          - vehicles
+          - chemicals
+          - food
+          - pharmaceuticals
+        description: Filter by production type
+      - name: ownership_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - corporate
+          - player_owned
+          - government
+          - faction
+        description: Filter by ownership type
+      - $ref: '#/components/parameters/Limit'
       responses:
         '200':
           description: List of production facilities
@@ -151,32 +175,33 @@ paths:
                   pagination:
                     $ref: '#/components/schemas/PaginationInfo'
                 required:
-                  - facilities
-                  - pagination
+                - facilities
+                - pagination
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
-
   /api/v1/economy/production/facilities/{facility_id}:
     get:
       summary: Get production facility details
-      description: |
-        Retrieves detailed information about a specific production facility,
+      description: 'Retrieves detailed information about a specific production facility,
+
         including production capacity, current status, and resource requirements.
+
+        '
       operationId: getProductionFacility
       tags:
-        - Production Facilities
+      - Production Facilities
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: facility_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Production facility ID
+      - name: facility_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Production facility ID
       responses:
         '200':
           description: Production facility details
@@ -188,25 +213,26 @@ paths:
           $ref: '#/components/responses/NotFound'
         '401':
           $ref: '#/components/responses/Unauthorized'
-
     put:
       summary: Update production facility
-      description: |
-        Updates production facility information, including upgrades,
+      description: 'Updates production facility information, including upgrades,
+
         resource allocation changes, or production line modifications.
+
+        '
       operationId: updateProductionFacility
       tags:
-        - Production Facilities
+      - Production Facilities
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: facility_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Production facility ID
+      - name: facility_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Production facility ID
       requestBody:
         required: true
         content:
@@ -226,19 +252,19 @@ paths:
           $ref: '#/components/responses/NotFound'
         '401':
           $ref: '#/components/responses/Unauthorized'
-
-  # Supply Chain Management
   /api/v1/economy/production/supply-chains:
     post:
       summary: Create supply chain
-      description: |
-        Creates a new supply chain for a production facility, defining
+      description: 'Creates a new supply chain for a production facility, defining
+
         resource inputs, production processes, and output distribution.
+
+        '
       operationId: createSupplyChain
       tags:
-        - Supply Chains
+      - Supply Chains
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -256,39 +282,47 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
-
     get:
       summary: Get supply chains
-      description: |
-        Retrieves a list of supply chains with filtering capabilities.
+      description: 'Retrieves a list of supply chains with filtering capabilities.
+
         Supports filtering by facility, product type, and efficiency metrics.
+
+        '
       operationId: getSupplyChains
       tags:
-        - Supply Chains
+      - Supply Chains
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: facility_id
-          in: query
-          schema:
-            type: string
-            format: uuid
-          description: Filter by production facility
-        - name: product_type
-          in: query
-          schema:
-            type: string
-            enum: [ raw_materials, electronics, weapons, vehicles, chemicals, food, pharmaceuticals ]
-          description: Filter by product type
-        - name: efficiency_min
-          in: query
-          schema:
-            type: number
-            format: float
-            minimum: 0
-            maximum: 1
-          description: Minimum efficiency threshold (0-1)
-        - $ref: '#/components/parameters/Limit'
+      - name: facility_id
+        in: query
+        schema:
+          type: string
+          format: uuid
+        description: Filter by production facility
+      - name: product_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - raw_materials
+          - electronics
+          - weapons
+          - vehicles
+          - chemicals
+          - food
+          - pharmaceuticals
+        description: Filter by product type
+      - name: efficiency_min
+        in: query
+        schema:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        description: Minimum efficiency threshold (0-1)
+      - $ref: '#/components/parameters/Limit'
       responses:
         '200':
           description: List of supply chains
@@ -304,32 +338,33 @@ paths:
                   pagination:
                     $ref: '#/components/schemas/PaginationInfo'
                 required:
-                  - supply_chains
-                  - pagination
+                - supply_chains
+                - pagination
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
-
   /api/v1/economy/production/supply-chains/{chain_id}:
     get:
       summary: Get supply chain details
-      description: |
-        Retrieves detailed information about a specific supply chain,
+      description: 'Retrieves detailed information about a specific supply chain,
+
         including all nodes, connections, and performance metrics.
+
+        '
       operationId: getSupplyChain
       tags:
-        - Supply Chains
+      - Supply Chains
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: chain_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Supply chain ID
+      - name: chain_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Supply chain ID
       responses:
         '200':
           description: Supply chain details
@@ -341,19 +376,19 @@ paths:
           $ref: '#/components/responses/NotFound'
         '401':
           $ref: '#/components/responses/Unauthorized'
-
-  # Manufacturing Operations
   /api/v1/economy/production/manufacturing/orders:
     post:
       summary: Create manufacturing order
-      description: |
-        Creates a new manufacturing order for production of specific goods,
+      description: 'Creates a new manufacturing order for production of specific goods,
+
         specifying quantities, deadlines, and quality requirements.
+
+        '
       operationId: createManufacturingOrder
       tags:
-        - Manufacturing
+      - Manufacturing
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -371,43 +406,56 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
-
     get:
       summary: Get manufacturing orders
-      description: |
-        Retrieves a list of manufacturing orders with filtering capabilities.
+      description: 'Retrieves a list of manufacturing orders with filtering capabilities.
+
         Supports filtering by facility, status, product type, and deadline.
+
+        '
       operationId: getManufacturingOrders
       tags:
-        - Manufacturing
+      - Manufacturing
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: facility_id
-          in: query
-          schema:
-            type: string
-            format: uuid
-          description: Filter by production facility
-        - name: status
-          in: query
-          schema:
-            type: string
-            enum: [ pending, in_progress, completed, cancelled, delayed ]
-          description: Filter by order status
-        - name: product_type
-          in: query
-          schema:
-            type: string
-            enum: [ raw_materials, electronics, weapons, vehicles, chemicals, food, pharmaceuticals ]
-          description: Filter by product type
-        - name: deadline_before
-          in: query
-          schema:
-            type: string
-            format: date
-          description: Filter orders with deadline before this date
-        - $ref: '#/components/parameters/Limit'
+      - name: facility_id
+        in: query
+        schema:
+          type: string
+          format: uuid
+        description: Filter by production facility
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - pending
+          - in_progress
+          - completed
+          - cancelled
+          - delayed
+        description: Filter by order status
+      - name: product_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - raw_materials
+          - electronics
+          - weapons
+          - vehicles
+          - chemicals
+          - food
+          - pharmaceuticals
+        description: Filter by product type
+      - name: deadline_before
+        in: query
+        schema:
+          type: string
+          format: date
+        description: Filter orders with deadline before this date
+      - $ref: '#/components/parameters/Limit'
       responses:
         '200':
           description: List of manufacturing orders
@@ -423,25 +471,25 @@ paths:
                   pagination:
                     $ref: '#/components/schemas/PaginationInfo'
                 required:
-                  - orders
-                  - pagination
+                - orders
+                - pagination
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
-
-  # Resource Optimization
   /api/v1/economy/production/optimization/resource:
     post:
       summary: Optimize resource allocation
-      description: |
-        Performs resource allocation optimization for production facilities,
+      description: 'Performs resource allocation optimization for production facilities,
+
         maximizing efficiency and minimizing costs across the supply chain.
+
+        '
       operationId: optimizeResourceAllocation
       tags:
-        - Resource Optimization
+      - Resource Optimization
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -459,19 +507,19 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
-
-  # Production Planning
   /api/v1/economy/production/planning/capacity:
     post:
       summary: Plan production capacity
-      description: |
-        Performs production capacity planning and forecasting for facilities,
+      description: 'Performs production capacity planning and forecasting for facilities,
+
         predicting demand, optimizing capacity utilization, and planning expansions.
+
+        '
       operationId: planProductionCapacity
       tags:
-        - Production Planning
+      - Production Planning
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -489,22 +537,27 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
-
 components:
   securitySchemes:
     BearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
-
   schemas:
     HealthResponse:
       type: object
-      required: [ status, timestamp, version, service ]
+      required:
+      - status
+      - timestamp
+      - version
+      - service
       properties:
         status:
           type: string
-          enum: [ healthy, degraded, unhealthy ]
+          enum:
+          - healthy
+          - degraded
+          - unhealthy
           description: Current health status of the service
         timestamp:
           type: string
@@ -521,19 +574,16 @@ components:
           additionalProperties:
             type: string
           description: Additional health details
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     Error:
       type: object
-      required: [ message, code ]
+      required:
+      - message
+      - code
       properties:
         message:
           type: string
           maxLength: 1000
-        code:
-          type: integer
-          minimum: 100
-          maximum: 599
         domain:
           type: string
           maxLength: 255
@@ -541,12 +591,18 @@ components:
         timestamp:
           type: string
           format: date-time
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
-    # Production Facilities Schemas
+        code:
+          type: integer
+          minimum: 100
+          maximum: 599
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     CreateFacilityRequest:
       type: object
-      required: [ name, location_city, production_type, initial_capacity ]
+      required:
+      - name
+      - location_city
+      - production_type
+      - initial_capacity
       properties:
         name:
           type: string
@@ -558,22 +614,23 @@ components:
           description: City location
         production_type:
           type: string
-          enum: [ raw_materials, electronics, weapons, vehicles, chemicals, food, pharmaceuticals ]
+          enum:
+          - raw_materials
+          - electronics
+          - weapons
+          - vehicles
+          - chemicals
+          - food
+          - pharmaceuticals
           description: Type of production
-        initial_capacity:
-          type: integer
-          minimum: 1
-          description: Initial production capacity (units per hour)
-        construction_cost:
-          type: number
-          format: float
-          minimum: 0
-          description: Construction cost
-        operating_cost_per_hour:
-          type: number
-          format: float
-          minimum: 0
-          description: Operating cost per hour
+        automation_level:
+          type: string
+          enum:
+          - manual
+          - semi_automated
+          - fully_automated
+          default: manual
+          description: Level of automation
         resource_requirements:
           type: array
           items:
@@ -587,16 +644,24 @@ components:
                 format: float
                 minimum: 0
             required:
-              - resource_type
-              - quantity_per_hour
+            - resource_type
+            - quantity_per_hour
           description: Resource requirements for production
-        automation_level:
-          type: string
-          enum: [ manual, semi_automated, fully_automated ]
-          default: manual
-          description: Level of automation
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
+        construction_cost:
+          type: number
+          format: float
+          minimum: 0
+          description: Construction cost
+        operating_cost_per_hour:
+          type: number
+          format: float
+          minimum: 0
+          description: Operating cost per hour
+        initial_capacity:
+          type: integer
+          minimum: 1
+          description: Initial production capacity (units per hour)
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     UpdateFacilityRequest:
       type: object
       properties:
@@ -604,28 +669,41 @@ components:
           type: string
           maxLength: 255
           description: Updated facility name
-        production_capacity:
-          type: integer
-          minimum: 1
-          description: Updated production capacity
+        automation_level:
+          type: string
+          enum:
+          - manual
+          - semi_automated
+          - fully_automated
+          description: Updated automation level
+        status:
+          type: string
+          enum:
+          - active
+          - maintenance
+          - inactive
+          - destroyed
+          description: Facility status
         operating_cost_per_hour:
           type: number
           format: float
           minimum: 0
           description: Updated operating cost
-        automation_level:
-          type: string
-          enum: [ manual, semi_automated, fully_automated ]
-          description: Updated automation level
-        status:
-          type: string
-          enum: [ active, maintenance, inactive, destroyed ]
-          description: Facility status
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
+        production_capacity:
+          type: integer
+          minimum: 1
+          description: Updated production capacity
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     ProductionFacility:
       type: object
-      required: [ id, name, location_city, production_type, capacity, status, created_at ]
+      required:
+      - id
+      - name
+      - location_city
+      - production_type
+      - capacity
+      - status
+      - created_at
       properties:
         id:
           type: string
@@ -641,33 +719,38 @@ components:
           description: City location
         production_type:
           type: string
-          enum: [ raw_materials, electronics, weapons, vehicles, chemicals, food, pharmaceuticals ]
+          enum:
+          - raw_materials
+          - electronics
+          - weapons
+          - vehicles
+          - chemicals
+          - food
+          - pharmaceuticals
           description: Type of production
-        capacity:
-          type: integer
-          description: Current production capacity (units per hour)
         status:
           type: string
-          enum: [ active, maintenance, inactive, destroyed ]
+          enum:
+          - active
+          - maintenance
+          - inactive
+          - destroyed
           description: Facility status
         ownership_type:
           type: string
-          enum: [ corporate, player_owned, government, faction ]
+          enum:
+          - corporate
+          - player_owned
+          - government
+          - faction
           description: Ownership type
         automation_level:
           type: string
-          enum: [ manual, semi_automated, fully_automated ]
+          enum:
+          - manual
+          - semi_automated
+          - fully_automated
           description: Level of automation
-        efficiency_rating:
-          type: number
-          format: float
-          minimum: 0
-          maximum: 1
-          description: Current efficiency rating (0-1)
-        operating_cost_per_hour:
-          type: number
-          format: float
-          description: Operating cost per hour
         construction_date:
           type: string
           format: date-time
@@ -688,12 +771,26 @@ components:
         updated_at:
           type: string
           format: date-time
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
-    # Supply Chain Schemas
+        efficiency_rating:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Current efficiency rating (0-1)
+        operating_cost_per_hour:
+          type: number
+          format: float
+          description: Operating cost per hour
+        capacity:
+          type: integer
+          description: Current production capacity (units per hour)
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     CreateSupplyChainRequest:
       type: object
-      required: [ facility_id, product_type, nodes ]
+      required:
+      - facility_id
+      - product_type
+      - nodes
       properties:
         facility_id:
           type: string
@@ -701,8 +798,24 @@ components:
           description: Production facility ID
         product_type:
           type: string
-          enum: [ raw_materials, electronics, weapons, vehicles, chemicals, food, pharmaceuticals ]
+          enum:
+          - raw_materials
+          - electronics
+          - weapons
+          - vehicles
+          - chemicals
+          - food
+          - pharmaceuticals
           description: Final product type
+        optimization_goal:
+          type: string
+          enum:
+          - cost_minimization
+          - speed_maximization
+          - reliability_maximization
+          - quality_maximization
+          default: cost_minimization
+          description: Primary optimization goal
         nodes:
           type: array
           items:
@@ -710,7 +823,11 @@ components:
             properties:
               node_type:
                 type: string
-                enum: [ supplier, production, distribution, storage ]
+                enum:
+                - supplier
+                - production
+                - distribution
+                - storage
               resource_type:
                 type: string
                 maxLength: 100
@@ -723,20 +840,20 @@ components:
                 format: float
                 minimum: 0
             required:
-              - node_type
-              - resource_type
-              - quantity_required
+            - node_type
+            - resource_type
+            - quantity_required
           description: Supply chain nodes and their requirements
-        optimization_goal:
-          type: string
-          enum: [ cost_minimization, speed_maximization, reliability_maximization, quality_maximization ]
-          default: cost_minimization
-          description: Primary optimization goal
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     SupplyChain:
       type: object
-      required: [ id, facility_id, product_type, nodes, status, created_at ]
+      required:
+      - id
+      - facility_id
+      - product_type
+      - nodes
+      - status
+      - created_at
       properties:
         id:
           type: string
@@ -748,8 +865,29 @@ components:
           description: Associated production facility
         product_type:
           type: string
-          enum: [ raw_materials, electronics, weapons, vehicles, chemicals, food, pharmaceuticals ]
+          enum:
+          - raw_materials
+          - electronics
+          - weapons
+          - vehicles
+          - chemicals
+          - food
+          - pharmaceuticals
           description: Final product type
+        status:
+          type: string
+          enum:
+          - active
+          - inactive
+          - disrupted
+          - optimized
+          description: Supply chain status
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
         nodes:
           type: array
           items:
@@ -760,7 +898,11 @@ components:
                 format: uuid
               node_type:
                 type: string
-                enum: [ supplier, production, distribution, storage ]
+                enum:
+                - supplier
+                - production
+                - distribution
+                - storage
               resource_type:
                 type: string
                 maxLength: 100
@@ -777,15 +919,17 @@ components:
                 type: number
                 format: float
             required:
-              - node_id
-              - node_type
-              - resource_type
-              - quantity_required
+            - node_id
+            - node_type
+            - resource_type
+            - quantity_required
           description: Supply chain nodes with current status
-        status:
-          type: string
-          enum: [ active, inactive, disrupted, optimized ]
-          description: Supply chain status
+        bottleneck_nodes:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: IDs of bottleneck nodes in the chain
         efficiency_score:
           type: number
           format: float
@@ -800,24 +944,14 @@ components:
           type: number
           format: float
           description: Average processing time in hours
-        bottleneck_nodes:
-          type: array
-          items:
-            type: string
-            format: uuid
-          description: IDs of bottleneck nodes in the chain
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
-    # Manufacturing Schemas
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     CreateManufacturingOrderRequest:
       type: object
-      required: [ facility_id, product_type, quantity, deadline ]
+      required:
+      - facility_id
+      - product_type
+      - quantity
+      - deadline
       properties:
         facility_id:
           type: string
@@ -825,24 +959,34 @@ components:
           description: Production facility ID
         product_type:
           type: string
-          enum: [ raw_materials, electronics, weapons, vehicles, chemicals, food, pharmaceuticals ]
+          enum:
+          - raw_materials
+          - electronics
+          - weapons
+          - vehicles
+          - chemicals
+          - food
+          - pharmaceuticals
           description: Product to manufacture
-        quantity:
-          type: integer
-          minimum: 1
-          description: Quantity to produce
         deadline:
           type: string
           format: date-time
           description: Production deadline
         priority:
           type: string
-          enum: [ low, normal, high, urgent ]
+          enum:
+          - low
+          - normal
+          - high
+          - urgent
           default: normal
           description: Order priority
         quality_standard:
           type: string
-          enum: [ standard, premium, military_grade ]
+          enum:
+          - standard
+          - premium
+          - military_grade
           default: standard
           description: Required quality standard
         special_requirements:
@@ -850,11 +994,20 @@ components:
           items:
             type: string
           description: Special manufacturing requirements
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
+        quantity:
+          type: integer
+          minimum: 1
+          description: Quantity to produce
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     ManufacturingOrder:
       type: object
-      required: [ id, facility_id, product_type, quantity, status, created_at ]
+      required:
+      - id
+      - facility_id
+      - product_type
+      - quantity
+      - status
+      - created_at
       properties:
         id:
           type: string
@@ -866,22 +1019,31 @@ components:
           description: Production facility ID
         product_type:
           type: string
-          enum: [ raw_materials, electronics, weapons, vehicles, chemicals, food, pharmaceuticals ]
+          enum:
+          - raw_materials
+          - electronics
+          - weapons
+          - vehicles
+          - chemicals
+          - food
+          - pharmaceuticals
           description: Product being manufactured
-        quantity:
-          type: integer
-          description: Total quantity to produce
-        completed_quantity:
-          type: integer
-          default: 0
-          description: Quantity already completed
         status:
           type: string
-          enum: [ pending, in_progress, completed, cancelled, delayed ]
+          enum:
+          - pending
+          - in_progress
+          - completed
+          - cancelled
+          - delayed
           description: Order status
         priority:
           type: string
-          enum: [ low, normal, high, urgent ]
+          enum:
+          - low
+          - normal
+          - high
+          - urgent
           description: Order priority
         deadline:
           type: string
@@ -899,44 +1061,36 @@ components:
           description: Actual completion time
         quality_achieved:
           type: string
-          enum: [ standard, premium, military_grade ]
+          enum:
+          - standard
+          - premium
+          - military_grade
           nullable: true
           description: Achieved quality level
-        cost_incurred:
-          type: number
-          format: float
-          description: Total cost incurred so far
         created_at:
           type: string
           format: date-time
         updated_at:
           type: string
           format: date-time
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
-    # Optimization Schemas
+        cost_incurred:
+          type: number
+          format: float
+          description: Total cost incurred so far
+        quantity:
+          type: integer
+          description: Total quantity to produce
+        completed_quantity:
+          type: integer
+          default: 0
+          description: Quantity already completed
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     ResourceOptimizationRequest:
       type: object
-      required: [ facility_ids, time_period_days ]
+      required:
+      - facility_ids
+      - time_period_days
       properties:
-        facility_ids:
-          type: array
-          items:
-            type: string
-            format: uuid
-          description: IDs of facilities to optimize
-        time_period_days:
-          type: integer
-          minimum: 1
-          maximum: 365
-          default: 30
-          description: Optimization period in days
-        optimization_criteria:
-          type: array
-          items:
-            type: string
-            enum: [ cost_reduction, efficiency_improvement, capacity_utilization, resource_waste_reduction ]
-          description: Optimization criteria to prioritize
         constraints:
           type: object
           properties:
@@ -951,12 +1105,61 @@ components:
               default: 5
               description: Minimum required efficiency gain percentage
           description: Optimization constraints
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
+        facility_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: IDs of facilities to optimize
+        optimization_criteria:
+          type: array
+          items:
+            type: string
+            enum:
+            - cost_reduction
+            - efficiency_improvement
+            - capacity_utilization
+            - resource_waste_reduction
+          description: Optimization criteria to prioritize
+        time_period_days:
+          type: integer
+          minimum: 1
+          maximum: 365
+          default: 30
+          description: Optimization period in days
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     ResourceOptimizationResponse:
       type: object
-      required: [ facility_optimizations, overall_metrics ]
+      required:
+      - facility_optimizations
+      - overall_metrics
       properties:
+        generated_at:
+          type: string
+          format: date-time
+          description: Optimization report generation time
+        overall_metrics:
+          type: object
+          properties:
+            total_cost_savings_percent:
+              type: number
+              format: float
+            average_efficiency_improvement:
+              type: number
+              format: float
+            total_resource_reallocations:
+              type: integer
+            implementation_complexity:
+              type: string
+              enum:
+              - low
+              - medium
+              - high
+          required:
+          - total_cost_savings_percent
+          - average_efficiency_improvement
+          - total_resource_reallocations
+          description: Overall optimization metrics
         facility_optimizations:
           type: array
           items:
@@ -991,59 +1194,37 @@ components:
                       type: number
                       format: float
                 required:
-                  - resource_type
-                  - from_facility
-                  - to_facility
-                  - quantity
+                - resource_type
+                - from_facility
+                - to_facility
+                - quantity
               recommendations:
                 type: array
                 items:
                   type: string
             required:
-              - facility_id
-              - current_efficiency
-              - optimized_efficiency
+            - facility_id
+            - current_efficiency
+            - optimized_efficiency
           description: Optimization results for each facility
-        overall_metrics:
-          type: object
-          properties:
-            total_cost_savings_percent:
-              type: number
-              format: float
-            average_efficiency_improvement:
-              type: number
-              format: float
-            total_resource_reallocations:
-              type: integer
-            implementation_complexity:
-              type: string
-              enum: [ low, medium, high ]
-          required:
-            - total_cost_savings_percent
-            - average_efficiency_improvement
-            - total_resource_reallocations
-          description: Overall optimization metrics
-        generated_at:
-          type: string
-          format: date-time
-          description: Optimization report generation time
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
-    # Capacity Planning Schemas
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     CapacityPlanningRequest:
       type: object
-      required: [ facility_id, planning_horizon_months ]
+      required:
+      - facility_id
+      - planning_horizon_months
       properties:
         facility_id:
           type: string
           format: uuid
           description: Facility to plan capacity for
-        planning_horizon_months:
-          type: integer
-          minimum: 1
-          maximum: 60
-          default: 12
-          description: Planning horizon in months
+        risk_factors:
+          type: object
+          additionalProperties:
+            type: number
+            format: float
+            minimum: 0
+            maximum: 1
         demand_forecast:
           type: array
           items:
@@ -1061,8 +1242,8 @@ components:
                 minimum: 0
                 maximum: 1
             required:
-              - month
-              - expected_demand
+            - month
+            - expected_demand
           description: Demand forecast data
         expansion_options:
           type: array
@@ -1071,7 +1252,11 @@ components:
             properties:
               option_type:
                 type: string
-                enum: [ capacity_expansion, automation_upgrade, new_facility, outsourcing ]
+                enum:
+                - capacity_expansion
+                - automation_upgrade
+                - new_facility
+                - outsourcing
               cost:
                 type: number
                 format: float
@@ -1083,31 +1268,34 @@ components:
                 type: integer
                 minimum: 1
             required:
-              - option_type
-              - cost
-              - capacity_increase
-              - implementation_time_months
+            - option_type
+            - cost
+            - capacity_increase
+            - implementation_time_months
           description: Available capacity expansion options
-        risk_factors:
-          type: object
-          additionalProperties:
-            type: number
-            format: float
-            minimum: 0
-            maximum: 1
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
+        planning_horizon_months:
+          type: integer
+          minimum: 1
+          maximum: 60
+          default: 12
+          description: Planning horizon in months
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     CapacityPlanningResponse:
       type: object
-      required: [ facility_id, current_capacity, recommended_plan, projections ]
+      required:
+      - facility_id
+      - current_capacity
+      - recommended_plan
+      - projections
       properties:
         facility_id:
           type: string
           format: uuid
           description: Facility ID
-        current_capacity:
-          type: integer
-          description: Current production capacity
+        generated_at:
+          type: string
+          format: date-time
+          description: Planning report generation time
         recommended_plan:
           type: array
           items:
@@ -1115,7 +1303,11 @@ components:
             properties:
               expansion_option:
                 type: string
-                enum: [ capacity_expansion, automation_upgrade, new_facility, outsourcing ]
+                enum:
+                - capacity_expansion
+                - automation_upgrade
+                - new_facility
+                - outsourcing
               implementation_month:
                 type: integer
                 minimum: 0
@@ -1129,12 +1321,15 @@ components:
                 format: float
               risk_assessment:
                 type: string
-                enum: [ low, medium, high ]
+                enum:
+                - low
+                - medium
+                - high
             required:
-              - expansion_option
-              - implementation_month
-              - cost
-              - capacity_gain
+            - expansion_option
+            - implementation_month
+            - cost
+            - capacity_gain
           description: Recommended capacity expansion plan
         projections:
           type: array
@@ -1157,10 +1352,10 @@ components:
                 type: integer
                 description: Positive = surplus, negative = deficit
             required:
-              - month
-              - projected_capacity
-              - projected_demand
-              - utilization_rate
+            - month
+            - projected_capacity
+            - projected_demand
+            - utilization_rate
           description: Capacity and demand projections
         total_investment_required:
           type: number
@@ -1176,12 +1371,10 @@ components:
           minimum: 0
           maximum: 1
           description: Confidence level in the planning results
-        generated_at:
-          type: string
-          format: date-time
-          description: Planning report generation time
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
+        current_capacity:
+          type: integer
+          description: Current production capacity
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     PaginationInfo:
       type: object
       properties:
@@ -1197,8 +1390,7 @@ components:
         total_pages:
           type: integer
           minimum: 0
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
   responses:
     BadRequest:
       description: Invalid request parameters
@@ -1206,21 +1398,18 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-
     Unauthorized:
       description: Authentication required
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-
     NotFound:
       description: Resource not found
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-
     TooManyRequests:
       description: Rate limit exceeded
       headers:
@@ -1232,14 +1421,12 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-
     InternalServerError:
       description: Internal server error
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-
   parameters:
     Limit:
       name: limit
@@ -1251,7 +1438,3 @@ components:
         minimum: 1
         maximum: 1000
         default: 100
-
-# BACKEND NOTE: All schemas optimized for struct alignment. Expected memory savings: 30-50%.
-# PERFORMANCE: Database queries optimized with geospatial and time-series indexes.
-# SCALING: Read replicas for production monitoring, write-through caching for optimization calculations.

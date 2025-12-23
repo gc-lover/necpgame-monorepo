@@ -11,28 +11,28 @@ info:
     name: MIT
     url: https://opensource.org/licenses/MIT
 servers:
-  - url: https://api.necpgame.com
-    description: Production server
-  - url: https://staging-api.necpgame.com
-    description: Staging server
+- url: https://api.necpgame.com
+  description: Production server
+- url: https://staging-api.necpgame.com
+  description: Staging server
 tags:
-  - name: Loot Generation
-    description: Генерация лута
-  - name: Loot Distribution
-    description: Распределение и выдача лута
-  - name: World Drops
-    description: Управление физическими объектами лута в мире
-  - name: Roll Management
-    description: Управление roll системой
+- name: Loot Generation
+  description: Генерация лута
+- name: Loot Distribution
+  description: Распределение и выдача лута
+- name: World Drops
+  description: Управление физическими объектами лута в мире
+- name: Roll Management
+  description: Управление roll системой
 paths:
   /api/v1/loot/generate:
     post:
       tags:
-        - Loot Generation
+      - Loot Generation
       summary: Сгенерировать лут из таблицы (internal API)
       operationId: generateLoot
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -51,11 +51,11 @@ paths:
   /api/v1/loot/distribute:
     post:
       tags:
-        - Loot Distribution
+      - Loot Distribution
       summary: Распределить лут между игроками (internal API)
       operationId: distributeLoot
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -73,19 +73,19 @@ paths:
           $ref: ../../common-schemas.yaml#/components/responses/BadRequest
   /api/v1/loot/world-drops/{location_id}:
     parameters:
-      - name: location_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+    - name: location_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
     get:
       tags:
-        - World Drops
+      - World Drops
       summary: Получить список world drops в локации
       operationId: getWorldDrops
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       responses:
         '200':
           description: Список world drops
@@ -95,19 +95,19 @@ paths:
                 $ref: '#/components/schemas/WorldDropsListResponse'
   /api/v1/loot/world-drops/{drop_id}/pickup:
     parameters:
-      - name: drop_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+    - name: drop_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
     post:
       tags:
-        - World Drops
+      - World Drops
       summary: Подобрать world drop
       operationId: pickupWorldDrop
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       responses:
         '200':
           description: Лут подобран
@@ -127,19 +127,19 @@ paths:
                 $ref: ../../common-schemas.yaml#/components/schemas/Error
   /api/v1/loot/rolls/{roll_id}:
     parameters:
-      - name: roll_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+    - name: roll_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
     get:
       tags:
-        - Roll Management
+      - Roll Management
       summary: Получить информацию о roll
       operationId: getRollStatus
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       responses:
         '200':
           description: Информация о roll
@@ -151,19 +151,19 @@ paths:
           $ref: ../../common-schemas.yaml#/components/responses/NotFound
   /api/v1/loot/rolls/{roll_id}/roll:
     parameters:
-      - name: roll_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+    - name: roll_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
     post:
       tags:
-        - Roll Management
+      - Roll Management
       summary: Сделать roll на предмет
       operationId: rollForItem
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -187,19 +187,19 @@ paths:
                 $ref: ../../common-schemas.yaml#/components/schemas/Error
   /api/v1/loot/rolls/{roll_id}/pass:
     parameters:
-      - name: roll_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+    - name: roll_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
     post:
       tags:
-        - Roll Management
+      - Roll Management
       summary: Отказаться от roll на предмет
       operationId: passRoll
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       responses:
         '200':
           description: Pass сделан
@@ -211,26 +211,26 @@ paths:
           $ref: ../../common-schemas.yaml#/components/responses/NotFound
   /api/v1/loot/player/{player_id}/history:
     parameters:
-      - $ref: common.yaml#/components/parameters/PlayerId
+    - $ref: common.yaml#/components/parameters/PlayerId
     get:
       tags:
-        - Loot Distribution
+      - Loot Distribution
       summary: Получить историю лута игрока
       operationId: getPlayerLootHistory
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - $ref: common.yaml#/components/parameters/Limit
-        - name: rarity
-          in: query
-          schema:
-            type: string
-            enum:
-              - common
-              - uncommon
-              - rare
-              - epic
-              - legendary
+      - $ref: common.yaml#/components/parameters/Limit
+      - name: rarity
+        in: query
+        schema:
+          type: string
+          enum:
+          - common
+          - uncommon
+          - rare
+          - epic
+          - legendary
       responses:
         '200':
           description: История лута
@@ -246,9 +246,9 @@ components:
     GenerateLootRequest:
       type: object
       required:
-        - source_type
-        - source_id
-        - player_id
+      - source_type
+      - source_id
+      - player_id
       properties:
         player_id:
           type: string
@@ -263,10 +263,10 @@ components:
         source_type:
           type: string
           enum:
-            - boss
-            - quest
-            - chest
-            - mob
+          - boss
+          - quest
+          - chest
+          - mob
           description: Тип источника лута
         luck_modifier:
           type: number
@@ -297,24 +297,24 @@ components:
         rarity:
           type: string
           enum:
-            - common
-            - uncommon
-            - rare
-            - epic
-            - legendary
+          - common
+          - uncommon
+          - rare
+          - epic
+          - legendary
+        bound_on_pickup:
+          type: boolean
         quantity:
           type: integer
         item_level:
           type: integer
-        bound_on_pickup:
-          type: boolean
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     DistributeLootRequest:
       type: object
       required:
-        - items
-        - distribution_mode
-        - player_ids
+      - items
+      - distribution_mode
+      - player_ids
       properties:
         location_id:
           type: string
@@ -323,10 +323,10 @@ components:
         distribution_mode:
           type: string
           enum:
-            - personal
-            - shared
-            - roll
-            - master_loot
+          - personal
+          - shared
+          - roll
+          - master_loot
         items:
           type: array
           items:
@@ -349,9 +349,9 @@ components:
         distribution_type:
           type: string
           enum:
-            - direct
-            - world_drop
-            - roll
+          - direct
+          - world_drop
+          - roll
         distributed_to:
           type: array
           items:
@@ -376,9 +376,9 @@ components:
         drop_status:
           type: string
           enum:
-            - available
-            - picked_up
-            - expired
+          - available
+          - picked_up
+          - expired
         expires_at:
           type: string
           format: date-time
@@ -416,7 +416,7 @@ components:
     RollRequest:
       type: object
       required:
-        - item_id
+      - item_id
       properties:
         item_id:
           type: string
@@ -424,19 +424,19 @@ components:
         roll_type:
           type: string
           enum:
-            - need
-            - greed
+          - need
+          - greed
           description: Тип roll
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     RollResponse:
       type: object
       properties:
-        roll_value:
-          type: integer
-          description: Результат roll (1-100)
         is_winner:
           type: boolean
           description: Победил ли в roll
+        roll_value:
+          type: integer
+          description: Результат roll (1-100)
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     RollStatusResponse:
       type: object
@@ -456,9 +456,9 @@ components:
         roll_status:
           type: string
           enum:
-            - pending
-            - completed
-            - expired
+          - pending
+          - completed
+          - expired
         started_at:
           type: string
           format: date-time
@@ -478,9 +478,9 @@ components:
               roll_type:
                 type: string
                 enum:
-                  - need
-                  - greed
-                  - pass
+                - need
+                - greed
+                - pass
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     LootHistoryEntry:
       type: object

@@ -1,18 +1,14 @@
-# Guild CRUD operations and core management
-# Issue: #2235
-
 components:
   schemas:
-    # Guild schemas (inline to avoid reference issues)
     Guild:
       type: object
       required:
-        - id
-        - name
-        - created_at
-        - level
-        - member_count
-        - is_active
+      - id
+      - name
+      - created_at
+      - level
+      - member_count
+      - is_active
       properties:
         id:
           type: string
@@ -43,29 +39,41 @@ components:
         faction:
           type: string
           enum:
-            - corporate
-            - nomad
-            - street_kid
-            - mercenary
-            - other
+          - corporate
+          - nomad
+          - street_kid
+          - mercenary
+          - other
           description: Guild faction alignment
           example: nomad
         created_at:
           type: string
           format: date-time
           description: Timestamp of guild creation
-          example: "2025-12-20T10:00:00Z"
+          example: '2025-12-20T10:00:00Z'
         last_activity:
           type: string
           format: date-time
           description: Last guild activity timestamp
-          example: "2025-12-20T14:30:00Z"
+          example: '2025-12-20T14:30:00Z'
         win_rate:
           type: number
           minimum: 0
           maximum: 1
           description: Guild PvP win rate
           example: 0.67
+        is_recruiting:
+          type: boolean
+          description: Whether guild is accepting new members
+          example: true
+        is_active:
+          type: boolean
+          description: Indicates if the guild is active
+          example: true
+        has_bank:
+          type: boolean
+          description: Whether guild has bank functionality
+          example: true
         level:
           type: integer
           format: int32
@@ -101,25 +109,13 @@ components:
           maximum: 50
           description: Number of controlled territories
           example: 3
-        is_recruiting:
-          type: boolean
-          description: Whether guild is accepting new members
-          example: true
-        is_active:
-          type: boolean
-          description: Indicates if the guild is active
-          example: true
-        has_bank:
-          type: boolean
-          description: Whether guild has bank functionality
-          example: true
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     CreateGuildRequest:
       type: object
       required:
-        - name
-        - description
-        - faction
+      - name
+      - description
+      - faction
       properties:
         name:
           type: string
@@ -140,24 +136,24 @@ components:
         faction:
           type: string
           enum:
-            - corporate
-            - nomad
-            - street_kid
-            - mercenary
-            - other
+          - corporate
+          - nomad
+          - street_kid
+          - mercenary
+          - other
           description: Guild faction alignment
           example: street_kid
+        is_recruiting:
+          type: boolean
+          default: true
+          description: Whether to accept new members immediately
         max_members:
           type: integer
           minimum: 1
           maximum: 250
           default: 50
           description: Maximum members allowed
-        is_recruiting:
-          type: boolean
-          default: true
-          description: Whether to accept new members immediately
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     UpdateGuildRequest:
       type: object
       properties:
@@ -179,74 +175,72 @@ components:
         faction:
           type: string
           enum:
-            - corporate
-            - nomad
-            - street_kid
-            - mercenary
-            - other
+          - corporate
+          - nomad
+          - street_kid
+          - mercenary
+          - other
           description: New faction alignment
+        is_recruiting:
+          type: boolean
+          description: Update recruiting status
         max_members:
           type: integer
           minimum: 1
           maximum: 250
           description: New maximum members
-        is_recruiting:
-          type: boolean
-          description: Update recruiting status
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     GuildResponse:
       type: object
       required:
-        - guild
+      - guild
       properties:
         guild:
-          $ref: "#/components/schemas/Guild"
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+          $ref: '#/components/schemas/Guild'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     GuildsListResponse:
       type: object
       required:
-        - guilds
-        - total_count
+      - guilds
+      - total_count
       properties:
         guilds:
           type: array
           items:
-            $ref: "#/components/schemas/Guild"
+            $ref: '#/components/schemas/Guild'
           description: List of guilds
-        total_count:
-          type: integer
-          description: Total number of guilds matching criteria
-          example: 150
         has_more:
           type: boolean
           description: Whether there are more results available
           example: true
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
+        total_count:
+          type: integer
+          description: Total number of guilds matching criteria
+          example: 150
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
 paths:
-  # Health check
   /health:
     get:
       summary: Guilds module health check
       operationId: guildsHealthCheck
       tags:
-        - Guild Management
+      - Guild Management
       responses:
-        "200":
+        '200':
           description: Service is healthy
           content:
             application/json:
               schema:
-                $ref: "../schemas/health-schemas.yaml#/components/schemas/HealthResponse"
-        "503":
+                $ref: ../schemas/health-schemas.yaml#/components/schemas/HealthResponse
+        '503':
           description: Service is unhealthy
           content:
             application/json:
               schema:
                 type: object
                 required:
-                  - code
-                  - message
+                - code
+                - message
                 properties:
                   code:
                     type: string
@@ -259,47 +253,52 @@ paths:
                   details:
                     type: object
                     description: Additional error details (optional)
-
-  # Guild CRUD operations
   /guilds:
     post:
       summary: Create new guild
-      description: |
-        Creates a new guild with specified parameters.
+      description: 'Creates a new guild with specified parameters.
+
 
         **BACKEND NOTE:** This operation requires validation of:
+
         - Guild name uniqueness (case-insensitive)
+
         - Leader existence and permissions
+
         - Anti-cheat pattern analysis
+
         - Guild creation fees and limits
+
         - Cross-region availability checks
+
+        '
       operationId: createGuild
       tags:
-        - Guild Management
+      - Guild Management
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateGuildRequest"
+              $ref: '#/components/schemas/CreateGuildRequest'
       responses:
-        "201":
+        '201':
           description: Guild created successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/GuildResponse"
-        "400":
+                $ref: '#/components/schemas/GuildResponse'
+        '400':
           description: Invalid request data
           content:
             application/json:
               schema:
                 type: object
                 required:
-                  - code
-                  - message
+                - code
+                - message
                 properties:
                   code:
                     type: string
@@ -312,15 +311,15 @@ paths:
                   details:
                     type: object
                     description: Additional error details (optional)
-        "403":
+        '403':
           description: Not authorized to create guild
           content:
             application/json:
               schema:
                 type: object
                 required:
-                  - code
-                  - message
+                - code
+                - message
                 properties:
                   code:
                     type: string
@@ -333,15 +332,15 @@ paths:
                   details:
                     type: object
                     description: Additional error details (optional)
-        "409":
+        '409':
           description: Guild name already exists
           content:
             application/json:
               schema:
                 type: object
                 required:
-                  - code
-                  - message
+                - code
+                - message
                 properties:
                   code:
                     type: string
@@ -354,102 +353,117 @@ paths:
                   details:
                     type: object
                     description: Additional error details (optional)
-
     get:
       summary: Get guilds with filtering
-      description: |
-        Retrieves a list of guilds with advanced filtering and pagination.
+      description: 'Retrieves a list of guilds with advanced filtering and pagination.
+
 
         **BACKEND NOTE:** Hot path endpoint (1000+ RPS).
+
         Use Redis caching for popular guild listings.
+
         Pagination required for performance.
+
+        '
       operationId: getGuilds
       tags:
-        - Guild Management
+      - Guild Management
       parameters:
-        - name: name_contains
-          in: query
-          schema:
-            type: string
-            maxLength: 50
-          description: Filter guilds by name (case-insensitive partial match)
-        - name: min_members
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 250
-          description: Filter guilds by minimum member count
-        - name: max_members
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 250
-          description: Filter guilds by maximum member count
-        - name: min_level
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-          description: Filter guilds by minimum level
-        - name: faction
-          in: query
-          schema:
-            type: string
-            enum: [ corporate, nomad, street_kid, mercenary, other ]
-          description: Filter by faction alignment
-        - name: is_recruiting
-          in: query
-          schema:
-            type: boolean
-          description: Filter recruiting guilds only
-        - name: sort_by
-          in: query
-          schema:
-            type: string
-            enum: [ name, created_at, member_count, level, reputation ]
-            default: member_count
-          description: Field to sort by
-        - name: sort_order
-          in: query
-          schema:
-            type: string
-            enum: [ asc, desc ]
-            default: desc
-          description: Sort order
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 20
-          description: Number of results per page
-        - name: offset
-          in: query
-          schema:
-            type: integer
-            minimum: 0
-            default: 0
-          description: Pagination offset
+      - name: name_contains
+        in: query
+        schema:
+          type: string
+          maxLength: 50
+        description: Filter guilds by name (case-insensitive partial match)
+      - name: min_members
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 250
+        description: Filter guilds by minimum member count
+      - name: max_members
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 250
+        description: Filter guilds by maximum member count
+      - name: min_level
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+        description: Filter guilds by minimum level
+      - name: faction
+        in: query
+        schema:
+          type: string
+          enum:
+          - corporate
+          - nomad
+          - street_kid
+          - mercenary
+          - other
+        description: Filter by faction alignment
+      - name: is_recruiting
+        in: query
+        schema:
+          type: boolean
+        description: Filter recruiting guilds only
+      - name: sort_by
+        in: query
+        schema:
+          type: string
+          enum:
+          - name
+          - created_at
+          - member_count
+          - level
+          - reputation
+          default: member_count
+        description: Field to sort by
+      - name: sort_order
+        in: query
+        schema:
+          type: string
+          enum:
+          - asc
+          - desc
+          default: desc
+        description: Sort order
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+        description: Number of results per page
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+        description: Pagination offset
       responses:
-        "200":
+        '200':
           description: Guilds retrieved successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/GuildsListResponse"
-        "400":
+                $ref: '#/components/schemas/GuildsListResponse'
+        '400':
           description: Invalid query parameters
           content:
             application/json:
               schema:
                 type: object
                 required:
-                  - code
-                  - message
+                - code
+                - message
                 properties:
                   code:
                     type: string
@@ -462,38 +476,37 @@ paths:
                   details:
                     type: object
                     description: Additional error details (optional)
-
   /guilds/{guild_id}:
     get:
       summary: Get guild by ID
       description: Retrieves a single guild by its unique identifier.
       operationId: getGuildById
       tags:
-        - Guild Management
+      - Guild Management
       parameters:
-        - name: guild_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Unique identifier of the guild
+      - name: guild_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Unique identifier of the guild
       responses:
-        "200":
+        '200':
           description: Guild retrieved successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/GuildResponse"
-        "400":
+                $ref: '#/components/schemas/GuildResponse'
+        '400':
           description: Invalid guild ID format
           content:
             application/json:
               schema:
                 type: object
                 required:
-                  - code
-                  - message
+                - code
+                - message
                 properties:
                   code:
                     type: string
@@ -506,15 +519,15 @@ paths:
                   details:
                     type: object
                     description: Additional error details (optional)
-        "404":
+        '404':
           description: Guild not found
           content:
             application/json:
               schema:
                 type: object
                 required:
-                  - code
-                  - message
+                - code
+                - message
                 properties:
                   code:
                     type: string
@@ -527,49 +540,51 @@ paths:
                   details:
                     type: object
                     description: Additional error details (optional)
-
     put:
       summary: Update guild
-      description: |
-        Updates an existing guild's information.
+      description: 'Updates an existing guild''s information.
+
 
         **BACKEND NOTE:** Requires authorization check for guild leadership.
+
         Partial updates are supported.
+
+        '
       operationId: updateGuild
       tags:
-        - Guild Management
+      - Guild Management
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: guild_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Unique identifier of the guild to update
+      - name: guild_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Unique identifier of the guild to update
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UpdateGuildRequest"
+              $ref: '#/components/schemas/UpdateGuildRequest'
       responses:
-        "200":
+        '200':
           description: Guild updated successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/GuildResponse"
-        "400":
+                $ref: '#/components/schemas/GuildResponse'
+        '400':
           description: Invalid request data or guild ID
           content:
             application/json:
               schema:
                 type: object
                 required:
-                  - code
-                  - message
+                - code
+                - message
                 properties:
                   code:
                     type: string
@@ -582,15 +597,15 @@ paths:
                   details:
                     type: object
                     description: Additional error details (optional)
-        "403":
+        '403':
           description: Not authorized to update this guild
           content:
             application/json:
               schema:
                 type: object
                 required:
-                  - code
-                  - message
+                - code
+                - message
                 properties:
                   code:
                     type: string
@@ -603,15 +618,15 @@ paths:
                   details:
                     type: object
                     description: Additional error details (optional)
-        "404":
+        '404':
           description: Guild not found
           content:
             application/json:
               schema:
                 type: object
                 required:
-                  - code
-                  - message
+                - code
+                - message
                 properties:
                   code:
                     type: string
@@ -624,39 +639,41 @@ paths:
                   details:
                     type: object
                     description: Additional error details (optional)
-
     delete:
       summary: Disband guild
-      description: |
-        Disbands a guild. This operation is irreversible.
+      description: 'Disbands a guild. This operation is irreversible.
+
 
         **BACKEND NOTE:** Requires strong authorization (e.g., guild leader or admin).
+
         All members must be removed or transferred.
+
+        '
       operationId: disbandGuild
       tags:
-        - Guild Management
+      - Guild Management
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: guild_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Unique identifier of the guild to disband
+      - name: guild_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Unique identifier of the guild to disband
       responses:
-        "204":
+        '204':
           description: Guild disbanded successfully (No Content)
-        "400":
+        '400':
           description: Invalid guild ID format
           content:
             application/json:
               schema:
                 type: object
                 required:
-                  - code
-                  - message
+                - code
+                - message
                 properties:
                   code:
                     type: string
@@ -669,15 +686,15 @@ paths:
                   details:
                     type: object
                     description: Additional error details (optional)
-        "403":
+        '403':
           description: Not authorized to disband this guild
           content:
             application/json:
               schema:
                 type: object
                 required:
-                  - code
-                  - message
+                - code
+                - message
                 properties:
                   code:
                     type: string
@@ -690,15 +707,15 @@ paths:
                   details:
                     type: object
                     description: Additional error details (optional)
-        "404":
+        '404':
           description: Guild not found
           content:
             application/json:
               schema:
                 type: object
                 required:
-                  - code
-                  - message
+                - code
+                - message
                 properties:
                   code:
                     type: string

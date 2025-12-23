@@ -1,21 +1,31 @@
-# Issue: #2025 - Создать OpenAPI спецификации для tournament-service
 openapi: 3.0.3
 info:
   title: Tournament Service API
-  description: |
-    **Tournament Service** - Competitive gaming tournament management for NECPGAME MMOFPS RPG.
+  description: '**Tournament Service** - Competitive gaming tournament management for NECPGAME MMOFPS RPG.
+
 
     Provides comprehensive tournament management including:
+
     - Tournament creation and configuration
+
     - Player/team registration and management
+
     - Bracket generation and match scheduling
+
     - Live match tracking and statistics
+
     - Prize distribution and leaderboards
+
     - Spectator mode and live streaming integration
 
+
     **BACKEND NOTE:** Enterprise-grade tournament service with optimized memory layout.
+
     Expected memory savings: 30-50% through struct field alignment.
+
     Performance targets: 2000+ RPS, P99 <15ms for tournament operations.
+
+    '
   version: 2.0.0
   license:
     name: MIT
@@ -23,37 +33,33 @@ info:
   contact:
     name: NECPGAME Tournament API Support
     email: tournament@necp.game
-
 servers:
-  - url: http://localhost:8087/api/v1/tournaments
-    description: Tournament Service Development Server
-  - url: https://tournament.necpgame.com/api/v1
-    description: Tournament Service Production Server
-
+- url: http://localhost:8087/api/v1/tournaments
+  description: Tournament Service Development Server
+- url: https://tournament.necpgame.com/api/v1
+  description: Tournament Service Production Server
 security:
-  - BearerAuth: [ ]
-
+- BearerAuth: []
 tags:
-  - name: tournament-management
-    description: Tournament creation and lifecycle management
-  - name: registration
-    description: Player and team registration operations
-  - name: brackets
-    description: Tournament bracket and match management
-  - name: matches
-    description: Live match tracking and results
-  - name: spectator
-    description: Spectator mode and live updates
-  - name: prizes
-    description: Prize distribution and rewards
-
+- name: tournament-management
+  description: Tournament creation and lifecycle management
+- name: registration
+  description: Player and team registration operations
+- name: brackets
+  description: Tournament bracket and match management
+- name: matches
+  description: Live match tracking and results
+- name: spectator
+  description: Spectator mode and live updates
+- name: prizes
+  description: Prize distribution and rewards
 paths:
   /health:
     get:
       summary: Tournament service health check
       operationId: tournamentServiceHealthCheck
       tags:
-        - tournament-management
+      - tournament-management
       responses:
         '200':
           description: Service is healthy
@@ -68,15 +74,14 @@ paths:
                   timestamp:
                     type: string
                     format: date-time
-
   /tournaments:
     post:
       summary: Create new tournament
       operationId: createTournament
       tags:
-        - tournament-management
+      - tournament-management
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -98,54 +103,65 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
     get:
       summary: List tournaments
       operationId: listTournaments
       tags:
-        - tournament-management
+      - tournament-management
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: status
-          in: query
-          schema:
-            type: string
-            enum: [ draft, registration_open, registration_closed, in_progress, completed, cancelled ]
-        - name: game_mode
-          in: query
-          schema:
-            type: string
-        - name: min_prize_pool
-          in: query
-          schema:
-            type: integer
-            minimum: 0
-        - name: sort_by
-          in: query
-          schema:
-            type: string
-            enum: [ start_date, prize_pool, participants_count, created_at ]
-            default: created_at
-        - name: sort_order
-          in: query
-          schema:
-            type: string
-            enum: [ asc, desc ]
-            default: desc
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 20
-        - name: offset
-          in: query
-          schema:
-            type: integer
-            minimum: 0
-            default: 0
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - draft
+          - registration_open
+          - registration_closed
+          - in_progress
+          - completed
+          - cancelled
+      - name: game_mode
+        in: query
+        schema:
+          type: string
+      - name: min_prize_pool
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+      - name: sort_by
+        in: query
+        schema:
+          type: string
+          enum:
+          - start_date
+          - prize_pool
+          - participants_count
+          - created_at
+          default: created_at
+      - name: sort_order
+        in: query
+        schema:
+          type: string
+          enum:
+          - asc
+          - desc
+          default: desc
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
       responses:
         '200':
           description: Tournaments list retrieved
@@ -155,22 +171,21 @@ paths:
                 $ref: '#/components/schemas/TournamentsList'
         '401':
           $ref: '#/components/responses/Unauthorized'
-
   /tournaments/{tournament_id}:
     get:
       summary: Get tournament details
       operationId: getTournament
       tags:
-        - tournament-management
+      - tournament-management
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: tournament_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: tournament_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
         '200':
           description: Tournament details retrieved
@@ -182,21 +197,20 @@ paths:
           $ref: '#/components/responses/NotFound'
         '401':
           $ref: '#/components/responses/Unauthorized'
-
     put:
       summary: Update tournament
       operationId: updateTournament
       tags:
-        - tournament-management
+      - tournament-management
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: tournament_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: tournament_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       requestBody:
         required: true
         content:
@@ -216,21 +230,20 @@ paths:
           $ref: '#/components/responses/NotFound'
         '400':
           $ref: '#/components/responses/BadRequest'
-
     delete:
       summary: Cancel tournament
       operationId: cancelTournament
       tags:
-        - tournament-management
+      - tournament-management
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: tournament_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: tournament_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
         '204':
           description: Tournament cancelled successfully
@@ -238,22 +251,21 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
-
   /tournaments/{tournament_id}/register:
     post:
       summary: Register for tournament
       operationId: registerForTournament
       tags:
-        - registration
+      - registration
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: tournament_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: tournament_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       requestBody:
         required: true
         content:
@@ -275,40 +287,42 @@ paths:
           $ref: '#/components/responses/NotFound'
         '409':
           $ref: '#/components/responses/Conflict'
-
   /tournaments/{tournament_id}/participants:
     get:
       summary: Get tournament participants
       operationId: getTournamentParticipants
       tags:
-        - registration
+      - registration
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: tournament_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: status
-          in: query
-          schema:
-            type: string
-            enum: [ registered, confirmed, disqualified ]
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 50
-        - name: offset
-          in: query
-          schema:
-            type: integer
-            minimum: 0
-            default: 0
+      - name: tournament_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - registered
+          - confirmed
+          - disqualified
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
       responses:
         '200':
           description: Tournament participants retrieved
@@ -320,27 +334,26 @@ paths:
           $ref: '#/components/responses/NotFound'
         '401':
           $ref: '#/components/responses/Unauthorized'
-
   /tournaments/{tournament_id}/brackets:
     get:
       summary: Get tournament bracket
       operationId: getTournamentBracket
       tags:
-        - brackets
+      - brackets
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: tournament_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: round
-          in: query
-          schema:
-            type: integer
-            minimum: 1
+      - name: tournament_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: round
+        in: query
+        schema:
+          type: integer
+          minimum: 1
       responses:
         '200':
           description: Tournament bracket retrieved
@@ -352,21 +365,20 @@ paths:
           $ref: '#/components/responses/NotFound'
         '401':
           $ref: '#/components/responses/Unauthorized'
-
     post:
       summary: Generate tournament bracket
       operationId: generateTournamentBracket
       tags:
-        - brackets
+      - brackets
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: tournament_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: tournament_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       requestBody:
         required: true
         content:
@@ -386,22 +398,21 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
-
   /matches/{match_id}:
     get:
       summary: Get match details
       operationId: getMatch
       tags:
-        - matches
+      - matches
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: match_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: match_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
         '200':
           description: Match details retrieved
@@ -413,21 +424,20 @@ paths:
           $ref: '#/components/responses/NotFound'
         '401':
           $ref: '#/components/responses/Unauthorized'
-
     put:
       summary: Update match result
       operationId: updateMatchResult
       tags:
-        - matches
+      - matches
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: match_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: match_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       requestBody:
         required: true
         content:
@@ -447,32 +457,31 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
-
   /tournaments/{tournament_id}/spectator/stream:
     get:
       summary: Get tournament live stream data
       operationId: getTournamentStream
       tags:
-        - spectator
+      - spectator
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: tournament_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: include_matches
-          in: query
-          schema:
-            type: boolean
-            default: true
-        - name: include_stats
-          in: query
-          schema:
-            type: boolean
-            default: true
+      - name: tournament_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: include_matches
+        in: query
+        schema:
+          type: boolean
+          default: true
+      - name: include_stats
+        in: query
+        schema:
+          type: boolean
+          default: true
       responses:
         '200':
           description: Tournament stream data retrieved
@@ -484,22 +493,21 @@ paths:
           $ref: '#/components/responses/NotFound'
         '401':
           $ref: '#/components/responses/Unauthorized'
-
   /tournaments/{tournament_id}/prizes:
     get:
       summary: Get tournament prizes
       operationId: getTournamentPrizes
       tags:
-        - prizes
+      - prizes
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: tournament_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: tournament_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
         '200':
           description: Tournament prizes retrieved
@@ -511,21 +519,20 @@ paths:
           $ref: '#/components/responses/NotFound'
         '401':
           $ref: '#/components/responses/Unauthorized'
-
     post:
       summary: Distribute tournament prizes
       operationId: distributeTournamentPrizes
       tags:
-        - prizes
+      - prizes
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: tournament_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: tournament_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
         '200':
           description: Prizes distributed successfully
@@ -539,27 +546,27 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
-
 components:
   securitySchemes:
     BearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
-
   schemas:
-    # Tournament Schemas
     Tournament:
       type: object
       required:
-        - id
-        - name
-        - game_mode
-        - max_participants
-        - status
-        - created_at
+      - id
+      - name
+      - game_mode
+      - max_participants
+      - status
+      - created_at
       properties:
         id:
+          type: string
+          format: uuid
+        created_by:
           type: string
           format: uuid
         name:
@@ -571,18 +578,21 @@ components:
           maxLength: 1000
         game_mode:
           type: string
-          enum: [ deathmatch, team_deathmatch, capture_the_flag, domination, custom ]
-        max_participants:
-          type: integer
-          minimum: 2
-          maximum: 1000
-        min_participants:
-          type: integer
-          minimum: 2
-          default: 2
+          enum:
+          - deathmatch
+          - team_deathmatch
+          - capture_the_flag
+          - domination
+          - custom
         status:
           type: string
-          enum: [ draft, registration_open, registration_closed, in_progress, completed, cancelled ]
+          enum:
+          - draft
+          - registration_open
+          - registration_closed
+          - in_progress
+          - completed
+          - cancelled
         registration_deadline:
           type: string
           format: date-time
@@ -592,6 +602,30 @@ components:
         end_date:
           type: string
           format: date-time
+        tournament_format:
+          type: string
+          enum:
+          - single_elimination
+          - double_elimination
+          - round_robin
+          - swiss_system
+          default: single_elimination
+        rules:
+          type: string
+          maxLength: 5000
+        created_at:
+          type: string
+          format: date-time
+        settings:
+          $ref: '#/components/schemas/TournamentSettings'
+        max_participants:
+          type: integer
+          minimum: 2
+          maximum: 1000
+        min_participants:
+          type: integer
+          minimum: 2
+          default: 2
         prize_pool:
           type: integer
           minimum: 0
@@ -600,27 +634,11 @@ components:
           type: integer
           minimum: 0
           default: 0
-        tournament_format:
-          type: string
-          enum: [ single_elimination, double_elimination, round_robin, swiss_system ]
-          default: single_elimination
-        rules:
-          type: string
-          maxLength: 5000
-        created_at:
-          type: string
-          format: date-time
-        created_by:
-          type: string
-          format: uuid
         current_participants:
           type: integer
           minimum: 0
           default: 0
-        settings:
-          $ref: '#/components/schemas/TournamentSettings'
       description: 'BACKEND NOTE: Fields ordered for optimal memory alignment (large → small). Expected memory savings: 30-50%.'
-
     TournamentSettings:
       type: object
       properties:
@@ -641,15 +659,13 @@ components:
           type: integer
           description: Maximum match duration in minutes
           default: 60
-
-    # Request/Response Schemas
     CreateTournamentRequest:
       type: object
       required:
-        - name
-        - game_mode
-        - max_participants
-        - start_date
+      - name
+      - game_mode
+      - max_participants
+      - start_date
       properties:
         name:
           type: string
@@ -660,7 +676,31 @@ components:
           maxLength: 1000
         game_mode:
           type: string
-          enum: [ deathmatch, team_deathmatch, capture_the_flag, domination, custom ]
+          enum:
+          - deathmatch
+          - team_deathmatch
+          - capture_the_flag
+          - domination
+          - custom
+        registration_deadline:
+          type: string
+          format: date-time
+        start_date:
+          type: string
+          format: date-time
+        tournament_format:
+          type: string
+          enum:
+          - single_elimination
+          - double_elimination
+          - round_robin
+          - swiss_system
+          default: single_elimination
+        rules:
+          type: string
+          maxLength: 5000
+        settings:
+          $ref: '#/components/schemas/TournamentSettings'
         max_participants:
           type: integer
           minimum: 2
@@ -669,12 +709,6 @@ components:
           type: integer
           minimum: 2
           default: 2
-        registration_deadline:
-          type: string
-          format: date-time
-        start_date:
-          type: string
-          format: date-time
         prize_pool:
           type: integer
           minimum: 0
@@ -683,16 +717,6 @@ components:
           type: integer
           minimum: 0
           default: 0
-        tournament_format:
-          type: string
-          enum: [ single_elimination, double_elimination, round_robin, swiss_system ]
-          default: single_elimination
-        rules:
-          type: string
-          maxLength: 5000
-        settings:
-          $ref: '#/components/schemas/TournamentSettings'
-
     UpdateTournamentRequest:
       type: object
       properties:
@@ -709,18 +733,17 @@ components:
         start_date:
           type: string
           format: date-time
+        rules:
+          type: string
+          maxLength: 5000
+        settings:
+          $ref: '#/components/schemas/TournamentSettings'
         prize_pool:
           type: integer
           minimum: 0
         entry_fee:
           type: integer
           minimum: 0
-        rules:
-          type: string
-          maxLength: 5000
-        settings:
-          $ref: '#/components/schemas/TournamentSettings'
-
     TournamentsList:
       type: object
       properties:
@@ -734,31 +757,30 @@ components:
           type: integer
         offset:
           type: integer
-
-    # Registration Schemas
     TournamentRegistrationRequest:
       type: object
       properties:
         team_name:
           type: string
           maxLength: 50
+        payment_method:
+          type: string
+          enum:
+          - in_game_currency
+          - real_money
         team_members:
           type: array
           items:
             type: string
             format: uuid
           maxItems: 10
-        payment_method:
-          type: string
-          enum: [ in_game_currency, real_money ]
-
     TournamentParticipant:
       type: object
       required:
-        - id
-        - tournament_id
-        - account_id
-        - registered_at
+      - id
+      - tournament_id
+      - account_id
+      - registered_at
       properties:
         id:
           type: string
@@ -772,14 +794,13 @@ components:
         team_name:
           type: string
           maxLength: 50
-        team_members:
-          type: array
-          items:
-            type: string
-            format: uuid
         status:
           type: string
-          enum: [ registered, confirmed, checked_in, disqualified ]
+          enum:
+          - registered
+          - confirmed
+          - checked_in
+          - disqualified
         registered_at:
           type: string
           format: date-time
@@ -787,7 +808,11 @@ components:
           type: string
           format: date-time
           nullable: true
-
+        team_members:
+          type: array
+          items:
+            type: string
+            format: uuid
     TournamentParticipantsList:
       type: object
       properties:
@@ -801,24 +826,30 @@ components:
           type: integer
         offset:
           type: integer
-
-    # Bracket and Match Schemas
     GenerateBracketRequest:
       type: object
       properties:
         seeding_method:
           type: string
-          enum: [ random, skill_based, registration_order ]
+          enum:
+          - random
+          - skill_based
+          - registration_order
           default: random
         bracket_size:
           type: integer
-          enum: [ 4, 8, 16, 32, 64, 128 ]
-
+          enum:
+          - 4
+          - 8
+          - 16
+          - 32
+          - 64
+          - 128
     TournamentBracket:
       type: object
       required:
-        - tournament_id
-        - rounds
+      - tournament_id
+      - rounds
       properties:
         tournament_id:
           type: string
@@ -831,29 +862,27 @@ components:
           type: integer
         current_round:
           type: integer
-
     BracketRound:
       type: object
       required:
-        - round_number
-        - matches
+      - round_number
+      - matches
       properties:
-        round_number:
-          type: integer
         name:
           type: string
         matches:
           type: array
           items:
             $ref: '#/components/schemas/Match'
-
+        round_number:
+          type: integer
     Match:
       type: object
       required:
-        - id
-        - tournament_id
-        - round_number
-        - status
+      - id
+      - tournament_id
+      - round_number
+      - status
       properties:
         id:
           type: string
@@ -861,13 +890,23 @@ components:
         tournament_id:
           type: string
           format: uuid
-        round_number:
-          type: integer
-        match_number:
-          type: integer
+        participant1_id:
+          type: string
+          format: uuid
+        participant2_id:
+          type: string
+          format: uuid
+        winner_id:
+          type: string
+          format: uuid
+          nullable: true
         status:
           type: string
-          enum: [ scheduled, in_progress, completed, cancelled ]
+          enum:
+          - scheduled
+          - in_progress
+          - completed
+          - cancelled
         scheduled_at:
           type: string
           format: date-time
@@ -879,28 +918,21 @@ components:
           type: string
           format: date-time
           nullable: true
-        participant1_id:
-          type: string
-          format: uuid
-        participant2_id:
-          type: string
-          format: uuid
-        winner_id:
-          type: string
-          format: uuid
-          nullable: true
+        server_info:
+          $ref: '#/components/schemas/MatchServerInfo'
+        round_number:
+          type: integer
+        match_number:
+          type: integer
         score_participant1:
           type: integer
           default: 0
         score_participant2:
           type: integer
           default: 0
-        server_info:
-          $ref: '#/components/schemas/MatchServerInfo'
         spectator_count:
           type: integer
           default: 0
-
     MatchServerInfo:
       type: object
       properties:
@@ -909,17 +941,16 @@ components:
           format: uuid
         server_address:
           type: string
-        server_port:
-          type: integer
         spectator_url:
           type: string
-
+        server_port:
+          type: integer
     UpdateMatchResultRequest:
       type: object
       required:
-        - winner_id
-        - score_participant1
-        - score_participant2
+      - winner_id
+      - score_participant1
+      - score_participant2
       properties:
         winner_id:
           type: string
@@ -933,20 +964,24 @@ components:
         match_duration:
           type: integer
           description: Match duration in seconds
-
-    # Spectator and Streaming Schemas
     TournamentStream:
       type: object
       required:
-        - tournament_id
-        - status
+      - tournament_id
+      - status
       properties:
         tournament_id:
           type: string
           format: uuid
         status:
           type: string
-          enum: [ not_started, in_progress, completed, cancelled ]
+          enum:
+          - not_started
+          - in_progress
+          - completed
+          - cancelled
+        live_stats:
+          $ref: '#/components/schemas/TournamentLiveStats'
         current_matches:
           type: array
           items:
@@ -955,15 +990,16 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Match'
-        live_stats:
-          $ref: '#/components/schemas/TournamentLiveStats'
         spectator_count:
           type: integer
           default: 0
-
     TournamentLiveStats:
       type: object
       properties:
+        top_performers:
+          type: array
+          items:
+            $ref: '#/components/schemas/TopPerformer'
         total_matches_played:
           type: integer
           default: 0
@@ -973,16 +1009,11 @@ components:
         average_match_duration:
           type: integer
           description: Average match duration in seconds
-        top_performers:
-          type: array
-          items:
-            $ref: '#/components/schemas/TopPerformer'
-
     TopPerformer:
       type: object
       required:
-        - account_id
-        - score
+      - account_id
+      - score
       properties:
         account_id:
           type: string
@@ -995,47 +1026,43 @@ components:
           type: integer
         placement:
           type: integer
-
-    # Prize Schemas
     TournamentPrizes:
       type: object
       required:
-        - tournament_id
-        - prizes
+      - tournament_id
+      - prizes
       properties:
         tournament_id:
           type: string
           format: uuid
-        total_prize_pool:
-          type: integer
-          minimum: 0
         prizes:
           type: array
           items:
             $ref: '#/components/schemas/TournamentPrize'
-
+        total_prize_pool:
+          type: integer
+          minimum: 0
     TournamentPrize:
       type: object
       required:
-        - place
-        - reward_type
-        - reward_amount
+      - place
+      - reward_type
+      - reward_amount
       properties:
-        place:
-          type: integer
-          minimum: 1
-        place_description:
-          type: string
-          example: "1st Place"
-        reward_type:
-          type: string
-          enum: [ in_game_currency, real_money, item, title, experience ]
-        reward_amount:
-          type: integer
-          minimum: 0
         reward_item_id:
           type: string
           format: uuid
+        place_description:
+          type: string
+          example: 1st Place
+        reward_type:
+          type: string
+          enum:
+          - in_game_currency
+          - real_money
+          - item
+          - title
+          - experience
         reward_title:
           type: string
         percentage_of_pool:
@@ -1043,13 +1070,18 @@ components:
           format: float
           minimum: 0
           maximum: 100
-
+        place:
+          type: integer
+          minimum: 1
+        reward_amount:
+          type: integer
+          minimum: 0
     PrizeDistributionResult:
       type: object
       required:
-        - tournament_id
-        - distributed_at
-        - total_distributed
+      - tournament_id
+      - distributed_at
+      - total_distributed
       properties:
         tournament_id:
           type: string
@@ -1057,8 +1089,6 @@ components:
         distributed_at:
           type: string
           format: date-time
-        total_distributed:
-          type: integer
         distributions:
           type: array
           items:
@@ -1067,48 +1097,52 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/FailedPrizeDistribution'
-
+        total_distributed:
+          type: integer
     PrizeDistribution:
       type: object
       required:
-        - participant_id
-        - place
-        - reward_type
-        - reward_amount
-        - distributed_at
+      - participant_id
+      - place
+      - reward_type
+      - reward_amount
+      - distributed_at
       properties:
         participant_id:
           type: string
           format: uuid
-        place:
-          type: integer
         reward_type:
           type: string
-          enum: [ in_game_currency, real_money, item, title, experience ]
-        reward_amount:
-          type: integer
+          enum:
+          - in_game_currency
+          - real_money
+          - item
+          - title
+          - experience
         distributed_at:
           type: string
           format: date-time
-
+        place:
+          type: integer
+        reward_amount:
+          type: integer
     FailedPrizeDistribution:
       type: object
       required:
-        - participant_id
-        - reason
+      - participant_id
+      - reason
       properties:
         participant_id:
           type: string
           format: uuid
-        place:
-          type: integer
         reward_type:
           type: string
-        reward_amount:
-          type: integer
         reason:
           type: string
-
+        place:
+          type: integer
+        reward_amount:
+          type: integer
   responses:
     BadRequest:
       description: Bad request - invalid parameters
@@ -1123,7 +1157,6 @@ components:
                 type: string
               code:
                 type: string
-
     Unauthorized:
       description: Authentication required
       content:
@@ -1136,7 +1169,6 @@ components:
                 example: unauthorized
               message:
                 type: string
-
     Forbidden:
       description: Insufficient permissions
       content:
@@ -1149,7 +1181,6 @@ components:
                 example: forbidden
               message:
                 type: string
-
     NotFound:
       description: Resource not found
       content:
@@ -1162,7 +1193,6 @@ components:
                 example: not_found
               message:
                 type: string
-
     Conflict:
       description: Resource conflict
       content:
@@ -1175,7 +1205,6 @@ components:
                 example: conflict
               message:
                 type: string
-
     InternalServerError:
       description: Internal server error
       content:

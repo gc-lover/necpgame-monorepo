@@ -3,22 +3,30 @@ components:
     CombatSession:
       type: object
       required:
-        - id
-        - created_at
-        - status
-        - participants
+      - id
+      - created_at
+      - status
+      - participants
       properties:
         id:
           type: string
           format: uuid
           description: Unique session identifier
+        winner_team_id:
+          type: string
+          format: uuid
+          description: 'Optional: Winning team identifier'
         created_at:
           type: string
           format: date-time
           description: Session creation timestamp
         status:
           type: string
-          enum: [ active, paused, ended, cancelled ]
+          enum:
+          - active
+          - paused
+          - ended
+          - cancelled
           example: active
           description: Current session status
         participants:
@@ -35,18 +43,13 @@ components:
           type: integer
           minimum: 1
           default: 10
-        winner_team_id:
-          type: string
-          format: uuid
-          description: 'Optional: Winning team identifier'
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     SessionParticipant:
       type: object
       required:
-        - player_id
-        - team_id
-        - joined_at
+      - player_id
+      - team_id
+      - joined_at
       properties:
         player_id:
           type: string
@@ -60,32 +63,35 @@ components:
           type: string
           format: date-time
           description: When player joined the session
+        position:
+          $ref: ./position-schemas.yaml#/components/schemas/PlayerPosition
         health:
           type: number
           format: float
           minimum: 0
           maximum: 100
           default: 100
-        position:
-          $ref: './position-schemas.yaml#/components/schemas/PlayerPosition'
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     CreateSessionRequest:
       type: object
       required:
-        - participants
-        - game_mode
+      - participants
+      - game_mode
       properties:
+        game_mode:
+          type: string
+          enum:
+          - deathmatch
+          - team_deathmatch
+          - capture_the_flag
+          - king_of_the_hill
+          example: team_deathmatch
         participants:
           type: array
           items:
             $ref: '#/components/schemas/CreateParticipantRequest'
           minItems: 2
           maxItems: 50
-        game_mode:
-          type: string
-          enum: [ deathmatch, team_deathmatch, capture_the_flag, king_of_the_hill ]
-          example: team_deathmatch
         max_rounds:
           type: integer
           minimum: 1
@@ -97,12 +103,11 @@ components:
           maximum: 60
           default: 15
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     CreateParticipantRequest:
       type: object
       required:
-        - player_id
-        - team_id
+      - player_id
+      - team_id
       properties:
         player_id:
           type: string
@@ -111,26 +116,28 @@ components:
           type: string
           format: uuid
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     UpdateSessionRequest:
       type: object
       properties:
-        status:
-          type: string
-          enum: [ active, paused, ended, cancelled ]
-        current_round:
-          type: integer
-          minimum: 1
         winner_team_id:
           type: string
           format: uuid
+        status:
+          type: string
+          enum:
+          - active
+          - paused
+          - ended
+          - cancelled
+        current_round:
+          type: integer
+          minimum: 1
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     JoinSessionRequest:
       type: object
       required:
-        - player_id
-        - team_id
+      - player_id
+      - team_id
       properties:
         player_id:
           type: string
@@ -142,14 +149,13 @@ components:
           type: boolean
           default: false
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     JoinSessionResponse:
       type: object
       required:
-        - session_id
-        - player_id
-        - assigned_team_id
-        - websocket_url
+      - session_id
+      - player_id
+      - assigned_team_id
+      - websocket_url
       properties:
         session_id:
           type: string
@@ -164,53 +170,54 @@ components:
           type: string
           format: uri
           example: ws://combat.necpgame.com/api/v1/combat/ws/sessions/123
+        start_position:
+          $ref: ./position-schemas.yaml#/components/schemas/PlayerPosition
         initial_health:
           type: number
           format: float
           default: 100
-        start_position:
-          $ref: './position-schemas.yaml#/components/schemas/PlayerPosition'
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     SuccessResponse:
       type: object
       properties:
-        success:
-          type: boolean
-          example: true
         message:
           type: string
           maxLength: 255
           example: Operation completed successfully
+        success:
+          type: boolean
+          example: true
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     SpectateRequest:
       type: object
       required:
-        - player_id
+      - player_id
       properties:
         player_id:
           type: string
           format: uuid
           description: Spectator player identifier
-        preferred_camera_mode:
-          type: string
-          enum: [ free, follow_player, overview, cinematic ]
-          default: free
-          description: Preferred spectator camera mode
         follow_target_id:
           type: string
           format: uuid
           description: Player to follow if camera mode is follow_player
+        preferred_camera_mode:
+          type: string
+          enum:
+          - free
+          - follow_player
+          - overview
+          - cinematic
+          default: free
+          description: Preferred spectator camera mode
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     SpectateResponse:
       type: object
       required:
-        - session_id
-        - spectator_id
-        - websocket_url
-        - available_camera_modes
+      - session_id
+      - spectator_id
+      - websocket_url
+      - available_camera_modes
       properties:
         session_id:
           type: string
@@ -222,14 +229,18 @@ components:
           type: string
           format: uri
           example: ws://combat.necpgame.com/api/v1/combat/ws/sessions/123/spectate
+        initial_camera_position:
+          $ref: ./position-schemas.yaml#/components/schemas/PlayerPosition
         available_camera_modes:
           type: array
           items:
             type: string
-            enum: [ free, follow_player, overview, cinematic ]
+            enum:
+            - free
+            - follow_player
+            - overview
+            - cinematic
           description: Available spectator camera modes for this session
-        initial_camera_position:
-          $ref: './position-schemas.yaml#/components/schemas/PlayerPosition'
         session_participants:
           type: array
           items:

@@ -10,18 +10,18 @@ info:
     name: NECPGAME API Support
     email: api@necp.game
 servers:
-  - url: http://localhost:8086/api/v1
-    description: Локальный сервер разработки
-  - url: https://api.necp.game/api/v1
-    description: Продакшен сервер
+- url: http://localhost:8086/api/v1
+  description: Локальный сервер разработки
+- url: https://api.necp.game/api/v1
+  description: Продакшен сервер
 tags:
-  - name: Action Rate Validation
-    description: Валидация частоты действий
+- name: Action Rate Validation
+  description: Валидация частоты действий
 paths:
   /anti-cheat/action-rate/validate:
     post:
       tags:
-        - Action Rate Validation
+      - Action Rate Validation
       summary: Валидация частоты действий
       description: 'Проверяет частоту действий игрока и обнаруживает возможные макросы
 
@@ -30,7 +30,7 @@ paths:
         '
       operationId: validateActionRate
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -53,23 +53,23 @@ paths:
   /anti-cheat/action-rate/violations/{player_id}:
     get:
       tags:
-        - Action Rate Validation
+      - Action Rate Validation
       summary: Получить нарушения частоты действий для игрока
       description: Возвращает список нарушений частоты действий для указанного игрока с пагинацией.
       operationId: getActionRateViolations
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: player_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Идентификатор игрока
-          example: 550e8400-e29b-41d4-a716-446655440000
-        - $ref: common.yaml#/components/parameters/Limit
-        - $ref: common.yaml#/components/parameters/Offset
+      - name: player_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Идентификатор игрока
+        example: 550e8400-e29b-41d4-a716-446655440000
+      - $ref: common.yaml#/components/parameters/Limit
+      - $ref: common.yaml#/components/parameters/Offset
       responses:
         '200':
           description: Список нарушений частоты действий
@@ -91,9 +91,9 @@ components:
     ActionRateValidationRequest:
       type: object
       required:
-        - player_id
-        - action_type
-        - action_timestamp
+      - player_id
+      - action_type
+      - action_timestamp
       properties:
         player_id:
           type: string
@@ -103,10 +103,10 @@ components:
         action_type:
           type: string
           enum:
-            - ATTACK
-            - SKILL
-            - INTERACTION
-            - MOVEMENT
+          - ATTACK
+          - SKILL
+          - INTERACTION
+          - MOVEMENT
           description: Тип действия
           example: ATTACK
         action_timestamp:
@@ -122,24 +122,16 @@ components:
     ActionRateValidationResponse:
       type: object
       required:
-        - is_valid
+      - is_valid
       properties:
         pattern_detected:
           type: string
           enum:
-            - HUMAN
-            - MACRO
-            - UNKNOWN
+          - HUMAN
+          - MACRO
+          - UNKNOWN
           description: Обнаруженный паттерн
           example: HUMAN
-        violation:
-          nullable: true
-          description: Нарушение, если обнаружено
-        max_actions_per_second:
-          type: integer
-          minimum: 0
-          description: Максимально допустимое количество действий в секунду
-          example: 3
         actions_per_second:
           type: number
           format: float
@@ -150,28 +142,43 @@ components:
           type: boolean
           description: Валидна ли частота действий
           example: true
+        violation:
+          nullable: true
+          description: Нарушение, если обнаружено
+        max_actions_per_second:
+          type: integer
+          minimum: 0
+          description: Максимально допустимое количество действий в секунду
+          example: 3
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     ActionRateViolation:
       type: object
       required:
-        - violation_type
-        - severity
+      - violation_type
+      - severity
       properties:
         violation_type:
           type: string
           enum:
-            - ACTION_RATE_HACK
+          - ACTION_RATE_HACK
           description: Тип нарушения
           example: ACTION_RATE_HACK
         severity:
           type: string
           enum:
-            - LOW
-            - MEDIUM
-            - HIGH
-            - CRITICAL
+          - LOW
+          - MEDIUM
+          - HIGH
+          - CRITICAL
           description: Серьезность нарушения
           example: HIGH
+        pattern_periodicity:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Процент идеальной периодичности
+          example: 95.5
         actions_exceeded_by:
           type: integer
           minimum: 0
@@ -182,19 +189,12 @@ components:
           minimum: 0
           description: Порог количества действий
           example: 3
-        pattern_periodicity:
-          type: number
-          format: float
-          minimum: 0
-          maximum: 100
-          description: Процент идеальной периодичности
-          example: 95.5
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     ActionRateViolationsResponse:
       type: object
       required:
-        - violations
-        - total
+      - violations
+      - total
       properties:
         violations:
           type: array
@@ -218,4 +218,4 @@ components:
           example: 0
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
 security:
-  - BearerAuth: [ ]
+- BearerAuth: []

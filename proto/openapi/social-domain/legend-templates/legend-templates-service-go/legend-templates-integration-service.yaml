@@ -6,115 +6,113 @@ info:
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
-
 servers:
-  - url: https://legend-templates.necpgame.com/v1
-    description: Production server
-  - url: https://staging-legend-templates.necpgame.com/v1
-    description: Staging server
-
+- url: https://legend-templates.necpgame.com/v1
+  description: Production server
+- url: https://staging-legend-templates.necpgame.com/v1
+  description: Staging server
 security:
-  - BearerAuth: [ ]
-
+- BearerAuth: []
 paths:
-  # Dialogue Legend Integration (HOT PATH - optimized for 1000+ RPS)
   /triggers/active:
     get:
       summary: Get active legend triggers for dialogue integration
       operationId: getActiveLegendTriggers
-      description: |
-        **HOT PATH ENDPOINT** - Returns active triggers for real-time legend generation
-        Expected performance: <50μs per request
-      parameters:
-        - name: location_id
-          in: query
-          schema:
-            type: string
-            format: uuid
-          description: Filter by location ID
-        - name: faction_id
-          in: query
-          schema:
-            type: string
-            format: uuid
-          description: Filter by faction ID
-        - name: npc_id
-          in: query
-          schema:
-            type: string
-            format: uuid
-          description: Filter by NPC ID
-        - name: player_id
-          in: query
-          schema:
-            type: string
-            format: uuid
-          description: Filter by player ID (for personalized triggers)
-      responses:
-        "200":
-          $ref: "#/components/responses/ActiveLegendTriggersResponse"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
+      description: '**HOT PATH ENDPOINT** - Returns active triggers for real-time legend generation
 
+        Expected performance: <50μs per request
+
+        '
+      parameters:
+      - name: location_id
+        in: query
+        schema:
+          type: string
+          format: uuid
+        description: Filter by location ID
+      - name: faction_id
+        in: query
+        schema:
+          type: string
+          format: uuid
+        description: Filter by faction ID
+      - name: npc_id
+        in: query
+        schema:
+          type: string
+          format: uuid
+        description: Filter by NPC ID
+      - name: player_id
+        in: query
+        schema:
+          type: string
+          format: uuid
+        description: Filter by player ID (for personalized triggers)
+      responses:
+        '200':
+          $ref: '#/components/responses/ActiveLegendTriggersResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
   /triggers/{trigger_id}/generate:
     post:
       summary: Generate legend for active trigger
       operationId: generateLegendForTrigger
-      description: |
-        **HOT PATH ENDPOINT** - Generates legend based on trigger conditions
+      description: '**HOT PATH ENDPOINT** - Generates legend based on trigger conditions
+
         Expected performance: <1ms per request, zero allocations
+
+        '
       parameters:
-        - name: trigger_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Trigger ID
+      - name: trigger_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Trigger ID
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/GenerateLegendForTriggerRequest"
+              $ref: '#/components/schemas/GenerateLegendForTriggerRequest'
       responses:
-        "200":
-          $ref: "#/components/responses/GeneratedLegendForTriggerResponse"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-
+        '200':
+          $ref: '#/components/responses/GeneratedLegendForTriggerResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
   /dialogue/integrate:
     post:
       summary: Integrate generated legend into dialogue
       operationId: integrateLegendIntoDialogue
-      description: |
-        **HOT PATH ENDPOINT** - Integrates legend into ongoing dialogue
+      description: '**HOT PATH ENDPOINT** - Integrates legend into ongoing dialogue
+
         Expected performance: <100μs per request
+
+        '
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/IntegrateLegendIntoDialogueRequest"
+              $ref: '#/components/schemas/IntegrateLegendIntoDialogueRequest'
       responses:
-        "200":
-          $ref: "#/components/responses/IntegratedLegendDialogueResponse"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-
+        '200':
+          $ref: '#/components/responses/IntegratedLegendDialogueResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 components:
   securitySchemes:
     BearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
-
   responses:
     ActiveLegendTriggersResponse:
       description: Active legend triggers for dialogue integration
@@ -126,15 +124,14 @@ components:
               triggers:
                 type: array
                 items:
-                  $ref: "#/components/schemas/LegendTrigger"
+                  $ref: '#/components/schemas/LegendTrigger'
               total:
                 type: integer
                 minimum: 0
               cache_timestamp:
                 type: string
                 format: date-time
-            description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
+            description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     GeneratedLegendForTriggerResponse:
       description: Generated legend for trigger
       content:
@@ -143,7 +140,7 @@ components:
             type: object
             properties:
               legend:
-                $ref: "#/components/schemas/GeneratedLegend"
+                $ref: '#/components/schemas/GeneratedLegend'
               trigger_id:
                 type: string
                 format: uuid
@@ -152,8 +149,7 @@ components:
                 items:
                   type: string
                 description: Suggested points for dialogue integration
-            description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
+            description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     IntegratedLegendDialogueResponse:
       description: Legend integrated into dialogue
       content:
@@ -179,8 +175,7 @@ components:
                   generation_timestamp:
                     type: string
                     format: date-time
-            description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
+            description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     BadRequest:
       description: Bad request
       content:
@@ -196,7 +191,6 @@ components:
                 example: Invalid request parameters
               details:
                 type: object
-
     NotFound:
       description: Resource not found
       content:
@@ -210,7 +204,6 @@ components:
               message:
                 type: string
                 example: Trigger not found
-
     InternalServerError:
       description: Internal server error
       content:
@@ -224,37 +217,29 @@ components:
               message:
                 type: string
                 example: Internal server error
-
   schemas:
-    # Integration schemas
     LegendTrigger:
       type: object
-      required: [ id, type, conditions, legend_id ]
+      required:
+      - id
+      - type
+      - conditions
+      - legend_id
       properties:
         id:
           type: string
           format: uuid
-        type:
-          type: string
-          enum: [ location, time, faction, dialogue, player_presence ]
-        conditions:
-          type: object
-          description: Trigger conditions (location_id, faction_id, keywords, etc.)
         legend_id:
           type: string
           format: uuid
-        priority:
-          type: integer
-          minimum: 1
-          default: 1
-        cooldown_minutes:
-          type: integer
-          minimum: 0
-          default: 60
-          description: Cooldown between activations (minutes)
-        active:
-          type: boolean
-          default: true
+        type:
+          type: string
+          enum:
+          - location
+          - time
+          - faction
+          - dialogue
+          - player_presence
         created_at:
           type: string
           format: date-time
@@ -264,11 +249,27 @@ components:
         last_triggered:
           type: string
           format: date-time
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
+        conditions:
+          type: object
+          description: Trigger conditions (location_id, faction_id, keywords, etc.)
+        active:
+          type: boolean
+          default: true
+        priority:
+          type: integer
+          minimum: 1
+          default: 1
+        cooldown_minutes:
+          type: integer
+          minimum: 0
+          default: 60
+          description: Cooldown between activations (minutes)
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     GenerateLegendForTriggerRequest:
       type: object
-      required: [ trigger_id, context_data ]
+      required:
+      - trigger_id
+      - context_data
       properties:
         trigger_id:
           type: string
@@ -294,7 +295,11 @@ components:
               description: Current dialogue state
             time_context:
               type: string
-              enum: [ morning, afternoon, evening, night ]
+              enum:
+              - morning
+              - afternoon
+              - evening
+              - night
             additional_variables:
               type: object
               description: Additional variables for template substitution
@@ -308,36 +313,25 @@ components:
               default: 1
             style_preference:
               type: string
-              enum: [ formal, casual, dramatic, mysterious ]
+              enum:
+              - formal
+              - casual
+              - dramatic
+              - mysterious
               default: casual
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     IntegrateLegendIntoDialogueRequest:
       type: object
-      required: [ dialogue_id, legend_text, integration_points ]
+      required:
+      - dialogue_id
+      - legend_text
+      - integration_points
       properties:
         dialogue_id:
           type: string
           format: uuid
         legend_text:
           type: string
-        integration_points:
-          type: array
-          items:
-            type: object
-            properties:
-              position:
-                type: string
-                enum: [ beginning, middle, end, interruption ]
-              context_keywords:
-                type: array
-                items:
-                  type: string
-              priority:
-                type: integer
-                minimum: 1
-                maximum: 10
-                default: 5
         trigger_metadata:
           type: object
           properties:
@@ -348,21 +342,44 @@ components:
               type: string
             cooldown_applied:
               type: boolean
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
+        integration_points:
+          type: array
+          items:
+            type: object
+            properties:
+              position:
+                type: string
+                enum:
+                - beginning
+                - middle
+                - end
+                - interruption
+              context_keywords:
+                type: array
+                items:
+                  type: string
+              priority:
+                type: integer
+                minimum: 1
+                maximum: 10
+                default: 5
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     GeneratedLegend:
       type: object
-      required: [ text, template_id, variables_used ]
+      required:
+      - text
+      - template_id
+      - variables_used
       properties:
-        text:
-          type: string
-          description: Generated legend story text
         template_id:
           type: string
           format: uuid
         variant_id:
           type: string
           format: uuid
+        text:
+          type: string
+          description: Generated legend story text
         variables_used:
           type: object
           description: Variables that were substituted in the template
@@ -378,4 +395,4 @@ components:
             processing_time_ms:
               type: integer
               minimum: 0
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'

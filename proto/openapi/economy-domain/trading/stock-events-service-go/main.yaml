@@ -1,31 +1,44 @@
-# Issue: #142109968
 openapi: 3.0.3
 info:
   title: Stock Events Service Go API
-  description: |
-    Enterprise-Grade Stock Events Service API for NECPGAME MMOFPS RPG.
+  description: 'Enterprise-Grade Stock Events Service API for NECPGAME MMOFPS RPG.
+
 
     **Enterprise-Grade Domain:** economy-domain
 
+
     **Module:** stock-events-service-go
+
 
     **Purpose:** High-performance stock market events management
 
+
     **BACKEND NOTE:** Struct field alignment optimized (large → small types).
+
 
     All schemas ordered for optimal memory layout in generated Go code.
 
+
     Expected memory savings: 30-50% for stock-events-related structs.
+
 
     **Features:**
 
+
     - Real-time stock event processing (1000+ RPS)
+
     - Market event triggers and notifications
+
     - Event-driven trading mechanics
+
     - Economic impact calculations
+
     - Anti-cheat validation for trading events
 
+
     **Performance:** P99 <50ms for event operations, zero allocations in hot path
+
+    '
   version: 1.0.0
   license:
     name: Proprietary
@@ -35,29 +48,29 @@ info:
     url: https://necpgame.com/support
     email: api@stock-events.necpgame.com
 servers:
-  - url: http://localhost:8147/api/v1
-    description: Stock Events Service Go (development)
-  - url: https://stock-events-go.necpgame.com/api/v1
-    description: Stock Events Service Go (production)
+- url: http://localhost:8147/api/v1
+  description: Stock Events Service Go (development)
+- url: https://stock-events-go.necpgame.com/api/v1
+  description: Stock Events Service Go (production)
 tags:
-  - name: Stock Events Management
-    description: Stock market event lifecycle operations
-  - name: Event Processing
-    description: Real-time event processing and notifications
-  - name: Market Impact
-    description: Economic impact calculations and analysis
-  - name: Event Analytics
-    description: Event statistics and analytics
+- name: Stock Events Management
+  description: Stock market event lifecycle operations
+- name: Event Processing
+  description: Real-time event processing and notifications
+- name: Market Impact
+  description: Economic impact calculations and analysis
+- name: Event Analytics
+  description: Event statistics and analytics
 security:
-  - BearerAuth: [ ]
+- BearerAuth: []
 paths:
   /health:
     get:
       tags:
-        - Stock Events Management
+      - Stock Events Management
       summary: Service health check
       operationId: getHealth
-      security: [ ]
+      security: []
       responses:
         '200':
           description: Service is healthy
@@ -68,13 +81,13 @@ paths:
                 properties:
                   status:
                     type: string
-                    example: "healthy"
+                    example: healthy
                   timestamp:
                     type: string
                     format: date-time
                   version:
                     type: string
-                    example: "1.0.0"
+                    example: 1.0.0
         '503':
           description: Service unhealthy
           content:
@@ -84,43 +97,49 @@ paths:
                 properties:
                   status:
                     type: string
-                    example: "unhealthy"
+                    example: unhealthy
                   error:
                     type: string
-
   /economy/stock/events:
     get:
       tags:
-        - Stock Events Management
+      - Stock Events Management
       summary: Get active stock events
       operationId: getActiveStockEvents
       parameters:
-        - name: stock_symbol
-          in: query
-          schema:
-            type: string
-          description: Filter by specific stock symbol
-        - name: event_type
-          in: query
-          schema:
-            type: string
-            enum: [ earnings, dividend, split, acquisition, regulatory, market_crash, boom ]
-          description: Filter by event type
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 50
-          description: Number of events to return
-        - name: offset
-          in: query
-          schema:
-            type: integer
-            minimum: 0
-            default: 0
-          description: Pagination offset
+      - name: stock_symbol
+        in: query
+        schema:
+          type: string
+        description: Filter by specific stock symbol
+      - name: event_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - earnings
+          - dividend
+          - split
+          - acquisition
+          - regulatory
+          - market_crash
+          - boom
+        description: Filter by event type
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+        description: Number of events to return
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+        description: Pagination offset
       responses:
         '200':
           description: List of active stock events
@@ -131,14 +150,14 @@ paths:
                 items:
                   $ref: '#/components/schemas/StockEvent'
         '400':
-          $ref: '../../../common-schemas.yaml#/components/responses/BadRequest'
+          $ref: ../../../common-schemas.yaml#/components/responses/BadRequest
         '401':
-          $ref: '../../../common-schemas.yaml#/components/responses/Unauthorized'
+          $ref: ../../../common-schemas.yaml#/components/responses/Unauthorized
         '500':
-          $ref: '../../../common-schemas.yaml#/components/responses/InternalServerError'
+          $ref: ../../../common-schemas.yaml#/components/responses/InternalServerError
     post:
       tags:
-        - Stock Events Management
+      - Stock Events Management
       summary: Create new stock event
       operationId: createStockEvent
       requestBody:
@@ -155,26 +174,25 @@ paths:
               schema:
                 $ref: '#/components/schemas/StockEvent'
         '400':
-          $ref: '../../../common-schemas.yaml#/components/responses/BadRequest'
+          $ref: ../../../common-schemas.yaml#/components/responses/BadRequest
         '401':
-          $ref: '../../../common-schemas.yaml#/components/responses/Unauthorized'
+          $ref: ../../../common-schemas.yaml#/components/responses/Unauthorized
         '500':
-          $ref: '../../../common-schemas.yaml#/components/responses/InternalServerError'
-
+          $ref: ../../../common-schemas.yaml#/components/responses/InternalServerError
   /economy/stock/events/{event_id}:
     get:
       tags:
-        - Stock Events Management
+      - Stock Events Management
       summary: Get stock event details
       operationId: getStockEventDetails
       parameters:
-        - name: event_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Stock event unique identifier
+      - name: event_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Stock event unique identifier
       responses:
         '200':
           description: Stock event details
@@ -185,24 +203,23 @@ paths:
         '404':
           description: Stock event not found
         '401':
-          $ref: '../../../common-schemas.yaml#/components/responses/Unauthorized'
+          $ref: ../../../common-schemas.yaml#/components/responses/Unauthorized
         '500':
-          $ref: '../../../common-schemas.yaml#/components/responses/InternalServerError'
-
+          $ref: ../../../common-schemas.yaml#/components/responses/InternalServerError
   /economy/stock/events/{event_id}/impact:
     get:
       tags:
-        - Market Impact
+      - Market Impact
       summary: Calculate market impact of stock event
       operationId: calculateEventImpact
       parameters:
-        - name: event_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Stock event unique identifier
+      - name: event_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Stock event unique identifier
       responses:
         '200':
           description: Event impact analysis
@@ -213,30 +230,40 @@ paths:
         '404':
           description: Stock event not found
         '401':
-          $ref: '../../../common-schemas.yaml#/components/responses/Unauthorized'
+          $ref: ../../../common-schemas.yaml#/components/responses/Unauthorized
         '500':
-          $ref: '../../../common-schemas.yaml#/components/responses/InternalServerError'
-
+          $ref: ../../../common-schemas.yaml#/components/responses/InternalServerError
   /economy/stock/events/analytics:
     get:
       tags:
-        - Event Analytics
+      - Event Analytics
       summary: Get stock events analytics
       operationId: getStockEventsAnalytics
       parameters:
-        - name: timeframe
-          in: query
-          schema:
-            type: string
-            enum: [ 1h, 24h, 7d, 30d ]
-            default: 24h
-          description: Analytics timeframe
-        - name: event_type
-          in: query
-          schema:
-            type: string
-            enum: [ earnings, dividend, split, acquisition, regulatory, market_crash, boom ]
-          description: Filter by event type
+      - name: timeframe
+        in: query
+        schema:
+          type: string
+          enum:
+          - 1h
+          - 24h
+          - 7d
+          - 30d
+          default: 24h
+        description: Analytics timeframe
+      - name: event_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - earnings
+          - dividend
+          - split
+          - acquisition
+          - regulatory
+          - market_crash
+          - boom
+        description: Filter by event type
       responses:
         '200':
           description: Stock events analytics
@@ -245,25 +272,24 @@ paths:
               schema:
                 $ref: '#/components/schemas/StockEventsAnalytics'
         '400':
-          $ref: '../../../common-schemas.yaml#/components/responses/BadRequest'
+          $ref: ../../../common-schemas.yaml#/components/responses/BadRequest
         '401':
-          $ref: '../../../common-schemas.yaml#/components/responses/Unauthorized'
+          $ref: ../../../common-schemas.yaml#/components/responses/Unauthorized
         '500':
-          $ref: '../../../common-schemas.yaml#/components/responses/InternalServerError'
-
+          $ref: ../../../common-schemas.yaml#/components/responses/InternalServerError
 components:
   schemas:
     StockEvent:
       type: object
       required:
-        - id
-        - stock_symbol
-        - event_type
-        - title
-        - description
-        - impact
-        - start_time
-        - end_time
+      - id
+      - stock_symbol
+      - event_type
+      - title
+      - description
+      - impact
+      - start_time
+      - end_time
       properties:
         id:
           type: string
@@ -274,7 +300,14 @@ components:
           description: Stock symbol affected by the event
         event_type:
           type: string
-          enum: [ earnings, dividend, split, acquisition, regulatory, market_crash, boom ]
+          enum:
+          - earnings
+          - dividend
+          - split
+          - acquisition
+          - regulatory
+          - market_crash
+          - boom
           description: Type of stock event
         title:
           type: string
@@ -282,8 +315,6 @@ components:
         description:
           type: string
           description: Detailed event description
-        impact:
-          $ref: '#/components/schemas/EventImpact'
         start_time:
           type: string
           format: date-time
@@ -294,7 +325,11 @@ components:
           description: Event end time
         status:
           type: string
-          enum: [ upcoming, active, completed, cancelled ]
+          enum:
+          - upcoming
+          - active
+          - completed
+          - cancelled
           default: upcoming
           description: Current event status
         created_at:
@@ -303,25 +338,33 @@ components:
         updated_at:
           type: string
           format: date-time
+        impact:
+          $ref: '#/components/schemas/EventImpact'
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     CreateStockEventRequest:
       type: object
       required:
-        - stock_symbol
-        - event_type
-        - title
-        - description
-        - impact
-        - start_time
-        - end_time
+      - stock_symbol
+      - event_type
+      - title
+      - description
+      - impact
+      - start_time
+      - end_time
       properties:
         stock_symbol:
           type: string
           description: Stock symbol affected by the event
         event_type:
           type: string
-          enum: [ earnings, dividend, split, acquisition, regulatory, market_crash, boom ]
+          enum:
+          - earnings
+          - dividend
+          - split
+          - acquisition
+          - regulatory
+          - market_crash
+          - boom
           description: Type of stock event
         title:
           type: string
@@ -329,8 +372,6 @@ components:
         description:
           type: string
           description: Detailed event description
-        impact:
-          $ref: '#/components/schemas/EventImpact'
         start_time:
           type: string
           format: date-time
@@ -339,14 +380,26 @@ components:
           type: string
           format: date-time
           description: Event end time
+        impact:
+          $ref: '#/components/schemas/EventImpact'
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     EventImpact:
       type: object
       required:
-        - price_change_percent
-        - volume_multiplier
+      - price_change_percent
+      - volume_multiplier
       properties:
+        economic_indicators:
+          type: object
+          additionalProperties:
+            type: number
+            format: float
+          description: Economic indicators affected by this event
+        affected_stocks:
+          type: array
+          items:
+            type: string
+          description: List of additionally affected stock symbols
         price_change_percent:
           type: number
           format: float
@@ -366,47 +419,34 @@ components:
           maximum: 5.0
           default: 1.0
           description: Market volatility increase factor
-        affected_stocks:
-          type: array
-          items:
-            type: string
-          description: List of additionally affected stock symbols
-        economic_indicators:
-          type: object
-          additionalProperties:
-            type: number
-            format: float
-          description: Economic indicators affected by this event
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     EventImpactAnalysis:
       type: object
       properties:
         event_id:
           type: string
           format: uuid
+        risk_assessment:
+          type: string
+          enum:
+          - low
+          - medium
+          - high
+          - extreme
         current_impact:
           $ref: '#/components/schemas/EventImpact'
         projected_outcomes:
           type: array
           items:
             $ref: '#/components/schemas/ProjectedOutcome'
-        risk_assessment:
-          type: string
-          enum: [ low, medium, high, extreme ]
         recommendations:
           type: array
           items:
             type: string
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     ProjectedOutcome:
       type: object
       properties:
-        timeframe_minutes:
-          type: integer
-          format: int32
-          description: Timeframe in minutes
         projected_price:
           type: number
           format: float
@@ -417,14 +457,14 @@ components:
           minimum: 0.0
           maximum: 1.0
           description: Confidence level of projection
+        timeframe_minutes:
+          type: integer
+          format: int32
+          description: Timeframe in minutes
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     StockEventsAnalytics:
       type: object
       properties:
-        total_events:
-          type: integer
-          format: int32
         events_by_type:
           type: object
           additionalProperties:
@@ -454,16 +494,17 @@ components:
               volatility_index:
                 type: number
                 format: float
+        total_events:
+          type: integer
+          format: int32
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
   securitySchemes:
     BearerAuth:
-      $ref: '../../../common-schemas.yaml#/components/securitySchemes/BearerAuth'
+      $ref: ../../../common-schemas.yaml#/components/securitySchemes/BearerAuth
   responses:
     BadRequest:
-      $ref: '../../../common-schemas.yaml#/components/responses/BadRequest'
+      $ref: ../../../common-schemas.yaml#/components/responses/BadRequest
     Unauthorized:
-      $ref: '../../../common-schemas.yaml#/components/responses/Unauthorized'
+      $ref: ../../../common-schemas.yaml#/components/responses/Unauthorized
     InternalServerError:
-      $ref: '../../../common-schemas.yaml#/components/responses/InternalServerError'
-
+      $ref: ../../../common-schemas.yaml#/components/responses/InternalServerError

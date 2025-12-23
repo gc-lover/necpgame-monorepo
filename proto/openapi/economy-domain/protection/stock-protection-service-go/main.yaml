@@ -1,31 +1,44 @@
-# Issue: #142109968
 openapi: 3.0.3
 info:
   title: Stock Protection Service Go API
-  description: |
-    Enterprise-Grade Stock Protection Service API for NECPGAME MMOFPS RPG.
+  description: 'Enterprise-Grade Stock Protection Service API for NECPGAME MMOFPS RPG.
+
 
     **Enterprise-Grade Domain:** economy-domain
 
+
     **Module:** stock-protection-service-go
+
 
     **Purpose:** High-performance stock portfolio protection and risk management
 
+
     **BACKEND NOTE:** Struct field alignment optimized (large → small types).
+
 
     All schemas ordered for optimal memory layout in generated Go code.
 
+
     Expected memory savings: 30-50% for stock-protection-related structs.
+
 
     **Features:**
 
+
     - Real-time portfolio protection (1000+ RPS)
+
     - Stop-loss and take-profit orders
+
     - Circuit breaker mechanisms
+
     - Risk assessment and alerts
+
     - Anti-cheat validation for protection orders
 
+
     **Performance:** P99 <30ms for protection operations, zero allocations in hot path
+
+    '
   version: 1.0.0
   license:
     name: Proprietary
@@ -35,29 +48,29 @@ info:
     url: https://necpgame.com/support
     email: api@stock-protection.necpgame.com
 servers:
-  - url: http://localhost:8152/api/v1
-    description: Stock Protection Service Go (development)
-  - url: https://stock-protection-go.necpgame.com/api/v1
-    description: Stock Protection Service Go (production)
+- url: http://localhost:8152/api/v1
+  description: Stock Protection Service Go (development)
+- url: https://stock-protection-go.necpgame.com/api/v1
+  description: Stock Protection Service Go (production)
 tags:
-  - name: Portfolio Protection
-    description: Stock portfolio protection operations
-  - name: Risk Management
-    description: Risk assessment and management
-  - name: Circuit Breakers
-    description: Market circuit breaker operations
-  - name: Protection Orders
-    description: Stop-loss and take-profit orders
+- name: Portfolio Protection
+  description: Stock portfolio protection operations
+- name: Risk Management
+  description: Risk assessment and management
+- name: Circuit Breakers
+  description: Market circuit breaker operations
+- name: Protection Orders
+  description: Stop-loss and take-profit orders
 security:
-  - BearerAuth: [ ]
+- BearerAuth: []
 paths:
   /health:
     get:
       tags:
-        - Portfolio Protection
+      - Portfolio Protection
       summary: Service health check
       operationId: getHealth
-      security: [ ]
+      security: []
       responses:
         '200':
           description: Service is healthy
@@ -68,13 +81,13 @@ paths:
                 properties:
                   status:
                     type: string
-                    example: "healthy"
+                    example: healthy
                   timestamp:
                     type: string
                     format: date-time
                   version:
                     type: string
-                    example: "1.0.0"
+                    example: 1.0.0
         '503':
           description: Service unhealthy
           content:
@@ -84,37 +97,40 @@ paths:
                 properties:
                   status:
                     type: string
-                    example: "unhealthy"
+                    example: unhealthy
                   error:
                     type: string
-
   /economy/stock/protection/orders:
     get:
       tags:
-        - Protection Orders
+      - Protection Orders
       summary: Get user's protection orders
       operationId: getProtectionOrders
       parameters:
-        - name: status
-          in: query
-          schema:
-            type: string
-            enum: [ active, triggered, cancelled, expired ]
-            default: active
-          description: Filter by order status
-        - name: stock_symbol
-          in: query
-          schema:
-            type: string
-          description: Filter by stock symbol
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 50
-          description: Number of orders to return
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - active
+          - triggered
+          - cancelled
+          - expired
+          default: active
+        description: Filter by order status
+      - name: stock_symbol
+        in: query
+        schema:
+          type: string
+        description: Filter by stock symbol
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+        description: Number of orders to return
       responses:
         '200':
           description: List of protection orders
@@ -125,14 +141,14 @@ paths:
                 items:
                   $ref: '#/components/schemas/ProtectionOrder'
         '400':
-          $ref: '../../../common-schemas.yaml#/components/responses/BadRequest'
+          $ref: ../../../common-schemas.yaml#/components/responses/BadRequest
         '401':
-          $ref: '../../../common-schemas.yaml#/components/responses/Unauthorized'
+          $ref: ../../../common-schemas.yaml#/components/responses/Unauthorized
         '500':
-          $ref: '../../../common-schemas.yaml#/components/responses/InternalServerError'
+          $ref: ../../../common-schemas.yaml#/components/responses/InternalServerError
     post:
       tags:
-        - Protection Orders
+      - Protection Orders
       summary: Create protection order
       operationId: createProtectionOrder
       requestBody:
@@ -149,28 +165,27 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProtectionOrder'
         '400':
-          $ref: '../../../common-schemas.yaml#/components/responses/BadRequest'
+          $ref: ../../../common-schemas.yaml#/components/responses/BadRequest
         '401':
-          $ref: '../../../common-schemas.yaml#/components/responses/Unauthorized'
+          $ref: ../../../common-schemas.yaml#/components/responses/Unauthorized
         '422':
           description: Invalid order parameters
         '500':
-          $ref: '../../../common-schemas.yaml#/components/responses/InternalServerError'
-
+          $ref: ../../../common-schemas.yaml#/components/responses/InternalServerError
   /economy/stock/protection/orders/{order_id}:
     get:
       tags:
-        - Protection Orders
+      - Protection Orders
       summary: Get protection order details
       operationId: getProtectionOrderDetails
       parameters:
-        - name: order_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Protection order unique identifier
+      - name: order_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Protection order unique identifier
       responses:
         '200':
           description: Protection order details
@@ -181,22 +196,22 @@ paths:
         '404':
           description: Protection order not found
         '401':
-          $ref: '../../../common-schemas.yaml#/components/responses/Unauthorized'
+          $ref: ../../../common-schemas.yaml#/components/responses/Unauthorized
         '500':
-          $ref: '../../../common-schemas.yaml#/components/responses/InternalServerError'
+          $ref: ../../../common-schemas.yaml#/components/responses/InternalServerError
     delete:
       tags:
-        - Protection Orders
+      - Protection Orders
       summary: Cancel protection order
       operationId: cancelProtectionOrder
       parameters:
-        - name: order_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Protection order unique identifier
+      - name: order_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Protection order unique identifier
       responses:
         '204':
           description: Protection order cancelled successfully
@@ -205,14 +220,13 @@ paths:
         '409':
           description: Cannot cancel triggered order
         '401':
-          $ref: '../../../common-schemas.yaml#/components/responses/Unauthorized'
+          $ref: ../../../common-schemas.yaml#/components/responses/Unauthorized
         '500':
-          $ref: '../../../common-schemas.yaml#/components/responses/InternalServerError'
-
+          $ref: ../../../common-schemas.yaml#/components/responses/InternalServerError
   /economy/stock/protection/risk-assessment:
     post:
       tags:
-        - Risk Management
+      - Risk Management
       summary: Assess portfolio risk
       operationId: assessPortfolioRisk
       requestBody:
@@ -229,26 +243,28 @@ paths:
               schema:
                 $ref: '#/components/schemas/RiskAssessmentResponse'
         '400':
-          $ref: '../../../common-schemas.yaml#/components/responses/BadRequest'
+          $ref: ../../../common-schemas.yaml#/components/responses/BadRequest
         '401':
-          $ref: '../../../common-schemas.yaml#/components/responses/Unauthorized'
+          $ref: ../../../common-schemas.yaml#/components/responses/Unauthorized
         '500':
-          $ref: '../../../common-schemas.yaml#/components/responses/InternalServerError'
-
+          $ref: ../../../common-schemas.yaml#/components/responses/InternalServerError
   /economy/stock/protection/circuit-breakers:
     get:
       tags:
-        - Circuit Breakers
+      - Circuit Breakers
       summary: Get active circuit breakers
       operationId: getCircuitBreakers
       parameters:
-        - name: status
-          in: query
-          schema:
-            type: string
-            enum: [ active, triggered, reset ]
-            default: active
-          description: Filter by circuit breaker status
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - active
+          - triggered
+          - reset
+          default: active
+        description: Filter by circuit breaker status
       responses:
         '200':
           description: List of circuit breakers
@@ -259,33 +275,36 @@ paths:
                 items:
                   $ref: '#/components/schemas/CircuitBreaker'
         '400':
-          $ref: '../../../common-schemas.yaml#/components/responses/BadRequest'
+          $ref: ../../../common-schemas.yaml#/components/responses/BadRequest
         '401':
-          $ref: '../../../common-schemas.yaml#/components/responses/Unauthorized'
+          $ref: ../../../common-schemas.yaml#/components/responses/Unauthorized
         '500':
-          $ref: '../../../common-schemas.yaml#/components/responses/InternalServerError'
-
+          $ref: ../../../common-schemas.yaml#/components/responses/InternalServerError
   /economy/stock/protection/alerts:
     get:
       tags:
-        - Portfolio Protection
+      - Portfolio Protection
       summary: Get protection alerts
       operationId: getProtectionAlerts
       parameters:
-        - name: severity
-          in: query
-          schema:
-            type: string
-            enum: [ low, medium, high, critical ]
-          description: Filter by alert severity
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 50
-          description: Number of alerts to return
+      - name: severity
+        in: query
+        schema:
+          type: string
+          enum:
+          - low
+          - medium
+          - high
+          - critical
+        description: Filter by alert severity
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+        description: Number of alerts to return
       responses:
         '200':
           description: List of protection alerts
@@ -296,25 +315,24 @@ paths:
                 items:
                   $ref: '#/components/schemas/ProtectionAlert'
         '400':
-          $ref: '../../../common-schemas.yaml#/components/responses/BadRequest'
+          $ref: ../../../common-schemas.yaml#/components/responses/BadRequest
         '401':
-          $ref: '../../../common-schemas.yaml#/components/responses/Unauthorized'
+          $ref: ../../../common-schemas.yaml#/components/responses/Unauthorized
         '500':
-          $ref: '../../../common-schemas.yaml#/components/responses/InternalServerError'
-
+          $ref: ../../../common-schemas.yaml#/components/responses/InternalServerError
 components:
   schemas:
     ProtectionOrder:
       type: object
       required:
-        - id
-        - user_id
-        - stock_symbol
-        - order_type
-        - trigger_price
-        - quantity
-        - status
-        - created_at
+      - id
+      - user_id
+      - stock_symbol
+      - order_type
+      - trigger_price
+      - quantity
+      - status
+      - created_at
       properties:
         id:
           type: string
@@ -329,20 +347,18 @@ components:
           description: Stock symbol to protect
         order_type:
           type: string
-          enum: [ stop_loss, take_profit, trailing_stop ]
+          enum:
+          - stop_loss
+          - take_profit
+          - trailing_stop
           description: Type of protection order
-        trigger_price:
-          type: number
-          format: float
-          description: Price at which to trigger the order
-        quantity:
-          type: integer
-          format: int32
-          minimum: 1
-          description: Number of shares to protect
         status:
           type: string
-          enum: [ active, triggered, cancelled, expired ]
+          enum:
+          - active
+          - triggered
+          - cancelled
+          - expired
           description: Current order status
         triggered_at:
           type: string
@@ -355,22 +371,33 @@ components:
         updated_at:
           type: string
           format: date-time
+        trigger_price:
+          type: number
+          format: float
+          description: Price at which to trigger the order
+        quantity:
+          type: integer
+          format: int32
+          minimum: 1
+          description: Number of shares to protect
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     CreateProtectionOrderRequest:
       type: object
       required:
-        - stock_symbol
-        - order_type
-        - trigger_price
-        - quantity
+      - stock_symbol
+      - order_type
+      - trigger_price
+      - quantity
       properties:
         stock_symbol:
           type: string
           description: Stock symbol to protect
         order_type:
           type: string
-          enum: [ stop_loss, take_profit, trailing_stop ]
+          enum:
+          - stop_loss
+          - take_profit
+          - trailing_stop
           description: Type of protection order
         trigger_price:
           type: number
@@ -389,38 +416,35 @@ components:
           default: 30
           description: Order expiration in days
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     RiskAssessmentRequest:
       type: object
       required:
-        - portfolio
+      - portfolio
       properties:
+        risk_tolerance:
+          type: string
+          enum:
+          - conservative
+          - moderate
+          - aggressive
+          default: moderate
+          description: User's risk tolerance level
         portfolio:
           type: array
           items:
             $ref: '#/components/schemas/PortfolioPosition'
           description: List of portfolio positions to assess
-        risk_tolerance:
-          type: string
-          enum: [ conservative, moderate, aggressive ]
-          default: moderate
-          description: User's risk tolerance level
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     PortfolioPosition:
       type: object
       required:
-        - stock_symbol
-        - quantity
-        - average_price
+      - stock_symbol
+      - quantity
+      - average_price
       properties:
         stock_symbol:
           type: string
           description: Stock symbol
-        quantity:
-          type: integer
-          format: int32
-          description: Number of shares held
         average_price:
           type: number
           format: float
@@ -429,14 +453,21 @@ components:
           type: number
           format: float
           description: Current market price
+        quantity:
+          type: integer
+          format: int32
+          description: Number of shares held
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     RiskAssessmentResponse:
       type: object
       properties:
         overall_risk_level:
           type: string
-          enum: [ low, medium, high, extreme ]
+          enum:
+          - low
+          - medium
+          - high
+          - extreme
           description: Overall portfolio risk level
         risk_factors:
           type: array
@@ -454,17 +485,23 @@ components:
           maximum: 1.0
           description: Portfolio diversification score
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     RiskFactor:
       type: object
       properties:
         factor_type:
           type: string
-          enum: [ volatility, concentration, liquidity, correlation ]
+          enum:
+          - volatility
+          - concentration
+          - liquidity
+          - correlation
           description: Type of risk factor
         severity:
           type: string
-          enum: [ low, medium, high ]
+          enum:
+          - low
+          - medium
+          - high
           description: Risk severity level
         description:
           type: string
@@ -475,15 +512,14 @@ components:
             type: string
           description: Stock symbols affected by this risk factor
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     CircuitBreaker:
       type: object
       required:
-        - id
-        - stock_symbol
-        - trigger_condition
-        - status
-        - created_at
+      - id
+      - stock_symbol
+      - trigger_condition
+      - status
+      - created_at
       properties:
         id:
           type: string
@@ -492,11 +528,12 @@ components:
         stock_symbol:
           type: string
           description: Stock symbol protected by circuit breaker
-        trigger_condition:
-          $ref: '#/components/schemas/TriggerCondition'
         status:
           type: string
-          enum: [ active, triggered, reset ]
+          enum:
+          - active
+          - triggered
+          - reset
           description: Circuit breaker status
         triggered_at:
           type: string
@@ -514,17 +551,21 @@ components:
         updated_at:
           type: string
           format: date-time
+        trigger_condition:
+          $ref: '#/components/schemas/TriggerCondition'
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     TriggerCondition:
       type: object
       required:
-        - type
-        - threshold
+      - type
+      - threshold
       properties:
         type:
           type: string
-          enum: [ price_drop_percent, volume_spike, volatility_spike ]
+          enum:
+          - price_drop_percent
+          - volume_spike
+          - volatility_spike
           description: Type of trigger condition
         threshold:
           type: number
@@ -536,16 +577,15 @@ components:
           default: 5
           description: Timeframe in minutes for condition evaluation
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     ProtectionAlert:
       type: object
       required:
-        - id
-        - user_id
-        - alert_type
-        - severity
-        - message
-        - created_at
+      - id
+      - user_id
+      - alert_type
+      - severity
+      - message
+      - created_at
       properties:
         id:
           type: string
@@ -555,13 +595,26 @@ components:
           type: string
           format: uuid
           description: User who should receive the alert
+        related_order_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: Related protection order ID
         alert_type:
           type: string
-          enum: [ order_triggered, risk_warning, circuit_breaker, market_volatility ]
+          enum:
+          - order_triggered
+          - risk_warning
+          - circuit_breaker
+          - market_volatility
           description: Type of protection alert
         severity:
           type: string
-          enum: [ low, medium, high, critical ]
+          enum:
+          - low
+          - medium
+          - high
+          - critical
           description: Alert severity level
         message:
           type: string
@@ -570,11 +623,6 @@ components:
           type: string
           nullable: true
           description: Stock symbol related to the alert
-        related_order_id:
-          type: string
-          format: uuid
-          nullable: true
-          description: Related protection order ID
         created_at:
           type: string
           format: date-time
@@ -584,15 +632,13 @@ components:
           nullable: true
           description: Timestamp when user acknowledged the alert
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
   securitySchemes:
     BearerAuth:
-      $ref: '../../../common-schemas.yaml#/components/securitySchemes/BearerAuth'
+      $ref: ../../../common-schemas.yaml#/components/securitySchemes/BearerAuth
   responses:
     BadRequest:
-      $ref: '../../../common-schemas.yaml#/components/responses/BadRequest'
+      $ref: ../../../common-schemas.yaml#/components/responses/BadRequest
     Unauthorized:
-      $ref: '../../../common-schemas.yaml#/components/responses/Unauthorized'
+      $ref: ../../../common-schemas.yaml#/components/responses/Unauthorized
     InternalServerError:
-      $ref: '../../../common-schemas.yaml#/components/responses/InternalServerError'
-
+      $ref: ../../../common-schemas.yaml#/components/responses/InternalServerError

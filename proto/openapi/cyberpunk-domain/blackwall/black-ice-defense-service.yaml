@@ -42,22 +42,22 @@ info:
     name: NECPGAME API Support
     email: api@necpgame.com
 servers:
-  - url: http://localhost:8083
-    description: Gameplay Service
-  - url: https://gameplay.necpgame.com
-    description: Gameplay Service (продакшн)
+- url: http://localhost:8083
+  description: Gameplay Service
+- url: https://gameplay.necpgame.com
+  description: Gameplay Service (продакшн)
 tags:
-  - name: Defense
-    description: Защита от Black ICE
-  - name: Demons
-    description: Демоны защиты
-  - name: Equipment
-    description: Оборудование защиты
+- name: Defense
+  description: Защита от Black ICE
+- name: Demons
+  description: Демоны защиты
+- name: Equipment
+  description: Оборудование защиты
 paths:
   /api/v1/hacking/blackice/{ice_id}/defend:
     post:
       tags:
-        - Defense
+      - Defense
       summary: Активация защиты
       description: 'Активирует защиту от Black ICE (демон, имплант или оборудование).
 
@@ -66,14 +66,14 @@ paths:
         '
       operationId: defendAgainstBlackICE
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: ice_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: ice_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       requestBody:
         required: true
         content:
@@ -92,7 +92,7 @@ paths:
   /api/v1/hacking/blackice/defense/available:
     get:
       tags:
-        - Defense
+      - Defense
       summary: Доступные защиты
       description: 'Возвращает список доступных защит для персонажа.
 
@@ -101,14 +101,14 @@ paths:
         '
       operationId: getAvailableDefenses
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: character_id
-          in: query
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: character_id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
         '200':
           description: Список доступных защит
@@ -121,43 +121,43 @@ paths:
   /api/v1/hacking/blackice/defense/effectiveness:
     get:
       tags:
-        - Defense
+      - Defense
       summary: Эффективность защиты
       description: 'Возвращает матрицу эффективности защиты против различных типов Black ICE.
 
         '
       operationId: getDefenseEffectiveness
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: defense_type
-          in: query
-          schema:
-            type: string
-            enum:
-              - shield_demon
-              - counter_demon
-              - escape_demon
-              - analyze_demon
-              - purge_demon
-              - decoy_demon
-              - neural_buffer
-              - overload_limiter
-              - blackice_detector
-              - emergency_eject
-              - scanner
-              - disruptor
-              - protection_module
-        - name: ice_type
-          in: query
-          schema:
-            type: string
-            enum:
-              - killer
-              - hunter
-              - deception
-              - corruption
-              - collective
+      - name: defense_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - shield_demon
+          - counter_demon
+          - escape_demon
+          - analyze_demon
+          - purge_demon
+          - decoy_demon
+          - neural_buffer
+          - overload_limiter
+          - blackice_detector
+          - emergency_eject
+          - scanner
+          - disruptor
+          - protection_module
+      - name: ice_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - killer
+          - hunter
+          - deception
+          - corruption
+          - collective
       responses:
         '200':
           description: Матрица эффективности
@@ -173,9 +173,9 @@ components:
     DefendRequest:
       type: object
       required:
-        - character_id
-        - defense_type
-        - defense_id
+      - character_id
+      - defense_type
+      - defense_id
       properties:
         character_id:
           type: string
@@ -186,20 +186,22 @@ components:
         defense_type:
           type: string
           enum:
-            - demon
-            - implant
-            - equipment
+          - demon
+          - implant
+          - equipment
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     DefenseResult:
       type: object
       required:
-        - defense_active
-        - effectiveness
+      - defense_active
+      - effectiveness
       properties:
         warnings:
           type: array
           items:
             type: string
+        defense_active:
+          type: boolean
         cooldown_remaining:
           type: integer
           format: int64
@@ -212,8 +214,6 @@ components:
         overload_reduction:
           type: integer
           description: Снижение скорости перегрузки
-        defense_active:
-          type: boolean
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     AvailableDefenses:
       type: object
@@ -237,9 +237,9 @@ components:
     DefenseDemon:
       type: object
       required:
-        - demon_id
-        - demon_type
-        - cooldown
+      - demon_id
+      - demon_type
+      - cooldown
       properties:
         demon_id:
           type: string
@@ -253,12 +253,12 @@ components:
         demon_type:
           type: string
           enum:
-            - shield
-            - counter
-            - escape
-            - analyze
-            - purge
-            - decoy
+          - shield
+          - counter
+          - escape
+          - analyze
+          - purge
+          - decoy
         requirements:
           type: object
           properties:
@@ -274,9 +274,9 @@ components:
     DefenseImplant:
       type: object
       required:
-        - implant_id
-        - implant_type
-        - slot
+      - implant_id
+      - implant_type
+      - slot
       properties:
         implant_id:
           type: string
@@ -292,23 +292,23 @@ components:
         implant_type:
           type: string
           enum:
-            - neural_buffer
-            - overload_limiter
-            - blackice_detector
-            - emergency_eject
+          - neural_buffer
+          - overload_limiter
+          - blackice_detector
+          - emergency_eject
         slot:
           type: string
           enum:
-            - neural
-            - cybernetic
-            - sensor
-            - system
+          - neural
+          - cybernetic
+          - sensor
+          - system
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     DefenseEquipment:
       type: object
       required:
-        - equipment_id
-        - equipment_type
+      - equipment_id
+      - equipment_type
       properties:
         equipment_id:
           type: string
@@ -320,9 +320,9 @@ components:
         equipment_type:
           type: string
           enum:
-            - scanner
-            - disruptor
-            - protection_module
+          - scanner
+          - disruptor
+          - protection_module
         requirements:
           type: object
           properties:

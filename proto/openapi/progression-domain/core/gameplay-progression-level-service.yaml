@@ -10,50 +10,50 @@ info:
     name: NECPGAME API Support
     email: api@necp.game
 servers:
-  - url: http://localhost:8083/api/v1
-    description: Локальный сервер разработки
-  - url: https://api.necp.game/api/v1
-    description: Продакшен сервер
+- url: http://localhost:8083/api/v1
+  description: Локальный сервер разработки
+- url: https://api.necp.game/api/v1
+  description: Продакшен сервер
 tags:
-  - name: Progression Level
-    description: Управление уровнями и опытом
+- name: Progression Level
+  description: Управление уровнями и опытом
 paths:
   /gameplay/progression/experience/calculate:
     get:
       tags:
-        - Progression Level
+      - Progression Level
       summary: Рассчитать опыт
       operationId: calculateExperience
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: base_xp
-          in: query
-          required: true
-          schema:
-            type: integer
-            minimum: 1
-        - name: source
-          in: query
-          required: true
-          schema:
-            type: string
-            enum:
-              - combat:enemy-killed
-              - quest:completed
-              - skill:used
-              - exploration:area-discovered
-              - achievement:unlocked
-        - name: level
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-        - name: modifiers
-          in: query
-          schema:
-            type: object
-            additionalProperties: true
+      - name: base_xp
+        in: query
+        required: true
+        schema:
+          type: integer
+          minimum: 1
+      - name: source
+        in: query
+        required: true
+        schema:
+          type: string
+          enum:
+          - combat:enemy-killed
+          - quest:completed
+          - skill:used
+          - exploration:area-discovered
+          - achievement:unlocked
+      - name: level
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+      - name: modifiers
+        in: query
+        schema:
+          type: object
+          additionalProperties: true
       responses:
         '200':
           description: Результат расчёта опыта
@@ -70,18 +70,18 @@ paths:
   /gameplay/progression/level/{playerId}:
     get:
       tags:
-        - Progression Level
+      - Progression Level
       summary: Получить уровень игрока
       operationId: getPlayerLevel
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: playerId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: playerId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
         '200':
           description: Уровень игрока
@@ -98,11 +98,11 @@ paths:
   /gameplay/progression/level/check:
     post:
       tags:
-        - Progression Level
+      - Progression Level
       summary: Проверить повышение уровня
       operationId: checkLevelUp
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -125,18 +125,18 @@ paths:
   /gameplay/progression/level/requirements/{level}:
     get:
       tags:
-        - Progression Level
+      - Progression Level
       summary: Получить требования к уровню
       operationId: getLevelRequirements
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: level
-          in: path
-          required: true
-          schema:
-            type: integer
-            minimum: 1
+      - name: level
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 1
       responses:
         '200':
           description: Требования к уровню
@@ -217,8 +217,8 @@ components:
     CheckLevelUpRequest:
       type: object
       required:
-        - player_id
-        - current_experience
+      - player_id
+      - current_experience
       properties:
         player_id:
           type: string
@@ -236,6 +236,8 @@ components:
         player_id:
           type: string
           format: uuid
+        level_up_available:
+          type: boolean
         current_level:
           type: integer
         new_level:
@@ -247,8 +249,6 @@ components:
         skill_points_gained:
           type: integer
           nullable: true
-        level_up_available:
-          type: boolean
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     LevelRequirementsResponse:
       type: object
@@ -267,22 +267,15 @@ components:
     Error:
       type: object
       required:
-        - message
-        - code
-        - timestamp
+      - message
+      - code
+      - timestamp
       properties:
         message:
           type: string
           description: Human-readable error message
           example: Internal server error
           maxLength: 1000
-        code:
-          type: integer
-          description: HTTP status code
-          example: 500
-          format: int32
-          minimum: 100
-          maximum: 599
         timestamp:
           type: string
           format: date-time
@@ -291,5 +284,12 @@ components:
           type: string
           description: Error domain
           example: progression
+        code:
+          type: integer
+          description: HTTP status code
+          example: 500
+          format: int32
+          minimum: 100
+          maximum: 599
 security:
-  - BearerAuth: [ ]
+- BearerAuth: []

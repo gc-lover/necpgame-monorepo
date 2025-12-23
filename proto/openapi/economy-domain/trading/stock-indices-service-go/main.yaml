@@ -1,31 +1,44 @@
-# Issue: #142109968
 openapi: 3.0.3
 info:
   title: Stock Indices Service Go API
-  description: |
-    Enterprise-Grade Stock Indices Service API for NECPGAME MMOFPS RPG.
+  description: 'Enterprise-Grade Stock Indices Service API for NECPGAME MMOFPS RPG.
+
 
     **Enterprise-Grade Domain:** economy-domain
 
+
     **Module:** stock-indices-service-go
+
 
     **Purpose:** High-performance stock market indices calculation and tracking
 
+
     **BACKEND NOTE:** Struct field alignment optimized (large → small types).
+
 
     All schemas ordered for optimal memory layout in generated Go code.
 
+
     Expected memory savings: 30-50% for stock-indices-related structs.
+
 
     **Features:**
 
+
     - Real-time index calculations (1000+ RPS)
+
     - Index constituent management
+
     - Historical index data
+
     - Index performance analytics
+
     - Anti-cheat validation for index operations
 
+
     **Performance:** P99 <35ms for index operations, zero allocations in hot path
+
+    '
   version: 1.0.0
   license:
     name: Proprietary
@@ -35,29 +48,29 @@ info:
     url: https://necpgame.com/support
     email: api@stock-indices.necpgame.com
 servers:
-  - url: http://localhost:8149/api/v1
-    description: Stock Indices Service Go (development)
-  - url: https://stock-indices-go.necpgame.com/api/v1
-    description: Stock Indices Service Go (production)
+- url: http://localhost:8149/api/v1
+  description: Stock Indices Service Go (development)
+- url: https://stock-indices-go.necpgame.com/api/v1
+  description: Stock Indices Service Go (production)
 tags:
-  - name: Index Management
-    description: Stock index lifecycle operations
-  - name: Index Constituents
-    description: Index constituent stock management
-  - name: Index History
-    description: Historical index data and performance
-  - name: Index Analytics
-    description: Index performance analytics
+- name: Index Management
+  description: Stock index lifecycle operations
+- name: Index Constituents
+  description: Index constituent stock management
+- name: Index History
+  description: Historical index data and performance
+- name: Index Analytics
+  description: Index performance analytics
 security:
-  - BearerAuth: [ ]
+- BearerAuth: []
 paths:
   /health:
     get:
       tags:
-        - Index Management
+      - Index Management
       summary: Service health check
       operationId: getHealth
-      security: [ ]
+      security: []
       responses:
         '200':
           description: Service is healthy
@@ -68,13 +81,13 @@ paths:
                 properties:
                   status:
                     type: string
-                    example: "healthy"
+                    example: healthy
                   timestamp:
                     type: string
                     format: date-time
                   version:
                     type: string
-                    example: "1.0.0"
+                    example: 1.0.0
         '503':
           description: Service unhealthy
           content:
@@ -84,38 +97,44 @@ paths:
                 properties:
                   status:
                     type: string
-                    example: "unhealthy"
+                    example: unhealthy
                   error:
                     type: string
-
   /economy/stock/indices:
     get:
       tags:
-        - Index Management
+      - Index Management
       summary: Get stock indices
       operationId: getStockIndices
       parameters:
-        - name: index_type
-          in: query
-          schema:
-            type: string
-            enum: [ broad_market, sector, thematic, custom ]
-          description: Filter by index type
-        - name: status
-          in: query
-          schema:
-            type: string
-            enum: [ active, inactive, suspended ]
-            default: active
-          description: Filter by index status
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 50
-          description: Number of indices to return
+      - name: index_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - broad_market
+          - sector
+          - thematic
+          - custom
+        description: Filter by index type
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - active
+          - inactive
+          - suspended
+          default: active
+        description: Filter by index status
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+        description: Number of indices to return
       responses:
         '200':
           description: List of stock indices
@@ -126,25 +145,24 @@ paths:
                 items:
                   $ref: '#/components/schemas/StockIndex'
         '400':
-          $ref: '../../../common-schemas.yaml#/components/responses/BadRequest'
+          $ref: ../../../common-schemas.yaml#/components/responses/BadRequest
         '401':
-          $ref: '../../../common-schemas.yaml#/components/responses/Unauthorized'
+          $ref: ../../../common-schemas.yaml#/components/responses/Unauthorized
         '500':
-          $ref: '../../../common-schemas.yaml#/components/responses/InternalServerError'
-
+          $ref: ../../../common-schemas.yaml#/components/responses/InternalServerError
   /economy/stock/indices/{index_symbol}:
     get:
       tags:
-        - Index Management
+      - Index Management
       summary: Get index details
       operationId: getIndexDetails
       parameters:
-        - name: index_symbol
-          in: path
-          required: true
-          schema:
-            type: string
-          description: Index symbol (e.g., SPX, DJI, NASDAQ)
+      - name: index_symbol
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Index symbol (e.g., SPX, DJI, NASDAQ)
       responses:
         '200':
           description: Index details
@@ -155,39 +173,38 @@ paths:
         '404':
           description: Index not found
         '401':
-          $ref: '../../../common-schemas.yaml#/components/responses/Unauthorized'
+          $ref: ../../../common-schemas.yaml#/components/responses/Unauthorized
         '500':
-          $ref: '../../../common-schemas.yaml#/components/responses/InternalServerError'
-
+          $ref: ../../../common-schemas.yaml#/components/responses/InternalServerError
   /economy/stock/indices/{index_symbol}/constituents:
     get:
       tags:
-        - Index Constituents
+      - Index Constituents
       summary: Get index constituents
       operationId: getIndexConstituents
       parameters:
-        - name: index_symbol
-          in: path
-          required: true
-          schema:
-            type: string
-          description: Index symbol
-        - name: weight_threshold
-          in: query
-          schema:
-            type: number
-            format: float
-            minimum: 0.0
-            maximum: 100.0
-          description: Minimum weight threshold for constituents
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 500
-            default: 100
-          description: Number of constituents to return
+      - name: index_symbol
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Index symbol
+      - name: weight_threshold
+        in: query
+        schema:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 100.0
+        description: Minimum weight threshold for constituents
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 500
+          default: 100
+        description: Number of constituents to return
       responses:
         '200':
           description: Index constituents
@@ -200,50 +217,56 @@ paths:
         '404':
           description: Index not found
         '401':
-          $ref: '../../../common-schemas.yaml#/components/responses/Unauthorized'
+          $ref: ../../../common-schemas.yaml#/components/responses/Unauthorized
         '500':
-          $ref: '../../../common-schemas.yaml#/components/responses/InternalServerError'
-
+          $ref: ../../../common-schemas.yaml#/components/responses/InternalServerError
   /economy/stock/indices/{index_symbol}/history:
     get:
       tags:
-        - Index History
+      - Index History
       summary: Get index historical data
       operationId: getIndexHistory
       parameters:
-        - name: index_symbol
-          in: path
-          required: true
-          schema:
-            type: string
-          description: Index symbol
-        - name: start_date
-          in: query
-          schema:
-            type: string
-            format: date
-          description: Start date for historical data
-        - name: end_date
-          in: query
-          schema:
-            type: string
-            format: date
-          description: End date for historical data
-        - name: interval
-          in: query
-          schema:
-            type: string
-            enum: [ 1m, 5m, 15m, 1h, 1d, 1w, 1M ]
-            default: 1d
-          description: Data interval
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 1000
-            default: 100
-          description: Number of data points to return
+      - name: index_symbol
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Index symbol
+      - name: start_date
+        in: query
+        schema:
+          type: string
+          format: date
+        description: Start date for historical data
+      - name: end_date
+        in: query
+        schema:
+          type: string
+          format: date
+        description: End date for historical data
+      - name: interval
+        in: query
+        schema:
+          type: string
+          enum:
+          - 1m
+          - 5m
+          - 15m
+          - 1h
+          - 1d
+          - 1w
+          - 1M
+          default: 1d
+        description: Data interval
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 1000
+          default: 100
+        description: Number of data points to return
       responses:
         '200':
           description: Index historical data
@@ -256,41 +279,51 @@ paths:
         '404':
           description: Index not found
         '400':
-          $ref: '../../../common-schemas.yaml#/components/responses/BadRequest'
+          $ref: ../../../common-schemas.yaml#/components/responses/BadRequest
         '401':
-          $ref: '../../../common-schemas.yaml#/components/responses/Unauthorized'
+          $ref: ../../../common-schemas.yaml#/components/responses/Unauthorized
         '500':
-          $ref: '../../../common-schemas.yaml#/components/responses/InternalServerError'
-
+          $ref: ../../../common-schemas.yaml#/components/responses/InternalServerError
   /economy/stock/indices/analytics/performance:
     get:
       tags:
-        - Index Analytics
+      - Index Analytics
       summary: Get indices performance analytics
       operationId: getIndicesPerformanceAnalytics
       parameters:
-        - name: index_symbols
-          in: query
-          schema:
-            type: array
-            items:
-              type: string
-          description: Specific index symbols to analyze
-        - name: timeframe
-          in: query
-          schema:
+      - name: index_symbols
+        in: query
+        schema:
+          type: array
+          items:
             type: string
-            enum: [ 1d, 7d, 30d, 90d, 1y, 5y ]
-            default: 30d
-          description: Analysis timeframe
-        - name: metrics
-          in: query
-          schema:
-            type: array
-            items:
-              type: string
-              enum: [ returns, volatility, correlation, sharpe_ratio, max_drawdown ]
-          description: Performance metrics to include
+        description: Specific index symbols to analyze
+      - name: timeframe
+        in: query
+        schema:
+          type: string
+          enum:
+          - 1d
+          - 7d
+          - 30d
+          - 90d
+          - 1y
+          - 5y
+          default: 30d
+        description: Analysis timeframe
+      - name: metrics
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - returns
+            - volatility
+            - correlation
+            - sharpe_ratio
+            - max_drawdown
+        description: Performance metrics to include
       responses:
         '200':
           description: Indices performance analytics
@@ -299,25 +332,24 @@ paths:
               schema:
                 $ref: '#/components/schemas/IndicesPerformanceAnalytics'
         '400':
-          $ref: '../../../common-schemas.yaml#/components/responses/BadRequest'
+          $ref: ../../../common-schemas.yaml#/components/responses/BadRequest
         '401':
-          $ref: '../../../common-schemas.yaml#/components/responses/Unauthorized'
+          $ref: ../../../common-schemas.yaml#/components/responses/Unauthorized
         '500':
-          $ref: '../../../common-schemas.yaml#/components/responses/InternalServerError'
-
+          $ref: ../../../common-schemas.yaml#/components/responses/InternalServerError
   /economy/stock/indices/{index_symbol}/rebalance:
     post:
       tags:
-        - Index Management
+      - Index Management
       summary: Rebalance index constituents
       operationId: rebalanceIndex
       parameters:
-        - name: index_symbol
-          in: path
-          required: true
-          schema:
-            type: string
-          description: Index symbol to rebalance
+      - name: index_symbol
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Index symbol to rebalance
       requestBody:
         required: true
         content:
@@ -334,26 +366,25 @@ paths:
         '404':
           description: Index not found
         '400':
-          $ref: '../../../common-schemas.yaml#/components/responses/BadRequest'
+          $ref: ../../../common-schemas.yaml#/components/responses/BadRequest
         '401':
-          $ref: '../../../common-schemas.yaml#/components/responses/Unauthorized'
+          $ref: ../../../common-schemas.yaml#/components/responses/Unauthorized
         '403':
           description: Insufficient permissions to rebalance index
         '500':
-          $ref: '../../../common-schemas.yaml#/components/responses/InternalServerError'
-
+          $ref: ../../../common-schemas.yaml#/components/responses/InternalServerError
 components:
   schemas:
     StockIndex:
       type: object
       required:
-        - symbol
-        - name
-        - index_type
-        - base_value
-        - current_value
-        - status
-        - created_at
+      - symbol
+      - name
+      - index_type
+      - base_value
+      - current_value
+      - status
+      - created_at
       properties:
         symbol:
           type: string
@@ -363,23 +394,18 @@ components:
           description: Index name (e.g., S&P 500)
         index_type:
           type: string
-          enum: [ broad_market, sector, thematic, custom ]
+          enum:
+          - broad_market
+          - sector
+          - thematic
+          - custom
           description: Type of index
-        base_value:
-          type: number
-          format: float
-          description: Base value of the index
-        current_value:
-          type: number
-          format: float
-          description: Current value of the index
-        change_percent:
-          type: number
-          format: float
-          description: Percentage change from base value
         status:
           type: string
-          enum: [ active, inactive, suspended ]
+          enum:
+          - active
+          - inactive
+          - suspended
           description: Index status
         description:
           type: string
@@ -392,10 +418,6 @@ components:
           type: string
           nullable: true
           description: Theme for thematic indices
-        constituent_count:
-          type: integer
-          format: int32
-          description: Number of constituent stocks
         last_updated:
           type: string
           format: date-time
@@ -406,16 +428,31 @@ components:
         updated_at:
           type: string
           format: date-time
+        base_value:
+          type: number
+          format: float
+          description: Base value of the index
+        current_value:
+          type: number
+          format: float
+          description: Current value of the index
+        change_percent:
+          type: number
+          format: float
+          description: Percentage change from base value
+        constituent_count:
+          type: integer
+          format: int32
+          description: Number of constituent stocks
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     IndexConstituent:
       type: object
       required:
-        - stock_symbol
-        - company_name
-        - weight
-        - shares_outstanding
-        - price_per_share
+      - stock_symbol
+      - company_name
+      - weight
+      - shares_outstanding
+      - price_per_share
       properties:
         stock_symbol:
           type: string
@@ -423,24 +460,6 @@ components:
         company_name:
           type: string
           description: Company name
-        weight:
-          type: number
-          format: float
-          minimum: 0.0
-          maximum: 100.0
-          description: Weight in index (%)
-        shares_outstanding:
-          type: integer
-          format: int64
-          description: Total shares outstanding
-        price_per_share:
-          type: number
-          format: float
-          description: Current price per share
-        market_cap:
-          type: number
-          format: float
-          description: Market capitalization
         sector:
           type: string
           description: Company sector
@@ -454,14 +473,31 @@ components:
         last_updated:
           type: string
           format: date-time
+        weight:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 100.0
+          description: Weight in index (%)
+        price_per_share:
+          type: number
+          format: float
+          description: Current price per share
+        market_cap:
+          type: number
+          format: float
+          description: Market capitalization
+        shares_outstanding:
+          type: integer
+          format: int64
+          description: Total shares outstanding
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     IndexHistoricalData:
       type: object
       required:
-        - timestamp
-        - value
-        - volume
+      - timestamp
+      - value
+      - volume
       properties:
         timestamp:
           type: string
@@ -479,10 +515,6 @@ components:
           type: number
           format: float
           description: Percentage change
-        volume:
-          type: integer
-          format: int64
-          description: Trading volume
         high:
           type: number
           format: float
@@ -495,20 +527,24 @@ components:
           type: number
           format: float
           description: Opening value
+        volume:
+          type: integer
+          format: int64
+          description: Trading volume
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     IndicesPerformanceAnalytics:
       type: object
       properties:
         timeframe:
           type: string
-          enum: [ 1d, 7d, 30d, 90d, 1y, 5y ]
+          enum:
+          - 1d
+          - 7d
+          - 30d
+          - 90d
+          - 1y
+          - 5y
           description: Analysis timeframe
-        indices:
-          type: array
-          items:
-            $ref: '#/components/schemas/IndexPerformanceMetrics'
-          description: Performance metrics for each index
         correlations:
           type: object
           additionalProperties:
@@ -533,14 +569,18 @@ components:
               type: number
               format: float
           description: Market summary statistics
+        indices:
+          type: array
+          items:
+            $ref: '#/components/schemas/IndexPerformanceMetrics'
+          description: Performance metrics for each index
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     IndexPerformanceMetrics:
       type: object
       required:
-        - symbol
-        - total_return
-        - volatility
+      - symbol
+      - total_return
+      - volatility
       properties:
         symbol:
           type: string
@@ -570,17 +610,11 @@ components:
           format: float
           description: Beta relative to broad market
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     RebalanceIndexRequest:
       type: object
       required:
-        - new_constituents
+      - new_constituents
       properties:
-        new_constituents:
-          type: array
-          items:
-            $ref: '#/components/schemas/IndexConstituentUpdate'
-          description: New list of constituents
         rebalance_date:
           type: string
           format: date
@@ -588,13 +622,17 @@ components:
         reason:
           type: string
           description: Reason for rebalancing
+        new_constituents:
+          type: array
+          items:
+            $ref: '#/components/schemas/IndexConstituentUpdate'
+          description: New list of constituents
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     IndexConstituentUpdate:
       type: object
       required:
-        - stock_symbol
-        - weight
+      - stock_symbol
+      - weight
       properties:
         stock_symbol:
           type: string
@@ -610,7 +648,6 @@ components:
           format: int64
           description: Updated shares outstanding
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     RebalanceResult:
       type: object
       properties:
@@ -621,14 +658,12 @@ components:
           type: string
           format: date
           description: Effective date of rebalancing
-        old_constituent_count:
-          type: integer
-          format: int32
-          description: Previous number of constituents
-        new_constituent_count:
-          type: integer
-          format: int32
-          description: New number of constituents
+        status:
+          type: string
+          enum:
+          - completed
+          - pending
+          - failed
         changes:
           type: array
           items:
@@ -638,7 +673,10 @@ components:
                 type: string
               action:
                 type: string
-                enum: [ added, removed, weight_changed ]
+                enum:
+                - added
+                - removed
+                - weight_changed
               old_weight:
                 type: number
                 format: float
@@ -648,19 +686,22 @@ components:
                 format: float
                 nullable: true
             description: Details of constituent changes
-        status:
-          type: string
-          enum: [ completed, pending, failed ]
+        old_constituent_count:
+          type: integer
+          format: int32
+          description: Previous number of constituents
+        new_constituent_count:
+          type: integer
+          format: int32
+          description: New number of constituents
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
   securitySchemes:
     BearerAuth:
-      $ref: '../../../common-schemas.yaml#/components/securitySchemes/BearerAuth'
+      $ref: ../../../common-schemas.yaml#/components/securitySchemes/BearerAuth
   responses:
     BadRequest:
-      $ref: '../../../common-schemas.yaml#/components/responses/BadRequest'
+      $ref: ../../../common-schemas.yaml#/components/responses/BadRequest
     Unauthorized:
-      $ref: '../../../common-schemas.yaml#/components/responses/Unauthorized'
+      $ref: ../../../common-schemas.yaml#/components/responses/Unauthorized
     InternalServerError:
-      $ref: '../../../common-schemas.yaml#/components/responses/InternalServerError'
-
+      $ref: ../../../common-schemas.yaml#/components/responses/InternalServerError

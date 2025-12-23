@@ -7,19 +7,19 @@ info:
     name: MIT
     url: https://opensource.org/licenses/MIT
 servers:
-  - url: http://localhost:8092
-    description: Development server
-  - url: http://trajectory-service:8092
-    description: Kubernetes service
+- url: http://localhost:8092
+  description: Development server
+- url: http://trajectory-service:8092
+  description: Kubernetes service
 security:
-  - BearerAuth: [ ]
+- BearerAuth: []
 paths:
   /api/v1/trajectory/calculate:
     post:
       summary: Рассчитать траекторию проджектайла
       operationId: calculateTrajectory
       tags:
-        - Trajectory Calculation
+      - Trajectory Calculation
       requestBody:
         required: true
         content:
@@ -44,7 +44,7 @@ paths:
       summary: Рассчитать цепную траекторию
       operationId: calculateChainTrajectory
       tags:
-        - Trajectory Calculation
+      - Trajectory Calculation
       requestBody:
         required: true
         content:
@@ -67,7 +67,7 @@ paths:
       summary: Рассчитать траекторию с рикошетами
       operationId: calculateRicochetTrajectory
       tags:
-        - Trajectory Calculation
+      - Trajectory Calculation
       requestBody:
         required: true
         content:
@@ -90,7 +90,7 @@ paths:
       summary: Рассчитать траекторию с разделением
       operationId: calculateSplitTrajectory
       tags:
-        - Trajectory Calculation
+      - Trajectory Calculation
       requestBody:
         required: true
         content:
@@ -113,13 +113,13 @@ paths:
       summary: Получить список алгоритмов траекторий
       operationId: getTrajectoryAlgorithms
       tags:
-        - Algorithms
+      - Algorithms
       parameters:
-        - name: form_type
-          in: query
-          description: Фильтр по типу формы
-          schema:
-            type: string
+      - name: form_type
+        in: query
+        description: Фильтр по типу формы
+        schema:
+          type: string
       responses:
         '200':
           description: Список алгоритмов
@@ -128,7 +128,7 @@ paths:
               schema:
                 type: object
                 required:
-                  - algorithms
+                - algorithms
                 properties:
                   algorithms:
                     type: array
@@ -141,9 +141,9 @@ components:
     Vector3:
       type: object
       required:
-        - x
-        - y
-        - z
+      - x
+      - y
+      - z
       properties:
         x:
           type: number
@@ -158,39 +158,23 @@ components:
     ProjectileFormType:
       type: string
       enum:
-        - point
-        - line
-        - fan
-        - spiral
-        - wave
-        - circle
-        - square
-        - chain
-        - split
-        - ricochet
-        - phasing
+      - point
+      - line
+      - fan
+      - spiral
+      - wave
+      - circle
+      - square
+      - chain
+      - split
+      - ricochet
+      - phasing
     TrajectoryParameters:
       type: object
       description: 'Параметры траектории
 
         BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
       properties:
-        projectile_count:
-          type: integer
-          description: Количество снарядов
-          example: 8
-        chain_max_targets:
-          type: integer
-          description: Максимум целей для цепи
-          example: 5
-        ricochet_count:
-          type: integer
-          description: Количество рикошетов
-          example: 5
-        split_count:
-          type: integer
-          description: Количество частей при разделении
-          example: 5
         spread_angle:
           type: number
           format: float
@@ -226,12 +210,28 @@ components:
           format: float
           description: Максимальная глубина проникновения
           example: 2.0
+        projectile_count:
+          type: integer
+          description: Количество снарядов
+          example: 8
+        chain_max_targets:
+          type: integer
+          description: Максимум целей для цепи
+          example: 5
+        ricochet_count:
+          type: integer
+          description: Количество рикошетов
+          example: 5
+        split_count:
+          type: integer
+          description: Количество частей при разделении
+          example: 5
     CalculateTrajectoryRequest:
       type: object
       required:
-        - form
-        - origin
-        - direction
+      - form
+      - origin
+      - direction
       properties:
         form:
           $ref: '#/components/schemas/ProjectileFormType'
@@ -254,8 +254,8 @@ components:
     TrajectoryPoint:
       type: object
       required:
-        - position
-        - time
+      - position
+      - time
       properties:
         position:
           $ref: '#/components/schemas/Vector3'
@@ -269,8 +269,8 @@ components:
     TrajectoryResponse:
       type: object
       required:
-        - trajectory_points
-        - total_time
+      - trajectory_points
+      - total_time
       properties:
         trajectory_points:
           type: array
@@ -288,8 +288,8 @@ components:
     ChainTarget:
       type: object
       required:
-        - target_id
-        - position
+      - target_id
+      - position
       properties:
         target_id:
           type: string
@@ -299,9 +299,9 @@ components:
     ChainTrajectoryRequest:
       type: object
       required:
-        - origin
-        - initial_target
-        - potential_targets
+      - origin
+      - initial_target
+      - potential_targets
       properties:
         initial_target:
           $ref: '#/components/schemas/ChainTarget'
@@ -317,24 +317,24 @@ components:
             type: number
             format: float
           example:
-            - 1.0
-            - 0.7
-            - 0.5
-            - 0.3
-            - 0.2
-        max_chain_targets:
-          type: integer
-          default: 5
+          - 1.0
+          - 0.7
+          - 0.5
+          - 0.3
+          - 0.2
         chain_radius:
           type: number
           format: float
           default: 10.0
+        max_chain_targets:
+          type: integer
+          default: 5
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     ChainTrajectoryResponse:
       type: object
       required:
-        - chain_segments
-        - total_targets
+      - chain_segments
+      - total_targets
       properties:
         chain_segments:
           type: array
@@ -356,16 +356,13 @@ components:
     RicochetTrajectoryRequest:
       type: object
       required:
-        - origin
-        - direction
+      - origin
+      - direction
       properties:
         origin:
           $ref: '#/components/schemas/Vector3'
         direction:
           $ref: '#/components/schemas/Vector3'
-        max_bounces:
-          type: integer
-          default: 5
         velocity:
           type: number
           format: float
@@ -375,12 +372,15 @@ components:
           format: float
           description: Коэффициент отскока
           default: 0.9
+        max_bounces:
+          type: integer
+          default: 5
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     RicochetTrajectoryResponse:
       type: object
       required:
-        - bounces
-        - total_bounces
+      - bounces
+      - total_bounces
       properties:
         bounces:
           type: array
@@ -400,17 +400,13 @@ components:
     SplitTrajectoryRequest:
       type: object
       required:
-        - origin
-        - direction
+      - origin
+      - direction
       properties:
         origin:
           $ref: '#/components/schemas/Vector3'
         direction:
           $ref: '#/components/schemas/Vector3'
-        split_count:
-          type: integer
-          description: Количество частей
-          default: 5
         velocity:
           type: number
           format: float
@@ -425,12 +421,16 @@ components:
           format: float
           description: Угол разделения
           default: 30.0
+        split_count:
+          type: integer
+          description: Количество частей
+          default: 5
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     SplitTrajectoryResponse:
       type: object
       required:
-        - split_point
-        - child_trajectories
+      - split_point
+      - child_trajectories
       properties:
         split_point:
           $ref: '#/components/schemas/Vector3'
@@ -442,10 +442,10 @@ components:
     TrajectoryAlgorithm:
       type: object
       required:
-        - id
-        - name
-        - algorithm_type
-        - performance_cost
+      - id
+      - name
+      - algorithm_type
+      - performance_cost
       properties:
         id:
           type: string
@@ -461,17 +461,17 @@ components:
         algorithm_type:
           type: string
           enum:
-            - linear_trajectory
-            - parallel_lines
-            - cone_spread
-            - helical_trajectory
-            - sinusoidal_trajectory
-            - radial_spread
-            - grid_pattern
-            - chain_reaction
-            - split_trajectory
-            - bounce_trajectory
-            - penetration_trajectory
+          - linear_trajectory
+          - parallel_lines
+          - cone_spread
+          - helical_trajectory
+          - sinusoidal_trajectory
+          - radial_spread
+          - grid_pattern
+          - chain_reaction
+          - split_trajectory
+          - bounce_trajectory
+          - penetration_trajectory
         parameters:
           type: object
           additionalProperties: true
@@ -484,4 +484,3 @@ components:
   securitySchemes:
     BearerAuth:
       $ref: ../../common-schemas.yaml#/components/securitySchemes/BearerAuth
-

@@ -10,18 +10,18 @@ info:
     name: NECPGAME API Support
     email: api@necp.game
 servers:
-  - url: http://localhost:8086/api/v1
-    description: Локальный сервер разработки
-  - url: https://api.necp.game/api/v1
-    description: Продакшен сервер
+- url: http://localhost:8086/api/v1
+  description: Локальный сервер разработки
+- url: https://api.necp.game/api/v1
+  description: Продакшен сервер
 tags:
-  - name: Position Validation
-    description: Валидация позиции игрока
+- name: Position Validation
+  description: Валидация позиции игрока
 paths:
   /anti-cheat/position/validate:
     post:
       tags:
-        - Position Validation
+      - Position Validation
       summary: Валидация позиции игрока
       description: 'Проверяет позицию игрока и обнаруживает возможные телепортации,
 
@@ -30,7 +30,7 @@ paths:
         '
       operationId: validatePosition
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -53,23 +53,23 @@ paths:
   /anti-cheat/position/violations/{player_id}:
     get:
       tags:
-        - Position Validation
+      - Position Validation
       summary: Получить нарушения позиции для игрока
       description: Возвращает список нарушений позиции для указанного игрока с пагинацией.
       operationId: getPositionViolations
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: player_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Идентификатор игрока
-          example: 550e8400-e29b-41d4-a716-446655440000
-        - $ref: common.yaml#/components/parameters/Limit
-        - $ref: common.yaml#/components/parameters/Offset
+      - name: player_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Идентификатор игрока
+        example: 550e8400-e29b-41d4-a716-446655440000
+      - $ref: common.yaml#/components/parameters/Limit
+      - $ref: common.yaml#/components/parameters/Offset
       responses:
         '200':
           description: Список нарушений позиции
@@ -91,9 +91,9 @@ components:
     PositionValidationRequest:
       type: object
       required:
-        - player_id
-        - current_position
-        - previous_position
+      - player_id
+      - current_position
+      - previous_position
       properties:
         player_id:
           type: string
@@ -120,11 +120,8 @@ components:
     PositionValidationResponse:
       type: object
       required:
-        - is_valid
+      - is_valid
       properties:
-        violation:
-          nullable: true
-          description: Нарушение, если обнаружено
         distance:
           type: number
           format: float
@@ -145,26 +142,29 @@ components:
           type: boolean
           description: Обнаружена ли коллизия
           example: false
+        violation:
+          nullable: true
+          description: Нарушение, если обнаружено
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     PositionViolation:
       type: object
       required:
-        - violation_type
-        - severity
+      - violation_type
+      - severity
       properties:
         violation_type:
           type: string
           enum:
-            - POSITION_HACK
+          - POSITION_HACK
           description: Тип нарушения
           example: POSITION_HACK
         severity:
           type: string
           enum:
-            - LOW
-            - MEDIUM
-            - HIGH
-            - CRITICAL
+          - LOW
+          - MEDIUM
+          - HIGH
+          - CRITICAL
           description: Серьезность нарушения
           example: MEDIUM
         distance_exceeded:
@@ -185,8 +185,8 @@ components:
     PositionViolationsResponse:
       type: object
       required:
-        - violations
-        - total
+      - violations
+      - total
       properties:
         violations:
           type: array
@@ -210,4 +210,4 @@ components:
           example: 0
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
 security:
-  - BearerAuth: [ ]
+- BearerAuth: []

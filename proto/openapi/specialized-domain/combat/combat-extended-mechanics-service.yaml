@@ -1,25 +1,39 @@
 openapi: 3.0.3
 info:
   title: Combat Extended Mechanics Service API
-  description: |
-    Расширенные механики боевой системы NECPGAME - VALORANT-стиль способностей в MMORPG.
+  description: 'Расширенные механики боевой системы NECPGAME - VALORANT-стиль способностей в MMORPG.
+
     API для управления боевыми ролями, комбо-системами, имплантами, синергиями и прогрессией мастерства.
 
+
     **BACKEND NOTE**: Служба оптимизирована для высокопроизводительных вычислений боевых механик.
+
     Использует кеширование для часто запрашиваемых данных о ролях и синергиях.
 
+
     **PERFORMANCE**: Ожидаемая нагрузка - 2000 RPS в пиковые моменты.
+
     Время отклика < 15ms для основных операций (комбо, синергии).
+
     Использует Redis для кеширования состояний ролей и прогрессии.
+
 
     **SCALING**: Read replicas для каталогов, write-through caching для прогрессии мастерства.
 
+
     **ENTERPRISE FEATURES**:
+
     - Валориант-стиль комбо с 100% мультипликаторами урона
+
     - Динамическая адаптация ролей под экипировку
+
     - Импланты с стресс-системой и киберпсихозом
+
     - Брендовая система оружия с прогрессией R1-R5
+
     - AI врагов с адаптивными тактиками
+
+    '
   version: 1.0.0
   license:
     name: MIT
@@ -27,42 +41,37 @@ info:
   contact:
     name: Backend Team
     email: backend@necp.game
-
 servers:
-  - url: https://api.necpgame.com/v1/combat/extended
-    description: Production server
-  - url: https://staging-api.necpgame.com/v1/combat/extended
-    description: Staging server
-  - url: http://localhost:8200/api/v1/combat/extended
-    description: Local development
-
+- url: https://api.necpgame.com/v1/combat/extended
+  description: Production server
+- url: https://staging-api.necpgame.com/v1/combat/extended
+  description: Staging server
+- url: http://localhost:8200/api/v1/combat/extended
+  description: Local development
 security:
-  - BearerAuth: [ ]
-
+- BearerAuth: []
 tags:
-  - name: roles
-    description: Боевые роли и архетипы
-  - name: synergies
-    description: Синергии и комбо-системы
-  - name: implants
-    description: Киберимпланты и стресс-система
-  - name: progression
-    description: Прогрессия мастерства и ранги
-  - name: abilities
-    description: Расширенный каталог способностей
-  - name: brands
-    description: Система брендов и экипировки
-
+- name: roles
+  description: Боевые роли и архетипы
+- name: synergies
+  description: Синергии и комбо-системы
+- name: implants
+  description: Киберимпланты и стресс-система
+- name: progression
+  description: Прогрессия мастерства и ранги
+- name: abilities
+  description: Расширенный каталог способностей
+- name: brands
+  description: Система брендов и экипировки
 paths:
-  # Боевые роли
   /api/v1/combat/roles:
     get:
       summary: Получить все боевые роли
       operationId: getCombatRoles
       tags:
-        - roles
+      - roles
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       responses:
         '200':
           description: Список боевых ролей
@@ -72,22 +81,21 @@ paths:
                 $ref: '#/components/schemas/CombatRolesResponse'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
   /api/v1/combat/roles/{role_id}:
     get:
       summary: Получить детали боевой роли
       operationId: getCombatRole
       tags:
-        - roles
+      - roles
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: role_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: role_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
         '200':
           description: Детали боевой роли
@@ -99,22 +107,21 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
   /api/v1/combat/roles/{role_id}/abilities:
     get:
       summary: Получить способности для роли
       operationId: getRoleAbilities
       tags:
-        - roles
+      - roles
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: role_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: role_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
         '200':
           description: Способности роли
@@ -126,27 +133,35 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
-  # Синергии и комбо
   /api/v1/combat/synergies:
     get:
       summary: Получить матрицу синергий
       operationId: getSynergyMatrix
       tags:
-        - synergies
+      - synergies
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: weapon_brand
-          in: query
-          schema:
-            type: string
-            enum: [ arasaka, militech, kang_tao, budget_arms, constitutional_arms ]
-        - name: implant_type
-          in: query
-          schema:
-            type: string
-            enum: [ gorilla_arms, mantis_blades, kiroshi_optics, synaptic_accelerator, projectile_launcher ]
+      - name: weapon_brand
+        in: query
+        schema:
+          type: string
+          enum:
+          - arasaka
+          - militech
+          - kang_tao
+          - budget_arms
+          - constitutional_arms
+      - name: implant_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - gorilla_arms
+          - mantis_blades
+          - kiroshi_optics
+          - synaptic_accelerator
+          - projectile_launcher
       responses:
         '200':
           description: Матрица синергий
@@ -156,26 +171,28 @@ paths:
                 $ref: '#/components/schemas/SynergyMatrixResponse'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
   /api/v1/combat/combos:
     get:
       summary: Получить доступные комбо
       operationId: getCombos
       tags:
-        - synergies
+      - synergies
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: player_id
-          in: query
-          schema:
-            type: string
-            format: uuid
-        - name: combo_type
-          in: query
-          schema:
-            type: string
-            enum: [ solo, team, legendary ]
+      - name: player_id
+        in: query
+        schema:
+          type: string
+          format: uuid
+      - name: combo_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - solo
+          - team
+          - legendary
       responses:
         '200':
           description: Список комбо
@@ -185,14 +202,13 @@ paths:
                 $ref: '#/components/schemas/CombosResponse'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
     post:
       summary: Активировать комбо
       operationId: activateCombo
       tags:
-        - synergies
+      - synergies
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -212,22 +228,25 @@ paths:
           $ref: '#/components/responses/TooManyRequests'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
-  # Импланты и стресс-система
   /api/v1/combat/implants:
     get:
       summary: Получить каталог имплантов
       operationId: getImplantsCatalog
       tags:
-        - implants
+      - implants
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: category
-          in: query
-          schema:
-            type: string
-            enum: [ combat, stealth, mobility, utility, medical ]
+      - name: category
+        in: query
+        schema:
+          type: string
+          enum:
+          - combat
+          - stealth
+          - mobility
+          - utility
+          - medical
       responses:
         '200':
           description: Каталог имплантов
@@ -237,22 +256,21 @@ paths:
                 $ref: '#/components/schemas/ImplantsCatalogResponse'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
   /api/v1/combat/implants/player/{player_id}:
     get:
       summary: Получить импланты игрока
       operationId: getPlayerImplants
       tags:
-        - implants
+      - implants
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: player_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: player_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
         '200':
           description: Импланты игрока
@@ -264,21 +282,20 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
     post:
       summary: Установить имплант
       operationId: installImplant
       tags:
-        - implants
+      - implants
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: player_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: player_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       requestBody:
         required: true
         content:
@@ -298,22 +315,21 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
   /api/v1/combat/implants/stress/{player_id}:
     get:
       summary: Получить уровень стресса имплантов
       operationId: getImplantStress
       tags:
-        - implants
+      - implants
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: player_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: player_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
         '200':
           description: Уровень стресса
@@ -325,28 +341,33 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
-  # Прогрессия мастерства
   /api/v1/combat/progression/player/{player_id}:
     get:
       summary: Получить прогрессию мастерства
       operationId: getMasteryProgression
       tags:
-        - progression
+      - progression
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: player_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: weapon_class
-          in: query
-          schema:
-            type: string
-            enum: [ pistol, shotgun, rifle, sniper, smg, launcher, melee ]
+      - name: player_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: weapon_class
+        in: query
+        schema:
+          type: string
+          enum:
+          - pistol
+          - shotgun
+          - rifle
+          - sniper
+          - smg
+          - launcher
+          - melee
       responses:
         '200':
           description: Прогрессия мастерства
@@ -358,27 +379,33 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
   /api/v1/combat/progression/player/{player_id}/rank:
     get:
       summary: Получить текущий ранг мастерства
       operationId: getCurrentMasteryRank
       tags:
-        - progression
+      - progression
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: player_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: weapon_class
-          in: query
-          schema:
-            type: string
-            enum: [ pistol, shotgun, rifle, sniper, smg, launcher, melee ]
+      - name: player_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: weapon_class
+        in: query
+        schema:
+          type: string
+          enum:
+          - pistol
+          - shotgun
+          - rifle
+          - sniper
+          - smg
+          - launcher
+          - melee
       responses:
         '200':
           description: Текущий ранг
@@ -390,16 +417,14 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
-  # Брендовая система
   /api/v1/combat/brands:
     get:
       summary: Получить все бренды оружия
       operationId: getWeaponBrands
       tags:
-        - brands
+      - brands
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       responses:
         '200':
           description: Список брендов
@@ -409,28 +434,32 @@ paths:
                 $ref: '#/components/schemas/WeaponBrandsResponse'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
   /api/v1/combat/brands/{brand_id}/weapons:
     get:
       summary: Получить оружие бренда
       operationId: getBrandWeapons
       tags:
-        - brands
+      - brands
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: brand_id
-          in: path
-          required: true
-          schema:
-            type: string
-            enum: [ arasaka, militech, kang_tao, budget_arms, constitutional_arms ]
-        - name: tier
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 5
+      - name: brand_id
+        in: path
+        required: true
+        schema:
+          type: string
+          enum:
+          - arasaka
+          - militech
+          - kang_tao
+          - budget_arms
+          - constitutional_arms
+      - name: tier
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 5
       responses:
         '200':
           description: Оружие бренда
@@ -442,27 +471,38 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
-  # Расширенные способности
   /api/v1/combat/abilities/extended:
     get:
       summary: Получить расширенный каталог способностей
       operationId: getExtendedAbilities
       tags:
-        - abilities
+      - abilities
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: archetype
-          in: query
-          schema:
-            type: string
-            enum: [ combat, netrunner, tech, stealth, support, mobility, medic, tactician ]
-        - name: slot_type
-          in: query
-          schema:
-            type: string
-            enum: [ Q, E, R, passive, implant ]
+      - name: archetype
+        in: query
+        schema:
+          type: string
+          enum:
+          - combat
+          - netrunner
+          - tech
+          - stealth
+          - support
+          - mobility
+          - medic
+          - tactician
+      - name: slot_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - Q
+          - E
+          - R
+          - passive
+          - implant
       responses:
         '200':
           description: Расширенный каталог способностей
@@ -472,14 +512,12 @@ paths:
                 $ref: '#/components/schemas/ExtendedAbilitiesResponse'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
 components:
   securitySchemes:
     BearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
-
   responses:
     BadRequest:
       description: Неверный запрос
@@ -511,14 +549,12 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-
   schemas:
-    # Общие схемы
     Error:
       type: object
       required:
-        - code
-        - message
+      - code
+      - message
       properties:
         code:
           type: string
@@ -529,16 +565,14 @@ components:
         details:
           type: object
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
-    # Боевые роли
     CombatRole:
       type: object
       required:
-        - id
-        - name
-        - archetype
-        - key_attributes
-        - tactical_priorities
+      - id
+      - name
+      - archetype
+      - key_attributes
+      - tactical_priorities
       properties:
         id:
           type: string
@@ -549,8 +583,17 @@ components:
           description: Название роли
         archetype:
           type: string
-          enum: [ solo, hybrid, support ]
+          enum:
+          - solo
+          - hybrid
+          - support
           description: Архетип роли
+        synergy_bonuses:
+          type: object
+          description: Бонусы синергии
+        mastery_requirements:
+          type: object
+          description: Требования к мастерству
         key_attributes:
           type: array
           items:
@@ -566,19 +609,12 @@ components:
           items:
             type: string
           description: Рекомендуемое оружие
-        synergy_bonuses:
-          type: object
-          description: Бонусы синергии
-        mastery_requirements:
-          type: object
-          description: Требования к мастерству
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     CombatRolesResponse:
       type: object
       required:
-        - roles
-        - total
+      - roles
+      - total
       properties:
         roles:
           type: array
@@ -588,13 +624,12 @@ components:
           type: integer
           minimum: 0
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     RoleAbilitiesResponse:
       type: object
       required:
-        - role_id
-        - abilities
-        - total
+      - role_id
+      - abilities
+      - total
       properties:
         role_id:
           type: string
@@ -607,32 +642,29 @@ components:
           type: integer
           minimum: 0
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
-    # Синергии и комбо
     SynergyMatrixResponse:
       type: object
       required:
-        - matrix
-        - timestamp
+      - matrix
+      - timestamp
       properties:
-        matrix:
-          type: object
-          description: Матрица синергий по брендам и типам имплантов
         timestamp:
           type: string
           format: date-time
         version:
           type: string
+        matrix:
+          type: object
+          description: Матрица синергий по брендам и типам имплантов
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     CombatCombo:
       type: object
       required:
-        - id
-        - name
-        - type
-        - damage_multiplier
-        - requirements
+      - id
+      - name
+      - type
+      - damage_multiplier
+      - requirements
       properties:
         id:
           type: string
@@ -641,18 +673,21 @@ components:
           type: string
         type:
           type: string
-          enum: [ solo, team, legendary ]
+          enum:
+          - solo
+          - team
+          - legendary
+        requirements:
+          type: array
+          items:
+            type: string
+          description: Требования для активации
         damage_multiplier:
           type: number
           format: float
           minimum: 1.0
           maximum: 2.0
           description: Мультипликатор урона (до 100% бонуса)
-        requirements:
-          type: array
-          items:
-            type: string
-          description: Требования для активации
         cooldown_seconds:
           type: integer
           minimum: 0
@@ -660,33 +695,31 @@ components:
           type: integer
           minimum: 0
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     CombosResponse:
       type: object
       required:
-        - combos
-        - total
+      - combos
+      - total
       properties:
         combos:
           type: array
           items:
             $ref: '#/components/schemas/CombatCombo'
-        total:
-          type: integer
-          minimum: 0
         player_unlocked:
           type: array
           items:
             type: string
             format: uuid
+        total:
+          type: integer
+          minimum: 0
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     ActivateComboRequest:
       type: object
       required:
-        - combo_id
-        - player_id
-        - session_id
+      - combo_id
+      - player_id
+      - session_id
       properties:
         combo_id:
           type: string
@@ -703,40 +736,37 @@ components:
             type: string
             format: uuid
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     ActivateComboResult:
       type: object
       required:
-        - success
-        - combo_id
-        - timestamp
+      - success
+      - combo_id
+      - timestamp
       properties:
-        success:
-          type: boolean
         combo_id:
           type: string
           format: uuid
         timestamp:
           type: string
           format: date-time
+        error_message:
+          type: string
         damage_multiplier:
           type: number
           format: float
+        success:
+          type: boolean
         cooldown_remaining:
           type: integer
-        error_message:
-          type: string
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
-    # Импланты
     CombatImplant:
       type: object
       required:
-        - id
-        - name
-        - category
-        - rarity
-        - cyberpsychosis_risk
+      - id
+      - name
+      - category
+      - rarity
+      - cyberpsychosis_risk
       properties:
         id:
           type: string
@@ -745,10 +775,28 @@ components:
           type: string
         category:
           type: string
-          enum: [ combat, stealth, mobility, utility, medical ]
+          enum:
+          - combat
+          - stealth
+          - mobility
+          - utility
+          - medical
         rarity:
           type: string
-          enum: [ common, uncommon, rare, epic, legendary ]
+          enum:
+          - common
+          - uncommon
+          - rare
+          - epic
+          - legendary
+        requirements:
+          type: object
+          description: Требования для установки
+        effects:
+          type: array
+          items:
+            type: string
+          description: Эффекты импланта
         cyberpsychosis_risk:
           type: number
           format: float
@@ -763,42 +811,32 @@ components:
           type: number
           format: float
           description: Максимальный порог стресса
-        effects:
-          type: array
-          items:
-            type: string
-          description: Эффекты импланта
-        requirements:
-          type: object
-          description: Требования для установки
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     ImplantsCatalogResponse:
       type: object
       required:
-        - implants
-        - total
-        - categories
+      - implants
+      - total
+      - categories
       properties:
         implants:
           type: array
           items:
             $ref: '#/components/schemas/CombatImplant'
-        total:
-          type: integer
-          minimum: 0
         categories:
           type: array
           items:
             type: string
+        total:
+          type: integer
+          minimum: 0
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     PlayerImplant:
       type: object
       required:
-        - implant_id
-        - installed_at
-        - current_stress
+      - implant_id
+      - installed_at
+      - current_stress
       properties:
         implant_id:
           type: string
@@ -806,26 +844,25 @@ components:
         installed_at:
           type: string
           format: date-time
+        last_used:
+          type: string
+          format: date-time
         current_stress:
           type: number
           format: float
           minimum: 0.0
-        last_used:
-          type: string
-          format: date-time
         cyberpsychosis_level:
           type: number
           format: float
           minimum: 0.0
           maximum: 1.0
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     PlayerImplantsResponse:
       type: object
       required:
-        - player_id
-        - implants
-        - total_stress
+      - player_id
+      - implants
+      - total_stress
       properties:
         player_id:
           type: string
@@ -844,61 +881,71 @@ components:
           type: number
           format: float
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     InstallImplantRequest:
       type: object
       required:
-        - implant_id
-        - slot
+      - implant_id
+      - slot
       properties:
         implant_id:
           type: string
           format: uuid
         slot:
           type: string
-          enum: [ arms, legs, eyes, brain, nervous_system, skeleton ]
+          enum:
+          - arms
+          - legs
+          - eyes
+          - brain
+          - nervous_system
+          - skeleton
         force_install:
           type: boolean
           default: false
           description: Принудительная установка (игнорирует риски)
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     InstallImplantResult:
       type: object
       required:
-        - success
-        - implant_id
-        - timestamp
+      - success
+      - implant_id
+      - timestamp
       properties:
-        success:
-          type: boolean
         implant_id:
           type: string
           format: uuid
         timestamp:
           type: string
           format: date-time
+        error_message:
+          type: string
         stress_increase:
           type: number
           format: float
         cyberpsychosis_risk_increase:
           type: number
           format: float
-        error_message:
-          type: string
+        success:
+          type: boolean
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     ImplantStressResponse:
       type: object
       required:
-        - player_id
-        - current_stress
-        - max_stress
-        - cyberpsychosis_level
+      - player_id
+      - current_stress
+      - max_stress
+      - cyberpsychosis_level
       properties:
         player_id:
           type: string
           format: uuid
+        last_stress_event:
+          type: string
+          format: date-time
+        stress_sources:
+          type: array
+          items:
+            type: object
         current_stress:
           type: number
           format: float
@@ -911,33 +958,42 @@ components:
         stress_decay_rate:
           type: number
           format: float
-        last_stress_event:
-          type: string
-          format: date-time
-        stress_sources:
-          type: array
-          items:
-            type: object
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
-    # Прогрессия мастерства
     MasteryProgressionResponse:
       type: object
       required:
-        - player_id
-        - weapon_class
-        - current_experience
-        - experience_to_next_rank
+      - player_id
+      - weapon_class
+      - current_experience
+      - experience_to_next_rank
       properties:
         player_id:
           type: string
           format: uuid
         weapon_class:
           type: string
-          enum: [ pistol, shotgun, rifle, sniper, smg, launcher, melee ]
+          enum:
+          - pistol
+          - shotgun
+          - rifle
+          - sniper
+          - smg
+          - launcher
+          - melee
         current_rank:
           type: string
-          enum: [ R1, R2, R3, R4, R5 ]
+          enum:
+          - R1
+          - R2
+          - R3
+          - R4
+          - R5
+        rank_bonuses:
+          type: object
+          description: Бонусы текущего ранга
+        next_rank_bonuses:
+          type: object
+          description: Бонусы следующего ранга
         current_experience:
           type: integer
           minimum: 0
@@ -947,76 +1003,83 @@ components:
         total_experience:
           type: integer
           minimum: 0
-        rank_bonuses:
-          type: object
-          description: Бонусы текущего ранга
-        next_rank_bonuses:
-          type: object
-          description: Бонусы следующего ранга
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     MasteryRankResponse:
       type: object
       required:
-        - player_id
-        - weapon_class
-        - rank
-        - unlocked_at
+      - player_id
+      - weapon_class
+      - rank
+      - unlocked_at
       properties:
         player_id:
           type: string
           format: uuid
         weapon_class:
           type: string
-          enum: [ pistol, shotgun, rifle, sniper, smg, launcher, melee ]
+          enum:
+          - pistol
+          - shotgun
+          - rifle
+          - sniper
+          - smg
+          - launcher
+          - melee
         rank:
           type: string
-          enum: [ R1, R2, R3, R4, R5 ]
+          enum:
+          - R1
+          - R2
+          - R3
+          - R4
+          - R5
         unlocked_at:
           type: string
           format: date-time
-        experience_at_unlock:
-          type: integer
         rank_benefits:
           type: array
           items:
             type: string
+        experience_at_unlock:
+          type: integer
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
-    # Брендовая система
     WeaponBrand:
       type: object
       required:
-        - id
-        - name
-        - faction
-        - specialty
+      - id
+      - name
+      - faction
+      - specialty
       properties:
         id:
           type: string
-          enum: [ arasaka, militech, kang_tao, budget_arms, constitutional_arms ]
+          enum:
+          - arasaka
+          - militech
+          - kang_tao
+          - budget_arms
+          - constitutional_arms
         name:
           type: string
         faction:
           type: string
         specialty:
           type: string
-        reputation_bonus:
-          type: number
-          format: float
         synergy_multipliers:
           type: object
         legendary_weapons:
           type: array
           items:
             type: string
+        reputation_bonus:
+          type: number
+          format: float
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     WeaponBrandsResponse:
       type: object
       required:
-        - brands
-        - total
+      - brands
+      - total
       properties:
         brands:
           type: array
@@ -1026,16 +1089,17 @@ components:
           type: integer
           minimum: 0
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     BrandWeaponsResponse:
       type: object
       required:
-        - brand_id
-        - weapons
-        - total
+      - brand_id
+      - weapons
+      - total
       properties:
         brand_id:
           type: string
+        tier_distribution:
+          type: object
         weapons:
           type: array
           items:
@@ -1043,19 +1107,15 @@ components:
         total:
           type: integer
           minimum: 0
-        tier_distribution:
-          type: object
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
-    # Расширенные способности
     CombatAbility:
       type: object
       required:
-        - id
-        - name
-        - archetype
-        - slot_type
-        - cooldown_seconds
+      - id
+      - name
+      - archetype
+      - slot_type
+      - cooldown_seconds
       properties:
         id:
           type: string
@@ -1064,16 +1124,30 @@ components:
           type: string
         archetype:
           type: string
-          enum: [ combat, netrunner, tech, stealth, support, mobility, medic, tactician ]
+          enum:
+          - combat
+          - netrunner
+          - tech
+          - stealth
+          - support
+          - mobility
+          - medic
+          - tactician
         slot_type:
           type: string
-          enum: [ Q, E, R, passive, implant ]
-        cooldown_seconds:
-          type: integer
-          minimum: 0
+          enum:
+          - Q
+          - E
+          - R
+          - passive
+          - implant
         damage_type:
           type: string
-          enum: [ physical, energy, chemical, cyber ]
+          enum:
+          - physical
+          - energy
+          - chemical
+          - cyber
         effects:
           type: array
           items:
@@ -1082,42 +1156,42 @@ components:
           type: array
           items:
             type: string
+        cooldown_seconds:
+          type: integer
+          minimum: 0
         mastery_unlock_level:
           type: integer
           minimum: 1
           maximum: 5
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     ExtendedAbilitiesResponse:
       type: object
       required:
-        - abilities
-        - total
-        - archetypes
+      - abilities
+      - total
+      - archetypes
       properties:
+        slot_distribution:
+          type: object
         abilities:
           type: array
           items:
             $ref: '#/components/schemas/CombatAbility'
-        total:
-          type: integer
-          minimum: 0
         archetypes:
           type: array
           items:
             type: string
-        slot_distribution:
-          type: object
+        total:
+          type: integer
+          minimum: 0
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
-    # Ссылка на базовое оружие
     Weapon:
       type: object
       required:
-        - id
-        - name
-        - category
-        - tier
+      - id
+      - name
+      - category
+      - tier
       properties:
         id:
           type: string
@@ -1126,11 +1200,18 @@ components:
           type: string
         category:
           type: string
-          enum: [ pistol, shotgun, rifle, sniper, smg, launcher, melee ]
+          enum:
+          - pistol
+          - shotgun
+          - rifle
+          - sniper
+          - smg
+          - launcher
+          - melee
+        brand:
+          type: string
         tier:
           type: integer
           minimum: 1
           maximum: 5
-        brand:
-          type: string
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'

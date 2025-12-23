@@ -1,23 +1,36 @@
 openapi: 3.0.3
 info:
   title: Economy Contracts and Deals Service API
-  description: |
-    Полная система контрактов и сделок для NECPGAME.
+  description: 'Полная система контрактов и сделок для NECPGAME.
+
     Безопасные P2P сделки с эскроу, арбитражем и полным жизненным циклом контрактов.
 
+
     **BACKEND NOTE**: Enterprise-grade контрактная система для MMOFPS RPG.
+
     Использует state machine, distributed locks и comprehensive audit trails.
 
+
     **PERFORMANCE**: Ожидаемая нагрузка - 1000+ TPS в пиковые моменты.
+
     Время отклика < 50ms для основных операций (создание контрактов, эскроу).
 
+
     **FEATURES**:
+
     - 4 типа контрактов (обмен, доставка, крафт, сервисы)
+
     - Полный жизненный цикл с 7 состояниями
+
     - Эскроу система с автоматическими блокировками
+
     - AI-модерируемый арбитраж и разрешение споров
+
     - Интеграции с инвентарем, кошельками, репутацией
+
     - Комплексная система безопасности и KYC
+
+    '
   version: 1.0.0
   license:
     name: MIT
@@ -25,68 +38,74 @@ info:
   contact:
     name: Backend Team
     email: backend@necp.game
-
 servers:
-  - url: https://api.necpgame.com/v1/economy/contracts
-    description: Production server
-  - url: https://staging-api.necpgame.com/v1/economy/contracts
-    description: Staging server
-  - url: http://localhost:8410/api/v1/economy/contracts
-    description: Local development
-
+- url: https://api.necpgame.com/v1/economy/contracts
+  description: Production server
+- url: https://staging-api.necpgame.com/v1/economy/contracts
+  description: Staging server
+- url: http://localhost:8410/api/v1/economy/contracts
+  description: Local development
 security:
-  - BearerAuth: [ ]
-
+- BearerAuth: []
 tags:
-  - name: contracts
-    description: Управление контрактами и сделками
-  - name: contract-lifecycle
-    description: Жизненный цикл контрактов
-  - name: escrow
-    description: Эскроу и залоги
-  - name: arbitration
-    description: Арбитраж и споры
-  - name: contract-negotiation
-    description: Переговоры и модификации контрактов
-  - name: contract-monitoring
-    description: Мониторинг и аналитика контрактов
-
+- name: contracts
+  description: Управление контрактами и сделками
+- name: contract-lifecycle
+  description: Жизненный цикл контрактов
+- name: escrow
+  description: Эскроу и залоги
+- name: arbitration
+  description: Арбитраж и споры
+- name: contract-negotiation
+  description: Переговоры и модификации контрактов
+- name: contract-monitoring
+  description: Мониторинг и аналитика контрактов
 paths:
-  # Основные контракты
   /api/v1/economy/contracts:
     get:
       summary: Получить список контрактов
       operationId: getContracts
       tags:
-        - contracts
+      - contracts
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: status
-          in: query
-          schema:
-            type: string
-            enum: [ draft, negotiation, escrow_pending, active, completed, cancelled, disputed ]
-          description: Фильтр по статусу
-        - name: type
-          in: query
-          schema:
-            type: string
-            enum: [ exchange, delivery, crafting, service ]
-          description: Фильтр по типу контракта
-        - name: participant
-          in: query
-          schema:
-            type: string
-            format: uuid
-          description: Фильтр по участнику (свои контракты)
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 20
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - draft
+          - negotiation
+          - escrow_pending
+          - active
+          - completed
+          - cancelled
+          - disputed
+        description: Фильтр по статусу
+      - name: type
+        in: query
+        schema:
+          type: string
+          enum:
+          - exchange
+          - delivery
+          - crafting
+          - service
+        description: Фильтр по типу контракта
+      - name: participant
+        in: query
+        schema:
+          type: string
+          format: uuid
+        description: Фильтр по участнику (свои контракты)
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
       responses:
         '200':
           description: Список контрактов
@@ -98,14 +117,13 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
     post:
       summary: Создать новый контракт
       operationId: createContract
       tags:
-        - contracts
+      - contracts
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -131,23 +149,21 @@ paths:
                 $ref: '#/components/responses/Conflict'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
-  # Конкретный контракт
   /api/v1/economy/contracts/{contract_id}:
     get:
       summary: Получить детали контракта
       operationId: getContract
       tags:
-        - contracts
+      - contracts
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: contract_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: contract_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
         '200':
           description: Детали контракта
@@ -161,21 +177,20 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
     patch:
       summary: Обновить контракт (переговоры)
       operationId: updateContract
       tags:
-        - contract-negotiation
+      - contract-negotiation
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: contract_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: contract_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       requestBody:
         required: true
         content:
@@ -201,29 +216,34 @@ paths:
                 $ref: '#/components/responses/Conflict'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
-  # Жизненный цикл контракта
   /api/v1/economy/contracts/{contract_id}/lifecycle/{action}:
     post:
       summary: Выполнить действие жизненного цикла
       operationId: executeContractLifecycleAction
       tags:
-        - contract-lifecycle
+      - contract-lifecycle
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: contract_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: action
-          in: path
-          required: true
-          schema:
-            type: string
-            enum: [ accept, reject, deposit_escrow, confirm_delivery, complete, cancel, dispute ]
+      - name: contract_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: action
+        in: path
+        required: true
+        schema:
+          type: string
+          enum:
+          - accept
+          - reject
+          - deposit_escrow
+          - confirm_delivery
+          - complete
+          - cancel
+          - dispute
       requestBody:
         content:
           application/json:
@@ -248,23 +268,21 @@ paths:
                 $ref: '#/components/responses/Conflict'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
-  # Эскроу система
   /api/v1/economy/contracts/{contract_id}/escrow:
     get:
       summary: Получить статус эскроу
       operationId: getEscrowStatus
       tags:
-        - escrow
+      - escrow
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: contract_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: contract_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
         '200':
           description: Статус эскроу
@@ -278,21 +296,20 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
     post:
       summary: Внести средства/предметы в эскроу
       operationId: depositToEscrow
       tags:
-        - escrow
+      - escrow
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: contract_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: contract_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       requestBody:
         required: true
         content:
@@ -318,23 +335,21 @@ paths:
                 $ref: '#/components/responses/Conflict'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
-  # Арбитраж и споры
   /api/v1/economy/contracts/{contract_id}/dispute:
     post:
       summary: Открыть спор по контракту
       operationId: openContractDispute
       tags:
-        - arbitration
+      - arbitration
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: contract_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: contract_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       requestBody:
         required: true
         content:
@@ -360,22 +375,21 @@ paths:
                 $ref: '#/components/responses/Conflict'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
   /api/v1/economy/contracts/disputes/{dispute_id}:
     get:
       summary: Получить детали спора
       operationId: getDispute
       tags:
-        - arbitration
+      - arbitration
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: dispute_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: dispute_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
         '200':
           description: Детали спора
@@ -389,21 +403,20 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
     post:
       summary: Добавить доказательство к спору
       operationId: addDisputeEvidence
       tags:
-        - arbitration
+      - arbitration
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: dispute_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: dispute_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       requestBody:
         required: true
         content:
@@ -429,22 +442,21 @@ paths:
                 $ref: '#/components/responses/Conflict'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
   /api/v1/economy/contracts/disputes/{dispute_id}/resolve:
     post:
       summary: Разрешить спор (арбитраж)
       operationId: resolveDispute
       tags:
-        - arbitration
+      - arbitration
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: dispute_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: dispute_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       requestBody:
         required: true
         content:
@@ -470,23 +482,21 @@ paths:
                 $ref: '#/components/responses/Conflict'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
-  # Мониторинг контрактов
   /api/v1/economy/contracts/{contract_id}/timeline:
     get:
       summary: Получить таймлайн контракта
       operationId: getContractTimeline
       tags:
-        - contract-monitoring
+      - contract-monitoring
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: contract_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: contract_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
         '200':
           description: Таймлайн контракта
@@ -500,32 +510,42 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
   /api/v1/economy/contracts/analytics:
     get:
       summary: Получить аналитику по контрактам
       operationId: getContractsAnalytics
       tags:
-        - contract-monitoring
+      - contract-monitoring
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: period
-          in: query
-          schema:
-            type: string
-            enum: [ 7d, 30d, 90d, 1y ]
-            default: 30d
-        - name: type
-          in: query
-          schema:
-            type: string
-            enum: [ exchange, delivery, crafting, service ]
-        - name: status
-          in: query
-          schema:
-            type: string
-            enum: [ completed, disputed, cancelled ]
+      - name: period
+        in: query
+        schema:
+          type: string
+          enum:
+          - 7d
+          - 30d
+          - 90d
+          - 1y
+          default: 30d
+      - name: type
+        in: query
+        schema:
+          type: string
+          enum:
+          - exchange
+          - delivery
+          - crafting
+          - service
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - completed
+          - disputed
+          - cancelled
       responses:
         '200':
           description: Аналитика контрактов
@@ -535,14 +555,12 @@ paths:
                 $ref: '#/components/schemas/ContractsAnalytics'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
 components:
   securitySchemes:
     BearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
-
   responses:
     BadRequest:
       description: Неверный запрос
@@ -580,14 +598,12 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-
   schemas:
-    # Общие схемы
     Error:
       type: object
       required:
-        - code
-        - message
+      - code
+      - message
       properties:
         code:
           type: string
@@ -598,17 +614,15 @@ components:
         details:
           type: object
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
-    # Контракты
     Contract:
       type: object
       required:
-        - id
-        - type
-        - status
-        - participants
-        - terms
-        - created_at
+      - id
+      - type
+      - status
+      - participants
+      - terms
+      - created_at
       properties:
         id:
           type: string
@@ -616,23 +630,23 @@ components:
           description: Уникальный ID контракта
         type:
           type: string
-          enum: [ exchange, delivery, crafting, service ]
+          enum:
+          - exchange
+          - delivery
+          - crafting
+          - service
           description: Тип контракта
         status:
           type: string
-          enum: [ draft, negotiation, escrow_pending, active, completed, cancelled, disputed ]
+          enum:
+          - draft
+          - negotiation
+          - escrow_pending
+          - active
+          - completed
+          - cancelled
+          - disputed
           description: Текущий статус
-        participants:
-          type: array
-          items:
-            $ref: '#/components/schemas/ContractParticipant'
-          minItems: 2
-          maxItems: 2
-          description: Участники контракта
-        terms:
-          $ref: '#/components/schemas/ContractTerms'
-        escrow:
-          $ref: '#/components/schemas/EscrowInfo'
         deadline:
           type: string
           format: date-time
@@ -650,27 +664,40 @@ components:
         completed_at:
           type: string
           format: date-time
+        terms:
+          $ref: '#/components/schemas/ContractTerms'
+        escrow:
+          $ref: '#/components/schemas/EscrowInfo'
+        participants:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContractParticipant'
+          minItems: 2
+          maxItems: 2
+          description: Участники контракта
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     ContractParticipant:
       type: object
       required:
-        - player_id
-        - role
+      - player_id
+      - role
       properties:
         player_id:
           type: string
           format: uuid
         role:
           type: string
-          enum: [ buyer, seller, contractor, client ]
+          enum:
+          - buyer
+          - seller
+          - contractor
+          - client
           description: Роль в контракте
         confirmed_at:
           type: string
           format: date-time
           description: Время подтверждения участия
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     ContractTerms:
       type: object
       properties:
@@ -678,85 +705,92 @@ components:
           type: string
           maxLength: 1000
           description: Описание контракта
+        payment:
+          $ref: '#/components/schemas/PaymentTerms'
+        penalties:
+          $ref: '#/components/schemas/PenaltyTerms'
         deliverables:
           type: array
           items:
             $ref: '#/components/schemas/Deliverable'
           description: Что должно быть доставлено
-        payment:
-          $ref: '#/components/schemas/PaymentTerms'
-        penalties:
-          $ref: '#/components/schemas/PenaltyTerms'
         special_conditions:
           type: array
           items:
             type: string
           description: Специальные условия
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     Deliverable:
       type: object
       required:
-        - type
-        - description
+      - type
+      - description
       properties:
         type:
           type: string
-          enum: [ item, service, crafting_result, delivery ]
+          enum:
+          - item
+          - service
+          - crafting_result
+          - delivery
         description:
           type: string
-        quantity:
-          type: integer
-          minimum: 1
         quality_requirements:
           type: object
           description: Требования к качеству
         delivery_location:
           $ref: '#/components/schemas/Location'
+        quantity:
+          type: integer
+          minimum: 1
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     PaymentTerms:
       type: object
       required:
-        - amount
-        - currency
+      - amount
+      - currency
       properties:
-        amount:
-          type: number
-          format: float
-          minimum: 0
         currency:
           type: string
-          enum: [ eddies, bitcoins, corporate_script ]
+          enum:
+          - eddies
+          - bitcoins
+          - corporate_script
         payment_schedule:
           type: array
           items:
             $ref: '#/components/schemas/PaymentMilestone'
           description: График платежей
+        amount:
+          type: number
+          format: float
+          minimum: 0
         escrow_required:
           type: boolean
           default: true
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     PaymentMilestone:
       type: object
       required:
-        - percentage
-        - trigger
+      - percentage
+      - trigger
       properties:
+        trigger:
+          type: string
+          enum:
+          - contract_signed
+          - delivery_started
+          - delivery_completed
+          - quality_verified
         percentage:
           type: number
           format: float
           minimum: 0
           maximum: 100
-        trigger:
-          type: string
-          enum: [ contract_signed, delivery_started, delivery_completed, quality_verified ]
         amount:
           type: number
           format: float
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     PenaltyTerms:
       type: object
       properties:
@@ -781,14 +815,16 @@ components:
           minimum: 0
           description: Максимальный штраф
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     Location:
       type: object
       required:
-        - x
-        - y
-        - z
+      - x
+      - y
+      - z
       properties:
+        zone:
+          type: string
+          description: Название зоны
         x:
           type: number
           format: float
@@ -798,14 +834,23 @@ components:
         z:
           type: number
           format: float
-        zone:
-          type: string
-          description: Название зоны
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     EscrowInfo:
       type: object
       properties:
+        status:
+          type: string
+          enum:
+          - pending
+          - partial
+          - complete
+          - released
+          - disputed
+        release_conditions:
+          type: array
+          items:
+            type: string
+          description: Условия освобождения средств
         total_amount:
           type: number
           format: float
@@ -822,24 +867,16 @@ components:
           type: number
           format: float
           description: Удержанный залог
-        status:
-          type: string
-          enum: [ pending, partial, complete, released, disputed ]
-        release_conditions:
-          type: array
-          items:
-            type: string
-          description: Условия освобождения средств
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
-    # Ответы API
     ContractsResponse:
       type: object
       required:
-        - contracts
-        - total
-        - pagination
+      - contracts
+      - total
+      - pagination
       properties:
+        pagination:
+          $ref: '#/components/schemas/PaginationInfo'
         contracts:
           type: array
           items:
@@ -847,13 +884,14 @@ components:
         total:
           type: integer
           minimum: 0
-        pagination:
-          $ref: '#/components/schemas/PaginationInfo'
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     PaginationInfo:
       type: object
       properties:
+        has_next:
+          type: boolean
+        has_prev:
+          type: boolean
         page:
           type: integer
           minimum: 1
@@ -863,21 +901,18 @@ components:
         total_pages:
           type: integer
           minimum: 0
-        has_next:
-          type: boolean
-        has_prev:
-          type: boolean
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     ContractDetail:
       type: object
       required:
-        - contract
-        - timeline
-        - participants_details
+      - contract
+      - timeline
+      - participants_details
       properties:
         contract:
           $ref: '#/components/schemas/Contract'
+        dispute_info:
+          $ref: '#/components/schemas/DisputeInfo'
         timeline:
           type: array
           items:
@@ -886,38 +921,34 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ParticipantDetail'
-        dispute_info:
-          $ref: '#/components/schemas/DisputeInfo'
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     TimelineEntry:
       type: object
       required:
-        - timestamp
-        - action
-        - actor
+      - timestamp
+      - action
+      - actor
       properties:
+        actor:
+          type: string
+          format: uuid
+          description: ID актора
         timestamp:
           type: string
           format: date-time
         action:
           type: string
           description: Действие (создание, подтверждение, оплата и т.д.)
-        actor:
-          type: string
-          format: uuid
-          description: ID актора
         details:
           type: object
           description: Детали действия
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     ParticipantDetail:
       type: object
       required:
-        - player_id
-        - reputation_score
-        - completed_contracts
+      - player_id
+      - reputation_score
+      - completed_contracts
       properties:
         player_id:
           type: string
@@ -927,6 +958,8 @@ components:
           format: float
           minimum: 0
           maximum: 100
+        kyc_verified:
+          type: boolean
         completed_contracts:
           type: integer
           minimum: 0
@@ -936,37 +969,34 @@ components:
         level:
           type: integer
           minimum: 1
-        kyc_verified:
-          type: boolean
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
-    # Создание и обновление контрактов
     CreateContractRequest:
       type: object
       required:
-        - type
-        - counterparty_id
-        - terms
+      - type
+      - counterparty_id
+      - terms
       properties:
-        type:
-          type: string
-          enum: [ exchange, delivery, crafting, service ]
         counterparty_id:
           type: string
           format: uuid
           description: ID контрагента
-        terms:
-          $ref: '#/components/schemas/ContractTerms'
+        type:
+          type: string
+          enum:
+          - exchange
+          - delivery
+          - crafting
+          - service
         initial_offer:
           type: object
           description: Первоначальное предложение
+        terms:
+          $ref: '#/components/schemas/ContractTerms'
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     UpdateContractRequest:
       type: object
       properties:
-        terms:
-          $ref: '#/components/schemas/ContractTerms'
         message:
           type: string
           maxLength: 500
@@ -974,9 +1004,9 @@ components:
         counter_offer:
           type: object
           description: Контрпредложение
+        terms:
+          $ref: '#/components/schemas/ContractTerms'
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
-    # Жизненный цикл
     LifecycleActionRequest:
       type: object
       properties:
@@ -984,28 +1014,32 @@ components:
           type: string
           maxLength: 500
           description: Причина действия
+        delivery_proof:
+          type: object
+          description: Доказательство доставки
         evidence:
           type: array
           items:
             type: string
           description: Доказательства выполнения
-        delivery_proof:
-          type: object
-          description: Доказательство доставки
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     LifecycleActionResult:
       type: object
       required:
-        - success
-        - new_status
-        - timestamp
+      - success
+      - new_status
+      - timestamp
       properties:
-        success:
-          type: boolean
         new_status:
           type: string
-          enum: [ draft, negotiation, escrow_pending, active, completed, cancelled, disputed ]
+          enum:
+          - draft
+          - negotiation
+          - escrow_pending
+          - active
+          - completed
+          - cancelled
+          - disputed
         timestamp:
           type: string
           format: date-time
@@ -1016,26 +1050,35 @@ components:
           items:
             type: string
           description: Побочные эффекты (уведомления, репутация и т.д.)
+        success:
+          type: boolean
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
-    # Эскроу
     EscrowStatus:
       type: object
       required:
-        - contract_id
-        - status
-        - deposits
+      - contract_id
+      - status
+      - deposits
       properties:
         contract_id:
           type: string
           format: uuid
         status:
           type: string
-          enum: [ pending, partial, complete, released, disputed ]
+          enum:
+          - pending
+          - partial
+          - complete
+          - released
+          - disputed
         deposits:
           type: array
           items:
             $ref: '#/components/schemas/EscrowDeposit'
+        release_blockers:
+          type: array
+          items:
+            type: string
         total_required:
           type: number
           format: float
@@ -1044,103 +1087,107 @@ components:
           format: float
         can_release:
           type: boolean
-        release_blockers:
-          type: array
-          items:
-            type: string
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     EscrowDeposit:
       type: object
       required:
-        - participant_id
-        - amount
-        - timestamp
+      - participant_id
+      - amount
+      - timestamp
       properties:
         participant_id:
           type: string
           format: uuid
-        amount:
-          type: number
-          format: float
         currency:
           type: string
-          enum: [ eddies, bitcoins, corporate_script ]
+          enum:
+          - eddies
+          - bitcoins
+          - corporate_script
+        timestamp:
+          type: string
+          format: date-time
         items:
           type: array
           items:
             $ref: '#/components/schemas/EscrowItem'
-        timestamp:
-          type: string
-          format: date-time
+        amount:
+          type: number
+          format: float
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     EscrowItem:
       type: object
       required:
-        - item_id
-        - quantity
+      - item_id
+      - quantity
       properties:
         item_id:
           type: string
           format: uuid
+        quality:
+          type: string
+          enum:
+          - common
+          - uncommon
+          - rare
+          - epic
+          - legendary
         quantity:
           type: integer
           minimum: 1
-        quality:
-          type: string
-          enum: [ common, uncommon, rare, epic, legendary ]
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     EscrowDepositRequest:
       type: object
       required:
-        - deposit_type
+      - deposit_type
       properties:
         deposit_type:
           type: string
-          enum: [ currency, items, both ]
-        currency_amount:
-          type: number
-          format: float
-          minimum: 0
+          enum:
+          - currency
+          - items
+          - both
         currency_type:
           type: string
-          enum: [ eddies, bitcoins, corporate_script ]
+          enum:
+          - eddies
+          - bitcoins
+          - corporate_script
         items:
           type: array
           items:
             $ref: '#/components/schemas/EscrowItem'
+        currency_amount:
+          type: number
+          format: float
+          minimum: 0
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     EscrowDepositResult:
       type: object
       required:
-        - success
-        - deposited_at
+      - success
+      - deposited_at
       properties:
-        success:
-          type: boolean
-        deposited_at:
-          type: string
-          format: date-time
         deposit_id:
           type: string
           format: uuid
+        deposited_at:
+          type: string
+          format: date-time
         escrow_status:
           $ref: '#/components/schemas/EscrowStatus'
+        success:
+          type: boolean
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
-    # Арбитраж и споры
     Dispute:
       type: object
       required:
-        - id
-        - contract_id
-        - initiator_id
-        - reason
-        - status
-        - created_at
+      - id
+      - contract_id
+      - initiator_id
+      - reason
+      - status
+      - created_at
       properties:
         id:
           type: string
@@ -1156,44 +1203,48 @@ components:
           maxLength: 1000
         status:
           type: string
-          enum: [ open, evidence_collection, ai_review, human_review, resolved, closed ]
-        ai_verdict:
-          $ref: '#/components/schemas/AIVerdict'
-        final_resolution:
-          $ref: '#/components/schemas/DisputeResolution'
+          enum:
+          - open
+          - evidence_collection
+          - ai_review
+          - human_review
+          - resolved
+          - closed
         created_at:
           type: string
           format: date-time
         resolved_at:
           type: string
           format: date-time
+        ai_verdict:
+          $ref: '#/components/schemas/AIVerdict'
+        final_resolution:
+          $ref: '#/components/schemas/DisputeResolution'
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     AIVerdict:
       type: object
       required:
-        - confidence
-        - recommended_resolution
+      - confidence
+      - recommended_resolution
       properties:
-        confidence:
-          type: number
-          format: float
-          minimum: 0
-          maximum: 1
-        recommended_resolution:
-          $ref: '#/components/schemas/DisputeResolution'
         reasoning:
           type: string
         evidence_strength:
           type: object
           description: Оценка силы доказательств
+        recommended_resolution:
+          $ref: '#/components/schemas/DisputeResolution'
+        confidence:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     DisputeResolution:
       type: object
       required:
-        - winner
-        - escrow_distribution
+      - winner
+      - escrow_distribution
       properties:
         winner:
           type: string
@@ -1212,38 +1263,36 @@ components:
           type: integer
           description: Длительность блокировки (минуты)
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     OpenDisputeRequest:
       type: object
       required:
-        - reason
+      - reason
       properties:
         reason:
           type: string
           maxLength: 1000
           description: Причина открытия спора
+        requested_resolution:
+          type: object
+          description: Запрашиваемое разрешение
         evidence:
           type: array
           items:
             type: string
             description: Ссылки на доказательства
-        requested_resolution:
-          type: object
-          description: Запрашиваемое разрешение
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     DisputeDetail:
       type: object
       required:
-        - dispute
-        - contract
-        - evidence
-        - participants
+      - dispute
+      - contract
+      - evidence
+      - participants
       properties:
-        dispute:
-          $ref: '#/components/schemas/Dispute'
         contract:
           $ref: '#/components/schemas/Contract'
+        dispute:
+          $ref: '#/components/schemas/Dispute'
         evidence:
           type: array
           items:
@@ -1257,15 +1306,14 @@ components:
           items:
             $ref: '#/components/schemas/DisputeTimelineEntry'
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     DisputeEvidence:
       type: object
       required:
-        - id
-        - submitter_id
-        - type
-        - content
-        - submitted_at
+      - id
+      - submitter_id
+      - type
+      - content
+      - submitted_at
       properties:
         id:
           type: string
@@ -1275,30 +1323,37 @@ components:
           format: uuid
         type:
           type: string
-          enum: [ text, image, video, log, witness_statement ]
+          enum:
+          - text
+          - image
+          - video
+          - log
+          - witness_statement
         content:
           type: string
-        metadata:
-          type: object
         submitted_at:
           type: string
           format: date-time
+        metadata:
+          type: object
         verified:
           type: boolean
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     DisputeParticipant:
       type: object
       required:
-        - player_id
-        - role
+      - player_id
+      - role
       properties:
         player_id:
           type: string
           format: uuid
         role:
           type: string
-          enum: [ initiator, respondent, witness ]
+          enum:
+          - initiator
+          - respondent
+          - witness
         last_activity:
           type: string
           format: date-time
@@ -1306,13 +1361,12 @@ components:
           type: integer
           minimum: 0
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     DisputeTimelineEntry:
       type: object
       required:
-        - timestamp
-        - event
-        - actor
+      - timestamp
+      - event
+      - actor
       properties:
         timestamp:
           type: string
@@ -1326,118 +1380,121 @@ components:
         details:
           type: object
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     AddEvidenceRequest:
       type: object
       required:
-        - type
-        - content
+      - type
+      - content
       properties:
         type:
           type: string
-          enum: [ text, image, video, log, witness_statement ]
+          enum:
+          - text
+          - image
+          - video
+          - log
+          - witness_statement
         content:
           type: string
         metadata:
           type: object
           description: Дополнительные метаданные
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     AddEvidenceResult:
       type: object
       required:
-        - success
-        - evidence_id
+      - success
+      - evidence_id
       properties:
-        success:
-          type: boolean
         evidence_id:
           type: string
           format: uuid
         submitted_at:
           type: string
           format: date-time
+        success:
+          type: boolean
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     ResolveDisputeRequest:
       type: object
       required:
-        - resolution
+      - resolution
       properties:
-        resolution:
-          $ref: '#/components/schemas/DisputeResolution'
         moderator_notes:
           type: string
           maxLength: 2000
+        resolution:
+          $ref: '#/components/schemas/DisputeResolution'
         appeal_allowed:
           type: boolean
           default: true
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     ResolveDisputeResult:
       type: object
       required:
-        - success
-        - resolved_at
-        - final_resolution
+      - success
+      - resolved_at
+      - final_resolution
       properties:
-        success:
-          type: boolean
         resolved_at:
           type: string
           format: date-time
         final_resolution:
           $ref: '#/components/schemas/DisputeResolution'
+        success:
+          type: boolean
         notifications_sent:
           type: boolean
         contract_status_updated:
           type: boolean
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
-    # Мониторинг
     ContractTimeline:
       type: object
       required:
-        - contract_id
-        - entries
+      - contract_id
+      - entries
       properties:
         contract_id:
           type: string
           format: uuid
+        current_phase:
+          type: string
+          enum:
+          - negotiation
+          - escrow
+          - execution
+          - completion
+          - dispute
+        next_deadline:
+          type: string
+          format: date-time
         entries:
           type: array
           items:
             $ref: '#/components/schemas/TimelineEntry'
-        current_phase:
-          type: string
-          enum: [ negotiation, escrow, execution, completion, dispute ]
-        next_deadline:
-          type: string
-          format: date-time
         warnings:
           type: array
           items:
             type: string
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     ContractsAnalytics:
       type: object
       required:
-        - period
-        - summary
-        - by_type
-        - by_status
+      - period
+      - summary
+      - by_type
+      - by_status
       properties:
         period:
           type: string
-        summary:
-          $ref: '#/components/schemas/ContractStats'
         by_type:
           type: object
           description: Статистика по типам контрактов
         by_status:
           type: object
           description: Статистика по статусам
+        summary:
+          $ref: '#/components/schemas/ContractStats'
         dispute_rate:
           type: number
           format: float
@@ -1446,22 +1503,9 @@ components:
           type: integer
           description: Среднее время выполнения (часы)
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     ContractStats:
       type: object
       properties:
-        total_contracts:
-          type: integer
-          minimum: 0
-        completed_contracts:
-          type: integer
-          minimum: 0
-        disputed_contracts:
-          type: integer
-          minimum: 0
-        cancelled_contracts:
-          type: integer
-          minimum: 0
         total_volume:
           type: number
           format: float
@@ -1474,8 +1518,19 @@ components:
           format: float
           minimum: 0
           maximum: 1
+        total_contracts:
+          type: integer
+          minimum: 0
+        completed_contracts:
+          type: integer
+          minimum: 0
+        disputed_contracts:
+          type: integer
+          minimum: 0
+        cancelled_contracts:
+          type: integer
+          minimum: 0
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     DisputeInfo:
       type: object
       properties:
@@ -1484,7 +1539,13 @@ components:
           format: uuid
         status:
           type: string
-          enum: [ open, evidence_collection, ai_review, human_review, resolved, closed ]
+          enum:
+          - open
+          - evidence_collection
+          - ai_review
+          - human_review
+          - resolved
+          - closed
         opened_at:
           type: string
           format: date-time

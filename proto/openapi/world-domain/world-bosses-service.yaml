@@ -1,23 +1,36 @@
 openapi: 3.0.3
 info:
   title: World Bosses Service API
-  description: |
-    Полная система мировых боссов для NECPGAME.
+  description: 'Полная система мировых боссов для NECPGAME.
+
     Каталог боссов, расписание, участие, телеметрия и последствия событий.
 
+
     **BACKEND NOTE**: Enterprise-grade world boss management для MMOFPS RPG.
+
     Использует TimescaleDB для телеметрии и Redis для кеширования состояний боссов.
 
+
     **PERFORMANCE**: Ожидаемая нагрузка - 5000+ RPS во время активных событий.
+
     Время отклика < 150ms для основных запросов (каталог, регистрация).
 
+
     **FEATURES**:
+
     - Каталог 7 мировых боссов с фазовыми сценариями
+
     - Лиговая система Bronze → Mythic с прогрессивной сложностью
+
     - WebSocket real-time телеметрия боев
+
     - Автоматическая ротация по циклам и сюжетным триггерам
+
     - Интеграция с экономикой, социальными связями и аналитикой
+
     - Aftermath система с изменением мировых флагов
+
+    '
   version: 1.0.0
   license:
     name: MIT
@@ -25,63 +38,76 @@ info:
   contact:
     name: Backend Team
     email: backend@necp.game
-
 servers:
-  - url: https://api.necpgame.com/v1/world/bosses
-    description: Production server
-  - url: https://staging-api.necpgame.com/v1/world/bosses
-    description: Staging server
-  - url: http://localhost:8430/api/v1/world/bosses
-    description: Local development
-
+- url: https://api.necpgame.com/v1/world/bosses
+  description: Production server
+- url: https://staging-api.necpgame.com/v1/world/bosses
+  description: Staging server
+- url: http://localhost:8430/api/v1/world/bosses
+  description: Local development
 security:
-  - BearerAuth: [ ]
-
+- BearerAuth: []
 tags:
-  - name: catalog
-    description: Каталог боссов и их характеристики
-  - name: scheduling
-    description: Расписание и управление событиями
-  - name: participation
-    description: Регистрация и участие в событиях
-  - name: telemetry
-    description: Телеметрия и real-time данные
-  - name: aftermath
-    description: Последствия и награды событий
-
+- name: catalog
+  description: Каталог боссов и их характеристики
+- name: scheduling
+  description: Расписание и управление событиями
+- name: participation
+  description: Регистрация и участие в событиях
+- name: telemetry
+  description: Телеметрия и real-time данные
+- name: aftermath
+  description: Последствия и награды событий
 paths:
-  # Каталог боссов
   /api/v1/world/bosses/catalog:
     get:
       summary: Получить полный каталог мировых боссов
       operationId: getWorldBossesCatalog
       tags:
-        - catalog
+      - catalog
       parameters:
-        - name: league
-          in: query
-          schema:
-            type: string
-            enum: [ Bronze, Silver, Gold, Platinum, Diamond, Master, Mythic ]
-          description: Фильтр по лиге сложности
-        - name: faction
-          in: query
-          schema:
-            type: string
-            enum: [ neon-titans, blackwall, valentinos, nomads, netwatch, eclipse, hivemind ]
-          description: Фильтр по фракции босса
-        - name: location_type
-          in: query
-          schema:
-            type: string
-            enum: [ city, badlands, orbital, cyberspace ]
-          description: Фильтр по типу локации
-        - name: available_only
-          in: query
-          schema:
-            type: boolean
-            default: false
-          description: Показывать только доступных в текущем цикле
+      - name: league
+        in: query
+        schema:
+          type: string
+          enum:
+          - Bronze
+          - Silver
+          - Gold
+          - Platinum
+          - Diamond
+          - Master
+          - Mythic
+        description: Фильтр по лиге сложности
+      - name: faction
+        in: query
+        schema:
+          type: string
+          enum:
+          - neon-titans
+          - blackwall
+          - valentinos
+          - nomads
+          - netwatch
+          - eclipse
+          - hivemind
+        description: Фильтр по фракции босса
+      - name: location_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - city
+          - badlands
+          - orbital
+          - cyberspace
+        description: Фильтр по типу локации
+      - name: available_only
+        in: query
+        schema:
+          type: boolean
+          default: false
+        description: Показывать только доступных в текущем цикле
       responses:
         '200':
           description: Каталог мировых боссов
@@ -91,33 +117,32 @@ paths:
                 $ref: '#/components/schemas/WorldBossesCatalogResponse'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
   /api/v1/world/bosses/{boss_id}:
     get:
       summary: Получить детали конкретного босса
       operationId: getWorldBossDetails
       tags:
-        - catalog
+      - catalog
       parameters:
-        - name: boss_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: ID босса
-        - name: include_phases
-          in: query
-          schema:
-            type: boolean
-            default: true
-          description: Включить детали фаз
-        - name: include_rewards
-          in: query
-          schema:
-            type: boolean
-            default: true
-          description: Включить информацию о наградах
+      - name: boss_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: ID босса
+      - name: include_phases
+        in: query
+        schema:
+          type: boolean
+          default: true
+        description: Включить детали фаз
+      - name: include_rewards
+        in: query
+        schema:
+          type: boolean
+          default: true
+        description: Включить информацию о наградах
       responses:
         '200':
           description: Детали мирового босса
@@ -129,42 +154,44 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
-  # Расписание событий
   /api/v1/world/bosses/schedule:
     get:
       summary: Получить расписание предстоящих событий мировых боссов
       operationId: getWorldBossesSchedule
       tags:
-        - scheduling
+      - scheduling
       parameters:
-        - name: from_date
-          in: query
-          schema:
-            type: string
-            format: date-time
-          description: Начало периода
-        - name: to_date
-          in: query
-          schema:
-            type: string
-            format: date-time
-          description: Конец периода
-        - name: status
-          in: query
-          schema:
-            type: string
-            enum: [ scheduled, active, completed, failed ]
-            default: scheduled
-          description: Статус событий
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 50
-            default: 20
-          description: Максимальное количество результатов
+      - name: from_date
+        in: query
+        schema:
+          type: string
+          format: date-time
+        description: Начало периода
+      - name: to_date
+        in: query
+        schema:
+          type: string
+          format: date-time
+        description: Конец периода
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - scheduled
+          - active
+          - completed
+          - failed
+          default: scheduled
+        description: Статус событий
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 50
+          default: 20
+        description: Максимальное количество результатов
       responses:
         '200':
           description: Расписание событий мировых боссов
@@ -174,14 +201,13 @@ paths:
                 $ref: '#/components/schemas/WorldBossesScheduleResponse'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
     post:
       summary: Запланировать специальное событие мирового босса
       operationId: scheduleWorldBossEvent
       tags:
-        - scheduling
+      - scheduling
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -201,21 +227,20 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
   /api/v1/world/bosses/events/{event_id}:
     get:
       summary: Получить детали конкретного события
       operationId: getWorldBossEventDetails
       tags:
-        - scheduling
+      - scheduling
       parameters:
-        - name: event_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: ID события
+      - name: event_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: ID события
       responses:
         '200':
           description: Детали события мирового босса
@@ -227,22 +252,21 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
     put:
       summary: Обновить параметры события
       operationId: updateWorldBossEvent
       tags:
-        - scheduling
+      - scheduling
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: event_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: ID события
+      - name: event_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: ID события
       requestBody:
         required: true
         content:
@@ -266,24 +290,22 @@ paths:
           $ref: '#/components/responses/Conflict'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
-  # Участие в событиях
   /api/v1/world/bosses/events/{event_id}/register:
     post:
       summary: Зарегистрироваться на участие в событии
       operationId: registerForWorldBossEvent
       tags:
-        - participation
+      - participation
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: event_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: ID события
+      - name: event_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: ID события
       requestBody:
         required: true
         content:
@@ -307,36 +329,39 @@ paths:
           $ref: '#/components/responses/Conflict'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
   /api/v1/world/bosses/events/{event_id}/participants:
     get:
       summary: Получить список участников события
       operationId: getEventParticipants
       tags:
-        - participation
+      - participation
       parameters:
-        - name: event_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: ID события
-        - name: status
-          in: query
-          schema:
-            type: string
-            enum: [ registered, confirmed, participating, completed ]
-            default: participating
-          description: Статус участников
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 50
-          description: Максимальное количество участников
+      - name: event_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: ID события
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - registered
+          - confirmed
+          - participating
+          - completed
+          default: participating
+        description: Статус участников
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+        description: Максимальное количество участников
       responses:
         '200':
           description: Список участников события
@@ -348,22 +373,20 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
-  # Телеметрия и real-time данные
   /api/v1/world/bosses/events/{event_id}/status:
     get:
       summary: Получить текущий статус активного события
       operationId: getWorldBossEventStatus
       tags:
-        - telemetry
+      - telemetry
       parameters:
-        - name: event_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: ID события
+      - name: event_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: ID события
       responses:
         '200':
           description: Текущий статус события
@@ -375,43 +398,49 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
   /api/v1/world/bosses/events/{event_id}/telemetry:
     get:
       summary: Получить телеметрию события
       operationId: getWorldBossEventTelemetry
       tags:
-        - telemetry
+      - telemetry
       parameters:
-        - name: event_id
-          in: path
-          required: true
-          schema:
+      - name: event_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: ID события
+      - name: from_timestamp
+        in: query
+        schema:
+          type: string
+          format: date-time
+        description: Начало периода телеметрии
+      - name: event_types
+        in: query
+        schema:
+          type: array
+          items:
             type: string
-            format: uuid
-          description: ID события
-        - name: from_timestamp
-          in: query
-          schema:
-            type: string
-            format: date-time
-          description: Начало периода телеметрии
-        - name: event_types
-          in: query
-          schema:
-            type: array
-            items:
-              type: string
-              enum: [ PhaseStart, AbilityCast, SkillCheck, PlayerDown, LootRoll, BossDefeated, EventFailed ]
-          description: Типы событий для фильтрации
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 1000
-            default: 100
-          description: Максимальное количество записей
+            enum:
+            - PhaseStart
+            - AbilityCast
+            - SkillCheck
+            - PlayerDown
+            - LootRoll
+            - BossDefeated
+            - EventFailed
+        description: Типы событий для фильтрации
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 1000
+          default: 100
+        description: Максимальное количество записей
       responses:
         '200':
           description: Телеметрия события
@@ -423,22 +452,20 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
-  # Последствия событий
   /api/v1/world/bosses/events/{event_id}/aftermath:
     get:
       summary: Получить последствия события
       operationId: getWorldBossEventAftermath
       tags:
-        - aftermath
+      - aftermath
       parameters:
-        - name: event_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: ID события
+      - name: event_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: ID события
       responses:
         '200':
           description: Последствия события мирового босса
@@ -450,22 +477,21 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
     post:
       summary: Зафиксировать последствия события
       operationId: processWorldBossAftermath
       tags:
-        - aftermath
+      - aftermath
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: event_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: ID события
+      - name: event_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: ID события
       requestBody:
         required: true
         content:
@@ -489,30 +515,29 @@ paths:
           $ref: '#/components/responses/Conflict'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
   /api/v1/world/bosses/events/{event_id}/rewards/{player_id}:
     get:
       summary: Получить награды игрока за участие в событии
       operationId: getPlayerEventRewards
       tags:
-        - aftermath
+      - aftermath
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: event_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: ID события
-        - name: player_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: ID игрока
+      - name: event_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: ID события
+      - name: player_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: ID игрока
       responses:
         '200':
           description: Награды игрока
@@ -526,14 +551,12 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
 components:
   securitySchemes:
     BearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
-
   responses:
     BadRequest:
       description: Неверный запрос
@@ -571,14 +594,12 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-
   schemas:
-    # Общие схемы
     Error:
       type: object
       required:
-        - code
-        - message
+      - code
+      - message
       properties:
         code:
           type: string
@@ -589,16 +610,17 @@ components:
         details:
           type: object
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     Location:
       type: object
       required:
-        - city_id
-        - coordinates
+      - city_id
+      - coordinates
       properties:
         city_id:
           type: string
           format: uuid
+        address:
+          type: string
         coordinates:
           type: object
           properties:
@@ -609,41 +631,36 @@ components:
               type: number
               format: float
           required:
-            - latitude
-            - longitude
-        address:
-          type: string
+          - latitude
+          - longitude
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
-    # Каталог боссов
     WorldBossesCatalogResponse:
       type: object
       required:
-        - bosses
-        - total_count
+      - bosses
+      - total_count
       properties:
+        current_cycle:
+          $ref: '#/components/schemas/BossRotationCycle'
         bosses:
           type: array
           items:
             $ref: '#/components/schemas/WorldBossSummary'
-        total_count:
-          type: integer
         leagues_available:
           type: array
           items:
             type: string
-        current_cycle:
-          $ref: '#/components/schemas/BossRotationCycle'
+        total_count:
+          type: integer
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     WorldBossSummary:
       type: object
       required:
-        - boss_id
-        - name
-        - faction
-        - league
-        - location_type
+      - boss_id
+      - name
+      - faction
+      - league
+      - location_type
       properties:
         boss_id:
           type: string
@@ -652,16 +669,41 @@ components:
           type: string
         faction:
           type: string
-          enum: [ neon-titans, blackwall, valentinos, nomads, netwatch, eclipse, hivemind ]
+          enum:
+          - neon-titans
+          - blackwall
+          - valentinos
+          - nomads
+          - netwatch
+          - eclipse
+          - hivemind
         league:
           type: string
-          enum: [ Bronze, Silver, Gold, Platinum, Diamond, Master, Mythic ]
+          enum:
+          - Bronze
+          - Silver
+          - Gold
+          - Platinum
+          - Diamond
+          - Master
+          - Mythic
         location_type:
           type: string
-          enum: [ city, badlands, orbital, cyberspace ]
+          enum:
+          - city
+          - badlands
+          - orbital
+          - cyberspace
         base_difficulty:
           type: string
-          enum: [ easy, normal, hard, nightmare ]
+          enum:
+          - easy
+          - normal
+          - hard
+          - nightmare
+        next_available:
+          type: string
+          format: date-time
         player_count_range:
           type: object
           properties:
@@ -670,22 +712,18 @@ components:
             max:
               type: integer
           required:
-            - min
-            - max
+          - min
+          - max
         available:
           type: boolean
-        next_available:
-          type: string
-          format: date-time
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     BossRotationCycle:
       type: object
       required:
-        - cycle_id
-        - start_date
-        - end_date
-        - active_bosses
+      - cycle_id
+      - start_date
+      - end_date
+      - active_bosses
       properties:
         cycle_id:
           type: string
@@ -696,47 +734,45 @@ components:
         end_date:
           type: string
           format: date-time
+        theme:
+          type: string
         active_bosses:
           type: array
           items:
             type: string
             format: uuid
-        theme:
-          type: string
         special_events:
           type: array
           items:
             type: string
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     WorldBossDetailResponse:
       type: object
       required:
-        - boss
-        - phases
-        - rewards
+      - boss
+      - phases
+      - rewards
       properties:
+        rewards:
+          $ref: '#/components/schemas/BossRewards'
+        statistics:
+          $ref: '#/components/schemas/BossStatistics'
         boss:
           $ref: '#/components/schemas/WorldBoss'
         phases:
           type: array
           items:
             $ref: '#/components/schemas/BossPhase'
-        rewards:
-          $ref: '#/components/schemas/BossRewards'
-        statistics:
-          $ref: '#/components/schemas/BossStatistics'
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     WorldBoss:
       type: object
       required:
-        - boss_id
-        - name
-        - faction
-        - description
-        - location_type
-        - base_health
+      - boss_id
+      - name
+      - faction
+      - description
+      - location_type
+      - base_health
       properties:
         boss_id:
           type: string
@@ -745,12 +781,29 @@ components:
           type: string
         faction:
           type: string
-          enum: [ neon-titans, blackwall, valentinos, nomads, netwatch, eclipse, hivemind ]
+          enum:
+          - neon-titans
+          - blackwall
+          - valentinos
+          - nomads
+          - netwatch
+          - eclipse
+          - hivemind
         description:
           type: string
         location_type:
           type: string
-          enum: [ city, badlands, orbital, cyberspace ]
+          enum:
+          - city
+          - badlands
+          - orbital
+          - cyberspace
+        lore_context:
+          type: string
+        trigger_conditions:
+          type: object
+        visual_assets:
+          type: object
         base_health:
           type: integer
           minimum: 1000000
@@ -761,35 +814,21 @@ components:
         duration_estimate:
           type: integer
           description: Ожидаемая длительность в минутах
-        trigger_conditions:
-          type: object
-        lore_context:
-          type: string
-        visual_assets:
-          type: object
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     BossPhase:
       type: object
       required:
-        - phase_number
-        - name
-        - description
-        - abilities
+      - phase_number
+      - name
+      - description
+      - abilities
       properties:
-        phase_number:
-          type: integer
-          minimum: 1
-          maximum: 3
         name:
           type: string
         description:
           type: string
-        health_percentage:
-          type: number
-          format: float
-          minimum: 0
-          maximum: 1
+        transitions:
+          type: object
         abilities:
           type: array
           items:
@@ -798,18 +837,24 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/SkillCheck'
-        transitions:
-          type: object
+        health_percentage:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+        phase_number:
+          type: integer
+          minimum: 1
+          maximum: 3
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     BossAbility:
       type: object
       required:
-        - ability_id
-        - name
-        - type
-        - damage
-        - cooldown
+      - ability_id
+      - name
+      - type
+      - damage
+      - cooldown
       properties:
         ability_id:
           type: string
@@ -818,38 +863,49 @@ components:
           type: string
         type:
           type: string
-          enum: [ melee, ranged, aoe, debuff, summon, special ]
-        damage:
-          type: integer
-          minimum: 0
-        cooldown:
-          type: integer
-          description: Перезарядка в секундах
+          enum:
+          - melee
+          - ranged
+          - aoe
+          - debuff
+          - summon
+          - special
         description:
           type: string
         effects:
           type: array
           items:
             type: string
+        damage:
+          type: integer
+          minimum: 0
+        cooldown:
+          type: integer
+          description: Перезарядка в секундах
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     SkillCheck:
       type: object
       required:
-        - attribute
-        - difficulty
-        - success_threshold
+      - attribute
+      - difficulty
+      - success_threshold
       properties:
         attribute:
           type: string
-          enum: [ strength, intelligence, reflexes, cool, tech, luck ]
+          enum:
+          - strength
+          - intelligence
+          - reflexes
+          - cool
+          - tech
+          - luck
         difficulty:
           type: string
-          enum: [ easy, medium, hard, extreme ]
-        success_threshold:
-          type: integer
-          minimum: 1
-          maximum: 20
+          enum:
+          - easy
+          - medium
+          - hard
+          - extreme
         consequences:
           type: object
           properties:
@@ -857,15 +913,14 @@ components:
               type: string
             failure:
               type: string
+        success_threshold:
+          type: integer
+          minimum: 1
+          maximum: 20
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     BossRewards:
       type: object
       properties:
-        loot_table:
-          type: array
-          items:
-            $ref: '#/components/schemas/LootEntry'
         faction_reputation:
           type: object
           additionalProperties:
@@ -877,6 +932,10 @@ components:
               type: integer
             premium_points:
               type: integer
+        loot_table:
+          type: array
+          items:
+            $ref: '#/components/schemas/LootEntry'
         achievement_unlocks:
           type: array
           items:
@@ -886,13 +945,12 @@ components:
           items:
             $ref: '#/components/schemas/WorldFlagChange'
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     LootEntry:
       type: object
       required:
-        - item_id
-        - rarity
-        - drop_chance
+      - item_id
+      - rarity
+      - drop_chance
       properties:
         item_id:
           type: string
@@ -901,12 +959,13 @@ components:
           type: string
         rarity:
           type: string
-          enum: [ common, uncommon, rare, epic, legendary, unique ]
-        drop_chance:
-          type: number
-          format: float
-          minimum: 0
-          maximum: 1
+          enum:
+          - common
+          - uncommon
+          - rare
+          - epic
+          - legendary
+          - unique
         quantity_range:
           type: object
           properties:
@@ -914,75 +973,79 @@ components:
               type: integer
             max:
               type: integer
+        drop_chance:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     WorldFlagChange:
       type: object
       required:
-        - flag_name
-        - change_type
-        - value
+      - flag_name
+      - change_type
+      - value
       properties:
         flag_name:
           type: string
         change_type:
           type: string
-          enum: [ set, increment, decrement, toggle ]
+          enum:
+          - set
+          - increment
+          - decrement
+          - toggle
         value:
           type: string
         duration:
           type: integer
           description: Длительность в часах
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     BossStatistics:
       type: object
       properties:
+        difficulty_adjustments:
+          type: object
+        most_used_abilities:
+          type: array
+          items:
+            type: string
+        success_rate:
+          type: number
+          format: float
         total_defeats:
           type: integer
         average_clear_time:
           type: integer
           description: Среднее время победы в секундах
-        success_rate:
-          type: number
-          format: float
         average_participants:
           type: integer
-        most_used_abilities:
-          type: array
-          items:
-            type: string
-        difficulty_adjustments:
-          type: object
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
-    # Расписание событий
     WorldBossesScheduleResponse:
       type: object
       required:
-        - events
-        - total_count
+      - events
+      - total_count
       properties:
+        next_cycle_start:
+          type: string
+          format: date-time
         events:
           type: array
           items:
             $ref: '#/components/schemas/WorldBossEventSummary'
         total_count:
           type: integer
-        next_cycle_start:
-          type: string
-          format: date-time
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     WorldBossEventSummary:
       type: object
       required:
-        - event_id
-        - boss_id
-        - boss_name
-        - status
-        - scheduled_time
-        - location
+      - event_id
+      - boss_id
+      - boss_name
+      - status
+      - scheduled_time
+      - location
       properties:
         event_id:
           type: string
@@ -994,27 +1057,38 @@ components:
           type: string
         status:
           type: string
-          enum: [ scheduled, active, completed, failed, cancelled ]
+          enum:
+          - scheduled
+          - active
+          - completed
+          - failed
+          - cancelled
         scheduled_time:
           type: string
           format: date-time
-        location:
-          $ref: '#/components/schemas/Location'
         league:
           type: string
-          enum: [ Bronze, Silver, Gold, Platinum, Diamond, Master, Mythic ]
+          enum:
+          - Bronze
+          - Silver
+          - Gold
+          - Platinum
+          - Diamond
+          - Master
+          - Mythic
+        location:
+          $ref: '#/components/schemas/Location'
         expected_participants:
           type: integer
         registered_count:
           type: integer
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     ScheduleWorldBossRequest:
       type: object
       required:
-        - boss_id
-        - scheduled_time
-        - location
+      - boss_id
+      - scheduled_time
+      - location
       properties:
         boss_id:
           type: string
@@ -1022,66 +1096,75 @@ components:
         scheduled_time:
           type: string
           format: date-time
-        location:
-          $ref: '#/components/schemas/Location'
         league:
           type: string
-          enum: [ Bronze, Silver, Gold, Platinum, Diamond, Master, Mythic ]
+          enum:
+          - Bronze
+          - Silver
+          - Gold
+          - Platinum
+          - Diamond
+          - Master
+          - Mythic
           default: Bronze
-        custom_settings:
-          type: object
         reason:
           type: string
           maxLength: 500
+        custom_settings:
+          type: object
+        location:
+          $ref: '#/components/schemas/Location'
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     WorldBossEventScheduledResponse:
       type: object
       required:
-        - event_id
-        - status
-        - scheduled_time
+      - event_id
+      - status
+      - scheduled_time
       properties:
         event_id:
           type: string
           format: uuid
         status:
           type: string
-          enum: [ scheduled, active, completed, failed, cancelled ]
+          enum:
+          - scheduled
+          - active
+          - completed
+          - failed
+          - cancelled
         scheduled_time:
           type: string
           format: date-time
-        estimated_participants:
-          type: integer
         notification_sent:
           type: boolean
+        estimated_participants:
+          type: integer
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     WorldBossEventDetailResponse:
       type: object
       required:
-        - event
-        - participants
-        - telemetry_summary
+      - event
+      - participants
+      - telemetry_summary
       properties:
+        telemetry_summary:
+          $ref: '#/components/schemas/EventTelemetrySummary'
         event:
           $ref: '#/components/schemas/WorldBossEvent'
         participants:
           type: array
           items:
             $ref: '#/components/schemas/EventParticipant'
-        telemetry_summary:
-          $ref: '#/components/schemas/EventTelemetrySummary'
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     WorldBossEvent:
       type: object
       required:
-        - event_id
-        - boss_id
-        - status
-        - scheduled_time
-        - location
+      - event_id
+      - boss_id
+      - status
+      - scheduled_time
+      - location
       properties:
         event_id:
           type: string
@@ -1091,7 +1174,12 @@ components:
           format: uuid
         status:
           type: string
-          enum: [ scheduled, active, completed, failed, cancelled ]
+          enum:
+          - scheduled
+          - active
+          - completed
+          - failed
+          - cancelled
         scheduled_time:
           type: string
           format: date-time
@@ -1101,31 +1189,37 @@ components:
         actual_end_time:
           type: string
           format: date-time
-        location:
-          $ref: '#/components/schemas/Location'
         league:
           type: string
-          enum: [ Bronze, Silver, Gold, Platinum, Diamond, Master, Mythic ]
+          enum:
+          - Bronze
+          - Silver
+          - Gold
+          - Platinum
+          - Diamond
+          - Master
+          - Mythic
+        custom_settings:
+          type: object
+        location:
+          $ref: '#/components/schemas/Location'
+        boss_health_percentage:
+          type: number
+          format: float
         registered_participants:
           type: integer
         active_participants:
           type: integer
         current_phase:
           type: integer
-        boss_health_percentage:
-          type: number
-          format: float
-        custom_settings:
-          type: object
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     EventParticipant:
       type: object
       required:
-        - player_id
-        - player_name
-        - status
-        - joined_at
+      - player_id
+      - player_name
+      - status
+      - joined_at
       properties:
         player_id:
           type: string
@@ -1134,32 +1228,36 @@ components:
           type: string
         status:
           type: string
-          enum: [ registered, confirmed, participating, completed, disconnected ]
+          enum:
+          - registered
+          - confirmed
+          - participating
+          - completed
+          - disconnected
         joined_at:
           type: string
           format: date-time
         left_at:
           type: string
           format: date-time
+        rewards_earned:
+          type: array
+          items:
+            type: string
         damage_dealt:
           type: integer
         healing_done:
           type: integer
         skill_checks_passed:
           type: integer
-        rewards_earned:
-          type: array
-          items:
-            type: string
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     EventTelemetrySummary:
       type: object
       properties:
-        total_damage:
-          type: integer
-        total_healing:
-          type: integer
+        ability_usage:
+          type: object
+          additionalProperties:
+            type: integer
         phase_transitions:
           type: array
           items:
@@ -1172,55 +1270,67 @@ components:
                 format: date-time
               reason:
                 type: string
-        ability_usage:
-          type: object
-          additionalProperties:
-            type: integer
+        total_damage:
+          type: integer
+        total_healing:
+          type: integer
         player_deaths:
           type: integer
         successful_skill_checks:
           type: integer
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     UpdateWorldBossEventRequest:
       type: object
       properties:
         scheduled_time:
           type: string
           format: date-time
-        location:
-          $ref: '#/components/schemas/Location'
         league:
           type: string
-          enum: [ Bronze, Silver, Gold, Platinum, Diamond, Master, Mythic ]
-        custom_settings:
-          type: object
+          enum:
+          - Bronze
+          - Silver
+          - Gold
+          - Platinum
+          - Diamond
+          - Master
+          - Mythic
         status:
           type: string
-          enum: [ scheduled, active, completed, failed, cancelled ]
+          enum:
+          - scheduled
+          - active
+          - completed
+          - failed
+          - cancelled
+        custom_settings:
+          type: object
+        location:
+          $ref: '#/components/schemas/Location'
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     WorldBossEventResponse:
       type: object
       required:
-        - event
+      - event
       properties:
         event:
           $ref: '#/components/schemas/WorldBossEvent'
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
-    # Участие в событиях
     RegisterForEventRequest:
       type: object
       required:
-        - player_id
+      - player_id
       properties:
         player_id:
           type: string
           format: uuid
         preferred_role:
           type: string
-          enum: [ tank, healer, dps, support ]
+          enum:
+          - tank
+          - healer
+          - dps
+          - support
         team_composition_notes:
           type: string
           maxLength: 200
@@ -1229,14 +1339,13 @@ components:
           items:
             type: string
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     RegistrationResponse:
       type: object
       required:
-        - event_id
-        - player_id
-        - status
-        - registered_at
+      - event_id
+      - player_id
+      - status
+      - registered_at
       properties:
         event_id:
           type: string
@@ -1246,33 +1355,29 @@ components:
           format: uuid
         status:
           type: string
-          enum: [ registered, confirmed, waitlist ]
+          enum:
+          - registered
+          - confirmed
+          - waitlist
         registered_at:
+          type: string
+          format: date-time
+        estimated_start:
           type: string
           format: date-time
         queue_position:
           type: integer
-        estimated_start:
-          type: string
-          format: date-time
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     EventParticipantsResponse:
       type: object
       required:
-        - event_id
-        - participants
-        - total_count
+      - event_id
+      - participants
+      - total_count
       properties:
         event_id:
           type: string
           format: uuid
-        participants:
-          type: array
-          items:
-            $ref: '#/components/schemas/EventParticipant'
-        total_count:
-          type: integer
         by_role:
           type: object
           properties:
@@ -1284,36 +1389,33 @@ components:
               type: integer
             support:
               type: integer
+        participants:
+          type: array
+          items:
+            $ref: '#/components/schemas/EventParticipant'
+        total_count:
+          type: integer
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
-    # Телеметрия
     WorldBossEventStatusResponse:
       type: object
       required:
-        - event_id
-        - status
-        - current_phase
-        - boss_health_percentage
-        - participants_count
+      - event_id
+      - status
+      - current_phase
+      - boss_health_percentage
+      - participants_count
       properties:
         event_id:
           type: string
           format: uuid
         status:
           type: string
-          enum: [ scheduled, active, completed, failed, cancelled ]
-        current_phase:
-          type: integer
-        boss_health_percentage:
-          type: number
-          format: float
-        participants_count:
-          type: integer
-        active_participants:
-          type: integer
-        time_elapsed:
-          type: integer
-          description: Время с начала события в секундах
+          enum:
+          - scheduled
+          - active
+          - completed
+          - failed
+          - cancelled
         estimated_completion:
           type: string
           format: date-time
@@ -1321,95 +1423,112 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/TelemetryEvent'
+        boss_health_percentage:
+          type: number
+          format: float
+        current_phase:
+          type: integer
+        participants_count:
+          type: integer
+        active_participants:
+          type: integer
+        time_elapsed:
+          type: integer
+          description: Время с начала события в секундах
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     TelemetryEvent:
       type: object
       required:
-        - timestamp
-        - event_type
-        - description
+      - timestamp
+      - event_type
+      - description
       properties:
+        player_id:
+          type: string
+          format: uuid
         timestamp:
           type: string
           format: date-time
         event_type:
           type: string
-          enum: [ PhaseStart, AbilityCast, SkillCheck, PlayerDown, LootRoll, BossDefeated, EventFailed ]
+          enum:
+          - PhaseStart
+          - AbilityCast
+          - SkillCheck
+          - PlayerDown
+          - LootRoll
+          - BossDefeated
+          - EventFailed
         description:
           type: string
-        player_id:
-          type: string
-          format: uuid
         player_name:
           type: string
         ability_name:
           type: string
-        damage:
-          type: integer
         success:
           type: boolean
+        damage:
+          type: integer
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     WorldBossTelemetryResponse:
       type: object
       required:
-        - event_id
-        - events
-        - total_count
+      - event_id
+      - events
+      - total_count
       properties:
         event_id:
           type: string
           format: uuid
+        pagination:
+          $ref: '#/components/schemas/PaginationInfo'
         events:
           type: array
           items:
             $ref: '#/components/schemas/TelemetryEvent'
         total_count:
           type: integer
-        pagination:
-          $ref: '#/components/schemas/PaginationInfo'
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     PaginationInfo:
       type: object
       properties:
+        has_more:
+          type: boolean
         limit:
           type: integer
         offset:
           type: integer
-        has_more:
-          type: boolean
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
-    # Последствия
     WorldBossAftermathResponse:
       type: object
       required:
-        - event_id
-        - outcome
-        - aftermath_effects
+      - event_id
+      - outcome
+      - aftermath_effects
       properties:
         event_id:
           type: string
           format: uuid
         outcome:
           type: string
-          enum: [ victory, defeat, timeout, cancelled ]
-        aftermath_effects:
-          $ref: '#/components/schemas/AftermathEffects'
-        world_flags_changed:
-          type: array
-          items:
-            $ref: '#/components/schemas/WorldFlagChange'
+          enum:
+          - victory
+          - defeat
+          - timeout
+          - cancelled
         faction_reputation_changes:
           type: object
           additionalProperties:
             type: integer
+        aftermath_effects:
+          $ref: '#/components/schemas/AftermathEffects'
         economic_impacts:
           $ref: '#/components/schemas/EconomicImpacts'
+        world_flags_changed:
+          type: array
+          items:
+            $ref: '#/components/schemas/WorldFlagChange'
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     AftermathEffects:
       type: object
       properties:
@@ -1435,15 +1554,9 @@ components:
           items:
             type: string
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     EconomicImpacts:
       type: object
       properties:
-        market_volatility:
-          type: number
-          format: float
-        faction_bounties_updated:
-          type: boolean
         resource_prices_affected:
           type: object
           additionalProperties:
@@ -1453,32 +1566,39 @@ components:
           type: array
           items:
             type: string
+        market_volatility:
+          type: number
+          format: float
+        faction_bounties_updated:
+          type: boolean
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     ProcessAftermathRequest:
       type: object
       required:
-        - outcome
+      - outcome
       properties:
         outcome:
           type: string
-          enum: [ victory, defeat, timeout, cancelled ]
-        final_statistics:
-          $ref: '#/components/schemas/EventTelemetrySummary'
+          enum:
+          - victory
+          - defeat
+          - timeout
+          - cancelled
         special_conditions:
           type: object
+        final_statistics:
+          $ref: '#/components/schemas/EventTelemetrySummary'
         manual_adjustments:
           type: array
           items:
             $ref: '#/components/schemas/WorldFlagChange'
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     AftermathProcessedResponse:
       type: object
       required:
-        - event_id
-        - processed_at
-        - effects_applied
+      - event_id
+      - processed_at
+      - effects_applied
       properties:
         event_id:
           type: string
@@ -1488,18 +1608,17 @@ components:
           format: date-time
         effects_applied:
           $ref: '#/components/schemas/AftermathEffects'
-        notifications_sent:
-          type: integer
         data_updated:
           type: boolean
+        notifications_sent:
+          type: integer
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     PlayerRewardsResponse:
       type: object
       required:
-        - event_id
-        - player_id
-        - rewards
+      - event_id
+      - player_id
+      - rewards
       properties:
         event_id:
           type: string
@@ -1507,16 +1626,19 @@ components:
         player_id:
           type: string
           format: uuid
+        participation_rating:
+          type: string
+          enum:
+          - minimal
+          - standard
+          - heroic
+          - legendary
         rewards:
           $ref: '#/components/schemas/PlayerRewards'
         contribution_score:
           type: number
           format: float
-        participation_rating:
-          type: string
-          enum: [ minimal, standard, heroic, legendary ]
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     PlayerRewards:
       type: object
       properties:
@@ -1527,23 +1649,22 @@ components:
               type: integer
             premium_points:
               type: integer
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/LootEntry'
         faction_reputation:
           type: object
           additionalProperties:
             type: integer
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/LootEntry'
         achievements:
+          type: array
+          items:
+            type: string
+        title_unlocks:
           type: array
           items:
             type: string
         experience:
           type: integer
-        title_unlocks:
-          type: array
-          items:
-            type: string
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-

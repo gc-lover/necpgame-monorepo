@@ -22,20 +22,20 @@ info:
     name: NECPGAME API Support
     email: api@necp.game
 servers:
-  - url: http://localhost:8090/api/v1/sync
-    description: Локальный сервер разработки
-  - url: https://api.necp.game/api/v1/sync
-    description: Продакшен сервер
+- url: http://localhost:8090/api/v1/sync
+  description: Локальный сервер разработки
+- url: https://api.necp.game/api/v1/sync
+  description: Продакшен сервер
 tags:
-  - name: Event Bus
-    description: Управление Event Bus
-  - name: Outbox
-    description: Управление Outbox Pattern
+- name: Event Bus
+  description: Управление Event Bus
+- name: Outbox
+  description: Управление Outbox Pattern
 paths:
   /events/publish:
     post:
       tags:
-        - Event Bus
+      - Event Bus
       summary: Опубликовать событие в Event Bus
       description: 'Публикует событие в Event Bus (Kafka) для распространения
 
@@ -44,7 +44,7 @@ paths:
         '
       operationId: publishEvent
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -78,23 +78,23 @@ paths:
   /events/{eventId}:
     get:
       tags:
-        - Event Bus
+      - Event Bus
       summary: Получить событие по ID
       description: 'Возвращает информацию о событии по его ID.
 
         '
       operationId: getEvent
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: eventId
-          in: path
-          required: true
-          description: ID события
-          schema:
-            type: string
-            format: uuid
-            example: bb0e8400-e29b-41d4-a716-446655440000
+      - name: eventId
+        in: path
+        required: true
+        description: ID события
+        schema:
+          type: string
+          format: uuid
+          example: bb0e8400-e29b-41d4-a716-446655440000
       responses:
         '200':
           description: Информация о событии
@@ -111,59 +111,59 @@ paths:
   /events:
     get:
       tags:
-        - Event Bus
+      - Event Bus
       summary: Получить список событий
       description: 'Возвращает список событий с фильтрацией по типу, статусу и дате.
 
         '
       operationId: listEvents
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: event_type
-          in: query
-          required: false
-          description: Фильтр по типу события
-          schema:
-            type: string
-            example: character.*
-        - name: status
-          in: query
-          required: false
-          description: Фильтр по статусу
-          schema:
-            $ref: sync-schemas.yaml#/components/schemas/EventStatus
-        - name: start_date
-          in: query
-          required: false
-          description: Начальная дата
-          schema:
-            type: string
-            format: date-time
-        - name: end_date
-          in: query
-          required: false
-          description: Конечная дата
-          schema:
-            type: string
-            format: date-time
-        - name: limit
-          in: query
-          required: false
-          description: Лимит результатов
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 50
-        - name: offset
-          in: query
-          required: false
-          description: Смещение для пагинации
-          schema:
-            type: integer
-            minimum: 0
-            default: 0
+      - name: event_type
+        in: query
+        required: false
+        description: Фильтр по типу события
+        schema:
+          type: string
+          example: character.*
+      - name: status
+        in: query
+        required: false
+        description: Фильтр по статусу
+        schema:
+          $ref: sync-schemas.yaml#/components/schemas/EventStatus
+      - name: start_date
+        in: query
+        required: false
+        description: Начальная дата
+        schema:
+          type: string
+          format: date-time
+      - name: end_date
+        in: query
+        required: false
+        description: Конечная дата
+        schema:
+          type: string
+          format: date-time
+      - name: limit
+        in: query
+        required: false
+        description: Лимит результатов
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+      - name: offset
+        in: query
+        required: false
+        description: Смещение для пагинации
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
       responses:
         '200':
           description: Список событий
@@ -178,32 +178,32 @@ paths:
   /outbox/pending:
     get:
       tags:
-        - Outbox
+      - Outbox
       summary: Получить список ожидающих событий Outbox
       description: 'Возвращает список событий из Outbox, ожидающих обработки.
 
         '
       operationId: getPendingOutboxEvents
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: limit
-          in: query
-          required: false
-          description: Лимит результатов
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 50
-        - name: offset
-          in: query
-          required: false
-          description: Смещение для пагинации
-          schema:
-            type: integer
-            minimum: 0
-            default: 0
+      - name: limit
+        in: query
+        required: false
+        description: Лимит результатов
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+      - name: offset
+        in: query
+        required: false
+        description: Смещение для пагинации
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
       responses:
         '200':
           description: Список ожидающих событий
@@ -218,23 +218,23 @@ paths:
   /outbox/{eventId}/retry:
     post:
       tags:
-        - Outbox
+      - Outbox
       summary: Повторить обработку события Outbox
       description: 'Запускает повторную обработку события из Outbox после ошибки.
 
         '
       operationId: retryOutboxEvent
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: eventId
-          in: path
-          required: true
-          description: ID события Outbox
-          schema:
-            type: string
-            format: uuid
-            example: cc0e8400-e29b-41d4-a716-446655440000
+      - name: eventId
+        in: path
+        required: true
+        description: ID события Outbox
+        schema:
+          type: string
+          format: uuid
+          example: cc0e8400-e29b-41d4-a716-446655440000
       responses:
         '200':
           description: Обработка запущена
@@ -258,7 +258,7 @@ paths:
   /outbox/stats:
     get:
       tags:
-        - Outbox
+      - Outbox
       summary: Получить статистику Outbox
       description: 'Возвращает статистику обработки событий Outbox:
 
@@ -267,7 +267,7 @@ paths:
         '
       operationId: getOutboxStats
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       responses:
         '200':
           description: Статистика Outbox
@@ -293,8 +293,8 @@ components:
     PublishEventRequest:
       type: object
       required:
-        - event_type
-        - payload
+      - event_type
+      - payload
       properties:
         event_type:
           type: string
@@ -311,10 +311,10 @@ components:
     PublishEventResponse:
       type: object
       required:
-        - event_id
-        - event_type
-        - status
-        - published_at
+      - event_id
+      - event_type
+      - status
+      - published_at
       properties:
         event_id:
           type: string
@@ -333,8 +333,8 @@ components:
     EventsListResponse:
       type: object
       required:
-        - events
-        - total
+      - events
+      - total
       properties:
         events:
           type: array
@@ -348,8 +348,8 @@ components:
     OutboxEventsResponse:
       type: object
       required:
-        - events
-        - total
+      - events
+      - total
       properties:
         events:
           type: array
@@ -363,10 +363,10 @@ components:
     RetryOutboxEventResponse:
       type: object
       required:
-        - event_id
-        - status
-        - retry_count
-        - message
+      - event_id
+      - status
+      - retry_count
+      - message
       properties:
         event_id:
           type: string
@@ -385,12 +385,18 @@ components:
     OutboxStatsResponse:
       type: object
       required:
-        - total_events
-        - pending_events
-        - processed_events
-        - failed_events
-        - average_processing_time
+      - total_events
+      - pending_events
+      - processed_events
+      - failed_events
+      - average_processing_time
       properties:
+        average_processing_time:
+          type: number
+          format: float
+          description: Среднее время обработки в секундах
+          minimum: 0
+          example: 2.5
         total_events:
           type: integer
           description: Общее количество событий
@@ -411,12 +417,6 @@ components:
           description: Количество неудачных событий
           minimum: 0
           example: 150
-        average_processing_time:
-          type: number
-          format: float
-          description: Среднее время обработки в секундах
-          minimum: 0
-          example: 2.5
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
   responses:
     BadRequest:

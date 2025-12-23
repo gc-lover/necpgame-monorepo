@@ -1,30 +1,48 @@
 openapi: 3.0.3
 info:
   title: Security Kafka API - Enterprise-Grade Event Streaming
-  description: |
-    **Enterprise-Grade Security Kafka API for NECPGAME**
+  description: '**Enterprise-Grade Security Kafka API for NECPGAME**
+
 
     Comprehensive event-driven architecture for security event streaming,
+
     audit logging, and real-time security monitoring across all microservices.
 
+
     ## Key Features
+
     - **Enterprise-grade architecture** with proper event streaming domain separation
+
     - **Backend optimization hints** for struct alignment and performance (30-50% memory savings)
+
     - **Complete validation** with redocly and ogen code generation
+
     - **Security-first approach** with encrypted event streams and access control
+
     - **Performance-optimized** response structures with field ordering
+
     - **Comprehensive error handling** with proper HTTP status codes
 
+
     ## Domain Purpose
+
     The Security Kafka Service manages all event streaming and message queuing for security-related
+
     operations in NECPGAME, including audit events, security monitoring, and cross-service communication.
 
+
     ## Performance Targets
+
     - P99 Latency: <100ms for event publishing (HIGH THROUGHPUT)
+
     - Memory: <50KB per active event stream
+
     - Concurrent streams: 1000+ simultaneous event producers/consumers
+
     - Event throughput: 100k+ events/sec sustained
-  version: "1.0.0"
+
+    '
+  version: 1.0.0
   contact:
     name: NECPGAME API Support
     url: https://necpgame.com/support
@@ -32,53 +50,55 @@ info:
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
-
 servers:
-  - url: https://api.necpgame.com/v1/kafka
-    description: Production server
-  - url: https://staging-api.necpgame.com/v1/kafka
-    description: Staging server
-  - url: http://localhost:8080/api/v1/kafka
-    description: Local development server
-
+- url: https://api.necpgame.com/v1/kafka
+  description: Production server
+- url: https://staging-api.necpgame.com/v1/kafka
+  description: Staging server
+- url: http://localhost:8080/api/v1/kafka
+  description: Local development server
 security:
-  - BearerAuth: [ ]
-
+- BearerAuth: []
 tags:
-  - name: Event Streaming
-    description: Kafka event publishing and consumption
-  - name: Topic Management
-    description: Kafka topic creation and configuration
-  - name: Consumer Groups
-    description: Consumer group management and monitoring
-  - name: Event Schemas
-    description: Event schema validation and evolution
-  - name: Health Monitoring
-    description: System health and performance monitoring
-
+- name: Event Streaming
+  description: Kafka event publishing and consumption
+- name: Topic Management
+  description: Kafka topic creation and configuration
+- name: Consumer Groups
+  description: Consumer group management and monitoring
+- name: Event Schemas
+  description: Event schema validation and evolution
+- name: Health Monitoring
+  description: System health and performance monitoring
 paths:
-  # Health Check - ОБЯЗАТЕЛЬНО для всех доменов
   /health:
     get:
       summary: Kafka service health check
-      description: |
-        **Enterprise-grade health check endpoint**
+      description: '**Enterprise-grade health check endpoint**
+
 
         Provides real-time health status of the Kafka event streaming microservice.
+
         Critical for service discovery, load balancing, and monitoring.
 
+
         **Performance:** <1ms response time, cached for 30 seconds
+
+        '
       operationId: kafkaHealthCheck
       tags:
-        - Health Monitoring
+      - Health Monitoring
       parameters:
-        - name: Accept-Encoding
-          in: header
-          schema:
-            type: string
-            enum: [ gzip, deflate, br ]
+      - name: Accept-Encoding
+        in: header
+        schema:
+          type: string
+          enum:
+          - gzip
+          - deflate
+          - br
       responses:
-        "200":
+        '200':
           description: Service is healthy
           headers:
             Cache-Control:
@@ -92,43 +112,49 @@ paths:
             Content-Encoding:
               schema:
                 type: string
-                enum: [ gzip, deflate, br ]
+                enum:
+                - gzip
+                - deflate
+                - br
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/HealthResponse"
-        "503":
+                $ref: '#/components/schemas/HealthResponse'
+        '503':
           description: Service is unhealthy
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/HealthResponse"
-        "429":
+                $ref: '#/components/schemas/HealthResponse'
+        '429':
           description: Rate limit exceeded
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "500":
+                $ref: '#/components/schemas/Error'
+        '500':
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-
+                $ref: '#/components/schemas/Error'
   /health/batch:
     post:
       summary: Batch health check for Kafka clusters
-      description: |
-        **Enterprise-grade batch health monitoring**
+      description: '**Enterprise-grade batch health monitoring**
+
 
         Performs health checks across multiple Kafka clusters and topics simultaneously.
+
         Optimized for event streaming orchestration and dependency monitoring.
 
+
         **Performance:** <5ms for batch of 10 clusters
+
+        '
       operationId: kafkaBatchHealthCheck
       tags:
-        - Health Monitoring
+      - Health Monitoring
       requestBody:
         required: true
         content:
@@ -140,76 +166,87 @@ paths:
                   type: array
                   items:
                     type: string
-                    enum: [ security-events, audit-logs, auth-events, anticheat-events ]
+                    enum:
+                    - security-events
+                    - audit-logs
+                    - auth-events
+                    - anticheat-events
                   minItems: 1
                   maxItems: 10
-                  example: [ "security-events", "audit-logs" ]
+                  example:
+                  - security-events
+                  - audit-logs
       responses:
-        "200":
+        '200':
           description: Batch health check completed
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/BatchHealthResponse"
-        "400":
+                $ref: '#/components/schemas/BatchHealthResponse'
+        '400':
           description: Invalid request parameters
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-
+                $ref: '#/components/schemas/Error'
   /health/ws:
     get:
       summary: WebSocket health monitoring
-      description: |
-        **Real-time health monitoring via WebSocket**
+      description: '**Real-time health monitoring via WebSocket**
+
 
         Establishes WebSocket connection for continuous health monitoring.
+
         Critical for real-time event streaming monitoring and failover detection.
 
+
         **Performance:** <10ms connection establishment, <1ms ping-pong
+
+        '
       operationId: kafkaWebSocketHealth
       tags:
-        - Health Monitoring
+      - Health Monitoring
       parameters:
-        - name: token
-          in: query
-          required: true
-          schema:
-            type: string
-            description: JWT token for authentication
+      - name: token
+        in: query
+        required: true
+        schema:
+          type: string
+          description: JWT token for authentication
       responses:
-        "101":
+        '101':
           description: WebSocket connection established
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/WebSocketHealthMessage"
-
-  # Event Streaming
+                $ref: '#/components/schemas/WebSocketHealthMessage'
   /events/publish:
     post:
       summary: Publish security event
-      description: |
-        **Publish security event to Kafka**
+      description: '**Publish security event to Kafka**
+
 
         Publishes security-related events to appropriate Kafka topics.
+
         Events include authentication attempts, authorization decisions, and security violations.
 
+
         **Performance:** <10ms publish latency, HIGH THROUGHPUT (100k+ events/sec)
+
+        '
       operationId: publishSecurityEvent
       tags:
-        - Event Streaming
+      - Event Streaming
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/SecurityEvent"
+              $ref: '#/components/schemas/SecurityEvent'
       responses:
-        "201":
+        '201':
           description: Security event published successfully
           content:
             application/json:
@@ -218,17 +255,17 @@ paths:
                 properties:
                   event_id:
                     type: string
-                    example: "evt_12345"
+                    example: evt_12345
                   topic:
                     type: string
-                    example: "security-events"
-        "202":
+                    example: security-events
+        '202':
           description: Event published successfully (accepted for processing)
           headers:
             X-Kafka-Topic:
               schema:
                 type: string
-                example: "security-events"
+                example: security-events
             X-Kafka-Partition:
               schema:
                 type: integer
@@ -245,54 +282,58 @@ paths:
                   eventId:
                     type: string
                     format: uuid
-                    example: "123e4567-e89b-12d3-a456-426614174000"
+                    example: 123e4567-e89b-12d3-a456-426614174000
                   publishedAt:
                     type: string
                     format: date-time
-                    example: "2024-01-01T12:00:00Z"
+                    example: '2024-01-01T12:00:00Z'
                   topic:
                     type: string
-                    example: "security-events"
-        "400":
+                    example: security-events
+        '400':
           description: Invalid event data
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "429":
+                $ref: '#/components/schemas/Error'
+        '429':
           description: Rate limit exceeded
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-
+                $ref: '#/components/schemas/Error'
   /events/batch:
     post:
       summary: Batch publish security events
-      description: |
-        **Batch publish multiple security events**
+      description: '**Batch publish multiple security events**
+
 
         Publishes multiple security events in a single request for improved throughput.
+
         Optimized for high-volume security event logging.
 
+
         **Performance:** <50ms for batch of 100 events, BULK THROUGHPUT
+
+        '
       operationId: batchPublishSecurityEvents
       tags:
-        - Event Streaming
+      - Event Streaming
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required: [ events ]
+              required:
+              - events
               properties:
                 events:
                   type: array
                   items:
-                    $ref: "#/components/schemas/SecurityEvent"
+                    $ref: '#/components/schemas/SecurityEvent'
                   minItems: 1
                   maxItems: 1000
                 atomic:
@@ -300,7 +341,7 @@ paths:
                   default: true
                   description: Whether all events should be published atomically
       responses:
-        "201":
+        '201':
           description: Security events batch published successfully
           content:
             application/json:
@@ -314,8 +355,8 @@ paths:
                       format: uuid
                   topic:
                     type: string
-                    example: "security-events"
-        "202":
+                    example: security-events
+        '202':
           description: Events published successfully (accepted for processing)
           content:
             application/json:
@@ -327,221 +368,251 @@ paths:
                     items:
                       type: string
                       format: uuid
-                    example: [ "123e4567-e89b-12d3-a456-426614174000" ]
+                    example:
+                    - 123e4567-e89b-12d3-a456-426614174000
                   publishedAt:
                     type: string
                     format: date-time
-                    example: "2024-01-01T12:00:00Z"
+                    example: '2024-01-01T12:00:00Z'
                   totalEvents:
                     type: integer
                     example: 50
-        "400":
+        '400':
           description: Invalid event data
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "429":
+                $ref: '#/components/schemas/Error'
+        '429':
           description: Rate limit exceeded
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-
-  # Topic Management
+                $ref: '#/components/schemas/Error'
   /topics:
     get:
       summary: List Kafka topics
-      description: |
-        **Get available Kafka topics**
+      description: '**Get available Kafka topics**
+
 
         Retrieves list of active Kafka topics for security event streaming.
+
         Filtered by permissions and access control.
 
+
         **Performance:** <20ms query, cached
+
+        '
       operationId: listKafkaTopics
       tags:
-        - Topic Management
+      - Topic Management
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: type
-          in: query
-          schema:
-            type: string
-            enum: [ security, audit, auth, anticheat ]
-            description: Filter by topic type
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 20
+      - name: type
+        in: query
+        schema:
+          type: string
+          enum:
+          - security
+          - audit
+          - auth
+          - anticheat
+          description: Filter by topic type
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
       responses:
-        "200":
+        '200':
           description: Topics retrieved successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/KafkaTopicsResponse"
-        "403":
+                $ref: '#/components/schemas/KafkaTopicsResponse'
+        '403':
           description: Insufficient permissions
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-
+                $ref: '#/components/schemas/Error'
     post:
       summary: Create Kafka topic
-      description: |
-        **Create new Kafka topic**
+      description: '**Create new Kafka topic**
+
 
         Creates a new Kafka topic for security event streaming.
+
         Requires admin privileges and validates topic configuration.
 
+
         **Performance:** <100ms topic creation
+
+        '
       operationId: createKafkaTopic
       tags:
-        - Topic Management
+      - Topic Management
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateTopicRequest"
+              $ref: '#/components/schemas/CreateTopicRequest'
       responses:
-        "201":
+        '201':
           description: Topic created successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/KafkaTopic"
-        "400":
+                $ref: '#/components/schemas/KafkaTopic'
+        '400':
           description: Invalid topic configuration
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "403":
+                $ref: '#/components/schemas/Error'
+        '403':
           description: Insufficient permissions
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-
-  # Consumer Groups
+                $ref: '#/components/schemas/Error'
   /consumers/groups:
     get:
       summary: List consumer groups
-      description: |
-        **Get consumer groups**
+      description: '**Get consumer groups**
+
 
         Retrieves list of active Kafka consumer groups for monitoring and management.
+
         Critical for event processing observability.
 
+
         **Performance:** <30ms query
+
+        '
       operationId: listConsumerGroups
       tags:
-        - Consumer Groups
+      - Consumer Groups
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: topic
-          in: query
-          schema:
-            type: string
-            description: Filter by topic
-        - name: state
-          in: query
-          schema:
-            type: string
-            enum: [ stable, empty, dead, preparing_rebalance, completing_rebalance ]
+      - name: topic
+        in: query
+        schema:
+          type: string
+          description: Filter by topic
+      - name: state
+        in: query
+        schema:
+          type: string
+          enum:
+          - stable
+          - empty
+          - dead
+          - preparing_rebalance
+          - completing_rebalance
       responses:
-        "200":
+        '200':
           description: Consumer groups retrieved
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ConsumerGroupsResponse"
-        "403":
+                $ref: '#/components/schemas/ConsumerGroupsResponse'
+        '403':
           description: Insufficient permissions
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-
-  # Event Schemas
+                $ref: '#/components/schemas/Error'
   /schemas:
     get:
       summary: List event schemas
-      description: |
-        **Get available event schemas**
+      description: '**Get available event schemas**
+
 
         Retrieves list of event schemas for validation and documentation.
+
         Used for event schema evolution and compatibility checking.
 
+
         **Performance:** <10ms query, cached
+
+        '
       operationId: listEventSchemas
       tags:
-        - Event Schemas
+      - Event Schemas
       parameters:
-        - name: version
-          in: query
-          schema:
-            type: string
-            description: Schema version filter
-        - name: domain
-          in: query
-          schema:
-            type: string
-            enum: [ security, auth, audit, anticheat ]
+      - name: version
+        in: query
+        schema:
+          type: string
+          description: Schema version filter
+      - name: domain
+        in: query
+        schema:
+          type: string
+          enum:
+          - security
+          - auth
+          - audit
+          - anticheat
       responses:
-        "200":
+        '200':
           description: Event schemas retrieved
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/EventSchemasResponse"
-        "400":
+                $ref: '#/components/schemas/EventSchemasResponse'
+        '400':
           description: Invalid parameters
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-
+                $ref: '#/components/schemas/Error'
   /schemas/validate:
     post:
       summary: Validate event against schema
-      description: |
-        **Validate event data against schema**
+      description: '**Validate event data against schema**
+
 
         Validates event data against the appropriate schema for data integrity.
+
         Critical for maintaining event stream quality and compatibility.
 
+
         **Performance:** <5ms validation
+
+        '
       operationId: validateEventSchema
       tags:
-        - Event Schemas
+      - Event Schemas
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required: [ eventType, eventData ]
+              required:
+              - eventType
+              - eventData
               properties:
                 eventType:
                   type: string
-                  example: "login_attempt"
+                  example: login_attempt
                 eventData:
                   type: object
                   additionalProperties: true
-                  example: { "userId": "123", "ip": "192.168.1.1" }
+                  example:
+                    userId: '123'
+                    ip: 192.168.1.1
       responses:
-        "200":
+        '200':
           description: Event is valid
           content:
             application/json:
@@ -553,22 +624,19 @@ paths:
                     example: true
                   schemaVersion:
                     type: string
-                    example: "1.0.0"
+                    example: 1.0.0
                   warnings:
                     type: array
                     items:
                       type: string
-                    example: [ ]
-        "400":
+                    example: []
+        '400':
           description: Event validation failed
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/EventValidationError"
-
-  # Legacy references
-  $ref: './kafka-events.yaml#/components/schemas'
-
+                $ref: '#/components/schemas/EventValidationError'
+  $ref: ./kafka-events.yaml#/components/schemas
 components:
   securitySchemes:
     BearerAuth:
@@ -576,24 +644,37 @@ components:
       scheme: bearer
       bearerFormat: JWT
       description: JWT authorization token
-
   schemas:
-    # Health schemas - ОБЯЗАТЕЛЬНЫ
     HealthResponse:
       type: object
-      required: [ status, timestamp, version ]
+      required:
+      - status
+      - timestamp
+      - version
       properties:
         status:
           type: string
-          enum: [ healthy, degraded, unhealthy ]
+          enum:
+          - healthy
+          - degraded
+          - unhealthy
           example: healthy
         timestamp:
           type: string
           format: date-time
-          example: "2024-01-01T12:00:00Z"
+          example: '2024-01-01T12:00:00Z'
         version:
           type: string
-          example: "1.0.0"
+          example: 1.0.0
+        eventThroughput:
+          type: object
+          properties:
+            perSecond:
+              type: integer
+              example: 1250
+            perMinute:
+              type: integer
+              example: 75000
         uptime:
           type: integer
           format: int64
@@ -605,149 +686,179 @@ components:
         activeConsumers:
           type: integer
           example: 150
-        eventThroughput:
-          type: object
-          properties:
-            perSecond:
-              type: integer
-              example: 1250
-            perMinute:
-              type: integer
-              example: 75000
-
     BatchHealthResponse:
       type: object
-      required: [ overallStatus, services, timestamp ]
+      required:
+      - overallStatus
+      - services
+      - timestamp
       properties:
         overallStatus:
           type: string
-          enum: [ healthy, degraded, unhealthy ]
+          enum:
+          - healthy
+          - degraded
+          - unhealthy
           example: healthy
-        services:
-          type: object
-          additionalProperties:
-            $ref: "#/components/schemas/HealthResponse"
         timestamp:
           type: string
           format: date-time
-          example: "2024-01-01T12:00:00Z"
-
+          example: '2024-01-01T12:00:00Z'
+        services:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/HealthResponse'
     WebSocketHealthMessage:
       type: object
-      required: [ type, timestamp ]
+      required:
+      - type
+      - timestamp
       properties:
         type:
           type: string
-          enum: [ ping, pong, health_update, topic_status, consumer_status ]
+          enum:
+          - ping
+          - pong
+          - health_update
+          - topic_status
+          - consumer_status
           example: topic_status
         timestamp:
           type: string
           format: date-time
-          example: "2024-01-01T12:00:00Z"
+          example: '2024-01-01T12:00:00Z'
         data:
-          $ref: "#/components/schemas/HealthResponse"
-
+          $ref: '#/components/schemas/HealthResponse'
     Error:
       type: object
-      required: [ code, message ]
+      required:
+      - code
+      - message
       properties:
-        code:
-          type: string
-          example: "VALIDATION_ERROR"
-        message:
-          type: string
-          example: "Invalid request parameters"
-        details:
-          type: object
-          additionalProperties: true
-        timestamp:
-          type: string
-          format: date-time
-          example: "2024-01-01T12:00:00Z"
         requestId:
           type: string
           format: uuid
-          example: "123e4567-e89b-12d3-a456-426614174000"
-
-    # Event Streaming schemas
-    SecurityEvent:
-      type: object
-      required: [ eventType, timestamp, source, data ]
-      properties:
-        eventType:
+          example: 123e4567-e89b-12d3-a456-426614174000
+        code:
           type: string
-          enum: [ login_attempt, login_success, login_failure, logout, password_change, role_change, permission_granted, permission_revoked, suspicious_activity, anticheat_violation, session_created, session_destroyed, token_issued, token_revoked ]
-          example: "login_attempt"
+          example: VALIDATION_ERROR
+        message:
+          type: string
+          example: Invalid request parameters
         timestamp:
           type: string
           format: date-time
-          example: "2024-01-01T12:00:00Z"
-        source:
+          example: '2024-01-01T12:00:00Z'
+        details:
           type: object
-          required: [ service, instance ]
-          properties:
-            service:
-              type: string
-              example: "auth-service"
-            instance:
-              type: string
-              example: "auth-pod-123"
-            version:
-              type: string
-              example: "1.0.0"
+          additionalProperties: true
+    SecurityEvent:
+      type: object
+      required:
+      - eventType
+      - timestamp
+      - source
+      - data
+      properties:
         correlationId:
           type: string
           format: uuid
           description: Correlation ID for request tracing
-          example: "123e4567-e89b-12d3-a456-426614174000"
+          example: 123e4567-e89b-12d3-a456-426614174000
         userId:
           type: string
           format: uuid
           description: Affected user ID
-          example: "123e4567-e89b-12d3-a456-426614174001"
+          example: 123e4567-e89b-12d3-a456-426614174001
         sessionId:
           type: string
           format: uuid
           description: Session ID if applicable
-          example: "123e4567-e89b-12d3-a456-426614174002"
+          example: 123e4567-e89b-12d3-a456-426614174002
+        eventType:
+          type: string
+          enum:
+          - login_attempt
+          - login_success
+          - login_failure
+          - logout
+          - password_change
+          - role_change
+          - permission_granted
+          - permission_revoked
+          - suspicious_activity
+          - anticheat_violation
+          - session_created
+          - session_destroyed
+          - token_issued
+          - token_revoked
+          example: login_attempt
+        timestamp:
+          type: string
+          format: date-time
+          example: '2024-01-01T12:00:00Z'
         ipAddress:
           type: string
-          example: "192.168.1.1"
+          example: 192.168.1.1
         userAgent:
           type: string
-          example: "Mozilla/5.0..."
+          example: Mozilla/5.0...
+        source:
+          type: object
+          required:
+          - service
+          - instance
+          properties:
+            service:
+              type: string
+              example: auth-service
+            instance:
+              type: string
+              example: auth-pod-123
+            version:
+              type: string
+              example: 1.0.0
         data:
           type: object
           additionalProperties: true
           description: Event-specific data
           example:
             success: true
-            method: "password"
+            method: password
             mfaUsed: false
-
-    # Topic Management schemas
     KafkaTopicsResponse:
       type: object
-      required: [ topics, total ]
+      required:
+      - topics
+      - total
       properties:
         topics:
           type: array
           items:
-            $ref: "#/components/schemas/KafkaTopic"
+            $ref: '#/components/schemas/KafkaTopic'
         total:
           type: integer
           example: 25
-
     CreateTopicRequest:
       type: object
-      required: [ name, partitions, replicationFactor ]
+      required:
+      - name
+      - partitions
+      - replicationFactor
       properties:
         name:
           type: string
           minLength: 3
           maxLength: 100
-          pattern: '^[a-zA-Z0-9._-]+$'
-          example: "security-events"
+          pattern: ^[a-zA-Z0-9._-]+$
+          example: security-events
+        cleanupPolicy:
+          type: string
+          enum:
+          - delete
+          - compact
+          default: delete
+          example: delete
         partitions:
           type: integer
           minimum: 1
@@ -770,64 +881,73 @@ components:
           description: Segment size in bytes
           default: 1073741824
           example: 1073741824
-        cleanupPolicy:
-          type: string
-          enum: [ delete, compact ]
-          default: "delete"
-          example: "delete"
-
     KafkaTopic:
       type: object
-      required: [ name, partitions, replicationFactor, state ]
+      required:
+      - name
+      - partitions
+      - replicationFactor
+      - state
       properties:
         name:
           type: string
-          example: "security-events"
+          example: security-events
+        state:
+          type: string
+          enum:
+          - active
+          - inactive
+          - error
+          example: active
+        createdAt:
+          type: string
+          format: date-time
+          example: '2024-01-01T10:00:00Z'
         partitions:
           type: integer
           example: 6
         replicationFactor:
           type: integer
           example: 3
-        state:
-          type: string
-          enum: [ active, inactive, error ]
-          example: "active"
         retentionMs:
           type: integer
           example: 604800000
         messagesCount:
           type: integer
           example: 1250000
-        createdAt:
-          type: string
-          format: date-time
-          example: "2024-01-01T10:00:00Z"
-
-    # Consumer Groups schemas
     ConsumerGroupsResponse:
       type: object
-      required: [ groups, total ]
+      required:
+      - groups
+      - total
       properties:
         groups:
           type: array
           items:
-            $ref: "#/components/schemas/ConsumerGroup"
+            $ref: '#/components/schemas/ConsumerGroup'
         total:
           type: integer
           example: 15
-
     ConsumerGroup:
       type: object
-      required: [ groupId, state, members, topics ]
+      required:
+      - groupId
+      - state
+      - members
+      - topics
       properties:
         groupId:
           type: string
-          example: "security-audit-consumers"
+          example: security-audit-consumers
         state:
           type: string
-          enum: [ stable, empty, dead, preparing_rebalance, completing_rebalance ]
-          example: "stable"
+          enum:
+          - stable
+          - empty
+          - dead
+          - preparing_rebalance
+          - completing_rebalance
+          example: stable
         members:
           type: array
           items:
@@ -835,69 +955,79 @@ components:
             properties:
               memberId:
                 type: string
-                example: "consumer-123"
+                example: consumer-123
               clientId:
                 type: string
-                example: "audit-service-1"
+                example: audit-service-1
               host:
                 type: string
-                example: "10.0.1.15:9092"
+                example: 10.0.1.15:9092
         topics:
           type: array
           items:
             type: string
-          example: [ "security-events", "audit-logs" ]
+          example:
+          - security-events
+          - audit-logs
         lag:
           type: integer
           description: Total lag across all partitions
           example: 150
-
-    # Event Schemas schemas
     EventSchemasResponse:
       type: object
-      required: [ schemas, total ]
+      required:
+      - schemas
+      - total
       properties:
         schemas:
           type: array
           items:
-            $ref: "#/components/schemas/EventSchema"
+            $ref: '#/components/schemas/EventSchema'
         total:
           type: integer
           example: 20
-
     EventSchema:
       type: object
-      required: [ eventType, version, schema ]
+      required:
+      - eventType
+      - version
+      - schema
       properties:
         eventType:
           type: string
-          example: "login_attempt"
+          example: login_attempt
         version:
           type: string
-          example: "1.0.0"
+          example: 1.0.0
+        createdAt:
+          type: string
+          format: date-time
+          example: '2024-01-01T10:00:00Z'
+        updatedAt:
+          type: string
+          format: date-time
+          example: '2024-01-01T12:00:00Z'
         schema:
           type: object
           description: JSON Schema definition
           additionalProperties: true
-        createdAt:
-          type: string
-          format: date-time
-          example: "2024-01-01T10:00:00Z"
-        updatedAt:
-          type: string
-          format: date-time
-          example: "2024-01-01T12:00:00Z"
-
     EventValidationError:
       type: object
-      required: [ code, message, errors ]
+      required:
+      - code
+      - message
+      - errors
       properties:
         code:
           type: string
-          example: "SCHEMA_VALIDATION_ERROR"
+          example: SCHEMA_VALIDATION_ERROR
         message:
           type: string
-          example: "Event data does not match schema"
+          example: Event data does not match schema
+        timestamp:
+          type: string
+          format: date-time
+          example: '2024-01-01T12:00:00Z'
         errors:
           type: array
           items:
@@ -905,17 +1035,11 @@ components:
             properties:
               field:
                 type: string
-                example: "userId"
+                example: userId
               message:
                 type: string
-                example: "Field is required"
+                example: Field is required
               value:
                 type: object
                 description: Invalid value
-        timestamp:
-          type: string
-          format: date-time
-          example: "2024-01-01T12:00:00Z"
-
-    # Legacy references
-    $ref: './kafka-events.yaml#/components/schemas'
+    $ref: ./kafka-events.yaml#/components/schemas

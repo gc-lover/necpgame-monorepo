@@ -1,11 +1,10 @@
-# Issue: #1647
 components:
   schemas:
     SendMailRequest:
       type: object
       required:
-        - recipientId
-        - subject
+      - recipientId
+      - subject
       properties:
         recipientId:
           type: string
@@ -33,8 +32,8 @@ components:
           items:
             type: object
             required:
-              - itemId
-              - quantity
+            - itemId
+            - quantity
             properties:
               itemId:
                 type: string
@@ -51,9 +50,9 @@ components:
     SendMailResponse:
       type: object
       required:
-        - mailId
-        - status
-        - expiresAt
+      - mailId
+      - status
+      - expiresAt
       properties:
         mailId:
           type: string
@@ -61,7 +60,7 @@ components:
         status:
           type: string
           enum:
-            - sent
+          - sent
         expiresAt:
           type: string
           format: date-time
@@ -69,9 +68,9 @@ components:
     InboxResponse:
       type: object
       required:
-        - mails
-        - unreadCount
-        - totalCount
+      - mails
+      - unreadCount
+      - totalCount
       properties:
         mails:
           type: array
@@ -89,12 +88,12 @@ components:
     MailSummary:
       type: object
       required:
-        - id
-        - senderName
-        - subject
-        - mailStatus
-        - sentAt
-        - expiresAt
+      - id
+      - senderName
+      - subject
+      - mailStatus
+      - sentAt
+      - expiresAt
       properties:
         id:
           type: string
@@ -109,66 +108,66 @@ components:
         mailStatus:
           type: string
           enum:
-            - sent
-            - read
-            - claimed
-            - expired
+          - sent
+          - read
+          - claimed
+          - expired
         sentAt:
           type: string
           format: date-time
         expiresAt:
           type: string
           format: date-time
-        codAmount:
-          type: integer
         hasAttachments:
           type: boolean
+        codAmount:
+          type: integer
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     MailDetailResponse:
       type: object
       required:
-        - mail
+      - mail
       properties:
         mail:
           $ref: '#/components/schemas/MailDetail'
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     MailDetail:
       allOf:
-        - $ref: '#/components/schemas/MailSummary'
-        - type: object
-          properties:
-            body:
-              type: string
-            attachmentItems:
-              type: array
-              items:
-                type: object
-                properties:
-                  itemId:
-                    type: string
-                    format: uuid
-                  itemName:
-                    type: string
-                  quantity:
-                    type: integer
-            attachmentCurrency:
+      - $ref: '#/components/schemas/MailSummary'
+      - type: object
+        properties:
+          body:
+            type: string
+          attachmentItems:
+            type: array
+            items:
               type: object
-              additionalProperties:
-                type: integer
-            codCurrency:
-              type: string
-            attachmentClaimed:
-              type: boolean
-            readAt:
-              type: string
-              format: date-time
-            claimedAt:
-              type: string
-              format: date-time
+              properties:
+                itemId:
+                  type: string
+                  format: uuid
+                itemName:
+                  type: string
+                quantity:
+                  type: integer
+          attachmentCurrency:
+            type: object
+            additionalProperties:
+              type: integer
+          codCurrency:
+            type: string
+          attachmentClaimed:
+            type: boolean
+          readAt:
+            type: string
+            format: date-time
+          claimedAt:
+            type: string
+            format: date-time
     ClaimAttachmentsResponse:
       type: object
       required:
-        - claimed
+      - claimed
       properties:
         currencyReceived:
           type: object
@@ -186,16 +185,16 @@ components:
                 type: string
               quantity:
                 type: integer
-        codPaid:
-          type: integer
         claimed:
           type: boolean
+        codPaid:
+          type: integer
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     MailAttachment:
       type: object
       required:
-        - type
-        - quantity
+      - type
+      - quantity
       properties:
         id:
           type: string
@@ -208,11 +207,11 @@ components:
         type:
           type: string
           enum:
-            - item
-            - currency
-            - questReward
-            - achievementReward
-            - eventReward
+          - item
+          - currency
+          - questReward
+          - achievementReward
+          - eventReward
         quantity:
           type: integer
         currency:
@@ -222,10 +221,10 @@ components:
     SendSystemMailRequest:
       type: object
       required:
-        - recipientId
-        - type
-        - title
-        - content
+      - recipientId
+      - type
+      - title
+      - content
       properties:
         recipientId:
           type: string
@@ -239,10 +238,10 @@ components:
         type:
           type: string
           enum:
-            - questReward
-            - achievementReward
-            - eventReward
-            - maintenanceNotification
+          - questReward
+          - achievementReward
+          - eventReward
+          - maintenanceNotification
         attachments:
           type: array
           items:
@@ -257,9 +256,9 @@ components:
     BroadcastSystemMailRequest:
       type: object
       required:
-        - type
-        - title
-        - content
+      - type
+      - title
+      - content
       properties:
         title:
           type: string
@@ -270,10 +269,10 @@ components:
         type:
           type: string
           enum:
-            - questReward
-            - achievementReward
-            - eventReward
-            - maintenanceNotification
+          - questReward
+          - achievementReward
+          - eventReward
+          - maintenanceNotification
         filter:
           type: object
           additionalProperties: true
@@ -292,9 +291,11 @@ components:
     BroadcastResult:
       type: object
       required:
-        - sentCount
-        - totalRecipients
+      - sentCount
+      - totalRecipients
       properties:
+        success:
+          type: boolean
         sentCount:
           type: integer
         failedCount:
@@ -302,14 +303,12 @@ components:
           default: 0
         totalRecipients:
           type: integer
-        success:
-          type: boolean
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     UnreadMailCountResponse:
       type: object
       required:
-        - unreadCount
-        - totalCount
+      - unreadCount
+      - totalCount
       properties:
         unreadCount:
           type: integer
@@ -319,11 +318,10 @@ components:
     ExtendMailRequest:
       type: object
       required:
-        - days
+      - days
       properties:
         days:
           type: integer
           minimum: 1
           maximum: 30
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-

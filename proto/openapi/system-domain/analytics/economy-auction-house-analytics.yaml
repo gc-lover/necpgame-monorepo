@@ -1,4 +1,3 @@
-# Issue: #82
 openapi: 3.0.3
 info:
   title: Auction House Analytics API
@@ -12,32 +11,32 @@ info:
     name: MIT
     url: https://opensource.org/licenses/MIT
 servers:
-  - url: http://localhost:8080/api/v1
-    description: Economy Service (dev)
-  - url: https://api.necp.game/api/v1
-    description: Economy Service (prod)
+- url: http://localhost:8080/api/v1
+  description: Economy Service (dev)
+- url: https://api.necp.game/api/v1
+  description: Economy Service (prod)
 tags:
-  - name: Auction Analytics
-    description: Метрики и отчеты аукционного дома
+- name: Auction Analytics
+  description: Метрики и отчеты аукционного дома
 paths:
   /economy/auction-house/analytics/overview:
     get:
       operationId: getAuctionOverview
       tags:
-        - Auction Analytics
+      - Auction Analytics
       summary: Обзор метрик аукциона
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: window
-          in: query
-          schema:
-            type: string
-            enum:
-              - 1d
-              - 7d
-              - 30d
-          description: Окно агрегации
+      - name: window
+        in: query
+        schema:
+          type: string
+          enum:
+          - 1d
+          - 7d
+          - 30d
+        description: Окно агрегации
       responses:
         '200':
           description: Сводка метрик
@@ -53,27 +52,27 @@ paths:
     get:
       operationId: getTopBidders
       tags:
-        - Auction Analytics
+      - Auction Analytics
       summary: Топ участников по ставкам
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            format: int32
-            default: 20
-            maximum: 100
-        - name: window
-          in: query
-          schema:
-            type: string
-            enum:
-              - 7d
-              - 30d
-              - 90d
-          description: Окно расчёта
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          format: int32
+          default: 20
+          maximum: 100
+      - name: window
+        in: query
+        schema:
+          type: string
+          enum:
+          - 7d
+          - 30d
+          - 90d
+        description: Окно расчёта
       responses:
         '200':
           description: Лидеры по ставкам
@@ -94,26 +93,26 @@ paths:
     get:
       operationId: getTopItems
       tags:
-        - Auction Analytics
+      - Auction Analytics
       summary: Топ предметов по выручке
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            format: int32
-            default: 20
-            maximum: 100
-        - name: window
-          in: query
-          schema:
-            type: string
-            enum:
-              - 7d
-              - 30d
-              - 90d
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          format: int32
+          default: 20
+          maximum: 100
+      - name: window
+        in: query
+        schema:
+          type: string
+          enum:
+          - 7d
+          - 30d
+          - 90d
       responses:
         '200':
           description: Самые прибыльные предметы
@@ -134,28 +133,28 @@ paths:
     get:
       operationId: getAuctionActivity
       tags:
-        - Auction Analytics
+      - Auction Analytics
       summary: Активность аукционов по времени
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: bucket_minutes
-          in: query
-          schema:
-            type: integer
-            format: int32
-            default: 60
-            minimum: 5
-            maximum: 1440
-          description: Размер временного бакета
-        - name: window_hours
-          in: query
-          schema:
-            type: integer
-            format: int32
-            default: 24
-            minimum: 1
-            maximum: 168
+      - name: bucket_minutes
+        in: query
+        schema:
+          type: integer
+          format: int32
+          default: 60
+          minimum: 5
+          maximum: 1440
+        description: Размер временного бакета
+      - name: window_hours
+        in: query
+        schema:
+          type: integer
+          format: int32
+          default: 24
+          minimum: 1
+          maximum: 168
       responses:
         '200':
           description: Серия активности
@@ -179,12 +178,16 @@ components:
     AuctionOverviewMetrics:
       type: object
       required:
-        - active_auctions
-        - bids_24h
-        - buyout_rate
-        - avg_price
-        - gross_volume
+      - active_auctions
+      - bids_24h
+      - buyout_rate
+      - avg_price
+      - gross_volume
       properties:
+        buyout_rate:
+          type: number
+          format: float
+          description: Доля лотов, ушедших по buyout
         avg_price:
           type: integer
           format: int64
@@ -199,18 +202,14 @@ components:
         bids_24h:
           type: integer
           format: int32
-        buyout_rate:
-          type: number
-          format: float
-          description: Доля лотов, ушедших по buyout
       description: 'BACKEND NOTE: Fields ordered large → small для выравнивания структур.'
     BidderStats:
       type: object
       required:
-        - bidder_id
-        - total_bids
-        - wins
-        - total_spent
+      - bidder_id
+      - total_bids
+      - wins
+      - total_spent
       properties:
         bidder_id:
           type: string
@@ -228,10 +227,10 @@ components:
     ItemRevenueStats:
       type: object
       required:
-        - item_id
-        - revenue
-        - sold_count
-        - avg_price
+      - item_id
+      - revenue
+      - sold_count
+      - avg_price
       properties:
         item_id:
           type: string
@@ -250,10 +249,10 @@ components:
     AuctionActivityPoint:
       type: object
       required:
-        - bucket_start
-        - auctions_created
-        - bids_placed
-        - buyouts
+      - bucket_start
+      - auctions_created
+      - bids_placed
+      - buyouts
       properties:
         bucket_start:
           type: string

@@ -43,12 +43,12 @@ info:
 
     '
 servers:
-  - url: http://localhost:8083/api/v1
-    description: Quest REST API
-  - url: ws://localhost:8301
-    description: Quest WebSocket API
-  - url: udp://localhost:8302
-    description: Quest UDP API (critical events)
+- url: http://localhost:8083/api/v1
+  description: Quest REST API
+- url: ws://localhost:8301
+  description: Quest WebSocket API
+- url: udp://localhost:8302
+  description: Quest UDP API (critical events)
 paths:
   /gameplay/quests/content/reload:
     post:
@@ -81,17 +81,17 @@ paths:
       summary: WebSocket connection for quest instance updates
       operationId: getQuestInstanceWebSocket
       parameters:
-        - name: instance_id
-          in: path
-          required: true
-          schema:
-            type: string
-        - name: compress
-          in: query
-          schema:
-            type: boolean
-            default: true
-          description: Enable LZ4 compression
+      - name: instance_id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: compress
+        in: query
+        schema:
+          type: boolean
+          default: true
+        description: Enable LZ4 compression
       responses:
         '101':
           description: WebSocket connection established
@@ -122,28 +122,28 @@ components:
       properties:
         quest_id:
           type: string
-        processing_time_ms:
-          type: integer
         compression_ratio:
           type: number
           format: float
         success:
           type: boolean
+        processing_time_ms:
+          type: integer
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     WebSocketConnectionAck:
       type: object
       properties:
         connection_id:
           type: string
+        compression_enabled:
+          type: boolean
+          default: true
         heartbeat_interval_ms:
           type: integer
           default: 30000
         max_batch_size:
           type: integer
           default: 10
-        compression_enabled:
-          type: boolean
-          default: true
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     QuestCriticalEvent:
       type: object
@@ -155,9 +155,9 @@ components:
         event_type:
           type: string
           enum:
-            - quest_completed
-            - reward_claimed
-            - objective_critical
+          - quest_completed
+          - reward_claimed
+          - objective_critical
         event_data:
           type: object
           description: Event-specific data (compressed)
@@ -169,8 +169,8 @@ components:
       properties:
         event_id:
           type: string
-        processing_time_us:
-          type: integer
         processed:
           type: boolean
+        processing_time_us:
+          type: integer
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'

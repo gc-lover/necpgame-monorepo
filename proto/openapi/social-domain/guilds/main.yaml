@@ -1,34 +1,54 @@
-# Issue: #2235
 openapi: 3.0.3
 info:
   title: Social Domain - Guilds Module API
-  description: |
-    **Enterprise-Grade Guilds Module** for NECPGAME MMOFPS RPG.
+  description: '**Enterprise-Grade Guilds Module** for NECPGAME MMOFPS RPG.
+
 
     **Module Purpose:** Complete guild management system with warfare, territories, and social hierarchy
 
+
     **Architecture:** Event-driven microservice with Kafka integration
+
     **Domain:** social-domain
+
     **Module:** guilds
 
+
     **Core Features:**
+
     - Guild creation and lifecycle management
+
     - Member management and roles (leader, officer, member)
+
     - Guild bank and resource management
+
     - Territory claiming and defense
+
     - Guild warfare and PvP mechanics
+
     - Reputation and ranking systems
+
     - Cross-guild alliances and diplomacy
 
+
     **Performance Targets:**
+
     - Hot paths: 2000+ RPS, P99 <15ms (guild status, member lists)
+
     - Event throughput: 1000+ events/sec (guild updates, territory changes)
+
     - Memory: <30MB per service instance (optimized structs)
+
     - Cache hit rate: >95% (Redis for active guilds)
 
+
     **BACKEND NOTE:** Struct field alignment optimized (large → small types).
+
     All schemas ordered for optimal memory layout in generated Go code.
+
     Expected memory savings: 30-50% for guild-related structs.
+
+    '
   version: 1.0.0
   license:
     name: MIT
@@ -37,65 +57,53 @@ info:
     name: NECPGAME Guilds API Support
     url: https://necpgame.com/support
     email: api@guilds.necpgame.com
-
 servers:
-  - url: http://localhost:8084/api/v1/social-domain/guilds
-    description: Guilds Module Development Server
-  - url: https://guilds.necpgame.com/api/v1
-    description: Guilds Module Production Server
-
+- url: http://localhost:8084/api/v1/social-domain/guilds
+  description: Guilds Module Development Server
+- url: https://guilds.necpgame.com/api/v1
+  description: Guilds Module Production Server
 security:
-  - BearerAuth: [ ]
-
+- BearerAuth: []
 tags:
-  - name: Guild Management
-    description: Core guild CRUD operations
-  - name: Guild Members
-    description: Member management and roles
-  - name: Guild Bank
-    description: Resource and inventory management
-  - name: Guild Territories
-    description: Territory claiming and control
-  - name: Guild Warfare
-    description: PvP and conflict systems
-  - name: Guild Statistics
-    description: Analytics and performance metrics
-
+- name: Guild Management
+  description: Core guild CRUD operations
+- name: Guild Members
+  description: Member management and roles
+- name: Guild Bank
+  description: Resource and inventory management
+- name: Guild Territories
+  description: Territory claiming and control
+- name: Guild Warfare
+  description: PvP and conflict systems
+- name: Guild Statistics
+  description: Analytics and performance metrics
 paths:
-  # Guild management endpoints
   /health:
-    $ref: "./paths/guild-management.yaml#/paths/~1health"
+    $ref: ./paths/guild-management.yaml#/paths/~1health
   /guilds:
-    $ref: "./paths/guild-management.yaml#/paths/~1guilds"
+    $ref: ./paths/guild-management.yaml#/paths/~1guilds
   /guilds/{guild_id}:
-    $ref: "./paths/guild-management.yaml#/paths/~1guilds~1{guild_id}"
-
-  # Member management endpoints
+    $ref: ./paths/guild-management.yaml#/paths/~1guilds~1{guild_id}
   /guilds/{guild_id}/members:
-    $ref: "./paths/member-management.yaml#/paths/~1guilds~1{guild_id}~1members"
+    $ref: ./paths/member-management.yaml#/paths/~1guilds~1{guild_id}~1members
   /guilds/{guild_id}/members/{player_id}:
-    $ref: "./paths/member-management.yaml#/paths/~1guilds~1{guild_id}~1members~1{player_id}"
-
-  # Territory management endpoints
+    $ref: ./paths/member-management.yaml#/paths/~1guilds~1{guild_id}~1members~1{player_id}
   /guilds/{guild_id}/territories:
-    $ref: "./paths/territory-management.yaml#/paths/~1guilds~1{guild_id}~1territories"
-
+    $ref: ./paths/territory-management.yaml#/paths/~1guilds~1{guild_id}~1territories
 components:
   securitySchemes:
     BearerAuth:
       type: http
       scheme: bearer
       description: JWT Bearer token authentication
-
   schemas:
-    # Include schemas from separate files
     HealthResponse:
-      $ref: "./schemas/health-schemas.yaml#/components/schemas/HealthResponse"
+      $ref: ./schemas/health-schemas.yaml#/components/schemas/HealthResponse
     Error:
       type: object
       required:
-        - code
-        - message
+      - code
+      - message
       properties:
         code:
           type: string
@@ -108,17 +116,15 @@ components:
         details:
           type: object
           description: Additional error details (optional)
-
-    # Guild schemas (inline to avoid reference issues)
     Guild:
       type: object
       required:
-        - id
-        - name
-        - created_at
-        - level
-        - member_count
-        - is_active
+      - id
+      - name
+      - created_at
+      - level
+      - member_count
+      - is_active
       properties:
         id:
           type: string
@@ -149,11 +155,11 @@ components:
         faction:
           type: string
           enum:
-            - corporate
-            - nomad
-            - street_kid
-            - mercenary
-            - other
+          - corporate
+          - nomad
+          - street_kid
+          - mercenary
+          - other
           description: Guild faction alignment
           example: nomad
         created_at:
@@ -172,6 +178,18 @@ components:
           maximum: 1
           description: Guild PvP win rate
           example: 0.67
+        is_recruiting:
+          type: boolean
+          description: Whether guild is accepting new members
+          example: true
+        is_active:
+          type: boolean
+          description: Indicates if the guild is active
+          example: true
+        has_bank:
+          type: boolean
+          description: Whether guild has bank functionality
+          example: true
         level:
           type: integer
           format: int32
@@ -207,25 +225,13 @@ components:
           maximum: 50
           description: Number of controlled territories
           example: 3
-        is_recruiting:
-          type: boolean
-          description: Whether guild is accepting new members
-          example: true
-        is_active:
-          type: boolean
-          description: Indicates if the guild is active
-          example: true
-        has_bank:
-          type: boolean
-          description: Whether guild has bank functionality
-          example: true
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     CreateGuildRequest:
       type: object
       required:
-        - name
-        - description
-        - faction
+      - name
+      - description
+      - faction
       properties:
         name:
           type: string
@@ -246,23 +252,23 @@ components:
         faction:
           type: string
           enum:
-            - corporate
-            - nomad
-            - street_kid
-            - mercenary
-            - other
+          - corporate
+          - nomad
+          - street_kid
+          - mercenary
+          - other
           description: Guild faction alignment
           example: street_kid
+        is_recruiting:
+          type: boolean
+          default: true
+          description: Whether to accept new members immediately
         max_members:
           type: integer
           minimum: 1
           maximum: 250
           default: 50
           description: Maximum members allowed
-        is_recruiting:
-          type: boolean
-          default: true
-          description: Whether to accept new members immediately
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     UpdateGuildRequest:
       type: object
@@ -285,25 +291,25 @@ components:
         faction:
           type: string
           enum:
-            - corporate
-            - nomad
-            - street_kid
-            - mercenary
-            - other
+          - corporate
+          - nomad
+          - street_kid
+          - mercenary
+          - other
           description: New faction alignment
+        is_recruiting:
+          type: boolean
+          description: Update recruiting status
         max_members:
           type: integer
           minimum: 1
           maximum: 250
           description: New maximum members
-        is_recruiting:
-          type: boolean
-          description: Update recruiting status
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     GuildResponse:
       type: object
       required:
-        - guild
+      - guild
       properties:
         guild:
           $ref: '#/components/schemas/Guild'
@@ -311,29 +317,22 @@ components:
     GuildsListResponse:
       type: object
       required:
-        - guilds
-        - total_count
+      - guilds
+      - total_count
       properties:
         guilds:
           type: array
           items:
             $ref: '#/components/schemas/Guild'
           description: List of guilds
-        total_count:
-          type: integer
-          description: Total number of guilds matching criteria
-          example: 150
         has_more:
           type: boolean
           description: Whether there are more results available
           example: true
+        total_count:
+          type: integer
+          description: Total number of guilds matching criteria
+          example: 150
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
-    # Member schemas
-    GuildMember:
-    # Member schemas (inline to avoid reference issues)
-
-    # Territory schemas
-    Territory:
-    # Territory schemas (inline to avoid reference issues)
-
+    GuildMember: null
+    Territory: null

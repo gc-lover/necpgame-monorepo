@@ -1,4 +1,3 @@
-# Issue: #1653
 openapi: 3.0.3
 info:
   title: Elemental Effects Service API
@@ -10,32 +9,32 @@ info:
 
     '
 servers:
-  - url: https://api.necpgame.com
-    description: Production
-  - url: https://staging-api.necpgame.com
-    description: Staging
+- url: https://api.necpgame.com
+  description: Production
+- url: https://staging-api.necpgame.com
+  description: Staging
 tags:
-  - name: Effects
-    description: CRUD стихийных эффектов
-  - name: Interactions
-    description: Правила и расчеты взаимодействий
+- name: Effects
+  description: CRUD стихийных эффектов
+- name: Interactions
+  description: Правила и расчеты взаимодействий
 security:
-  - BearerAuth: [ ]
+- BearerAuth: []
 paths:
   /api/v1/effects:
     get:
       tags:
-        - Effects
+      - Effects
       summary: Список стихийных эффектов
       operationId: listEffects
       parameters:
-        - name: type
-          in: query
-          description: Фильтр по типу эффекта
-          schema:
-            $ref: '#/components/schemas/ElementType'
-        - $ref: ../../common-schemas.yaml#/components/parameters/Limit
-        - $ref: common.yaml#/components/parameters/Offset
+      - name: type
+        in: query
+        description: Фильтр по типу эффекта
+        schema:
+          $ref: '#/components/schemas/ElementType'
+      - $ref: ../../common-schemas.yaml#/components/parameters/Limit
+      - $ref: common.yaml#/components/parameters/Offset
       responses:
         '200':
           description: Список эффектов
@@ -49,7 +48,7 @@ paths:
           $ref: ../../common-schemas.yaml#/components/responses/InternalServerError
     post:
       tags:
-        - Effects
+      - Effects
       summary: Создать эффект
       operationId: createEffect
       requestBody:
@@ -75,15 +74,15 @@ paths:
           $ref: ../../common-schemas.yaml#/components/responses/InternalServerError
   /api/v1/effects/{effect_id}:
     parameters:
-      - name: effect_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+    - name: effect_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
     get:
       tags:
-        - Effects
+      - Effects
       summary: Получить эффект
       operationId: getEffect
       responses:
@@ -101,7 +100,7 @@ paths:
           $ref: ../../common-schemas.yaml#/components/responses/InternalServerError
     patch:
       tags:
-        - Effects
+      - Effects
       summary: Обновить эффект
       operationId: updateEffect
       requestBody:
@@ -127,7 +126,7 @@ paths:
           $ref: ../../common-schemas.yaml#/components/responses/InternalServerError
     delete:
       tags:
-        - Effects
+      - Effects
       summary: Удалить эффект
       operationId: deleteEffect
       responses:
@@ -142,7 +141,7 @@ paths:
   /api/v1/effects/interactions:
     get:
       tags:
-        - Interactions
+      - Interactions
       summary: Список правил взаимодействий
       operationId: listInteractions
       responses:
@@ -158,7 +157,7 @@ paths:
           $ref: ../../common-schemas.yaml#/components/responses/InternalServerError
     post:
       tags:
-        - Interactions
+      - Interactions
       summary: Создать правило взаимодействия
       operationId: createInteraction
       requestBody:
@@ -185,7 +184,7 @@ paths:
   /api/v1/effects/interactions/preview:
     post:
       tags:
-        - Interactions
+      - Interactions
       summary: Рассчитать взаимодействие
       operationId: previewInteraction
       requestBody:
@@ -215,12 +214,12 @@ components:
     ElementType:
       type: string
       enum:
-        - fire
-        - ice
-        - poison
-        - acid
-        - electric
-        - void
+      - fire
+      - ice
+      - poison
+      - acid
+      - electric
+      - void
     EffectBase:
       type: object
       properties:
@@ -239,15 +238,6 @@ components:
           format: date-time
         type:
           $ref: '#/components/schemas/ElementType'
-        duration_ms:
-          type: integer
-          format: int32
-          minimum: 0
-        stack_limit:
-          type: integer
-          format: int32
-          minimum: 1
-          default: 1
         dot_dps:
           type: number
           format: float
@@ -273,13 +263,22 @@ components:
           minimum: 0
         spread_enabled:
           type: boolean
+        duration_ms:
+          type: integer
+          format: int32
+          minimum: 0
+        stack_limit:
+          type: integer
+          format: int32
+          minimum: 1
+          default: 1
       required:
-        - id
-        - name
-        - type
-        - duration_ms
-        - stack_limit
-        - proc_chance
+      - id
+      - name
+      - type
+      - duration_ms
+      - stack_limit
+      - proc_chance
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     EffectUpsertRequest:
       type: object
@@ -290,15 +289,6 @@ components:
           maxLength: 64
         type:
           $ref: '#/components/schemas/ElementType'
-        duration_ms:
-          type: integer
-          format: int32
-          minimum: 0
-        stack_limit:
-          type: integer
-          format: int32
-          minimum: 1
-          default: 1
         dot_dps:
           type: number
           format: float
@@ -324,17 +314,26 @@ components:
           minimum: 0
         spread_enabled:
           type: boolean
+        duration_ms:
+          type: integer
+          format: int32
+          minimum: 0
+        stack_limit:
+          type: integer
+          format: int32
+          minimum: 1
+          default: 1
       required:
-        - name
-        - type
-        - duration_ms
-        - stack_limit
-        - proc_chance
+      - name
+      - type
+      - duration_ms
+      - stack_limit
+      - proc_chance
       additionalProperties: false
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     EffectResponse:
       allOf:
-        - $ref: '#/components/schemas/EffectBase'
+      - $ref: '#/components/schemas/EffectBase'
     EffectListResponse:
       type: object
       properties:
@@ -345,8 +344,8 @@ components:
           items:
             $ref: '#/components/schemas/EffectBase'
       required:
-        - items
-        - pagination
+      - items
+      - pagination
       additionalProperties: false
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     InteractionRule:
@@ -376,10 +375,10 @@ components:
           minimum: 0
           default: 1
       required:
-        - id
-        - attacker_type
-        - defender_type
-        - damage_multiplier
+      - id
+      - attacker_type
+      - defender_type
+      - damage_multiplier
       additionalProperties: false
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     InteractionUpsertRequest:
@@ -400,14 +399,14 @@ components:
           minimum: 0
           default: 1
       required:
-        - attacker_type
-        - defender_type
-        - damage_multiplier
+      - attacker_type
+      - defender_type
+      - damage_multiplier
       additionalProperties: false
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     InteractionResponse:
       allOf:
-        - $ref: '#/components/schemas/InteractionRule'
+      - $ref: '#/components/schemas/InteractionRule'
     InteractionListResponse:
       type: object
       properties:
@@ -416,7 +415,7 @@ components:
           items:
             $ref: '#/components/schemas/InteractionRule'
       required:
-        - items
+      - items
       additionalProperties: false
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     InteractionPreviewRequest:
@@ -426,10 +425,6 @@ components:
           $ref: '#/components/schemas/ElementType'
         defender_type:
           $ref: '#/components/schemas/ElementType'
-        stacks_applied:
-          type: integer
-          format: int32
-          minimum: 0
         base_damage:
           type: number
           format: float
@@ -438,10 +433,14 @@ components:
           type: boolean
         defender_is_armor_broken:
           type: boolean
+        stacks_applied:
+          type: integer
+          format: int32
+          minimum: 0
       required:
-        - attacker_type
-        - defender_type
-        - base_damage
+      - attacker_type
+      - defender_type
+      - base_damage
       additionalProperties: false
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     InteractionPreviewResponse:
@@ -464,7 +463,7 @@ components:
           format: float
           minimum: 0
       required:
-        - total_damage
-        - damage_multiplier
+      - total_damage
+      - damage_multiplier
       additionalProperties: false
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'

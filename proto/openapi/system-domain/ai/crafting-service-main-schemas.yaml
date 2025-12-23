@@ -3,10 +3,10 @@ components:
     CraftingRecipe:
       type: object
       required:
-        - name
-        - category
-        - tier
-        - materials
+      - name
+      - category
+      - tier
+      - materials
       properties:
         name:
           type: string
@@ -17,12 +17,12 @@ components:
         category:
           type: string
           enum:
-            - weapons
-            - armor
-            - implants
-            - vehicles
-            - consumables
-            - tools
+          - weapons
+          - armor
+          - implants
+          - vehicles
+          - consumables
+          - tools
           description: Recipe category
         requirements:
           $ref: '#/components/schemas/RecipeRequirements'
@@ -31,6 +31,12 @@ components:
           items:
             $ref: '#/components/schemas/RecipeMaterial'
           description: Required materials
+        success_rate:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+          description: Base success rate (0.0-1.0)
         tier:
           type: integer
           minimum: 1
@@ -45,12 +51,6 @@ components:
           type: integer
           minimum: 1
           description: Crafting duration in seconds
-        success_rate:
-          type: number
-          format: float
-          minimum: 0.0
-          maximum: 1.0
-          description: Base success rate (0.0-1.0)
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     OrderListResponse:
       type: object
@@ -72,8 +72,8 @@ components:
     CreateContractRequest:
       type: object
       required:
-        - recipe_id
-        - quality_modifier
+      - recipe_id
+      - quality_modifier
       properties:
         recipe_id:
           type: string
@@ -93,11 +93,11 @@ components:
     Contract:
       type: object
       required:
-        - id
-        - player_id
-        - recipe_id
-        - status
-        - created_at
+      - id
+      - player_id
+      - recipe_id
+      - status
+      - created_at
       properties:
         id:
           type: string
@@ -118,11 +118,11 @@ components:
         status:
           type: string
           enum:
-            - pending
-            - active
-            - completed
-            - failed
-            - cancelled
+          - pending
+          - active
+          - completed
+          - failed
+          - cancelled
           description: Contract status
         created_at:
           type: string
@@ -147,7 +147,7 @@ components:
     StartCraftingRequest:
       type: object
       required:
-        - recipe_id
+      - recipe_id
       properties:
         recipe_id:
           type: string
@@ -168,11 +168,11 @@ components:
     Order:
       type: object
       required:
-        - id
-        - player_id
-        - recipe_id
-        - status
-        - created_at
+      - id
+      - player_id
+      - recipe_id
+      - status
+      - created_at
       properties:
         id:
           type: string
@@ -197,11 +197,11 @@ components:
         status:
           type: string
           enum:
-            - pending
-            - active
-            - completed
-            - failed
-            - cancelled
+          - pending
+          - active
+          - completed
+          - failed
+          - cancelled
           description: Order status
         created_at:
           type: string
@@ -212,11 +212,6 @@ components:
         completed_at:
           type: string
           format: date-time
-        final_quality:
-          type: integer
-          minimum: 1
-          maximum: 100
-          description: Final crafted item quality
         quality_modifier:
           type: number
           format: float
@@ -231,6 +226,11 @@ components:
           minimum: 0.0
           maximum: 1.0
           description: Completion progress (0.0-1.0)
+        final_quality:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Final crafted item quality
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     CraftingCost:
       type: object
@@ -269,13 +269,13 @@ components:
     BookStationRequest:
       type: object
       required:
-        - duration_hours
+      - duration_hours
       properties:
         priority:
           type: string
           enum:
-            - normal
-            - high
+          - normal
+          - high
           default: normal
           description: Booking priority
         duration_hours:
@@ -287,9 +287,9 @@ components:
     BookingConfirmation:
       type: object
       required:
-        - booking_id
-        - station_id
-        - expires_at
+      - booking_id
+      - station_id
+      - expires_at
       properties:
         booking_id:
           type: string
@@ -326,7 +326,7 @@ components:
     StartProductionChainRequest:
       type: object
       required:
-        - chain_id
+      - chain_id
       properties:
         chain_id:
           type: string
@@ -335,20 +335,20 @@ components:
         priority:
           type: string
           enum:
-            - normal
-            - high
-            - urgent
+          - normal
+          - high
+          - urgent
           default: normal
           description: Processing priority
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     ProductionChain:
       type: object
       required:
-        - id
-        - name
-        - category
-        - complexity
-        - stages
+      - id
+      - name
+      - category
+      - complexity
+      - stages
       properties:
         id:
           type: string
@@ -367,17 +367,17 @@ components:
         category:
           type: string
           enum:
-            - weapons
-            - armor
-            - vehicles
-            - electronics
+          - weapons
+          - armor
+          - vehicles
+          - electronics
           description: Chain category
         status:
           type: string
           enum:
-            - available
-            - in_progress
-            - completed
+          - available
+          - in_progress
+          - completed
           description: Chain status
         created_at:
           type: string
@@ -393,6 +393,10 @@ components:
           items:
             $ref: '#/components/schemas/ChainStage'
           description: Production stages
+        total_cost:
+          type: number
+          format: float
+          description: Total production cost
         complexity:
           type: integer
           minimum: 1
@@ -401,17 +405,13 @@ components:
         estimated_duration:
           type: integer
           description: Estimated total duration in seconds
-        total_cost:
-          type: number
-          format: float
-          description: Total production cost
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     ChainStage:
       type: object
       required:
-        - sequence
-        - recipe_id
-        - status
+      - sequence
+      - recipe_id
+      - status
       properties:
         recipe_id:
           type: string
@@ -420,18 +420,18 @@ components:
         station_type:
           type: string
           enum:
-            - basic
-            - professional
-            - factory
-            - specialized
+          - basic
+          - professional
+          - factory
+          - specialized
           description: Required station type
         status:
           type: string
           enum:
-            - pending
-            - active
-            - completed
-            - failed
+          - pending
+          - active
+          - completed
+          - failed
           description: Stage status
         started_at:
           type: string

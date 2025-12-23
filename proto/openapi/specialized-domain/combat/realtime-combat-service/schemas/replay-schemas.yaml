@@ -3,15 +3,17 @@ components:
     CombatReplayResponse:
       type: object
       required:
-        - session_id
-        - events
-        - total_duration_seconds
-        - metadata
+      - session_id
+      - events
+      - total_duration_seconds
+      - metadata
       properties:
         session_id:
           type: string
           format: uuid
           description: Combat session identifier
+        metadata:
+          $ref: '#/components/schemas/ReplayMetadata'
         events:
           type: array
           items:
@@ -22,8 +24,6 @@ components:
           format: float
           minimum: 0
           description: Total session duration in seconds
-        metadata:
-          $ref: '#/components/schemas/ReplayMetadata'
         start_timestamp:
           type: integer
           description: Session start timestamp
@@ -32,46 +32,53 @@ components:
           type: integer
           description: Session end timestamp
           example: 1734702900000
-      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%. Event-sourced replay system.'
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%. Event-sourced
+        replay system.'
     ReplayEvent:
       type: object
       required:
-        - event_type
-        - timestamp
-        - event_id
-        - event_data
+      - event_type
+      - timestamp
+      - event_id
+      - event_data
       properties:
-        event_type:
-          type: string
-          enum: [ session_start, player_join, player_leave, position_update, damage_dealt, action_executed, status_effect, session_end ]
-          example: damage_dealt
-          description: Type of combat event
-        timestamp:
-          type: integer
-          description: Event timestamp (Unix milliseconds)
-          example: 1734702600050
         event_id:
           type: string
           format: uuid
           description: Unique event identifier
+        event_type:
+          type: string
+          enum:
+          - session_start
+          - player_join
+          - player_leave
+          - position_update
+          - damage_dealt
+          - action_executed
+          - status_effect
+          - session_end
+          example: damage_dealt
+          description: Type of combat event
         event_data:
           type: object
           description: Event-specific data
           oneOf:
-            - $ref: '#/components/schemas/DamageEventData'
-            - $ref: '#/components/schemas/ActionEventData'
-            - $ref: '#/components/schemas/PositionEventData'
-            - $ref: '#/components/schemas/SessionEventData'
+          - $ref: '#/components/schemas/DamageEventData'
+          - $ref: '#/components/schemas/ActionEventData'
+          - $ref: '#/components/schemas/PositionEventData'
+          - $ref: '#/components/schemas/SessionEventData'
+        timestamp:
+          type: integer
+          description: Event timestamp (Unix milliseconds)
+          example: 1734702600050
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     DamageEventData:
       type: object
       required:
-        - attacker_id
-        - target_id
-        - damage_amount
-        - damage_type
+      - attacker_id
+      - target_id
+      - damage_amount
+      - damage_type
       properties:
         attacker_id:
           type: string
@@ -79,68 +86,73 @@ components:
         target_id:
           type: string
           format: uuid
+        damage_type:
+          type: string
+          enum:
+          - bullet
+          - melee
+          - explosion
+          - ability
+          - environmental
+        hit_position:
+          $ref: ./position-schemas.yaml#/components/schemas/PlayerPosition
         damage_amount:
           type: number
           format: float
-        damage_type:
-          type: string
-          enum: [ bullet, melee, explosion, ability, environmental ]
-        hit_position:
-          $ref: './position-schemas.yaml#/components/schemas/PlayerPosition'
         critical_hit:
           type: boolean
         headshot:
           type: boolean
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     ActionEventData:
       type: object
       required:
-        - player_id
-        - action_type
-        - action_id
+      - player_id
+      - action_type
+      - action_id
       properties:
         player_id:
           type: string
           format: uuid
-        action_type:
-          type: string
-          enum: [ attack, ability, special_move, reload, switch_weapon, use_item ]
         action_id:
           type: string
           format: uuid
-        target_position:
-          $ref: './position-schemas.yaml#/components/schemas/PlayerPosition'
         target_player_id:
           type: string
           format: uuid
+        action_type:
+          type: string
+          enum:
+          - attack
+          - ability
+          - special_move
+          - reload
+          - switch_weapon
+          - use_item
+        target_position:
+          $ref: ./position-schemas.yaml#/components/schemas/PlayerPosition
         combo_sequence:
           type: array
           items:
             type: string
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     PositionEventData:
       type: object
       required:
-        - player_id
-        - position
+      - player_id
+      - position
       properties:
         player_id:
           type: string
           format: uuid
         position:
-          $ref: './position-schemas.yaml#/components/schemas/PlayerPosition'
+          $ref: ./position-schemas.yaml#/components/schemas/PlayerPosition
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     SessionEventData:
       type: object
       required:
-        - event_subtype
+      - event_subtype
       properties:
-        event_subtype:
-          type: string
-          enum: [ session_created, player_joined, player_left, session_paused, session_resumed, session_ended ]
         player_id:
           type: string
           format: uuid
@@ -153,29 +165,36 @@ components:
           type: string
           format: uuid
           description: Winning team for session end events
+        event_subtype:
+          type: string
+          enum:
+          - session_created
+          - player_joined
+          - player_left
+          - session_paused
+          - session_resumed
+          - session_ended
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     ReplayMetadata:
       type: object
       required:
-        - game_mode
-        - participant_count
-        - winner_team_id
+      - game_mode
+      - participant_count
+      - winner_team_id
       properties:
-        game_mode:
-          type: string
-          enum: [ deathmatch, team_deathmatch, capture_the_flag, king_of_the_hill ]
-        participant_count:
-          type: integer
-          minimum: 2
         winner_team_id:
           type: string
           format: uuid
+        game_mode:
+          type: string
+          enum:
+          - deathmatch
+          - team_deathmatch
+          - capture_the_flag
+          - king_of_the_hill
         total_damage_dealt:
           type: number
           format: float
-        total_actions_executed:
-          type: integer
         average_session_health:
           type: number
           format: float
@@ -187,4 +206,9 @@ components:
           minimum: 0
           maximum: 1
           description: Quality score based on event completeness (0-1)
+        participant_count:
+          type: integer
+          minimum: 2
+        total_actions_executed:
+          type: integer
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'

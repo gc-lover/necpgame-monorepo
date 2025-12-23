@@ -1,17 +1,13 @@
-# Guild territory management operations
-# Issue: #2235
-
 components:
   schemas:
-    # Territory schemas (inline to avoid reference issues)
     Territory:
       type: object
       required:
-        - id
-        - name
-        - type
-        - control_points
-        - is_contested
+      - id
+      - name
+      - type
+      - control_points
+      - is_contested
       properties:
         id:
           type: string
@@ -28,15 +24,18 @@ components:
         type:
           type: string
           enum:
-            - district
-            - landmark
-            - resource_node
-            - strategic_point
+          - district
+          - landmark
+          - resource_node
+          - strategic_point
           description: Territory type
         claimed_at:
           type: string
           format: date-time
           description: When territory was claimed
+        is_contested:
+          type: boolean
+          description: Whether territory is under attack
         control_points:
           type: integer
           minimum: 1
@@ -49,14 +48,11 @@ components:
           type: integer
           minimum: 0
           description: Economic value of territory
-        is_contested:
-          type: boolean
-          description: Whether territory is under attack
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     GuildTerritoriesResponse:
       type: object
       required:
-        - territories
+      - territories
       properties:
         territories:
           type: array
@@ -66,7 +62,7 @@ components:
     ClaimTerritoryRequest:
       type: object
       required:
-        - territory_id
+      - territory_id
       properties:
         territory_id:
           type: string
@@ -76,8 +72,8 @@ components:
     TerritoryClaimResponse:
       type: object
       required:
-        - claim_id
-        - status
+      - claim_id
+      - status
       properties:
         claim_id:
           type: string
@@ -86,41 +82,42 @@ components:
         status:
           type: string
           enum:
-            - initiated
-            - processing
-            - completed
-            - failed
+          - initiated
+          - processing
+          - completed
+          - failed
           description: Claim status
         estimated_completion:
           type: string
           format: date-time
           description: When claim will complete
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
 paths:
-  # Guild territories
   /guilds/{guild_id}/territories:
     get:
       summary: Get guild territories
       description: Retrieves list of territories controlled by the guild.
       operationId: getGuildTerritories
       tags:
-        - Guild Territories
+      - Guild Territories
       parameters:
-        - name: guild_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Guild identifier
-        - name: status
-          in: query
-          schema:
-            type: string
-            enum: [ controlled, contested, lost ]
-            default: controlled
-          description: Territory control status
+      - name: guild_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Guild identifier
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - controlled
+          - contested
+          - lost
+          default: controlled
+        description: Territory control status
       responses:
         '200':
           description: Territories retrieved successfully
@@ -135,8 +132,8 @@ paths:
               schema:
                 type: object
                 required:
-                  - code
-                  - message
+                - code
+                - message
                 properties:
                   code:
                     type: string
@@ -156,8 +153,8 @@ paths:
               schema:
                 type: object
                 required:
-                  - code
-                  - message
+                - code
+                - message
                 properties:
                   code:
                     type: string
@@ -170,30 +167,35 @@ paths:
                   details:
                     type: object
                     description: Additional error details (optional)
-
     post:
       summary: Claim territory
-      description: |
-        Attempts to claim a territory for the guild.
+      description: 'Attempts to claim a territory for the guild.
+
 
         **BACKEND NOTE:** Complex operation involving:
+
         - Territory availability checks
+
         - Combat requirements validation
+
         - Resource cost deduction
+
         - Notification broadcasts
+
+        '
       operationId: claimTerritory
       tags:
-        - Guild Territories
+      - Guild Territories
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: guild_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Guild identifier
+      - name: guild_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Guild identifier
       requestBody:
         required: true
         content:
@@ -214,8 +216,8 @@ paths:
               schema:
                 type: object
                 required:
-                  - code
-                  - message
+                - code
+                - message
                 properties:
                   code:
                     type: string
@@ -235,8 +237,8 @@ paths:
               schema:
                 type: object
                 required:
-                  - code
-                  - message
+                - code
+                - message
                 properties:
                   code:
                     type: string
@@ -256,8 +258,8 @@ paths:
               schema:
                 type: object
                 required:
-                  - code
-                  - message
+                - code
+                - message
                 properties:
                   code:
                     type: string

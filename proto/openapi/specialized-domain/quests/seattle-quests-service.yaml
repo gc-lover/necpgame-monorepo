@@ -1,21 +1,32 @@
 openapi: 3.0.3
 info:
   title: Seattle Quests Service API
-  description: |
-    Специализированный API для квестов Сиэтла 2020-2029 годов в NECPGAME.
+  description: 'Специализированный API для квестов Сиэтла 2020-2029 годов в NECPGAME.
+
     Управляет 10 уникальными квестами, раскрывающими историю и культуру Сиэтла этого периода.
 
+
     **BACKEND NOTE**: Служба оптимизирована для тематических квестов Сиэтла.
+
     Использует кеширование для часто запрашиваемых квестов и исторических данных.
 
+
     **PERFORMANCE**: Ожидаемая нагрузка - 300 RPS в пиковые моменты.
+
     Время отклика < 10ms для основных операций (получение квеста, обновление прогресса).
 
+
     **FEATURES**:
+
     - Тематические квесты Сиэтла (Space Needle, Pike Place, Starbucks, etc.)
+
     - Историческая точность 2020-2029 периода
+
     - Культурный лор и локальные достопримечательности
+
     - Интеграция с туристической системой города
+
+    '
   version: 1.0.0
   license:
     name: MIT
@@ -23,57 +34,61 @@ info:
   contact:
     name: Backend Team
     email: backend@necp.game
-
 servers:
-  - url: https://api.necpgame.com/v1/quests/seattle
-    description: Production server
-  - url: https://staging-api.necpgame.com/v1/quests/seattle
-    description: Staging server
-  - url: http://localhost:8300/api/v1/quests/seattle
-    description: Local development
-
+- url: https://api.necpgame.com/v1/quests/seattle
+  description: Production server
+- url: https://staging-api.necpgame.com/v1/quests/seattle
+  description: Staging server
+- url: http://localhost:8300/api/v1/quests/seattle
+  description: Local development
 security:
-  - BearerAuth: [ ]
-
+- BearerAuth: []
 tags:
-  - name: seattle-quests
-    description: Квесты Сиэтла 2020-2029
-  - name: quest-progress
-    description: Прогресс по квестам
-  - name: landmarks
-    description: Достопримечательности Сиэтла
-  - name: history
-    description: Исторический контекст
-
+- name: seattle-quests
+  description: Квесты Сиэтла 2020-2029
+- name: quest-progress
+  description: Прогресс по квестам
+- name: landmarks
+  description: Достопримечательности Сиэтла
+- name: history
+  description: Исторический контекст
 paths:
-  # Получение списка квестов Сиэтла
   /api/v1/quests/seattle:
     get:
       summary: Получить все квесты Сиэтла 2020-2029
       operationId: getSeattleQuests
       tags:
-        - seattle-quests
+      - seattle-quests
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: player_id
-          in: query
-          schema:
-            type: string
-            format: uuid
-          description: ID игрока для фильтрации доступных квестов
-        - name: status
-          in: query
-          schema:
-            type: string
-            enum: [ available, in_progress, completed, failed ]
-          description: Статус квеста
-        - name: theme
-          in: query
-          schema:
-            type: string
-            enum: [ landmarks, culture, technology, nature, food ]
-          description: Тематика квеста
+      - name: player_id
+        in: query
+        schema:
+          type: string
+          format: uuid
+        description: ID игрока для фильтрации доступных квестов
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - available
+          - in_progress
+          - completed
+          - failed
+        description: Статус квеста
+      - name: theme
+        in: query
+        schema:
+          type: string
+          enum:
+          - landmarks
+          - culture
+          - technology
+          - nature
+          - food
+        description: Тематика квеста
       responses:
         '200':
           description: Список квестов Сиэтла
@@ -85,30 +100,38 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
-  # Конкретный квест
   /api/v1/quests/seattle/{quest_id}:
     get:
       summary: Получить детали квеста Сиэтла
       operationId: getSeattleQuest
       tags:
-        - seattle-quests
+      - seattle-quests
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: quest_id
-          in: path
-          required: true
-          schema:
-            type: string
-            enum: [ space-needle, pike-place-market, starbucks-origin, grunge-music, amazon-hq, mount-rainier, rain-rain-rain, boeing-factory, seafood-salmon, tech-boom-gentrification ]
-          description: ID квеста Сиэтла
-        - name: include_lore
-          in: query
-          schema:
-            type: boolean
-            default: false
-          description: Включить исторический лор
+      - name: quest_id
+        in: path
+        required: true
+        schema:
+          type: string
+          enum:
+          - space-needle
+          - pike-place-market
+          - starbucks-origin
+          - grunge-music
+          - amazon-hq
+          - mount-rainier
+          - rain-rain-rain
+          - boeing-factory
+          - seafood-salmon
+          - tech-boom-gentrification
+        description: ID квеста Сиэтла
+      - name: include_lore
+        in: query
+        schema:
+          type: boolean
+          default: false
+        description: Включить исторический лор
       responses:
         '200':
           description: Детали квеста
@@ -120,29 +143,37 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
-  # Прогресс по квесту
   /api/v1/quests/seattle/{quest_id}/progress:
     get:
       summary: Получить прогресс игрока по квесту
       operationId: getSeattleQuestProgress
       tags:
-        - quest-progress
+      - quest-progress
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: quest_id
-          in: path
-          required: true
-          schema:
-            type: string
-            enum: [ space-needle, pike-place-market, starbucks-origin, grunge-music, amazon-hq, mount-rainier, rain-rain-rain, boeing-factory, seafood-salmon, tech-boom-gentrification ]
-        - name: player_id
-          in: query
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: quest_id
+        in: path
+        required: true
+        schema:
+          type: string
+          enum:
+          - space-needle
+          - pike-place-market
+          - starbucks-origin
+          - grunge-music
+          - amazon-hq
+          - mount-rainier
+          - rain-rain-rain
+          - boeing-factory
+          - seafood-salmon
+          - tech-boom-gentrification
+      - name: player_id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
         '200':
           description: Прогресс по квесту
@@ -154,21 +185,30 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
     post:
       summary: Обновить прогресс по квесту
       operationId: updateSeattleQuestProgress
       tags:
-        - quest-progress
+      - quest-progress
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: quest_id
-          in: path
-          required: true
-          schema:
-            type: string
-            enum: [ space-needle, pike-place-market, starbucks-origin, grunge-music, amazon-hq, mount-rainier, rain-rain-rain, boeing-factory, seafood-salmon, tech-boom-gentrification ]
+      - name: quest_id
+        in: path
+        required: true
+        schema:
+          type: string
+          enum:
+          - space-needle
+          - pike-place-market
+          - starbucks-origin
+          - grunge-music
+          - amazon-hq
+          - mount-rainier
+          - rain-rain-rain
+          - boeing-factory
+          - seafood-salmon
+          - tech-boom-gentrification
       requestBody:
         required: true
         content:
@@ -188,29 +228,32 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
-  # Достопримечательности Сиэтла
   /api/v1/quests/seattle/landmarks:
     get:
       summary: Получить достопримечательности Сиэтла
       operationId: getSeattleLandmarks
       tags:
-        - landmarks
+      - landmarks
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: category
-          in: query
-          schema:
-            type: string
-            enum: [ architecture, nature, culture, technology, food ]
-          description: Категория достопримечательности
-        - name: quest_related
-          in: query
-          schema:
-            type: boolean
-            default: true
-          description: Только связанные с квестами
+      - name: category
+        in: query
+        schema:
+          type: string
+          enum:
+          - architecture
+          - nature
+          - culture
+          - technology
+          - food
+        description: Категория достопримечательности
+      - name: quest_related
+        in: query
+        schema:
+          type: boolean
+          default: true
+        description: Только связанные с квестами
       responses:
         '200':
           description: Достопримечательности Сиэтла
@@ -220,31 +263,33 @@ paths:
                 $ref: '#/components/schemas/SeattleLandmarksResponse'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
-  # Исторический контекст
   /api/v1/quests/seattle/history/{year}:
     get:
       summary: Получить исторический контекст Сиэтла за год
       operationId: getSeattleHistory
       tags:
-        - history
+      - history
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: year
-          in: path
-          required: true
-          schema:
-            type: integer
-            minimum: 2020
-            maximum: 2029
-          description: Год (2020-2029)
-        - name: focus
-          in: query
-          schema:
-            type: string
-            enum: [ technology, culture, economy, environment ]
-          description: Фокус исторического контекста
+      - name: year
+        in: path
+        required: true
+        schema:
+          type: integer
+          minimum: 2020
+          maximum: 2029
+        description: Год (2020-2029)
+      - name: focus
+        in: query
+        schema:
+          type: string
+          enum:
+          - technology
+          - culture
+          - economy
+          - environment
+        description: Фокус исторического контекста
       responses:
         '200':
           description: Исторический контекст
@@ -258,30 +303,41 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
-  # Туристические маршруты
   /api/v1/quests/seattle/routes:
     get:
       summary: Получить туристические маршруты по Сиэтлу
       operationId: getSeattleRoutes
       tags:
-        - landmarks
+      - landmarks
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: quest_id
-          in: query
-          schema:
-            type: string
-            enum: [ space-needle, pike-place-market, starbucks-origin, grunge-music, amazon-hq, mount-rainier, rain-rain-rain, boeing-factory, seafood-salmon, tech-boom-gentrification ]
-          description: Маршрут для конкретного квеста
-        - name: difficulty
-          in: query
-          schema:
-            type: string
-            enum: [ easy, medium, hard ]
-            default: medium
-          description: Сложность маршрута
+      - name: quest_id
+        in: query
+        schema:
+          type: string
+          enum:
+          - space-needle
+          - pike-place-market
+          - starbucks-origin
+          - grunge-music
+          - amazon-hq
+          - mount-rainier
+          - rain-rain-rain
+          - boeing-factory
+          - seafood-salmon
+          - tech-boom-gentrification
+        description: Маршрут для конкретного квеста
+      - name: difficulty
+        in: query
+        schema:
+          type: string
+          enum:
+          - easy
+          - medium
+          - hard
+          default: medium
+        description: Сложность маршрута
       responses:
         '200':
           description: Туристические маршруты
@@ -291,14 +347,12 @@ paths:
                 $ref: '#/components/schemas/SeattleRoutesResponse'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
 components:
   securitySchemes:
     BearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
-
   responses:
     BadRequest:
       description: Неверный запрос
@@ -324,14 +378,12 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-
   schemas:
-    # Общие схемы
     Error:
       type: object
       required:
-        - code
-        - message
+      - code
+      - message
       properties:
         code:
           type: string
@@ -342,67 +394,82 @@ components:
         details:
           type: object
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
-    # Квесты Сиэтла
     SeattleQuest:
       type: object
       required:
-        - id
-        - title
-        - theme
-        - difficulty
-        - estimated_time
+      - id
+      - title
+      - theme
+      - difficulty
+      - estimated_time
       properties:
         id:
           type: string
-          enum: [ space-needle, pike-place-market, starbucks-origin, grunge-music, amazon-hq, mount-rainier, rain-rain-rain, boeing-factory, seafood-salmon, tech-boom-gentrification ]
+          enum:
+          - space-needle
+          - pike-place-market
+          - starbucks-origin
+          - grunge-music
+          - amazon-hq
+          - mount-rainier
+          - rain-rain-rain
+          - boeing-factory
+          - seafood-salmon
+          - tech-boom-gentrification
           description: Уникальный ID квеста
         title:
           type: string
           description: Название квеста
         theme:
           type: string
-          enum: [ landmarks, culture, technology, nature, food ]
+          enum:
+          - landmarks
+          - culture
+          - technology
+          - nature
+          - food
           description: Тематика квеста
         difficulty:
           type: string
-          enum: [ easy, medium, hard ]
+          enum:
+          - easy
+          - medium
+          - hard
           description: Сложность квеста
-        estimated_time:
-          type: integer
-          minimum: 15
-          maximum: 120
-          description: Ориентировочное время выполнения (минуты)
         description:
           type: string
           description: Описание квеста
-        objectives:
-          type: array
-          items:
-            $ref: '#/components/schemas/QuestObjective'
-          description: Цели квеста
-        rewards:
-          $ref: '#/components/schemas/QuestRewards'
         location:
           type: string
           description: Основная локация в Сиэтле
         historical_context:
           type: string
           description: Исторический контекст периода 2020-2029
+        rewards:
+          $ref: '#/components/schemas/QuestRewards'
+        objectives:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuestObjective'
+          description: Цели квеста
         prerequisites:
           type: array
           items:
             type: string
           description: Необходимые условия
+        estimated_time:
+          type: integer
+          minimum: 15
+          maximum: 120
+          description: Ориентировочное время выполнения (минуты)
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     QuestObjective:
       type: object
       required:
-        - id
-        - description
-        - type
-        - progress_required
+      - id
+      - description
+      - type
+      - progress_required
       properties:
         id:
           type: string
@@ -411,29 +478,25 @@ components:
           type: string
         type:
           type: string
-          enum: [ visit_location, collect_items, talk_to_npc, complete_task, time_based ]
+          enum:
+          - visit_location
+          - collect_items
+          - talk_to_npc
+          - complete_task
+          - time_based
+        completed:
+          type: boolean
+          default: false
         progress_required:
           type: integer
           minimum: 1
         progress_current:
           type: integer
           default: 0
-        completed:
-          type: boolean
-          default: false
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     QuestRewards:
       type: object
       properties:
-        experience:
-          type: integer
-          minimum: 0
-          description: Опыт
-        currency:
-          type: integer
-          minimum: 0
-          description: Валюта
         items:
           type: array
           items:
@@ -449,15 +512,25 @@ components:
           items:
             type: string
           description: Разблокированный лор
+        experience:
+          type: integer
+          minimum: 0
+          description: Опыт
+        currency:
+          type: integer
+          minimum: 0
+          description: Валюта
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     SeattleQuestsResponse:
       type: object
       required:
-        - quests
-        - total
-        - period
+      - quests
+      - total
+      - period
       properties:
+        period:
+          type: string
+          example: 2020-2029
         quests:
           type: array
           items:
@@ -465,30 +538,26 @@ components:
         total:
           type: integer
           minimum: 0
-        period:
-          type: string
-          example: "2020-2029"
         available_for_player:
           type: integer
           minimum: 0
           description: Количество доступных игроку квестов
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     SeattleQuestDetailResponse:
       type: object
       required:
-        - quest
-        - period
-        - historical_context
+      - quest
+      - period
+      - historical_context
       properties:
-        quest:
-          $ref: '#/components/schemas/SeattleQuest'
         period:
           type: string
-          example: "2020-2029"
+          example: 2020-2029
         historical_context:
           type: object
           description: Детальный исторический контекст
+        quest:
+          $ref: '#/components/schemas/SeattleQuest'
         related_landmarks:
           type: array
           items:
@@ -500,25 +569,38 @@ components:
             type: string
           description: Культурные insights
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
-    # Прогресс
     QuestProgressResponse:
       type: object
       required:
-        - player_id
-        - quest_id
-        - status
-        - objectives
+      - player_id
+      - quest_id
+      - status
+      - objectives
       properties:
         player_id:
           type: string
           format: uuid
         quest_id:
           type: string
-          enum: [ space-needle, pike-place-market, starbucks-origin, grunge-music, amazon-hq, mount-rainier, rain-rain-rain, boeing-factory, seafood-salmon, tech-boom-gentrification ]
+          enum:
+          - space-needle
+          - pike-place-market
+          - starbucks-origin
+          - grunge-music
+          - amazon-hq
+          - mount-rainier
+          - rain-rain-rain
+          - boeing-factory
+          - seafood-salmon
+          - tech-boom-gentrification
         status:
           type: string
-          enum: [ not_started, in_progress, completed, failed, abandoned ]
+          enum:
+          - not_started
+          - in_progress
+          - completed
+          - failed
+          - abandoned
         started_at:
           type: string
           format: date-time
@@ -536,13 +618,12 @@ components:
           maximum: 1.0
           description: Общий прогресс (0.0-1.0)
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     UpdateQuestProgressRequest:
       type: object
       required:
-        - player_id
-        - objective_id
-        - progress_increment
+      - player_id
+      - objective_id
+      - progress_increment
       properties:
         player_id:
           type: string
@@ -550,48 +631,47 @@ components:
         objective_id:
           type: string
           format: uuid
-        progress_increment:
-          type: integer
-          minimum: 1
         timestamp:
           type: string
           format: date-time
         location_context:
           type: object
           description: Контекст локации
+        progress_increment:
+          type: integer
+          minimum: 1
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     UpdateQuestProgressResponse:
       type: object
       required:
-        - success
-        - new_progress
-        - quest_status
+      - success
+      - new_progress
+      - quest_status
       properties:
-        success:
-          type: boolean
-        new_progress:
-          type: number
-          format: float
         quest_status:
           type: string
-          enum: [ in_progress, completed ]
+          enum:
+          - in_progress
+          - completed
         rewards_earned:
           $ref: '#/components/schemas/QuestRewards'
         next_objectives:
           type: array
           items:
             $ref: '#/components/schemas/QuestObjective'
+        new_progress:
+          type: number
+          format: float
+        success:
+          type: boolean
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
-    # Достопримечательности
     SeattleLandmark:
       type: object
       required:
-        - id
-        - name
-        - category
-        - coordinates
+      - id
+      - name
+      - category
+      - coordinates
       properties:
         id:
           type: string
@@ -600,12 +680,21 @@ components:
           type: string
         category:
           type: string
-          enum: [ architecture, nature, culture, technology, food ]
+          enum:
+          - architecture
+          - nature
+          - culture
+          - technology
+          - food
+        description:
+          type: string
+        historical_significance:
+          type: string
         coordinates:
           type: object
           required:
-            - latitude
-            - longitude
+          - latitude
+          - longitude
           properties:
             latitude:
               type: number
@@ -613,10 +702,6 @@ components:
             longitude:
               type: number
               format: float
-        description:
-          type: string
-        historical_significance:
-          type: string
         related_quests:
           type: array
           items:
@@ -627,50 +712,48 @@ components:
           items:
             type: string
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     SeattleLandmarksResponse:
       type: object
       required:
-        - landmarks
-        - total
-        - categories
+      - landmarks
+      - total
+      - categories
       properties:
         landmarks:
           type: array
           items:
             $ref: '#/components/schemas/SeattleLandmark'
-        total:
-          type: integer
-          minimum: 0
         categories:
           type: array
           items:
             type: string
+        total:
+          type: integer
+          minimum: 0
         quest_related_count:
           type: integer
           minimum: 0
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
-    # Исторический контекст
     SeattleHistoryResponse:
       type: object
       required:
-        - year
-        - events
-        - cultural_context
+      - year
+      - events
+      - cultural_context
       properties:
-        year:
-          type: integer
-          minimum: 2020
-          maximum: 2029
+        cultural_context:
+          type: object
+          description: Культурный контекст года
+        economic_indicators:
+          type: object
         events:
           type: array
           items:
             type: object
             required:
-              - title
-              - description
-              - impact
+            - title
+            - description
+            - impact
             properties:
               title:
                 type: string
@@ -678,56 +761,68 @@ components:
                 type: string
               impact:
                 type: string
-                enum: [ high, medium, low ]
-        cultural_context:
-          type: object
-          description: Культурный контекст года
+                enum:
+                - high
+                - medium
+                - low
         technological_advances:
           type: array
           items:
             type: string
-        economic_indicators:
-          type: object
+        year:
+          type: integer
+          minimum: 2020
+          maximum: 2029
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
-    # Маршруты
     SeattleRoute:
       type: object
       required:
-        - id
-        - name
-        - waypoints
-        - difficulty
+      - id
+      - name
+      - waypoints
+      - difficulty
       properties:
         id:
           type: string
           format: uuid
         name:
           type: string
+        difficulty:
+          type: string
+          enum:
+          - easy
+          - medium
+          - hard
+        quest_integration:
+          type: string
+          enum:
+          - space-needle
+          - pike-place-market
+          - starbucks-origin
+          - grunge-music
+          - amazon-hq
+          - mount-rainier
+          - rain-rain-rain
+          - boeing-factory
+          - seafood-salmon
+          - tech-boom-gentrification
         waypoints:
           type: array
           items:
             $ref: '#/components/schemas/SeattleLandmark'
-        difficulty:
-          type: string
-          enum: [ easy, medium, hard ]
-        estimated_duration:
-          type: integer
-          description: Ориентировочное время в минутах
-        quest_integration:
-          type: string
-          enum: [ space-needle, pike-place-market, starbucks-origin, grunge-music, amazon-hq, mount-rainier, rain-rain-rain, boeing-factory, seafood-salmon, tech-boom-gentrification ]
         highlights:
           type: array
           items:
             type: string
+        estimated_duration:
+          type: integer
+          description: Ориентировочное время в минутах
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     SeattleRoutesResponse:
       type: object
       required:
-        - routes
-        - total
+      - routes
+      - total
       properties:
         routes:
           type: array

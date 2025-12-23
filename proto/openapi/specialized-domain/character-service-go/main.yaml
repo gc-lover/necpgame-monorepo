@@ -1,33 +1,54 @@
 openapi: 3.0.3
 info:
   title: Character Service API - Enterprise-Grade Player Character Management
-  description: |
-    **Enterprise-Grade Character Service API for NECPGAME**
+  description: '**Enterprise-Grade Character Service API for NECPGAME**
+
 
     Comprehensive player character management system providing CRUD operations for character data,
+
     statistics tracking, inventory integration, and performance-optimized character state management.
 
+
     ## Key Features
+
     - **Enterprise-grade architecture** with proper domain separation
+
     - **Backend optimization hints** for struct alignment and performance (30-50% memory savings)
+
     - **Complete validation** with redocly and ogen code generation
+
     - **Security-first approach** with JWT authentication and character ownership validation
+
     - **Performance-optimized** response structures with field ordering
+
     - **Comprehensive error handling** with proper HTTP status codes
 
+
     ## Domain Purpose
+
     The Character Service manages all aspects of player characters in the NECPGAME ecosystem,
+
     including creation, progression, statistics, appearance customization, and cross-service integration.
+
     Follows enterprise-grade microservices patterns with event-driven architecture.
 
+
     ## Performance Targets
+
     - P99 Latency: <15ms for character loading (HOT PATH)
+
     - P99 Latency: <50ms for character updates
+
     - Memory: <25KB per character instance cached
+
     - Concurrent users: 50,000+ simultaneous character operations
+
     - Data consistency: Event-sourced with CQRS patterns
+
     - Cache hit rate: 95%+ for character data
-  version: "1.0.0"
+
+    '
+  version: 1.0.0
   contact:
     name: NECPGAME API Support
     url: https://necpgame.com/support
@@ -35,51 +56,53 @@ info:
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
-
 servers:
-  - url: https://api.necpgame.com/v1/character
-    description: Production server
-  - url: https://staging-api.necpgame.com/v1/character
-    description: Staging server
-  - url: http://localhost:8080/api/v1/character
-    description: Local development server
-
+- url: https://api.necpgame.com/v1/character
+  description: Production server
+- url: https://staging-api.necpgame.com/v1/character
+  description: Staging server
+- url: http://localhost:8080/api/v1/character
+  description: Local development server
 security:
-  - BearerAuth: [ ]
-
+- BearerAuth: []
 tags:
-  - name: Character Management
-    description: Core character CRUD operations and lifecycle management
-  - name: Character Statistics
-    description: Character stats, progression, and performance tracking
-  - name: Character Appearance
-    description: Character customization and visual appearance management
-  - name: Health Monitoring
-    description: System health and performance monitoring
-
+- name: Character Management
+  description: Core character CRUD operations and lifecycle management
+- name: Character Statistics
+  description: Character stats, progression, and performance tracking
+- name: Character Appearance
+  description: Character customization and visual appearance management
+- name: Health Monitoring
+  description: System health and performance monitoring
 paths:
-  # Health Check - ОБЯЗАТЕЛЬНО для всех доменов
   /health:
     get:
       summary: Character service health check
-      description: |
-        **Enterprise-grade health check endpoint**
+      description: '**Enterprise-grade health check endpoint**
+
 
         Provides real-time health status of the character service microservice.
+
         Critical for service discovery, load balancing, and monitoring.
 
+
         **Performance:** <1ms response time, cached for 30 seconds
+
+        '
       operationId: characterServiceHealthCheck
       tags:
-        - Health Monitoring
+      - Health Monitoring
       parameters:
-        - name: Accept-Encoding
-          in: header
-          schema:
-            type: string
-            enum: [ gzip, deflate, br ]
+      - name: Accept-Encoding
+        in: header
+        schema:
+          type: string
+          enum:
+          - gzip
+          - deflate
+          - br
       responses:
-        "200":
+        '200':
           description: Service is healthy
           headers:
             Cache-Control:
@@ -93,18 +116,21 @@ paths:
             Content-Encoding:
               schema:
                 type: string
-                enum: [ gzip, deflate, br ]
+                enum:
+                - gzip
+                - deflate
+                - br
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/HealthResponse"
-        "503":
+                $ref: '#/components/schemas/HealthResponse'
+        '503':
           description: Service is unhealthy
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/HealthResponse"
-        "429":
+                $ref: '#/components/schemas/HealthResponse'
+        '429':
           description: Too many requests - rate limit exceeded
           headers:
             Retry-After:
@@ -114,22 +140,24 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-
-  # Batch Health Check - ОБЯЗАТЕЛЬНО для enterprise-grade доменов
+                $ref: '#/components/schemas/Error'
   /health/batch:
     post:
       summary: Batch health check for multiple domain services
-      description: |
-        **Performance optimization:** Check multiple domain health in single request
+      description: '**Performance optimization:** Check multiple domain health in single request
+
 
         Reduces N HTTP calls to 1 call. Critical for microservice orchestration.
+
         Eliminates network overhead in health monitoring scenarios.
 
+
         **Use case:** Service mesh health checks, Kubernetes readiness probes
+
+        '
       operationId: characterServiceBatchHealthCheck
       tags:
-        - Health Monitoring
+      - Health Monitoring
       requestBody:
         required: true
         content:
@@ -137,25 +165,28 @@ paths:
             schema:
               type: object
               required:
-                - services
+              - services
               properties:
                 services:
                   type: array
                   items:
                     type: string
-                    enum: [ example-domain, system-domain, specialized-domain ]
+                    enum:
+                    - example-domain
+                    - system-domain
+                    - specialized-domain
                     maxItems: 10
                   description: List of services to check
       responses:
-        "200":
-          $ref: "#/components/responses/HealthBatchSuccess"
-        "400":
+        '200':
+          $ref: '#/components/responses/HealthBatchSuccess'
+        '400':
           description: Invalid request - malformed service list
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "429":
+                $ref: '#/components/schemas/Error'
+        '429':
           description: Too many requests - rate limit exceeded
           headers:
             Retry-After:
@@ -166,35 +197,42 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-
-  # WebSocket Health Monitoring - ОБЯЗАТЕЛЬНО для real-time доменов
+                $ref: '#/components/schemas/Error'
   /health/ws:
     get:
       summary: Real-time health monitoring WebSocket
-      description: |
-        **Performance optimization:** Real-time health updates without polling
+      description: '**Performance optimization:** Real-time health updates without polling
+
 
         Eliminates periodic HTTP requests, reduces server load by ~90%.
+
         Perfect for dashboard monitoring and alerting systems.
 
+
         **Protocol:** WebSocket with JSON payloads
+
         **Heartbeat:** 30 second intervals
+
         **Reconnection:** Automatic with exponential backoff
+
+        '
       operationId: exampleDomainHealthWebSocket
       tags:
-        - Health Monitoring
+      - Health Monitoring
       parameters:
-        - name: services
-          in: query
-          schema:
-            type: array
-            items:
-              type: string
-              enum: [ example-domain, system-domain, specialized-domain ]
-          description: Services to monitor (optional, monitors all if not specified)
+      - name: services
+        in: query
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - example-domain
+            - system-domain
+            - specialized-domain
+        description: Services to monitor (optional, monitors all if not specified)
       responses:
-        "200":
+        '200':
           description: WebSocket upgrade information returned
           content:
             application/json:
@@ -203,13 +241,14 @@ paths:
                 properties:
                   websocket_url:
                     type: string
-                    example: "ws://localhost:8080/api/v1/example-domain/health/ws"
+                    example: ws://localhost:8080/api/v1/example-domain/health/ws
                   supported_protocols:
                     type: array
                     items:
                       type: string
-                    example: [ "health-monitoring-v1" ]
-        "101":
+                    example:
+                    - health-monitoring-v1
+        '101':
           description: WebSocket connection established successfully
           headers:
             Upgrade:
@@ -227,20 +266,20 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/WebSocketHealthMessage"
-        "400":
+                $ref: '#/components/schemas/WebSocketHealthMessage'
+        '400':
           description: Invalid request - malformed service parameters
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "401":
+                $ref: '#/components/schemas/Error'
+        '401':
           description: Unauthorized - authentication required for WebSocket
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "429":
+                $ref: '#/components/schemas/Error'
+        '429':
           description: Too many requests - WebSocket connection limit exceeded
           headers:
             Retry-After:
@@ -250,89 +289,113 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-
-  # Character CRUD Operations - Core character management
+                $ref: '#/components/schemas/Error'
   /characters:
     get:
       summary: List characters with filtering and pagination
-      description: |
-        **Enterprise-grade character listing endpoint**
+      description: '**Enterprise-grade character listing endpoint**
+
 
         Supports complex filtering by player, status, level, and class.
+
         Optimized for high-throughput scenarios with proper database indexing.
+
         Critical for character selection screens and admin panels.
 
+
         **Performance:** <10ms P95, supports 1000+ concurrent requests
+
         **Memory optimization:** 30-50% savings through struct field alignment
+
+        '
       operationId: listCharacters
       tags:
-        - Character Management
+      - Character Management
       parameters:
-        - name: page
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            default: 1
-          description: Page number for pagination
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 20
-          description: Number of characters per page
-        - name: sort_by
-          in: query
-          schema:
-            type: string
-            enum: [ created_at, level, name, last_login, experience ]
-            default: last_login
-          description: Sort field for character listing
-        - name: sort_order
-          in: query
-          schema:
-            type: string
-            enum: [ asc, desc ]
-            default: desc
-          description: Sort order
-        - name: player_id
-          in: query
-          schema:
-            type: string
-            format: uuid
-          description: Filter characters by player ID
-        - name: status
-          in: query
-          schema:
-            type: string
-            enum: [ active, inactive, deleted ]
-            default: active
-          description: Filter by character status
-        - name: min_level
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-          description: Minimum character level filter
-        - name: max_level
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-          description: Maximum character level filter
-        - name: character_class
-          in: query
-          schema:
-            type: string
-            enum: [ solo, nomad, fixer, corporate, street_kid, techie, media, police, rockerboy, netrunner ]
-          description: Filter by character class/archetype
+      - name: page
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          default: 1
+        description: Page number for pagination
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+        description: Number of characters per page
+      - name: sort_by
+        in: query
+        schema:
+          type: string
+          enum:
+          - created_at
+          - level
+          - name
+          - last_login
+          - experience
+          default: last_login
+        description: Sort field for character listing
+      - name: sort_order
+        in: query
+        schema:
+          type: string
+          enum:
+          - asc
+          - desc
+          default: desc
+        description: Sort order
+      - name: player_id
+        in: query
+        schema:
+          type: string
+          format: uuid
+        description: Filter characters by player ID
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - active
+          - inactive
+          - deleted
+          default: active
+        description: Filter by character status
+      - name: min_level
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+        description: Minimum character level filter
+      - name: max_level
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+        description: Maximum character level filter
+      - name: character_class
+        in: query
+        schema:
+          type: string
+          enum:
+          - solo
+          - nomad
+          - fixer
+          - corporate
+          - street_kid
+          - techie
+          - media
+          - police
+          - rockerboy
+          - netrunner
+        description: Filter by character class/archetype
       responses:
-        "200":
+        '200':
           description: Characters retrieved successfully
           headers:
             Cache-Control:
@@ -354,89 +417,94 @@ paths:
               schema:
                 type: object
                 required:
-                  - characters
-                  - pagination
+                - characters
+                - pagination
                 properties:
                   characters:
                     type: array
                     items:
-                      $ref: "#/components/schemas/CharacterSummary"
+                      $ref: '#/components/schemas/CharacterSummary'
                     description: List of characters
                   pagination:
-                    $ref: "#/components/schemas/PaginationInfo"
-        "400":
+                    $ref: '#/components/schemas/PaginationInfo'
+        '400':
           description: Invalid request - malformed query parameters
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "401":
+                $ref: '#/components/schemas/Error'
+        '401':
           description: Unauthorized - authentication required
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "422":
+                $ref: '#/components/schemas/Error'
+        '422':
           description: Unprocessable entity - validation failed
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-
+                $ref: '#/components/schemas/Error'
     post:
       summary: Create new character
-      description: |
-        **Enterprise-grade character creation endpoint**
+      description: '**Enterprise-grade character creation endpoint**
+
 
         Creates a new player character with validation, security checks, and data consistency.
+
         Supports character class selection, appearance customization, and initial attribute assignment.
+
         Critical for new player onboarding and character slot management.
 
+
         **Performance:** <50ms P95, includes validation and business logic
+
         **Business rules:** Max 5 characters per player, unique names per player
+
+        '
       operationId: createCharacter
       tags:
-        - Character Management
+      - Character Management
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateCharacterRequest"
+              $ref: '#/components/schemas/CreateCharacterRequest'
       responses:
-        "201":
+        '201':
           description: Character created successfully
           headers:
             Location:
               schema:
                 type: string
-                example: "/api/v1/character/123e4567-e89b-12d3-a456-426614174000"
+                example: /api/v1/character/123e4567-e89b-12d3-a456-426614174000
               description: URL of the created character
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Character"
-        "400":
+                $ref: '#/components/schemas/Character'
+        '400':
           description: Invalid request - malformed or missing data
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "409":
+                $ref: '#/components/schemas/Error'
+        '409':
           description: Conflict - character name already exists for this player
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "422":
+                $ref: '#/components/schemas/Error'
+        '422':
           description: Unprocessable entity - business rule validation failed (max characters reached)
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "429":
+                $ref: '#/components/schemas/Error'
+        '429':
           description: Too many requests - creation rate limit exceeded
           headers:
             Retry-After:
@@ -446,62 +514,67 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-
+                $ref: '#/components/schemas/Error'
   /characters/{character_id}:
     get:
       summary: Get character by ID
-      description: |
-        **Enterprise-grade character retrieval endpoint**
+      description: '**Enterprise-grade character retrieval endpoint**
+
 
         Retrieves complete character data including stats, inventory, appearance, and progression.
+
         Optimized with Redis caching and database indexing for fast character loading.
+
         Critical for character selection and gameplay initialization.
 
+
         **Performance:** <5ms P95 with Redis caching (HOT PATH)
+
         **Memory optimization:** 30-50% savings through struct field alignment
+
+        '
       operationId: getCharacter
       tags:
-        - Character Management
+      - Character Management
       parameters:
-        - name: character_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Character unique identifier
-        - name: include_stats
-          in: query
-          schema:
-            type: boolean
-            default: true
-          description: Include detailed character statistics
-        - name: include_inventory
-          in: query
-          schema:
-            type: boolean
-            default: false
-          description: Include character inventory data
-        - name: include_progression
-          in: query
-          schema:
-            type: boolean
-            default: true
-          description: Include progression and experience data
-        - name: If-None-Match
-          in: header
-          schema:
-            type: string
-          description: Conditional request - return 304 if ETag matches
-        - name: If-Modified-Since
-          in: header
-          schema:
-            type: string
-            format: date-time
-          description: Conditional request - return 304 if not modified since this time
+      - name: character_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Character unique identifier
+      - name: include_stats
+        in: query
+        schema:
+          type: boolean
+          default: true
+        description: Include detailed character statistics
+      - name: include_inventory
+        in: query
+        schema:
+          type: boolean
+          default: false
+        description: Include character inventory data
+      - name: include_progression
+        in: query
+        schema:
+          type: boolean
+          default: true
+        description: Include progression and experience data
+      - name: If-None-Match
+        in: header
+        schema:
+          type: string
+        description: Conditional request - return 304 if ETag matches
+      - name: If-Modified-Since
+        in: header
+        schema:
+          type: string
+          format: date-time
+        description: Conditional request - return 304 if not modified since this time
       responses:
-        "200":
+        '200':
           description: Character retrieved successfully
           headers:
             Cache-Control:
@@ -516,12 +589,12 @@ paths:
               schema:
                 type: string
                 format: date-time
-                example: "2025-12-22T10:30:00Z"
+                example: '2025-12-22T10:30:00Z'
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Character"
-        "304":
+                $ref: '#/components/schemas/Character'
+        '304':
           description: Not modified - character has not changed
           headers:
             ETag:
@@ -532,25 +605,25 @@ paths:
               schema:
                 type: string
                 example: max-age=300, private
-        "400":
+        '400':
           description: Invalid request - malformed character ID
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "401":
+                $ref: '#/components/schemas/Error'
+        '401':
           description: Unauthorized - character belongs to different player
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "404":
+                $ref: '#/components/schemas/Error'
+        '404':
           description: Character not found
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "429":
+                $ref: '#/components/schemas/Error'
+        '429':
           description: Too many requests - rate limit exceeded
           headers:
             Retry-After:
@@ -560,65 +633,70 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-
+                $ref: '#/components/schemas/Error'
     put:
       summary: Update character
-      description: |
-        **Enterprise-grade character update endpoint**
+      description: '**Enterprise-grade character update endpoint**
+
 
         Supports partial updates for character data, appearance, and settings.
+
         Uses optimistic locking to prevent concurrent modification conflicts.
+
         Critical for character progression and customization.
 
+
         **Performance:** <25ms P95, includes validation and conflict resolution
+
         **Business rules:** Level progression, attribute caps, cosmetic restrictions
+
+        '
       operationId: updateCharacter
       tags:
-        - Character Management
+      - Character Management
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: character_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Character unique identifier
-        - name: If-Match
-          in: header
-          schema:
-            type: string
-          description: ETag for optimistic locking - prevents concurrent updates
-        - name: If-Unmodified-Since
-          in: header
-          schema:
-            type: string
-            format: date-time
-          description: Conditional update - proceed only if not modified since this time
+      - name: character_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Character unique identifier
+      - name: If-Match
+        in: header
+        schema:
+          type: string
+        description: ETag for optimistic locking - prevents concurrent updates
+      - name: If-Unmodified-Since
+        in: header
+        schema:
+          type: string
+          format: date-time
+        description: Conditional update - proceed only if not modified since this time
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UpdateCharacterStatsRequest"
+              $ref: '#/components/schemas/UpdateCharacterStatsRequest'
       responses:
-        "200":
-          $ref: "#/components/responses/ExampleUpdated"
-        "400":
+        '200':
+          $ref: '#/components/responses/ExampleUpdated'
+        '400':
           description: Invalid request - malformed data or example ID
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "404":
+                $ref: '#/components/schemas/Error'
+        '404':
           description: Example not found
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "409":
+                $ref: '#/components/schemas/Error'
+        '409':
           description: Conflict - version conflict (optimistic locking) or precondition failed
           headers:
             ETag:
@@ -629,8 +707,8 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "412":
+                $ref: '#/components/schemas/Error'
+        '412':
           description: Precondition failed - If-Match or If-Unmodified-Since condition not met
           headers:
             ETag:
@@ -641,14 +719,14 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "422":
+                $ref: '#/components/schemas/Error'
+        '422':
           description: Unprocessable entity - business rule validation failed
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "429":
+                $ref: '#/components/schemas/Error'
+        '429':
           description: Too many requests - update rate limit exceeded
           headers:
             Retry-After:
@@ -658,52 +736,55 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-
+                $ref: '#/components/schemas/Error'
     delete:
       summary: Delete example
-      description: |
-        **Enterprise-grade deletion endpoint**
+      description: '**Enterprise-grade deletion endpoint**
+
 
         Supports soft deletes with audit trails and cleanup scheduling.
+
         Ensures referential integrity and cascading deletes.
 
+
         **Performance:** <15ms P95, includes cleanup operations
+
+        '
       operationId: deleteCharacter
       tags:
-        - Character Management
+      - Character Management
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: character_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Character unique identifier
+      - name: character_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Character unique identifier
       responses:
-        "204":
-          $ref: "#/components/responses/ExampleDeleted"
-        "400":
+        '204':
+          $ref: '#/components/responses/ExampleDeleted'
+        '400':
           description: Invalid request - malformed example ID
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "404":
+                $ref: '#/components/schemas/Error'
+        '404':
           description: Example not found
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "409":
+                $ref: '#/components/schemas/Error'
+        '409':
           description: Conflict - example cannot be deleted (referential integrity)
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "429":
+                $ref: '#/components/schemas/Error'
+        '429':
           description: Too many requests - deletion rate limit exceeded
           headers:
             Retry-After:
@@ -713,33 +794,36 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-
-  # Character Statistics Management
+                $ref: '#/components/schemas/Error'
   /characters/{character_id}/stats:
     get:
       summary: Get character statistics
-      description: |
-        **Enterprise-grade character statistics endpoint**
+      description: '**Enterprise-grade character statistics endpoint**
+
 
         Retrieves detailed character stats including attributes, skills, and derived values.
+
         Optimized for frequent access during gameplay and UI updates.
 
+
         **Performance:** <3ms P95 (HOT PATH), Redis cached
+
         **Memory optimization:** 30-50% savings through field alignment
+
+        '
       operationId: getCharacterStats
       tags:
-        - Character Statistics
+      - Character Statistics
       parameters:
-        - name: character_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Character unique identifier
+      - name: character_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Character unique identifier
       responses:
-        "200":
+        '200':
           description: Character statistics retrieved successfully
           headers:
             Cache-Control:
@@ -749,94 +833,101 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CharacterStats"
-        "401":
+                $ref: '#/components/schemas/CharacterStats'
+        '401':
           description: Unauthorized - character belongs to different player
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "404":
+                $ref: '#/components/schemas/Error'
+        '404':
           description: Character not found
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-
+                $ref: '#/components/schemas/Error'
     put:
       summary: Update character statistics
-      description: |
-        **Enterprise-grade statistics update endpoint**
+      description: '**Enterprise-grade statistics update endpoint**
+
 
         Updates character stats with validation for game balance and progression rules.
+
         Supports experience gain, attribute increases, and skill progression.
+
         Critical for character advancement and gameplay mechanics.
 
+
         **Performance:** <15ms P95, includes validation and business logic
+
         **Business rules:** Level caps, attribute prerequisites, experience requirements
+
+        '
       operationId: updateCharacterStats
       tags:
-        - Character Statistics
+      - Character Statistics
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: character_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Character unique identifier
+      - name: character_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Character unique identifier
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UpdateCharacterStatsRequest"
+              $ref: '#/components/schemas/UpdateCharacterStatsRequest'
       responses:
-        "200":
+        '200':
           description: Character statistics updated successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CharacterStats"
-        "400":
+                $ref: '#/components/schemas/CharacterStats'
+        '400':
           description: Invalid request - malformed statistics data
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "422":
+                $ref: '#/components/schemas/Error'
+        '422':
           description: Unprocessable entity - game balance rules violated
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-
-  # Character Appearance Management
+                $ref: '#/components/schemas/Error'
   /characters/{character_id}/appearance:
     get:
       summary: Get character appearance
-      description: |
-        **Enterprise-grade character appearance endpoint**
+      description: '**Enterprise-grade character appearance endpoint**
+
 
         Retrieves character visual customization data for UI rendering and gameplay.
+
         Includes clothing, cyberware visibility, and cosmetic items.
 
+
         **Performance:** <5ms P95, cached with CDN support
+
+        '
       operationId: getCharacterAppearance
       tags:
-        - Character Appearance
+      - Character Appearance
       parameters:
-        - name: character_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Character unique identifier
+      - name: character_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Character unique identifier
       responses:
-        "200":
+        '200':
           description: Character appearance retrieved successfully
           headers:
             Cache-Control:
@@ -846,66 +937,68 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CharacterAppearance"
-        "404":
+                $ref: '#/components/schemas/CharacterAppearance'
+        '404':
           description: Character not found
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-
+                $ref: '#/components/schemas/Error'
     put:
       summary: Update character appearance
-      description: |
-        **Enterprise-grade appearance update endpoint**
+      description: '**Enterprise-grade appearance update endpoint**
+
 
         Updates character visual customization with validation for owned items.
+
         Supports clothing changes, cyberware toggles, and cosmetic modifications.
 
+
         **Performance:** <20ms P95, includes inventory validation
+
         **Business rules:** Item ownership validation, faction restrictions
+
+        '
       operationId: updateCharacterAppearance
       tags:
-        - Character Appearance
+      - Character Appearance
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: character_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Character unique identifier
+      - name: character_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Character unique identifier
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UpdateCharacterAppearanceRequest"
+              $ref: '#/components/schemas/UpdateCharacterAppearanceRequest'
       responses:
-        "200":
+        '200':
           description: Character appearance updated successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CharacterAppearance"
-        "400":
+                $ref: '#/components/schemas/CharacterAppearance'
+        '400':
           description: Invalid request - malformed appearance data
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "422":
+                $ref: '#/components/schemas/Error'
+        '422':
           description: Unprocessable entity - item ownership or restrictions violated
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-
+                $ref: '#/components/schemas/Error'
 components:
   responses:
-    # Common response definitions with headers
     HealthBatchSuccess:
       description: Batch health results retrieved successfully
       headers:
@@ -923,20 +1016,19 @@ components:
           schema:
             type: object
             required:
-              - results
-              - total_time_ms
+            - results
+            - total_time_ms
             properties:
               results:
                 type: array
                 items:
-                  $ref: "#/components/schemas/HealthResponse"
+                  $ref: '#/components/schemas/HealthResponse'
                 description: Health status for each requested service
               total_time_ms:
                 type: integer
                 description: Total processing time in milliseconds
                 example: 15
                 minimum: 0
-
     ExampleListSuccess:
       description: Examples retrieved successfully
       headers:
@@ -957,8 +1049,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/CharacterListResponse"
-
+            $ref: '#/components/schemas/CharacterListResponse'
     ExampleCreated:
       description: Example created successfully
       headers:
@@ -979,8 +1070,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/CharacterResponse"
-
+            $ref: '#/components/schemas/CharacterResponse'
     ExampleRetrieved:
       description: Example retrieved successfully
       headers:
@@ -998,7 +1088,7 @@ components:
           schema:
             type: string
             format: date-time
-            example: "2025-12-21T10:00:00Z"
+            example: '2025-12-21T10:00:00Z'
             description: Last modification timestamp
         X-Processing-Time:
           schema:
@@ -1008,8 +1098,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/CharacterResponse"
-
+            $ref: '#/components/schemas/CharacterResponse'
     ExampleUpdated:
       description: Example updated successfully
       headers:
@@ -1022,7 +1111,7 @@ components:
           schema:
             type: string
             format: date-time
-            example: "2025-12-21T10:05:00Z"
+            example: '2025-12-21T10:05:00Z'
             description: Last modification timestamp
         X-Processing-Time:
           schema:
@@ -1032,8 +1121,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/CharacterResponse"
-
+            $ref: '#/components/schemas/CharacterResponse'
     ExampleDeleted:
       description: Example deleted successfully
       headers:
@@ -1042,46 +1130,69 @@ components:
             type: integer
             example: 15
             description: Processing time in milliseconds
-
   securitySchemes:
     BearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
-      description: |
-        JWT Bearer token authentication.
+      description: 'JWT Bearer token authentication.
+
 
         **Token Format:** `Bearer {token}`
+
         **Token Claims:**
+
         - `sub`: User/Player ID
+
         - `exp`: Expiration timestamp
+
         - `iat`: Issued at timestamp
+
         - `iss`: Token issuer
+
         - `aud`: Token audience
+
         - `roles`: User roles array
+
         - `permissions`: User permissions array
 
+
         **Security Features:**
+
         - RS256 signature algorithm
+
         - Token rotation required every 24 hours
+
         - Automatic refresh tokens
+
         - Revocation support via Redis
+
+        '
     ApiKeyAuth:
       type: apiKey
       in: header
       name: X-API-Key
-      description: |
-        API Key authentication for service-to-service communication.
+      description: 'API Key authentication for service-to-service communication.
+
 
         **Use Cases:**
+
         - Internal service communication
+
         - Third-party integrations
+
         - Development and testing
 
+
         **Security:**
+
         - HMAC-SHA256 signed
+
         - Rate limited per key
+
         - Scoped permissions
+
+        '
     OAuth2:
       type: oauth2
       flows:
@@ -1104,30 +1215,37 @@ components:
       type: apiKey
       in: header
       name: X-Client-Certificate
-      description: |
-        Mutual TLS authentication for high-security operations.
+      description: 'Mutual TLS authentication for high-security operations.
+
 
         **Requirements:**
+
         - Valid client certificate
+
         - Certificate signed by trusted CA
+
         - Certificate not revoked (OCSP/CRL check)
 
+
         **Use Cases:**
+
         - Administrative operations
+
         - Financial transactions
+
         - Critical system operations
+
 
         **Header:** `X-Client-Certificate: {certificate_fingerprint}`
 
+        '
   schemas:
-
-    # Health schemas - ОБЯЗАТЕЛЬНЫ для всех доменов
     HealthResponse:
       type: object
       required:
-        - status
-        - timestamp
-        - domain
+      - status
+      - timestamp
+      - domain
       properties:
         domain:
           type: string
@@ -1135,17 +1253,20 @@ components:
           maxLength: 50
         status:
           type: string
-          enum: [ healthy, degraded, unhealthy ]
+          enum:
+          - healthy
+          - degraded
+          - unhealthy
           example: healthy
           maxLength: 255
         timestamp:
           type: string
           format: date-time
-          example: "2025-12-21T10:00:00Z"
+          example: '2025-12-21T10:00:00Z'
           maxLength: 255
         version:
           type: string
-          example: "1.0.0"
+          example: 1.0.0
           maxLength: 50
         uptime_seconds:
           type: integer
@@ -1153,18 +1274,20 @@ components:
         active_connections:
           type: integer
           example: 1500
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     WebSocketHealthMessage:
       type: object
       required:
-        - type
-        - timestamp
-        - health
+      - type
+      - timestamp
+      - health
       properties:
         type:
           type: string
-          enum: [ health_update, health_alert, service_down ]
+          enum:
+          - health_update
+          - health_alert
+          - service_down
           example: health_update
           maxLength: 255
         timestamp:
@@ -1177,26 +1300,18 @@ components:
           description: Timestamp of the health message
           maxLength: 1000
         health:
-          $ref: "#/components/schemas/HealthResponse"
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
-    # Error schema - ОБЯЗАТЕЛЬНО для всех доменов
+          $ref: '#/components/schemas/HealthResponse'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     Error:
       type: object
       required:
-        - code
-        - message
+      - code
+      - message
       properties:
         message:
           type: string
           maxLength: 256
           example: Internal server error
-        code:
-          type: integer
-          format: int32
-          minimum: 100
-          maximum: 599
-          example: 500
         domain:
           type: string
           example: example-domain
@@ -1204,25 +1319,28 @@ components:
         details:
           type: object
           description: Additional error context
-          example: { "field": "name", "reason": "required" }
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
-    # Character Service schemas - Enterprise-grade character management
-
-    # Core Character entity - Memory optimized field ordering (large → small)
+          example:
+            field: name
+            reason: required
+        code:
+          type: integer
+          format: int32
+          minimum: 100
+          maximum: 599
+          example: 500
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     Character:
       type: object
       required:
-        - id
-        - player_id
-        - name
-        - character_class
-        - level
-        - experience
-        - created_at
-        - status
+      - id
+      - player_id
+      - name
+      - character_class
+      - level
+      - experience
+      - created_at
+      - status
       properties:
-        # Large fields first for struct alignment (strings, arrays)
         id:
           type: string
           format: uuid
@@ -1238,28 +1356,65 @@ components:
           minLength: 3
           maxLength: 32
           description: Character display name (unique per player)
-          example: "Jaxx Silverhand"
+          example: Jaxx Silverhand
         biography:
           type: string
           maxLength: 500
           description: Character backstory and description
-          example: "A seasoned street samurai with a cybernetic arm and a chip on his shoulder."
+          example: A seasoned street samurai with a cybernetic arm and a chip on his shoulder.
         character_class:
           type: string
-          enum: [ solo, nomad, fixer, corporate, street_kid, techie, media, police, rockerboy, netrunner ]
+          enum:
+          - solo
+          - nomad
+          - fixer
+          - corporate
+          - street_kid
+          - techie
+          - media
+          - police
+          - rockerboy
+          - netrunner
           description: Character archetype/class
           example: solo
         faction:
           type: string
           maxLength: 50
           description: Current faction affiliation
-          example: "Maelstrom"
+          example: Maelstrom
         location:
           type: string
           maxLength: 100
           description: Current location in Night City
-          example: "Watson - Claire"
-        # Medium fields (integers)
+          example: Watson - Claire
+        status:
+          type: string
+          enum:
+          - active
+          - inactive
+          - deleted
+          default: active
+          description: Character status
+          example: active
+        created_at:
+          type: string
+          format: date-time
+          description: Character creation timestamp
+          example: '2025-12-21T10:00:00Z'
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+          example: '2025-12-22T08:30:00Z'
+        last_login:
+          type: string
+          format: date-time
+          description: Last login timestamp
+          example: '2025-12-22T08:00:00Z'
+        is_online:
+          type: boolean
+          description: Whether character is currently online
+          example: true
         level:
           type: integer
           minimum: 1
@@ -1277,45 +1432,16 @@ components:
           maximum: 1000
           description: Street reputation (-1000 to 1000)
           example: 450
-        # Small fields (booleans, enums)
-        status:
-          type: string
-          enum: [ active, inactive, deleted ]
-          default: active
-          description: Character status
-          example: active
-        is_online:
-          type: boolean
-          description: Whether character is currently online
-          example: true
-        # Timestamps
-        created_at:
-          type: string
-          format: date-time
-          description: Character creation timestamp
-          example: "2025-12-21T10:00:00Z"
-        updated_at:
-          type: string
-          format: date-time
-          description: Last update timestamp
-          example: "2025-12-22T08:30:00Z"
-        last_login:
-          type: string
-          format: date-time
-          description: Last login timestamp
-          example: "2025-12-22T08:00:00Z"
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
-    # Character summary for listings - optimized for list views
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     CharacterSummary:
       type: object
       required:
-        - id
-        - name
-        - character_class
-        - level
-        - status
-        - last_login
+      - id
+      - name
+      - character_class
+      - level
+      - status
+      - last_login
       properties:
         id:
           type: string
@@ -1325,42 +1451,54 @@ components:
         name:
           type: string
           description: Character display name
-          example: "Jaxx Silverhand"
+          example: Jaxx Silverhand
         character_class:
           type: string
-          enum: [ solo, nomad, fixer, corporate, street_kid, techie, media, police, rockerboy, netrunner ]
+          enum:
+          - solo
+          - nomad
+          - fixer
+          - corporate
+          - street_kid
+          - techie
+          - media
+          - police
+          - rockerboy
+          - netrunner
           description: Character archetype/class
           example: solo
-        level:
-          type: integer
-          description: Character level
-          example: 25
         status:
           type: string
-          enum: [ active, inactive, deleted ]
+          enum:
+          - active
+          - inactive
+          - deleted
           description: Character status
           example: active
-        is_online:
-          type: boolean
-          description: Whether character is currently online
-          example: true
         last_login:
           type: string
           format: date-time
           description: Last login timestamp
-          example: "2025-12-22T08:00:00Z"
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%. Hot path optimization required."
-
-    # Character Statistics - detailed performance metrics
+          example: '2025-12-22T08:00:00Z'
+        is_online:
+          type: boolean
+          description: Whether character is currently online
+          example: true
+        level:
+          type: integer
+          description: Character level
+          example: 25
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%. Hot
+        path optimization required.'
     CharacterStats:
       type: object
       required:
-        - character_id
-        - attributes
-        - skills
-        - health
-        - level
-        - experience
+      - character_id
+      - attributes
+      - skills
+      - health
+      - level
+      - experience
       properties:
         character_id:
           type: string
@@ -1468,16 +1606,14 @@ components:
           minimum: 0
           description: Experience needed for next level
           example: 2500
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
-    # Character Appearance - visual customization data
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     CharacterAppearance:
       type: object
       required:
-        - character_id
-        - body_type
-        - hair_style
-        - clothing
+      - character_id
+      - body_type
+      - hair_style
+      - clothing
       properties:
         character_id:
           type: string
@@ -1486,29 +1622,33 @@ components:
           example: 550e8400-e29b-41d4-a716-446655440000
         body_type:
           type: string
-          enum: [ athletic, bulky, slim, average ]
+          enum:
+          - athletic
+          - bulky
+          - slim
+          - average
           description: Character body build
           example: athletic
         hair_style:
           type: string
           maxLength: 50
           description: Hair style description
-          example: "Short mohawk with neon highlights"
+          example: Short mohawk with neon highlights
         hair_color:
           type: string
           maxLength: 30
           description: Hair color
-          example: "Neon blue"
+          example: Neon blue
         eye_color:
           type: string
           maxLength: 30
           description: Eye color (natural or cybernetic)
-          example: "Cybernetic red"
+          example: Cybernetic red
         skin_tone:
           type: string
           maxLength: 30
           description: Skin tone/mods
-          example: "Pale with circuit tattoos"
+          example: Pale with circuit tattoos
         clothing:
           type: object
           properties:
@@ -1516,71 +1656,77 @@ components:
               type: string
               maxLength: 100
               description: Headwear/helmet
-              example: "Techie visor"
+              example: Techie visor
             torso:
               type: string
               maxLength: 100
               description: Upper body clothing
-              example: "Leather jacket with LED panels"
+              example: Leather jacket with LED panels
             legs:
               type: string
               maxLength: 100
               description: Lower body clothing
-              example: "Cargo pants with armor plating"
+              example: Cargo pants with armor plating
             feet:
               type: string
               maxLength: 100
               description: Footwear
-              example: "Heavy boots"
+              example: Heavy boots
         cyberware_visible:
           type: array
           items:
             type: string
             maxLength: 50
           description: List of visible cyberware implants
-          example: [ "Left cybernetic arm", "Neural implant ports" ]
+          example:
+          - Left cybernetic arm
+          - Neural implant ports
         tattoos:
           type: array
           items:
             type: string
             maxLength: 100
           description: Character tattoos and body modifications
-          example: [ "Maelstrom gang tattoo", "Circuit board arm tattoo" ]
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
-    # Request/Response schemas
+          example:
+          - Maelstrom gang tattoo
+          - Circuit board arm tattoo
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     CreateCharacterRequest:
       type: object
       required:
-        - name
-        - character_class
+      - name
+      - character_class
       properties:
         name:
           type: string
           minLength: 3
           maxLength: 32
           description: Desired character name (unique per player)
-          example: "Jaxx Silverhand"
+          example: Jaxx Silverhand
         character_class:
           type: string
-          enum: [ solo, nomad, fixer, corporate, street_kid, techie, media, police, rockerboy, netrunner ]
+          enum:
+          - solo
+          - nomad
+          - fixer
+          - corporate
+          - street_kid
+          - techie
+          - media
+          - police
+          - rockerboy
+          - netrunner
           description: Character archetype/class
           example: solo
         biography:
           type: string
           maxLength: 500
           description: Character backstory (optional)
-          example: "A seasoned street samurai with a cybernetic arm and a chip on his shoulder."
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
+          example: A seasoned street samurai with a cybernetic arm and a chip on his shoulder.
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     UpdateCharacterStatsRequest:
       type: object
       properties:
-        experience_gain:
-          type: integer
-          minimum: 0
-          description: Experience points to add
-          example: 150
         attribute_increases:
           type: object
           description: Attribute increases (limited by available points)
@@ -1633,7 +1779,11 @@ components:
               minimum: 0
               description: Damage amount
               example: 0
-
+        experience_gain:
+          type: integer
+          minimum: 0
+          description: Experience points to add
+          example: 150
     UpdateCharacterAppearanceRequest:
       type: object
       properties:
@@ -1641,12 +1791,12 @@ components:
           type: string
           maxLength: 50
           description: New hair style
-          example: "Long dreadlocks"
+          example: Long dreadlocks
         hair_color:
           type: string
           maxLength: 30
           description: New hair color
-          example: "Electric purple"
+          example: Electric purple
         clothing:
           type: object
           description: Clothing updates (must own items)
@@ -1655,12 +1805,12 @@ components:
               type: string
               maxLength: 100
               description: New headwear
-              example: "Rockerboy shades"
+              example: Rockerboy shades
             torso:
               type: string
               maxLength: 100
               description: New torso clothing
-              example: "Nomad armored vest"
+              example: Nomad armored vest
         cyberware_visibility:
           type: object
           description: Toggle cyberware visibility
@@ -1673,17 +1823,23 @@ components:
               type: boolean
               description: Show/hide neural ports
               example: false
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
-    # Common pagination schema
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     PaginationInfo:
       type: object
       required:
-        - page
-        - limit
-        - total_count
-        - total_pages
+      - page
+      - limit
+      - total_count
+      - total_pages
       properties:
+        has_next:
+          type: boolean
+          description: Whether there is a next page
+          example: true
+        has_prev:
+          type: boolean
+          description: Whether there is a previous page
+          example: false
         page:
           type: integer
           description: Current page number
@@ -1700,35 +1856,26 @@ components:
           type: integer
           description: Total number of pages
           example: 8
-        has_next:
-          type: boolean
-          description: Whether there is a next page
-          example: true
-        has_prev:
-          type: boolean
-          description: Whether there is a previous page
-          example: false
-
     CharacterResponse:
       type: object
       required:
-        - character
+      - character
       properties:
         character:
-          $ref: "#/components/schemas/Character"
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
+          $ref: '#/components/schemas/Character'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     CharacterListResponse:
       type: object
       required:
-        - characters
-        - pagination
+      - characters
+      - pagination
       properties:
+        pagination:
+          $ref: '#/components/schemas/PaginationInfo'
         characters:
           type: array
           items:
-            $ref: "#/components/schemas/CharacterSummary"
+            $ref: '#/components/schemas/CharacterSummary'
           description: List of characters
-        pagination:
-          $ref: "#/components/schemas/PaginationInfo"
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%. Paginated responses optimized for memory efficiency."
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%. Paginated
+        responses optimized for memory efficiency.'

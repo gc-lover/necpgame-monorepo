@@ -1,23 +1,36 @@
 openapi: 3.0.3
 info:
   title: Economy Resources and Materials Catalog Service API
-  description: |
-    Полная система каталога ресурсов и материалов для NECPGAME.
+  description: 'Полная система каталога ресурсов и материалов для NECPGAME.
+
     Управление инвентарем, свойствами материалов, ценообразованием и интеграциями.
 
+
     **BACKEND NOTE**: Enterprise-grade каталог ресурсов для MMOFPS RPG.
+
     Использует Redis для кеширования свойств материалов и PostgreSQL для каталога.
 
+
     **PERFORMANCE**: Ожидаемая нагрузка - 2000+ RPS в пиковые моменты.
+
     Время отклика < 20ms для основных операций (поиск ресурсов, проверка свойств).
 
+
     **FEATURES**:
+
     - 6 категорий ресурсов (сырье, электроника, биоматериалы, данные, компоненты, экзотика)
+
     - 5-tier система (T1-T5) с прогрессией
+
     - Динамическое ценообразование с ±50% колебаниями
+
     - Зоны добычи и источники ресурсов
+
     - Интеграция с крафтингом, торговлей и экономикой
+
     - Свойства материалов и характеристики
+
+    '
   version: 1.0.0
   license:
     name: MIT
@@ -25,72 +38,78 @@ info:
   contact:
     name: Backend Team
     email: backend@necp.game
-
 servers:
-  - url: https://api.necpgame.com/v1/economy/resources
-    description: Production server
-  - url: https://staging-api.necpgame.com/v1/economy/resources
-    description: Staging server
-  - url: http://localhost:8420/api/v1/economy/resources
-    description: Local development
-
+- url: https://api.necpgame.com/v1/economy/resources
+  description: Production server
+- url: https://staging-api.necpgame.com/v1/economy/resources
+  description: Staging server
+- url: http://localhost:8420/api/v1/economy/resources
+  description: Local development
 security:
-  - BearerAuth: [ ]
-
+- BearerAuth: []
 tags:
-  - name: resources
-    description: Управление ресурсами и материалами
-  - name: catalog
-    description: Каталог ресурсов
-  - name: pricing
-    description: Ценообразование и стоимость
-  - name: properties
-    description: Свойства и характеристики материалов
-  - name: sources
-    description: Источники и зоны добычи
-  - name: inventory
-    description: Управление инвентарем
-
+- name: resources
+  description: Управление ресурсами и материалами
+- name: catalog
+  description: Каталог ресурсов
+- name: pricing
+  description: Ценообразование и стоимость
+- name: properties
+  description: Свойства и характеристики материалов
+- name: sources
+  description: Источники и зоны добычи
+- name: inventory
+  description: Управление инвентарем
 paths:
-  # Основной каталог ресурсов
   /api/v1/economy/resources/catalog:
     get:
       summary: Получить каталог ресурсов
       operationId: getResourcesCatalog
       tags:
-        - catalog
+      - catalog
       parameters:
-        - name: category
-          in: query
-          schema:
-            type: string
-            enum: [ raw_materials, electronics, bio_chem, data_assets, crafting_components, exotic ]
-          description: Фильтр по категории
-        - name: tier
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 5
-          description: Фильтр по tier
-        - name: rarity
-          in: query
-          schema:
-            type: string
-            enum: [ common, uncommon, rare, epic, legendary ]
-          description: Фильтр по редкости
-        - name: location
-          in: query
-          schema:
-            type: string
-          description: Фильтр по зоне добычи
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 20
+      - name: category
+        in: query
+        schema:
+          type: string
+          enum:
+          - raw_materials
+          - electronics
+          - bio_chem
+          - data_assets
+          - crafting_components
+          - exotic
+        description: Фильтр по категории
+      - name: tier
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 5
+        description: Фильтр по tier
+      - name: rarity
+        in: query
+        schema:
+          type: string
+          enum:
+          - common
+          - uncommon
+          - rare
+          - epic
+          - legendary
+        description: Фильтр по редкости
+      - name: location
+        in: query
+        schema:
+          type: string
+        description: Фильтр по зоне добычи
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
       responses:
         '200':
           description: Каталог ресурсов
@@ -102,22 +121,20 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
-  # Конкретный ресурс
   /api/v1/economy/resources/catalog/{resource_id}:
     get:
       summary: Получить детали ресурса
       operationId: getResourceDetails
       tags:
-        - catalog
-        - properties
+      - catalog
+      - properties
       parameters:
-        - name: resource_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: resource_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
         '200':
           description: Детали ресурса
@@ -129,21 +146,19 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
-  # Ценообразование
   /api/v1/economy/resources/pricing/{resource_id}:
     get:
       summary: Получить текущие цены ресурса
       operationId: getResourcePricing
       tags:
-        - pricing
+      - pricing
       parameters:
-        - name: resource_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: resource_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
         '200':
           description: Текущие цены ресурса
@@ -155,21 +170,20 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
     put:
       summary: Обновить цены ресурса (админ)
       operationId: updateResourcePricing
       tags:
-        - pricing
+      - pricing
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: resource_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: resource_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       requestBody:
         required: true
         content:
@@ -191,21 +205,19 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
-  # Источники и зоны добычи
   /api/v1/economy/resources/sources/{resource_id}:
     get:
       summary: Получить источники ресурса
       operationId: getResourceSources
       tags:
-        - sources
+      - sources
       parameters:
-        - name: resource_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: resource_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
         '200':
           description: Источники ресурса
@@ -217,13 +229,12 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
   /api/v1/economy/resources/zones:
     get:
       summary: Получить зоны добычи
       operationId: getResourceZones
       tags:
-        - sources
+      - sources
       responses:
         '200':
           description: Зоны добычи
@@ -233,26 +244,25 @@ paths:
                 $ref: '#/components/schemas/ResourceZonesResponse'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
   /api/v1/economy/resources/zones/{zone_id}/resources:
     get:
       summary: Получить ресурсы зоны
       operationId: getZoneResources
       tags:
-        - sources
+      - sources
       parameters:
-        - name: zone_id
-          in: path
-          required: true
-          schema:
-            type: string
-        - name: tier
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 5
-          description: Фильтр по tier
+      - name: zone_id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: tier
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 5
+        description: Фильтр по tier
       responses:
         '200':
           description: Ресурсы зоны
@@ -264,36 +274,40 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
-  # Управление инвентарем
   /api/v1/economy/resources/inventory/{player_id}:
     get:
       summary: Получить инвентарь игрока
       operationId: getPlayerInventory
       tags:
-        - inventory
+      - inventory
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: player_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: category
-          in: query
-          schema:
-            type: string
-            enum: [ raw_materials, electronics, bio_chem, data_assets, crafting_components, exotic ]
-          description: Фильтр по категории
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 50
+      - name: player_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: category
+        in: query
+        schema:
+          type: string
+          enum:
+          - raw_materials
+          - electronics
+          - bio_chem
+          - data_assets
+          - crafting_components
+          - exotic
+        description: Фильтр по категории
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
       responses:
         '200':
           description: Инвентарь игрока
@@ -305,22 +319,21 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
   /api/v1/economy/resources/inventory/{player_id}/transfer:
     post:
       summary: Переместить ресурсы между игроками
       operationId: transferResources
       tags:
-        - inventory
+      - inventory
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: player_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: player_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       requestBody:
         required: true
         content:
@@ -346,45 +359,54 @@ paths:
                 $ref: '#/components/schemas/Error'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
-  # Поиск и аналитика
   /api/v1/economy/resources/search:
     get:
       summary: Поиск ресурсов
       operationId: searchResources
       tags:
-        - catalog
+      - catalog
       parameters:
-        - name: query
-          in: query
-          schema:
-            type: string
-            minLength: 2
-            maxLength: 100
-          description: Поисковый запрос
-        - name: category
-          in: query
-          schema:
-            type: string
-            enum: [ raw_materials, electronics, bio_chem, data_assets, crafting_components, exotic ]
-        - name: max_price
-          in: query
-          schema:
-            type: number
-            format: float
-            minimum: 0
-        - name: min_rarity
-          in: query
-          schema:
-            type: string
-            enum: [ common, uncommon, rare, epic, legendary ]
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 50
-            default: 20
+      - name: query
+        in: query
+        schema:
+          type: string
+          minLength: 2
+          maxLength: 100
+        description: Поисковый запрос
+      - name: category
+        in: query
+        schema:
+          type: string
+          enum:
+          - raw_materials
+          - electronics
+          - bio_chem
+          - data_assets
+          - crafting_components
+          - exotic
+      - name: max_price
+        in: query
+        schema:
+          type: number
+          format: float
+          minimum: 0
+      - name: min_rarity
+        in: query
+        schema:
+          type: string
+          enum:
+          - common
+          - uncommon
+          - rare
+          - epic
+          - legendary
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 50
+          default: 20
       responses:
         '200':
           description: Результаты поиска
@@ -396,25 +418,34 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
   /api/v1/economy/resources/analytics:
     get:
       summary: Аналитика по ресурсам
       operationId: getResourcesAnalytics
       tags:
-        - catalog
+      - catalog
       parameters:
-        - name: period
-          in: query
-          schema:
-            type: string
-            enum: [ 7d, 30d, 90d, 1y ]
-            default: 30d
-        - name: category
-          in: query
-          schema:
-            type: string
-            enum: [ raw_materials, electronics, bio_chem, data_assets, crafting_components, exotic ]
+      - name: period
+        in: query
+        schema:
+          type: string
+          enum:
+          - 7d
+          - 30d
+          - 90d
+          - 1y
+          default: 30d
+      - name: category
+        in: query
+        schema:
+          type: string
+          enum:
+          - raw_materials
+          - electronics
+          - bio_chem
+          - data_assets
+          - crafting_components
+          - exotic
       responses:
         '200':
           description: Аналитика ресурсов
@@ -424,14 +455,12 @@ paths:
                 $ref: '#/components/schemas/ResourcesAnalyticsResponse'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
 components:
   securitySchemes:
     BearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
-
   responses:
     BadRequest:
       description: Неверный запрос
@@ -465,14 +494,12 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-
   schemas:
-    # Общие схемы
     Error:
       type: object
       required:
-        - code
-        - message
+      - code
+      - message
       properties:
         code:
           type: string
@@ -483,17 +510,15 @@ components:
         details:
           type: object
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
-    # Ресурсы
     Resource:
       type: object
       required:
-        - id
-        - name
-        - category
-        - tier
-        - rarity
-        - base_price
+      - id
+      - name
+      - category
+      - tier
+      - rarity
+      - base_price
       properties:
         id:
           type: string
@@ -504,27 +529,23 @@ components:
           description: Название ресурса
         category:
           type: string
-          enum: [ raw_materials, electronics, bio_chem, data_assets, crafting_components, exotic ]
+          enum:
+          - raw_materials
+          - electronics
+          - bio_chem
+          - data_assets
+          - crafting_components
+          - exotic
           description: Категория ресурса
-        tier:
-          type: integer
-          minimum: 1
-          maximum: 5
-          description: Tier ресурса (1-5)
         rarity:
           type: string
-          enum: [ common, uncommon, rare, epic, legendary ]
+          enum:
+          - common
+          - uncommon
+          - rare
+          - epic
+          - legendary
           description: Редкость ресурса
-        base_price:
-          type: number
-          format: float
-          minimum: 0
-          description: Базовая цена (евро)
-        current_price:
-          type: number
-          format: float
-          minimum: 0
-          description: Текущая рыночная цена
         description:
           type: string
           description: Описание ресурса
@@ -540,17 +561,31 @@ components:
           items:
             type: string
           description: Назначение и применение
-        stack_limit:
-          type: integer
-          minimum: 1
-          description: Максимальный стек
+        base_price:
+          type: number
+          format: float
+          minimum: 0
+          description: Базовая цена (евро)
+        current_price:
+          type: number
+          format: float
+          minimum: 0
+          description: Текущая рыночная цена
         weight:
           type: number
           format: float
           minimum: 0
           description: Вес единицы (кг)
+        tier:
+          type: integer
+          minimum: 1
+          maximum: 5
+          description: Tier ресурса (1-5)
+        stack_limit:
+          type: integer
+          minimum: 1
+          description: Максимальный стек
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     ResourceProperties:
       type: object
       properties:
@@ -578,32 +613,40 @@ components:
           type: number
           format: float
           description: Вычислительная мощность
-        encryption_level:
-          type: integer
-          minimum: 0
-          maximum: 10
-          description: Уровень шифрования
         rarity_modifier:
           type: number
           format: float
           minimum: 0.1
           maximum: 5.0
           description: Модификатор редкости
+        encryption_level:
+          type: integer
+          minimum: 0
+          maximum: 10
+          description: Уровень шифрования
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     ResourceSource:
       type: object
       required:
-        - type
-        - location
+      - type
+      - location
       properties:
         type:
           type: string
-          enum: [ loot, mining, crafting, purchase, quest, event ]
+          enum:
+          - loot
+          - mining
+          - crafting
+          - purchase
+          - quest
+          - event
           description: Тип источника
         location:
           type: string
           description: Местоположение
+        faction_control:
+          type: string
+          description: Контроль фракции
         drop_rate:
           type: number
           format: float
@@ -614,19 +657,16 @@ components:
           type: integer
           minimum: 1
           description: Минимальный уровень
-        faction_control:
-          type: string
-          description: Контроль фракции
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
-    # Ответы API
     ResourcesCatalogResponse:
       type: object
       required:
-        - resources
-        - total
-        - pagination
+      - resources
+      - total
+      - pagination
       properties:
+        pagination:
+          $ref: '#/components/schemas/PaginationInfo'
         resources:
           type: array
           items:
@@ -634,13 +674,14 @@ components:
         total:
           type: integer
           minimum: 0
-        pagination:
-          $ref: '#/components/schemas/PaginationInfo'
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     PaginationInfo:
       type: object
       properties:
+        has_next:
+          type: boolean
+        has_prev:
+          type: boolean
         page:
           type: integer
           minimum: 1
@@ -650,19 +691,17 @@ components:
         total_pages:
           type: integer
           minimum: 0
-        has_next:
-          type: boolean
-        has_prev:
-          type: boolean
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     ResourceDetail:
       type: object
       required:
-        - resource
-        - pricing_history
-        - market_demand
+      - resource
+      - pricing_history
+      - market_demand
       properties:
+        market_demand:
+          type: object
+          description: Текущий рыночный спрос
         resource:
           $ref: '#/components/schemas/Resource'
         pricing_history:
@@ -670,9 +709,6 @@ components:
           items:
             $ref: '#/components/schemas/PricePoint'
           maxItems: 30
-        market_demand:
-          type: object
-          description: Текущий рыночный спрос
         related_resources:
           type: array
           items:
@@ -682,32 +718,30 @@ components:
           items:
             $ref: '#/components/schemas/CraftingRecipe'
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     PricePoint:
       type: object
       required:
-        - timestamp
-        - price
+      - timestamp
+      - price
       properties:
         timestamp:
           type: string
           format: date-time
+        event:
+          type: string
+          description: Связанное событие
         price:
           type: number
           format: float
         volume:
           type: integer
           minimum: 0
-        event:
-          type: string
-          description: Связанное событие
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     CraftingRecipe:
       type: object
       required:
-        - result_resource_id
-        - ingredients
+      - result_resource_id
+      - ingredients
       properties:
         result_resource_id:
           type: string
@@ -723,12 +757,11 @@ components:
           type: integer
           minimum: 1
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     RecipeIngredient:
       type: object
       required:
-        - resource_id
-        - quantity
+      - resource_id
+      - quantity
       properties:
         resource_id:
           type: string
@@ -737,19 +770,22 @@ components:
           type: integer
           minimum: 1
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
-    # Ценообразование
     ResourcePricing:
       type: object
       required:
-        - resource_id
-        - base_price
-        - current_price
-        - price_factors
+      - resource_id
+      - base_price
+      - current_price
+      - price_factors
       properties:
         resource_id:
           type: string
           format: uuid
+        last_updated:
+          type: string
+          format: date-time
+        price_factors:
+          $ref: '#/components/schemas/PriceFactors'
         base_price:
           type: number
           format: float
@@ -758,19 +794,13 @@ components:
           type: number
           format: float
           minimum: 0
-        price_factors:
-          $ref: '#/components/schemas/PriceFactors'
         volatility:
           type: number
           format: float
           minimum: 0
           maximum: 1
           description: Волатильность цены (0-1)
-        last_updated:
-          type: string
-          format: date-time
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     PriceFactors:
       type: object
       properties:
@@ -797,63 +827,58 @@ components:
           maximum: 2.0
           description: Региональный множитель
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     UpdateResourcePricingRequest:
       type: object
       properties:
-        base_price:
-          type: number
-          format: float
-          minimum: 0
-        price_factors:
-          $ref: '#/components/schemas/PriceFactors'
         reason:
           type: string
           maxLength: 500
           description: Причина изменения цены
+        price_factors:
+          $ref: '#/components/schemas/PriceFactors'
+        base_price:
+          type: number
+          format: float
+          minimum: 0
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
-    # Источники и зоны
     ResourceSources:
       type: object
       required:
-        - resource_id
-        - sources
+      - resource_id
+      - sources
       properties:
         resource_id:
           type: string
           format: uuid
+        best_source:
+          $ref: '#/components/schemas/ResourceSource'
         sources:
           type: array
           items:
             $ref: '#/components/schemas/ResourceSource'
-        best_source:
-          $ref: '#/components/schemas/ResourceSource'
         average_drop_rate:
           type: number
           format: float
           minimum: 0
           maximum: 1
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     ResourceZonesResponse:
       type: object
       required:
-        - zones
+      - zones
       properties:
         zones:
           type: array
           items:
             $ref: '#/components/schemas/ResourceZone'
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     ResourceZone:
       type: object
       required:
-        - id
-        - name
-        - risk_level
-        - available_resources
+      - id
+      - name
+      - risk_level
+      - available_resources
       properties:
         id:
           type: string
@@ -861,31 +886,38 @@ components:
           type: string
         risk_level:
           type: string
-          enum: [ low, medium, high, extreme ]
+          enum:
+          - low
+          - medium
+          - high
+          - extreme
         faction_control:
           type: string
+        access_requirements:
+          type: object
+          description: Требования для доступа
         available_resources:
           type: array
           items:
             $ref: '#/components/schemas/ZoneResourceInfo'
-        access_requirements:
-          type: object
-          description: Требования для доступа
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     ZoneResourceInfo:
       type: object
       required:
-        - resource_id
-        - abundance
-        - quality_range
+      - resource_id
+      - abundance
+      - quality_range
       properties:
         resource_id:
           type: string
           format: uuid
         abundance:
           type: string
-          enum: [ rare, uncommon, common, abundant ]
+          enum:
+          - rare
+          - uncommon
+          - common
+          - abundant
         quality_range:
           type: object
           properties:
@@ -903,12 +935,11 @@ components:
           minimum: 0
           maximum: 1
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     ZoneResourcesResponse:
       type: object
       required:
-        - zone
-        - resources
+      - zone
+      - resources
       properties:
         zone:
           $ref: '#/components/schemas/ResourceZone'
@@ -921,14 +952,12 @@ components:
           minimum: 1
           maximum: 5
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
-    # Инвентарь
     PlayerInventoryResponse:
       type: object
       required:
-        - player_id
-        - items
-        - total_weight
+      - player_id
+      - items
+      - total_weight
       properties:
         player_id:
           type: string
@@ -951,17 +980,31 @@ components:
           minimum: 0
           maximum: 100
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     InventoryItem:
       type: object
       required:
-        - resource_id
-        - quantity
-        - acquired_at
+      - resource_id
+      - quantity
+      - acquired_at
       properties:
         resource_id:
           type: string
           format: uuid
+        acquired_at:
+          type: string
+          format: date-time
+        source:
+          type: string
+          enum:
+          - loot
+          - purchase
+          - crafting
+          - transfer
+          - quest
+        value:
+          type: number
+          format: float
+          description: Текущая стоимость
         quantity:
           type: integer
           minimum: 0
@@ -970,48 +1013,36 @@ components:
           minimum: 1
           maximum: 100
           description: Качество предмета (%)
-        acquired_at:
-          type: string
-          format: date-time
-        source:
-          type: string
-          enum: [ loot, purchase, crafting, transfer, quest ]
-        value:
-          type: number
-          format: float
-          description: Текущая стоимость
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     ResourceTransferRequest:
       type: object
       required:
-        - recipient_id
-        - items
+      - recipient_id
+      - items
       properties:
         recipient_id:
           type: string
           format: uuid
           description: ID получателя
+        message:
+          type: string
+          maxLength: 200
+          description: Сообщение получателю
         items:
           type: array
           items:
             $ref: '#/components/schemas/TransferItem'
           minItems: 1
-        message:
-          type: string
-          maxLength: 200
-          description: Сообщение получателю
         require_acceptance:
           type: boolean
           default: false
           description: Требовать подтверждение от получателя
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     TransferItem:
       type: object
       required:
-        - resource_id
-        - quantity
+      - resource_id
+      - quantity
       properties:
         resource_id:
           type: string
@@ -1020,36 +1051,38 @@ components:
           type: integer
           minimum: 1
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     ResourceTransferResult:
       type: object
       required:
-        - success
-        - transfer_id
-        - transferred_at
+      - success
+      - transfer_id
+      - transferred_at
       properties:
-        success:
-          type: boolean
         transfer_id:
           type: string
           format: uuid
         transferred_at:
           type: string
           format: date-time
+        success:
+          type: boolean
         recipient_notified:
           type: boolean
         requires_acceptance:
           type: boolean
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
-    # Поиск и аналитика
     ResourceSearchResponse:
       type: object
       required:
-        - results
-        - total
-        - query
+      - results
+      - total
+      - query
       properties:
+        query:
+          type: string
+        filters_applied:
+          type: object
+          description: Примененные фильтры
         results:
           type: array
           items:
@@ -1057,31 +1090,25 @@ components:
         total:
           type: integer
           minimum: 0
-        query:
-          type: string
-        filters_applied:
-          type: object
-          description: Примененные фильтры
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     ResourcesAnalyticsResponse:
       type: object
       required:
-        - period
-        - summary
-        - by_category
-        - by_tier
+      - period
+      - summary
+      - by_category
+      - by_tier
       properties:
         period:
           type: string
-        summary:
-          $ref: '#/components/schemas/ResourceMarketSummary'
         by_category:
           type: object
           description: Статистика по категориям
         by_tier:
           type: object
           description: Статистика по tier
+        summary:
+          $ref: '#/components/schemas/ResourceMarketSummary'
         price_trends:
           type: array
           items:
@@ -1092,40 +1119,41 @@ components:
             $ref: '#/components/schemas/Resource'
           maxItems: 10
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     ResourceMarketSummary:
       type: object
       properties:
-        total_resources:
-          type: integer
-          minimum: 0
-        avg_price_change:
-          type: number
-          format: float
-          description: Среднее изменение цены (%)
         most_valuable:
           $ref: '#/components/schemas/Resource'
         most_volatile:
           $ref: '#/components/schemas/Resource'
+        avg_price_change:
+          type: number
+          format: float
+          description: Среднее изменение цены (%)
         total_market_value:
           type: number
           format: float
           description: Общая рыночная стоимость
+        total_resources:
+          type: integer
+          minimum: 0
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     PriceTrend:
       type: object
       required:
-        - resource_id
-        - trend
-        - change_percent
+      - resource_id
+      - trend
+      - change_percent
       properties:
         resource_id:
           type: string
           format: uuid
         trend:
           type: string
-          enum: [ up, down, stable ]
+          enum:
+          - up
+          - down
+          - stable
         change_percent:
           type: number
           format: float

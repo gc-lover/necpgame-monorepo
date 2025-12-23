@@ -1,32 +1,53 @@
 openapi: 3.0.3
 info:
   title: Kafka Schema Management API - Enterprise-Grade Event Schema Management
-  description: |
-    **Enterprise-Grade Kafka Event Schema Management API for NECPGAME**
+  description: '**Enterprise-Grade Kafka Event Schema Management API for NECPGAME**
+
 
     This API provides comprehensive management capabilities for Kafka event schemas used in the
+
     microservices event-driven architecture. Enables creation, validation, versioning, and deployment
+
     of JSON schemas for high-performance event streaming with 100k+ events/sec throughput.
 
+
     ## Key Features
+
     - **Schema CRUD Operations** - Create, read, update, delete JSON schemas
+
     - **Version Management** - Semantic versioning with backward compatibility checks
+
     - **Validation Services** - Real-time schema validation and compatibility testing
+
     - **Deployment Control** - Safe schema deployment with rollback capabilities
+
     - **Audit Trail** - Complete change history and approval workflows
+
     - **Performance Optimized** - Memory-aligned structs for Go code generation
 
+
     ## Domain Purpose
+
     Centralizes management of Kafka event schemas to ensure data consistency, backward compatibility,
+
     and performance across all microservices. Supports enterprise-grade event-driven architecture
+
     with high throughput and low latency requirements.
 
+
     ## Performance Targets
+
     - P99 Latency: <50ms for validation operations
+
     - Memory: <100KB per schema instance
+
     - Throughput: 1000+ schema validations/sec
+
     - Concurrent operations: 100+ simultaneous deployments
+
     - Event throughput: 100k+ events/sec after deployment
+
+    '
   version: 1.0.0
   contact:
     name: NECPGAME API Support
@@ -36,48 +57,52 @@ info:
     name: MIT
     url: https://opensource.org/licenses/MIT
 servers:
-  - url: https://api.necpgame.com/v1/kafka-schema-management
-    description: Production server
-  - url: https://staging-api.necpgame.com/v1/kafka-schema-management
-    description: Staging server
-  - url: http://localhost:8080/api/v1/kafka-schema-management
-    description: Local development server
+- url: https://api.necpgame.com/v1/kafka-schema-management
+  description: Production server
+- url: https://staging-api.necpgame.com/v1/kafka-schema-management
+  description: Staging server
+- url: http://localhost:8080/api/v1/kafka-schema-management
+  description: Local development server
 security:
-  - BearerAuth: []
+- BearerAuth: []
 tags:
-  - name: Schema Management
-    description: Core schema CRUD operations
-  - name: Schema Validation
-    description: Schema validation and compatibility checking
-  - name: Schema Deployment
-    description: Schema deployment and rollback operations
-  - name: Schema Analytics
-    description: Schema usage analytics and monitoring
-  - name: Health Monitoring
-    description: System health and performance monitoring
+- name: Schema Management
+  description: Core schema CRUD operations
+- name: Schema Validation
+  description: Schema validation and compatibility checking
+- name: Schema Deployment
+  description: Schema deployment and rollback operations
+- name: Schema Analytics
+  description: Schema usage analytics and monitoring
+- name: Health Monitoring
+  description: System health and performance monitoring
 paths:
   /health:
     get:
       summary: Kafka Schema Management health check
-      description: |
-        **Enterprise-grade health check endpoint**
+      description: '**Enterprise-grade health check endpoint**
+
 
         Provides real-time health status of the Kafka Schema Management microservice.
+
         Critical for service discovery, load balancing, and monitoring.
 
+
         **Performance:** <1ms response time, cached for 30 seconds
+
+        '
       operationId: kafkaSchemaHealthCheck
       tags:
-        - Health Monitoring
+      - Health Monitoring
       parameters:
-        - name: Accept-Encoding
-          in: header
-          schema:
-            type: string
-            enum:
-              - gzip
-              - deflate
-              - br
+      - name: Accept-Encoding
+        in: header
+        schema:
+          type: string
+          enum:
+          - gzip
+          - deflate
+          - br
       responses:
         '200':
           description: Service is healthy
@@ -94,9 +119,9 @@ paths:
               schema:
                 type: string
                 enum:
-                  - gzip
-                  - deflate
-                  - br
+                - gzip
+                - deflate
+                - br
           content:
             application/json:
               schema:
@@ -140,25 +165,25 @@ components:
     SchemaListResponse:
       type: object
       required:
-        - schemas
-        - pagination
-        - filters_applied
+      - schemas
+      - pagination
+      - filters_applied
       properties:
-        schemas:
-          type: array
-          items:
-            $ref: '#/components/schemas/SchemaSummary'
         pagination:
           $ref: '#/components/schemas/PaginationMetadata'
         filters_applied:
           $ref: '#/components/schemas/SchemaListFilter'
+        schemas:
+          type: array
+          items:
+            $ref: '#/components/schemas/SchemaSummary'
         total_matching:
           type: integer
           example: 45
     SchemaResponse:
       type: object
       required:
-        - schema
+      - schema
       properties:
         schema:
           $ref: '#/components/schemas/KafkaEventSchema'
@@ -171,17 +196,17 @@ components:
     ServiceHealth:
       type: object
       required:
-        - status
-        - timestamp
-        - service_name
-        - version
+      - status
+      - timestamp
+      - service_name
+      - version
       properties:
         status:
           type: string
           enum:
-            - healthy
-            - degraded
-            - unhealthy
+          - healthy
+          - degraded
+          - unhealthy
           example: healthy
         timestamp:
           type: string
@@ -193,32 +218,32 @@ components:
         version:
           type: string
           example: 1.0.0
-        uptime_seconds:
-          type: integer
-          example: 86400
         checks:
           type: object
           properties:
             database_connection:
               type: string
               enum:
-                - pass
-                - fail
+              - pass
+              - fail
             kafka_connection:
               type: string
               enum:
-                - pass
-                - fail
+              - pass
+              - fail
             redis_connection:
               type: string
               enum:
-                - pass
-                - fail
+              - pass
+              - fail
             schema_registry:
               type: string
               enum:
-                - pass
-                - fail
+              - pass
+              - fail
+        uptime_seconds:
+          type: integer
+          example: 86400
         memory_usage_mb:
           type: integer
           example: 256
@@ -228,10 +253,14 @@ components:
     ApiError:
       type: object
       required:
-        - error_code
-        - message
-        - timestamp
+      - error_code
+      - message
+      - timestamp
       properties:
+        request_id:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174000
         error_code:
           type: string
           example: SCHEMA_VALIDATION_FAILED
@@ -242,10 +271,10 @@ components:
           type: string
           format: date-time
           example: '2025-12-23T21:00:00Z'
-        request_id:
+        documentation_url:
           type: string
-          format: uuid
-          example: 123e4567-e89b-12d3-a456-426614174000
+          format: uri
+          example: https://docs.necpgame.com/api-errors/SCHEMA_VALIDATION_FAILED
         details:
           type: object
           description: Additional error context
@@ -258,23 +287,73 @@ components:
           items:
             type: string
           example:
-            - Add event_id field to your schema
-            - Ensure event_id is a valid UUID
-        documentation_url:
-          type: string
-          format: uri
-          example: https://docs.necpgame.com/api-errors/SCHEMA_VALIDATION_FAILED
+          - Add event_id field to your schema
+          - Ensure event_id is a valid UUID
     KafkaEventSchema:
       type: object
       required:
-        - schema_id
-        - name
-        - domain
-        - version
-        - status
-        - created_at
-        - schema_definition
+      - schema_id
+      - name
+      - domain
+      - version
+      - status
+      - created_at
+      - schema_definition
       properties:
+        schema_id:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174000
+        description:
+          type: string
+          maxLength: 500
+          example: JSON schema for combat session events
+        name:
+          type: string
+          pattern: ^[a-z][a-z0-9-]*$
+          minLength: 3
+          maxLength: 50
+          example: combat-session-events
+        created_at:
+          type: string
+          format: date-time
+          example: '2025-12-23T20:00:00Z'
+        updated_at:
+          type: string
+          format: date-time
+          example: '2025-12-23T21:00:00Z'
+        deployed_at:
+          type: string
+          format: date-time
+          example: '2025-12-23T21:30:00Z'
+        domain:
+          type: string
+          enum:
+          - core
+          - combat
+          - economy
+          - social
+          - system
+          example: combat
+        version:
+          type: string
+          pattern: ^\d+\.\d+\.\d+$
+          example: 1.0.0
+        status:
+          type: string
+          enum:
+          - draft
+          - published
+          - deprecated
+          - archived
+          example: published
+        compatibility_mode:
+          type: string
+          enum:
+          - backward
+          - forward
+          - full
+          default: backward
         schema_definition:
           type: object
           description: Full JSON Schema Draft 7 definition
@@ -282,9 +361,9 @@ components:
             $schema: http://json-schema.org/draft-07/schema#
             type: object
             required:
-              - event_id
-              - event_type
-              - timestamp
+            - event_id
+            - event_type
+            - timestamp
             properties:
               event_id:
                 type: string
@@ -312,10 +391,6 @@ components:
                 type: object
               metadata:
                 type: object
-        description:
-          type: string
-          maxLength: 500
-          example: JSON schema for combat session events
         tags:
           type: array
           maxItems: 10
@@ -328,68 +403,18 @@ components:
           items:
             type: string
             enum:
-              - staging
-              - production
-        schema_id:
-          type: string
-          format: uuid
-          example: 123e4567-e89b-12d3-a456-426614174000
-        name:
-          type: string
-          pattern: ^[a-z][a-z0-9-]*$
-          minLength: 3
-          maxLength: 50
-          example: combat-session-events
-        created_at:
-          type: string
-          format: date-time
-          example: '2025-12-23T20:00:00Z'
-        updated_at:
-          type: string
-          format: date-time
-          example: '2025-12-23T21:00:00Z'
-        deployed_at:
-          type: string
-          format: date-time
-          example: '2025-12-23T21:30:00Z'
-        domain:
-          type: string
-          enum:
-            - core
-            - combat
-            - economy
-            - social
-            - system
-          example: combat
-        version:
-          type: string
-          pattern: ^\d+\.\d+\.\d+$
-          example: 1.0.0
-        status:
-          type: string
-          enum:
-            - draft
-            - published
-            - deprecated
-            - archived
-          example: published
-        compatibility_mode:
-          type: string
-          enum:
-            - backward
-            - forward
-            - full
-          default: backward
+            - staging
+            - production
         is_active:
           type: boolean
           default: true
     CreateSchemaCommand:
       type: object
       required:
-        - name
-        - domain
-        - version
-        - schema_definition
+      - name
+      - domain
+      - version
+      - schema_definition
       properties:
         name:
           type: string
@@ -399,26 +424,26 @@ components:
         domain:
           type: string
           enum:
-            - core
-            - combat
-            - economy
-            - social
-            - system
+          - core
+          - combat
+          - economy
+          - social
+          - system
         version:
           type: string
           pattern: ^\d+\.\d+\.\d+$
-        schema_definition:
-          type: object
         description:
           type: string
           maxLength: 500
         compatibility_mode:
           type: string
           enum:
-            - backward
-            - forward
-            - full
+          - backward
+          - forward
+          - full
           default: backward
+        schema_definition:
+          type: object
         tags:
           type: array
           maxItems: 10
@@ -431,45 +456,45 @@ components:
         description:
           type: string
           maxLength: 500
-        schema_definition:
-          type: object
         compatibility_mode:
           type: string
           enum:
-            - backward
-            - forward
-            - full
+          - backward
+          - forward
+          - full
+        status:
+          type: string
+          enum:
+          - draft
+          - published
+          - deprecated
+        schema_definition:
+          type: object
         tags:
           type: array
           maxItems: 10
           items:
             type: string
             maxLength: 20
-        status:
-          type: string
-          enum:
-            - draft
-            - published
-            - deprecated
     EventValidationRequest:
       type: object
       required:
-        - event_data
+      - event_data
       properties:
+        schema_version:
+          type: string
+          pattern: ^\d+\.\d+\.\d+$
         event_data:
           type: object
         strict_mode:
           type: boolean
           default: true
-        schema_version:
-          type: string
-          pattern: ^\d+\.\d+\.\d+$
     ValidationError:
       type: object
       required:
-        - field_path
-        - error_code
-        - message
+      - field_path
+      - error_code
+      - message
       properties:
         field_path:
           type: string
@@ -483,9 +508,9 @@ components:
         severity:
           type: string
           enum:
-            - error
-            - warning
-            - info
+          - error
+          - warning
+          - info
           default: error
         suggestion:
           type: string
@@ -493,28 +518,14 @@ components:
     ValidationResult:
       type: object
       required:
-        - is_valid
-        - errors
-        - warnings
-        - validated_at
+      - is_valid
+      - errors
+      - warnings
+      - validated_at
       properties:
-        is_valid:
-          type: boolean
-          example: true
-        errors:
-          type: array
-          items:
-            $ref: '#/components/schemas/ValidationError'
-        warnings:
-          type: array
-          items:
-            $ref: '#/components/schemas/ValidationError'
         validated_at:
           type: string
           format: date-time
-        processing_time_ms:
-          type: integer
-          example: 5
         schema_used:
           type: object
           properties:
@@ -524,45 +535,59 @@ components:
             version:
               type: string
               pattern: ^\d+\.\d+\.\d+$
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ValidationError'
+        warnings:
+          type: array
+          items:
+            $ref: '#/components/schemas/ValidationError'
+        is_valid:
+          type: boolean
+          example: true
+        processing_time_ms:
+          type: integer
+          example: 5
     CompatibilityCheckCommand:
       type: object
       required:
-        - target_schema_definition
+      - target_schema_definition
       properties:
-        target_schema_definition:
-          type: object
         compatibility_mode:
           type: string
           enum:
-            - backward
-            - forward
-            - full
+          - backward
+          - forward
+          - full
           default: backward
+        target_schema_definition:
+          type: object
         include_examples:
           type: boolean
           default: false
     CompatibilityIssue:
       type: object
       required:
-        - issue_type
-        - severity
-        - field_path
-        - description
+      - issue_type
+      - severity
+      - field_path
+      - description
       properties:
         issue_type:
           type: string
           enum:
-            - breaking_change
-            - potential_risk
-            - warning
-            - info
+          - breaking_change
+          - potential_risk
+          - warning
+          - info
         severity:
           type: string
           enum:
-            - critical
-            - high
-            - medium
-            - low
+          - critical
+          - high
+          - medium
+          - low
         field_path:
           type: string
           example: properties.event_type
@@ -578,41 +603,41 @@ components:
     CompatibilityReport:
       type: object
       required:
-        - is_compatible
-        - compatibility_mode
-        - issues
-        - checked_at
+      - is_compatible
+      - compatibility_mode
+      - issues
+      - checked_at
       properties:
-        is_compatible:
-          type: boolean
-          example: true
         compatibility_mode:
           type: string
           enum:
-            - backward
-            - forward
-            - full
+          - backward
+          - forward
+          - full
+        checked_at:
+          type: string
+          format: date-time
         issues:
           type: array
           items:
             $ref: '#/components/schemas/CompatibilityIssue'
-        checked_at:
-          type: string
-          format: date-time
-        processing_time_ms:
-          type: integer
-          example: 25
         compatibility_score:
           type: number
           minimum: 0
           maximum: 1
           example: 0.95
+        is_compatible:
+          type: boolean
+          example: true
+        processing_time_ms:
+          type: integer
+          example: 25
     SchemaUsageMetrics:
       type: object
       required:
-        - schema_id
-        - time_range
-        - collected_at
+      - schema_id
+      - time_range
+      - collected_at
       properties:
         schema_id:
           type: string
@@ -620,10 +645,10 @@ components:
         time_range:
           type: string
           enum:
-            - 1h
-            - 24h
-            - 7d
-            - 30d
+          - 1h
+          - 24h
+          - 7d
+          - 30d
         collected_at:
           type: string
           format: date-time
@@ -655,27 +680,6 @@ components:
             REQUIRED_FIELD_MISSING: 120
             INVALID_FORMAT: 85
             TYPE_MISMATCH: 15
-        deployment_history:
-          type: array
-          maxItems: 20
-          items:
-            type: object
-            properties:
-              deployed_at:
-                type: string
-                format: date-time
-              environment:
-                type: string
-                enum:
-                  - staging
-                  - production
-              version:
-                type: string
-                pattern: ^\d+\.\d+\.\d+$
-              success:
-                type: boolean
-              rollback_performed:
-                type: boolean
         consumer_metrics:
           type: object
           properties:
@@ -688,15 +692,36 @@ components:
             events_per_second:
               type: number
               example: 1250.5
+        deployment_history:
+          type: array
+          maxItems: 20
+          items:
+            type: object
+            properties:
+              deployed_at:
+                type: string
+                format: date-time
+              environment:
+                type: string
+                enum:
+                - staging
+                - production
+              version:
+                type: string
+                pattern: ^\d+\.\d+\.\d+$
+              success:
+                type: boolean
+              rollback_performed:
+                type: boolean
     SchemaSummary:
       type: object
       required:
-        - schema_id
-        - name
-        - domain
-        - version
-        - status
-        - created_at
+      - schema_id
+      - name
+      - domain
+      - version
+      - status
+      - created_at
       properties:
         schema_id:
           type: string
@@ -706,50 +731,56 @@ components:
         domain:
           type: string
           enum:
-            - core
-            - combat
-            - economy
-            - social
-            - system
+          - core
+          - combat
+          - economy
+          - social
+          - system
         version:
           type: string
           pattern: ^\d+\.\d+\.\d+$
         status:
           type: string
           enum:
-            - draft
-            - published
-            - deprecated
-            - archived
+          - draft
+          - published
+          - deprecated
+          - archived
         description:
           type: string
-        tags:
-          type: array
-          items:
-            type: string
         created_at:
           type: string
           format: date-time
         updated_at:
           type: string
           format: date-time
+        tags:
+          type: array
+          items:
+            type: string
         deployed_to:
           type: array
           items:
             type: string
             enum:
-              - staging
-              - production
+            - staging
+            - production
     PaginationMetadata:
       type: object
       required:
-        - page
-        - limit
-        - total_items
-        - total_pages
-        - has_next
-        - has_previous
+      - page
+      - limit
+      - total_items
+      - total_pages
+      - has_next
+      - has_previous
       properties:
+        has_next:
+          type: boolean
+          example: true
+        has_previous:
+          type: boolean
+          example: false
         page:
           type: integer
           minimum: 1
@@ -765,12 +796,6 @@ components:
         total_pages:
           type: integer
           example: 8
-        has_next:
-          type: boolean
-          example: true
-        has_previous:
-          type: boolean
-          example: false
         first_item_index:
           type: integer
           example: 1
@@ -783,18 +808,18 @@ components:
         domain:
           type: string
           enum:
-            - core
-            - combat
-            - economy
-            - social
-            - system
+          - core
+          - combat
+          - economy
+          - social
+          - system
         status:
           type: string
           enum:
-            - draft
-            - published
-            - deprecated
-            - archived
+          - draft
+          - published
+          - deprecated
+          - archived
         version_pattern:
           type: string
           pattern: ^\d+\.\d+\.\d+$
@@ -802,12 +827,6 @@ components:
           type: string
           minLength: 2
           maxLength: 50
-        tags:
-          type: array
-          maxItems: 5
-          items:
-            type: string
-            maxLength: 20
         created_after:
           type: string
           format: date-time
@@ -817,15 +836,21 @@ components:
         deployed_to:
           type: string
           enum:
-            - staging
-            - production
+          - staging
+          - production
+        tags:
+          type: array
+          maxItems: 5
+          items:
+            type: string
+            maxLength: 20
     DeploymentStatus:
       type: object
       required:
-        - deployment_id
-        - status
-        - environment
-        - initiated_at
+      - deployment_id
+      - status
+      - environment
+      - initiated_at
       properties:
         deployment_id:
           type: string
@@ -833,27 +858,23 @@ components:
         status:
           type: string
           enum:
-            - pending
-            - validating
-            - deploying
-            - completed
-            - failed
-            - rolled_back
+          - pending
+          - validating
+          - deploying
+          - completed
+          - failed
+          - rolled_back
         environment:
           type: string
           enum:
-            - staging
-            - production
+          - staging
+          - production
         initiated_at:
           type: string
           format: date-time
         completed_at:
           type: string
           format: date-time
-        progress_percentage:
-          type: integer
-          minimum: 0
-          maximum: 100
         current_step:
           type: string
           example: Validating schema compatibility
@@ -862,13 +883,20 @@ components:
         rollback_available:
           type: boolean
           default: true
+        progress_percentage:
+          type: integer
+          minimum: 0
+          maximum: 100
   securitySchemes:
     BearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
-      description: |
-        **JWT Bearer Authentication**
+      description: '**JWT Bearer Authentication**
+
 
         Use JWT token obtained from authentication service.
+
         Required for all operations except health checks.
+
+        '

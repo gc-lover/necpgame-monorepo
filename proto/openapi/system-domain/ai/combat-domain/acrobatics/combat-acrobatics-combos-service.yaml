@@ -20,18 +20,18 @@ info:
     name: NECPGAME API Support
     email: api@necp.game
 servers:
-  - url: http://localhost:8083/api/v1/gameplay/combat/acrobatics
-    description: Локальный сервер разработки
-  - url: https://api.necp.game/api/v1/gameplay/combat/acrobatics
-    description: Продакшен сервер
+- url: http://localhost:8083/api/v1/gameplay/combat/acrobatics
+  description: Локальный сервер разработки
+- url: https://api.necp.game/api/v1/gameplay/combat/acrobatics
+  description: Продакшен сервер
 tags:
-  - name: Movement Combos
-    description: Комбо из движения
+- name: Movement Combos
+  description: Комбо из движения
 paths:
   /combo/movement:
     post:
       tags:
-        - Movement Combos
+      - Movement Combos
       summary: Выполнить комбо из движения
       description: 'Выполняет комбо из движения на основе последовательности действий.
 
@@ -40,7 +40,7 @@ paths:
         '
       operationId: executeMovementCombo
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -49,10 +49,10 @@ paths:
               $ref: '#/components/schemas/ExecuteMovementComboRequest'
             example:
               sequence:
-                - wall_run
-                - wall_kick
-                - air_dash
-                - attack
+              - wall_run
+              - wall_kick
+              - air_dash
+              - attack
               target_id: bb0e8400-e29b-41d4-a716-446655440000
               attack_type: melee
       responses:
@@ -70,8 +70,8 @@ paths:
                 damage_boost: 30.0
                 attack_speed_boost: 20.0
                 special_effects:
-                  - stun
-                  - knockback
+                - stun
+                - knockback
                 timestamp: '2025-12-01T10:00:00Z'
         '400':
           $ref: ../../../../common-schemas.yaml#/components/responses/BadRequest
@@ -82,7 +82,7 @@ paths:
   /combo/available:
     get:
       tags:
-        - Movement Combos
+      - Movement Combos
       summary: Получить доступные комбо из движения
       description: 'Возвращает список всех доступных комбо из движения для персонажа
 
@@ -91,14 +91,14 @@ paths:
         '
       operationId: getAvailableMovementCombos
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: movement_type
-          in: query
-          required: false
-          description: Фильтр по первому элементу движения
-          schema:
-            $ref: combat-acrobatics-schemas.yaml#/components/schemas/MovementType
+      - name: movement_type
+        in: query
+        required: false
+        description: Фильтр по первому элементу движения
+        schema:
+          $ref: combat-acrobatics-schemas.yaml#/components/schemas/MovementType
       responses:
         '200':
           description: Список доступных комбо
@@ -108,28 +108,28 @@ paths:
                 $ref: '#/components/schemas/AvailableMovementCombosResponse'
               example:
                 combos:
-                  - chain_id: cc0e8400-e29b-41d4-a716-446655440000
-                    chain_name: Wall Run → Wall Kick → Air Dash → Attack
-                    sequence:
-                      - wall_run
-                      - wall_kick
-                      - air_dash
-                      - attack
-                    damage_boost: 30.0
-                    attack_speed_boost: 20.0
-                    special_effects:
-                      - stun
-                      - knockback
-                  - chain_id: dd0e8400-e29b-41d4-a716-446655440000
-                    chain_name: Slide → Vault → Attack
-                    sequence:
-                      - slide
-                      - vault
-                      - attack
-                    damage_boost: 25.0
-                    attack_speed_boost: 15.0
-                    special_effects:
-                      - knockback
+                - chain_id: cc0e8400-e29b-41d4-a716-446655440000
+                  chain_name: Wall Run → Wall Kick → Air Dash → Attack
+                  sequence:
+                  - wall_run
+                  - wall_kick
+                  - air_dash
+                  - attack
+                  damage_boost: 30.0
+                  attack_speed_boost: 20.0
+                  special_effects:
+                  - stun
+                  - knockback
+                - chain_id: dd0e8400-e29b-41d4-a716-446655440000
+                  chain_name: Slide → Vault → Attack
+                  sequence:
+                  - slide
+                  - vault
+                  - attack
+                  damage_boost: 25.0
+                  attack_speed_boost: 15.0
+                  special_effects:
+                  - knockback
                 total: 4
         '401':
           $ref: ../../../../common-schemas.yaml#/components/responses/Unauthorized
@@ -143,8 +143,8 @@ components:
     ExecuteMovementComboRequest:
       type: object
       required:
-        - sequence
-        - attack_type
+      - sequence
+      - attack_type
       properties:
         target_id:
           type: string
@@ -166,22 +166,22 @@ components:
             type: string
           minItems: 2
           example:
-            - wall_run
-            - wall_kick
-            - air_dash
-            - attack
+          - wall_run
+          - wall_kick
+          - air_dash
+          - attack
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     MovementComboResponse:
       type: object
       required:
-        - combo_id
-        - chain_id
-        - chain_name
-        - damage_dealt
-        - damage_boost
-        - attack_speed_boost
-        - special_effects
-        - timestamp
+      - combo_id
+      - chain_id
+      - chain_name
+      - damage_dealt
+      - damage_boost
+      - attack_speed_boost
+      - special_effects
+      - timestamp
       properties:
         combo_id:
           type: string
@@ -205,13 +205,8 @@ components:
           items:
             $ref: combat-acrobatics-schemas.yaml#/components/schemas/SpecialEffect
           example:
-            - stun
-            - knockback
-        damage_dealt:
-          type: integer
-          description: Нанесенный урон с учетом бонусов
-          minimum: 0
-          example: 390
+          - stun
+          - knockback
         damage_boost:
           type: number
           format: float
@@ -222,12 +217,17 @@ components:
           format: float
           description: Примененный бонус скорости атаки (в процентах)
           example: 20.0
+        damage_dealt:
+          type: integer
+          description: Нанесенный урон с учетом бонусов
+          minimum: 0
+          example: 390
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     AvailableMovementCombosResponse:
       type: object
       required:
-        - combos
-        - total
+      - combos
+      - total
       properties:
         combos:
           type: array

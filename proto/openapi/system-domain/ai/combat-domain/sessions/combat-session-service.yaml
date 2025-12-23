@@ -20,23 +20,23 @@ info:
     name: NECPGAME Backend Team
     email: backend@necp.game
 servers:
-  - url: https://api.necp.game/api/v1
-    description: Production
-  - url: http://localhost:8080/api/v1
-    description: Local
+- url: https://api.necp.game/api/v1
+  description: Production
+- url: http://localhost:8080/api/v1
+  description: Local
 security:
-  - BearerAuth: [ ]
+- BearerAuth: []
 tags:
-  - name: Combat Sessions
-  - name: Combat Actions
-  - name: Combat Analytics
+- name: Combat Sessions
+- name: Combat Actions
+- name: Combat Analytics
 paths:
   /gameplay/combat/sessions:
     post:
       summary: Создать боевую сессию
       operationId: createCombatSession
       tags:
-        - Combat Sessions
+      - Combat Sessions
       requestBody:
         required: true
         content:
@@ -58,18 +58,18 @@ paths:
       summary: Список сессий
       operationId: listCombatSessions
       tags:
-        - Combat Sessions
+      - Combat Sessions
       parameters:
-        - $ref: common.yaml#/components/parameters/Limit
-        - $ref: common.yaml#/components/parameters/Offset
-        - name: status
-          in: query
-          schema:
-            $ref: '#/components/schemas/SessionStatus'
-        - name: session_type
-          in: query
-          schema:
-            $ref: '#/components/schemas/SessionType'
+      - $ref: common.yaml#/components/parameters/Limit
+      - $ref: common.yaml#/components/parameters/Offset
+      - name: status
+        in: query
+        schema:
+          $ref: '#/components/schemas/SessionStatus'
+      - name: session_type
+        in: query
+        schema:
+          $ref: '#/components/schemas/SessionType'
       responses:
         '200':
           description: Список сессий
@@ -79,12 +79,12 @@ paths:
                 $ref: '#/components/schemas/SessionListResponse'
   /gameplay/combat/sessions/{sessionId}:
     parameters:
-      - $ref: '#/components/parameters/SessionId'
+    - $ref: '#/components/parameters/SessionId'
     get:
       summary: Получить сессию
       operationId: getCombatSession
       tags:
-        - Combat Sessions
+      - Combat Sessions
       responses:
         '200':
           description: Состояние сессии
@@ -98,7 +98,7 @@ paths:
       summary: Завершить сессию
       operationId: endCombatSession
       tags:
-        - Combat Sessions
+      - Combat Sessions
       responses:
         '200':
           description: Сессия завершена
@@ -110,13 +110,13 @@ paths:
           $ref: ../../../../common-schemas.yaml#/components/responses/Forbidden
   /gameplay/combat/sessions/{sessionId}/actions:
     parameters:
-      - $ref: '#/components/parameters/SessionId'
+    - $ref: '#/components/parameters/SessionId'
     post:
       summary: Выполнить действие
       description: Выполнение боевого действия (с античит-валидацией)
       operationId: executeCombatAction
       tags:
-        - Combat Actions
+      - Combat Actions
       requestBody:
         required: true
         content:
@@ -140,12 +140,12 @@ paths:
                 $ref: ../../../../common-schemas.yaml#/components/schemas/Error
   /gameplay/combat/sessions/{sessionId}/state:
     parameters:
-      - $ref: '#/components/parameters/SessionId'
+    - $ref: '#/components/parameters/SessionId'
     get:
       summary: Получить realtime состояние
       operationId: getCombatState
       tags:
-        - Combat Sessions
+      - Combat Sessions
       responses:
         '200':
           description: Текущее состояние
@@ -155,15 +155,15 @@ paths:
                 $ref: '#/components/schemas/CombatState'
   /gameplay/combat/sessions/{sessionId}/logs:
     parameters:
-      - $ref: '#/components/parameters/SessionId'
+    - $ref: '#/components/parameters/SessionId'
     get:
       summary: Логи сессии
       operationId: getCombatLogs
       tags:
-        - Combat Analytics
+      - Combat Analytics
       parameters:
-        - $ref: ../../../../common-schemas.yaml#/components/parameters/Limit
-        - $ref: common.yaml#/components/parameters/Offset
+      - $ref: ../../../../common-schemas.yaml#/components/parameters/Limit
+      - $ref: common.yaml#/components/parameters/Offset
       responses:
         '200':
           description: Логи
@@ -173,12 +173,12 @@ paths:
                 $ref: '#/components/schemas/LogsResponse'
   /gameplay/combat/sessions/{sessionId}/stats:
     parameters:
-      - $ref: '#/components/parameters/SessionId'
+    - $ref: '#/components/parameters/SessionId'
     get:
       summary: Статистика сессии
       operationId: getCombatStats
       tags:
-        - Combat Analytics
+      - Combat Analytics
       responses:
         '200':
           description: Статистика
@@ -202,45 +202,45 @@ components:
     SessionType:
       type: string
       enum:
-        - pvp_arena
-        - pve_raid
-        - extract_zone
-        - guild_war
+      - pvp_arena
+      - pve_raid
+      - extract_zone
+      - guild_war
     SessionStatus:
       type: string
       enum:
-        - pending
-        - active
-        - ended
-        - aborted
+      - pending
+      - active
+      - ended
+      - aborted
     Difficulty:
       type: string
       enum:
-        - normal
-        - hard
-        - elite
+      - normal
+      - hard
+      - elite
     ActionType:
       type: string
       enum:
-        - attack
-        - ability
-        - move
-        - reload
-        - extract
-        - heal
-        - revive
+      - attack
+      - ability
+      - move
+      - reload
+      - extract
+      - heal
+      - revive
     ParticipantStatus:
       type: string
       enum:
-        - alive
-        - dead
-        - extracted
-        - disconnected
+      - alive
+      - dead
+      - extracted
+      - disconnected
     CreateSessionRequest:
       type: object
       required:
-        - session_type
-        - participants
+      - session_type
+      - participants
       properties:
         zone_id:
           type: string
@@ -260,33 +260,33 @@ components:
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     CombatSessionResponse:
       allOf:
-        - $ref: ../../../../common-schemas.yaml#/components/schemas/BaseEntityWithTimestamps
-        - type: object
-          required:
-            - session_type
-            - status
-            - participants
-          properties:
-            session_type:
-              $ref: '#/components/schemas/SessionType'
-            status:
-              $ref: '#/components/schemas/SessionStatus'
-            zone_id:
-              type: string
-            difficulty:
-              $ref: '#/components/schemas/Difficulty'
-            participants:
-              type: array
-              items:
-                $ref: combat-session-schemas.yaml#/components/schemas/Participant
-            winner_team:
-              type: string
-              nullable: true
+      - $ref: ../../../../common-schemas.yaml#/components/schemas/BaseEntityWithTimestamps
+      - type: object
+        required:
+        - session_type
+        - status
+        - participants
+        properties:
+          session_type:
+            $ref: '#/components/schemas/SessionType'
+          status:
+            $ref: '#/components/schemas/SessionStatus'
+          zone_id:
+            type: string
+          difficulty:
+            $ref: '#/components/schemas/Difficulty'
+          participants:
+            type: array
+            items:
+              $ref: combat-session-schemas.yaml#/components/schemas/Participant
+          winner_team:
+            type: string
+            nullable: true
     SessionListResponse:
       type: object
       required:
-        - items
-        - pagination
+      - items
+      - pagination
       properties:
         pagination:
           $ref: ../../../../common-schemas.yaml#/components/schemas/PaginationResponse
@@ -298,10 +298,10 @@ components:
     SessionSummary:
       type: object
       required:
-        - id
-        - session_type
-        - status
-        - created_at
+      - id
+      - session_type
+      - status
+      - created_at
       properties:
         id:
           type: string
@@ -319,7 +319,7 @@ components:
     ActionRequest:
       type: object
       required:
-        - action_type
+      - action_type
       properties:
         target_id:
           type: string
@@ -337,9 +337,9 @@ components:
     ActionResponse:
       type: object
       required:
-        - success
-        - action_type
-        - timestamp
+      - success
+      - action_type
+      - timestamp
       properties:
         timestamp:
           type: string
@@ -352,17 +352,17 @@ components:
           type: array
           items:
             $ref: combat-session-schemas.yaml#/components/schemas/StatusEffect
-        damage_dealt:
-          type: integer
         success:
           type: boolean
+        damage_dealt:
+          type: integer
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     CombatState:
       type: object
       required:
-        - session_id
-        - participants_state
-        - current_turn
+      - session_id
+      - participants_state
+      - current_turn
       properties:
         session_id:
           type: string
@@ -380,8 +380,8 @@ components:
     LogsResponse:
       type: object
       required:
-        - logs
-        - pagination
+      - logs
+      - pagination
       properties:
         pagination:
           $ref: ../../../../common-schemas.yaml#/components/schemas/PaginationResponse
@@ -393,8 +393,8 @@ components:
     StatsResponse:
       type: object
       required:
-        - session_id
-        - participants_stats
+      - session_id
+      - participants_stats
       properties:
         session_id:
           type: string
@@ -410,8 +410,8 @@ components:
     SessionEndResponse:
       type: object
       required:
-        - session_id
-        - status
+      - session_id
+      - status
       properties:
         session_id:
           type: string
@@ -426,4 +426,3 @@ components:
           items:
             $ref: combat-session-schemas.yaml#/components/schemas/Reward
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-

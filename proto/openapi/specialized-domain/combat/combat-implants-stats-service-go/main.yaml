@@ -17,14 +17,10 @@ info:
 
     **Features:**
 
-    - Real-time implant performance monitoring (1000+ RPS)
-    - Statistical analysis of implant effectiveness
-    - Performance metrics collection and aggregation
-    - Player implant usage analytics
-    - Anti-cheat statistical validation
+    - Real-time implant performance monitoring (1000+ RPS) - Statistical analysis of implant effectiveness - Performance metrics
+    collection and aggregation - Player implant usage analytics - Anti-cheat statistical validation
 
-    **Performance:** P99 <10ms for stats operations, zero allocations in hot path
-    '
+    **Performance:** P99 <10ms for stats operations, zero allocations in hot path '
   version: 1.0.0
   license:
     name: Proprietary
@@ -34,31 +30,31 @@ info:
     url: https://necpgame.com/support
     email: api@combat-implants-stats.necpgame.com
 servers:
-  - url: http://localhost:8084/api/v1
-    description: Combat Implants Stats Service Go (development)
-  - url: https://combat-implants-stats-go.necpgame.com/api/v1
-    description: Combat Implants Stats Service Go (production)
+- url: http://localhost:8084/api/v1
+  description: Combat Implants Stats Service Go (development)
+- url: https://combat-implants-stats-go.necpgame.com/api/v1
+  description: Combat Implants Stats Service Go (production)
 tags:
-  - name: Implant Stats
-    description: Individual implant performance statistics
-  - name: Analytics
-    description: Aggregated analytics and trends
-  - name: Performance Metrics
-    description: Real-time performance monitoring
-  - name: Player Analytics
-    description: Player-specific implant usage patterns
-  - name: Anti-Cheat
-    description: Statistical validation and anomaly detection
+- name: Implant Stats
+  description: Individual implant performance statistics
+- name: Analytics
+  description: Aggregated analytics and trends
+- name: Performance Metrics
+  description: Real-time performance monitoring
+- name: Player Analytics
+  description: Player-specific implant usage patterns
+- name: Anti-Cheat
+  description: Statistical validation and anomaly detection
 security:
-  - BearerAuth: [ ]
+- BearerAuth: []
 paths:
   /health:
     get:
       tags:
-        - Performance Metrics
+      - Performance Metrics
       summary: Service health check
       operationId: getHealth
-      security: [ ]
+      security: []
       responses:
         '200':
           description: Service is healthy
@@ -66,28 +62,31 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HealthResponse'
-
   /combat/implants/{implant_id}/stats:
     get:
       tags:
-        - Implant Stats
+      - Implant Stats
       summary: Get implant performance statistics
       operationId: getImplantStats
       parameters:
-        - name: implant_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Unique implant identifier
-        - name: timeframe
-          in: query
-          schema:
-            type: string
-            enum: [ 1h, 24h, 7d, 30d ]
-            default: 24h
-          description: Time period for statistics
+      - name: implant_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Unique implant identifier
+      - name: timeframe
+        in: query
+        schema:
+          type: string
+          enum:
+          - 1h
+          - 24h
+          - 7d
+          - 30d
+          default: 24h
+        description: Time period for statistics
       responses:
         '200':
           description: Implant performance statistics
@@ -101,42 +100,49 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-
   /combat/implants/stats/aggregate:
     get:
       tags:
-        - Analytics
+      - Analytics
       summary: Get aggregated implant statistics
       operationId: getAggregatedStats
       parameters:
-        - name: implant_type
-          in: query
-          schema:
-            type: string
-            enum: [ combat, stealth, hacking, medical ]
-          description: Filter by implant type
-        - name: min_level
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 10
-          description: Minimum implant level
-        - name: timeframe
-          in: query
-          schema:
-            type: string
-            enum: [ 1h, 24h, 7d, 30d ]
-            default: 24h
-          description: Aggregation timeframe
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 1000
-            default: 100
-          description: Maximum number of results
+      - name: implant_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - combat
+          - stealth
+          - hacking
+          - medical
+        description: Filter by implant type
+      - name: min_level
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 10
+        description: Minimum implant level
+      - name: timeframe
+        in: query
+        schema:
+          type: string
+          enum:
+          - 1h
+          - 24h
+          - 7d
+          - 30d
+          default: 24h
+        description: Aggregation timeframe
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 1000
+          default: 100
+        description: Maximum number of results
       responses:
         '200':
           description: Aggregated statistics
@@ -144,21 +150,20 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AggregatedStatsResponse'
-
   /combat/implants/{implant_id}/performance:
     get:
       tags:
-        - Performance Metrics
+      - Performance Metrics
       summary: Get real-time performance metrics
       operationId: getImplantPerformance
       parameters:
-        - name: implant_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Unique implant identifier
+      - name: implant_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Unique implant identifier
       responses:
         '200':
           description: Real-time performance metrics
@@ -166,28 +171,30 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PerformanceMetricsResponse'
-
   /combat/players/{player_id}/implant-analytics:
     get:
       tags:
-        - Player Analytics
+      - Player Analytics
       summary: Get player implant usage analytics
       operationId: getPlayerImplantAnalytics
       parameters:
-        - name: player_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Unique player identifier
-        - name: period
-          in: query
-          schema:
-            type: string
-            enum: [ daily, weekly, monthly ]
-            default: weekly
-          description: Analytics period
+      - name: player_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Unique player identifier
+      - name: period
+        in: query
+        schema:
+          type: string
+          enum:
+          - daily
+          - weekly
+          - monthly
+          default: weekly
+        description: Analytics period
       responses:
         '200':
           description: Player implant analytics
@@ -201,35 +208,38 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-
   /combat/implants/stats/anomalies:
     get:
       tags:
-        - Anti-Cheat
+      - Anti-Cheat
       summary: Detect statistical anomalies for anti-cheat
       operationId: detectAnomalies
       parameters:
-        - name: player_id
-          in: query
-          schema:
-            type: string
-            format: uuid
-          description: Specific player to check
-        - name: implant_type
-          in: query
-          schema:
-            type: string
-            enum: [ combat, stealth, hacking, medical ]
-          description: Implant type filter
-        - name: sensitivity
-          in: query
-          schema:
-            type: number
-            format: float
-            minimum: 0.1
-            maximum: 5.0
-            default: 1.0
-          description: Anomaly detection sensitivity
+      - name: player_id
+        in: query
+        schema:
+          type: string
+          format: uuid
+        description: Specific player to check
+      - name: implant_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - combat
+          - stealth
+          - hacking
+          - medical
+        description: Implant type filter
+      - name: sensitivity
+        in: query
+        schema:
+          type: number
+          format: float
+          minimum: 0.1
+          maximum: 5.0
+          default: 1.0
+        description: Anomaly detection sensitivity
       responses:
         '200':
           description: Detected anomalies
@@ -237,28 +247,33 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AnomaliesResponse'
-
   /combat/implants/stats/trends:
     get:
       tags:
-        - Analytics
+      - Analytics
       summary: Get implant usage trends
       operationId: getUsageTrends
       parameters:
-        - name: trend_type
-          in: query
-          schema:
-            type: string
-            enum: [ popularity, performance, failure_rate ]
-            default: popularity
-          description: Type of trend analysis
-        - name: period
-          in: query
-          schema:
-            type: string
-            enum: [ 7d, 30d, 90d ]
-            default: 30d
-          description: Trend analysis period
+      - name: trend_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - popularity
+          - performance
+          - failure_rate
+          default: popularity
+        description: Type of trend analysis
+      - name: period
+        in: query
+        schema:
+          type: string
+          enum:
+          - 7d
+          - 30d
+          - 90d
+          default: 30d
+        description: Trend analysis period
       responses:
         '200':
           description: Usage trends data
@@ -266,32 +281,28 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TrendsResponse'
-
 components:
   securitySchemes:
     BearerAuth:
       type: http
       scheme: bearer
       description: JWT Bearer token authentication
-
   schemas:
-    # Response schemas
     HealthResponse:
       type: object
       properties:
         status:
           type: string
-          example: "healthy"
+          example: healthy
         timestamp:
           type: string
           format: date-time
+        version:
+          type: string
+          example: 1.0.0
         uptime:
           type: integer
           description: Uptime in seconds
-        version:
-          type: string
-          example: "1.0.0"
-
     ImplantStatsResponse:
       type: object
       properties:
@@ -300,14 +311,21 @@ components:
           format: uuid
         implant_type:
           type: string
-          enum: [ combat, stealth, hacking, medical ]
-        level:
-          type: integer
-          minimum: 1
-          maximum: 10
-        usage_count:
-          type: integer
-          minimum: 0
+          enum:
+          - combat
+          - stealth
+          - hacking
+          - medical
+        last_used:
+          type: string
+          format: date-time
+        failure_reasons:
+          type: object
+          additionalProperties:
+            type: integer
+            minimum: 0
+        performance_metrics:
+          $ref: '#/components/schemas/PerformanceMetrics'
         success_rate:
           type: number
           format: float
@@ -317,23 +335,16 @@ components:
           type: number
           format: float
           description: Average usage duration in seconds
-        failure_reasons:
-          type: object
-          additionalProperties:
-            type: integer
-            minimum: 0
-        performance_metrics:
-          $ref: '#/components/schemas/PerformanceMetrics'
-        last_used:
-          type: string
-          format: date-time
-
+        level:
+          type: integer
+          minimum: 1
+          maximum: 10
+        usage_count:
+          type: integer
+          minimum: 0
     AggregatedStatsResponse:
       type: object
       properties:
-        total_implants:
-          type: integer
-          minimum: 0
         stats_by_type:
           type: object
           additionalProperties:
@@ -343,10 +354,12 @@ components:
           items:
             $ref: '#/components/schemas/ImplantStatsResponse'
           maxItems: 100
+        total_implants:
+          type: integer
+          minimum: 0
         total_requests:
           type: integer
           minimum: 0
-
     PerformanceMetricsResponse:
       type: object
       properties:
@@ -366,21 +379,12 @@ components:
           type: number
           format: float
           description: Impact on implant health (-1.0 to 1.0)
-
     PlayerAnalyticsResponse:
       type: object
       properties:
         player_id:
           type: string
           format: uuid
-        total_implants:
-          type: integer
-          minimum: 0
-        favorite_implant_types:
-          type: array
-          items:
-            type: string
-          maxItems: 10
         usage_patterns:
           type: object
           properties:
@@ -395,6 +399,11 @@ components:
               additionalProperties:
                 type: integer
                 minimum: 0
+        favorite_implant_types:
+          type: array
+          items:
+            type: string
+          maxItems: 10
         performance_trends:
           type: array
           items:
@@ -404,7 +413,9 @@ components:
           format: float
           minimum: -1.0
           maximum: 1.0
-
+        total_implants:
+          type: integer
+          minimum: 0
     AnomaliesResponse:
       type: object
       properties:
@@ -412,33 +423,39 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Anomaly'
-        total_scanned:
-          type: integer
-          minimum: 0
         anomaly_score:
           type: number
           format: float
           minimum: 0.0
           maximum: 1.0
-
+        total_scanned:
+          type: integer
+          minimum: 0
     TrendsResponse:
       type: object
       properties:
         trend_type:
           type: string
-          enum: [ popularity, performance, failure_rate ]
+          enum:
+          - popularity
+          - performance
+          - failure_rate
         period:
           type: string
-          enum: [ 7d, 30d, 90d ]
+          enum:
+          - 7d
+          - 30d
+          - 90d
+        overall_trend:
+          type: string
+          enum:
+          - increasing
+          - decreasing
+          - stable
         data_points:
           type: array
           items:
             $ref: '#/components/schemas/TrendPoint'
-        overall_trend:
-          type: string
-          enum: [ increasing, decreasing, stable ]
-
-    # Nested schemas
     PerformanceMetrics:
       type: object
       properties:
@@ -456,9 +473,6 @@ components:
           format: float
           minimum: 0.0
           maximum: 1.0
-        side_effects_count:
-          type: integer
-          minimum: 0
         average_damage_boost:
           type: number
           format: float
@@ -467,24 +481,25 @@ components:
           format: float
           minimum: 0.0
           maximum: 1.0
-
+        side_effects_count:
+          type: integer
+          minimum: 0
     TypeStats:
       type: object
       properties:
         implant_type:
           type: string
-        total_count:
-          type: integer
-          minimum: 0
         average_level:
           type: number
           format: float
         average_success_rate:
           type: number
           format: float
+        total_count:
+          type: integer
+          minimum: 0
         most_used_level:
           type: integer
-
     TrendPoint:
       type: object
       properties:
@@ -499,7 +514,6 @@ components:
           format: float
           minimum: 0.0
           maximum: 1.0
-
     Anomaly:
       type: object
       properties:
@@ -508,12 +522,10 @@ components:
           format: uuid
         anomaly_type:
           type: string
-          enum: [ performance_spike, unusual_failure_rate, suspicious_usage_pattern ]
-        severity_score:
-          type: number
-          format: float
-          minimum: 0.0
-          maximum: 1.0
+          enum:
+          - performance_spike
+          - unusual_failure_rate
+          - suspicious_usage_pattern
         description:
           type: string
         detected_at:
@@ -521,8 +533,15 @@ components:
           format: date-time
         recommended_action:
           type: string
-          enum: [ monitor, investigate, flag ]
-
+          enum:
+          - monitor
+          - investigate
+          - flag
+        severity_score:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
     Error:
       type: object
       properties:
@@ -536,6 +555,6 @@ components:
           type: string
           format: date-time
       required:
-        - error
-        - code
-        - message
+      - error
+      - code
+      - message

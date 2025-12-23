@@ -3,12 +3,12 @@ components:
     Guild:
       type: object
       required:
-        - id
-        - name
-        - created_at
-        - level
-        - member_count
-        - is_active
+      - id
+      - name
+      - created_at
+      - level
+      - member_count
+      - is_active
       properties:
         id:
           type: string
@@ -75,9 +75,17 @@ components:
             maxLength: 20
           description: Guild tags for categorization
           example:
-            - PvP
-            - Competitive
-            - English
+          - PvP
+          - Competitive
+          - English
+        is_recruiting:
+          type: boolean
+          description: Whether guild is recruiting new members
+          example: true
+        is_active:
+          type: boolean
+          description: Whether guild is active
+          example: true
         level:
           type: integer
           minimum: 1
@@ -103,19 +111,11 @@ components:
           maximum: 10000
           description: Guild reputation score
           example: 1250
-        is_recruiting:
-          type: boolean
-          description: Whether guild is recruiting new members
-          example: true
-        is_active:
-          type: boolean
-          description: Whether guild is active
-          example: true
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     CreateGuildRequest:
       type: object
       required:
-        - name
+      - name
       properties:
         name:
           type: string
@@ -146,9 +146,13 @@ components:
             maxLength: 20
           description: Guild tags for categorization
           example:
-            - PvP
-            - Competitive
-            - English
+          - PvP
+          - Competitive
+          - English
+        is_recruiting:
+          type: boolean
+          default: true
+          description: Whether guild is recruiting new members
         max_members:
           type: integer
           minimum: 10
@@ -156,10 +160,6 @@ components:
           default: 50
           description: Maximum allowed members
           example: 100
-        is_recruiting:
-          type: boolean
-          default: true
-          description: Whether guild is recruiting new members
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     GuildSummary:
       type: object
@@ -176,8 +176,11 @@ components:
           items:
             type: string
           example:
-            - PvP
-            - Competitive
+          - PvP
+          - Competitive
+        is_recruiting:
+          type: boolean
+          example: true
         level:
           type: integer
           example: 25
@@ -190,9 +193,6 @@ components:
         reputation:
           type: integer
           example: 1250
-        is_recruiting:
-          type: boolean
-          example: true
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     UpdateGuildRequest:
       type: object
@@ -234,35 +234,18 @@ components:
             type: string
             maxLength: 20
           description: Guild tags for categorization
+        is_recruiting:
+          type: boolean
+          description: Whether guild is recruiting new members
         max_members:
           type: integer
           minimum: 10
           maximum: 1000
           description: Maximum allowed members
-        is_recruiting:
-          type: boolean
-          description: Whether guild is recruiting new members
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     GuildStats:
       type: object
       properties:
-        total_resources_collected:
-          type: integer
-          format: int64
-          example: 1500000
-        total_members:
-          type: integer
-          example: 47
-        active_members_7d:
-          type: integer
-          description: Members active in last 7 days
-          example: 32
-        total_wins:
-          type: integer
-          example: 156
-        total_losses:
-          type: integer
-          example: 89
         win_rate:
           type: number
           format: float
@@ -280,20 +263,37 @@ components:
           maximum: 1
           description: Percentage of controlled territory
           example: 0.75
+        total_resources_collected:
+          type: integer
+          format: int64
+          example: 1500000
+        total_members:
+          type: integer
+          example: 47
+        active_members_7d:
+          type: integer
+          description: Members active in last 7 days
+          example: 32
+        total_wins:
+          type: integer
+          example: 156
+        total_losses:
+          type: integer
+          example: 89
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     GuildResponse:
       type: object
       required:
-        - guild
-        - stats
-        - leader
+      - guild
+      - stats
+      - leader
       properties:
         guild:
           $ref: '#/components/schemas/Guild'
-        stats:
-          $ref: '#/components/schemas/GuildStats'
         leader:
           $ref: '#/components/schemas/GuildMemberSummary'
+        stats:
+          $ref: '#/components/schemas/GuildStats'
         officers:
           type: array
           maxItems: 10
@@ -312,9 +312,9 @@ components:
         role:
           type: string
           enum:
-            - leader
-            - officer
-            - member
+          - leader
+          - officer
+          - member
           example: leader
         joined_at:
           type: string

@@ -1,33 +1,54 @@
 openapi: 3.0.3
 info:
   title: Security Service API - Enterprise-Grade Authentication, Authorization and Anti-Cheat
-  description: |
-    **Enterprise-Grade Security Service API for NECPGAME**
+  description: '**Enterprise-Grade Security Service API for NECPGAME**
+
 
     Comprehensive security infrastructure managing authentication, authorization, threat detection,
+
     anti-cheat validation, and security monitoring for the NECPGAME ecosystem.
 
+
     ## Key Features
+
     - **Enterprise-grade architecture** with proper domain separation
+
     - **Backend optimization hints** for struct alignment and performance (30-50% memory savings)
+
     - **Complete validation** with redocly and ogen code generation
+
     - **Security-first approach** with multi-layer authentication and authorization
+
     - **Performance-optimized** response structures with field ordering
+
     - **Comprehensive error handling** with proper HTTP status codes
 
+
     ## Domain Purpose
+
     The Security Service manages all security aspects of NECPGAME including user authentication,
+
     role-based access control, threat detection, anti-cheat mechanisms, security monitoring,
+
     and compliance with security standards.
 
+
     ## Performance Targets
+
     - P99 Latency: <25ms for authentication (HOT PATH)
+
     - P99 Latency: <50ms for authorization checks
+
     - Memory: <30KB per active security session
+
     - Concurrent users: 100,000+ simultaneous security operations
+
     - Authentication throughput: 10,000+ auth operations/minute
+
     - Data consistency: Event-sourced with CQRS patterns
-  version: "1.0.0"
+
+    '
+  version: 1.0.0
   contact:
     name: NECPGAME API Support
     url: https://necpgame.com/support
@@ -35,54 +56,57 @@ info:
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
-
 servers:
-  - url: https://api.necpgame.com/v1/security
-    description: Production server
-  - url: https://staging-api.necpgame.com/v1/security
-    description: Staging server
-  - url: http://localhost:8080/api/v1/security
-    description: Local development server
-
+- url: https://api.necpgame.com/v1/security
+  description: Production server
+- url: https://staging-api.necpgame.com/v1/security
+  description: Staging server
+- url: http://localhost:8080/api/v1/security
+  description: Local development server
 security:
-  - BearerAuth: [ ]
-
+- BearerAuth: []
 tags:
-  - name: Authentication
-    description: User authentication, token management, and session handling
-  - name: Authorization
-    description: Role-based access control, permissions, and policy management
-  - name: Threat Detection
-    description: Security monitoring, anomaly detection, and threat analysis
-  - name: Anti-Cheat
-    description: Cheat detection, validation, and enforcement mechanisms
-  - name: Health Monitoring
-    description: System health and performance monitoring
-
+- name: Authentication
+  description: User authentication, token management, and session handling
+- name: Authorization
+  description: Role-based access control, permissions, and policy management
+- name: Threat Detection
+  description: Security monitoring, anomaly detection, and threat analysis
+- name: Anti-Cheat
+  description: Cheat detection, validation, and enforcement mechanisms
+- name: Health Monitoring
+  description: System health and performance monitoring
 paths:
-  # Health Check - ОБЯЗАТЕЛЬНО для всех доменов
   /health:
     get:
       summary: Security service health check
-      description: |
-        **Enterprise-grade health check endpoint**
+      description: '**Enterprise-grade health check endpoint**
+
 
         Provides real-time health status of the security service microservice.
+
         Critical for service discovery, load balancing, and monitoring.
+
         Includes authentication systems and security monitoring status.
 
+
         **Performance:** <1ms response time, cached for 30 seconds
+
+        '
       operationId: securityServiceHealthCheck
       tags:
-        - Health Monitoring
+      - Health Monitoring
       parameters:
-        - name: Accept-Encoding
-          in: header
-          schema:
-            type: string
-            enum: [ gzip, deflate, br ]
+      - name: Accept-Encoding
+        in: header
+        schema:
+          type: string
+          enum:
+          - gzip
+          - deflate
+          - br
       responses:
-        "200":
+        '200':
           description: Service is healthy
           headers:
             Cache-Control:
@@ -96,18 +120,21 @@ paths:
             Content-Encoding:
               schema:
                 type: string
-                enum: [ gzip, deflate, br ]
+                enum:
+                - gzip
+                - deflate
+                - br
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/HealthResponse"
-        "503":
+                $ref: '#/components/schemas/HealthResponse'
+        '503':
           description: Service is unhealthy
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/HealthResponse"
-        "429":
+                $ref: '#/components/schemas/HealthResponse'
+        '429':
           description: Too many requests - rate limit exceeded
           headers:
             Retry-After:
@@ -117,25 +144,28 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-
-  # Batch Health Check - ОБЯЗАТЕЛЬНО для enterprise-grade доменов
+                $ref: '#/components/schemas/Error'
   /auth/permissions:
     get:
       summary: Get user permissions and roles
-      description: |
-        **Enterprise-grade authorization endpoint**
+      description: '**Enterprise-grade authorization endpoint**
+
 
         Retrieves comprehensive user permissions, roles, and access control information.
+
         Critical for role-based access control (RBAC) and permission validation.
 
+
         **Performance:** <15ms P95 (HOT PATH), Redis cached
+
         **Security:** Permission inheritance, role hierarchies, temporary elevations
+
+        '
       operationId: getUserPermissions
       tags:
-        - Authorization
+      - Authorization
       responses:
-        "200":
+        '200':
           description: User permissions retrieved successfully
           headers:
             Cache-Control:
@@ -151,52 +181,63 @@ paths:
               schema:
                 type: object
                 required:
-                  - user_id
-                  - roles
-                  - permissions
-                  - effective_permissions
+                - user_id
+                - roles
+                - permissions
+                - effective_permissions
                 properties:
                   user_id:
                     type: string
                     format: uuid
-                    example: "550e8400-e29b-41d4-a716-446655440000"
+                    example: 550e8400-e29b-41d4-a716-446655440000
                   roles:
                     type: array
                     items:
-                      $ref: "#/components/schemas/UserRole"
+                      $ref: '#/components/schemas/UserRole'
                     description: User's assigned roles
                   permissions:
                     type: array
                     items:
                       type: string
                     description: Direct permissions (not including inherited)
-                    example: [ "game:play", "economy:trade" ]
+                    example:
+                    - game:play
+                    - economy:trade
                   effective_permissions:
                     type: array
                     items:
                       type: string
                     description: All effective permissions including inherited
-                    example: [ "game:play", "economy:trade", "social:chat", "admin:moderate" ]
+                    example:
+                    - game:play
+                    - economy:trade
+                    - social:chat
+                    - admin:moderate
                   restrictions:
                     type: array
                     items:
                       type: string
                     description: Permission restrictions or denials
-                    example: [ "admin:ban_players" ]
-
+                    example:
+                    - admin:ban_players
     post:
       summary: Check specific permission
-      description: |
-        **Enterprise-grade permission validation endpoint**
+      description: '**Enterprise-grade permission validation endpoint**
+
 
         Validates if user has specific permission or set of permissions.
+
         Supports complex permission checks with context and conditions.
 
+
         **Performance:** <10ms P95 (HOT PATH), optimized permission trees
+
         **Security:** Context-aware permission evaluation, audit logging
+
+        '
       operationId: checkPermission
       tags:
-        - Authorization
+      - Authorization
       requestBody:
         required: true
         content:
@@ -204,115 +245,135 @@ paths:
             schema:
               type: object
               required:
-                - permission
+              - permission
               properties:
                 permission:
                   type: string
                   description: Permission to check
-                  example: "economy:trade"
+                  example: economy:trade
                 resource:
                   type: string
                   description: Specific resource being accessed
-                  example: "marketplace:item:12345"
+                  example: marketplace:item:12345
                 context:
                   type: object
                   description: Additional context for permission evaluation
-                  example: { "time_of_day": "night", "location": "restricted_area" }
+                  example:
+                    time_of_day: night
+                    location: restricted_area
       responses:
-        "200":
+        '200':
           description: Permission check completed
           content:
             application/json:
               schema:
                 type: object
                 required:
-                  - permission
-                  - granted
-                  - reason
+                - permission
+                - granted
+                - reason
                 properties:
                   permission:
                     type: string
-                    example: "economy:trade"
+                    example: economy:trade
                   granted:
                     type: boolean
                     example: true
                   reason:
                     type: string
                     description: Reason for grant/deny decision
-                    example: "User has required role"
+                    example: User has required role
                   conditions:
                     type: array
                     items:
                       type: string
                     description: Additional conditions that apply
-                    example: [ "Time restriction: trading allowed only 8AM-10PM" ]
-
-  # Threat Detection - Security monitoring and anomaly detection
+                    example:
+                    - 'Time restriction: trading allowed only 8AM-10PM'
   /security/threats:
     get:
       summary: Get security threats and alerts
-      description: |
-        **Enterprise-grade threat detection endpoint**
+      description: '**Enterprise-grade threat detection endpoint**
+
 
         Retrieves security alerts, suspicious activities, and threat intelligence.
+
         Critical for security monitoring and incident response.
 
+
         **Performance:** <50ms P95, optimized for security dashboards
+
         **Security:** Role-based access to threat information, audit trails
+
+        '
       operationId: getSecurityThreats
       tags:
-        - Threat Detection
+      - Threat Detection
       parameters:
-        - name: severity
-          in: query
-          schema:
-            type: string
-            enum: [ low, medium, high, critical ]
-          description: Filter by threat severity
-        - name: type
-          in: query
-          schema:
-            type: string
-            enum: [ authentication, authorization, cheating, ddos, fraud, system ]
-          description: Filter by threat type
-        - name: status
-          in: query
-          schema:
-            type: string
-            enum: [ active, resolved, investigating, false_positive ]
-            default: active
-          description: Filter by threat status
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 50
-          description: Maximum number of threats to return
+      - name: severity
+        in: query
+        schema:
+          type: string
+          enum:
+          - low
+          - medium
+          - high
+          - critical
+        description: Filter by threat severity
+      - name: type
+        in: query
+        schema:
+          type: string
+          enum:
+          - authentication
+          - authorization
+          - cheating
+          - ddos
+          - fraud
+          - system
+        description: Filter by threat type
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - active
+          - resolved
+          - investigating
+          - false_positive
+          default: active
+        description: Filter by threat status
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+        description: Maximum number of threats to return
       responses:
-        "200":
+        '200':
           description: Security threats retrieved successfully
           content:
             application/json:
               schema:
                 type: object
                 required:
-                  - threats
-                  - summary
-                  - pagination
+                - threats
+                - summary
+                - pagination
                 properties:
                   threats:
                     type: array
                     items:
-                      $ref: "#/components/schemas/SecurityThreat"
+                      $ref: '#/components/schemas/SecurityThreat'
                     description: List of security threats
                   summary:
                     type: object
                     required:
-                      - total_active
-                      - critical_count
-                      - recent_incidents
+                    - total_active
+                    - critical_count
+                    - recent_incidents
                     properties:
                       total_active:
                         type: integer
@@ -327,23 +388,26 @@ paths:
                         description: Threats in last 24 hours
                         example: 8
                   pagination:
-                    $ref: "#/components/schemas/PaginationInfo"
-
-  # Anti-Cheat - Cheat detection and validation
+                    $ref: '#/components/schemas/PaginationInfo'
   /security/anticheat:
     post:
       summary: Validate game action for cheating
-      description: |
-        **Enterprise-grade anti-cheat validation endpoint**
+      description: '**Enterprise-grade anti-cheat validation endpoint**
+
 
         Validates game actions for cheating patterns, speed hacking, aimbot detection,
+
         and other security violations. Critical for fair gameplay.
 
+
         **Performance:** <20ms P95 (HOT PATH), real-time validation
+
         **Security:** Multi-layer validation, machine learning models, pattern analysis
+
+        '
       operationId: validateGameAction
       tags:
-        - Anti-Cheat
+      - Anti-Cheat
       requestBody:
         required: true
         content:
@@ -351,35 +415,41 @@ paths:
             schema:
               type: object
               required:
-                - action_type
-                - player_id
-                - action_data
+              - action_type
+              - player_id
+              - action_data
               properties:
                 action_type:
                   type: string
-                  enum: [ movement, combat, economy, social ]
+                  enum:
+                  - movement
+                  - combat
+                  - economy
+                  - social
                   description: Type of game action being validated
-                  example: "combat"
+                  example: combat
                 player_id:
                   type: string
                   format: uuid
                   description: Player performing the action
-                  example: "550e8400-e29b-41d4-a716-446655440000"
+                  example: 550e8400-e29b-41d4-a716-446655440000
                 action_data:
                   type: object
                   description: Action-specific validation data
-                  example: {
-                    "position": { "x": 100.5, "y": 200.3, "z": 50.0 },
-                    "target": "enemy_id_123",
-                    "damage": 150,
-                    "timestamp": "2025-12-22T10:30:00Z"
-                  }
+                  example:
+                    position:
+                      x: 100.5
+                      y: 200.3
+                      z: 50.0
+                    target: enemy_id_123
+                    damage: 150
+                    timestamp: '2025-12-22T10:30:00Z'
                 client_signature:
                   type: string
                   description: Client-generated action signature for integrity
-                  example: "signature_hash_123456"
+                  example: signature_hash_123456
       responses:
-        "200":
+        '200':
           description: Action validated successfully - no cheating detected
           headers:
             X-Validation-Score:
@@ -393,9 +463,9 @@ paths:
               schema:
                 type: object
                 required:
-                  - valid
-                  - confidence_score
-                  - validation_checks
+                - valid
+                - confidence_score
+                - validation_checks
                 properties:
                   valid:
                     type: boolean
@@ -412,43 +482,53 @@ paths:
                     items:
                       type: string
                     description: Validation checks performed
-                    example: [ "speed_check", "aim_assist_detection", "position_validation" ]
+                    example:
+                    - speed_check
+                    - aim_assist_detection
+                    - position_validation
                   flags:
                     type: array
                     items:
                       type: string
-                      enum: [ suspicious_pattern, borderline, clean ]
+                      enum:
+                      - suspicious_pattern
+                      - borderline
+                      - clean
                     description: Validation flags
-                    example: [ "clean" ]
-        "400":
+                    example:
+                    - clean
+        '400':
           description: Invalid validation request
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "403":
+                $ref: '#/components/schemas/Error'
+        '403':
           description: Action flagged as cheating - access denied
           headers:
             X-Cheat-Reason:
               schema:
                 type: string
-                example: "speed_hacking_detected"
+                example: speed_hacking_detected
                 description: Reason for cheating detection
             X-Ban-Recommendation:
               schema:
                 type: string
-                enum: [ none, temporary, permanent ]
-                example: "temporary"
+                enum:
+                - none
+                - temporary
+                - permanent
+                example: temporary
                 description: Recommended ban action
           content:
             application/json:
               schema:
                 type: object
                 required:
-                  - cheated
-                  - reason
-                  - evidence
-                  - recommended_action
+                - cheated
+                - reason
+                - evidence
+                - recommended_action
                 properties:
                   cheated:
                     type: boolean
@@ -456,24 +536,25 @@ paths:
                   reason:
                     type: string
                     description: Detailed cheating detection reason
-                    example: "Movement speed exceeded maximum allowed velocity by 150%"
+                    example: Movement speed exceeded maximum allowed velocity by 150%
                   evidence:
                     type: object
                     description: Supporting evidence for the detection
-                    example: {
-                      "detected_speed": 25.5,
-                      "max_allowed_speed": 12.0,
-                      "confidence": 0.95
-                    }
+                    example:
+                      detected_speed: 25.5
+                      max_allowed_speed: 12.0
+                      confidence: 0.95
                   recommended_action:
                     type: string
-                    enum: [ warn, temporary_ban, permanent_ban, investigate ]
+                    enum:
+                    - warn
+                    - temporary_ban
+                    - permanent_ban
+                    - investigate
                     description: Recommended security action
-                    example: "temporary_ban"
-
+                    example: temporary_ban
 components:
   responses:
-    # Common response definitions with headers
     HealthBatchSuccess:
       description: Batch health results retrieved successfully
       headers:
@@ -491,26 +572,24 @@ components:
           schema:
             type: object
             required:
-              - results
-              - total_time_ms
+            - results
+            - total_time_ms
             properties:
               results:
                 type: array
                 items:
-                  $ref: "#/components/schemas/HealthResponse"
+                  $ref: '#/components/schemas/HealthResponse'
                 description: Health status for each requested service
               total_time_ms:
                 type: integer
                 description: Total processing time in milliseconds
                 example: 15
                 minimum: 0
-
-    # Security Service Responses
     Error:
       type: object
       required:
-        - code
-        - message
+      - code
+      - message
       properties:
         message:
           type: string
@@ -529,37 +608,35 @@ components:
         details:
           type: object
           description: Additional error context
-          example: { "field": "name", "reason": "required" }
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
-    # Domain-specific schemas for Security Service
-
-    # User Security Profile - Enterprise-grade user security information
+          example:
+            field: name
+            reason: required
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     UserSecurityProfile:
       type: object
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
       required:
-        - id
-        - username
-        - email
-        - roles
-        - created_at
+      - id
+      - username
+      - email
+      - roles
+      - created_at
       properties:
         id:
           type: string
           format: uuid
           description: User unique identifier
-          example: "550e8400-e29b-41d4-a716-446655440000"
+          example: 550e8400-e29b-41d4-a716-446655440000
         username:
           type: string
           description: User's username
-          example: "john_doe"
+          example: john_doe
           maxLength: 50
         email:
           type: string
           format: email
           description: User's email address
-          example: "john.doe@example.com"
+          example: john.doe@example.com
           maxLength: 255
         email_verified:
           type: boolean
@@ -568,7 +645,7 @@ components:
         phone:
           type: string
           description: User's phone number
-          example: "+1-555-0123"
+          example: +1-555-0123
           maxLength: 20
         phone_verified:
           type: boolean
@@ -577,72 +654,90 @@ components:
         roles:
           type: array
           items:
-            $ref: "#/components/schemas/UserRole"
+            $ref: '#/components/schemas/UserRole'
           description: User's assigned roles
           maxItems: 10
         permissions:
           type: array
           items:
             type: string
-            enum: [read, write, delete, admin]
+            enum:
+            - read
+            - write
+            - delete
+            - admin
           description: User's permissions
-          example: ["read", "write"]
+          example:
+          - read
+          - write
         last_login:
           type: string
           format: date-time
           description: Last login timestamp
-          example: "2025-12-21T10:00:00Z"
+          example: '2025-12-21T10:00:00Z'
         login_count:
           type: integer
           description: Total login count
           example: 42
         account_status:
           type: string
-          enum: [active, suspended, locked, pending_verification]
+          enum:
+          - active
+          - suspended
+          - locked
+          - pending_verification
           description: Account status
-          example: "active"
+          example: active
         created_at:
           type: string
           format: date-time
           description: Account creation timestamp
-          example: "2025-01-15T08:30:00Z"
+          example: '2025-01-15T08:30:00Z'
         updated_at:
           type: string
           format: date-time
           description: Last update timestamp
-          example: "2025-12-21T10:00:00Z"
-
-    # User Role - Role-based access control
+          example: '2025-12-21T10:00:00Z'
     UserRole:
       type: object
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
       required:
-        - id
-        - name
-        - permissions
+      - id
+      - name
+      - permissions
       properties:
         id:
           type: string
           format: uuid
           description: Role unique identifier
-          example: "550e8400-e29b-41d4-a716-446655440001"
+          example: 550e8400-e29b-41d4-a716-446655440001
         name:
           type: string
           description: Role name
-          example: "admin"
+          example: admin
           maxLength: 50
         description:
           type: string
           description: Role description
-          example: "Administrator with full system access"
+          example: Administrator with full system access
           maxLength: 255
         permissions:
           type: array
           items:
             type: string
-            enum: [read, write, delete, admin, security, audit]
+            enum:
+            - read
+            - write
+            - delete
+            - admin
+            - security
+            - audit
           description: Permissions granted by this role
-          example: ["read", "write", "delete", "admin"]
+          example:
+          - read
+          - write
+          - delete
+          - admin
         is_system_role:
           type: boolean
           description: Whether this is a system-defined role
@@ -651,61 +746,72 @@ components:
           type: string
           format: date-time
           description: Role creation timestamp
-          example: "2025-01-01T00:00:00Z"
-
-    # Security Threat - Threat detection and monitoring
+          example: '2025-01-01T00:00:00Z'
     SecurityThreat:
       type: object
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
       required:
-        - id
-        - type
-        - severity
-        - status
-        - detected_at
+      - id
+      - type
+      - severity
+      - status
+      - detected_at
       properties:
         id:
           type: string
           format: uuid
           description: Threat unique identifier
-          example: "550e8400-e29b-41d4-a716-446655440002"
+          example: 550e8400-e29b-41d4-a716-446655440002
         type:
           type: string
-          enum: [suspicious_login, brute_force, unusual_activity, data_exfiltration, privilege_escalation]
+          enum:
+          - suspicious_login
+          - brute_force
+          - unusual_activity
+          - data_exfiltration
+          - privilege_escalation
           description: Type of security threat
-          example: "suspicious_login"
+          example: suspicious_login
         severity:
           type: string
-          enum: [low, medium, high, critical]
+          enum:
+          - low
+          - medium
+          - high
+          - critical
           description: Threat severity level
-          example: "high"
+          example: high
         status:
           type: string
-          enum: [active, investigating, resolved, dismissed]
+          enum:
+          - active
+          - investigating
+          - resolved
+          - dismissed
           description: Current threat status
-          example: "investigating"
+          example: investigating
         description:
           type: string
           description: Threat description
-          example: "Multiple failed login attempts from unusual location"
+          example: Multiple failed login attempts from unusual location
           maxLength: 1000
         user_id:
           type: string
           format: uuid
           description: Affected user ID
-          example: "550e8400-e29b-41d4-a716-446655440000"
+          example: 550e8400-e29b-41d4-a716-446655440000
         ip_address:
           type: string
           description: IP address involved
-          example: "192.168.1.100"
+          example: 192.168.1.100
         user_agent:
           type: string
           description: User agent string
-          example: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+          example: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36
         location:
           type: string
           description: Geographic location
-          example: "New York, US"
+          example: New York, US
         confidence_score:
           type: number
           format: float
@@ -717,29 +823,33 @@ components:
           type: string
           format: date-time
           description: When threat was detected
-          example: "2025-12-21T10:00:00Z"
+          example: '2025-12-21T10:00:00Z'
         resolved_at:
           type: string
           format: date-time
           description: When threat was resolved
-          example: "2025-12-21T10:30:00Z"
+          example: '2025-12-21T10:30:00Z'
         actions_taken:
           type: array
           items:
             type: string
-            enum: [account_locked, ip_blocked, notification_sent, password_reset_required]
+            enum:
+            - account_locked
+            - ip_blocked
+            - notification_sent
+            - password_reset_required
           description: Actions taken to mitigate threat
-          example: ["account_locked", "notification_sent"]
-
-    # Pagination Info - Standard pagination metadata
+          example:
+          - account_locked
+          - notification_sent
     PaginationInfo:
       type: object
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
       required:
-        - page
-        - limit
-        - total_count
-        - has_more
+      - page
+      - limit
+      - total_count
+      - has_more
       properties:
         page:
           type: integer
@@ -774,18 +884,15 @@ components:
           type: boolean
           description: Whether there is a next page
           example: true
-
-    # Core Example entity - ОБЯЗАТЕЛЬНО оптимизировать порядок полей
     Example:
       type: object
       required:
-        - id
-        - name
-        - created_at
-        - status
-        - is_active
+      - id
+      - name
+      - created_at
+      - status
+      - is_active
       properties:
-        # Large fields first for struct alignment
         id:
           type: string
           format: uuid
@@ -806,12 +913,12 @@ components:
           type: string
           format: date-time
           description: Creation timestamp
-          example: "2025-12-21T10:00:00Z"
+          example: '2025-12-21T10:00:00Z'
         updated_at:
           type: string
           format: date-time
           description: Last update timestamp
-          example: "2025-12-21T10:00:00Z"
+          example: '2025-12-21T10:00:00Z'
         priority:
           type: integer
           minimum: 1
@@ -821,7 +928,11 @@ components:
           example: 7
         status:
           type: string
-          enum: [ active, inactive, pending, archived ]
+          enum:
+          - active
+          - inactive
+          - pending
+          - archived
           default: active
           description: Current status
           example: active
@@ -836,15 +947,17 @@ components:
             maxLength: 50
           maxItems: 10
           description: Associated tags
-          example: [ "demo", "template", "best-practice" ]
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%. Hot path optimization required."
-
-    # Request/Response schemas
+          example:
+          - demo
+          - template
+          - best-practice
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%. Hot
+        path optimization required.'
     CreateExampleRequest:
       type: object
       required:
-        - name
-        - description
+      - name
+      - description
       properties:
         name:
           type: string
@@ -870,8 +983,7 @@ components:
             maxLength: 50
           maxItems: 10
           description: Initial tags
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     UpdateExampleRequest:
       type: object
       properties:
@@ -892,7 +1004,11 @@ components:
           description: New priority
         status:
           type: string
-          enum: [ active, inactive, pending, archived ]
+          enum:
+          - active
+          - inactive
+          - pending
+          - archived
           description: New status
         is_active:
           type: boolean
@@ -904,28 +1020,26 @@ components:
             maxLength: 50
           maxItems: 10
           description: Replace all tags
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     ExampleResponse:
       type: object
       required:
-        - example
+      - example
       properties:
         example:
-          $ref: "#/components/schemas/Example"
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
+          $ref: '#/components/schemas/Example'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     ExampleListResponse:
       type: object
       required:
-        - examples
-        - total_count
-        - has_more
+      - examples
+      - total_count
+      - has_more
       properties:
         examples:
           type: array
           items:
-            $ref: "#/components/schemas/Example"
+            $ref: '#/components/schemas/Example'
           description: List of examples
         total_count:
           type: integer
@@ -943,50 +1057,69 @@ components:
           type: integer
           description: Items per page
           example: 20
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%. Paginated responses optimized for memory efficiency."
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%. Paginated
+        responses optimized for memory efficiency.'
   securitySchemes:
     BearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
-      description: |
-        JWT Bearer token authentication.
+      description: 'JWT Bearer token authentication.
+
 
         **Token Format:** Bearer {token}
+
         **Token Claims:**
+
         - sub: User/Player ID
+
         - exp: Expiration timestamp
+
         - iat: Issued at timestamp
+
         - iss: Token issuer
+
         - aud: Token audience
+
         - roles: User roles array
+
         - permissions: User permissions array
 
+
         **Security Features:**
+
         - RS256 signature algorithm
+
         - Token rotation required every 24 hours
+
         - Automatic refresh tokens
+
         - Revocation support via Redis
+
+        '
     ApiKeyAuth:
       type: apiKey
       in: header
       name: X-API-Key
-      description: |
-        API Key authentication for service-to-service communication.
+      description: 'API Key authentication for service-to-service communication.
+
 
         **Use Cases:**
+
         - Internal service communication
+
         - Third-party integrations
+
         - Development and testing
 
+        '
   schemas:
-    # Health schemas - ОБЯЗАТЕЛЬНЫ для всех доменов
     HealthResponse:
       type: object
       required:
-        - status
-        - timestamp
-        - domain
+      - status
+      - timestamp
+      - domain
       properties:
         domain:
           type: string
@@ -994,248 +1127,306 @@ components:
           maxLength: 50
         status:
           type: string
-          enum: [ healthy, degraded, unhealthy ]
+          enum:
+          - healthy
+          - degraded
+          - unhealthy
           example: healthy
           maxLength: 255
         timestamp:
           type: string
           format: date-time
-          example: "2025-12-21T10:00:00Z"
+          example: '2025-12-21T10:00:00Z'
           maxLength: 255
         version:
           type: string
-          example: "1.0.0"
+          example: 1.0.0
           maxLength: 50
         uptime_seconds:
           type: integer
           example: 3600
           minimum: 0
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     Error:
       type: object
       required:
-        - code
-        - message
+      - code
+      - message
       properties:
         message:
           type: string
           maxLength: 256
           example: Internal server error
+        domain:
+          type: string
+          example: security-domain
+          maxLength: 50
+        timestamp:
+          type: string
+          format: date-time
+          example: '2025-12-21T10:00:00Z'
+          maxLength: 255
+        details:
+          type: object
+          description: Additional error context
+          example:
+            field: name
+            reason: required
         code:
           type: integer
           format: int32
           minimum: 100
           maximum: 599
           example: 500
-        domain:
-          type: string
-          example: security-domain
-          maxLength: 50
-        timestamp:
-          type: string
-          format: date-time
-          example: "2025-12-21T10:00:00Z"
-          maxLength: 255
-        details:
-          type: object
-          description: Additional error context
-          example: { "field": "name", "reason": "required" }
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     WebSocketHealthMessage:
       type: object
       required:
-        - type
-        - message_timestamp
-        - health
+      - type
+      - message_timestamp
+      - health
       properties:
         type:
           type: string
-          enum: [ health_update, health_alert, service_down ]
+          enum:
+          - health_update
+          - health_alert
+          - service_down
           example: health_update
         message_timestamp:
           type: string
           format: date-time
           description: Timestamp of the health message
-          example: "2025-12-21T10:00:00Z"
+          example: '2025-12-21T10:00:00Z'
           maxLength: 1000
         health:
-          $ref: "#/components/schemas/HealthResponse"
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
-    # User Security Profile - Enterprise-grade user security information
+          $ref: '#/components/schemas/HealthResponse'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     UserSecurityProfile:
       type: object
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
       required:
-        - id
-        - username
-        - email
-        - roles
-        - created_at
+      - id
+      - username
+      - email
+      - roles
+      - created_at
       properties:
         id:
           type: string
           format: uuid
           description: User unique identifier
-          example: "550e8400-e29b-41d4-a716-446655440000"
+          example: 550e8400-e29b-41d4-a716-446655440000
         username:
           type: string
           description: User's username
-          example: "john_doe"
+          example: john_doe
           maxLength: 50
         email:
           type: string
           format: email
           description: User's email address
-          example: "john.doe@example.com"
+          example: john.doe@example.com
           maxLength: 255
-        email_verified:
-          type: boolean
-          description: Whether email is verified
-          example: true
         phone:
           type: string
           description: User's phone number
-          example: "+1-555-0123"
+          example: +1-555-0123
           maxLength: 20
-        phone_verified:
-          type: boolean
-          description: Whether phone is verified
-          example: false
+        last_login:
+          type: string
+          format: date-time
+          description: Last login timestamp
+          example: '2025-12-21T10:00:00Z'
+        account_status:
+          type: string
+          enum:
+          - active
+          - suspended
+          - locked
+          - pending_verification
+          description: Account status
+          example: active
+        created_at:
+          type: string
+          format: date-time
+          description: Account creation timestamp
+          example: '2025-01-15T08:30:00Z'
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+          example: '2025-12-21T10:00:00Z'
         roles:
           type: array
           items:
-            $ref: "#/components/schemas/UserRole"
+            $ref: '#/components/schemas/UserRole'
           description: User's assigned roles
           maxItems: 10
         permissions:
           type: array
           items:
             type: string
-            enum: [read, write, delete, admin, security, audit]
+            enum:
+            - read
+            - write
+            - delete
+            - admin
+            - security
+            - audit
           description: User's permissions
-          example: ["read", "write"]
-        last_login:
-          type: string
-          format: date-time
-          description: Last login timestamp
-          example: "2025-12-21T10:00:00Z"
+          example:
+          - read
+          - write
+        email_verified:
+          type: boolean
+          description: Whether email is verified
+          example: true
+        phone_verified:
+          type: boolean
+          description: Whether phone is verified
+          example: false
         login_count:
           type: integer
           description: Total login count
           example: 42
-        account_status:
-          type: string
-          enum: [active, suspended, locked, pending_verification]
-          description: Account status
-          example: "active"
-        created_at:
-          type: string
-          format: date-time
-          description: Account creation timestamp
-          example: "2025-01-15T08:30:00Z"
-        updated_at:
-          type: string
-          format: date-time
-          description: Last update timestamp
-          example: "2025-12-21T10:00:00Z"
-
-    # User Role - Role-based access control
     UserRole:
       type: object
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
       required:
-        - id
-        - name
-        - permissions
+      - id
+      - name
+      - permissions
       properties:
         id:
           type: string
           format: uuid
           description: Role unique identifier
-          example: "550e8400-e29b-41d4-a716-446655440001"
+          example: 550e8400-e29b-41d4-a716-446655440001
         name:
           type: string
           description: Role name
-          example: "admin"
+          example: admin
           maxLength: 50
         description:
           type: string
           description: Role description
-          example: "Administrator with full system access"
+          example: Administrator with full system access
           maxLength: 255
-        permissions:
-          type: array
-          items:
-            type: string
-            enum: [read, write, delete, admin, security, audit]
-          description: Permissions granted by this role
-          example: ["read", "write", "delete", "admin"]
-        is_system_role:
-          type: boolean
-          description: Whether this is a system-defined role
-          example: true
         created_at:
           type: string
           format: date-time
           description: Role creation timestamp
-          example: "2025-01-01T00:00:00Z"
-
-    # Security Threat - Threat detection and monitoring
+          example: '2025-01-01T00:00:00Z'
+        permissions:
+          type: array
+          items:
+            type: string
+            enum:
+            - read
+            - write
+            - delete
+            - admin
+            - security
+            - audit
+          description: Permissions granted by this role
+          example:
+          - read
+          - write
+          - delete
+          - admin
+        is_system_role:
+          type: boolean
+          description: Whether this is a system-defined role
+          example: true
     SecurityThreat:
       type: object
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
       required:
-        - id
-        - type
-        - severity
-        - status
-        - detected_at
+      - id
+      - type
+      - severity
+      - status
+      - detected_at
       properties:
         id:
           type: string
           format: uuid
           description: Threat unique identifier
-          example: "550e8400-e29b-41d4-a716-446655440002"
-        type:
-          type: string
-          enum: [suspicious_login, brute_force, unusual_activity, data_exfiltration, privilege_escalation]
-          description: Type of security threat
-          example: "suspicious_login"
-        severity:
-          type: string
-          enum: [low, medium, high, critical]
-          description: Threat severity level
-          example: "high"
-        status:
-          type: string
-          enum: [active, investigating, resolved, dismissed]
-          description: Current threat status
-          example: "investigating"
-        description:
-          type: string
-          description: Threat description
-          example: "Multiple failed login attempts from unusual location"
-          maxLength: 1000
+          example: 550e8400-e29b-41d4-a716-446655440002
         user_id:
           type: string
           format: uuid
           description: Affected user ID
-          example: "550e8400-e29b-41d4-a716-446655440000"
+          example: 550e8400-e29b-41d4-a716-446655440000
+        type:
+          type: string
+          enum:
+          - suspicious_login
+          - brute_force
+          - unusual_activity
+          - data_exfiltration
+          - privilege_escalation
+          description: Type of security threat
+          example: suspicious_login
+        severity:
+          type: string
+          enum:
+          - low
+          - medium
+          - high
+          - critical
+          description: Threat severity level
+          example: high
+        status:
+          type: string
+          enum:
+          - active
+          - investigating
+          - resolved
+          - dismissed
+          description: Current threat status
+          example: investigating
+        description:
+          type: string
+          description: Threat description
+          example: Multiple failed login attempts from unusual location
+          maxLength: 1000
         ip_address:
           type: string
           description: IP address involved
-          example: "192.168.1.100"
+          example: 192.168.1.100
         user_agent:
           type: string
           description: User agent string
-          example: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+          example: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36
         location:
           type: string
           description: Geographic location
-          example: "New York, US"
+          example: New York, US
+        detected_at:
+          type: string
+          format: date-time
+          description: When threat was detected
+          example: '2025-12-21T10:00:00Z'
+        resolved_at:
+          type: string
+          format: date-time
+          description: When threat was resolved
+          example: '2025-12-21T10:30:00Z'
+        actions_taken:
+          type: array
+          items:
+            type: string
+            enum:
+            - account_locked
+            - ip_blocked
+            - notification_sent
+            - password_reset_required
+          description: Actions taken to mitigate threat
+          example:
+          - account_locked
+          - notification_sent
         confidence_score:
           type: number
           format: float
@@ -1243,34 +1434,27 @@ components:
           maximum: 1
           description: AI confidence score (0.0-1.0)
           example: 0.85
-        detected_at:
-          type: string
-          format: date-time
-          description: When threat was detected
-          example: "2025-12-21T10:00:00Z"
-        resolved_at:
-          type: string
-          format: date-time
-          description: When threat was resolved
-          example: "2025-12-21T10:30:00Z"
-        actions_taken:
-          type: array
-          items:
-            type: string
-            enum: [account_locked, ip_blocked, notification_sent, password_reset_required]
-          description: Actions taken to mitigate threat
-          example: ["account_locked", "notification_sent"]
-
-    # Pagination Info - Standard pagination metadata
     PaginationInfo:
       type: object
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
       required:
-        - page
-        - limit
-        - total_count
-        - has_more
+      - page
+      - limit
+      - total_count
+      - has_more
       properties:
+        has_more:
+          type: boolean
+          description: Whether there are more pages available
+          example: true
+        has_previous:
+          type: boolean
+          description: Whether there is a previous page
+          example: false
+        has_next:
+          type: boolean
+          description: Whether there is a next page
+          example: true
         page:
           type: integer
           description: Current page number (1-based)
@@ -1292,15 +1476,3 @@ components:
           description: Total number of pages
           example: 8
           minimum: 1
-        has_more:
-          type: boolean
-          description: Whether there are more pages available
-          example: true
-        has_previous:
-          type: boolean
-          description: Whether there is a previous page
-          example: false
-        has_next:
-          type: boolean
-          description: Whether there is a next page
-          example: true

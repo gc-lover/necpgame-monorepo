@@ -20,18 +20,18 @@ info:
     name: NECPGAME API Support
     email: api@necp.game
 servers:
-  - url: http://localhost:8090/api/v1/sync
-    description: Локальный сервер разработки
-  - url: https://api.necp.game/api/v1/sync
-    description: Продакшен сервер
+- url: http://localhost:8090/api/v1/sync
+  description: Локальный сервер разработки
+- url: https://api.necp.game/api/v1/sync
+  description: Продакшен сервер
 tags:
-  - name: Consistency
-    description: Мониторинг консистентности
+- name: Consistency
+  description: Мониторинг консистентности
 paths:
   /consistency/check:
     get:
       tags:
-        - Consistency
+      - Consistency
       summary: Проверить консистентность
       description: 'Выполняет проверку консистентности данных между сервисами.
 
@@ -40,22 +40,22 @@ paths:
         '
       operationId: checkConsistency
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: service_name
-          in: query
-          required: false
-          description: Фильтр по сервису
-          schema:
-            type: string
-            example: character-service
-        - name: check_type
-          in: query
-          required: false
-          description: Тип проверки
-          schema:
-            type: string
-            example: reference_integrity
+      - name: service_name
+        in: query
+        required: false
+        description: Фильтр по сервису
+        schema:
+          type: string
+          example: character-service
+      - name: check_type
+        in: query
+        required: false
+        description: Тип проверки
+        schema:
+          type: string
+          example: reference_integrity
       responses:
         '200':
           description: Результаты проверки консистентности
@@ -66,7 +66,7 @@ paths:
               example:
                 check_id: bb0e8400-e29b-41d4-a716-446655440000
                 status: consistent
-                violations: [ ]
+                violations: []
                 checked_at: '2025-12-01T10:00:00Z'
         '401':
           $ref: ../../common-schemas.yaml#/components/responses/Unauthorized
@@ -75,7 +75,7 @@ paths:
   /consistency/metrics:
     get:
       tags:
-        - Consistency
+      - Consistency
       summary: Получить метрики консистентности
       description: 'Возвращает метрики консистентности данных: количество проверок,
 
@@ -84,22 +84,22 @@ paths:
         '
       operationId: getConsistencyMetrics
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: start_date
-          in: query
-          required: false
-          description: Начальная дата периода
-          schema:
-            type: string
-            format: date-time
-        - name: end_date
-          in: query
-          required: false
-          description: Конечная дата периода
-          schema:
-            type: string
-            format: date-time
+      - name: start_date
+        in: query
+        required: false
+        description: Начальная дата периода
+        schema:
+          type: string
+          format: date-time
+      - name: end_date
+        in: query
+        required: false
+        description: Конечная дата периода
+        schema:
+          type: string
+          format: date-time
       responses:
         '200':
           description: Метрики консистентности
@@ -120,14 +120,14 @@ paths:
   /consistency/fix:
     post:
       tags:
-        - Consistency
+      - Consistency
       summary: Исправить неконсистентность
       description: 'Запускает автоматическое исправление обнаруженных нарушений консистентности.
 
         '
       operationId: fixConsistency
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -165,10 +165,10 @@ components:
     ConsistencyCheckResponse:
       type: object
       required:
-        - check_id
-        - status
-        - violations
-        - checked_at
+      - check_id
+      - status
+      - violations
+      - checked_at
       properties:
         check_id:
           type: string
@@ -201,21 +201,34 @@ components:
               severity:
                 type: string
                 enum:
-                  - low
-                  - medium
-                  - high
-                  - critical
-          example: [ ]
+                - low
+                - medium
+                - high
+                - critical
+          example: []
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     ConsistencyMetricsResponse:
       type: object
       required:
-        - total_checks
-        - consistent_checks
-        - inconsistent_checks
-        - consistency_rate
-        - average_sync_time
+      - total_checks
+      - consistent_checks
+      - inconsistent_checks
+      - consistency_rate
+      - average_sync_time
       properties:
+        consistency_rate:
+          type: number
+          format: float
+          description: Процент консистентности (0.0-1.0)
+          minimum: 0.0
+          maximum: 1.0
+          example: 0.98
+        average_sync_time:
+          type: number
+          format: float
+          description: Среднее время синхронизации в секундах
+          minimum: 0
+          example: 1.5
         total_checks:
           type: integer
           description: Общее количество проверок
@@ -231,25 +244,12 @@ components:
           description: Количество неконсистентных проверок
           minimum: 0
           example: 200
-        consistency_rate:
-          type: number
-          format: float
-          description: Процент консистентности (0.0-1.0)
-          minimum: 0.0
-          maximum: 1.0
-          example: 0.98
-        average_sync_time:
-          type: number
-          format: float
-          description: Среднее время синхронизации в секундах
-          minimum: 0
-          example: 1.5
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     FixConsistencyRequest:
       type: object
       required:
-        - check_id
-        - fix_strategy
+      - check_id
+      - fix_strategy
       properties:
         check_id:
           type: string
@@ -258,9 +258,9 @@ components:
         fix_strategy:
           type: string
           enum:
-            - auto
-            - manual
-            - selective
+          - auto
+          - manual
+          - selective
           description: Стратегия исправления
           example: auto
         violations_to_fix:
@@ -273,10 +273,10 @@ components:
     FixConsistencyResponse:
       type: object
       required:
-        - check_id
-        - status
-        - violations_fixed
-        - message
+      - check_id
+      - status
+      - violations_fixed
+      - message
       properties:
         check_id:
           type: string
@@ -288,9 +288,9 @@ components:
         status:
           type: string
           enum:
-            - fixing
-            - completed
-            - failed
+          - fixing
+          - completed
+          - failed
           example: fixing
         violations_fixed:
           type: integer

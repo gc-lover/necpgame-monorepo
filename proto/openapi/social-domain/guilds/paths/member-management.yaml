@@ -1,17 +1,13 @@
-# Guild member management operations
-# Issue: #2235
-
 components:
   schemas:
-    # Member schemas (inline to avoid reference issues)
     GuildMember:
       type: object
       required:
-        - player_id
-        - username
-        - role
-        - joined_at
-        - is_active
+      - player_id
+      - username
+      - role
+      - joined_at
+      - is_active
       properties:
         player_id:
           type: string
@@ -24,10 +20,10 @@ components:
         role:
           type: string
           enum:
-            - leader
-            - officer
-            - member
-            - recruit
+          - leader
+          - officer
+          - member
+          - recruit
           description: Member role in guild
         joined_at:
           type: string
@@ -37,19 +33,19 @@ components:
           type: string
           format: date-time
           description: Last activity timestamp
+        is_active:
+          type: boolean
+          description: Whether member is currently active
         contribution_score:
           type: integer
           minimum: 0
           description: Member contribution score
-        is_active:
-          type: boolean
-          description: Whether member is currently active
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     GuildMembersResponse:
       type: object
       required:
-        - members
-        - total_count
+      - members
+      - total_count
       properties:
         members:
           type: array
@@ -62,7 +58,7 @@ components:
     GuildMemberResponse:
       type: object
       required:
-        - member
+      - member
       properties:
         member:
           $ref: '#/components/schemas/GuildMember'
@@ -70,8 +66,8 @@ components:
     InvitePlayerRequest:
       type: object
       required:
-        - player_id
-        - message
+      - player_id
+      - message
       properties:
         player_id:
           type: string
@@ -85,8 +81,8 @@ components:
     InvitationResponse:
       type: object
       required:
-        - invitation_id
-        - expires_at
+      - invitation_id
+      - expires_at
       properties:
         invitation_id:
           type: string
@@ -100,7 +96,7 @@ components:
     UpdateMemberRoleRequest:
       type: object
       required:
-        - new_role
+      - new_role
       properties:
         reason:
           type: string
@@ -109,58 +105,63 @@ components:
         new_role:
           type: string
           enum:
-            - leader
-            - officer
-            - member
-            - recruit
+          - leader
+          - officer
+          - member
+          - recruit
           description: New role for the member
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
 paths:
-  # Guild member management
   /guilds/{guild_id}/members:
     get:
       summary: Get guild members
       description: Retrieves list of guild members with their roles and status.
       operationId: getGuildMembers
       tags:
-        - Guild Members
+      - Guild Members
       parameters:
-        - name: guild_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Guild identifier
-        - name: role
-          in: query
-          schema:
-            type: string
-            enum: [ leader, officer, member, recruit ]
-          description: Filter by member role
-        - name: status
-          in: query
-          schema:
-            type: string
-            enum: [ active, inactive, suspended ]
-            default: active
-          description: Filter by member status
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 250
-            default: 50
-          description: Number of results per page
-        - name: offset
-          in: query
-          schema:
-            type: integer
-            minimum: 0
-            default: 0
-          description: Pagination offset
+      - name: guild_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Guild identifier
+      - name: role
+        in: query
+        schema:
+          type: string
+          enum:
+          - leader
+          - officer
+          - member
+          - recruit
+        description: Filter by member role
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - active
+          - inactive
+          - suspended
+          default: active
+        description: Filter by member status
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 250
+          default: 50
+        description: Number of results per page
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+        description: Pagination offset
       responses:
         '200':
           description: Members retrieved successfully
@@ -175,8 +176,8 @@ paths:
               schema:
                 type: object
                 required:
-                  - code
-                  - message
+                - code
+                - message
                 properties:
                   code:
                     type: string
@@ -196,8 +197,8 @@ paths:
               schema:
                 type: object
                 required:
-                  - code
-                  - message
+                - code
+                - message
                 properties:
                   code:
                     type: string
@@ -217,8 +218,8 @@ paths:
               schema:
                 type: object
                 required:
-                  - code
-                  - message
+                - code
+                - message
                 properties:
                   code:
                     type: string
@@ -231,27 +232,29 @@ paths:
                   details:
                     type: object
                     description: Additional error details (optional)
-
     post:
       summary: Invite player to guild
-      description: |
-        Sends an invitation to a player to join the guild.
+      description: 'Sends an invitation to a player to join the guild.
+
 
         **BACKEND NOTE:** Creates invitation record and sends notification.
+
         Player must accept invitation to become member.
+
+        '
       operationId: invitePlayerToGuild
       tags:
-        - Guild Members
+      - Guild Members
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: guild_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Guild identifier
+      - name: guild_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Guild identifier
       requestBody:
         required: true
         content:
@@ -272,8 +275,8 @@ paths:
               schema:
                 type: object
                 required:
-                  - code
-                  - message
+                - code
+                - message
                 properties:
                   code:
                     type: string
@@ -293,8 +296,8 @@ paths:
               schema:
                 type: object
                 required:
-                  - code
-                  - message
+                - code
+                - message
                 properties:
                   code:
                     type: string
@@ -314,8 +317,8 @@ paths:
               schema:
                 type: object
                 required:
-                  - code
-                  - message
+                - code
+                - message
                 properties:
                   code:
                     type: string
@@ -335,8 +338,8 @@ paths:
               schema:
                 type: object
                 required:
-                  - code
-                  - message
+                - code
+                - message
                 properties:
                   code:
                     type: string
@@ -349,35 +352,37 @@ paths:
                   details:
                     type: object
                     description: Additional error details (optional)
-
   /guilds/{guild_id}/members/{player_id}:
     put:
       summary: Update member role
-      description: |
-        Updates a member's role within the guild.
+      description: 'Updates a member''s role within the guild.
+
 
         **BACKEND NOTE:** Requires leadership permissions.
+
         Role changes are logged for audit purposes.
+
+        '
       operationId: updateMemberRole
       tags:
-        - Guild Members
+      - Guild Members
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: guild_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Guild identifier
-        - name: player_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Player identifier
+      - name: guild_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Guild identifier
+      - name: player_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Player identifier
       requestBody:
         required: true
         content:
@@ -398,8 +403,8 @@ paths:
               schema:
                 type: object
                 required:
-                  - code
-                  - message
+                - code
+                - message
                 properties:
                   code:
                     type: string
@@ -419,8 +424,8 @@ paths:
               schema:
                 type: object
                 required:
-                  - code
-                  - message
+                - code
+                - message
                 properties:
                   code:
                     type: string
@@ -440,8 +445,8 @@ paths:
               schema:
                 type: object
                 required:
-                  - code
-                  - message
+                - code
+                - message
                 properties:
                   code:
                     type: string
@@ -454,40 +459,46 @@ paths:
                   details:
                     type: object
                     description: Additional error details (optional)
-
     delete:
       summary: Remove member from guild
-      description: |
-        Removes a member from the guild (kick or voluntary leave).
+      description: 'Removes a member from the guild (kick or voluntary leave).
+
 
         **BACKEND NOTE:** Handles both voluntary leaves and forced removals.
+
         Different authorization levels required.
+
+        '
       operationId: removeGuildMember
       tags:
-        - Guild Members
+      - Guild Members
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: guild_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Guild identifier
-        - name: player_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Player identifier
-        - name: reason
-          in: query
-          schema:
-            type: string
-            enum: [ voluntary, inactive, violation, leadership_decision ]
-          description: Reason for removal (required for kicks)
+      - name: guild_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Guild identifier
+      - name: player_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Player identifier
+      - name: reason
+        in: query
+        schema:
+          type: string
+          enum:
+          - voluntary
+          - inactive
+          - violation
+          - leadership_decision
+        description: Reason for removal (required for kicks)
       responses:
         '204':
           description: Member removed successfully (No Content)
@@ -498,8 +509,8 @@ paths:
               schema:
                 type: object
                 required:
-                  - code
-                  - message
+                - code
+                - message
                 properties:
                   code:
                     type: string
@@ -519,8 +530,8 @@ paths:
               schema:
                 type: object
                 required:
-                  - code
-                  - message
+                - code
+                - message
                 properties:
                   code:
                     type: string
@@ -540,8 +551,8 @@ paths:
               schema:
                 type: object
                 required:
-                  - code
-                  - message
+                - code
+                - message
                 properties:
                   code:
                     type: string

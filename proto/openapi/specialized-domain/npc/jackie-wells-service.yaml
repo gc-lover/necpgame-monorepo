@@ -1,17 +1,24 @@
 openapi: 3.0.3
 info:
   title: Jackie Welles NPC Service API
-  description: |
-    API для работы с Jackie Welles - ключевым NPC-партнером в Night City.
+  description: 'API для работы с Jackie Welles - ключевым NPC-партнером в Night City.
+
     Управляет взаимодействием игрока с Jackie, его квестами, торговлей и отношениями.
 
+
     **BACKEND NOTE**: Служба оптимизирована для быстрого доступа к Jackie как основному напарнику.
+
     Использует кеширование для часто запрашиваемых данных.
 
+
     **PERFORMANCE**: Ожидаемая нагрузка - 50k запросов/сек в пиковые моменты.
+
     Время отклика < 20ms для основных операций.
 
+
     **SCALING**: Read replicas для истории взаимодействий, write-through caching для статуса отношений.
+
+    '
   version: 1.0.0
   license:
     name: MIT
@@ -19,150 +26,149 @@ info:
   contact:
     name: Backend Team
     email: backend@necp.game
-
 servers:
-  - url: https://api.necpgame.com/v1/npc/jackie-welles
-    description: Production server
-  - url: https://staging-api.necpgame.com/v1/npc/jackie-welles
-    description: Staging server
-  - url: http://localhost:8089/v1/npc/jackie-welles
-    description: Local development
-
+- url: https://api.necpgame.com/v1/npc/jackie-welles
+  description: Production server
+- url: https://staging-api.necpgame.com/v1/npc/jackie-welles
+  description: Staging server
+- url: http://localhost:8089/v1/npc/jackie-welles
+  description: Local development
 security:
-  - BearerAuth: [ ]
-  - ApiKeyAuth: [ ]
-
+- BearerAuth: []
+- ApiKeyAuth: []
 paths:
-  # Основные операции с Jackie Welles
   /api/v1/npc/jackie-welles/profile:
     get:
       summary: Получить профиль Jackie Welles
       description: Возвращает полный профиль Jackie Welles с текущим состоянием
       operationId: getJackieProfile
-      tags: [ Jackie ]
+      tags:
+      - Jackie
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       responses:
-        "200":
+        '200':
           description: Профиль Jackie Welles
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/JackieProfile"
-        "404":
-          $ref: "#/components/responses/NotFound"
-
+                $ref: '#/components/schemas/JackieProfile'
+        '404':
+          $ref: '#/components/responses/NotFound'
   /api/v1/npc/jackie-welles/status:
     get:
       summary: Получить текущий статус Jackie
       description: Возвращает текущее местоположение, состояние и доступность Jackie
       operationId: getJackieStatus
-      tags: [ Jackie ]
+      tags:
+      - Jackie
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       responses:
-        "200":
+        '200':
           description: Статус Jackie Welles
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/JackieStatus"
-        "404":
-          $ref: "#/components/responses/NotFound"
-
+                $ref: '#/components/schemas/JackieStatus'
+        '404':
+          $ref: '#/components/responses/NotFound'
   /api/v1/npc/jackie-welles/interact:
     post:
       summary: Взаимодействовать с Jackie
       description: Инициировать взаимодействие с Jackie (разговор, торговля, квест)
       operationId: interactWithJackie
-      tags: [ Jackie, Interactions ]
+      tags:
+      - Jackie
+      - Interactions
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/InteractionRequest"
+              $ref: '#/components/schemas/InteractionRequest'
       responses:
-        "200":
+        '200':
           description: Результат взаимодействия
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/InteractionResponse"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "404":
-          $ref: "#/components/responses/NotFound"
-
-  # Отношения и лояльность
+                $ref: '#/components/schemas/InteractionResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
   /api/v1/npc/jackie-welles/relationship:
     get:
       summary: Получить уровень отношений с Jackie
       description: Возвращает текущий уровень отношений, лояльность и доступные возможности
       operationId: getJackieRelationship
-      tags: [ Jackie, Relationships ]
+      tags:
+      - Jackie
+      - Relationships
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       responses:
-        "200":
+        '200':
           description: Уровень отношений с Jackie
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/JackieRelationship"
-        "404":
-          $ref: "#/components/responses/NotFound"
-
+                $ref: '#/components/schemas/JackieRelationship'
+        '404':
+          $ref: '#/components/responses/NotFound'
     post:
       summary: Изменить уровень отношений с Jackie
       description: Обновить уровень отношений на основе действий игрока
       operationId: updateJackieRelationship
-      tags: [ Jackie, Relationships ]
+      tags:
+      - Jackie
+      - Relationships
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UpdateRelationshipRequest"
+              $ref: '#/components/schemas/UpdateRelationshipRequest'
       responses:
-        "200":
+        '200':
           description: Отношения обновлены
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/JackieRelationship"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-
-  # Торговля и инвентарь
+                $ref: '#/components/schemas/JackieRelationship'
+        '400':
+          $ref: '#/components/responses/BadRequest'
   /api/v1/npc/jackie-welles/trade:
     post:
       summary: Торговать с Jackie
       description: Совершить сделку с Jackie (покупка/продажа предметов)
       operationId: tradeWithJackie
-      tags: [ Jackie, Trading ]
+      tags:
+      - Jackie
+      - Trading
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/TradeRequest"
+              $ref: '#/components/schemas/TradeRequest'
       responses:
-        "200":
+        '200':
           description: Сделка совершена
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/TradeResponse"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "402":
+                $ref: '#/components/schemas/TradeResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '402':
           description: Недостаточно средств
           content:
             application/json:
@@ -171,21 +177,22 @@ paths:
                 properties:
                   error:
                     type: string
-                    example: "insufficient_funds"
+                    example: insufficient_funds
                   required_amount:
                     type: integer
                     example: 1500
-
   /api/v1/npc/jackie-welles/inventory:
     get:
       summary: Получить инвентарь Jackie
       description: Возвращает предметы, которые Jackie может продать или отдать
       operationId: getJackieInventory
-      tags: [ Jackie, Inventory ]
+      tags:
+      - Jackie
+      - Inventory
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       responses:
-        "200":
+        '200':
           description: Инвентарь Jackie
           content:
             application/json:
@@ -195,25 +202,25 @@ paths:
                   items:
                     type: array
                     items:
-                      $ref: "#/components/schemas/InventoryItem"
+                      $ref: '#/components/schemas/InventoryItem'
                   last_updated:
                     type: string
                     format: date-time
                 required:
-                  - items
-                  - last_updated
-
-  # Квесты и задания
+                - items
+                - last_updated
   /api/v1/npc/jackie-welles/quests/available:
     get:
       summary: Получить доступные квесты от Jackie
       description: Возвращает список квестов, которые Jackie может предложить игроку
       operationId: getJackieAvailableQuests
-      tags: [ Jackie, Quests ]
+      tags:
+      - Jackie
+      - Quests
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       responses:
-        "200":
+        '200':
           description: Доступные квесты
           content:
             application/json:
@@ -223,38 +230,39 @@ paths:
                   quests:
                     type: array
                     items:
-                      $ref: "#/components/schemas/JackieQuest"
+                      $ref: '#/components/schemas/JackieQuest'
                   total:
                     type: integer
                 required:
-                  - quests
-                  - total
-
+                - quests
+                - total
   /api/v1/npc/jackie-welles/quests/{quest_id}/accept:
     post:
       summary: Принять квест от Jackie
       description: Принять предложенный Jackie квест
       operationId: acceptJackieQuest
-      tags: [ Jackie, Quests ]
+      tags:
+      - Jackie
+      - Quests
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: quest_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: quest_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
-        "200":
+        '200':
           description: Квест принят
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/JackieQuest"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "409":
+                $ref: '#/components/schemas/JackieQuest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
           description: Квест уже принят или недоступен
           content:
             application/json:
@@ -263,64 +271,64 @@ paths:
                 properties:
                   error:
                     type: string
-                    example: "quest_already_accepted"
-
-  # Диалоги и разговоры
+                    example: quest_already_accepted
   /api/v1/npc/jackie-welles/dialogue/start:
     post:
       summary: Начать диалог с Jackie
       description: Инициировать разговор с Jackie с учетом контекста отношений
       operationId: startJackieDialogue
-      tags: [ Jackie, Dialogue ]
+      tags:
+      - Jackie
+      - Dialogue
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/DialogueStartRequest"
+              $ref: '#/components/schemas/DialogueStartRequest'
       responses:
-        "200":
+        '200':
           description: Диалог начат
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/DialogueResponse"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-
+                $ref: '#/components/schemas/DialogueResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
   /api/v1/npc/jackie-welles/dialogue/{dialogue_id}/respond:
     post:
       summary: Ответить в диалоге с Jackie
       description: Отправить ответ в активном диалоге с Jackie
       operationId: respondToJackieDialogue
-      tags: [ Jackie, Dialogue ]
+      tags:
+      - Jackie
+      - Dialogue
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: dialogue_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: dialogue_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/DialogueResponseRequest"
+              $ref: '#/components/schemas/DialogueResponseRequest'
       responses:
-        "200":
+        '200':
           description: Ответ принят
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/DialogueResponse"
-        "404":
-          $ref: "#/components/responses/NotFound"
-
+                $ref: '#/components/schemas/DialogueResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
 components:
   securitySchemes:
     BearerAuth:
@@ -331,60 +339,74 @@ components:
       type: apiKey
       in: header
       name: X-API-Key
-
   schemas:
-    # Основные сущности Jackie Welles
     JackieProfile:
       type: object
-      required: [ npc_id, name, faction, relationship_level ]
+      required:
+      - npc_id
+      - name
+      - faction
+      - relationship_level
       properties:
         npc_id:
           type: string
           format: uuid
-          example: "jackie-welles-uuid"
+          example: jackie-welles-uuid
         name:
           type: string
-          example: "Santiago 'Jackie' Welles Morales"
-        age:
-          type: integer
-          example: 28
+          example: Santiago 'Jackie' Welles Morales
         faction:
           type: string
-          example: "Valentinos"
+          example: Valentinos
         relationship_level:
           type: string
-          enum: [ stranger, acquaintance, friend, close_friend, brother ]
-          example: "close_friend"
+          enum:
+          - stranger
+          - acquaintance
+          - friend
+          - close_friend
+          - brother
+          example: close_friend
         location:
           type: string
-          example: "El Coyote Cojo, Watson District"
+          example: El Coyote Cojo, Watson District
         current_activity:
           type: string
-          example: "available_for_contracts"
+          example: available_for_contracts
         combat_stats:
-          $ref: "#/components/schemas/JackieCombatStats"
+          $ref: '#/components/schemas/JackieCombatStats'
         personality_traits:
           type: array
           items:
             type: string
-          example: [ "loyal", "brave", "impulsive", "protective" ]
+          example:
+          - loyal
+          - brave
+          - impulsive
+          - protective
         available_services:
           type: array
           items:
             type: string
-          example: [ "contracts", "trading", "training", "guidance" ]
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
+          example:
+          - contracts
+          - trading
+          - training
+          - guidance
+        age:
+          type: integer
+          example: 28
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     JackieStatus:
       type: object
-      required: [ npc_id, available, location ]
+      required:
+      - npc_id
+      - available
+      - location
       properties:
         npc_id:
           type: string
           format: uuid
-        available:
-          type: boolean
-          description: Доступен ли Jackie для взаимодействия
         location:
           type: string
           description: Текущее местоположение
@@ -397,12 +419,27 @@ components:
           description: Когда станет доступен, если сейчас занят
         mood:
           type: string
-          enum: [ neutral, happy, angry, concerned, excited ]
+          enum:
+          - neutral
+          - happy
+          - angry
+          - concerned
+          - excited
           description: Текущее настроение Jackie
-
+        available:
+          type: boolean
+          description: Доступен ли Jackie для взаимодействия
     JackieCombatStats:
       type: object
       properties:
+        special_abilities:
+          type: array
+          items:
+            type: string
+          example:
+          - close_combat_expert
+          - vehicle_specialist
+          - intimidation
         level:
           type: integer
           minimum: 1
@@ -425,87 +462,113 @@ components:
           minimum: 0
           maximum: 100
           example: 75
-        special_abilities:
-          type: array
-          items:
-            type: string
-          example: [ "close_combat_expert", "vehicle_specialist", "intimidation" ]
-
     JackieRelationship:
       type: object
-      required: [ level, loyalty_points, trust_level ]
+      required:
+      - level
+      - loyalty_points
+      - trust_level
       properties:
         level:
           type: string
-          enum: [ stranger, acquaintance, friend, close_friend, brother ]
-        loyalty_points:
-          type: integer
-          minimum: 0
-          maximum: 1000
-          description: Очки лояльности (0-1000)
+          enum:
+          - stranger
+          - acquaintance
+          - friend
+          - close_friend
+          - brother
         trust_level:
           type: string
-          enum: [ low, medium, high, absolute ]
+          enum:
+          - low
+          - medium
+          - high
+          - absolute
         unlocked_features:
           type: array
           items:
             type: string
           description: Разблокированные возможности
-          example: [ "special_contracts", "discounted_trading", "backup_in_combat" ]
+          example:
+          - special_contracts
+          - discounted_trading
+          - backup_in_combat
         relationship_events:
           type: array
           items:
-            $ref: "#/components/schemas/RelationshipEvent"
-
+            $ref: '#/components/schemas/RelationshipEvent'
+        loyalty_points:
+          type: integer
+          minimum: 0
+          maximum: 1000
+          description: Очки лояльности (0-1000)
     RelationshipEvent:
       type: object
-      required: [ event_id, type, timestamp, impact ]
+      required:
+      - event_id
+      - type
+      - timestamp
+      - impact
       properties:
         event_id:
           type: string
           format: uuid
         type:
           type: string
-          enum: [ quest_completed, betrayal, help_provided, argument, gift_given ]
+          enum:
+          - quest_completed
+          - betrayal
+          - help_provided
+          - argument
+          - gift_given
         timestamp:
           type: string
           format: date-time
-        impact:
-          type: integer
-          description: Влияние на отношения (-100 до +100)
         description:
           type: string
           maxLength: 500
-
-    # Взаимодействия
+        impact:
+          type: integer
+          description: Влияние на отношения (-100 до +100)
     InteractionRequest:
       type: object
-      required: [ interaction_type ]
+      required:
+      - interaction_type
       properties:
         interaction_type:
           type: string
-          enum: [ talk, trade, quest, help, fight ]
-        context:
-          type: object
-          description: Дополнительный контекст взаимодействия
+          enum:
+          - talk
+          - trade
+          - quest
+          - help
+          - fight
         location:
           type: string
           description: Местоположение взаимодействия
-
+        context:
+          type: object
+          description: Дополнительный контекст взаимодействия
     InteractionResponse:
       type: object
-      required: [ result, dialogue_options ]
+      required:
+      - result
+      - dialogue_options
       properties:
         result:
           type: string
-          enum: [ success, partial_success, failure, unavailable ]
+          enum:
+          - success
+          - partial_success
+          - failure
+          - unavailable
         dialogue_text:
           type: string
           description: Текст ответа Jackie
         dialogue_options:
           type: array
           items:
-            $ref: "#/components/schemas/DialogueOption"
+            $ref: '#/components/schemas/DialogueOption'
         available_actions:
           type: array
           items:
@@ -514,10 +577,11 @@ components:
         relationship_change:
           type: integer
           description: Изменение уровня отношений
-
     DialogueOption:
       type: object
-      required: [ id, text ]
+      required:
+      - id
+      - text
       properties:
         id:
           type: string
@@ -528,24 +592,27 @@ components:
           items:
             type: string
           description: Последствия выбора
-
-    # Торговля
     TradeRequest:
       type: object
-      required: [ trade_type, items ]
+      required:
+      - trade_type
+      - items
       properties:
         trade_type:
           type: string
-          enum: [ buy, sell ]
+          enum:
+          - buy
+          - sell
         items:
           type: array
           items:
-            $ref: "#/components/schemas/TradeItem"
+            $ref: '#/components/schemas/TradeItem'
           minItems: 1
-
     TradeItem:
       type: object
-      required: [ item_id, quantity ]
+      required:
+      - item_id
+      - quantity
       properties:
         item_id:
           type: string
@@ -556,27 +623,30 @@ components:
         offered_price:
           type: integer
           description: Предлагаемая цена (для продажи игроком)
-
     TradeResponse:
       type: object
-      required: [ success, items_traded ]
+      required:
+      - success
+      - items_traded
       properties:
-        success:
-          type: boolean
         items_traded:
           type: array
           items:
-            $ref: "#/components/schemas/TradedItem"
+            $ref: '#/components/schemas/TradedItem'
+        success:
+          type: boolean
         total_cost:
           type: integer
           description: Общая стоимость сделки
         relationship_change:
           type: integer
           description: Изменение отношений от сделки
-
     TradedItem:
       type: object
-      required: [ item_id, quantity, final_price ]
+      required:
+      - item_id
+      - quantity
+      - final_price
       properties:
         item_id:
           type: string
@@ -586,10 +656,13 @@ components:
         final_price:
           type: integer
           description: Финальная цена за единицу
-
     InventoryItem:
       type: object
-      required: [ item_id, name, type, price ]
+      required:
+      - item_id
+      - name
+      - type
+      - price
       properties:
         item_id:
           type: string
@@ -598,20 +671,33 @@ components:
           type: string
         type:
           type: string
-          enum: [ weapon, armor, cyberware, consumable, vehicle_part ]
+          enum:
+          - weapon
+          - armor
+          - cyberware
+          - consumable
+          - vehicle_part
+        rarity:
+          type: string
+          enum:
+          - common
+          - uncommon
+          - rare
+          - epic
+          - legendary
+        description:
+          type: string
         price:
           type: integer
           minimum: 0
-        rarity:
-          type: string
-          enum: [ common, uncommon, rare, epic, legendary ]
-        description:
-          type: string
-
-    # Квесты
     JackieQuest:
       type: object
-      required: [ quest_id, title, type, difficulty, rewards ]
+      required:
+      - quest_id
+      - title
+      - type
+      - difficulty
+      - rewards
       properties:
         quest_id:
           type: string
@@ -622,14 +708,25 @@ components:
           type: string
         type:
           type: string
-          enum: [ delivery, assassination, protection, investigation, escort ]
+          enum:
+          - delivery
+          - assassination
+          - protection
+          - investigation
+          - escort
         difficulty:
           type: string
-          enum: [ easy, medium, hard, very_hard ]
+          enum:
+          - easy
+          - medium
+          - hard
+          - very_hard
         time_limit:
           type: string
           format: duration
           description: Время на выполнение
+        rewards:
+          $ref: '#/components/schemas/QuestRewards'
         requirements:
           type: array
           items:
@@ -638,18 +735,18 @@ components:
         objectives:
           type: array
           items:
-            $ref: "#/components/schemas/QuestObjective"
-        rewards:
-          $ref: "#/components/schemas/QuestRewards"
+            $ref: '#/components/schemas/QuestObjective'
         prerequisites:
           type: array
           items:
             type: string
           description: Необходимые предварительные условия
-
     QuestObjective:
       type: object
-      required: [ id, description, type ]
+      required:
+      - id
+      - description
+      - type
       properties:
         id:
           type: string
@@ -657,7 +754,12 @@ components:
           type: string
         type:
           type: string
-          enum: [ kill, collect, deliver, reach_location, talk_to_npc ]
+          enum:
+          - kill
+          - collect
+          - deliver
+          - reach_location
+          - talk_to_npc
         target:
           type: string
           description: Цель задания
@@ -668,28 +770,25 @@ components:
               type: integer
             required:
               type: integer
-
     QuestRewards:
       type: object
       properties:
-        money:
-          type: integer
-          minimum: 0
+        faction_reputation:
+          type: object
+          description: Репутация с фракциями
         items:
           type: array
           items:
-            $ref: "#/components/schemas/InventoryItem"
+            $ref: '#/components/schemas/InventoryItem'
+        money:
+          type: integer
+          minimum: 0
         experience:
           type: integer
           minimum: 0
         relationship_points:
           type: integer
           description: Очки отношений с Jackie
-        faction_reputation:
-          type: object
-          description: Репутация с фракциями
-
-    # Диалоги
     DialogueStartRequest:
       type: object
       properties:
@@ -701,73 +800,87 @@ components:
           description: Местоположение разговора
         urgency_level:
           type: string
-          enum: [ casual, urgent, emergency ]
-
+          enum:
+          - casual
+          - urgent
+          - emergency
     DialogueResponse:
       type: object
-      required: [ dialogue_id, speaker, text, options ]
+      required:
+      - dialogue_id
+      - speaker
+      - text
+      - options
       properties:
         dialogue_id:
           type: string
           format: uuid
         speaker:
           type: string
-          example: "jackie"
+          example: jackie
         text:
           type: string
           description: Текст реплики
         emotion:
           type: string
-          enum: [ neutral, happy, angry, concerned, excited, sad ]
+          enum:
+          - neutral
+          - happy
+          - angry
+          - concerned
+          - excited
+          - sad
         options:
           type: array
           items:
-            $ref: "#/components/schemas/DialogueOption"
+            $ref: '#/components/schemas/DialogueOption'
         background_actions:
           type: array
           items:
             type: string
           description: Возможные действия в фоне диалога
-
     DialogueResponseRequest:
       type: object
-      required: [ option_id ]
+      required:
+      - option_id
       properties:
         option_id:
           type: string
         additional_context:
           type: object
           description: Дополнительный контекст ответа
-
-    # Запросы обновления
     UpdateRelationshipRequest:
       type: object
-      required: [ action_type, impact ]
+      required:
+      - action_type
+      - impact
       properties:
         action_type:
           type: string
-          enum: [ quest_completed, help_provided, betrayal, gift_given, argument ]
+          enum:
+          - quest_completed
+          - help_provided
+          - betrayal
+          - gift_given
+          - argument
+        description:
+          type: string
+          maxLength: 500
+          description: Описание события
         impact:
           type: integer
           minimum: -100
           maximum: 100
           description: Влияние на отношения (-100 до +100)
-        description:
-          type: string
-          maxLength: 500
-          description: Описание события
-
     Error:
       type: object
-      required: [ message, code ]
+      required:
+      - message
+      - code
       properties:
         message:
           type: string
           maxLength: 1000
-        code:
-          type: integer
-          minimum: 100
-          maximum: 599
         domain:
           type: string
           maxLength: 255
@@ -775,34 +888,33 @@ components:
         timestamp:
           type: string
           format: date-time
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
+        code:
+          type: integer
+          minimum: 100
+          maximum: 599
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
   responses:
     BadRequest:
       description: Неверный запрос
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Error"
+            $ref: '#/components/schemas/Error'
     Forbidden:
       description: Доступ запрещен
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Error"
+            $ref: '#/components/schemas/Error'
     NotFound:
       description: Ресурс не найден
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Error"
+            $ref: '#/components/schemas/Error'
     InternalServerError:
       description: Внутренняя ошибка сервера
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Error"
-
-  # BACKEND NOTE: All schemas optimized for struct alignment. Expected memory savings: 30-50%.
-  # PERFORMANCE: Database queries optimized with indexes on relationship levels and location data.
-  # SCALING: Read replicas for profile data, write-through caching for relationship updates.
+            $ref: '#/components/schemas/Error'

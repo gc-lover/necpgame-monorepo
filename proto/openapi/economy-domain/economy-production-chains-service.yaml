@@ -1,25 +1,40 @@
 openapi: 3.0.3
 info:
   title: Economy Production Chains Service API
-  description: |
-    Полная система производственных цепочек для NECPGAME.
+  description: 'Полная система производственных цепочек для NECPGAME.
+
     Управление рецептами крафта, станциями, цепочками поставок и оптимизацией производства.
 
+
     **BACKEND NOTE**: Enterprise-grade production chains для MMOFPS RPG.
+
     Использует Redis для кеширования рецептов и PostgreSQL для производственных данных.
 
+
     **PERFORMANCE**: Ожидаемая нагрузка - 3000+ RPS в пиковые моменты.
+
     Время отклика < 25ms для основных операций (проверка рецептов, запуск производства).
 
+
     **FEATURES**:
+
     - 5-tier система рецептов (T1-T5) с прогрессией
+
     - Управление производственными станциями и оборудованием
+
     - Цепочки поставок с логистикой и рисками
+
     - Гильдийное производство и кооперация
+
     - Массовое производство с оптимизацией
+
     - Ускорители и rush-заказы
+
     - Легендарный крафт с квестовыми цепочками
+
     - Аналитика прибыли и оптимизация цепочек
+
+    '
   version: 1.0.0
   license:
     name: MIT
@@ -27,79 +42,80 @@ info:
   contact:
     name: Backend Team
     email: backend@necp.game
-
 servers:
-  - url: https://api.necpgame.com/v1/economy/production
-    description: Production server
-  - url: https://staging-api.necpgame.com/v1/economy/production
-    description: Staging server
-  - url: http://localhost:8430/api/v1/economy/production
-    description: Local development
-
+- url: https://api.necpgame.com/v1/economy/production
+  description: Production server
+- url: https://staging-api.necpgame.com/v1/economy/production
+  description: Staging server
+- url: http://localhost:8430/api/v1/economy/production
+  description: Local development
 security:
-  - BearerAuth: [ ]
-
+- BearerAuth: []
 tags:
-  - name: recipes
-    description: Управление рецептами крафта
-  - name: stations
-    description: Производственные станции
-  - name: chains
-    description: Производственные цепочки
-  - name: guilds
-    description: Гильдийное производство
-  - name: bulk
-    description: Массовое производство
-  - name: rush
-    description: Ускорители и rush-заказы
-  - name: legendary
-    description: Легендарный крафт
-  - name: analytics
-    description: Аналитика производства
-
+- name: recipes
+  description: Управление рецептами крафта
+- name: stations
+  description: Производственные станции
+- name: chains
+  description: Производственные цепочки
+- name: guilds
+  description: Гильдийное производство
+- name: bulk
+  description: Массовое производство
+- name: rush
+  description: Ускорители и rush-заказы
+- name: legendary
+  description: Легендарный крафт
+- name: analytics
+  description: Аналитика производства
 paths:
-  # Основной каталог рецептов
   /api/v1/economy/production/recipes:
     get:
       summary: Получить каталог рецептов
       operationId: getRecipesCatalog
       tags:
-        - recipes
+      - recipes
       parameters:
-        - name: tier
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 5
-          description: Фильтр по tier
-        - name: category
-          in: query
-          schema:
-            type: string
-            enum: [ weapons, armor, implants, cyberdecks, vehicles, consumables ]
-          description: Фильтр по категории
-        - name: required_level
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-          description: Минимальный уровень крафтера
-        - name: player_level
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-          description: Уровень игрока для фильтра доступных рецептов
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 50
-            default: 20
+      - name: tier
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 5
+        description: Фильтр по tier
+      - name: category
+        in: query
+        schema:
+          type: string
+          enum:
+          - weapons
+          - armor
+          - implants
+          - cyberdecks
+          - vehicles
+          - consumables
+        description: Фильтр по категории
+      - name: required_level
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+        description: Минимальный уровень крафтера
+      - name: player_level
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+        description: Уровень игрока для фильтра доступных рецептов
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 50
+          default: 20
       responses:
         '200':
           description: Каталог рецептов
@@ -111,21 +127,19 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
-  # Конкретный рецепт
   /api/v1/economy/production/recipes/{recipe_id}:
     get:
       summary: Получить детали рецепта
       operationId: getRecipeDetails
       tags:
-        - recipes
+      - recipes
       parameters:
-        - name: recipe_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: recipe_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
         '200':
           description: Детали рецепта
@@ -137,31 +151,34 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
-  # Производственные станции
   /api/v1/economy/production/stations:
     get:
       summary: Получить доступные станции
       operationId: getAvailableStations
       tags:
-        - stations
+      - stations
       parameters:
-        - name: player_id
-          in: query
-          schema:
-            type: string
-            format: uuid
-          description: ID игрока для проверки доступа
-        - name: location
-          in: query
-          schema:
-            type: string
-          description: Фильтр по локации
-        - name: station_type
-          in: query
-          schema:
-            type: string
-            enum: [ basic_workbench, advanced_forge, legendary_anvil, assembly_line, nano_fabricator ]
+      - name: player_id
+        in: query
+        schema:
+          type: string
+          format: uuid
+        description: ID игрока для проверки доступа
+      - name: location
+        in: query
+        schema:
+          type: string
+        description: Фильтр по локации
+      - name: station_type
+        in: query
+        schema:
+          type: string
+          enum:
+          - basic_workbench
+          - advanced_forge
+          - legendary_anvil
+          - assembly_line
+          - nano_fabricator
       responses:
         '200':
           description: Доступные станции
@@ -171,20 +188,19 @@ paths:
                 $ref: '#/components/schemas/StationsResponse'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
   /api/v1/economy/production/stations/{station_id}:
     get:
       summary: Получить детали станции
       operationId: getStationDetails
       tags:
-        - stations
+      - stations
       parameters:
-        - name: station_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: station_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
         '200':
           description: Детали станции
@@ -196,22 +212,21 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
     post:
       summary: Запустить производство на станции
       operationId: startProduction
       tags:
-        - stations
-        - chains
+      - stations
+      - chains
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: station_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: station_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       requestBody:
         required: true
         content:
@@ -237,23 +252,21 @@ paths:
                 $ref: '#/components/schemas/Error'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
-  # Статус производства
   /api/v1/economy/production/jobs/{job_id}:
     get:
       summary: Получить статус производственной задачи
       operationId: getProductionStatus
       tags:
-        - chains
+      - chains
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: job_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: job_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
         '200':
           description: Статус производства
@@ -267,21 +280,20 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
     delete:
       summary: Отменить производство
       operationId: cancelProduction
       tags:
-        - chains
+      - chains
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: job_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: job_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
         '200':
           description: Производство отменено
@@ -301,30 +313,28 @@ paths:
                 $ref: '#/components/schemas/Error'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
-  # Гильдийное производство
   /api/v1/economy/production/guilds/{guild_id}/chains:
     get:
       summary: Получить гильдийные производственные цепочки
       operationId: getGuildChains
       tags:
-        - guilds
-        - chains
+      - guilds
+      - chains
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: guild_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: member_id
-          in: query
-          schema:
-            type: string
-            format: uuid
-          description: ID участника гильдии
+      - name: guild_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: member_id
+        in: query
+        schema:
+          type: string
+          format: uuid
+        description: ID участника гильдии
       responses:
         '200':
           description: Гильдийные цепочки
@@ -336,22 +346,21 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
     post:
       summary: Создать гильдийную производственную цепочку
       operationId: createGuildChain
       tags:
-        - guilds
-        - chains
+      - guilds
+      - chains
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: guild_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: guild_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       requestBody:
         required: true
         content:
@@ -371,29 +380,28 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
   /api/v1/economy/production/guilds/{guild_id}/chains/{chain_id}/join:
     post:
       summary: Присоединиться к гильдийной цепочке
       operationId: joinGuildChain
       tags:
-        - guilds
-        - chains
+      - guilds
+      - chains
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: guild_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: chain_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: guild_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: chain_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       requestBody:
         required: true
         content:
@@ -419,16 +427,14 @@ paths:
                 $ref: '#/components/schemas/Error'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
-  # Массовое производство
   /api/v1/economy/production/bulk:
     post:
       summary: Запустить массовое производство
       operationId: startBulkProduction
       tags:
-        - bulk
+      - bulk
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -454,23 +460,21 @@ paths:
                 $ref: '#/components/schemas/Error'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
-  # Rush-заказы и ускорители
   /api/v1/economy/production/rush/{job_id}:
     post:
       summary: Применить rush-заказ к производству
       operationId: applyRushOrder
       tags:
-        - rush
+      - rush
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: job_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: job_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       requestBody:
         required: true
         content:
@@ -498,15 +502,14 @@ paths:
                 $ref: '#/components/schemas/Error'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
   /api/v1/economy/production/boosters:
     get:
       summary: Получить доступные ускорители
       operationId: getAvailableBoosters
       tags:
-        - rush
+      - rush
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       responses:
         '200':
           description: Доступные ускорители
@@ -516,16 +519,14 @@ paths:
                 $ref: '#/components/schemas/BoostersResponse'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
-  # Легендарный крафт
   /api/v1/economy/production/legendary/quests:
     get:
       summary: Получить доступные легендарные квестовые цепочки
       operationId: getLegendaryQuests
       tags:
-        - legendary
+      - legendary
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       responses:
         '200':
           description: Легендарные квесты
@@ -535,22 +536,21 @@ paths:
                 $ref: '#/components/schemas/LegendaryQuestsResponse'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
   /api/v1/economy/production/legendary/{quest_id}/progress:
     get:
       summary: Получить прогресс легендарной цепочки
       operationId: getLegendaryProgress
       tags:
-        - legendary
+      - legendary
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: quest_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: quest_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
         '200':
           description: Прогресс цепочки
@@ -564,21 +564,20 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
     post:
       summary: Обновить прогресс легендарной цепочки
       operationId: updateLegendaryProgress
       tags:
-        - legendary
+      - legendary
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: quest_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: quest_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       requestBody:
         required: true
         content:
@@ -600,38 +599,46 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
-  # Аналитика производства
   /api/v1/economy/production/analytics:
     get:
       summary: Аналитика производства
       operationId: getProductionAnalytics
       tags:
-        - analytics
+      - analytics
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: player_id
-          in: query
-          schema:
-            type: string
-            format: uuid
-        - name: guild_id
-          in: query
-          schema:
-            type: string
-            format: uuid
-        - name: period
-          in: query
-          schema:
-            type: string
-            enum: [ 7d, 30d, 90d, 1y ]
-            default: 30d
-        - name: category
-          in: query
-          schema:
-            type: string
-            enum: [ weapons, armor, implants, cyberdecks, vehicles, consumables ]
+      - name: player_id
+        in: query
+        schema:
+          type: string
+          format: uuid
+      - name: guild_id
+        in: query
+        schema:
+          type: string
+          format: uuid
+      - name: period
+        in: query
+        schema:
+          type: string
+          enum:
+          - 7d
+          - 30d
+          - 90d
+          - 1y
+          default: 30d
+      - name: category
+        in: query
+        schema:
+          type: string
+          enum:
+          - weapons
+          - armor
+          - implants
+          - cyberdecks
+          - vehicles
+          - consumables
       responses:
         '200':
           description: Аналитика производства
@@ -643,31 +650,40 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
   /api/v1/economy/production/analytics/profitability:
     get:
       summary: Анализ прибыльности рецептов
       operationId: getProfitabilityAnalysis
       tags:
-        - analytics
+      - analytics
       parameters:
-        - name: tier
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 5
-        - name: category
-          in: query
-          schema:
-            type: string
-            enum: [ weapons, armor, implants, cyberdecks, vehicles, consumables ]
-        - name: sort_by
-          in: query
-          schema:
-            type: string
-            enum: [ profit_margin, total_profit, success_rate, production_time ]
-            default: profit_margin
+      - name: tier
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 5
+      - name: category
+        in: query
+        schema:
+          type: string
+          enum:
+          - weapons
+          - armor
+          - implants
+          - cyberdecks
+          - vehicles
+          - consumables
+      - name: sort_by
+        in: query
+        schema:
+          type: string
+          enum:
+          - profit_margin
+          - total_profit
+          - success_rate
+          - production_time
+          default: profit_margin
       responses:
         '200':
           description: Анализ прибыльности
@@ -679,14 +695,12 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
 components:
   securitySchemes:
     BearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
-
   responses:
     BadRequest:
       description: Неверный запрос
@@ -720,14 +734,12 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-
   schemas:
-    # Общие схемы
     Error:
       type: object
       required:
-        - code
-        - message
+      - code
+      - message
       properties:
         code:
           type: string
@@ -738,18 +750,16 @@ components:
         details:
           type: object
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
-    # Рецепты
     Recipe:
       type: object
       required:
-        - id
-        - name
-        - tier
-        - category
-        - ingredients
-        - result
-        - production_time
+      - id
+      - name
+      - tier
+      - category
+      - ingredients
+      - result
+      - production_time
       properties:
         id:
           type: string
@@ -758,30 +768,26 @@ components:
         name:
           type: string
           description: Название рецепта
-        tier:
-          type: integer
-          minimum: 1
-          maximum: 5
-          description: Tier рецепта (1-5)
         category:
           type: string
-          enum: [ weapons, armor, implants, cyberdecks, vehicles, consumables ]
+          enum:
+          - weapons
+          - armor
+          - implants
+          - cyberdecks
+          - vehicles
+          - consumables
           description: Категория предмета
+        description:
+          type: string
+          description: Описание рецепта
+        result:
+          $ref: '#/components/schemas/RecipeResult'
         ingredients:
           type: array
           items:
             $ref: '#/components/schemas/RecipeIngredient'
           description: Необходимые ингредиенты
-        result:
-          $ref: '#/components/schemas/RecipeResult'
-        production_time:
-          type: integer
-          minimum: 1
-          description: Время производства (секунды)
-        required_level:
-          type: integer
-          minimum: 1
-          description: Требуемый уровень крафтера
         success_rate:
           type: number
           format: float
@@ -796,20 +802,29 @@ components:
           maximum: 1
           default: 0.5
           description: Штраф при провале (% потерянных ресурсов)
-        description:
-          type: string
-          description: Описание рецепта
+        tier:
+          type: integer
+          minimum: 1
+          maximum: 5
+          description: Tier рецепта (1-5)
+        production_time:
+          type: integer
+          minimum: 1
+          description: Время производства (секунды)
+        required_level:
+          type: integer
+          minimum: 1
+          description: Требуемый уровень крафтера
         unlocks_at_level:
           type: integer
           minimum: 1
           description: Уровень, на котором открывается рецепт
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     RecipeIngredient:
       type: object
       required:
-        - resource_id
-        - quantity
+      - resource_id
+      - quantity
       properties:
         resource_id:
           type: string
@@ -825,21 +840,16 @@ components:
           maximum: 100
           description: Минимальное качество ресурса (%)
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     RecipeResult:
       type: object
       required:
-        - item_id
-        - quantity
+      - item_id
+      - quantity
       properties:
         item_id:
           type: string
           format: uuid
           description: ID получаемого предмета
-        quantity:
-          type: integer
-          minimum: 1
-          description: Количество получаемых предметов
         quality_range:
           type: object
           properties:
@@ -852,16 +862,20 @@ components:
               minimum: 1
               maximum: 100
           description: Диапазон качества результата
+        quantity:
+          type: integer
+          minimum: 1
+          description: Количество получаемых предметов
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
-    # Ответы API
     RecipesCatalogResponse:
       type: object
       required:
-        - recipes
-        - total
-        - pagination
+      - recipes
+      - total
+      - pagination
       properties:
+        pagination:
+          $ref: '#/components/schemas/PaginationInfo'
         recipes:
           type: array
           items:
@@ -869,13 +883,14 @@ components:
         total:
           type: integer
           minimum: 0
-        pagination:
-          $ref: '#/components/schemas/PaginationInfo'
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     PaginationInfo:
       type: object
       properties:
+        has_next:
+          type: boolean
+        has_prev:
+          type: boolean
         page:
           type: integer
           minimum: 1
@@ -885,41 +900,35 @@ components:
         total_pages:
           type: integer
           minimum: 0
-        has_next:
-          type: boolean
-        has_prev:
-          type: boolean
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     RecipeDetail:
       type: object
       required:
-        - recipe
-        - player_can_craft
-        - estimated_costs
+      - recipe
+      - player_can_craft
+      - estimated_costs
       properties:
+        estimated_costs:
+          $ref: '#/components/schemas/EstimatedCosts'
+        profitability:
+          $ref: '#/components/schemas/ProfitabilityInfo'
         recipe:
           $ref: '#/components/schemas/Recipe'
-        player_can_craft:
-          type: boolean
-          description: Может ли игрок создать этот рецепт
         missing_requirements:
           type: array
           items:
             type: string
           description: Недостающие требования
-        estimated_costs:
-          $ref: '#/components/schemas/EstimatedCosts'
-        profitability:
-          $ref: '#/components/schemas/ProfitabilityInfo'
+        player_can_craft:
+          type: boolean
+          description: Может ли игрок создать этот рецепт
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     EstimatedCosts:
       type: object
       required:
-        - material_cost
-        - time_cost
-        - total_cost
+      - material_cost
+      - time_cost
+      - total_cost
       properties:
         material_cost:
           type: number
@@ -942,13 +951,12 @@ components:
           minimum: 0
           description: Общая стоимость (€)
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     ProfitabilityInfo:
       type: object
       required:
-        - expected_profit
-        - profit_margin
-        - roi_time
+      - expected_profit
+      - profit_margin
+      - roi_time
       properties:
         expected_profit:
           type: number
@@ -967,25 +975,32 @@ components:
           type: integer
           description: Точка безубыточности (количество крафтов)
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
-    # Производственные станции
     ProductionStation:
       type: object
       required:
-        - id
-        - name
-        - type
-        - location
-        - efficiency
+      - id
+      - name
+      - type
+      - location
+      - efficiency
       properties:
         id:
           type: string
           format: uuid
+        current_job:
+          type: string
+          format: uuid
+          description: ID текущего задания
         name:
           type: string
         type:
           type: string
-          enum: [ basic_workbench, advanced_forge, legendary_anvil, assembly_line, nano_fabricator ]
+          enum:
+          - basic_workbench
+          - advanced_forge
+          - legendary_anvil
+          - assembly_line
+          - nano_fabricator
         location:
           type: string
           description: Локация станции
@@ -1007,10 +1022,6 @@ components:
           minimum: 0
           maximum: 100
           description: Бонус к скорости (%)
-        access_level:
-          type: integer
-          minimum: 1
-          description: Требуемый уровень доступа
         hourly_rate:
           type: number
           format: float
@@ -1019,44 +1030,41 @@ components:
         is_available:
           type: boolean
           default: true
-        current_job:
-          type: string
-          format: uuid
-          description: ID текущего задания
+        access_level:
+          type: integer
+          minimum: 1
+          description: Требуемый уровень доступа
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     StationsResponse:
       type: object
       required:
-        - stations
+      - stations
       properties:
         stations:
           type: array
           items:
             $ref: '#/components/schemas/ProductionStation'
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     StationDetail:
       type: object
       required:
-        - station
-        - available_recipes
-        - queue_status
+      - station
+      - available_recipes
+      - queue_status
       properties:
+        maintenance_info:
+          $ref: '#/components/schemas/MaintenanceInfo'
         station:
           $ref: '#/components/schemas/ProductionStation'
+        queue_status:
+          $ref: '#/components/schemas/QueueStatus'
         available_recipes:
           type: array
           items:
             type: string
             format: uuid
           description: Доступные рецепты
-        queue_status:
-          $ref: '#/components/schemas/QueueStatus'
-        maintenance_info:
-          $ref: '#/components/schemas/MaintenanceInfo'
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     QueueStatus:
       type: object
       properties:
@@ -1070,7 +1078,6 @@ components:
           type: integer
           minimum: 1
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     MaintenanceInfo:
       type: object
       properties:
@@ -1087,42 +1094,44 @@ components:
           maximum: 100
           description: Снижение эффективности (%)
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     StartProductionRequest:
       type: object
       required:
-        - recipe_id
-        - quantity
+      - recipe_id
+      - quantity
       properties:
         recipe_id:
           type: string
           format: uuid
-        quantity:
-          type: integer
-          minimum: 1
-          default: 1
         priority:
           type: string
-          enum: [ low, normal, high, rush ]
+          enum:
+          - low
+          - normal
+          - high
+          - rush
           default: normal
-        use_premium_materials:
-          type: boolean
-          default: false
-          description: Использовать премиум материалы
         apply_boosters:
           type: array
           items:
             type: string
             format: uuid
           description: ID применяемых ускорителей
+        use_premium_materials:
+          type: boolean
+          default: false
+          description: Использовать премиум материалы
+        quantity:
+          type: integer
+          minimum: 1
+          default: 1
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     ProductionStartedResponse:
       type: object
       required:
-        - job_id
-        - estimated_completion
-        - total_cost
+      - job_id
+      - estimated_completion
+      - total_cost
       properties:
         job_id:
           type: string
@@ -1139,36 +1148,34 @@ components:
           minimum: 0
           maximum: 1
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     ProductionStatus:
       type: object
       required:
-        - job_id
-        - status
-        - recipe_id
-        - started_at
+      - job_id
+      - status
+      - recipe_id
+      - started_at
       properties:
         job_id:
           type: string
           format: uuid
-        status:
-          type: string
-          enum: [ queued, running, completed, failed, cancelled ]
         recipe_id:
           type: string
           format: uuid
+        status:
+          type: string
+          enum:
+          - queued
+          - running
+          - completed
+          - failed
+          - cancelled
         started_at:
           type: string
           format: date-time
         estimated_completion:
           type: string
           format: date-time
-        progress:
-          type: number
-          format: float
-          minimum: 0
-          maximum: 100
-          description: Прогресс (%)
         current_step:
           type: string
           description: Текущий этап производства
@@ -1177,22 +1184,23 @@ components:
           items:
             type: string
           description: Примененные ускорители
+        progress:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Прогресс (%)
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     ProductionCancelledResponse:
       type: object
       required:
-        - job_id
-        - refund_amount
-        - cancelled_at
+      - job_id
+      - refund_amount
+      - cancelled_at
       properties:
         job_id:
           type: string
           format: uuid
-        refund_amount:
-          type: number
-          format: float
-          minimum: 0
         cancelled_at:
           type: string
           format: date-time
@@ -1200,38 +1208,39 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ResourceReturn'
+        refund_amount:
+          type: number
+          format: float
+          minimum: 0
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     ResourceReturn:
       type: object
       required:
-        - resource_id
-        - returned_quantity
+      - resource_id
+      - returned_quantity
       properties:
         resource_id:
           type: string
           format: uuid
-        returned_quantity:
-          type: integer
-          minimum: 0
         quality_degradation:
           type: number
           format: float
           minimum: 0
           maximum: 100
           description: Снижение качества (%)
+        returned_quantity:
+          type: integer
+          minimum: 0
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
-    # Гильдийное производство
     GuildChain:
       type: object
       required:
-        - id
-        - guild_id
-        - recipe_id
-        - coordinator
-        - participants
-        - status
+      - id
+      - guild_id
+      - recipe_id
+      - coordinator
+      - participants
+      - status
       properties:
         id:
           type: string
@@ -1246,55 +1255,62 @@ components:
           type: string
           format: uuid
           description: ID координатора
-        participants:
-          type: array
-          items:
-            $ref: '#/components/schemas/ChainParticipant'
         status:
           type: string
-          enum: [ forming, gathering_materials, producing, completed, failed ]
-        progress:
-          type: number
-          format: float
-          minimum: 0
-          maximum: 100
+          enum:
+          - forming
+          - gathering_materials
+          - producing
+          - completed
+          - failed
         deadline:
           type: string
           format: date-time
         reward_distribution:
           $ref: '#/components/schemas/RewardDistribution'
+        participants:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChainParticipant'
+        progress:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     ChainParticipant:
       type: object
       required:
-        - player_id
-        - role
-        - contribution
+      - player_id
+      - role
+      - contribution
       properties:
         player_id:
           type: string
           format: uuid
         role:
           type: string
-          enum: [ gatherer, crafter, financier, coordinator ]
+          enum:
+          - gatherer
+          - crafter
+          - financier
+          - coordinator
+        materials_provided:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContributionItem'
         contribution:
           type: number
           format: float
           minimum: 0
           maximum: 100
           description: Вклад в цепочку (%)
-        materials_provided:
-          type: array
-          items:
-            $ref: '#/components/schemas/ContributionItem'
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     ContributionItem:
       type: object
       required:
-        - resource_id
-        - quantity
+      - resource_id
+      - quantity
       properties:
         resource_id:
           type: string
@@ -1303,43 +1319,43 @@ components:
           type: integer
           minimum: 0
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     RewardDistribution:
       type: object
       properties:
-        total_reward:
-          type: number
-          format: float
         distribution_type:
           type: string
-          enum: [ equal, contribution_based, role_based ]
+          enum:
+          - equal
+          - contribution_based
+          - role_based
         participant_rewards:
           type: array
           items:
             $ref: '#/components/schemas/ParticipantReward'
+        total_reward:
+          type: number
+          format: float
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     ParticipantReward:
       type: object
       required:
-        - player_id
-        - amount
+      - player_id
+      - amount
       properties:
         player_id:
           type: string
           format: uuid
-        amount:
-          type: number
-          format: float
         bonus_reason:
           type: string
           description: Причина бонуса
+        amount:
+          type: number
+          format: float
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     GuildChainsResponse:
       type: object
       required:
-        - chains
+      - chains
       properties:
         chains:
           type: array
@@ -1349,40 +1365,45 @@ components:
           type: integer
           minimum: 0
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     CreateGuildChainRequest:
       type: object
       required:
-        - recipe_id
-        - max_participants
-        - deadline
+      - recipe_id
+      - max_participants
+      - deadline
       properties:
         recipe_id:
           type: string
           format: uuid
-        max_participants:
-          type: integer
-          minimum: 2
-          maximum: 20
         deadline:
           type: string
           format: date-time
         reward_distribution:
           type: string
-          enum: [ equal, contribution_based, role_based ]
+          enum:
+          - equal
+          - contribution_based
+          - role_based
           default: contribution_based
         required_roles:
           type: array
           items:
             type: string
-            enum: [ gatherer, crafter, financier, coordinator ]
+            enum:
+            - gatherer
+            - crafter
+            - financier
+            - coordinator
+        max_participants:
+          type: integer
+          minimum: 2
+          maximum: 20
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     GuildChainCreatedResponse:
       type: object
       required:
-        - chain_id
-        - created_at
+      - chain_id
+      - created_at
       properties:
         chain_id:
           type: string
@@ -1394,32 +1415,34 @@ components:
           type: string
           description: Ссылка для приглашения участников
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     JoinGuildChainRequest:
       type: object
       required:
-        - role
+      - role
       properties:
         role:
           type: string
-          enum: [ gatherer, crafter, financier, coordinator ]
+          enum:
+          - gatherer
+          - crafter
+          - financier
+          - coordinator
+        materials_offered:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContributionItem'
         contribution_offer:
           type: number
           format: float
           minimum: 0
           description: Предлагаемый вклад (€)
-        materials_offered:
-          type: array
-          items:
-            $ref: '#/components/schemas/ContributionItem'
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     JoinedGuildChainResponse:
       type: object
       required:
-        - chain_id
-        - joined_at
-        - assigned_role
+      - chain_id
+      - joined_at
+      - assigned_role
       properties:
         chain_id:
           type: string
@@ -1429,49 +1452,53 @@ components:
           format: date-time
         assigned_role:
           type: string
-          enum: [ gatherer, crafter, financier, coordinator ]
+          enum:
+          - gatherer
+          - crafter
+          - financier
+          - coordinator
         expected_contribution:
           type: number
           format: float
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
-    # Массовое производство
     BulkProductionRequest:
       type: object
       required:
-        - recipe_id
-        - batch_size
-        - station_id
+      - recipe_id
+      - batch_size
+      - station_id
       properties:
         recipe_id:
           type: string
           format: uuid
-        batch_size:
-          type: integer
-          minimum: 10
-          maximum: 1000
-          description: Размер партии
         station_id:
           type: string
           format: uuid
         priority:
           type: string
-          enum: [ low, normal, high ]
+          enum:
+          - low
+          - normal
+          - high
           default: normal
+        batch_size:
+          type: integer
+          minimum: 10
+          maximum: 1000
+          description: Размер партии
         quality_target:
           type: integer
           minimum: 1
           maximum: 100
           description: Целевое качество (%)
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     BulkProductionStartedResponse:
       type: object
       required:
-        - batch_id
-        - estimated_completion
-        - total_cost
-        - efficiency_bonus
+      - batch_id
+      - estimated_completion
+      - total_cost
+      - efficiency_bonus
       properties:
         batch_id:
           type: string
@@ -1491,30 +1518,32 @@ components:
           format: float
           description: Экономия ресурсов (%)
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
-    # Rush-заказы и ускорители
     RushOrderRequest:
       type: object
       required:
-        - rush_type
+      - rush_type
       properties:
         rush_type:
           type: string
-          enum: [ standard, premium, legendary ]
-          description: "Rush order type (standard: +50% cost -50% time)"
+          enum:
+          - standard
+          - premium
+          - legendary
+          description: 'Rush order type (standard: +50% cost -50% time)'
         payment_method:
           type: string
-          enum: [ currency, premium_points ]
+          enum:
+          - currency
+          - premium_points
           default: currency
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     RushOrderAppliedResponse:
       type: object
       required:
-        - job_id
-        - new_completion_time
-        - rush_cost
-        - time_saved
+      - job_id
+      - new_completion_time
+      - rush_cost
+      - time_saved
       properties:
         job_id:
           type: string
@@ -1525,24 +1554,23 @@ components:
         rush_cost:
           type: number
           format: float
-        time_saved:
-          type: integer
-          description: Сэкономленное время (секунды)
         speed_multiplier:
           type: number
           format: float
           description: Множитель скорости
+        time_saved:
+          type: integer
+          description: Сэкономленное время (секунды)
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     ProductionBooster:
       type: object
       required:
-        - id
-        - name
-        - type
-        - effect
-        - duration
-        - cost
+      - id
+      - name
+      - type
+      - effect
+      - duration
+      - cost
       properties:
         id:
           type: string
@@ -1551,27 +1579,34 @@ components:
           type: string
         type:
           type: string
-          enum: [ efficiency, quality, speed, material_optimizer ]
+          enum:
+          - efficiency
+          - quality
+          - speed
+          - material_optimizer
+        rarity:
+          type: string
+          enum:
+          - common
+          - uncommon
+          - rare
+          - epic
         effect:
           type: number
           format: float
           description: Величина эффекта (%)
-        duration:
-          type: integer
-          description: Длительность (секунды)
         cost:
           type: number
           format: float
           description: Стоимость (€)
-        rarity:
-          type: string
-          enum: [ common, uncommon, rare, epic ]
+        duration:
+          type: integer
+          description: Длительность (секунды)
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     BoostersResponse:
       type: object
       required:
-        - boosters
+      - boosters
       properties:
         boosters:
           type: array
@@ -1584,16 +1619,14 @@ components:
             format: uuid
           description: ID бустеров, которыми владеет игрок
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
-    # Легендарный крафт
     LegendaryQuest:
       type: object
       required:
-        - id
-        - name
-        - description
-        - requirements
-        - rewards
+      - id
+      - name
+      - description
+      - requirements
+      - rewards
       properties:
         id:
           type: string
@@ -1602,29 +1635,28 @@ components:
           type: string
         description:
           type: string
+        difficulty:
+          type: string
+          enum:
+          - challenging
+          - extreme
+          - legendary
         requirements:
           $ref: '#/components/schemas/LegendaryRequirements'
         rewards:
           $ref: '#/components/schemas/LegendaryRewards'
-        difficulty:
-          type: string
-          enum: [ challenging, extreme, legendary ]
-        estimated_duration:
-          type: integer
-          description: Ожидаемая длительность (дни)
         success_rate:
           type: number
           format: float
           minimum: 0
           maximum: 1
+        estimated_duration:
+          type: integer
+          description: Ожидаемая длительность (дни)
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     LegendaryRequirements:
       type: object
       properties:
-        required_level:
-          type: integer
-          minimum: 50
         required_faction:
           type: string
         special_licenses:
@@ -1640,26 +1672,27 @@ components:
           items:
             type: string
             format: uuid
+        required_level:
+          type: integer
+          minimum: 50
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     RareMaterialRequirement:
       type: object
       required:
-        - material_id
-        - quantity
-        - source_hint
+      - material_id
+      - quantity
+      - source_hint
       properties:
         material_id:
           type: string
           format: uuid
-        quantity:
-          type: integer
-          minimum: 1
         source_hint:
           type: string
           description: Подсказка где найти материал
+        quantity:
+          type: integer
+          minimum: 1
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     LegendaryRewards:
       type: object
       properties:
@@ -1667,6 +1700,9 @@ components:
           type: string
           format: uuid
           description: ID легендарного предмета
+        title_unlocked:
+          type: string
+          description: Разблокируемый титул
         bonus_rewards:
           type: array
           items:
@@ -1674,15 +1710,11 @@ components:
         reputation_gain:
           type: integer
           description: Прирост репутации
-        title_unlocked:
-          type: string
-          description: Разблокируемый титул
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     LegendaryQuestsResponse:
       type: object
       required:
-        - quests
+      - quests
       properties:
         quests:
           type: array
@@ -1695,67 +1727,61 @@ components:
             format: uuid
           description: ID квестов, доступных игроку
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     LegendaryProgressResponse:
       type: object
       required:
-        - quest_id
-        - progress
-        - completed_steps
-        - next_step
+      - quest_id
+      - progress
+      - completed_steps
+      - next_step
       properties:
         quest_id:
           type: string
           format: uuid
+        next_step:
+          type: string
+        estimated_completion:
+          type: string
+          format: date-time
+        completed_steps:
+          type: array
+          items:
+            type: string
+        remaining_requirements:
+          type: array
+          items:
+            type: string
         progress:
           type: number
           format: float
           minimum: 0
           maximum: 100
-        completed_steps:
-          type: array
-          items:
-            type: string
-        next_step:
-          type: string
-        remaining_requirements:
-          type: array
-          items:
-            type: string
-        estimated_completion:
-          type: string
-          format: date-time
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     UpdateLegendaryProgressRequest:
       type: object
       required:
-        - step_completed
+      - step_completed
       properties:
         step_completed:
           type: string
+        notes:
+          type: string
+          maxLength: 500
         materials_used:
           type: array
           items:
             $ref: '#/components/schemas/ContributionItem'
-        notes:
-          type: string
-          maxLength: 500
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     LegendaryProgressUpdatedResponse:
       type: object
       required:
-        - quest_id
-        - new_progress
-        - updated_at
+      - quest_id
+      - new_progress
+      - updated_at
       properties:
         quest_id:
           type: string
           format: uuid
-        new_progress:
-          type: number
-          format: float
         updated_at:
           type: string
           format: date-time
@@ -1764,47 +1790,38 @@ components:
           items:
             type: string
           description: Разблокированный контент
+        new_progress:
+          type: number
+          format: float
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
-    # Аналитика производства
     ProductionAnalyticsResponse:
       type: object
       required:
-        - period
-        - summary
-        - recipes_used
-        - stations_utilized
+      - period
+      - summary
+      - recipes_used
+      - stations_utilized
       properties:
         period:
           type: string
-        summary:
-          $ref: '#/components/schemas/ProductionSummary'
         recipes_used:
           type: object
           description: Статистика по рецептам
         stations_utilized:
           type: object
           description: Статистика по станциям
+        efficiency_metrics:
+          $ref: '#/components/schemas/EfficiencyMetrics'
+        summary:
+          $ref: '#/components/schemas/ProductionSummary'
         profitability_trends:
           type: array
           items:
             $ref: '#/components/schemas/ProfitabilityTrend'
-        efficiency_metrics:
-          $ref: '#/components/schemas/EfficiencyMetrics'
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     ProductionSummary:
       type: object
       properties:
-        total_productions:
-          type: integer
-          minimum: 0
-        successful_productions:
-          type: integer
-          minimum: 0
-        failed_productions:
-          type: integer
-          minimum: 0
         total_revenue:
           type: number
           format: float
@@ -1817,27 +1834,34 @@ components:
         average_profit_margin:
           type: number
           format: float
+        total_productions:
+          type: integer
+          minimum: 0
+        successful_productions:
+          type: integer
+          minimum: 0
+        failed_productions:
+          type: integer
+          minimum: 0
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     ProfitabilityTrend:
       type: object
       required:
-        - date
-        - avg_profit_margin
+      - date
+      - avg_profit_margin
       properties:
+        top_performing_recipe:
+          type: string
+          format: uuid
         date:
           type: string
           format: date
         avg_profit_margin:
           type: number
           format: float
-        top_performing_recipe:
-          type: string
-          format: uuid
         total_volume:
           type: integer
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     EfficiencyMetrics:
       type: object
       properties:
@@ -1864,45 +1888,51 @@ components:
           maximum: 100
           description: Консистентность качества (%)
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     ProfitabilityAnalysisResponse:
       type: object
       required:
-        - recipes
-        - sorted_by
+      - recipes
+      - sorted_by
       properties:
+        sorted_by:
+          type: string
         recipes:
           type: array
           items:
             $ref: '#/components/schemas/RecipeProfitability'
-        sorted_by:
-          type: string
-        total_recipes:
-          type: integer
         recommended_recipes:
           type: array
           items:
             type: string
             format: uuid
+        total_recipes:
+          type: integer
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     RecipeProfitability:
       type: object
       required:
-        - recipe_id
-        - profitability_metrics
+      - recipe_id
+      - profitability_metrics
       properties:
         recipe_id:
           type: string
           format: uuid
-        profitability_metrics:
-          $ref: '#/components/schemas/ProfitabilityInfo'
         market_demand:
           type: string
-          enum: [ low, medium, high, very_high ]
+          enum:
+          - low
+          - medium
+          - high
+          - very_high
         competition_level:
           type: string
-          enum: [ low, medium, high, saturated ]
+          enum:
+          - low
+          - medium
+          - high
+          - saturated
+        profitability_metrics:
+          $ref: '#/components/schemas/ProfitabilityInfo'
         recommended_batch_size:
           type: integer
           minimum: 1

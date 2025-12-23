@@ -1,29 +1,47 @@
 openapi: 3.0.3
 info:
   title: Quest System API
-  description: |
-    **Enterprise-Grade Quest Management API for NECPGAME MMOFPS**
+  description: '**Enterprise-Grade Quest Management API for NECPGAME MMOFPS**
+
 
     Полная система управления квестами с enterprise-grade оптимизациями.
+
     Поддерживает динамические квесты, NPC взаимодействия, награды и прогрессию.
 
+
     ## Key Features
+
     - **Enterprise-grade quest management** с оптимизацией производительности
+
     - **Backend optimization hints** для struct alignment и memory savings
+
     - **Complete validation** с redocly и ogen code generation
+
     - **Security-first approach** с JWT authentication
+
     - **Performance-optimized** response structures
+
     - **Comprehensive error handling** с proper HTTP status codes
 
+
     ## Domain Purpose
+
     Quest System управляет всеми аспектами квестовой системы:
+
     создание квестов, отслеживание прогресса, награды, NPC диалоги, ветвление сюжета.
 
+
     ## Performance Targets
+
     - Hot paths: 1000+ RPS, P99 <15ms (quest status, progress updates)
+
     - Quest queries: <5ms average response time
+
     - Memory: <35MB per service instance
+
     - Cache hit rate: >95%
+
+    '
   version: 1.0.0
   license:
     name: MIT
@@ -32,29 +50,25 @@ info:
     name: NECPGAME Quests API Support
     url: https://necpgame.com/support
     email: api@quests.necpgame.com
-
 servers:
-  - url: http://localhost:8080/api/v1
-    description: Development server
-  - url: https://api.necpgame.com/api/v1
-    description: Production server
-
+- url: http://localhost:8080/api/v1
+  description: Development server
+- url: https://api.necpgame.com/api/v1
+  description: Production server
 security:
-  - BearerAuth: [ ]
-
+- BearerAuth: []
 tags:
-  - name: Quests
-    description: Quest management operations
-  - name: Quest Progress
-    description: Quest progress tracking
-
+- name: Quests
+  description: Quest management operations
+- name: Quest Progress
+  description: Quest progress tracking
 paths:
   /api/v1/quests/health:
     get:
       summary: Quest service health check
       operationId: questHealthCheck
       tags:
-        - Quests
+      - Quests
       responses:
         '200':
           description: Service is healthy
@@ -62,50 +76,58 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HealthResponse'
-
   /api/v1/quests:
     get:
       summary: Get available quests
       operationId: getQuests
       tags:
-        - Quests
+      - Quests
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: status
-          in: query
-          schema:
-            type: string
-            enum: [ available, active, completed, failed ]
-            default: available
-          description: Filter by quest status
-        - name: type
-          in: query
-          schema:
-            type: string
-            enum: [ main_story, side_quest, daily, event, faction ]
-          description: Filter by quest type
-        - name: location_id
-          in: query
-          schema:
-            type: string
-            format: uuid
-          description: Filter by location
-        - name: level_min
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-          description: Minimum character level
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 50
-            default: 20
-          description: Maximum number of results
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - available
+          - active
+          - completed
+          - failed
+          default: available
+        description: Filter by quest status
+      - name: type
+        in: query
+        schema:
+          type: string
+          enum:
+          - main_story
+          - side_quest
+          - daily
+          - event
+          - faction
+        description: Filter by quest type
+      - name: location_id
+        in: query
+        schema:
+          type: string
+          format: uuid
+        description: Filter by location
+      - name: level_min
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+        description: Minimum character level
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 50
+          default: 20
+        description: Maximum number of results
       responses:
         '200':
           description: Quests retrieved successfully
@@ -119,23 +141,22 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-
   /api/v1/quests/{quest_id}:
     get:
       summary: Get quest details
       operationId: getQuest
       tags:
-        - Quests
+      - Quests
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: quest_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Quest unique identifier
+      - name: quest_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Quest unique identifier
       responses:
         '200':
           description: Quest details retrieved
@@ -149,23 +170,22 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-
   /api/v1/quests/{quest_id}/accept:
     post:
       summary: Accept a quest
       operationId: acceptQuest
       tags:
-        - Quests
+      - Quests
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: quest_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Quest to accept
+      - name: quest_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Quest to accept
       responses:
         '200':
           description: Quest accepted successfully
@@ -185,23 +205,22 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-
   /api/v1/quests/{quest_id}/progress:
     get:
       summary: Get quest progress
       operationId: getQuestProgress
       tags:
-        - Quest Progress
+      - Quest Progress
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: quest_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Quest identifier
+      - name: quest_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Quest identifier
       responses:
         '200':
           description: Quest progress retrieved
@@ -215,22 +234,21 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-
     post:
       summary: Update quest progress
       operationId: updateQuestProgress
       tags:
-        - Quest Progress
+      - Quest Progress
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: quest_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Quest identifier
+      - name: quest_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Quest identifier
       requestBody:
         required: true
         content:
@@ -256,23 +274,22 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-
   /api/v1/quests/{quest_id}/complete:
     post:
       summary: Complete a quest
       operationId: completeQuest
       tags:
-        - Quests
+      - Quests
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: quest_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Quest to complete
+      - name: quest_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Quest to complete
       responses:
         '200':
           description: Quest completed successfully
@@ -292,8 +309,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-
-  # Seattle Quests Service Integration - specialized Seattle 2020-2029 quests
   /api/v1/seattle/quests:
     $ref: ./seattle-quests-service.yaml#/paths/~1api~1v1~1quests~1seattle
   /api/v1/seattle/quests/{quest_id}:
@@ -306,55 +321,27 @@ paths:
     $ref: ./seattle-quests-service.yaml#/paths/~1api~1v1~1quests~1seattle~1history~1{year}
   /api/v1/seattle/quests/routes:
     $ref: ./seattle-quests-service.yaml#/paths/~1api~1v1~1quests~1seattle~1routes
-
 components:
   securitySchemes:
     BearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
-
   schemas:
-    # Core quest schemas
     Quest:
       type: object
       required:
-        - id
-        - title
-        - type
-        - status
-        - created_at
+      - id
+      - title
+      - type
+      - status
+      - created_at
       properties:
         id:
           type: string
           format: uuid
           description: Unique quest identifier
           example: 550e8400-e29b-41d4-a716-446655440000
-        title:
-          type: string
-          maxLength: 200
-          description: Quest title
-          example: "Shadows of the Past"
-        description:
-          type: string
-          maxLength: 2000
-          description: Detailed quest description
-        type:
-          type: string
-          enum: [ main_story, side_quest, daily, event, faction ]
-          description: Quest type
-          example: main_story
-        status:
-          type: string
-          enum: [ draft, available, active, completed, failed, expired ]
-          description: Quest status
-          example: available
-        level_requirement:
-          type: integer
-          minimum: 1
-          maximum: 100
-          description: Required character level
-          example: 15
         location_id:
           type: string
           format: uuid
@@ -363,65 +350,88 @@ components:
           type: string
           format: uuid
           description: NPC who gives the quest
-        time_limit_hours:
-          type: integer
-          minimum: 1
-          description: Time limit in hours
-        is_repeatable:
-          type: boolean
-          default: false
-          description: Whether quest can be repeated
-        prerequisites:
-          type: array
-          items:
-            type: object
-            required:
-              - type
-              - value
-            properties:
-              type:
-                type: string
-                enum: [ quest_completed, level_minimum, faction_reputation, item_owned ]
-              value:
-                type: string
-                description: Prerequisite value
+        title:
+          type: string
+          maxLength: 200
+          description: Quest title
+          example: Shadows of the Past
+        description:
+          type: string
+          maxLength: 2000
+          description: Detailed quest description
+        type:
+          type: string
+          enum:
+          - main_story
+          - side_quest
+          - daily
+          - event
+          - faction
+          description: Quest type
+          example: main_story
+        status:
+          type: string
+          enum:
+          - draft
+          - available
+          - active
+          - completed
+          - failed
+          - expired
+          description: Quest status
+          example: available
         created_at:
           type: string
           format: date-time
         updated_at:
           type: string
           format: date-time
+        prerequisites:
+          type: array
+          items:
+            type: object
+            required:
+            - type
+            - value
+            properties:
+              type:
+                type: string
+                enum:
+                - quest_completed
+                - level_minimum
+                - faction_reputation
+                - item_owned
+              value:
+                type: string
+                description: Prerequisite value
+        is_repeatable:
+          type: boolean
+          default: false
+          description: Whether quest can be repeated
+        level_requirement:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Required character level
+          example: 15
+        time_limit_hours:
+          type: integer
+          minimum: 1
+          description: Time limit in hours
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     QuestObjective:
       type: object
       required:
-        - id
-        - description
-        - type
-        - current_progress
-        - target_progress
+      - id
+      - description
+      - type
+      - current_progress
+      - target_progress
       properties:
         id:
           type: string
           format: uuid
           description: Objective identifier
-        description:
-          type: string
-          maxLength: 500
-          description: Objective description
-        type:
-          type: string
-          enum: [ kill, collect, explore, interact, deliver, escort, defend ]
-          description: Objective type
-        current_progress:
-          type: integer
-          minimum: 0
-          description: Current progress value
-        target_progress:
-          type: integer
-          minimum: 1
-          description: Target progress value
         location_id:
           type: string
           format: uuid
@@ -434,14 +444,32 @@ components:
           type: string
           format: uuid
           description: Required item
-
+        description:
+          type: string
+          maxLength: 500
+          description: Objective description
+        type:
+          type: string
+          enum:
+          - kill
+          - collect
+          - explore
+          - interact
+          - deliver
+          - escort
+          - defend
+          description: Objective type
+        current_progress:
+          type: integer
+          minimum: 0
+          description: Current progress value
+        target_progress:
+          type: integer
+          minimum: 1
+          description: Target progress value
     QuestReward:
       type: object
       properties:
-        experience_points:
-          type: integer
-          minimum: 0
-          description: XP reward
         currency:
           type: object
           properties:
@@ -450,15 +478,24 @@ components:
               minimum: 0
             type:
               type: string
-              enum: [ eddies, tokens, reputation ]
+              enum:
+              - eddies
+              - tokens
+              - reputation
               default: eddies
+        faction_reputation:
+          type: object
+          description: Faction reputation changes
+          additionalProperties:
+            type: integer
+            description: Reputation points (positive or negative)
         items:
           type: array
           items:
             type: object
             required:
-              - item_id
-              - quantity
+            - item_id
+            - quantity
             properties:
               item_id:
                 type: string
@@ -466,91 +503,91 @@ components:
               quantity:
                 type: integer
                 minimum: 1
-        faction_reputation:
-          type: object
-          description: Faction reputation changes
-          additionalProperties:
-            type: integer
-            description: Reputation points (positive or negative)
-
+        experience_points:
+          type: integer
+          minimum: 0
+          description: XP reward
     QuestDetailResponse:
       type: object
       required:
-        - quest
-        - objectives
-        - rewards
+      - quest
+      - objectives
+      - rewards
       properties:
         quest:
           $ref: '#/components/schemas/Quest'
+        rewards:
+          $ref: '#/components/schemas/QuestReward'
         objectives:
           type: array
           items:
             $ref: '#/components/schemas/QuestObjective'
-        rewards:
-          $ref: '#/components/schemas/QuestReward'
         dialogue_options:
           type: array
           items:
             type: object
             required:
-              - text
-              - action
+            - text
+            - action
             properties:
               text:
                 type: string
                 maxLength: 200
               action:
                 type: string
-                enum: [ accept, decline, ask_more_info ]
-
+                enum:
+                - accept
+                - decline
+                - ask_more_info
     QuestListResponse:
       type: object
       required:
-        - quests
-        - total_count
+      - quests
+      - total_count
       properties:
         quests:
           type: array
           items:
             $ref: '#/components/schemas/Quest'
-        total_count:
-          type: integer
-          minimum: 0
         has_more:
           type: boolean
           default: false
-
+        total_count:
+          type: integer
+          minimum: 0
     QuestProgressResponse:
       type: object
       required:
-        - quest_id
-        - status
-        - objectives
-        - started_at
+      - quest_id
+      - status
+      - objectives
+      - started_at
       properties:
         quest_id:
           type: string
           format: uuid
         status:
           type: string
-          enum: [ active, completed, failed ]
+          enum:
+          - active
+          - completed
+          - failed
+        started_at:
+          type: string
+          format: date-time
         objectives:
           type: array
           items:
             $ref: '#/components/schemas/QuestObjective'
-        started_at:
-          type: string
-          format: date-time
         time_remaining_seconds:
           type: integer
           minimum: 0
           description: Seconds until quest expires
-
     UpdateProgressRequest:
       type: object
       required:
-        - objective_id
-        - progress_increment
+      - objective_id
+      - progress_increment
       properties:
         objective_id:
           type: string
@@ -560,38 +597,38 @@ components:
           type: integer
           minimum: 1
           description: Amount to add to progress
-
     QuestCompletionResponse:
       type: object
       required:
-        - quest_id
-        - rewards_granted
-        - completed_at
+      - quest_id
+      - rewards_granted
+      - completed_at
       properties:
         quest_id:
           type: string
           format: uuid
-        rewards_granted:
-          $ref: '#/components/schemas/QuestReward'
-        completed_at:
-          type: string
-          format: date-time
         next_quest_available:
           type: string
           format: uuid
           description: ID of next quest in chain
-
-    # Common schemas
+        completed_at:
+          type: string
+          format: date-time
+        rewards_granted:
+          $ref: '#/components/schemas/QuestReward'
     HealthResponse:
       type: object
       required:
-        - status
-        - service
-        - timestamp
+      - status
+      - service
+      - timestamp
       properties:
         status:
           type: string
-          enum: [ healthy, degraded, unhealthy ]
+          enum:
+          - healthy
+          - degraded
+          - unhealthy
           example: healthy
         service:
           type: string
@@ -601,14 +638,12 @@ components:
           format: date-time
         version:
           type: string
-          example: "1.0.0"
+          example: 1.0.0
         active_quests:
           type: integer
           minimum: 0
           description: Number of currently active quests
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
-    # Seattle Quests Service Schemas Integration
     SeattleQuest:
       $ref: ./seattle-quests-service.yaml#/components/schemas/SeattleQuest
     SeattleQuestsResponse:
@@ -629,25 +664,24 @@ components:
       $ref: ./seattle-quests-service.yaml#/components/schemas/SeattleRoute
     SeattleRoutesResponse:
       $ref: ./seattle-quests-service.yaml#/components/schemas/SeattleRoutesResponse
-
     Error:
       type: object
       required:
-        - message
-        - code
+      - message
+      - code
       properties:
         message:
           type: string
           maxLength: 1000
-          example: "Quest not found"
+          example: Quest not found
         code:
           type: string
-          pattern: '^[A-Z_][A-Z0-9_]*$'
+          pattern: ^[A-Z_][A-Z0-9_]*$
           example: QUEST_NOT_FOUND
-        details:
-          type: object
-          description: Additional error details
         timestamp:
           type: string
           format: date-time
+        details:
+          type: object
+          description: Additional error details
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'

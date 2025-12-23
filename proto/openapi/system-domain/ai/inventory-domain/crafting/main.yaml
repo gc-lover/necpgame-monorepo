@@ -1,30 +1,48 @@
 openapi: 3.0.3
 info:
   title: Inventory Crafting API - Enterprise-Grade Item Manufacturing
-  description: |
-    **Enterprise-Grade Inventory Crafting API for NECPGAME**
+  description: '**Enterprise-Grade Inventory Crafting API for NECPGAME**
+
 
     Comprehensive item crafting and manufacturing system providing advanced crafting mechanics,
+
     recipe management, material processing, and quality-based item production for the NECPGAME ecosystem.
 
+
     ## Key Features
+
     - **Enterprise-grade architecture** with proper inventory domain separation
+
     - **Backend optimization hints** for struct alignment and performance (30-50% memory savings)
+
     - **Complete validation** with redocly and ogen code generation
+
     - **Security-first approach** with crafting validation and anti-cheat measures
+
     - **Performance-optimized** response structures with field ordering
+
     - **Comprehensive error handling** with proper HTTP status codes
 
+
     ## Domain Purpose
+
     The Inventory Crafting Service manages all item crafting and manufacturing operations in NECPGAME,
+
     including recipe processing, material consumption, quality calculation, and crafting progression.
 
+
     ## Performance Targets
+
     - P99 Latency: <25ms for crafting operations (HOT PATH)
+
     - Memory: <15KB per active crafting session
+
     - Concurrent crafters: 50,000+ simultaneous crafting operations
+
     - Recipe throughput: 1000+ crafts/sec sustained
-  version: "1.0.0"
+
+    '
+  version: 1.0.0
   contact:
     name: NECPGAME API Support
     url: https://necpgame.com/support
@@ -32,57 +50,59 @@ info:
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
-
 servers:
-  - url: https://api.necpgame.com/v1/crafting
-    description: Production server
-  - url: https://staging-api.necpgame.com/v1/crafting
-    description: Staging server
-  - url: http://localhost:8080/api/v1/crafting
-    description: Local development server
-
+- url: https://api.necpgame.com/v1/crafting
+  description: Production server
+- url: https://staging-api.necpgame.com/v1/crafting
+  description: Staging server
+- url: http://localhost:8080/api/v1/crafting
+  description: Local development server
 security:
-  - BearerAuth: [ ]
-
+- BearerAuth: []
 tags:
-  - name: Crafting Operations
-    description: Core crafting mechanics and recipe processing
-  - name: Recipe Management
-    description: Recipe creation, modification, and discovery
-  - name: Material Processing
-    description: Material consumption and inventory management
-  - name: Quality Systems
-    description: Item quality calculation and enhancement
-  - name: Crafting Stations
-    description: Crafting station management and upgrades
-  - name: Statistics
-    description: Crafting analytics and performance metrics
-  - name: Health Monitoring
-    description: System health and performance monitoring
-
+- name: Crafting Operations
+  description: Core crafting mechanics and recipe processing
+- name: Recipe Management
+  description: Recipe creation, modification, and discovery
+- name: Material Processing
+  description: Material consumption and inventory management
+- name: Quality Systems
+  description: Item quality calculation and enhancement
+- name: Crafting Stations
+  description: Crafting station management and upgrades
+- name: Statistics
+  description: Crafting analytics and performance metrics
+- name: Health Monitoring
+  description: System health and performance monitoring
 paths:
-  # Health Check - ОБЯЗАТЕЛЬНО для всех доменов
   /health:
     get:
       summary: Crafting service health check
-      description: |
-        **Enterprise-grade health check endpoint**
+      description: '**Enterprise-grade health check endpoint**
+
 
         Provides real-time health status of the crafting microservice.
+
         Critical for service discovery, load balancing, and monitoring.
 
+
         **Performance:** <1ms response time, cached for 30 seconds
+
+        '
       operationId: craftingHealthCheck
       tags:
-        - Health Monitoring
+      - Health Monitoring
       parameters:
-        - name: Accept-Encoding
-          in: header
-          schema:
-            type: string
-            enum: [ gzip, deflate, br ]
+      - name: Accept-Encoding
+        in: header
+        schema:
+          type: string
+          enum:
+          - gzip
+          - deflate
+          - br
       responses:
-        "200":
+        '200':
           description: Service is healthy
           headers:
             Cache-Control:
@@ -96,43 +116,49 @@ paths:
             Content-Encoding:
               schema:
                 type: string
-                enum: [ gzip, deflate, br ]
+                enum:
+                - gzip
+                - deflate
+                - br
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/HealthResponse"
-        "503":
+                $ref: '#/components/schemas/HealthResponse'
+        '503':
           description: Service is unhealthy
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/HealthResponse"
-        "429":
+                $ref: '#/components/schemas/HealthResponse'
+        '429':
           description: Rate limit exceeded
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "500":
+                $ref: '#/components/schemas/Error'
+        '500':
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-
+                $ref: '#/components/schemas/Error'
   /health/batch:
     post:
       summary: Batch health check for crafting subsystems
-      description: |
-        **Enterprise-grade batch health monitoring**
+      description: '**Enterprise-grade batch health monitoring**
+
 
         Performs health checks across multiple crafting-related services simultaneously.
+
         Optimized for crafting orchestration and dependency monitoring.
 
+
         **Performance:** <5ms for batch of 10 services
+
+        '
       operationId: craftingBatchHealthCheck
       tags:
-        - Health Monitoring
+      - Health Monitoring
       requestBody:
         required: true
         content:
@@ -144,169 +170,186 @@ paths:
                   type: array
                   items:
                     type: string
-                    enum: [ recipes, materials, stations, quality ]
+                    enum:
+                    - recipes
+                    - materials
+                    - stations
+                    - quality
                   minItems: 1
                   maxItems: 10
-                  example: [ "recipes", "materials" ]
+                  example:
+                  - recipes
+                  - materials
       responses:
-        "200":
+        '200':
           description: Batch health check completed
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/BatchHealthResponse"
-        "400":
+                $ref: '#/components/schemas/BatchHealthResponse'
+        '400':
           description: Invalid request parameters
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-
+                $ref: '#/components/schemas/Error'
   /health/ws:
     get:
       summary: WebSocket health monitoring
-      description: |
-        **Real-time health monitoring via WebSocket**
+      description: '**Real-time health monitoring via WebSocket**
+
 
         Establishes WebSocket connection for continuous health monitoring.
+
         Critical for real-time crafting monitoring and failover detection.
 
+
         **Performance:** <10ms connection establishment, <1ms ping-pong
+
+        '
       operationId: craftingWebSocketHealth
       tags:
-        - Health Monitoring
+      - Health Monitoring
       parameters:
-        - name: token
-          in: query
-          required: true
-          schema:
-            type: string
-            description: JWT token for authentication
+      - name: token
+        in: query
+        required: true
+        schema:
+          type: string
+          description: JWT token for authentication
       responses:
-        "101":
+        '101':
           description: WebSocket connection established
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/WebSocketHealthMessage"
-
-  # Crafting Operations
+                $ref: '#/components/schemas/WebSocketHealthMessage'
   /craft:
     post:
       summary: Start crafting operation
-      description: |
-        **Initiate item crafting**
+      description: '**Initiate item crafting**
+
 
         Starts a crafting operation using specified recipe and materials.
+
         Validates requirements, consumes materials, and initiates crafting process.
 
+
         **Performance:** <50ms validation and start, HOT PATH
+
+        '
       operationId: startCrafting
       tags:
-        - Crafting Operations
+      - Crafting Operations
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/StartCraftingRequest"
+              $ref: '#/components/schemas/StartCraftingRequest'
       responses:
-        "201":
+        '201':
           description: Crafting operation started successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CraftingStatus"
-        "202":
+                $ref: '#/components/schemas/CraftingStatus'
+        '202':
           description: Crafting started successfully (accepted for processing)
           headers:
             Location:
               schema:
                 type: string
-                example: "/crafting/status/craft_123"
+                example: /crafting/status/craft_123
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CraftingStatus"
-        "400":
+                $ref: '#/components/schemas/CraftingStatus'
+        '400':
           description: Invalid crafting request
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "402":
+                $ref: '#/components/schemas/Error'
+        '402':
           description: Insufficient materials or requirements
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "429":
+                $ref: '#/components/schemas/Error'
+        '429':
           description: Crafting queue full
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-
+                $ref: '#/components/schemas/Error'
   /craft/{craftingId}/status:
     get:
       summary: Get crafting status
-      description: |
-        **Get crafting operation status**
+      description: '**Get crafting operation status**
+
 
         Retrieves real-time status of ongoing crafting operation.
+
         Critical for player experience during crafting.
 
+
         **Performance:** <10ms status lookup, HOT PATH
+
+        '
       operationId: getCraftingStatus
       tags:
-        - Crafting Operations
+      - Crafting Operations
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: craftingId
-          in: path
-          required: true
-          schema:
-            type: string
+      - name: craftingId
+        in: path
+        required: true
+        schema:
+          type: string
       responses:
-        "200":
+        '200':
           description: Crafting status retrieved
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CraftingStatus"
-        "404":
+                $ref: '#/components/schemas/CraftingStatus'
+        '404':
           description: Crafting operation not found
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-
+                $ref: '#/components/schemas/Error'
   /craft/{craftingId}/cancel:
     post:
       summary: Cancel crafting operation
-      description: |
-        **Cancel ongoing crafting**
+      description: '**Cancel ongoing crafting**
+
 
         Cancels crafting operation and attempts to refund materials.
+
         Subject to cancellation policies and timing restrictions.
 
+
         **Performance:** <20ms cancellation
+
+        '
       operationId: cancelCrafting
       tags:
-        - Crafting Operations
+      - Crafting Operations
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: craftingId
-          in: path
-          required: true
-          schema:
-            type: string
+      - name: craftingId
+        in: path
+        required: true
+        schema:
+          type: string
       responses:
-        "200":
+        '200':
           description: Crafting cancelled successfully
           content:
             application/json:
@@ -316,150 +359,169 @@ paths:
                   refundedMaterials:
                     type: array
                     items:
-                      $ref: "#/components/schemas/MaterialQuantity"
+                      $ref: '#/components/schemas/MaterialQuantity'
                   cancelledAt:
                     type: string
                     format: date-time
-                    example: "2024-01-01T12:00:00Z"
-        "400":
+                    example: '2024-01-01T12:00:00Z'
+        '400':
           description: Cannot cancel crafting (too late)
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "404":
+                $ref: '#/components/schemas/Error'
+        '404':
           description: Crafting operation not found
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-
-  # Recipe Management
+                $ref: '#/components/schemas/Error'
   /recipes:
     get:
       summary: List available recipes
-      description: |
-        **Get crafting recipes**
+      description: '**Get crafting recipes**
+
 
         Retrieves list of available crafting recipes with filtering and pagination.
+
         Supports filtering by category, skill level, and availability.
 
+
         **Performance:** <30ms for filtered queries, cached
+
+        '
       operationId: listRecipes
       tags:
-        - Recipe Management
+      - Recipe Management
       parameters:
-        - name: category
-          in: query
-          schema:
-            type: string
-            enum: [ weapons, armor, consumables, tools, decorations ]
-        - name: skillLevel
-          in: query
-          schema:
-            type: string
-            enum: [ novice, apprentice, journeyman, expert, master ]
-        - name: available
-          in: query
-          schema:
-            type: boolean
-            default: true
-            description: Filter by player's available recipes
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 20
-        - name: offset
-          in: query
-          schema:
-            type: integer
-            minimum: 0
-            default: 0
+      - name: category
+        in: query
+        schema:
+          type: string
+          enum:
+          - weapons
+          - armor
+          - consumables
+          - tools
+          - decorations
+      - name: skillLevel
+        in: query
+        schema:
+          type: string
+          enum:
+          - novice
+          - apprentice
+          - journeyman
+          - expert
+          - master
+      - name: available
+        in: query
+        schema:
+          type: boolean
+          default: true
+          description: Filter by player's available recipes
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
       responses:
-        "200":
+        '200':
           description: Recipes retrieved successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/RecipesListResponse"
-        "400":
+                $ref: '#/components/schemas/RecipesListResponse'
+        '400':
           description: Invalid query parameters
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-
+                $ref: '#/components/schemas/Error'
   /recipes/{recipeId}:
     get:
       summary: Get recipe details
-      description: |
-        **Get detailed recipe information**
+      description: '**Get detailed recipe information**
+
 
         Retrieves comprehensive recipe details including requirements and outputs.
+
         Cached for performance optimization.
 
+
         **Performance:** <5ms cached response
+
+        '
       operationId: getRecipe
       tags:
-        - Recipe Management
+      - Recipe Management
       parameters:
-        - name: recipeId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
+      - name: recipeId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
       responses:
-        "200":
+        '200':
           description: Recipe details retrieved
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Recipe"
-        "404":
+                $ref: '#/components/schemas/Recipe'
+        '404':
           description: Recipe not found
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-
-  # Material Processing
+                $ref: '#/components/schemas/Error'
   /materials/validate:
     post:
       summary: Validate crafting materials
-      description: |
-        **Validate material requirements**
+      description: '**Validate material requirements**
+
 
         Validates if player has sufficient materials for crafting recipe.
+
         Performs anti-cheat validation and material quality checks.
 
+
         **Performance:** <15ms validation, HOT PATH
+
+        '
       operationId: validateMaterials
       tags:
-        - Material Processing
+      - Material Processing
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required: [ recipeId, materials ]
+              required:
+              - recipeId
+              - materials
               properties:
                 recipeId:
                   type: string
                   format: uuid
-                  example: "123e4567-e89b-12d3-a456-426614174000"
+                  example: 123e4567-e89b-12d3-a456-426614174000
                 materials:
                   type: array
                   items:
-                    $ref: "#/components/schemas/MaterialQuantity"
+                    $ref: '#/components/schemas/MaterialQuantity'
       responses:
-        "200":
+        '200':
           description: Materials validated successfully
           content:
             application/json:
@@ -472,52 +534,57 @@ paths:
                   missingMaterials:
                     type: array
                     items:
-                      $ref: "#/components/schemas/MaterialQuantity"
+                      $ref: '#/components/schemas/MaterialQuantity'
                   qualityBonus:
                     type: number
                     format: float
                     minimum: 0
                     maximum: 1
                     example: 0.15
-        "400":
+        '400':
           description: Invalid material validation request
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-
-  # Quality Systems
+                $ref: '#/components/schemas/Error'
   /quality/calculate:
     post:
       summary: Calculate item quality
-      description: |
-        **Calculate crafting quality**
+      description: '**Calculate crafting quality**
+
 
         Calculates final item quality based on materials, skills, and random factors.
+
         Critical for item value and player progression.
 
+
         **Performance:** <10ms calculation
+
+        '
       operationId: calculateQuality
       tags:
-        - Quality Systems
+      - Quality Systems
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required: [ recipeId, materials, skillLevel ]
+              required:
+              - recipeId
+              - materials
+              - skillLevel
               properties:
                 recipeId:
                   type: string
                   format: uuid
-                  example: "123e4567-e89b-12d3-a456-426614174000"
+                  example: 123e4567-e89b-12d3-a456-426614174000
                 materials:
                   type: array
                   items:
-                    $ref: "#/components/schemas/MaterialQuantity"
+                    $ref: '#/components/schemas/MaterialQuantity'
                 skillLevel:
                   type: integer
                   minimum: 1
@@ -528,117 +595,126 @@ paths:
                   format: uuid
                   description: Crafting station being used
       responses:
-        "200":
+        '200':
           description: Quality calculated successfully
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/QualityCalculation"
-        "400":
+                $ref: '#/components/schemas/QualityCalculation'
+        '400':
           description: Invalid quality calculation request
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-
-  # Crafting Stations
+                $ref: '#/components/schemas/Error'
   /stations:
     get:
       summary: List crafting stations
-      description: |
-        **Get available crafting stations**
+      description: '**Get available crafting stations**
+
 
         Retrieves list of crafting stations available to player.
+
         Includes station capabilities, upgrades, and locations.
 
+
         **Performance:** <20ms query, cached
+
+        '
       operationId: listCraftingStations
       tags:
-        - Crafting Stations
+      - Crafting Stations
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: type
-          in: query
-          schema:
-            type: string
-            enum: [ basic, advanced, master, portable ]
-        - name: location
-          in: query
-          schema:
-            type: string
-            description: Filter by location
-        - name: available
-          in: query
-          schema:
-            type: boolean
-            default: true
+      - name: type
+        in: query
+        schema:
+          type: string
+          enum:
+          - basic
+          - advanced
+          - master
+          - portable
+      - name: location
+        in: query
+        schema:
+          type: string
+          description: Filter by location
+      - name: available
+        in: query
+        schema:
+          type: boolean
+          default: true
       responses:
-        "200":
+        '200':
           description: Crafting stations retrieved
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CraftingStationsResponse"
-        "400":
+                $ref: '#/components/schemas/CraftingStationsResponse'
+        '400':
           description: Invalid query parameters
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-
-  # Statistics
+                $ref: '#/components/schemas/Error'
   /statistics/{playerId}:
     get:
       summary: Get crafting statistics
-      description: |
-        **Get player crafting statistics**
+      description: '**Get player crafting statistics**
+
 
         Retrieves comprehensive crafting statistics and analytics.
+
         Used for progression tracking and achievements.
 
+
         **Performance:** <50ms statistics aggregation, cached
+
+        '
       operationId: getCraftingStatistics
       tags:
-        - Statistics
+      - Statistics
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: playerId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: period
-          in: query
-          schema:
-            type: string
-            enum: [ daily, weekly, monthly, all_time ]
-            default: weekly
+      - name: playerId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: period
+        in: query
+        schema:
+          type: string
+          enum:
+          - daily
+          - weekly
+          - monthly
+          - all_time
+          default: weekly
       responses:
-        "200":
+        '200':
           description: Crafting statistics retrieved
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CraftingStatistics"
-        "403":
+                $ref: '#/components/schemas/CraftingStatistics'
+        '403':
           description: Cannot access other player's statistics
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-        "404":
+                $ref: '#/components/schemas/Error'
+        '404':
           description: Player not found
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
-
-  # Legacy references
-  $ref: './crafting-service.yaml#/components/schemas'
-
+                $ref: '#/components/schemas/Error'
+  $ref: ./crafting-service.yaml#/components/schemas
 components:
   securitySchemes:
     BearerAuth:
@@ -646,24 +722,28 @@ components:
       scheme: bearer
       bearerFormat: JWT
       description: JWT authorization token
-
   schemas:
-    # Health schemas - ОБЯЗАТЕЛЬНЫ
     HealthResponse:
       type: object
-      required: [ status, timestamp, version ]
+      required:
+      - status
+      - timestamp
+      - version
       properties:
         status:
           type: string
-          enum: [ healthy, degraded, unhealthy ]
+          enum:
+          - healthy
+          - degraded
+          - unhealthy
           example: healthy
         timestamp:
           type: string
           format: date-time
-          example: "2024-01-01T12:00:00Z"
+          example: '2024-01-01T12:00:00Z'
         version:
           type: string
-          example: "1.0.0"
+          example: 1.0.0
         uptime:
           type: integer
           format: int64
@@ -678,117 +758,152 @@ components:
         completedCrafts:
           type: integer
           example: 15420
-
     BatchHealthResponse:
       type: object
-      required: [ overallStatus, services, timestamp ]
+      required:
+      - overallStatus
+      - services
+      - timestamp
       properties:
         overallStatus:
           type: string
-          enum: [ healthy, degraded, unhealthy ]
+          enum:
+          - healthy
+          - degraded
+          - unhealthy
           example: healthy
-        services:
-          type: object
-          additionalProperties:
-            $ref: "#/components/schemas/HealthResponse"
         timestamp:
           type: string
           format: date-time
-          example: "2024-01-01T12:00:00Z"
-
+          example: '2024-01-01T12:00:00Z'
+        services:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/HealthResponse'
     WebSocketHealthMessage:
       type: object
-      required: [ type, timestamp ]
+      required:
+      - type
+      - timestamp
       properties:
         type:
           type: string
-          enum: [ ping, pong, health_update, crafting_status, station_status ]
+          enum:
+          - ping
+          - pong
+          - health_update
+          - crafting_status
+          - station_status
           example: crafting_status
         timestamp:
           type: string
           format: date-time
-          example: "2024-01-01T12:00:00Z"
+          example: '2024-01-01T12:00:00Z'
         data:
-          $ref: "#/components/schemas/HealthResponse"
-
+          $ref: '#/components/schemas/HealthResponse'
     Error:
       type: object
-      required: [ code, message ]
+      required:
+      - code
+      - message
       properties:
-        code:
-          type: string
-          example: "VALIDATION_ERROR"
-        message:
-          type: string
-          example: "Invalid request parameters"
-        details:
-          type: object
-          additionalProperties: true
-        timestamp:
-          type: string
-          format: date-time
-          example: "2024-01-01T12:00:00Z"
         requestId:
           type: string
           format: uuid
-          example: "123e4567-e89b-12d3-a456-426614174000"
-
-    # Crafting Operations schemas
+          example: 123e4567-e89b-12d3-a456-426614174000
+        code:
+          type: string
+          example: VALIDATION_ERROR
+        message:
+          type: string
+          example: Invalid request parameters
+        timestamp:
+          type: string
+          format: date-time
+          example: '2024-01-01T12:00:00Z'
+        details:
+          type: object
+          additionalProperties: true
     StartCraftingRequest:
       type: object
-      required: [ recipeId, quantity ]
+      required:
+      - recipeId
+      - quantity
       properties:
         recipeId:
           type: string
           format: uuid
-          example: "123e4567-e89b-12d3-a456-426614174000"
+          example: 123e4567-e89b-12d3-a456-426614174000
+        craftingStation:
+          type: string
+          format: uuid
+          description: Specific crafting station to use
+          example: 123e4567-e89b-12d3-a456-426614174001
+        priority:
+          type: string
+          enum:
+          - low
+          - normal
+          - high
+          - rush
+          default: normal
+          example: high
+        qualityFocus:
+          type: boolean
+          default: false
+          description: Focus on quality over speed
+          example: true
         quantity:
           type: integer
           minimum: 1
           maximum: 100
           default: 1
           example: 1
-        craftingStation:
-          type: string
-          format: uuid
-          description: Specific crafting station to use
-          example: "123e4567-e89b-12d3-a456-426614174001"
-        priority:
-          type: string
-          enum: [ low, normal, high, rush ]
-          default: "normal"
-          example: "high"
-        qualityFocus:
-          type: boolean
-          default: false
-          description: Focus on quality over speed
-          example: true
-
     CraftingStatus:
       type: object
-      required: [ craftingId, status, recipeId, progress, estimatedCompletion ]
+      required:
+      - craftingId
+      - status
+      - recipeId
+      - progress
+      - estimatedCompletion
       properties:
-        craftingId:
-          type: string
-          example: "craft_123456"
-        status:
-          type: string
-          enum: [ queued, preparing, crafting, quality_check, completed, failed, cancelled ]
-          example: "crafting"
         recipeId:
           type: string
           format: uuid
-          example: "123e4567-e89b-12d3-a456-426614174000"
+          example: 123e4567-e89b-12d3-a456-426614174000
+        stationId:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174001
+        craftingId:
+          type: string
+          example: craft_123456
+        status:
+          type: string
+          enum:
+          - queued
+          - preparing
+          - crafting
+          - quality_check
+          - completed
+          - failed
+          - cancelled
+          example: crafting
+        estimatedCompletion:
+          type: string
+          format: date-time
+          example: '2024-01-01T12:15:00Z'
+        startedAt:
+          type: string
+          format: date-time
+          example: '2024-01-01T12:00:00Z'
         progress:
           type: number
           format: float
           minimum: 0
           maximum: 1
           example: 0.67
-        estimatedCompletion:
-          type: string
-          format: date-time
-          example: "2024-01-01T12:15:00Z"
         quality:
           type: number
           format: float
@@ -796,24 +911,18 @@ components:
           maximum: 1
           description: Current quality progress (if applicable)
           example: 0.85
-        startedAt:
-          type: string
-          format: date-time
-          example: "2024-01-01T12:00:00Z"
-        stationId:
-          type: string
-          format: uuid
-          example: "123e4567-e89b-12d3-a456-426614174001"
-
-    # Recipe Management schemas
     RecipesListResponse:
       type: object
-      required: [ recipes, total, limit, offset ]
+      required:
+      - recipes
+      - total
+      - limit
+      - offset
       properties:
         recipes:
           type: array
           items:
-            $ref: "#/components/schemas/RecipeSummary"
+            $ref: '#/components/schemas/RecipeSummary'
         total:
           type: integer
           example: 150
@@ -823,63 +932,95 @@ components:
         offset:
           type: integer
           example: 0
-
     RecipeSummary:
       type: object
-      required: [ id, name, category, skillLevel, craftTime, outputItem ]
+      required:
+      - id
+      - name
+      - category
+      - skillLevel
+      - craftTime
+      - outputItem
       properties:
         id:
           type: string
           format: uuid
-          example: "123e4567-e89b-12d3-a456-426614174000"
+          example: 123e4567-e89b-12d3-a456-426614174000
         name:
           type: string
-          example: "Steel Sword"
+          example: Steel Sword
         category:
           type: string
-          enum: [ weapons, armor, consumables, tools, decorations ]
-          example: "weapons"
+          enum:
+          - weapons
+          - armor
+          - consumables
+          - tools
+          - decorations
+          example: weapons
         skillLevel:
           type: string
-          enum: [ novice, apprentice, journeyman, expert, master ]
-          example: "journeyman"
+          enum:
+          - novice
+          - apprentice
+          - journeyman
+          - expert
+          - master
+          example: journeyman
+        outputItem:
+          type: string
+          example: Steel Sword
+        available:
+          type: boolean
+          example: true
         craftTime:
           type: integer
           description: Base crafting time in seconds
           example: 300
-        outputItem:
-          type: string
-          example: "Steel Sword"
         outputQuantity:
           type: integer
           minimum: 1
           example: 1
-        available:
-          type: boolean
-          example: true
-
     Recipe:
       type: object
-      required: [ id, name, category, skillLevel, requirements, materials, output, craftTime ]
+      required:
+      - id
+      - name
+      - category
+      - skillLevel
+      - requirements
+      - materials
+      - output
+      - craftTime
       properties:
         id:
           type: string
           format: uuid
-          example: "123e4567-e89b-12d3-a456-426614174000"
+          example: 123e4567-e89b-12d3-a456-426614174000
         name:
           type: string
-          example: "Steel Sword"
+          example: Steel Sword
         description:
           type: string
-          example: "A finely crafted steel sword with balanced weight and durability"
+          example: A finely crafted steel sword with balanced weight and durability
         category:
           type: string
-          enum: [ weapons, armor, consumables, tools, decorations ]
-          example: "weapons"
+          enum:
+          - weapons
+          - armor
+          - consumables
+          - tools
+          - decorations
+          example: weapons
         skillLevel:
           type: string
-          enum: [ novice, apprentice, journeyman, expert, master ]
-          example: "journeyman"
+          enum:
+          - novice
+          - apprentice
+          - journeyman
+          - expert
+          - master
+          example: journeyman
         requirements:
           type: object
           properties:
@@ -890,23 +1031,19 @@ components:
               example: 35
             craftingStation:
               type: string
-              enum: [ anvil, forge, workbench, alchemy_lab ]
-              example: "forge"
+              enum:
+              - anvil
+              - forge
+              - workbench
+              - alchemy_lab
+              example: forge
             specialTools:
               type: array
               items:
                 type: string
-              example: [ "hammer", "tongs" ]
-        materials:
-          type: array
-          items:
-            $ref: "#/components/schemas/MaterialQuantity"
-        output:
-          $ref: "#/components/schemas/CraftingOutput"
-        craftTime:
-          type: integer
-          description: Base crafting time in seconds
-          example: 300
+              example:
+              - hammer
+              - tongs
         quality:
           type: object
           properties:
@@ -927,43 +1064,56 @@ components:
                   type: number
                   format: float
                   example: 0.95
-
+        output:
+          $ref: '#/components/schemas/CraftingOutput'
+        materials:
+          type: array
+          items:
+            $ref: '#/components/schemas/MaterialQuantity'
+        craftTime:
+          type: integer
+          description: Base crafting time in seconds
+          example: 300
     MaterialQuantity:
       type: object
-      required: [ materialId, quantity ]
+      required:
+      - materialId
+      - quantity
       properties:
         materialId:
           type: string
           format: uuid
-          example: "123e4567-e89b-12d3-a456-426614174001"
+          example: 123e4567-e89b-12d3-a456-426614174001
         materialName:
           type: string
-          example: "Steel Ingot"
+          example: Steel Ingot
+        quality:
+          type: string
+          enum:
+          - poor
+          - common
+          - good
+          - excellent
+          - masterwork
+          description: Minimum quality required
+          example: good
         quantity:
           type: integer
           minimum: 1
           example: 2
-        quality:
-          type: string
-          enum: [ poor, common, good, excellent, masterwork ]
-          description: Minimum quality required
-          example: "good"
-
     CraftingOutput:
       type: object
-      required: [ itemId, quantity ]
+      required:
+      - itemId
+      - quantity
       properties:
         itemId:
           type: string
           format: uuid
-          example: "123e4567-e89b-12d3-a456-426614174002"
+          example: 123e4567-e89b-12d3-a456-426614174002
         itemName:
           type: string
-          example: "Steel Sword"
-        quantity:
-          type: integer
-          minimum: 1
-          example: 1
+          example: Steel Sword
         quality:
           type: number
           format: float
@@ -971,24 +1121,26 @@ components:
           maximum: 1
           description: Base quality of output
           example: 0.75
-
-    # Quality Systems schemas
+        quantity:
+          type: integer
+          minimum: 1
+          example: 1
     QualityCalculation:
       type: object
-      required: [ baseQuality, finalQuality, factors ]
+      required:
+      - baseQuality
+      - finalQuality
+      - factors
       properties:
-        baseQuality:
-          type: number
-          format: float
-          minimum: 0
-          maximum: 1
-          example: 0.75
-        finalQuality:
-          type: number
-          format: float
-          minimum: 0
-          maximum: 1
-          example: 0.82
+        qualityTier:
+          type: string
+          enum:
+          - poor
+          - common
+          - good
+          - excellent
+          - masterwork
+          example: excellent
         factors:
           type: object
           properties:
@@ -1008,56 +1160,63 @@ components:
               type: number
               format: float
               example: 0.02
-        qualityTier:
-          type: string
-          enum: [ poor, common, good, excellent, masterwork ]
-          example: "excellent"
-
-    # Crafting Stations schemas
+        baseQuality:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          example: 0.75
+        finalQuality:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          example: 0.82
     CraftingStationsResponse:
       type: object
-      required: [ stations, total ]
+      required:
+      - stations
+      - total
       properties:
         stations:
           type: array
           items:
-            $ref: "#/components/schemas/CraftingStation"
+            $ref: '#/components/schemas/CraftingStation'
         total:
           type: integer
           example: 25
-
     CraftingStation:
       type: object
-      required: [ id, name, type, level, capabilities, location ]
+      required:
+      - id
+      - name
+      - type
+      - level
+      - capabilities
+      - location
       properties:
         id:
           type: string
           format: uuid
-          example: "123e4567-e89b-12d3-a456-426614174003"
+          example: 123e4567-e89b-12d3-a456-426614174003
         name:
           type: string
-          example: "Master Forge"
+          example: Master Forge
         type:
           type: string
-          enum: [ anvil, forge, workbench, alchemy_lab, enchanting_table ]
-          example: "forge"
-        level:
-          type: integer
-          minimum: 1
-          maximum: 10
-          example: 5
-        capabilities:
-          type: array
-          items:
-            type: string
-            enum: [ metalworking, woodworking, alchemy, enchanting, jewelcrafting ]
-          example: [ "metalworking", "jewelcrafting" ]
+          enum:
+          - anvil
+          - forge
+          - workbench
+          - alchemy_lab
+          - enchanting_table
+          example: forge
         location:
           type: object
           properties:
             zone:
               type: string
-              example: "Central City"
+              example: Central City
             coordinates:
               type: object
               properties:
@@ -1069,6 +1228,19 @@ components:
                   type: number
                   format: float
                   example: 67.89
+        capabilities:
+          type: array
+          items:
+            type: string
+            enum:
+            - metalworking
+            - woodworking
+            - alchemy
+            - enchanting
+            - jewelcrafting
+          example:
+          - metalworking
+          - jewelcrafting
         qualityBonus:
           type: number
           format: float
@@ -1080,21 +1252,33 @@ components:
           format: float
           minimum: 0
           maximum: 0.5
-          example: 0.10
-
-    # Statistics schemas
+          example: 0.1
+        level:
+          type: integer
+          minimum: 1
+          maximum: 10
+          example: 5
     CraftingStatistics:
       type: object
-      required: [ playerId, period, totals, byCategory, achievements ]
+      required:
+      - playerId
+      - period
+      - totals
+      - byCategory
+      - achievements
       properties:
         playerId:
           type: string
           format: uuid
-          example: "123e4567-e89b-12d3-a456-426614174004"
+          example: 123e4567-e89b-12d3-a456-426614174004
         period:
           type: string
-          enum: [ daily, weekly, monthly, all_time ]
-          example: "weekly"
+          enum:
+          - daily
+          - weekly
+          - monthly
+          - all_time
+          example: weekly
         totals:
           type: object
           properties:
@@ -1132,7 +1316,7 @@ components:
                 example: 0.82
               favoriteRecipe:
                 type: string
-                example: "Steel Sword"
+                example: Steel Sword
         achievements:
           type: array
           items:
@@ -1140,14 +1324,12 @@ components:
             properties:
               id:
                 type: string
-                example: "master_craftsman"
+                example: master_craftsman
               name:
                 type: string
-                example: "Master Craftsman"
+                example: Master Craftsman
               unlockedAt:
                 type: string
                 format: date-time
-                example: "2024-01-01T12:00:00Z"
-
-    # Legacy references
-    $ref: './crafting-service.yaml#/components/schemas'
+                example: '2024-01-01T12:00:00Z'
+    $ref: ./crafting-service.yaml#/components/schemas

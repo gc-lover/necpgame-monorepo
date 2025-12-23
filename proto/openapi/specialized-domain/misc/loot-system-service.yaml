@@ -23,34 +23,34 @@ info:
     name: MIT
     url: https://opensource.org/licenses/MIT
 servers:
-  - url: https://api.necp.game/api/v1
-  - url: http://localhost:8085/api/v1
+- url: https://api.necp.game/api/v1
+- url: http://localhost:8085/api/v1
 security:
-  - BearerAuth: [ ]
+- BearerAuth: []
 tags:
-  - name: Loot Drops
-  - name: Loot Rolls
-  - name: Loot Settings
+- name: Loot Drops
+- name: Loot Rolls
+- name: Loot Settings
 paths:
   /economy/loot/drops/nearby:
     get:
       summary: Предметы рядом
       operationId: getNearbyDrops
       tags:
-        - Loot Drops
+      - Loot Drops
       parameters:
-        - name: position
-          in: query
-          required: true
-          schema:
-            type: string
-            description: x,y,z
-        - name: radius
-          in: query
-          schema:
-            type: number
-            format: float
-            default: 50.0
+      - name: position
+        in: query
+        required: true
+        schema:
+          type: string
+          description: x,y,z
+      - name: radius
+        in: query
+        schema:
+          type: number
+          format: float
+          default: 50.0
       responses:
         '200':
           description: Список дропов
@@ -59,7 +59,7 @@ paths:
               schema:
                 type: object
                 required:
-                  - drops
+                - drops
                 properties:
                   drops:
                     type: array
@@ -72,7 +72,7 @@ paths:
       summary: Подобрать предмет
       operationId: pickupLoot
       tags:
-        - Loot Drops
+      - Loot Drops
       requestBody:
         required: true
         content:
@@ -80,7 +80,7 @@ paths:
             schema:
               type: object
               required:
-                - drop_id
+              - drop_id
               properties:
                 drop_id:
                   type: string
@@ -105,14 +105,14 @@ paths:
       summary: История лута
       operationId: getLootHistory
       tags:
-        - Loot Drops
+      - Loot Drops
       parameters:
-        - $ref: common.yaml#/components/parameters/Limit
-        - $ref: common.yaml#/components/parameters/Offset
-        - name: rarity
-          in: query
-          schema:
-            $ref: '#/components/schemas/Rarity'
+      - $ref: common.yaml#/components/parameters/Limit
+      - $ref: common.yaml#/components/parameters/Offset
+      - name: rarity
+        in: query
+        schema:
+          $ref: '#/components/schemas/Rarity'
       responses:
         '200':
           description: История
@@ -121,8 +121,8 @@ paths:
               schema:
                 type: object
                 required:
-                  - items
-                  - pagination
+                - items
+                - pagination
                 properties:
                   items:
                     type: array
@@ -135,7 +135,7 @@ paths:
       summary: Активные roll'ы
       operationId: getActiveRolls
       tags:
-        - Loot Rolls
+      - Loot Rolls
       responses:
         '200':
           description: Активные roll'ы
@@ -144,7 +144,7 @@ paths:
               schema:
                 type: object
                 required:
-                  - rolls
+                - rolls
                 properties:
                   rolls:
                     type: array
@@ -152,17 +152,17 @@ paths:
                       $ref: '#/components/schemas/LootRoll'
   /economy/loot/rolls/{rollId}/submit:
     parameters:
-      - name: rollId
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
+    - name: rollId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
     post:
       summary: Отправить roll
       operationId: submitRoll
       tags:
-        - Loot Rolls
+      - Loot Rolls
       requestBody:
         required: true
         content:
@@ -170,7 +170,7 @@ paths:
             schema:
               type: object
               required:
-                - choice
+              - choice
               properties:
                 choice:
                   $ref: '#/components/schemas/RollChoice'
@@ -192,7 +192,7 @@ paths:
       summary: Настройки auto-loot
       operationId: getLootSettings
       tags:
-        - Loot Settings
+      - Loot Settings
       responses:
         '200':
           description: Настройки
@@ -204,7 +204,7 @@ paths:
       summary: Обновить настройки
       operationId: updateLootSettings
       tags:
-        - Loot Settings
+      - Loot Settings
       requestBody:
         required: true
         content:
@@ -226,71 +226,71 @@ components:
     Rarity:
       type: string
       enum:
-        - common
-        - uncommon
-        - rare
-        - epic
-        - legendary
+      - common
+      - uncommon
+      - rare
+      - epic
+      - legendary
     LootMode:
       type: string
       enum:
-        - personal
-        - party_roll
-        - master_loot
+      - personal
+      - party_roll
+      - master_loot
     RollChoice:
       type: string
       enum:
-        - need
-        - greed
-        - pass
+      - need
+      - greed
+      - pass
     RollStatus:
       type: string
       enum:
-        - active
-        - completed
-        - expired
+      - active
+      - completed
+      - expired
     WorldDrop:
       allOf:
-        - $ref: common.yaml#/components/schemas/BaseEntity
-        - type: object
-          required:
-            - items
-            - position
-            - loot_mode
-            - expires_at
-          properties:
+      - $ref: common.yaml#/components/schemas/BaseEntity
+      - type: object
+        required:
+        - items
+        - position
+        - loot_mode
+        - expires_at
+        properties:
+          items:
+            type: array
             items:
-              type: array
-              items:
-                $ref: '#/components/schemas/LootItem'
-            currency:
-              type: object
-              properties:
-                eurodollars:
-                  type: integer
-                cryptos:
-                  type: integer
-            position:
-              $ref: ../../common-schemas.yaml#/components/schemas/Position3D
-            zone_id:
-              type: string
-            loot_mode:
-              $ref: '#/components/schemas/LootMode'
-            picked_up:
-              type: boolean
-            picked_up_by:
-              type: string
-              format: uuid
-              nullable: true
-            expires_at:
-              type: string
-              format: date-time
+              $ref: '#/components/schemas/LootItem'
+          currency:
+            type: object
+            properties:
+              eurodollars:
+                type: integer
+              cryptos:
+                type: integer
+          position:
+            $ref: ../../common-schemas.yaml#/components/schemas/Position3D
+          zone_id:
+            type: string
+          loot_mode:
+            $ref: '#/components/schemas/LootMode'
+          picked_up:
+            type: boolean
+          picked_up_by:
+            type: string
+            format: uuid
+            nullable: true
+          expires_at:
+            type: string
+            format: date-time
     LootItem:
       type: object
       required:
-        - item_id
-        - quantity
-        - rarity
+      - item_id
+      - quantity
+      - rarity
       properties:
         item_id:
           type: string
@@ -312,8 +312,8 @@ components:
     PickupResponse:
       type: object
       required:
-        - success
-        - items
+      - success
+      - items
       properties:
         currency:
           type: object
@@ -331,90 +331,90 @@ components:
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     LootHistoryEntry:
       allOf:
-        - $ref: ../../common-schemas.yaml#/components/schemas/BaseEntity
-        - type: object
-          required:
-            - item_id
-            - quantity
-            - source_type
-            - timestamp
-          properties:
-            item_id:
-              type: string
-              format: uuid
-            item_name:
-              type: string
-            quantity:
-              type: integer
-            source_type:
-              type: string
-              enum:
-                - enemy
-                - boss
-                - chest
-                - quest
-                - trade
-            source_id:
-              type: string
-              format: uuid
-            rarity:
-              $ref: '#/components/schemas/Rarity'
-            timestamp:
-              type: string
-              format: date-time
+      - $ref: ../../common-schemas.yaml#/components/schemas/BaseEntity
+      - type: object
+        required:
+        - item_id
+        - quantity
+        - source_type
+        - timestamp
+        properties:
+          item_id:
+            type: string
+            format: uuid
+          item_name:
+            type: string
+          quantity:
+            type: integer
+          source_type:
+            type: string
+            enum:
+            - enemy
+            - boss
+            - chest
+            - quest
+            - trade
+          source_id:
+            type: string
+            format: uuid
+          rarity:
+            $ref: '#/components/schemas/Rarity'
+          timestamp:
+            type: string
+            format: date-time
     LootRoll:
       allOf:
-        - $ref: ../../common-schemas.yaml#/components/schemas/BaseEntity
-        - type: object
-          required:
-            - party_id
-            - item
-            - status
-            - participants
-            - expires_at
-          properties:
-            party_id:
-              type: string
-              format: uuid
-            item:
-              $ref: '#/components/schemas/LootItem'
-            roll_type:
-              type: string
-              enum:
-                - need_greed
-                - master_loot
-            participants:
-              type: array
-              items:
-                type: object
-                required:
-                  - player_id
-                  - choice
-                properties:
-                  player_id:
-                    type: string
-                    format: uuid
-                  choice:
-                    $ref: '#/components/schemas/RollChoice'
-                  roll_value:
-                    type: integer
-                    minimum: 1
-                    maximum: 100
-            winner_id:
-              type: string
-              format: uuid
-              nullable: true
-            status:
-              $ref: '#/components/schemas/RollStatus'
-            expires_at:
-              type: string
-              format: date-time
+      - $ref: ../../common-schemas.yaml#/components/schemas/BaseEntity
+      - type: object
+        required:
+        - party_id
+        - item
+        - status
+        - participants
+        - expires_at
+        properties:
+          party_id:
+            type: string
+            format: uuid
+          item:
+            $ref: '#/components/schemas/LootItem'
+          roll_type:
+            type: string
+            enum:
+            - need_greed
+            - master_loot
+          participants:
+            type: array
+            items:
+              type: object
+              required:
+              - player_id
+              - choice
+              properties:
+                player_id:
+                  type: string
+                  format: uuid
+                choice:
+                  $ref: '#/components/schemas/RollChoice'
+                roll_value:
+                  type: integer
+                  minimum: 1
+                  maximum: 100
+          winner_id:
+            type: string
+            format: uuid
+            nullable: true
+          status:
+            $ref: '#/components/schemas/RollStatus'
+          expires_at:
+            type: string
+            format: date-time
     RollResult:
       type: object
       required:
-        - success
-        - roll_id
-        - your_roll
+      - success
+      - roll_id
+      - your_roll
       properties:
         roll_id:
           type: string
@@ -427,13 +427,12 @@ components:
           type: array
           items:
             type: object
+        success:
+          type: boolean
         your_roll:
           type: integer
           minimum: 1
           maximum: 100
-        success:
-          type: boolean
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     LootSettings:
       type: object
-

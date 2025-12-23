@@ -1,24 +1,38 @@
 openapi: 3.0.3
 info:
   title: Economy Logistics Service API
-  description: |
-    Полная система логистики экономики для NECPGAME.
+  description: 'Полная система логистики экономики для NECPGAME.
+
     Перевозки товаров, риски, страхование, конвои и отслеживание в реальном времени.
 
+
     **BACKEND NOTE**: Enterprise-grade logistics для MMOFPS RPG.
+
     Использует TimescaleDB для отслеживания маршрутов и Redis для кеширования рисков.
 
+
     **PERFORMANCE**: Ожидаемая нагрузка - 2000+ RPS в пиковые моменты.
+
     Время отклика < 100ms для основных запросов (расчет стоимости, статус).
 
+
     **FEATURES**:
+
     - 5 типов транспорта: наземный, воздушный, железнодорожный, курьерский, самовывоз
+
     - Система рисков: атаки бандитов, аварии, задержки, погодные факторы
+
     - 3 уровня страхования: basic, premium, full с франшизами
+
     - Конвои и эскорт с бронированными транспортными средствами
+
     - Жизненный цикл: DRAFT → SCHEDULED → IN_TRANSIT → DELIVERED/LOST
+
     - WebSocket real-time tracking с геолокацией
+
     - SLA мониторинг и уведомления о задержках
+
+    '
   version: 1.0.0
   license:
     name: MIT
@@ -26,42 +40,37 @@ info:
   contact:
     name: Backend Team
     email: backend@necp.game
-
 servers:
-  - url: https://api.necpgame.com/v1/economy/logistics
-    description: Production server
-  - url: https://staging-api.necpgame.com/v1/economy/logistics
-    description: Staging server
-  - url: http://localhost:8420/api/v1/economy/logistics
-    description: Local development
-
+- url: https://api.necpgame.com/v1/economy/logistics
+  description: Production server
+- url: https://staging-api.necpgame.com/v1/economy/logistics
+  description: Staging server
+- url: http://localhost:8420/api/v1/economy/logistics
+  description: Local development
 security:
-  - BearerAuth: [ ]
-
+- BearerAuth: []
 tags:
-  - name: shipments
-    description: Управление перевозками
-  - name: quotes
-    description: Расчет стоимости перевозок
-  - name: risks
-    description: Оценка и управление рисками
-  - name: insurance
-    description: Страхование перевозок
-  - name: escorts
-    description: Конвои и эскорт
-  - name: tracking
-    description: Отслеживание в реальном времени
-
+- name: shipments
+  description: Управление перевозками
+- name: quotes
+  description: Расчет стоимости перевозок
+- name: risks
+  description: Оценка и управление рисками
+- name: insurance
+  description: Страхование перевозок
+- name: escorts
+  description: Конвои и эскорт
+- name: tracking
+  description: Отслеживание в реальном времени
 paths:
-  # Расчет стоимости перевозки
   /api/v1/economy/logistics/shipments/quote:
     post:
       summary: Рассчитать стоимость и риски перевозки
       operationId: calculateShipmentQuote
       tags:
-        - quotes
+      - quotes
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -79,38 +88,42 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
-  # Управление перевозками
   /api/v1/economy/logistics/shipments:
     get:
       summary: Получить список перевозок пользователя
       operationId: getUserShipments
       tags:
-        - shipments
+      - shipments
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: status
-          in: query
-          schema:
-            type: string
-            enum: [ DRAFT, SCHEDULED, IN_TRANSIT, DELAYED, DELIVERED, LOST ]
-          description: Фильтр по статусу
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 20
-          description: Количество результатов
-        - name: offset
-          in: query
-          schema:
-            type: integer
-            minimum: 0
-            default: 0
-          description: Смещение для пагинации
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum:
+          - DRAFT
+          - SCHEDULED
+          - IN_TRANSIT
+          - DELAYED
+          - DELIVERED
+          - LOST
+        description: Фильтр по статусу
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 20
+        description: Количество результатов
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+        description: Смещение для пагинации
       responses:
         '200':
           description: Список перевозок
@@ -120,14 +133,13 @@ paths:
                 $ref: '#/components/schemas/ShipmentListResponse'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
     post:
       summary: Создать новую перевозку
       operationId: createShipment
       tags:
-        - shipments
+      - shipments
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -145,23 +157,22 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
   /api/v1/economy/logistics/shipments/{shipment_id}:
     get:
       summary: Получить детали перевозки
       operationId: getShipmentDetails
       tags:
-        - shipments
+      - shipments
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: shipment_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: ID перевозки
+      - name: shipment_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: ID перевозки
       responses:
         '200':
           description: Детали перевозки
@@ -175,22 +186,21 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
     put:
       summary: Обновить перевозку
       operationId: updateShipment
       tags:
-        - shipments
+      - shipments
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: shipment_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: ID перевозки
+      - name: shipment_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: ID перевозки
       requestBody:
         required: true
         content:
@@ -214,22 +224,21 @@ paths:
           $ref: '#/components/responses/Conflict'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
     delete:
       summary: Отменить перевозку
       operationId: cancelShipment
       tags:
-        - shipments
+      - shipments
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: shipment_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: ID перевозки
+      - name: shipment_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: ID перевозки
       responses:
         '200':
           description: Перевозка отменена
@@ -245,24 +254,22 @@ paths:
           $ref: '#/components/responses/Conflict'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
-  # Жизненный цикл перевозки
   /api/v1/economy/logistics/shipments/{shipment_id}/schedule:
     post:
       summary: Запланировать перевозку
       operationId: scheduleShipment
       tags:
-        - shipments
+      - shipments
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: shipment_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: ID перевозки
+      - name: shipment_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: ID перевозки
       requestBody:
         required: true
         content:
@@ -286,23 +293,22 @@ paths:
           $ref: '#/components/responses/Conflict'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
   /api/v1/economy/logistics/shipments/{shipment_id}/start:
     post:
       summary: Начать перевозку
       operationId: startShipment
       tags:
-        - shipments
+      - shipments
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: shipment_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: ID перевозки
+      - name: shipment_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: ID перевозки
       responses:
         '200':
           description: Перевозка начата
@@ -318,23 +324,22 @@ paths:
           $ref: '#/components/responses/Conflict'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
   /api/v1/economy/logistics/shipments/{shipment_id}/complete:
     post:
       summary: Завершить перевозку
       operationId: completeShipment
       tags:
-        - shipments
+      - shipments
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: shipment_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: ID перевозки
+      - name: shipment_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: ID перевозки
       requestBody:
         required: true
         content:
@@ -358,16 +363,14 @@ paths:
           $ref: '#/components/responses/Conflict'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
-  # Риски и страхование
   /api/v1/economy/logistics/risks/assess:
     post:
       summary: Оценить риски маршрута
       operationId: assessRouteRisks
       tags:
-        - risks
+      - risks
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -385,15 +388,14 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
   /api/v1/economy/logistics/insurance/quote:
     post:
       summary: Рассчитать стоимость страхования
       operationId: calculateInsuranceQuote
       tags:
-        - insurance
+      - insurance
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -411,16 +413,14 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
-  # Конвои и эскорт
   /api/v1/economy/logistics/escorts/quote:
     post:
       summary: Рассчитать стоимость эскорта
       operationId: calculateEscortQuote
       tags:
-        - escorts
+      - escorts
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -438,24 +438,22 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
-  # Отслеживание в реальном времени
   /api/v1/economy/logistics/tracking/{shipment_id}:
     get:
       summary: Получить текущее положение перевозки
       operationId: getShipmentTracking
       tags:
-        - tracking
+      - tracking
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: shipment_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: ID перевозки
+      - name: shipment_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: ID перевозки
       responses:
         '200':
           description: Текущее положение
@@ -469,35 +467,34 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
   /api/v1/economy/logistics/tracking/{shipment_id}/history:
     get:
       summary: Получить историю перемещений
       operationId: getShipmentTrackingHistory
       tags:
-        - tracking
+      - tracking
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: shipment_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: ID перевозки
-        - name: since
-          in: query
-          schema:
-            type: string
-            format: date-time
-          description: Начало периода
-        - name: until
-          in: query
-          schema:
-            type: string
-            format: date-time
-          description: Конец периода
+      - name: shipment_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: ID перевозки
+      - name: since
+        in: query
+        schema:
+          type: string
+          format: date-time
+        description: Начало периода
+      - name: until
+        in: query
+        schema:
+          type: string
+          format: date-time
+        description: Конец периода
       responses:
         '200':
           description: История перемещений
@@ -511,24 +508,22 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
-  # Инциденты и проблемы
   /api/v1/economy/logistics/incidents/{shipment_id}:
     get:
       summary: Получить инциденты перевозки
       operationId: getShipmentIncidents
       tags:
-        - shipments
+      - shipments
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: shipment_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: ID перевозки
+      - name: shipment_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: ID перевозки
       responses:
         '200':
           description: Список инцидентов
@@ -542,22 +537,21 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
     post:
       summary: Сообщить об инциденте
       operationId: reportIncident
       tags:
-        - shipments
+      - shipments
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: shipment_id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: ID перевозки
+      - name: shipment_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: ID перевозки
       requestBody:
         required: true
         content:
@@ -579,14 +573,12 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
 components:
   securitySchemes:
     BearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
-
   responses:
     BadRequest:
       description: Неверный запрос
@@ -624,14 +616,12 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-
   schemas:
-    # Общие схемы
     Error:
       type: object
       required:
-        - code
-        - message
+      - code
+      - message
       properties:
         code:
           type: string
@@ -642,16 +632,17 @@ components:
         details:
           type: object
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     Location:
       type: object
       required:
-        - city_id
-        - coordinates
+      - city_id
+      - coordinates
       properties:
         city_id:
           type: string
           format: uuid
+        address:
+          type: string
         coordinates:
           type: object
           properties:
@@ -662,25 +653,29 @@ components:
               type: number
               format: float
           required:
-            - latitude
-            - longitude
-        address:
-          type: string
+          - latitude
+          - longitude
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     CargoItem:
       type: object
       required:
-        - item_id
-        - quantity
-        - value
+      - item_id
+      - quantity
+      - value
       properties:
         item_id:
           type: string
           format: uuid
-        quantity:
-          type: integer
-          minimum: 1
+        item_type:
+          type: string
+          enum:
+          - weapons
+          - armor
+          - electronics
+          - chemicals
+          - food
+          - luxury
+          - industrial
         value:
           type: number
           format: float
@@ -693,19 +688,41 @@ components:
           type: number
           format: float
           description: Объем единицы в м³
-        item_type:
-          type: string
-          enum: [ weapons, armor, electronics, chemicals, food, luxury, industrial ]
+        quantity:
+          type: integer
+          minimum: 1
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
-    # Расчет стоимости
     ShipmentQuoteRequest:
       type: object
       required:
-        - origin
-        - destination
-        - cargo
+      - origin
+      - destination
+      - cargo
       properties:
+        transport_type:
+          type: string
+          enum:
+          - ground
+          - air
+          - rail
+          - courier
+          - pickup
+          default: ground
+        priority:
+          type: string
+          enum:
+          - standard
+          - express
+          - urgent
+          default: standard
+        insurance_level:
+          type: string
+          enum:
+          - none
+          - basic
+          - premium
+          - full
+          default: basic
         origin:
           $ref: '#/components/schemas/Location'
         destination:
@@ -715,50 +732,36 @@ components:
           items:
             $ref: '#/components/schemas/CargoItem'
           minItems: 1
-        transport_type:
-          type: string
-          enum: [ ground, air, rail, courier, pickup ]
-          default: ground
-        priority:
-          type: string
-          enum: [ standard, express, urgent ]
-          default: standard
-        insurance_level:
-          type: string
-          enum: [ none, basic, premium, full ]
-          default: basic
         escort_required:
           type: boolean
           default: false
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     ShipmentQuoteResponse:
       type: object
       required:
-        - quote_id
-        - total_cost
-        - estimated_time
-        - risks_assessment
+      - quote_id
+      - total_cost
+      - estimated_time
+      - risks_assessment
       properties:
         quote_id:
           type: string
           format: uuid
+        valid_until:
+          type: string
+          format: date-time
+        breakdown:
+          $ref: '#/components/schemas/CostBreakdown'
+        risks_assessment:
+          $ref: '#/components/schemas/RisksAssessment'
         total_cost:
           type: number
           format: float
           description: Общая стоимость в Eurodollars (€$)
-        breakdown:
-          $ref: '#/components/schemas/CostBreakdown'
         estimated_time:
           type: integer
           description: Ожидаемое время в часах
-        risks_assessment:
-          $ref: '#/components/schemas/RisksAssessment'
-        valid_until:
-          type: string
-          format: date-time
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     CostBreakdown:
       type: object
       properties:
@@ -778,78 +781,102 @@ components:
           type: number
           format: float
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     RisksAssessment:
       type: object
       properties:
         overall_risk_level:
           type: string
-          enum: [ low, medium, high, extreme ]
+          enum:
+          - low
+          - medium
+          - high
+          - extreme
+        recommended_insurance:
+          type: string
+          enum:
+          - none
+          - basic
+          - premium
+          - full
         risk_factors:
           type: array
           items:
             $ref: '#/components/schemas/RiskFactor'
-        recommended_insurance:
-          type: string
-          enum: [ none, basic, premium, full ]
         recommended_escort:
           type: boolean
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     RiskFactor:
       type: object
       required:
-        - type
-        - probability
-        - impact
+      - type
+      - probability
+      - impact
       properties:
         type:
           type: string
-          enum: [ bandit_attack, accident, customs_delay, weather, mechanical_failure ]
+          enum:
+          - bandit_attack
+          - accident
+          - customs_delay
+          - weather
+          - mechanical_failure
+        impact:
+          type: string
+          enum:
+          - minor
+          - moderate
+          - major
+          - catastrophic
+        description:
+          type: string
         probability:
           type: number
           format: float
           minimum: 0
           maximum: 1
-        impact:
-          type: string
-          enum: [ minor, moderate, major, catastrophic ]
-        description:
-          type: string
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
-    # Перевозки
     ShipmentListResponse:
       type: object
       required:
-        - shipments
-        - total_count
+      - shipments
+      - total_count
       properties:
+        pagination:
+          $ref: '#/components/schemas/PaginationInfo'
         shipments:
           type: array
           items:
             $ref: '#/components/schemas/ShipmentSummary'
         total_count:
           type: integer
-        pagination:
-          $ref: '#/components/schemas/PaginationInfo'
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     ShipmentSummary:
       type: object
       required:
-        - shipment_id
-        - status
-        - origin
-        - destination
-        - created_at
+      - shipment_id
+      - status
+      - origin
+      - destination
+      - created_at
       properties:
         shipment_id:
           type: string
           format: uuid
         status:
           type: string
-          enum: [ DRAFT, SCHEDULED, IN_TRANSIT, DELAYED, DELIVERED, LOST ]
+          enum:
+          - DRAFT
+          - SCHEDULED
+          - IN_TRANSIT
+          - DELAYED
+          - DELIVERED
+          - LOST
+        estimated_delivery:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
         origin:
           $ref: '#/components/schemas/Location'
         destination:
@@ -857,32 +884,51 @@ components:
         total_value:
           type: number
           format: float
-        estimated_delivery:
-          type: string
-          format: date-time
-        created_at:
-          type: string
-          format: date-time
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     PaginationInfo:
       type: object
       properties:
+        has_more:
+          type: boolean
         limit:
           type: integer
         offset:
           type: integer
-        has_more:
-          type: boolean
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     CreateShipmentRequest:
       type: object
       required:
-        - origin
-        - destination
-        - cargo
+      - origin
+      - destination
+      - cargo
       properties:
+        transport_type:
+          type: string
+          enum:
+          - ground
+          - air
+          - rail
+          - courier
+          - pickup
+          default: ground
+        priority:
+          type: string
+          enum:
+          - standard
+          - express
+          - urgent
+          default: standard
+        insurance_level:
+          type: string
+          enum:
+          - none
+          - basic
+          - premium
+          - full
+          default: basic
+        notes:
+          type: string
+          maxLength: 1000
         origin:
           $ref: '#/components/schemas/Location'
         destination:
@@ -892,39 +938,29 @@ components:
           items:
             $ref: '#/components/schemas/CargoItem'
           minItems: 1
-        transport_type:
-          type: string
-          enum: [ ground, air, rail, courier, pickup ]
-          default: ground
-        priority:
-          type: string
-          enum: [ standard, express, urgent ]
-          default: standard
-        insurance_level:
-          type: string
-          enum: [ none, basic, premium, full ]
-          default: basic
         escort_required:
           type: boolean
           default: false
-        notes:
-          type: string
-          maxLength: 1000
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     ShipmentCreatedResponse:
       type: object
       required:
-        - shipment_id
-        - status
-        - quote
+      - shipment_id
+      - status
+      - quote
       properties:
         shipment_id:
           type: string
           format: uuid
         status:
           type: string
-          enum: [ DRAFT, SCHEDULED, IN_TRANSIT, DELAYED, DELIVERED, LOST ]
+          enum:
+          - DRAFT
+          - SCHEDULED
+          - IN_TRANSIT
+          - DELAYED
+          - DELIVERED
+          - LOST
         quote:
           $ref: '#/components/schemas/ShipmentQuoteResponse'
         next_actions:
@@ -932,12 +968,11 @@ components:
           items:
             type: string
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     ShipmentDetailResponse:
       type: object
       required:
-        - shipment
-        - timeline
+      - shipment
+      - timeline
       properties:
         shipment:
           $ref: '#/components/schemas/Shipment'
@@ -950,45 +985,49 @@ components:
           items:
             $ref: '#/components/schemas/Incident'
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     Shipment:
       type: object
       required:
-        - shipment_id
-        - status
-        - origin
-        - destination
-        - cargo
-        - created_at
+      - shipment_id
+      - status
+      - origin
+      - destination
+      - cargo
+      - created_at
       properties:
         shipment_id:
           type: string
           format: uuid
         status:
           type: string
-          enum: [ DRAFT, SCHEDULED, IN_TRANSIT, DELAYED, DELIVERED, LOST ]
-        origin:
-          $ref: '#/components/schemas/Location'
-        destination:
-          $ref: '#/components/schemas/Location'
-        cargo:
-          type: array
-          items:
-            $ref: '#/components/schemas/CargoItem'
+          enum:
+          - DRAFT
+          - SCHEDULED
+          - IN_TRANSIT
+          - DELAYED
+          - DELIVERED
+          - LOST
         transport_type:
           type: string
-          enum: [ ground, air, rail, courier, pickup ]
+          enum:
+          - ground
+          - air
+          - rail
+          - courier
+          - pickup
         priority:
           type: string
-          enum: [ standard, express, urgent ]
+          enum:
+          - standard
+          - express
+          - urgent
         insurance_level:
           type: string
-          enum: [ none, basic, premium, full ]
-        escort_required:
-          type: boolean
-        total_cost:
-          type: number
-          format: float
+          enum:
+          - none
+          - basic
+          - premium
+          - full
         estimated_delivery:
           type: string
           format: date-time
@@ -1005,82 +1044,116 @@ components:
           type: string
         notes:
           type: string
+        origin:
+          $ref: '#/components/schemas/Location'
+        destination:
+          $ref: '#/components/schemas/Location'
+        cargo:
+          type: array
+          items:
+            $ref: '#/components/schemas/CargoItem'
+        total_cost:
+          type: number
+          format: float
+        escort_required:
+          type: boolean
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     TimelineEvent:
       type: object
       required:
-        - timestamp
-        - event_type
-        - description
+      - timestamp
+      - event_type
+      - description
       properties:
         timestamp:
           type: string
           format: date-time
         event_type:
           type: string
-          enum: [ created, scheduled, departed, in_transit, arrived, delayed, incident, delivered, lost ]
+          enum:
+          - created
+          - scheduled
+          - departed
+          - in_transit
+          - arrived
+          - delayed
+          - incident
+          - delivered
+          - lost
         description:
           type: string
-        location:
-          $ref: '#/components/schemas/Location'
         metadata:
           type: object
+        location:
+          $ref: '#/components/schemas/Location'
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     UpdateShipmentRequest:
       type: object
       properties:
         transport_type:
           type: string
-          enum: [ ground, air, rail, courier, pickup ]
+          enum:
+          - ground
+          - air
+          - rail
+          - courier
+          - pickup
         priority:
           type: string
-          enum: [ standard, express, urgent ]
+          enum:
+          - standard
+          - express
+          - urgent
         insurance_level:
           type: string
-          enum: [ none, basic, premium, full ]
-        escort_required:
-          type: boolean
+          enum:
+          - none
+          - basic
+          - premium
+          - full
         notes:
           type: string
           maxLength: 1000
+        escort_required:
+          type: boolean
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     ShipmentResponse:
       type: object
       required:
-        - shipment
+      - shipment
       properties:
         shipment:
           $ref: '#/components/schemas/Shipment'
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     ShipmentCancelledResponse:
       type: object
       required:
-        - shipment_id
-        - status
-        - refund_amount
+      - shipment_id
+      - status
+      - refund_amount
       properties:
         shipment_id:
           type: string
           format: uuid
         status:
           type: string
-          enum: [ DRAFT, SCHEDULED, IN_TRANSIT, DELAYED, DELIVERED, LOST ]
+          enum:
+          - DRAFT
+          - SCHEDULED
+          - IN_TRANSIT
+          - DELAYED
+          - DELIVERED
+          - LOST
+        reason:
+          type: string
         refund_amount:
           type: number
           format: float
-        reason:
-          type: string
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
-    # Жизненный цикл
     ScheduleShipmentRequest:
       type: object
       required:
-        - scheduled_departure
+      - scheduled_departure
       properties:
         scheduled_departure:
           type: string
@@ -1089,20 +1162,25 @@ components:
           type: string
           maxLength: 500
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     ShipmentScheduledResponse:
       type: object
       required:
-        - shipment_id
-        - status
-        - scheduled_departure
+      - shipment_id
+      - status
+      - scheduled_departure
       properties:
         shipment_id:
           type: string
           format: uuid
         status:
           type: string
-          enum: [ DRAFT, SCHEDULED, IN_TRANSIT, DELAYED, DELIVERED, LOST ]
+          enum:
+          - DRAFT
+          - SCHEDULED
+          - IN_TRANSIT
+          - DELAYED
+          - DELIVERED
+          - LOST
         scheduled_departure:
           type: string
           format: date-time
@@ -1110,20 +1188,25 @@ components:
           type: string
           format: date-time
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     ShipmentStartedResponse:
       type: object
       required:
-        - shipment_id
-        - status
-        - actual_departure
+      - shipment_id
+      - status
+      - actual_departure
       properties:
         shipment_id:
           type: string
           format: uuid
         status:
           type: string
-          enum: [ DRAFT, SCHEDULED, IN_TRANSIT, DELAYED, DELIVERED, LOST ]
+          enum:
+          - DRAFT
+          - SCHEDULED
+          - IN_TRANSIT
+          - DELAYED
+          - DELIVERED
+          - LOST
         actual_departure:
           type: string
           format: date-time
@@ -1133,40 +1216,47 @@ components:
         tracking_url:
           type: string
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     CompleteShipmentRequest:
       type: object
       required:
-        - delivery_status
+      - delivery_status
       properties:
         delivery_status:
           type: string
-          enum: [ delivered, lost, damaged ]
+          enum:
+          - delivered
+          - lost
+          - damaged
         damage_description:
+          type: string
+          maxLength: 1000
+        notes:
           type: string
           maxLength: 1000
         received_items:
           type: array
           items:
             $ref: '#/components/schemas/CargoItem'
-        notes:
-          type: string
-          maxLength: 1000
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     ShipmentCompletedResponse:
       type: object
       required:
-        - shipment_id
-        - status
-        - actual_delivery
+      - shipment_id
+      - status
+      - actual_delivery
       properties:
         shipment_id:
           type: string
           format: uuid
         status:
           type: string
-          enum: [ DRAFT, SCHEDULED, IN_TRANSIT, DELAYED, DELIVERED, LOST ]
+          enum:
+          - DRAFT
+          - SCHEDULED
+          - IN_TRANSIT
+          - DELAYED
+          - DELIVERED
+          - LOST
         actual_delivery:
           type: string
           format: date-time
@@ -1177,44 +1267,41 @@ components:
           type: number
           format: float
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
-    # Риски и страхование
     RiskAssessmentRequest:
       type: object
       required:
-        - origin
-        - destination
-        - transport_type
+      - origin
+      - destination
+      - transport_type
       properties:
+        transport_type:
+          type: string
+          enum:
+          - ground
+          - air
+          - rail
+          - courier
+          - pickup
+        current_weather_conditions:
+          type: object
         origin:
           $ref: '#/components/schemas/Location'
         destination:
           $ref: '#/components/schemas/Location'
-        transport_type:
-          type: string
-          enum: [ ground, air, rail, courier, pickup ]
-        cargo_value:
-          type: number
-          format: float
-        current_weather_conditions:
-          type: object
         faction_territories:
           type: array
           items:
             type: string
+        cargo_value:
+          type: number
+          format: float
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     RiskAssessmentResponse:
       type: object
       required:
-        - overall_risk_score
-        - risk_breakdown
+      - overall_risk_score
+      - risk_breakdown
       properties:
-        overall_risk_score:
-          type: number
-          format: float
-          minimum: 0
-          maximum: 1
         risk_breakdown:
           type: object
           properties:
@@ -1247,41 +1334,59 @@ components:
           type: array
           items:
             type: string
+        overall_risk_score:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     InsuranceQuoteRequest:
       type: object
       required:
-        - shipment_quote_id
-        - coverage_level
+      - shipment_quote_id
+      - coverage_level
       properties:
         shipment_quote_id:
           type: string
           format: uuid
         coverage_level:
           type: string
-          enum: [ basic, premium, full ]
-        deductible_amount:
-          type: number
-          format: float
+          enum:
+          - basic
+          - premium
+          - full
         additional_coverages:
           type: array
           items:
             type: string
-            enum: [ theft, damage, delay ]
+            enum:
+            - theft
+            - damage
+            - delay
+        deductible_amount:
+          type: number
+          format: float
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     InsuranceQuoteResponse:
       type: object
       required:
-        - coverage_level
-        - premium_cost
-        - coverage_amount
-        - deductible
+      - coverage_level
+      - premium_cost
+      - coverage_amount
+      - deductible
       properties:
         coverage_level:
           type: string
-          enum: [ basic, premium, full ]
+          enum:
+          - basic
+          - premium
+          - full
+        coverage_details:
+          type: object
+        exclusions:
+          type: array
+          items:
+            type: string
         premium_cost:
           type: number
           format: float
@@ -1291,54 +1396,49 @@ components:
         deductible:
           type: number
           format: float
-        coverage_details:
-          type: object
-        exclusions:
-          type: array
-          items:
-            type: string
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
-    # Конвои и эскорт
     EscortQuoteRequest:
       type: object
       required:
-        - shipment_quote_id
-        - escort_level
+      - shipment_quote_id
+      - escort_level
       properties:
         shipment_quote_id:
           type: string
           format: uuid
         escort_level:
           type: string
-          enum: [ basic, reinforced, elite ]
+          enum:
+          - basic
+          - reinforced
+          - elite
+        armored_vehicle:
+          type: boolean
+          default: false
         additional_guards:
           type: integer
           minimum: 0
           maximum: 10
-        armored_vehicle:
-          type: boolean
-          default: false
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     EscortQuoteResponse:
       type: object
       required:
-        - escort_level
-        - total_cost
-        - risk_reduction
+      - escort_level
+      - total_cost
+      - risk_reduction
       properties:
         escort_level:
           type: string
-          enum: [ basic, reinforced, elite ]
-        total_cost:
-          type: number
-          format: float
-        risk_reduction:
-          type: number
-          format: float
-          minimum: 0
-          maximum: 1
+          enum:
+          - basic
+          - reinforced
+          - elite
+        availability:
+          type: string
+          enum:
+          - immediate
+          - scheduled
+          - unavailable
         escort_details:
           type: object
           properties:
@@ -1350,34 +1450,43 @@ components:
               type: array
               items:
                 type: string
-        availability:
-          type: string
-          enum: [ immediate, scheduled, unavailable ]
+        total_cost:
+          type: number
+          format: float
+        risk_reduction:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
-    # Отслеживание
     TrackingInfoResponse:
       type: object
       required:
-        - shipment_id
-        - current_location
-        - status
-        - estimated_arrival
+      - shipment_id
+      - current_location
+      - status
+      - estimated_arrival
       properties:
         shipment_id:
           type: string
           format: uuid
-        current_location:
-          $ref: '#/components/schemas/Location'
         status:
           type: string
-          enum: [ DRAFT, SCHEDULED, IN_TRANSIT, DELAYED, DELIVERED, LOST ]
+          enum:
+          - DRAFT
+          - SCHEDULED
+          - IN_TRANSIT
+          - DELAYED
+          - DELIVERED
+          - LOST
         estimated_arrival:
           type: string
           format: date-time
         last_update:
           type: string
           format: date-time
+        current_location:
+          $ref: '#/components/schemas/Location'
         progress_percentage:
           type: number
           format: float
@@ -1386,12 +1495,11 @@ components:
         incidents_count:
           type: integer
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     TrackingHistoryResponse:
       type: object
       required:
-        - shipment_id
-        - positions
+      - shipment_id
+      - positions
       properties:
         shipment_id:
           type: string
@@ -1407,16 +1515,17 @@ components:
           type: number
           format: float
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     PositionUpdate:
       type: object
       required:
-        - timestamp
-        - location
+      - timestamp
+      - location
       properties:
         timestamp:
           type: string
           format: date-time
+        status:
+          type: string
         location:
           $ref: '#/components/schemas/Location'
         speed:
@@ -1425,16 +1534,12 @@ components:
         heading:
           type: number
           format: float
-        status:
-          type: string
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
-    # Инциденты
     IncidentsResponse:
       type: object
       required:
-        - shipment_id
-        - incidents
+      - shipment_id
+      - incidents
       properties:
         shipment_id:
           type: string
@@ -1446,56 +1551,78 @@ components:
         total_count:
           type: integer
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     Incident:
       type: object
       required:
-        - incident_id
-        - type
-        - severity
-        - timestamp
-        - description
+      - incident_id
+      - type
+      - severity
+      - timestamp
+      - description
       properties:
         incident_id:
           type: string
           format: uuid
         type:
           type: string
-          enum: [ bandit_attack, accident, customs_delay, weather, mechanical_failure, theft, damage ]
+          enum:
+          - bandit_attack
+          - accident
+          - customs_delay
+          - weather
+          - mechanical_failure
+          - theft
+          - damage
         severity:
           type: string
-          enum: [ minor, moderate, major, critical ]
+          enum:
+          - minor
+          - moderate
+          - major
+          - critical
         timestamp:
           type: string
           format: date-time
         description:
           type: string
+        resolution:
+          type: string
+        insurance_claim:
+          $ref: '#/components/schemas/InsuranceClaim'
         location:
           $ref: '#/components/schemas/Location'
         resolved:
           type: boolean
           default: false
-        resolution:
-          type: string
-        insurance_claim:
-          $ref: '#/components/schemas/InsuranceClaim'
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     ReportIncidentRequest:
       type: object
       required:
-        - type
-        - description
+      - type
+      - description
       properties:
         type:
           type: string
-          enum: [ bandit_attack, accident, customs_delay, weather, mechanical_failure, theft, damage ]
+          enum:
+          - bandit_attack
+          - accident
+          - customs_delay
+          - weather
+          - mechanical_failure
+          - theft
+          - damage
         severity:
           type: string
-          enum: [ minor, moderate, major, critical ]
+          enum:
+          - minor
+          - moderate
+          - major
+          - critical
         description:
           type: string
           maxLength: 2000
+        contact_info:
+          type: string
         location:
           $ref: '#/components/schemas/Location'
         evidence:
@@ -1503,50 +1630,52 @@ components:
           items:
             type: string
             format: uri
-        contact_info:
-          type: string
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     IncidentReportedResponse:
       type: object
       required:
-        - incident_id
-        - status
+      - incident_id
+      - status
       properties:
         incident_id:
           type: string
           format: uuid
         status:
           type: string
-          enum: [ reported, investigating, resolved ]
+          enum:
+          - reported
+          - investigating
+          - resolved
+        insurance_coverage_applicable:
+          type: boolean
         estimated_resolution_time:
           type: integer
           description: В часах
-        insurance_coverage_applicable:
-          type: boolean
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-
     InsuranceClaim:
       type: object
       required:
-        - claim_id
-        - amount_requested
-        - status
+      - claim_id
+      - amount_requested
+      - status
       properties:
         claim_id:
           type: string
           format: uuid
+        status:
+          type: string
+          enum:
+          - pending
+          - approved
+          - rejected
+          - paid
+        processed_at:
+          type: string
+          format: date-time
         amount_requested:
           type: number
           format: float
         amount_approved:
           type: number
           format: float
-        status:
-          type: string
-          enum: [ pending, approved, rejected, paid ]
-        processed_at:
-          type: string
-          format: date-time
       description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
-

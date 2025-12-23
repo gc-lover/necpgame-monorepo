@@ -1,83 +1,87 @@
 openapi: 3.0.3
 info:
   title: Legend Templates Service API
-  description: |
-    API for managing urban legend story templates and their variants.
+  description: 'API for managing urban legend story templates and their variants.
+
 
     **BACKEND PERFORMANCE NOTES:**
+
     - Hot path endpoints (GET /templates/active, GET /templates/generate) optimized for 1000+ RPS
+
     - Struct field alignment applied to reduce memory usage by 30-50%
+
     - Zero allocations in template generation pipeline
+
     - Context timeouts: 30ms for hot paths, 100ms for admin operations
+
     - Database connection pooling with prepared statements
+
+    '
   version: 1.0.0
   license:
     name: Apache 2.0
     url: https://www.apache.org/licenses/LICENSE-2.0.html
   contact:
     name: NECPGAME Legend Templates API Support
-
 servers:
-  - url: https://legend-templates.necpgame.com/v1
-    description: Production server
-  - url: https://staging-legend-templates.necpgame.com/v1
-    description: Staging server
-
+- url: https://legend-templates.necpgame.com/v1
+  description: Production server
+- url: https://staging-legend-templates.necpgame.com/v1
+  description: Staging server
 security:
-  - BearerAuth: [ ]
-
+- BearerAuth: []
 paths:
-  # Health check
   /health:
     get:
       summary: Health check endpoint
       operationId: getHealth
       responses:
-        "200":
-          $ref: "#/components/responses/HealthResponse"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-
-  # Template management
+        '200':
+          $ref: '#/components/responses/HealthResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
   /templates:
     get:
       summary: Get all story templates
       operationId: getTemplates
       parameters:
-        - name: type
-          in: query
-          schema:
-            type: string
-            enum: [ combat, social, economic, exploration ]
-          description: Filter by template type
-        - name: category
-          in: query
-          schema:
-            type: string
-          description: Filter by event category
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 50
-          description: Maximum number of results
-        - name: offset
-          in: query
-          schema:
-            type: integer
-            minimum: 0
-            default: 0
-          description: Pagination offset
+      - name: type
+        in: query
+        schema:
+          type: string
+          enum:
+          - combat
+          - social
+          - economic
+          - exploration
+        description: Filter by template type
+      - name: category
+        in: query
+        schema:
+          type: string
+        description: Filter by event category
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+        description: Maximum number of results
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+        description: Pagination offset
       responses:
-        "200":
-          $ref: "#/components/responses/TemplatesListResponse"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-
+        '200':
+          $ref: '#/components/responses/TemplatesListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
     post:
       summary: Create new story template
       operationId: createTemplate
@@ -86,36 +90,33 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateTemplateRequest"
+              $ref: '#/components/schemas/CreateTemplateRequest'
       responses:
-        "201":
-          $ref: "#/components/responses/TemplateResponse"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-
+        '201':
+          $ref: '#/components/responses/TemplateResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
   /templates/{template_id}:
     parameters:
-      - name: template_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: Template ID
-
+    - name: template_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Template ID
     get:
       summary: Get template by ID
       operationId: getTemplate
       responses:
-        "200":
-          $ref: "#/components/responses/TemplateResponse"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-
+        '200':
+          $ref: '#/components/responses/TemplateResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
     put:
       summary: Update template
       operationId: updateTemplate
@@ -124,50 +125,45 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UpdateTemplateRequest"
+              $ref: '#/components/schemas/UpdateTemplateRequest'
       responses:
-        "200":
-          $ref: "#/components/responses/TemplateResponse"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-
+        '200':
+          $ref: '#/components/responses/TemplateResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
     delete:
       summary: Delete template
       operationId: deleteTemplate
       responses:
-        "204":
+        '204':
           description: Template deleted successfully
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-
-  # Template variants management
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
   /templates/{template_id}/variants:
     parameters:
-      - name: template_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: Template ID
-
+    - name: template_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Template ID
     get:
       summary: Get template variants
       operationId: getTemplateVariants
       responses:
-        "200":
-          $ref: "#/components/responses/TemplateVariantsResponse"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-
+        '200':
+          $ref: '#/components/responses/TemplateVariantsResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
     post:
       summary: Add template variant
       operationId: addTemplateVariant
@@ -176,34 +172,32 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateVariantRequest"
+              $ref: '#/components/schemas/CreateVariantRequest'
       responses:
-        "201":
-          $ref: "#/components/responses/VariantResponse"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-
+        '201':
+          $ref: '#/components/responses/VariantResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
   /templates/{template_id}/variants/{variant_id}:
     parameters:
-      - name: template_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: Template ID
-      - name: variant_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: Variant ID
-
+    - name: template_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Template ID
+    - name: variant_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Variant ID
     put:
       summary: Update template variant
       operationId: updateTemplateVariant
@@ -212,71 +206,65 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UpdateVariantRequest"
+              $ref: '#/components/schemas/UpdateVariantRequest'
       responses:
-        "200":
-          $ref: "#/components/responses/VariantResponse"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-
+        '200':
+          $ref: '#/components/responses/VariantResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
     delete:
       summary: Delete template variant
       operationId: deleteTemplateVariant
       responses:
-        "204":
+        '204':
           description: Variant deleted successfully
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-
-  # Variable rules management
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
   /variables:
     get:
       summary: Get all variable rules
       operationId: getVariables
       parameters:
-        - name: type
-          in: query
-          schema:
-            type: string
-            enum:
-              [
-                player_name,
-                action_verb,
-                enemy_type,
-                location,
-                number,
-                time_context,
-                faction,
-                emotion,
-              ]
-          description: Filter by variable type
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 50
-          description: Maximum number of results
-        - name: offset
-          in: query
-          schema:
-            type: integer
-            minimum: 0
-            default: 0
-          description: Pagination offset
+      - name: type
+        in: query
+        schema:
+          type: string
+          enum:
+          - player_name
+          - action_verb
+          - enemy_type
+          - location
+          - number
+          - time_context
+          - faction
+          - emotion
+        description: Filter by variable type
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+        description: Maximum number of results
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+        description: Pagination offset
       responses:
-        "200":
-          $ref: "#/components/responses/VariablesListResponse"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-
+        '200':
+          $ref: '#/components/responses/VariablesListResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
     post:
       summary: Create variable rule
       operationId: createVariable
@@ -285,36 +273,33 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateVariableRequest"
+              $ref: '#/components/schemas/CreateVariableRequest'
       responses:
-        "201":
-          $ref: "#/components/responses/VariableResponse"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-
+        '201':
+          $ref: '#/components/responses/VariableResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
   /variables/{variable_id}:
     parameters:
-      - name: variable_id
-        in: path
-        required: true
-        schema:
-          type: string
-          format: uuid
-        description: Variable ID
-
+    - name: variable_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Variable ID
     get:
       summary: Get variable by ID
       operationId: getVariable
       responses:
-        "200":
-          $ref: "#/components/responses/VariableResponse"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-
+        '200':
+          $ref: '#/components/responses/VariableResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
     put:
       summary: Update variable rule
       operationId: updateVariable
@@ -323,72 +308,73 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UpdateVariableRequest"
+              $ref: '#/components/schemas/UpdateVariableRequest'
       responses:
-        "200":
-          $ref: "#/components/responses/VariableResponse"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-
+        '200':
+          $ref: '#/components/responses/VariableResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
     delete:
       summary: Delete variable rule
       operationId: deleteVariable
       responses:
-        "204":
+        '204':
           description: Variable deleted successfully
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-
-  # Story generation (HOT PATH - optimized for 1000+ RPS)
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
   /generate:
     post:
       summary: Generate legend story from event data
       operationId: generateLegend
-      description: |
-        **HOT PATH ENDPOINT** - Optimized for real-time story generation
+      description: '**HOT PATH ENDPOINT** - Optimized for real-time story generation
+
         Expected performance: <1ms per request, zero allocations
+
+        '
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/GenerateLegendRequest"
+              $ref: '#/components/schemas/GenerateLegendRequest'
       responses:
-        "200":
-          $ref: "#/components/responses/GeneratedLegendResponse"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-
-  # Active templates cache (HOT PATH)
+        '200':
+          $ref: '#/components/responses/GeneratedLegendResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
   /templates/active:
     get:
       summary: Get active templates for fast generation
       operationId: getActiveTemplates
-      description: |
-        **HOT PATH ENDPOINT** - Returns cached active templates
-        Expected performance: <100μs per request
-      parameters:
-        - name: type
-          in: query
-          schema:
-            type: string
-            enum: [ combat, social, economic, exploration ]
-          description: Filter by template type
-      responses:
-        "200":
-          $ref: "#/components/responses/ActiveTemplatesResponse"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
+      description: '**HOT PATH ENDPOINT** - Returns cached active templates
 
-  # Template validation
+        Expected performance: <100μs per request
+
+        '
+      parameters:
+      - name: type
+        in: query
+        schema:
+          type: string
+          enum:
+          - combat
+          - social
+          - economic
+          - exploration
+        description: Filter by template type
+      responses:
+        '200':
+          $ref: '#/components/responses/ActiveTemplatesResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
   /validate:
     post:
       summary: Validate template structure
@@ -398,22 +384,20 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ValidateTemplateRequest"
+              $ref: '#/components/schemas/ValidateTemplateRequest'
       responses:
-        "200":
-          $ref: "#/components/responses/ValidationResponse"
-        "400":
-          $ref: "#/components/responses/ValidationError"
-        "500":
-          $ref: "#/components/responses/InternalServerError"
-
+        '200':
+          $ref: '#/components/responses/ValidationResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 components:
   securitySchemes:
     BearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
-
   responses:
     HealthResponse:
       description: Service health status
@@ -431,7 +415,6 @@ components:
               version:
                 type: string
                 example: 1.0.0
-
     TemplatesListResponse:
       description: List of story templates
       content:
@@ -442,7 +425,7 @@ components:
               templates:
                 type: array
                 items:
-                  $ref: "#/components/schemas/StoryTemplate"
+                  $ref: '#/components/schemas/StoryTemplate'
               total:
                 type: integer
                 minimum: 0
@@ -453,8 +436,7 @@ components:
                 type: integer
                 minimum: 1
                 maximum: 100
-            description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
+            description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     TemplateResponse:
       description: Single template response
       content:
@@ -463,9 +445,8 @@ components:
             type: object
             properties:
               template:
-                $ref: "#/components/schemas/StoryTemplate"
-            description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
+                $ref: '#/components/schemas/StoryTemplate'
+            description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     TemplateVariantsResponse:
       description: Template variants response
       content:
@@ -476,12 +457,11 @@ components:
               variants:
                 type: array
                 items:
-                  $ref: "#/components/schemas/TemplateVariant"
+                  $ref: '#/components/schemas/TemplateVariant'
               template_id:
                 type: string
                 format: uuid
-            description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
+            description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     VariantResponse:
       description: Single variant response
       content:
@@ -490,9 +470,8 @@ components:
             type: object
             properties:
               variant:
-                $ref: "#/components/schemas/TemplateVariant"
-            description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
+                $ref: '#/components/schemas/TemplateVariant'
+            description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     VariablesListResponse:
       description: List of variable rules
       content:
@@ -503,7 +482,7 @@ components:
               variables:
                 type: array
                 items:
-                  $ref: "#/components/schemas/VariableRule"
+                  $ref: '#/components/schemas/VariableRule'
               total:
                 type: integer
                 minimum: 0
@@ -514,8 +493,7 @@ components:
                 type: integer
                 minimum: 1
                 maximum: 100
-            description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
+            description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     VariableResponse:
       description: Single variable response
       content:
@@ -524,9 +502,8 @@ components:
             type: object
             properties:
               variable:
-                $ref: "#/components/schemas/VariableRule"
-            description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
+                $ref: '#/components/schemas/VariableRule'
+            description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     GeneratedLegendResponse:
       description: Generated legend story
       content:
@@ -550,8 +527,7 @@ components:
                 description: Variables substituted in the template
                 additionalProperties:
                   type: string
-            description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
+            description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     ActiveTemplatesResponse:
       description: Active templates for fast generation
       content:
@@ -562,12 +538,11 @@ components:
               templates:
                 type: array
                 items:
-                  $ref: "#/components/schemas/ActiveTemplate"
+                  $ref: '#/components/schemas/ActiveTemplate'
               cache_timestamp:
                 type: string
                 format: date-time
-            description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
+            description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     ValidationResponse:
       description: Template validation result
       content:
@@ -583,8 +558,7 @@ components:
                 items:
                   type: string
                 description: Validation errors (empty if valid)
-            description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
+            description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     ValidationError:
       description: Template validation error
       content:
@@ -600,8 +574,7 @@ components:
                 items:
                   type: string
                   description: Validation error messages
-            description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
+            description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     BadRequest:
       description: Bad request
       content:
@@ -617,7 +590,6 @@ components:
                 example: Invalid request parameters
               details:
                 type: object
-
     NotFound:
       description: Resource not found
       content:
@@ -631,7 +603,6 @@ components:
               message:
                 type: string
                 example: Template not found
-
     InternalServerError:
       description: Internal server error
       content:
@@ -645,33 +616,45 @@ components:
               message:
                 type: string
                 example: Internal server error
-
   schemas:
-    # Template schemas
     StoryTemplate:
       type: object
-      required: [ id, type, category, base_template ]
+      required:
+      - id
+      - type
+      - category
+      - base_template
       properties:
         id:
           type: string
           format: uuid
         type:
           type: string
-          enum: [ combat, social, economic, exploration ]
+          enum:
+          - combat
+          - social
+          - economic
+          - exploration
         category:
           type: string
           description: Event category
         base_template:
           type: string
           description: Base template with {variable} placeholders
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        conditions:
+          type: object
+          description: Activation conditions
         variables:
           type: array
           items:
             type: string
           description: Required variables for this template
-        conditions:
-          type: object
-          description: Activation conditions
         variants:
           type: array
           items:
@@ -680,65 +663,69 @@ components:
         active:
           type: boolean
           default: true
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     CreateTemplateRequest:
       type: object
-      required: [ type, category, base_template ]
+      required:
+      - type
+      - category
+      - base_template
       properties:
         type:
           type: string
-          enum: [ combat, social, economic, exploration ]
+          enum:
+          - combat
+          - social
+          - economic
+          - exploration
         category:
           type: string
         base_template:
           type: string
+        conditions:
+          type: object
         variables:
           type: array
           items:
             type: string
-        conditions:
-          type: object
         variants:
           type: array
           items:
             type: string
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     UpdateTemplateRequest:
       type: object
       properties:
         type:
           type: string
-          enum: [ combat, social, economic, exploration ]
+          enum:
+          - combat
+          - social
+          - economic
+          - exploration
         category:
           type: string
         base_template:
           type: string
+        conditions:
+          type: object
         variables:
           type: array
           items:
             type: string
-        conditions:
-          type: object
         variants:
           type: array
           items:
             type: string
         active:
           type: boolean
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
-    # Variant schemas
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     TemplateVariant:
       type: object
-      required: [ id, template_id, variant_text ]
+      required:
+      - id
+      - template_id
+      - variant_text
       properties:
         id:
           type: string
@@ -749,22 +736,22 @@ components:
         variant_text:
           type: string
           description: Alternative template text
+        created_at:
+          type: string
+          format: date-time
+        active:
+          type: boolean
+          default: true
         weight:
           type: integer
           minimum: 1
           default: 1
           description: Selection weight for this variant
-        active:
-          type: boolean
-          default: true
-        created_at:
-          type: string
-          format: date-time
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     CreateVariantRequest:
       type: object
-      required: [ variant_text ]
+      required:
+      - variant_text
       properties:
         variant_text:
           type: string
@@ -772,24 +759,25 @@ components:
           type: integer
           minimum: 1
           default: 1
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     UpdateVariantRequest:
       type: object
       properties:
         variant_text:
           type: string
+        active:
+          type: boolean
         weight:
           type: integer
           minimum: 1
-        active:
-          type: boolean
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
-    # Variable schemas
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     VariableRule:
       type: object
-      required: [ id, type, name, rules ]
+      required:
+      - id
+      - type
+      - name
+      - rules
       properties:
         id:
           type: string
@@ -797,19 +785,23 @@ components:
         type:
           type: string
           enum:
-            [
-              player_name,
-              action_verb,
-              enemy_type,
-              location,
-              number,
-              time_context,
-              faction,
-              emotion,
-            ]
+          - player_name
+          - action_verb
+          - enemy_type
+          - location
+          - number
+          - time_context
+          - faction
+          - emotion
         name:
           type: string
           description: Variable placeholder name
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
         rules:
           type: object
           description: Substitution rules (synonyms, transformations, etc.)
@@ -825,7 +817,10 @@ components:
               properties:
                 case:
                   type: string
-                  enum: [ lower, upper, title ]
+                  enum:
+                  - lower
+                  - upper
+                  - title
                 plural:
                   type: boolean
                 gender_adapt:
@@ -838,69 +833,64 @@ components:
         active:
           type: boolean
           default: true
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     CreateVariableRequest:
       type: object
-      required: [ type, name, rules ]
+      required:
+      - type
+      - name
+      - rules
       properties:
         type:
           type: string
           enum:
-            [
-              player_name,
-              action_verb,
-              enemy_type,
-              location,
-              number,
-              time_context,
-              faction,
-              emotion,
-            ]
+          - player_name
+          - action_verb
+          - enemy_type
+          - location
+          - number
+          - time_context
+          - faction
+          - emotion
         name:
           type: string
         rules:
           type: object
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     UpdateVariableRequest:
       type: object
       properties:
         type:
           type: string
           enum:
-            [
-              player_name,
-              action_verb,
-              enemy_type,
-              location,
-              number,
-              time_context,
-              faction,
-              emotion,
-            ]
+          - player_name
+          - action_verb
+          - enemy_type
+          - location
+          - number
+          - time_context
+          - faction
+          - emotion
         name:
           type: string
         rules:
           type: object
         active:
           type: boolean
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
-    # Generation schemas
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     GenerateLegendRequest:
       type: object
-      required: [ event_type, event_data ]
+      required:
+      - event_type
+      - event_data
       properties:
         event_type:
           type: string
-          enum: [ combat, social, economic, exploration ]
+          enum:
+          - combat
+          - social
+          - economic
+          - exploration
           description: Type of event to generate legend for
         event_data:
           type: object
@@ -929,7 +919,12 @@ components:
               description: Faction involved
             emotion:
               type: string
-              enum: [ fear, admiration, respect, envy, neutral ]
+              enum:
+              - fear
+              - admiration
+              - respect
+              - envy
+              - neutral
               description: Emotional context
             additional_data:
               type: object
@@ -946,11 +941,19 @@ components:
               description: Current location of narrator
             time_of_day:
               type: string
-              enum: [ morning, afternoon, evening, night ]
+              enum:
+              - morning
+              - afternoon
+              - evening
+              - night
               description: Time of day affecting story tone
             story_style:
               type: string
-              enum: [ formal, casual, slang, dramatic ]
+              enum:
+              - formal
+              - casual
+              - slang
+              - dramatic
               description: Desired story telling style
         variant_count:
           type: integer
@@ -958,27 +961,34 @@ components:
           maximum: 5
           default: 1
           description: Number of story variants to generate
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
-    # Validation schemas
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     ValidateTemplateRequest:
       type: object
-      required: [ template ]
+      required:
+      - template
       properties:
         template:
-          $ref: "#/components/schemas/StoryTemplate"
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
-
+          $ref: '#/components/schemas/StoryTemplate'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     ActiveTemplate:
       type: object
-      required: [ id, type, category, base_template, variables ]
+      required:
+      - id
+      - type
+      - category
+      - base_template
+      - variables
       properties:
         id:
           type: string
           format: uuid
         type:
           type: string
-          enum: [ combat, social, economic, exploration ]
+          enum:
+          - combat
+          - social
+          - economic
+          - exploration
         category:
           type: string
         base_template:
@@ -991,4 +1001,4 @@ components:
           type: array
           items:
             type: string
-      description: "BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%."
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'

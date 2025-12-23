@@ -1,37 +1,60 @@
 openapi: 3.0.3
 info:
   title: AI Adaptive Service API
-  description: |
-    API для системы адаптивного AI врагов в MMORPG.
+  description: 'API для системы адаптивного AI врагов в MMORPG.
+
 
     ## Описание системы
 
+
     Система адаптивного AI анализирует действия игроков в реальном времени и адаптирует поведение врагов:
+
     - **Анализ тактик**: сбор данных о паттернах игроков, предпочтительных позициях, комбо-последовательностях
+
     - **Адаптация атак**: фокус на слабых игроках, прерывание комбо, изменение приоритетов целей
+
     - **Адаптация защиты**: уклонение от частых атак, блокирование способностей, позиционирование
+
     - **Контр-стратегии**: разделение команды, фокус на саппортах, использование окружения
+
 
     ## Архитектура
 
+
     **Микросервис**: `ai-service-go`
 
+
     **База данных**: PostgreSQL с таблицами:
+
     - `ai_profiles` - профили AI врагов
+
     - `player_tactics_analysis` - анализ тактик игроков
+
     - `encounter_sessions` - сессии встреч
+
     - `ai_adaptation_history` - история адаптаций
 
+
     **Интеграции**:
+
     - `gameplay-service` - данные о действиях игроков
+
     - `analytics-service` - анализ паттернов и машинное обучение
+
     - `combat-service` - управление боями
 
+
     **AI компоненты**:
+
     - Tactical Analyzer - анализ тактик в реальном времени
+
     - Pattern Recognizer - распознавание паттернов
+
     - Strategy Adapter - адаптация стратегий
+
     - Machine Learning Engine - обучение моделей
+
+    '
   version: 1.0.0
   contact:
     name: AI Team
@@ -39,57 +62,66 @@ info:
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
-
 servers:
-  - url: https://api.necpgame.com/v1
-    description: Production server
-  - url: https://staging-api.necpgame.com/v1
-    description: Staging server
-  - url: http://localhost:8080/v1
-    description: Local development server
-
+- url: https://api.necpgame.com/v1
+  description: Production server
+- url: https://staging-api.necpgame.com/v1
+  description: Staging server
+- url: http://localhost:8080/v1
+  description: Local development server
 security:
-  - BearerAuth: [ ]
-  - ApiKeyAuth: [ ]
-
+- BearerAuth: []
+- ApiKeyAuth: []
 paths:
   /api/v1/gameplay/combat/ai/profiles:
     get:
       summary: Получить список профилей AI
-      description: |
-        Возвращает список всех доступных профилей AI врагов с их характеристиками,
+      description: 'Возвращает список всех доступных профилей AI врагов с их характеристиками,
+
         тактиками и адаптационными возможностями.
+
+        '
       operationId: getAIProfiles
       tags:
-        - AI Profiles
+      - AI Profiles
       parameters:
-        - name: difficulty
-          in: query
-          schema:
-            type: string
-            enum: [ street, tactical, mythic, raid ]
-          description: Фильтр по уровню сложности
-        - name: faction
-          in: query
-          schema:
-            type: string
-            enum: [ neutral, arasaka, militech, kang_tao, netwatch, voodoo_boys ]
-          description: Фильтр по фракции
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 50
-          description: Максимальное количество профилей
-        - name: offset
-          in: query
-          schema:
-            type: integer
-            minimum: 0
-            default: 0
-          description: Смещение для пагинации
+      - name: difficulty
+        in: query
+        schema:
+          type: string
+          enum:
+          - street
+          - tactical
+          - mythic
+          - raid
+        description: Фильтр по уровню сложности
+      - name: faction
+        in: query
+        schema:
+          type: string
+          enum:
+          - neutral
+          - arasaka
+          - militech
+          - kang_tao
+          - netwatch
+          - voodoo_boys
+        description: Фильтр по фракции
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+        description: Максимальное количество профилей
+      - name: offset
+        in: query
+        schema:
+          type: integer
+          minimum: 0
+          default: 0
+        description: Смещение для пагинации
       responses:
         '200':
           description: Список профилей AI
@@ -110,24 +142,25 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
   /api/v1/gameplay/combat/ai/profiles/{profileId}:
     get:
       summary: Получить информацию о профиле AI
-      description: |
-        Возвращает детальную информацию о конкретном профиле AI,
+      description: 'Возвращает детальную информацию о конкретном профиле AI,
+
         включая текущие адаптации и статистику использования.
+
+        '
       operationId: getAIProfile
       tags:
-        - AI Profiles
+      - AI Profiles
       parameters:
-        - name: profileId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: ID профиля AI
+      - name: profileId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: ID профиля AI
       responses:
         '200':
           description: Информация о профиле AI
@@ -141,31 +174,36 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
   /api/v1/gameplay/combat/ai/profiles/{profileId}/telemetry:
     get:
       summary: Получить телеметрию профиля AI
-      description: |
-        Возвращает телеметрию использования профиля AI: эффективность адаптаций,
+      description: 'Возвращает телеметрию использования профиля AI: эффективность адаптаций,
+
         паттерны поведения игроков, статистику побед/поражений.
+
+        '
       operationId: getAIProfileTelemetry
       tags:
-        - AI Profiles
+      - AI Profiles
       parameters:
-        - name: profileId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: ID профиля AI
-        - name: timeframe
-          in: query
-          schema:
-            type: string
-            enum: [ hour, day, week, month ]
-            default: day
-          description: Временной интервал для телеметрии
+      - name: profileId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: ID профиля AI
+      - name: timeframe
+        in: query
+        schema:
+          type: string
+          enum:
+          - hour
+          - day
+          - week
+          - month
+          default: day
+        description: Временной интервал для телеметрии
       responses:
         '200':
           description: Телеметрия профиля AI
@@ -179,24 +217,25 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
   /api/v1/gameplay/combat/raids/{raidId}/phase:
     post:
       summary: Переход фазы рейда
-      description: |
-        Инициирует переход рейда на следующую фазу с адаптацией AI босса
+      description: 'Инициирует переход рейда на следующую фазу с адаптацией AI босса
+
         на основе анализа действий игроков в предыдущей фазе.
+
+        '
       operationId: transitionRaidPhase
       tags:
-        - Raid Management
+      - Raid Management
       parameters:
-        - name: raidId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: ID рейда
+      - name: raidId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: ID рейда
       requestBody:
         required: true
         content:
@@ -204,7 +243,7 @@ paths:
             schema:
               type: object
               required:
-                - new_phase
+              - new_phase
               properties:
                 new_phase:
                   type: integer
@@ -246,16 +285,17 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
   /api/v1/gameplay/combat/ai/encounter:
     post:
       summary: Создать новую встречу с AI
-      description: |
-        Создает новую встречу с врагами, использующими адаптивный AI.
+      description: 'Создает новую встречу с врагами, использующими адаптивный AI.
+
         AI анализирует доступные данные о игроках для оптимизации тактики.
+
+        '
       operationId: createAIEncounter
       tags:
-        - Encounter Management
+      - Encounter Management
       requestBody:
         required: true
         content:
@@ -263,17 +303,24 @@ paths:
             schema:
               type: object
               required:
-                - encounter_type
-                - difficulty
-                - player_ids
+              - encounter_type
+              - difficulty
+              - player_ids
               properties:
                 encounter_type:
                   type: string
-                  enum: [ street, tactical, mythic, raid ]
+                  enum:
+                  - street
+                  - tactical
+                  - mythic
+                  - raid
                   description: Тип встречи
                 difficulty:
                   type: string
-                  enum: [ normal, hard, mythic ]
+                  enum:
+                  - normal
+                  - hard
+                  - mythic
                 player_ids:
                   type: array
                   items:
@@ -310,24 +357,25 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
   /api/v1/gameplay/combat/ai/encounter/{encounterId}:
     get:
       summary: Получить информацию о встрече
-      description: |
-        Возвращает детальную информацию о встрече с AI,
+      description: 'Возвращает детальную информацию о встрече с AI,
+
         включая текущие адаптации и статистику.
+
+        '
       operationId: getEncounter
       tags:
-        - Encounter Management
+      - Encounter Management
       parameters:
-        - name: encounterId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: ID встречи
+      - name: encounterId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: ID встречи
       responses:
         '200':
           description: Информация о встрече
@@ -341,24 +389,25 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
   /api/v1/gameplay/combat/ai/encounter/{encounterId}/start:
     post:
       summary: Начать встречу
-      description: |
-        Запускает встречу с адаптивным AI. В этот момент AI начинает
+      description: 'Запускает встречу с адаптивным AI. В этот момент AI начинает
+
         анализ действий игроков и адаптацию поведения.
+
+        '
       operationId: startEncounter
       tags:
-        - Encounter Management
+      - Encounter Management
       parameters:
-        - name: encounterId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: ID встречи
+      - name: encounterId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: ID встречи
       responses:
         '200':
           description: Встреча успешно запущена
@@ -385,24 +434,25 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
   /api/v1/gameplay/combat/ai/encounter/{encounterId}/end:
     post:
       summary: Завершить встречу
-      description: |
-        Завершает встречу и сохраняет финальную телеметрию AI,
+      description: 'Завершает встречу и сохраняет финальную телеметрию AI,
+
         включая все адаптации и анализ эффективности.
+
+        '
       operationId: endEncounter
       tags:
-        - Encounter Management
+      - Encounter Management
       parameters:
-        - name: encounterId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: ID встречи
+      - name: encounterId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: ID встречи
       requestBody:
         required: true
         content:
@@ -410,11 +460,15 @@ paths:
             schema:
               type: object
               required:
-                - result
+              - result
               properties:
                 result:
                   type: string
-                  enum: [ victory, defeat, timeout, aborted ]
+                  enum:
+                  - victory
+                  - defeat
+                  - timeout
+                  - aborted
                   description: Результат встречи
                 final_statistics:
                   $ref: '#/components/schemas/EncounterStatistics'
@@ -442,16 +496,17 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
   /api/v1/gameplay/combat/ai/analysis/player-tactics:
     post:
       summary: Анализировать тактики игроков
-      description: |
-        Анализирует действия игроков в реальном времени для определения паттернов
+      description: 'Анализирует действия игроков в реальном времени для определения паттернов
+
         и подготовки адаптаций AI.
+
+        '
       operationId: analyzePlayerTactics
       tags:
-        - Tactical Analysis
+      - Tactical Analysis
       requestBody:
         required: true
         content:
@@ -459,8 +514,8 @@ paths:
             schema:
               type: object
               required:
-                - encounter_id
-                - player_actions
+              - encounter_id
+              - player_actions
               properties:
                 encounter_id:
                   type: string
@@ -506,16 +561,15 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '500':
           $ref: '#/components/responses/InternalServerError'
-
 components:
   schemas:
     AIProfile:
       type: object
       required:
-        - profile_id
-        - name
-        - difficulty
-        - base_tactics
+      - profile_id
+      - name
+      - difficulty
+      - base_tactics
       properties:
         profile_id:
           type: string
@@ -524,13 +578,25 @@ components:
         name:
           type: string
           description: Название профиля
-          example: "Arasaka Elite Tactical Unit"
+          example: Arasaka Elite Tactical Unit
         difficulty:
           type: string
-          enum: [ street, tactical, mythic, raid ]
+          enum:
+          - street
+          - tactical
+          - mythic
+          - raid
         faction:
           type: string
-          enum: [ neutral, arasaka, militech, kang_tao, netwatch, voodoo_boys ]
+          enum:
+          - neutral
+          - arasaka
+          - militech
+          - kang_tao
+          - netwatch
+          - voodoo_boys
+        statistics:
+          $ref: '#/components/schemas/AIProfileStatistics'
         base_tactics:
           type: array
           items:
@@ -541,26 +607,22 @@ components:
           items:
             type: string
           description: Возможности адаптации
-        statistics:
-          $ref: '#/components/schemas/AIProfileStatistics'
-
     AIProfileDetailed:
       allOf:
-        - $ref: '#/components/schemas/AIProfile'
-        - type: object
-          properties:
-            current_adaptations:
-              type: array
-              items:
-                $ref: '#/components/schemas/AIAdaptation'
-            telemetry_summary:
-              $ref: '#/components/schemas/AITelemetrySummary'
-            machine_learning_models:
-              type: array
-              items:
-                type: string
-              description: Используемые модели ML
-
+      - $ref: '#/components/schemas/AIProfile'
+      - type: object
+        properties:
+          current_adaptations:
+            type: array
+            items:
+              $ref: '#/components/schemas/AIAdaptation'
+          telemetry_summary:
+            $ref: '#/components/schemas/AITelemetrySummary'
+          machine_learning_models:
+            type: array
+            items:
+              type: string
+            description: Используемые модели ML
     AITelemetry:
       type: object
       properties:
@@ -569,16 +631,16 @@ components:
           format: uuid
         timeframe:
           type: string
-          enum: [ hour, day, week, month ]
-        encounters_total:
-          type: integer
-        victories:
-          type: integer
-        defeats:
-          type: integer
-        average_encounter_duration:
-          type: integer
-          format: int64
+          enum:
+          - hour
+          - day
+          - week
+          - month
+        performance_metrics:
+          type: object
+          additionalProperties:
+            type: number
+            format: float
         most_common_adaptations:
           type: array
           items:
@@ -592,15 +654,22 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/TacticPattern'
-        performance_metrics:
-          type: object
-          additionalProperties:
-            type: number
-            format: float
-
+        encounters_total:
+          type: integer
+        victories:
+          type: integer
+        defeats:
+          type: integer
+        average_encounter_duration:
+          type: integer
+          format: int64
     AITelemetrySummary:
       type: object
       properties:
+        most_successful_tactics:
+          type: array
+          items:
+            type: string
         win_rate:
           type: number
           format: float
@@ -611,63 +680,58 @@ components:
           format: float
           minimum: 0.0
           maximum: 1.0
-        most_successful_tactics:
-          type: array
-          items:
-            type: string
         learning_progress:
           type: number
           format: float
           minimum: 0.0
           maximum: 1.0
-
     AIProfileStatistics:
       type: object
       properties:
-        total_encounters:
-          type: integer
+        common_counter_strategies:
+          type: array
+          items:
+            type: string
         win_rate:
           type: number
           format: float
         average_difficulty_faced:
           type: number
           format: float
-        common_counter_strategies:
-          type: array
-          items:
-            type: string
-
+        total_encounters:
+          type: integer
     Encounter:
       type: object
       required:
-        - encounter_id
-        - encounter_type
-        - difficulty
-        - status
-        - created_at
+      - encounter_id
+      - encounter_type
+      - difficulty
+      - status
+      - created_at
       properties:
         encounter_id:
           type: string
           format: uuid
         encounter_type:
           type: string
-          enum: [ street, tactical, mythic, raid ]
+          enum:
+          - street
+          - tactical
+          - mythic
+          - raid
         difficulty:
           type: string
-          enum: [ normal, hard, mythic ]
+          enum:
+          - normal
+          - hard
+          - mythic
         status:
           type: string
-          enum: [ created, active, completed, failed ]
-        player_ids:
-          type: array
-          items:
-            type: string
-            format: uuid
-        ai_profiles:
-          type: array
-          items:
-            type: string
-            format: uuid
+          enum:
+          - created
+          - active
+          - completed
+          - failed
         created_at:
           type: string
           format: date-time
@@ -679,57 +743,65 @@ components:
           type: string
           format: date-time
           nullable: true
-
+        player_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        ai_profiles:
+          type: array
+          items:
+            type: string
+            format: uuid
     EncounterDetailed:
       allOf:
-        - $ref: '#/components/schemas/Encounter'
-        - type: object
-          properties:
-            current_ai_state:
-              $ref: '#/components/schemas/AIEncounterState'
-            player_performance:
-              type: array
-              items:
-                $ref: '#/components/schemas/PlayerPerformance'
-            adaptations_applied:
-              type: array
-              items:
-                $ref: '#/components/schemas/AIAdaptation'
-            real_time_telemetry:
-              $ref: '#/components/schemas/AITelemetry'
-
+      - $ref: '#/components/schemas/Encounter'
+      - type: object
+        properties:
+          current_ai_state:
+            $ref: '#/components/schemas/AIEncounterState'
+          player_performance:
+            type: array
+            items:
+              $ref: '#/components/schemas/PlayerPerformance'
+          adaptations_applied:
+            type: array
+            items:
+              $ref: '#/components/schemas/AIAdaptation'
+          real_time_telemetry:
+            $ref: '#/components/schemas/AITelemetry'
     AIEncounterState:
       type: object
       properties:
         encounter_phase:
           type: string
-          enum: [ initialization, analysis, adaptation, execution, conclusion ]
-        active_adaptations:
-          type: array
-          items:
-            $ref: '#/components/schemas/AIAdaptation'
+          enum:
+          - initialization
+          - analysis
+          - adaptation
+          - execution
+          - conclusion
         threat_assessment:
           type: object
           additionalProperties:
             type: number
             format: float
           description: Оценка угрозы по игрокам
+        active_adaptations:
+          type: array
+          items:
+            $ref: '#/components/schemas/AIAdaptation'
         strategy_confidence:
           type: number
           format: float
           minimum: 0.0
           maximum: 1.0
-
     PlayerPerformanceAnalysis:
       type: object
       properties:
         player_id:
           type: string
           format: uuid
-        damage_dealt:
-          type: integer
-        damage_received:
-          type: integer
         abilities_used:
           type: object
           additionalProperties:
@@ -740,25 +812,21 @@ components:
         team_coordination_score:
           type: number
           format: float
-
-    PlayerPerformance:
-      type: object
-      required:
-        - player_id
-        - damage_dealt
-        - damage_received
-        - survival_time
-      properties:
-        player_id:
-          type: string
-          format: uuid
         damage_dealt:
           type: integer
         damage_received:
           type: integer
-        survival_time:
-          type: integer
-          format: int64
+    PlayerPerformance:
+      type: object
+      required:
+      - player_id
+      - damage_dealt
+      - damage_received
+      - survival_time
+      properties:
+        player_id:
+          type: string
+          format: uuid
         abilities_used:
           type: array
           items:
@@ -766,22 +834,35 @@ components:
         positioning_score:
           type: number
           format: float
-
+        damage_dealt:
+          type: integer
+        damage_received:
+          type: integer
+        survival_time:
+          type: integer
+          format: int64
     AIAdaptation:
       type: object
       required:
-        - adaptation_type
-        - target_player
-        - effectiveness_score
-        - applied_at
+      - adaptation_type
+      - target_player
+      - effectiveness_score
+      - applied_at
       properties:
-        adaptation_type:
-          type: string
-          enum: [ attack_focus, defense_adjustment, counter_strategy, positioning_change ]
         target_player:
           type: string
           format: uuid
           nullable: true
+        adaptation_type:
+          type: string
+          enum:
+          - attack_focus
+          - defense_adjustment
+          - counter_strategy
+          - positioning_change
+        applied_at:
+          type: string
+          format: date-time
         parameters:
           type: object
           description: Параметры адаптации
@@ -790,23 +871,28 @@ components:
           format: float
           minimum: 0.0
           maximum: 1.0
-        applied_at:
-          type: string
-          format: date-time
-
     PlayerAction:
       type: object
       required:
-        - player_id
-        - action_type
-        - timestamp
+      - player_id
+      - action_type
+      - timestamp
       properties:
         player_id:
           type: string
           format: uuid
+        target_id:
+          type: string
+          format: uuid
+          nullable: true
         action_type:
           type: string
-          enum: [ ability_used, position_changed, damage_dealt, damage_received, item_used ]
+          enum:
+          - ability_used
+          - position_changed
+          - damage_dealt
+          - damage_received
+          - item_used
         timestamp:
           type: string
           format: date-time
@@ -822,23 +908,25 @@ components:
             z:
               type: number
               format: float
-        target_id:
-          type: string
-          format: uuid
-          nullable: true
         parameters:
           type: object
-
     TacticPattern:
       type: object
       required:
-        - pattern_type
-        - confidence
-        - frequency
+      - pattern_type
+      - confidence
+      - frequency
       properties:
         pattern_type:
           type: string
-          example: "burst_damage_combo"
+          example: burst_damage_combo
+        recommended_counter:
+          type: string
+        affected_players:
+          type: array
+          items:
+            type: string
+            format: uuid
         confidence:
           type: number
           format: float
@@ -846,24 +934,9 @@ components:
           maximum: 1.0
         frequency:
           type: integer
-        affected_players:
-          type: array
-          items:
-            type: string
-            format: uuid
-        recommended_counter:
-          type: string
-
     EncounterStatistics:
       type: object
       properties:
-        duration:
-          type: integer
-          format: int64
-        total_damage_dealt:
-          type: integer
-        total_damage_received:
-          type: integer
         player_survival_rates:
           type: object
           additionalProperties:
@@ -874,19 +947,24 @@ components:
           additionalProperties:
             type: number
             format: float
-
+        duration:
+          type: integer
+          format: int64
+        total_damage_dealt:
+          type: integer
+        total_damage_received:
+          type: integer
     Pagination:
       type: object
       properties:
+        has_more:
+          type: boolean
         offset:
           type: integer
         limit:
           type: integer
         total:
           type: integer
-        has_more:
-          type: boolean
-
   responses:
     BadRequest:
       description: Некорректный запрос
@@ -895,17 +973,16 @@ components:
           schema:
             type: object
             required:
-              - error
+            - error
             properties:
               error:
                 type: string
-                example: "VALIDATION_ERROR"
+                example: VALIDATION_ERROR
               message:
                 type: string
-                example: "Invalid request parameters"
+                example: Invalid request parameters
               details:
                 type: object
-
     Unauthorized:
       description: Не авторизован
       content:
@@ -913,15 +990,14 @@ components:
           schema:
             type: object
             required:
-              - error
+            - error
             properties:
               error:
                 type: string
-                example: "UNAUTHORIZED"
+                example: UNAUTHORIZED
               message:
                 type: string
-                example: "Authentication required"
-
+                example: Authentication required
     InternalServerError:
       description: Внутренняя ошибка сервера
       content:
@@ -929,15 +1005,14 @@ components:
           schema:
             type: object
             required:
-              - error
+            - error
             properties:
               error:
                 type: string
-                example: "INTERNAL_ERROR"
+                example: INTERNAL_ERROR
               message:
                 type: string
-                example: "Internal server error occurred"
-
+                example: Internal server error occurred
   securitySchemes:
     BearerAuth:
       type: http

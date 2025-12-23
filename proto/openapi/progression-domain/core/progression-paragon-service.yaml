@@ -12,18 +12,18 @@ info:
     name: NECPGAME API Support
     email: api@necp.game
 servers:
-  - url: http://localhost:8084/api/v1/progression
-    description: Локальный сервер разработки
-  - url: https://api.necp.game/api/v1/progression
-    description: Продакшен сервер
+- url: http://localhost:8084/api/v1/progression
+  description: Локальный сервер разработки
+- url: https://api.necp.game/api/v1/progression
+  description: Продакшен сервер
 tags:
-  - name: Paragon
-    description: Paragon Levels - бесконечные уровни после 50
+- name: Paragon
+  description: Paragon Levels - бесконечные уровни после 50
 paths:
   /paragon/levels:
     get:
       tags:
-        - Paragon
+      - Paragon
       summary: Получить Paragon Levels персонажа
       description: 'Возвращает информацию о Paragon Levels персонажа: текущий уровень, накопленные очки,
 
@@ -32,15 +32,15 @@ paths:
         '
       operationId: getParagonLevels
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: character_id
-          in: query
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Идентификатор персонажа
+      - name: character_id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Идентификатор персонажа
       responses:
         '200':
           description: Информация о Paragon Levels
@@ -57,14 +57,14 @@ paths:
                 experience_current: 125000
                 experience_required: 150000
                 allocations:
-                  - stat_type: strength
-                    points_allocated: 20
-                  - stat_type: agility
-                    points_allocated: 15
-                  - stat_type: intelligence
-                    points_allocated: 10
-                  - stat_type: vitality
-                    points_allocated: 15
+                - stat_type: strength
+                  points_allocated: 20
+                - stat_type: agility
+                  points_allocated: 15
+                - stat_type: intelligence
+                  points_allocated: 10
+                - stat_type: vitality
+                  points_allocated: 15
                 updated_at: '2025-12-01T10:00:00Z'
         '401':
           $ref: ../../common-schemas.yaml#/components/responses/Unauthorized
@@ -75,7 +75,7 @@ paths:
   /paragon/distribute:
     post:
       tags:
-        - Paragon
+      - Paragon
       summary: Распределить Paragon Points по характеристикам
       description: 'Распределяет доступные Paragon Points по характеристикам персонажа.
 
@@ -84,15 +84,15 @@ paths:
         '
       operationId: distributeParagonPoints
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: character_id
-          in: query
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Идентификатор персонажа
+      - name: character_id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Идентификатор персонажа
       requestBody:
         required: true
         content:
@@ -101,14 +101,14 @@ paths:
               $ref: '#/components/schemas/DistributeParagonPointsRequest'
             example:
               allocations:
-                - stat_type: strength
-                  points: 5
-                - stat_type: agility
-                  points: 3
-                - stat_type: intelligence
-                  points: 2
-                - stat_type: vitality
-                  points: 5
+              - stat_type: strength
+                points: 5
+              - stat_type: agility
+                points: 3
+              - stat_type: intelligence
+                points: 2
+              - stat_type: vitality
+                points: 5
       responses:
         '200':
           description: Paragon Points успешно распределены
@@ -127,7 +127,7 @@ paths:
   /paragon/stats:
     get:
       tags:
-        - Paragon
+      - Paragon
       summary: Получить статистику Paragon Levels
       description: 'Возвращает статистику Paragon Levels: общее количество уровней, распределение очков,
 
@@ -136,15 +136,15 @@ paths:
         '
       operationId: getParagonStats
       security:
-        - BearerAuth: [ ]
+      - BearerAuth: []
       parameters:
-        - name: character_id
-          in: query
-          required: true
-          schema:
-            type: string
-            format: uuid
-          description: Идентификатор персонажа
+      - name: character_id
+        in: query
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Идентификатор персонажа
       responses:
         '200':
           description: Статистика Paragon Levels
@@ -181,12 +181,12 @@ components:
         stat_type:
           type: string
           enum:
-            - strength
-            - agility
-            - intelligence
-            - vitality
-            - willpower
-            - perception
+          - strength
+          - agility
+          - intelligence
+          - vitality
+          - willpower
+          - perception
           description: Тип характеристики
         points_allocated:
           type: integer
@@ -243,25 +243,25 @@ components:
     DistributeParagonPointsRequest:
       type: object
       required:
-        - allocations
+      - allocations
       properties:
         allocations:
           type: array
           items:
             type: object
             required:
-              - stat_type
-              - points
+            - stat_type
+            - points
             properties:
               stat_type:
                 type: string
                 enum:
-                  - strength
-                  - agility
-                  - intelligence
-                  - vitality
-                  - willpower
-                  - perception
+                - strength
+                - agility
+                - intelligence
+                - vitality
+                - willpower
+                - perception
               points:
                 type: integer
                 minimum: 1
@@ -285,6 +285,11 @@ components:
           additionalProperties:
             type: integer
             minimum: 0
+        percentile:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 100.0
         total_paragon_levels:
           type: integer
           minimum: 0
@@ -297,8 +302,3 @@ components:
         global_rank:
           type: integer
           minimum: 1
-        percentile:
-          type: number
-          format: float
-          minimum: 0.0
-          maximum: 100.0
