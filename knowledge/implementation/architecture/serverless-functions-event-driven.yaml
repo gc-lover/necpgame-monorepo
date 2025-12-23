@@ -1,47 +1,47 @@
 <!-- Issue: #1997 -->
-# Serverless Functions for Event-Driven Microservices
+  # Serverless Functions for Event-Driven Microservices
 
-## Overview
-Serverless архитектура на базе AWS Lambda/Azure Functions для обработки событий в NECPGAME, обеспечивающая автоматическое масштабирование, cost optimization и быструю разработку event-driven функций.
+    ## Overview
+    Serverless архитектура на базе AWS Lambda/Azure Functions для обработки событий в NECPGAME, обеспечивающая автоматическое масштабирование, cost optimization и быструю разработку event-driven функций.
+    
+    ## Performance Requirements
+    
+    **Load:** 100k events/sec burst capacity, auto-scaling to 1000 concurrent functions
+    
+    **Data Model (optimized):**
+    - Function execution time: <30s average, <5min max
+    - Cold start optimization: <1s for warm functions
+    - Memory allocation: 512MB-3GB per function
+    - Event batch size: 10-100 events per invocation
 
-## Performance Requirements
+      **Hot Path:** Real-time event processing → 50k invocations/min (CRITICAL)
 
-**Load:** 100k events/sec burst capacity, auto-scaling to 1000 concurrent functions
-
-**Data Model (optimized):**
-- Function execution time: <30s average, <5min max
-- Cold start optimization: <1s for warm functions
-- Memory allocation: 512MB-3GB per function
-- Event batch size: 10-100 events per invocation
-
-**Hot Path:** Real-time event processing → 50k invocations/min (CRITICAL)
-
-**Backend optimizations required:**
-- Function warm pools for reduced cold starts
-- Event batching and filtering
-- Optimized memory/CPU allocation
-- Cost-aware scaling policies
-
-## Architecture Components
-
-### 1. Serverless Event Processing Flow
-```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Event Source  │────│   Event Router │────│   Lambda        │
-│   (Kafka/SQS)   │    │   (EventBridge)│    │   Functions     │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-          │                       │                       │
-          ▼                       ▼                       ▼
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Dead Letter   │    │   Metrics/      │    │   Data Sink     │
-│   Queue         │    │   Monitoring    │    │   (S3/DynamoDB) │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-```
-
-### 2. Function Categories
-
-#### Event Processing Functions
-```
+      **Backend optimizations required:**
+    - Function warm pools for reduced cold starts
+    - Event batching and filtering
+    - Optimized memory/CPU allocation
+    - Cost-aware scaling policies
+      
+      ## Architecture Components
+      
+      ### 1. Serverless Event Processing Flow
+      ```
+      ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+      │   Event Source  │────│   Event Router │────│   Lambda        │
+      │   (Kafka/SQS)   │    │   (EventBridge)│    │   Functions     │
+      └─────────────────┘    └─────────────────┘    └─────────────────┘
+      │                       │                       │
+      ▼                       ▼                       ▼
+      ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+      │   Dead Letter   │    │   Metrics/      │    │   Data Sink     │
+      │   Queue         │    │   Monitoring    │    │   (S3/DynamoDB) │
+      └─────────────────┘    └─────────────────┘    └─────────────────┘
+      ```
+      
+      ### 2. Function Categories
+      
+      #### Event Processing Functions
+      ```
 Combat Event Processor:
 ├── Trigger: Kafka topic (game.combat.events)
 ├── Process: Real-time combat calculations
@@ -53,10 +53,10 @@ Analytics Processor:
 ├── Process: User behavior analysis, ML features
 ├── Output: Analytics data to Redshift
 └── Scaling: 1-50 instances based on queue depth
-```
-
-#### API Backend Functions
-```
+  ```
+  
+  #### API Backend Functions
+  ```
 Player Profile API:
 ├── Trigger: API Gateway (HTTP requests)
 ├── Process: CRUD operations for player data
@@ -68,12 +68,12 @@ Matchmaking Service:
 ├── Process: Player matching algorithm
 ├── Output: Match assignment events
 └── Scaling: On-demand with reserved capacity
-```
-
-### 3. Event Sources Integration
-
-#### Kafka Event Streaming
-```yaml
+  ```
+  
+  ### 3. Event Sources Integration
+  
+  #### Kafka Event Streaming
+  ```yaml
 Kafka Triggers:
   topics:
     - game.player.events
@@ -90,10 +90,10 @@ Function Configuration:
   environment:
     KAFKA_BROKERS: ${KAFKA_ENDPOINT}
     DATABASE_URL: ${DATABASE_SECRET}
-```
-
-#### SQS Queue Processing
-```yaml
+  ```
+  
+  #### SQS Queue Processing
+  ```yaml
 SQS Triggers:
   queues:
     - player-updates-queue
@@ -105,47 +105,47 @@ SQS Triggers:
 Error Handling:
   max_receive_count: 3
   backoff_strategy: EXPONENTIAL
-```
-
-## Serverless Patterns
-
-### 1. Event-Driven Processing
-```
+  ```
+  
+  ## Serverless Patterns
+  
+  ### 1. Event-Driven Processing
+  ```
 Pattern: Event → Filter → Process → Store
 
 Implementation:
-├── EventBridge rules for event routing
-├── Lambda functions for processing
-├── DynamoDB for state management
-└── S3 for large data storage
-```
-
-### 2. API Composition
-```
+  ├── EventBridge rules for event routing
+  ├── Lambda functions for processing
+  ├── DynamoDB for state management
+  └── S3 for large data storage
+  ```
+  
+  ### 2. API Composition
+  ```
 Pattern: API Gateway → Lambda → Multiple Services → Response
 
 Implementation:
-├── API Gateway with Lambda integration
-├── Step Functions for orchestration
-├── Lambda layers for shared code
-└── API Gateway caching
-```
-
-### 3. Data Processing Pipelines
-```
+  ├── API Gateway with Lambda integration
+  ├── Step Functions for orchestration
+  ├── Lambda layers for shared code
+  └── API Gateway caching
+  ```
+  
+  ### 3. Data Processing Pipelines
+  ```
 Pattern: Stream → Transform → Aggregate → Store
 
 Implementation:
-├── Kinesis for real-time streams
-├── Lambda for transformation logic
-├── DynamoDB streams for change data capture
-└── Glue for ETL to data warehouse
-```
-
-## Scaling & Performance
-
-### 1. Auto-scaling Configuration
-```
+  ├── Kinesis for real-time streams
+  ├── Lambda for transformation logic
+  ├── DynamoDB streams for change data capture
+  └── Glue for ETL to data warehouse
+  ```
+  
+  ## Scaling & Performance
+  
+  ### 1. Auto-scaling Configuration
+  ```
 Concurrency Limits:
 ├── Reserved: 10 (for critical functions)
 ├── Provisioned: 50 (for API functions)
@@ -155,85 +155,85 @@ Scaling Triggers:
 ├── Target utilization: 70% CPU
 ├── Queue depth: >100 messages
 ├── Custom metrics: Event throughput
-```
-
-### 2. Cold Start Optimization
-```
+  ```
+  
+  ### 2. Cold Start Optimization
+  ```
 Strategies:
-├── Provisioned concurrency for critical paths
-├── Warm-up functions (scheduled invocations)
-├── Container images over ZIP packages
-└── Optimized dependency loading
+  ├── Provisioned concurrency for critical paths
+  ├── Warm-up functions (scheduled invocations)
+  ├── Container images over ZIP packages
+  └── Optimized dependency loading
 
 Monitoring:
-├── Cold start duration tracking
-├── Function latency percentiles
-├── Error rates by function
-```
-
-### 3. Cost Optimization
-```
+  ├── Cold start duration tracking
+  ├── Function latency percentiles
+  ├── Error rates by function
+  ```
+  
+  ### 3. Cost Optimization
+  ```
 Cost Controls:
-├── Function duration limits (<5min)
-├── Memory allocation optimization
-├── Compute Optimizer recommendations
-└── Reserved capacity for predictable workloads
+  ├── Function duration limits (<5min)
+  ├── Memory allocation optimization
+  ├── Compute Optimizer recommendations
+  └── Reserved capacity for predictable workloads
 
 Budget Alerts:
-├── Daily spending limits
-├── Function invocation costs
-├── Data transfer costs
-```
-
-## Reliability & Resilience
-
-### 1. Error Handling
-```
+  ├── Daily spending limits
+  ├── Function invocation costs
+  ├── Data transfer costs
+  ```
+  
+  ## Reliability & Resilience
+  
+  ### 1. Error Handling
+  ```
 Retry Policies:
 ├── Synchronous: 3 attempts with backoff
 ├── Asynchronous: DLQ for failed events
 ├── Circuit breakers: Prevent cascade failures
 
 Dead Letter Queues:
-├── Failed event storage
-├── Manual processing capability
-└── Alert generation
-```
-
-### 2. Monitoring & Observability
-```
+  ├── Failed event storage
+  ├── Manual processing capability
+  └── Alert generation
+  ```
+  
+  ### 2. Monitoring & Observability
+  ```
 Metrics Collection:
-├── AWS X-Ray for tracing
-├── CloudWatch Logs for debugging
-├── Custom metrics for business logic
-└── Application Insights integration
+  ├── AWS X-Ray for tracing
+  ├── CloudWatch Logs for debugging
+  ├── Custom metrics for business logic
+  └── Application Insights integration
 
 Alerting:
-├── Function failures (>5%)
-├── High latency (>30s P95)
-├── Cold start spikes
-└── Cost overruns
-```
-
-### 3. Security
-```
+  ├── Function failures (>5%)
+  ├── High latency (>30s P95)
+  ├── Cold start spikes
+  └── Cost overruns
+  ```
+  
+  ### 3. Security
+  ```
 Authentication:
-├── IAM roles with least privilege
-├── VPC integration for private resources
-├── API Gateway authorizers
-└── AWS WAF for protection
+  ├── IAM roles with least privilege
+  ├── VPC integration for private resources
+  ├── API Gateway authorizers
+  └── AWS WAF for protection
 
 Data Protection:
-├── Encryption at rest (KMS)
-├── TLS for data in transit
-├── VPC endpoints for AWS services
-└── Security groups and NACLs
-```
-
-## Development & Deployment
-
-### 1. Infrastructure as Code
-```yaml
+  ├── Encryption at rest (KMS)
+  ├── TLS for data in transit
+  ├── VPC endpoints for AWS services
+  └── Security groups and NACLs
+  ```
+  
+  ## Development & Deployment
+  
+  ### 1. Infrastructure as Code
+  ```yaml
 # serverless.yml example
 service: game-event-processor
 
@@ -265,146 +265,146 @@ functions:
           path: player/{id}
           method: get
     reservedConcurrency: 10
-```
-
-### 2. CI/CD Pipeline
-```
+  ```
+  
+  ### 2. CI/CD Pipeline
+  ```
 GitHub Actions Workflow:
-├── Code quality checks (linting, tests)
-├── Security scanning (dependency checks)
-├── Infrastructure deployment (Serverless Framework)
-├── Integration testing
-└── Production deployment with canary releases
-```
-
-### 3. Testing Strategy
-```
+  ├── Code quality checks (linting, tests)
+  ├── Security scanning (dependency checks)
+  ├── Infrastructure deployment (Serverless Framework)
+  ├── Integration testing
+  └── Production deployment with canary releases
+  ```
+  
+  ### 3. Testing Strategy
+  ```
 Unit Tests:
-├── Function logic testing
-├── Event processing validation
-├── Error handling verification
+  ├── Function logic testing
+  ├── Event processing validation
+  ├── Error handling verification
 
 Integration Tests:
-├── Event source/sink testing
-├── API Gateway integration
-├── Database connectivity
+  ├── Event source/sink testing
+  ├── API Gateway integration
+  ├── Database connectivity
 
 Load Tests:
-├── Concurrent invocation testing
-├── Cold start performance
-├── Scaling behavior validation
-```
-
-## Function Architecture Patterns
-
-### 1. Single Responsibility Functions
-```
+  ├── Concurrent invocation testing
+  ├── Cold start performance
+  ├── Scaling behavior validation
+  ```
+  
+  ## Function Architecture Patterns
+  
+  ### 1. Single Responsibility Functions
+  ```
 Small Functions (<1000 LOC):
-├── Focused on one business capability
-├── Easy to test and maintain
-├── Fast cold starts
-└── Independent scaling
-```
-
-### 2. Layered Architecture
-```
+  ├── Focused on one business capability
+  ├── Easy to test and maintain
+  ├── Fast cold starts
+  └── Independent scaling
+  ```
+  
+  ### 2. Layered Architecture
+  ```
 Lambda Layers:
-├── Common utilities (logging, metrics)
-├── Business logic shared libraries
-├── Database connection pools
-└── Third-party dependencies
-```
-
-### 3. Event Sourcing Integration
-```
+  ├── Common utilities (logging, metrics)
+  ├── Business logic shared libraries
+  ├── Database connection pools
+  └── Third-party dependencies
+  ```
+  
+  ### 3. Event Sourcing Integration
+  ```
 Event Store Functions:
-├── Event validation and enrichment
-├── Aggregate state updates
-├── Snapshot generation
-└── Read model projections
-```
-
-## Cost Analysis & Optimization
-
-### 1. Cost Breakdown
-```
+  ├── Event validation and enrichment
+  ├── Aggregate state updates
+  ├── Snapshot generation
+  └── Read model projections
+  ```
+  
+  ## Cost Analysis & Optimization
+  
+  ### 1. Cost Breakdown
+  ```
 Primary Costs:
-├── Function execution time ($0.00001667/GB-sec)
-├── Number of requests ($0.20/million)
-├── Data transfer ($0.09/GB)
-└── Provisioned concurrency ($0.000004167/GB-sec)
+  ├── Function execution time ($0.00001667/GB-sec)
+  ├── Number of requests ($0.20/million)
+  ├── Data transfer ($0.09/GB)
+  └── Provisioned concurrency ($0.000004167/GB-sec)
 
 Optimization Targets:
-├── Reduce execution time (<10s average)
-├── Minimize memory allocation (512MB baseline)
-├── Batch processing for high-volume events
-└── Reserved capacity for predictable loads
-```
-
-### 2. Cost Monitoring
-```
+  ├── Reduce execution time (<10s average)
+  ├── Minimize memory allocation (512MB baseline)
+  ├── Batch processing for high-volume events
+  └── Reserved capacity for predictable loads
+  ```
+  
+  ### 2. Cost Monitoring
+  ```
 AWS Cost Explorer:
-├── Cost by function/service
-├── Cost trends over time
-├── Reserved vs on-demand usage
-└── Optimization recommendations
+  ├── Cost by function/service
+  ├── Cost trends over time
+  ├── Reserved vs on-demand usage
+  └── Optimization recommendations
 
 Custom Dashboards:
-├── Cost per event processed
-├── Cost per user action
-├── Efficiency metrics (cost vs performance)
-```
-
-## Implementation Roadmap
-
-### Phase 1: Foundation
-- [ ] Serverless framework setup (AWS CDK/Serverless Framework)
-- [ ] Basic function templates and patterns
-- [ ] Event source integrations (Kafka, SQS)
-- [ ] Monitoring and logging setup
-
-### Phase 2: Core Functions
-- [ ] Event processing functions (combat, analytics)
-- [ ] API functions (player data, matchmaking)
-- [ ] Data transformation pipelines
-- [ ] Error handling and DLQs
-
-### Phase 3: Optimization
-- [ ] Performance tuning (memory, concurrency)
-- [ ] Cold start optimization
-- [ ] Cost monitoring and alerts
-- [ ] Auto-scaling configuration
-
-### Phase 4: Advanced Features
-- [ ] Event-driven workflows (Step Functions)
-- [ ] Real-time stream processing (Kinesis)
-- [ ] ML inference functions
-- [ ] Cross-region replication
-
-### Phase 5: Production Readiness
-- [ ] Comprehensive testing (load, chaos)
-- [ ] Security hardening
-- [ ] Disaster recovery procedures
-- [ ] Documentation and training
-
-## Risk Assessment
-- **Cold Starts:** May impact real-time performance requirements
-- **Vendor Lock-in:** AWS Lambda specific implementation
-- **Cost Spikes:** Uncontrolled scaling during traffic spikes
-- **Debugging Complexity:** Distributed tracing becomes critical
-
-## Dependencies
-- AWS Lambda (or Azure Functions)
-- Amazon EventBridge (or equivalent)
-- AWS Step Functions
-- Amazon SQS/Kinesis
-- AWS X-Ray for observability
-
-## Success Metrics
-- Function availability: 99.9% uptime
-- Cold start latency: <5s P95
-- Cost efficiency: <$0.50 per 1M events
-- Processing throughput: 50k events/sec sustained
+  ├── Cost per event processed
+  ├── Cost per user action
+  ├── Efficiency metrics (cost vs performance)
+  ```
+  
+  ## Implementation Roadmap
+  
+  ### Phase 1: Foundation
+  - [ ] Serverless framework setup (AWS CDK/Serverless Framework)
+  - [ ] Basic function templates and patterns
+  - [ ] Event source integrations (Kafka, SQS)
+  - [ ] Monitoring and logging setup
+  
+  ### Phase 2: Core Functions
+  - [ ] Event processing functions (combat, analytics)
+  - [ ] API functions (player data, matchmaking)
+  - [ ] Data transformation pipelines
+  - [ ] Error handling and DLQs
+  
+  ### Phase 3: Optimization
+  - [ ] Performance tuning (memory, concurrency)
+  - [ ] Cold start optimization
+  - [ ] Cost monitoring and alerts
+  - [ ] Auto-scaling configuration
+  
+  ### Phase 4: Advanced Features
+  - [ ] Event-driven workflows (Step Functions)
+  - [ ] Real-time stream processing (Kinesis)
+  - [ ] ML inference functions
+  - [ ] Cross-region replication
+  
+  ### Phase 5: Production Readiness
+  - [ ] Comprehensive testing (load, chaos)
+  - [ ] Security hardening
+  - [ ] Disaster recovery procedures
+  - [ ] Documentation and training
+  
+  ## Risk Assessment
+  - **Cold Starts:** May impact real-time performance requirements
+  - **Vendor Lock-in:** AWS Lambda specific implementation
+  - **Cost Spikes:** Uncontrolled scaling during traffic spikes
+  - **Debugging Complexity:** Distributed tracing becomes critical
+  
+  ## Dependencies
+  - AWS Lambda (or Azure Functions)
+  - Amazon EventBridge (or equivalent)
+  - AWS Step Functions
+  - Amazon SQS/Kinesis
+  - AWS X-Ray for observability
+  
+  ## Success Metrics
+  - Function availability: 99.9% uptime
+  - Cold start latency: <5s P95
+  - Cost efficiency: <$0.50 per 1M events
+  - Processing throughput: 50k events/sec sustained
 
 ---
 

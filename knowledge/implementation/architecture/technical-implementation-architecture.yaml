@@ -203,7 +203,8 @@ architecture:
     - name: auth-service
       port: 8081
       responsibility: Аутентификация и авторизация
-      database: postgres (schema: auth)
+      database:
+        postgres (schema: auth)
       endpoints_base: /api/v1/auth
       integrations:
         - Keycloak для OIDC
@@ -213,7 +214,8 @@ architecture:
     - name: character-service
       port: 8082
       responsibility: Управление персонажами
-      database: postgres (schema: characters)
+      database:
+        postgres (schema: characters)
       endpoints_base: /api/v1/characters
       integrations:
         - Progression Service для атрибутов
@@ -223,7 +225,8 @@ architecture:
     - name: gameplay-service
       port: 8083
       responsibility: Игровой процесс и боевая система
-      database: postgres (schema: gameplay)
+      database:
+        postgres (schema: gameplay)
       endpoints_base: /api/v1/gameplay
       integrations:
         - Realtime Gateway для боевых действий
@@ -234,7 +237,8 @@ architecture:
     - name: social-service
       port: 8084
       responsibility: Социальные системы
-      database: postgres (schema: social)
+      database:
+        postgres (schema: social)
       endpoints_base: /api/v1/social
       integrations:
         - Character Service для данных игроков
@@ -244,7 +248,8 @@ architecture:
     - name: economy-service
       port: 8085
       responsibility: Экономика и торговля
-      database: postgres (schema: economy)
+      database:
+        postgres (schema: economy)
       endpoints_base: /api/v1/economy
       integrations:
         - Character Service для инвентаря
@@ -254,7 +259,8 @@ architecture:
     - name: world-service
       port: 8086
       responsibility: Мир и события
-      database: postgres (schema: world)
+      database:
+        postgres (schema: world)
       endpoints_base: /api/v1/world
       integrations:
         - Gameplay Service для рейдов
@@ -264,7 +270,8 @@ architecture:
     - name: progression-service
       port: 8087
       responsibility: Прогрессия персонажа
-      database: postgres (schema: progression)
+      database:
+        postgres (schema: progression)
       endpoints_base: /api/v1/progression
       integrations:
         - Character Service для обновления атрибутов
@@ -415,7 +422,7 @@ technical_specification:
       description: |
         Настройка Kubernetes кластера, Helm чартов, ArgoCD, мониторинга
         и базовой инфраструктуры для развертывания сервисов.
-      dependencies: []
+      dependencies: [ ]
       estimated_effort: 5 days
 
     - id: api-gateway-implementation
@@ -423,7 +430,7 @@ technical_specification:
       description: |
         Настройка Envoy Gateway с маршрутизацией, аутентификацией,
         rate limiting и load balancing.
-      dependencies: [infrastructure-setup]
+      dependencies: [ infrastructure-setup ]
       estimated_effort: 3 days
 
     - id: service-discovery-config
@@ -431,7 +438,7 @@ technical_specification:
       description: |
         Настройка Eureka для обнаружения сервисов и Config Server
         для централизованной конфигурации.
-      dependencies: [infrastructure-setup]
+      dependencies: [ infrastructure-setup ]
       estimated_effort: 2 days
 
     - id: event-bus-setup
@@ -439,7 +446,7 @@ technical_specification:
       description: |
         Настройка Kafka кластера, Schema Registry и реализация
         Transactional Outbox паттерна.
-      dependencies: [infrastructure-setup]
+      dependencies: [ infrastructure-setup ]
       estimated_effort: 4 days
 
     - id: database-setup
@@ -447,7 +454,7 @@ technical_specification:
       description: |
         Настройка PostgreSQL кластера, Redis кластера, ClickHouse,
         OpenSearch и создание базовых схем.
-      dependencies: [infrastructure-setup]
+      dependencies: [ infrastructure-setup ]
       estimated_effort: 4 days
 
     - id: monitoring-setup
@@ -455,7 +462,7 @@ technical_specification:
       description: |
         Настройка Prometheus, Grafana, Loki, Tempo и OpenTelemetry
         для полной наблюдаемости системы.
-      dependencies: [infrastructure-setup]
+      dependencies: [ infrastructure-setup ]
       estimated_effort: 3 days
 
     - id: ci-cd-pipelines
@@ -463,7 +470,7 @@ technical_specification:
       description: |
         Создание GitHub Actions пайплайнов для сборки, тестирования
         и деплоя сервисов.
-      dependencies: [infrastructure-setup]
+      dependencies: [ infrastructure-setup ]
       estimated_effort: 3 days
 
     - id: security-setup
@@ -471,7 +478,7 @@ technical_specification:
       description: |
         Настройка Keycloak, mTLS, TLS/QUIC, rate limiting
         и управления секретами.
-      dependencies: [infrastructure-setup, api-gateway-implementation]
+      dependencies: [ infrastructure-setup, api-gateway-implementation ]
       estimated_effort: 4 days
 
     - id: client-integration
@@ -479,7 +486,7 @@ technical_specification:
       description: |
         Интеграция UE5 клиента с QUIC, WebSocket, Protobuf
         и настройка QoS менеджера.
-      dependencies: [api-gateway-implementation]
+      dependencies: [ api-gateway-implementation ]
       estimated_effort: 5 days
 
     - id: documentation
@@ -487,7 +494,7 @@ technical_specification:
       description: |
         Создание полной документации по архитектуре, API,
         деплою и операционным процедурам.
-      dependencies: []
+      dependencies: [ ]
       estimated_effort: 3 days
 
 diagrams:
@@ -495,7 +502,7 @@ diagrams:
     ```mermaid
     graph TB
         Client[UE5 Client] --> Gateway[API Gateway<br/>Envoy]
-        
+    
         Gateway --> AuthService[Auth Service<br/>8081]
         Gateway --> CharacterService[Character Service<br/>8082]
         Gateway --> GameplayService[Gameplay Service<br/>8083]
@@ -503,23 +510,23 @@ diagrams:
         Gateway --> EconomyService[Economy Service<br/>8085]
         Gateway --> WorldService[World Service<br/>8086]
         Gateway --> ProgressionService[Progression Service<br/>8087]
-        
+    
         Client --> RealtimeGateway[Realtime Gateway<br/>QUIC/UDP<br/>8080]
         Client --> WSLobby[WS Lobby<br/>WebSocket<br/>8089]
-        
+    
         RealtimeGateway --> GameplayService
         WSLobby --> SocialService
-        
+    
         AuthService --> Keycloak[Keycloak]
         AuthService --> Redis[(Redis)]
-        
+    
         CharacterService --> Postgres1[(PostgreSQL<br/>characters)]
         GameplayService --> Postgres2[(PostgreSQL<br/>gameplay)]
         SocialService --> Postgres3[(PostgreSQL<br/>social)]
         EconomyService --> Postgres4[(PostgreSQL<br/>economy)]
         WorldService --> Postgres5[(PostgreSQL<br/>world)]
         ProgressionService --> Postgres6[(PostgreSQL<br/>progression)]
-        
+    
         AuthService --> Kafka[Kafka<br/>Event Bus]
         CharacterService --> Kafka
         GameplayService --> Kafka
@@ -527,12 +534,12 @@ diagrams:
         EconomyService --> Kafka
         WorldService --> Kafka
         ProgressionService --> Kafka
-        
+    
         Kafka --> ClickHouse[(ClickHouse<br/>Analytics)]
-        
+    
         Gateway --> Eureka[Eureka<br/>Service Discovery]
         Gateway --> ConfigServer[Config Server]
-        
+    
         Gateway --> Prometheus[Prometheus<br/>Metrics]
         Gateway --> Grafana[Grafana<br/>Dashboards]
         Gateway --> Loki[Loki<br/>Logs]
@@ -547,7 +554,7 @@ diagrams:
                 Envoy[Envoy Gateway]
                 Ingress[Ingress Controller]
             end
-            
+    
             subgraph "Services Namespace"
                 AuthPod[Auth Service Pods]
                 CharPod[Character Service Pods]
@@ -557,19 +564,19 @@ diagrams:
                 WorldPod[World Service Pods]
                 ProgPod[Progression Service Pods]
             end
-            
+    
             subgraph "Infrastructure Namespace"
                 EurekaPod[Eureka Pods]
                 ConfigPod[Config Server Pods]
                 KafkaPod[Kafka Pods]
             end
-            
+    
             subgraph "Data Namespace"
                 PostgresPod[PostgreSQL Pods]
                 RedisPod[Redis Pods]
                 ClickHousePod[ClickHouse Pods]
             end
-            
+    
             subgraph "Monitoring Namespace"
                 PromPod[Prometheus Pods]
                 GrafanaPod[Grafana Pods]
@@ -577,10 +584,10 @@ diagrams:
                 TempoPod[Tempo Pods]
             end
         end
-        
+    
         ArgoCD[ArgoCD<br/>GitOps] --> Kubernetes
         GitHub[GitHub Actions<br/>CI/CD] --> ArgoCD
-        
+    
         External[External Services] --> Envoy
         Envoy --> AuthPod
         Envoy --> CharPod

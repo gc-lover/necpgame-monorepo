@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-import os
 import glob
+import os
 import yaml
+
 
 def fix_remaining_paths():
     files_to_fix = [
@@ -60,7 +61,7 @@ def fix_remaining_paths():
 
                     if paths_start != -1 and components_start != -1:
                         # Replace paths section
-                        new_lines = lines[:paths_start+1] + [
+                        new_lines = lines[:paths_start + 1] + [
                             '  /health:',
                             '    get:',
                             '      summary: Health check',
@@ -68,7 +69,7 @@ def fix_remaining_paths():
                             '      responses:',
                             '        \'200\':',
                             '          description: Service is healthy'
-                        ] + lines[paths_start+1:components_start] + lines[components_start:]
+                        ] + lines[paths_start + 1:components_start] + lines[components_start:]
                         content = '\n'.join(new_lines)
 
                 with open(file_path, 'w', encoding='utf-8') as f:
@@ -80,6 +81,7 @@ def fix_remaining_paths():
             print(f"Error processing {file_path}: {e}")
 
     print(f"Fixed {fixed_count} files")
+
 
 if __name__ == "__main__":
     fix_remaining_paths()

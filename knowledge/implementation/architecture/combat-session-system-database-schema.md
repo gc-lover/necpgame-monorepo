@@ -1,9 +1,11 @@
 <!-- Issue: #130 -->
+
 # Combat Session System - Database Schema
 
 ## Обзор
 
-Схема базы данных для системы боевых сессий, управляющей боями (PvE, PvP, Raid, Arena), участниками, логами действий и наградами.
+Схема базы данных для системы боевых сессий, управляющей боями (PvE, PvP, Raid, Arena), участниками, логами действий и
+наградами.
 
 ## ERD Диаграмма
 
@@ -73,6 +75,7 @@ erDiagram
 Боевые сессии (PvE, PvP, Raid, Arena).
 
 **Колонки:**
+
 - `id` (UUID, PK) - Уникальный идентификатор
 - `session_type` (combat_session_type) - Тип сессии: pve, pvp, raid, arena
 - `status` (combat_session_status) - Статус: created, active, paused, completed, cancelled
@@ -84,9 +87,11 @@ erDiagram
 - `settings` (JSONB) - Настройки боя
 
 **Ограничения:**
+
 - CHECK: started_at и ended_at должны быть согласованы
 
 **Индексы:**
+
 - `idx_combat_sessions_status` - По статусу и времени создания
 - `idx_combat_sessions_type_status` - По типу сессии и статусу
 - `idx_combat_sessions_started_at` - По времени начала
@@ -97,6 +102,7 @@ erDiagram
 Участники боевых сессий (игроки, NPC, враги).
 
 **Колонки:**
+
 - `id` (UUID, PK) - Уникальный идентификатор
 - `session_id` (UUID, FK) - ID боевой сессии
 - `participant_type` (combat_participant_type) - Тип участника: player, npc, enemy
@@ -110,9 +116,11 @@ erDiagram
 - `created_at` (TIMESTAMP) - Время создания
 
 **Ограничения:**
+
 - CHECK: health <= max_health
 
 **Индексы:**
+
 - `idx_combat_participants_session_id` - По сессии и статусу
 - `idx_combat_participants_participant` - По участнику и типу
 - `idx_combat_participants_team` - По сессии и команде
@@ -124,6 +132,7 @@ erDiagram
 Логи действий в бою.
 
 **Колонки:**
+
 - `id` (UUID, PK) - Уникальный идентификатор
 - `session_id` (UUID, FK) - ID боевой сессии
 - `turn_number` (INTEGER) - Номер хода
@@ -137,6 +146,7 @@ erDiagram
 - `created_at` (TIMESTAMP) - Время действия
 
 **Индексы:**
+
 - `idx_combat_logs_session_id` - По сессии и номеру хода
 - `idx_combat_logs_actor_id` - По актору и времени
 - `idx_combat_logs_target_id` - По цели и времени
@@ -148,6 +158,7 @@ erDiagram
 Награды за боевые сессии.
 
 **Колонки:**
+
 - `id` (UUID, PK) - Уникальный идентификатор
 - `session_id` (UUID, FK) - ID боевой сессии
 - `participant_id` (UUID, FK) - ID участника (combat_participants)
@@ -157,6 +168,7 @@ erDiagram
 - `created_at` (TIMESTAMP) - Время создания
 
 **Индексы:**
+
 - `idx_combat_rewards_session_id` - По сессии и статусу распределения
 - `idx_combat_rewards_participant_id` - По участнику
 - `idx_combat_rewards_distributed` - По статусу распределения и времени
@@ -165,12 +177,14 @@ erDiagram
 ## ENUM типы
 
 ### combat_session_type
+
 - `pve` - PvE (Player vs Environment)
 - `pvp` - PvP (Player vs Player)
 - `raid` - Рейд
 - `arena` - Арена
 
 ### combat_session_status
+
 - `created` - Создана
 - `active` - Активна
 - `paused` - Приостановлена
@@ -178,16 +192,19 @@ erDiagram
 - `cancelled` - Отменена
 
 ### combat_participant_type
+
 - `player` - Игрок
 - `npc` - NPC
 - `enemy` - Враг
 
 ### combat_participant_status
+
 - `alive` - Жив
 - `defeated` - Побежден
 - `escaped` - Сбежал
 
 ### combat_action_type
+
 - `attack` - Атака
 - `ability` - Способность
 - `defend` - Защита
@@ -195,6 +212,7 @@ erDiagram
 - `move` - Движение
 
 ### combat_reward_type
+
 - `experience` - Опыт
 - `loot` - Лут
 - `currency` - Валюта

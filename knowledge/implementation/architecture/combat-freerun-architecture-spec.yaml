@@ -31,7 +31,7 @@ technical_specification:
       description: |
         Реализация Freerun Action Manager с обработкой всех типов действий паркура,
         валидацией доступности и интеграцией с боевой сессией.
-      dependencies: []
+      dependencies: [ ]
       estimated_effort: 5 days
 
     - id: stamina-manager
@@ -39,7 +39,7 @@ technical_specification:
       description: |
         Реализация Stamina Manager с расчетом расхода, восстановления и модификаторов
         выносливости на основе навыков и имплантов.
-      dependencies: []
+      dependencies: [ ]
       estimated_effort: 4 days
 
     - id: freerun-combo-system
@@ -47,7 +47,7 @@ technical_specification:
       description: |
         Реализация Freerun Combo System с отслеживанием последовательностей действий,
         применением бонусов и интеграцией с боевыми комбо.
-      dependencies: [freerun-action-manager]
+      dependencies: [ freerun-action-manager ]
       estimated_effort: 4 days
 
     - id: route-manager
@@ -55,7 +55,7 @@ technical_specification:
       description: |
         Реализация Route Manager с созданием, валидацией и управлением пользовательскими
         маршрутами паркура.
-      dependencies: [freerun-action-manager]
+      dependencies: [ freerun-action-manager ]
       estimated_effort: 4 days
 
     - id: mobile-ability-integrator
@@ -63,7 +63,7 @@ technical_specification:
       description: |
         Реализация Mobile Ability Integrator с проверкой совместимости способностей
         с паркуром и применением мобильных версий.
-      dependencies: [freerun-action-manager]
+      dependencies: [ freerun-action-manager ]
       estimated_effort: 4 days
 
     - id: freerun-telemetry-collector
@@ -71,7 +71,7 @@ technical_specification:
       description: |
         Реализация Freerun Telemetry Collector с логированием действий, сбором метрик
         и интеграцией с Analytics Service.
-      dependencies: [freerun-action-manager]
+      dependencies: [ freerun-action-manager ]
       estimated_effort: 3 days
 
     - id: anti-cheat-validator
@@ -79,7 +79,7 @@ technical_specification:
       description: |
         Реализация Anti-Cheat Validator с проверкой действий паркура на подозрительность,
         валидацией физической возможности и детектом эксплойтов.
-      dependencies: [freerun-action-manager]
+      dependencies: [ freerun-action-manager ]
       estimated_effort: 5 days
 
     - id: websocket-channels
@@ -87,7 +87,7 @@ technical_specification:
       description: |
         Реализация WebSocket каналов для realtime обновлений действий паркура,
         состояния выносливости и телеметрии.
-      dependencies: [freerun-action-manager, stamina-manager]
+      dependencies: [ freerun-action-manager, stamina-manager ]
       estimated_effort: 3 days
 
     - id: event-bus-integration
@@ -95,7 +95,7 @@ technical_specification:
       description: |
         Реализация публикации и подписки на события через Kafka
         для всех компонентов системы Freerun.
-      dependencies: [freerun-action-manager, freerun-combo-system]
+      dependencies: [ freerun-action-manager, freerun-combo-system ]
       estimated_effort: 2 days
 
     - id: database-schema
@@ -103,7 +103,7 @@ technical_specification:
       description: |
         Создание таблиц БД для действий паркура, профилей, комбо, выносливости, маршрутов,
         телеметрии и аудита с миграциями Liquibase.
-      dependencies: []
+      dependencies: [ ]
       estimated_effort: 2 days
 
 diagrams:
@@ -111,9 +111,9 @@ diagrams:
     ```mermaid
     graph TB
         Client[UE5 Client] --> Gateway[API Gateway]
-        
+    
         Gateway --> GameplayService[Gameplay Service<br/>8083]
-        
+    
         GameplayService --> FAM[Freerun Action Manager]
         GameplayService --> SM[Stamina Manager]
         GameplayService --> FCS[Freerun Combo System]
@@ -121,12 +121,12 @@ diagrams:
         GameplayService --> MAI[Mobile Ability Integrator]
         GameplayService --> FTC[Freerun Telemetry Collector]
         GameplayService --> ACV[Anti-Cheat Validator]
-        
+    
         FAM --> SM
         FAM --> FCS
         FAM --> ACV
         FCS --> MAI
-        
+    
         GameplayService --> CombatSession[Combat Session]
         GameplayService --> AbilityService[Ability Service]
         GameplayService --> ImplantService[Implant Service]
@@ -134,12 +134,12 @@ diagrams:
         GameplayService --> QuestService[Quest Service]
         GameplayService --> AnalyticsService[Analytics Service]
         GameplayService --> InventoryService[Inventory Service]
-        
+    
         GameplayService --> EventBus[Event Bus<br/>Kafka]
         EventBus --> RealtimeGateway[Realtime Gateway]
-        
+    
         GameplayService --> DB[(Gameplay DB)]
-        
+    
         Client --> WSFreerun[WebSocket<br/>Freerun]
         WSFreerun --> GameplayService
     ```
@@ -154,7 +154,7 @@ diagrams:
         participant FCS as Freerun Combo System
         participant MAI as Mobile Ability Integrator
         participant EB as Event Bus
-        
+    
         C->>FAM: POST /freerun/actions
         FAM->>FAM: Check action availability
         FAM->>SM: Check stamina
@@ -179,7 +179,7 @@ diagrams:
         participant IS as Implant Service
         participant ES as Economy Service
         participant EB as Event Bus
-        
+    
         Note over SM: Action performed, stamina consumed
         SM->>SM: Calculate stamina consumption
         SM->>PS: Get skill bonuses
@@ -188,12 +188,12 @@ diagrams:
         IS-->>SM: Implant data
         SM->>SM: Apply modifiers
         SM->>SM: Update stamina state
-        
+    
         alt Stamina depleted
             SM->>SM: Block actions
             SM->>SM: Start recovery timer
         end
-        
+    
         SM->>SM: Natural recovery
         SM->>EB: Publish combat.freerun.stamina
     ```

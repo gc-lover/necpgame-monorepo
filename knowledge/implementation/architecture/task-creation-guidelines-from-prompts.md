@@ -4,7 +4,9 @@
 
 ## Overview
 
-This document provides architectural guidelines for transforming prompts from `prompt.md` into actionable tasks using the MCP workflow. It aligns with `AGENT_SIMPLE_GUIDE.md` and `CONTENT_WORKFLOW.md` to ensure consistent task creation and execution.
+This document provides architectural guidelines for transforming prompts from `prompt.md` into actionable tasks using
+the MCP workflow. It aligns with `AGENT_SIMPLE_GUIDE.md` and `CONTENT_WORKFLOW.md` to ensure consistent task creation
+and execution.
 
 ## Architecture Context
 
@@ -28,11 +30,13 @@ Universal Agent
 ### Workflow Architecture
 
 **System Workflow (Technical):**
+
 ```
 Idea → Architect → DB → API → Backend → Network → Security → DevOps → UE5 → QA → Release
 ```
 
 **Content Workflow (Creative):**
+
 ```
 Idea → Content Writer → Backend (import) → QA → Release
 ```
@@ -42,11 +46,13 @@ Idea → Content Writer → Backend (import) → QA → Release
 ### 1. Prompt Analysis Phase
 
 #### Input: Raw Prompt
+
 - **Source:** `prompt.md` (universal agent definition)
 - **Contains:** 14 agent roles, workflow pipelines, technical requirements
 - **Format:** High-level mission and role definitions
 
 #### Analysis Steps:
+
 1. **Identify Agent Role:** Match prompt requirements to one of 14 roles
 2. **Determine Workflow Type:** System vs Content vs UI workflow
 3. **Extract Technical Requirements:** Performance, SOLID, security, file placement
@@ -70,6 +76,7 @@ Task:
 ```
 
 #### Status Flow Architecture:
+
 ```
 Todo → In Progress → Todo (next agent) → ... → Done
                     ↓
@@ -83,6 +90,7 @@ Todo → In Progress → Todo (next agent) → ... → Done
 #### GitHub Projects Operations:
 
 **Task Discovery:**
+
 ```javascript
 mcp_github_list_project_items({
   owner_type: 'user',
@@ -93,6 +101,7 @@ mcp_github_list_project_items({
 ```
 
 **Task Assignment:**
+
 ```javascript
 // Status: Todo → In Progress
 updated_field: { id: 239690516, value: '83d488e7' }
@@ -102,6 +111,7 @@ updated_field: { id: 243899542, value: '{agent_id}' }
 ```
 
 **Task Completion:**
+
 ```javascript
 // Status: In Progress → Todo (next agent)
 updated_field: [
@@ -114,22 +124,22 @@ updated_field: [
 
 #### From Prompt.md Roles to MCP Agents:
 
-| Prompt Role | MCP Agent | Field Value | Use Case |
-|-------------|-----------|-------------|----------|
-| Idea Writer | Idea | `8c3f5f11` | Concept creation |
-| Architect | Architect | `d109c7f9` | System design |
-| API Designer | API | `6aa5d9af` | OpenAPI specs |
-| Backend | Backend | `1fc13998` | Go services |
-| Database | DB | `1e745162` | SQL schemas |
-| Content Writer | Content | `d3cae8d8` | YAML content |
-| UI/UX Designer | UI/UX | `98c65039` | Interface design |
-| UE5 Developer | UE5 | `56920475` | C++ Unreal |
-| QA | QA | `3352c488` | Testing |
-| Performance | Performance | `d16ede50` | Optimization |
-| Security | Security | `12586c50` | Security audit |
-| Network | Network | `c60ebab1` | Protocols |
-| DevOps | DevOps | `7e67a39b` | Infrastructure |
-| Release | Release | `f5878f68` | Deployment |
+| Prompt Role    | MCP Agent   | Field Value | Use Case         |
+|----------------|-------------|-------------|------------------|
+| Idea Writer    | Idea        | `8c3f5f11`  | Concept creation |
+| Architect      | Architect   | `d109c7f9`  | System design    |
+| API Designer   | API         | `6aa5d9af`  | OpenAPI specs    |
+| Backend        | Backend     | `1fc13998`  | Go services      |
+| Database       | DB          | `1e745162`  | SQL schemas      |
+| Content Writer | Content     | `d3cae8d8`  | YAML content     |
+| UI/UX Designer | UI/UX       | `98c65039`  | Interface design |
+| UE5 Developer  | UE5         | `56920475`  | C++ Unreal       |
+| QA             | QA          | `3352c488`  | Testing          |
+| Performance    | Performance | `d16ede50`  | Optimization     |
+| Security       | Security    | `12586c50`  | Security audit   |
+| Network        | Network     | `c60ebab1`  | Protocols        |
+| DevOps         | DevOps      | `7e67a39b`  | Infrastructure   |
+| Release        | Release     | `f5878f68`  | Deployment       |
 
 ## Content vs System Task Differentiation
 
@@ -138,6 +148,7 @@ updated_field: [
 **Pattern:** Content creation with import
 **Workflow:** Content Writer → Backend (import) → QA
 **Import Methods:**
+
 - **API Import:** `POST /api/v1/gameplay/quests/content/reload`
 - **SQL Migration:** Generate `V*__data_*.sql` files
 - **Decision Logic:** Backend agent chooses method based on volume
@@ -156,6 +167,7 @@ updated_field: [
 ### 1. Task Creation Rules
 
 #### Title Format:
+
 ```
 [{Role}] {Action}: {Description}
 Examples:
@@ -165,6 +177,7 @@ Examples:
 ```
 
 #### Body Requirements:
+
 - **Clear Objective:** What needs to be done
 - **Technical Context:** Performance requirements, dependencies
 - **File Locations:** Specific paths according to placement rules
@@ -174,11 +187,13 @@ Examples:
 ### 2. Agent Autonomy Rules
 
 #### Decision Making:
+
 - **Autonomous:** Agents work independently using rules
 - **No Approvals:** Execute based on prompt.md guidelines
 - **Self-Validation:** Check own work before handoff
 
 #### Communication:
+
 - **Comments Only:** Brief status updates
 - **Format:** `[OK] {Result}. Handed off to {NextAgent}. Issue: #{number}`
 - **No Reports:** Focus on execution, not documentation
@@ -186,6 +201,7 @@ Examples:
 ### 3. File Placement Architecture
 
 #### Directory Structure (from prompt.md):
+
 ```
 knowledge/          # Content (YAML)
 ├── canon/         # Lore, quests, NPCs
@@ -204,6 +220,7 @@ scripts/          # Automation tools
 ```
 
 #### Critical Rules:
+
 - **Root Clean:** Only `README.md`, `CHANGELOG.md`, config files
 - **Type-Based:** Each file type in designated directory
 - **No Temporary Files:** All files serve permanent purpose
@@ -213,6 +230,7 @@ scripts/          # Automation tools
 ### Optimization Requirements (PERFORMANCE_ENFORCEMENT.md)
 
 #### Blocker Level (Cannot Proceed):
+
 - No context timeouts
 - No DB connection pools
 - Goroutine leaks
@@ -220,11 +238,13 @@ scripts/          # Automation tools
 - No health/metrics endpoints
 
 #### Validation Command:
+
 ```bash
 /backend-validate-optimizations #123
 ```
 
 #### Workflow Integration:
+
 - **Backend Agent:** Must pass validation before handoff
 - **Architect Role:** Define performance targets in architecture
 - **All Agents:** Consider performance implications
@@ -253,6 +273,7 @@ scripts/          # Automation tools
 **Input Prompt:** "Create player inventory system with real-time updates"
 
 **Output Tasks:**
+
 1. **Architect:** Design inventory architecture
 2. **DB:** Create inventory tables
 3. **API:** Design inventory endpoints
@@ -265,15 +286,20 @@ scripts/          # Automation tools
 **Input Prompt:** "Create Night City district lore"
 
 **Output Tasks:**
+
 1. **Content Writer:** Create YAML lore files
 2. **Backend:** Import via API or SQL
 3. **QA:** Validate via API endpoints
 
 ## Conclusion
 
-This guidelines document provides the architectural framework for transforming high-level prompts from `prompt.md` into concrete, actionable tasks that integrate seamlessly with the MCP workflow. By following these guidelines, agents can maintain consistency, ensure proper workflow progression, and deliver high-quality results aligned with the project's technical and creative requirements.
+This guidelines document provides the architectural framework for transforming high-level prompts from `prompt.md` into
+concrete, actionable tasks that integrate seamlessly with the MCP workflow. By following these guidelines, agents can
+maintain consistency, ensure proper workflow progression, and deliver high-quality results aligned with the project's
+technical and creative requirements.
 
 **Key Success Factors:**
+
 - Strict adherence to workflow pipelines
 - Proper agent role assignment
 - File placement discipline

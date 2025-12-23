@@ -1,9 +1,11 @@
 <!-- Issue: #140890166 -->
+
 # Economy Contracts and Deals System - Database Schema
 
 ## Обзор
 
-Схема базы данных для системы контрактов и сделок, включающая контракты игроков, переговоры, эскроу, залоги, споры и лог исполнения контрактов.
+Схема базы данных для системы контрактов и сделок, включающая контракты игроков, переговоры, эскроу, залоги, споры и лог
+исполнения контрактов.
 
 ## ERD Диаграмма
 
@@ -102,6 +104,7 @@ erDiagram
 Таблица контрактов игроков. Хранит информацию о контрактах между игроками.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `contract_type`: Тип контракта (contract_type ENUM, NOT NULL)
 - `initiator_id`: ID инициатора (FK к characters, NOT NULL)
@@ -121,12 +124,14 @@ erDiagram
 - `updated_at`: Время последнего обновления
 
 **Индексы:**
+
 - По `(initiator_id, status)` для контрактов инициатора
 - По `(counterparty_id, status)` для контрактов контрагента
 - По `(contract_type, status)` для фильтрации по типу
 - По `(status, deadline)` для активных контрактов (WHERE status IN ('ACTIVE', 'ESCROW_PENDING'))
 
 **Constraints:**
+
 - CHECK (initiator_id != counterparty_id): Инициатор и контрагент должны быть разными
 
 ### contract_negotiations
@@ -134,6 +139,7 @@ erDiagram
 Таблица переговоров по контрактам. Хранит предложения и переговоры по контрактам.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `contract_id`: ID контракта (FK к player_contracts, NOT NULL)
 - `proposal`: Предложение по контракту (JSONB, default: {})
@@ -143,6 +149,7 @@ erDiagram
 - `responded_at`: Время ответа (TIMESTAMP, nullable)
 
 **Индексы:**
+
 - По `(contract_id, status)` для предложений по контракту
 - По `proposer_id` для предложений игрока
 
@@ -151,6 +158,7 @@ erDiagram
 Таблица эскроу для контрактов. Хранит информацию о заблокированных активах.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `contract_id`: ID контракта (FK к player_contracts, NOT NULL, UNIQUE)
 - `initiator_items`: Предметы инициатора (JSONB, default: [])
@@ -162,10 +170,12 @@ erDiagram
 - `released_at`: Время освобождения (TIMESTAMP, nullable)
 
 **Индексы:**
+
 - По `contract_id` для эскроу контракта
 - По `status` для фильтрации по статусу
 
 **Constraints:**
+
 - UNIQUE(contract_id): Один эскроу на контракт
 
 ### collaterals
@@ -173,6 +183,7 @@ erDiagram
 Таблица залогов для контрактов. Хранит информацию о залогах сторон.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `contract_id`: ID контракта (FK к player_contracts, NOT NULL)
 - `player_id`: ID игрока (FK к characters, NOT NULL)
@@ -183,6 +194,7 @@ erDiagram
 - `released_at`: Время освобождения (TIMESTAMP, nullable)
 
 **Индексы:**
+
 - По `contract_id` для залогов контракта
 - По `(player_id, status)` для залогов игрока
 
@@ -191,6 +203,7 @@ erDiagram
 Таблица споров по контрактам. Хранит информацию о спорах и арбитраже.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `contract_id`: ID контракта (FK к player_contracts, NOT NULL, UNIQUE)
 - `initiator_id`: ID инициатора спора (FK к characters, NOT NULL)
@@ -203,11 +216,13 @@ erDiagram
 - `created_at`: Время создания
 
 **Индексы:**
+
 - По `contract_id` для спора контракта
 - По `initiator_id` для споров инициатора
 - По `(decision, resolved_at)` для разрешенных споров (WHERE decision != 'pending')
 
 **Constraints:**
+
 - UNIQUE(contract_id): Один спор на контракт
 
 ### contract_execution_log
@@ -215,6 +230,7 @@ erDiagram
 Таблица лога исполнения контрактов. Хранит историю действий по контрактам.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `contract_id`: ID контракта (FK к player_contracts, NOT NULL)
 - `action`: Действие (VARCHAR(255), NOT NULL)
@@ -222,18 +238,21 @@ erDiagram
 - `executed_at`: Время выполнения
 
 **Индексы:**
+
 - По `(contract_id, executed_at DESC)` для лога контракта
 - По `executed_at DESC` для временных запросов
 
 ## ENUM типы
 
 ### contract_type
+
 - `item_exchange`: Обмен предметами
 - `delivery`: Доставка
 - `crafting`: Крафт
 - `service`: Сервис
 
 ### contract_status
+
 - `DRAFT`: Черновик
 - `NEGOTIATION`: Переговоры
 - `ESCROW_PENDING`: Ожидание эскроу
@@ -243,21 +262,25 @@ erDiagram
 - `DISPUTED`: Спор
 
 ### negotiation_status
+
 - `pending`: Ожидает ответа
 - `accepted`: Принято
 - `rejected`: Отклонено
 
 ### escrow_status
+
 - `locked`: Заблокировано
 - `released`: Освобождено
 - `distributed`: Распределено
 
 ### collateral_status
+
 - `locked`: Заблокировано
 - `released`: Освобождено
 - `forfeited`: Удержано
 
 ### dispute_decision
+
 - `pending`: Ожидает решения
 - `initiator_wins`: Победа инициатора
 - `counterparty_wins`: Победа контрагента
@@ -345,13 +368,16 @@ erDiagram
 ## Миграции
 
 ### Применение миграций:
+
 ```bash
 liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ```
 
 ## Соответствие архитектуре
 
-Схема БД полностью соответствует архитектуре из `knowledge/implementation/architecture/economy-contracts-system-architecture.yaml`:
+Схема БД полностью соответствует архитектуре из
+`knowledge/implementation/architecture/economy-contracts-system-architecture.yaml`:
+
 - [OK] Все таблицы из архитектуры созданы
 - [OK] Все поля соответствуют описанию
 - [OK] Индексы оптимизированы для частых запросов
@@ -364,6 +390,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Контракты
 
 Система контрактов включает:
+
 - **Типы контрактов**: item_exchange, delivery, crafting, service
 - **Жизненный цикл**: DRAFT → NEGOTIATION → ESCROW_PENDING → ACTIVE → COMPLETED/CANCELLED/DISPUTED
 - **Условия**: terms (JSONB) для гибких условий контракта
@@ -374,6 +401,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Переговоры
 
 Система переговоров включает:
+
 - **Предложения**: proposal (JSONB) для гибких предложений
 - **Статусы**: pending, accepted, rejected для управления предложениями
 - **Временные метки**: created_at и responded_at для отслеживания времени
@@ -381,6 +409,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Эскроу
 
 Система эскроу включает:
+
 - **Предметы**: initiator_items и counterparty_items (JSONB массивы) для блокировки предметов
 - **Валюта**: initiator_currency и counterparty_currency для блокировки валюты
 - **Статусы**: locked, released, distributed для управления эскроу
@@ -389,6 +418,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Залоги
 
 Система залогов включает:
+
 - **Суммы**: amount для суммы залога, forfeited_amount для удержанной суммы
 - **Статусы**: locked, released, forfeited для управления залогами
 - **Временные метки**: locked_at и released_at для отслеживания времени
@@ -396,6 +426,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Споры
 
 Система споров включает:
+
 - **Причины**: reason для описания причины спора
 - **Доказательства**: evidence (JSONB) для сбора доказательств
 - **AI-модерация**: ai_moderation_result (JSONB) для результатов AI-модерации
@@ -405,6 +436,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Лог исполнения
 
 Система лога включает:
+
 - **Действия**: action для описания действия
 - **Детали**: details (JSONB) для деталей действия
 - **Временные метки**: executed_at для времени выполнения
@@ -412,6 +444,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Интеграция с другими системами
 
 Система контрактов интегрируется с:
+
 - **Characters**: через initiator_id, counterparty_id для участников контрактов
 - **Inventory Service**: через initiator_items и counterparty_items для блокировки предметов
 - **Wallet Service**: через initiator_currency и counterparty_currency для блокировки валюты
@@ -419,5 +452,4 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 - **Logistics Service**: через contract_type 'delivery' для доставки
 - **Crafting Service**: через contract_type 'crafting' для крафта
 - **Notification Service**: через события для уведомлений
-
 

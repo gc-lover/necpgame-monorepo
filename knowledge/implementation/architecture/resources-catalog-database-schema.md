@@ -1,9 +1,11 @@
 <!-- Issue: #140890239 -->
+
 # Resources Catalog System - Database Schema
 
 ## Обзор
 
-Схема базы данных для каталога ресурсов и материалов, расширяющая существующую таблицу `economy.resources` и добавляющая таблицы для источников добычи, применения, зон добычи и истории цен.
+Схема базы данных для каталога ресурсов и материалов, расширяющая существующую таблицу `economy.resources` и добавляющая
+таблицы для источников добычи, применения, зон добычи и истории цен.
 
 ## ERD Диаграмма
 
@@ -98,6 +100,7 @@ erDiagram
 Таблица ресурсов. Расширена дополнительными полями для каталога ресурсов.
 
 **Существующие поля:**
+
 - `id`: UUID первичный ключ
 - `name`: Название ресурса (VARCHAR(100), NOT NULL, UNIQUE)
 - `category`: Категория ресурса (VARCHAR(50), NOT NULL)
@@ -108,6 +111,7 @@ erDiagram
 - `updated_at`: Время последнего обновления
 
 **Новые поля:**
+
 - `tier`: Тиер ресурса (INTEGER, nullable, CHECK: 1-5)
 - `rarity`: Редкость ресурса (resource_rarity ENUM, nullable)
 - `stack_size`: Максимальный размер стека (INTEGER, default: 1, CHECK: > 0)
@@ -123,6 +127,7 @@ erDiagram
 - `icon_path`: Путь к иконке ресурса (VARCHAR(255), nullable)
 
 **Индексы:**
+
 - По `(category, name)` для фильтрации по категории
 - По `name` для поиска по названию
 - По `current_price` для сортировки по цене
@@ -136,6 +141,7 @@ erDiagram
 Таблица источников добычи ресурсов. Хранит информацию о том, откуда можно получить ресурсы.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `resource_id`: ID ресурса (FK resources, NOT NULL)
 - `source_type`: Тип источника (resource_source_type ENUM, NOT NULL)
@@ -149,6 +155,7 @@ erDiagram
 - `created_at`: Время создания
 
 **Индексы:**
+
 - По `resource_id` для источников конкретного ресурса
 - По `source_type` для фильтрации по типу источника
 - По `source_id` для источников конкретного объекта (WHERE source_id IS NOT NULL)
@@ -158,6 +165,7 @@ erDiagram
 Таблица применения ресурсов. Хранит информацию о том, как используются ресурсы.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `resource_id`: ID ресурса (FK resources, NOT NULL)
 - `application_type`: Тип применения (resource_application_type ENUM, NOT NULL)
@@ -168,6 +176,7 @@ erDiagram
 - `created_at`: Время создания
 
 **Индексы:**
+
 - По `resource_id` для применений конкретного ресурса
 - По `application_type` для фильтрации по типу применения
 - По `(target_item_type, target_item_tier)` для применений конкретного типа предмета (WHERE оба NOT NULL)
@@ -177,6 +186,7 @@ erDiagram
 Таблица зон добычи ресурсов. Хранит информацию о зонах, где можно добывать ресурсы.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `resource_id`: ID ресурса (FK resources, NOT NULL)
 - `zone_name`: Название зоны (VARCHAR(255), NOT NULL)
@@ -191,6 +201,7 @@ erDiagram
 - `updated_at`: Время последнего обновления
 
 **Индексы:**
+
 - По `resource_id` для зон конкретного ресурса
 - По `region_id` для зон конкретного региона (WHERE region_id IS NOT NULL)
 - По `is_active` для активных зон (WHERE is_active = true)
@@ -201,6 +212,7 @@ erDiagram
 Таблица истории цен ресурсов. Хранит историю изменения цен для динамического ценообразования.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `resource_id`: ID ресурса (FK resources, NOT NULL)
 - `price`: Цена ресурса (DECIMAL(20,2), NOT NULL, CHECK: >= 0)
@@ -212,6 +224,7 @@ erDiagram
 - `recorded_at`: Время записи цены
 
 **Индексы:**
+
 - По `(resource_id, recorded_at DESC)` для истории цен ресурса
 - По `price_type` для фильтрации по типу цены
 - По `region_id` для цен конкретного региона (WHERE region_id IS NOT NULL)
@@ -221,6 +234,7 @@ erDiagram
 ## ENUM типы
 
 ### resource_rarity
+
 - `common`: Обычный
 - `uncommon`: Необычный
 - `rare`: Редкий
@@ -228,6 +242,7 @@ erDiagram
 - `legendary`: Легендарный
 
 ### resource_source_type
+
 - `loot`: Лут (выпадение с врагов, контейнеров)
 - `mining`: Добыча (извлечение из месторождений)
 - `processing`: Переработка (обработка других ресурсов)
@@ -238,6 +253,7 @@ erDiagram
 - `event`: Событие (награда за событие)
 
 ### resource_application_type
+
 - `weapon_crafting`: Крафт оружия
 - `armor_crafting`: Крафт брони
 - `cyberware_crafting`: Крафт кибердеков
@@ -324,15 +340,18 @@ erDiagram
 ## Миграции
 
 ### Применение миграций:
+
 ```bash
 liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ```
 
-**Примечание:** Миграция расширяет существующую таблицу `economy.resources` из `V1_58__economy_basic_mechanics_tables.sql` и добавляет новые таблицы.
+**Примечание:** Миграция расширяет существующую таблицу `economy.resources` из
+`V1_58__economy_basic_mechanics_tables.sql` и добавляет новые таблицы.
 
 ## Соответствие архитектуре
 
 Схема БД соответствует механике из `knowledge/mechanics/economy/economy-resources-catalog.yaml`:
+
 - [OK] Расширена таблица `resources` с полями для tier, rarity, stack_size, weight, prices
 - [OK] Создана таблица `resource_sources` для источников добычи
 - [OK] Создана таблица `resource_applications` для применения ресурсов
@@ -347,6 +366,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Tier-система
 
 Ресурсы классифицируются по тиерам (T1-T5):
+
 - **T1**: Базовые ресурсы (Scrap Metal, Circuit Board)
 - **T2**: Обычные ресурсы (Steel Ingot, Processor Chip)
 - **T3**: Редкие ресурсы (Titanium Alloy, Neural Matrix)
@@ -356,6 +376,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Редкость ресурсов
 
 Система поддерживает следующие уровни редкости:
+
 - **common**: Обычный (широко доступен)
 - **uncommon**: Необычный (редко встречается)
 - **rare**: Редкий (очень редко встречается)
@@ -365,6 +386,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Источники добычи
 
 Ресурсы можно получить из различных источников:
+
 - **loot**: Лут с врагов, контейнеров
 - **mining**: Добыча из месторождений
 - **processing**: Переработка других ресурсов
@@ -377,6 +399,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Применение ресурсов
 
 Ресурсы используются для:
+
 - **weapon_crafting**: Крафт оружия
 - **armor_crafting**: Крафт брони
 - **cyberware_crafting**: Крафт кибердеков
@@ -389,6 +412,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Зоны добычи
 
 Основные зоны добычи:
+
 - **Watson**: Низкий-средний риск, базовые ресурсы
 - **Corpo Plaza**: Средний-высокий риск, редкие ресурсы
 - **Badlands**: Высокий риск, эпические ресурсы
@@ -397,6 +421,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Динамическое ценообразование
 
 Система ценообразования учитывает:
+
 - **supply_factor**: Фактор предложения (0.00-2.00)
 - **demand_factor**: Фактор спроса (0.00-2.00)
 - **economic_events**: Влияние экономических событий
@@ -406,6 +431,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Интеграция с другими системами
 
 Каталог ресурсов интегрируется с:
+
 - **Crafting Service**: Использование ресурсов в крафте
 - **Inventory Service**: Хранение ресурсов
 - **Economy Service**: Динамическое ценообразование

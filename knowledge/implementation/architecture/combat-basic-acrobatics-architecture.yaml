@@ -368,7 +368,7 @@ technical_specification:
       description: |
         Реализация Wall Run Manager с обработкой начала/остановки Wall Run,
         определением поверхностей, управлением выносливостью и синхронизацией позиций.
-      dependencies: []
+      dependencies: [ ]
       estimated_effort: 5 days
       file_size_estimate: 350 lines
 
@@ -377,7 +377,7 @@ technical_specification:
       description: |
         Реализация Double Jump Manager с проверкой доступности, применением импульса,
         отслеживанием использования и интеграцией с GAS.
-      dependencies: []
+      dependencies: [ ]
       estimated_effort: 3 days
       file_size_estimate: 250 lines
 
@@ -386,7 +386,7 @@ technical_specification:
       description: |
         Реализация Slide Manager с обработкой начала/остановки Slide,
         сохранением инерции, интеграцией с боевой системой и анимациями.
-      dependencies: []
+      dependencies: [ ]
       estimated_effort: 4 days
       file_size_estimate: 300 lines
 
@@ -395,7 +395,7 @@ technical_specification:
       description: |
         Реализация Surface Detection System с определением подходящих поверхностей
         для Wall Run и Slide, кэшированием результатов и обновлением в реальном времени.
-      dependencies: []
+      dependencies: [ ]
       estimated_effort: 4 days
       file_size_estimate: 280 lines
 
@@ -404,7 +404,7 @@ technical_specification:
       description: |
         Реализация Acrobatics State Tracker с отслеживанием состояний всех элементов,
         синхронизацией с клиентом и сохранением в БД.
-      dependencies: [wall-run-manager, double-jump-manager, slide-manager]
+      dependencies: [ wall-run-manager, double-jump-manager, slide-manager ]
       estimated_effort: 3 days
       file_size_estimate: 200 lines
 
@@ -413,7 +413,7 @@ technical_specification:
       description: |
         Реализация REST API endpoints для управления элементами акробатики,
         получения состояний и доступных поверхностей.
-      dependencies: [wall-run-manager, double-jump-manager, slide-manager]
+      dependencies: [ wall-run-manager, double-jump-manager, slide-manager ]
       estimated_effort: 2 days
       file_size_estimate: 180 lines
 
@@ -422,7 +422,7 @@ technical_specification:
       description: |
         Реализация WebSocket каналов для realtime обновлений состояний акробатики,
         синхронизации позиций и уведомлений о событиях.
-      dependencies: [acrobatics-state-tracker]
+      dependencies: [ acrobatics-state-tracker ]
       estimated_effort: 2 days
       file_size_estimate: 150 lines
 
@@ -431,7 +431,7 @@ technical_specification:
       description: |
         Реализация публикации и подписки на события через Kafka
         для всех элементов акробатики.
-      dependencies: [wall-run-manager, double-jump-manager, slide-manager]
+      dependencies: [ wall-run-manager, double-jump-manager, slide-manager ]
       estimated_effort: 2 days
       file_size_estimate: 120 lines
 
@@ -440,7 +440,7 @@ technical_specification:
       description: |
         Создание таблиц БД для состояний Wall Run, Double Jump, Slide и поверхностей
         с миграциями Liquibase.
-      dependencies: []
+      dependencies: [ ]
       estimated_effort: 2 days
       file_size_estimate: 100 lines
 
@@ -449,35 +449,35 @@ diagrams:
     ```mermaid
     graph TB
         Client[UE5 Client] --> Gateway[API Gateway]
-        
+    
         Gateway --> GameplayService[Gameplay Service<br/>8083]
-        
+    
         GameplayService --> WRM[Wall Run Manager]
         GameplayService --> DJM[Double Jump Manager]
         GameplayService --> SM[Slide Manager]
         GameplayService --> AST[Acrobatics State Tracker]
         GameplayService --> SDS[Surface Detection System]
-        
+    
         WRM --> SM[Stamina Manager]
         DJM --> SM
         SM --> SM
-        
+    
         WRM --> MS[Movement Service]
         DJM --> MS
         SM --> MS
-        
+    
         WRM --> CS[Combat System]
         SM --> CS
-        
+    
         WRM --> PS[Progression Service]
         DJM --> PS
         SM --> PS
-        
+    
         GameplayService --> EventBus[Event Bus<br/>Kafka]
         EventBus --> RealtimeGateway[Realtime Gateway]
-        
+    
         GameplayService --> DB[(Gameplay DB)]
-        
+    
         Client --> WSAcrobatics[WebSocket<br/>Acrobatics]
         WSAcrobatics --> GameplayService
     ```
@@ -491,7 +491,7 @@ diagrams:
         participant SM as Stamina Manager
         participant MS as Movement Service
         participant EB as Event Bus
-        
+    
         C->>WRM: POST /wall-run/start
         WRM->>SDS: Check surface
         SDS-->>WRM: Surface available
@@ -502,13 +502,13 @@ diagrams:
         WRM->>SM: Consume stamina (15-20/sec)
         WRM->>EB: Publish wall-run.started
         WRM-->>C: Wall run active
-        
+    
         loop During wall run
             WRM->>SM: Consume stamina
             WRM->>MS: Update position
             SM-->>WRM: Stamina status
         end
-        
+    
         alt Stamina depleted or end of wall
             WRM->>WRM: Stop wall run
             WRM->>EB: Publish wall-run.stopped
@@ -525,7 +525,7 @@ diagrams:
         participant MS as Movement Service
         participant GAS as GAS System
         participant EB as Event Bus
-        
+    
         C->>DJM: POST /double-jump
         DJM->>DJM: Check in air
         DJM->>DJM: Check not used
@@ -537,7 +537,7 @@ diagrams:
         DJM->>DJM: Mark as used
         DJM->>EB: Publish double-jump
         DJM-->>C: Double jump executed
-        
+    
         Note over DJM: Reset on landing
     ```
 
@@ -550,7 +550,7 @@ diagrams:
         participant MS as Movement Service
         participant CS as Combat System
         participant EB as Event Bus
-        
+    
         C->>SLM: POST /slide/start
         SLM->>SLM: Check speed and surface
         SLM->>SM: Check stamina
@@ -561,13 +561,13 @@ diagrams:
         SLM->>CS: Enable combat
         SLM->>EB: Publish slide.started
         SLM-->>C: Slide active
-        
+    
         loop During slide
             SLM->>MS: Update position
             SLM->>CS: Allow combat
             SLM->>SM: Consume stamina
         end
-        
+    
         alt Slowdown or manual stop
             SLM->>SLM: Stop slide
             SLM->>CS: Disable combat

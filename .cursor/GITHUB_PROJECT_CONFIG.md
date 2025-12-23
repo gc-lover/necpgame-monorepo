@@ -7,12 +7,15 @@
 **КРИТИЧНО:** Запрещено использовать эмодзи и специальные Unicode символы в коде!
 
 ### Почему запрещено:
+
 — [FORBIDDEN] Ломают выполнение скриптов на Windows
 — [FORBIDDEN] Могут вызвать ошибки в терминале
+
 - [FORBIDDEN] Создают проблемы с кодировкой
 - [FORBIDDEN] Нарушают совместимость между ОС
 
 ### Что use вместо:
+
 - [OK] `:smile:` вместо [EMOJI]
 - [OK] `[FORBIDDEN]` вместо [FORBIDDEN]
 - [OK] `[OK]` вместо [OK]
@@ -20,6 +23,7 @@
 - [OK] `[WARNING]` вместо [WARNING]
 
 ### Автоматическая проверка:
+
 - Pre-commit hooks блокируют коммиты с эмодзи
 - Git hooks проверяют staged файлы
 - Исключения: `.cursor/rules/*` (документация), `.githooks/*`
@@ -53,6 +57,7 @@ mcp_github_list_project_items({
 вернутся все поля.
 
 **Оптимизированные скрипты для агентов:**
+
 - `python scripts/validate-domains-openapi.py` - валидация OpenAPI доменов
 - `python scripts/generate-all-domains-go.py` - генерация enterprise-grade сервисов
 - `python scripts/batch-optimize-openapi-struct-alignment.py` - оптимизация структур OpenAPI
@@ -144,6 +149,7 @@ const TYPE_OPTIONS = {
 ```
 
 **Правила простановки TYPE:**
+
 - **API**: Задачи на создание/изменение OpenAPI спецификаций в enterprise-grade доменах
 - **MIGRATION**: Задачи на создание Liquibase миграций схемы БД
 - **DATA**: Задачи на импорт контента/NPC/квестов в БД
@@ -163,10 +169,12 @@ const CHECK_OPTIONS = {
 ```
 
 **Правила простановки CHECK:**
+
 - **0 (NOT_CHECKED)**: Задача взята в работу впервые, статус не проверялся
 - **1 (CHECKED)**: Агент проверил актуальность задачи и её выполнение в проекте
 
 **Алгоритм проверки:**
+
 1. Взять задачу → CHECK = 0
 2. Проанализировать задачу и проверить в проекте
 3. Если задача сделана → передать следующему агенту

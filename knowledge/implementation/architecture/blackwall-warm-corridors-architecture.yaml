@@ -174,16 +174,16 @@ architecture:
       description: Создание тёплого коридора
       request:
         team_leader_id: UUID
-        team_members: [UUID]
+        team_members: [ UUID ]
         location_id: UUID
         map_id: UUID
         weak_zone_id: UUID
-        equipment_ids: [UUID]
+        equipment_ids: [ UUID ]
       response:
         corridor_id: UUID
         preparation_required: boolean
         estimated_prep_time: seconds
-        node_positions: [object]
+        node_positions: [ object ]
         risk_assessment: object
 
     - path: POST /api/v1/blackwall/corridor/{corridorId}/nodes/place
@@ -206,16 +206,16 @@ architecture:
         corridor_active: boolean
         initial_stability: 0-100
         lifetime: seconds
-        warnings: [string]
+        warnings: [ string ]
 
     - path: GET /api/v1/blackwall/corridor/{corridorId}/status
       description: Статус активного коридора
       response:
         stability: 0-100
         time_remaining: seconds
-        team_status: [object]
-        active_threats: [object]
-        warnings: [string]
+        team_status: [ object ]
+        active_threats: [ object ]
+        warnings: [ string ]
 
     - path: POST /api/v1/blackwall/corridor/{corridorId}/maintain
       description: Поддержание коридора (мини-игра)
@@ -233,19 +233,19 @@ architecture:
       request:
         usage_type: enum [data_transfer, player_passage]
         data_volume: integer (optional)
-        character_ids: [UUID] (optional)
+        character_ids: [ UUID ] (optional)
       response:
         usage_result: object
         stability_impact: integer
         success: boolean
-        warnings: [string]
+        warnings: [ string ]
 
     - path: POST /api/v1/blackwall/corridor/{corridorId}/close
       description: Закрытие коридора (автоматическое или ручное)
       response:
         closure_reason: string
-        players_trapped: [UUID]
-        equipment_lost: [UUID]
+        players_trapped: [ UUID ]
+        equipment_lost: [ UUID ]
         consequences: object
 
   database_schema:
@@ -269,7 +269,7 @@ architecture:
             foreign_key: blackwall_zones.id
           - name: status
             type: VARCHAR(20)
-            values: [preparing, active, unstable, closed]
+            values: [ preparing, active, unstable, closed ]
           - name: stability
             type: INTEGER
             range: 0-100
@@ -316,8 +316,8 @@ architecture:
             type: TIMESTAMP
           - name: status
             type: VARCHAR(20)
-            values: [active, afk, disconnected]
-        primary_key: [corridor_id, character_id]
+            values: [ active, afk, disconnected ]
+        primary_key: [ corridor_id, character_id ]
 
       - name: warm_corridor_maintenance_log
         columns:
@@ -359,22 +359,22 @@ architecture:
 
   class_roles:
     netrunner:
-      primary_roles: [stabilizer, navigator]
+      primary_roles: [ stabilizer, navigator ]
       effectiveness: high
       risk_modifier: -10%
     
     techie:
-      primary_roles: [stabilizer, coordinator]
+      primary_roles: [ stabilizer, coordinator ]
       effectiveness: medium-high
       special: "Equipment modifications for stability"
     
     solo:
-      primary_roles: [guard]
+      primary_roles: [ guard ]
       effectiveness: high
       special: "Physical protection in real world"
     
     fixer:
-      primary_roles: [coordinator]
+      primary_roles: [ coordinator ]
       effectiveness: high
       special: "Organization, negotiations with NetWatch"
 

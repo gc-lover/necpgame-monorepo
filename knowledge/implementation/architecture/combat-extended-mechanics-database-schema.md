@@ -1,9 +1,11 @@
 <!-- Issue: #140875781 -->
+
 # Combat Extended Mechanics - Database Schema
 
 ## Обзор
 
-Схема базы данных для расширенных механик боевой системы, включающая взлом в бою, активации имплантов, продвинутую стрельбу, лоадауты и состояние всех механик.
+Схема базы данных для расширенных механик боевой системы, включающая взлом в бою, активации имплантов, продвинутую
+стрельбу, лоадауты и состояние всех механик.
 
 ## ERD Диаграмма
 
@@ -97,6 +99,7 @@ erDiagram
 Таблица выполнений взлома в бою. Хранит информацию о взломах, выполненных игроками во время боевых сессий.
 
 **Ключевые поля:**
+
 - `hacking_type`: Тип взлома (VARCHAR(100))
 - `network_id`: ID сети для взлома (UUID, nullable)
 - `target_id`: ID цели взлома (UUID, nullable)
@@ -104,6 +107,7 @@ erDiagram
 - `effects_applied`: JSONB эффекты взлома `{damage, debuff, control, etc.}`
 
 **Индексы:**
+
 - По `character_id` для поиска взломов игрока
 - По `session_id` для поиска взломов в сессии
 - Композитный индекс `(character_id, session_id)` для оптимизации запросов
@@ -113,12 +117,14 @@ erDiagram
 Таблица сетей для взлома. Хранит информацию о доступных сетях для взлома в боевых сценариях.
 
 **Ключевые поля:**
+
 - `network_name`: Название сети
 - `network_type`: Тип сети (enemy, device, infrastructure, combat_scenario)
 - `access_level`: Уровень доступа (INTEGER)
 - `available_demons`: JSONB доступные демоны для взлома
 
 **Индексы:**
+
 - По `network_type` для фильтрации по типу сети
 - По `access_level` для поиска по уровню доступа
 
@@ -127,12 +133,14 @@ erDiagram
 Таблица активаций имплантов в бою. Хранит информацию о активациях имплантов во время боевых сессий.
 
 **Ключевые поля:**
+
 - `implant_id`: ID импланта (UUID)
 - `effects_applied`: JSONB эффекты импланта `{buffs, debuffs, abilities, etc.}`
 - `energy_used`: Потраченная энергия (INTEGER)
 - `humanity_cost`: Стоимость человечности за активацию (INTEGER)
 
 **Индексы:**
+
 - По `character_id` для поиска активаций игрока
 - По `session_id` для поиска активаций в сессии
 - По `implant_id` для поиска по типу импланта
@@ -143,6 +151,7 @@ erDiagram
 Таблица статистики продвинутой стрельбы. Хранит информацию о прицеливании, отдаче и точности стрельбы.
 
 **Ключевые поля:**
+
 - `weapon_id`: ID оружия (UUID)
 - `aim_accuracy`: Точность прицеливания (0-100%, DECIMAL(5,2))
 - `recoil_control`: Контроль отдачи (0-100%, DECIMAL(5,2))
@@ -150,6 +159,7 @@ erDiagram
 - `hits_landed`: Количество попаданий (INTEGER)
 
 **Индексы:**
+
 - По `character_id` для поиска статистики игрока
 - По `session_id` для поиска статистики в сессии
 - По `weapon_id` для поиска по оружию
@@ -160,6 +170,7 @@ erDiagram
 Таблица лоадаутов боевой системы. Хранит информацию о конфигурациях оружия, способностей, имплантов и экипировки.
 
 **Ключевые поля:**
+
 - `name`: Название лоадаута (VARCHAR(255))
 - `weapons`: JSONB оружие `[{weapon_id, attachments, mods}, ...]`
 - `abilities`: JSONB способности `[{ability_id, level, mods}, ...]`
@@ -168,6 +179,7 @@ erDiagram
 - `is_active`: Флаг активного лоадаута (BOOLEAN)
 
 **Индексы:**
+
 - По `character_id` для поиска лоадаутов игрока
 - По `is_active` для фильтрации активных лоадаутов
 - Композитный индекс `(character_id, is_active)` для оптимизации запросов
@@ -177,6 +189,7 @@ erDiagram
 Таблица состояния всех механик в боевой сессии. Хранит объединенное состояние всех расширенных механик для оркестрации.
 
 **Ключевые поля:**
+
 - `session_id`: ID боевой сессии (UUID)
 - `character_id`: ID персонажа (UUID)
 - `loadout_id`: ID активного лоадаута (UUID, nullable)
@@ -185,6 +198,7 @@ erDiagram
 - `shooting_config`: JSONB конфигурация стрельбы `{aim_sensitivity, recoil_pattern, etc.}`
 
 **Индексы:**
+
 - Уникальный индекс `(session_id, character_id)` - одно состояние на персонажа в сессии
 - По `session_id` для поиска состояний в сессии
 - По `character_id` для поиска состояний персонажа
@@ -238,6 +252,7 @@ erDiagram
 ### Партиционирование
 
 Для больших объемов данных рекомендуется партиционирование:
+
 - По `created_at` для таблиц логов (combat_hacking_executions, combat_implant_activations)
 - По `session_id` для таблиц состояний (combat_mechanics_state)
 
@@ -246,13 +261,16 @@ erDiagram
 Миграция создана в файле: `infrastructure/liquibase/migrations/V1_49__combat_extended_mechanics_tables.sql`
 
 Для применения миграции:
+
 ```bash
 liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ```
 
 ## Соответствие архитектуре
 
-Схема БД полностью соответствует архитектуре из `knowledge/implementation/architecture/combat-extended-mechanics-architecture.yaml`:
+Схема БД полностью соответствует архитектуре из
+`knowledge/implementation/architecture/combat-extended-mechanics-architecture.yaml`:
+
 - [OK] Все таблицы из архитектуры созданы
 - [OK] Все поля соответствуют описанию
 - [OK] Индексы оптимизированы для частых запросов
@@ -264,6 +282,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### JSONB поля
 
 Использование JSONB для гибкого хранения:
+
 - `effects_applied`: Эффекты взлома/имплантов
 - `available_demons`: Доступные демоны для взлома
 - `weapons`, `abilities`, `implants`, `equipment`: Конфигурации лоадаутов
@@ -274,5 +293,4 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 - `combat_hacking_executions.network_id` → `combat_hacking_networks.id` (опциональная связь)
 - `combat_mechanics_state.loadout_id` → `combat_loadouts.id` (опциональная связь)
 - Все таблицы связаны через `character_id` и `session_id` для объединения данных
-
 

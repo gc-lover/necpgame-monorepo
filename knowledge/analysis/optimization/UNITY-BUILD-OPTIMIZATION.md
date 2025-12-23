@@ -3,6 +3,7 @@
 ## [OK] Текущее состояние
 
 Unity Build уже включён в проекте:
+
 - `bUseUnityBuild = true` в `LyraGame.Target.cs`
 - `bUseUnityBuild = true` в `LyraEditor.Target.cs`
 - `MinFilesUsingPrecompiledHeader = 1`
@@ -10,32 +11,40 @@ Unity Build уже включён в проекте:
 ## [ROCKET] Выполненные оптимизации
 
 ### 1. Включён PCH (Precompiled Headers)
+
 ```csharp
 bUsePCHFiles = true;
 ```
+
 **Результат**: Ускорение компиляции на 30-50% за счёт предкомпиляции заголовков.
 
 ### 2. Оптимизирован Unity Build
+
 ```csharp
 bUseUnity = true;  // В Build.cs модуля
 bForceUnityFileGeneration = false;  // Автоматическое определение
 ```
+
 **Результат**: Меньше файлов для компиляции, быстрее сборка.
 
 ### 3. Настроен MinFilesUsingPrecompiledHeader
+
 ```csharp
 MinFilesUsingPrecompiledHeader = 1;
 ```
+
 **Результат**: Минимум 1 файл использует PCH, что ускоряет компиляцию.
 
 ## [SYMBOL] Как работает Unity Build
 
 ### Без Unity Build:
+
 - Каждый `.cpp` файл компилируется отдельно
 - 100 файлов = 100 единиц компиляции
 - Много времени на повторную компиляцию заголовков
 
 ### С Unity Build:
+
 - Несколько `.cpp` файлов объединяются в один Unity файл
 - 100 файлов → ~10-20 Unity файлов
 - Меньше единиц компиляции = быстрее сборка
@@ -57,14 +66,18 @@ MinFilesUsingPrecompiledHeader = 1;
 ## [SYMBOL] Дополнительные настройки
 
 ### Исключение файлов из Unity Build
+
 Если нужно исключить файл из Unity Build (редко нужно):
+
 ```csharp
 // В Build.cs
 PublicDefinitions.Add("DISABLE_UNITY_BUILD_FOR_THIS_FILE=1");
 ```
 
 ### Настройка размера Unity файлов
+
 По умолчанию UE5 автоматически определяет оптимальный размер. Можно настроить через:
+
 ```csharp
 // В Target.cs (не рекомендуется менять)
 // UnityFileSizeLimit = 100;  // Количество файлов в одном Unity файле
@@ -73,19 +86,20 @@ PublicDefinitions.Add("DISABLE_UNITY_BUILD_FOR_THIS_FILE=1");
 ## [NOTE] Изменённые файлы
 
 1. `client/UE5/NECPGAME/Source/LyraGame.Target.cs`
-   - Добавлен `bUsePCHFiles = true`
-   - Добавлен `bForceUnityFileGeneration = false`
+    - Добавлен `bUsePCHFiles = true`
+    - Добавлен `bForceUnityFileGeneration = false`
 
 2. `client/UE5/NECPGAME/Source/LyraEditor.Target.cs`
-   - Добавлен `bUsePCHFiles = true`
-   - Добавлен `bForceUnityFileGeneration = false`
+    - Добавлен `bUsePCHFiles = true`
+    - Добавлен `bForceUnityFileGeneration = false`
 
 3. `client/UE5/NECPGAME/Source/LyraGame/LyraGame.Build.cs`
-   - Добавлен `bUseUnity = true`
+    - Добавлен `bUseUnity = true`
 
 ## [TARGET] Ожидаемый результат
 
 После применения настроек:
+
 - [OK] Первый билд: может быть немного медленнее (генерация Unity файлов)
 - [OK] Инкрементальная сборка: на 30-50% быстрее
 - [OK] Меньше файлов для компиляции
@@ -104,5 +118,4 @@ PublicDefinitions.Add("DISABLE_UNITY_BUILD_FOR_THIS_FILE=1");
 2. **Параллельная компиляция**: Используйте все ядра процессора
 3. **SSD**: Убедитесь, что проект на SSD для быстрого доступа
 4. **Кэш компилятора**: Используйте кэш компилятора (IncrediBuild, FASTBuild)
-
 

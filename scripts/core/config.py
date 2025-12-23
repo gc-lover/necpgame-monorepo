@@ -6,9 +6,9 @@ SOLID: Single Responsibility - manages only configuration
 
 import os
 import yaml
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, Any, Optional
-from dataclasses import dataclass
 
 
 @dataclass

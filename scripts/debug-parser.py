@@ -3,8 +3,8 @@
 Debug the OpenAPI parser input
 """
 
-import sys
 import re
+import sys
 
 # Read all input
 input_data = sys.stdin.read()

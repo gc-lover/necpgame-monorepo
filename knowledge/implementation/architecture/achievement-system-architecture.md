@@ -13,7 +13,8 @@
 
 ## Краткое описание
 
-Achievement System отслеживает прогресс игроков во всех игровых активностях и выдает награды, титулы и уведомления за выполнение целей.
+Achievement System отслеживает прогресс игроков во всех игровых активностях и выдает награды, титулы и уведомления за
+выполнение целей.
 
 ## Связанные документы
 
@@ -82,21 +83,25 @@ flowchart TD
 **Подкомпоненты:**
 
 #### Event Listener
+
 - Подписка на события всех сервисов
 - Фильтрация релевантных событий
 - Routing к Progress Tracker
 
 #### Progress Tracker
+
 - Обновление прогресса
 - Проверка completion criteria
 - Unlock достижений
 
 #### Reward Processor
+
 - Выдача наград (валюта, предметы, XP)
 - Отправка через Mail Service
 - Уведомления
 
 #### Title Manager
+
 - Управление титулами
 - Активация/деактивация
 - Отображение
@@ -174,11 +179,13 @@ CREATE UNIQUE INDEX idx_active_title ON player_titles(player_id) WHERE is_active
 ### 3.1. Achievement Management
 
 #### GET /api/v1/world/achievements
+
 **Список всех достижений**
 
 Parameters: `category`, `status` (all, completed, in_progress)
 
 Response:
+
 ```json
 {
   "achievements": [{
@@ -196,9 +203,11 @@ Response:
 ```
 
 #### GET /api/v1/world/achievements/player/{player_id}
+
 **Достижения игрока**
 
 Response:
+
 ```json
 {
   "total_points": 1250,
@@ -209,14 +218,17 @@ Response:
 ```
 
 #### POST /api/v1/world/titles/{title_id}/activate
+
 **Активировать титул**
 
 ### 3.2. Internal API
 
 #### POST /internal/v1/achievements/process-event
+
 **Обработка события** (вызывается Event Listener)
 
 Request:
+
 ```json
 {
   "event_type": "enemy_killed",
@@ -230,42 +242,50 @@ Request:
 ## 4. Категории достижений
 
 ### 4.1. Combat
+
 - Убить N врагов
 - Убить боссов
 - Критические удары
 - PvP победы
 
 ### 4.2. Exploration
+
 - Открыть локации
 - Найти секреты
 - Путешествия
 
 ### 4.3. Economic
+
 - Заработать N золота
 - Торговые сделки
 - Auction house
 
 ### 4.4. Social
+
 - Добавить друзей
 - Создать гильдию
 - Помочь новичкам
 
 ### 4.5. Quests
+
 - Завершить N квестов
 - Сюжетные квесты
 - Ежедневные квесты
 
 ### 4.6. Progression
+
 - Достичь уровня
 - Развить навыки
 - Экипировка
 
 ### 4.7. PvP
+
 - Рейтинг
 - Арены
 - Clan wars
 
 ### 4.8. Special
+
 - Сезонные события
 - Первопроходцы
 - Редкие достижения
@@ -274,12 +294,12 @@ Request:
 
 ## 5. Типы достижений
 
-| Type | Описание | Пример |
-|------|----------|--------|
-| Standard | Одноразовое выполнение | "Kill first enemy" |
-| Progressive | Несколько уровней | "Kill 10/100/1000 enemies" |
-| Repeatable | Можно выполнять многократно | "Complete daily quest" |
-| Hidden | Скрыто до unlock | "Secret boss defeated" |
+| Type        | Описание                    | Пример                     |
+|-------------|-----------------------------|----------------------------|
+| Standard    | Одноразовое выполнение      | "Kill first enemy"         |
+| Progressive | Несколько уровней           | "Kill 10/100/1000 enemies" |
+| Repeatable  | Можно выполнять многократно | "Complete daily quest"     |
+| Hidden      | Скрыто до unlock            | "Secret boss defeated"     |
 
 ---
 
@@ -320,6 +340,7 @@ sequenceDiagram
 ## 7. События
 
 **Subscribed Events:**
+
 - `combat:enemy_killed`
 - `quest:completed`
 - `trade:completed`
@@ -330,6 +351,7 @@ sequenceDiagram
 - `exploration:location_discovered`
 
 **Published Events:**
+
 - `achievement:unlocked`
 - `achievement:progress_updated`
 - `title:unlocked`
@@ -348,21 +370,27 @@ sequenceDiagram
 ## 9. Разбиение на подзадачи
 
 ### 9.1. Database Schema (P0)
+
 **Срок:** 1 неделя
 
 ### 9.2. Event Listener (P0)
+
 **Срок:** 1.5 недели
 
 ### 9.3. Progress Tracker (P0)
+
 **Срок:** 2 недели
 
 ### 9.4. Reward Processor (P1)
+
 **Срок:** 1 неделя
 
 ### 9.5. Title System (P2)
+
 **Срок:** 1 неделя
 
 ### 9.6. Analytics Integration (P2)
+
 **Срок:** 0.5 недели
 
 ---
@@ -379,37 +407,4 @@ sequenceDiagram
 ---
 
 **Конец документа**
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

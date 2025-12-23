@@ -1,69 +1,71 @@
-        constraints: |
-          - UNIQUE(player_id, quest_id, week_start)
-        indexes:
-          - player_id, week_start
-          - quest_id, week_start
+constraints: |
+  - UNIQUE(player_id, quest_id, week_start)
+indexes:
+  - player_id, week_start
+  - quest_id, week_start
 
-      - name: reset_tracking
-        description: Трекинг сбросов
-        fields:
-          - id: UUID (PK)
-          - reset_type: ENUM (daily, weekly)
-          - reset_date: DATE
-          - status: ENUM (pending, in_progress, completed, failed)
-          - started_at: TIMESTAMP
-          - completed_at: TIMESTAMP (nullable)
-          - players_processed: INTEGER (default: 0)
-          - players_total: INTEGER
-          - error_message: TEXT (nullable)
-          - created_at: TIMESTAMP
-        indexes:
-          - reset_type, reset_date
-          - status, reset_date
+  - name: reset_tracking
+    description: Трекинг сбросов
+    fields:
+      - id: UUID (PK)
+      - reset_type: ENUM (daily, weekly)
+      - reset_date: DATE
+      - status: ENUM (pending, in_progress, completed, failed)
+      - started_at: TIMESTAMP
+      - completed_at: TIMESTAMP (nullable)
+      - players_processed:
+          INTEGER (default: 0)
+      - players_total: INTEGER
+      - error_message: TEXT (nullable)
+      - created_at: TIMESTAMP
+    indexes:
+      - reset_type, reset_date
+      - status, reset_date
 
-      - name: login_rewards_tracking
-        description: Трекинг логин-наград
-        fields:
-          - id: UUID (PK)
-          - player_id: UUID (FK accounts)
-          - reward_type: ENUM (daily, weekly, monthly)
-          - day_number: INTEGER
-          - claimed_at: TIMESTAMP
-          - reward_data: JSONB
-          - streak_days: INTEGER (default: 0)
-          - last_login_date: DATE
-          - created_at: TIMESTAMP
-        constraints: |
-          - UNIQUE(player_id, reward_type, day_number)
-        indexes:
-          - player_id, reward_type
-          - last_login_date
+  - name: login_rewards_tracking
+    description: Трекинг логин-наград
+    fields:
+      - id: UUID (PK)
+      - player_id: UUID (FK accounts)
+      - reward_type: ENUM (daily, weekly, monthly)
+      - day_number: INTEGER
+      - claimed_at: TIMESTAMP
+      - reward_data: JSONB
+      - streak_days:
+          INTEGER (default: 0)
+      - last_login_date: DATE
+      - created_at: TIMESTAMP
+    constraints: |
+      - UNIQUE(player_id, reward_type, day_number)
+    indexes:
+      - player_id, reward_type
+      - last_login_date
 
-      - name: daily_lockouts
-        description: Ежедневные ограничения
-        fields:
-          - id: UUID (PK)
-          - player_id: UUID (FK accounts)
-          - lockout_type: VARCHAR(100)
-          - lockout_data: JSONB
-          - reset_date: DATE
-          - expires_at: TIMESTAMP
-          - created_at: TIMESTAMP
-        constraints: |
-          - UNIQUE(player_id, lockout_type, reset_date)
-        indexes:
-          - player_id, reset_date
-          - expires_at
+  - name: daily_lockouts
+    description: Ежедневные ограничения
+    fields:
+      - id: UUID (PK)
+      - player_id: UUID (FK accounts)
+      - lockout_type: VARCHAR(100)
+      - lockout_data: JSONB
+      - reset_date: DATE
+      - expires_at: TIMESTAMP
+      - created_at: TIMESTAMP
+    constraints: |
+      - UNIQUE(player_id, lockout_type, reset_date)
+    indexes:
+      - player_id, reset_date
+      - expires_at
 
 technical_specification:
   backend_requirements:
     - Реализация модулей в world-service-go:
-      - reset (управление сбросами)
-      - reset-quests (квесты)
-      - reset-rewards (награды)
-      - reset-scheduler (планировщик)
-      - reset-executor (выполнение)
-      - reset-events (события)
+        - reset (управление сбросами)
+        - reset-quests (квесты)
+        - reset-rewards (награды)
+        - reset-scheduler (планировщик)
+        - reset-executor (выполнение)
+        - reset-events (события)
     - Интеграция с gameplay-service для квестов
     - Интеграция с economy-service для наград
     - Оптимизация запросов к БД (batch, индексы)
@@ -311,5 +313,4 @@ history:
       - Спроектирована система cron jobs
       - Создано техническое задание
       - Разбито на подзадачи
-
 

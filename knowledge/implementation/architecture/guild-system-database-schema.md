@@ -1,4 +1,5 @@
 <!-- Issue: #140888360 -->
+
 # Guild System - Database Schema
 
 ## Обзор
@@ -116,6 +117,7 @@ erDiagram
 Таблица гильдий. Хранит информацию о гильдиях.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `name`: Название гильдии (VARCHAR(100), UNIQUE, NOT NULL)
 - `tag`: Тег гильдии (VARCHAR(10), UNIQUE, NOT NULL)
@@ -131,6 +133,7 @@ erDiagram
 - `updated_at`: Время последнего обновления
 
 **Индексы:**
+
 - По `name` для поиска по названию
 - По `tag` для поиска по тегу
 - По `leader_id` для гильдий лидера
@@ -141,6 +144,7 @@ erDiagram
 Таблица участников гильдий. Хранит информацию об участниках.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `guild_id`: ID гильдии (FK к guilds, NOT NULL)
 - `character_id`: ID персонажа (FK к characters, NOT NULL)
@@ -153,6 +157,7 @@ erDiagram
 - `updated_at`: Время последнего обновления
 
 **Индексы:**
+
 - По `(guild_id, character_id)` для уникальности
 - По `(guild_id, status)` для участников гильдии
 - По `(character_id, status)` для гильдий персонажа
@@ -160,6 +165,7 @@ erDiagram
 - По `(guild_id, rank_id)` для участников по rank_id
 
 **Constraints:**
+
 - UNIQUE(guild_id, character_id): Один участник на гильдию
 
 ### guild_ranks
@@ -167,6 +173,7 @@ erDiagram
 Таблица рангов в гильдиях. Хранит информацию о рангах и правах.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `guild_id`: ID гильдии (FK к guilds, NOT NULL)
 - `name`: Название ранга (VARCHAR(50), NOT NULL)
@@ -175,11 +182,13 @@ erDiagram
 - `created_at`: Время создания
 
 **Индексы:**
+
 - По `guild_id` для рангов гильдии
 - По `(guild_id, order)` для сортировки по порядку
 - По `(guild_id, name)` для поиска по названию
 
 **Constraints:**
+
 - UNIQUE(guild_id, name): Уникальное название ранга в гильдии
 
 ### guild_bank_items
@@ -187,6 +196,7 @@ erDiagram
 Таблица предметов в банке гильдии. Хранит информацию о предметах в банке.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `guild_id`: ID гильдии (FK к guilds, NOT NULL)
 - `item_id`: ID предмета (UUID, NOT NULL)
@@ -195,6 +205,7 @@ erDiagram
 - `deposited_at`: Время депозита
 
 **Индексы:**
+
 - По `guild_id` для предметов гильдии
 - По `item_id` для поиска предмета
 
@@ -203,6 +214,7 @@ erDiagram
 Таблица транзакций банка гильдии. Хранит информацию о транзакциях.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `guild_id`: ID гильдии (FK к guilds, NOT NULL)
 - `type`: Тип транзакции (VARCHAR(20), NOT NULL: 'deposit', 'withdraw')
@@ -215,6 +227,7 @@ erDiagram
 - `created_at`: Время создания
 
 **Индексы:**
+
 - По `guild_id` для транзакций гильдии
 - По `performed_by` для транзакций игрока
 - По `created_at DESC` для последних транзакций
@@ -224,6 +237,7 @@ erDiagram
 Таблица гильдейских войн. Хранит информацию о войнах между гильдиями.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `attacker_guild_id`: ID атакующей гильдии (FK к guilds, NOT NULL)
 - `defender_guild_id`: ID защищающейся гильдии (FK к guilds, NOT NULL)
@@ -234,11 +248,13 @@ erDiagram
 - `winner_guild_id`: ID победившей гильдии (FK к guilds, nullable)
 
 **Индексы:**
+
 - По `(attacker_guild_id, status)` для войн атакующей гильдии
 - По `(defender_guild_id, status)` для войн защищающейся гильдии
 - По `status` для активных войн
 
 **Constraints:**
+
 - CHECK (attacker_guild_id != defender_guild_id): Гильдия не может воевать сама с собой
 
 ### guild_territories
@@ -246,6 +262,7 @@ erDiagram
 Таблица территорий гильдий. Хранит информацию о захваченных территориях.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `guild_id`: ID гильдии (FK к guilds, NOT NULL)
 - `territory_id`: ID территории (UUID, NOT NULL)
@@ -254,6 +271,7 @@ erDiagram
 - `resources`: Ресурсы территории (JSONB, default: {})
 
 **Индексы:**
+
 - По `guild_id` для территорий гильдии
 - По `territory_id` для поиска территории
 
@@ -262,32 +280,38 @@ erDiagram
 Таблица перков гильдий. Хранит информацию о разблокированных перках.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `guild_id`: ID гильдии (FK к guilds, NOT NULL)
 - `perk_id`: ID перка (UUID, NOT NULL)
 - `unlocked_at`: Время разблокировки
 
 **Индексы:**
+
 - По `guild_id` для перков гильдии
 - По `perk_id` для поиска перка
 
 **Constraints:**
+
 - UNIQUE(guild_id, perk_id): Один перк на гильдию
 
 ## ENUM типы
 
 ### guild_status
+
 - `active`: Активна
 - `disbanded`: Распущена
 - `suspended`: Приостановлена
 
 ### guild_war_status
+
 - `declared`: Война объявлена
 - `active`: Война активна
 - `ended`: Война завершена
 - `cancelled`: Война отменена
 
 ### bank_transaction_type
+
 - `deposit`: Депозит
 - `withdraw`: Снятие
 
@@ -376,12 +400,14 @@ erDiagram
 ## Миграции
 
 ### Существующие миграции:
+
 - `V1_14__guild_tables.sql` - базовые таблицы (guilds, guild_members, guild_invitations, guild_banks)
 - `V1_29__guild_ranks_tables.sql` - таблица рангов
 - `V1_30__guild_bank_transactions_tables.sql` - таблица транзакций
 - `V1_66__guild_system_enhancement.sql` - расширенные таблицы и поля
 
 ### Применение миграций:
+
 ```bash
 liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ```
@@ -389,6 +415,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ## Соответствие архитектуре
 
 Схема БД полностью соответствует архитектуре из `knowledge/implementation/architecture/guild-system-architecture.yaml`:
+
 - [OK] Все таблицы из архитектуры созданы
 - [OK] Все поля соответствуют описанию
 - [OK] Индексы оптимизированы для частых запросов
@@ -401,6 +428,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Гильдии
 
 Система гильдий включает:
+
 - **Уровни**: level (1-50)
 - **Опыт**: experience (BIGINT) для больших значений
 - **Участники**: max_members (default: 50)
@@ -411,6 +439,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Участники
 
 Система участников включает:
+
 - **Ранги**: rank_id (FK к guild_ranks) и rank (legacy)
 - **Вклад**: contribution (BIGINT) для больших значений
 - **Активность**: last_active_at для отслеживания активности
@@ -419,6 +448,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Ранги
 
 Система рангов включает:
+
 - **Порядок**: order для сортировки
 - **Права**: permissions (JSONB) для гибкой системы прав
 - **Уникальность**: уникальное название ранга в гильдии
@@ -426,6 +456,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Банк
 
 Система банка включает:
+
 - **Предметы**: guild_bank_items для хранения предметов
 - **Транзакции**: guild_bank_transactions для истории
 - **Валюта**: amount и currency_type для гибкости
@@ -434,6 +465,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Войны
 
 Система войн включает:
+
 - **Статусы**: declared, active, ended, cancelled
 - **Победитель**: winner_guild_id для определения победителя
 - **Временные метки**: started_at и ended_at для отслеживания
@@ -441,6 +473,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Территории
 
 Система территорий включает:
+
 - **Налоги**: tax_rate (0-100%) для управления экономикой
 - **Ресурсы**: resources (JSONB) для гибкой структуры
 - **Захват**: captured_at для отслеживания времени захвата
@@ -448,15 +481,16 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Перки
 
 Система перков включает:
+
 - **Разблокировка**: unlocked_at для отслеживания времени
 - **Уникальность**: один перк на гильдию
 
 ### Интеграция с другими системами
 
 Система гильдий интегрируется с:
+
 - **Characters**: через character_id для участников и лидеров
 - **Economy Service**: через guild_bank_transactions для банка
 - **World Service**: через guild_wars и guild_territories для войн и территории
 - **Social Service**: через guild_invitations для приглашений
-
 

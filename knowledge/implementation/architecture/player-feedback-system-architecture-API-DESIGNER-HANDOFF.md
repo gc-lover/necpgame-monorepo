@@ -15,40 +15,40 @@
 #### 1.1. Endpoints для спецификации (8 endpoints):
 
 1. **POST /api/v1/feedback/submit**
-   - Создание нового обращения
-   - Request body: тип, категория, заголовок, описание, приоритет, скриншоты, контекст игры
-   - Response: ID обращения, статус, ссылка на GitHub Issue
+    - Создание нового обращения
+    - Request body: тип, категория, заголовок, описание, приоритет, скриншоты, контекст игры
+    - Response: ID обращения, статус, ссылка на GitHub Issue
 
 2. **GET /api/v1/feedback/{id}**
-   - Получение обращения по ID
-   - Response: полная информация об обращении
+    - Получение обращения по ID
+    - Response: полная информация об обращении
 
 3. **GET /api/v1/feedback/player/{player_id}**
-   - История обращений игрока
-   - Query params: status, type, limit, offset
-   - Response: список обращений с пагинацией
+    - История обращений игрока
+    - Query params: status, type, limit, offset
+    - Response: список обращений с пагинацией
 
 4. **POST /api/v1/feedback/{id}/update-status**
-   - Обновление статуса обращения
-   - Request body: статус, комментарий (опционально)
-   - Response: обновленный статус
+    - Обновление статуса обращения
+    - Request body: статус, комментарий (опционально)
+    - Response: обновленный статус
 
 5. **GET /api/v1/feedback/board**
-   - Доска идей (публичные предложения)
-   - Query params: category, status, sort, limit, offset, search
-   - Response: список публичных предложений
+    - Доска идей (публичные предложения)
+    - Query params: category, status, sort, limit, offset, search
+    - Response: список публичных предложений
 
 6. **POST /api/v1/feedback/{id}/vote**
-   - Голосование за предложение
-   - Response: обновленный счетчик голосов
+    - Голосование за предложение
+    - Response: обновленный счетчик голосов
 
 7. **DELETE /api/v1/feedback/{id}/vote**
-   - Отзыв голоса
-   - Response: обновленный счетчик голосов
+    - Отзыв голоса
+    - Response: обновленный счетчик голосов
 
 8. **GET /api/v1/feedback/stats**
-   - Статистика обращений (для админов)
-   - Response: статистика по обращениям
+    - Статистика обращений (для админов)
+    - Response: статистика по обращениям
 
 #### 1.2. Схемы данных:
 
@@ -73,18 +73,22 @@
 ### 2. Детали для проработки
 
 #### Request/Response схемы:
+
 - Детальные схемы для всех endpoints
 - Валидация полей (min/max length, required, enum)
 - Примеры запросов и ответов
 - Описание ошибок
 
 #### Типы данных:
+
 - Enum для типов обращений (feature_request, bug_report, wishlist, feedback)
 - Enum для категорий (gameplay, balance, content, technical, lore, ui, other)
-- Enum для статусов (pending_moderation, pending, in_review, assigned, in_progress, resolved, rejected, duplicate, merged)
+- Enum для статусов (pending_moderation, pending, in_review, assigned, in_progress, resolved, rejected, duplicate,
+  merged)
 - Enum для приоритетов (low, medium, high, critical)
 
 #### Интеграции:
+
 - Описание интеграции с GitHub API (в документации)
 - Описание интеграции с session-service
 - Описание интеграции с character-service
@@ -95,8 +99,8 @@
 - **Концепция:** `knowledge/analysis/tasks/ideas/2025-11-23-IDEA-player-feedback-system.yaml`
 - **GitHub Issue:** #1335
 - **Коммиты:**
-  - `[architect] docs: добавить архитектуру системы обратной связи от игроков`
-  - `[architect] chore: завершить архитектурную проработку, готово к передаче API Designer`
+    - `[architect] docs: добавить архитектуру системы обратной связи от игроков`
+    - `[architect] chore: завершить архитектурную проработку, готово к передаче API Designer`
 
 ### 4. Решения, принятые на этапе Architect
 
@@ -117,6 +121,7 @@
 ### 6. Расположение файла
 
 OpenAPI спецификация должна быть создана в:
+
 ```
 services/feedback-service-go/
 ├── api/
@@ -127,5 +132,6 @@ services/feedback-service-go/
 
 ---
 
-**Примечание:** GitHub Issue #1335 будет обновлен с метками `agent:api-designer` и `stage:api-design` после снятия rate limit.
+**Примечание:** GitHub Issue #1335 будет обновлен с метками `agent:api-designer` и `stage:api-design` после снятия rate
+limit.
 

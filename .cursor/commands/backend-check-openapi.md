@@ -5,6 +5,7 @@
 **Purpose:** Validate OpenAPI specifications before backend development to ensure:
 
 — Schema compliance and required fields
+
 - Security definitions completeness
 - ogen compatibility for code generation
 - Project standards adherence

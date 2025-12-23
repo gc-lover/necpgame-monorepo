@@ -1,280 +1,280 @@
 <!-- Issue: #1521 -->
 
-# Architecture: Data Synchronization System - Layers & Mechanics Coordination
+  # Architecture: Data Synchronization System - Layers & Mechanics Coordination
 
-## Performance Requirements
+    ## Performance Requirements
 
-**Load:** 15000+ concurrent players, P99 <50ms for critical operations
-**Data Model (optimized):**
-- SyncEvent: 96 bytes (event_type, entity_id, timestamp, payload_hash)
-- SyncState: 128 bytes (entity_id, version, last_sync_timestamp, consistency_level)
-- ConflictResolution: 64 bytes (conflict_id, resolution_strategy, participants)
+    **Load:** 15000+ concurrent players, P99 <50ms for critical operations
+    **Data Model (optimized):**
+    - SyncEvent: 96 bytes (event_type, entity_id, timestamp, payload_hash)
+    - SyncState: 128 bytes (entity_id, version, last_sync_timestamp, consistency_level)
+    - ConflictResolution: 64 bytes (conflict_id, resolution_strategy, participants)
 
-**Hot Path:** Real-time sync (500 RPS/player), conflict resolution (100 RPS/player)
-**Backend optimizations:** Level 3 - Distributed event processing, conflict-free replicated data types, eventual consistency patterns
+      **Hot Path:** Real-time sync (500 RPS/player), conflict resolution (100 RPS/player)
+      **Backend optimizations:** Level 3 - Distributed event processing, conflict-free replicated data types, eventual consistency patterns
+      
+      ## System Architecture
+      
+      ### Core Components
+      
+      ```mermaid
+      graph TB
+      subgraph "Synchronization Layer"
+      EBS[Event Bus Service]
+      SSS[State Sync Service]
+      CRS[Conflict Resolution Service]
+      OBS[Outbox Service]
+      end
+      
+      subgraph "Data Consistency Layer"
+      SCS[Strong Consistency Service]
+      ECS[Eventual Consistency Service]
+      DTS[Distributed Transaction Service]
+      SRS[Saga Recovery Service]
+      end
+      
+      subgraph "Microservice Coordination"
+      CSM[Cross-Service Mediator]
+      EPM[Event Processing Manager]
+      SPM[Sync Policy Manager]
+      MSM[Message Sequencing Manager]
+      end
+      
+      subgraph "Client-Server Sync"
+      CSS[Client Sync Service]
+      SSS[Server State Service]
+      RSM[Realtime Sync Manager]
+      PSM[Prediction Sync Manager]
+      end
+      
+      EBS --> CSM
+      CSM --> SPM
+      SPM --> EPM
+      EPM --> MSM
+      OBS --> EBS
+      SRS --> DTS
+      CRS --> SCS
+      CRS --> ECS
+      ```
 
-## System Architecture
+    ### Synchronization Patterns
 
-### Core Components
+    #### 1. Event-Driven Synchronization
+    - **Event Bus:** Kafka-based event streaming for cross-service communication
+    - **Outbox Pattern:** Guaranteed event delivery from database transactions
+    - **Saga Pattern:** Distributed transaction coordination for complex operations
 
-```mermaid
-graph TB
-    subgraph "Synchronization Layer"
-        EBS[Event Bus Service]
-        SSS[State Sync Service]
-        CRS[Conflict Resolution Service]
-        OBS[Outbox Service]
-    end
+    #### 2. State Synchronization
+    - **Strong Consistency:** ACID transactions for critical data (inventory, currency)
+    - **Eventual Consistency:** Asynchronous sync for non-critical data (stats, logs)
+    - **Conflict Resolution:** Vector clocks and last-write-wins strategies
 
-    subgraph "Data Consistency Layer"
-        SCS[Strong Consistency Service]
-        ECS[Eventual Consistency Service]
-        DTS[Distributed Transaction Service]
-        SRS[Saga Recovery Service]
-    end
+    #### 3. Client-Server Coordination
+    - **Authoritative Server:** Single source of truth for game state
+    - **Client Prediction:** Optimistic updates with server reconciliation
+    - **Delta Synchronization:** Incremental state updates for bandwidth optimization
 
-    subgraph "Microservice Coordination"
-        CSM[Cross-Service Mediator]
-        EPM[Event Processing Manager]
-        SPM[Sync Policy Manager]
-        MSM[Message Sequencing Manager]
-    end
+    ## Consistency Strategies
 
-    subgraph "Client-Server Sync"
-        CSS[Client Sync Service]
-        SSS[Server State Service]
-        RSM[Realtime Sync Manager]
-        PSM[Prediction Sync Manager]
-    end
+    ### Critical Data (Strong Consistency)
+    - **Inventory Operations:** Item transfers, equipment changes
+    - **Financial Transactions:** Currency transfers, purchases
+    - **Character Progression:** Level ups, stat changes
+    - **Quest Progress:** Objective completion, rewards
 
-    EBS --> CSM
-    CSM --> SPM
-    SPM --> EPM
-    EPM --> MSM
-    OBS --> EBS
-    SRS --> DTS
-    CRS --> SCS
-    CRS --> ECS
-```
+    ### Non-Critical Data (Eventual Consistency)
+    - **Player Statistics:** Match history, achievements
+    - **Social Features:** Friend lists, guild membership
+    - **Analytics Data:** Usage metrics, performance logs
 
-### Synchronization Patterns
+    ## Microservice Architecture
 
-#### 1. Event-Driven Synchronization
-- **Event Bus:** Kafka-based event streaming for cross-service communication
-- **Outbox Pattern:** Guaranteed event delivery from database transactions
-- **Saga Pattern:** Distributed transaction coordination for complex operations
+    ### Synchronization Core Services
 
-#### 2. State Synchronization
-- **Strong Consistency:** ACID transactions for critical data (inventory, currency)
-- **Eventual Consistency:** Asynchronous sync for non-critical data (stats, logs)
-- **Conflict Resolution:** Vector clocks and last-write-wins strategies
+    #### Event Bus Service (EBS)
+    - **Technology:** Apache Kafka with Zookeeper
+    - **Partitions:** 24 partitions for horizontal scaling
+    - **Retention:** 7 days for event replay
+    - **Topics:** `sync.inventory`, `sync.character`, `sync.combat`, `sync.economy`
 
-#### 3. Client-Server Coordination
-- **Authoritative Server:** Single source of truth for game state
-- **Client Prediction:** Optimistic updates with server reconciliation
-- **Delta Synchronization:** Incremental state updates for bandwidth optimization
+    #### State Synchronization Service (SSS)
+    - **Architecture:** CQRS with separate read/write models
+    - **Write Model:** Event sourcing for state changes
+    - **Read Model:** Materialized views for queries
+    - **Cache:** Redis Cluster for hot data
 
-## Consistency Strategies
+    #### Conflict Resolution Service (CRS)
+    - **Strategies:** Vector clocks, operational transforms
+    - **Detection:** Merkle trees for state comparison
+    - **Resolution:** Business rule-based conflict handling
 
-### Critical Data (Strong Consistency)
-- **Inventory Operations:** Item transfers, equipment changes
-- **Financial Transactions:** Currency transfers, purchases
-- **Character Progression:** Level ups, stat changes
-- **Quest Progress:** Objective completion, rewards
+    ### Domain-Specific Sync Managers
 
-### Non-Critical Data (Eventual Consistency)
-- **Player Statistics:** Match history, achievements
-- **Social Features:** Friend lists, guild membership
-- **Analytics Data:** Usage metrics, performance logs
+    #### Inventory Sync Manager
+    - **Pattern:** Strong consistency with optimistic locking
+    - **Conflict Resolution:** Item stacking rules, ownership validation
+    - **Recovery:** Saga rollback for failed transfers
 
-## Microservice Architecture
+    #### Character Sync Manager
+    - **Pattern:** Strong consistency for core stats, eventual for derived
+    - **State Merging:** Level progression, experience accumulation
+    - **Validation:** Stat caps, progression requirements
 
-### Synchronization Core Services
+    #### Combat Sync Manager
+    - **Pattern:** Real-time synchronization with reconciliation
+    - **Prediction:** Client-side damage prediction
+    - **Correction:** Server authoritative damage application
+      
+      ## Database Architecture
+      
+      ### Primary Database (PostgreSQL)
+        ```sql
+        -- Event Store
+        CREATE TABLE sync_events (
+        event_id UUID PRIMARY KEY,
+        event_type VARCHAR(100) NOT NULL,
+        entity_id UUID NOT NULL,
+        aggregate_type VARCHAR(50) NOT NULL,
+        event_data JSONB NOT NULL,
+        event_timestamp TIMESTAMPTZ DEFAULT NOW(),
+        event_version BIGINT NOT NULL,
+        causation_id UUID,
+        correlation_id UUID
+        );
+        
+        -- Outbox for guaranteed delivery
+        CREATE TABLE outbox_events (
+        id BIGSERIAL PRIMARY KEY,
+        event_type VARCHAR(100) NOT NULL,
+        payload JSONB NOT NULL,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        processed_at TIMESTAMPTZ,
+        retry_count INTEGER DEFAULT 0
+        );
+        
+        -- Sync state tracking
+        CREATE TABLE entity_sync_state (
+        entity_id UUID PRIMARY KEY,
+        entity_type VARCHAR(50) NOT NULL,
+        version BIGINT NOT NULL,
+        last_sync_at TIMESTAMPTZ,
+        consistency_level VARCHAR(20) DEFAULT 'eventual',
+        conflict_count INTEGER DEFAULT 0
+        );
+        ```
+      
+      ### Read Database (PostgreSQL - CQRS Read Model)
+        ```sql
+        -- Materialized views for queries
+        CREATE MATERIALIZED VIEW player_inventory AS
+        SELECT
+        p.player_id,
+        i.item_id,
+        i.quantity,
+        i.equipped,
+        i.created_at
+        FROM players p
+        JOIN inventory_items i ON p.player_id = i.player_id;
+        ```
 
-#### Event Bus Service (EBS)
-- **Technology:** Apache Kafka with Zookeeper
-- **Partitions:** 24 partitions for horizontal scaling
-- **Retention:** 7 days for event replay
-- **Topics:** `sync.inventory`, `sync.character`, `sync.combat`, `sync.economy`
+    ## Implementation Roadmap
 
-#### State Synchronization Service (SSS)
-- **Architecture:** CQRS with separate read/write models
-- **Write Model:** Event sourcing for state changes
-- **Read Model:** Materialized views for queries
-- **Cache:** Redis Cluster for hot data
-
-#### Conflict Resolution Service (CRS)
-- **Strategies:** Vector clocks, operational transforms
-- **Detection:** Merkle trees for state comparison
-- **Resolution:** Business rule-based conflict handling
-
-### Domain-Specific Sync Managers
-
-#### Inventory Sync Manager
-- **Pattern:** Strong consistency with optimistic locking
-- **Conflict Resolution:** Item stacking rules, ownership validation
-- **Recovery:** Saga rollback for failed transfers
-
-#### Character Sync Manager
-- **Pattern:** Strong consistency for core stats, eventual for derived
-- **State Merging:** Level progression, experience accumulation
-- **Validation:** Stat caps, progression requirements
-
-#### Combat Sync Manager
-- **Pattern:** Real-time synchronization with reconciliation
-- **Prediction:** Client-side damage prediction
-- **Correction:** Server authoritative damage application
-
-## Database Architecture
-
-### Primary Database (PostgreSQL)
-```sql
--- Event Store
-CREATE TABLE sync_events (
-    event_id UUID PRIMARY KEY,
-    event_type VARCHAR(100) NOT NULL,
-    entity_id UUID NOT NULL,
-    aggregate_type VARCHAR(50) NOT NULL,
-    event_data JSONB NOT NULL,
-    event_timestamp TIMESTAMPTZ DEFAULT NOW(),
-    event_version BIGINT NOT NULL,
-    causation_id UUID,
-    correlation_id UUID
-);
-
--- Outbox for guaranteed delivery
-CREATE TABLE outbox_events (
-    id BIGSERIAL PRIMARY KEY,
-    event_type VARCHAR(100) NOT NULL,
-    payload JSONB NOT NULL,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    processed_at TIMESTAMPTZ,
-    retry_count INTEGER DEFAULT 0
-);
-
--- Sync state tracking
-CREATE TABLE entity_sync_state (
-    entity_id UUID PRIMARY KEY,
-    entity_type VARCHAR(50) NOT NULL,
-    version BIGINT NOT NULL,
-    last_sync_at TIMESTAMPTZ,
-    consistency_level VARCHAR(20) DEFAULT 'eventual',
-    conflict_count INTEGER DEFAULT 0
-);
-```
-
-### Read Database (PostgreSQL - CQRS Read Model)
-```sql
--- Materialized views for queries
-CREATE MATERIALIZED VIEW player_inventory AS
-SELECT
-    p.player_id,
-    i.item_id,
-    i.quantity,
-    i.equipped,
-    i.created_at
-FROM players p
-JOIN inventory_items i ON p.player_id = i.player_id;
-```
-
-## Implementation Roadmap
-
-### Phase 1: Core Infrastructure (2 weeks)
-- [ ] Deploy Kafka Event Bus cluster
-- [ ] Implement Event Bus Service
-- [ ] Create Outbox Pattern implementation
-- [ ] Set up database schemas
-
-### Phase 2: Synchronization Services (3 weeks)
-- [ ] Build State Sync Service
-- [ ] Implement Conflict Resolution Service
-- [ ] Create Saga Coordinator
-- [ ] Add monitoring and observability
-
-### Phase 3: Domain Integration (4 weeks)
-- [ ] Integrate with Character Service
-- [ ] Integrate with Inventory Service
-- [ ] Integrate with Combat Service
-- [ ] Integrate with Economy Service
-
-### Phase 4: Client-Server Sync (2 weeks)
-- [ ] Implement client prediction
-- [ ] Add server reconciliation
-- [ ] Optimize delta synchronization
-- [ ] Performance testing
-
-### Phase 5: Production Ready (1 week)
-- [ ] Load testing (10k concurrent users)
-- [ ] Failover testing
-- [ ] Monitoring dashboard
-- [ ] Documentation
-
-## Security Considerations
-
-### Authentication & Authorization
-- **Service-to-Service:** Mutual TLS with SPIFFE/SPIRE
-- **Event Security:** Signed events with HMAC-SHA256
-- **Access Control:** RBAC for event publishing/subscription
-
-### Data Protection
-- **Encryption:** AES-256-GCM for sensitive data
-- **Audit Trail:** Complete event history for compliance
-- **PII Handling:** Tokenization for personal data
-
-## Monitoring & Observability
-
-### Metrics
-- **Event Throughput:** Events per second by topic
-- **Sync Latency:** P50/P95/P99 sync times
-- **Conflict Rate:** Conflicts detected vs resolved
-- **Service Health:** Uptime, error rates, queue depths
-
-### Alerts
-- **Sync Delays:** >100ms for critical operations
-- **Conflict Spikes:** >5% unresolved conflicts
-- **Event Loss:** Missing events in sequence
-- **Service Degradation:** >99.9% uptime requirement
-
-## Scaling Strategy
-
-### Horizontal Scaling
-- **Event Bus:** Partition-based scaling
-- **Services:** Kubernetes HPA with custom metrics
-- **Database:** Read replicas for query scaling
-
-### Geographic Distribution
-- **Regional Clusters:** Event Bus per region
-- **Cross-Region Sync:** Event replication
-- **Global Consistency:** CRDTs for multi-region data
-
-## Risk Assessment
-
-### High Risk
-- **Data Loss:** Event store corruption → Backup strategy required
-- **Split-Brain:** Network partitions → Consensus protocols needed
-- **Performance Degradation:** High load → Capacity planning critical
-
-### Mitigation Strategies
-- **Multi-AZ Deployment:** Cross-zone redundancy
-- **Circuit Breakers:** Fault isolation between services
-- **Graceful Degradation:** Reduced functionality under load
-
-## Cost Optimization
-
-### Infrastructure Costs
-- **Event Bus:** Reserved instances for steady load
-- **Database:** Aurora Serverless for variable load
-- **Compute:** Spot instances for batch processing
-
-### Operational Costs
-- **Monitoring:** Centralized logging with retention policies
-- **Backup:** Incremental backups with compression
-- **Disaster Recovery:** Multi-region failover capability
-
-## API Specifications
-
-### Event Bus API
-```yaml
+    ### Phase 1: Core Infrastructure (2 weeks)
+    - [ ] Deploy Kafka Event Bus cluster
+    - [ ] Implement Event Bus Service
+    - [ ] Create Outbox Pattern implementation
+    - [ ] Set up database schemas
+    
+    ### Phase 2: Synchronization Services (3 weeks)
+    - [ ] Build State Sync Service
+    - [ ] Implement Conflict Resolution Service
+    - [ ] Create Saga Coordinator
+    - [ ] Add monitoring and observability
+    
+    ### Phase 3: Domain Integration (4 weeks)
+    - [ ] Integrate with Character Service
+    - [ ] Integrate with Inventory Service
+    - [ ] Integrate with Combat Service
+    - [ ] Integrate with Economy Service
+    
+    ### Phase 4: Client-Server Sync (2 weeks)
+    - [ ] Implement client prediction
+    - [ ] Add server reconciliation
+    - [ ] Optimize delta synchronization
+    - [ ] Performance testing
+    
+    ### Phase 5: Production Ready (1 week)
+    - [ ] Load testing (10k concurrent users)
+    - [ ] Failover testing
+    - [ ] Monitoring dashboard
+    - [ ] Documentation
+    
+    ## Security Considerations
+    
+    ### Authentication & Authorization
+    - **Service-to-Service:** Mutual TLS with SPIFFE/SPIRE
+    - **Event Security:** Signed events with HMAC-SHA256
+    - **Access Control:** RBAC for event publishing/subscription
+    
+    ### Data Protection
+    - **Encryption:** AES-256-GCM for sensitive data
+    - **Audit Trail:** Complete event history for compliance
+    - **PII Handling:** Tokenization for personal data
+    
+    ## Monitoring & Observability
+    
+    ### Metrics
+    - **Event Throughput:** Events per second by topic
+    - **Sync Latency:** P50/P95/P99 sync times
+    - **Conflict Rate:** Conflicts detected vs resolved
+    - **Service Health:** Uptime, error rates, queue depths
+    
+    ### Alerts
+    - **Sync Delays:** >100ms for critical operations
+    - **Conflict Spikes:** >5% unresolved conflicts
+    - **Event Loss:** Missing events in sequence
+    - **Service Degradation:** >99.9% uptime requirement
+    
+    ## Scaling Strategy
+    
+    ### Horizontal Scaling
+    - **Event Bus:** Partition-based scaling
+    - **Services:** Kubernetes HPA with custom metrics
+    - **Database:** Read replicas for query scaling
+    
+    ### Geographic Distribution
+    - **Regional Clusters:** Event Bus per region
+    - **Cross-Region Sync:** Event replication
+    - **Global Consistency:** CRDTs for multi-region data
+    
+    ## Risk Assessment
+    
+    ### High Risk
+    - **Data Loss:** Event store corruption → Backup strategy required
+    - **Split-Brain:** Network partitions → Consensus protocols needed
+    - **Performance Degradation:** High load → Capacity planning critical
+    
+    ### Mitigation Strategies
+    - **Multi-AZ Deployment:** Cross-zone redundancy
+    - **Circuit Breakers:** Fault isolation between services
+    - **Graceful Degradation:** Reduced functionality under load
+    
+    ## Cost Optimization
+    
+    ### Infrastructure Costs
+    - **Event Bus:** Reserved instances for steady load
+    - **Database:** Aurora Serverless for variable load
+    - **Compute:** Spot instances for batch processing
+    
+    ### Operational Costs
+    - **Monitoring:** Centralized logging with retention policies
+    - **Backup:** Incremental backups with compression
+    - **Disaster Recovery:** Multi-region failover capability
+      
+      ## API Specifications
+      
+      ### Event Bus API
+        ```yaml
 openapi: 3.0.0
 paths:
   /events/publish:
@@ -289,10 +289,10 @@ paths:
   /events/subscribe/{topic}:
     get:
       summary: Subscribe to topic events
-```
-
-### Synchronization API
-```yaml
+  ```
+  
+  ### Synchronization API
+  ```yaml
 openapi: 3.0.0
 paths:
   /sync/state/{entityId}:
@@ -305,36 +305,36 @@ paths:
       summary: List unresolved conflicts
     post:
       summary: Resolve conflict manually
-```
+  ```
 
-## Follow-up Tasks
+  ## Follow-up Tasks
 
-### Database Agent (#2210)
-- Implement event store schema with partitioning
-- Create CQRS read models for query optimization
-- Set up database replication and backup strategy
-- Design indexes for high-throughput event queries
+  ### Database Agent (#2210)
+  - Implement event store schema with partitioning
+  - Create CQRS read models for query optimization
+  - Set up database replication and backup strategy
+  - Design indexes for high-throughput event queries
 
-### API Designer (#2197)
-- Design Event Bus API specifications
-- Create synchronization service OpenAPI specs
-- Define client-server sync protocols
-- Document webhook and callback interfaces
+  ### API Designer (#2197)
+  - Design Event Bus API specifications
+  - Create synchronization service OpenAPI specs
+  - Define client-server sync protocols
+  - Document webhook and callback interfaces
 
-### Backend Agent (#2220)
-- Implement Event Bus Service with Kafka integration
-- Build State Synchronization Service with CQRS
-- Create Conflict Resolution Service with vector clocks
-- Develop Saga Coordinator for distributed transactions
+  ### Backend Agent (#2220)
+  - Implement Event Bus Service with Kafka integration
+  - Build State Synchronization Service with CQRS
+  - Create Conflict Resolution Service with vector clocks
+  - Develop Saga Coordinator for distributed transactions
 
-### Network Agent (#2199)
-- Design real-time synchronization protocols
-- Implement client prediction and server reconciliation
-- Optimize delta synchronization for bandwidth
-- Add compression and prioritization for sync messages
+  ### Network Agent (#2199)
+  - Design real-time synchronization protocols
+  - Implement client prediction and server reconciliation
+  - Optimize delta synchronization for bandwidth
+  - Add compression and prioritization for sync messages
 
-### DevOps Agent (#2224)
-- Set up Kafka cluster with monitoring
-- Configure Kubernetes deployments for sync services
-- Implement service mesh for inter-service communication
-- Create CI/CD pipelines for sync components
+  ### DevOps Agent (#2224)
+  - Set up Kafka cluster with monitoring
+  - Configure Kubernetes deployments for sync services
+  - Implement service mesh for inter-service communication
+  - Create CI/CD pipelines for sync components

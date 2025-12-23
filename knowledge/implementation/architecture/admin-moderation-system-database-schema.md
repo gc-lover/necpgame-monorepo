@@ -1,9 +1,11 @@
 <!-- Issue: #403 -->
+
 # Admin Moderation System - Database Schema
 
 ## Обзор
 
-Схема базы данных для системы администрирования и модерации, управляющей администраторами, журналом действий и санкциями.
+Схема базы данных для системы администрирования и модерации, управляющей администраторами, журналом действий и
+санкциями.
 
 ## ERD Диаграмма
 
@@ -59,6 +61,7 @@ erDiagram
 Администраторы и модераторы системы.
 
 **Колонки:**
+
 - `id` (UUID, PK) - Уникальный идентификатор
 - `username` (VARCHAR(100), UNIQUE) - Имя пользователя
 - `email` (VARCHAR(255), UNIQUE) - Email
@@ -70,6 +73,7 @@ erDiagram
 - `updated_at` (TIMESTAMP) - Время обновления
 
 **Индексы:**
+
 - `idx_admin_users_username` - По имени пользователя
 - `idx_admin_users_email` - По email
 - `idx_admin_users_role` - По роли
@@ -81,6 +85,7 @@ erDiagram
 Журнал действий администраторов.
 
 **Колонки:**
+
 - `id` (UUID, PK) - Уникальный идентификатор
 - `admin_id` (UUID, FK) - ID администратора
 - `action_type` (VARCHAR(100)) - Тип действия (например, ban_player, edit_economy, moderate_content)
@@ -93,6 +98,7 @@ erDiagram
 - `created_at` (TIMESTAMP) - Время действия
 
 **Индексы:**
+
 - `idx_admin_actions_log_admin_id` - По администратору и времени
 - `idx_admin_actions_log_action_type` - По типу действия и времени
 - `idx_admin_actions_log_target` - По типу цели, ID цели и времени
@@ -104,6 +110,7 @@ erDiagram
 Санкции, выданные администраторами.
 
 **Колонки:**
+
 - `id` (UUID, PK) - Уникальный идентификатор
 - `player_id` (UUID) - ID игрока
 - `admin_id` (UUID, FK) - ID администратора
@@ -116,9 +123,11 @@ erDiagram
 - `updated_at` (TIMESTAMP) - Время обновления
 
 **Ограничения:**
+
 - CHECK: для PERMANENT_BAN expires_at должен быть NULL, для остальных - NOT NULL
 
 **Индексы:**
+
 - `idx_admin_sanctions_player_id` - По игроку, активности и времени истечения
 - `idx_admin_sanctions_admin_id` - По администратору и времени создания
 - `idx_admin_sanctions_is_active` - По активности и времени истечения
@@ -129,17 +138,20 @@ erDiagram
 ## ENUM типы
 
 ### admin_role
+
 - `SUPER_ADMIN` - Супер-администратор
 - `ADMIN` - Администратор
 - `MODERATOR` - Модератор
 
 ### admin_action_target_type
+
 - `player` - Игрок
 - `economy` - Экономика
 - `content` - Контент
 - `moderation` - Модерация
 
 ### admin_sanction_type
+
 - `WARNING` - Предупреждение
 - `TEMPORARY_BAN` - Временный бан
 - `PERMANENT_BAN` - Постоянный бан

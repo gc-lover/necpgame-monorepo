@@ -384,7 +384,7 @@ technical_specification:
       description: |
         Реализация Air Dash Manager с обработкой активации, управления зарядами,
         кулдаунов, интеграции с GAS и комбо-системой.
-      dependencies: []
+      dependencies: [ ]
       estimated_effort: 5 days
       file_size_estimate: 350 lines
 
@@ -393,7 +393,7 @@ technical_specification:
       description: |
         Реализация Wall Kick Manager с обработкой активации во время Wall Run,
         управления цепочками, интеграции с боевой системой и анимациями.
-      dependencies: [wall-run-manager]
+      dependencies: [ wall-run-manager ]
       estimated_effort: 4 days
       file_size_estimate: 300 lines
 
@@ -402,7 +402,7 @@ technical_specification:
       description: |
         Реализация Vault Manager с обработкой автоматического определения препятствий,
         выполнения перепрыгивания, сохранения инерции и интеграции с боевой системой.
-      dependencies: []
+      dependencies: [ ]
       estimated_effort: 4 days
       file_size_estimate: 320 lines
 
@@ -411,7 +411,7 @@ technical_specification:
       description: |
         Реализация Obstacle Detection System с определением подходящих препятствий
         для Vault, кэшированием результатов и обновлением в реальном времени.
-      dependencies: []
+      dependencies: [ ]
       estimated_effort: 4 days
       file_size_estimate: 280 lines
 
@@ -420,7 +420,7 @@ technical_specification:
       description: |
         Реализация Dash Combo System с отслеживанием комбо из Air Dash,
         интеграцией с боевыми комбо и применением бонусов.
-      dependencies: [air-dash-manager]
+      dependencies: [ air-dash-manager ]
       estimated_effort: 3 days
       file_size_estimate: 250 lines
 
@@ -429,7 +429,7 @@ technical_specification:
       description: |
         Реализация Advanced Acrobatics State Tracker с отслеживанием состояний,
         синхронизацией с клиентом и сохранением в БД.
-      dependencies: [air-dash-manager, wall-kick-manager, vault-manager]
+      dependencies: [ air-dash-manager, wall-kick-manager, vault-manager ]
       estimated_effort: 3 days
       file_size_estimate: 220 lines
 
@@ -438,7 +438,7 @@ technical_specification:
       description: |
         Реализация REST API endpoints для управления элементами,
         получения состояний и препятствий.
-      dependencies: [air-dash-manager, wall-kick-manager, vault-manager]
+      dependencies: [ air-dash-manager, wall-kick-manager, vault-manager ]
       estimated_effort: 2 days
       file_size_estimate: 200 lines
 
@@ -447,7 +447,7 @@ technical_specification:
       description: |
         Реализация WebSocket каналов для realtime обновлений состояний,
         синхронизации позиций и уведомлений.
-      dependencies: [advanced-acrobatics-state-tracker]
+      dependencies: [ advanced-acrobatics-state-tracker ]
       estimated_effort: 2 days
       file_size_estimate: 180 lines
 
@@ -456,7 +456,7 @@ technical_specification:
       description: |
         Реализация публикации и подписки на события через Kafka
         для всех продвинутых элементов акробатики.
-      dependencies: [air-dash-manager, wall-kick-manager, vault-manager]
+      dependencies: [ air-dash-manager, wall-kick-manager, vault-manager ]
       estimated_effort: 2 days
       file_size_estimate: 150 lines
 
@@ -465,7 +465,7 @@ technical_specification:
       description: |
         Создание таблиц БД для состояний элементов, препятствий
         и истории комбо с миграциями Liquibase.
-      dependencies: []
+      dependencies: [ ]
       estimated_effort: 2 days
       file_size_estimate: 120 lines
 
@@ -474,39 +474,39 @@ diagrams:
     ```mermaid
     graph TB
         Client[UE5 Client] --> Gateway[API Gateway]
-        
+    
         Gateway --> GameplayService[Gameplay Service<br/>8083]
-        
+    
         GameplayService --> ADM[Air Dash Manager]
         GameplayService --> WKM[Wall Kick Manager]
         GameplayService --> VM[Vault Manager]
         GameplayService --> AAST[Advanced Acrobatics State Tracker]
         GameplayService --> ODS[Obstacle Detection System]
         GameplayService --> DCS[Dash Combo System]
-        
+    
         ADM --> SM[Stamina Manager]
         WKM --> SM
         VM --> SM
-        
+    
         ADM --> MS[Movement Service]
         WKM --> MS
         VM --> MS
-        
+    
         ADM --> CS[Combat System]
         WKM --> CS
         VM --> CS
-        
+    
         ADM --> CSS[Combos Synergies System]
         WKM --> CSS
         VM --> CSS
-        
+    
         WKM --> WRM[Wall Run Manager]
-        
+    
         GameplayService --> EventBus[Event Bus<br/>Kafka]
         EventBus --> RealtimeGateway[Realtime Gateway]
-        
+    
         GameplayService --> DB[(Gameplay DB)]
-        
+    
         Client --> WSAdvanced[WebSocket<br/>Advanced Acrobatics]
         WSAdvanced --> GameplayService
     ```
@@ -521,7 +521,7 @@ diagrams:
         participant DCS as Dash Combo System
         participant CS as Combat System
         participant EB as Event Bus
-        
+    
         C->>ADM: POST /air-dash
         ADM->>ADM: Check in air
         ADM->>ADM: Check charges available
@@ -537,7 +537,7 @@ diagrams:
         ADM->>CS: Enable combat
         ADM->>EB: Publish air-dash
         ADM-->>C: Air dash executed
-        
+    
         Note over ADM: Recover charges on cooldown
     ```
 
@@ -551,7 +551,7 @@ diagrams:
         participant MS as Movement Service
         participant CS as Combat System
         participant EB as Event Bus
-        
+    
         C->>WKM: POST /wall-kick
         WKM->>WRM: Check in wall run
         WRM-->>WKM: Wall run active
@@ -563,7 +563,7 @@ diagrams:
         WKM->>CS: Enable combat
         WKM->>EB: Publish wall-kick
         WKM-->>C: Wall kick executed
-        
+    
         Note over WKM: Can start new wall run
     ```
 
@@ -577,7 +577,7 @@ diagrams:
         participant MS as Movement Service
         participant CS as Combat System
         participant EB as Event Bus
-        
+    
         C->>VM: POST /vault
         VM->>ODS: Check obstacles
         ODS-->>VM: Obstacle available
@@ -589,7 +589,7 @@ diagrams:
         VM->>CS: Enable combat
         VM->>EB: Publish vault
         VM-->>C: Vault active
-        
+    
         Note over VM: Auto-complete on animation end
     ```
 

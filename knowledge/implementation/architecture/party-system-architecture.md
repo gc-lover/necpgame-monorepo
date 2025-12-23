@@ -13,7 +13,8 @@
 
 ## Краткое описание
 
-Party System управляет кооперативными группами до 5 игроков для совместного прохождения контента с поддержкой приглашений, ролей, общих квестов и различных режимов распределения лута.
+Party System управляет кооперативными группами до 5 игроков для совместного прохождения контента с поддержкой
+приглашений, ролей, общих квестов и различных режимов распределения лута.
 
 ## Связанные документы
 
@@ -83,17 +84,20 @@ flowchart TD
 **Подкомпоненты:**
 
 #### Party Manager
+
 - Создание/роспуск групп
 - Управление участниками
 - Роли (leader, member)
 - Настройки группы
 
 #### Invite Handler
+
 - Отправка/принятие приглашений
 - Валидация (размер группы, статус игрока)
 - Уведомления
 
 #### Loot Distributor
+
 - Need/Greed система
 - Master Looter
 - Free for All
@@ -146,9 +150,11 @@ CREATE INDEX idx_invite_invitee ON party_invites(invitee_id, invite_status);
 ### 3.1. Party Management
 
 #### POST /api/v1/social/party/create
+
 **Создать группу**
 
 Response:
+
 ```json
 {
   "party_id": "uuid",
@@ -159,9 +165,11 @@ Response:
 ```
 
 #### DELETE /api/v1/social/party/{party_id}
+
 **Распустить группу** (только leader)
 
 #### POST /api/v1/social/party/{party_id}/invite
+
 **Пригласить игрока**
 
 Request: `{"player_id": "uuid"}`
@@ -169,21 +177,27 @@ Request: `{"player_id": "uuid"}`
 Response: `{"invite_id": "uuid", "expires_at": "..."}`
 
 #### POST /api/v1/social/party/invite/{invite_id}/accept
+
 **Принять приглашение**
 
 #### POST /api/v1/social/party/invite/{invite_id}/decline
+
 **Отклонить приглашение**
 
 #### DELETE /api/v1/social/party/{party_id}/member/{player_id}
+
 **Исключить участника** (только leader)
 
 #### POST /api/v1/social/party/{party_id}/leave
+
 **Покинуть группу**
 
 #### PATCH /api/v1/social/party/{party_id}/settings
+
 **Изменить настройки**
 
 Request:
+
 ```json
 {
   "loot_mode": "master_looter",
@@ -194,6 +208,7 @@ Request:
 ### 3.2. Loot Distribution
 
 #### POST /api/v1/social/party/{party_id}/loot/roll
+
 **Бросить кубик на предмет**
 
 Request: `{"item_id": "uuid", "roll_type": "need"|"greed"|"pass"}`
@@ -201,6 +216,7 @@ Request: `{"item_id": "uuid", "roll_type": "need"|"greed"|"pass"}`
 Response: `{"roll_value": 85, "player_id": "uuid"}`
 
 #### POST /api/v1/social/party/{party_id}/loot/assign
+
 **Выдать предмет** (Master Looter only)
 
 Request: `{"item_id": "uuid", "player_id": "uuid"}`
@@ -271,6 +287,7 @@ sequenceDiagram
 **Приоритет:** Need > Greed > Pass
 
 **Процесс:**
+
 1. Предмет выпадает
 2. Все участники бросают кубик (1-100)
 3. Need броски сравниваются первыми
@@ -300,6 +317,7 @@ sequenceDiagram
 ## 6. События (Event-Driven)
 
 **Published:**
+
 - `party:created` - группа создана
 - `party:member_joined` - участник присоединился
 - `party:member_left` - участник покинул
@@ -307,6 +325,7 @@ sequenceDiagram
 - `party:loot_rolled` - брошен кубик на лут
 
 **Subscribed:**
+
 - `quest:progress` - обновление прогресса квеста
 - `combat:ended` - завершение боя (для лута)
 - `player:disconnected` - отключение игрока
@@ -332,26 +351,32 @@ sequenceDiagram
 ## 8. Разбиение на подзадачи
 
 ### 8.1. Database Schema (P0)
+
 Создать схемы для `parties`, `party_invites`
 **Срок:** 1 неделя
 
 ### 8.2. Party Manager API (P0)
+
 REST API для создания/управления группами
 **Срок:** 2 недели
 
 ### 8.3. Invite System (P0)
+
 Система приглашений
 **Срок:** 1 неделя
 
 ### 8.4. Loot Distributor (P1)
+
 Реализовать 4 режима лута
 **Срок:** 2 недели
 
 ### 8.5. Quest Integration (P1)
+
 Синхронизация квестов
 **Срок:** 1 неделя
 
 ### 8.6. Matchmaking Integration (P2)
+
 Групповые очереди
 **Срок:** 1 неделя
 
@@ -369,37 +394,4 @@ REST API для создания/управления группами
 ---
 
 **Конец документа**
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

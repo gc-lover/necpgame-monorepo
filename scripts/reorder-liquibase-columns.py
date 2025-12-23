@@ -2,7 +2,7 @@
 """
 NECPGAME Liquibase Column Order Optimizer
 Issue: #1586 - Automatic Liquibase column order optimization
-PERFORMANCE: Memory ↓30-50% for database tables
+PERFORMANCE: Memory down 30-50% for database tables
 
 SOLID Architecture:
 - Single Responsibility: Only optimizes SQL column order
@@ -11,6 +11,7 @@ SOLID Architecture:
 """
 
 from pathlib import Path
+
 from scripts.core.base_script import BaseScript
 from scripts.sql.liquibase_processor import LiquibaseProcessor
 
@@ -24,7 +25,7 @@ class ReorderLiquibaseColumns(BaseScript):
     def __init__(self):
         super().__init__(
             "reorder-liquibase-columns",
-            "Optimize Liquibase SQL migrations for column order (large→small)"
+            "Optimize Liquibase SQL migrations for column order (large to small)"
         )
         self.processor = LiquibaseProcessor(self.logger)
 
@@ -58,7 +59,7 @@ class ReorderLiquibaseColumns(BaseScript):
             self.logger.info(f"Optimized tables: {count}")
             if changed_tables:
                 for table in changed_tables:
-                    self.logger.info(f"  ✓ {table}")
+                    self.logger.info(f"  OK {table}")
 
             if not args.dry_run:
                 self.file_manager.write_text(sql_file, sql_content)

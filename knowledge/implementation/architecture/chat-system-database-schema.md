@@ -1,9 +1,11 @@
 <!-- Issue: #140889577 -->
+
 # Chat System - Database Schema
 
 ## Обзор
 
-Схема базы данных для системы чата, включающая каналы, сообщения, участников, баны, жалобы, игнорируемых игроков и историю сообщений.
+Схема базы данных для системы чата, включающая каналы, сообщения, участников, баны, жалобы, игнорируемых игроков и
+историю сообщений.
 
 ## ERD Диаграмма
 
@@ -107,6 +109,7 @@ erDiagram
 Таблица каналов чата. Хранит информацию о каналах.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `channel_type`: Тип канала (VARCHAR(50), NOT NULL)
 - `owner_id`: ID владельца (FK к characters, nullable)
@@ -122,6 +125,7 @@ erDiagram
 - `deleted_at`: Время удаления (TIMESTAMP, nullable)
 
 **Индексы:**
+
 - По `(channel_type, is_active)` для активных каналов
 - По `owner_id` для каналов владельца
 - По `is_active` для активных каналов
@@ -131,6 +135,7 @@ erDiagram
 Таблица сообщений чата. Хранит информацию о сообщениях.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `channel_id`: ID канала (FK к chat_channels, NOT NULL)
 - `channel_type`: Тип канала (VARCHAR(50), NOT NULL) - legacy поле
@@ -145,6 +150,7 @@ erDiagram
 - `deleted_at`: Время удаления (TIMESTAMP, nullable) - legacy поле
 
 **Индексы:**
+
 - По `(channel_id, created_at DESC)` для сообщений канала
 - По `(sender_id, created_at DESC)` для сообщений отправителя
 - По `created_at DESC` для последних сообщений
@@ -154,6 +160,7 @@ erDiagram
 Таблица участников каналов. Хранит информацию об участниках каналов.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `channel_id`: ID канала (FK к chat_channels, NOT NULL)
 - `player_id`: ID игрока (FK к characters, NOT NULL)
@@ -161,10 +168,12 @@ erDiagram
 - `last_read_at`: Время последнего прочитанного сообщения (TIMESTAMP, nullable)
 
 **Индексы:**
+
 - По `channel_id` для участников канала
 - По `player_id` для каналов игрока
 
 **Constraints:**
+
 - UNIQUE(channel_id, player_id): Один участник на канал
 
 ### chat_bans
@@ -172,6 +181,7 @@ erDiagram
 Таблица банов в чате. Хранит информацию о банах.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `player_id`: ID забаненного игрока (FK к characters, NOT NULL)
 - `channel_id`: ID канала (FK к chat_channels, nullable)
@@ -183,6 +193,7 @@ erDiagram
 - `created_at`: Время создания
 
 **Индексы:**
+
 - По `(player_id, is_active)` для активных банов игрока
 - По `(channel_id, is_active)` для активных банов канала
 - По `expires_at` для истекающих банов
@@ -192,6 +203,7 @@ erDiagram
 Таблица жалоб на сообщения. Хранит информацию о жалобах.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `message_id`: ID сообщения (FK к chat_messages, nullable)
 - `channel_id`: ID канала (FK к chat_channels, nullable)
@@ -204,6 +216,7 @@ erDiagram
 - `created_at`: Время создания
 
 **Индексы:**
+
 - По `message_id` для жалоб на сообщение
 - По `reporter_id` для жалоб жалобщика
 - По `(status, created_at DESC)` для необработанных жалоб
@@ -213,16 +226,19 @@ erDiagram
 Таблица игнорируемых игроков. Хранит информацию об игнорируемых игроках.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `player_id`: ID игрока (FK к characters, NOT NULL)
 - `ignored_player_id`: ID игнорируемого игрока (FK к characters, NOT NULL)
 - `created_at`: Время создания
 
 **Индексы:**
+
 - По `player_id` для игнорируемых игроком
 - По `ignored_player_id` для игроков, которые игнорируют
 
 **Constraints:**
+
 - UNIQUE(player_id, ignored_player_id): Один игнорируемый игрок на игрока
 - CHECK (player_id != ignored_player_id): Игрок не может игнорировать себя
 
@@ -231,6 +247,7 @@ erDiagram
 Таблица истории сообщений (архив). Хранит архивные сообщения.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `channel_id`: ID канала (FK к chat_channels, NOT NULL)
 - `sender_id`: ID отправителя (FK к characters, NOT NULL)
@@ -239,12 +256,14 @@ erDiagram
 - `created_at`: Время создания
 
 **Индексы:**
+
 - По `(channel_id, created_at DESC)` для истории канала
 - По `(sender_id, created_at DESC)` для истории отправителя
 
 ## ENUM типы
 
 ### chat_channel_type
+
 - `GLOBAL`: Глобальный чат сервера
 - `TRADE`: Торговый чат
 - `NEWBIE`: Чат для новичков
@@ -259,16 +278,19 @@ erDiagram
 - `RP_EMOTE`: Ролевые эмоции
 
 ### chat_message_type
+
 - `text`: Текстовое сообщение
 - `system`: Системное сообщение
 - `emote`: Эмоция
 - `command`: Команда
 
 ### chat_ban_type
+
 - `channel`: Бан в канале
 - `global`: Глобальный бан
 
 ### chat_report_status
+
 - `pending`: Ожидает рассмотрения
 - `reviewed`: Рассмотрено
 - `resolved`: Решено
@@ -357,11 +379,13 @@ erDiagram
 ## Миграции
 
 ### Существующие миграции:
+
 - `V1_10__chat_tables.sql` - базовые таблицы (chat_channels, chat_messages, chat_bans)
 - `V1_25__chat_moderation_tables.sql` - таблица жалоб (chat_reports)
 - `V1_67__chat_system_enhancement.sql` - расширенные таблицы и поля
 
 ### Применение миграций:
+
 ```bash
 liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ```
@@ -369,6 +393,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ## Соответствие архитектуре
 
 Схема БД полностью соответствует архитектуре из `knowledge/implementation/architecture/chat-system-architecture.yaml`:
+
 - [OK] Все таблицы из архитектуры созданы
 - [OK] Все поля соответствуют описанию
 - [OK] Индексы оптимизированы для частых запросов
@@ -381,7 +406,9 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Каналы
 
 Система каналов включает:
-- **Типы каналов**: GLOBAL, TRADE, NEWBIE, LOCAL, PARTY, RAID, GUILD, GUILD_OFFICER, WHISPER, SYSTEM, COMBAT_LOG, RP_EMOTE
+
+- **Типы каналов**: GLOBAL, TRADE, NEWBIE, LOCAL, PARTY, RAID, GUILD, GUILD_OFFICER, WHISPER, SYSTEM, COMBAT_LOG,
+  RP_EMOTE
 - **Права доступа**: read_permission и write_permission (JSONB) для гибкой системы прав
 - **Кулдаун**: cooldown_seconds для ограничения частоты сообщений
 - **Длина сообщений**: max_message_length для ограничения размера
@@ -390,6 +417,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Сообщения
 
 Система сообщений включает:
+
 - **Типы сообщений**: text, system, emote, command
 - **Форматирование**: formatted_text для отформатированного текста
 - **Редактирование**: is_edited для отслеживания редактированных сообщений
@@ -399,6 +427,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Участники
 
 Система участников включает:
+
 - **Присоединение**: joined_at для отслеживания времени присоединения
 - **Чтение**: last_read_at для отслеживания последнего прочитанного сообщения
 - **Уникальность**: один участник на канал
@@ -406,6 +435,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Баны
 
 Система банов включает:
+
 - **Типы банов**: channel (в канале) и global (глобальный)
 - **Временные баны**: expires_at для автоматического снятия
 - **Причины**: reason для детализации бана
@@ -415,6 +445,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Жалобы
 
 Система жалоб включает:
+
 - **Статусы**: pending, reviewed, resolved, dismissed
 - **Рассмотрение**: reviewed_by и reviewed_at для отслеживания рассмотрения
 - **Привязка**: message_id и channel_id для контекста
@@ -423,6 +454,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Игнорирование
 
 Система игнорирования включает:
+
 - **Уникальность**: один игнорируемый игрок на игрока
 - **Защита**: игрок не может игнорировать себя
 - **Временные метки**: created_at для отслеживания времени
@@ -430,6 +462,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### История
 
 Система истории включает:
+
 - **Архивация**: долгосрочное хранение сообщений
 - **Поиск**: индексы для быстрого поиска по каналам и отправителям
 - **Форматирование**: сохранение отформатированного текста
@@ -437,11 +470,11 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Интеграция с другими системами
 
 Система чата интегрируется с:
+
 - **Characters**: через sender_id, player_id для участников и отправителей
 - **Parties**: через channel_type для групповых каналов
 - **Guilds**: через channel_type для гильдейских каналов
 - **World Service**: через channel_type для локальных каналов
 - **Moderation Service**: через chat_bans и chat_reports для модерации
 - **Notification Service**: через события для уведомлений
-
 

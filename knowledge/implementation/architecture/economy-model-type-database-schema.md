@@ -1,9 +1,11 @@
 <!-- Issue: #140890244 -->
+
 # Economy Model Type System - Database Schema
 
 ## Обзор
 
-Схема базы данных для типа экономической модели, управляющей конфигурацией гибридной экономической системы с глобальными, региональными и фракционными рынками, правилами доступа и ценообразования.
+Схема базы данных для типа экономической модели, управляющей конфигурацией гибридной экономической системы с
+глобальными, региональными и фракционными рынками, правилами доступа и ценообразования.
 
 ## ERD Диаграмма
 
@@ -103,21 +105,25 @@ erDiagram
 Таблица конфигурации экономической модели. Хранит глобальную конфигурацию экономической системы.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `model_type`: Тип экономической модели (economy_model_type ENUM, NOT NULL, default: 'hybrid')
 - `name`: Название конфигурации (VARCHAR(255), NOT NULL, UNIQUE)
 - `description`: Описание конфигурации (TEXT, nullable)
 - `base_supply_npc_controlled`: Базовое снабжение контролируется NPC (BOOLEAN, NOT NULL, default: true)
 - `strategic_markets_player_controlled`: Стратегические рынки контролируются игроками (BOOLEAN, NOT NULL, default: true)
-- `regional_modifiers_faction_controlled`: Региональные модификаторы контролируются фракциями (BOOLEAN, NOT NULL, default: true)
+- `regional_modifiers_faction_controlled`: Региональные модификаторы контролируются фракциями (BOOLEAN, NOT NULL,
+  default: true)
 - `price_volatility_factor`: Фактор волатильности цен (DECIMAL(5,2), NOT NULL, default: 1.00, диапазон: 0.00-10.00)
-- `demand_supply_impact`: Влияние спроса и предложения на цены (DECIMAL(5,2), NOT NULL, default: 0.50, диапазон: 0.00-1.00)
+- `demand_supply_impact`: Влияние спроса и предложения на цены (DECIMAL(5,2), NOT NULL, default: 0.50, диапазон:
+  0.00-1.00)
 - `rare_items_player_only`: Редкие предметы только для игроков (BOOLEAN, NOT NULL, default: true)
 - `is_active`: Активна ли конфигурация (BOOLEAN, NOT NULL, default: true)
 - `created_at`: Время создания
 - `updated_at`: Время последнего обновления
 
 **Индексы:**
+
 - По `model_type` для фильтрации по типу модели
 - По `is_active` для активных конфигураций (WHERE is_active = true)
 
@@ -126,6 +132,7 @@ erDiagram
 Таблица типов рынков. Хранит информацию о глобальных, региональных и фракционных рынках.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `market_type`: Тип рынка (market_type ENUM, NOT NULL)
 - `name`: Название рынка (VARCHAR(255), NOT NULL)
@@ -134,7 +141,8 @@ erDiagram
 - `faction_id`: ID фракции (FK factions, nullable - для фракционных рынков)
 - `is_global`: Является ли рынок глобальным (BOOLEAN, NOT NULL, default: false)
 - `base_tax_rate`: Базовая ставка налога в процентах (DECIMAL(5,2), NOT NULL, default: 0.00, диапазон: 0.00-100.00)
-- `player_tax_rate`: Ставка налога для игроков в процентах (DECIMAL(5,2), NOT NULL, default: 0.00, диапазон: 0.00-100.00)
+- `player_tax_rate`: Ставка налога для игроков в процентах (DECIMAL(5,2), NOT NULL, default: 0.00, диапазон:
+  0.00-100.00)
 - `npc_tax_rate`: Ставка налога для NPC в процентах (DECIMAL(5,2), NOT NULL, default: 0.00, диапазон: 0.00-100.00)
 - `min_reputation_level`: Минимальный уровень репутации для доступа (INTEGER, default: 0, CHECK: >= 0)
 - `requires_alliance`: Требуется ли союз для доступа (BOOLEAN, NOT NULL, default: false)
@@ -143,6 +151,7 @@ erDiagram
 - `updated_at`: Время последнего обновления
 
 **Индексы:**
+
 - По `market_type` для фильтрации по типу рынка
 - По `region_id` для региональных рынков (WHERE region_id IS NOT NULL)
 - По `faction_id` для фракционных рынков (WHERE faction_id IS NOT NULL)
@@ -156,6 +165,7 @@ erDiagram
 Таблица правил доступа к рынкам. Хранит требования для доступа к рынкам (репутация, союзы, уровень, квесты).
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `market_type_id`: ID типа рынка (FK market_types, NOT NULL)
 - `access_type`: Тип требования доступа (VARCHAR(50), NOT NULL - 'reputation', 'alliance', 'guild', 'level', 'quest')
@@ -167,6 +177,7 @@ erDiagram
 - `created_at`: Время создания
 
 **Индексы:**
+
 - По `market_type_id` для правил конкретного рынка
 - По `access_type` для фильтрации по типу требования
 - По `is_active` для активных правил (WHERE is_active = true)
@@ -176,6 +187,7 @@ erDiagram
 Таблица конфигурации модели ценообразования. Хранит параметры ценообразования для разных рынков и категорий предметов.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `market_type_id`: ID типа рынка (FK market_types, nullable - NULL для глобальных настроек)
 - `item_category`: Категория предметов (VARCHAR(50), nullable)
@@ -183,17 +195,23 @@ erDiagram
 - `pricing_control_type`: Тип контроля ценообразования (pricing_control_type ENUM, NOT NULL, default: 'hybrid')
 - `base_price_multiplier`: Множитель базовой цены (DECIMAL(5,2), NOT NULL, default: 1.00, диапазон: 0.00-10.00)
 - `demand_impact_factor`: Фактор влияния спроса на цену (DECIMAL(5,2), NOT NULL, default: 0.30, диапазон: 0.00-1.00)
-- `supply_impact_factor`: Фактор влияния предложения на цену (DECIMAL(5,2), NOT NULL, default: 0.30, диапазон: 0.00-1.00)
+- `supply_impact_factor`: Фактор влияния предложения на цену (DECIMAL(5,2), NOT NULL, default: 0.30, диапазон:
+  0.00-1.00)
 - `event_impact_factor`: Фактор влияния событий на цену (DECIMAL(5,2), NOT NULL, default: 0.20, диапазон: 0.00-1.00)
-- `min_price_modifier`: Модификатор минимальной цены (DECIMAL(5,2), NOT NULL, default: 0.50, диапазон: 0.00-1.00 от базовой)
-- `max_price_modifier`: Модификатор максимальной цены (DECIMAL(5,2), NOT NULL, default: 2.00, диапазон: 1.00-10.00 от базовой)
-- `player_control_percentage`: Процент контроля игроков над ценами (DECIMAL(5,2), NOT NULL, default: 50.00, диапазон: 0.00-100.00)
-- `npc_control_percentage`: Процент контроля NPC над ценами (DECIMAL(5,2), NOT NULL, default: 50.00, диапазон: 0.00-100.00)
+- `min_price_modifier`: Модификатор минимальной цены (DECIMAL(5,2), NOT NULL, default: 0.50, диапазон: 0.00-1.00 от
+  базовой)
+- `max_price_modifier`: Модификатор максимальной цены (DECIMAL(5,2), NOT NULL, default: 2.00, диапазон: 1.00-10.00 от
+  базовой)
+- `player_control_percentage`: Процент контроля игроков над ценами (DECIMAL(5,2), NOT NULL, default: 50.00, диапазон:
+  0.00-100.00)
+- `npc_control_percentage`: Процент контроля NPC над ценами (DECIMAL(5,2), NOT NULL, default: 50.00, диапазон:
+  0.00-100.00)
 - `is_active`: Активна ли конфигурация (BOOLEAN, NOT NULL, default: true)
 - `created_at`: Время создания
 - `updated_at`: Время последнего обновления
 
 **Индексы:**
+
 - По `market_type_id` для конфигураций конкретного рынка (WHERE market_type_id IS NOT NULL)
 - По `(item_category, item_tier)` для конфигураций конкретной категории и тиера (WHERE оба NOT NULL)
 - По `pricing_control_type` для фильтрации по типу контроля
@@ -204,6 +222,7 @@ erDiagram
 Таблица правил управления экономикой. Хранит правила контроля цен, предложения, налогов и доступа для разных сущностей.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `governance_entity_type`: Тип сущности управления (governance_entity_type ENUM, NOT NULL)
 - `entity_id`: ID сущности (UUID, nullable - player_id, faction_id, etc.)
@@ -219,6 +238,7 @@ erDiagram
 - `updated_at`: Время последнего обновления
 
 **Индексы:**
+
 - По `(governance_entity_type, entity_id)` для правил конкретной сущности (WHERE entity_id IS NOT NULL)
 - По `(rule_type, rule_scope)` для фильтрации по типу и области действия
 - По `scope_id` для правил конкретной области (WHERE scope_id IS NOT NULL)
@@ -228,21 +248,25 @@ erDiagram
 ## ENUM типы
 
 ### economy_model_type
+
 - `player_driven`: Полностью игроко-управляемая экономика
 - `npc_driven`: Полностью NPC-управляемая экономика
 - `hybrid`: Гибридная экономика (комбинация игроков, NPC и фракций)
 
 ### market_type
+
 - `global`: Глобальный рынок (доступен всем игрокам)
 - `regional`: Региональный рынок (доступен игрокам в регионе)
 - `faction`: Фракционный рынок (доступен игрокам фракции)
 
 ### pricing_control_type
+
 - `system_base`: Базовые ставки системы (полный контроль системы)
 - `player_driven`: Игроко-управляемое ценообразование (полный контроль игроков)
 - `hybrid`: Гибридное ценообразование (комбинация системы и игроков)
 
 ### governance_entity_type
+
 - `player`: Игрок
 - `npc`: NPC
 - `faction`: Фракция
@@ -321,6 +345,7 @@ erDiagram
 ## Миграции
 
 ### Применение миграций:
+
 ```bash
 liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ```
@@ -328,6 +353,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ## Соответствие архитектуре
 
 Схема БД соответствует механике из `knowledge/mechanics/economy/economy-type.yaml`:
+
 - [OK] Гибридная модель экономики (player-driven, NPC-driven, hybrid)
 - [OK] Глобальные, региональные и фракционные рынки
 - [OK] Правила доступа к рынкам (репутация, союзы, уровень, квесты)
@@ -342,6 +368,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Гибридная модель экономики
 
 Система поддерживает три типа экономических моделей:
+
 - **player_driven**: Полностью игроко-управляемая экономика (как в EVE Online)
 - **npc_driven**: Полностью NPC-управляемая экономика (как в World of Warcraft)
 - **hybrid**: Гибридная экономика (комбинация игроков, NPC и фракций)
@@ -349,6 +376,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Типы рынков
 
 Система поддерживает три типа рынков:
+
 - **global**: Глобальный рынок для массовых товаров (доступен всем игрокам)
 - **regional**: Региональный рынок для локальных ресурсов (доступен игрокам в регионе)
 - **faction**: Фракционный рынок с требованиями по репутации и союзам
@@ -356,6 +384,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Правила доступа
 
 Система поддерживает различные типы требований доступа:
+
 - **reputation**: Требование по уровню репутации
 - **alliance**: Требование по союзу
 - **guild**: Требование по гильдии
@@ -365,6 +394,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Ценообразование
 
 Система ценообразования учитывает:
+
 - **Базовые ставки системы**: Задаются платформой
 - **Динамика спроса и предложения**: Влияние активности игроков
 - **Экономические события**: Влияние событий на цены
@@ -373,6 +403,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Правила управления
 
 Система управления экономикой поддерживает:
+
 - **price_control**: Контроль цен
 - **supply_control**: Контроль предложения
 - **tax_control**: Контроль налогов
@@ -381,6 +412,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Интеграция с другими системами
 
 Тип экономической модели интегрируется с:
+
 - **Economy Service**: Применение правил ценообразования и доступа
 - **Social Service**: Проверка репутации и союзов для доступа к рынкам
 - **World Service**: Региональные модификаторы и события

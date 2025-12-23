@@ -1,9 +1,11 @@
 <!-- Issue: #140890233 -->
+
 # Production Chains System - Database Schema
 
 ## Обзор
 
-Схема базы данных для системы производственных цепочек, управляющей многоэтапным производством предметов от добычи сырья до крафта легендарных предметов.
+Схема базы данных для системы производственных цепочек, управляющей многоэтапным производством предметов от добычи сырья
+до крафта легендарных предметов.
 
 ## ERD Диаграмма
 
@@ -135,6 +137,7 @@ erDiagram
 Производственные цепочки. Хранит информацию о цепочках производства предметов.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `name`: Название цепочки (VARCHAR(255), NOT NULL)
 - `description`: Описание цепочки (TEXT, nullable)
@@ -143,12 +146,14 @@ erDiagram
 - `stages`: Массив этапов цепочки (JSONB, NOT NULL, default: '[]')
 - `base_cost`: Базовая стоимость производства (DECIMAL(10,2), NOT NULL, default: 0)
 - `base_time_minutes`: Базовое время производства в минутах (INTEGER, NOT NULL, default: 0)
-- `base_success_rate`: Базовая вероятность успеха в процентах (DECIMAL(5,2), NOT NULL, default: 0.00, диапазон: 0.00-100.00)
+- `base_success_rate`: Базовая вероятность успеха в процентах (DECIMAL(5,2), NOT NULL, default: 0.00, диапазон:
+  0.00-100.00)
 - `required_licenses`: Массив UUID лицензий (UUID[], nullable)
 - `created_at`: Время создания
 - `updated_at`: Время последнего обновления
 
 **Индексы:**
+
 - По `(item_tier, item_type)` для фильтрации по тиеру и типу
 - По `name` для поиска по названию
 
@@ -157,6 +162,7 @@ erDiagram
 Заказы на производство. Хранит информацию о заказах игроков на производство.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `player_id`: ID игрока (FK accounts, NOT NULL)
 - `chain_id`: ID цепочки (FK production_chains, NOT NULL)
@@ -181,6 +187,7 @@ erDiagram
 - `updated_at`: Время последнего обновления
 
 **Индексы:**
+
 - По `(player_id, status)` для заказов игрока по статусу
 - По `(chain_id, status)` для заказов по цепочке и статусу
 - По `(guild_id, status)` для гильдийных заказов (WHERE guild_id IS NOT NULL)
@@ -191,6 +198,7 @@ erDiagram
 Этапы производства. Хранит информацию об этапах выполнения заказа.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `order_id`: ID заказа (FK production_orders, NOT NULL)
 - `stage_number`: Номер этапа (INTEGER, NOT NULL)
@@ -205,6 +213,7 @@ erDiagram
 - `created_at`: Время создания
 
 **Индексы:**
+
 - По `(order_id, stage_number)` для этапов заказа
 - По `status` для фильтрации по статусу
 
@@ -213,6 +222,7 @@ erDiagram
 Производственные станции игроков. Хранит информацию о станциях игроков.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `player_id`: ID игрока (FK accounts, NOT NULL)
 - `station_type`: Тип станции (production_station_type ENUM, NOT NULL)
@@ -225,6 +235,7 @@ erDiagram
 - `updated_at`: Время последнего обновления
 
 **Индексы:**
+
 - По `(player_id, station_type)` для станций игрока по типу
 - По `(station_type, level)` для станций по типу и уровню
 
@@ -233,6 +244,7 @@ erDiagram
 Лицензии на производство. Хранит информацию о доступных лицензиях.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `name`: Название лицензии (VARCHAR(255), NOT NULL)
 - `description`: Описание лицензии (TEXT, nullable)
@@ -243,6 +255,7 @@ erDiagram
 - `created_at`: Время создания
 
 **Индексы:**
+
 - По `(item_tier, item_type)` для фильтрации по тиеру и типу
 
 ### player_production_licenses
@@ -250,6 +263,7 @@ erDiagram
 Лицензии игроков. Хранит информацию о купленных лицензиях игроков.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `player_id`: ID игрока (FK accounts, NOT NULL)
 - `license_id`: ID лицензии (FK production_licenses, NOT NULL)
@@ -258,6 +272,7 @@ erDiagram
 - `active`: Активна ли лицензия (BOOLEAN, NOT NULL, default: true)
 
 **Индексы:**
+
 - По `(player_id, active)` для активных лицензий игрока
 - По `(license_id, active)` для активных лицензий по типу
 - По `expires_at` для истекающих лицензий (WHERE expires_at IS NOT NULL)
@@ -267,6 +282,7 @@ erDiagram
 Ускорители производства. Хранит информацию о примененных ускорителях.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `order_id`: ID заказа (FK production_orders, NOT NULL)
 - `accelerator_type`: Тип ускорителя (production_accelerator_type ENUM, NOT NULL)
@@ -275,6 +291,7 @@ erDiagram
 - `expires_at`: Время истечения эффекта
 
 **Индексы:**
+
 - По `order_id` для ускорителей заказа
 - По `expires_at` для истекающих ускорителей
 
@@ -283,6 +300,7 @@ erDiagram
 Квестовые цепочки для легендарного крафта. Хранит информацию о квестах для легендарных предметов.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `name`: Название квестовой цепочки (VARCHAR(255), NOT NULL)
 - `description`: Описание квестовой цепочки (TEXT, nullable)
@@ -292,15 +310,18 @@ erDiagram
 - `required_mastery`: Требуемый уровень мастерства (INTEGER, NOT NULL, default: 0, CHECK: >= 0)
 - `required_components`: Требуемые компоненты (JSONB, NOT NULL, default: '{}')
 - `legendary_forge_required`: Требуется ли легендарная кузня (BOOLEAN, NOT NULL, default: false)
-- `base_success_rate`: Базовая вероятность успеха в процентах (DECIMAL(5,2), NOT NULL, default: 0.00, диапазон: 0.00-100.00)
+- `base_success_rate`: Базовая вероятность успеха в процентах (DECIMAL(5,2), NOT NULL, default: 0.00, диапазон:
+  0.00-100.00)
 - `created_at`: Время создания
 
 **Индексы:**
+
 - По `item_id` для квестов по предмету (WHERE item_id IS NOT NULL)
 
 ## ENUM типы
 
 ### production_order_status
+
 - `pending`: Ожидает начала
 - `started`: Начато
 - `in_progress`: В процессе
@@ -309,24 +330,28 @@ erDiagram
 - `cancelled`: Отменено
 
 ### production_stage_type
+
 - `resource_extraction`: Добыча сырья
 - `processing`: Переработка
 - `crafting`: Крафт
 - `assembly`: Сборка
 
 ### production_stage_status
+
 - `pending`: Ожидает начала
 - `in_progress`: В процессе
 - `completed`: Завершено
 - `failed`: Провалено
 
 ### production_station_type
+
 - `smelter`: Плавильня
 - `processor`: Процессор
 - `assembler`: Сборщик
 - `legendary_forge`: Легендарная кузня
 
 ### production_accelerator_type
+
 - `efficiency_catalyst`: Катализатор эффективности
 - `quality_enhancer`: Улучшитель качества
 - `material_optimizer`: Оптимизатор материалов
@@ -399,13 +424,16 @@ erDiagram
 ## Миграции
 
 ### Применение миграций:
+
 ```bash
 liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ```
 
 ## Соответствие архитектуре
 
-Схема БД полностью соответствует архитектуре из `knowledge/implementation/architecture/economy-production-chains-system-architecture.yaml`:
+Схема БД полностью соответствует архитектуре из
+`knowledge/implementation/architecture/economy-production-chains-system-architecture.yaml`:
+
 - [OK] Все таблицы из архитектуры созданы
 - [OK] Все поля соответствуют описанию
 - [OK] Индексы оптимизированы для частых запросов
@@ -418,6 +446,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Жизненный цикл заказов
 
 Заказы проходят через следующие стадии:
+
 1. **pending**: Заказ создан, ожидает начала
 2. **started**: Производство начато
 3. **in_progress**: Производство в процессе
@@ -428,6 +457,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Типы этапов
 
 Система поддерживает следующие типы этапов:
+
 - **resource_extraction**: Добыча сырья (извлечение ресурсов)
 - **processing**: Переработка (обработка сырья)
 - **crafting**: Крафт (создание компонентов)
@@ -436,6 +466,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Типы станций
 
 Система поддерживает следующие типы станций:
+
 - **smelter**: Плавильня (для плавки металлов)
 - **processor**: Процессор (для обработки материалов)
 - **assembler**: Сборщик (для сборки предметов)
@@ -444,6 +475,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Ускорители
 
 Система поддерживает следующие типы ускорителей:
+
 - **efficiency_catalyst**: Катализатор эффективности (ускоряет производство)
 - **quality_enhancer**: Улучшитель качества (повышает качество)
 - **material_optimizer**: Оптимизатор материалов (экономит ресурсы)
@@ -451,6 +483,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Массовое производство
 
 Массовое производство (`is_bulk = true`) оптимизирует:
+
 - Время производства (bulk_efficiency)
 - Расход ресурсов
 - Использование производственных линий
@@ -458,6 +491,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Rush-заказы
 
 Rush-заказы (`is_rush = true`) позволяют:
+
 - Сократить время производства
 - Увеличить стоимость (rush_cost_multiplier)
 - Приоритетную обработку
@@ -465,6 +499,7 @@ Rush-заказы (`is_rush = true`) позволяют:
 ### Легендарный крафт
 
 Легендарный крафт требует:
+
 - Квестовую цепочку (quest_chain)
 - Чертеж (required_blueprint)
 - Уровень мастерства (required_mastery)
@@ -474,6 +509,7 @@ Rush-заказы (`is_rush = true`) позволяют:
 ### Интеграция с другими системами
 
 Система производственных цепочек интегрируется с:
+
 - **Crafting Service**: Выполнение этапов крафта, получение рецептов
 - **Guild Service**: Гильдийное производство, распределение ролей
 - **Inventory Service**: Проверка ресурсов, резервирование, получение готовых предметов

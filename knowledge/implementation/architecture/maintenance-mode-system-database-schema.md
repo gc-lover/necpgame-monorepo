@@ -1,4 +1,5 @@
 <!-- Issue: #316 -->
+
 # Maintenance Mode System - Database Schema
 
 ## Обзор
@@ -66,6 +67,7 @@ erDiagram
 Окна обслуживания системы.
 
 **Колонки:**
+
 - `id` (UUID, PK) - Уникальный идентификатор
 - `type` (maintenance_window_type) - Тип окна: scheduled, emergency, hot_fix, rollback, upgrade
 - `status` (maintenance_window_status) - Статус: planned, starting, in_progress, ending, completed, cancelled
@@ -82,10 +84,12 @@ erDiagram
 - `updated_at` (TIMESTAMP) - Время обновления
 
 **Ограничения:**
+
 - CHECK: scheduled_end > scheduled_start
 - CHECK: actual_start и actual_end должны быть согласованы
 
 **Индексы:**
+
 - `idx_maintenance_windows_type` - По типу и запланированному времени начала
 - `idx_maintenance_windows_status` - По статусу и запланированному времени начала
 - `idx_maintenance_windows_scheduled_start` - По запланированному времени начала
@@ -98,6 +102,7 @@ erDiagram
 Текущий статус обслуживания (единственная строка).
 
 **Колонки:**
+
 - `id` (UUID, PK) - Уникальный идентификатор (фиксированный: 00000000-0000-0000-0000-000000000001)
 - `is_maintenance_mode` (BOOLEAN) - Включен ли режим обслуживания
 - `current_window_id` (UUID, FK) - ID текущего окна обслуживания
@@ -106,9 +111,11 @@ erDiagram
 - `last_updated` (TIMESTAMP) - Время последнего обновления
 
 **Ограничения:**
+
 - CHECK: id = '00000000-0000-0000-0000-000000000001'::uuid (единственная строка)
 
 **Индексы:**
+
 - `idx_maintenance_status_is_maintenance_mode` - По режиму обслуживания
 - `idx_maintenance_status_current_window_id` - По текущему окну
 
@@ -117,6 +124,7 @@ erDiagram
 Уведомления об обслуживании.
 
 **Колонки:**
+
 - `id` (UUID, PK) - Уникальный идентификатор
 - `window_id` (UUID, FK) - ID окна обслуживания
 - `notification_type` (maintenance_notification_type) - Тип уведомления: advance_24h, advance_1h, immediate, completion
@@ -126,6 +134,7 @@ erDiagram
 - `created_at` (TIMESTAMP) - Время создания
 
 **Индексы:**
+
 - `idx_maintenance_notifications_window_id` - По окну и типу уведомления
 - `idx_maintenance_notifications_type` - По типу уведомления и времени отправки
 - `idx_maintenance_notifications_channel` - По каналу и времени отправки
@@ -136,6 +145,7 @@ erDiagram
 Телеметрия обслуживания.
 
 **Колонки:**
+
 - `id` (UUID, PK) - Уникальный идентификатор
 - `event_type` (VARCHAR(50)) - Тип события
 - `window_id` (UUID, FK) - ID окна обслуживания
@@ -143,6 +153,7 @@ erDiagram
 - `created_at` (TIMESTAMP) - Время события
 
 **Индексы:**
+
 - `idx_maintenance_telemetry_event_type` - По типу события и времени
 - `idx_maintenance_telemetry_window_id` - По окну и времени
 - `idx_maintenance_telemetry_created_at` - По времени события
@@ -150,6 +161,7 @@ erDiagram
 ## ENUM типы
 
 ### maintenance_window_type
+
 - `scheduled` - Запланированное
 - `emergency` - Экстренное
 - `hot_fix` - Горячее исправление
@@ -157,6 +169,7 @@ erDiagram
 - `upgrade` - Обновление
 
 ### maintenance_window_status
+
 - `planned` - Запланировано
 - `starting` - Запускается
 - `in_progress` - В процессе
@@ -165,12 +178,14 @@ erDiagram
 - `cancelled` - Отменено
 
 ### maintenance_notification_type
+
 - `advance_24h` - За 24 часа
 - `advance_1h` - За 1 час
 - `immediate` - Немедленно
 - `completion` - Завершение
 
 ### maintenance_notification_channel
+
 - `in_game` - В игре
 - `email` - Email
 - `push` - Push-уведомление

@@ -1,68 +1,68 @@
-          - transaction_type, status
+- transaction_type, status
 
-      - name: portfolio_snapshots
-        description: Снимки портфелей для аналитики
-        fields:
-          - id: UUID (PK)
-          - player_id: UUID (FK accounts)
-          - total_value: DECIMAL(10,2)
-          - total_cost: DECIMAL(10,2)
-          - total_profit_loss: DECIMAL(10,2)
-          - total_profit_loss_percentage: DECIMAL(5,2)
-          - distribution: JSONB (распределение по типам продуктов)
-          - risk_score: DECIMAL(3,2) (0.00-1.00)
-          - snapshot_at: TIMESTAMP
-        indexes:
-          - player_id, snapshot_at
-          - snapshot_at
+- name: portfolio_snapshots
+  description: Снимки портфелей для аналитики
+  fields:
+    - id: UUID (PK)
+    - player_id: UUID (FK accounts)
+    - total_value: DECIMAL(10,2)
+    - total_cost: DECIMAL(10,2)
+    - total_profit_loss: DECIMAL(10,2)
+    - total_profit_loss_percentage: DECIMAL(5,2)
+    - distribution: JSONB (распределение по типам продуктов)
+    - risk_score: DECIMAL(3,2) (0.00-1.00)
+    - snapshot_at: TIMESTAMP
+  indexes:
+    - player_id, snapshot_at
+    - snapshot_at
 
-      - name: investment_risk_alerts
-        description: Алерты по рискам инвестиций
-        fields:
-          - id: UUID (PK)
-          - player_id: UUID (FK accounts)
-          - position_id: UUID (FK player_investment_positions, nullable)
-          - alert_type: ENUM (margin_call, kyc_required, high_risk, suitability_warning)
-          - severity: ENUM (low, medium, high, critical)
-          - message: TEXT
-          - resolved: BOOLEAN
-          - resolved_at: TIMESTAMP (nullable)
-          - created_at: TIMESTAMP
-        indexes:
-          - player_id, resolved
-          - alert_type, severity
+- name: investment_risk_alerts
+  description: Алерты по рискам инвестиций
+  fields:
+    - id: UUID (PK)
+    - player_id: UUID (FK accounts)
+    - position_id: UUID (FK player_investment_positions, nullable)
+    - alert_type: ENUM (margin_call, kyc_required, high_risk, suitability_warning)
+    - severity: ENUM (low, medium, high, critical)
+    - message: TEXT
+    - resolved: BOOLEAN
+    - resolved_at: TIMESTAMP (nullable)
+    - created_at: TIMESTAMP
+  indexes:
+    - player_id, resolved
+    - alert_type, severity
 
 technical_specification:
   backend_requirements:
     - Реализация Investment Manager в economy-service:
-      - CRUD операции с инвестиционными позициями
-      - Управление транзакциями
-      - Валидация инвестиций
+        - CRUD операции с инвестиционными позициями
+        - Управление транзакциями
+        - Валидация инвестиций
     - Реализация Investment Product Catalog:
-      - Каталог продуктов (акции, облигации, недвижимость, производственные доли, спекуляции)
-      - Управление доступностью продуктов
+        - Каталог продуктов (акции, облигации, недвижимость, производственные доли, спекуляции)
+        - Управление доступностью продуктов
     - Реализация Portfolio Manager:
-      - Управление портфелями игроков
-      - Расчёт стоимости портфеля
-      - Распределение капитала
+        - Управление портфелями игроков
+        - Расчёт стоимости портфеля
+        - Распределение капитала
     - Реализация Risk Analyzer:
-      - Расчёт уровней риска
-      - Проверка suitability и margin requirements
-      - Генерация алертов
+        - Расчёт уровней риска
+        - Проверка suitability и margin requirements
+        - Генерация алертов
     - Реализация Portfolio Rebalancer:
-      - Анализ распределения портфеля
-      - Генерация рекомендаций
-      - Применение ребалансировки
+        - Анализ распределения портфеля
+        - Генерация рекомендаций
+        - Применение ребалансировки
     - Реализация Dividend Calculator:
-      - Расчёт дивидендов и выплат
-      - Начисление выплат
+        - Расчёт дивидендов и выплат
+        - Начисление выплат
     - Реализация Investment Analytics Collector:
-      - Сбор метрик портфеля
-      - Анализ доходности
-      - Генерация прогнозов
+        - Сбор метрик портфеля
+        - Анализ доходности
+        - Генерация прогнозов
     - Реализация Investment Lifecycle Manager:
-      - Управление жизненным циклом инвестиций
-      - Переходы между стадиями
+        - Управление жизненным циклом инвестиций
+        - Переходы между стадиями
     - Интеграция с stock-exchange-service для акций
     - Интеграция с housing-service для недвижимости
     - Создание схемы БД (investment_products, player_investment_positions, investment_transactions, portfolio_snapshots, investment_risk_alerts)
@@ -293,7 +293,7 @@ diagrams:
         HOLD --> EXIT: Sell Investment
         REBALANCE --> HOLD: Rebalanced
         EXIT --> [*]
-        
+    
         HOLD --> HOLD: Dividend/Interest Paid
         HOLD --> EXIT: Force Exit (Risk)
     ```

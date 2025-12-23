@@ -1,9 +1,11 @@
 <!-- Issue: #140876086 -->
+
 # Economy Equipment System - Database Schema
 
 ## Обзор
 
-Схема базы данных для системы оборудования, включающая каталог оборудования, временную линию культового оборудования, разблокировки, матрицу характеристик и процедурно сгенерированное оборудование.
+Схема базы данных для системы оборудования, включающая каталог оборудования, временную линию культового оборудования,
+разблокировки, матрицу характеристик и процедурно сгенерированное оборудование.
 
 ## ERD Диаграмма
 
@@ -84,6 +86,7 @@ erDiagram
 Таблица каталога оборудования. Хранит ручной срез ключевых предметов оборудования.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `name`: Название предмета (VARCHAR(100), NOT NULL)
 - `category`: Категория оборудования (ENUM: weapon, armor, cyberware, consumable)
@@ -96,6 +99,7 @@ erDiagram
 - `updated_at`: Время последнего обновления
 
 **Индексы:**
+
 - По `(category, brand, rarity)` для фильтрации по категории, бренду и редкости
 - По `(brand, category)` для поиска по бренду
 - По `(rarity, category)` для поиска по редкости
@@ -106,6 +110,7 @@ erDiagram
 Таблица временной линии культового оборудования. Хранит информацию о культовом оборудовании и его доступности по эпохам.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `equipment_id`: ID предмета из equipment_catalog (FK, UNIQUE)
 - `era_start`: Год начала эпохи (INTEGER, 2000-2100, NOT NULL)
@@ -118,6 +123,7 @@ erDiagram
 - `updated_at`: Время последнего обновления
 
 **Индексы:**
+
 - По `equipment_id` для связи с каталогом
 - По `(era_start, era_end)` для поиска по эпохе
 - По `(availability, is_active)` для активных предметов
@@ -128,6 +134,7 @@ erDiagram
 Таблица разблокировок культового оборудования. Хранит информацию о разблокировках культового оборудования персонажами.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `character_id`: ID персонажа (FK к characters, NOT NULL)
 - `iconic_id`: ID культового предмета из iconic_equipment_timeline (FK, NOT NULL)
@@ -137,11 +144,13 @@ erDiagram
 - `created_at`: Время создания
 
 **Индексы:**
+
 - По `(character_id, unlocked_at DESC)` для истории разблокировок персонажа
 - По `iconic_id` для поиска по культовому предмету
 - По `unlock_method` для фильтрации по методу разблокировки
 
 **Constraints:**
+
 - UNIQUE(character_id, iconic_id): Одна разблокировка на персонажа
 
 ### equipment_matrix
@@ -149,6 +158,7 @@ erDiagram
 Таблица матрицы характеристик оборудования. Хранит пулы характеристик и модификаторы для процедурной генерации.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `brand`: Бренд (VARCHAR(50), NOT NULL)
 - `category`: Категория оборудования (ENUM, NOT NULL)
@@ -160,11 +170,13 @@ erDiagram
 - `created_at`: Время создания
 
 **Индексы:**
+
 - По `(brand, category, rarity, version)` для поиска матрицы
 - По `(category, rarity)` для фильтрации по категории и редкости
 - По `version DESC` для последних версий
 
 **Constraints:**
+
 - UNIQUE(brand, category, rarity, version): Одна матрица на комбинацию
 
 ### generated_equipment
@@ -172,6 +184,7 @@ erDiagram
 Таблица процедурно сгенерированного оборудования. Хранит информацию о сгенерированных предметах.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `seed`: Seed для процедурной генерации (BIGINT, NOT NULL)
 - `brand`: Бренд (VARCHAR(50), NOT NULL)
@@ -183,23 +196,27 @@ erDiagram
 - `item_id`: ID предмета в инвентаре (nullable)
 
 **Индексы:**
+
 - По `(seed, brand, category)` для поиска по seed
 - По `(brand, category, rarity)` для фильтрации
 - По `character_id` для предметов персонажа
 - По `generated_at DESC` для последних генераций
 
 **Constraints:**
+
 - UNIQUE(seed, brand, category): Один предмет на комбинацию seed/brand/category
 
 ## ENUM типы
 
 ### equipment_category
+
 - `weapon`: Оружие
 - `armor`: Броня
 - `cyberware`: Кибервар
 - `consumable`: Расходники
 
 ### equipment_rarity
+
 - `common`: Обычное
 - `uncommon`: Необычное
 - `rare`: Редкое
@@ -208,12 +225,14 @@ erDiagram
 - `iconic`: Культовое
 
 ### iconic_availability
+
 - `always`: Всегда доступно
 - `seasonal`: Сезонное
 - `event`: Событийное
 - `quest`: Квестовое
 
 ### iconic_unlock_method
+
 - `quest`: Через квест
 - `event`: Через событие
 - `purchase`: Покупка
@@ -288,16 +307,20 @@ erDiagram
 ## Миграции
 
 ### Существующие миграции:
+
 - `V1_60__economy_equipment_system_tables.sql` - полная схема системы оборудования
 
 ### Применение миграций:
+
 ```bash
 liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ```
 
 ## Соответствие архитектуре
 
-Схема БД полностью соответствует архитектуре из `knowledge/implementation/architecture/equipment-system-architecture.yaml`:
+Схема БД полностью соответствует архитектуре из
+`knowledge/implementation/architecture/equipment-system-architecture.yaml`:
+
 - [OK] Все таблицы из архитектуры созданы
 - [OK] Все поля соответствуют описанию
 - [OK] ENUM типы созданы для категорий, редкости, доступности и методов разблокировки
@@ -311,6 +334,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Каталог оборудования
 
 Система каталога включает:
+
 - **Ручной срез**: ключевые предметы, добавленные вручную
 - **Категории**: weapon, armor, cyberware, consumable
 - **Редкость**: от common до iconic
@@ -320,6 +344,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Временная линия культового оборудования
 
 Система временной линии включает:
+
 - **Эпохи**: era_start и era_end для временных рамок
 - **Условия разблокировки**: JSONB для гибкости
 - **Доступность**: always, seasonal, event, quest
@@ -329,6 +354,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Разблокировки культового оборудования
 
 Система разблокировок включает:
+
 - **Методы разблокировки**: quest, event, purchase, drop
 - **Данные разблокировки**: JSONB для дополнительной информации
 - **Время разблокировки**: для истории
@@ -337,6 +363,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Матрица характеристик
 
 Система матрицы включает:
+
 - **Пулы характеристик**: JSONB для гибкости
 - **Модификаторы**: JSONB для модификаторов
 - **Версионирование**: версия матрицы для обновлений
@@ -345,6 +372,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Процедурная генерация
 
 Система генерации включает:
+
 - **Seed**: для воспроизводимости
 - **Характеристики**: JSONB для сгенерированных stats
 - **Связь с персонажем**: character_id для отслеживания
@@ -354,9 +382,9 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Интеграция с другими системами
 
 Система оборудования интегрируется с:
+
 - **Inventory Service**: через character_items и character_equipment
 - **Economy Service**: через торговлю и рынки
 - **Gameplay Service**: через расчет характеристик
 - **Narrative Service**: через разблокировку культового оборудования
-
 

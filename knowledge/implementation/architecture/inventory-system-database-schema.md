@@ -1,9 +1,11 @@
 <!-- Issue: #140887147 -->
+
 # Inventory System - Database Schema
 
 ## Обзор
 
-Схема базы данных для системы инвентаря, включающая управление предметами игроков, экипировкой, хранением, stacking и весом.
+Схема базы данных для системы инвентаря, включающая управление предметами игроков, экипировкой, хранением, stacking и
+весом.
 
 ## ERD Диаграмма
 
@@ -108,12 +110,14 @@ erDiagram
 Основная таблица инвентаря персонажа. Хранит информацию о вместимости, использованных слотах и весе.
 
 **Ключевые поля:**
+
 - `capacity`: Максимальное количество слотов (по умолчанию 50)
 - `used_slots`: Количество использованных слотов
 - `weight`: Текущий вес инвентаря
 - `max_weight`: Максимальный вес (по умолчанию 100.0)
 
 **Индексы:**
+
 - Уникальный индекс по `character_id` (один персонаж - один инвентарь)
 - Индекс по `character_id` для быстрого поиска
 
@@ -122,6 +126,7 @@ erDiagram
 Таблица предметов в инвентаре персонажа. Хранит информацию о предметах, их расположении, стеках и свойствах.
 
 **Ключевые поля:**
+
 - `item_template_id`: ID шаблона предмета (UUID, nullable для обратной совместимости)
 - `item_id`: ID предмета (VARCHAR, для обратной совместимости)
 - `slot_index`: Индекс слота в инвентаре
@@ -133,6 +138,7 @@ erDiagram
 - `equip_slot`: Слот экипировки (если экипирован)
 
 **Индексы:**
+
 - Уникальный индекс `(inventory_id, slot_index)` для неэкипированных предметов
 - Индекс по `character_id` для поиска предметов персонажа
 - Индекс по `item_template_id` для поиска по шаблону
@@ -144,18 +150,21 @@ erDiagram
 Таблица экипировки персонажа. Хранит информацию о экипированных предметах в различных слотах.
 
 **Ключевые поля:**
+
 - `character_id`: ID персонажа (PK, FK)
 - `slot_type`: Тип слота экипировки (weapon_primary, armor_head, implant_1, etc.)
 - `item_id`: ID предмета из character_items (FK)
 - `equipped_at`: Время экипировки
 
 **Типы слотов:**
+
 - Оружие: `weapon_primary`, `weapon_secondary`, `weapon_melee`
 - Броня: `armor_head`, `armor_body`, `armor_legs`, `armor_feet`, `armor_hands`
 - Импланты: `implant_1`, `implant_2`, `implant_3`, `implant_4`, `implant_5`
 - Системы: `cyberdeck`, `operating_system`, `nervous_system`
 
 **Индексы:**
+
 - Первичный ключ `(character_id, slot_type)` - один слот на персонажа
 - Индекс по `item_id` для поиска экипированных предметов
 - Индекс по `slot_type` для фильтрации по типу слота
@@ -165,12 +174,14 @@ erDiagram
 Таблица хранилища персонажа (банк/стэш). Хранит информацию о различных типах хранилищ.
 
 **Ключевые поля:**
+
 - `storage_type`: Тип хранилища (personal_bank, guild_bank, stash)
 - `max_slots`: Максимальное количество слотов (по умолчанию 50)
 - `current_weight`: Текущий вес хранилища
 - `max_weight`: Максимальный вес (по умолчанию 500.0)
 
 **Индексы:**
+
 - Уникальный индекс `(character_id, storage_type)` для одного типа хранилища на персонажа
 - Индекс по `character_id` для поиска хранилищ персонажа
 - Композитный индекс `(character_id, storage_type)` для оптимизации запросов
@@ -180,6 +191,7 @@ erDiagram
 Таблица предметов в хранилище. Хранит информацию о предметах в банке/стэше.
 
 **Ключевые поля:**
+
 - `storage_id`: ID хранилища (FK)
 - `item_template_id`: ID шаблона предмета (FK, nullable)
 - `slot_index`: Индекс слота в хранилище
@@ -189,6 +201,7 @@ erDiagram
 - `modifiers`: JSONB модификаторы предмета
 
 **Индексы:**
+
 - Уникальный индекс `(storage_id, slot_index)` для одного предмета на слот
 - Индекс по `storage_id` для поиска предметов в хранилище
 - Композитный индекс `(storage_id, slot_index)` для оптимизации запросов
@@ -199,6 +212,7 @@ erDiagram
 Таблица шаблонов предметов. Хранит базовую информацию о типах предметов.
 
 **Ключевые поля:**
+
 - `id`: ID шаблона (VARCHAR(100), PK)
 - `name`: Название предмета
 - `type`: Тип предмета (weapon, armor, consumable, material, quest_item, etc.)
@@ -213,6 +227,7 @@ erDiagram
 - `metadata`: JSONB дополнительные метаданные
 
 **Индексы:**
+
 - Композитный индекс `(type, rarity)` для фильтрации по типу и редкости
 
 ## Constraints и валидация
@@ -285,23 +300,29 @@ erDiagram
 ### Партиционирование
 
 Для больших объемов данных рекомендуется партиционирование:
+
 - По `created_at` для таблиц логов операций
 - По `character_id` для распределения нагрузки
 
 ## Миграции
 
 ### Существующие миграции:
+
 - `V1_6__inventory_tables.sql` - базовые таблицы (character_inventory, character_items, item_templates)
-- `V1_48__inventory_system_enhancement.sql` - дополнение схемы (character_equipment, character_storage, storage_items, дополнительные поля)
+- `V1_48__inventory_system_enhancement.sql` - дополнение схемы (character_equipment, character_storage, storage_items,
+  дополнительные поля)
 
 ### Применение миграций:
+
 ```bash
 liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ```
 
 ## Соответствие архитектуре
 
-Схема БД полностью соответствует архитектуре из `knowledge/implementation/architecture/inventory-system-architecture.yaml`:
+Схема БД полностью соответствует архитектуре из
+`knowledge/implementation/architecture/inventory-system-architecture.yaml`:
+
 - [OK] Все таблицы из архитектуры созданы
 - [OK] Все поля соответствуют описанию
 - [OK] Индексы оптимизированы для частых запросов
@@ -313,21 +334,23 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 
 ### Обратная совместимость
 
-- Таблица `character_items` поддерживает как `item_id` (VARCHAR), так и `item_template_id` (UUID) для обратной совместимости
+- Таблица `character_items` поддерживает как `item_id` (VARCHAR), так и `item_template_id` (UUID) для обратной
+  совместимости
 - Поле `item_template_id` может быть NULL для существующих записей
 
 ### Soft Delete
 
 Все таблицы поддерживают soft delete через поле `deleted_at`:
+
 - Индексы используют `WHERE deleted_at IS NULL` для фильтрации удаленных записей
 - Уникальные индексы учитывают soft delete при проверке уникальности
 
 ### JSONB поля
 
 Использование JSONB для гибкого хранения:
+
 - `modifiers`: Модификаторы предмета (статы, аффиксы, улучшения)
 - `metadata`: Дополнительные метаданные предмета
 - `requirements`: Требования для использования предмета
 - `stats`: Базовые статы предмета
-
 

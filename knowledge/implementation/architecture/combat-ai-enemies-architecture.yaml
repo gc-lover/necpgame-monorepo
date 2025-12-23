@@ -109,8 +109,8 @@ architecture:
       skill_level: "1-10"
       characteristics: |
         Базовые навыки, простая тактика, стандартное оружие
-      unique_abilities: []
-      lore_events: []
+      unique_abilities: [ ]
+      lore_events: [ ]
 
     - name: tactical
       description: Тактические враги
@@ -121,7 +121,7 @@ architecture:
         - Urban Sweep
         - Sync Burst
         - Faction-specific abilities (Arasaka, Militech, Kang Tao, NetWatch, Voodoo Boys)
-      lore_events: []
+      lore_events: [ ]
 
     - name: mythic
       description: Мифические враги
@@ -131,7 +131,7 @@ architecture:
       unique_abilities:
         - Reality Tear
         - Legendary combos
-      lore_events: []
+      lore_events: [ ]
 
     - name: raid
       description: Рейдовые враги
@@ -325,7 +325,7 @@ technical_specification:
       description: |
         Реализация AI Profile Manager с загрузкой профилей, фильтрацией по слоям сложности
         и управлением способностями врагов.
-      dependencies: []
+      dependencies: [ ]
       estimated_effort: 4 days
 
     - id: ai-behavior-engine
@@ -333,7 +333,7 @@ technical_specification:
       description: |
         Реализация AI Behavior Engine с комбинацией Behaviour Tree и Utility AI,
         обработкой действий и синхронизацией с Combat Session.
-      dependencies: [ai-profile-manager]
+      dependencies: [ ai-profile-manager ]
       estimated_effort: 7 days
 
     - id: raid-manager
@@ -341,7 +341,7 @@ technical_specification:
       description: |
         Реализация Raid Manager с управлением рейдовыми сессиями, координацией игроков
         и интеграцией с World Service.
-      dependencies: [ai-profile-manager]
+      dependencies: [ ai-profile-manager ]
       estimated_effort: 6 days
 
     - id: boss-phase-controller
@@ -349,7 +349,7 @@ technical_specification:
       description: |
         Реализация Boss Phase Controller с управлением фазами, механиками боссов
         и переходами между фазами.
-      dependencies: [raid-manager, ai-behavior-engine]
+      dependencies: [ raid-manager, ai-behavior-engine ]
       estimated_effort: 5 days
 
     - id: encounter-manager
@@ -357,7 +357,7 @@ technical_specification:
       description: |
         Реализация Encounter Manager с созданием встреч, управлением жизненным циклом
         и интеграцией с AI Behavior Engine.
-      dependencies: [ai-behavior-engine]
+      dependencies: [ ai-behavior-engine ]
       estimated_effort: 4 days
 
     - id: ai-telemetry-collector
@@ -365,7 +365,7 @@ technical_specification:
       description: |
         Реализация AI Telemetry Collector с сбором метрик, логированием действий
         и интеграцией с Analytics Service.
-      dependencies: [ai-behavior-engine, encounter-manager]
+      dependencies: [ ai-behavior-engine, encounter-manager ]
       estimated_effort: 3 days
 
     - id: ai-balance-tuner
@@ -373,7 +373,7 @@ technical_specification:
       description: |
         Реализация AI Balance Tuner с анализом метрик, расчетом коэффициентов
         и автоматическим обновлением баланса каждые 24 часа.
-      dependencies: [ai-telemetry-collector]
+      dependencies: [ ai-telemetry-collector ]
       estimated_effort: 5 days
 
     - id: websocket-channels
@@ -381,7 +381,7 @@ technical_specification:
       description: |
         Реализация WebSocket каналов для realtime событий рейдов
         с поддержкой PhaseStart, MechanicTrigger, PlayerDown, CheckRequired.
-      dependencies: [raid-manager, boss-phase-controller]
+      dependencies: [ raid-manager, boss-phase-controller ]
       estimated_effort: 3 days
 
     - id: event-bus-integration
@@ -389,7 +389,7 @@ technical_specification:
       description: |
         Реализация публикации и подписки на события через Kafka
         для всех компонентов системы AI.
-      dependencies: [ai-behavior-engine, raid-manager, encounter-manager]
+      dependencies: [ ai-behavior-engine, raid-manager, encounter-manager ]
       estimated_effort: 2 days
 
     - id: database-schema
@@ -397,7 +397,7 @@ technical_specification:
       description: |
         Создание таблиц БД для AI профилей, способностей, рейдов, встреч, телеметрии
         и баланса с миграциями Liquibase.
-      dependencies: []
+      dependencies: [ ]
       estimated_effort: 2 days
 
 diagrams:
@@ -405,9 +405,9 @@ diagrams:
     ```mermaid
     graph TB
         Client[UE5 Client] --> Gateway[API Gateway]
-        
+    
         Gateway --> GameplayService[Gameplay Service<br/>8083]
-        
+    
         GameplayService --> APM[AI Profile Manager]
         GameplayService --> ABE[AI Behavior Engine]
         GameplayService --> RM[Raid Manager]
@@ -415,25 +415,25 @@ diagrams:
         GameplayService --> EMC[Encounter Manager]
         GameplayService --> ATC[AI Telemetry Collector]
         GameplayService --> ABT[AI Balance Tuner]
-        
+    
         ABE --> APM
         BPC --> RM
         EMC --> ABE
         ATC --> ABE
         ABT --> ATC
-        
+    
         GameplayService --> CombatSession[Combat Session]
         GameplayService --> WorldService[World Service]
         GameplayService --> EconomyService[Economy Service]
         GameplayService --> AnalyticsService[Analytics Service]
         GameplayService --> SocialService[Social Service]
         GameplayService --> ProgressionService[Progression Service]
-        
+    
         GameplayService --> EventBus[Event Bus<br/>Kafka]
         EventBus --> RealtimeGateway[Realtime Gateway]
-        
+    
         GameplayService --> DB[(Gameplay DB)]
-        
+    
         Client --> WSRaid[WebSocket<br/>Raid Events]
         WSRaid --> GameplayService
     ```
@@ -448,7 +448,7 @@ diagrams:
         participant WS as World Service
         participant EB as Event Bus
         participant RG as Realtime Gateway
-        
+    
         C->>RM: Enter raid
         RM->>RM: Create raid session
         RM->>BPC: Initialize phase 1
@@ -456,20 +456,20 @@ diagrams:
         RM->>EB: Publish raid.phase.started
         EB->>RG: Notify clients
         RG->>C: PhaseStart event
-        
+    
         Note over C,RG: Players fight boss
-        
+    
         ABE->>ABE: Process boss behavior
         ABE->>BPC: Update phase progress
         BPC->>BPC: Check phase conditions
-        
+    
         alt Phase conditions met
             BPC->>BPC: Transition to next phase
             BPC->>EB: Publish raid.phase.completed
             EB->>RG: Notify clients
             RG->>C: PhaseStart (next phase)
         end
-        
+    
         alt Boss defeated
             BPC->>RM: Boss defeated
             RM->>EB: Publish raid.boss.defeated
@@ -488,10 +488,10 @@ diagrams:
         participant CS as Combat Session
         participant ATC as AI Telemetry Collector
         participant EB as Event Bus
-        
+    
         ABE->>APM: Load AI profile
         APM-->>ABE: Profile data
-        
+    
         loop Combat loop
             ABE->>ABE: Evaluate situation (Utility AI)
             ABE->>ABE: Select action (Behaviour Tree)

@@ -1,96 +1,96 @@
-        fields:
-          - id: UUID (PK)
-          - contract_id: UUID (FK player_contracts)
-          - initiator_items: JSONB (предметы инициатора)
-          - counterparty_items: JSONB (предметы контрагента)
-          - initiator_currency: DECIMAL(10,2)
-          - counterparty_currency: DECIMAL(10,2)
-          - status: ENUM (locked, released, distributed)
-          - locked_at: TIMESTAMP
-          - released_at: TIMESTAMP (nullable)
-        indexes:
-          - contract_id
-          - status
+fields:
+  - id: UUID (PK)
+  - contract_id: UUID (FK player_contracts)
+  - initiator_items: JSONB (предметы инициатора)
+  - counterparty_items: JSONB (предметы контрагента)
+  - initiator_currency: DECIMAL(10,2)
+  - counterparty_currency: DECIMAL(10,2)
+  - status: ENUM (locked, released, distributed)
+  - locked_at: TIMESTAMP
+  - released_at: TIMESTAMP (nullable)
+indexes:
+  - contract_id
+  - status
 
-      - name: collaterals
-        description: Залоги для контрактов
-        fields:
-          - id: UUID (PK)
-          - contract_id: UUID (FK player_contracts)
-          - player_id: UUID (FK accounts)
-          - amount: DECIMAL(10,2)
-          - forfeited_amount: DECIMAL(10,2)
-          - status: ENUM (locked, released, forfeited)
-          - locked_at: TIMESTAMP
-          - released_at: TIMESTAMP (nullable)
-        indexes:
-          - contract_id
-          - player_id, status
+  - name: collaterals
+    description: Залоги для контрактов
+    fields:
+      - id: UUID (PK)
+      - contract_id: UUID (FK player_contracts)
+      - player_id: UUID (FK accounts)
+      - amount: DECIMAL(10,2)
+      - forfeited_amount: DECIMAL(10,2)
+      - status: ENUM (locked, released, forfeited)
+      - locked_at: TIMESTAMP
+      - released_at: TIMESTAMP (nullable)
+    indexes:
+      - contract_id
+      - player_id, status
 
-      - name: contract_disputes
-        description: Споры по контрактам
-        fields:
-          - id: UUID (PK)
-          - contract_id: UUID (FK player_contracts)
-          - initiator_id: UUID (FK accounts)
-          - reason: TEXT
-          - evidence: JSONB (доказательства)
-          - ai_moderation_result: JSONB (nullable)
-          - decision: ENUM (pending, initiator_wins, counterparty_wins, partial)
-          - escrow_distribution: JSONB (nullable)
-          - resolved_at: TIMESTAMP (nullable)
-          - created_at: TIMESTAMP
-        indexes:
-          - contract_id
-          - initiator_id
-          - decision, resolved_at
+  - name: contract_disputes
+    description: Споры по контрактам
+    fields:
+      - id: UUID (PK)
+      - contract_id: UUID (FK player_contracts)
+      - initiator_id: UUID (FK accounts)
+      - reason: TEXT
+      - evidence: JSONB (доказательства)
+      - ai_moderation_result: JSONB (nullable)
+      - decision: ENUM (pending, initiator_wins, counterparty_wins, partial)
+      - escrow_distribution: JSONB (nullable)
+      - resolved_at: TIMESTAMP (nullable)
+      - created_at: TIMESTAMP
+    indexes:
+      - contract_id
+      - initiator_id
+      - decision, resolved_at
 
-      - name: contract_execution_log
-        description: Лог исполнения контрактов
-        fields:
-          - id: UUID (PK)
-          - contract_id: UUID (FK player_contracts)
-          - action: VARCHAR(255)
-          - details: JSONB
-          - executed_at: TIMESTAMP
-        indexes:
-          - contract_id, executed_at
+  - name: contract_execution_log
+    description: Лог исполнения контрактов
+    fields:
+      - id: UUID (PK)
+      - contract_id: UUID (FK player_contracts)
+      - action: VARCHAR(255)
+      - details: JSONB
+      - executed_at: TIMESTAMP
+    indexes:
+      - contract_id, executed_at
 
 technical_specification:
   backend_requirements:
     - Реализация Contract Manager в contract-service:
-      - CRUD операции с контрактами
-      - Управление жизненным циклом (переходы состояний)
-      - Валидация контрактов
+        - CRUD операции с контрактами
+        - Управление жизненным циклом (переходы состояний)
+        - Валидация контрактов
     - Реализация Contract Negotiation Manager:
-      - Управление переговорами
-      - Обмен предложениями
-      - Финализация контрактов
+        - Управление переговорами
+        - Обмен предложениями
+        - Финализация контрактов
     - Реализация Escrow Manager:
-      - Создание эскроу
-      - Блокировка активов
-      - Освобождение эскроу
+        - Создание эскроу
+        - Блокировка активов
+        - Освобождение эскроу
     - Реализация Collateral Manager:
-      - Создание залогов
-      - Блокировка залогов
-      - Удержание залогов
+        - Создание залогов
+        - Блокировка залогов
+        - Удержание залогов
     - Реализация Arbitration Manager:
-      - Создание споров
-      - Сбор доказательств
-      - AI-модерация
-      - Разрешение споров
+        - Создание споров
+        - Сбор доказательств
+        - AI-модерация
+        - Разрешение споров
     - Реализация Contract Validator:
-      - Проверка требований
-      - KYC проверки
-      - Проверка лимитов
-      - Детекция мошенничества
+        - Проверка требований
+        - KYC проверки
+        - Проверка лимитов
+        - Детекция мошенничества
     - Реализация Contract Execution Engine:
-      - Исполнение контрактов
-      - Интеграция с другими сервисами
+        - Исполнение контрактов
+        - Интеграция с другими сервисами
     - Реализация Contract Analytics Collector:
-      - Сбор метрик
-      - Анализ успешности
-      - Генерация отчётов
+        - Сбор метрик
+        - Анализ успешности
+        - Генерация отчётов
     - Интеграция с inventory-service для предметов
     - Интеграция с wallet-service для валюты
     - Интеграция с reputation-service для репутации

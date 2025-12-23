@@ -1,90 +1,103 @@
-          - used_slots: INTEGER (default: 0)
-          - prestige_score: INTEGER (default: 0)
-          - access_setting: ENUM (PRIVATE, FRIENDS_ONLY, PUBLIC, GUILD_ONLY)
-          - guests: UUID[] (FK accounts)
-          - purchased_at: TIMESTAMP
-          - created_at: TIMESTAMP
-          - updated_at: TIMESTAMP
-        indexes:
-          - owner_id
-          - guild_id
-          - apartment_type, prestige_score
+- used_slots:
+    INTEGER (default: 0)
+- prestige_score:
+    INTEGER (default: 0)
+- access_setting: ENUM (PRIVATE, FRIENDS_ONLY, PUBLIC, GUILD_ONLY)
+- guests: UUID[] (FK accounts)
+- purchased_at: TIMESTAMP
+- created_at: TIMESTAMP
+- updated_at: TIMESTAMP
+indexes:
+  - owner_id
+  - guild_id
+  - apartment_type, prestige_score
 
-      - name: placed_furniture
-        description: Размещённая мебель
-        fields:
-          - id: UUID (PK)
-          - apartment_id: UUID (FK apartments)
-          - furniture_item_id: UUID (FK furniture_items)
-          - position_x: FLOAT
-          - position_y: FLOAT
-          - position_z: FLOAT
-          - rotation_x: FLOAT (default: 0)
-          - rotation_y: FLOAT (default: 0)
-          - rotation_z: FLOAT (default: 0)
-          - scale_x: FLOAT (default: 1)
-          - scale_y: FLOAT (default: 1)
-          - scale_z: FLOAT (default: 1)
-          - placed_at: TIMESTAMP
-        indexes:
-          - apartment_id
-          - furniture_item_id
+  - name: placed_furniture
+    description: Размещённая мебель
+    fields:
+      - id: UUID (PK)
+      - apartment_id: UUID (FK apartments)
+      - furniture_item_id: UUID (FK furniture_items)
+      - position_x: FLOAT
+      - position_y: FLOAT
+      - position_z: FLOAT
+      - rotation_x:
+          FLOAT (default: 0)
+      - rotation_y:
+          FLOAT (default: 0)
+      - rotation_z:
+          FLOAT (default: 0)
+      - scale_x:
+          FLOAT (default: 1)
+      - scale_y:
+          FLOAT (default: 1)
+      - scale_z:
+          FLOAT (default: 1)
+      - placed_at: TIMESTAMP
+    indexes:
+      - apartment_id
+      - furniture_item_id
 
-      - name: furniture_items
-        description: Каталог мебели
-        fields:
-          - id: UUID (PK)
-          - name: VARCHAR(255)
-          - category: ENUM (DECORATIVE, FUNCTIONAL, COMFORT, STORAGE)
-          - description: TEXT
-          - price: BIGINT
-          - prestige_points: INTEGER (default: 0)
-          - slot_cost: INTEGER (default: 1)
-          - is_unique: BOOLEAN (default: false)
-          - function_bonus: JSONB (nullable)
-          - is_active: BOOLEAN (default: true)
-          - created_at: TIMESTAMP
-          - updated_at: TIMESTAMP
-        indexes:
-          - category, is_active
-          - is_unique, prestige_points
+  - name: furniture_items
+    description: Каталог мебели
+    fields:
+      - id: UUID (PK)
+      - name: VARCHAR(255)
+      - category: ENUM (DECORATIVE, FUNCTIONAL, COMFORT, STORAGE)
+      - description: TEXT
+      - price: BIGINT
+      - prestige_points:
+          INTEGER (default: 0)
+      - slot_cost:
+          INTEGER (default: 1)
+      - is_unique:
+          BOOLEAN (default: false)
+      - function_bonus: JSONB (nullable)
+      - is_active:
+          BOOLEAN (default: true)
+      - created_at: TIMESTAMP
+      - updated_at: TIMESTAMP
+    indexes:
+      - category, is_active
+      - is_unique, prestige_points
 
-      - name: player_furniture_inventory
-        description: Инвентарь мебели игроков
-        fields:
-          - id: UUID (PK)
-          - player_id: UUID (FK accounts)
-          - furniture_item_id: UUID (FK furniture_items)
-          - quantity: INTEGER (default: 1)
-          - purchased_at: TIMESTAMP
-        constraints: |
-          - UNIQUE(player_id, furniture_item_id)
-        indexes:
-          - player_id
-          - furniture_item_id
+  - name: player_furniture_inventory
+    description: Инвентарь мебели игроков
+    fields:
+      - id: UUID (PK)
+      - player_id: UUID (FK accounts)
+      - furniture_item_id: UUID (FK furniture_items)
+      - quantity:
+          INTEGER (default: 1)
+      - purchased_at: TIMESTAMP
+    constraints: |
+      - UNIQUE(player_id, furniture_item_id)
+    indexes:
+      - player_id
+      - furniture_item_id
 
-      - name: apartment_visits
-        description: Посещения квартир
-        fields:
-          - id: UUID (PK)
-          - apartment_id: UUID (FK apartments)
-          - visitor_id: UUID (FK accounts)
-          - visited_at: TIMESTAMP
-        indexes:
-          - apartment_id, visited_at
-          - visitor_id, visited_at
+  - name: apartment_visits
+    description: Посещения квартир
+    fields:
+      - id: UUID (PK)
+      - apartment_id: UUID (FK apartments)
+      - visitor_id: UUID (FK accounts)
+      - visited_at: TIMESTAMP
+    indexes:
+      - apartment_id, visited_at
+      - visitor_id, visited_at
 
 technical_specification:
   backend_requirements:
     - Реализация модулей в world-service-go:
-      - housing (управление квартирами)
-      - housing-furniture (мебель)
-      - housing-placement (размещение)
-      - housing-prestige (престиж)
-      - housing-bonuses (бонусы)
-      - housing-visits (посещения)
-      - housing-events (события)
-      - housing-shop (магазин)
+        - housing (управление квартирами)
+        - housing-furniture (мебель)
+        - housing-placement (размещение)
+        - housing-prestige (престиж)
+        - housing-bonuses (бонусы)
+        - housing-visits (посещения)
+        - housing-events (события)
+        - housing-shop (магазин)
     - Интеграция с economy-service для покупок
     - Интеграция с social-service для доступа
     - Интеграция с character-service для бонусов
@@ -344,5 +357,4 @@ history:
       - Спроектирована система функциональных бонусов
       - Создано техническое задание
       - Разбито на подзадачи
-
 

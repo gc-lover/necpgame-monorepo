@@ -1,248 +1,248 @@
-          - dialogue_tree: JSONB
-          - conditions: JSONB
-          - reputation_requirements: JSONB
-          - quest_triggers: JSONB
-          - created_at: TIMESTAMP
-          - updated_at: TIMESTAMP
+- dialogue_tree: JSONB
+- conditions: JSONB
+- reputation_requirements: JSONB
+- quest_triggers: JSONB
+- created_at: TIMESTAMP
+- updated_at: TIMESTAMP
 
-      - name: npc_dialogue_progress
-        description: Прогресс диалогов игроков
-        columns:
-          - id: UUID PRIMARY KEY
-          - player_id: UUID
-          - npc_id: UUID REFERENCES npcs(id)
-          - dialogue_id: UUID REFERENCES npc_dialogues(id)
-          - current_node: VARCHAR(255)
-          - visited_nodes: JSONB
-          - choices_made: JSONB
-          - created_at: TIMESTAMP
-          - updated_at: TIMESTAMP
+- name: npc_dialogue_progress
+  description: Прогресс диалогов игроков
+  columns:
+    - id: UUID PRIMARY KEY
+    - player_id: UUID
+    - npc_id: UUID REFERENCES npcs(id)
+    - dialogue_id: UUID REFERENCES npc_dialogues(id)
+    - current_node: VARCHAR(255)
+    - visited_nodes: JSONB
+    - choices_made: JSONB
+    - created_at: TIMESTAMP
+    - updated_at: TIMESTAMP
 
-      - name: npc_trader_catalogs
-        description: Каталоги товаров торговцев
-        columns:
-          - id: UUID PRIMARY KEY
-          - npc_id: UUID REFERENCES npcs(id)
-          - item_template_id: UUID
-          - price: DECIMAL(20, 4)
-          - stock: INTEGER
-          - restock_timer: INTEGER
-          - special_offer: BOOLEAN DEFAULT FALSE
-          - created_at: TIMESTAMP
-          - updated_at: TIMESTAMP
+- name: npc_trader_catalogs
+  description: Каталоги товаров торговцев
+  columns:
+    - id: UUID PRIMARY KEY
+    - npc_id: UUID REFERENCES npcs(id)
+    - item_template_id: UUID
+    - price: DECIMAL(20, 4)
+    - stock: INTEGER
+    - restock_timer: INTEGER
+    - special_offer: BOOLEAN DEFAULT FALSE
+    - created_at: TIMESTAMP
+    - updated_at: TIMESTAMP
 
-      - name: npc_trainer_skills
-        description: Навыки, доступные у тренеров
-        columns:
-          - id: UUID PRIMARY KEY
-          - npc_id: UUID REFERENCES npcs(id)
-          - skill_id: UUID
-          - training_cost: DECIMAL(20, 4)
-          - requirements: JSONB
-          - created_at: TIMESTAMP
-          - updated_at: TIMESTAMP
+- name: npc_trainer_skills
+  description: Навыки, доступные у тренеров
+  columns:
+    - id: UUID PRIMARY KEY
+    - npc_id: UUID REFERENCES npcs(id)
+    - skill_id: UUID
+    - training_cost: DECIMAL(20, 4)
+    - requirements: JSONB
+    - created_at: TIMESTAMP
+    - updated_at: TIMESTAMP
 
-      - name: npc_reputation
-        description: Репутация игроков с NPC
-        columns:
-          - id: UUID PRIMARY KEY
-          - player_id: UUID
-          - npc_id: UUID REFERENCES npcs(id)
-          - reputation_value: INTEGER
-          - reputation_level: VARCHAR(50) (HOSTILE, NEUTRAL, FRIENDLY, TRUSTED)
-          - last_interaction: TIMESTAMP
-          - created_at: TIMESTAMP
-          - updated_at: TIMESTAMP
+- name: npc_reputation
+  description: Репутация игроков с NPC
+  columns:
+    - id: UUID PRIMARY KEY
+    - player_id: UUID
+    - npc_id: UUID REFERENCES npcs(id)
+    - reputation_value: INTEGER
+    - reputation_level: VARCHAR(50) (HOSTILE, NEUTRAL, FRIENDLY, TRUSTED)
+    - last_interaction: TIMESTAMP
+    - created_at: TIMESTAMP
+    - updated_at: TIMESTAMP
 
-      - name: npc_interaction_history
-        description: История взаимодействий с NPC
-        columns:
-          - id: UUID PRIMARY KEY
-          - player_id: UUID
-          - npc_id: UUID REFERENCES npcs(id)
-          - interaction_type: VARCHAR(50)
-          - interaction_data: JSONB
-          - timestamp: TIMESTAMP
-          - created_at: TIMESTAMP
+- name: npc_interaction_history
+  description: История взаимодействий с NPC
+  columns:
+    - id: UUID PRIMARY KEY
+    - player_id: UUID
+    - npc_id: UUID REFERENCES npcs(id)
+    - interaction_type: VARCHAR(50)
+    - interaction_data: JSONB
+    - timestamp: TIMESTAMP
+    - created_at: TIMESTAMP
 
-  event_bus:
-    topics:
-      - name: social.npc.interaction.started
-        description: Начато взаимодействие с NPC
-        schema:
-          player_id: UUID
-          npc_id: UUID
-          interaction_type: string
+event_bus:
+  topics:
+    - name: social.npc.interaction.started
+      description: Начато взаимодействие с NPC
+      schema:
+        player_id: UUID
+        npc_id: UUID
+        interaction_type: string
 
-      - name: social.npc.dialogue.response
-        description: Ответ в диалоге
-        schema:
-          player_id: UUID
-          npc_id: UUID
-          dialogue_id: UUID
-          response_id: string
+    - name: social.npc.dialogue.response
+      description: Ответ в диалоге
+      schema:
+        player_id: UUID
+        npc_id: UUID
+        dialogue_id: UUID
+        response_id: string
 
-      - name: social.npc.reputation.changed
-        description: Изменена репутация с NPC
-        schema:
-          player_id: UUID
-          npc_id: UUID
-          old_reputation: number
-          new_reputation: number
-          change: number
+    - name: social.npc.reputation.changed
+      description: Изменена репутация с NPC
+      schema:
+        player_id: UUID
+        npc_id: UUID
+        old_reputation: number
+        new_reputation: number
+        change: number
 
-      - name: economy.npc.trade.completed
-        description: Завершена торговля с NPC
-        schema:
-          player_id: UUID
-          npc_id: UUID
-          trade_type: string
-          items: array
-          total_cost: number
+    - name: economy.npc.trade.completed
+      description: Завершена торговля с NPC
+      schema:
+        player_id: UUID
+        npc_id: UUID
+        trade_type: string
+        items: array
+        total_cost: number
 
-      - name: gameplay.npc.skill.learned
-        description: Изучен навык у NPC
-        schema:
-          player_id: UUID
-          npc_id: UUID
-          skill_id: UUID
-          cost: number
+    - name: gameplay.npc.skill.learned
+      description: Изучен навык у NPC
+      schema:
+        player_id: UUID
+        npc_id: UUID
+        skill_id: UUID
+        cost: number
 
-  websocket:
-    channels:
-      - name: npc.{npc_id}.state
-        description: Realtime обновления состояния NPC
-      - name: npc.{npc_id}.dialogue
-        description: Realtime обновления диалога
-      - name: npc.{npc_id}.shop
-        description: Realtime обновления магазина NPC
+websocket:
+  channels:
+    - name: npc.{npc_id}.state
+      description: Realtime обновления состояния NPC
+    - name: npc.{npc_id}.dialogue
+      description: Realtime обновления диалога
+    - name: npc.{npc_id}.shop
+      description: Realtime обновления магазина NPC
 
-  technical_tasks:
-    phases:
-      phase_1:
-        name: Базовая инфраструктура
-        tasks:
-          - Создание таблиц БД
-          - Настройка миграций Liquibase
-          - Базовая структура social-service для NPC
-          - Интеграция с Event Bus
-          - Настройка Redis для кэширования
-        estimated_effort: 4 days
+technical_tasks:
+  phases:
+    phase_1:
+      name: Базовая инфраструктура
+      tasks:
+        - Создание таблиц БД
+        - Настройка миграций Liquibase
+        - Базовая структура social-service для NPC
+        - Интеграция с Event Bus
+        - Настройка Redis для кэширования
+      estimated_effort: 4 days
 
-      phase_2:
-        name: NPC Type Manager
-        tasks:
-          - Реализация NPC Type Manager
-          - Реестр типов NPC
-          - Функционал каждого типа
-          - Связь с фракциями
-        estimated_effort: 3 days
+    phase_2:
+      name: NPC Type Manager
+      tasks:
+        - Реализация NPC Type Manager
+        - Реестр типов NPC
+        - Функционал каждого типа
+        - Связь с фракциями
+      estimated_effort: 3 days
 
-      phase_3:
-        name: Dialogue System
-        tasks:
-          - Реализация Dialogue System
-          - Дерево диалогов
-          - Выбор ответов
-          - Условия доступности
-          - Влияние на репутацию
-        estimated_effort: 5 days
+    phase_3:
+      name: Dialogue System
+      tasks:
+        - Реализация Dialogue System
+        - Дерево диалогов
+        - Выбор ответов
+        - Условия доступности
+        - Влияние на репутацию
+      estimated_effort: 5 days
 
-      phase_4:
-        name: Trading Interface
-        tasks:
-          - Реализация Trading Interface Manager
-          - Каталог товаров
-          - Покупка/продажа
-          - Обмен валют
-          - Ремонт оборудования
-        estimated_effort: 4 days
+    phase_4:
+      name: Trading Interface
+      tasks:
+        - Реализация Trading Interface Manager
+        - Каталог товаров
+        - Покупка/продажа
+        - Обмен валют
+        - Ремонт оборудования
+      estimated_effort: 4 days
 
-      phase_5:
-        name: Training Interface
-        tasks:
-          - Реализация Training Interface Manager
-          - Дерево навыков
-          - Обучение навыкам
-          - Тренировочные режимы
-        estimated_effort: 4 days
+    phase_5:
+      name: Training Interface
+      tasks:
+        - Реализация Training Interface Manager
+        - Дерево навыков
+        - Обучение навыкам
+        - Тренировочные режимы
+      estimated_effort: 4 days
 
-      phase_6:
-        name: Faction Interface
-        tasks:
-          - Реализация Faction Interface Manager
-          - Вступление в фракции
-          - Задания фракций
-          - Управление территорией
-        estimated_effort: 4 days
+    phase_6:
+      name: Faction Interface
+      tasks:
+        - Реализация Faction Interface Manager
+        - Вступление в фракции
+        - Задания фракций
+        - Управление территорией
+      estimated_effort: 4 days
 
-      phase_7:
-        name: Reputation System
-        tasks:
-          - Реализация NPC Reputation Tracker
-          - Влияние действий на репутацию
-          - Уровни репутации
-          - Разблокировка контента
-        estimated_effort: 3 days
+    phase_7:
+      name: Reputation System
+      tasks:
+        - Реализация NPC Reputation Tracker
+        - Влияние действий на репутацию
+        - Уровни репутации
+        - Разблокировка контента
+      estimated_effort: 3 days
 
-      phase_8:
-        name: Интеграции
-        tasks:
-          - Интеграция с Quest Service
-          - Интеграция с Economy Service
-          - Интеграция с Skill System
-          - Интеграция с Faction System
-          - WebSocket каналы
-        estimated_effort: 4 days
+    phase_8:
+      name: Интеграции
+      tasks:
+        - Интеграция с Quest Service
+        - Интеграция с Economy Service
+        - Интеграция с Skill System
+        - Интеграция с Faction System
+        - WebSocket каналы
+      estimated_effort: 4 days
 
-    total_estimated_effort: 31 days
+  total_estimated_effort: 31 days
 
 diagrams:
   component_diagram: |
     ```mermaid
     graph TB
         Client[UE5 Client] --> Gateway[API Gateway]
-        
+    
         Gateway --> SocialService[Social Service<br/>8084]
         Gateway --> EconomyService[Economy Service<br/>8085]
         Gateway --> GameplayService[Gameplay Service<br/>8083]
         Gateway --> QuestService[Quest Service<br/>8087]
-        
+    
         SocialService --> NTM[NPC Type Manager]
         SocialService --> NIM[NPC Interaction Manager]
         SocialService --> DS[Dialogue System]
         SocialService --> NRT[NPC Reputation Tracker]
         SocialService --> NSM[NPC State Manager]
         SocialService --> FIM[Faction Interface Manager]
-        
+    
         EconomyService --> TIM[Trading Interface Manager]
         EconomyService --> NTC[NPC Trader Catalog]
         EconomyService --> CEH[Currency Exchange Handler]
         EconomyService --> ERH[Equipment Repair Handler]
-        
+    
         GameplayService --> TrIM[Training Interface Manager]
         GameplayService --> STM[Skill Tree Manager]
         GameplayService --> ST[Skill Trainer]
         GameplayService --> TS[Training Simulator]
-        
+    
         QuestService --> NQP[NPC Quest Provider]
         QuestService --> QCM[Quest Chain Manager]
         QuestService --> QCV[Quest Condition Validator]
-        
+    
         SocialService --> EventBus[Event Bus<br/>Kafka]
         EconomyService --> EventBus
         GameplayService --> EventBus
         QuestService --> EventBus
-        
+    
         SocialService --> DB[(NPC System DB)]
         EconomyService --> DB
         GameplayService --> DB
         QuestService --> DB
-        
+    
         SocialService --> Cache[(Redis Cache)]
         SocialService --> FactionService[Faction System]
         SocialService --> RelationshipService[Relationship System]
-        
+    
         Client --> WSNPC[WebSocket<br/>NPC Interactions]
         WSNPC --> SocialService
     ```
@@ -257,16 +257,16 @@ diagrams:
         participant DialogueSystem
         participant TradingInterface
         participant TrainingInterface
-        
+    
         Client->>SocialService: GET /npc/{id}/interact
         SocialService->>NPCTypeManager: Get NPC type
         NPCTypeManager->>InteractionManager: Get available actions
         InteractionManager->>Client: Available actions (dialogue, trade, train, etc.)
-        
+    
         Client->>SocialService: POST /npc/{id}/dialogue/start
         SocialService->>DialogueSystem: Start dialogue
         DialogueSystem->>Client: Dialogue tree
-        
+    
         Client->>SocialService: POST /npc/{id}/dialogue/response
         SocialService->>DialogueSystem: Process response
         DialogueSystem->>DialogueSystem: Update reputation
@@ -281,25 +281,22 @@ diagrams:
         Fixer --> Quests[Квесты]
         Fixer --> Contacts[Контакты]
         Fixer --> Locations[Скрытые локации]
-        
+    
         Trader[Trader] --> Shop[Магазин]
         Trader --> Repair[Ремонт]
         Trader --> Currency[Обмен валют]
         Trader --> Auctions[Аукционы]
-        
+    
         Trainer[Trainer] --> Skills[Навыки]
         Trainer --> Training[Тренировки]
         Trainer --> Simulations[Симуляции]
-        
+    
         GangLeader[Gang Leader] --> GangQuests[Задания банды]
         GangLeader --> Territory[Территория]
         GangLeader --> Wars[Войны]
-        
+    
         CorporateDirector[Corporate Director] --> CorpContracts[Контракты]
         CorporateDirector --> Career[Карьера]
         CorporateDirector --> Politics[Политика]
     ```
-
-
-
 

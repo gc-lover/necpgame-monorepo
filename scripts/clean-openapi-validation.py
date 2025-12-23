@@ -4,21 +4,24 @@ Clean OpenAPI validation output for AI agents.
 Removes ANSI colors, emojis, and provides structured feedback.
 """
 
+import os
+import re
 import subprocess
 import sys
-import re
-import os
 from pathlib import Path
+
 
 def clean_ansi(text):
     """Remove ANSI escape codes"""
     ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
     return ansi_escape.sub('', text)
 
+
 def clean_emojis(text):
     """Remove emojis and special Unicode"""
     # Simplified emoji removal to avoid encoding issues
     return text
+
 
 def parse_validation_output(raw_output):
     """Parse redocly lint output and structure it"""
@@ -63,6 +66,7 @@ def parse_validation_output(raw_output):
         'blocked': len(errors) > 0
     }
 
+
 def parse_error_line(line, all_lines, index):
     """Parse a single error line from structured redocly output"""
 
@@ -76,7 +80,8 @@ def parse_error_line(line, all_lines, index):
         # Get description from next lines
         description = ""
         i = index + 1
-        while i < len(all_lines) and not all_lines[i].strip().startswith('[') and not all_lines[i].strip().startswith('Error was generated'):
+        while i < len(all_lines) and not all_lines[i].strip().startswith('[') and not all_lines[i].strip().startswith(
+                'Error was generated'):
             if all_lines[i].strip():
                 description += all_lines[i].strip() + " "
             i += 1
@@ -102,11 +107,13 @@ def parse_error_line(line, all_lines, index):
 
     return None
 
+
 def parse_warning_line(line, all_lines, index):
     """Parse a single warning line from structured redocly output"""
     # For now, warnings are not structured the same way in the output we tested
     # This is a placeholder for future enhancement
     return None
+
 
 def get_solution(error_type, description):
     """Provide solution based on error type"""
@@ -125,6 +132,7 @@ def get_solution(error_type, description):
             return solution
 
     return 'Check OpenAPI specification documentation'
+
 
 def format_output(result):
     """Format structured output for AI agents"""
@@ -181,13 +189,14 @@ def format_output(result):
 
     return "\n".join(output)
 
+
 def log_debug(message, data=None):
     """Log debug information to NDJSON file"""
     import json
     import time
     log_entry = {
-        "id": f"log_{int(time.time()*1000)}_debug",
-        "timestamp": int(time.time()*1000),
+        "id": f"log_{int(time.time() * 1000)}_debug",
+        "timestamp": int(time.time() * 1000),
         "location": "scripts/clean-openapi-validation.py",
         "message": message,
         "data": data or {},
@@ -200,6 +209,7 @@ def log_debug(message, data=None):
             f.write(json.dumps(log_entry, ensure_ascii=False) + "\n")
     except:
         pass  # Ignore logging errors
+
 
 def main():
     """Main function"""
@@ -249,6 +259,7 @@ def main():
 
     # Return appropriate exit code
     return 1 if parsed['blocked'] else 0
+
 
 if __name__ == '__main__':
     sys.exit(main())

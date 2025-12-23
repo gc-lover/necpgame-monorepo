@@ -2,7 +2,7 @@
 """
 NECPGAME Batch OpenAPI Struct Alignment Optimizer
 Issue: #1586 - Batch optimization of ALL OpenAPI files for struct field alignment
-PERFORMANCE: Memory ↓30-50%, Cache hits ↑15-20%
+PERFORMANCE: Memory down 30-50%, Cache hits up 15-20%
 
 SOLID Architecture:
 - Single Responsibility: Only optimizes struct alignment
@@ -12,6 +12,7 @@ SOLID Architecture:
 
 from pathlib import Path
 from typing import List, Tuple
+
 from scripts.core.base_script import BaseScript
 from scripts.openapi.openapi_manager import OpenAPIManager
 
@@ -102,7 +103,7 @@ class BatchOpenAPIOptimizer(BaseScript):
                     self.logger.info("  [SKIP] Already optimized")
 
             except Exception as e:
-                self.logger.error(f"  ✗ Failed to process: {e}")
+                self.logger.error(f"  ERROR Failed to process: {e}")
                 continue
 
         self._print_summary(len(files), total_files_changed, total_changed, files_with_changes)
@@ -149,7 +150,7 @@ class BatchOpenAPIOptimizer(BaseScript):
             self.logger.error(f"Failed to process {file_path.name}: {e}")
 
     def _print_summary(self, total_files: int, files_changed: int, total_changes: int,
-                      files_with_changes: List[Tuple[Path, int, List[str]]]):
+                       files_with_changes: List[Tuple[Path, int, List[str]]]):
         """Print optimization summary"""
         print("\n" + "=" * 60)
         print("OPTIMIZATION SUMMARY")
@@ -164,7 +165,7 @@ class BatchOpenAPIOptimizer(BaseScript):
                 print(f"  - {file_path.relative_to(self.config.get_project_root())}: {count} schemas")
                 if len(schemas) <= 5:
                     for schema in schemas:
-                        print(f"    • {schema}")
+                        print(f"    - {schema}")
 
 
 def main():

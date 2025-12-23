@@ -6,6 +6,7 @@ import os
 import re
 from pathlib import Path
 
+
 def fix_common_refs():
     """Fix all common.yaml references to use correct paths"""
     openapi_dir = Path("proto/openapi")
@@ -49,6 +50,7 @@ def fix_common_refs():
             print(f"Error processing {yaml_file}: {e}")
 
     print(f"Fixed {fixed_count} files")
+
 
 if __name__ == "__main__":
     fix_common_refs()

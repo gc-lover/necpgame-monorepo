@@ -116,13 +116,13 @@ architecture:
       request:
         character_id: UUID
         location_id: UUID
-        equipment_ids: [UUID]
+        equipment_ids: [ UUID ]
         scan_type: enum [surface, deep, critical]
       response:
         session_id: UUID
         estimated_duration: seconds
         risk_level: enum [low, medium, high, extreme]
-        warnings: [string]
+        warnings: [ string ]
 
     - path: GET /api/v1/blackwall/mapping/{sessionId}/status
       description: Статус активного сканирования
@@ -132,7 +132,7 @@ architecture:
         current_zone_type: enum [safe, weak, anomaly, critical, unknown]
         false_signals_detected: integer
         stress_level: 0-100
-        warnings: [string]
+        warnings: [ string ]
 
     - path: POST /api/v1/blackwall/mapping/{sessionId}/analyze-signal
       description: Анализ обнаруженного сигнала (мини-игра)
@@ -170,10 +170,10 @@ architecture:
       response:
         map_id: UUID
         accuracy: 0-100
-        zones: [object]
+        zones: [ object ]
         age: seconds
         outdated: boolean
-        warnings: [string]
+        warnings: [ string ]
 
   database_schema:
     tables:
@@ -215,7 +215,7 @@ architecture:
             type: VARCHAR(20)
           - name: status
             type: VARCHAR(20)
-            values: [active, completed, aborted, failed]
+            values: [ active, completed, aborted, failed ]
           - name: progress
             type: INTEGER
             range: 0-100
@@ -238,7 +238,7 @@ architecture:
             foreign_key: blackwall_maps.id
           - name: zone_type
             type: VARCHAR(20)
-            values: [safe, weak, anomaly, critical, unknown]
+            values: [ safe, weak, anomaly, critical, unknown ]
           - name: coordinates
             type: JSONB
           - name: stability
@@ -313,19 +313,19 @@ architecture:
         probability: 0.15
         detection_difficulty: 25
         effect: Ложная зона на карте, при использовании → атака AI
-    
+
       - name: old_data_echo
         source: data_corruption
         probability: 0.20
         detection_difficulty: 20
         effect: Устаревшие данные, зона уже изменилась
-    
+
       - name: netwatch_trap
         source: netwatch
         probability: 0.10
         detection_difficulty: 30
         effect: Приманка для обнаружения, триггер преследования
-    
+
       - name: system_glitch
         source: blackwall_instability
         probability: 0.25
@@ -349,20 +349,20 @@ architecture:
 
   class_access:
     netrunner:
-      scan_types: [surface, deep, critical]
+      scan_types: [ surface, deep, critical ]
       false_signal_detection: +15%
       accuracy_bonus: +20%
       risk_modifier: -10%
     
     techie:
-      scan_types: [surface, deep]
+      scan_types: [ surface, deep ]
       false_signal_detection: +5%
       accuracy_bonus: +5%
       risk_modifier: +5%
       requires_modifications: true
     
     other_classes:
-      scan_types: [surface]
+      scan_types: [ surface ]
       false_signal_detection: 0%
       accuracy_bonus: -20%
       risk_modifier: +15%

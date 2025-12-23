@@ -120,18 +120,18 @@ architecture:
             description: Уникальный идентификатор
           - name: rule_type
             type: enum
-            values: [word_filter, spam_pattern, toxicity_threshold]
+            values: [ word_filter, spam_pattern, toxicity_threshold ]
             description: Тип правила
           - name: pattern
             type: string
             description: Регулярное выражение или список слов
           - name: severity
             type: enum
-            values: [low, medium, high, critical]
+            values: [ low, medium, high, critical ]
             description: Уровень серьезности
           - name: action
             type: enum
-            values: [warn, mute, ban, delete]
+            values: [ warn, mute, ban, delete ]
             description: Автоматическое действие
           - name: is_active
             type: boolean
@@ -151,7 +151,7 @@ architecture:
             description: ID сообщения
           - name: violation_type
             type: enum
-            values: [spam, toxicity, harassment, forbidden_words]
+            values: [ spam, toxicity, harassment, forbidden_words ]
             description: Тип нарушения
           - name: severity_score
             type: float
@@ -174,7 +174,7 @@ architecture:
             description: ID нарушения
           - name: action_type
             type: enum
-            values: [warning, mute, ban, message_delete]
+            values: [ warning, mute, ban, message_delete ]
             description: Тип действия
           - name: duration
             type: interval
@@ -222,7 +222,7 @@ architecture:
         parameters:
           - name: rule_type
             type: query
-            enum: [word_filter, spam_pattern, toxicity_threshold]
+            enum: [ word_filter, spam_pattern, toxicity_threshold ]
           - name: limit
             type: query
             default: 50
@@ -242,19 +242,19 @@ architecture:
         description: Создать новое правило модерации
         request:
           type: object
-          required: [rule_type, pattern, severity]
+          required: [ rule_type, pattern, severity ]
           properties:
             rule_type:
               type: string
-              enum: [word_filter, spam_pattern, toxicity_threshold]
+              enum: [ word_filter, spam_pattern, toxicity_threshold ]
             pattern:
               type: string
             severity:
               type: string
-              enum: [low, medium, high, critical]
+              enum: [ low, medium, high, critical ]
             action:
               type: string
-              enum: [warn, mute, ban, delete]
+              enum: [ warn, mute, ban, delete ]
         response:
           $ref: '#/components/schemas/ModerationRule'
 
@@ -267,10 +267,10 @@ architecture:
             format: uuid
           - name: violation_type
             type: query
-            enum: [spam, toxicity, harassment, forbidden_words]
+            enum: [ spam, toxicity, harassment, forbidden_words ]
           - name: status
             type: query
-            enum: [pending, resolved, dismissed]
+            enum: [ pending, resolved, dismissed ]
             default: pending
           - name: limit
             type: query
@@ -296,11 +296,11 @@ architecture:
             format: uuid
         request:
           type: object
-          required: [action_type]
+          required: [ action_type ]
           properties:
             action_type:
               type: string
-              enum: [warning, mute, ban, message_delete, dismiss]
+              enum: [ warning, mute, ban, message_delete, dismiss ]
             duration:
               type: string
               description: ISO 8601 duration (для mute/ban)
@@ -315,7 +315,7 @@ architecture:
         description: Синхронная проверка сообщения (middleware endpoint)
         request:
           type: object
-          required: [player_id, message, channel_type]
+          required: [ player_id, message, channel_type ]
           properties:
             player_id:
               type: string
@@ -325,7 +325,7 @@ architecture:
               maxLength: 500
             channel_type:
               type: string
-              enum: [global, team, party, whisper, trade]
+              enum: [ global, team, party, whisper, trade ]
             metadata:
               type: object
               description: Дополнительная информация о сообщении
@@ -338,7 +338,7 @@ architecture:
               type: boolean
             violation_type:
               type: string
-              enum: [spam, toxicity, harassment, forbidden_words]
+              enum: [ spam, toxicity, harassment, forbidden_words ]
             severity_score:
               type: number
               minimum: 0
@@ -455,22 +455,22 @@ architecture:
       - name: violation_rate
         type: counter
         description: Количество обнаруженных нарушений в минуту
-        labels: [violation_type, severity]
+        labels: [ violation_type, severity ]
 
       - name: moderation_latency
         type: histogram
         description: Латентность проверки сообщений
-        buckets: [0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1.0]
+        buckets: [ 0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1.0 ]
 
       - name: rule_hit_rate
         type: counter
         description: Количество срабатываний каждого правила
-        labels: [rule_id, rule_type]
+        labels: [ rule_id, rule_type ]
 
       - name: ml_model_accuracy
         type: gauge
         description: Точность ML модели токсичности
-        labels: [model_version]
+        labels: [ model_version ]
 
     alerts:
       - name: High Violation Rate

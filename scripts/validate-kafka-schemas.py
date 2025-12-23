@@ -9,11 +9,12 @@ Ensures schemas are syntactically correct and follow conventions.
 """
 
 import json
+import jsonschema
 import os
 import sys
 from pathlib import Path
 from typing import List, Dict, Any
-import jsonschema
+
 
 class KafkaSchemaValidator:
     def __init__(self, schemas_dir: str):
@@ -127,6 +128,7 @@ class KafkaSchemaValidator:
             for warning in self.warnings:
                 print(f"  - {warning}")
 
+
 def main():
     if len(sys.argv) != 2:
         print("Usage: python validate-kafka-schemas.py <schemas_directory>")
@@ -142,6 +144,7 @@ def main():
     success = validator.validate_all_schemas()
 
     sys.exit(0 if success else 1)
+
 
 if __name__ == "__main__":
     main()

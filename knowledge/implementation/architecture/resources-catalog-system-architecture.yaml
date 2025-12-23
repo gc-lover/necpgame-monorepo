@@ -27,7 +27,7 @@ components:
     integration:
       - economy-service
       - crafting-service
-    
+
   - name: "Dynamic Pricing Engine"
     type: core
     responsibilities:
@@ -37,7 +37,7 @@ components:
     integration:
       - market-service
       - analytics-service
-    
+
   - name: "Source Tracker"
     type: core
     responsibilities:
@@ -47,7 +47,7 @@ components:
     integration:
       - world-service
       - loot-service
-    
+
   - name: "Usage Analytics"
     type: supporting
     responsibilities:
@@ -71,37 +71,37 @@ api_endpoints:
           - rarity (common, uncommon, rare, epic, legendary)
         expected_rps: 500
         optimization_level: 1
-      
+
       - method: GET
         path: "/resources/{id}"
         description: "Детальная информация о ресурсе"
         expected_rps: 1000
         optimization_level: 1
-      
+
       - method: GET
         path: "/resources/{id}/price"
         description: "Текущая цена ресурса с модификаторами"
         expected_rps: 2000
         optimization_level: 2
-      
+
       - method: GET
         path: "/resources/{id}/sources"
         description: "Источники получения ресурса"
         expected_rps: 300
         optimization_level: 1
-      
+
       - method: GET
         path: "/resources/{id}/uses"
         description: "Применение ресурса в крафте"
         expected_rps: 200
         optimization_level: 1
-      
+
       - method: POST
         path: "/admin/resources"
         description: "Создать ресурс (admin)"
         expected_rps: 5
         optimization_level: 1
-      
+
       - method: PUT
         path: "/admin/resources/{id}"
         description: "Обновить ресурс (admin)"
@@ -156,7 +156,7 @@ data_model:
       expected_struct_size: ~76 bytes
       expected_row_count: 100 resources
       memory_for_10k: ~760 KB
-    
+
     - name: ResourceSource
       description: "Источник получения ресурса"
       fields_ordered_by_size:
@@ -173,7 +173,7 @@ data_model:
           type: float32
           size: 4 bytes
       expected_struct_size: ~32 bytes
-    
+
     - name: ResourcePrice
       description: "Текущая цена с модификаторами"
       fields_ordered_by_size:
@@ -220,7 +220,7 @@ database_schema:
       hot_queries:
         - "SELECT * FROM resources WHERE category = ? AND tier >= ?" (1000 QPS, <5ms)
         - "SELECT * FROM resources WHERE id = ?" (2000 QPS, <1ms)
-    
+
     - name: resource_sources
       description: "Источники ресурсов"
       columns:
@@ -234,7 +234,7 @@ database_schema:
         - "idx_sources_resource ON resource_sources(resource_id)"
         - "idx_sources_zone ON resource_sources(zone_id) WHERE zone_id IS NOT NULL"
       expected_rows: 500
-    
+
     - name: resource_prices
       description: "Текущие цены с модификаторами"
       columns:
@@ -256,7 +256,7 @@ event_bus_contracts:
       payload:
         resource_id: uuid
         fields_changed: array
-    
+
     - topic: "resources.price.changed"
       description: "Цена ресурса изменилась"
       payload:
@@ -269,7 +269,7 @@ event_bus_contracts:
     - topic: "market.demand.updated"
       description: "Спрос на рынке изменился"
       handler: "Update demand_modifier in resource_prices"
-    
+
     - topic: "crafting.resource.used"
       description: "Ресурс использован в крафте"
       handler: "Update usage analytics"
@@ -313,15 +313,15 @@ integration:
     - name: economy-service
       integration_type: API
       description: "Получение каталога для market operations"
-    
+
     - name: crafting-service
       integration_type: API
       description: "Получение ресурсов для recipes"
-    
+
     - name: world-service
       integration_type: Event Bus
       description: "Обновление spawn points и zones"
-    
+
     - name: loot-service
       integration_type: Event Bus
       description: "Drop rates и loot tables"

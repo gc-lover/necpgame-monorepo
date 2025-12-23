@@ -1,145 +1,145 @@
-          - started_at: TIMESTAMP (nullable)
-          - completed_at: TIMESTAMP (nullable)
-          - created_at: TIMESTAMP
-          - updated_at: TIMESTAMP
-        indexes:
-          - player_id, status
-          - chain_id, status
-          - guild_id, status
-          - status, started_at
+- started_at: TIMESTAMP (nullable)
+- completed_at: TIMESTAMP (nullable)
+- created_at: TIMESTAMP
+- updated_at: TIMESTAMP
+indexes:
+  - player_id, status
+  - chain_id, status
+  - guild_id, status
+  - status, started_at
 
-      - name: production_stages
-        description: Этапы производства
-        fields:
-          - id: UUID (PK)
-          - order_id: UUID (FK production_orders)
-          - stage_number: INTEGER
-          - stage_type: ENUM (resource_extraction, processing, crafting, assembly)
-          - status: ENUM (pending, in_progress, completed, failed)
-          - required_resources: JSONB
-          - consumed_resources: JSONB (nullable)
-          - result: JSONB (nullable)
-          - success: BOOLEAN (nullable)
-          - started_at: TIMESTAMP (nullable)
-          - completed_at: TIMESTAMP (nullable)
-          - created_at: TIMESTAMP
-        indexes:
-          - order_id, stage_number
-          - status
+  - name: production_stages
+    description: Этапы производства
+    fields:
+      - id: UUID (PK)
+      - order_id: UUID (FK production_orders)
+      - stage_number: INTEGER
+      - stage_type: ENUM (resource_extraction, processing, crafting, assembly)
+      - status: ENUM (pending, in_progress, completed, failed)
+      - required_resources: JSONB
+      - consumed_resources: JSONB (nullable)
+      - result: JSONB (nullable)
+      - success: BOOLEAN (nullable)
+      - started_at: TIMESTAMP (nullable)
+      - completed_at: TIMESTAMP (nullable)
+      - created_at: TIMESTAMP
+    indexes:
+      - order_id, stage_number
+      - status
 
-      - name: production_stations
-        description: Производственные станции игроков
-        fields:
-          - id: UUID (PK)
-          - player_id: UUID (FK accounts)
-          - station_type: ENUM (smelter, processor, assembler, legendary_forge)
-          - level: INTEGER
-          - efficiency_bonus: DECIMAL(5,2)
-          - capacity: INTEGER
-          - current_orders: INTEGER
-          - location: VARCHAR(255)
-          - created_at: TIMESTAMP
-          - updated_at: TIMESTAMP
-        indexes:
-          - player_id, station_type
-          - station_type, level
+  - name: production_stations
+    description: Производственные станции игроков
+    fields:
+      - id: UUID (PK)
+      - player_id: UUID (FK accounts)
+      - station_type: ENUM (smelter, processor, assembler, legendary_forge)
+      - level: INTEGER
+      - efficiency_bonus: DECIMAL(5,2)
+      - capacity: INTEGER
+      - current_orders: INTEGER
+      - location: VARCHAR(255)
+      - created_at: TIMESTAMP
+      - updated_at: TIMESTAMP
+    indexes:
+      - player_id, station_type
+      - station_type, level
 
-      - name: production_licenses
-        description: Лицензии на производство
-        fields:
-          - id: UUID (PK)
-          - name: VARCHAR(255)
-          - description: TEXT
-          - item_tier: INTEGER
-          - item_type: VARCHAR(50)
-          - cost: DECIMAL(10,2)
-          - duration_days: INTEGER (nullable, для временных лицензий)
-          - created_at: TIMESTAMP
-        indexes:
-          - item_tier, item_type
+  - name: production_licenses
+    description: Лицензии на производство
+    fields:
+      - id: UUID (PK)
+      - name: VARCHAR(255)
+      - description: TEXT
+      - item_tier: INTEGER
+      - item_type: VARCHAR(50)
+      - cost: DECIMAL(10,2)
+      - duration_days: INTEGER (nullable, для временных лицензий)
+      - created_at: TIMESTAMP
+    indexes:
+      - item_tier, item_type
 
-      - name: player_production_licenses
-        description: Лицензии игроков
-        fields:
-          - id: UUID (PK)
-          - player_id: UUID (FK accounts)
-          - license_id: UUID (FK production_licenses)
-          - purchased_at: TIMESTAMP
-          - expires_at: TIMESTAMP (nullable)
-          - active: BOOLEAN
-        indexes:
-          - player_id, active
-          - license_id, active
-          - expires_at
+  - name: player_production_licenses
+    description: Лицензии игроков
+    fields:
+      - id: UUID (PK)
+      - player_id: UUID (FK accounts)
+      - license_id: UUID (FK production_licenses)
+      - purchased_at: TIMESTAMP
+      - expires_at: TIMESTAMP (nullable)
+      - active: BOOLEAN
+    indexes:
+      - player_id, active
+      - license_id, active
+      - expires_at
 
-      - name: production_accelerators
-        description: Ускорители производства
-        fields:
-          - id: UUID (PK)
-          - order_id: UUID (FK production_orders)
-          - accelerator_type: ENUM (efficiency_catalyst, quality_enhancer, material_optimizer)
-          - effect: JSONB (описание эффекта)
-          - applied_at: TIMESTAMP
-          - expires_at: TIMESTAMP
-        indexes:
-          - order_id
-          - expires_at
+  - name: production_accelerators
+    description: Ускорители производства
+    fields:
+      - id: UUID (PK)
+      - order_id: UUID (FK production_orders)
+      - accelerator_type: ENUM (efficiency_catalyst, quality_enhancer, material_optimizer)
+      - effect: JSONB (описание эффекта)
+      - applied_at: TIMESTAMP
+      - expires_at: TIMESTAMP
+    indexes:
+      - order_id
+      - expires_at
 
-      - name: production_legendary_quests
-        description: Квестовые цепочки для легендарного крафта
-        fields:
-          - id: UUID (PK)
-          - name: VARCHAR(255)
-          - description: TEXT
-          - item_id: UUID (FK items)
-          - quest_chain: JSONB (массив квестов)
-          - required_blueprint: BOOLEAN
-          - required_mastery: INTEGER
-          - required_components: JSONB
-          - legendary_forge_required: BOOLEAN
-          - base_success_rate: DECIMAL(5,2)
-          - created_at: TIMESTAMP
-        indexes:
-          - item_id
+  - name: production_legendary_quests
+    description: Квестовые цепочки для легендарного крафта
+    fields:
+      - id: UUID (PK)
+      - name: VARCHAR(255)
+      - description: TEXT
+      - item_id: UUID (FK items)
+      - quest_chain: JSONB (массив квестов)
+      - required_blueprint: BOOLEAN
+      - required_mastery: INTEGER
+      - required_components: JSONB
+      - legendary_forge_required: BOOLEAN
+      - base_success_rate: DECIMAL(5,2)
+      - created_at: TIMESTAMP
+    indexes:
+      - item_id
 
 technical_specification:
   backend_requirements:
     - Реализация Production Chain Manager в production-service:
-      - CRUD операции с цепочками
-      - Валидация цепочек
-      - Расчёт стоимости цепочек
+        - CRUD операции с цепочками
+        - Валидация цепочек
+        - Расчёт стоимости цепочек
     - Реализация Production Stage Manager:
-      - Управление этапами производства
-      - Выполнение этапов
-      - Переходы между этапами
+        - Управление этапами производства
+        - Выполнение этапов
+        - Переходы между этапами
     - Реализация Station Manager:
-      - Управление станциями
-      - Улучшение станций
-      - Резервирование станций
+        - Управление станциями
+        - Улучшение станций
+        - Резервирование станций
     - Реализация License Manager:
-      - Каталог лицензий
-      - Покупка лицензий
-      - Проверка лицензий
+        - Каталог лицензий
+        - Покупка лицензий
+        - Проверка лицензий
     - Реализация Resource Manager:
-      - Проверка ресурсов
-      - Резервирование ресурсов
-      - Расход ресурсов
+        - Проверка ресурсов
+        - Резервирование ресурсов
+        - Расход ресурсов
     - Реализация Bulk Production Manager:
-      - Массовое производство
-      - Оптимизация производства
-      - Управление производственными линиями
+        - Массовое производство
+        - Оптимизация производства
+        - Управление производственными линиями
     - Реализация Accelerator Manager:
-      - Применение ускорителей
-      - Rush-заказы
-      - Расчёт стоимости ускорения
+        - Применение ускорителей
+        - Rush-заказы
+        - Расчёт стоимости ускорения
     - Реализация Legendary Craft Manager:
-      - Квестовые цепочки
-      - Проверка требований
-      - Легендарный крафт
+        - Квестовые цепочки
+        - Проверка требований
+        - Легендарный крафт
     - Реализация Production Analytics Collector:
-      - Сбор метрик
-      - Анализ прибыльности
-      - Генерация отчётов
+        - Сбор метрик
+        - Анализ прибыльности
+        - Генерация отчётов
     - Интеграция с crafting-service для выполнения крафта
     - Интеграция с guild-service для гильдийного производства
     - Интеграция с inventory-service для ресурсов

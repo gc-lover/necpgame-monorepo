@@ -280,7 +280,7 @@ technical_specification:
       description: |
         Реализация Ability Catalog Manager с загрузкой и кэшированием способностей,
         фильтрацией по источникам и рангам.
-      dependencies: []
+      dependencies: [ ]
       estimated_effort: 3 days
 
     - id: ability-loadout-manager
@@ -288,7 +288,7 @@ technical_specification:
       description: |
         Реализация Ability Loadout Manager с поддержкой Q/E/R слотов, пассивов,
         хакерских слотов и валидации требований.
-      dependencies: [ability-catalog-manager]
+      dependencies: [ ability-catalog-manager ]
       estimated_effort: 4 days
 
     - id: ability-activation-engine
@@ -296,7 +296,7 @@ technical_specification:
       description: |
         Реализация Ability Activation Engine с проверкой доступности, ресурсов,
         кулдаунов и киберпсихоза.
-      dependencies: [ability-catalog-manager, ability-loadout-manager]
+      dependencies: [ ability-catalog-manager, ability-loadout-manager ]
       estimated_effort: 5 days
 
     - id: cooldown-manager
@@ -304,7 +304,7 @@ technical_specification:
       description: |
         Реализация Cooldown Manager с отслеживанием кулдаунов, модификаторами
         и автоматическим истечением.
-      dependencies: [ability-activation-engine]
+      dependencies: [ ability-activation-engine ]
       estimated_effort: 3 days
 
     - id: synergy-system
@@ -312,7 +312,7 @@ technical_specification:
       description: |
         Реализация Synergy System с поддержкой ability/team/equipment/implant/timing
         синергий и расчетом бонусов.
-      dependencies: [ability-activation-engine]
+      dependencies: [ ability-activation-engine ]
       estimated_effort: 5 days
 
     - id: cyberpsychosis-tracker
@@ -320,7 +320,7 @@ technical_specification:
       description: |
         Реализация Cyberpsychosis Tracker с расчетом влияния способностей,
         отслеживанием порогов и применением ограничений.
-      dependencies: [ability-activation-engine]
+      dependencies: [ ability-activation-engine ]
       estimated_effort: 4 days
 
     - id: ability-metrics-collector
@@ -328,7 +328,7 @@ technical_specification:
       description: |
         Реализация Ability Metrics Collector с логированием активаций,
         сбором статистики и интеграцией с Analytics Service.
-      dependencies: [ability-activation-engine]
+      dependencies: [ ability-activation-engine ]
       estimated_effort: 3 days
 
     - id: websocket-channels
@@ -336,7 +336,7 @@ technical_specification:
       description: |
         Реализация WebSocket каналов для realtime обновлений активаций
         и лоадаутов.
-      dependencies: [ability-activation-engine, ability-loadout-manager]
+      dependencies: [ ability-activation-engine, ability-loadout-manager ]
       estimated_effort: 3 days
 
     - id: event-bus-integration
@@ -344,7 +344,7 @@ technical_specification:
       description: |
         Реализация публикации и подписки на события через Kafka
         для всех компонентов системы способностей.
-      dependencies: [ability-activation-engine, synergy-system, cyberpsychosis-tracker]
+      dependencies: [ ability-activation-engine, synergy-system, cyberpsychosis-tracker ]
       estimated_effort: 2 days
 
     - id: database-schema
@@ -352,7 +352,7 @@ technical_specification:
       description: |
         Создание таблиц БД для способностей, лоадаутов, кулдаунов, синергий
         и киберпсихоза с миграциями Liquibase.
-      dependencies: []
+      dependencies: [ ]
       estimated_effort: 2 days
 
 diagrams:
@@ -360,9 +360,9 @@ diagrams:
     ```mermaid
     graph TB
         Client[UE5 Client] --> Gateway[API Gateway]
-        
+    
         Gateway --> GameplayService[Gameplay Service<br/>8083]
-        
+    
         GameplayService --> ACM[Ability Catalog Manager]
         GameplayService --> ALM[Ability Loadout Manager]
         GameplayService --> AAE[Ability Activation Engine]
@@ -370,22 +370,22 @@ diagrams:
         GameplayService --> SS[Synergy System]
         GameplayService --> CT[Cyberpsychosis Tracker]
         GameplayService --> AMC[Ability Metrics Collector]
-        
+    
         AAE --> CM
         AAE --> CT
         AAE --> SS
-        
+    
         GameplayService --> ProgressionService[Progression Service]
         GameplayService --> EconomyService[Economy Service]
         GameplayService --> InventoryService[Inventory Service]
         GameplayService --> ImplantService[Implant Service]
         GameplayService --> AnalyticsService[Analytics Service]
-        
+    
         GameplayService --> EventBus[Event Bus<br/>Kafka]
         EventBus --> RealtimeGateway[Realtime Gateway]
-        
+    
         GameplayService --> DB[(Gameplay DB)]
-        
+    
         Client --> WSAbl[WebSocket<br/>Abilities]
         WSAbl --> GameplayService
     ```
@@ -400,7 +400,7 @@ diagrams:
         participant SS as Synergy System
         participant PS as Progression Service
         participant EB as Event Bus
-        
+    
         C->>AAE: POST /abilities/activate
         AAE->>AAE: Check ability availability
         AAE->>CM: Check cooldowns
@@ -415,7 +415,7 @@ diagrams:
         AAE->>CT: Update cyberpsychosis
         AAE->>EB: Publish combat.ability.activated
         AAE-->>C: Activation result
-        
+    
         EB->>PS: combat.ability.activated
         PS->>PS: Update attributes if needed
     ```
@@ -430,7 +430,7 @@ diagrams:
         participant IS as Implant Service
         participant ES as Economy Service
         participant EB as Event Bus
-        
+    
         C->>ALM: POST /abilities/loadouts
         ALM->>ALM: Validate loadout
         ALM->>ACM: Check ability requirements

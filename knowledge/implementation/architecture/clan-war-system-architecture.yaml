@@ -391,140 +391,140 @@ architecture:
       latency_requirements: < 100-300ms для публикации событий
       sync_strategy: Eventual Consistency для событий (через Event Bus)
 
-## Performance Requirements
+  ## Performance Requirements
 
-**Load:** 10000+ concurrent players, P99 <50ms for war operations
-**Data Model (optimized):**
-- ClanWar: 256 bytes (participants, phases, territories, scores)
-- WarBattle: 128 bytes (participants, scores, territory_id, timestamps)
-- TerritoryState: 96 bytes (owner_clan_id, resources, defense_level, last_capture)
+  **Load:** 10000+ concurrent players, P99 <50ms for war operations
+  **Data Model (optimized):**
+  - ClanWar: 256 bytes (participants, phases, territories, scores)
+  - WarBattle: 128 bytes (participants, scores, territory_id, timestamps)
+  - TerritoryState: 96 bytes (owner_clan_id, resources, defense_level, last_capture)
 
-**Hot Path:** Territory capture (200 RPS), score updates (500 RPS), war status queries (1000 RPS)
-**Backend optimizations:** Level 3 - Event sourcing, CQRS, distributed war state management
+    **Hot Path:** Territory capture (200 RPS), score updates (500 RPS), war status queries (1000 RPS)
+    **Backend optimizations:** Level 3 - Event sourcing, CQRS, distributed war state management
 
-## Scaling Strategy
+  ## Scaling Strategy
 
-### Horizontal Scaling
-- **War Manager:** Multiple instances with consistent hashing by war_id
-- **Battle Manager:** Sharded by territory region, auto-scaling during peak battles
-- **Database:** Read replicas for score queries, partitioned by war_id and time
+  ### Horizontal Scaling
+  - **War Manager:** Multiple instances with consistent hashing by war_id
+  - **Battle Manager:** Sharded by territory region, auto-scaling during peak battles
+  - **Database:** Read replicas for score queries, partitioned by war_id and time
 
-### Geographic Distribution
-- **Regional Wars:** Wars limited to regions to reduce latency
-- **Cross-Region Alliances:** Eventual consistency for alliance data
-- **Global Leaderboards:** Cached in Redis with periodic sync
+  ### Geographic Distribution
+  - **Regional Wars:** Wars limited to regions to reduce latency
+  - **Cross-Region Alliances:** Eventual consistency for alliance data
+  - **Global Leaderboards:** Cached in Redis with periodic sync
 
-## Security Considerations
+  ## Security Considerations
 
-### Access Control
-- **War Declaration:** Guild leader + admin approval required
-- **Admin Operations:** Multi-factor authentication, audit trails
-- **Player Data:** Encrypted sensitive information, GDPR compliance
+  ### Access Control
+  - **War Declaration:** Guild leader + admin approval required
+  - **Admin Operations:** Multi-factor authentication, audit trails
+  - **Player Data:** Encrypted sensitive information, GDPR compliance
 
-### Anti-Cheat Measures
-- **Battle Validation:** Server-side hit validation, anti-speed hacking
-- **Score Integrity:** Cryptographic signatures on score updates
-- **Territory Control:** GPS validation for mobile clients
+  ### Anti-Cheat Measures
+  - **Battle Validation:** Server-side hit validation, anti-speed hacking
+  - **Score Integrity:** Cryptographic signatures on score updates
+  - **Territory Control:** GPS validation for mobile clients
 
-## Monitoring & Observability
+  ## Monitoring & Observability
 
-### Key Metrics
-- **War Participation:** Active players per war, concurrent battles
-- **System Performance:** P95 latency for war operations, error rates
-- **Battle Statistics:** Kill/death ratios, territory capture times
-- **Economic Impact:** Reward distribution success rates
+  ### Key Metrics
+  - **War Participation:** Active players per war, concurrent battles
+  - **System Performance:** P95 latency for war operations, error rates
+  - **Battle Statistics:** Kill/death ratios, territory capture times
+  - **Economic Impact:** Reward distribution success rates
 
-### Alerts
-- **Critical:** War declaration failures, battle system downtime
-- **Performance:** Latency spikes >100ms, error rates >1%
-- **Security:** Suspicious activity patterns, anti-cheat violations
+  ### Alerts
+  - **Critical:** War declaration failures, battle system downtime
+  - **Performance:** Latency spikes >100ms, error rates >1%
+  - **Security:** Suspicious activity patterns, anti-cheat violations
 
-## Implementation Roadmap
+  ## Implementation Roadmap
 
-### Phase 1: Core Infrastructure (3 weeks)
-- [ ] Set up PostgreSQL with partitioning strategy
-- [ ] Implement War Manager with basic CRUD operations
-- [ ] Create War Phase Controller with timer scheduling
-- [ ] Set up Event Bus integration
+  ### Phase 1: Core Infrastructure (3 weeks)
+  - [ ] Set up PostgreSQL with partitioning strategy
+  - [ ] Implement War Manager with basic CRUD operations
+  - [ ] Create War Phase Controller with timer scheduling
+  - [ ] Set up Event Bus integration
+  
+  ### Phase 2: Territory & Battle Systems (4 weeks)
+  - [ ] Build Territory Manager with ownership tracking
+  - [ ] Implement Battle Manager with PvP zone creation
+  - [ ] Create Score Calculator with real-time updates
+  - [ ] Add Alliance Manager for war coalitions
+  
+  ### Phase 3: Rewards & Events (3 weeks)
+  - [ ] Develop Reward Distributor with economy integration
+  - [ ] Implement War Event Handler with notifications
+  - [ ] Create comprehensive event schema
+  - [ ] Add real-time updates via WebSocket
+  
+  ### Phase 4: Production Ready (2 weeks)
+  - [ ] Performance testing (1000 concurrent players)
+  - [ ] Load testing with multiple simultaneous wars
+  - [ ] Security audit and penetration testing
+  - [ ] Monitoring dashboard implementation
+  
+  ## Risk Assessment
+  
+  ### High Risk
+  - **Data Loss:** War state corruption during critical battles
+  - **Cheating:** Exploits in scoring or territory capture systems
+  - **Performance:** System overload during peak war times
+  
+  ### Mitigation
+  - **Backup Strategy:** Point-in-time recovery, cross-region replication
+  - **Anti-Cheat:** Server-side validation, statistical anomaly detection
+  - **Capacity Planning:** Auto-scaling, load shedding during peaks
+  
+  ## Cost Optimization
+  
+  ### Infrastructure Costs
+  - **Database:** Aurora Serverless for variable war activity
+  - **Compute:** Spot instances for battle processing
+  - **Cache:** Redis Cluster for score and territory data
+  
+  ### Operational Costs
+  - **Monitoring:** Centralized logging with retention policies
+  - **Alerting:** Automated incident response to reduce MTTR
+  - **Testing:** Automated load testing to prevent production issues
+  
+  ## Follow-up Tasks
+  
+  ### API Designer (#2197)
+  - Create detailed OpenAPI 3.0 specification for all clan war endpoints
+  - Define WebSocket protocols for real-time war updates
+  - Document event schemas for inter-service communication
+  - Create request/response examples and error codes
+  
+  ### Database Agent (#2210)
+  - Design PostgreSQL schema with proper indexing and partitioning
+  - Implement time-based partitioning for war data scalability
+  - Create Liquibase migrations for all clan war tables
+  - Set up database monitoring and performance optimization
+  
+  ### Backend Agent (#2220)
+  - Implement 8 clan war modules in world-service-go
+  - Apply performance optimizations (struct alignment, context timeouts)
+  - Integrate with guild-service, gameplay-service, economy-service
+  - Add comprehensive error handling and logging
+  
+  ### DevOps Agent (#2224)
+  - Set up Kubernetes deployments with horizontal pod autoscaling
+  - Configure monitoring stack (Prometheus, Grafana, ELK)
+  - Implement CI/CD pipelines for clan war service
+  - Create infrastructure as code with Terraform
+  
+  ### Network Agent (#2199)
+  - Design WebSocket protocols for real-time battle updates
+  - Implement delta synchronization for war state changes
+  - Optimize network traffic for large-scale PvP events
+  - Add connection pooling and load balancing
 
-### Phase 2: Territory & Battle Systems (4 weeks)
-- [ ] Build Territory Manager with ownership tracking
-- [ ] Implement Battle Manager with PvP zone creation
-- [ ] Create Score Calculator with real-time updates
-- [ ] Add Alliance Manager for war coalitions
-
-### Phase 3: Rewards & Events (3 weeks)
-- [ ] Develop Reward Distributor with economy integration
-- [ ] Implement War Event Handler with notifications
-- [ ] Create comprehensive event schema
-- [ ] Add real-time updates via WebSocket
-
-### Phase 4: Production Ready (2 weeks)
-- [ ] Performance testing (1000 concurrent players)
-- [ ] Load testing with multiple simultaneous wars
-- [ ] Security audit and penetration testing
-- [ ] Monitoring dashboard implementation
-
-## Risk Assessment
-
-### High Risk
-- **Data Loss:** War state corruption during critical battles
-- **Cheating:** Exploits in scoring or territory capture systems
-- **Performance:** System overload during peak war times
-
-### Mitigation
-- **Backup Strategy:** Point-in-time recovery, cross-region replication
-- **Anti-Cheat:** Server-side validation, statistical anomaly detection
-- **Capacity Planning:** Auto-scaling, load shedding during peaks
-
-## Cost Optimization
-
-### Infrastructure Costs
-- **Database:** Aurora Serverless for variable war activity
-- **Compute:** Spot instances for battle processing
-- **Cache:** Redis Cluster for score and territory data
-
-### Operational Costs
-- **Monitoring:** Centralized logging with retention policies
-- **Alerting:** Automated incident response to reduce MTTR
-- **Testing:** Automated load testing to prevent production issues
-
-## Follow-up Tasks
-
-### API Designer (#2197)
-- Create detailed OpenAPI 3.0 specification for all clan war endpoints
-- Define WebSocket protocols for real-time war updates
-- Document event schemas for inter-service communication
-- Create request/response examples and error codes
-
-### Database Agent (#2210)
-- Design PostgreSQL schema with proper indexing and partitioning
-- Implement time-based partitioning for war data scalability
-- Create Liquibase migrations for all clan war tables
-- Set up database monitoring and performance optimization
-
-### Backend Agent (#2220)
-- Implement 8 clan war modules in world-service-go
-- Apply performance optimizations (struct alignment, context timeouts)
-- Integrate with guild-service, gameplay-service, economy-service
-- Add comprehensive error handling and logging
-
-### DevOps Agent (#2224)
-- Set up Kubernetes deployments with horizontal pod autoscaling
-- Configure monitoring stack (Prometheus, Grafana, ELK)
-- Implement CI/CD pipelines for clan war service
-- Create infrastructure as code with Terraform
-
-### Network Agent (#2199)
-- Design WebSocket protocols for real-time battle updates
-- Implement delta synchronization for war state changes
-- Optimize network traffic for large-scale PvP events
-- Add connection pooling and load balancing
-
-  database_schema:
-    tables:
-      - name: clan_wars
-        description: Клановые войны
-        fields:
-          - id: UUID (PK)
-          - attacker_clan_id: UUID (FK guilds)
+    database_schema:
+      tables:
+        - name: clan_wars
+          description: Клановые войны
+          fields:
+            - id: UUID (PK)
+            - attacker_clan_id: UUID (FK guilds)

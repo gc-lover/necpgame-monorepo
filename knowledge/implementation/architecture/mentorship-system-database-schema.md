@@ -1,9 +1,11 @@
 <!-- Issue: #140890865 -->
+
 # Mentorship System - Database Schema
 
 ## Обзор
 
-Схема базы данных для системы наставничества, управляющей договорами наставничества, уроками, прогрессом навыков, репутацией наставников, академиями и учебным контентом.
+Схема базы данных для системы наставничества, управляющей договорами наставничества, уроками, прогрессом навыков,
+репутацией наставников, академиями и учебным контентом.
 
 ## ERD Диаграмма
 
@@ -193,6 +195,7 @@ erDiagram
 Таблица договоров наставничества. Хранит информацию о договорах между наставниками и учениками.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `mentor_id`: ID наставника (FK accounts/characters, NOT NULL)
 - `mentee_id`: ID ученика (FK accounts/characters, NOT NULL)
@@ -209,6 +212,7 @@ erDiagram
 - `updated_at`: Время последнего обновления
 
 **Индексы:**
+
 - По `(mentor_id, status)` для контрактов наставника по статусу
 - По `(mentee_id, status)` для контрактов ученика по статусу
 - По `(mentorship_type, status)` для фильтрации по типу и статусу
@@ -219,6 +223,7 @@ erDiagram
 Таблица расписаний уроков. Хранит информацию о запланированных уроках.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `contract_id`: ID контракта (FK mentorship_contracts, NOT NULL)
 - `lesson_date`: Дата урока (TIMESTAMP, NOT NULL)
@@ -231,6 +236,7 @@ erDiagram
 - `updated_at`: Время последнего обновления
 
 **Индексы:**
+
 - По `(contract_id, status)` для расписаний контракта по статусу
 - По `(lesson_date, status)` для запланированных уроков (WHERE status = 'scheduled')
 
@@ -239,6 +245,7 @@ erDiagram
 Таблица уроков наставничества. Хранит информацию о проведенных уроках.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `contract_id`: ID контракта (FK mentorship_contracts, NOT NULL)
 - `schedule_id`: ID расписания (FK mentorship_schedules, nullable)
@@ -255,6 +262,7 @@ erDiagram
 - `updated_at`: Время последнего обновления
 
 **Индексы:**
+
 - По `(contract_id, status)` для уроков контракта по статусу
 - По `schedule_id` для уроков по расписанию (WHERE schedule_id IS NOT NULL)
 - По `(status, started_at)` для активных уроков (WHERE started_at IS NOT NULL)
@@ -264,6 +272,7 @@ erDiagram
 Таблица прогресса навыков учеников. Хранит информацию о прогрессе навыков в рамках наставничества.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `contract_id`: ID контракта (FK mentorship_contracts, NOT NULL)
 - `mentee_id`: ID ученика (FK accounts/characters, NOT NULL)
@@ -277,6 +286,7 @@ erDiagram
 - `last_update`: Время последнего обновления
 
 **Индексы:**
+
 - По `contract_id` для прогресса контракта
 - По `mentee_id` для прогресса ученика
 - По `(skill_track, skill_name)` для прогресса по навыку
@@ -288,6 +298,7 @@ erDiagram
 Таблица репутации наставников. Хранит информацию о репутации и статистике наставников.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `mentor_id`: ID наставника (FK accounts/characters, NOT NULL)
 - `reputation_score`: Общий рейтинг наставника (DECIMAL(5,2), NOT NULL, default: 0.00, диапазон: 0-100)
@@ -300,6 +311,7 @@ erDiagram
 - `last_update`: Время последнего обновления
 
 **Индексы:**
+
 - По `mentor_id` для репутации наставника
 - По `reputation_score DESC` для топ наставников
 - По `average_rating DESC` для наставников по рейтингу
@@ -311,6 +323,7 @@ erDiagram
 Таблица отзывов о наставниках. Хранит отзывы учеников о наставниках.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `contract_id`: ID контракта (FK mentorship_contracts, NOT NULL)
 - `mentor_id`: ID наставника (FK accounts/characters, NOT NULL)
@@ -320,6 +333,7 @@ erDiagram
 - `created_at`: Время создания
 
 **Индексы:**
+
 - По `contract_id` для отзывов контракта
 - По `mentor_id` для отзывов наставника
 - По `mentee_id` для отзывов ученика
@@ -330,6 +344,7 @@ erDiagram
 Таблица академий и образовательных центров. Хранит информацию об академиях.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `academy_name`: Название академии (VARCHAR(255), NOT NULL)
 - `academy_type`: Тип академии (academy_type ENUM, NOT NULL)
@@ -342,6 +357,7 @@ erDiagram
 - `updated_at`: Время последнего обновления
 
 **Индексы:**
+
 - По `academy_type` для фильтрации по типу академии
 - По `rating DESC` для академий по рейтингу
 
@@ -350,6 +366,7 @@ erDiagram
 Таблица программ академий. Хранит информацию о программах обучения в академиях.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `academy_id`: ID академии (FK academies, NOT NULL)
 - `program_name`: Название программы (VARCHAR(255), NOT NULL)
@@ -363,6 +380,7 @@ erDiagram
 - `updated_at`: Время последнего обновления
 
 **Индексы:**
+
 - По `(academy_id, status)` для программ академии по статусу
 - По `skill_track` для программ по треку навыков
 - По `status` для активных программ (WHERE status = 'active')
@@ -372,6 +390,7 @@ erDiagram
 Таблица записей в академии. Хранит информацию о записях персонажей в академии.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `academy_id`: ID академии (FK academies, NOT NULL)
 - `program_id`: ID программы (FK academy_programs, NOT NULL)
@@ -382,15 +401,18 @@ erDiagram
 - `payment_status`: Статус оплаты (academy_payment_status ENUM, NOT NULL, default: 'pending')
 
 **Индексы:**
+
 - По `(academy_id, program_id, status)` для записей академии и программы по статусу
 - По `(character_id, status)` для записей персонажа по статусу
 - По `status` для фильтрации по статусу
 
 ### mentorship_chains
 
-Таблица цепочек наставничества. Хранит информацию о цепочках наставничества (линейные, сетевые, фракционные, академические).
+Таблица цепочек наставничества. Хранит информацию о цепочках наставничества (линейные, сетевые, фракционные,
+академические).
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `chain_name`: Название цепочки (VARCHAR(255), NOT NULL)
 - `chain_type`: Тип цепочки (mentorship_chain_type ENUM, NOT NULL)
@@ -400,6 +422,7 @@ erDiagram
 - `created_at`: Время создания
 
 **Индексы:**
+
 - По `chain_type` для фильтрации по типу цепочки
 - По `chain_level` для фильтрации по уровню цепочки
 
@@ -408,6 +431,7 @@ erDiagram
 Таблица учебного контента. Хранит информацию об учебном контенте (гайды, симуляции, VR сцены, видео, тексты).
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `creator_id`: ID создателя (FK accounts/characters, NOT NULL)
 - `content_type`: Тип контента (mentorship_content_type ENUM, NOT NULL)
@@ -427,6 +451,7 @@ erDiagram
 - `updated_at`: Время последнего обновления
 
 **Индексы:**
+
 - По `creator_id` для контента создателя
 - По `(content_type, skill_track)` для контента по типу и треку (WHERE skill_track IS NOT NULL)
 - По `is_public` для публичного контента (WHERE is_public = true)
@@ -438,6 +463,7 @@ erDiagram
 Таблица экономики наставничества. Хранит информацию о финансовых транзакциях в рамках наставничества.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `contract_id`: ID контракта (FK mentorship_contracts, NOT NULL)
 - `payment_type`: Тип платежа (mentorship_payment_model ENUM, NOT NULL)
@@ -450,6 +476,7 @@ erDiagram
 - `created_at`: Время создания
 
 **Индексы:**
+
 - По `contract_id` для платежей контракта
 - По `(payer_id, status)` для платежей плательщика по статусу
 - По `(recipient_id, status)` для платежей получателя по статусу
@@ -458,6 +485,7 @@ erDiagram
 ## ENUM типы
 
 ### mentorship_type
+
 - `player_to_player`: Игрок → Игрок
 - `player_to_npc`: Игрок → NPC
 - `npc_to_player`: NPC → Игрок
@@ -465,17 +493,20 @@ erDiagram
 - `academy`: Академия
 
 ### mentorship_contract_status
+
 - `active`: Активен
 - `completed`: Завершен
 - `terminated`: Прерван
 
 ### mentorship_payment_model
+
 - `paid`: Платное
 - `grant`: Грант
 - `influence_points`: Очки влияния
 - `resources`: Ресурсы
 
 ### lesson_format
+
 - `theoretical`: Теоретический
 - `practical`: Практический
 - `content_based`: На основе контента
@@ -484,44 +515,52 @@ erDiagram
 - `vr`: VR
 
 ### mentorship_schedule_status
+
 - `scheduled`: Запланирован
 - `in-progress`: В процессе
 - `completed`: Завершен
 - `cancelled`: Отменен
 
 ### mentorship_lesson_status
+
 - `scheduled`: Запланирован
 - `in-progress`: В процессе
 - `completed`: Завершен
 - `failed`: Провален
 
 ### academy_type
+
 - `corporate`: Корпоративная
 - `gang`: Бандитская
 - `independent`: Независимая
 
 ### academy_program_status
+
 - `active`: Активна
 - `inactive`: Неактивна
 
 ### academy_enrollment_status
+
 - `enrolled`: Записан
 - `in-progress`: В процессе
 - `completed`: Завершен
 - `dropped`: Отчислен
 
 ### academy_payment_status
+
 - `pending`: Ожидает оплаты
 - `paid`: Оплачено
 - `refunded`: Возвращено
 
 ### mentorship_chain_type
+
 - `linear`: Линейная
 - `network`: Сетевая
 - `faction`: Фракционная
 - `academy`: Академическая
 
 ### mentorship_content_type
+
 - `guide`: Гайд
 - `simulation`: Симуляция
 - `vr_scene`: VR сцена
@@ -529,16 +568,19 @@ erDiagram
 - `text`: Текст
 
 ### content_moderation_status
+
 - `pending`: На модерации
 - `approved`: Одобрен
 - `rejected`: Отклонен
 
 ### content_monetization_status
+
 - `free`: Бесплатный
 - `paid`: Платный
 - `subscription`: По подписке
 
 ### mentorship_payment_status
+
 - `pending`: Ожидает
 - `paid`: Оплачено
 - `failed`: Провалено
@@ -633,13 +675,16 @@ erDiagram
 ## Миграции
 
 ### Применение миграций:
+
 ```bash
 liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ```
 
 ## Соответствие архитектуре
 
-Схема БД полностью соответствует архитектуре из `knowledge/implementation/architecture/mentorship-system-architecture.yaml`:
+Схема БД полностью соответствует архитектуре из
+`knowledge/implementation/architecture/mentorship-system-architecture.yaml`:
+
 - [OK] Все таблицы из архитектуры созданы
 - [OK] Все поля соответствуют описанию
 - [OK] Индексы оптимизированы для частых запросов
@@ -652,6 +697,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Типы наставничества
 
 Система поддерживает следующие типы наставничества:
+
 - **player_to_player**: Игрок обучает игрока
 - **player_to_npc**: Игрок обучает NPC
 - **npc_to_player**: NPC обучает игрока
@@ -661,6 +707,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Форматы уроков
 
 Система поддерживает следующие форматы уроков:
+
 - **theoretical**: Теоретический урок
 - **practical**: Практический урок
 - **content_based**: Урок на основе контента
@@ -671,6 +718,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Модели оплаты
 
 Система поддерживает следующие модели оплаты:
+
 - **paid**: Платное обучение
 - **grant**: Грант на обучение
 - **influence_points**: Оплата очками влияния
@@ -679,6 +727,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Типы академий
 
 Система поддерживает следующие типы академий:
+
 - **corporate**: Корпоративная академия
 - **gang**: Бандитская академия
 - **independent**: Независимая академия
@@ -686,6 +735,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Типы цепочек наставничества
 
 Система поддерживает следующие типы цепочек:
+
 - **linear**: Линейная цепочка (A → B → C)
 - **network**: Сетевая цепочка (множественные связи)
 - **faction**: Фракционная цепочка (в рамках фракции)
@@ -694,6 +744,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Типы учебного контента
 
 Система поддерживает следующие типы контента:
+
 - **guide**: Гайд
 - **simulation`: Симуляция
 - **vr_scene**: VR сцена
@@ -703,6 +754,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Интеграция с другими системами
 
 Система наставничества интегрируется с:
+
 - **NPC Service**: Получение информации о NPC-наставниках, проверка доступности
 - **Economy Service**: Обработка платежей, грантов, очков влияния, ресурсов
 - **Social Service**: Репутация наставников, отзывы, социальные связи

@@ -1,9 +1,11 @@
 <!-- Issue: #140875791 -->
+
 # Social System - Database Schema
 
 ## Обзор
 
-Схема базы данных для социальной системы, включающая отношения с NPC, найм NPC, отношения между игроками и систему заказов игроков.
+Схема базы данных для социальной системы, включающая отношения с NPC, найм NPC, отношения между игроками и систему
+заказов игроков.
 
 ## ERD Диаграмма
 
@@ -149,6 +151,7 @@ erDiagram
 **npc_relationships** - Отношения персонажей с NPC (репутация, доверие, взаимодействия)
 
 **Ключевые поля:**
+
 - `character_id`: ID персонажа (FK к characters)
 - `npc_id`: ID NPC
 - `relationship_type`: Тип отношения
@@ -159,6 +162,7 @@ erDiagram
 - `relationship_data`: JSONB дополнительные данные
 
 **Индексы:**
+
 - По `(character_id)` для поиска отношений персонажа
 - По `(npc_id)` для поиска отношений с NPC
 - По `(character_id, reputation_value)` для сортировки по репутации
@@ -168,6 +172,7 @@ erDiagram
 **npc_hiring_contracts** - Контракты найма NPC (зарплата, сроки, статус)
 
 **Ключевые поля:**
+
 - `character_id`: ID персонажа (FK к characters)
 - `npc_id`: ID NPC
 - `hiring_type`: Тип найма
@@ -197,6 +202,7 @@ erDiagram
 **player_relationships** - Отношения между игроками (друзья, союзники, враги)
 
 **Ключевые поля:**
+
 - `character_id_1`, `character_id_2`: ID персонажей (FK к characters)
 - `relationship_type`: Тип отношения (friends, close_allies, pact, neutral, enemies, nemesis)
 - `reputation_value`: Значение репутации
@@ -298,6 +304,7 @@ erDiagram
 ## Миграции
 
 ### Существующие миграции:
+
 - `V1_9__social_tables.sql` - базовые социальные таблицы (notifications, friendships)
 - `V1_27__player_orders_tables.sql` - базовые таблицы заказов (player_orders, player_order_reviews)
 - `V1_45__romance_core_tables.sql` - таблицы романтических отношений
@@ -305,6 +312,7 @@ erDiagram
 - `V1_53__social_system_player_orders_enhancement.sql` - дополнение системы заказов
 
 ### Применение миграций:
+
 ```bash
 liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ```
@@ -312,6 +320,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ## Соответствие архитектуре
 
 Схема БД полностью соответствует архитектурам:
+
 - [OK] `npc-hiring-system-architecture.yaml` - все таблицы найма NPC созданы
 - [OK] `relationships-system-architecture.yaml` - все таблицы отношений созданы
 - [OK] `player-orders-database.yaml` - все таблицы заказов созданы
@@ -325,6 +334,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### JSONB поля
 
 Использование JSONB для гибкого хранения:
+
 - `relationship_data`: Данные отношений
 - `terms`: Условия контрактов
 - `resources`: Ресурсы задач
@@ -335,6 +345,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### NPC Hiring
 
 Система найма NPC включает:
+
 - Контракты с разными типами оплаты
 - Задачи для нанятых NPC
 - Отслеживание эффективности
@@ -346,6 +357,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Player Relationships
 
 Система отношений включает:
+
 - Типы отношений (друзья, союзники, враги)
 - Уровни доверия
 - Договоры доверия
@@ -358,6 +370,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Player Orders
 
 Система заказов включает:
+
 - Мульти-исполнительные заказы
 - Аукционы заказов
 - Опционы на заказы
@@ -366,5 +379,4 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 - Рейтинги и репутация
 - Экономика заказов
 - Телеметрия для аналитики
-
 

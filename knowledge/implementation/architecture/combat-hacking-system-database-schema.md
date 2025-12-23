@@ -1,9 +1,11 @@
 <!-- Issue: #140876070 -->
+
 # Combat Hacking System - Database Schema
 
 ## Обзор
 
-Схема базы данных для системы боевого взлома, включающая типы взлома, сети, состояние перегрева и доступ к сетям. Интегрируется с боевой системой для выполнения взлома в боевых сценариях.
+Схема базы данных для системы боевого взлома, включающая типы взлома, сети, состояние перегрева и доступ к сетям.
+Интегрируется с боевой системой для выполнения взлома в боевых сценариях.
 
 ## ERD Диаграмма
 
@@ -92,6 +94,7 @@ erDiagram
 Таблица типов взлома. Хранит каталог типов взлома с требованиями и характеристиками.
 
 **Ключевые поля:**
+
 - `type_name`: Название типа взлома (UNIQUE)
 - `category`: Категория типа взлома (enemy, device, infrastructure, combat_scenario)
 - `class_requirement`: Требуемый класс для использования (nullable)
@@ -101,6 +104,7 @@ erDiagram
 - `description`: Описание типа взлома
 
 **Индексы:**
+
 - По `category` для фильтрации по категории
 - По `class_requirement` для фильтрации по классу
 - По `overheat_cost` для сортировки по стоимости
@@ -110,6 +114,7 @@ erDiagram
 Таблица сетей для взлома. Хранит детальную информацию о сетях (локальные, корпоративные, городские, персональные).
 
 **Ключевые поля:**
+
 - `network_name`: Название сети (UNIQUE)
 - `network_type`: Тип сети (local, corporate, city, personal)
 - `security_level`: Уровень защиты сети (INTEGER, 0-100)
@@ -119,6 +124,7 @@ erDiagram
 - `description`: Описание сети
 
 **Индексы:**
+
 - По `network_type` для фильтрации по типу
 - По `security_level` для сортировки по уровню защиты
 - По `access_method` для фильтрации по методу доступа
@@ -128,6 +134,7 @@ erDiagram
 Таблица состояния перегрева. Хранит информацию о состоянии перегрева системы взлома персонажа в боевой сессии.
 
 **Ключевые поля:**
+
 - `character_id`: ID персонажа (FK к characters)
 - `session_id`: ID боевой сессии (FK к combat_sessions, nullable)
 - `current_heat`: Текущий уровень нагрева (INTEGER, >= 0)
@@ -137,6 +144,7 @@ erDiagram
 - `last_update`: Время последнего обновления
 
 **Индексы:**
+
 - По `(character_id, is_overheated)` для состояния персонажа
 - По `session_id` для состояния в сессии
 - По `(is_overheated, current_heat DESC)` для перегретых систем
@@ -146,6 +154,7 @@ erDiagram
 Таблица доступа к сетям. Хранит информацию о доступе персонажей к сетям для взлома.
 
 **Ключевые поля:**
+
 - `character_id`: ID персонажа (FK к characters)
 - `network_id`: ID сети (FK к hacking_networks)
 - `access_level`: Уровень доступа к сети (INTEGER, >= 0)
@@ -155,6 +164,7 @@ erDiagram
 - `is_active`: Флаг активности доступа
 
 **Индексы:**
+
 - По `(character_id, is_active)` для активных доступов персонажа
 - По `(network_id, is_active)` для активных доступов к сети
 - По `expires_at` для истекающих доступов
@@ -164,11 +174,13 @@ erDiagram
 Таблица выполнений взлома в бою. Уже создана в V1_49, дополнена связями с hacking_types и hacking_networks.
 
 **Добавленные поля:**
+
 - `hacking_type_id`: ID типа взлома (FK к hacking_types, nullable)
 - `hacking_network_id`: ID сети (FK к hacking_networks, nullable)
 - `overheat_generated`: Количество сгенерированного перегрева (INTEGER, >= 0)
 
 **Индексы:**
+
 - По `hacking_type_id` для фильтрации по типу взлома
 - По `hacking_network_id` для фильтрации по сети
 
@@ -245,17 +257,23 @@ erDiagram
 ## Миграции
 
 ### Существующие миграции:
-- `V1_49__combat_extended_mechanics_tables.sql` - базовые таблицы взлома (combat_hacking_executions, combat_hacking_networks)
-- `V1_56__combat_hacking_system_tables.sql` - дополнение схемы (hacking_types, hacking_networks, hacking_overheat_state, hacking_network_access)
+
+- `V1_49__combat_extended_mechanics_tables.sql` - базовые таблицы взлома (combat_hacking_executions,
+  combat_hacking_networks)
+- `V1_56__combat_hacking_system_tables.sql` - дополнение схемы (hacking_types, hacking_networks, hacking_overheat_state,
+  hacking_network_access)
 
 ### Применение миграций:
+
 ```bash
 liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ```
 
 ## Соответствие архитектуре
 
-Схема БД полностью соответствует архитектуре из `knowledge/implementation/architecture/combat-hacking-integration-architecture.yaml`:
+Схема БД полностью соответствует архитектуре из
+`knowledge/implementation/architecture/combat-hacking-integration-architecture.yaml`:
+
 - [OK] Все таблицы из архитектуры созданы
 - [OK] Все поля соответствуют описанию
 - [OK] ENUM типы созданы для всех перечислений
@@ -270,6 +288,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### JSONB поля
 
 Использование JSONB для гибкого хранения:
+
 - `skill_requirement`: Требования к навыкам для типов взлома
 - `protection_levels`: Уровни защиты сетей
 - `available_demons`: Доступные демоны для взлома
@@ -278,6 +297,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Типы взлома
 
 Система поддерживает различные категории типов взлома:
+
 - **enemy**: Взлом врагов
 - **device**: Взлом устройств
 - **infrastructure**: Взлом инфраструктуры
@@ -286,6 +306,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Сети для взлома
 
 Система поддерживает различные типы сетей:
+
 - **local**: Локальные сети
 - **corporate**: Корпоративные сети
 - **city**: Городские сети
@@ -294,6 +315,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Методы доступа
 
 Система поддерживает различные методы доступа:
+
 - **remote**: Удаленный доступ
 - **physical**: Физический доступ
 - **hybrid**: Гибридный доступ
@@ -301,6 +323,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Перегрев системы
 
 Система перегрева включает:
+
 - **current_heat**: Текущий уровень нагрева
 - **max_heat**: Максимальный уровень нагрева
 - **is_overheated**: Флаг перегрева (блокирует взлом)
@@ -309,8 +332,8 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Интеграция с боевой системой
 
 Взлом интегрирован с боевой системой через:
+
 - `combat_hacking_executions`: Выполнения взлома в бою
 - `hacking_overheat_state`: Состояние перегрева в боевой сессии
 - Связи с `combat_sessions` для отслеживания взлома в бою
-
 

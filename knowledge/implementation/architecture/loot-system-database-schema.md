@@ -1,11 +1,14 @@
 <!-- Issue: #140888539 -->
+
 # Loot System - Database Schema
 
 ## Обзор
 
-Схема базы данных для системы лута, включающая таблицы лута, распределения, roll систему, мировые дропы и историю лута игроков.
+Схема базы данных для системы лута, включающая таблицы лута, распределения, roll систему, мировые дропы и историю лута
+игроков.
 
-**Примечание:** Все таблицы уже созданы в миграции `V1_62__loot_tables_system_tables.sql` (Issue #140876092). Эта документация описывает полную схему системы лута.
+**Примечание:** Все таблицы уже созданы в миграции `V1_62__loot_tables_system_tables.sql` (Issue #140876092). Эта
+документация описывает полную схему системы лута.
 
 ## ERD Диаграмма
 
@@ -125,6 +128,7 @@ erDiagram
 Таблица таблиц лута. Хранит определения дропов для различных источников.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `name`: Название таблицы лута (VARCHAR(255), NOT NULL)
 - `source_type`: Тип источника (ENUM: 'npc', 'container', 'quest', 'boss', 'world_event')
@@ -139,6 +143,7 @@ erDiagram
 - `updated_at`: Время последнего обновления
 
 **Индексы:**
+
 - По `(source_type, source_id)` для поиска по источнику
 - По `is_active` для активных таблиц
 
@@ -147,6 +152,7 @@ erDiagram
 Таблица записей в таблицах лута. Хранит предметы с весами и шансами.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `loot_table_id`: ID таблицы лута (FK к loot_tables, NOT NULL)
 - `item_template_id`: ID шаблона предмета (UUID, NOT NULL)
@@ -160,6 +166,7 @@ erDiagram
 - `created_at`: Время создания
 
 **Индексы:**
+
 - По `loot_table_id` для записей таблицы
 - По `item_template_id` для поиска предмета
 
@@ -168,6 +175,7 @@ erDiagram
 Таблица распределений лута. Хранит сгенерированные дропы.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `source_type`: Тип источника (ENUM: 'npc', 'container', 'quest', 'boss')
 - `source_id`: ID источника (UUID, NOT NULL)
@@ -178,6 +186,7 @@ erDiagram
 - `distributed_at`: Время распределения (TIMESTAMP, nullable)
 
 **Индексы:**
+
 - По `(source_type, source_id)` для поиска по источнику
 - По `(party_id, status)` для распределений группы
 - По `(status, created_at)` для статуса распределения
@@ -187,6 +196,7 @@ erDiagram
 Таблица предметов в распределениях. Хранит конкретные предметы для выдачи.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `distribution_id`: ID распределения (FK к loot_distributions, NOT NULL)
 - `item_template_id`: ID шаблона предмета (UUID, NOT NULL)
@@ -196,6 +206,7 @@ erDiagram
 - `created_at`: Время создания
 
 **Индексы:**
+
 - По `distribution_id` для предметов распределения
 - По `(assigned_to, status)` для предметов игрока
 
@@ -204,6 +215,7 @@ erDiagram
 Таблица roll сессий для групп. Хранит Need/Greed систему.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `distribution_id`: ID распределения (FK к loot_distributions, NOT NULL)
 - `item_id`: ID предмета (FK к loot_distribution_items, NOT NULL)
@@ -214,6 +226,7 @@ erDiagram
 - `created_at`: Время создания
 
 **Индексы:**
+
 - По `distribution_id` для roll сессий распределения
 - По `(party_id, status)` для roll сессий группы
 - По `expires_at` для истекающих сессий
@@ -223,6 +236,7 @@ erDiagram
 Таблица участников roll сессий. Хранит выборы игроков.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `roll_id`: ID roll сессии (FK к loot_rolls, NOT NULL)
 - `character_id`: ID персонажа (FK к characters, NOT NULL)
@@ -231,11 +245,13 @@ erDiagram
 - `rolled_at`: Время броска (TIMESTAMP, nullable)
 
 **Индексы:**
+
 - По `(roll_id, character_id)` для уникальности
 - По `(roll_id, choice)` для выборов по типу
 - По `character_id` для roll сессий персонажа
 
 **Constraints:**
+
 - UNIQUE(roll_id, character_id): Один участник на roll сессию
 
 ### world_drops
@@ -243,6 +259,7 @@ erDiagram
 Таблица мировых дропов. Хранит предметы, выпавшие в мире.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `item_template_id`: ID шаблона предмета (UUID, NOT NULL)
 - `quantity`: Количество (INTEGER, NOT NULL, default: 1, CHECK > 0)
@@ -257,6 +274,7 @@ erDiagram
 - `picked_up_at`: Время подбора (TIMESTAMP, nullable)
 
 **Индексы:**
+
 - По `(world_id, location_x, location_y)` для поиска по координатам
 - По `(status, expires_at)` для активных дропов
 - По `(status, created_at)` для статуса дропа
@@ -266,6 +284,7 @@ erDiagram
 Таблица истории лута игроков. Хранит данные для smart loot.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `character_id`: ID персонажа (FK к characters, NOT NULL)
 - `item_template_id`: ID шаблона предмета (UUID, NOT NULL)
@@ -274,12 +293,14 @@ erDiagram
 - `luck_value`: Значение удачи (DECIMAL(5, 2), NOT NULL, default: 0.0)
 
 **Индексы:**
+
 - По `(character_id, obtained_at DESC)` для истории персонажа
 - По `(item_template_id, character_id)` для предметов персонажа
 
 ## ENUM типы
 
 ### loot_source_type
+
 - `npc`: Лут от NPC
 - `container`: Лут из контейнеров
 - `quest`: Награды за квесты
@@ -287,32 +308,38 @@ erDiagram
 - `world_event`: Лут от мировых событий
 
 ### loot_distribution_mode
+
 - `personal`: Личный лут
 - `party`: Лут для группы
 - `shared`: Общий лут
 - `boss`: Специальный режим для боссов
 
 ### loot_distribution_status
+
 - `pending`: Ожидает распределения
 - `distributed`: Распределен
 - `expired`: Истек
 
 ### loot_item_status
+
 - `pending`: Ожидает назначения
 - `assigned`: Назначен
 - `claimed`: Получен
 
 ### loot_roll_status
+
 - `active`: Активна
 - `completed`: Завершена
 - `expired`: Истекла
 
 ### loot_roll_choice
+
 - `need`: Нужен предмет
 - `greed`: Жадность
 - `pass`: Пропустить
 
 ### world_drop_status
+
 - `active`: Активен
 - `picked_up`: Подобран
 - `expired`: Истек
@@ -398,9 +425,11 @@ erDiagram
 ## Миграции
 
 ### Существующие миграции:
+
 - `V1_62__loot_tables_system_tables.sql` - все таблицы системы лута (Issue #140876092)
 
 ### Применение миграций:
+
 ```bash
 liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ```
@@ -408,6 +437,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ## Соответствие архитектуре
 
 Схема БД полностью соответствует архитектуре из `knowledge/implementation/architecture/loot-system-architecture.yaml`:
+
 - [OK] Все таблицы из архитектуры созданы
 - [OK] Все поля соответствуют описанию
 - [OK] Индексы оптимизированы для частых запросов
@@ -420,6 +450,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Генерация лута
 
 Система генерации включает:
+
 - **Loot Tables**: определения дропов для различных источников
 - **Luck Modifier**: модификатор удачи для влияния на дроп
 - **Weight System**: система весов для вероятности дропа
@@ -429,6 +460,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Распределение лута
 
 Система распределения включает:
+
 - **Режимы**: personal, party, shared, boss
 - **Статусы**: pending, distributed, expired
 - **Party Integration**: интеграция с группами для группового лута
@@ -437,6 +469,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Roll система
 
 Система roll включает:
+
 - **Need/Greed/Pass**: выбор игрока
 - **Roll Values**: значения бросков (1-100)
 - **Timeouts**: истечение сессий (30 секунд)
@@ -446,6 +479,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Мировые дропы
 
 Система мировых дропов включает:
+
 - **Координаты**: location_x, location_y, location_z для позиционирования
 - **World ID**: привязка к миру
 - **Expiration**: истечение дропов (5 минут)
@@ -455,6 +489,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Smart Loot
 
 Система smart loot включает:
+
 - **History Tracking**: отслеживание истории лута игрока
 - **Luck Value**: значение удачи при получении
 - **Source Type**: тип источника для анализа
@@ -464,10 +499,10 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Интеграция с другими системами
 
 Система лута интегрируется с:
+
 - **Characters**: через character_id для участников и получателей
 - **Parties**: через party_id для группового лута
 - **Inventory Service**: для выдачи предметов
 - **Economy Service**: для выдачи валюты
 - **Gameplay Service**: для получения событий о луте
-
 

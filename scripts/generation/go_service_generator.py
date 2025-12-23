@@ -8,9 +8,10 @@ SOLID: Single Responsibility - generates Go service structure
 
 from pathlib import Path
 from typing import Optional
+
+from scripts.core.command_runner import CommandRunner
 from scripts.core.config import ConfigManager
 from scripts.core.file_manager import FileManager
-from scripts.core.command_runner import CommandRunner
 from scripts.core.logger import Logger
 from scripts.openapi.openapi_manager import OpenAPIManager
 
@@ -30,7 +31,7 @@ class GoServiceGenerator:
         self.logger = logger
 
     def generate_domain_service(self, domain: str, skip_bundle: bool = False,
-                               skip_test: bool = False, dry_run: bool = False) -> None:
+                                skip_test: bool = False, dry_run: bool = False) -> None:
         """Generate complete Go service for a domain with PERFORMANCE optimizations"""
         domain_dir = self.config.get_openapi_dir() / domain
         if not domain_dir.exists():
@@ -82,18 +83,19 @@ class GoServiceGenerator:
         # Try common locations
         possible_paths = [
             r"C:\Users\zzzle\go\bin\ogen.exe",  # Windows
-            "/usr/local/go/bin/ogen",           # Linux/Mac
-            "ogen",                            # In PATH
+            "/usr/local/go/bin/ogen",  # Linux/Mac
+            "ogen",  # In PATH
         ]
 
         for path in possible_paths:
             if shutil.which(path) or os.path.exists(path):
                 return path
 
-        raise FileNotFoundError("ogen binary not found. Install with: go install github.com/ogen-go/ogen/cmd/ogen@latest")
+        raise FileNotFoundError(
+            "ogen binary not found. Install with: go install github.com/ogen-go/ogen/cmd/ogen@latest")
 
     def _generate_go_code(self, service_dir: Path, bundled_spec: Path,
-                         domain: str, dry_run: bool) -> None:
+                          domain: str, dry_run: bool) -> None:
         """Generate Go code using ogen"""
         pkg_dir = service_dir / "pkg" / "api"
         if not dry_run:

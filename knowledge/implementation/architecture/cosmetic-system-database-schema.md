@@ -1,9 +1,11 @@
 <!-- Issue: #315 -->
+
 # Cosmetic System - Database Schema
 
 ## Обзор
 
-Схема базы данных для системы косметики, управляющей каталогом косметических предметов, владением косметикой игроками, экипировкой и ротациями магазина.
+Схема базы данных для системы косметики, управляющей каталогом косметических предметов, владением косметикой игроками,
+экипировкой и ротациями магазина.
 
 ## ERD Диаграмма
 
@@ -81,6 +83,7 @@ erDiagram
 Каталог косметических предметов.
 
 **Колонки:**
+
 - `id` (UUID, PK) - Уникальный идентификатор
 - `code` (VARCHAR(50), UNIQUE) - Код косметики
 - `name` (VARCHAR(255)) - Название
@@ -98,6 +101,7 @@ erDiagram
 - `updated_at` (TIMESTAMP) - Время обновления
 
 **Индексы:**
+
 - `idx_cosmetic_items_code` - По коду
 - `idx_cosmetic_items_category` - По категории и редкости
 - `idx_cosmetic_items_rarity` - По редкости
@@ -110,6 +114,7 @@ erDiagram
 Владение косметикой игроками.
 
 **Колонки:**
+
 - `id` (UUID, PK) - Уникальный идентификатор
 - `character_id` (UUID, FK) - ID персонажа
 - `cosmetic_id` (UUID, FK) - ID косметики
@@ -119,9 +124,11 @@ erDiagram
 - `last_used_at` (TIMESTAMP) - Время последнего использования
 
 **Ограничения:**
+
 - UNIQUE (character_id, cosmetic_id) - Один персонаж может владеть одной косметикой один раз
 
 **Индексы:**
+
 - `idx_player_cosmetics_character_id` - По персонажу и времени получения
 - `idx_player_cosmetics_cosmetic_id` - По косметике
 - `idx_player_cosmetics_source` - По источнику
@@ -132,6 +139,7 @@ erDiagram
 Экипированная косметика игроков.
 
 **Колонки:**
+
 - `id` (UUID, PK) - Уникальный идентификатор
 - `character_id` (UUID, FK) - ID персонажа
 - `slot_type` (cosmetic_category) - Тип слота: character_skin, weapon_skin, emote, title, name_plate
@@ -141,9 +149,11 @@ erDiagram
 - `updated_at` (TIMESTAMP) - Время обновления
 
 **Ограничения:**
+
 - UNIQUE (character_id, slot_type, slot_name) - Один персонаж может экипировать одну косметику в один слот
 
 **Индексы:**
+
 - `idx_player_equipped_cosmetics_character_id` - По персонажу и типу слота
 - `idx_player_equipped_cosmetics_cosmetic_id` - По косметике
 - `idx_player_equipped_cosmetics_slot_type` - По типу слота и имени
@@ -153,6 +163,7 @@ erDiagram
 Ротации магазина косметики.
 
 **Колонки:**
+
 - `id` (UUID, PK) - Уникальный идентификатор
 - `rotation_type` (cosmetic_rotation_type) - Тип ротации: daily, weekly
 - `start_date` (TIMESTAMP) - Дата начала
@@ -161,9 +172,11 @@ erDiagram
 - `created_at` (TIMESTAMP) - Время создания
 
 **Ограничения:**
+
 - CHECK (end_date > start_date) - Дата окончания должна быть позже даты начала
 
 **Индексы:**
+
 - `idx_cosmetic_shop_rotations_type` - По типу ротации и дате начала
 - `idx_cosmetic_shop_rotations_dates` - По датам
 - `idx_cosmetic_shop_rotations_active` - По активным ротациям
@@ -173,6 +186,7 @@ erDiagram
 Телеметрия косметики.
 
 **Колонки:**
+
 - `id` (UUID, PK) - Уникальный идентификатор
 - `event_type` (cosmetic_telemetry_event) - Тип события: acquired, equipped, unequipped, purchased, viewed
 - `character_id` (UUID, FK) - ID персонажа
@@ -181,6 +195,7 @@ erDiagram
 - `created_at` (TIMESTAMP) - Время события
 
 **Индексы:**
+
 - `idx_cosmetic_telemetry_event_type` - По типу события и времени
 - `idx_cosmetic_telemetry_character_id` - По персонажу и времени
 - `idx_cosmetic_telemetry_cosmetic_id` - По косметике и времени
@@ -189,6 +204,7 @@ erDiagram
 ## ENUM типы
 
 ### cosmetic_category
+
 - `character_skin` - Скин персонажа
 - `weapon_skin` - Скин оружия
 - `emote` - Эмоция
@@ -196,16 +212,19 @@ erDiagram
 - `name_plate` - Табличка с именем
 
 ### cosmetic_rarity
+
 - `common` - Обычная
 - `rare` - Редкая
 - `epic` - Эпическая
 - `legendary` - Легендарная
 
 ### cosmetic_rotation_type
+
 - `daily` - Ежедневная
 - `weekly` - Еженедельная
 
 ### cosmetic_telemetry_event
+
 - `acquired` - Получено
 - `equipped` - Экипировано
 - `unequipped` - Снято

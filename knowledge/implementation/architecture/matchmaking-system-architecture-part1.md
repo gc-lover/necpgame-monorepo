@@ -12,7 +12,8 @@
 
 ## Краткое описание
 
-Система матчмейкинга обеспечивает подбор игроков для PvP, PvE и рейдов с учётом рейтинга, ролей, времени ожидания и качества матча.
+Система матчмейкинга обеспечивает подбор игроков для PvP, PvE и рейдов с учётом рейтинга, ролей, времени ожидания и
+качества матча.
 
 **См. также:** [Part 2: Rating System & Operations](./matchmaking-system-architecture-part2.md)
 
@@ -86,24 +87,28 @@ flowchart TD
 **Подкомпоненты:**
 
 #### Queue Manager
+
 - Вход/выход из очереди
 - Приоритизация
 - Расширение диапазона поиска
 - Управление партиями
 
 #### Matchmaking Engine
+
 - Подбор кандидатов
 - Проверка совместимости
 - Создание матчей
 - Мониторинг качества
 
 #### Team Balancing Service
+
 - Snake draft алгоритм
 - Распределение ролей
 - Балансировка рейтинга
 - Проверка композиций
 
 #### Rating Service
+
 - Расчёт MMR/ELO
 - Сезонные рейтинги
 - Ранги (Bronze → Grandmaster)
@@ -146,6 +151,7 @@ CREATE INDEX idx_queue_rating ON matchmaking_queues(rating, activity_type);
 ### 3.1. Queue Management
 
 #### POST /api/v1/matchmaking/queue
+
 **Вход в очередь**
 
 Request: `{"activity_type": "pvp_5v5", "preferred_roles": [...]}`
@@ -153,12 +159,15 @@ Request: `{"activity_type": "pvp_5v5", "preferred_roles": [...]}`
 Response: `{"queue_id": "uuid", "estimated_wait_time": 120}`
 
 #### DELETE /api/v1/matchmaking/queue/{id}
+
 **Выход из очереди**
 
 #### GET /api/v1/matchmaking/queue/{id}/status
+
 **Статус очереди**
 
 Response:
+
 ```json
 {
   "status": "waiting",
@@ -173,6 +182,7 @@ Response:
 #### /ws/matchmaking
 
 Events:
+
 - `queue_update` - обновление позиции
 - `match_found` - матч найден
 - `match_ready` - все приняли
@@ -237,11 +247,13 @@ flowchart TD
 ### 4.3. Snake Draft Балансировка
 
 **Алгоритм:**
+
 1. Сортировка 10 игроков по рейтингу (desc)
 2. Распределение: A,A,B,B,B,B,A,A,A,A
 3. Результат: примерно равные средние рейтинги
 
 **Пример:**
+
 ```
 Рейтинги: 1800, 1750, 1700, 1650, 1600, 1550, 1500, 1450, 1400, 1350
 
@@ -252,67 +264,37 @@ Team B: 1700, 1650, 1600, 1550, 1350 (avg: 1570)
 ### 4.4. Match Quality Score
 
 **Формула:**
+
 ```
 MQS = 0.4 * rating_balance + 0.2 * role_distribution + 
       0.2 * wait_time_fairness + 0.2 * latency_score
 ```
 
 **Компоненты:**
+
 - `rating_balance` = 1 - (|avg_A - avg_B| / 200)
 - `role_distribution` = % ролей заполнены
 - `wait_time_fairness` = 1 - (std_dev / mean)
 - `latency_score` = 1 - (max_latency / 150ms)
 
 **Пороги:**
+
 - MQS >= 0.9 - отличный
 - MQS >= 0.7 - хороший (минимум)
 - MQS < 0.7 - недостаточный
 
 ### 4.5. Расширение диапазона поиска
 
-| Время ожидания | Диапазон MMR |
-|----------------|--------------|
-| 0-2 минуты | ±50 |
-| 2-5 минут | ±100 |
-| 5-10 минут | ±200 |
-| 10+ минут | ±400 + приоритет |
+| Время ожидания | Диапазон MMR     |
+|----------------|------------------|
+| 0-2 минуты     | ±50              |
+| 2-5 минут      | ±100             |
+| 5-10 минут     | ±200             |
+| 10+ минут      | ±400 + приоритет |
 
 Проверка: каждые 15 секунд
 
 ---
 
 **См. [Part 2](./matchmaking-system-architecture-part2.md) для рейтинговой системы и операций**
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

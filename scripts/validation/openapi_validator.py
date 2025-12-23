@@ -6,9 +6,10 @@ SOLID: Single Responsibility - validates OpenAPI specifications
 
 from pathlib import Path
 from typing import Dict, Any, List
-from scripts.validation.base_validator import BaseValidator, ValidationResult
-from scripts.openapi.openapi_manager import OpenAPIManager
+
 from scripts.core.config import ConfigManager
+from scripts.openapi.openapi_manager import OpenAPIManager
+from scripts.validation.base_validator import BaseValidator, ValidationResult
 
 
 class OpenAPIValidator(BaseValidator):

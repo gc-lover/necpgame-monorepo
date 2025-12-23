@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-import os
 import glob
+import os
 import yaml
+
 
 def fix_empty_paths():
     # Find all main.yaml files in proto/openapi
@@ -37,6 +38,7 @@ def fix_empty_paths():
             print(f"Error processing {file_path}: {e}")
 
     print(f"Fixed {fixed_count} files")
+
 
 if __name__ == "__main__":
     fix_empty_paths()

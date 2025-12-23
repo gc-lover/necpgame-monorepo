@@ -4,14 +4,15 @@ NECPGAME Base Script
 SOLID: Base class for all scripts with common functionality
 """
 
-import sys
 import argparse
+import sys
 from pathlib import Path
 from typing import Optional
+
+from scripts.core.command_runner import CommandRunner
 from scripts.core.config import ConfigManager
 from scripts.core.file_manager import FileManager
 from scripts.core.logger import Logger
-from scripts.core.command_runner import CommandRunner
 
 
 class BaseScript:

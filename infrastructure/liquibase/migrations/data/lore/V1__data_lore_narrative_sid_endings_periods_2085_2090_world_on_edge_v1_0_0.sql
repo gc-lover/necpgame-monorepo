@@ -5,192 +5,187 @@
 BEGIN;
 
 -- Lore: canon-narrative-sid-period-2085-2090-world-on-edge
-INSERT INTO narrative.lore_entries (
-    lore_id, title, document_type, category,
-    content_data, version
-)
-VALUES (
-    'canon-narrative-sid-period-2085-2090-world-on-edge',
-    'SID период 2085-2090 — мир на грани',
-    'canon',
-    'narrative',
-    '{
-  "metadata": {
-    "id": "canon-narrative-sid-period-2085-2090-world-on-edge",
-    "title": "SID период 2085-2090 — мир на грани",
-    "document_type": "canon",
-    "category": "narrative",
-    "status": "draft",
-    "version": "1.0.0",
-    "last_updated": "2025-11-12T00:00:00+00:00",
-    "concept_approved": false,
-    "concept_reviewed_at": "",
-    "owners": [
-      {
-        "role": "narrative_director",
-        "contact": "narrative@necp.game"
+INSERT INTO narrative.lore_entries (lore_id, title, document_type, category,
+                                    content_data, version)
+VALUES ('canon-narrative-sid-period-2085-2090-world-on-edge',
+        'SID период 2085-2090 — мир на грани',
+        'canon',
+        'narrative',
+        '{
+      "metadata": {
+        "id": "canon-narrative-sid-period-2085-2090-world-on-edge",
+        "title": "SID период 2085-2090 — мир на грани",
+        "document_type": "canon",
+        "category": "narrative",
+        "status": "draft",
+        "version": "1.0.0",
+        "last_updated": "2025-11-12T00:00:00+00:00",
+        "concept_approved": false,
+        "concept_reviewed_at": "",
+        "owners": [
+          {
+            "role": "narrative_director",
+            "contact": "narrative@necp.game"
+          }
+        ],
+        "tags": [
+          "sid",
+          "finale-prep"
+        ],
+        "topics": [
+          "narrative",
+          "branching"
+        ],
+        "related_systems": [
+          "narrative-service"
+        ],
+        "related_documents": [
+          {
+            "id": "canon-narrative-sid-period-2025-2030-foundation",
+            "relation": "references"
+          },
+          {
+            "id": "canon-narrative-sid-finale-navigation",
+            "relation": "precedes"
+          }
+        ],
+        "source": "shared/docs/knowledge/canon/narrative/sid-endings/periods/2085-2090-world-on-edge.md",
+        "visibility": "internal",
+        "audience": [
+          "narrative",
+          "systems-design"
+        ],
+        "risk_level": "high"
+      },
+      "review": {
+        "chain": [
+          {
+            "role": "narrative_director",
+            "reviewer": "",
+            "reviewed_at": "",
+            "status": "pending"
+          }
+        ],
+        "next_actions": []
+      },
+      "summary": {
+        "problem": "Финальный подготовительный период 2085-2090 был неструктурирован и требовал перенос в YAML.",
+        "goal": "Систематизировать критические развилки перед финалом, влияющие на исходы лиги 2090-2093.",
+        "essence": "Документ описывает отношение к симуляции, финальную корпоративную войну, судьбу регионов, городов и NPC, а также критические пороги.",
+        "key_points": [
+          {
+            "Отношение игроков к симуляции задаёт четыре сценария": "принятие, отрицание, восстание или раскол."
+          },
+          "Корпоративная война может закончиться победой Arasaka, Militech, их взаимным уничтожением или миром.",
+          "Региональные, городские и персональные финалы доводятся до кульминации перед фиксированием концовок 2090-2093."
+        ]
+      },
+      "content": {
+        "sections": [
+          {
+            "id": "context",
+            "title": "Контекст периода",
+            "body": "Последние пять лет лиги объединяют все накопленные конфликты, раскрытие симуляции и подготовку к перезапуску мира.\n",
+            "mechanics_links": [],
+            "assets": []
+          },
+          {
+            "id": "simulation_choice",
+            "title": "Критическое отношение к симуляции",
+            "body": "Четыре ветви (принятие, отрицание, восстание, раскол) определяют стабильность системы, контакт с создателями и варианты\nфинала.\n",
+            "mechanics_links": [],
+            "assets": []
+          },
+          {
+            "id": "final_corp_war",
+            "title": "Финальная корпоративная война",
+            "body": "Исход войны Arasaka и Militech задаёт мировую власть, вакуум сил или дуополию и напрямую влияет на старт следующей лиги.\n",
+            "mechanics_links": [],
+            "assets": []
+          },
+          {
+            "id": "regions",
+            "title": "Финалы регионов",
+            "body": "Каждый регион выбирает между процветанием, упадком, расколом или новым порядком, закрепляя глобальные концовки.\n",
+            "mechanics_links": [],
+            "assets": []
+          },
+          {
+            "id": "cities",
+            "title": "Судьбы ключевых городов",
+            "body": "Топ-20 городов получают по несколько сценариев, включая легенду, руины, возрождение или уникальные раскрытия симуляции.\n",
+            "mechanics_links": [],
+            "assets": []
+          },
+          {
+            "id": "npc",
+            "title": "Завершение арок NPC",
+            "body": "Marco \"Fix\" Sanchez, José \"Tigre\" Ramirez, Hiroshi Tanaka, Viktor Vektor и другие персонажи достигают персональных финалов,\nвлияющих на эпилог и титры.\n",
+            "mechanics_links": [],
+            "assets": []
+          },
+          {
+            "id": "thresholds",
+            "title": "Критические пороги",
+            "body": "Раскрытие симуляции (2087), финальная битва (2089) и точка невозврата (2090) фиксируют все параметры и запускают финал.\n",
+            "mechanics_links": [],
+            "assets": []
+          },
+          {
+            "id": "finale_impact",
+            "title": "Влияние на 2090-2093",
+            "body": "Исходы периода определяют доминирующие силы, региональные сценарии, легенды городов и персональные эпилоги, влияя на следующую лигу.\n",
+            "mechanics_links": [],
+            "assets": []
+          }
+        ]
+      },
+      "appendix": {
+        "glossary": [],
+        "references": [
+          {
+            "title": "Период 2080-2085",
+            "link": "./2080-2085-revelation-begins.md"
+          },
+          {
+            "title": "Финальный период 2090-2093",
+            "link": "./finale-2090-2093/README.md"
+          },
+          {
+            "title": "Концовки SID",
+            "link": "../endings/"
+          }
+        ],
+        "decisions": []
+      },
+      "implementation": {
+        "github_issue": 133,
+        "needs_task": false,
+        "queue_reference": [
+          "shared/trackers/queues/concept/queued.yaml"
+        ],
+        "blockers": []
+      },
+      "history": [
+        {
+          "version": "1.0.0",
+          "date": "2025-11-12",
+          "author": "narrative_team",
+          "changes": "Описание периода 2085-2090 перенесено в YAML, структурированы критические развилки и пороги."
+        }
+      ],
+      "validation": {
+        "checksum": "",
+        "schema_version": "1.0"
       }
-    ],
-    "tags": [
-      "sid",
-      "finale-prep"
-    ],
-    "topics": [
-      "narrative",
-      "branching"
-    ],
-    "related_systems": [
-      "narrative-service"
-    ],
-    "related_documents": [
-      {
-        "id": "canon-narrative-sid-period-2025-2030-foundation",
-        "relation": "references"
-      },
-      {
-        "id": "canon-narrative-sid-finale-navigation",
-        "relation": "precedes"
-      }
-    ],
-    "source": "shared/docs/knowledge/canon/narrative/sid-endings/periods/2085-2090-world-on-edge.md",
-    "visibility": "internal",
-    "audience": [
-      "narrative",
-      "systems-design"
-    ],
-    "risk_level": "high"
-  },
-  "review": {
-    "chain": [
-      {
-        "role": "narrative_director",
-        "reviewer": "",
-        "reviewed_at": "",
-        "status": "pending"
-      }
-    ],
-    "next_actions": []
-  },
-  "summary": {
-    "problem": "Финальный подготовительный период 2085-2090 был неструктурирован и требовал перенос в YAML.",
-    "goal": "Систематизировать критические развилки перед финалом, влияющие на исходы лиги 2090-2093.",
-    "essence": "Документ описывает отношение к симуляции, финальную корпоративную войну, судьбу регионов, городов и NPC, а также критические пороги.",
-    "key_points": [
-      {
-        "Отношение игроков к симуляции задаёт четыре сценария": "принятие, отрицание, восстание или раскол."
-      },
-      "Корпоративная война может закончиться победой Arasaka, Militech, их взаимным уничтожением или миром.",
-      "Региональные, городские и персональные финалы доводятся до кульминации перед фиксированием концовок 2090-2093."
-    ]
-  },
-  "content": {
-    "sections": [
-      {
-        "id": "context",
-        "title": "Контекст периода",
-        "body": "Последние пять лет лиги объединяют все накопленные конфликты, раскрытие симуляции и подготовку к перезапуску мира.\n",
-        "mechanics_links": [],
-        "assets": []
-      },
-      {
-        "id": "simulation_choice",
-        "title": "Критическое отношение к симуляции",
-        "body": "Четыре ветви (принятие, отрицание, восстание, раскол) определяют стабильность системы, контакт с создателями и варианты\nфинала.\n",
-        "mechanics_links": [],
-        "assets": []
-      },
-      {
-        "id": "final_corp_war",
-        "title": "Финальная корпоративная война",
-        "body": "Исход войны Arasaka и Militech задаёт мировую власть, вакуум сил или дуополию и напрямую влияет на старт следующей лиги.\n",
-        "mechanics_links": [],
-        "assets": []
-      },
-      {
-        "id": "regions",
-        "title": "Финалы регионов",
-        "body": "Каждый регион выбирает между процветанием, упадком, расколом или новым порядком, закрепляя глобальные концовки.\n",
-        "mechanics_links": [],
-        "assets": []
-      },
-      {
-        "id": "cities",
-        "title": "Судьбы ключевых городов",
-        "body": "Топ-20 городов получают по несколько сценариев, включая легенду, руины, возрождение или уникальные раскрытия симуляции.\n",
-        "mechanics_links": [],
-        "assets": []
-      },
-      {
-        "id": "npc",
-        "title": "Завершение арок NPC",
-        "body": "Marco \"Fix\" Sanchez, José \"Tigre\" Ramirez, Hiroshi Tanaka, Viktor Vektor и другие персонажи достигают персональных финалов,\nвлияющих на эпилог и титры.\n",
-        "mechanics_links": [],
-        "assets": []
-      },
-      {
-        "id": "thresholds",
-        "title": "Критические пороги",
-        "body": "Раскрытие симуляции (2087), финальная битва (2089) и точка невозврата (2090) фиксируют все параметры и запускают финал.\n",
-        "mechanics_links": [],
-        "assets": []
-      },
-      {
-        "id": "finale_impact",
-        "title": "Влияние на 2090-2093",
-        "body": "Исходы периода определяют доминирующие силы, региональные сценарии, легенды городов и персональные эпилоги, влияя на следующую лигу.\n",
-        "mechanics_links": [],
-        "assets": []
-      }
-    ]
-  },
-  "appendix": {
-    "glossary": [],
-    "references": [
-      {
-        "title": "Период 2080-2085",
-        "link": "./2080-2085-revelation-begins.md"
-      },
-      {
-        "title": "Финальный период 2090-2093",
-        "link": "./finale-2090-2093/README.md"
-      },
-      {
-        "title": "Концовки SID",
-        "link": "../endings/"
-      }
-    ],
-    "decisions": []
-  },
-  "implementation": {
-    "github_issue": 133,
-    "needs_task": false,
-    "queue_reference": [
-      "shared/trackers/queues/concept/queued.yaml"
-    ],
-    "blockers": []
-  },
-  "history": [
-    {
-      "version": "1.0.0",
-      "date": "2025-11-12",
-      "author": "narrative_team",
-      "changes": "Описание периода 2085-2090 перенесено в YAML, структурированы критические развилки и пороги."
-    }
-  ],
-  "validation": {
-    "checksum": "",
-    "schema_version": "1.0"
-  }
-}'::jsonb,
-    1
-)
-ON CONFLICT (lore_id) DO UPDATE SET
+    }'::jsonb,
+        1) ON CONFLICT (lore_id) DO
+UPDATE SET
     title = EXCLUDED.title,
     document_type = EXCLUDED.document_type,
     category = EXCLUDED.category,
     content_data = EXCLUDED.content_data,
     version = EXCLUDED.version,
     updated_at = CURRENT_TIMESTAMP;
-
 
 COMMIT;

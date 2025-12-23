@@ -1,9 +1,11 @@
 <!-- Issue: #140876090 -->
+
 # Stock Exchange System - Database Schema
 
 ## Обзор
 
-Схема базы данных для системы фондовой биржи, включающая корпорации, историю цен акций, портфели игроков, дивиденды, биржевые индексы, влияние событий и алерты о нарушениях.
+Схема базы данных для системы фондовой биржи, включающая корпорации, историю цен акций, портфели игроков, дивиденды,
+биржевые индексы, влияние событий и алерты о нарушениях.
 
 ## ERD Диаграмма
 
@@ -180,6 +182,7 @@ erDiagram
 Таблица корпораций на бирже. Хранит информацию о корпорациях, чьи акции торгуются на бирже.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `symbol`: Символ корпорации на бирже (VARCHAR(10), UNIQUE, NOT NULL)
 - `name`: Название корпорации (VARCHAR(255), NOT NULL)
@@ -193,6 +196,7 @@ erDiagram
 - `updated_at`: Время последнего обновления
 
 **Индексы:**
+
 - По `symbol` для поиска по символу
 - По `sector` для фильтрации по сектору
 - По `faction_id` для связи с фракциями
@@ -203,6 +207,7 @@ erDiagram
 Таблица истории цен акций. Хранит историю цен акций корпораций.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `corporation_id`: ID корпорации (FK к corporations, NOT NULL)
 - `price`: Цена акции (DECIMAL(20,4), NOT NULL, > 0)
@@ -216,6 +221,7 @@ erDiagram
 - `created_at`: Время создания
 
 **Индексы:**
+
 - По `(corporation_id, timestamp DESC)` для истории цен корпорации
 - По `timestamp DESC` для последних цен
 - По `event_id` для связи с событиями
@@ -225,6 +231,7 @@ erDiagram
 Таблица портфелей игроков. Хранит информацию об акциях, принадлежащих игрокам.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `character_id`: ID персонажа (FK к characters, NOT NULL)
 - `corporation_id`: ID корпорации (FK к corporations, NOT NULL)
@@ -236,10 +243,12 @@ erDiagram
 - `updated_at`: Время последнего обновления
 
 **Индексы:**
+
 - По `character_id` для портфеля персонажа
 - По `corporation_id` для владельцев акций корпорации
 
 **Constraints:**
+
 - UNIQUE(character_id, corporation_id): Один портфель на персонажа и корпорацию
 
 ### dividend_schedules
@@ -247,6 +256,7 @@ erDiagram
 Таблица расписания дивидендов. Хранит информацию о запланированных и выплаченных дивидендах.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `corporation_id`: ID корпорации (FK к corporations, NOT NULL)
 - `dividend_type`: Тип дивидендов (ENUM: QUARTERLY, ANNUAL, NOT NULL)
@@ -260,6 +270,7 @@ erDiagram
 - `updated_at`: Время последнего обновления
 
 **Индексы:**
+
 - По `(corporation_id, status)` для дивидендов корпорации
 - По `(payment_date, status)` для предстоящих выплат
 - По `status` для фильтрации по статусу
@@ -269,6 +280,7 @@ erDiagram
 Таблица выплат дивидендов. Хранит информацию о выплатах дивидендов игрокам.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `dividend_schedule_id`: ID расписания дивидендов (FK к dividend_schedules, NOT NULL)
 - `character_id`: ID персонажа (FK к characters, NOT NULL)
@@ -282,6 +294,7 @@ erDiagram
 - `created_at`: Время создания
 
 **Индексы:**
+
 - По `dividend_schedule_id` для выплат по расписанию
 - По `(character_id, paid_at DESC)` для истории выплат персонажа
 - По `corporation_id` для выплат корпорации
@@ -291,6 +304,7 @@ erDiagram
 Таблица биржевых индексов. Хранит информацию о биржевых индексах.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `name`: Название индекса (VARCHAR(255), NOT NULL)
 - `symbol`: Символ индекса (VARCHAR(20), UNIQUE, NOT NULL)
@@ -301,6 +315,7 @@ erDiagram
 - `updated_at`: Время последнего обновления
 
 **Индексы:**
+
 - По `symbol` для поиска по символу
 
 ### index_constituents
@@ -308,6 +323,7 @@ erDiagram
 Таблица состава индексов. Хранит информацию о корпорациях, входящих в индексы.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `index_id`: ID индекса (FK к stock_indices, NOT NULL)
 - `corporation_id`: ID корпорации (FK к corporations, NOT NULL)
@@ -316,10 +332,12 @@ erDiagram
 - `removed_at`: Время удаления из индекса (TIMESTAMP, nullable)
 
 **Индексы:**
+
 - По `(index_id, removed_at)` для активных корпораций в индексе
 - По `corporation_id` для индексов, содержащих корпорацию
 
 **Constraints:**
+
 - UNIQUE(index_id, corporation_id, removed_at): Одна запись на комбинацию
 
 ### index_history
@@ -327,6 +345,7 @@ erDiagram
 Таблица истории индексов. Хранит историю значений индексов.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `index_id`: ID индекса (FK к stock_indices, NOT NULL)
 - `value`: Значение индекса (DECIMAL(20,4), NOT NULL, > 0)
@@ -336,6 +355,7 @@ erDiagram
 - `created_at`: Время создания
 
 **Индексы:**
+
 - По `(index_id, timestamp DESC)` для истории индекса
 - По `timestamp DESC` для последних значений
 
@@ -344,6 +364,7 @@ erDiagram
 Таблица влияния событий на акции. Хранит информацию о влиянии событий на цены акций.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `event_id`: ID события (UUID, NOT NULL)
 - `event_type`: Тип события (VARCHAR(50), NOT NULL)
@@ -357,6 +378,7 @@ erDiagram
 - `created_at`: Время создания
 
 **Индексы:**
+
 - По `event_id` для связи с событиями
 - По `(corporation_id, started_at DESC)` для влияний на корпорацию
 - По `ended_at` для активных влияний
@@ -366,6 +388,7 @@ erDiagram
 Таблица алертов о нарушениях. Хранит информацию о нарушениях правил торговли.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `character_id`: ID персонажа (FK к characters, NOT NULL)
 - `alert_type`: Тип алерта (VARCHAR(50), NOT NULL)
@@ -377,6 +400,7 @@ erDiagram
 - `resolved_at`: Время разрешения (TIMESTAMP, nullable)
 
 **Индексы:**
+
 - По `(character_id, status)` для алертов персонажа
 - По `(status, created_at DESC)` для открытых алертов
 - По `(severity, status)` для критичных нарушений
@@ -384,29 +408,35 @@ erDiagram
 ## ENUM типы
 
 ### stock_type
+
 - `Common`: Обычные акции
 - `Preferred`: Привилегированные акции
 
 ### dividend_type
+
 - `QUARTERLY`: Квартальные дивиденды
 - `ANNUAL`: Годовые дивиденды
 
 ### dividend_status
+
 - `SCHEDULED`: Запланировано
 - `DECLARED`: Объявлено
 - `PAID`: Выплачено
 
 ### index_calculation_method
+
 - `PRICE_WEIGHTED`: Взвешенный по цене
 - `MARKET_CAP_WEIGHTED`: Взвешенный по рыночной капитализации
 
 ### compliance_severity
+
 - `LOW`: Низкая
 - `MEDIUM`: Средняя
 - `HIGH`: Высокая
 - `CRITICAL`: Критическая
 
 ### compliance_alert_status
+
 - `OPEN`: Открыт
 - `INVESTIGATING`: Расследуется
 - `RESOLVED`: Разрешен
@@ -510,10 +540,12 @@ erDiagram
 ## Миграции
 
 ### Существующие миграции:
+
 - `V1_51__economy_trading_markets_auctions_tables.sql` - базовые таблицы (stock_orders, stock_trades)
 - `V1_61__stock_exchange_system_tables.sql` - полная схема Stock Exchange
 
 ### Применение миграций:
+
 ```bash
 liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ```
@@ -521,6 +553,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ## Соответствие архитектуре
 
 Схема БД полностью соответствует архитектуре из `knowledge/implementation/architecture/stock-exchange-database.yaml`:
+
 - [OK] Все таблицы из архитектуры созданы
 - [OK] Все поля соответствуют описанию
 - [OK] ENUM типы созданы для типов акций, дивидендов, индексов и алертов
@@ -534,6 +567,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Корпорации
 
 Система корпораций включает:
+
 - **Символы**: уникальные символы на бирже
 - **Типы акций**: Common и Preferred
 - **Листинг**: отслеживание IPO и исключения из листинга
@@ -542,6 +576,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### История цен
 
 Система истории цен включает:
+
 - **OHLC данные**: open, high, low, close
 - **Объем торгов**: volume для анализа
 - **Связь с событиями**: event_id для отслеживания влияния
@@ -549,6 +584,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Портфели игроков
 
 Система портфелей включает:
+
 - **Количество акций**: quantity для отслеживания владения
 - **Средняя цена покупки**: average_buy_price для расчета прибыли
 - **Инвестиции**: total_invested для учета вложений
@@ -557,6 +593,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Дивиденды
 
 Система дивидендов включает:
+
 - **Расписание**: declaration_date, ex_dividend_date, record_date, payment_date
 - **Типы**: QUARTERLY и ANNUAL
 - **Выплаты**: автоматический расчет на основе количества акций
@@ -566,6 +603,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Биржевые индексы
 
 Система индексов включает:
+
 - **Методы расчета**: PRICE_WEIGHTED и MARKET_CAP_WEIGHTED
 - **Состав**: index_constituents с весами корпораций
 - **История**: index_history для отслеживания изменений
@@ -574,6 +612,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Влияние событий
 
 Система влияния событий включает:
+
 - **Процент влияния**: impact_percent для расчета изменения цены
 - **Длительность**: duration_hours для временного влияния
 - **Активность**: ended_at для отслеживания активных влияний
@@ -581,6 +620,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Алерты о нарушениях
 
 Система алертов включает:
+
 - **Серьезность**: LOW, MEDIUM, HIGH, CRITICAL
 - **Статус**: OPEN, INVESTIGATING, RESOLVED
 - **Связь со сделками**: trade_id для отслеживания нарушений
@@ -588,9 +628,9 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Интеграция с другими системами
 
 Система фондовой биржи интегрируется с:
+
 - **Stock Orders/Trades**: через stock_orders и stock_trades (V1_51)
 - **Characters**: через character_id для портфелей и алертов
 - **World Events**: через event_id для влияния на цены
 - **Factions**: через faction_id для связи корпораций с фракциями
-
 

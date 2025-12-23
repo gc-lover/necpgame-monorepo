@@ -1,9 +1,11 @@
 <!-- Issue: #140890164 -->
+
 # Economy Analytics System - Database Schema
 
 ## Обзор
 
-Схема базы данных для системы экономической аналитики, включающая данные для графиков, технические индикаторы, анализ настроений, снимки портфеля, оповещения и настройки игроков.
+Схема базы данных для системы экономической аналитики, включающая данные для графиков, технические индикаторы, анализ
+настроений, снимки портфеля, оповещения и настройки игроков.
 
 ## ERD Диаграмма
 
@@ -98,6 +100,7 @@ erDiagram
 Таблица данных для графиков. Хранит исторические данные цен для различных типов графиков.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `symbol`: Символ актива (VARCHAR(50), NOT NULL)
 - `chart_type`: Тип графика (chart_type ENUM, NOT NULL)
@@ -112,6 +115,7 @@ erDiagram
 - `created_at`: Время создания записи
 
 **Индексы:**
+
 - По `(symbol, chart_type, time_frame, timestamp DESC)` для быстрого поиска данных графика
 - По `timestamp DESC` для временных запросов
 - По `(symbol, timestamp DESC)` для данных по символу
@@ -121,6 +125,7 @@ erDiagram
 Таблица технических индикаторов. Хранит рассчитанные технические индикаторы.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `symbol`: Символ актива (VARCHAR(50), NOT NULL)
 - `indicator_type`: Тип индикатора (VARCHAR(50), NOT NULL: 'MA', 'RSI', 'MACD', 'BollingerBands' и др.)
@@ -131,6 +136,7 @@ erDiagram
 - `created_at`: Время создания записи
 
 **Индексы:**
+
 - По `(symbol, indicator_type, timestamp DESC)` для быстрого поиска индикатора
 - По `timestamp DESC` для временных запросов
 - По `(symbol, timestamp DESC)` для индикаторов по символу
@@ -140,6 +146,7 @@ erDiagram
 Таблица анализа настроений. Хранит анализ настроений рынка.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `symbol`: Символ актива (VARCHAR(50), nullable - NULL для общего рынка)
 - `timestamp`: Временная метка анализа (TIMESTAMP, NOT NULL)
@@ -150,6 +157,7 @@ erDiagram
 - `created_at`: Время создания записи
 
 **Индексы:**
+
 - По `(symbol, timestamp DESC)` для настроений по символу (WHERE symbol IS NOT NULL)
 - По `timestamp DESC` для временных запросов
 - По `timestamp DESC` для общего рынка (WHERE symbol IS NULL)
@@ -159,6 +167,7 @@ erDiagram
 Таблица снимков портфеля. Хранит исторические снимки портфеля для аналитики.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `player_id`: ID игрока (FK к characters, NOT NULL)
 - `timestamp`: Временная метка снимка (TIMESTAMP, NOT NULL)
@@ -172,6 +181,7 @@ erDiagram
 - `created_at`: Время создания записи
 
 **Индексы:**
+
 - По `(player_id, timestamp DESC)` для снимков портфеля игрока
 - По `timestamp DESC` для временных запросов
 
@@ -180,6 +190,7 @@ erDiagram
 Таблица оповещений игроков. Хранит оповещения о ценах и событиях.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `player_id`: ID игрока (FK к characters, NOT NULL)
 - `alert_type`: Тип оповещения (alert_type ENUM, NOT NULL: 'price', 'event')
@@ -194,18 +205,22 @@ erDiagram
 - `updated_at`: Время последнего обновления
 
 **Индексы:**
+
 - По `(player_id, active)` для активных оповещений игрока (WHERE active = true)
 - По `(symbol, active, triggered)` для оповещений по символу (WHERE symbol IS NOT NULL AND active = true)
 - По `triggered_at DESC` для сработавших оповещений (WHERE triggered = true)
 
 **Constraints:**
-- CHECK: (alert_type = 'price' AND symbol IS NOT NULL AND event_type IS NULL) OR (alert_type = 'event' AND event_type IS NOT NULL)
+
+- CHECK: (alert_type = 'price' AND symbol IS NOT NULL AND event_type IS NULL) OR (alert_type = 'event' AND event_type IS
+  NOT NULL)
 
 ### analytics_settings
 
 Таблица настроек аналитики игроков. Хранит настройки графиков, индикаторов и оповещений.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `player_id`: ID игрока (FK к characters, NOT NULL, UNIQUE)
 - `chart_preferences`: Настройки графиков (JSONB, default: {})
@@ -214,14 +229,17 @@ erDiagram
 - `updated_at`: Время последнего обновления
 
 **Индексы:**
+
 - По `player_id` для быстрого поиска настроек игрока
 
 **Constraints:**
+
 - UNIQUE(player_id): Один набор настроек на игрока
 
 ## ENUM типы
 
 ### chart_type
+
 - `line`: Линейный график
 - `candlestick`: Свечной график
 - `ohlc`: График OHLC (Open-High-Low-Close)
@@ -229,15 +247,18 @@ erDiagram
 - `volume`: Гистограмма объема
 
 ### indicator_signal
+
 - `buy`: Сигнал на покупку
 - `sell`: Сигнал на продажу
 - `neutral`: Нейтральный сигнал
 
 ### alert_type
+
 - `price`: Ценовое оповещение
 - `event`: Событийное оповещение
 
 ### alert_condition
+
 - `above`: Выше целевого значения
 - `below`: Ниже целевого значения
 - `equals`: Равно целевому значению
@@ -319,13 +340,16 @@ erDiagram
 ## Миграции
 
 ### Применение миграций:
+
 ```bash
 liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ```
 
 ## Соответствие архитектуре
 
-Схема БД полностью соответствует архитектуре из `knowledge/implementation/architecture/economy-analytics-system-architecture.yaml`:
+Схема БД полностью соответствует архитектуре из
+`knowledge/implementation/architecture/economy-analytics-system-architecture.yaml`:
+
 - [OK] Все таблицы из архитектуры созданы
 - [OK] Все поля соответствуют описанию
 - [OK] Индексы оптимизированы для частых запросов
@@ -338,6 +362,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Графики
 
 Система графиков включает:
+
 - **Типы графиков**: line, candlestick, ohlc, area, volume
 - **Таймфреймы**: 1m, 5m, 15m, 1h, 4h, 1d, 1w
 - **OHLC данные**: open, high, low, close для свечных и OHLC графиков
@@ -347,6 +372,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Технические индикаторы
 
 Система индикаторов включает:
+
 - **Типы индикаторов**: MA, RSI, MACD, BollingerBands и др.
 - **Параметры**: parameters (JSONB) для гибкой настройки индикаторов
 - **Сигналы**: buy, sell, neutral для торговых сигналов
@@ -355,6 +381,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Анализ настроений
 
 Система настроений включает:
+
 - **Бычьи/медвежьи сигналы**: bullish_signals и bearish_signals для баланса сигналов
 - **Индекс страха и жадности**: fear_greed_index (0.00-100.00)
 - **Общий индекс настроений**: sentiment_score (-100.00 to 100.00)
@@ -363,6 +390,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Портфельная аналитика
 
 Система портфельной аналитики включает:
+
 - **Метрики стоимости**: total_value, total_cost, total_return, total_return_percentage
 - **Метрики риска**: sharpe_ratio для риск-скорректированной доходности
 - **Метрики торговли**: win_rate, profit_factor для анализа торговли
@@ -371,6 +399,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Оповещения
 
 Система оповещений включает:
+
 - **Типы оповещений**: price (ценовые) и event (событийные)
 - **Условия**: above, below, equals, change_percentage для различных условий
 - **Целевые значения**: target_value для условий оповещений
@@ -380,6 +409,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Настройки
 
 Система настроек включает:
+
 - **Предпочтения графиков**: chart_preferences (JSONB) для настройки графиков
 - **Предпочтения индикаторов**: indicator_preferences (JSONB) для выбранных индикаторов
 - **Предпочтения оповещений**: alert_preferences (JSONB) для настройки оповещений
@@ -388,11 +418,11 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Интеграция с другими системами
 
 Система аналитики интегрируется с:
+
 - **Characters**: через player_id для портфельной аналитики, оповещений и настроек
 - **Economy Service**: через symbol для данных о ценах
 - **Stock Exchange Service**: через symbol для данных об акциях
 - **Investment Service**: через player_id для портфельной аналитики
 - **Notification Service**: через analytics_alerts для отправки оповещений
 - **Event Bus**: через события для обновления данных
-
 

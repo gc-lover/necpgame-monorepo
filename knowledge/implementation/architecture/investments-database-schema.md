@@ -1,9 +1,11 @@
 <!-- Issue: #140890222 -->
+
 # Investments System - Database Schema
 
 ## Обзор
 
-Схема базы данных для системы инвестиций, управляющей портфелями игроков, различными типами инвестиций (акции, облигации, недвижимость, производственные доли, спекуляции), транзакциями, аналитикой и рисками.
+Схема базы данных для системы инвестиций, управляющей портфелями игроков, различными типами инвестиций (акции,
+облигации, недвижимость, производственные доли, спекуляции), транзакциями, аналитикой и рисками.
 
 ## ERD Диаграмма
 
@@ -97,6 +99,7 @@ erDiagram
 Таблица инвестиционных продуктов. Хранит информацию о доступных продуктах для инвестирования.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `product_type`: Тип продукта (investment_product_type ENUM, NOT NULL)
 - `name`: Название продукта (VARCHAR(255), NOT NULL)
@@ -113,6 +116,7 @@ erDiagram
 - `updated_at`: Время последнего обновления
 
 **Индексы:**
+
 - По `(product_type, available)` для фильтрации доступных продуктов по типу
 - По `issuer_id` для продуктов конкретного эмитента (WHERE issuer_id IS NOT NULL)
 - По `risk_level` для фильтрации по уровню риска
@@ -122,6 +126,7 @@ erDiagram
 Таблица инвестиционных позиций игроков. Хранит информацию о текущих и закрытых позициях игроков.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `player_id`: ID игрока (FK accounts, NOT NULL)
 - `product_id`: ID продукта (FK investment_products, NOT NULL)
@@ -139,15 +144,18 @@ erDiagram
 - `updated_at`: Время последнего обновления
 
 **Индексы:**
+
 - По `(player_id, status)` для позиций игрока по статусу
 - По `(product_id, status)` для позиций по продукту и статусу
 - По `purchased_at DESC` для временных запросов
 
 ### investment_transactions
 
-Таблица транзакций по инвестициям. Хранит историю всех транзакций (покупка, продажа, дивиденды, проценты, комиссии, налоги).
+Таблица транзакций по инвестициям. Хранит историю всех транзакций (покупка, продажа, дивиденды, проценты, комиссии,
+налоги).
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `player_id`: ID игрока (FK accounts, NOT NULL)
 - `position_id`: ID позиции (FK player_investment_positions, nullable - NULL для транзакций без позиции)
@@ -162,6 +170,7 @@ erDiagram
 - `created_at`: Время создания
 
 **Индексы:**
+
 - По `(player_id, executed_at DESC)` для истории транзакций игрока
 - По `position_id` для транзакций конкретной позиции (WHERE position_id IS NOT NULL)
 - По `(transaction_type, status)` для фильтрации по типу и статусу
@@ -171,6 +180,7 @@ erDiagram
 Таблица снимков портфелей для аналитики. Хранит исторические снимки портфелей для анализа доходности и распределения.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `player_id`: ID игрока (FK accounts, NOT NULL)
 - `total_value`: Общая стоимость портфеля (DECIMAL(10,2), NOT NULL)
@@ -182,6 +192,7 @@ erDiagram
 - `snapshot_at`: Время создания снимка
 
 **Индексы:**
+
 - По `(player_id, snapshot_at DESC)` для истории снимков игрока
 - По `snapshot_at DESC` для временных запросов
 
@@ -190,6 +201,7 @@ erDiagram
 Таблица алертов по рискам инвестиций. Хранит предупреждения о рисках (margin call, KYC, high risk, suitability warning).
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `player_id`: ID игрока (FK accounts, NOT NULL)
 - `position_id`: ID позиции (FK player_investment_positions, nullable - NULL для портфельных алертов)
@@ -201,12 +213,14 @@ erDiagram
 - `created_at`: Время создания
 
 **Индексы:**
+
 - По `(player_id, resolved)` для нерешенных алертов игрока
 - По `(alert_type, severity)` для фильтрации по типу и серьезности
 
 ## ENUM типы
 
 ### investment_product_type
+
 - `stock`: Акции
 - `bond`: Облигации
 - `real_estate`: Недвижимость
@@ -214,26 +228,31 @@ erDiagram
 - `commodity_speculation`: Спекуляции на товарах
 
 ### investment_risk_level
+
 - `low`: Низкий риск
 - `medium`: Средний риск
 - `high`: Высокий риск
 - `very_high`: Очень высокий риск
 
 ### investment_liquidity
+
 - `high`: Высокая ликвидность
 - `medium`: Средняя ликвидность
 - `low`: Низкая ликвидность
 
 ### investment_position_type
+
 - `long`: Длинная позиция (покупка)
 - `short`: Короткая позиция (продажа)
 
 ### investment_position_status
+
 - `active`: Активная позиция
 - `closed`: Закрытая позиция
 - `suspended`: Приостановленная позиция
 
 ### investment_transaction_type
+
 - `purchase`: Покупка
 - `sale`: Продажа
 - `dividend`: Дивиденды
@@ -242,18 +261,21 @@ erDiagram
 - `tax`: Налог
 
 ### investment_transaction_status
+
 - `pending`: Ожидает выполнения
 - `completed`: Выполнена
 - `failed`: Не выполнена
 - `cancelled`: Отменена
 
 ### investment_risk_alert_type
+
 - `margin_call`: Маржинальный колл
 - `kyc_required`: Требуется KYC
 - `high_risk`: Высокий риск
 - `suitability_warning`: Предупреждение о пригодности
 
 ### investment_risk_alert_severity
+
 - `low`: Низкая серьезность
 - `medium`: Средняя серьезность
 - `high`: Высокая серьезность
@@ -317,13 +339,16 @@ erDiagram
 ## Миграции
 
 ### Применение миграций:
+
 ```bash
 liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ```
 
 ## Соответствие архитектуре
 
-Схема БД полностью соответствует архитектуре из `knowledge/implementation/architecture/economy-investments-system-architecture.yaml`:
+Схема БД полностью соответствует архитектуре из
+`knowledge/implementation/architecture/economy-investments-system-architecture.yaml`:
+
 - [OK] Все таблицы из архитектуры созданы
 - [OK] Все поля соответствуют описанию
 - [OK] Индексы оптимизированы для частых запросов
@@ -335,6 +360,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Типы инвестиционных продуктов
 
 Система поддерживает следующие типы продуктов:
+
 - **stock**: Акции компаний (высокая волатильность, дивиденды)
 - **bond**: Облигации (фиксированная доходность, срок погашения)
 - **real_estate**: Недвижимость (стабильная доходность, низкая ликвидность)
@@ -344,12 +370,14 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Управление позициями
 
 Позиции могут быть:
+
 - **long**: Длинная позиция (покупка с ожиданием роста)
 - **short**: Короткая позиция (продажа с ожиданием падения)
 
 ### Статусы позиций
 
 Позиции проходят через следующие стадии:
+
 1. **active**: Позиция активна, отслеживается прибыль/убыток
 2. **closed**: Позиция закрыта, финальная прибыль/убыток зафиксированы
 3. **suspended**: Позиция приостановлена (например, при маржинальном колле)
@@ -357,6 +385,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Типы транзакций
 
 Система поддерживает следующие типы транзакций:
+
 - **purchase**: Покупка инвестиции
 - **sale**: Продажа инвестиции
 - **dividend**: Выплата дивидендов
@@ -367,6 +396,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Алерты по рискам
 
 Система генерирует следующие типы алертов:
+
 - **margin_call**: Маржинальный колл (требуется пополнение счета)
 - **kyc_required**: Требуется KYC (проверка личности)
 - **high_risk**: Высокий риск (превышение допустимого риска)
@@ -375,6 +405,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Снимки портфелей
 
 Снимки портфелей создаются для:
+
 - Анализа исторической доходности
 - Отслеживания изменений распределения
 - Генерации отчетов и графиков
@@ -383,6 +414,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Интеграция с другими системами
 
 Система инвестиций интегрируется с:
+
 - **Stock Exchange Service**: Получение данных об акциях, синхронизация цен, обработка дивидендов
 - **Housing Service**: Получение данных о недвижимости, синхронизация доходности
 - **Economy Events Service**: Влияние экономических событий на доходность и риски

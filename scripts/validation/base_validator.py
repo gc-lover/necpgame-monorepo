@@ -5,6 +5,7 @@ SOLID: Base class for all validators
 """
 
 from typing import List, Dict, Any, Tuple
+
 from scripts.core.logger import Logger
 
 
@@ -51,9 +52,9 @@ class BaseValidator:
     def log_results(self, target_name: str):
         """Log validation results"""
         if self.result.valid:
-            self.logger.info(f"✓ {target_name} validation passed")
+            self.logger.info(f"PASS {target_name} validation passed")
         else:
-            self.logger.error(f"✗ {target_name} validation failed")
+            self.logger.error(f"FAIL {target_name} validation failed")
 
         if self.result.errors:
             for error in self.result.errors:

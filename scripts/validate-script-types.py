@@ -13,8 +13,8 @@ Exit codes:
     1 - Forbidden script types detected (failure)
 """
 
-import sys
 import os
+import sys
 from pathlib import Path
 
 # Forbidden script extensions (only Python allowed)
@@ -45,6 +45,7 @@ ALLOWED_EXCEPTIONS = [
     'scripts/framework.py',
 ]
 
+
 def is_forbidden_script(file_path):
     """Check if file is a forbidden script type"""
     _, ext = os.path.splitext(file_path)
@@ -58,6 +59,7 @@ def is_forbidden_script(file_path):
         return True, FORBIDDEN_EXTENSIONS[ext.lower()]
 
     return False, None
+
 
 def main():
     if len(sys.argv) < 2:
@@ -123,6 +125,7 @@ def main():
         else:
             print("[INFO] No script files to check")
         sys.exit(0)
+
 
 if __name__ == '__main__':
     main()

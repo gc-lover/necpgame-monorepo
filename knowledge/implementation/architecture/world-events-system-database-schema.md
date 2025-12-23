@@ -1,9 +1,11 @@
 <!-- Issue: #140875793 -->
+
 # World Events System - Database Schema
 
 ## Обзор
 
-Схема базы данных для системы мировых событий, управляющей крупными событиями, которые влияют на весь мир игры или большие регионы. Включает события разных типов, масштабов и частоты.
+Схема базы данных для системы мировых событий, управляющей крупными событиями, которые влияют на весь мир игры или
+большие регионы. Включает события разных типов, масштабов и частоты.
 
 ## ERD Диаграмма
 
@@ -97,6 +99,7 @@ erDiagram
 Таблица мировых событий. Хранит информацию о событиях разных типов, масштабов и частоты.
 
 **Ключевые поля:**
+
 - `title`: Название события
 - `description`: Описание события
 - `type`: Тип события (STORY, TECHNOLOGICAL, ECONOMIC, POLITICAL, MILITARY, SPORTS, ENVIRONMENTAL)
@@ -113,6 +116,7 @@ erDiagram
 - `version`: Версия события для оптимистичной блокировки
 
 **Индексы:**
+
 - По `type` для фильтрации по типу
 - По `scale` для фильтрации по масштабу
 - По `(status, start_time)` для активных событий
@@ -124,6 +128,7 @@ erDiagram
 Таблица эффектов событий. Хранит информацию о эффектах, применяемых к различным системам.
 
 **Ключевые поля:**
+
 - `event_id`: ID события (FK к world_events)
 - `target_system`: Целевая система (ECONOMY, SOCIAL, GAMEPLAY, REPUTATION, QUEST)
 - `effect_type`: Тип эффекта (VARCHAR)
@@ -132,6 +137,7 @@ erDiagram
 - `is_active`: Флаг активности эффекта
 
 **Индексы:**
+
 - По `(event_id, is_active)` для эффектов события
 - По `(target_system, is_active)` для фильтрации по системе
 - По `(is_active, start_time)` для активных эффектов
@@ -142,6 +148,7 @@ erDiagram
 Таблица расписания событий. Хранит информацию о запланированных запусках событий.
 
 **Ключевые поля:**
+
 - `event_id`: ID события (FK к world_events)
 - `scheduled_time`: Запланированное время запуска
 - `trigger_type`: Тип триггера (CRON, MANUAL, QUEST, SIMULATION)
@@ -149,6 +156,7 @@ erDiagram
 - `status`: Статус расписания (SCHEDULED, TRIGGERED, CANCELLED)
 
 **Индексы:**
+
 - По `(event_id, status)` для расписаний события
 - По `(scheduled_time, status)` для запланированных запусков
 - По `trigger_type` для фильтрации по типу триггера
@@ -159,6 +167,7 @@ erDiagram
 Таблица истории событий. Хранит информацию об изменениях событий для аудита.
 
 **Ключевые поля:**
+
 - `event_id`: ID события (FK к world_events)
 - `action`: Действие (CREATED, UPDATED, ANNOUNCED, ACTIVATED, DEACTIVATED, ARCHIVED, CANCELLED)
 - `changed_by`: ID пользователя, внесшего изменение (UUID, nullable)
@@ -166,6 +175,7 @@ erDiagram
 - `timestamp`: Время изменения
 
 **Индексы:**
+
 - По `(event_id, timestamp DESC)` для истории события
 - По `(action, timestamp DESC)` для фильтрации по действию
 - По `timestamp DESC` для временных запросов
@@ -176,6 +186,7 @@ erDiagram
 Таблица аналитики событий. Хранит метрики и статистику по событиям.
 
 **Ключевые поля:**
+
 - `event_id`: ID события (FK к world_events)
 - `metric_name`: Название метрики (VARCHAR)
 - `metric_value`: Значение метрики (DECIMAL)
@@ -183,6 +194,7 @@ erDiagram
 - `recorded_at`: Время записи метрики
 
 **Индексы:**
+
 - По `(event_id, recorded_at DESC)` для метрик события
 - По `(metric_name, recorded_at DESC)` для фильтрации по метрике
 - По `recorded_at DESC` для временных запросов
@@ -192,6 +204,7 @@ erDiagram
 Таблица участников событий. Хранит информацию об участии игроков в событиях.
 
 **Ключевые поля:**
+
 - `event_id`: ID события (FK к world_events)
 - `character_id`: ID персонажа (FK к characters)
 - `participation_type`: Тип участия (VARCHAR)
@@ -200,6 +213,7 @@ erDiagram
 - `left_at`: Время выхода (nullable)
 
 **Индексы:**
+
 - По `event_id` для участников события
 - По `character_id` для событий персонажа
 - По `event_id` для активных участников (WHERE left_at IS NULL)
@@ -209,7 +223,8 @@ erDiagram
 ### CHECK Constraints
 
 - `world_events.max_concurrent`: Должно быть > 0
-- `event_history.action`: Допустимые значения: 'CREATED', 'UPDATED', 'ANNOUNCED', 'ACTIVATED', 'DEACTIVATED', 'ARCHIVED', 'CANCELLED'
+- `event_history.action`: Допустимые значения: 'CREATED', 'UPDATED', 'ANNOUNCED', 'ACTIVATED', 'DEACTIVATED', '
+  ARCHIVED', 'CANCELLED'
 
 ### ENUM Types
 
@@ -276,16 +291,20 @@ erDiagram
 ## Миграции
 
 ### Существующие миграции:
+
 - `V1_54__world_events_system_tables.sql` - создание всех таблиц системы мировых событий
 
 ### Применение миграций:
+
 ```bash
 liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ```
 
 ## Соответствие архитектуре
 
-Схема БД полностью соответствует архитектуре из `knowledge/implementation/architecture/world-events-system-architecture.yaml`:
+Схема БД полностью соответствует архитектуре из
+`knowledge/implementation/architecture/world-events-system-architecture.yaml`:
+
 - [OK] Все таблицы из архитектуры созданы
 - [OK] Все поля соответствуют описанию
 - [OK] ENUM типы созданы для всех перечислений
@@ -300,6 +319,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### JSONB поля
 
 Использование JSONB для гибкого хранения:
+
 - `parameters`: Параметры эффектов
 - `trigger_parameters`: Параметры триггеров (CRON выражения, условия)
 - `changes`: Детали изменений в истории
@@ -309,6 +329,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Массивы
 
 Использование массивов PostgreSQL:
+
 - `target_regions`: TEXT[] - целевые регионы
 - `target_factions`: UUID[] - целевые фракции
 - `prerequisites`: UUID[] - предварительные условия (ID других событий)
@@ -316,17 +337,20 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### INTERVAL типы
 
 Использование INTERVAL для длительности:
+
 - `duration`: Длительность события
 - `cooldown_duration`: Длительность кулдауна
 
 ### Версионирование
 
 Поддержка оптимистичной блокировки:
+
 - `version`: Версия события для предотвращения конфликтов при одновременном обновлении
 
 ### Типы событий
 
 Система поддерживает различные типы событий:
+
 - **STORY**: Сюжетные события
 - **TECHNOLOGICAL**: Технологические события
 - **ECONOMIC**: Экономические события
@@ -338,6 +362,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Масштабы событий
 
 События могут иметь разные масштабы:
+
 - **GLOBAL**: Глобальные события (весь мир)
 - **REGIONAL**: Региональные события (регион)
 - **CITY**: Городские события (город)
@@ -346,6 +371,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Частота событий
 
 События могут иметь разную частоту:
+
 - **ONE_TIME**: Разовые события
 - **PERIODIC**: Периодические события
 - **REGULAR**: Регулярные события
@@ -353,6 +379,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Эффекты событий
 
 Эффекты могут применяться к различным системам:
+
 - **ECONOMY**: Экономическая система
 - **SOCIAL**: Социальная система
 - **GAMEPLAY**: Игровая механика
@@ -362,9 +389,9 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Триггеры расписания
 
 События могут запускаться различными способами:
+
 - **CRON**: По расписанию (CRON выражение)
 - **MANUAL**: Вручную
 - **QUEST**: По квесту
 - **SIMULATION**: По симуляции
-
 

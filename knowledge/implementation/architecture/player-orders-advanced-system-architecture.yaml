@@ -29,7 +29,7 @@ components:
     integration:
       - player-orders-core-service
       - social-service
-    
+
   - name: "Order Auction System"
     type: core
     responsibilities:
@@ -40,7 +40,7 @@ components:
     integration:
       - player-orders-core-service
       - economy-service
-    
+
   - name: "Arbitration Service"
     type: core
     responsibilities:
@@ -52,7 +52,7 @@ components:
       - player-orders-core-service
       - reputation-service
       - anti-cheat-service
-    
+
   - name: "Insurance Manager"
     type: supporting
     responsibilities:
@@ -73,17 +73,17 @@ api_endpoints:
         path: "/orders/multi-executor"
         description: "Создать multi-executor заказ"
         expected_rps: 100
-      
+
       - method: POST
         path: "/orders/{id}/invite"
         description: "Пригласить участника"
         expected_rps: 200
-      
+
       - method: POST
         path: "/orders/{id}/join"
         description: "Присоединиться к заказу"
         expected_rps: 300
-      
+
       - method: GET
         path: "/orders/{id}/participants"
         description: "Список участников"
@@ -96,17 +96,17 @@ api_endpoints:
         path: "/auctions"
         description: "Создать аукцион на заказ"
         expected_rps: 50
-      
+
       - method: POST
         path: "/auctions/{id}/bids"
         description: "Сделать ставку"
         expected_rps: 200
-      
+
       - method: GET
         path: "/auctions/{id}"
         description: "Статус аукциона"
         expected_rps: 300
-      
+
       - method: POST
         path: "/auctions/{id}/complete"
         description: "Завершить аукцион"
@@ -119,17 +119,17 @@ api_endpoints:
         path: "/disputes"
         description: "Создать спор"
         expected_rps: 20
-      
+
       - method: POST
         path: "/disputes/{id}/evidence"
         description: "Добавить доказательства"
         expected_rps: 50
-      
+
       - method: GET
         path: "/disputes/{id}"
         description: "Статус спора"
         expected_rps: 100
-      
+
       - method: POST
         path: "/disputes/{id}/resolve"
         description: "Разрешить спор (arbitrator)"
@@ -142,12 +142,12 @@ api_endpoints:
         path: "/orders/{id}/insurance/quote"
         description: "Расчет стоимости страховки"
         expected_rps: 300
-      
+
       - method: POST
         path: "/orders/{id}/insurance/purchase"
         description: "Купить страховку"
         expected_rps: 100
-      
+
       - method: POST
         path: "/orders/{id}/insurance/claim"
         description: "Заявка на выплату"
@@ -177,7 +177,7 @@ data_model:
           type: enum
           size: 1 byte
       expected_struct_size: ~48 bytes
-    
+
     - name: OrderParticipant
       description: "Участник multi-executor заказа"
       fields_ordered_by_size:
@@ -200,7 +200,7 @@ data_model:
           type: bool
           size: 1 byte
       expected_struct_size: ~64 bytes
-    
+
     - name: OrderAuction
       description: "Аукцион на заказ"
       fields_ordered_by_size:
@@ -223,7 +223,7 @@ data_model:
           type: enum
           size: 1 byte
       expected_struct_size: ~60 bytes
-    
+
     - name: OrderDispute
       description: "Спор по заказу"
       fields_ordered_by_size:
@@ -249,7 +249,7 @@ data_model:
           type: enum
           size: 1 byte
       expected_struct_size: ~92 bytes
-    
+
     - name: OrderInsurance
       description: "Страховка заказа"
       fields_ordered_by_size:
@@ -283,7 +283,7 @@ database_schema:
         - "idx_multi_orders_base ON multi_executor_orders(base_order_id)"
         - "idx_multi_orders_status ON multi_executor_orders(status)"
       expected_rows: 5000
-    
+
     - name: order_participants
       columns:
         - id UUID PRIMARY KEY
@@ -298,7 +298,7 @@ database_schema:
         - "idx_participants_order ON order_participants(order_id)"
         - "idx_participants_player ON order_participants(player_id)"
       expected_rows: 30000
-    
+
     - name: order_auctions
       columns:
         - id UUID PRIMARY KEY
@@ -313,7 +313,7 @@ database_schema:
         - "idx_auctions_order ON order_auctions(order_id)"
         - "idx_auctions_end_time ON order_auctions(end_time) WHERE status = 'active'"
       expected_rows: 3000
-    
+
     - name: order_disputes
       columns:
         - id UUID PRIMARY KEY
@@ -332,7 +332,7 @@ database_schema:
         - "idx_disputes_status ON order_disputes(status)"
         - "idx_disputes_arbitrator ON order_disputes(arbitrator_id) WHERE arbitrator_id IS NOT NULL"
       expected_rows: 1000
-    
+
     - name: order_insurance
       columns:
         - id UUID PRIMARY KEY
@@ -351,20 +351,20 @@ event_bus_contracts:
   publishes:
     - topic: "orders.multi_executor.created"
       description: "Multi-executor заказ создан"
-    
+
     - topic: "orders.auction.bid_placed"
       description: "Ставка сделана на аукционе"
-    
+
     - topic: "orders.dispute.created"
       description: "Спор создан"
-    
+
     - topic: "orders.insurance.claimed"
       description: "Страховка активирована"
   
   subscribes:
     - topic: "orders.completed"
       description: "Заказ выполнен - распределить награды"
-    
+
     - topic: "orders.failed"
       description: "Заказ провален - обработать insurance"
 
@@ -377,14 +377,14 @@ data_synchronization:
         - "Calculate reward distribution"
         - "Transfer rewards to participants"
         - "Update reputation for all"
-    
+
     - name: "Auction Completion"
       steps:
         - "Close bidding"
         - "Assign order to winner"
         - "Charge auction fee"
         - "Notify participants"
-    
+
     - name: "Dispute Resolution"
       steps:
         - "Freeze order funds"
@@ -392,7 +392,7 @@ data_synchronization:
         - "Arbitrator review"
         - "Execute compensation"
         - "Update reputation"
-    
+
     - name: "Insurance Claim"
       steps:
         - "Validate claim"
@@ -423,15 +423,15 @@ integration:
     - name: player-orders-core-service
       integration_type: API + Event Bus
       description: "Базовая система заказов"
-    
+
     - name: reputation-service
       integration_type: Event Bus
       description: "Обновление репутации"
-    
+
     - name: wallet-service
       integration_type: API
       description: "Переводы средств"
-    
+
     - name: anti-cheat-service
       integration_type: API
       description: "Fraud detection"

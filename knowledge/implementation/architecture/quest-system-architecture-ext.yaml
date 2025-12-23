@@ -1,23 +1,22 @@
+narrative_service: |
+  - Управление сюжетными линиями
+  - Интеграция с системой лиг
+  - Управление каноном
 
-    narrative_service: |
-      - Управление сюжетными линиями
-      - Интеграция с системой лиг
-      - Управление каноном
+event_service: |
+  - Публикация событий квестов
+  - Подписка на события других систем
+  - Управление временными событиями
 
-    event_service: |
-      - Публикация событий квестов
-      - Подписка на события других систем
-      - Управление временными событиями
+progression_service: |
+  - Получение данных навыков для проверок
+  - Обновление прогресса при завершении квестов
+  - Интеграция с системой ачивок
 
-    progression_service: |
-      - Получение данных навыков для проверок
-      - Обновление прогресса при завершении квестов
-      - Интеграция с системой ачивок
-
-    realtime_gateway: |
-      - Отправка уведомлений о квестах
-      - Реалтайм обновления прогресса
-      - Синхронизация состояния диалогов
+realtime_gateway: |
+  - Отправка уведомлений о квестах
+  - Реалтайм обновления прогресса
+  - Синхронизация состояния диалогов
 
 technical_specification:
   subtasks:
@@ -26,7 +25,7 @@ technical_specification:
       description: |
         Реализация Quest Engine с поддержкой state machine, управления инстансами,
         обработки целей и интеграции с event bus.
-      dependencies: []
+      dependencies: [ ]
       estimated_effort: 5 days
 
     - id: quest-content-manager
@@ -34,7 +33,7 @@ technical_specification:
       description: |
         Реализация Quest Content Manager с загрузкой и кэшированием определений квестов,
         версионированием и фильтрацией.
-      dependencies: [quest-engine-core]
+      dependencies: [ quest-engine-core ]
       estimated_effort: 3 days
 
     - id: dialogue-system
@@ -42,7 +41,7 @@ technical_specification:
       description: |
         Реализация Dialogue System с поддержкой диалоговых деревьев, выборов игрока,
         условий и сохранения состояния.
-      dependencies: [quest-engine-core]
+      dependencies: [ quest-engine-core ]
       estimated_effort: 4 days
 
     - id: quest-branch-manager
@@ -50,7 +49,7 @@ technical_specification:
       description: |
         Реализация Quest Branch Manager с отслеживанием выборов, применением последствий
         и управлением блокировкой контента.
-      dependencies: [quest-engine-core, dialogue-system]
+      dependencies: [ quest-engine-core, dialogue-system ]
       estimated_effort: 4 days
 
     - id: quest-reward-calculator
@@ -58,7 +57,7 @@ technical_specification:
       description: |
         Реализация Quest Reward Calculator с расчетом динамических наград, учетом стиля
         прохождения и интеграцией с economy-service.
-      dependencies: [quest-engine-core]
+      dependencies: [ quest-engine-core ]
       estimated_effort: 3 days
 
     - id: skill-check-engine
@@ -66,7 +65,7 @@ technical_specification:
       description: |
         Реализация Skill Check Engine с проверкой навыков, учетом модификаторов,
         групповыми проверками и логированием.
-      dependencies: [quest-engine-core]
+      dependencies: [ quest-engine-core ]
       estimated_effort: 3 days
 
     - id: player-quest-board
@@ -74,7 +73,7 @@ technical_specification:
       description: |
         Реализация Player Quest Board с созданием квестов игроками, модерацией,
         рейтингом и интеграцией с досками фиксеров.
-      dependencies: [quest-engine-core, social-service]
+      dependencies: [ quest-engine-core, social-service ]
       estimated_effort: 5 days
 
     - id: quest-analytics
@@ -82,7 +81,7 @@ technical_specification:
       description: |
         Реализация Quest Analytics с логированием событий, статистикой выборов
         и метриками для балансировки.
-      dependencies: [quest-engine-core]
+      dependencies: [ quest-engine-core ]
       estimated_effort: 2 days
 
     - id: quest-event-publisher
@@ -90,7 +89,7 @@ technical_specification:
       description: |
         Реализация Quest Event Publisher с публикацией событий в event bus,
         подпиской на события других систем и синхронизацией состояния.
-      dependencies: [quest-engine-core, event-service]
+      dependencies: [ quest-engine-core, event-service ]
       estimated_effort: 2 days
 
     - id: database-schema
@@ -98,7 +97,7 @@ technical_specification:
       description: |
         Создание таблиц БД для квестов, диалогов, ветвления, проверок навыков
         и пользовательских квестов с миграциями Liquibase.
-      dependencies: []
+      dependencies: [ ]
       estimated_effort: 2 days
 
 diagrams:
@@ -109,28 +108,28 @@ diagrams:
         Gateway --> QuestEngine[Quest Engine]
         Gateway --> DialogueSystem[Dialogue System]
         Gateway --> QuestBoard[Player Quest Board]
-        
+    
         QuestEngine --> ContentManager[Quest Content Manager]
         QuestEngine --> BranchManager[Quest Branch Manager]
         QuestEngine --> RewardCalc[Quest Reward Calculator]
         QuestEngine --> SkillCheck[Skill Check Engine]
         QuestEngine --> EventPub[Quest Event Publisher]
-        
+    
         DialogueSystem --> BranchManager
         DialogueSystem --> SkillCheck
-        
+    
         QuestEngine --> CharacterService[Character Service]
         QuestEngine --> EconomyService[Economy Service]
         QuestEngine --> SocialService[Social Service]
         QuestEngine --> NarrativeService[Narrative Service]
         QuestEngine --> ProgressionService[Progression Service]
-        
+    
         EventPub --> EventBus[Event Bus]
         EventBus --> RealtimeGateway[Realtime Gateway]
-        
+    
         QuestEngine --> Analytics[Quest Analytics]
         QuestBoard --> SocialService
-        
+    
         QuestEngine --> DB[(Quest Database)]
         DialogueSystem --> DB
         BranchManager --> DB
@@ -149,7 +148,7 @@ diagrams:
         participant RC as Reward Calculator
         participant ES as Economy Service
         participant EB as Event Bus
-        
+    
         C->>QE: POST /quests/start
         QE->>CM: Load quest definition
         CM-->>QE: Quest definition
@@ -158,14 +157,14 @@ diagrams:
         QE->>QE: Create quest instance
         QE->>EB: Publish quest:started
         QE-->>C: Quest started
-        
+    
         Note over C,EB: Player completes objectives
-        
+    
         C->>QE: POST /quests/{id}/complete-objective
         QE->>QE: Update progress
         QE->>EB: Publish quest:objective-completed
         QE-->>C: Objective completed
-        
+    
         C->>QE: POST /quests/{id}/complete
         QE->>RC: Calculate rewards
         RC-->>QE: Rewards
@@ -184,13 +183,13 @@ diagrams:
         participant SC as Skill Check Engine
         participant BM as Branch Manager
         participant PS as Progression Service
-        
+    
         C->>DS: GET /dialogues/{id}
         DS->>DS: Load dialogue tree
         DS->>BM: Check conditions
         BM-->>DS: Available options
         DS-->>C: Dialogue with options
-        
+    
         C->>DS: POST /dialogues/{id}/select
         DS->>DS: Check if skill check needed
         alt Skill check required

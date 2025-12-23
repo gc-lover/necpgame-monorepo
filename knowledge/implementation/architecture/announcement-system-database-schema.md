@@ -1,9 +1,11 @@
 <!-- Issue: #323 -->
+
 # Announcement System - Database Schema
 
 ## Обзор
 
-Схема базы данных для системы объявлений, управляющей новостями игры, патчноутами, событиями, промо-акциями и уведомлениями для игроков.
+Схема базы данных для системы объявлений, управляющей новостями игры, патчноутами, событиями, промо-акциями и
+уведомлениями для игроков.
 
 ## ERD Диаграмма
 
@@ -78,8 +80,10 @@ erDiagram
 Объявления для игроков (новости, патчноуты, события, промо-акции).
 
 **Колонки:**
+
 - `id` (UUID, PK) - Уникальный идентификатор
-- `type` (announcement_type) - Тип объявления: game_news, patch_notes, maintenance, event, promotion, community, emergency
+- `type` (announcement_type) - Тип объявления: game_news, patch_notes, maintenance, event, promotion, community,
+  emergency
 - `priority` (announcement_priority) - Приоритет: low, medium, high, critical
 - `display_style` (announcement_display_style) - Стиль отображения: news_feed, popup, modal, banner, toast
 - `title` (VARCHAR(255)) - Заголовок объявления
@@ -96,6 +100,7 @@ erDiagram
 - `updated_at` (TIMESTAMP) - Время обновления
 
 **Индексы:**
+
 - `idx_announcements_type` - По типу и статусу
 - `idx_announcements_status` - По статусу и времени публикации
 - `idx_announcements_priority` - По приоритету и статусу (только опубликованные)
@@ -108,6 +113,7 @@ erDiagram
 Прочтения объявлений игроками с метриками взаимодействия.
 
 **Колонки:**
+
 - `id` (UUID, PK) - Уникальный идентификатор
 - `character_id` (UUID, FK) - ID персонажа
 - `announcement_id` (UUID, FK) - ID объявления
@@ -120,9 +126,11 @@ erDiagram
 - `updated_at` (TIMESTAMP) - Время обновления
 
 **Ограничения:**
+
 - UNIQUE (character_id, announcement_id) - Один персонаж может прочитать одно объявление один раз
 
 **Индексы:**
+
 - `idx_player_announcement_reads_character_id` - По персонажу и времени прочтения
 - `idx_player_announcement_reads_announcement_id` - По объявлению и времени прочтения
 - `idx_player_announcement_reads_read_at` - По времени прочтения (только прочитанные)
@@ -132,6 +140,7 @@ erDiagram
 Патчноуты с описанием изменений.
 
 **Колонки:**
+
 - `id` (UUID, PK) - Уникальный идентификатор
 - `version` (VARCHAR(50), UNIQUE) - Версия патча
 - `release_date` (TIMESTAMP) - Дата релиза
@@ -144,6 +153,7 @@ erDiagram
 - `updated_at` (TIMESTAMP) - Время обновления
 
 **Индексы:**
+
 - `idx_patch_notes_version` - По версии
 - `idx_patch_notes_release_date` - По дате релиза
 - `idx_patch_notes_announcement_id` - По связанному объявлению
@@ -153,6 +163,7 @@ erDiagram
 Телеметрия взаимодействий с объявлениями.
 
 **Колонки:**
+
 - `id` (UUID, PK) - Уникальный идентификатор
 - `event_type` (announcement_telemetry_event) - Тип события: displayed, read, clicked, dismissed
 - `announcement_id` (UUID, FK) - ID объявления
@@ -161,6 +172,7 @@ erDiagram
 - `created_at` (TIMESTAMP) - Время события
 
 **Индексы:**
+
 - `idx_announcement_telemetry_event_type` - По типу события и времени
 - `idx_announcement_telemetry_announcement_id` - По объявлению и времени
 - `idx_announcement_telemetry_character_id` - По персонажу и времени
@@ -169,6 +181,7 @@ erDiagram
 ## ENUM типы
 
 ### announcement_type
+
 - `game_news` - Новости игры
 - `patch_notes` - Патчноуты
 - `maintenance` - Обслуживание
@@ -178,12 +191,14 @@ erDiagram
 - `emergency` - Срочные объявления
 
 ### announcement_priority
+
 - `low` - Низкий приоритет
 - `medium` - Средний приоритет
 - `high` - Высокий приоритет
 - `critical` - Критический приоритет
 
 ### announcement_display_style
+
 - `news_feed` - Лента новостей
 - `popup` - Всплывающее окно
 - `modal` - Модальное окно
@@ -191,12 +206,14 @@ erDiagram
 - `toast` - Уведомление
 
 ### announcement_status
+
 - `draft` - Черновик
 - `scheduled` - Запланировано
 - `published` - Опубликовано
 - `archived` - Архивировано
 
 ### announcement_telemetry_event
+
 - `displayed` - Отображено
 - `read` - Прочитано
 - `clicked` - Кликнуто

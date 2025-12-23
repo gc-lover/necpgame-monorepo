@@ -1,9 +1,11 @@
 <!-- Issue: #140875788 -->
+
 # Economy Trading Markets Auctions - Database Schema
 
 ## Обзор
 
-Схема базы данных для экономической системы, включающая торговлю P2P, игровой рынок, аукционный дом, фондовую биржу и лог экономических операций.
+Схема базы данных для экономической системы, включающая торговлю P2P, игровой рынок, аукционный дом, фондовую биржу и
+лог экономических операций.
 
 ## ERD Диаграмма
 
@@ -102,6 +104,7 @@ erDiagram
 Таблица торговых сессий P2P. Хранит информацию о прямых обменах между игроками.
 
 **Ключевые поля:**
+
 - `initiator_id`: ID инициатора торговли (FK к characters)
 - `recipient_id`: ID получателя предложения (FK к characters)
 - `status`: Статус сессии (created, active, confirmed, completed, cancelled)
@@ -113,6 +116,7 @@ erDiagram
 - `completed_at`: Время завершения (nullable)
 
 **Индексы:**
+
 - По `(initiator_id, status)` для поиска сессий инициатора
 - По `(recipient_id, status)` для поиска сессий получателя
 - По `(status, expires_at)` для активных сессий
@@ -122,6 +126,7 @@ erDiagram
 Таблица объявлений на игровом рынке. Хранит информацию о предметах, выставленных на продажу с фиксированными ценами.
 
 **Ключевые поля:**
+
 - `seller_id`: ID продавца (FK к characters)
 - `item_id`: ID предмета
 - `price`: Цена предмета (DECIMAL(15,2), > 0)
@@ -131,6 +136,7 @@ erDiagram
 - `sold_at`: Время продажи (nullable)
 
 **Индексы:**
+
 - По `(seller_id, status)` для объявлений продавца
 - По `(item_id, status)` для поиска активных объявлений по предмету
 - По `(status, expires_at)` для активных объявлений
@@ -142,6 +148,7 @@ erDiagram
 Таблица лотов аукционного дома. Хранит информацию о предметах, выставленных на аукцион со ставками.
 
 **Ключевые поля:**
+
 - `seller_id`: ID продавца (FK к characters)
 - `item_id`: ID предмета
 - `start_price`: Начальная цена (DECIMAL(15,2), > 0)
@@ -155,6 +162,7 @@ erDiagram
 - `completed_at`: Время завершения (nullable)
 
 **Индексы:**
+
 - По `(seller_id, status)` для лотов продавца
 - По `bidder_id` для лотов, где игрок лидирует
 - По `(item_id, status)` для поиска активных лотов по предмету
@@ -167,6 +175,7 @@ erDiagram
 Таблица ордеров на фондовой бирже. Хранит информацию о заявках на покупку/продажу акций.
 
 **Ключевые поля:**
+
 - `character_id`: ID персонажа (FK к characters)
 - `stock_symbol`: Символ акции (VARCHAR(20))
 - `order_type`: Тип ордера (buy, sell)
@@ -178,6 +187,7 @@ erDiagram
 - `executed_at`: Время исполнения (nullable)
 
 **Индексы:**
+
 - По `(character_id, status)` для ордеров персонажа
 - По `(stock_symbol, status)` для активных ордеров по акции
 - По `(order_type, stock_symbol, status)` для matching ордеров
@@ -189,6 +199,7 @@ erDiagram
 Таблица исполненных сделок на фондовой бирже. Хранит информацию о завершенных сделках.
 
 **Ключевые поля:**
+
 - `buy_order_id`: ID ордера на покупку (FK к stock_orders)
 - `sell_order_id`: ID ордера на продажу (FK к stock_orders)
 - `stock_symbol`: Символ акции (VARCHAR(20))
@@ -197,6 +208,7 @@ erDiagram
 - `executed_at`: Время исполнения
 
 **Индексы:**
+
 - По `buy_order_id` для поиска сделок по ордеру покупки
 - По `sell_order_id` для поиска сделок по ордеру продажи
 - По `(stock_symbol, executed_at DESC)` для истории сделок по акции
@@ -207,6 +219,7 @@ erDiagram
 Таблица лога всех экономических операций. Хранит информацию о всех операциях для аналитики и аудита.
 
 **Ключевые поля:**
+
 - `operation_type`: Тип операции (trade, market_purchase, auction_bid, stock_order)
 - `character_id`: ID персонажа (FK к characters)
 - `operation_data`: JSONB данные операции
@@ -214,6 +227,7 @@ erDiagram
 - `created_at`: Время операции
 
 **Индексы:**
+
 - По `(character_id, created_at DESC)` для операций персонажа
 - По `(operation_type, created_at DESC)` для фильтрации по типу
 - По `created_at DESC` для аналитики по времени
@@ -292,23 +306,29 @@ erDiagram
 ### Партиционирование
 
 Для больших объемов данных рекомендуется партиционирование:
+
 - По `created_at` для таблиц логов (economy_operations_log, stock_trades)
 - По `stock_symbol` для stock_orders (если много разных акций)
 
 ## Миграции
 
 ### Существующие миграции:
+
 - `V1_15__trade_tables.sql` - базовые таблицы торговли (trade_sessions, trade_history)
-- `V1_51__economy_trading_markets_auctions_tables.sql` - дополнение схемы (market_listings, auction_lots, stock_orders, stock_trades, economy_operations_log)
+- `V1_51__economy_trading_markets_auctions_tables.sql` - дополнение схемы (market_listings, auction_lots, stock_orders,
+  stock_trades, economy_operations_log)
 
 ### Применение миграций:
+
 ```bash
 liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ```
 
 ## Соответствие архитектуре
 
-Схема БД полностью соответствует архитектуре из `knowledge/implementation/architecture/economy-trading-markets-auctions-architecture.yaml`:
+Схема БД полностью соответствует архитектуре из
+`knowledge/implementation/architecture/economy-trading-markets-auctions-architecture.yaml`:
+
 - [OK] Все таблицы из архитектуры созданы
 - [OK] Все поля соответствуют описанию
 - [OK] Индексы оптимизированы для частых запросов
@@ -321,6 +341,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### JSONB поля
 
 Использование JSONB для гибкого хранения:
+
 - `initiator_items`, `recipient_items`: Предметы в торговых сессиях
 - `initiator_currency`, `recipient_currency`: Валюта в торговых сессиях
 - `operation_data`: Данные операции для аналитики
@@ -329,6 +350,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Торговые сессии
 
 P2P торговля требует двойного подтверждения:
+
 - Оба игрока должны подтвердить обмен
 - Предметы блокируются до завершения или отмены
 - Сессия истекает через определенное время
@@ -336,6 +358,7 @@ P2P торговля требует двойного подтверждения:
 ### Игровой рынок
 
 Рынок с фиксированными ценами:
+
 - Продавец устанавливает цену
 - Покупатель покупает по указанной цене
 - Комиссия 1% удерживается автоматически
@@ -343,6 +366,7 @@ P2P торговля требует двойного подтверждения:
 ### Аукционный дом
 
 Аукционы со ставками:
+
 - Минимальная ставка: текущая + 5%
 - Мгновенный выкуп по buyout_price (если указан)
 - Таймер продлевается на 5 минут при новой ставке (если <5 минут осталось)
@@ -350,9 +374,9 @@ P2P торговля требует двойного подтверждения:
 ### Фондовая биржа
 
 Order book система:
+
 - Market ордера исполняются немедленно по лучшей цене
 - Limit ордера ждут подходящей цены
 - Matching происходит автоматически
 - Цены обновляются при исполнении сделок
-
 

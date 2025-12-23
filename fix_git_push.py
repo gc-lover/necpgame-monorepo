@@ -6,6 +6,7 @@ Diagnoses and fixes common git push issues
 import subprocess
 import sys
 
+
 def run_command(cmd, description):
     """Run command and return result"""
     print(f"\n[CHECK] {description}")
@@ -21,6 +22,7 @@ def run_command(cmd, description):
     except Exception as e:
         print(f"Error running command: {e}")
         return None
+
 
 def main():
     print("GIT PUSH DIAGNOSTIC AND FIX SCRIPT")
@@ -65,7 +67,8 @@ def main():
 
     # 7. Try force push with lease (safer than --force)
     print("\n[FIX] Trying force push with lease...")
-    force_push = run_command(f"git push --force-with-lease origin {current_branch}:{current_branch}", "Force pushing with lease")
+    force_push = run_command(f"git push --force-with-lease origin {current_branch}:{current_branch}",
+                             "Force pushing with lease")
 
     if force_push and force_push.returncode == 0:
         print("[SUCCESS] Force push successful!")
@@ -76,6 +79,7 @@ def main():
         print("2. Ensure you have write access to the repository")
         print("3. Check if remote branch exists: git ls-remote origin")
         print("4. Try: git push -u origin develop")
+
 
 if __name__ == '__main__':
     main()

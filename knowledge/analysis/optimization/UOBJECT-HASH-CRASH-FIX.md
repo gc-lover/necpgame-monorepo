@@ -3,6 +3,7 @@
 ## [SEARCH] Проблема
 
 Краш при работе с сетевой синхронизацией:
+
 ```
 Fatal error: [File:D:\build\++UE5\Sync\Engine\Source\Runtime\CoreUObject\Private\UObject\UObjectHash.cpp] [Line: 644] 
 Trying to modify UObject map (FindOrAdd) that is currently being iterated.
@@ -14,8 +15,10 @@ Trying to modify UObject map (FindOrAdd) that is currently being iterated.
 
 Краш происходил из-за модификации UObject hash tables во время итерации:
 
-1. **Итерация по PlayerController**: В `FindControllerByPlayerId` и `OnGameStateReceived` происходила итерация по `World->GetPlayerControllerIterator()`
-2. **Обращение к UObject**: Во время итерации вызывался `GetPlayerIdFromController`, который обращался к `PlayerState` (UObject)
+1. **Итерация по PlayerController**: В `FindControllerByPlayerId` и `OnGameStateReceived` происходила итерация по
+   `World->GetPlayerControllerIterator()`
+2. **Обращение к UObject**: Во время итерации вызывался `GetPlayerIdFromController`, который обращался к `PlayerState` (
+   UObject)
 3. **Модификация TMap**: При добавлении в `EntityStateHistory` TMap могла происходить модификация UObject hash tables
 
 ### Почему это вызывало краш
@@ -29,6 +32,7 @@ Trying to modify UObject map (FindOrAdd) that is currently being iterated.
 ### 1. Предварительный сбор контроллеров
 
 **Было**:
+
 ```cpp
 for (const FProtobufCodec::FEntityState& Entity : ServerMsg.GameState.Snapshot.Entities)
 {
@@ -38,6 +42,7 @@ for (const FProtobufCodec::FEntityState& Entity : ServerMsg.GameState.Snapshot.E
 ```
 
 **Стало**:
+
 ```cpp
 TMap<FString, APlayerController*> ControllerMap;
 for (FConstPlayerControllerIterator It = World->GetPlayerControllerIterator(); It; ++It)
@@ -65,11 +70,13 @@ for (const FProtobufCodec::FEntityState& Entity : ServerMsg.GameState.Snapshot.E
 ### 2. Изменение сигнатуры ProcessEntityUpdate
 
 **Было**:
+
 ```cpp
 void ProcessEntityUpdate(const FProtobufCodec::FEntityState& Entity, int64 GameStateTick, const FString& LocalPlayerId, UWorld* World);
 ```
 
 **Стало**:
+
 ```cpp
 void ProcessEntityUpdate(const FProtobufCodec::FEntityState& Entity, int64 GameStateTick, const FString& LocalPlayerId, UWorld* World, APlayerController* TargetController);
 ```
@@ -79,6 +86,7 @@ void ProcessEntityUpdate(const FProtobufCodec::FEntityState& Entity, int64 GameS
 ### 3. Безопасная итерация в FindControllerByPlayerId
 
 **Было**:
+
 ```cpp
 for (FConstPlayerControllerIterator It = World->GetPlayerControllerIterator(); It; ++It)
 {
@@ -91,6 +99,7 @@ for (FConstPlayerControllerIterator It = World->GetPlayerControllerIterator(); I
 ```
 
 **Стало**:
+
 ```cpp
 TArray<APlayerController*> Controllers;
 for (FConstPlayerControllerIterator It = World->GetPlayerControllerIterator(); It; ++It)
@@ -144,6 +153,7 @@ FString UWebSocketMovementSyncComponent::GetPlayerIdFromController(APlayerContro
 ## [TARGET] Результат
 
 После исправления:
+
 - [OK] Нет модификации UObject hash tables во время итерации
 - [OK] Контроллеры собираются заранее в безопасном месте
 - [OK] Обращение к UObject происходит после завершения итерации
@@ -168,13 +178,13 @@ FString UWebSocketMovementSyncComponent::GetPlayerIdFromController(APlayerContro
 ## [SYMBOL] Файлы изменены
 
 - `client/UE5/NECPGAME/Source/LyraGame/Net/WebSocketMovementSyncComponent.cpp`
-  - Функция `OnGameStateReceived`: предварительный сбор контроллеров
-  - Функция `ProcessEntityUpdate`: изменена сигнатура для приёма контроллера
-  - Функция `FindControllerByPlayerId`: безопасная итерация с предварительным сбором
-  - Функция `GetPlayerIdFromController`: добавлены проверки валидности
+    - Функция `OnGameStateReceived`: предварительный сбор контроллеров
+    - Функция `ProcessEntityUpdate`: изменена сигнатура для приёма контроллера
+    - Функция `FindControllerByPlayerId`: безопасная итерация с предварительным сбором
+    - Функция `GetPlayerIdFromController`: добавлены проверки валидности
 
 - `client/UE5/NECPGAME/Source/LyraGame/Net/WebSocketMovementSyncComponent.h`
-  - Изменена сигнатура `ProcessEntityUpdate`
+    - Изменена сигнатура `ProcessEntityUpdate`
 
 ## [WARNING] Важные замечания
 

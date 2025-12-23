@@ -5,134 +5,129 @@
 BEGIN;
 
 -- Lore: main-story-2020-2030-dd-nodes
-INSERT INTO narrative.lore_entries (
-    lore_id, title, document_type, category,
-    content_data, version
-)
-VALUES (
-    'main-story-2020-2030-dd-nodes',
-    '2020–2030 — Shooter skill tests по классам',
-    'canon',
-    'narrative',
-    '{
-  "metadata": {
-    "id": "main-story-2020-2030-dd-nodes",
-    "title": "2020–2030 — Shooter skill tests по классам",
-    "document_type": "canon",
-    "category": "narrative",
-    "status": "draft",
-    "version": "0.1.0",
-    "last_updated": "2025-11-11T09:20:00+00:00",
-    "concept_approved": false,
-    "concept_reviewed_at": "",
-    "owners": [
-      {
-        "role": "concept_director",
-        "contact": "concept@necp.game"
-      }
-    ],
-    "tags": [
-      "main-story",
-      "early-era",
-      "shooter-tests"
-    ],
-    "topics": [
-      "story-arc",
-      "gameplay-integration"
-    ],
-    "related_systems": [
-      "quest-engine",
-      "combat-service",
-      "economy-service"
-    ],
-    "related_documents": [
-      {
-        "id": "main-story-2020-2030",
-        "relation": "references"
-      }
-    ],
-    "source": "shared/docs/knowledge/canon/narrative/scenarios/main-story/dd-nodes/2020-2030-dd-nodes-by-class.md",
-    "visibility": "internal",
-    "audience": [
-      "concept",
-      "narrative",
-      "systems"
-    ],
-    "risk_level": "medium"
-  },
-  "review": {
-    "chain": [
-      {
-        "role": "concept_director",
-        "reviewer": "",
-        "reviewed_at": "",
-        "status": "pending"
-      }
-    ],
-    "next_actions": []
-  },
-  "summary": {
-    "problem": "Shooter-проверки эпохи 2020–2030 находились в Markdown и не имели структурированных метаданных для vision-хендОффа.",
-    "goal": "Перенести узлы по актам и классам в единый YAML, пригодный для проверки схемы и связывания с основным сюжетом.",
-    "essence": "Ранние узлы кампании фиксируют пороги освоения сетей, контракты гильдий и зарождение купольных режимов.",
-    "key_points": [
-      "Акт I концентрируется на чистоте каналов и охране зон для Netrunner и Solo.",
-      "Акт II вводит гильдейские контракты и медтех-проверки доступа к имплантам.",
-      "Акт III закрепляет политические режимы куполов и экстракт-лигу.",
-      "Акт IV формализует стандарты «чистого канала» и экспорт governance-параметров."
-    ]
-  },
-  "content": {
-    "sections": [
-      {
-        "id": "node_list",
-        "title": "Узлы и пороги",
-        "body": "- **A1 Трассировка фантомов:** Netrunner — hacking — threshold 0.62→0.70; модификатор «чистый канал» снижает порог до 0.58; критический успех открывает скрытый маршрут, провал поднимает heat.\n- **A2 Сенсорная зачистка:** Solo — defense — threshold 0.62–0.70; укрытия дают −0.03; критический успех позволяет пройти незамеченным, критический провал ведёт к ранению и агро.\n- **B1 Контракт гильдии:** Fixer — trading — threshold 0.62–0.70; скидочные прайсы снижают порог; успех даёт скидки, провал — штрафы, критический успех открывает эксклюзив.\n- **B2 Порог импланта:** Medtech — medicine — threshold 0.62–0.70; клиника даёт −0.03; провал вызывает осложнение, критический провал формирует инцидент.\n- **C1 Голос купола:** Politician — social — threshold 0.66–0.74; коалиция уменьшает пороги; успех закрепляет режим, провал блокирует реформу.\n- **C2 Экстракт-лига:** Nomad/Solo/Techie — role metric — threshold 0.62–0.70; доступ к маршруту снижает порог; критический успех даёт редкий аффикс, критический провал теряет лут.\n- **M1 Стандарты vs Чёрная сеть:** Netrunner/Corpo/Media — governance — threshold 0.66–0.74; публичная поддержка или логистика уменьшают порог; успех фиксирует статус «чистого», провал уводит в серый режим.\n",
-        "mechanics_links": [],
-        "assets": []
+INSERT INTO narrative.lore_entries (lore_id, title, document_type, category,
+                                    content_data, version)
+VALUES ('main-story-2020-2030-dd-nodes',
+        '2020–2030 — Shooter skill tests по классам',
+        'canon',
+        'narrative',
+        '{
+      "metadata": {
+        "id": "main-story-2020-2030-dd-nodes",
+        "title": "2020–2030 — Shooter skill tests по классам",
+        "document_type": "canon",
+        "category": "narrative",
+        "status": "draft",
+        "version": "0.1.0",
+        "last_updated": "2025-11-11T09:20:00+00:00",
+        "concept_approved": false,
+        "concept_reviewed_at": "",
+        "owners": [
+          {
+            "role": "concept_director",
+            "contact": "concept@necp.game"
+          }
+        ],
+        "tags": [
+          "main-story",
+          "early-era",
+          "shooter-tests"
+        ],
+        "topics": [
+          "story-arc",
+          "gameplay-integration"
+        ],
+        "related_systems": [
+          "quest-engine",
+          "combat-service",
+          "economy-service"
+        ],
+        "related_documents": [
+          {
+            "id": "main-story-2020-2030",
+            "relation": "references"
+          }
+        ],
+        "source": "shared/docs/knowledge/canon/narrative/scenarios/main-story/dd-nodes/2020-2030-dd-nodes-by-class.md",
+        "visibility": "internal",
+        "audience": [
+          "concept",
+          "narrative",
+          "systems"
+        ],
+        "risk_level": "medium"
       },
-      {
-        "id": "act_transitions",
-        "title": "Переходы между актами",
-        "body": "Пороговые значения и критические эффекты актов переносятся в следующие эпохи. Отметка heat из A1 повышает риски в A2, успехи гильдий в B1 открывают квоты 2030–2045, а режимы куполов C1 задают параметры для будущих политических линий. Метрика «чистого канала» служит глобальным модификатором для governance-тестов поздних актов.\n",
-        "mechanics_links": [],
-        "assets": []
+      "review": {
+        "chain": [
+          {
+            "role": "concept_director",
+            "reviewer": "",
+            "reviewed_at": "",
+            "status": "pending"
+          }
+        ],
+        "next_actions": []
+      },
+      "summary": {
+        "problem": "Shooter-проверки эпохи 2020–2030 находились в Markdown и не имели структурированных метаданных для vision-хендОффа.",
+        "goal": "Перенести узлы по актам и классам в единый YAML, пригодный для проверки схемы и связывания с основным сюжетом.",
+        "essence": "Ранние узлы кампании фиксируют пороги освоения сетей, контракты гильдий и зарождение купольных режимов.",
+        "key_points": [
+          "Акт I концентрируется на чистоте каналов и охране зон для Netrunner и Solo.",
+          "Акт II вводит гильдейские контракты и медтех-проверки доступа к имплантам.",
+          "Акт III закрепляет политические режимы куполов и экстракт-лигу.",
+          "Акт IV формализует стандарты «чистого канала» и экспорт governance-параметров."
+        ]
+      },
+      "content": {
+        "sections": [
+          {
+            "id": "node_list",
+            "title": "Узлы и пороги",
+            "body": "- **A1 Трассировка фантомов:** Netrunner — hacking — threshold 0.62→0.70; модификатор «чистый канал» снижает порог до 0.58; критический успех открывает скрытый маршрут, провал поднимает heat.\n- **A2 Сенсорная зачистка:** Solo — defense — threshold 0.62–0.70; укрытия дают −0.03; критический успех позволяет пройти незамеченным, критический провал ведёт к ранению и агро.\n- **B1 Контракт гильдии:** Fixer — trading — threshold 0.62–0.70; скидочные прайсы снижают порог; успех даёт скидки, провал — штрафы, критический успех открывает эксклюзив.\n- **B2 Порог импланта:** Medtech — medicine — threshold 0.62–0.70; клиника даёт −0.03; провал вызывает осложнение, критический провал формирует инцидент.\n- **C1 Голос купола:** Politician — social — threshold 0.66–0.74; коалиция уменьшает пороги; успех закрепляет режим, провал блокирует реформу.\n- **C2 Экстракт-лига:** Nomad/Solo/Techie — role metric — threshold 0.62–0.70; доступ к маршруту снижает порог; критический успех даёт редкий аффикс, критический провал теряет лут.\n- **M1 Стандарты vs Чёрная сеть:** Netrunner/Corpo/Media — governance — threshold 0.66–0.74; публичная поддержка или логистика уменьшают порог; успех фиксирует статус «чистого», провал уводит в серый режим.\n",
+            "mechanics_links": [],
+            "assets": []
+          },
+          {
+            "id": "act_transitions",
+            "title": "Переходы между актами",
+            "body": "Пороговые значения и критические эффекты актов переносятся в следующие эпохи. Отметка heat из A1 повышает риски в A2, успехи гильдий в B1 открывают квоты 2030–2045, а режимы куполов C1 задают параметры для будущих политических линий. Метрика «чистого канала» служит глобальным модификатором для governance-тестов поздних актов.\n",
+            "mechanics_links": [],
+            "assets": []
+          }
+        ]
+      },
+      "appendix": {
+        "glossary": [],
+        "references": [],
+        "decisions": []
+      },
+      "implementation": {
+        "github_issue": 133,
+        "needs_task": false,
+        "queue_reference": [],
+        "blockers": []
+      },
+      "history": [
+        {
+          "version": "0.1.0",
+          "date": "2025-11-11",
+          "author": "concept_director",
+          "changes": "Конвертация shooter-узлов 2020–2030 в YAML."
+        }
+      ],
+      "validation": {
+        "checksum": "",
+        "schema_version": "1.0"
       }
-    ]
-  },
-  "appendix": {
-    "glossary": [],
-    "references": [],
-    "decisions": []
-  },
-  "implementation": {
-    "github_issue": 133,
-    "needs_task": false,
-    "queue_reference": [],
-    "blockers": []
-  },
-  "history": [
-    {
-      "version": "0.1.0",
-      "date": "2025-11-11",
-      "author": "concept_director",
-      "changes": "Конвертация shooter-узлов 2020–2030 в YAML."
-    }
-  ],
-  "validation": {
-    "checksum": "",
-    "schema_version": "1.0"
-  }
-}'::jsonb,
-    0
-)
-ON CONFLICT (lore_id) DO UPDATE SET
+    }'::jsonb,
+        0) ON CONFLICT (lore_id) DO
+UPDATE SET
     title = EXCLUDED.title,
     document_type = EXCLUDED.document_type,
     category = EXCLUDED.category,
     content_data = EXCLUDED.content_data,
     version = EXCLUDED.version,
     updated_at = CURRENT_TIMESTAMP;
-
 
 COMMIT;

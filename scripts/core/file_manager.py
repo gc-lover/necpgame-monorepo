@@ -4,11 +4,12 @@ NECPGAME File Manager
 SOLID: Single Responsibility - manages file operations
 """
 
+import json
 import os
 import yaml
-import json
 from pathlib import Path
 from typing import List, Dict, Any, Optional, Union
+
 from scripts.core.config import ConfigManager
 
 
@@ -37,7 +38,7 @@ class FileManager:
         try:
             with open(file_path, 'w', encoding='utf-8') as f:
                 yaml.dump(data, f, allow_unicode=True, sort_keys=False,
-                         default_flow_style=False, width=120)
+                          default_flow_style=False, width=120)
         except Exception as e:
             raise ValueError(f"Failed to write YAML {file_path}: {e}")
 

@@ -4,7 +4,7 @@
 
 ## Метаданные
 
-- **ID:** architecture-chat-system  
+- **ID:** architecture-chat-system
 - **Версия:** 1.0.0
 - **Дата:** 2025-12-02
 - **Автор:** Architect Agent
@@ -13,7 +13,8 @@
 
 ## Краткое описание
 
-Chat System обеспечивает текстовую и голосовую коммуникацию игроков через множественные каналы с поддержкой модерации, форматирования, переводов и истории сообщений.
+Chat System обеспечивает текстовую и голосовую коммуникацию игроков через множественные каналы с поддержкой модерации,
+форматирования, переводов и истории сообщений.
 
 ## Связанные документы
 
@@ -91,27 +92,32 @@ flowchart TD
 **Подкомпоненты:**
 
 #### Chat Router
+
 - Маршрутизация сообщений по каналам
 - Определение получателей
 - WebSocket broadcasting
 
 #### Message Processor
+
 - Обработка команд (/whisper, /party, etc.)
 - Rich форматирование (bold, italic, links, emoji)
 - Валидация сообщений
 
 #### Channel Manager
+
 - Управление каналами
 - Права доступа (read/write)
 - Подписка/отписка
 
 #### Moderation Engine
+
 - Profanity filter
 - Spam detection
 - Auto-ban система
 - Жалобы игроков
 
 #### Voice Manager
+
 - WebRTC signaling
 - Голосовые каналы
 - Mute/unmute управление
@@ -176,9 +182,11 @@ CREATE INDEX idx_chat_bans_expires ON chat_bans(expires_at) WHERE is_active = TR
 ### 3.1. WebSocket API
 
 #### /ws/chat
+
 **Подключение к чату**
 
 **Incoming Messages:**
+
 ```json
 {
   "type": "send_message",
@@ -189,6 +197,7 @@ CREATE INDEX idx_chat_bans_expires ON chat_bans(expires_at) WHERE is_active = TR
 ```
 
 **Outgoing Messages:**
+
 ```json
 {
   "type": "message",
@@ -204,9 +213,11 @@ CREATE INDEX idx_chat_bans_expires ON chat_bans(expires_at) WHERE is_active = TR
 ### 3.2. REST API
 
 #### GET /api/v1/chat/channels
+
 **Список доступных каналов**
 
 Response:
+
 ```json
 {
   "channels": [
@@ -223,11 +234,13 @@ Response:
 ```
 
 #### GET /api/v1/chat/history/{channel_id}
+
 **История сообщений**
 
 Parameters: `before_message_id`, `limit`
 
 Response:
+
 ```json
 {
   "messages": [...],
@@ -236,9 +249,11 @@ Response:
 ```
 
 #### POST /api/v1/chat/report
+
 **Пожаловаться на сообщение**
 
 Request:
+
 ```json
 {
   "message_id": "uuid",
@@ -247,9 +262,11 @@ Request:
 ```
 
 #### POST /api/v1/chat/ban (Admin only)
+
 **Забанить игрока**
 
 Request:
+
 ```json
 {
   "player_id": "uuid",
@@ -263,9 +280,11 @@ Request:
 ### 3.3. Voice API
 
 #### POST /api/v1/chat/voice/{channel_id}/join
+
 **Присоединиться к голосовому каналу**
 
 Response:
+
 ```json
 {
   "webrtc_token": "...",
@@ -274,6 +293,7 @@ Response:
 ```
 
 #### POST /api/v1/chat/voice/{channel_id}/mute
+
 **Mute/unmute**
 
 Request: `{"muted": true}`
@@ -282,19 +302,19 @@ Request: `{"muted": true}`
 
 ## 4. Типы каналов
 
-| Channel Type | Scope | Write Access | Cooldown | Max Length |
-|--------------|-------|--------------|----------|------------|
-| GLOBAL | Server-wide | All players | 5s | 500 |
-| TRADE | Server-wide | All players | 10s | 300 |
-| NEWBIE | Server-wide | Level < 20 | 3s | 500 |
-| LOCAL | Zone | In same zone | 0s | 500 |
-| PARTY | Party members | Party members | 0s | 1000 |
-| RAID | Raid members | Raid members | 0s | 1000 |
-| GUILD | Guild members | Guild members | 0s | 1000 |
-| GUILD_OFFICER | Officers | Officers only | 0s | 2000 |
-| WHISPER | 1-to-1 | Sender/recipient | 0s | 1000 |
-| SYSTEM | Broadcast | System only | 0s | 2000 |
-| COMBAT_LOG | Combat events | System only | 0s | 500 |
+| Channel Type  | Scope         | Write Access     | Cooldown | Max Length |
+|---------------|---------------|------------------|----------|------------|
+| GLOBAL        | Server-wide   | All players      | 5s       | 500        |
+| TRADE         | Server-wide   | All players      | 10s      | 300        |
+| NEWBIE        | Server-wide   | Level < 20       | 3s       | 500        |
+| LOCAL         | Zone          | In same zone     | 0s       | 500        |
+| PARTY         | Party members | Party members    | 0s       | 1000       |
+| RAID          | Raid members  | Raid members     | 0s       | 1000       |
+| GUILD         | Guild members | Guild members    | 0s       | 1000       |
+| GUILD_OFFICER | Officers      | Officers only    | 0s       | 2000       |
+| WHISPER       | 1-to-1        | Sender/recipient | 0s       | 1000       |
+| SYSTEM        | Broadcast     | System only      | 0s       | 2000       |
+| COMBAT_LOG    | Combat events | System only      | 0s       | 500        |
 
 ---
 
@@ -372,6 +392,7 @@ flowchart TD
 ### 6.1. Profanity Filter
 
 **Процесс:**
+
 1. Проверка по словарю запрещённых слов
 2. Замена на `***`
 3. Whitelist для ссылок
@@ -381,11 +402,13 @@ flowchart TD
 ### 6.2. Spam Detection
 
 **Критерии:**
+
 - \> 10 сообщений в минуту
 - Идентичный текст 3+ раза подряд
 - Длинные сообщения с повторениями
 
 **Действия:**
+
 - 1-е нарушение: предупреждение
 - 2-е нарушение: 1 час бан
 - 3-е нарушение: 24 часа бан
@@ -394,6 +417,7 @@ flowchart TD
 ### 6.3. Auto-ban
 
 **Автоматические баны за:**
+
 - Severe profanity (расистские/угрозы)
 - Спам (> 3 нарушений)
 - Flood (> 20 сообщений в минуту)
@@ -412,16 +436,19 @@ flowchart TD
 ### 7.2. Оптимизации
 
 **Redis:**
+
 - Кэш истории (100 последних сообщений)
 - Rate limiting counters
 - Spam detection counters
 
 **PostgreSQL:**
+
 - Партиционирование `chat_messages` по дате (ежедневно)
 - Индексы на `channel_id` + `sent_at`
 - Архивация старых сообщений (> 30 дней)
 
 **WebSocket:**
+
 - Connection pooling
 - Message batching (каждые 50ms)
 - Региональные кластеры
@@ -431,34 +458,42 @@ flowchart TD
 ## 8. Разбиение на подзадачи
 
 ### 8.1. Database Schema (P0)
+
 Схемы `chat_channels`, `chat_messages`, `chat_bans`
 **Срок:** 1 неделя
 
 ### 8.2. WebSocket Server (P0)
+
 WebSocket gateway для real-time сообщений
 **Срок:** 2 недели
 
 ### 8.3. Channel Manager (P0)
+
 Управление каналами и подписками
 **Срок:** 1.5 недели
 
 ### 8.4. Message Processor (P0)
+
 Обработка, форматирование, валидация
 **Срок:** 2 недели
 
 ### 8.5. Moderation Engine (P0)
+
 Фильтры, спам-детекция, баны
 **Срок:** 2 недели
 
 ### 8.6. Voice Chat (WebRTC) (P1)
+
 WebRTC signaling и управление
 **Срок:** 3 недели
 
 ### 8.7. Translation Integration (P2)
+
 Автоперевод сообщений
 **Срок:** 1 неделя
 
 ### 8.8. History & Search (P2)
+
 История и поиск по сообщениям
 **Срок:** 1 неделя
 
@@ -484,11 +519,13 @@ WebRTC signaling и управление
 ## 10. События
 
 **Published:**
+
 - `chat:message_sent`
 - `chat:player_banned`
 - `chat:channel_created`
 
 **Subscribed:**
+
 - `player:connected` - добавить в каналы
 - `player:disconnected` - удалить из каналов
 - `party:disbanded` - закрыть party chat
@@ -509,37 +546,4 @@ WebRTC signaling и управление
 ---
 
 **Конец документа**
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

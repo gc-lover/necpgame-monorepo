@@ -5,11 +5,13 @@
 ### Вариант 1: Через скрипт (рекомендуется)
 
 **PowerShell:**
+
 ```powershell
 .\scripts\db\apply-all-migrations.ps1
 ```
 
 **Bash:**
+
 ```bash
 ./scripts/db/apply-all-migrations.sh
 ```
@@ -37,10 +39,10 @@ liquibase \
 ## Структура миграций
 
 - **Схемные миграции**: `infrastructure/liquibase/migrations/V*.sql`
-- **Контентные миграции**: 
-  - `infrastructure/liquibase/migrations/data/quests/` (711 миграций)
-  - `infrastructure/liquibase/migrations/data/npcs/` (170 миграций)
-  - `infrastructure/liquibase/migrations/data/dialogues/` (19 миграций)
+- **Контентные миграции**:
+    - `infrastructure/liquibase/migrations/data/quests/` (711 миграций)
+    - `infrastructure/liquibase/migrations/data/npcs/` (170 миграций)
+    - `infrastructure/liquibase/migrations/data/dialogues/` (19 миграций)
 
 **Всего: ~900 контентных миграций + ~170 схемных**
 
@@ -70,19 +72,24 @@ FROM databasechangelog;
 ## Troubleshooting
 
 ### Контейнер не найден
+
 ```bash
 cd infrastructure/docker/postgres
 docker compose up -d
 ```
 
 ### Ошибка подключения
+
 Проверьте, что PostgreSQL запущен:
+
 ```bash
 docker ps | grep necpgame-postgres
 ```
 
 ### Ошибка миграции
+
 Проверьте логи:
+
 ```bash
 docker compose -f docker-compose.yml -f docker-compose.migrations.yml logs liquibase
 ```

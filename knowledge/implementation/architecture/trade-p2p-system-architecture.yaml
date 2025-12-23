@@ -213,23 +213,23 @@ content:
           initiator_id UUID NOT NULL,
           target_id UUID NOT NULL,
           zone_id VARCHAR(100),
-          
+        
           status VARCHAR(20) NOT NULL,  -- pending, offering, confirmed, completed, cancelled, expired
-          
+        
           initiator_offer JSONB,  -- {items: [], currency: {}}
           target_offer JSONB,
-          
+        
           initiator_confirmed BOOLEAN DEFAULT false,
           target_confirmed BOOLEAN DEFAULT false,
-          
+        
           completed_at TIMESTAMP,
           cancelled_at TIMESTAMP,
           cancelled_by UUID,
           cancel_reason VARCHAR(200),
-          
+        
           created_at TIMESTAMP NOT NULL DEFAULT NOW(),
           expires_at TIMESTAMP NOT NULL,  -- created_at + 5 minutes
-          
+        
           CONSTRAINT valid_status CHECK (status IN (
             'pending', 'offering', 'confirmed', 'completed', 'cancelled', 'expired'
           ))
@@ -246,19 +246,19 @@ content:
         CREATE TABLE trade_history (
           id UUID PRIMARY KEY,
           session_id UUID NOT NULL REFERENCES trade_sessions(id),
-          
+        
           player1_id UUID NOT NULL,
           player2_id UUID NOT NULL,
-          
+        
           player1_items JSONB,  -- [{item_id, quantity, name}]
           player1_currency JSONB,  -- {eurodollars, cryptos}
-          
+        
           player2_items JSONB,
           player2_currency JSONB,
-          
+        
           zone_id VARCHAR(100),
           completed_at TIMESTAMP NOT NULL DEFAULT NOW(),
-          
+        
           -- Anti-fraud metadata
           player1_ip VARCHAR(45),
           player2_ip VARCHAR(45),
@@ -277,11 +277,11 @@ content:
         CREATE TABLE trade_events (
           id BIGSERIAL PRIMARY KEY,
           session_id UUID NOT NULL REFERENCES trade_sessions(id),
-          
+        
           event_type VARCHAR(50) NOT NULL,  -- offer_added, offer_updated, confirmed, completed, cancelled
           actor_id UUID NOT NULL,
           event_data JSONB,
-          
+        
           timestamp TIMESTAMP NOT NULL DEFAULT NOW()
         );
 
@@ -523,7 +523,7 @@ implementation:
     - "API Designer: OpenAPI спецификация"
     - "Backend: Реализация Trade Module в economy-service"
     - "Security: Интеграция fraud detection"
-  blockers: []
+  blockers: [ ]
 
 history:
   - version: "1.0.0"
@@ -534,37 +534,4 @@ history:
 validation:
   checksum: ""
   schema_version: "1.0"
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

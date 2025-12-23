@@ -49,7 +49,7 @@ review:
       reviewer: ''
       reviewed_at: 2025-11-09
       status: approved
-  next_actions: []
+  next_actions: [ ]
 summary:
   problem: Требуется согласованный документ, объединяющий управление аккаунтом игрока и жизненным циклом персонажей.
   goal: Описать доменную модель и интеграции character-service для готовности API и реализации.
@@ -64,72 +64,72 @@ content:
       title: Введение
       body: |
         Character-service управляет связью между аккаунтом игрока и его персонажами. Документ фиксирует границы API, доменные ограничения и взаимодействия с зависимыми сервисами для дальнейшей разработки и сопровождения.
-      mechanics_links: []
-      assets: []
+      mechanics_links: [ ]
+      assets: [ ]
     - id: service_overview
       title: Сервис и каталоги
       body: |
         Микросервис character-service обслуживает порт 8082 и хранит OpenAPI спецификации в каталоге api/v1/characters/players. Фронтенд взаимодействует через модуль modules/characters. Целевые спецификации включают управление персонажами, профилями игроков и переключением активного персонажа.
-      mechanics_links: []
-      assets: []
+      mechanics_links: [ ]
+      assets: [ ]
     - id: lifecycle_scope
       title: Обзор функциональности
       body: |
         Жизненный цикл охватывает профиль игрока, управление слотами, операции создания и удаления персонажей, восстановление после soft-delete, переключение активного персонажа и пересчёт характеристик. Интеграции обеспечивают синхронизацию состояния и событий между доменами прогрессии, экономики и социальных систем.
-      mechanics_links: []
-      assets: []
+      mechanics_links: [ ]
+      assets: [ ]
     - id: constraints
       title: Доменные ограничения
       body: |
         На аккаунт выделяется минимум три слота персонажей, расширение происходит через экономический сервис. В сессии разрешён один активный персонаж, переключение блокируется боевыми состояниями. Soft-delete сохраняет данные 30 дней до архивирования. Статус dead требует подтверждённой процедуры восстановления.
-      mechanics_links: []
-      assets: []
+      mechanics_links: [ ]
+      assets: [ ]
     - id: data_model
       title: Ключевые сущности
       body: |
         Данные распределяются по таблицам players, characters, character_slots, character_restore_queue, character_state_snapshots, character_equipment, character_inventory_refs и character_activity_log. Индексация ориентирована на поиск по аккаунту, статусу и игровым зонам.
-      mechanics_links: []
-      assets: []
+      mechanics_links: [ ]
+      assets: [ ]
     - id: data_flows
       title: Потоки данных
       body: |
         Создание персонажа проверяет наличие слота, записывает атрибуты и публикует событие CharacterCreated. Soft-delete маркирует запись и отправляет CharacterDeleted. Восстановление использует character_state_snapshots. Переключение сохраняет текущее состояние, активирует нового персонажа и обновляет сессию. Пересчёт статов комбинирует атрибуты, экипировку и баффы.
-      mechanics_links: []
-      assets: []
+      mechanics_links: [ ]
+      assets: [ ]
     - id: api_endpoints
       title: Целевые API
       body: |
         REST интерфейс включает создание, удаление, восстановление персонажа, переключение активного слота, получение списка персонажей, изменение внешности, пересчёт статов, аудит активности и покупку дополнительных слотов. Эндпоинты выравниваются с api/v1/players и api/v1/characters.
-      mechanics_links: []
-      assets: []
+      mechanics_links: [ ]
+      assets: [ ]
     - id: integrations
       title: Интеграции
       body: |
         Auth-service и session-service обеспечивают доступ и управление активными сессиями. Gameplay-service проверяет боевые состояния, economy-service отвечает за валюту и расширение слотов, inventory-service хранит инвентарь, social-service и notification-service поддерживают статусы и уведомления.
-      mechanics_links: []
-      assets: []
+      mechanics_links: [ ]
+      assets: [ ]
     - id: validation
       title: Валидация и ошибки
       body: |
         Требуются уникальные имена персонажей, соответствие доступным классам и origin, проверка инвентаря при восстановлении и валидация визуальных настроек. Переключение блокируется активными боевыми событиями, а создание ограничено антиспам логикой с ответом 429.
-      mechanics_links: []
-      assets: []
+      mechanics_links: [ ]
+      assets: [ ]
     - id: events
       title: События
       body: |
         Kafka-топики characters.lifecycle.* публикуют CharacterCreated, CharacterDeleted, CharacterRestored, CharacterSwitched и CharacterStatsUpdated. Каждый payload содержит идентификаторы аккаунта и персонажа, временную метку и контекст изменений для подписчиков.
-      mechanics_links: []
-      assets: []
+      mechanics_links: [ ]
+      assets: [ ]
 appendix:
-  glossary: []
-  references: []
-  decisions: []
+  glossary: [ ]
+  references: [ ]
+  decisions: [ ]
 implementation:
   needs_task: false
   github_issue: 75
   queue_reference:
     - shared/trackers/queues/concept/queued.yaml
-  blockers: []
+  blockers: [ ]
 history:
   - version: '1.1.0'
     date: 2025-11-09

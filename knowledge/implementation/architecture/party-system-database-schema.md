@@ -1,9 +1,11 @@
 <!-- Issue: #140887526 -->
+
 # Party System - Database Schema
 
 ## Обзор
 
-Схема базы данных для системы групп (Party System), включающая группы, участников, приглашения и логи распределения лута.
+Схема базы данных для системы групп (Party System), включающая группы, участников, приглашения и логи распределения
+лута.
 
 ## ERD Диаграмма
 
@@ -67,6 +69,7 @@ erDiagram
 Таблица групп игроков. Хранит информацию о группах до 5 участников.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `leader_id`: ID лидера группы (FK к characters, NOT NULL)
 - `name`: Название группы (VARCHAR(255), nullable)
@@ -78,6 +81,7 @@ erDiagram
 - `updated_at`: Время последнего обновления
 
 **Индексы:**
+
 - По `leader_id` для групп лидера
 - По `created_at DESC` для последних групп
 - По `(leader_id, status)` для активных групп лидера
@@ -88,6 +92,7 @@ erDiagram
 Таблица участников групп. Хранит информацию об участниках групп.
 
 **Ключевые поля:**
+
 - `party_id`: ID группы (FK к parties, NOT NULL)
 - `character_id`: ID персонажа (FK к characters, NOT NULL)
 - `role`: Роль участника (VARCHAR(20), NOT NULL: 'leader', 'member')
@@ -95,12 +100,14 @@ erDiagram
 - `last_active_at`: Время последней активности (TIMESTAMP, NOT NULL, default: CURRENT_TIMESTAMP)
 
 **Индексы:**
+
 - По `party_id` для участников группы
 - По `character_id` для групп персонажа
 - По `joined_at ASC` для сортировки по времени присоединения
 - По `(character_id, party_id)` для поиска участия
 
 **Constraints:**
+
 - PRIMARY KEY(party_id, character_id): Один участник на группу
 
 ### party_invitations
@@ -108,6 +115,7 @@ erDiagram
 Таблица приглашений в группы. Хранит информацию о приглашениях в группы.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `party_id`: ID группы (FK к parties, NOT NULL)
 - `inviter_id`: ID приглашающего (FK к characters, NOT NULL)
@@ -118,11 +126,13 @@ erDiagram
 - `responded_at`: Время ответа (TIMESTAMP, nullable)
 
 **Индексы:**
+
 - По `(invitee_id, status)` для приглашений приглашаемого
 - По `(party_id, status)` для приглашений группы
 - По `expires_at` для истекающих приглашений
 
 **Constraints:**
+
 - UNIQUE(party_id, invitee_id, status) WHERE status = 'pending': Одно активное приглашение на группу
 
 ### party_loot_logs
@@ -130,6 +140,7 @@ erDiagram
 Таблица логов распределения лута. Хранит информацию о распределении лута в группах.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `party_id`: ID группы (FK к parties, NOT NULL)
 - `item_id`: ID предмета (UUID, NOT NULL)
@@ -139,32 +150,38 @@ erDiagram
 - `created_at`: Время создания
 
 **Индексы:**
+
 - По `(party_id, created_at DESC)` для логов группы
 - По `(distributed_to, created_at DESC)` для логов получателя
 
 ## ENUM типы
 
 ### party_loot_mode
+
 - `free_for_all`: Каждый забирает свой лут
 - `need_before_greed`: Приоритет нуждающимся
 - `master_looter`: Лидер распределяет
 - `round_robin`: По очереди
 
 ### party_status
+
 - `active`: Активна
 - `disbanded`: Распущена
 
 ### party_member_role
+
 - `leader`: Лидер
 - `member`: Участник
 
 ### invitation_status
+
 - `pending`: Ожидает ответа
 - `accepted`: Принято
 - `declined`: Отклонено
 - `expired`: Истекло
 
 ### loot_distribution_mode
+
 - `free_for_all`: Каждый забирает свой лут
 - `need_before_greed`: Приоритет нуждающимся
 - `master_looter`: Лидер распределяет
@@ -179,7 +196,8 @@ erDiagram
 - `parties.status`: Должно быть одним из: 'active', 'disbanded'
 - `party_members.role`: Должно быть одним из: 'leader', 'member'
 - `party_invitations.status`: Должно быть одним из: 'pending', 'accepted', 'declined', 'expired'
-- `party_loot_logs.distribution_mode`: Должно быть одним из: 'free_for_all', 'need_before_greed', 'master_looter', 'round_robin'
+- `party_loot_logs.distribution_mode`: Должно быть одним из: 'free_for_all', 'need_before_greed', 'master_looter', '
+  round_robin'
 
 ### Foreign Keys
 
@@ -243,10 +261,12 @@ erDiagram
 ## Миграции
 
 ### Существующие миграции:
+
 - `V1_32__party_tables.sql` - базовые таблицы (parties, party_members)
 - `V1_64__party_system_enhancement.sql` - расширенные таблицы и поля
 
 ### Применение миграций:
+
 ```bash
 liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ```
@@ -254,6 +274,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ## Соответствие архитектуре
 
 Схема БД полностью соответствует архитектуре из `knowledge/implementation/architecture/party-system-architecture.yaml`:
+
 - [OK] Все таблицы из архитектуры созданы
 - [OK] Все поля соответствуют описанию
 - [OK] Индексы оптимизированы для частых запросов
@@ -266,6 +287,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Группы
 
 Система групп включает:
+
 - **Лимит участников**: max_size (2-5, default: 5)
 - **Режимы лута**: free_for_all, need_before_greed, master_looter, round_robin
 - **Статусы**: active, disbanded
@@ -275,6 +297,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Участники
 
 Система участников включает:
+
 - **Роли**: leader, member
 - **Время присоединения**: joined_at для истории
 - **Активность**: last_active_at для отслеживания активности
@@ -282,6 +305,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Приглашения
 
 Система приглашений включает:
+
 - **Статусы**: pending, accepted, declined, expired
 - **Истечение**: expires_at для таймаутов
 - **Ответ**: responded_at для времени ответа
@@ -290,6 +314,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Логи лута
 
 Система логов лута включает:
+
 - **Режимы распределения**: free_for_all, need_before_greed, master_looter, round_robin
 - **Результаты бросков**: roll_results (JSONB) для need-before-greed
 - **История**: created_at для отслеживания распределений
@@ -297,10 +322,10 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Интеграция с другими системами
 
 Система групп интегрируется с:
+
 - **Characters**: через character_id для участников и лидеров
 - **Economy Service**: через party_loot_logs для распределения лута
 - **Gameplay Service**: через party_id для совместных заданий
 - **Matchmaking Service**: через party_id для групповой очереди
 - **Notification Service**: через party_invitations для уведомлений
-
 

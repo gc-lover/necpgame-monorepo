@@ -5,6 +5,7 @@ Test parsing a specific error line
 
 import re
 
+
 def parse_error_line(line, all_lines, index):
     """Parse a single error line from codeframe redocly output"""
 
@@ -28,7 +29,8 @@ def parse_error_line(line, all_lines, index):
                 continue
 
             # Stop at next error/warning or end marker
-            if line_content.startswith('[') or line_content.startswith('Error was generated') or line_content.startswith('Warning was generated'):
+            if line_content.startswith('[') or line_content.startswith(
+                    'Error was generated') or line_content.startswith('Warning was generated'):
                 if "Warning was generated" in line_content:
                     is_warning = True
                 break
@@ -56,6 +58,7 @@ def parse_error_line(line, all_lines, index):
         }
 
     return None
+
 
 # Test on the actual error line
 test_lines = [

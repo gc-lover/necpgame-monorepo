@@ -21,9 +21,10 @@ import concurrent.futures
 import threading
 from pathlib import Path
 from typing import List, Dict, Any, Optional
+
 from scripts.core.base_script import BaseScript
-from scripts.openapi.openapi_manager import OpenAPIManager
 from scripts.generation.go_service_generator import GoServiceGenerator
+from scripts.openapi.openapi_manager import OpenAPIManager
 
 
 class GenerateAllDomainsGo(BaseScript):
@@ -221,4 +222,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-

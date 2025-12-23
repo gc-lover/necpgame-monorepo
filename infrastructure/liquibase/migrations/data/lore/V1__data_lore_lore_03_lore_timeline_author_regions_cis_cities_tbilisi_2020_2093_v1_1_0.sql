@@ -5,110 +5,107 @@
 BEGIN;
 
 -- Lore: canon-region-cis-tbilisi-2020-2093
-INSERT INTO narrative.lore_entries (
-    lore_id, title, document_type, category,
-    content_data, version
-)
-VALUES (
-    'canon-region-cis-tbilisi-2020-2093',
-    'Тбилиси 2020-2093 — Кавказский техно-культурный центр',
-    'canon',
-    'timeline-author',
-    '{
-  "metadata": {
-    "id": "canon-region-cis-tbilisi-2020-2093",
-    "title": "Тбилиси 2020-2093 — Кавказский техно-культурный центр",
-    "document_type": "canon",
-    "category": "timeline-author",
-    "status": "approved",
-    "version": "1.1.0",
-    "last_updated": "2025-11-23T04:05:00+00:00",
-    "concept_approved": true,
-    "concept_reviewed_at": "2025-11-12T00:45:00+00:00",
-    "owners": [
-      {
-        "role": "lore_analyst",
-        "contact": "lore@necp.game"
-      }
-    ],
-    "tags": [
-      "cis",
-      "tbilisi",
-      "culture-tech"
-    ],
-    "topics": [
-      "regional-history",
-      "cultural-hybrid",
-      "creative-economy"
-    ],
-    "related_systems": [
-      "narrative-service",
-      "economy-service",
-      "world-service"
-    ],
-    "related_documents": [
-      {
-        "id": "canon-region-cis-index",
-        "relation": "references"
+INSERT INTO narrative.lore_entries (lore_id, title, document_type, category,
+                                    content_data, version)
+VALUES ('canon-region-cis-tbilisi-2020-2093',
+        'Тбилиси 2020-2093 — Кавказский техно-культурный центр',
+        'canon',
+        'timeline-author',
+        '{
+      "metadata": {
+        "id": "canon-region-cis-tbilisi-2020-2093",
+        "title": "Тбилиси 2020-2093 — Кавказский техно-культурный центр",
+        "document_type": "canon",
+        "category": "timeline-author",
+        "status": "approved",
+        "version": "1.1.0",
+        "last_updated": "2025-11-23T04:05:00+00:00",
+        "concept_approved": true,
+        "concept_reviewed_at": "2025-11-12T00:45:00+00:00",
+        "owners": [
+          {
+            "role": "lore_analyst",
+            "contact": "lore@necp.game"
+          }
+        ],
+        "tags": [
+          "cis",
+          "tbilisi",
+          "culture-tech"
+        ],
+        "topics": [
+          "regional-history",
+          "cultural-hybrid",
+          "creative-economy"
+        ],
+        "related_systems": [
+          "narrative-service",
+          "economy-service",
+          "world-service"
+        ],
+        "related_documents": [
+          {
+            "id": "canon-region-cis-index",
+            "relation": "references"
+          },
+          {
+            "id": "github-issue-1256",
+            "title": "GitHub Issue",
+            "link": "https://github.com/gc-lover/necpgame-monorepo/issues/1256",
+            "relation": "migrated_to",
+            "migrated_at": "2025-11-23T04:05:00+00:00"
+          }
+        ],
+        "source": "shared/docs/knowledge/canon/lore/_03-lore/timeline-author/regions/cis/cities/tbilisi-2020-2093.md",
+        "visibility": "internal",
+        "audience": [
+          "lore",
+          "narrative",
+          "systems"
+        ],
+        "risk_level": "low"
       },
-      {
-        "id": "github-issue-1256",
-        "title": "GitHub Issue",
-        "link": "https://github.com/gc-lover/necpgame-monorepo/issues/1256",
-        "relation": "migrated_to",
-        "migrated_at": "2025-11-23T04:05:00+00:00"
-      }
-    ],
-    "source": "shared/docs/knowledge/canon/lore/_03-lore/timeline-author/regions/cis/cities/tbilisi-2020-2093.md",
-    "visibility": "internal",
-    "audience": [
-      "lore",
-      "narrative",
-      "systems"
-    ],
-    "risk_level": "low"
-  },
-  "review": {
-    "chain": [
-      {
-        "role": "lore_lead",
-        "reviewer": "",
-        "reviewed_at": "",
-        "status": "pending"
-      }
-    ],
-    "next_actions": []
-  },
-  "summary": {
-    "problem": "Хронология была списком эпох без системной связи между фестивальной экономикой, блокчейн-инфраструктурой и логистическим мостом Кавказа.",
-    "goal": "Привести досье Тбилиси к шаблону 1.1.0, подчеркнув симбиоз культуры и технологий, а также сценарии для контента и систем.",
-    "essence": "Тбилиси превращается в кибер-курорт Кавказа: винодельни под AR-куполами, техно-фестивали, блокчейн-банки и транзит данных Черноморья.",
-    "key_points": [
-      "Обновлены этапы 2020–2093 с указанием драйверов: AR-туризм, техно-фестивали, маглев-логистика, блокчейн-экономика и черноморский узел.",
-      "Добавлены системные крючки для narrative/economy: кибер-винодельни, festival DAO, борьба артистов с корпоративной монополией.",
-      "Сформирован набор контентных возможностей: фестивальное подполье, культурная дипломатия, trade-миссии на маглев-маршрутах."
-    ]
-  },
-  "content": {
-    "sections": [
-      {
-        "id": "cultural_profile",
-        "title": "Профиль региона",
-        "body": "Население около 2,5 млн; исторический центр и винодельческие долины интегрированы в AR-гиды и хостелы под куполами.\nКлимат умеренный, сезонные шквалы с гор — требуют подготовки инфраструктуры фестивалей и логистических маглеов.\nЭкономика опирается на креативные индустрии, блокчейн-банки и сервисы транзита данных между Кавказом, Европой и Чёрным морем.\n",
-        "mechanics_links": [],
-        "assets": []
+      "review": {
+        "chain": [
+          {
+            "role": "lore_lead",
+            "reviewer": "",
+            "reviewed_at": "",
+            "status": "pending"
+          }
+        ],
+        "next_actions": []
       },
-      {
-        "id": "timeline_eras",
-        "title": "Хронология 2020–2093",
-        "body": "2020–2029 — Туристическое возрождение: AR-экскурсии, инвестиции в винодельческие кварталы.\n2030–2039 — Техно-фестивали: ежегодные кибер-винилы, приток артистов и инвесторов.\n2040–2049 — Логистический мост: строительство маглевов и дата-хабов между Востоком и Западом.\n2050–2059 — Кибер-винодельни: дроны и AI контролируют сбор винограда и выпуск премиальных брендов.\n2060–2069 — Блокчейн-экономика: Старый город становится финансовым узлом, создаются festival DAO.\n2070–2079 — Фестивальное подполье: сопротивление монополизации культурных событий.\n2080–2089 — AR-галерея: ночной рынок превращён в постоянную AR-выставку.\n2090–2093 — Черноморский узел: транзит данных и товаров, дипломатическая платформа мегаполисов региона.\n",
-        "mechanics_links": [],
-        "assets": []
+      "summary": {
+        "problem": "Хронология была списком эпох без системной связи между фестивальной экономикой, блокчейн-инфраструктурой и логистическим мостом Кавказа.",
+        "goal": "Привести досье Тбилиси к шаблону 1.1.0, подчеркнув симбиоз культуры и технологий, а также сценарии для контента и систем.",
+        "essence": "Тбилиси превращается в кибер-курорт Кавказа: винодельни под AR-куполами, техно-фестивали, блокчейн-банки и транзит данных Черноморья.",
+        "key_points": [
+          "Обновлены этапы 2020–2093 с указанием драйверов: AR-туризм, техно-фестивали, маглев-логистика, блокчейн-экономика и черноморский узел.",
+          "Добавлены системные крючки для narrative/economy: кибер-винодельни, festival DAO, борьба артистов с корпоративной монополией.",
+          "Сформирован набор контентных возможностей: фестивальное подполье, культурная дипломатия, trade-миссии на маглев-маршрутах."
+        ]
       },
-      {
-        "id": "systems_hooks",
-        "title": "Системные крючки",
-        "body": "economy-service: festival DAO, продажа лицензий на AR-контент, винодельни как источник премиум-ресурсов.\nworld-service: влияние горного климата и сейсмики на маглевы; ивенты 'фестивальный шторм' и 'блокчейн-аудит'.\nnarrative-service: социальные квесты между артистами и корпорациями, дипломатия между кавказскими регионами.\n",
+      "content": {
+        "sections": [
+          {
+            "id": "cultural_profile",
+            "title": "Профиль региона",
+            "body": "Население около 2,5 млн; исторический центр и винодельческие долины интегрированы в AR-гиды и хостелы под куполами.\nКлимат умеренный, сезонные шквалы с гор — требуют подготовки инфраструктуры фестивалей и логистических маглеов.\nЭкономика опирается на креативные индустрии, блокчейн-банки и сервисы транзита данных между Кавказом, Европой и Чёрным морем.\n",
+            "mechanics_links": [],
+            "assets": []
+          },
+          {
+            "id": "timeline_eras",
+            "title": "Хронология 2020–2093",
+            "body": "2020–2029 — Туристическое возрождение: AR-экскурсии, инвестиции в винодельческие кварталы.\n2030–2039 — Техно-фестивали: ежегодные кибер-винилы, приток артистов и инвесторов.\n2040–2049 — Логистический мост: строительство маглевов и дата-хабов между Востоком и Западом.\n2050–2059 — Кибер-винодельни: дроны и AI контролируют сбор винограда и выпуск премиальных брендов.\n2060–2069 — Блокчейн-экономика: Старый город становится финансовым узлом, создаются festival DAO.\n2070–2079 — Фестивальное подполье: сопротивление монополизации культурных событий.\n2080–2089 — AR-галерея: ночной рынок превращён в постоянную AR-выставку.\n2090–2093 — Черноморский узел: транзит данных и товаров, дипломатическая платформа мегаполисов региона.\n",
+            "mechanics_links": [],
+            "assets": []
+          },
+          {
+            "id": "systems_hooks",
+            "title": "Системные крючки",
+            "body": "economy-service: festival DAO, продажа лицензий на AR-контент, винодельни как источник премиум-ресурсов.\nworld-service: влияние горного климата и сейсмики на маглевы; ивенты 'фестивальный шторм' и 'блокчейн-аудит'.\nnarrative-service: социальные квесты между артистами и корпорациями, дипломатия между кавказскими регионами.\n",
         "mechanics_links": [],
         "assets": []
       },
@@ -165,15 +162,13 @@ VALUES (
     "schema_version": "1.0"
   }
 }'::jsonb,
-    1
-)
-ON CONFLICT (lore_id) DO UPDATE SET
+        1) ON CONFLICT (lore_id) DO
+UPDATE SET
     title = EXCLUDED.title,
     document_type = EXCLUDED.document_type,
     category = EXCLUDED.category,
     content_data = EXCLUDED.content_data,
     version = EXCLUDED.version,
     updated_at = CURRENT_TIMESTAMP;
-
 
 COMMIT;

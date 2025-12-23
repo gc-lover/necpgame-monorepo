@@ -1,9 +1,11 @@
 <!-- Issue: #140875800 -->
+
 # League System and Meta Mechanics - Database Schema
 
 ## Обзор
 
-Схема базы данных для системы лиг и мета-механик, обеспечивающей сезонные циклы с глобальным сбросом, мета-прогресс между сезонами, Hall of Fame и Legacy Shop.
+Схема базы данных для системы лиг и мета-механик, обеспечивающей сезонные циклы с глобальным сбросом, мета-прогресс
+между сезонами, Hall of Fame и Legacy Shop.
 
 ## ERD Диаграмма
 
@@ -99,6 +101,7 @@ erDiagram
 Таблица лиг (сезонов). Хранит информацию о текущей и прошлых лигах с фазами и временным ускорением.
 
 **Ключевые поля:**
+
 - `name`: Название лиги
 - `seed`: Seed для генерации вариаций мира (BIGINT)
 - `start_date`, `end_date`: Даты начала и окончания лиги
@@ -108,6 +111,7 @@ erDiagram
 - `is_active`: Флаг активности лиги
 
 **Индексы:**
+
 - По `(is_active, start_date DESC)` для активной лиги
 - По `(current_phase, is_active)` для фильтрации по фазе
 - По `(start_date, end_date)` для временных запросов
@@ -117,6 +121,7 @@ erDiagram
 Таблица мета-прогресса игроков. Хранит информацию о титулах, косметике, Legacy Points и глобальном рейтинге.
 
 **Ключевые поля:**
+
 - `account_id`: ID аккаунта (UNIQUE)
 - `legacy_points`: Legacy Points для покупки Legacy Items
 - `global_rating`: Глобальный рейтинг с мягким сбросом (20%)
@@ -124,6 +129,7 @@ erDiagram
 - `cosmetics`: Косметика игрока (UUID[])
 
 **Индексы:**
+
 - По `account_id` для поиска по аккаунту
 - По `global_rating DESC` для рейтинга
 - По `legacy_points DESC` для Legacy Points
@@ -133,6 +139,7 @@ erDiagram
 Таблица статистики лиг. Хранит статистику по фазам лиги (экономика, PvP, квесты, топ игроки).
 
 **Ключевые поля:**
+
 - `league_id`: ID лиги (FK к leagues)
 - `phase`: Фаза лиги для статистики
 - `player_count`: Количество игроков
@@ -142,6 +149,7 @@ erDiagram
 - `top_players`: Топ игроки (JSONB)
 
 **Индексы:**
+
 - По `(league_id, phase)` для статистики лиги по фазе
 - По `(phase, updated_at DESC)` для фильтрации по фазе
 
@@ -150,6 +158,7 @@ erDiagram
 Таблица Hall of Fame. Хранит информацию о лучших игроках каждой лиги по категориям.
 
 **Ключевые поля:**
+
 - `league_id`: ID лиги (FK к leagues)
 - `account_id`: ID аккаунта
 - `category`: Категория (Story, Economy, PvP, Alternative)
@@ -158,6 +167,7 @@ erDiagram
 - `statue_model`: UUID 3D-модели статуи победителя
 
 **Индексы:**
+
 - По `(league_id, category, rank)` для Hall of Fame лиги
 - По `account_id` для достижений игрока
 - По `(category, rank)` для категорий
@@ -167,6 +177,7 @@ erDiagram
 Таблица предметов Legacy Shop. Хранит информацию о предметах, доступных для покупки за Legacy Points.
 
 **Ключевые поля:**
+
 - `item_name`: Название предмета
 - `item_description`: Описание предмета
 - `item_type`: Тип предмета
@@ -176,6 +187,7 @@ erDiagram
 - `item_data`: Данные предмета (JSONB)
 
 **Индексы:**
+
 - По `(is_available, legacy_points_cost)` для доступных предметов
 - По `(item_type, is_available)` для фильтрации по типу
 
@@ -184,6 +196,7 @@ erDiagram
 Таблица Legacy Items игроков. Хранит информацию о купленных Legacy Items для использования в новой лиге.
 
 **Ключевые поля:**
+
 - `account_id`: ID аккаунта
 - `league_id`: ID лиги (FK к leagues)
 - `shop_item_id`: ID предмета из Legacy Shop (FK к legacy_shop_items)
@@ -193,6 +206,7 @@ erDiagram
 - `item_data`: Данные предмета (JSONB)
 
 **Индексы:**
+
 - По `(account_id, league_id)` для предметов игрока в лиге
 - По `(league_id, is_used)` для использованных предметов
 - По `shop_item_id` для предметов из магазина
@@ -202,6 +216,7 @@ erDiagram
 Таблица истории покупок Legacy Items. Хранит информацию о всех покупках Legacy Items.
 
 **Ключевые поля:**
+
 - `account_id`: ID аккаунта
 - `shop_item_id`: ID предмета из Legacy Shop (FK к legacy_shop_items)
 - `league_id`: ID лиги (FK к leagues)
@@ -209,6 +224,7 @@ erDiagram
 - `purchased_at`: Время покупки
 
 **Индексы:**
+
 - По `(account_id, purchased_at DESC)` для истории игрока
 - По `(league_id, purchased_at DESC)` для покупок в лиге
 - По `shop_item_id` для покупок предмета
@@ -218,6 +234,7 @@ erDiagram
 Таблица регистраций на финальные события. Хранит информацию о регистрациях игроков на финальные события лиги.
 
 **Ключевые поля:**
+
 - `league_id`: ID лиги (FK к leagues)
 - `account_id`: ID аккаунта
 - `character_id`: ID персонажа (FK к characters, nullable)
@@ -225,6 +242,7 @@ erDiagram
 - `registered_at`: Время регистрации
 
 **Индексы:**
+
 - По `league_id` для регистраций в лиге
 - По `account_id` для регистраций игрока
 
@@ -303,9 +321,11 @@ erDiagram
 ## Миграции
 
 ### Существующие миграции:
+
 - `V1_55__league_system_meta_mechanics_tables.sql` - создание всех таблиц системы лиг и мета-механик
 
 ### Применение миграций:
+
 ```bash
 liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ```
@@ -313,6 +333,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ## Соответствие архитектуре
 
 Схема БД полностью соответствует архитектуре из `knowledge/implementation/architecture/league-system-architecture.yaml`:
+
 - [OK] Все таблицы из архитектуры созданы
 - [OK] Все поля соответствуют описанию
 - [OK] ENUM типы созданы для фаз и категорий
@@ -327,6 +348,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### JSONB поля
 
 Использование JSONB для гибкого хранения:
+
 - `economy_metrics`: Экономические метрики
 - `pvp_metrics`: PvP метрики
 - `quest_metrics`: Квестовые метрики
@@ -337,12 +359,14 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Массивы
 
 Использование массивов PostgreSQL:
+
 - `titles`: TEXT[] - титулы игрока
 - `cosmetics`: UUID[] - косметика игрока
 
 ### Фазы лиги
 
 Система поддерживает следующие фазы:
+
 - **Start**: Месяц 1 - создание персонажей, выбор фракций
 - **Rise**: Месяцы 2-3 - корпоративные войны
 - **Crisis**: Месяцы 4-5 - поздние конфликты
@@ -352,6 +376,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Категории Hall of Fame
 
 Hall of Fame включает следующие категории:
+
 - **Story**: Сюжетные достижения
 - **Economy**: Экономические достижения
 - **PvP**: PvP достижения
@@ -360,6 +385,7 @@ Hall of Fame включает следующие категории:
 ### Мета-прогресс
 
 Мета-прогресс включает:
+
 - **Legacy Points**: Очки для покупки Legacy Items
 - **Global Rating**: Глобальный рейтинг с мягким сбросом (20%)
 - **Titles**: Титулы игрока
@@ -369,8 +395,8 @@ Hall of Fame включает следующие категории:
 ### Временное ускорение
 
 Система поддерживает ускорение времени:
+
 - 15-30 игровых дней за реальный день
 - Учет сценарных событий (замедление для драматургии)
 - Синхронизация с World Service
-
 

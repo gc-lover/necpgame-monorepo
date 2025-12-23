@@ -1,11 +1,13 @@
 # GraphQL Federation for NECPGAME
 
 ## Issue: #2038
+
 **API Designer** - GraphQL federation for microservice integration
 
 ## Overview
 
-This directory contains the complete Apollo Federation 2.0 implementation for NECPGAME MMOFPS RPG, providing unified GraphQL API across 50+ microservices with enterprise-grade features.
+This directory contains the complete Apollo Federation 2.0 implementation for NECPGAME MMOFPS RPG, providing unified
+GraphQL API across 50+ microservices with enterprise-grade features.
 
 ## Architecture
 
@@ -28,24 +30,28 @@ proto/graphql-federation/
 ## Key Features
 
 ### [ROCKET] Enterprise-Grade Federation
+
 - **Apollo Federation 2.0** with advanced composition
 - **50+ microservices** unified under single GraphQL API
 - **Cross-service queries** with automatic entity resolution
 - **Real-time subscriptions** via WebSocket integration
 
 ### [SYMBOL] Performance Optimizations
+
 - **Smart entity batching** reduces N+1 query problems
 - **Reference resolution caching** for frequently accessed entities
 - **Lazy loading** for optional entity fields
 - **Query complexity limits** prevent abuse
 
 ### [SHIELD] Reliability Features
+
 - **Circuit breaker integration** for resilient queries
 - **Rate limiting** at gateway level
 - **Health checks** across all subgraphs
 - **Fallback mechanisms** for degraded services
 
 ### [SYMBOL] Monitoring & Observability
+
 - **Distributed tracing** with Jaeger integration
 - **Metrics collection** via Prometheus
 - **Query analytics** and performance monitoring
@@ -54,26 +60,32 @@ proto/graphql-federation/
 ## Subgraph Ownership
 
 ### Auth Subgraph (`auth-expansion-domain`)
+
 - **Primary Entities**: User, UserProfile, UserStats, UserSession
 - **Responsibilities**: Authentication, user management, sessions
 
 ### Social Subgraph (`social-domain`)
+
 - **Primary Entities**: Guild, Territory, Friendship, Party
 - **Responsibilities**: Guilds, territories, social relationships, parties
 
 ### Economy Subgraph (`economy-domain`)
+
 - **Primary Entities**: Item, MarketListing, Auction, Currency
 - **Responsibilities**: Trading, auctions, crafting, currencies
 
 ### Specialized Subgraph (`specialized-domain`)
+
 - **Primary Entities**: CombatSession, CraftingSkill, StatusEffect
 - **Responsibilities**: Combat, crafting, effects, game mechanics
 
 ### System Subgraph (`system-domain`)
+
 - **Primary Entities**: WebSocketConnection, CircuitBreaker, RateLimiter
 - **Responsibilities**: Infrastructure, monitoring, real-time features
 
 ### World Subgraph (`world-domain`)
+
 - **Primary Entities**: World, Region
 - **Responsibilities**: Game world, regions, locations
 
@@ -82,6 +94,7 @@ proto/graphql-federation/
 Entities are resolved across subgraphs using these patterns:
 
 ### Key-Based Resolution
+
 ```graphql
 type User @key(fields: "id") @key(fields: "email") {
   id: ID!
@@ -91,6 +104,7 @@ type User @key(fields: "id") @key(fields: "email") {
 ```
 
 ### Reference Resolution
+
 ```graphql
 type GuildMember @key(fields: "userId guildId") {
   userId: ID!
@@ -101,6 +115,7 @@ type GuildMember @key(fields: "userId guildId") {
 ```
 
 ### Extension Pattern
+
 ```graphql
 # In economy subgraph
 extend type User @key(fields: "id") {
@@ -113,6 +128,7 @@ extend type User @key(fields: "id") {
 ## Query Examples
 
 ### Cross-Service Player Dashboard
+
 ```graphql
 query GetPlayerDashboard($playerId: ID!) {
   playerDashboard(playerId: $playerId) {
@@ -152,6 +168,7 @@ query GetPlayerDashboard($playerId: ID!) {
 ```
 
 ### Real-time Game Events
+
 ```graphql
 subscription GameEvents($playerId: ID!) {
   gameEvents(playerId: $playerId) {
@@ -172,6 +189,7 @@ subscription GameEvents($playerId: ID!) {
 ## Performance Characteristics
 
 ### Target Metrics
+
 - **Query Latency**: P99 <100ms for simple queries
 - **Entity Resolution**: <50ms for complex entity graphs
 - **Throughput**: 1000+ queries/second
@@ -179,6 +197,7 @@ subscription GameEvents($playerId: ID!) {
 - **Cache Hit Rate**: >95% for entity resolution
 
 ### Optimization Strategies
+
 1. **Entity Batching**: Multiple entity references resolved in single request
 2. **Query Planning**: Optimal execution order for cross-service queries
 3. **Result Caching**: Redis-backed caching for frequently accessed data
@@ -187,6 +206,7 @@ subscription GameEvents($playerId: ID!) {
 ## Deployment
 
 ### Gateway Setup
+
 ```yaml
 # docker-compose.yml
 version: '3.8'
@@ -200,6 +220,7 @@ services:
 ```
 
 ### Subgraph Configuration
+
 Each subgraph exposes its schema via Apollo Federation:
 
 ```javascript
@@ -219,22 +240,26 @@ const server = new ApolloServer({
 ## Development Workflow
 
 ### 1. Schema Design
+
 - Design entities with clear ownership
 - Define @key directives for federation
 - Plan cross-service relationships
 
 ### 2. Implementation
+
 - Implement resolvers in owning subgraphs
 - Add @requires/@provides for extensions
 - Test entity resolution locally
 
 ### 3. Integration Testing
+
 - Deploy all subgraphs locally
 - Test cross-service queries
 - Validate entity resolution
 - Performance testing
 
 ### 4. Production Deployment
+
 - Rolling deployment of subgraphs
 - Gateway schema composition
 - Monitoring and alerting setup
@@ -242,6 +267,7 @@ const server = new ApolloServer({
 ## Monitoring
 
 ### Key Metrics to Monitor
+
 - **Query Latency** by operation type
 - **Error Rates** per subgraph
 - **Entity Resolution Time**
@@ -249,6 +275,7 @@ const server = new ApolloServer({
 - **Active Subscriptions**
 
 ### Health Checks
+
 - Subgraph availability
 - Schema validation
 - Entity resolution integrity
@@ -259,23 +286,24 @@ const server = new ApolloServer({
 ### Common Issues
 
 1. **Entity Resolution Failures**
-   - Check @key directives match
-   - Verify subgraph connectivity
-   - Review entity ownership
+    - Check @key directives match
+    - Verify subgraph connectivity
+    - Review entity ownership
 
 2. **Query Performance**
-   - Enable query complexity limits
-   - Implement result caching
-   - Optimize resolver batching
+    - Enable query complexity limits
+    - Implement result caching
+    - Optimize resolver batching
 
 3. **Schema Composition Errors**
-   - Validate all subgraph schemas
-   - Check Federation 2.0 compatibility
-   - Review entity extensions
+    - Validate all subgraph schemas
+    - Check Federation 2.0 compatibility
+    - Review entity extensions
 
 ## Future Enhancements
 
 ### Planned Features
+
 - **Schema Stitching Migration** from Federation 1.0
 - **Advanced Caching** with Apollo Cache Control
 - **Query Persisting** for performance
@@ -283,6 +311,7 @@ const server = new ApolloServer({
 - **Advanced Analytics** dashboard
 
 ### Scaling Considerations
+
 - **Subgraph Splitting** for high-traffic services
 - **Regional Gateways** for global distribution
 - **Query Result Batching** for mobile clients
@@ -297,4 +326,5 @@ const server = new ApolloServer({
 
 ---
 
-**Ready for Backend Implementation:** This GraphQL federation provides a solid foundation for unified API access across all NECPGAME microservices, enabling complex cross-service queries while maintaining performance and reliability.
+**Ready for Backend Implementation:** This GraphQL federation provides a solid foundation for unified API access across
+all NECPGAME microservices, enabling complex cross-service queries while maintaining performance and reliability.

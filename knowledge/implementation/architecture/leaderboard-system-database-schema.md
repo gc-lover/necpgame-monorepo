@@ -1,9 +1,11 @@
 <!-- Issue: #140887681 -->
+
 # Leaderboard System - Database Schema
 
 ## Обзор
 
-Схема базы данных для системы лидербордов, включающая определения лидербордов, записи игроков, снапшоты для сезонов, сезоны и награды.
+Схема базы данных для системы лидербордов, включающая определения лидербордов, записи игроков, снапшоты для сезонов,
+сезоны и награды.
 
 ## ERD Диаграмма
 
@@ -82,6 +84,7 @@ erDiagram
 Таблица определений лидербордов. Хранит информацию о различных типах лидербордов.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `code`: Уникальный код лидерборда (VARCHAR(100), UNIQUE, NOT NULL)
 - `name`: Название лидерборда (VARCHAR(255), NOT NULL)
@@ -95,6 +98,7 @@ erDiagram
 - `updated_at`: Время последнего обновления
 
 **Индексы:**
+
 - По `(code, type)` для поиска по коду и типу
 - По `(type, is_active)` для активных лидербордов
 - По `season_id` для сезонных лидербордов
@@ -104,6 +108,7 @@ erDiagram
 Таблица записей в лидербордах. Хранит позиции игроков в лидербордах.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `leaderboard_id`: ID лидерборда (FK к leaderboards, NOT NULL)
 - `player_id`: ID игрока (FK к characters, NOT NULL)
@@ -116,12 +121,14 @@ erDiagram
 - `updated_at`: Время последнего обновления
 
 **Индексы:**
+
 - По `(leaderboard_id, rank)` для сортировки по позициям
 - По `(player_id, leaderboard_id)` для поиска позиции игрока
 - По `(leaderboard_id, score DESC)` для сортировки по очкам
 - По `(season_id, rank)` для сезонных записей
 
 **Constraints:**
+
 - UNIQUE(leaderboard_id, player_id, season_id): Одна запись на игрока в лидерборде/сезоне
 
 ### leaderboard_snapshots
@@ -129,6 +136,7 @@ erDiagram
 Таблица снапшотов лидербордов. Хранит полные данные рейтингов на момент создания снапшота (для сезонов).
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `leaderboard_id`: ID лидерборда (FK к leaderboards, NOT NULL)
 - `season_id`: ID сезона (FK к leaderboard_seasons, NOT NULL)
@@ -136,6 +144,7 @@ erDiagram
 - `created_at`: Время создания снапшота
 
 **Индексы:**
+
 - По `(leaderboard_id, season_id)` для поиска снапшотов
 - По `season_id` для всех снапшотов сезона
 
@@ -144,6 +153,7 @@ erDiagram
 Таблица сезонов лидербордов. Хранит информацию о сезонах.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `name`: Название сезона (VARCHAR(255), NOT NULL)
 - `start_date`: Дата начала (TIMESTAMP, NOT NULL)
@@ -153,10 +163,12 @@ erDiagram
 - `created_at`: Время создания
 
 **Индексы:**
+
 - По `(status, end_date)` для активных сезонов
 - По `(start_date, end_date)` для поиска по датам
 
 **Constraints:**
+
 - CHECK (end_date > start_date): Дата окончания должна быть позже даты начала
 
 ### leaderboard_rewards
@@ -164,6 +176,7 @@ erDiagram
 Таблица наград за позиции в лидербордах. Хранит информацию о наградах по тирам.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `leaderboard_id`: ID лидерборда (FK к leaderboards, NOT NULL)
 - `season_id`: ID сезона (FK к leaderboard_seasons, nullable, ON DELETE CASCADE)
@@ -174,16 +187,19 @@ erDiagram
 - `created_at`: Время создания
 
 **Индексы:**
+
 - По `(leaderboard_id, tier)` для наград лидерборда
 - По `(season_id, tier)` для сезонных наград
 
 **Constraints:**
+
 - CHECK (rank_min > 0): Минимальная позиция должна быть больше 0
 - CHECK (rank_max >= rank_min): Максимальная позиция должна быть >= минимальной
 
 ## ENUM типы
 
 ### leaderboard_type
+
 - `global`: Глобальные рейтинги
 - `class`: Рейтинги по классам
 - `seasonal`: Сезонные рейтинги
@@ -191,12 +207,14 @@ erDiagram
 - `guild`: Гильдийные рейтинги
 
 ### update_frequency
+
 - `realtime`: Обновление в реальном времени
 - `hourly`: Ежечасное обновление
 - `daily`: Ежедневное обновление
 - `weekly`: Еженедельное обновление
 
 ### leaderboard_tier
+
 - `diamond`: Алмазный тир
 - `platinum`: Платиновый тир
 - `gold`: Золотой тир
@@ -204,6 +222,7 @@ erDiagram
 - `bronze`: Бронзовый тир
 
 ### season_status
+
 - `active`: Активный сезон
 - `ended`: Завершенный сезон
 - `archived`: Архивированный сезон
@@ -283,16 +302,20 @@ erDiagram
 ## Миграции
 
 ### Существующие миграции:
+
 - `V1_65__leaderboard_system_tables.sql` - все таблицы системы лидербордов
 
 ### Применение миграций:
+
 ```bash
 liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ```
 
 ## Соответствие архитектуре
 
-Схема БД полностью соответствует архитектуре из `knowledge/implementation/architecture/leaderboard-system-architecture.yaml`:
+Схема БД полностью соответствует архитектуре из
+`knowledge/implementation/architecture/leaderboard-system-architecture.yaml`:
+
 - [OK] Все таблицы из архитектуры созданы
 - [OK] Все поля соответствуют описанию
 - [OK] Индексы оптимизированы для частых запросов
@@ -305,6 +328,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Лидерборды
 
 Система лидербордов включает:
+
 - **Типы**: global, class, seasonal, friend, guild
 - **Области видимости**: server, class, season, friends, guild
 - **Метрики**: overall_power, combat_score, economic_score, social_score
@@ -314,6 +338,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Записи
 
 Система записей включает:
+
 - **Очки**: score (DECIMAL(20, 2)) для точных значений
 - **Позиции**: rank и previous_rank для отслеживания изменений
 - **Тиры**: diamond, platinum, gold, silver, bronze
@@ -323,6 +348,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Снапшоты
 
 Система снапшотов включает:
+
 - **Полные данные**: snapshot_data (JSONB) для архивации
 - **Сезонность**: привязка к сезонам через season_id
 - **История**: created_at для отслеживания времени создания
@@ -330,6 +356,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Сезоны
 
 Система сезонов включает:
+
 - **Статусы**: active, ended, archived
 - **Даты**: start_date и end_date для управления жизненным циклом
 - **Награды**: rewards_distributed для отслеживания распределения
@@ -337,6 +364,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Награды
 
 Система наград включает:
+
 - **Тиры**: diamond, platinum, gold, silver, bronze
 - **Диапазоны**: rank_min и rank_max для определения тиров
 - **Награды**: rewards (JSONB) для гибкой структуры наград
@@ -344,6 +372,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Интеграция с Redis
 
 Система лидербордов интегрируется с Redis для hot data:
+
 - **Sorted Sets**: для хранения топ-1000 игроков
 - **Ключи**: `leaderboard:{code}:{scope}` для основных рейтингов
 - **Синхронизация**: периодическая синхронизация Redis ↔ PostgreSQL
@@ -351,10 +380,10 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Интеграция с другими системами
 
 Система лидербордов интегрируется с:
+
 - **Characters**: через player_id для данных игроков
 - **Achievement Service**: для расчёта overall_power
 - **Economy Service**: для расчёта economic_score
 - **Gameplay Service**: для расчёта combat_score
 - **Social Service**: для friend и guild лидербордов
-
 

@@ -1,9 +1,11 @@
 <!-- Issue: #140890862 -->
+
 # Family Relationships System - Database Schema
 
 ## Обзор
 
-Схема базы данных для системы семейных отношений с NPC, управляющей семейными деревьями, событиями, эмоциями, усыновлениями, наследованием и взаимодействиями игрока с семьями.
+Схема базы данных для системы семейных отношений с NPC, управляющей семейными деревьями, событиями, эмоциями,
+усыновлениями, наследованием и взаимодействиями игрока с семьями.
 
 ## ERD Диаграмма
 
@@ -175,6 +177,7 @@ erDiagram
 Таблица семейных деревьев. Хранит информацию о семейных структурах (ядро, расширение, кланы).
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `family_name`: Название семьи (VARCHAR(255), nullable)
 - `clan_id`: ID клана (FK clans, nullable)
@@ -186,6 +189,7 @@ erDiagram
 - `updated_at`: Время последнего обновления
 
 **Индексы:**
+
 - По `head_of_family_id` для глав семей (WHERE head_of_family_id IS NOT NULL)
 - По `clan_id` для семей кланов (WHERE clan_id IS NOT NULL)
 - По `region_id` для семей по регионам (WHERE region_id IS NOT NULL)
@@ -195,6 +199,7 @@ erDiagram
 Таблица членов семьи. Хранит информацию о членах семьи (игроки и NPC).
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `family_tree_id`: ID семейного дерева (FK family_trees, NOT NULL)
 - `character_id`: ID персонажа/NPC (FK characters/NPC, NOT NULL)
@@ -211,6 +216,7 @@ erDiagram
 - `updated_at`: Время последнего обновления
 
 **Индексы:**
+
 - По `family_tree_id` для членов семьи
 - По `character_id` для поиска по персонажу
 - По `status` для живых членов (WHERE status = 'alive')
@@ -222,6 +228,7 @@ erDiagram
 Таблица семейных отношений. Хранит информацию об отношениях между членами семьи.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `family_tree_id`: ID семейного дерева (FK family_trees, NOT NULL)
 - `character_id`: ID персонажа/NPC (FK characters/NPC, NOT NULL)
@@ -234,18 +241,21 @@ erDiagram
 - `updated_at`: Время последнего обновления
 
 **Индексы:**
+
 - По `family_tree_id` для отношений семьи
 - По `character_id` для отношений персонажа
 - По `family_member_id` для отношений с членом семьи
 - По `relationship_type` для фильтрации по типу отношения
 
-**UNIQUE constraint:** `(character_id, family_member_id, relationship_type)` - уникальная комбинация персонажей и типа отношения
+**UNIQUE constraint:** `(character_id, family_member_id, relationship_type)` - уникальная комбинация персонажей и типа
+отношения
 
 ### family_emotions
 
 Таблица эмоций членов семьи. Хранит информацию об эмоциях членов семьи (привязанность, тревога, гордость, гнев).
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `family_tree_id`: ID семейного дерева (FK family_trees, NOT NULL)
 - `character_id`: ID персонажа/NPC (FK characters/NPC, NOT NULL)
@@ -259,6 +269,7 @@ erDiagram
 - `created_at`: Время создания
 
 **Индексы:**
+
 - По `family_tree_id` для эмоций семьи
 - По `character_id` для эмоций персонажа
 - По `target_character_id` для эмоций к целевому персонажу (WHERE target_character_id IS NOT NULL)
@@ -267,9 +278,11 @@ erDiagram
 
 ### family_events
 
-Таблица семейных событий. Хранит информацию о событиях семьи (свадьбы, рождения, болезни, конфликты, трагедии, праздники).
+Таблица семейных событий. Хранит информацию о событиях семьи (свадьбы, рождения, болезни, конфликты, трагедии,
+праздники).
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `family_tree_id`: ID семейного дерева (FK family_trees, NOT NULL)
 - `event_type`: Тип события (family_event_type ENUM, NOT NULL)
@@ -288,6 +301,7 @@ erDiagram
 - `updated_at`: Время последнего обновления
 
 **Индексы:**
+
 - По `family_tree_id` для событий семьи
 - По `event_type` для фильтрации по типу события
 - По `status` для фильтрации по статусу
@@ -295,9 +309,11 @@ erDiagram
 
 ### family_adoptions
 
-Таблица усыновлений. Хранит информацию об усыновлениях (игрок усыновляет NPC, NPC усыновляет игрока, NPC усыновляет NPC).
+Таблица усыновлений. Хранит информацию об усыновлениях (игрок усыновляет NPC, NPC усыновляет игрока, NPC усыновляет
+NPC).
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `family_tree_id`: ID семейного дерева (FK family_trees, NOT NULL)
 - `adopter_id`: ID усыновителя (FK characters/NPC, NOT NULL)
@@ -312,6 +328,7 @@ erDiagram
 - `updated_at`: Время последнего обновления
 
 **Индексы:**
+
 - По `family_tree_id` для усыновлений семьи
 - По `adopter_id` для усыновителя
 - По `adoptee_id` для усыновляемого
@@ -322,6 +339,7 @@ erDiagram
 Таблица наследования и завещаний. Хранит информацию о завещаниях и наследовании.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `family_tree_id`: ID семейного дерева (FK family_trees, NOT NULL)
 - `testator_id`: ID завещателя (FK characters/NPC, NOT NULL)
@@ -336,6 +354,7 @@ erDiagram
 - `updated_at`: Время последнего обновления
 
 **Индексы:**
+
 - По `family_tree_id` для наследства семьи
 - По `testator_id` для завещателя
 - По `status` для фильтрации по статусу
@@ -345,6 +364,7 @@ erDiagram
 Таблица споров о наследстве. Хранит информацию о спорах по наследству.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `heritage_id`: ID наследства (FK family_heritage, NOT NULL)
 - `claimant_id`: ID истца (FK characters/NPC, NOT NULL)
@@ -358,6 +378,7 @@ erDiagram
 - `updated_at`: Время последнего обновления
 
 **Индексы:**
+
 - По `heritage_id` для споров наследства
 - По `claimant_id` для истца
 - По `status` для фильтрации по статусу
@@ -367,6 +388,7 @@ erDiagram
 Таблица семейных квестов. Хранит информацию о квестах, связанных с семейными событиями.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `family_tree_id`: ID семейного дерева (FK family_trees, NOT NULL)
 - `quest_id`: ID квеста (FK quests, NOT NULL)
@@ -381,6 +403,7 @@ erDiagram
 - `updated_at`: Время последнего обновления
 
 **Индексы:**
+
 - По `family_tree_id` для квестов семьи
 - По `quest_id` для поиска по квесту
 - По `family_event_id` для квестов события (WHERE family_event_id IS NOT NULL)
@@ -390,9 +413,11 @@ erDiagram
 
 ### family_interactions
 
-Таблица взаимодействий игрока с семьей. Хранит информацию о взаимодействиях игрока с членами семьи (диалоги, помощь, подарки, визиты, медиация).
+Таблица взаимодействий игрока с семьей. Хранит информацию о взаимодействиях игрока с членами семьи (диалоги, помощь,
+подарки, визиты, медиация).
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `family_tree_id`: ID семейного дерева (FK family_trees, NOT NULL)
 - `player_id`: ID игрока (FK characters, NOT NULL)
@@ -404,6 +429,7 @@ erDiagram
 - `created_at`: Время создания
 
 **Индексы:**
+
 - По `family_tree_id` для взаимодействий семьи
 - По `player_id` для взаимодействий игрока
 - По `family_member_id` для взаимодействий с членом семьи
@@ -413,6 +439,7 @@ erDiagram
 ## ENUM типы
 
 ### family_relationship_type
+
 - `parent`: Родитель
 - `child`: Ребенок
 - `sibling`: Брат/сестра
@@ -423,6 +450,7 @@ erDiagram
 - `ward`: Подопечный
 
 ### family_event_type
+
 - `wedding`: Свадьба
 - `birth`: Рождение
 - `illness`: Болезнь
@@ -435,12 +463,14 @@ erDiagram
 - `inheritance`: Наследование
 
 ### family_event_status
+
 - `planned`: Запланировано
 - `active`: Активно
 - `completed`: Завершено
 - `cancelled`: Отменено
 
 ### family_emotion_type
+
 - `attachment`: Привязанность
 - `anxiety`: Тревога
 - `pride`: Гордость
@@ -453,6 +483,7 @@ erDiagram
 - `betrayal`: Предательство
 
 ### adoption_status
+
 - `pending`: Ожидает
 - `approved`: Одобрено
 - `rejected`: Отклонено
@@ -460,12 +491,14 @@ erDiagram
 - `cancelled`: Отменено
 
 ### heritage_status
+
 - `active`: Активно
 - `disputed`: Оспаривается
 - `resolved`: Разрешено
 - `executed`: Исполнено
 
 ### heritage_dispute_status
+
 - `pending`: Ожидает
 - `in_review`: На рассмотрении
 - `resolved`: Разрешено
@@ -541,6 +574,7 @@ erDiagram
 ## Миграции
 
 ### Применение миграций:
+
 ```bash
 liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ```
@@ -548,6 +582,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ## Соответствие архитектуре
 
 Схема БД полностью соответствует механике из `knowledge/mechanics/social/family-relationships-system-детально.yaml`:
+
 - [OK] Семейные деревья (ядро, расширение, кланы)
 - [OK] Члены семьи (игроки и NPC)
 - [OK] Семейные отношения (родители, дети, братья/сестры, супруги, расширенная семья)
@@ -567,6 +602,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Типы семей
 
 Система поддерживает следующие типы семей:
+
 - **core**: Ядро семьи (родители и дети)
 - **extended**: Расширенная семья (включая бабушек, дедушек, тетей, дядей)
 - **clan**: Клан (большая семейная структура)
@@ -574,6 +610,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Типы событий
 
 Система поддерживает следующие типы событий:
+
 - **wedding**: Свадьба
 - **birth**: Рождение
 - **illness**: Болезнь
@@ -588,6 +625,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Типы эмоций
 
 Система поддерживает следующие типы эмоций:
+
 - **attachment**: Привязанность
 - **anxiety**: Тревога
 - **pride**: Гордость
@@ -602,6 +640,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Типы усыновлений
 
 Система поддерживает следующие типы усыновлений:
+
 - **player_adopts_npc**: Игрок усыновляет NPC
 - **npc_adopts_player**: NPC усыновляет игрока
 - **npc_adopts_npc**: NPC усыновляет NPC
@@ -609,6 +648,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Типы взаимодействий
 
 Система поддерживает следующие типы взаимодействий:
+
 - **dialogue**: Диалог
 - **help**: Помощь
 - **gift**: Подарок
@@ -618,6 +658,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Интеграция с другими системами
 
 Система семейных отношений интегрируется с:
+
 - **Social Service**: Отношения, репутация, доверие
 - **World Service**: Региональные события, триггеры
 - **Economy Service**: Наследование, налоги, ресурсы

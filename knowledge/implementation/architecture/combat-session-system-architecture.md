@@ -13,7 +13,8 @@
 
 ## Краткое описание
 
-Combat Session System управляет боевыми сессиями, обработкой атак, расчётом урона, порядком ходов и выдачей наград после окончания боя.
+Combat Session System управляет боевыми сессиями, обработкой атак, расчётом урона, порядком ходов и выдачей наград после
+окончания боя.
 
 ## Связанные документы
 
@@ -87,23 +88,27 @@ flowchart TD
 **Подкомпоненты:**
 
 #### Session Manager
+
 - Создание/завершение сессий
 - Управление участниками
 - Состояние боя
 - Event publishing
 
 #### Turn Manager
+
 - Определение порядка ходов (инициатива)
 - Таймауты ходов
 - Переключение ходов
 
 #### Damage Calculator
+
 - Расчёт физического урона
 - Расчёт магического урона
 - Критические удары
 - Модификаторы (buffs/debuffs)
 
 #### Reward Processor
+
 - Выдача опыта
 - Генерация лута
 - Обновление квестов
@@ -161,9 +166,11 @@ CREATE INDEX idx_combat_logs_session ON combat_logs(session_id, round_number);
 ### 3.1. Session Management
 
 #### POST /api/v1/gameplay/combat/start
+
 **Начать бой**
 
 Request:
+
 ```json
 {
   "session_type": "pve",
@@ -176,6 +183,7 @@ Request:
 ```
 
 Response:
+
 ```json
 {
   "session_id": "uuid",
@@ -185,9 +193,11 @@ Response:
 ```
 
 #### GET /api/v1/gameplay/combat/{session_id}/state
+
 **Получить состояние боя**
 
 Response:
+
 ```json
 {
   "session_id": "uuid",
@@ -204,9 +214,11 @@ Response:
 ```
 
 #### POST /api/v1/gameplay/combat/{session_id}/attack
+
 **Атаковать**
 
 Request:
+
 ```json
 {
   "attacker_id": "uuid",
@@ -216,6 +228,7 @@ Request:
 ```
 
 Response:
+
 ```json
 {
   "damage_dealt": 125,
@@ -227,9 +240,11 @@ Response:
 ```
 
 #### POST /api/v1/gameplay/combat/{session_id}/flee
+
 **Сбежать из боя**
 
 #### POST /api/v1/gameplay/combat/{session_id}/end
+
 **Завершить бой** (автоматически при победе/поражении)
 
 ---
@@ -267,6 +282,7 @@ Response:
 ### 4.3. Turn Order (Initiative)
 
 **Формула:**
+
 ```
 Initiative = (Dexterity / 10) + random(1, 10)
 ```
@@ -276,6 +292,7 @@ Initiative = (Dexterity / 10) + random(1, 10)
 ### 4.4. Damage Calculation
 
 **Физический урон:**
+
 ```
 Base = WeaponDamage + (Strength * 0.5)
 Critical = Base * CritMultiplier (если roll < CritChance)
@@ -284,6 +301,7 @@ Final = Base * (1 - Reduction)
 ```
 
 **Магический урон:**
+
 ```
 Base = SpellPower + (Intelligence * 0.75)
 Reduction = MagicResist / (MagicResist + 100)
@@ -331,12 +349,14 @@ sequenceDiagram
 ## 6. События
 
 **Published:**
+
 - `combat:started` - бой начат
 - `combat:attack` - атака совершена
 - `combat:ended` - бой окончен
 - `combat:enemy_killed` - враг убит
 
 **Subscribed:**
+
 - `player:disconnected` - отменить бой
 - `quest:combat_required` - запуск сюжетного боя
 
@@ -362,21 +382,27 @@ sequenceDiagram
 ## 8. Разбиение на подзадачи
 
 ### 8.1. Database Schema (P0)
+
 **Срок:** 1 неделя
 
 ### 8.2. Session Manager (P0)
+
 **Срок:** 2 недели
 
 ### 8.3. Turn Manager (P0)
+
 **Срок:** 1 неделя
 
 ### 8.4. Damage Calculator (P0)
+
 **Срок:** 2 недели
 
 ### 8.5. Reward Processor (P1)
+
 **Срок:** 1 неделя
 
 ### 8.6. Anti-Cheat Integration (P1)
+
 **Срок:** 1 неделя
 
 ---
@@ -392,37 +418,4 @@ sequenceDiagram
 ---
 
 **Конец документа**
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

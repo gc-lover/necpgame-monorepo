@@ -1,137 +1,137 @@
 <!-- Issue: #2222 -->
 
-# Architecture: Quest System Innovation - Living Storylines & Dynamic Narratives
+  # Architecture: Quest System Innovation - Living Storylines & Dynamic Narratives
 
-## Performance Requirements
+    ## Performance Requirements
 
-**Load:** 5000+ concurrent players, P99 <50ms for quest updates
-**Data Model (optimized):**
-- StorylineState: 256 bytes (narrative threads, character arcs, world impact)
-- QuestContext: 128 bytes (player choices, event chains, temporal state)
-- NarrativeEvent: 64 bytes (event type, timestamp, consequence data)
+    **Load:** 5000+ concurrent players, P99 <50ms for quest updates
+    **Data Model (optimized):**
+    - StorylineState: 256 bytes (narrative threads, character arcs, world impact)
+    - QuestContext: 128 bytes (player choices, event chains, temporal state)
+    - NarrativeEvent: 64 bytes (event type, timestamp, consequence data)
 
-**Hot Path:** Quest progression checks (1000 RPS/player), narrative updates (200 RPS/player)
-**Backend optimizations:** Level 3 - Event sourcing, CQRS, distributed narrative processing
+      **Hot Path:** Quest progression checks (1000 RPS/player), narrative updates (200 RPS/player)
+      **Backend optimizations:** Level 3 - Event sourcing, CQRS, distributed narrative processing
+      
+      ## System Architecture
+      
+      ### Core Components
+      
+      ```mermaid
+      graph TB
+      subgraph "Narrative Engine"
+      NSE[Narrative State Engine]
+      QGE[Quest Generation Engine]
+      CAE[Character Arc Engine]
+      WSE[World State Engine]
+      end
+      
+      subgraph "Story Processing Services"
+      SPS[Story Processing Service]
+      NES[Narrative Event Store]
+      DCS[Dynamic Content Service]
+      AIS[AI Storytelling Service]
+      end
+      
+      subgraph "Integration Layer"
+      QIS[Quest Integration Service]
+      NIS[Narrative Integration Service]
+      EIS[Event Integration Service]
+      end
+      
+      subgraph "Data Layer"
+      NSD[Narrative State Data]
+      QSD[Quest Definition Data]
+      ESD[Event Stream Data]
+      WSD[World State Data]
+      end
+      
+      NSE --> SPS
+      NSE --> NES
+      QGE --> DCS
+      CAE --> AIS
+      WSE --> EIS
+      SPS --> QIS
+      NES --> NIS
+      DCS --> EIS
+      AIS --> NIS
+      ```
 
-## System Architecture
+      ### Microservice Architecture
 
-### Core Components
+      #### 1. Narrative State Engine (NSE)
+      **Purpose:** Core narrative processing, storyline lifecycle management, player choice integration
+      **Technology:** Go microservice with in-memory state management
+      **Scaling:** 5 pods, event-driven scaling based on active storylines
 
-```mermaid
-graph TB
-    subgraph "Narrative Engine"
-        NSE[Narrative State Engine]
-        QGE[Quest Generation Engine]
-        CAE[Character Arc Engine]
-        WSE[World State Engine]
-    end
-
-    subgraph "Story Processing Services"
-        SPS[Story Processing Service]
-        NES[Narrative Event Store]
-        DCS[Dynamic Content Service]
-        AIS[AI Storytelling Service]
-    end
-
-    subgraph "Integration Layer"
-        QIS[Quest Integration Service]
-        NIS[Narrative Integration Service]
-        EIS[Event Integration Service]
-    end
-
-    subgraph "Data Layer"
-        NSD[Narrative State Data]
-        QSD[Quest Definition Data]
-        ESD[Event Stream Data]
-        WSD[World State Data]
-    end
-
-    NSE --> SPS
-    NSE --> NES
-    QGE --> DCS
-    CAE --> AIS
-    WSE --> EIS
-    SPS --> QIS
-    NES --> NIS
-    DCS --> EIS
-    AIS --> NIS
-```
-
-### Microservice Architecture
-
-#### 1. Narrative State Engine (NSE)
-**Purpose:** Core narrative processing, storyline lifecycle management, player choice integration
-**Technology:** Go microservice with in-memory state management
-**Scaling:** 5 pods, event-driven scaling based on active storylines
-
-**Key Endpoints:**
-- `POST /api/v1/narrative/storyline/create` - Initialize new storyline
-- `PUT /api/v1/narrative/storyline/{id}/progress` - Update storyline state
-- `GET /api/v1/narrative/player/{player_id}/active` - Get active storylines
-- `POST /api/v1/narrative/choice/process` - Process player narrative choices
-
-#### 2. Quest Generation Engine (QGE)
-**Purpose:** Dynamic quest creation, procedural content generation, adaptive difficulty
-**Technology:** Go microservice with AI/ML integration
-**Scaling:** 3 pods, burst scaling for content generation
-
-**Key Endpoints:**
-- `POST /api/v1/quest/generate/dynamic` - Generate context-aware quests
-- `PUT /api/v1/quest/{id}/adapt` - Adapt quest based on player performance
-- `GET /api/v1/quest/player/{player_id}/recommendations` - AI quest recommendations
-- `POST /api/v1/quest/emergent/create` - Create emergent quests from player actions
-
-#### 3. Character Arc Engine (CAE)
-**Purpose:** NPC personality evolution, relationship dynamics, motivation systems
-**Technology:** Go microservice with behavioral AI
-**Scaling:** 4 pods, distributed by character regions
-
-**Key Endpoints:**
-- `PUT /api/v1/character/{id}/evolve` - Process character development
-- `POST /api/v1/character/{id}/relationship/update` - Update social relationships
-- `GET /api/v1/character/{id}/motivations` - Get current character motivations
-- `POST /api/v1/character/{id}/trauma/process` - Process traumatic events
-
-#### 4. World State Engine (WSE)
-**Purpose:** Global narrative coordination, world event management, consequence propagation
-**Technology:** Go microservice with distributed state
-**Scaling:** 2 pods, global singleton pattern
-
-**Key Endpoints:**
-- `POST /api/v1/world/event/trigger` - Trigger global world events
-- `PUT /api/v1/world/state/update` - Update world state from narratives
-- `GET /api/v1/world/region/{region_id}/narratives` - Get regional storylines
-- `POST /api/v1/world/consequence/propagate` - Propagate narrative consequences
-
-#### 5. Story Processing Service (SPS)
-**Purpose:** Narrative thread management, story weaving, temporal mechanics
-**Technology:** Go microservice with event streaming
-**Scaling:** 6 pods, partitioned by storyline type
-
-**Key Endpoints:**
-- `POST /api/v1/story/thread/weave` - Weave narrative threads together
-- `PUT /api/v1/story/thread/{id}/branch` - Create story branches
-- `GET /api/v1/story/player/{player_id}/threads` - Get player narrative threads
-- `POST /api/v1/story/temporal/advance` - Advance time-based narratives
-
-#### 6. Narrative Event Store (NES)
-**Purpose:** Event sourcing for all narrative events, audit trail, replay capability
-**Technology:** EventStoreDB or PostgreSQL with event tables
-**Scaling:** 3 pods, append-only with read replicas
-
-**Event Types:**
-- `StorylineCreated` - New storyline initialization
-- `PlayerChoiceMade` - Narrative decision recorded
-- `CharacterEvolved` - NPC development event
-- `WorldEventTriggered` - Global story event
-- `QuestGenerated` - Dynamic quest creation
-- `ConsequencePropagated` - Narrative impact applied
-
-## Data Synchronization Patterns
-
-### CQRS Implementation
-
-```yaml
+      **Key Endpoints:**
+    - `POST /api/v1/narrative/storyline/create` - Initialize new storyline
+    - `PUT /api/v1/narrative/storyline/{id}/progress` - Update storyline state
+    - `GET /api/v1/narrative/player/{player_id}/active` - Get active storylines
+    - `POST /api/v1/narrative/choice/process` - Process player narrative choices
+      
+      #### 2. Quest Generation Engine (QGE)
+      **Purpose:** Dynamic quest creation, procedural content generation, adaptive difficulty
+        **Technology:** Go microservice with AI/ML integration
+        **Scaling:** 3 pods, burst scaling for content generation
+        
+        **Key Endpoints:**
+    - `POST /api/v1/quest/generate/dynamic` - Generate context-aware quests
+    - `PUT /api/v1/quest/{id}/adapt` - Adapt quest based on player performance
+    - `GET /api/v1/quest/player/{player_id}/recommendations` - AI quest recommendations
+    - `POST /api/v1/quest/emergent/create` - Create emergent quests from player actions
+      
+      #### 3. Character Arc Engine (CAE)
+      **Purpose:** NPC personality evolution, relationship dynamics, motivation systems
+        **Technology:** Go microservice with behavioral AI
+        **Scaling:** 4 pods, distributed by character regions
+        
+        **Key Endpoints:**
+    - `PUT /api/v1/character/{id}/evolve` - Process character development
+    - `POST /api/v1/character/{id}/relationship/update` - Update social relationships
+    - `GET /api/v1/character/{id}/motivations` - Get current character motivations
+    - `POST /api/v1/character/{id}/trauma/process` - Process traumatic events
+      
+      #### 4. World State Engine (WSE)
+      **Purpose:** Global narrative coordination, world event management, consequence propagation
+        **Technology:** Go microservice with distributed state
+        **Scaling:** 2 pods, global singleton pattern
+        
+        **Key Endpoints:**
+    - `POST /api/v1/world/event/trigger` - Trigger global world events
+    - `PUT /api/v1/world/state/update` - Update world state from narratives
+    - `GET /api/v1/world/region/{region_id}/narratives` - Get regional storylines
+    - `POST /api/v1/world/consequence/propagate` - Propagate narrative consequences
+      
+      #### 5. Story Processing Service (SPS)
+      **Purpose:** Narrative thread management, story weaving, temporal mechanics
+        **Technology:** Go microservice with event streaming
+        **Scaling:** 6 pods, partitioned by storyline type
+        
+        **Key Endpoints:**
+    - `POST /api/v1/story/thread/weave` - Weave narrative threads together
+    - `PUT /api/v1/story/thread/{id}/branch` - Create story branches
+    - `GET /api/v1/story/player/{player_id}/threads` - Get player narrative threads
+    - `POST /api/v1/story/temporal/advance` - Advance time-based narratives
+      
+      #### 6. Narrative Event Store (NES)
+      **Purpose:** Event sourcing for all narrative events, audit trail, replay capability
+        **Technology:** EventStoreDB or PostgreSQL with event tables
+        **Scaling:** 3 pods, append-only with read replicas
+        
+        **Event Types:**
+    - `StorylineCreated` - New storyline initialization
+    - `PlayerChoiceMade` - Narrative decision recorded
+    - `CharacterEvolved` - NPC development event
+    - `WorldEventTriggered` - Global story event
+    - `QuestGenerated` - Dynamic quest creation
+    - `ConsequencePropagated` - Narrative impact applied
+      
+      ## Data Synchronization Patterns
+      
+      ### CQRS Implementation
+      
+      ```yaml
 cqrs_patterns:
   command_side:
     - CreateStoryline
@@ -148,11 +148,11 @@ cqrs_patterns:
     - GetQuestRecommendations
     - GetNarrativeHistory
     - GetConsequenceChains
-```
-
-### Event Sourcing for Narratives
-
-```yaml
+  ```
+  
+  ### Event Sourcing for Narratives
+  
+  ```yaml
 event_sourcing:
   aggregates:
     - PlayerNarrativeSession
@@ -161,105 +161,105 @@ event_sourcing:
     - StorylineLifecycle
 
   events:
-    - StorylineInitialized: {storyline_id, player_id, initial_state}
-    - ChoiceRecorded: {storyline_id, choice_type, choice_value, timestamp}
-    - CharacterTraitModified: {character_id, trait_name, old_value, new_value}
-    - WorldStateChanged: {region_id, state_property, old_value, new_value}
-    - QuestSpawned: {quest_id, generation_context, difficulty_level}
-    - ConsequenceRealized: {source_event, target_entity, consequence_type}
-```
+    - StorylineInitialized: { storyline_id, player_id, initial_state }
+    - ChoiceRecorded: { storyline_id, choice_type, choice_value, timestamp }
+    - CharacterTraitModified: { character_id, trait_name, old_value, new_value }
+    - WorldStateChanged: { region_id, state_property, old_value, new_value }
+    - QuestSpawned: { quest_id, generation_context, difficulty_level }
+    - ConsequenceRealized: { source_event, target_entity, consequence_type }
+  ```
 
-## Performance Optimizations
+  ## Performance Optimizations
 
-### Memory Management
-- **Object Pooling:** StorylineState and QuestContext objects recycled
-- **Struct Alignment:** Narrative events optimized for cache efficiency
-- **Zero Allocations:** Hot path narrative processing
+  ### Memory Management
+  - **Object Pooling:** StorylineState and QuestContext objects recycled
+  - **Struct Alignment:** Narrative events optimized for cache efficiency
+  - **Zero Allocations:** Hot path narrative processing
 
-### Network Optimization
-- **Delta Compression:** Only changed narrative state sent to clients
-- **Predictive Updates:** Client-side narrative state prediction
-- **Spatial Partitioning:** Narrative processing distributed by world regions
+  ### Network Optimization
+  - **Delta Compression:** Only changed narrative state sent to clients
+  - **Predictive Updates:** Client-side narrative state prediction
+  - **Spatial Partitioning:** Narrative processing distributed by world regions
 
-### Database Optimization
-- **Event Partitioning:** Events partitioned by storyline_id and timestamp
-- **Read Optimization:** Separate read models for different query patterns
-- **Caching Strategy:** Redis cache for active narrative states
+  ### Database Optimization
+  - **Event Partitioning:** Events partitioned by storyline_id and timestamp
+  - **Read Optimization:** Separate read models for different query patterns
+  - **Caching Strategy:** Redis cache for active narrative states
 
-## Scaling Strategy
+  ## Scaling Strategy
 
-### Horizontal Scaling
-- **Region-based Sharding:** Narrative processing sharded by game regions
-- **Storyline-based Routing:** Requests routed by storyline ownership
-- **Event Stream Partitioning:** Kafka topics partitioned by event type
+  ### Horizontal Scaling
+  - **Region-based Sharding:** Narrative processing sharded by game regions
+  - **Storyline-based Routing:** Requests routed by storyline ownership
+  - **Event Stream Partitioning:** Kafka topics partitioned by event type
 
-### Auto-scaling Triggers
-- **Active Storylines:** Scale based on concurrent narrative sessions
-- **Event Volume:** Scale event processing based on narrative activity
-- **Generation Load:** Scale quest generation during high procedural content demand
+  ### Auto-scaling Triggers
+  - **Active Storylines:** Scale based on concurrent narrative sessions
+  - **Event Volume:** Scale event processing based on narrative activity
+  - **Generation Load:** Scale quest generation during high procedural content demand
 
-## Security Architecture
+  ## Security Architecture
 
-### Anti-Cheat Measures
-- **Narrative Validation:** Server-side storyline state verification
-- **Choice Auditing:** Log all player narrative decisions for pattern analysis
-- **Event Integrity:** Cryptographic event chain validation
+  ### Anti-Cheat Measures
+  - **Narrative Validation:** Server-side storyline state verification
+  - **Choice Auditing:** Log all player narrative decisions for pattern analysis
+  - **Event Integrity:** Cryptographic event chain validation
 
-### Rate Limiting
-- **Choice Processing:** 20 choices/minute per player
-- **Quest Generation:** 5 dynamic quests/minute per player
-- **Storyline Updates:** 50 updates/minute per player
+  ### Rate Limiting
+  - **Choice Processing:** 20 choices/minute per player
+  - **Quest Generation:** 5 dynamic quests/minute per player
+  - **Storyline Updates:** 50 updates/minute per player
 
-## Monitoring & Observability
+  ## Monitoring & Observability
 
-### Key Metrics
-- **Narrative Engagement:** Average storylines per player
-- **Quest Completion:** Success rate of generated quests
-- **Character Development:** NPC evolution frequency
-- **World Events:** Global event propagation success rate
+  ### Key Metrics
+  - **Narrative Engagement:** Average storylines per player
+  - **Quest Completion:** Success rate of generated quests
+  - **Character Development:** NPC evolution frequency
+  - **World Events:** Global event propagation success rate
 
-### Health Checks
-- **Narrative Processing:** All engines respond within 50ms
-- **Event Store:** Write latency <20ms, read latency <10ms
-- **AI Generation:** Quest generation time <100ms
-- **State Synchronization:** Cross-service state consistency
+  ### Health Checks
+  - **Narrative Processing:** All engines respond within 50ms
+  - **Event Store:** Write latency <20ms, read latency <10ms
+  - **AI Generation:** Quest generation time <100ms
+  - **State Synchronization:** Cross-service state consistency
 
-## Implementation Roadmap
+  ## Implementation Roadmap
 
-### Phase 1: Core Narrative Engine (Week 1-3)
-- Basic storyline lifecycle management
-- Player choice processing
-- Event sourcing foundation
-- Core narrative state persistence
+  ### Phase 1: Core Narrative Engine (Week 1-3)
+  - Basic storyline lifecycle management
+  - Player choice processing
+  - Event sourcing foundation
+  - Core narrative state persistence
 
-### Phase 2: Dynamic Quest Generation (Week 4-6)
-- Procedural quest creation
-- Context-aware content generation
-- Adaptive difficulty systems
-- AI-powered quest recommendations
+  ### Phase 2: Dynamic Quest Generation (Week 4-6)
+  - Procedural quest creation
+  - Context-aware content generation
+  - Adaptive difficulty systems
+  - AI-powered quest recommendations
 
-### Phase 3: Character & World Integration (Week 7-9)
-- NPC personality evolution systems
-- Relationship dynamics
-- World state narrative integration
-- Consequence propagation mechanics
+  ### Phase 3: Character & World Integration (Week 7-9)
+  - NPC personality evolution systems
+  - Relationship dynamics
+  - World state narrative integration
+  - Consequence propagation mechanics
 
-### Phase 4: Advanced Narrative Features (Week 10-12)
-- Story weaving and thread management
-- Temporal narrative mechanics
-- Emergent quest systems
-- Multiplayer narrative coordination
+  ### Phase 4: Advanced Narrative Features (Week 10-12)
+  - Story weaving and thread management
+  - Temporal narrative mechanics
+  - Emergent quest systems
+  - Multiplayer narrative coordination
 
-### Phase 5: Performance & Polish (Week 13-14)
-- Comprehensive performance optimization
-- Extensive narrative testing
-- Balance adjustments
-- Production deployment preparation
-
-## API Specifications (High Level)
-
-### Narrative State API
-```yaml
+  ### Phase 5: Performance & Polish (Week 13-14)
+  - Comprehensive performance optimization
+  - Extensive narrative testing
+  - Balance adjustments
+  - Production deployment preparation
+    
+    ## API Specifications (High Level)
+    
+    ### Narrative State API
+    ```yaml
 paths:
   /api/v1/narrative/storyline:
     post:
@@ -285,10 +285,10 @@ paths:
         updated_state: object
         triggered_events: array
         new_opportunities: array
-```
-
-### Quest Generation API
-```yaml
+  ```
+  
+  ### Quest Generation API
+  ```yaml
 paths:
   /api/v1/quest/generate:
     post:
@@ -315,27 +315,27 @@ paths:
         recommendations: array[quest_preview]
         reasoning: array[string]
         engagement_score: number
-```
+  ```
 
-## Risk Assessment
+  ## Risk Assessment
 
-### Technical Risks
-- **High:** Narrative coherence maintenance across distributed systems
-- **Medium:** AI content generation quality and performance
-- **Low:** Event sourcing complexity for narrative replay
+  ### Technical Risks
+  - **High:** Narrative coherence maintenance across distributed systems
+  - **Medium:** AI content generation quality and performance
+  - **Low:** Event sourcing complexity for narrative replay
 
-### Mitigation Strategies
-- **Coherence:** Centralized narrative coordination service
-- **AI Quality:** Extensive training data and human oversight
-- **Complexity:** Modular event sourcing with clear boundaries
-
-## Next Steps
-
-This architecture establishes the foundation for a revolutionary quest system that creates truly living, adaptive narratives. The modular design enables incremental implementation while maintaining narrative coherence and performance.
-
-**Handed off to:** Database Agent for event store schema (#2210), API Designer for detailed narrative APIs (#2197), Backend Agent for narrative engine implementation (#2220), Content Writer for procedural narrative templates (#2223).
+  ### Mitigation Strategies
+  - **Coherence:** Centralized narrative coordination service
+  - **AI Quality:** Extensive training data and human oversight
+  - **Complexity:** Modular event sourcing with clear boundaries
+    
+    ## Next Steps
+      
+      This architecture establishes the foundation for a revolutionary quest system that creates truly living, adaptive narratives. The modular design enables incremental implementation while maintaining narrative coherence and performance.
+      
+      **Handed off to:** Database Agent for event store schema (#2210), API Designer for detailed narrative APIs (#2197), Backend Agent for narrative engine implementation (#2220), Content Writer for procedural narrative templates (#2223).
 
 ---
 
 *Designed by Architect Agent for Living Quest System*
-*Issue: #2222*
+*Issue : #2222*

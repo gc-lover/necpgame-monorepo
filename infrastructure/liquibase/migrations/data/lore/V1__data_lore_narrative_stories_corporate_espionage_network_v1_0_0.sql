@@ -5,220 +5,215 @@
 BEGIN;
 
 -- Lore: story-corporate-espionage-network
-INSERT INTO narrative.lore_entries (
-    lore_id, title, document_type, category,
-    content_data, version
-)
-VALUES (
-    'story-corporate-espionage-network',
-    'Корпоративная шпионская сеть',
-    'canon',
-    'narrative-story',
-    '{
-  "metadata": {
-    "id": "story-corporate-espionage-network",
-    "title": "Корпоративная шпионская сеть",
-    "document_type": "canon",
-    "category": "narrative-story",
-    "status": "draft",
-    "version": "1.0.0",
-    "last_updated": "2025-12-14T12:00:00+00:00",
-    "concept_approved": false,
-    "concept_reviewed_at": "",
-    "owners": [
-      {
-        "role": "concept_director",
-        "contact": "concept@necp.game"
+INSERT INTO narrative.lore_entries (lore_id, title, document_type, category,
+                                    content_data, version)
+VALUES ('story-corporate-espionage-network',
+        'Корпоративная шпионская сеть',
+        'canon',
+        'narrative-story',
+        '{
+      "metadata": {
+        "id": "story-corporate-espionage-network",
+        "title": "Корпоративная шпионская сеть",
+        "document_type": "canon",
+        "category": "narrative-story",
+        "status": "draft",
+        "version": "1.0.0",
+        "last_updated": "2025-12-14T12:00:00+00:00",
+        "concept_approved": false,
+        "concept_reviewed_at": "",
+        "owners": [
+          {
+            "role": "concept_director",
+            "contact": "concept@necp.game"
+          }
+        ],
+        "tags": [
+          "corporate",
+          "espionage",
+          "network",
+          "intrigue"
+        ],
+        "topics": [
+          "industrial_spying",
+          "corporate_intrigue",
+          "digital_security"
+        ],
+        "related_systems": [
+          "narrative-service",
+          "network-service",
+          "social-service"
+        ],
+        "related_documents": [],
+        "source": "shared/docs/knowledge/canon/narrative/stories/corporate-espionage-network.md",
+        "visibility": "internal",
+        "audience": [
+          "concept",
+          "narrative",
+          "liveops"
+        ],
+        "risk_level": "high"
+      },
+      "review": {
+        "chain": [
+          {
+            "role": "concept_director",
+            "reviewer": "",
+            "reviewed_at": "",
+            "status": "pending"
+          }
+        ],
+        "next_actions": []
+      },
+      "summary": {
+        "problem": "Корпорации создают глобальные сети шпионажа для кражи технологий и секретов.",
+        "goal": "Показать теневую сторону корпоративной войны через призму шпионажа.",
+        "essence": "В мире где информация = власть, шпионы - это современные рыцари информационной эры.",
+        "key_points": [
+          "Глобальные сети корпоративного шпионажа",
+          "Технологии слежки и противодействия",
+          "Этические дилеммы лояльности"
+        ]
+      },
+      "story_narrative": {
+        "hook": "Анонимный источник предлагает игроку работу в корпоративном шпионаже.",
+        "inciting_incident": "Игрок обнаруживает, что его текущий работодатель - часть глобальной шпионской сети.",
+        "rising_action": [
+          "Вербовка в шпионскую сеть одной из корпораций",
+          "Обучение техникам шпионажа и противодействия",
+          "Первые миссии по сбору разведданных",
+          "Конфликты лояльности и моральные дилеммы"
+        ],
+        "climax": "Игрок должен выбрать сторону в корпоративной войне за ключевую технологию.",
+        "falling_action": "Разоблачение сети приводит к глобальным последствиям.",
+        "resolution": "Перестройка корпоративного шпионажа или его полный крах."
+      },
+      "characters": {
+        "primary": [
+          {
+            "name": "Shadow Broker",
+            "role": "Руководитель шпионской сети",
+            "motivation": "Власть через информацию",
+            "arc": "От манипулятора к жертве собственных интриг"
+          },
+          {
+            "name": "The Ghost",
+            "role": "Легендарный шпион (игрок)",
+            "motivation": "Выживание в мире корпоративных войн",
+            "arc": "От наемника к человеку с совестью"
+          }
+        ],
+        "supporting": [
+          {
+            "name": "Corporate Handler",
+            "role": "Связной между игроком и корпорацией",
+            "motivation": "Карьерный рост через успехи агента",
+            "arc": "От лояльного сотрудника к предателю"
+          }
+        ]
+      },
+      "themes": [
+        "Информация как валюта в корпоративном мире",
+        "Лояльность - иллюзия в мире бесконечных интриг",
+        "Технология шпионажа меняет природу доверия"
+      ],
+      "world_building": {
+        "espionage_technologies": [
+          {
+            "neural_hacking": "Прямой доступ к воспоминаниям через импланты"
+          },
+          {
+            "digital_surveillance": "Всеобъемлющая слежка через умные города"
+          },
+          {
+            "ai_counterintelligence": "ИИ для обнаружения и предотвращения шпионажа"
+          }
+        ],
+        "corporate_networks": [
+          {
+            "Arasaka_Intelligence": "Традиционная шпионская сеть с японскими корнями"
+          },
+          {
+            "Militech_Security": "Современная сеть с акцентом на кибербезопасность"
+          },
+          {
+            "Biotechnica_Surveillance": "Биотехнологический шпионаж через генетику"
+          }
+        ]
+      },
+      "timeline": [
+        {
+          "date": "2028-03-01",
+          "event": "Создание первой корпоративной шпионской сети"
+        },
+        {
+          "date": "2029-01-15",
+          "event": "Первая крупная утечка данных"
+        },
+        {
+          "date": "2029-08-22",
+          "event": "Вербовка легендарного шпиона"
+        },
+        {
+          "date": "2030-05-10",
+          "event": "Кульминация - разоблачение глобальной сети"
+        }
+      ],
+      "player_impact": {
+        "choices": [
+          {
+            "loyal_agent": "Работать на одну корпорацию"
+          },
+          {
+            "double_agent": "Шпионить для нескольких сторон"
+          },
+          {
+            "whistleblower": "Разоблачить всю систему"
+          }
+        ],
+        "consequences": [
+          {
+            "reputation_changes": "Влияние на отношения с фракциями"
+          },
+          {
+            "access_changes": "Доступ к секретным технологиям"
+          },
+          {
+            "story_branches": "Альтернативные сюжетные линии в шпионском мире"
+          }
+        ]
+      },
+      "appendix": {
+        "glossary": [],
+        "references": [],
+        "decisions": []
+      },
+      "implementation": {
+        "github_issue": 140875775,
+        "needs_task": false,
+        "queue_reference": [],
+        "blockers": []
+      },
+      "history": [
+        {
+          "version": "1.0.0",
+          "date": "2025-12-14",
+          "author": "content_writer",
+          "changes": "Создан нарратив \"Корпоративная шпионская сеть\" с полной структурой шпионажа."
+        }
+      ],
+      "validation": {
+        "checksum": "",
+        "schema_version": "1.0"
       }
-    ],
-    "tags": [
-      "corporate",
-      "espionage",
-      "network",
-      "intrigue"
-    ],
-    "topics": [
-      "industrial_spying",
-      "corporate_intrigue",
-      "digital_security"
-    ],
-    "related_systems": [
-      "narrative-service",
-      "network-service",
-      "social-service"
-    ],
-    "related_documents": [],
-    "source": "shared/docs/knowledge/canon/narrative/stories/corporate-espionage-network.md",
-    "visibility": "internal",
-    "audience": [
-      "concept",
-      "narrative",
-      "liveops"
-    ],
-    "risk_level": "high"
-  },
-  "review": {
-    "chain": [
-      {
-        "role": "concept_director",
-        "reviewer": "",
-        "reviewed_at": "",
-        "status": "pending"
-      }
-    ],
-    "next_actions": []
-  },
-  "summary": {
-    "problem": "Корпорации создают глобальные сети шпионажа для кражи технологий и секретов.",
-    "goal": "Показать теневую сторону корпоративной войны через призму шпионажа.",
-    "essence": "В мире где информация = власть, шпионы - это современные рыцари информационной эры.",
-    "key_points": [
-      "Глобальные сети корпоративного шпионажа",
-      "Технологии слежки и противодействия",
-      "Этические дилеммы лояльности"
-    ]
-  },
-  "story_narrative": {
-    "hook": "Анонимный источник предлагает игроку работу в корпоративном шпионаже.",
-    "inciting_incident": "Игрок обнаруживает, что его текущий работодатель - часть глобальной шпионской сети.",
-    "rising_action": [
-      "Вербовка в шпионскую сеть одной из корпораций",
-      "Обучение техникам шпионажа и противодействия",
-      "Первые миссии по сбору разведданных",
-      "Конфликты лояльности и моральные дилеммы"
-    ],
-    "climax": "Игрок должен выбрать сторону в корпоративной войне за ключевую технологию.",
-    "falling_action": "Разоблачение сети приводит к глобальным последствиям.",
-    "resolution": "Перестройка корпоративного шпионажа или его полный крах."
-  },
-  "characters": {
-    "primary": [
-      {
-        "name": "Shadow Broker",
-        "role": "Руководитель шпионской сети",
-        "motivation": "Власть через информацию",
-        "arc": "От манипулятора к жертве собственных интриг"
-      },
-      {
-        "name": "The Ghost",
-        "role": "Легендарный шпион (игрок)",
-        "motivation": "Выживание в мире корпоративных войн",
-        "arc": "От наемника к человеку с совестью"
-      }
-    ],
-    "supporting": [
-      {
-        "name": "Corporate Handler",
-        "role": "Связной между игроком и корпорацией",
-        "motivation": "Карьерный рост через успехи агента",
-        "arc": "От лояльного сотрудника к предателю"
-      }
-    ]
-  },
-  "themes": [
-    "Информация как валюта в корпоративном мире",
-    "Лояльность - иллюзия в мире бесконечных интриг",
-    "Технология шпионажа меняет природу доверия"
-  ],
-  "world_building": {
-    "espionage_technologies": [
-      {
-        "neural_hacking": "Прямой доступ к воспоминаниям через импланты"
-      },
-      {
-        "digital_surveillance": "Всеобъемлющая слежка через умные города"
-      },
-      {
-        "ai_counterintelligence": "ИИ для обнаружения и предотвращения шпионажа"
-      }
-    ],
-    "corporate_networks": [
-      {
-        "Arasaka_Intelligence": "Традиционная шпионская сеть с японскими корнями"
-      },
-      {
-        "Militech_Security": "Современная сеть с акцентом на кибербезопасность"
-      },
-      {
-        "Biotechnica_Surveillance": "Биотехнологический шпионаж через генетику"
-      }
-    ]
-  },
-  "timeline": [
-    {
-      "date": "2028-03-01",
-      "event": "Создание первой корпоративной шпионской сети"
-    },
-    {
-      "date": "2029-01-15",
-      "event": "Первая крупная утечка данных"
-    },
-    {
-      "date": "2029-08-22",
-      "event": "Вербовка легендарного шпиона"
-    },
-    {
-      "date": "2030-05-10",
-      "event": "Кульминация - разоблачение глобальной сети"
-    }
-  ],
-  "player_impact": {
-    "choices": [
-      {
-        "loyal_agent": "Работать на одну корпорацию"
-      },
-      {
-        "double_agent": "Шпионить для нескольких сторон"
-      },
-      {
-        "whistleblower": "Разоблачить всю систему"
-      }
-    ],
-    "consequences": [
-      {
-        "reputation_changes": "Влияние на отношения с фракциями"
-      },
-      {
-        "access_changes": "Доступ к секретным технологиям"
-      },
-      {
-        "story_branches": "Альтернативные сюжетные линии в шпионском мире"
-      }
-    ]
-  },
-  "appendix": {
-    "glossary": [],
-    "references": [],
-    "decisions": []
-  },
-  "implementation": {
-    "github_issue": 140875775,
-    "needs_task": false,
-    "queue_reference": [],
-    "blockers": []
-  },
-  "history": [
-    {
-      "version": "1.0.0",
-      "date": "2025-12-14",
-      "author": "content_writer",
-      "changes": "Создан нарратив \"Корпоративная шпионская сеть\" с полной структурой шпионажа."
-    }
-  ],
-  "validation": {
-    "checksum": "",
-    "schema_version": "1.0"
-  }
-}'::jsonb,
-    1
-)
-ON CONFLICT (lore_id) DO UPDATE SET
+    }'::jsonb,
+        1) ON CONFLICT (lore_id) DO
+UPDATE SET
     title = EXCLUDED.title,
     document_type = EXCLUDED.document_type,
     category = EXCLUDED.category,
     content_data = EXCLUDED.content_data,
     version = EXCLUDED.version,
     updated_at = CURRENT_TIMESTAMP;
-
 
 COMMIT;

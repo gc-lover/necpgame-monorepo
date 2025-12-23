@@ -6,7 +6,9 @@
 
 ## Overview
 
-This directory contains JSON Schema specifications for Apache Kafka events used in the microservices event-driven architecture. Events enable asynchronous communication between services, real-time analytics, and maintain data consistency across domains.
+This directory contains JSON Schema specifications for Apache Kafka events used in the microservices event-driven
+architecture. Events enable asynchronous communication between services, real-time analytics, and maintain data
+consistency across domains.
 
 ## Performance Requirements
 
@@ -34,11 +36,13 @@ proto/kafka/
 ## Event Schema Design Principles
 
 ### 1. Memory Optimization (Level 3)
+
 - **Field Ordering:** Large types first (strings, arrays) → small types last (booleans, integers)
 - **Expected Savings:** 30-50% memory reduction in generated Go structs
 - **Target Size:** 256 bytes per event average
 
 ### 2. Enterprise-Grade Structure
+
 ```json
 {
   "event_id": "uuid",
@@ -59,34 +63,39 @@ proto/kafka/
 ```
 
 ### 3. Event Type Naming Convention
+
 - Format: `{domain}.{entity}.{action}`
 - Examples:
-  - `combat.session.start`
-  - `economy.trade.execute`
-  - `social.guild.join`
-  - `system.service.health`
+    - `combat.session.start`
+    - `economy.trade.execute`
+    - `social.guild.join`
+    - `system.service.health`
 
 ## Core Event Categories
 
 ### Combat Events (Hot Path - 20k EPS)
+
 - Session management (start/end/join/leave)
 - Player actions (attack/defend/ability)
 - Damage calculation and application
 - Anti-cheat validation events
 
 ### Economy Events
+
 - Trade executions and listings
 - Currency transactions
 - Auction activities
 - Market data updates
 
 ### Social Events
+
 - Guild management
 - Party formations
 - Chat messages (filtered)
 - Reputation changes
 
 ### System Events
+
 - Service health/status
 - Infrastructure monitoring
 - Audit/logging events
@@ -95,6 +104,7 @@ proto/kafka/
 ## Schema Validation
 
 All schemas are validated using JSON Schema Draft 7 and must pass:
+
 ```bash
 # Validate all schemas
 find proto/kafka/schemas -name "*.json" -exec jsonschema {} \;
@@ -106,6 +116,7 @@ jsonschema-bundle proto/kafka/schemas -o kafka-events-schema.json
 ## Code Generation
 
 ### Go Structs (Backend Services)
+
 ```bash
 # Generate Go structs from JSON schemas
 for schema in proto/kafka/schemas/**/*.json; do
@@ -114,6 +125,7 @@ done
 ```
 
 ### TypeScript Types (Analytics Services)
+
 ```bash
 # Generate TypeScript interfaces
 json2ts proto/kafka/schemas/**/*.json > types/kafka-events.d.ts

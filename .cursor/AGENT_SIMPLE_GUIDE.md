@@ -3,6 +3,7 @@
 ## [SYMBOL] Что такое Status, Agent, Type и Check?
 
 — **Status** — стадия задачи: `Todo`, `In Progress`, `Review`, `Blocked`, `Returned`, `Done`.
+
 - **Agent** - кто отвечает сейчас: `Idea`, `Content`, `Backend`, `Architect`, `API`, `DB`, `QA`, `Performance`,
   `Security`, `Network`, `DevOps`, `UI/UX`, `UE5`, `GameBalance`, `Release`.
 - **Type** - тип технической задачи: `API`, `MIGRATION`, `DATA`, `BACKEND`, `UE5`.
@@ -22,10 +23,10 @@ Examples:
 
 ```javascript
 mcp_github_list_project_items({
-  owner_type: 'user',
-  owner: 'gc-lover',
-  project_number: 1,
-  query: 'Agent:"{МойАгент}" Status:"Todo"'  // Например: Agent:"Backend"
+    owner_type: 'user',
+    owner: 'gc-lover',
+    project_number: 1,
+    query: 'Agent:"{МойАгент}" Status:"Todo"'  // Например: Agent:"Backend"
 });
 ```
 
@@ -42,20 +43,21 @@ python scripts/update-github-fields.py --item-id {item_id} --type {TYPE} --check
 
 ```javascript
 mcp_github_update_project_item({
-  owner_type: 'user',
-  owner: 'gc-lover',
-  project_number: 1,
-  item_id: project_item_id,  // из list_project_items
-  updated_field: [
-    { id: 239690516, value: '83d488e7' }, // Status: In Progress
-    { id: 243899542, value: '{id_моего_агента}' }, // Agent: из GITHUB_PROJECT_CONFIG.md
-    { id: '246469155', value: '{type_option_id}' }, // Type: API/MIGRATION/DATA/BACKEND/UE5
-    { id: '246468990', value: '22932cc7' } // Check: 0 (не проверялась)
-  ]
+    owner_type: 'user',
+    owner: 'gc-lover',
+    project_number: 1,
+    item_id: project_item_id,  // из list_project_items
+    updated_field: [
+        {id: 239690516, value: '83d488e7'}, // Status: In Progress
+        {id: 243899542, value: '{id_моего_агента}'}, // Agent: из GITHUB_PROJECT_CONFIG.md
+        {id: '246469155', value: '{type_option_id}'}, // Type: API/MIGRATION/DATA/BACKEND/UE5
+        {id: '246468990', value: '22932cc7'} // Check: 0 (не проверялась)
+    ]
 });
 ```
 
 **Правила простановки Type:**
+
 - **API**: `--type API` - Создание OpenAPI спецификаций
 - **MIGRATION**: `--type MIGRATION` - Создание БД миграций
 - **DATA**: `--type DATA` - Импорт данных в БД
@@ -75,17 +77,18 @@ python scripts/update-github-fields.py --item-id {item_id} --check 1
 
 ```javascript
 mcp_github_update_project_item({
-  owner_type: 'user',
-  owner: 'gc-lover',
-  project_number: 1,
-  item_id: project_item_id,
-  updated_field: [
-    { id: '246468990', value: '4e8cf8f5' } // Check: 1 (проверена)
-  ]
+    owner_type: 'user',
+    owner: 'gc-lover',
+    project_number: 1,
+    item_id: project_item_id,
+    updated_field: [
+        {id: '246468990', value: '4e8cf8f5'} // Check: 1 (проверена)
+    ]
 });
 ```
 
 **Логика проверки:**
+
 - Если задача **сделана** → передай следующему агенту
 - Если задача **не сделана** → выполняй работу
 - **ВСЕГДА** ставь Check = 1 после проверки!
@@ -93,12 +96,14 @@ mcp_github_update_project_item({
 ### 4️⃣ РАБОТАТЬ
 
     - **НЕ МУСОРИТЬ В КОРНЕ ПРОЕКТА!**
+
 - **OpenAPI:** `proto/openapi/{domain}/` (enterprise-grade домены!)
 - **Go сервисы:** `services/{service}-go/`
 - **Контент:** `knowledge/canon/` (YAML квесты, лор)
 - **Скрипты:** `scripts/` (автоматизация, оптимизация)
 
 **Оптимизированные скрипты (ТОЛЬКО PYTHON!):**
+
 - `python scripts/validate-domains-openapi.py` - валидация enterprise-grade доменов
 - `python scripts/generate-all-domains-go.py` - генерация enterprise-grade сервисов
 - `python scripts/batch-optimize-openapi-struct-alignment.py` - оптимизация структур OpenAPI
@@ -107,23 +112,24 @@ mcp_github_update_project_item({
 - `python scripts/update-github-fields.py --item-id {id} --type {TYPE} --check {0|1}` - управление полями GitHub
 
 **КРИТИЧНО:** Forbidden создавать новые .sh/.ps1/.bat скрипты!
+
 - [OK] Используй: `scripts/core/base_script.py` (базовый фреймворк)
 - [ERROR] Forbidden: .sh, .ps1, .bat, .cmd, .pl, .rb, .js
 - Git hooks блокируют коммиты с запрещенными типами скриптов
     - Корень только для: `README.md`, `CHANGELOG*.md`, основные конфиги
     - НЕ создавать промежуточные/тестовые файлы в корне!
     - **OpenAPI ДОМЕНЫ (КРИТИЧНО! Новая enterprise-grade архитектура):**
-      - Все enterprise-grade домены (see .cursor/DOMAIN_REFERENCE.md)
-      - Основные: system, specialized, social, economy, world domains
-      - Специализированные: arena, cosmetic, cyberpunk, faction, etc.
+        - Все enterprise-grade домены (see .cursor/DOMAIN_REFERENCE.md)
+        - Основные: system, specialized, social, economy, world domains
+        - Специализированные: arena, cosmetic, cyberpunk, faction, etc.
     - **СТРОГО соблюдать структуру knowledge/ (КРИТИЧНО!):**
-      - `knowledge/analysis/` - аналитика и исследования
-      - `knowledge/canon/` - канонический лор (YAML квесты, NPC, диалоги)
-      - `knowledge/content/` - игровые ассеты (враги, интерактивы, квесты)
-      - `knowledge/design/` - дизайн-документы UI/UX
-      - `knowledge/implementation/` - техническая реализация
-      - `knowledge/mechanics/` - игровые механики
-      - **ЗАПРЕЩЕНО:** создавать файлы напрямую в `knowledge/` (только в поддиректориях!)
+        - `knowledge/analysis/` - аналитика и исследования
+        - `knowledge/canon/` - канонический лор (YAML квесты, NPC, диалоги)
+        - `knowledge/content/` - игровые ассеты (враги, интерактивы, квесты)
+        - `knowledge/design/` - дизайн-документы UI/UX
+        - `knowledge/implementation/` - техническая реализация
+        - `knowledge/mechanics/` - игровые механики
+        - **ЗАПРЕЩЕНО:** создавать файлы напрямую в `knowledge/` (только в поддиректориях!)
 - Создавай файлы с `# Issue: #123` в начале
 - Коммить с префиксом `[agent]`
 - Пример: `[backend] feat: добавить API`
@@ -133,24 +139,24 @@ mcp_github_update_project_item({
 ```javascript
 // Меняй In Progress → Status: Todo + Agent: {СледующийАгент}
 mcp_github_update_project_item({
-  owner_type: 'user',
-  owner: 'gc-lover',
-  project_number: 1,
-  item_id: project_item_id,
-  updated_field: [
-    { id: 239690516, value: 'f75ad846' }, // Status: Todo
-    { id: 243899542, value: '{id_следующего_агента}' }, // Agent: next
-    { id: TYPE_FIELD_ID, value: '{new_type_option_id}' }, // Type: обнови если изменился тип работы
-    { id: CHECK_FIELD_ID, value: '1' } // Check: остается 1 (уже проверена)
-  ]
+    owner_type: 'user',
+    owner: 'gc-lover',
+    project_number: 1,
+    item_id: project_item_id,
+    updated_field: [
+        {id: 239690516, value: 'f75ad846'}, // Status: Todo
+        {id: 243899542, value: '{id_следующего_агента}'}, // Agent: next
+        {id: TYPE_FIELD_ID, value: '{new_type_option_id}'}, // Type: обнови если изменился тип работы
+        {id: CHECK_FIELD_ID, value: '1'} // Check: остается 1 (уже проверена)
+    ]
 });
 
 // ОБЯЗАТЕЛЬНО добавь комментарий
 mcp_github_add_issue_comment({
-  owner: 'gc-lover',
-  repo: 'necpgame-monorepo',
-  issue_number: issue_number,  // из list_project_items: content.number
-  body: '[OK] Work ready. Handed off to {NextAgent}\n\nIssue: #' + issue_number
+    owner: 'gc-lover',
+    repo: 'necpgame-monorepo',
+    issue_number: issue_number,  // из list_project_items: content.number
+    body: '[OK] Work ready. Handed off to {NextAgent}\n\nIssue: #' + issue_number
 });
 ```
 
@@ -203,12 +209,14 @@ Status всегда: Todo → In Progress → Review/Returned/Blocked → Todo (
 **КРИТИЧНО:** Запрещено использовать эмодзи и специальные Unicode символы в коде!
 
 ### Почему запрещено:
+
 - [FORBIDDEN] Ломают выполнение скриптов на Windows
 - [FORBIDDEN] Могут вызывать ошибки в терминале
 - [FORBIDDEN] Создают проблемы с кодировкой
 - [FORBIDDEN] Нарушают совместимость между ОС
 
 ### Что use вместо:
+
 - [OK] `:smile:` вместо [EMOJI]
 - [OK] `[FORBIDDEN]` вместо [FORBIDDEN]
 - [OK] `[OK]` вместо [OK]
@@ -216,6 +224,7 @@ Status всегда: Todo → In Progress → Review/Returned/Blocked → Todo (
 - [OK] `[WARNING]` вместо [WARNING]
 
 ### Автоматическая проверка:
+
 - Pre-commit hooks блокируют коммиты с эмодзи
 - Git hooks проверяют staged файлы
 - Исключения: `.cursor/rules/*` (документация), `.githooks/*`

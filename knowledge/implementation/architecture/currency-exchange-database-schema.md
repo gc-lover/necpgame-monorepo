@@ -1,9 +1,11 @@
 <!-- Issue: #140890193 -->
+
 # Currency Exchange System - Database Schema
 
 ## Обзор
 
-Схема базы данных для системы валютной биржи, включающая курсы валютных пар, историю курсов, ордера на обмен, исполненные сделки и лимиты рисков для игроков.
+Схема базы данных для системы валютной биржи, включающая курсы валютных пар, историю курсов, ордера на обмен,
+исполненные сделки и лимиты рисков для игроков.
 
 ## ERD Диаграмма
 
@@ -97,6 +99,7 @@ erDiagram
 Таблица курсов валютных пар. Хранит текущие курсы валютных пар.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `currency_pair`: Валютная пара (VARCHAR(10), NOT NULL, UNIQUE, например "EDDY/USD", "USD/EUR")
 - `base_currency`: Базовая валюта (VARCHAR(10), NOT NULL)
@@ -111,11 +114,13 @@ erDiagram
 - `created_at`: Время создания
 
 **Индексы:**
+
 - По `(currency_pair, last_updated DESC)` для быстрого поиска курса пары
 - По `(base_currency, quote_currency)` для поиска по валютам
 - По `last_updated DESC` для последних обновлений
 
 **Constraints:**
+
 - CHECK (base_currency != quote_currency): Базовая и котируемая валюты должны быть разными
 - CHECK (bid_rate <= ask_rate): Курс покупки должен быть <= курса продажи
 - CHECK (spread >= 0.0000): Спред должен быть >= 0
@@ -125,6 +130,7 @@ erDiagram
 Таблица истории курсов валютных пар. Хранит исторические данные курсов для графиков и аналитики.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `currency_pair`: Валютная пара (VARCHAR(10), NOT NULL)
 - `rate`: Средний курс (DECIMAL(20,8), NOT NULL)
@@ -135,6 +141,7 @@ erDiagram
 - `recorded_at`: Время записи
 
 **Индексы:**
+
 - По `(currency_pair, recorded_at DESC)` для истории пары
 - По `recorded_at DESC` для временных запросов
 
@@ -143,6 +150,7 @@ erDiagram
 Таблица ордеров на обмен валют. Хранит instant и limit ордера игроков.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `player_id`: ID игрока (FK к characters, NOT NULL)
 - `currency_pair`: Валютная пара (VARCHAR(10), NOT NULL)
@@ -163,12 +171,14 @@ erDiagram
 - `executed_at`: Время исполнения (TIMESTAMP, nullable)
 
 **Индексы:**
+
 - По `(player_id, status)` для ордеров игрока
 - По `(currency_pair, status, created_at DESC)` для ордеров по паре
 - По `(status, expires_at)` для истекающих ордеров (WHERE expires_at IS NOT NULL)
 - По `(currency_pair, order_type, side, status)` для matching engine (WHERE status IN ('active', 'pending'))
 
 **Constraints:**
+
 - CHECK (executed_amount <= amount): Исполненная сумма не может превышать общую сумму
 - CHECK: (order_type = 'limit' AND limit_rate IS NOT NULL) OR (order_type = 'instant' AND limit_rate IS NULL)
 
@@ -177,6 +187,7 @@ erDiagram
 Таблица исполненных сделок. Хранит историю исполненных обменов.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `buy_order_id`: ID ордера на покупку (FK к currency_exchange_orders, NOT NULL)
 - `sell_order_id`: ID ордера на продажу (FK к currency_exchange_orders, NOT NULL)
@@ -190,12 +201,14 @@ erDiagram
 - `executed_at`: Время исполнения
 
 **Индексы:**
+
 - По `buy_order_id` для сделок по ордеру на покупку
 - По `sell_order_id` для сделок по ордеру на продажу
 - По `(currency_pair, executed_at DESC)` для сделок по паре
 - По `executed_at DESC` для временных запросов
 
 **Constraints:**
+
 - CHECK (buy_order_id != sell_order_id): Ордера на покупку и продажу должны быть разными
 
 ### currency_exchange_risk_limits
@@ -203,6 +216,7 @@ erDiagram
 Таблица лимитов рисков для игроков. Хранит AML лимиты, дневные лимиты и лимиты на количество транзакций.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `player_id`: ID игрока (FK к characters, NOT NULL)
 - `limit_type`: Тип лимита (currency_risk_limit_type ENUM, NOT NULL)
@@ -215,10 +229,12 @@ erDiagram
 - `updated_at`: Время последнего обновления
 
 **Индексы:**
+
 - По `(player_id, limit_type, period_start DESC)` для лимитов игрока
 - По `reset_at` для лимитов, требующих сброса (WHERE reset_at > CURRENT_TIMESTAMP)
 
 **Constraints:**
+
 - CHECK (current_value <= limit_value): Текущее значение не может превышать лимит
 - CHECK (period_start < period_end): Начало периода должно быть раньше конца
 - CHECK (reset_at >= period_end): Время сброса должно быть >= конца периода
@@ -226,14 +242,17 @@ erDiagram
 ## ENUM типы
 
 ### currency_order_type
+
 - `instant`: Мгновенный обмен
 - `limit`: Лимитный ордер
 
 ### currency_order_side
+
 - `buy`: Покупка
 - `sell`: Продажа
 
 ### currency_order_status
+
 - `pending`: Ожидает активации
 - `active`: Активен
 - `partially_filled`: Частично исполнен
@@ -243,6 +262,7 @@ erDiagram
 - `blocked`: Заблокирован (риск-контроль)
 
 ### currency_risk_limit_type
+
 - `daily_volume`: Дневной объем торговли
 - `transaction_count`: Количество транзакций
 - `aml_limit`: AML лимит (Anti-Money Laundering)
@@ -260,7 +280,8 @@ erDiagram
 - `currency_exchange_orders.fee >= 0`: Комиссия должна быть >= 0
 - `currency_exchange_orders.fee_discount >= 0 AND fee_discount <= 100.00`: Скидка должна быть в диапазоне 0-100%
 - `currency_exchange_orders.ttl_seconds > 0`: Время жизни должно быть > 0 (если указано)
-- `currency_exchange_orders`: (order_type = 'limit' AND limit_rate IS NOT NULL) OR (order_type = 'instant' AND limit_rate IS NULL)
+- `currency_exchange_orders`: (order_type = 'limit' AND limit_rate IS NOT NULL) OR (order_type = 'instant' AND
+  limit_rate IS NULL)
 - `currency_exchange_trades.amount > 0`: Сумма сделки должна быть > 0
 - `currency_exchange_trades.rate > 0`: Курс должен быть > 0
 - `currency_exchange_trades.total > 0`: Общая сумма должна быть > 0
@@ -346,13 +367,16 @@ erDiagram
 ## Миграции
 
 ### Применение миграций:
+
 ```bash
 liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ```
 
 ## Соответствие архитектуре
 
-Схема БД полностью соответствует архитектуре из `knowledge/implementation/architecture/economy-currency-exchange-system-architecture.yaml`:
+Схема БД полностью соответствует архитектуре из
+`knowledge/implementation/architecture/economy-currency-exchange-system-architecture.yaml`:
+
 - [OK] Все таблицы из архитектуры созданы
 - [OK] Все поля соответствуют описанию
 - [OK] Индексы оптимизированы для частых запросов
@@ -365,6 +389,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Курсы валют
 
 Система курсов включает:
+
 - **Валютные пары**: currency_pair (например, "EDDY/USD", "USD/EUR")
 - **Bid/Ask**: bid_rate (курс покупки) и ask_rate (курс продажи)
 - **Спред**: spread (разница между ask и bid)
@@ -374,6 +399,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### История курсов
 
 Система истории включает:
+
 - **Исторические данные**: rate, bid_rate, ask_rate, spread, volume
 - **Временные метки**: recorded_at для отслеживания времени
 - **Оптимизация**: индексы для быстрого поиска по паре и времени
@@ -381,6 +407,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Ордера
 
 Система ордеров включает:
+
 - **Типы ордеров**: instant (мгновенный) и limit (лимитный)
 - **Стороны**: buy (покупка) и sell (продажа)
 - **Жизненный цикл**: pending → active → partially_filled/filled/cancelled/expired/blocked
@@ -391,6 +418,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Сделки
 
 Система сделок включает:
+
 - **Связь ордеров**: buy_order_id и sell_order_id для связи с ордерами
 - **Курс исполнения**: rate для курса, по которому была исполнена сделка
 - **Суммы**: amount (в базовой валюте) и total (в котируемой валюте)
@@ -399,6 +427,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Лимиты рисков
 
 Система лимитов включает:
+
 - **Типы лимитов**: daily_volume, transaction_count, aml_limit
 - **Периоды**: period_start и period_end для определения периода лимита
 - **Сброс**: reset_at для автоматического сброса лимитов
@@ -407,11 +436,11 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Интеграция с другими системами
 
 Система валютной биржи интегрируется с:
+
 - **Characters**: через player_id для ордеров и лимитов
 - **Wallet Service**: через блокировку средств при создании ордеров
 - **Tax Service**: через расчет налогов с обменов
 - **Economy Events**: через влияние событий на курсы валют
 - **Analytics Service**: через метрики обменов и волатильности
 - **Notification Service**: через уведомления об исполнении ордеров
-
 

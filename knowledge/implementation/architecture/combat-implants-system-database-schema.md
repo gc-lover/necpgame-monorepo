@@ -1,9 +1,12 @@
 <!-- Issue: #140876072 -->
+
 # Combat Implants System - Database Schema
 
 ## Обзор
 
-Схема базы данных для системы боевых имплантов, включающая каталог имплантов, установленные импланты персонажей, историю приобретений, состояние лимитов, киберпсихоз и синергии. Интегрируется с боевой системой для применения эффектов имплантов в бою.
+Схема базы данных для системы боевых имплантов, включающая каталог имплантов, установленные импланты персонажей, историю
+приобретений, состояние лимитов, киберпсихоз и синергии. Интегрируется с боевой системой для применения эффектов
+имплантов в бою.
 
 ## ERD Диаграмма
 
@@ -112,6 +115,7 @@ erDiagram
 Таблица каталога имплантов. Хранит информацию о всех доступных имплантах с их характеристиками и требованиями.
 
 **Ключевые поля:**
+
 - `name`: Название импланта (UNIQUE)
 - `type`: Тип импланта (combat, movement, os, visual)
 - `category`: Категория импланта (nullable)
@@ -124,6 +128,7 @@ erDiagram
 - `description`: Описание импланта
 
 **Индексы:**
+
 - По `(type, category)` для фильтрации по типу и категории
 - По `rarity` для фильтрации по редкости
 - По `slot_type` для фильтрации по слоту
@@ -134,6 +139,7 @@ erDiagram
 Таблица установленных имплантов персонажей. Хранит информацию о имплантах, установленных на персонажах.
 
 **Ключевые поля:**
+
 - `character_id`: ID персонажа (FK к characters)
 - `implant_id`: ID импланта из каталога (FK к implants_catalog)
 - `installed_at`: Время установки
@@ -142,6 +148,7 @@ erDiagram
 - `is_active`: Флаг активности импланта
 
 **Индексы:**
+
 - По `(character_id, is_active)` для активных имплантов персонажа
 - По `implant_id` для имплантов из каталога
 - По `(character_id, slot)` для слотов персонажа
@@ -152,6 +159,7 @@ erDiagram
 Таблица истории приобретений имплантов. Хранит информацию о всех способах приобретения имплантов.
 
 **Ключевые поля:**
+
 - `character_id`: ID персонажа (FK к characters)
 - `implant_id`: ID импланта из каталога (FK к implants_catalog)
 - `acquisition_type`: Тип приобретения (purchase, loot, quest, crafting)
@@ -159,6 +167,7 @@ erDiagram
 - `acquired_at`: Время приобретения
 
 **Индексы:**
+
 - По `(character_id, acquired_at DESC)` для истории персонажа
 - По `implant_id` для имплантов из каталога
 - По `acquisition_type` для типа приобретения
@@ -168,6 +177,7 @@ erDiagram
 Таблица состояния лимитов имплантов. Хранит информацию о текущих лимитах персонажа (энергия, человечность, слоты).
 
 **Ключевые поля:**
+
 - `character_id`: ID персонажа (FK к characters, UNIQUE)
 - `total_energy_used`: Общая использованная энергия (INTEGER, >= 0)
 - `max_energy`: Максимальная энергия (INTEGER, > 0)
@@ -177,6 +187,7 @@ erDiagram
 - `last_update`: Время последнего обновления
 
 **Индексы:**
+
 - По `character_id` для состояния персонажа
 - По `(total_energy_used, max_energy)` для энергии
 - По `(total_humanity_lost, max_humanity)` для человечности
@@ -186,6 +197,7 @@ erDiagram
 Таблица состояния киберпсихоза. Хранит информацию о текущем уровне киберпсихоза персонажа от имплантов.
 
 **Ключевые поля:**
+
 - `character_id`: ID персонажа (FK к characters, UNIQUE)
 - `current_level`: Текущий уровень киберпсихоза (INTEGER, 0-100)
 - `threshold_level`: Пороговый уровень киберпсихоза (INTEGER, 0-100)
@@ -193,6 +205,7 @@ erDiagram
 - `last_update`: Время последнего обновления
 
 **Индексы:**
+
 - По `character_id` для состояния персонажа
 - По `(current_level, threshold_level)` для уровня киберпсихоза
 - По `character_id` WHERE `current_level >= threshold_level` для пороговых состояний
@@ -202,6 +215,7 @@ erDiagram
 Таблица синергий имплантов. Хранит информацию о активных синергиях между имплантами персонажа.
 
 **Ключевые поля:**
+
 - `character_id`: ID персонажа (FK к characters)
 - `synergy_id`: ID синергии
 - `active_implants`: Активные импланты в синергии (JSONB)
@@ -210,6 +224,7 @@ erDiagram
 - `is_active`: Флаг активности синергии
 
 **Индексы:**
+
 - По `(character_id, is_active)` для активных синергий персонажа
 - По `synergy_id` для синергий
 - По `activated_at DESC` для времени активации
@@ -219,9 +234,11 @@ erDiagram
 Таблица активаций имплантов в бою. Уже создана в V1_49, дополнена связью с implants_catalog.
 
 **Добавленное поле:**
+
 - `implant_catalog_id`: ID импланта из каталога (FK к implants_catalog, nullable)
 
 **Индексы:**
+
 - По `implant_catalog_id` для фильтрации по импланту из каталога
 
 ## Constraints и валидация
@@ -298,17 +315,21 @@ erDiagram
 ## Миграции
 
 ### Существующие миграции:
+
 - `V1_49__combat_extended_mechanics_tables.sql` - базовые таблицы (combat_implant_activations)
 - `V1_57__combat_implants_system_tables.sql` - полная схема системы имплантов
 
 ### Применение миграций:
+
 ```bash
 liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ```
 
 ## Соответствие архитектуре
 
-Схема БД полностью соответствует архитектуре из `knowledge/implementation/architecture/combat-implants-architecture.yaml`:
+Схема БД полностью соответствует архитектуре из
+`knowledge/implementation/architecture/combat-implants-architecture.yaml`:
+
 - [OK] Все таблицы из архитектуры созданы
 - [OK] Все поля соответствуют описанию
 - [OK] ENUM типы созданы для всех перечислений
@@ -323,6 +344,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### JSONB поля
 
 Использование JSONB для гибкого хранения:
+
 - `effects`: Эффекты имплантов
 - `compatibility`: Совместимость имплантов
 - `cost`: Стоимость приобретения
@@ -334,6 +356,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Типы имплантов
 
 Система поддерживает различные типы имплантов:
+
 - **combat**: Боевые импланты (урон, защита, тактика)
 - **movement**: Двигательные импланты (скорость, прыжки, паркур)
 - **os**: Операционные системы (кибердек, сандевистан, берсерк)
@@ -342,6 +365,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Редкость имплантов
 
 Система поддерживает различные уровни редкости:
+
 - **common**: Обычные
 - **uncommon**: Необычные
 - **rare**: Редкие
@@ -351,6 +375,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Типы приобретения
 
 Система поддерживает различные способы приобретения:
+
 - **purchase**: Покупка
 - **loot**: Лут
 - **quest**: Квест
@@ -359,6 +384,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Лимиты имплантов
 
 Система лимитов включает:
+
 - **Энергия**: total_energy_used / max_energy
 - **Человечность**: total_humanity_lost / max_humanity
 - **Слоты**: slots_used (JSONB)
@@ -366,6 +392,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Киберпсихоз
 
 Система киберпсихоза включает:
+
 - **current_level**: Текущий уровень (0-100)
 - **threshold_level**: Пороговый уровень (0-100)
 - **effects_active**: Активные эффекты при достижении порога
@@ -373,6 +400,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Синергии имплантов
 
 Система синергий включает:
+
 - **synergy_id**: ID синергии
 - **active_implants**: Активные импланты в синергии
 - **bonus_effects**: Бонусные эффекты синергии
@@ -380,8 +408,8 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Интеграция с боевой системой
 
 Импланты интегрированы с боевой системой через:
+
 - `combat_implant_activations`: Активации имплантов в бою
 - Связи с `combat_sessions` для отслеживания активаций в бою
 - Применение эффектов имплантов в боевых сценариях
-
 

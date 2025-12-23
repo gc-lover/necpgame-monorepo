@@ -11,7 +11,7 @@ metadata:
   owners:
     - role: ui_ux_designer
       contact: ui-ux@necp.game
-  tags: [ui, ux, design, combat, weapon-effects, cyberpunk]
+  tags: [ ui, ux, design, combat, weapon-effects, cyberpunk ]
   github_issue: 1619
   sources:
     - knowledge/analysis/tasks/ideas/weapon-visual-audio-effects-system-concept.md
@@ -20,7 +20,8 @@ metadata:
     - knowledge/analysis/tasks/ideas/weapon-effects-accumulation-combo-system-concept.md
 summary:
   problem: Нет единого интерфейса, который показывает игроку элементальные и временные эффекты оружия, их накопление, комбо и статус откатов прямо в бою и в меню.
-  goal: Дать ясную, стильную в духе Cyberpunk 2077 визуализацию эффектов оружия: текущее состояние, стеки, пороги, комбо, взаимодействия стихий, временные искажения.
+  goal:
+    Дать ясную, стильную в духе Cyberpunk 2077 визуализацию эффектов оружия: текущее состояние, стеки, пороги, комбо, взаимодействия стихий, временные искажения.
   key_points:
     - HUD-модуль для боевого статуса эффектов и стаков
     - Карточки эффектов для инспекции и сравнения в меню
@@ -61,24 +62,24 @@ content:
         - id: weapon_effect_strip
           components:
             - type: effect_chip_row
-              items: [primary_element, secondary_element, temporal_buff]
+              items: [ primary_element, secondary_element, temporal_buff ]
               cues:
                 stacking_bar: vertical_micro
                 cooldown_ring: radial
                 synergy_badge: inline_icon
             - type: combo_meter
               layout: horizontal
-              markers: [x3, x5, x8, overdrive]
+              markers: [ x3, x5, x8, overdrive ]
             - type: temporal_timer
-              modes: [vampirism, haste, slowmo]
+              modes: [ vampirism, haste, slowmo ]
               indicator: dual_ring_with_glow
         - id: hazard_notifications
           components:
             - type: synergy_toast
-              triggers: [fire+poison_explosion, ice+electric_chain, acid+water_spread]
+              triggers: [ fire+poison_explosion, ice+electric_chain, acid+water_spread ]
               duration: 2.5s
             - type: overload_warning
-              states: [heat, energy, instability]
+              states: [ heat, energy, instability ]
         - id: reticle_context
           components:
             - type: elemental_reticle_overlay
@@ -90,47 +91,47 @@ content:
         - id: effect_cards_panel
           components:
             - type: effect_card_grid
-              fields: [name, tier, element, temporal, stacking_cap, synergy_tags, cooldown]
+              fields: [ name, tier, element, temporal, stacking_cap, synergy_tags, cooldown ]
             - type: comparison_slot
-              diff_fields: [dps, dot, control, range, uptime]
+              diff_fields: [ dps, dot, control, range, uptime ]
         - id: tuning_controls
           components:
             - type: slider_group
-              sliders: [visual_intensity, audio_intensity, alerts_density]
+              sliders: [ visual_intensity, audio_intensity, alerts_density ]
             - type: toggle_group
-              toggles: [colorblind_safe_palette, minimal_mode, haptics]
+              toggles: [ colorblind_safe_palette, minimal_mode, haptics ]
         - id: preview_panel
           components:
             - type: live_preview
-              scenes: [urban_night, industrial_indoor, open_field]
+              scenes: [ urban_night, industrial_indoor, open_field ]
               playback: slowmo + normal + haste
     inspection_modal:
       sections:
         - id: stacking_breakdown
           components:
             - type: stacked_bar
-              thresholds: [25, 50, 75, 100]
+              thresholds: [ 25, 50, 75, 100 ]
             - type: combo_path
-              nodes: [base, chain, overload, finisher]
+              nodes: [ base, chain, overload, finisher ]
         - id: temporal_curve
           components:
             - type: timeline_chart
-              tracks: [duration, regen, movement, rof, crit]
+              tracks: [ duration, regen, movement, rof, crit ]
             - type: trigger_list
-              items: [on_hit, on_kill, on_reload, on_swap]
+              items: [ on_hit, on_kill, on_reload, on_swap ]
     alerts_center:
       components:
         - type: toast_queue
-          priority: [danger, warning, info]
+          priority: [ danger, warning, info ]
           max_visible: 3
         - type: banner_alert
-          cases: [overheat, overload, instability, cooldown_lock]
+          cases: [ overheat, overload, instability, cooldown_lock ]
   ux_mechanics:
     interactions:
-      stacking_flow: {flow: [hit_target, add_stack, threshold_cue, decay_or_spend]}
-      combo_flow: {flow: [consecutive_hits, build_combo_meter, unlock_finisher, execute_finisher]}
-      temporal_flow: {flow: [trigger_effect, show_timer, curve_decay, warn_before_end]}
-      synergy_flow: {flow: [apply_element_a, apply_element_b, synergy_detected, show_toast, bonus_effect]}
+      stacking_flow: { flow: [ hit_target, add_stack, threshold_cue, decay_or_spend ] }
+      combo_flow: { flow: [ consecutive_hits, build_combo_meter, unlock_finisher, execute_finisher ] }
+      temporal_flow: { flow: [ trigger_effect, show_timer, curve_decay, warn_before_end ] }
+      synergy_flow: { flow: [ apply_element_a, apply_element_b, synergy_detected, show_toast, bonus_effect ] }
     input_patterns:
       - quick_toggle_element_secondary: hold_mouse4 + scroll
       - finisher_activation: double_tap_R
@@ -157,24 +158,24 @@ content:
       subtitles: textual effect callouts for hearing-impaired (top-right micro feed)
   animations:
     transitions:
-      effect_chip_activate: {duration: 180ms, effect: neon_pop + light_trail}
-      combo_milestone: {duration: 260ms, effect: slam_glow + brief_screen_shake_small}
-      temporal_start: {duration: 220ms, effect: radial_blur_in + chroma_shift}
+      effect_chip_activate: { duration: 180ms, effect: neon_pop + light_trail }
+      combo_milestone: { duration: 260ms, effect: slam_glow + brief_screen_shake_small }
+      temporal_start: { duration: 220ms, effect: radial_blur_in + chroma_shift }
     states:
       cooldown_ring: clockwise wipe with fading sparks
       toast_in: slide_from_right + opacity_fade
   telemetry:
     events:
       - event: ui_effect_stack_threshold_hit
-        payload: [weapon_id, element, stack_level, location_type]
+        payload: [ weapon_id, element, stack_level, location_type ]
       - event: ui_temporal_effect_used
-        payload: [effect_type, duration, uptime_pct, cancel_reason]
+        payload: [ effect_type, duration, uptime_pct, cancel_reason ]
       - event: ui_synergy_triggered
-        payload: [pair, source_weapon, targets_hit, dps_gain]
+        payload: [ pair, source_weapon, targets_hit, dps_gain ]
       - event: ui_overload_warning_shown
-        payload: [heat_level, time_to_overheat]
+        payload: [ heat_level, time_to_overheat ]
   implementation_notes:
-    handoff_targets: [UE5]
+    handoff_targets: [ UE5 ]
     assets:
       - reticle_overlay_vectors
       - icon_set_elemental + icon_set_temporal

@@ -5,11 +5,12 @@ SOLID: Single Responsibility - manages OpenAPI specifications
 PERFORMANCE: Memory pooling, zero allocations, preallocation
 """
 
+import threading
 from pathlib import Path
 from typing import List, Dict, Any, Optional, Tuple
-import threading
-from scripts.core.file_manager import FileManager
+
 from scripts.core.command_runner import CommandRunner
+from scripts.core.file_manager import FileManager
 from scripts.core.logger import Logger
 
 
@@ -182,7 +183,8 @@ class OpenAPIManager:
                 for key, value in obj.items():
                     if key == '$ref' and isinstance(value, str):
                         if '../../misc-domain/common/common.yaml' in value:
-                            obj[key] = value.replace('../../misc-domain/common/common.yaml', '../../common-schemas.yaml')
+                            obj[key] = value.replace('../../misc-domain/common/common.yaml',
+                                                     '../../common-schemas.yaml')
                             changed = True
                     else:
                         fix_refs(value)

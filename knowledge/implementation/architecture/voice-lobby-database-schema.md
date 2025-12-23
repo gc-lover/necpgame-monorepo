@@ -1,9 +1,11 @@
 <!-- Issue: #140892117 -->
+
 # Voice Lobby System - Database Schema
 
 ## Обзор
 
-Схема базы данных для системы голосовых лобби, управляющей голосовыми лобби для различных типов активностей, участниками, подканалами, поиском групп и телеметрией.
+Схема базы данных для системы голосовых лобби, управляющей голосовыми лобби для различных типов активностей,
+участниками, подканалами, поиском групп и телеметрией.
 
 ## ERD Диаграмма
 
@@ -95,9 +97,11 @@ erDiagram
 
 ### voice_lobbies
 
-Таблица голосовых лобби. Хранит информацию о голосовых лобби для различных типов активностей (activity, clan, guild, raid, tournament).
+Таблица голосовых лобби. Хранит информацию о голосовых лобби для различных типов активностей (activity, clan, guild,
+raid, tournament).
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `type`: Тип лобби (voice_lobby_type ENUM, NOT NULL)
 - `name`: Название лобби (VARCHAR(255), NOT NULL)
@@ -118,6 +122,7 @@ erDiagram
 - `closed_at`: Время закрытия (TIMESTAMP, nullable)
 
 **Индексы:**
+
 - По `owner_id` для лобби владельца
 - По `type` для фильтрации по типу
 - По `party_id` для лобби группы (WHERE party_id IS NOT NULL)
@@ -132,6 +137,7 @@ erDiagram
 Таблица участников лобби. Хранит информацию об участниках голосовых лобби с ролями и настройками.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `lobby_id`: ID лобби (UUID, NOT NULL, FK voice_lobbies, ON DELETE CASCADE)
 - `character_id`: ID персонажа (UUID, NOT NULL, FK characters)
@@ -143,6 +149,7 @@ erDiagram
 - `left_at`: Время выхода (TIMESTAMP, nullable)
 
 **Индексы:**
+
 - По `lobby_id` для участников лобби
 - По `character_id` для лобби персонажа
 - По `subchannel_id` для участников подканала (WHERE subchannel_id IS NOT NULL)
@@ -156,6 +163,7 @@ erDiagram
 Таблица подканалов лобби. Хранит информацию о подканалах лобби для разделения участников.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `lobby_id`: ID лобби (UUID, NOT NULL, FK voice_lobbies, ON DELETE CASCADE)
 - `name`: Название подканала (VARCHAR(255), NOT NULL)
@@ -167,6 +175,7 @@ erDiagram
 - `updated_at`: Время последнего обновления
 
 **Индексы:**
+
 - По `lobby_id` для подканалов лобби
 - По `type` для фильтрации по типу
 - По `name` для поиска по названию
@@ -176,6 +185,7 @@ erDiagram
 Таблица поисков групп. Хранит информацию о поисках групп для подбора игроков.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `character_id`: ID персонажа (UUID, NOT NULL, FK characters)
 - `role`: Роль для поиска (VARCHAR(50), nullable)
@@ -191,6 +201,7 @@ erDiagram
 - `found_at`: Время нахождения группы (TIMESTAMP, nullable)
 
 **Индексы:**
+
 - По `character_id` для поисков персонажа
 - По `status` для активных поисков (WHERE status = 'searching')
 - По `(role, activity)` для поиска по роли и активности (WHERE role IS NOT NULL AND activity IS NOT NULL)
@@ -202,6 +213,7 @@ erDiagram
 Таблица телеметрии лобби. Хранит информацию о событиях лобби для аналитики и мониторинга.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `event_type`: Тип события (VARCHAR(50), NOT NULL)
 - `lobby_id`: ID лобби (UUID, nullable, FK voice_lobbies, ON DELETE CASCADE)
@@ -210,6 +222,7 @@ erDiagram
 - `created_at`: Время события (TIMESTAMP, NOT NULL, default: CURRENT_TIMESTAMP)
 
 **Индексы:**
+
 - По `lobby_id` для событий лобби (WHERE lobby_id IS NOT NULL)
 - По `character_id` для событий персонажа (WHERE character_id IS NOT NULL)
 - По `event_type` для фильтрации по типу события
@@ -218,6 +231,7 @@ erDiagram
 ## ENUM типы
 
 ### voice_lobby_type
+
 - `activity`: Активность (для игровых активностей, max 8 участников, max 4 подканала)
 - `clan`: Клан (для клановых лобби, max 50 участников, max 10 подканалов)
 - `guild`: Гильдия (для гильдийных лобби, max 100 участников, max 20 подканалов)
@@ -225,6 +239,7 @@ erDiagram
 - `tournament`: Турнир (для турнирных лобби, max 16 участников, max 4 подканала)
 
 ### lobby_participant_role
+
 - `leader`: Лидер
 - `commander`: Командир
 - `party_leader`: Лидер группы
@@ -232,12 +247,14 @@ erDiagram
 - `member`: Участник
 
 ### lobby_subchannel_type
+
 - `main`: Основной канал (главный канал лобби, auto_create: true)
 - `role_based`: Ролевой канал (для определенных ролей, auto_create: false)
 - `commander`: Командирский канал (для командиров, max 8 участников, auto_create: false)
 - `party`: Групповой канал (для групп, max 8 участников, auto_create: false)
 
 ### party_finder_search_status
+
 - `searching`: Поиск активен
 - `found`: Группа найдена
 - `cancelled`: Поиск отменен
@@ -314,6 +331,7 @@ erDiagram
 ## Миграции
 
 ### Применение миграций:
+
 ```bash
 liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ```
@@ -321,6 +339,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ## Соответствие архитектуре
 
 Схема БД полностью соответствует архитектуре из `knowledge/implementation/architecture/voice-lobby-database.yaml`:
+
 - [OK] Голосовые лобби (5 типов: activity, clan, guild, raid, tournament)
 - [OK] Участники лобби с ролями и настройками
 - [OK] Подканалы лобби (4 типа: main, role_based, commander, party)
@@ -335,6 +354,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Типы лобби
 
 Система поддерживает 5 типов лобби:
+
 - **activity**: Для игровых активностей (max 8 участников, max 4 подканала)
 - **clan**: Для клановых лобби (max 50 участников, max 10 подканалов)
 - **guild**: Для гильдийных лобби (max 100 участников, max 20 подканалов)
@@ -344,6 +364,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Роли участников
 
 Система поддерживает 5 ролей участников:
+
 - **leader**: Лидер лобби
 - **commander**: Командир (для рейдов и турниров)
 - **party_leader**: Лидер группы
@@ -353,6 +374,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Подканалы
 
 Система поддерживает 4 типа подканалов:
+
 - **main**: Основной канал (автоматически создается)
 - **role_based**: Ролевой канал (для определенных ролей)
 - **commander**: Командирский канал (max 8 участников)
@@ -361,6 +383,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Поиск групп (Party Finder)
 
 Система поддерживает поиск групп по:
+
 - Роли (role)
 - Рейтингу (rating)
 - Активности (activity)
@@ -371,12 +394,14 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Интеграция с провайдером голосовой связи
 
 Система интегрируется с провайдером голосовой связи через:
+
 - `voice_provider_room_id`: ID комнаты в провайдере
 - `voice_provider_channel_id`: ID канала в провайдере
 
 ### Телеметрия
 
 Система собирает телеметрию для:
+
 - Аналитики использования лобби
 - Мониторинга производительности
 - Отладки проблем

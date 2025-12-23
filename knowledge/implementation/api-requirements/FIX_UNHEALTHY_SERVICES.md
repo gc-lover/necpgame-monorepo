@@ -1,12 +1,15 @@
 # Issue: Fix OpenAPI specifications for unhealthy services
 
 ## Status: Todo
+
 ## Agent: API
+
 ## Priority: High
 
 ## Problem Description
 
 Multiple services are running in Docker but showing "unhealthy" status, indicating issues with:
+
 - OpenAPI specification validation
 - ogen/oapi-codegen configuration
 - Health check endpoint configuration
@@ -15,6 +18,7 @@ Multiple services are running in Docker but showing "unhealthy" status, indicati
 ## Affected Services
 
 ### Critical (unhealthy status):
+
 - `admin-service` - API generation issues
 - `character-engram-core-service` - health check issues
 - `cosmetic-service` - API config issues (restarting)
@@ -25,6 +29,7 @@ Multiple services are running in Docker but showing "unhealthy" status, indicati
 - `support-service` - API config issues
 
 ### Stock Services (unhealthy):
+
 - `stock-analytics-tools-service`
 - `stock-dividends-service`
 - `stock-events-service`
@@ -35,6 +40,7 @@ Multiple services are running in Docker but showing "unhealthy" status, indicati
 - `stock-protection-service`
 
 ### Other Services (unhealthy):
+
 - `combat-sessions-service`
 - `progression-experience-service`
 - `projectile-core-service`
@@ -43,6 +49,7 @@ Multiple services are running in Docker but showing "unhealthy" status, indicati
 ## Root Cause Analysis
 
 Based on error patterns observed:
+
 1. **OpenAPI specification issues** - invalid specs or missing endpoints
 2. **Model mismatch** - generated models don't match existing code (e.g., Feedback model fields)
 3. **ogen code generation failures** - API server can't start due to generated code issues
@@ -52,17 +59,22 @@ Based on error patterns observed:
 ### Specific Issues Found:
 
 **Model Mismatch Examples:**
-- `feedback-service`: Generated `models.Feedback` missing fields: `ID`, `PlayerID`, `Type`, `Category`, `Title`, `Description`, `Status`, `CreatedAt`, `UpdatedAt`, `GithubIssueNumber`
+
+- `feedback-service`: Generated `models.Feedback` missing fields: `ID`, `PlayerID`, `Type`, `Category`, `Title`,
+  `Description`, `Status`, `CreatedAt`, `UpdatedAt`, `GithubIssueNumber`
 
 **Syntax Errors in Generated/Implementation Code:**
+
 - `gameplay-service`: Syntax error in `server/handlers.go:232:2` - "non-declaration statement outside function body"
 - This indicates malformed code generation or corrupted handler implementations
 
 **Health Check Issues:**
+
 - Services show "unhealthy" but containers are running
 - Health check endpoints may not exist or return wrong status
 
 **Code Generation Issues:**
+
 - Generated code exceeds 1000-line limit (expected for large APIs)
 - File size violations in: `oas_client_gen.go`, `oas_schemas_gen.go`, `oas_validators_gen.go`, etc.
 - Multiple codegen tools used inconsistently (ogen vs oapi-codegen)
@@ -70,7 +82,9 @@ Based on error patterns observed:
 ## Required Actions
 
 ### Phase 1: OpenAPI Validation
+
 For each affected service:
+
 ```bash
 # Validate spec
 redocly lint proto/openapi/{service}.yaml
@@ -83,6 +97,7 @@ redocly bundle proto/openapi/{service}.yaml -o /tmp/bundled.yaml
 ```
 
 ### Phase 2: ogen Code Generation
+
 ```bash
 # Generate code for each service
 make generate-api SERVICE={service}
@@ -92,13 +107,17 @@ go build ./services/{service}-go/...
 ```
 
 ### Phase 3: Health Check Configuration
+
 Verify health check endpoints in Dockerfiles:
+
 - Correct metrics port mapping
 - Health endpoint exists in generated code
 - Proper health check command syntax
 
 ### Phase 4: Server Configuration
+
 Check http_server.go files for:
+
 - Correct NewServer() parameters
 - Proper handler initialization
 - Logger configuration
@@ -116,11 +135,13 @@ Check http_server.go files for:
 **[CELEBRATE] FINAL SUCCESS - ALL SERVICES HEALTHY! [CELEBRATE]**
 
 **Final Docker Status:**
+
 - **Total services:** 27 running
 - **Healthy services:** 27 (100%) [OK] **PERFECT SUCCESS**
 - **Unhealthy services:** 0 (0%)
 
 **Working Services (27/27 - ALL HEALTHY!):**
+
 - [OK] `achievement-service` - Core game achievements system
 - [OK] `admin-service` [OK] **FIXED** - corrected health check port (9100→9201) and wget flags
 - [OK] `battle-pass-service` - Seasonal battle pass management
@@ -149,12 +170,13 @@ Check http_server.go files for:
 - [OK] `support-service` [OK] **FIXED** - corrected health check port (9097→9263) and wget flags
 
 **Fixed Issues:**
+
 1. **Health Check Port Mismatches:**
-   - `admin-service`: Changed from port 9100 to 9201
-   - `character-engram-core-service`: Changed from port 9090 to 9204
+    - `admin-service`: Changed from port 9100 to 9201
+    - `character-engram-core-service`: Changed from port 9090 to 9204
 
 2. **Health Check Command Issues:**
-   - Replaced `wget --no-verbose --tries=1 --spider` with `wget -q --spider` (BusyBox compatibility)
+    - Replaced `wget --no-verbose --tries=1 --spider` with `wget -q --spider` (BusyBox compatibility)
 
 **Infrastructure Status:** [OK] All healthy (postgres, redis, keycloak)
 
@@ -179,4 +201,5 @@ Check http_server.go files for:
 
 ## Notes
 
-This is a bulk fix for multiple services with similar issues. Individual services may have unique problems requiring separate investigation.
+This is a bulk fix for multiple services with similar issues. Individual services may have unique problems requiring
+separate investigation.

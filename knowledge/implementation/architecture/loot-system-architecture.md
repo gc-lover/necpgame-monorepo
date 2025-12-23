@@ -13,7 +13,8 @@
 
 ## Краткое описание
 
-Loot System управляет генерацией, распределением и выдачей предметов игрокам из таблиц лута с поддержкой рарности, Smart Loot, Bad Luck Protection и различных режимов распределения.
+Loot System управляет генерацией, распределением и выдачей предметов игрокам из таблиц лута с поддержкой рарности, Smart
+Loot, Bad Luck Protection и различных режимов распределения.
 
 ## Связанные документы
 
@@ -88,27 +89,32 @@ flowchart TD
 **Подкомпоненты:**
 
 #### Loot Generator
+
 - Генерация предметов из таблиц
 - Применение rarity weights
 - Luck модификаторы
 - Валютные награды
 
 #### Loot Distributor
+
 - Определение режима распределения (personal/party/roll)
 - Создание world drops
 - Прямая выдача в инвентарь
 
 #### Smart Loot Engine
+
 - Анализ класса и спека игрока
 - Повышение вероятности подходящих предметов
 - Исключение неподходящих
 
 #### Roll Manager
+
 - Управление roll-системой
 - Need/Greed/Pass логика
 - Определение победителя
 
 #### World Drop Manager
+
 - Создание физических объектов в мире
 - TTL и автоочистка
 - Pickup механика
@@ -199,11 +205,13 @@ CREATE INDEX idx_loot_history_legendary ON player_loot_history(player_id, item_r
 ### 3.1. Loot Management
 
 #### GET /api/v1/economy/loot/drops/nearby
+
 **Получить дропы поблизости**
 
 Parameters: `location_id`, `radius`
 
 Response:
+
 ```json
 {
   "drops": [
@@ -220,9 +228,11 @@ Response:
 ```
 
 #### POST /api/v1/economy/loot/pickup/{drop_id}
+
 **Подобрать дроп**
 
 Response:
+
 ```json
 {
   "success": true,
@@ -234,11 +244,13 @@ Response:
 Автоматически добавляет предметы в инвентарь.
 
 #### GET /api/v1/economy/loot/history
+
 **История полученных предметов**
 
 Parameters: `rarity`, `limit`, `before_timestamp`
 
 Response:
+
 ```json
 {
   "history": [
@@ -257,9 +269,11 @@ Response:
 ### 3.2. Roll System
 
 #### GET /api/v1/economy/loot/rolls/active
+
 **Получить активные rolls**
 
 Response:
+
 ```json
 {
   "rolls": [
@@ -275,11 +289,13 @@ Response:
 ```
 
 #### POST /api/v1/economy/loot/rolls/{roll_id}/submit
+
 **Сделать roll**
 
 Request: `{"roll_type": "need"|"greed"|"pass"}`
 
 Response:
+
 ```json
 {
   "roll_value": 87,
@@ -291,9 +307,11 @@ Response:
 ### 3.3. Internal API
 
 #### POST /internal/v1/loot/generate
+
 **Генерация лута** (вызывается Gameplay Service)
 
 Request:
+
 ```json
 {
   "source_type": "mob",
@@ -306,6 +324,7 @@ Request:
 ```
 
 Response:
+
 ```json
 {
   "world_drop_id": "uuid",
@@ -336,29 +355,33 @@ Response:
 ### 4.2. Smart Loot
 
 **Логика:**
+
 1. Получить класс и спек игрока
 2. Для каждого предмета:
-   - Если предмет подходит классу: weight *= 2.0
-   - Если не подходит: weight *= 0.5
+    - Если предмет подходит классу: weight *= 2.0
+    - Если не подходит: weight *= 0.5
 3. Пересчитать вероятности
 4. Генерировать с новыми весами
 
 **Пример:**
+
 - Warrior получает больше strength/armor предметов
 - Mage получает больше intelligence/mana предметов
 
 ### 4.3. Bad Luck Protection
 
 **Механика:**
+
 1. Отслеживание времени с последнего legendary drop
 2. Если > 7 дней:
-   - Увеличить шанс legendary на 10%
-   - Каждый день: +5% бонус
+    - Увеличить шанс legendary на 10%
+    - Каждый день: +5% бонус
 3. При получении legendary - сброс счётчика
 
 ### 4.4. Boss Loot
 
 **Гарантированные награды:**
+
 - Каждый участник получает: currency + XP + гарантированный предмет (rare+)
 - Party roll для epic/legendary предметов
 - First kill bonus (дополнительный legendary)
@@ -367,13 +390,13 @@ Response:
 
 ## 5. Режимы распределения
 
-| Mode | Описание | Использование |
-|------|----------|---------------|
-| Personal | Каждый игрок видит свой лут | Solo, PvE зоны |
-| Shared | Все видят общий лут | Party questing |
-| Party Roll | Need/Greed система | Dungeons, raids |
-| Master Looter | Лидер распределяет | Organized raids |
-| Free for All | Первый подобравший | PvP зоны |
+| Mode          | Описание                    | Использование   |
+|---------------|-----------------------------|-----------------|
+| Personal      | Каждый игрок видит свой лут | Solo, PvE зоны  |
+| Shared        | Все видят общий лут         | Party questing  |
+| Party Roll    | Need/Greed система          | Dungeons, raids |
+| Master Looter | Лидер распределяет          | Organized raids |
+| Free for All  | Первый подобравший          | PvP зоны        |
 
 ---
 
@@ -421,14 +444,17 @@ sequenceDiagram
 ### 7.2. Оптимизации
 
 **Кэширование:**
+
 - Loot tables в Redis (TTL: 1 час)
 - Снижение нагрузки на БД
 
 **Автоочистка:**
+
 - World drops с `expires_at < NOW()` удаляются каждые 5 минут
 - Старые rolls (> 1 день) архивируются
 
 **Партиционирование:**
+
 - `player_loot_history` партиционирована по дате (ежемесячно)
 
 ---
@@ -436,34 +462,42 @@ sequenceDiagram
 ## 8. Разбиение на подзадачи
 
 ### 8.1. Database Schema (P0)
+
 Схемы `loot_tables`, `world_drops`, `loot_rolls`, `player_loot_history`
 **Срок:** 1 неделя
 
 ### 8.2. Loot Generator (P0)
+
 Core генерация из таблиц, rarity weights
 **Срок:** 2 недели
 
 ### 8.3. Loot Distributor (P0)
+
 Режимы распределения (personal/shared/roll)
 **Срок:** 1.5 недели
 
 ### 8.4. Smart Loot Engine (P1)
+
 Анализ класса, подбор подходящих предметов
 **Срок:** 2 недели
 
 ### 8.5. Roll System (P0)
+
 Need/Greed/Pass, таймеры, победитель
 **Срок:** 1.5 недели
 
 ### 8.6. World Drop Manager (P0)
+
 Физические объекты, pickup, автоочистка
 **Срок:** 1 неделя
 
 ### 8.7. Bad Luck Protection (P2)
+
 Отслеживание legendary drops, бонусы
 **Срок:** 1 неделя
 
 ### 8.8. Boss Loot Logic (P1)
+
 Гарантированные награды, first kill bonuses
 **Срок:** 1 неделя
 
@@ -472,6 +506,7 @@ Need/Greed/Pass, таймеры, победитель
 ## 9. События
 
 **Published:**
+
 - `loot:generated` - лут сгенерирован
 - `loot:picked_up` - предмет подобран
 - `legendary:dropped` - выпал legendary предмет
@@ -479,6 +514,7 @@ Need/Greed/Pass, таймеры, победитель
 - `loot:roll_completed` - roll завершён
 
 **Subscribed:**
+
 - `combat:enemy_killed` - враг убит
 - `raid:boss_defeated` - босс побеждён
 - `quest:objective_completed` - цель квеста выполнена
@@ -490,18 +526,19 @@ Need/Greed/Pass, таймеры, победитель
 
 ### 10.1. Rarity Tiers
 
-| Rarity | Color | Base Drop Chance | Smart Loot Modifier |
-|--------|-------|------------------|---------------------|
-| Common | Gray | 60% | 1.0x |
-| Uncommon | Green | 25% | 1.2x |
-| Rare | Blue | 10% | 1.5x |
-| Epic | Purple | 4% | 2.0x |
-| Legendary | Orange | 1% | 2.5x |
-| Mythic | Red | 0.1% | 3.0x |
+| Rarity    | Color  | Base Drop Chance | Smart Loot Modifier |
+|-----------|--------|------------------|---------------------|
+| Common    | Gray   | 60%              | 1.0x                |
+| Uncommon  | Green  | 25%              | 1.2x                |
+| Rare      | Blue   | 10%              | 1.5x                |
+| Epic      | Purple | 4%               | 2.0x                |
+| Legendary | Orange | 1%               | 2.5x                |
+| Mythic    | Red    | 0.1%             | 3.0x                |
 
 ### 10.2. Luck Modifiers
 
 **Sources:**
+
 - Player stats: +0% to +20%
 - Buffs: +5% to +50%
 - Party bonus: +10%
@@ -509,6 +546,7 @@ Need/Greed/Pass, таймеры, победитель
 - Bad Luck Protection: +10% per day (max +50%)
 
 **Formula:**
+
 ```
 Final Drop Chance = Base Drop Chance * (1 + sum(luck_modifiers))
 ```
@@ -544,37 +582,4 @@ Final Drop Chance = Base Drop Chance * (1 + sum(luck_modifiers))
 ---
 
 **Конец документа**
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

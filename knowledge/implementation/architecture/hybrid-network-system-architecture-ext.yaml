@@ -1,40 +1,40 @@
-          - shard_x: INTEGER
-          - shard_y: INTEGER
-          - min_x: FLOAT
-          - min_y: FLOAT
-          - max_x: FLOAT
-          - max_y: FLOAT
-          - player_count: INTEGER
-          - status: ENUM (active, syncing, full)
-        indexes:
-          - zone_id, shard_x, shard_y
-          - server_id
+- shard_x: INTEGER
+- shard_y: INTEGER
+- min_x: FLOAT
+- min_y: FLOAT
+- max_x: FLOAT
+- max_y: FLOAT
+- player_count: INTEGER
+- status: ENUM (active, syncing, full)
+indexes:
+  - zone_id, shard_x, shard_y
+  - server_id
 
-      - name: cluster_servers
-        description: Серверы в мультисерверном кластере
-        fields:
-          - id: UUID (PK)
-          - cluster_id: UUID
-          - server_id: UUID (FK game_instances)
-          - shard_ids: UUID[] (array of shard IDs)
-          - player_count: INTEGER
-          - load_percentage: FLOAT
-          - status: ENUM (active, syncing, overloaded, down)
-          - last_sync: TIMESTAMP
-        indexes:
-          - cluster_id, status
-          - server_id
+  - name: cluster_servers
+    description: Серверы в мультисерверном кластере
+    fields:
+      - id: UUID (PK)
+      - cluster_id: UUID
+      - server_id: UUID (FK game_instances)
+      - shard_ids: UUID[] (array of shard IDs)
+      - player_count: INTEGER
+      - load_percentage: FLOAT
+      - status: ENUM (active, syncing, overloaded, down)
+      - last_sync: TIMESTAMP
+    indexes:
+      - cluster_id, status
+      - server_id
 
 technical_specification:
   backend_requirements:
     - Расширение realtime-gateway-go для поддержки WebSocket и UDP:
-      - Модуль protocol-gateway (поддержка обоих протоколов)
-      - Модуль protocol-switch-manager (динамическое переключение)
-      - Модуль udp-gateway (UDP обработка)
-      - Модуль session-manager (управление сессиями)
-      - Модуль spatial-partitioning-engine (оптимизация средних битв)
-      - Модуль spatial-sharding-manager (масштабирование больших битв)
-      - Модуль cluster-coordinator (координация кластеров)
+        - Модуль protocol-gateway (поддержка обоих протоколов)
+        - Модуль protocol-switch-manager (динамическое переключение)
+        - Модуль udp-gateway (UDP обработка)
+        - Модуль session-manager (управление сессиями)
+        - Модуль spatial-partitioning-engine (оптимизация средних битв)
+        - Модуль spatial-sharding-manager (масштабирование больших битв)
+        - Модуль cluster-coordinator (координация кластеров)
     - Расширение ws-lobby-go для поддержки WebSocket в MMORPG зонах
     - Интеграция с world-service для данных о зонах
     - Интеграция с gameplay-service для боевых событий
@@ -42,44 +42,44 @@ technical_specification:
 
   protocol_requirements:
     - WebSocket (TCP):
-      - Применение:
-        - Безопасные зоны (Safe Zones): постоянно, без переключения
-        - Открытый мир (Open World): по умолчанию, переключение на UDP при входе в бой
-      - Tick rate: 20-30 Hz
-      - Задержка: <100 мс
-      - Надежная доставка сообщений
-      - Поддержка TLS (wss://)
-      - Данные: квесты, инвентарь, чат, торговля, социальные взаимодействия
+        - Применение:
+            - Безопасные зоны (Safe Zones): постоянно, без переключения
+            - Открытый мир (Open World): по умолчанию, переключение на UDP при входе в бой
+        - Tick rate: 20-30 Hz
+        - Задержка: <100 мс
+        - Надежная доставка сообщений
+        - Поддержка TLS (wss://)
+        - Данные: квесты, инвентарь, чат, торговля, социальные взаимодействия
     - UDP:
-      - Применение:
-        - Выделенные PvP зоны (Dedicated PvP Zones): постоянно, без переключения
-        - Открытый мир (Open World): при входе в бой, переключение из WebSocket
-      - Tick rate: 60-128 Hz (зависит от типа зоны)
-      - Задержка: 5-50 мс
-      - Собственная реализация надежности (sequence, ACK/NACK)
-      - QoS управление (prioritization, packet ordering)
-      - Anti-cheat валидация
-      - Данные: позиции, выстрелы, урон, боевые события
+        - Применение:
+            - Выделенные PvP зоны (Dedicated PvP Zones): постоянно, без переключения
+            - Открытый мир (Open World): при входе в бой, переключение из WebSocket
+        - Tick rate: 60-128 Hz (зависит от типа зоны)
+        - Задержка: 5-50 мс
+        - Собственная реализация надежности (sequence, ACK/NACK)
+        - QoS управление (prioritization, packet ordering)
+        - Anti-cheat валидация
+        - Данные: позиции, выстрелы, урон, боевые события
 
   performance_requirements:
     - Protocol switching (только для открытого мира):
-      - Время переключения: <1 секунда
-      - Overlap период: 1-2 секунды (оба соединения активны)
-      - Fallback: автоматический возврат на WebSocket при проблемах с UDP
+        - Время переключения: <1 секунда
+        - Overlap период: 1-2 секунды (оба соединения активны)
+        - Fallback: автоматический возврат на WebSocket при проблемах с UDP
     - Безопасные зоны (Safe Zones):
-      - WebSocket: до 500 игроков на зону
-      - Переключение: отключено (только WebSocket)
+        - WebSocket: до 500 игроков на зону
+        - Переключение: отключено (только WebSocket)
     - Открытый мир (Open World):
-      - WebSocket (PvE режим): до 500 игроков на зону
-      - UDP (PvP режим): зависит от количества игроков в бою
+        - WebSocket (PvE режим): до 500 игроков на зону
+        - UDP (PvP режим): зависит от количества игроков в бою
     - Выделенные PvP зоны (Dedicated PvP Zones):
-      - UDP small PvP: 5-20 игроков, 60-128 Hz
-      - UDP GvG 200: 200 игроков, 60-80 Hz, spatial partitioning
-      - UDP GvG 400: 400 игроков, 40-60 Hz, spatial sharding (2-4 shards)
-      - UDP massive war: 2000+ игроков, 20-40 Hz, cluster (5-10 servers)
+        - UDP small PvP: 5-20 игроков, 60-128 Hz
+        - UDP GvG 200: 200 игроков, 60-80 Hz, spatial partitioning
+        - UDP GvG 400: 400 игроков, 40-60 Hz, spatial sharding (2-4 shards)
+        - UDP massive war: 2000+ игроков, 20-40 Hz, cluster (5-10 servers)
     - Оптимизация:
-      - Bandwidth optimization: 80-90% снижение через spatial partitioning
-      - Event aggregation: батчинг 100 мс для больших битв
+        - Bandwidth optimization: 80-90% снижение через spatial partitioning
+        - Event aggregation: батчинг 100 мс для больших битв
 
   scalability_requirements:
     - Горизонтальное масштабирование через пул инстансов
@@ -269,21 +269,21 @@ diagrams:
         PG->>WSH: Route to WebSocket handler
         WSH->>SM: Create session (websocket_only)
         Note over C,UDH: Player enters combat
-        
+    
         C->>PSM: Request protocol switch (PvE→PvP)
         PSM->>SM: Get session state
         SM->>PSM: Current state (websocket_only)
         PSM->>WSH: Sync critical data
         WSH->>C: Send critical state
-        
+    
         PSM->>UDH: Create UDP connection
         UDH->>C: Establish UDP connection
         SM->>SM: Update session (dual mode)
-        
+    
         Note over C,UDH: Overlap period (1-2 sec)
         WSH->>C: Updates via WebSocket
         UDH->>C: Updates via UDP
-        
+    
         C->>PSM: Confirm UDP ready
         PSM->>SM: Update session (udp_only)
         PSM->>WSH: Close WebSocket (or idle)
@@ -297,25 +297,25 @@ diagrams:
             subgraph "Cluster Coordinator"
                 CC[Cluster Coordinator]
             end
-            
+    
             subgraph "Server 1"
                 S1[Game Server 1]
                 SH1[Shard 1-1<br/>200 players]
                 SH2[Shard 1-2<br/>200 players]
             end
-            
+    
             subgraph "Server 2"
                 S2[Game Server 2]
                 SH3[Shard 2-1<br/>200 players]
                 SH4[Shard 2-2<br/>200 players]
             end
-            
+    
             subgraph "Server 3"
                 S3[Game Server 3]
                 SH5[Shard 3-1<br/>200 players]
                 SH6[Shard 3-2<br/>200 players]
             end
-            
+    
             CC --> S1
             CC --> S2
             CC --> S3
@@ -325,7 +325,7 @@ diagrams:
             S2 --> SH4
             S3 --> SH5
             S3 --> SH6
-            
+    
             SH1 -.->|Edge Sync| SH2
             SH2 -.->|Edge Sync| SH3
             SH3 -.->|Edge Sync| SH4

@@ -4,11 +4,13 @@
 
 ## Overview
 
-This document defines the complete technical architecture for the voice chat system in NECPGAME, supporting WebRTC-based communication with party, guild, raid, and proximity channels for MMO FPS RPG gameplay.
+This document defines the complete technical architecture for the voice chat system in NECPGAME, supporting WebRTC-based
+communication with party, guild, raid, and proximity channels for MMO FPS RPG gameplay.
 
 ## Performance Requirements
 
 **Target Metrics:**
+
 - P99 latency: <100ms for voice transmission
 - Concurrent channels: 10,000+ simultaneous
 - Max participants per channel: Party (5), Guild (100), Raid (25), Proximity (unlimited, spatial)
@@ -45,12 +47,14 @@ This document defines the complete technical architecture for the voice chat sys
 ### Infrastructure Components
 
 **Voice Server (WebRTC):**
+
 - **SFU (Selective Forwarding Unit):** Efficient multi-party routing
 - **Media Server:** Audio processing, mixing, noise suppression
 - **TURN/STUN Servers:** NAT traversal for P2P connections
 - **Load Balancer:** Geographic distribution
 
 **Supporting Services:**
+
 - **Redis:** Session store, pub/sub for real-time events
 - **PostgreSQL:** Persistent channel/participant data
 - **Monitoring:** Prometheus metrics, Grafana dashboards
@@ -58,32 +62,40 @@ This document defines the complete technical architecture for the voice chat sys
 ## Channel Types Architecture
 
 ### 1. Party Channels (2-5 players)
+
 **Use Case:** Small team coordination, tactical communication
 **Characteristics:**
+
 - Low latency priority (<50ms)
 - High quality audio (48kHz, stereo)
 - Push-to-talk or voice activity detection
 - Temporary channels (auto-cleanup when empty)
 
 ### 2. Guild Channels (up to 100 players)
+
 **Use Case:** Large community communication
 **Characteristics:**
+
 - Medium latency tolerance (<100ms)
 - Adaptive quality based on participant count
 - Role-based permissions (officers, members)
 - Persistent channels with moderation
 
 ### 3. Raid Channels (10-25 players with subchannels)
+
 **Use Case:** Coordinated boss fights, complex encounters
 **Characteristics:**
+
 - Tactical subchannels (tank/heal/dps groups)
 - Priority voice for raid leaders
 - Automatic ducking for critical announcements
 - Combat-aware muting
 
 ### 4. Proximity Channels (spatial, unlimited players)
+
 **Use Case:** Immersive world interaction, ambient audio
 **Characteristics:**
+
 - 3D spatial audio with distance attenuation
 - Dynamic participant management based on coordinates
 - Environmental audio mixing
@@ -121,11 +133,13 @@ connection_states:
 ### Quality Adaptation
 
 **Adaptive Bitrate:**
+
 - Network condition monitoring
 - Automatic quality reduction under poor connectivity
 - Priority-based audio allocation
 
 **Codec Selection:**
+
 - Primary: Opus (variable bitrate)
 - Fallback: PCMU/PCMA for compatibility
 - Spatial: Custom 3D audio processing
@@ -135,6 +149,7 @@ connection_states:
 ### Core Tables
 
 **voice_channels:**
+
 ```sql
 CREATE TABLE voice_channels (
     id UUID PRIMARY KEY,
@@ -157,6 +172,7 @@ CREATE INDEX idx_voice_channels_active ON voice_channels(updated_at) WHERE updat
 ```
 
 **voice_participants:**
+
 ```sql
 CREATE TABLE voice_participants (
     id UUID PRIMARY KEY,
@@ -178,6 +194,7 @@ CREATE INDEX idx_voice_participants_active ON voice_participants(last_activity) 
 ```
 
 **voice_channel_permissions:**
+
 ```sql
 CREATE TABLE voice_channel_permissions (
     id UUID PRIMARY KEY,
@@ -193,6 +210,7 @@ CREATE TABLE voice_channel_permissions (
 ### Partitioning Strategy
 
 **Time-based partitioning for high-volume tables:**
+
 ```sql
 -- Partition voice_participants by month for historical data
 CREATE TABLE voice_participants_y2025m01 PARTITION OF voice_participants
@@ -236,6 +254,7 @@ POST   /api/v1/voice/connection/quality     # Report connection quality
 ### 3D Audio Processing
 
 **Distance-based attenuation:**
+
 ```
 attenuation = 1.0 / (1.0 + distance * falloff_factor)
 where:
@@ -244,6 +263,7 @@ where:
 ```
 
 **Directional audio:**
+
 - Head-related transfer function (HRTF) for realistic 3D positioning
 - Doppler effect for moving sound sources
 - Occlusion processing for walls/obstacles
@@ -251,12 +271,14 @@ where:
 ### Proximity Channel Management
 
 **Dynamic participant updates:**
+
 1. Player moves → World service publishes coordinate update
 2. Voice service receives update → Calculates audible players
 3. SFU router updates audio streams
 4. Client receives new participant list
 
 **Performance optimization:**
+
 - Spatial partitioning (octree/grid)
 - Distance culling (max audible range: 50 meters)
 - Priority-based streaming (closer players first)
@@ -266,6 +288,7 @@ where:
 ### Event-Driven Communication
 
 **Redis Pub/Sub channels:**
+
 - `voice:channel:{id}:events` - Channel state changes
 - `voice:player:{id}:updates` - Player status updates
 - `voice:proximity:{zone}:updates` - Spatial audio updates
@@ -273,6 +296,7 @@ where:
 ### Service Mesh Integration
 
 **Envoy configuration for service-to-service:**
+
 ```yaml
 routes:
   - match:
@@ -290,18 +314,21 @@ routes:
 ### Key Metrics
 
 **Voice Quality:**
+
 - Audio latency (P50, P95, P99)
 - Packet loss percentage
 - Jitter buffer size
 - Connection success rate
 
 **System Performance:**
+
 - Active channels count
 - Concurrent participants
 - CPU usage per SFU
 - Memory usage per channel type
 
 **Business Metrics:**
+
 - Average session duration
 - Channel type distribution
 - User engagement (voice time per session)
@@ -323,6 +350,7 @@ ALERT VoiceConnectionFailure
 ### Authentication & Authorization
 
 **Token-based access:**
+
 - JWT tokens with channel permissions
 - Short-lived tokens (15 minutes)
 - Channel-specific access control
@@ -330,11 +358,13 @@ ALERT VoiceConnectionFailure
 ### Anti-Abuse Measures
 
 **Rate limiting:**
+
 - Connection attempts per IP
 - Channel creation per user
 - API calls per minute
 
 **Content moderation:**
+
 - Voice activity detection
 - Automatic muting for detected abuse
 - Report system integration
@@ -373,6 +403,7 @@ spec:
 ### Scaling Strategy
 
 **Horizontal Pod Autoscaling:**
+
 ```yaml
 metrics:
 - type: Resource
@@ -393,16 +424,19 @@ metrics:
 ## Migration Strategy
 
 ### Phase 1: Core Infrastructure
+
 1. Deploy voice service microservice
 2. Set up WebRTC infrastructure
 3. Implement basic party channels
 
 ### Phase 2: Extended Features
+
 1. Add guild and raid channels
 2. Implement proximity audio
 3. Add spatial processing
 
 ### Phase 3: Advanced Features
+
 1. Custom audio processing
 2. Advanced moderation tools
 3. Analytics and monitoring
@@ -420,11 +454,13 @@ metrics:
 ## Risk Assessment
 
 ### High Risk
+
 - **WebRTC complexity:** Mitigated by using proven SFU implementation
 - **Audio quality consistency:** Mitigated by adaptive bitrate
 - **Scalability at MMO scale:** Mitigated by horizontal scaling design
 
 ### Medium Risk
+
 - **Network NAT traversal:** Mitigated by TURN/STUN servers
 - **Audio synchronization:** Mitigated by timestamp-based sync
 - **Cross-platform compatibility:** Mitigated by WebRTC standards
@@ -432,6 +468,7 @@ metrics:
 ## Next Steps
 
 ### Immediate Tasks
+
 1. **API Designer:** Create OpenAPI specification for voice endpoints
 2. **Database:** Implement channel and participant tables
 3. **Backend:** Implement voice service handlers
@@ -439,10 +476,12 @@ metrics:
 5. **DevOps:** Set up Kubernetes deployment
 
 ### Subsystem Breakdown
+
 - Voice Service (Go microservice)
 - Voice Server (WebRTC SFU)
 - Database schema and migrations
 - Client integration (UE5)
 - Monitoring and alerting setup
 
-This architecture provides a scalable, high-performance voice chat system suitable for MMO FPS RPG gameplay with support for all required channel types and spatial audio features.
+This architecture provides a scalable, high-performance voice chat system suitable for MMO FPS RPG gameplay with support
+for all required channel types and spatial audio features.

@@ -7,6 +7,7 @@ SOLID: Single Responsibility - manages logging
 import logging
 import sys
 from typing import Optional
+
 from scripts.core.config import ConfigManager
 
 

@@ -19,7 +19,7 @@ technical_specification:
       description: |
         Реализация Maintenance Manager с управлением системой обслуживания
         и интеграцией с другими компонентами.
-      dependencies: []
+      dependencies: [ ]
       estimated_effort: 4 days
 
     - id: maintenance-window-manager
@@ -27,7 +27,7 @@ technical_specification:
       description: |
         Реализация Maintenance Window Manager с управлением окнами обслуживания,
         созданием, обновлением и удалением окон.
-      dependencies: [maintenance-manager]
+      dependencies: [ maintenance-manager ]
       estimated_effort: 4 days
 
     - id: maintenance-status-manager
@@ -35,7 +35,7 @@ technical_specification:
       description: |
         Реализация Maintenance Status Manager с управлением статусом обслуживания,
         обновлением статуса и проверкой режима обслуживания.
-      dependencies: [maintenance-manager]
+      dependencies: [ maintenance-manager ]
       estimated_effort: 3 days
 
     - id: scheduled-maintenance-manager
@@ -43,7 +43,7 @@ technical_specification:
       description: |
         Реализация Scheduled Maintenance Manager с управлением плановым обслуживанием,
         планированием окон и автоматическим запуском.
-      dependencies: [maintenance-window-manager]
+      dependencies: [ maintenance-window-manager ]
       estimated_effort: 4 days
 
     - id: emergency-maintenance-manager
@@ -51,7 +51,7 @@ technical_specification:
       description: |
         Реализация Emergency Maintenance Manager с управлением экстренным обслуживанием,
         триггерами и немедленным запуском.
-      dependencies: [maintenance-window-manager]
+      dependencies: [ maintenance-window-manager ]
       estimated_effort: 4 days
 
     - id: graceful-shutdown-manager
@@ -59,7 +59,7 @@ technical_specification:
       description: |
         Реализация Graceful Shutdown Manager с управлением graceful shutdown,
         ожиданием завершения активных запросов и закрытием соединений.
-      dependencies: [maintenance-manager]
+      dependencies: [ maintenance-manager ]
       estimated_effort: 5 days
 
     - id: connection-blocker
@@ -67,7 +67,7 @@ technical_specification:
       description: |
         Реализация Connection Blocker с блокировкой новых соединений,
         middleware для API Gateway и возвратом статуса 503.
-      dependencies: [maintenance-status-manager]
+      dependencies: [ maintenance-status-manager ]
       estimated_effort: 3 days
 
     - id: maintenance-notification-manager
@@ -75,7 +75,7 @@ technical_specification:
       description: |
         Реализация Maintenance Notification Manager с управлением уведомлениями,
         отправкой через различные каналы и логированием.
-      dependencies: [maintenance-manager]
+      dependencies: [ maintenance-manager ]
       estimated_effort: 4 days
 
     - id: maintenance-analytics-collector
@@ -83,7 +83,7 @@ technical_specification:
       description: |
         Реализация Maintenance Analytics Collector с логированием операций,
         сбором метрик и интеграцией с Analytics Service.
-      dependencies: [maintenance-manager]
+      dependencies: [ maintenance-manager ]
       estimated_effort: 3 days
 
     - id: maintenance-telemetry-collector
@@ -91,7 +91,7 @@ technical_specification:
       description: |
         Реализация Maintenance Telemetry Collector с логированием событий,
         сбором телеметрии и интеграцией с Analytics Service.
-      dependencies: [maintenance-manager]
+      dependencies: [ maintenance-manager ]
       estimated_effort: 2 days
 
     - id: websocket-channels
@@ -99,7 +99,7 @@ technical_specification:
       description: |
         Реализация WebSocket каналов для realtime обновлений статуса обслуживания
         и уведомлений.
-      dependencies: [maintenance-manager]
+      dependencies: [ maintenance-manager ]
       estimated_effort: 3 days
 
     - id: event-bus-integration
@@ -107,7 +107,7 @@ technical_specification:
       description: |
         Реализация публикации и подписки на события через Kafka
         для всех компонентов системы обслуживания.
-      dependencies: [maintenance-manager]
+      dependencies: [ maintenance-manager ]
       estimated_effort: 2 days
 
     - id: database-schema
@@ -115,7 +115,7 @@ technical_specification:
       description: |
         Создание таблиц БД для окон обслуживания, статуса, уведомлений
         и телеметрии с миграциями Liquibase.
-      dependencies: []
+      dependencies: [ ]
       estimated_effort: 3 days
 
 diagrams:
@@ -123,9 +123,9 @@ diagrams:
     ```mermaid
     graph TB
         Client[UE5 Client] --> Gateway[API Gateway]
-        
+    
         Gateway --> InfrastructureService[Infrastructure Service<br/>8093]
-        
+    
         InfrastructureService --> MM[Maintenance Manager]
         InfrastructureService --> MWM[Maintenance Window Manager]
         InfrastructureService --> MSM[Maintenance Status Manager]
@@ -136,7 +136,7 @@ diagrams:
         InfrastructureService --> MNM[Maintenance Notification Manager]
         InfrastructureService --> MAC[Maintenance Analytics Collector]
         InfrastructureService --> MTC[Maintenance Telemetry Collector]
-        
+    
         MM --> MWM
         MM --> MSM
         MWM --> SMM
@@ -144,18 +144,18 @@ diagrams:
         MSM --> CB
         MM --> GSM
         MM --> MNM
-        
+    
         InfrastructureService --> APIGateway[API Gateway]
         InfrastructureService --> NotificationService[Notification Service]
         InfrastructureService --> DeploymentService[Deployment Service]
         InfrastructureService --> MonitoringService[Monitoring Service]
         InfrastructureService --> AnalyticsService[Analytics Service]
-        
+    
         InfrastructureService --> EventBus[Event Bus<br/>Kafka]
         EventBus --> RealtimeGateway[Realtime Gateway]
-        
+    
         InfrastructureService --> DB[(Infrastructure DB)]
-        
+    
         Client --> WSMaintenance[WebSocket<br/>Maintenance]
         WSMaintenance --> InfrastructureService
     ```
@@ -170,7 +170,7 @@ diagrams:
         participant CB as Connection Blocker
         participant GSM as Graceful Shutdown Manager
         participant EB as Event Bus
-        
+    
         Admin->>MWM: Create maintenance window
         MWM->>MWM: Save window to DB
         MWM->>MNM: Schedule notifications (24h, 1h)
@@ -195,7 +195,7 @@ diagrams:
         participant CB as Connection Blocker
         participant GSM as Graceful Shutdown Manager
         participant EB as Event Bus
-        
+    
         Trigger->>EMM: Emergency maintenance trigger
         EMM->>EMM: Create emergency window
         EMM->>MNM: Send immediate notification

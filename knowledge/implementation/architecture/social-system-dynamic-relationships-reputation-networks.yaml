@@ -1,136 +1,136 @@
 <!-- Issue: #2221 -->
 
-# Architecture: Social System - Dynamic Relationships & Reputation Networks
+  # Architecture: Social System - Dynamic Relationships & Reputation Networks
 
-## Performance Requirements
+    ## Performance Requirements
 
-**Load:** 10000+ concurrent players, P99 <20ms for social queries
-**Data Model (optimized):**
-- RelationshipState: 96 bytes (entity_ids, relationship_type, strength, last_interaction)
-- ReputationEvent: 64 bytes (source, target, event_type, magnitude, timestamp)
-- SocialNetworkNode: 128 bytes (entity_id, connections, reputation_scores, metadata)
+    **Load:** 10000+ concurrent players, P99 <20ms for social queries
+    **Data Model (optimized):**
+    - RelationshipState: 96 bytes (entity_ids, relationship_type, strength, last_interaction)
+    - ReputationEvent: 64 bytes (source, target, event_type, magnitude, timestamp)
+    - SocialNetworkNode: 128 bytes (entity_id, connections, reputation_scores, metadata)
 
-**Hot Path:** Relationship queries (500 RPS/player), reputation updates (200 RPS/player)
-**Backend optimizations:** Level 3 - Graph database integration, social network algorithms, distributed reputation calculation
+      **Hot Path:** Relationship queries (500 RPS/player), reputation updates (200 RPS/player)
+      **Backend optimizations:** Level 3 - Graph database integration, social network algorithms, distributed reputation calculation
+      
+      ## System Architecture
+      
+      ### Core Components
+      
+      ```mermaid
+      graph TB
+      subgraph "Social Engine"
+      RSE[Relationship State Engine]
+      RNE[Reputation Network Engine]
+      SIE[Social Interaction Engine]
+      SAE[Social AI Engine]
+      end
+      
+      subgraph "Network Processing Services"
+      SPS[Social Processing Service]
+      NES[Network Event Store]
+      RES[Reputation Event Store]
+      GDS[Graph Data Service]
+      end
+      
+      subgraph "Integration Layer"
+      SIS[Social Integration Service]
+      NIS[Network Integration Service]
+      EIS[Event Integration Service]
+      end
+      
+      subgraph "Data Layer"
+      RSD[Relationship State Data]
+      NSD[Network Structure Data]
+      ESD[Event Stream Data]
+      WSD[World Social Data]
+      end
+      
+      RSE --> SPS
+      RNE --> NES
+      SIE --> RES
+      SAE --> GDS
+      SPS --> SIS
+      NES --> NIS
+      RES --> EIS
+      GDS --> NIS
+      ```
 
-## System Architecture
+      ### Microservice Architecture
 
-### Core Components
+      #### 1. Relationship State Engine (RSE)
+      **Purpose:** Core relationship management, state persistence, decay mechanics
+      **Technology:** Go microservice with PostgreSQL
+      **Scaling:** 8 pods, sharded by relationship type
 
-```mermaid
-graph TB
-    subgraph "Social Engine"
-        RSE[Relationship State Engine]
-        RNE[Reputation Network Engine]
-        SIE[Social Interaction Engine]
-        SAE[Social AI Engine]
-    end
-
-    subgraph "Network Processing Services"
-        SPS[Social Processing Service]
-        NES[Network Event Store]
-        RES[Reputation Event Store]
-        GDS[Graph Data Service]
-    end
-
-    subgraph "Integration Layer"
-        SIS[Social Integration Service]
-        NIS[Network Integration Service]
-        EIS[Event Integration Service]
-    end
-
-    subgraph "Data Layer"
-        RSD[Relationship State Data]
-        NSD[Network Structure Data]
-        ESD[Event Stream Data]
-        WSD[World Social Data]
-    end
-
-    RSE --> SPS
-    RNE --> NES
-    SIE --> RES
-    SAE --> GDS
-    SPS --> SIS
-    NES --> NIS
-    RES --> EIS
-    GDS --> NIS
-```
-
-### Microservice Architecture
-
-#### 1. Relationship State Engine (RSE)
-**Purpose:** Core relationship management, state persistence, decay mechanics
-**Technology:** Go microservice with PostgreSQL
-**Scaling:** 8 pods, sharded by relationship type
-
-**Key Endpoints:**
-- `POST /api/v1/relationships/create` - Initialize new relationship
-- `PUT /api/v1/relationships/{id}/update` - Modify relationship strength
-- `GET /api/v1/relationships/entity/{entity_id}` - Get all relationships for entity
-- `POST /api/v1/relationships/decay/process` - Process relationship decay
-
-#### 2. Reputation Network Engine (RNE)
-**Purpose:** Network propagation, information spread, credibility calculations
-**Technology:** Go microservice with Redis Graph
-**Scaling:** 6 pods, geographically distributed
-
-**Key Endpoints:**
-- `POST /api/v1/reputation/event/create` - Record reputation event
-- `PUT /api/v1/reputation/network/propagate` - Propagate reputation changes
-- `GET /api/v1/reputation/entity/{entity_id}/standing` - Get reputation scores
-- `POST /api/v1/reputation/network/analyze` - Analyze network connections
-
-#### 3. Social Interaction Engine (SIE)
-**Purpose:** Conversation mechanics, social combat, interaction processing
-**Technology:** Go microservice with behavioral AI
-**Scaling:** 5 pods, event-driven scaling
-
-**Key Endpoints:**
-- `POST /api/v1/social/conversation/process` - Process dialogue choices
-- `PUT /api/v1/social/combat/execute` - Execute social combat actions
-- `GET /api/v1/social/options/{npc_id}` - Get available interaction options
-- `POST /api/v1/social/event/trigger` - Trigger social event outcomes
-
-#### 4. Social AI Engine (SAE)
-**Purpose:** NPC personality modeling, adaptive behaviors, player pattern learning
-**Technology:** Go microservice with machine learning
-**Scaling:** 4 pods, AI workload based scaling
-
-**Key Endpoints:**
-- `POST /api/v1/ai/personality/evolve` - Update NPC personality models
-- `GET /api/v1/ai/behavior/predict/{npc_id}` - Predict NPC responses
-- `PUT /api/v1/ai/player/learn` - Update player behavior models
-- `POST /api/v1/ai/social/generate` - Generate emergent social events
-
-#### 5. Social Processing Service (SPS)
-**Purpose:** Event queuing, batch processing, asynchronous relationship updates
-**Technology:** Go microservice with Kafka
-**Scaling:** 6 pods, queue-length based scaling
-
-**Key Endpoints:**
-- `POST /api/v1/processing/relationship/batch` - Batch relationship updates
-- `PUT /api/v1/processing/network/recalculate` - Recalculate network metrics
-- `GET /api/v1/processing/queue/status` - Get processing queue status
-- `POST /api/v1/processing/event/archive` - Archive old social events
-
-#### 6. Network Event Store (NES) & Reputation Event Store (RES)
-**Purpose:** Event sourcing for all social and reputation events, audit trails
-**Technology:** EventStoreDB with read models
-**Scaling:** 4 pods each, partitioned by entity type
-
-**Event Types:**
-- `RelationshipCreated` - New relationship established
-- `ReputationModified` - Reputation score changed
-- `SocialInteraction` - Conversation or social combat occurred
-- `NetworkPropagation` - Information spread through network
-- `PersonalityEvolution` - NPC personality changed
-- `SocialEventTriggered` - Dynamic social event occurred
-
-## Data Synchronization Patterns
-
-### CQRS Implementation
-
-```yaml
+      **Key Endpoints:**
+    - `POST /api/v1/relationships/create` - Initialize new relationship
+    - `PUT /api/v1/relationships/{id}/update` - Modify relationship strength
+    - `GET /api/v1/relationships/entity/{entity_id}` - Get all relationships for entity
+    - `POST /api/v1/relationships/decay/process` - Process relationship decay
+      
+      #### 2. Reputation Network Engine (RNE)
+      **Purpose:** Network propagation, information spread, credibility calculations
+        **Technology:** Go microservice with Redis Graph
+        **Scaling:** 6 pods, geographically distributed
+        
+        **Key Endpoints:**
+    - `POST /api/v1/reputation/event/create` - Record reputation event
+    - `PUT /api/v1/reputation/network/propagate` - Propagate reputation changes
+    - `GET /api/v1/reputation/entity/{entity_id}/standing` - Get reputation scores
+    - `POST /api/v1/reputation/network/analyze` - Analyze network connections
+      
+      #### 3. Social Interaction Engine (SIE)
+      **Purpose:** Conversation mechanics, social combat, interaction processing
+        **Technology:** Go microservice with behavioral AI
+        **Scaling:** 5 pods, event-driven scaling
+        
+        **Key Endpoints:**
+    - `POST /api/v1/social/conversation/process` - Process dialogue choices
+    - `PUT /api/v1/social/combat/execute` - Execute social combat actions
+    - `GET /api/v1/social/options/{npc_id}` - Get available interaction options
+    - `POST /api/v1/social/event/trigger` - Trigger social event outcomes
+      
+      #### 4. Social AI Engine (SAE)
+      **Purpose:** NPC personality modeling, adaptive behaviors, player pattern learning
+        **Technology:** Go microservice with machine learning
+        **Scaling:** 4 pods, AI workload based scaling
+        
+        **Key Endpoints:**
+    - `POST /api/v1/ai/personality/evolve` - Update NPC personality models
+    - `GET /api/v1/ai/behavior/predict/{npc_id}` - Predict NPC responses
+    - `PUT /api/v1/ai/player/learn` - Update player behavior models
+    - `POST /api/v1/ai/social/generate` - Generate emergent social events
+      
+      #### 5. Social Processing Service (SPS)
+      **Purpose:** Event queuing, batch processing, asynchronous relationship updates
+        **Technology:** Go microservice with Kafka
+        **Scaling:** 6 pods, queue-length based scaling
+        
+        **Key Endpoints:**
+    - `POST /api/v1/processing/relationship/batch` - Batch relationship updates
+    - `PUT /api/v1/processing/network/recalculate` - Recalculate network metrics
+    - `GET /api/v1/processing/queue/status` - Get processing queue status
+    - `POST /api/v1/processing/event/archive` - Archive old social events
+      
+      #### 6. Network Event Store (NES) & Reputation Event Store (RES)
+      **Purpose:** Event sourcing for all social and reputation events, audit trails
+        **Technology:** EventStoreDB with read models
+        **Scaling:** 4 pods each, partitioned by entity type
+        
+        **Event Types:**
+    - `RelationshipCreated` - New relationship established
+    - `ReputationModified` - Reputation score changed
+    - `SocialInteraction` - Conversation or social combat occurred
+    - `NetworkPropagation` - Information spread through network
+    - `PersonalityEvolution` - NPC personality changed
+    - `SocialEventTriggered` - Dynamic social event occurred
+      
+      ## Data Synchronization Patterns
+      
+      ### CQRS Implementation
+      
+      ```yaml
 cqrs_patterns:
   command_side:
     - CreateRelationship
@@ -147,11 +147,11 @@ cqrs_patterns:
     - GetInteractionHistory
     - GetPersonalityProfile
     - GetNetworkAnalytics
-```
-
-### Event Sourcing for Social Systems
-
-```yaml
+  ```
+  
+  ### Event Sourcing for Social Systems
+  
+  ```yaml
 event_sourcing:
   aggregates:
     - RelationshipAggregate
@@ -160,106 +160,106 @@ event_sourcing:
     - PersonalityAggregate
 
   events:
-    - RelationshipEstablished: {entity1_id, entity2_id, initial_strength, context}
-    - ReputationEventRecorded: {source_id, target_id, event_type, magnitude, witnesses}
-    - SocialInteractionCompleted: {interactor_id, target_id, interaction_type, outcome}
-    - NetworkConnectionModified: {entity_id, connected_entity_id, connection_type, strength}
-    - PersonalityTraitModified: {entity_id, trait_name, old_value, new_value, reason}
-    - SocialEventGenerated: {event_type, affected_entities, trigger_condition, consequences}
-```
+    - RelationshipEstablished: { entity1_id, entity2_id, initial_strength, context }
+    - ReputationEventRecorded: { source_id, target_id, event_type, magnitude, witnesses }
+    - SocialInteractionCompleted: { interactor_id, target_id, interaction_type, outcome }
+    - NetworkConnectionModified: { entity_id, connected_entity_id, connection_type, strength }
+    - PersonalityTraitModified: { entity_id, trait_name, old_value, new_value, reason }
+    - SocialEventGenerated: { event_type, affected_entities, trigger_condition, consequences }
+  ```
 
-## Performance Optimizations
+  ## Performance Optimizations
 
-### Memory Management
-- **Graph Caching:** Social network structures cached in Redis
-- **Relationship Pooling:** Relationship objects recycled between operations
-- **Event Compression:** Social events compressed for storage
+  ### Memory Management
+  - **Graph Caching:** Social network structures cached in Redis
+  - **Relationship Pooling:** Relationship objects recycled between operations
+  - **Event Compression:** Social events compressed for storage
 
-### Network Optimization
-- **Delta Synchronization:** Only changed relationships sent to clients
-- **Spatial Partitioning:** Social networks partitioned by geographic zones
-- **Batch Updates:** Multiple relationship changes batched together
+  ### Network Optimization
+  - **Delta Synchronization:** Only changed relationships sent to clients
+  - **Spatial Partitioning:** Social networks partitioned by geographic zones
+  - **Batch Updates:** Multiple relationship changes batched together
 
-### Database Optimization
-- **Graph Queries:** Optimized for social network traversals
-- **Event Partitioning:** Events partitioned by entity and time
-- **Read Replicas:** Social queries use read replicas
-- **Index Strategy:** Composite indexes for common social queries
+  ### Database Optimization
+  - **Graph Queries:** Optimized for social network traversals
+  - **Event Partitioning:** Events partitioned by entity and time
+  - **Read Replicas:** Social queries use read replicas
+  - **Index Strategy:** Composite indexes for common social queries
 
-## Scaling Strategy
+  ## Scaling Strategy
 
-### Horizontal Scaling
-- **Entity Sharding:** Social data sharded by entity ownership
-- **Geographic Distribution:** Social networks distributed by world regions
-- **Event Streaming:** Social events processed through partitioned Kafka topics
+  ### Horizontal Scaling
+  - **Entity Sharding:** Social data sharded by entity ownership
+  - **Geographic Distribution:** Social networks distributed by world regions
+  - **Event Streaming:** Social events processed through partitioned Kafka topics
 
-### Auto-scaling Triggers
-- **Active Social Interactions:** Scale based on concurrent social activities
-- **Network Size:** Scale based on social graph complexity
-- **Event Volume:** Scale event processing based on social activity levels
+  ### Auto-scaling Triggers
+  - **Active Social Interactions:** Scale based on concurrent social activities
+  - **Network Size:** Scale based on social graph complexity
+  - **Event Volume:** Scale event processing based on social activity levels
 
-## Security Architecture
+  ## Security Architecture
 
-### Anti-Cheat Measures
-- **Relationship Validation:** Server-side relationship state verification
-- **Reputation Auditing:** Log all reputation changes for pattern analysis
-- **Interaction Monitoring:** Track social interaction patterns
+  ### Anti-Cheat Measures
+  - **Relationship Validation:** Server-side relationship state verification
+  - **Reputation Auditing:** Log all reputation changes for pattern analysis
+  - **Interaction Monitoring:** Track social interaction patterns
 
-### Rate Limiting
-- **Social Queries:** 100 requests/minute per player
-- **Reputation Events:** 20 events/minute per player
-- **Network Updates:** 50 updates/minute per player
+  ### Rate Limiting
+  - **Social Queries:** 100 requests/minute per player
+  - **Reputation Events:** 20 events/minute per player
+  - **Network Updates:** 50 updates/minute per player
 
-## Monitoring & Observability
+  ## Monitoring & Observability
 
-### Key Metrics
-- **Social Engagement:** Average relationships per player
-- **Network Health:** Reputation propagation success rates
-- **AI Performance:** Personality evolution accuracy
-- **Event Processing:** Social event throughput and latency
+  ### Key Metrics
+  - **Social Engagement:** Average relationships per player
+  - **Network Health:** Reputation propagation success rates
+  - **AI Performance:** Personality evolution accuracy
+  - **Event Processing:** Social event throughput and latency
 
-### Health Checks
-- **Relationship Queries:** All services respond within 15ms
-- **Network Calculations:** Graph algorithms complete within 100ms
-- **Event Processing:** Event throughput >1000 events/second
-- **AI Models:** Personality predictions >95% accuracy
+  ### Health Checks
+  - **Relationship Queries:** All services respond within 15ms
+  - **Network Calculations:** Graph algorithms complete within 100ms
+  - **Event Processing:** Event throughput >1000 events/second
+  - **AI Models:** Personality predictions >95% accuracy
 
-## Implementation Roadmap
+  ## Implementation Roadmap
 
-### Phase 1: Core Relationship System (Week 1-3)
-- Basic relationship mechanics and state management
-- Reputation scoring and event recording
-- Social interaction processing foundations
-- Event sourcing infrastructure
+  ### Phase 1: Core Relationship System (Week 1-3)
+  - Basic relationship mechanics and state management
+  - Reputation scoring and event recording
+  - Social interaction processing foundations
+  - Event sourcing infrastructure
 
-### Phase 2: Network Propagation (Week 4-6)
-- Reputation network propagation algorithms
-- Information spread mechanics
-- Multi-faction reputation systems
-- Network analysis and optimization
+  ### Phase 2: Network Propagation (Week 4-6)
+  - Reputation network propagation algorithms
+  - Information spread mechanics
+  - Multi-faction reputation systems
+  - Network analysis and optimization
 
-### Phase 3: Advanced Social Features (Week 7-9)
-- Social combat and conversation systems
-- NPC personality modeling and evolution
-- Dynamic social events and quest generation
-- Reputation economy mechanics
+  ### Phase 3: Advanced Social Features (Week 7-9)
+  - Social combat and conversation systems
+  - NPC personality modeling and evolution
+  - Dynamic social events and quest generation
+  - Reputation economy mechanics
 
-### Phase 4: AI & Adaptation (Week 10-12)
-- Machine learning for player behavior modeling
-- Adaptive NPC responses and personality evolution
-- Emergent social content generation
-- Social network analysis and prediction
+  ### Phase 4: AI & Adaptation (Week 10-12)
+  - Machine learning for player behavior modeling
+  - Adaptive NPC responses and personality evolution
+  - Emergent social content generation
+  - Social network analysis and prediction
 
-### Phase 5: Performance & Polish (Week 13-15)
-- Comprehensive performance optimization
-- Social network stress testing
-- Balance adjustments and tuning
-- Production deployment and monitoring
-
-## API Specifications (High Level)
-
-### Relationship Management API
-```yaml
+  ### Phase 5: Performance & Polish (Week 13-15)
+  - Comprehensive performance optimization
+  - Social network stress testing
+  - Balance adjustments and tuning
+  - Production deployment and monitoring
+    
+    ## API Specifications (High Level)
+    
+    ### Relationship Management API
+    ```yaml
 paths:
   /api/v1/relationships:
     post:
@@ -287,10 +287,10 @@ paths:
         new_strength: number
         reputation_effects: array
         triggered_events: array
-```
-
-### Reputation Network API
-```yaml
+  ```
+  
+  ### Reputation Network API
+  ```yaml
 paths:
   /api/v1/reputation/network:
     get:
@@ -318,27 +318,27 @@ paths:
         event_id: string
         propagation_estimate: object
         network_impact: object
-```
+  ```
 
-## Risk Assessment
+  ## Risk Assessment
 
-### Technical Risks
-- **High:** Social network complexity and performance scaling
-- **Medium:** AI personality modeling accuracy and consistency
-- **Low:** Event sourcing implementation for social history
+  ### Technical Risks
+  - **High:** Social network complexity and performance scaling
+  - **Medium:** AI personality modeling accuracy and consistency
+  - **Low:** Event sourcing implementation for social history
 
-### Mitigation Strategies
-- **Network Performance:** Graph database optimization and caching layers
-- **AI Consistency:** Extensive training data and human oversight validation
-- **Event Complexity:** Modular event sourcing with clear domain boundaries
-
-## Next Steps
-
-This architecture creates a comprehensive social system that transforms the game world into a living social ecosystem. The modular design enables incremental implementation while maintaining social network integrity and performance.
-
-**Handed off to:** Database Agent for social graph schema (#2210), API Designer for social APIs (#2197), Backend Agent for social services (#2220), Content Writer for NPC personality templates (#2223).
+  ### Mitigation Strategies
+  - **Network Performance:** Graph database optimization and caching layers
+  - **AI Consistency:** Extensive training data and human oversight validation
+  - **Event Complexity:** Modular event sourcing with clear domain boundaries
+    
+    ## Next Steps
+      
+      This architecture creates a comprehensive social system that transforms the game world into a living social ecosystem. The modular design enables incremental implementation while maintaining social network integrity and performance.
+      
+      **Handed off to:** Database Agent for social graph schema (#2210), API Designer for social APIs (#2197), Backend Agent for social services (#2220), Content Writer for NPC personality templates (#2223).
 
 ---
 
 *Designed by Architect Agent for Dynamic Social System*
-*Issue: #2221*
+*Issue : #2221*

@@ -1,258 +1,258 @@
-            - status: enum (PLANNED, ANNOUNCED, ACTIVE, COOLDOWN, ARCHIVED)
-            - type: enum (STORY, TECHNOLOGICAL, ECONOMIC, POLITICAL, MILITARY, SPORTS, ENVIRONMENTAL)
-            - scale: enum (GLOBAL, REGIONAL, CITY, LOCAL)
-            - frequency: enum (ONE_TIME, PERIODIC, REGULAR)
-            - limit: integer
-            - offset: integer
-          response: array of WorldEvent
+- status: enum (PLANNED, ANNOUNCED, ACTIVE, COOLDOWN, ARCHIVED)
+- type: enum (STORY, TECHNOLOGICAL, ECONOMIC, POLITICAL, MILITARY, SPORTS, ENVIRONMENTAL)
+- scale: enum (GLOBAL, REGIONAL, CITY, LOCAL)
+- frequency: enum (ONE_TIME, PERIODIC, REGULAR)
+- limit: integer
+- offset: integer
+response: array of WorldEvent
 
-        - method: GET
-          path: /{id}
-          description: Детали конкретного события
-          response: WorldEvent
+  - method: GET
+    path: /{id}
+    description: Детали конкретного события
+    response: WorldEvent
 
-        - method: POST
-          path: /
-          description: Создание нового события
-          request_body: CreateWorldEventRequest
-          response: WorldEvent
+  - method: POST
+    path: /
+    description: Создание нового события
+    request_body: CreateWorldEventRequest
+    response: WorldEvent
 
-        - method: PUT
-          path: /{id}
-          description: Обновление события
-          request_body: UpdateWorldEventRequest
-          response: WorldEvent
+  - method: PUT
+    path: /{id}
+    description: Обновление события
+    request_body: UpdateWorldEventRequest
+    response: WorldEvent
 
-        - method: DELETE
-          path: /{id}
-          description: Удаление события
-          response: void
+  - method: DELETE
+    path: /{id}
+    description: Удаление события
+    response: void
 
-        - method: POST
-          path: /{id}/announce
-          description: Анонс события
-          response: WorldEvent
+  - method: POST
+    path: /{id}/announce
+    description: Анонс события
+    response: WorldEvent
 
-        - method: POST
-          path: /{id}/activate
-          description: Активация события
-          response: WorldEvent
+  - method: POST
+    path: /{id}/activate
+    description: Активация события
+    response: WorldEvent
 
-        - method: POST
-          path: /{id}/deactivate
-          description: Деактивация события
-          response: WorldEvent
+  - method: POST
+    path: /{id}/deactivate
+    description: Деактивация события
+    response: WorldEvent
 
-        - method: GET
-          path: /active
-          description: Список активных событий
-          response: array of WorldEvent
+  - method: GET
+    path: /active
+    description: Список активных событий
+    response: array of WorldEvent
 
-        - method: GET
-          path: /planned
-          description: Список запланированных событий
-          response: array of WorldEvent
+  - method: GET
+    path: /planned
+    description: Список запланированных событий
+    response: array of WorldEvent
 
-        - method: GET
-          path: /by-scale/{scale}
-          description: События по масштабу
-          response: array of WorldEvent
+  - method: GET
+    path: /by-scale/{scale}
+    description: События по масштабу
+    response: array of WorldEvent
 
-        - method: GET
-          path: /by-type/{type}
-          description: События по типу
-          response: array of WorldEvent
+  - method: GET
+    path: /by-type/{type}
+    description: События по типу
+    response: array of WorldEvent
 
-        - method: GET
-          path: /by-frequency/{frequency}
-          description: События по частоте
-          response: array of WorldEvent
+  - method: GET
+    path: /by-frequency/{frequency}
+    description: События по частоте
+    response: array of WorldEvent
 
-    event_scheduler_service:
-      base_path: /api/v1/scheduler/world-events
-      endpoints:
-        - method: POST
-          path: /schedule
-          description: Запланировать событие
-          request_body: ScheduleWorldEventRequest
-          response: EventSchedule
+event_scheduler_service:
+  base_path: /api/v1/scheduler/world-events
+  endpoints:
+    - method: POST
+      path: /schedule
+      description: Запланировать событие
+      request_body: ScheduleWorldEventRequest
+      response: EventSchedule
 
-        - method: GET
-          path: /scheduled
-          description: Запланированные события
-          response: array of EventSchedule
+    - method: GET
+      path: /scheduled
+      description: Запланированные события
+      response: array of EventSchedule
 
-        - method: POST
-          path: /{id}/trigger
-          description: Ручной запуск события
-          response: WorldEvent
+    - method: POST
+      path: /{id}/trigger
+      description: Ручной запуск события
+      response: WorldEvent
 
-        - method: GET
-          path: /calendar
-          description: Календарь событий
-          query_params:
-            - start_date: date
-            - end_date: date
-          response: array of EventSchedule
+    - method: GET
+      path: /calendar
+      description: Календарь событий
+      query_params:
+        - start_date: date
+        - end_date: date
+      response: array of EventSchedule
 
-  integrations:
-    event_bus:
-      type: Kafka
-      topics:
-        - world-events.created
-        - world-events.updated
-        - world-events.announced
-        - world-events.activated
-        - world-events.deactivated
-        - world-events.effects-applied
-        - world-events.effects-removed
-      consumers:
-        - economy-service
-        - social-service
-        - gameplay-service
-        - notification-service
-        - analytics-service
-        - realtime-gateway
+integrations:
+  event_bus:
+    type: Kafka
+    topics:
+      - world-events.created
+      - world-events.updated
+      - world-events.announced
+      - world-events.activated
+      - world-events.deactivated
+      - world-events.effects-applied
+      - world-events.effects-removed
+    consumers:
+      - economy-service
+      - social-service
+      - gameplay-service
+      - notification-service
+      - analytics-service
+      - realtime-gateway
 
-    database:
-      type: PostgreSQL
-      schema: world_events
-      tables:
-        - world_events
-        - event_effects
-        - event_schedules
-        - event_history
-        - event_analytics
+  database:
+    type: PostgreSQL
+    schema: world_events
+    tables:
+      - world_events
+      - event_effects
+      - event_schedules
+      - event_history
+      - event_analytics
 
-    cache:
-      type: Redis
-      keys:
-        - world-events:active
-        - world-events:planned
-        - world-events:{id}
-      ttl: 300 seconds
+  cache:
+    type: Redis
+    keys:
+      - world-events:active
+      - world-events:planned
+      - world-events:{id}
+    ttl: 300 seconds
 
-  tickrate_and_network_requirements:
-    world_events_management:
-      tickrate: Event-based (on-demand)
-      network_load: |
-        - Создание события: event-based, ~0.01-0.05 events/sec
-        - Активация события: event-based, ~0.01-0.05 events/sec
-        - Обновление состояния: event-based, ~0.1-0.3 events/sec
-        - Общий трафик: ~0.2-0.5 KB/sec на игрока
-      sync_strategy: Strong Consistency
+tickrate_and_network_requirements:
+  world_events_management:
+    tickrate: Event-based (on-demand)
+    network_load: |
+      - Создание события: event-based, ~0.01-0.05 events/sec
+      - Активация события: event-based, ~0.01-0.05 events/sec
+      - Обновление состояния: event-based, ~0.1-0.3 events/sec
+      - Общий трафик: ~0.2-0.5 KB/sec на игрока
+    sync_strategy: Strong Consistency
 
-    event_effects:
-      tickrate: Event-based (on-demand)
-      network_load: |
-        - Применение эффектов: event-based, ~0.1-0.5 events/sec
-        - Обновление цен: event-based, ~0.1-0.3 events/sec
-        - Обновление репутации: event-based, ~0.05-0.1 events/sec
-        - Общий трафик: ~0.3-0.8 KB/sec на игрока
-      sync_strategy: Strong Consistency для критических эффектов, Eventual для статистики
+  event_effects:
+    tickrate: Event-based (on-demand)
+    network_load: |
+      - Применение эффектов: event-based, ~0.1-0.5 events/sec
+      - Обновление цен: event-based, ~0.1-0.3 events/sec
+      - Обновление репутации: event-based, ~0.05-0.1 events/sec
+      - Общий трафик: ~0.3-0.8 KB/sec на игрока
+    sync_strategy: Strong Consistency для критических эффектов, Eventual для статистики
 
-    event_scheduling:
-      tickrate: 1 Hz (проверка расписания)
-      network_load: |
-        - Проверка расписания: 1 update/sec
-        - Автоматическая активация: event-based, ~0.01-0.05 events/sec
-        - Общий трафик: ~0.1-0.2 KB/sec на игрока
-      sync_strategy: Eventual Consistency
+  event_scheduling:
+    tickrate: 1 Hz (проверка расписания)
+    network_load: |
+      - Проверка расписания: 1 update/sec
+      - Автоматическая активация: event-based, ~0.01-0.05 events/sec
+      - Общий трафик: ~0.1-0.2 KB/sec на игрока
+    sync_strategy: Eventual Consistency
 
-    event_monitoring:
-      tickrate: 1-5 Hz (мониторинг активных событий)
-      network_load: |
-        - Обновление статуса: 1-5 updates/sec
-        - WebSocket обновления: 1-5 updates/sec
-        - Общий трафик: ~0.2-0.5 KB/sec на игрока
-      sync_strategy: Eventual Consistency
+  event_monitoring:
+    tickrate: 1-5 Hz (мониторинг активных событий)
+    network_load: |
+      - Обновление статуса: 1-5 updates/sec
+      - WebSocket обновления: 1-5 updates/sec
+      - Общий трафик: ~0.2-0.5 KB/sec на игрока
+    sync_strategy: Eventual Consistency
 
-  technical_specification:
-    implementation_phases:
-      phase_1:
-        name: Базовая инфраструктура
-        tasks:
-          - Создание структуры БД для мировых событий
-          - Реализация World Events Manager
-          - Реализация Event State Manager
-          - Базовые CRUD endpoints
-          - Интеграция с Event Bus
-        estimated_effort: 5 days
+technical_specification:
+  implementation_phases:
+    phase_1:
+      name: Базовая инфраструктура
+      tasks:
+        - Создание структуры БД для мировых событий
+        - Реализация World Events Manager
+        - Реализация Event State Manager
+        - Базовые CRUD endpoints
+        - Интеграция с Event Bus
+      estimated_effort: 5 days
 
-      phase_2:
-        name: Планирование и запуск
-        tasks:
-          - Реализация Event Scheduler
-          - Реализация Trigger Manager
-          - Реализация Constraint Validator
-          - Поддержка периодических и регулярных событий
-          - Календарь событий
-        estimated_effort: 4 days
+    phase_2:
+      name: Планирование и запуск
+      tasks:
+        - Реализация Event Scheduler
+        - Реализация Trigger Manager
+        - Реализация Constraint Validator
+        - Поддержка периодических и регулярных событий
+        - Календарь событий
+      estimated_effort: 4 days
 
-      phase_3:
-        name: Эффекты и интеграции
-        tasks:
-          - Реализация Event Effects Coordinator
-          - Интеграция с Economy Service
-          - Интеграция с Social Service
-          - Интеграция с Gameplay Service
-          - Управление конфликтами эффектов
-        estimated_effort: 6 days
+    phase_3:
+      name: Эффекты и интеграции
+      tasks:
+        - Реализация Event Effects Coordinator
+        - Интеграция с Economy Service
+        - Интеграция с Social Service
+        - Интеграция с Gameplay Service
+        - Управление конфликтами эффектов
+      estimated_effort: 6 days
 
-      phase_4:
-        name: Масштаб и типы
-        tasks:
-          - Реализация Event Scale Manager
-          - Реализация Event Type Handler
-          - Поддержка всех типов событий
-          - Управление целевыми регионами
-        estimated_effort: 4 days
+    phase_4:
+      name: Масштаб и типы
+      tasks:
+        - Реализация Event Scale Manager
+        - Реализация Event Type Handler
+        - Поддержка всех типов событий
+        - Управление целевыми регионами
+      estimated_effort: 4 days
 
-      phase_5:
-        name: Коммуникация и аналитика
-        tasks:
-          - Реализация Event Communication Manager
-          - Интеграция с Notification Service
-          - Реализация Event Analytics Collector
-          - Интеграция с Analytics Service
-          - Мониторинг и алерты
-        estimated_effort: 5 days
+    phase_5:
+      name: Коммуникация и аналитика
+      tasks:
+        - Реализация Event Communication Manager
+        - Интеграция с Notification Service
+        - Реализация Event Analytics Collector
+        - Интеграция с Analytics Service
+        - Мониторинг и алерты
+      estimated_effort: 5 days
 
-    total_estimated_effort: 24 days
+  total_estimated_effort: 24 days
 
 diagrams:
   component_diagram: |
     ```mermaid
     graph TB
         Client[UE5 Client] --> Gateway[API Gateway]
-        
+    
         Gateway --> WorldService[World Service<br/>8086]
-        
+    
         WorldService --> WEM[World Events Manager]
         WorldService --> EEC[Event Effects Coordinator]
         WorldService --> ESM[Event State Manager]
         WorldService --> ESCM[Event Scale Manager]
         WorldService --> ETH[Event Type Handler]
-        
+    
         Gateway --> EventScheduler[Event Scheduler Service<br/>8090]
-        
+    
         EventScheduler --> ES[Event Scheduler]
         EventScheduler --> TM[Trigger Manager]
         EventScheduler --> CV[Constraint Validator]
         EventScheduler --> FM[Frequency Manager]
-        
+    
         WorldService --> EconomyService[Economy Service<br/>8085]
         WorldService --> SocialService[Social Service<br/>8084]
         WorldService --> GameplayService[Gameplay Service<br/>8083]
         WorldService --> NotificationService[Notification Service<br/>8092]
         WorldService --> AnalyticsService[Analytics Service<br/>8095]
-        
+    
         WorldService --> EventBus[Event Bus<br/>Kafka]
         EventBus --> RealtimeGateway[Realtime Gateway]
-        
+    
         WorldService --> DB[(World Events DB)]
         WorldService --> Cache[(Redis Cache)]
-        
+    
         Client --> WSWorld[WebSocket<br/>World Events]
         WSWorld --> WorldService
     ```
@@ -284,7 +284,4 @@ diagrams:
         Gameplay --> TTK[TTK Changes]
         Gameplay --> Content[Content Availability]
     ```
-
-
-
 

@@ -1,9 +1,11 @@
 <!-- Issue: #140890225 -->
+
 # Logistics System - Database Schema
 
 ## Обзор
 
-Схема базы данных для системы логистики и перевозок, управляющей перемещением товаров между регионами с учётом рисков, страхования, эскорта и мониторинга SLA.
+Схема базы данных для системы логистики и перевозок, управляющей перемещением товаров между регионами с учётом рисков,
+страхования, эскорта и мониторинга SLA.
 
 ## ERD Диаграмма
 
@@ -94,6 +96,7 @@ erDiagram
 Таблица перевозок. Хранит информацию о перевозках товаров между регионами.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `player_id`: ID игрока (FK accounts, NOT NULL)
 - `origin_region_id`: ID региона отправления (FK regions, nullable)
@@ -120,6 +123,7 @@ erDiagram
 - `updated_at`: Время последнего обновления
 
 **Индексы:**
+
 - По `(player_id, status)` для перевозок игрока по статусу
 - По `(status, scheduled_departure)` для запланированных перевозок (WHERE scheduled_departure IS NOT NULL)
 - По `(origin_region_id, destination_region_id)` для маршрутов (WHERE оба NOT NULL)
@@ -130,6 +134,7 @@ erDiagram
 Таблица маршрутов перевозок. Хранит информацию о маршрутах с точками пути.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `shipment_id`: ID перевозки (FK transport_shipments, NOT NULL)
 - `route_type`: Тип маршрута (transport_route_type ENUM, NOT NULL)
@@ -140,6 +145,7 @@ erDiagram
 - `created_at`: Время создания
 
 **Индексы:**
+
 - По `shipment_id` для маршрута конкретной перевозки
 
 ### transport_incidents
@@ -147,6 +153,7 @@ erDiagram
 Таблица инцидентов перевозок. Хранит информацию об инцидентах (атаки, аварии, задержки).
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `shipment_id`: ID перевозки (FK transport_shipments, NOT NULL)
 - `incident_type`: Тип инцидента (transport_incident_type ENUM, NOT NULL)
@@ -160,6 +167,7 @@ erDiagram
 - `resolved`: Разрешен ли инцидент (BOOLEAN, NOT NULL, default: false)
 
 **Индексы:**
+
 - По `(shipment_id, occurred_at DESC)` для инцидентов перевозки
 - По `(incident_type, severity)` для фильтрации по типу и серьезности
 - По `position` (GIST индекс) для геопозиции (WHERE position IS NOT NULL)
@@ -169,6 +177,7 @@ erDiagram
 Таблица отслеживания позиций перевозок. Хранит историю позиций перевозок в реальном времени.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `shipment_id`: ID перевозки (FK transport_shipments, NOT NULL)
 - `position`: Позиция перевозки (GEOMETRY(POINT, 4326), NOT NULL - PostGIS, WGS84)
@@ -177,6 +186,7 @@ erDiagram
 - `recorded_at`: Время записи позиции
 
 **Индексы:**
+
 - По `(shipment_id, recorded_at DESC)` для истории позиций перевозки
 - По `position` (GIST индекс) для геопозиции
 
@@ -185,6 +195,7 @@ erDiagram
 Таблица метрик SLA перевозок. Хранит метрики для мониторинга времени доставки.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `shipment_id`: ID перевозки (FK transport_shipments, NOT NULL)
 - `target_hours`: Целевое время доставки в часах (INTEGER, NOT NULL)
@@ -195,12 +206,14 @@ erDiagram
 - `measured_at`: Время измерения метрики
 
 **Индексы:**
+
 - По `shipment_id` для метрик конкретной перевозки
 - По `(sla_violated, measured_at DESC)` для нарушений SLA
 
 ## ENUM типы
 
 ### transport_type
+
 - `ground`: Наземный транспорт
 - `air`: Воздушный транспорт
 - `rail`: Железнодорожный транспорт
@@ -208,6 +221,7 @@ erDiagram
 - `player_pickup`: Самовывоз игроком
 
 ### transport_shipment_status
+
 - `DRAFT`: Черновик (перевозка создана, но не запланирована)
 - `SCHEDULED`: Запланирована (перевозка запланирована на определенное время)
 - `IN_TRANSIT`: В пути (перевозка активна)
@@ -217,23 +231,27 @@ erDiagram
 - `CANCELLED`: Отменена (перевозка отменена)
 
 ### insurance_plan
+
 - `none`: Без страхования
 - `basic`: Базовое страхование
 - `premium`: Премиум страхование
 - `full`: Полное страхование
 
 ### escort_type
+
 - `none`: Без эскорта
 - `npc_escort`: Эскорт NPC
 - `player_escort`: Эскорт игроков
 - `armored_transport`: Бронированный транспорт
 
 ### transport_route_type
+
 - `local`: Локальный маршрут
 - `regional`: Региональный маршрут
 - `global`: Глобальный маршрут
 
 ### transport_incident_type
+
 - `bandit_attack`: Атака бандитов
 - `accident`: Авария
 - `customs_delay`: Таможенная задержка
@@ -241,6 +259,7 @@ erDiagram
 - `other`: Другое
 
 ### transport_incident_severity
+
 - `low`: Низкая серьезность
 - `medium`: Средняя серьезность
 - `high`: Высокая серьезность
@@ -309,15 +328,19 @@ erDiagram
 ## Миграции
 
 ### Применение миграций:
+
 ```bash
 liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ```
 
-**Примечание:** Миграция требует расширения PostGIS для работы с геопозициями. Если PostGIS недоступен, можно использовать альтернативу с JSONB для координат.
+**Примечание:** Миграция требует расширения PostGIS для работы с геопозициями. Если PostGIS недоступен, можно
+использовать альтернативу с JSONB для координат.
 
 ## Соответствие архитектуре
 
-Схема БД полностью соответствует архитектуре из `knowledge/implementation/architecture/economy-logistics-system-architecture.yaml`:
+Схема БД полностью соответствует архитектуре из
+`knowledge/implementation/architecture/economy-logistics-system-architecture.yaml`:
+
 - [OK] Все таблицы из архитектуры созданы
 - [OK] Все поля соответствуют описанию
 - [OK] Индексы оптимизированы для частых запросов
@@ -330,6 +353,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Жизненный цикл перевозок
 
 Перевозки проходят через следующие стадии:
+
 1. **DRAFT**: Перевозка создана, но не запланирована
 2. **SCHEDULED**: Перевозка запланирована на определенное время
 3. **IN_TRANSIT**: Перевозка активна, груз в пути
@@ -341,6 +365,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Типы транспорта
 
 Система поддерживает следующие типы транспорта:
+
 - **ground**: Наземный транспорт (грузовики, фургоны)
 - **air**: Воздушный транспорт (самолеты, вертолеты)
 - **rail**: Железнодорожный транспорт (поезда)
@@ -350,6 +375,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Страхование
 
 Система поддерживает следующие планы страхования:
+
 - **none**: Без страхования (нет защиты от потери)
 - **basic**: Базовое страхование (частичная компенсация)
 - **premium**: Премиум страхование (большая компенсация)
@@ -358,6 +384,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Эскорт
 
 Система поддерживает следующие типы эскорта:
+
 - **none**: Без эскорта (высокий риск атак)
 - **npc_escort**: Эскорт NPC (снижение риска атак)
 - **player_escort**: Эскорт игроков (значительное снижение риска)
@@ -366,6 +393,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Инциденты
 
 Система обрабатывает следующие типы инцидентов:
+
 - **bandit_attack**: Атака бандитов (может привести к потере груза)
 - **accident**: Авария (может привести к задержке или повреждению груза)
 - **customs_delay**: Таможенная задержка (задержка доставки)
@@ -375,6 +403,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Отслеживание в реальном времени
 
 Система отслеживания использует:
+
 - **PostGIS POINT**: Для хранения геопозиций (WGS84)
 - **GIST индексы**: Для быстрого поиска по геопозиции
 - **WebSocket**: Для обновлений в реальном времени
@@ -383,6 +412,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### SLA мониторинг
 
 Система мониторинга SLA отслеживает:
+
 - **Целевое время доставки**: SLA target_hours
 - **Фактическое время доставки**: actual_hours
 - **Нарушения SLA**: sla_violated, violation_reason
@@ -391,6 +421,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Интеграция с другими системами
 
 Система логистики интегрируется с:
+
 - **Economy Service**: Получение данных о грузе, синхронизация стоимости
 - **Inventory Service**: Резервирование груза, передача в пункте назначения
 - **Insurance Service**: Расчёт стоимости страхования, создание полисов, обработка требований

@@ -5,169 +5,164 @@
 BEGIN;
 
 -- Lore: origin-street-kid
-INSERT INTO narrative.lore_entries (
-    lore_id, title, document_type, category,
-    content_data, version
-)
-VALUES (
-    'origin-street-kid',
-    'Origin: Street Kid',
-    'canon',
-    'origin-story',
-    '{
-  "metadata": {
-    "id": "origin-street-kid",
-    "title": "Origin: Street Kid",
-    "document_type": "canon",
-    "category": "origin-story",
-    "status": "draft",
-    "version": "0.1.0",
-    "last_updated": "2025-11-05T18:36:00+00:00",
-    "concept_approved": false,
-    "concept_reviewed_at": "",
-    "owners": [
-      {
-        "role": "concept_director",
-        "contact": "concept@necp.game"
-      }
-    ],
-    "tags": [
-      "origin",
-      "street",
-      "valentinos"
-    ],
-    "topics": [
-      "origins",
-      "narrative"
-    ],
-    "related_systems": [
-      "quest-engine",
-      "combat-service"
-    ],
-    "related_documents": [
-      {
-        "id": "quest-system-main-story-2020-2030",
-        "relation": "references"
-      }
-    ],
-    "source": "shared/docs/knowledge/canon/narrative/scenarios/origins/street-kid.md",
-    "visibility": "internal",
-    "audience": [
-      "concept",
-      "narrative"
-    ],
-    "risk_level": "medium"
-  },
-  "review": {
-    "chain": [
-      {
-        "role": "concept_director",
-        "reviewer": "",
-        "reviewed_at": "",
-        "status": "pending"
-      }
-    ],
-    "next_actions": []
-  },
-  "summary": {
-    "problem": "Тексты Street Kid не структурированы под шаблон знаний и не раскрывают ветви решений.",
-    "goal": "Сформировать сетку выборов, фракционных бонусов и эпохальных событий для уличного происхождения.",
-    "essence": "Игрок из Heywood или Watson платит долг Падре, выбирает между бандой и независимостью и несет последствия по эпохам.",
-    "key_points": [
-      {
-        "Первая миссия с Tyger Claws определяет подход": "стелс, переговоры или силовой вариант."
+INSERT INTO narrative.lore_entries (lore_id, title, document_type, category,
+                                    content_data, version)
+VALUES ('origin-street-kid',
+        'Origin: Street Kid',
+        'canon',
+        'origin-story',
+        '{
+      "metadata": {
+        "id": "origin-street-kid",
+        "title": "Origin: Street Kid",
+        "document_type": "canon",
+        "category": "origin-story",
+        "status": "draft",
+        "version": "0.1.0",
+        "last_updated": "2025-11-05T18:36:00+00:00",
+        "concept_approved": false,
+        "concept_reviewed_at": "",
+        "owners": [
+          {
+            "role": "concept_director",
+            "contact": "concept@necp.game"
+          }
+        ],
+        "tags": [
+          "origin",
+          "street",
+          "valentinos"
+        ],
+        "topics": [
+          "origins",
+          "narrative"
+        ],
+        "related_systems": [
+          "quest-engine",
+          "combat-service"
+        ],
+        "related_documents": [
+          {
+            "id": "quest-system-main-story-2020-2030",
+            "relation": "references"
+          }
+        ],
+        "source": "shared/docs/knowledge/canon/narrative/scenarios/origins/street-kid.md",
+        "visibility": "internal",
+        "audience": [
+          "concept",
+          "narrative"
+        ],
+        "risk_level": "medium"
       },
-      "Выбор семьи между Valentinos, фиксерской сетью или бегством в номадов.",
-      "Эпохальные дуги ведут уличные коалиции от 2030 года до конституций 2093."
-    ]
-  },
-  "content": {
-    "sections": [
-      {
-        "id": "overview",
-        "title": "Кратко",
-        "body": "- Имя по умолчанию: V или Alex \"Viper\" Torres, возраст старта 22 года.\n- Район: Heywood или Watson по выбору игрока.\n- Семья погибла в DataKrash, Падре дает крышу и долг.\n- Ключевые NPC: Падре, Хосе, Рита из El Coyote Cojo, доктор Сантьяго.\n",
-        "mechanics_links": [
-          "mechanics/quests/quest-system.yaml"
+      "review": {
+        "chain": [
+          {
+            "role": "concept_director",
+            "reviewer": "",
+            "reviewed_at": "",
+            "status": "pending"
+          }
+        ],
+        "next_actions": []
+      },
+      "summary": {
+        "problem": "Тексты Street Kid не структурированы под шаблон знаний и не раскрывают ветви решений.",
+        "goal": "Сформировать сетку выборов, фракционных бонусов и эпохальных событий для уличного происхождения.",
+        "essence": "Игрок из Heywood или Watson платит долг Падре, выбирает между бандой и независимостью и несет последствия по эпохам.",
+        "key_points": [
+          {
+            "Первая миссия с Tyger Claws определяет подход": "стелс, переговоры или силовой вариант."
+          },
+          "Выбор семьи между Valentinos, фиксерской сетью или бегством в номадов.",
+          "Эпохальные дуги ведут уличные коалиции от 2030 года до конституций 2093."
         ]
       },
-      {
-        "id": "inciting_incident",
-        "title": "Завязка \"Долг за жизнь\"",
-        "body": "Падре поручает забрать пакет у конкурента в Kabuki. Проверки stealth и social задают тон кампании.\n- Стелс: тихое проникновение сохраняет мир с Tyger Claws.\n- Социальный путь: договор с Wakako и моральная дилемма между предательством и верностью.\n- Агрессия: силовой захват вызывает войну районов и рост heat.\n",
-        "mechanics_links": [
-          "mechanics/social/social-mechanics-overview.yaml"
+      "content": {
+        "sections": [
+          {
+            "id": "overview",
+            "title": "Кратко",
+            "body": "- Имя по умолчанию: V или Alex \"Viper\" Torres, возраст старта 22 года.\n- Район: Heywood или Watson по выбору игрока.\n- Семья погибла в DataKrash, Падре дает крышу и долг.\n- Ключевые NPC: Падре, Хосе, Рита из El Coyote Cojo, доктор Сантьяго.\n",
+            "mechanics_links": [
+              "mechanics/quests/quest-system.yaml"
+            ]
+          },
+          {
+            "id": "inciting_incident",
+            "title": "Завязка \"Долг за жизнь\"",
+            "body": "Падре поручает забрать пакет у конкурента в Kabuki. Проверки stealth и social задают тон кампании.\n- Стелс: тихое проникновение сохраняет мир с Tyger Claws.\n- Социальный путь: договор с Wakako и моральная дилемма между предательством и верностью.\n- Агрессия: силовой захват вызывает войну районов и рост heat.\n",
+            "mechanics_links": [
+              "mechanics/social/social-mechanics-overview.yaml"
+            ]
+          },
+          {
+            "id": "family_choice",
+            "title": "Выбор семьи",
+            "body": "После первой миссии Хосе предлагает вступить в Valentinos, Падре советует работать фиксером, Nomad контакт обещает побег.\n- Valentinos: инициация, боевое испытание, высокий риск конфликтов с NCPD.\n- Fixer: гибкая сеть контрактов без глубокой защиты банды.\n- Nomad: сложные persuasion и survival проверки с шансом провала и ареста.\n",
+            "mechanics_links": [
+              "mechanics/combat/combat-shooter-core.yaml"
+            ]
+          },
+          {
+            "id": "epoch_path",
+            "title": "Траектория эпох",
+            "body": "- 2030-2045: влияние на купола, защита уличных интересов или торговля доступом.\n- 2045-2060: выход на красные рынки, конфликты с NetWatch.\n- 2060-2077: прокси контракты корпораций и участие в мета судах.\n- 2077: применение уличных маршрутов в Dogtown.\n- 2078-2093: формирование уличных коалиций и параметрических центров.\n",
+            "mechanics_links": []
+          },
+          {
+            "id": "factions",
+            "title": "Фракции и бонусы",
+            "body": "- Valentinos: снижение intimidation thresholds в Heywood, поддержка банды, конфликт с 6th Street и NCPD.\n- Padre Network: снижение trading и social порогов в фиксерских сетях, доступ к контрактам.\n- General Street: скидки на серые рынки, бонус к stealth в родных кварталах.\n",
+            "mechanics_links": [
+              "mechanics/economy/stock-exchange/stock-analytics.yaml"
+            ]
+          },
+          {
+            "id": "morality",
+            "title": "Моральные развилки",
+            "body": "- Предать ли Падре ради Tyger Claws.\n- Остаться ли в банде или сохранить независимость.\n- Сотрудничать с корпорациями или защищать улицу.\n- Свидетельствовать ли в мета судах против корпораций.\n",
+            "mechanics_links": []
+          },
+          {
+            "id": "consequences",
+            "title": "Последствия",
+            "body": "- Уличные контакты снижают social и trading пороги в родном районе.\n- Статус Valentinos дает бандподкрепление в финальных миссиях.\n- Репутация фикcера открывает дополнительные диалоги и NPC помощников.\n",
+            "mechanics_links": []
+          }
         ]
       },
-      {
-        "id": "family_choice",
-        "title": "Выбор семьи",
-        "body": "После первой миссии Хосе предлагает вступить в Valentinos, Падре советует работать фиксером, Nomad контакт обещает побег.\n- Valentinos: инициация, боевое испытание, высокий риск конфликтов с NCPD.\n- Fixer: гибкая сеть контрактов без глубокой защиты банды.\n- Nomad: сложные persuasion и survival проверки с шансом провала и ареста.\n",
-        "mechanics_links": [
-          "mechanics/combat/combat-shooter-core.yaml"
-        ]
+      "appendix": {
+        "glossary": [],
+        "references": [],
+        "decisions": []
       },
-      {
-        "id": "epoch_path",
-        "title": "Траектория эпох",
-        "body": "- 2030-2045: влияние на купола, защита уличных интересов или торговля доступом.\n- 2045-2060: выход на красные рынки, конфликты с NetWatch.\n- 2060-2077: прокси контракты корпораций и участие в мета судах.\n- 2077: применение уличных маршрутов в Dogtown.\n- 2078-2093: формирование уличных коалиций и параметрических центров.\n",
-        "mechanics_links": []
+      "implementation": {
+        "github_issue": 133,
+        "needs_task": false,
+        "queue_reference": [],
+        "blockers": []
       },
-      {
-        "id": "factions",
-        "title": "Фракции и бонусы",
-        "body": "- Valentinos: снижение intimidation thresholds в Heywood, поддержка банды, конфликт с 6th Street и NCPD.\n- Padre Network: снижение trading и social порогов в фиксерских сетях, доступ к контрактам.\n- General Street: скидки на серые рынки, бонус к stealth в родных кварталах.\n",
-        "mechanics_links": [
-          "mechanics/economy/stock-exchange/stock-analytics.yaml"
-        ]
-      },
-      {
-        "id": "morality",
-        "title": "Моральные развилки",
-        "body": "- Предать ли Падре ради Tyger Claws.\n- Остаться ли в банде или сохранить независимость.\n- Сотрудничать с корпорациями или защищать улицу.\n- Свидетельствовать ли в мета судах против корпораций.\n",
-        "mechanics_links": []
-      },
-      {
-        "id": "consequences",
-        "title": "Последствия",
-        "body": "- Уличные контакты снижают social и trading пороги в родном районе.\n- Статус Valentinos дает бандподкрепление в финальных миссиях.\n- Репутация фикcера открывает дополнительные диалоги и NPC помощников.\n",
-        "mechanics_links": []
+      "history": [
+        {
+          "version": "0.1.0",
+          "date": "2025-11-05",
+          "author": "concept_team",
+          "changes": "Конверсия origin Street Kid в формат знаний."
+        }
+      ],
+      "validation": {
+        "checksum": "",
+        "schema_version": "1.0"
       }
-    ]
-  },
-  "appendix": {
-    "glossary": [],
-    "references": [],
-    "decisions": []
-  },
-  "implementation": {
-    "github_issue": 133,
-    "needs_task": false,
-    "queue_reference": [],
-    "blockers": []
-  },
-  "history": [
-    {
-      "version": "0.1.0",
-      "date": "2025-11-05",
-      "author": "concept_team",
-      "changes": "Конверсия origin Street Kid в формат знаний."
-    }
-  ],
-  "validation": {
-    "checksum": "",
-    "schema_version": "1.0"
-  }
-}'::jsonb,
-    0
-)
-ON CONFLICT (lore_id) DO UPDATE SET
+    }'::jsonb,
+        0) ON CONFLICT (lore_id) DO
+UPDATE SET
     title = EXCLUDED.title,
     document_type = EXCLUDED.document_type,
     category = EXCLUDED.category,
     content_data = EXCLUDED.content_data,
     version = EXCLUDED.version,
     updated_at = CURRENT_TIMESTAMP;
-
 
 COMMIT;

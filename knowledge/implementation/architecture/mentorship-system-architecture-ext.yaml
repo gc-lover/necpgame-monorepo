@@ -1,276 +1,276 @@
-      - Субсидии для академий
-      - Распределение ресурсов
+- Субсидии для академий
+- Распределение ресурсов
 
-  data_flows:
-    mentorship_initiation_flow: |
-      1. Игрок или NPC инициирует поиск наставника/ученика
-      2. Mentorship Discovery Service находит подходящих кандидатов
-      3. Игрок или NPC создает предложение наставничества
-      4. Contract Manager проверяет требования и ограничения
-      5. Предложение отправляется получателю
-      6. Получатель принимает или отклоняет предложение
-      7. При принятии создается договор наставничества
-      8. Social Service публикует событие social.mentorship.contract-created
-      9. Realtime Gateway отправляет обновление клиентам
+data_flows:
+  mentorship_initiation_flow: |
+    1. Игрок или NPC инициирует поиск наставника/ученика
+    2. Mentorship Discovery Service находит подходящих кандидатов
+    3. Игрок или NPC создает предложение наставничества
+    4. Contract Manager проверяет требования и ограничения
+    5. Предложение отправляется получателю
+    6. Получатель принимает или отклоняет предложение
+    7. При принятии создается договор наставничества
+    8. Social Service публикует событие social.mentorship.contract-created
+    9. Realtime Gateway отправляет обновление клиентам
 
-    lesson_execution_flow: |
-      1. Наступает время урока по расписанию
-      2. Lesson Manager создает урок
-      3. Learning Format Manager определяет формат обучения
-      4. Урок начинается
-      5. Skill Progress Tracker отслеживает прогресс
-      6. Урок завершается
-      7. Lesson Manager оценивает результаты
-      8. Skill Progress Tracker обновляет навыки
-      9. Mentor Reputation Manager обновляет репутацию
-      10. Social Service публикует событие social.mentorship.lesson-completed
-      11. Realtime Gateway отправляет обновление клиентам
+  lesson_execution_flow: |
+    1. Наступает время урока по расписанию
+    2. Lesson Manager создает урок
+    3. Learning Format Manager определяет формат обучения
+    4. Урок начинается
+    5. Skill Progress Tracker отслеживает прогресс
+    6. Урок завершается
+    7. Lesson Manager оценивает результаты
+    8. Skill Progress Tracker обновляет навыки
+    9. Mentor Reputation Manager обновляет репутацию
+    10. Social Service публикует событие social.mentorship.lesson-completed
+    11. Realtime Gateway отправляет обновление клиентам
 
-    academy_enrollment_flow: |
-      1. Игрок выбирает академию и программу
-      2. Academy Manager проверяет требования
-      3. Economy Manager проверяет оплату
-      4. Academy Manager записывает игрока в программу
-      5. Schedule Manager создает расписание
-      6. Social Service публикует событие social.mentorship.academy-enrolled
-      7. Realtime Gateway отправляет обновление клиентам
+  academy_enrollment_flow: |
+    1. Игрок выбирает академию и программу
+    2. Academy Manager проверяет требования
+    3. Economy Manager проверяет оплату
+    4. Academy Manager записывает игрока в программу
+    5. Schedule Manager создает расписание
+    6. Social Service публикует событие social.mentorship.academy-enrolled
+    7. Realtime Gateway отправляет обновление клиентам
 
-    content_creation_flow: |
-      1. Наставник создает учебный контент
-      2. Content Manager получает контент
-      3. Content Manager отправляет на модерацию
-      4. После модерации контент публикуется
-      5. Content Manager добавляет контент в витрину академии
-      6. Social Service публикует событие social.mentorship.content-created
-      7. Realtime Gateway отправляет обновление клиентам
+  content_creation_flow: |
+    1. Наставник создает учебный контент
+    2. Content Manager получает контент
+    3. Content Manager отправляет на модерацию
+    4. После модерации контент публикуется
+    5. Content Manager добавляет контент в витрину академии
+    6. Social Service публикует событие social.mentorship.content-created
+    7. Realtime Gateway отправляет обновление клиентам
 
-  database_structure:
-    tables:
-      - name: mentorship_contracts
-        description: Договоры наставничества
-        columns:
-          - id: UUID PRIMARY KEY
-          - mentor_id: UUID FOREIGN KEY
-          - mentee_id: UUID FOREIGN KEY
-          - mentorship_type: ENUM (player_to_player, player_to_npc, npc_to_player, npc_to_npc, academy)
-          - contract_type: VARCHAR(50)
-          - skill_track: VARCHAR(50)
-          - start_date: TIMESTAMP
-          - end_date: TIMESTAMP
-          - status: ENUM (active, completed, terminated)
-          - payment_model: ENUM (paid, grant, influence_points, resources)
-          - payment_amount: DECIMAL(10,2)
-          - terms: JSONB
-          - created_at: TIMESTAMP
-          - updated_at: TIMESTAMP
+database_structure:
+  tables:
+    - name: mentorship_contracts
+      description: Договоры наставничества
+      columns:
+        - id: UUID PRIMARY KEY
+        - mentor_id: UUID FOREIGN KEY
+        - mentee_id: UUID FOREIGN KEY
+        - mentorship_type: ENUM (player_to_player, player_to_npc, npc_to_player, npc_to_npc, academy)
+        - contract_type: VARCHAR(50)
+        - skill_track: VARCHAR(50)
+        - start_date: TIMESTAMP
+        - end_date: TIMESTAMP
+        - status: ENUM (active, completed, terminated)
+        - payment_model: ENUM (paid, grant, influence_points, resources)
+        - payment_amount: DECIMAL(10,2)
+        - terms: JSONB
+        - created_at: TIMESTAMP
+        - updated_at: TIMESTAMP
 
-      - name: mentorship_schedules
-        description: Расписания уроков
-        columns:
-          - id: UUID PRIMARY KEY
-          - contract_id: UUID FOREIGN KEY
-          - lesson_date: TIMESTAMP
-          - lesson_time: TIME
-          - location: VARCHAR(255)
-          - format: ENUM (theoretical, practical, content_based, examination, group, vr)
-          - resources: JSONB
-          - status: ENUM (scheduled, in-progress, completed, cancelled)
-          - created_at: TIMESTAMP
-          - updated_at: TIMESTAMP
+    - name: mentorship_schedules
+      description: Расписания уроков
+      columns:
+        - id: UUID PRIMARY KEY
+        - contract_id: UUID FOREIGN KEY
+        - lesson_date: TIMESTAMP
+        - lesson_time: TIME
+        - location: VARCHAR(255)
+        - format: ENUM (theoretical, practical, content_based, examination, group, vr)
+        - resources: JSONB
+        - status: ENUM (scheduled, in-progress, completed, cancelled)
+        - created_at: TIMESTAMP
+        - updated_at: TIMESTAMP
 
-      - name: mentorship_lessons
-        description: Уроки наставничества
-        columns:
-          - id: UUID PRIMARY KEY
-          - contract_id: UUID FOREIGN KEY
-          - schedule_id: UUID FOREIGN KEY
-          - lesson_type: VARCHAR(50)
-          - format: ENUM (theoretical, practical, content_based, examination, group, vr)
-          - content_id: UUID FOREIGN KEY
-          - started_at: TIMESTAMP
-          - completed_at: TIMESTAMP
-          - duration: INTEGER
-          - skill_progress: JSONB
-          - evaluation: JSONB
-          - status: ENUM (scheduled, in-progress, completed, failed)
-          - created_at: TIMESTAMP
-          - updated_at: TIMESTAMP
+    - name: mentorship_lessons
+      description: Уроки наставничества
+      columns:
+        - id: UUID PRIMARY KEY
+        - contract_id: UUID FOREIGN KEY
+        - schedule_id: UUID FOREIGN KEY
+        - lesson_type: VARCHAR(50)
+        - format: ENUM (theoretical, practical, content_based, examination, group, vr)
+        - content_id: UUID FOREIGN KEY
+        - started_at: TIMESTAMP
+        - completed_at: TIMESTAMP
+        - duration: INTEGER
+        - skill_progress: JSONB
+        - evaluation: JSONB
+        - status: ENUM (scheduled, in-progress, completed, failed)
+        - created_at: TIMESTAMP
+        - updated_at: TIMESTAMP
 
-      - name: mentorship_skill_progress
-        description: Прогресс навыков учеников
-        columns:
-          - id: UUID PRIMARY KEY
-          - contract_id: UUID FOREIGN KEY
-          - mentee_id: UUID FOREIGN KEY
-          - skill_track: VARCHAR(50)
-          - skill_name: VARCHAR(100)
-          - initial_level: INTEGER
-          - current_level: INTEGER
-          - target_level: INTEGER
-          - experience_gained: INTEGER
-          - bonus_applied: DECIMAL(5,2)
-          - last_update: TIMESTAMP
+    - name: mentorship_skill_progress
+      description: Прогресс навыков учеников
+      columns:
+        - id: UUID PRIMARY KEY
+        - contract_id: UUID FOREIGN KEY
+        - mentee_id: UUID FOREIGN KEY
+        - skill_track: VARCHAR(50)
+        - skill_name: VARCHAR(100)
+        - initial_level: INTEGER
+        - current_level: INTEGER
+        - target_level: INTEGER
+        - experience_gained: INTEGER
+        - bonus_applied: DECIMAL(5,2)
+        - last_update: TIMESTAMP
 
-      - name: mentor_reputation
-        description: Репутация наставников
-        columns:
-          - id: UUID PRIMARY KEY
-          - mentor_id: UUID FOREIGN KEY
-          - reputation_score: DECIMAL(5,2)
-          - total_students: INTEGER
-          - successful_graduates: INTEGER
-          - average_rating: DECIMAL(3,2)
-          - total_reviews: INTEGER
-          - content_quality_score: DECIMAL(5,2)
-          - academy_rating: DECIMAL(3,2)
-          - last_update: TIMESTAMP
+    - name: mentor_reputation
+      description: Репутация наставников
+      columns:
+        - id: UUID PRIMARY KEY
+        - mentor_id: UUID FOREIGN KEY
+        - reputation_score: DECIMAL(5,2)
+        - total_students: INTEGER
+        - successful_graduates: INTEGER
+        - average_rating: DECIMAL(3,2)
+        - total_reviews: INTEGER
+        - content_quality_score: DECIMAL(5,2)
+        - academy_rating: DECIMAL(3,2)
+        - last_update: TIMESTAMP
 
-      - name: mentorship_reviews
-        description: Отзывы о наставниках
-        columns:
-          - id: UUID PRIMARY KEY
-          - contract_id: UUID FOREIGN KEY
-          - mentor_id: UUID FOREIGN KEY
-          - mentee_id: UUID FOREIGN KEY
-          - rating: INTEGER
-          - review_text: TEXT
-          - created_at: TIMESTAMP
+    - name: mentorship_reviews
+      description: Отзывы о наставниках
+      columns:
+        - id: UUID PRIMARY KEY
+        - contract_id: UUID FOREIGN KEY
+        - mentor_id: UUID FOREIGN KEY
+        - mentee_id: UUID FOREIGN KEY
+        - rating: INTEGER
+        - review_text: TEXT
+        - created_at: TIMESTAMP
 
-      - name: academies
-        description: Академии и образовательные центры
-        columns:
-          - id: UUID PRIMARY KEY
-          - academy_name: VARCHAR(255)
-          - academy_type: ENUM (corporate, gang, independent)
-          - location: VARCHAR(255)
-          - description: TEXT
-          - rating: DECIMAL(3,2)
-          - total_students: INTEGER
-          - total_programs: INTEGER
-          - created_at: TIMESTAMP
-          - updated_at: TIMESTAMP
+    - name: academies
+      description: Академии и образовательные центры
+      columns:
+        - id: UUID PRIMARY KEY
+        - academy_name: VARCHAR(255)
+        - academy_type: ENUM (corporate, gang, independent)
+        - location: VARCHAR(255)
+        - description: TEXT
+        - rating: DECIMAL(3,2)
+        - total_students: INTEGER
+        - total_programs: INTEGER
+        - created_at: TIMESTAMP
+        - updated_at: TIMESTAMP
 
-      - name: academy_programs
-        description: Программы академий
-        columns:
-          - id: UUID PRIMARY KEY
-          - academy_id: UUID FOREIGN KEY
-          - program_name: VARCHAR(255)
-          - skill_track: VARCHAR(50)
-          - duration: INTEGER
-          - cost: DECIMAL(10,2)
-          - requirements: JSONB
-          - schedule: JSONB
-          - status: ENUM (active, inactive)
-          - created_at: TIMESTAMP
-          - updated_at: TIMESTAMP
+    - name: academy_programs
+      description: Программы академий
+      columns:
+        - id: UUID PRIMARY KEY
+        - academy_id: UUID FOREIGN KEY
+        - program_name: VARCHAR(255)
+        - skill_track: VARCHAR(50)
+        - duration: INTEGER
+        - cost: DECIMAL(10,2)
+        - requirements: JSONB
+        - schedule: JSONB
+        - status: ENUM (active, inactive)
+        - created_at: TIMESTAMP
+        - updated_at: TIMESTAMP
 
-      - name: academy_enrollments
-        description: Записи в академии
-        columns:
-          - id: UUID PRIMARY KEY
-          - academy_id: UUID FOREIGN KEY
-          - program_id: UUID FOREIGN KEY
-          - character_id: UUID FOREIGN KEY
-          - enrolled_at: TIMESTAMP
-          - completed_at: TIMESTAMP
-          - status: ENUM (enrolled, in-progress, completed, dropped)
-          - payment_status: ENUM (pending, paid, refunded)
+    - name: academy_enrollments
+      description: Записи в академии
+      columns:
+        - id: UUID PRIMARY KEY
+        - academy_id: UUID FOREIGN KEY
+        - program_id: UUID FOREIGN KEY
+        - character_id: UUID FOREIGN KEY
+        - enrolled_at: TIMESTAMP
+        - completed_at: TIMESTAMP
+        - status: ENUM (enrolled, in-progress, completed, dropped)
+        - payment_status: ENUM (pending, paid, refunded)
 
-      - name: mentorship_chains
-        description: Цепочки наставничества
-        columns:
-          - id: UUID PRIMARY KEY
-          - chain_name: VARCHAR(255)
-          - chain_type: ENUM (linear, network, faction, academy)
-          - contract_ids: UUID[]
-          - character_ids: UUID[]
-          - chain_level: INTEGER
-          - created_at: TIMESTAMP
+    - name: mentorship_chains
+      description: Цепочки наставничества
+      columns:
+        - id: UUID PRIMARY KEY
+        - chain_name: VARCHAR(255)
+        - chain_type: ENUM (linear, network, faction, academy)
+        - contract_ids: UUID[]
+        - character_ids: UUID[]
+        - chain_level: INTEGER
+        - created_at: TIMESTAMP
 
-      - name: mentorship_content
-        description: Учебный контент
-        columns:
-          - id: UUID PRIMARY KEY
-          - creator_id: UUID FOREIGN KEY
-          - content_type: ENUM (guide, simulation, vr_scene, video, text)
-          - title: VARCHAR(255)
-          - description: TEXT
-          - skill_track: VARCHAR(50)
-          - content_data: JSONB
-          - moderation_status: ENUM (pending, approved, rejected)
-          - monetization_status: ENUM (free, paid, subscription)
-          - price: DECIMAL(10,2)
-          - rating: DECIMAL(3,2)
-          - views: INTEGER
-          - created_at: TIMESTAMP
-          - updated_at: TIMESTAMP
+    - name: mentorship_content
+      description: Учебный контент
+      columns:
+        - id: UUID PRIMARY KEY
+        - creator_id: UUID FOREIGN KEY
+        - content_type: ENUM (guide, simulation, vr_scene, video, text)
+        - title: VARCHAR(255)
+        - description: TEXT
+        - skill_track: VARCHAR(50)
+        - content_data: JSONB
+        - moderation_status: ENUM (pending, approved, rejected)
+        - monetization_status: ENUM (free, paid, subscription)
+        - price: DECIMAL(10,2)
+        - rating: DECIMAL(3,2)
+        - views: INTEGER
+        - created_at: TIMESTAMP
+        - updated_at: TIMESTAMP
 
-      - name: mentorship_economy
-        description: Экономика наставничества
-        columns:
-          - id: UUID PRIMARY KEY
-          - contract_id: UUID FOREIGN KEY
-          - payment_type: ENUM (course_fee, grant, influence_points, resources)
-          - amount: DECIMAL(10,2)
-          - payer_id: UUID FOREIGN KEY
-          - recipient_id: UUID FOREIGN KEY
-          - payment_date: TIMESTAMP
-          - status: ENUM (pending, paid, failed, refunded)
-          - transaction_id: UUID
+    - name: mentorship_economy
+      description: Экономика наставничества
+      columns:
+        - id: UUID PRIMARY KEY
+        - contract_id: UUID FOREIGN KEY
+        - payment_type: ENUM (course_fee, grant, influence_points, resources)
+        - amount: DECIMAL(10,2)
+        - payer_id: UUID FOREIGN KEY
+        - recipient_id: UUID FOREIGN KEY
+        - payment_date: TIMESTAMP
+        - status: ENUM (pending, paid, failed, refunded)
+        - transaction_id: UUID
 
-  integrations:
-    npc_service: |
-      - Получение информации о NPC-наставниках
-      - Проверка доступности NPC
-      - Обновление статуса NPC
-      - Взаимодействие с NPC
+integrations:
+  npc_service: |
+    - Получение информации о NPC-наставниках
+    - Проверка доступности NPC
+    - Обновление статуса NPC
+    - Взаимодействие с NPC
 
-    economy_service: |
-      - Проверка баланса игрока
-      - Обработка платежей за обучение
-      - Расчет доходов наставников
-      - Интеграция с налоговой системой
-      - Обработка грантов
+  economy_service: |
+    - Проверка баланса игрока
+    - Обработка платежей за обучение
+    - Расчет доходов наставников
+    - Интеграция с налоговой системой
+    - Обработка грантов
 
-    world_service: |
-      - Проверка доступа к академиям
-      - Триггеры событий на основе наставничества
-      - Влияние наставничества на мир
-      - Интеграция с образовательными хабами
+  world_service: |
+    - Проверка доступа к академиям
+    - Триггеры событий на основе наставничества
+    - Влияние наставничества на мир
+    - Интеграция с образовательными хабами
 
-    quest_service: |
-      - Интеграция с квестами наставничества
-      - Назначение квестов ученикам
-      - Оценка выполнения квестов
+  quest_service: |
+    - Интеграция с квестами наставничества
+    - Назначение квестов ученикам
+    - Оценка выполнения квестов
 
-    reputation_service: |
-      - Проверка репутации для наставничества
-      - Влияние наставничества на репутацию
-      - Обновление репутации на основе обучения
+  reputation_service: |
+    - Проверка репутации для наставничества
+    - Влияние наставничества на репутацию
+    - Обновление репутации на основе обучения
 
-    gameplay_service: |
-      - Получение событий игрового процесса
-      - Интеграция с системой прогрессии
-      - Модификация прогресса навыков
-      - Начисление опыта за обучение
+  gameplay_service: |
+    - Получение событий игрового процесса
+    - Интеграция с системой прогрессии
+    - Модификация прогресса навыков
+    - Начисление опыта за обучение
 
-    content_service: |
-      - Создание учебного контента
-      - Модерация контента
-      - Публикация контента
-      - Управление витриной контента
+  content_service: |
+    - Создание учебного контента
+    - Модерация контента
+    - Публикация контента
+    - Управление витриной контента
 
-    analytics_service: |
-      - Логирование всех операций наставничества
-      - Сбор метрик эффективности
-      - Анализ паттернов наставничества
-      - Мониторинг удовлетворенности
+  analytics_service: |
+    - Логирование всех операций наставничества
+    - Сбор метрик эффективности
+    - Анализ паттернов наставничества
+    - Мониторинг удовлетворенности
 
-    realtime_gateway: |
-      - Отправка realtime обновлений наставничества
-      - Синхронизация уроков
-      - Уведомления о событиях наставничества
+  realtime_gateway: |
+    - Отправка realtime обновлений наставничества
+    - Синхронизация уроков
+    - Уведомления о событиях наставничества
 
 technical_specification:
   subtasks:
@@ -279,7 +279,7 @@ technical_specification:
       description: |
         Реализация Mentorship Manager с управлением наставничеством,
         договорами и интеграцией с другими компонентами.
-      dependencies: []
+      dependencies: [ ]
       estimated_effort: 5 days
 
     - id: mentorship-discovery-service
@@ -287,7 +287,7 @@ technical_specification:
       description: |
         Реализация Mentorship Discovery Service с поиском наставников и учеников,
         фильтрацией и рекомендациями.
-      dependencies: [mentorship-manager]
+      dependencies: [ mentorship-manager ]
       estimated_effort: 4 days
 
     - id: contract-manager
@@ -295,7 +295,7 @@ technical_specification:
       description: |
         Реализация Contract Manager с управлением договорами наставничества,
         обработкой предложений и условий.
-      dependencies: [mentorship-manager]
+      dependencies: [ mentorship-manager ]
       estimated_effort: 4 days
 
     - id: schedule-manager
@@ -303,7 +303,7 @@ technical_specification:
       description: |
         Реализация Schedule Manager с управлением расписанием уроков,
         бронированием времени и автоматизацией.
-      dependencies: [contract-manager]
+      dependencies: [ contract-manager ]
       estimated_effort: 4 days
 
     - id: lesson-manager
@@ -311,7 +311,7 @@ technical_specification:
       description: |
         Реализация Lesson Manager с управлением уроками,
         отслеживанием прогресса и оценкой результатов.
-      dependencies: [schedule-manager]
+      dependencies: [ schedule-manager ]
       estimated_effort: 4 days
 
     - id: learning-format-manager
@@ -319,7 +319,7 @@ technical_specification:
       description: |
         Реализация Learning Format Manager с поддержкой различных форматов обучения,
         управлением ресурсами и взаимодействием.
-      dependencies: [lesson-manager]
+      dependencies: [ lesson-manager ]
       estimated_effort: 4 days
 
     - id: skill-progress-tracker
@@ -327,7 +327,7 @@ technical_specification:
       description: |
         Реализация Skill Progress Tracker с отслеживанием прогресса навыков,
         расчетом бонусов и обновлением уровней.
-      dependencies: [lesson-manager]
+      dependencies: [ lesson-manager ]
       estimated_effort: 4 days
 
     - id: mentor-reputation-manager
@@ -335,7 +335,7 @@ technical_specification:
       description: |
         Реализация Mentor Reputation Manager с управлением репутацией наставников,
         обработкой отзывов и расчетом рейтингов.
-      dependencies: [mentorship-manager]
+      dependencies: [ mentorship-manager ]
       estimated_effort: 4 days
 
     - id: academy-manager
@@ -343,7 +343,7 @@ technical_specification:
       description: |
         Реализация Academy Manager с управлением академиями,
         программами и записями в академии.
-      dependencies: [mentorship-manager]
+      dependencies: [ mentorship-manager ]
       estimated_effort: 5 days
 
     - id: mentorship-chain-manager
@@ -351,7 +351,7 @@ technical_specification:
       description: |
         Реализация Mentorship Chain Manager с поддержкой цепочек наставничества,
         линейных и сетевых структур.
-      dependencies: [mentorship-manager]
+      dependencies: [ mentorship-manager ]
       estimated_effort: 4 days
 
     - id: content-manager
@@ -359,7 +359,7 @@ technical_specification:
       description: |
         Реализация Content Manager с управлением учебным контентом,
         модерацией и публикацией.
-      dependencies: [mentorship-manager]
+      dependencies: [ mentorship-manager ]
       estimated_effort: 4 days
 
     - id: economy-manager
@@ -367,7 +367,7 @@ technical_specification:
       description: |
         Реализация Economy Manager с управлением экономикой наставничества,
         обработкой платежей и интеграцией с Economy Service.
-      dependencies: [mentorship-manager]
+      dependencies: [ mentorship-manager ]
       estimated_effort: 4 days
 
     - id: mentorship-telemetry-collector
@@ -375,7 +375,7 @@ technical_specification:
       description: |
         Реализация Mentorship Telemetry Collector с логированием операций,
         сбором метрик и интеграцией с Analytics Service.
-      dependencies: [mentorship-manager]
+      dependencies: [ mentorship-manager ]
       estimated_effort: 3 days
 
     - id: websocket-channels
@@ -383,7 +383,7 @@ technical_specification:
       description: |
         Реализация WebSocket каналов для realtime обновлений наставничества,
         уроков и расписания.
-      dependencies: [mentorship-manager, lesson-manager]
+      dependencies: [ mentorship-manager, lesson-manager ]
       estimated_effort: 3 days
 
     - id: event-bus-integration
@@ -391,7 +391,7 @@ technical_specification:
       description: |
         Реализация публикации и подписки на события через Kafka
         для всех компонентов системы наставничества.
-      dependencies: [mentorship-manager]
+      dependencies: [ mentorship-manager ]
       estimated_effort: 2 days
 
     - id: database-schema
@@ -400,7 +400,7 @@ technical_specification:
         Создание таблиц БД для наставничества, договоров, расписаний, уроков,
         прогресса навыков, репутации, академий, цепочек, контента и экономики
         с миграциями Liquibase.
-      dependencies: []
+      dependencies: [ ]
       estimated_effort: 3 days
 
 diagrams:
@@ -408,9 +408,9 @@ diagrams:
     ```mermaid
     graph TB
         Client[UE5 Client] --> Gateway[API Gateway]
-        
+    
         Gateway --> SocialService[Social Service<br/>8084]
-        
+    
         SocialService --> MM[Mentorship Manager]
         SocialService --> MDS[Mentorship Discovery Service]
         SocialService --> CM[Contract Manager]
@@ -424,7 +424,7 @@ diagrams:
         SocialService --> CM2[Content Manager]
         SocialService --> EM[Economy Manager]
         SocialService --> MTC[Mentorship Telemetry Collector]
-        
+    
         MM --> MDS
         MM --> CM
         CM --> SM
@@ -436,7 +436,7 @@ diagrams:
         MM --> MCM
         MM --> CM2
         MM --> EM
-        
+    
         SocialService --> NPCService[NPC Service]
         SocialService --> EconomyService[Economy Service]
         SocialService --> WorldService[World Service]
@@ -445,12 +445,12 @@ diagrams:
         SocialService --> GameplayService[Gameplay Service]
         SocialService --> ContentService[Content Service]
         SocialService --> AnalyticsService[Analytics Service]
-        
+    
         SocialService --> EventBus[Event Bus<br/>Kafka]
         EventBus --> RealtimeGateway[Realtime Gateway]
-        
+    
         SocialService --> DB[(Social DB)]
-        
+    
         Client --> WSMentorship[WebSocket<br/>Mentorship]
         WSMentorship --> SocialService
     ```
@@ -465,7 +465,7 @@ diagrams:
         participant LM as Lesson Manager
         participant SPT as Skill Progress Tracker
         participant EB as Event Bus
-        
+    
         P->>MDS: Search mentor
         MDS->>MDS: Find mentors
         MDS->>P: Return mentors
@@ -487,7 +487,7 @@ diagrams:
         participant EM as Economy Manager
         participant SM as Schedule Manager
         participant EB as Event Bus
-        
+    
         P->>AM: Enroll in academy
         AM->>AM: Check requirements
         AM->>EM: Check payment

@@ -5,18 +5,21 @@ Usage: python parse-openapi-output.py < output.txt
 Or: python parse-openapi-output.py --file output.txt
 """
 
-import sys
 import re
+import sys
+
 
 def clean_ansi(text):
     """Remove ANSI escape codes"""
     ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
     return ansi_escape.sub('', text)
 
+
 def clean_emojis(text):
     """Remove emojis and special Unicode"""
     # Simplified emoji removal to avoid encoding issues
     return text
+
 
 def parse_validation_output(raw_output):
     """Parse redocly lint output and structure it"""
@@ -57,6 +60,7 @@ def parse_validation_output(raw_output):
         'blocked': len(errors) > 0
     }
 
+
 def parse_error_line(line, all_lines, index):
     """Parse a single error line from codeframe redocly output"""
 
@@ -80,7 +84,8 @@ def parse_error_line(line, all_lines, index):
                 continue
 
             # Stop at next error/warning or end marker
-            if line_content.startswith('[') or line_content.startswith('Error was generated') or line_content.startswith('Warning was generated'):
+            if line_content.startswith('[') or line_content.startswith(
+                    'Error was generated') or line_content.startswith('Warning was generated'):
                 if "Warning was generated" in line_content:
                     is_warning = True
                 break
@@ -128,6 +133,7 @@ def parse_error_line(line, all_lines, index):
 
     return None
 
+
 def parse_warning_line(line, all_lines, index):
     """Parse a single warning line"""
     # Pattern: file.yaml:line:col warning type description
@@ -147,6 +153,7 @@ def parse_warning_line(line, all_lines, index):
 
     return None
 
+
 def get_solution(error_type, description):
     """Provide solution based on error type"""
     solutions = {
@@ -165,6 +172,7 @@ def get_solution(error_type, description):
 
     return 'Check OpenAPI specification documentation'
 
+
 def format_output(result):
     """Format structured output for AI agents"""
     output = []
@@ -174,7 +182,8 @@ def format_output(result):
     output.append("")
 
     # Count real errors (excluding unknown/generic)
-    real_errors = [e for e in result['errors'] if e['file'] != 'unknown' and 'validation failed' not in e['description'].lower()]
+    real_errors = [e for e in result['errors'] if
+                   e['file'] != 'unknown' and 'validation failed' not in e['description'].lower()]
 
     output.append(f"Files validated: {result['files_validated']}")
     output.append(f"Files with issues: {result['files_with_issues']}")
@@ -251,6 +260,7 @@ def format_output(result):
 
     return "\n".join(output)
 
+
 def main():
     """Main function"""
     # Read from file if specified, otherwise from stdin
@@ -272,6 +282,7 @@ def main():
 
     # Return appropriate exit code
     return 1 if parsed['blocked'] else 0
+
 
 if __name__ == '__main__':
     sys.exit(main())

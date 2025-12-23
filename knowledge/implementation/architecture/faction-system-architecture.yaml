@@ -1,253 +1,253 @@
 <!-- Issue: faction-system-architecture -->
 
-# Architecture: Faction System - Reputation, Alliances & Conflicts
+  # Architecture: Faction System - Reputation, Alliances & Conflicts
 
-## Performance Requirements
+  ## Performance Requirements
 
-**Load:** 20000+ concurrent players, P99 <30ms for faction operations
-**Data Model (optimized):**
-- FactionReputation: 64 bytes (faction_id, player_id, reputation_value, last_update)
-- FactionAlliance: 48 bytes (faction_a_id, faction_b_id, alliance_type, strength)
-- FactionTerritory: 80 bytes (faction_id, territory_id, control_level, resources)
+  **Load:** 20000+ concurrent players, P99 <30ms for faction operations
+              **Data Model (optimized):**
+              - FactionReputation: 64 bytes (faction_id, player_id, reputation_value, last_update)
+              - FactionAlliance: 48 bytes (faction_a_id, faction_b_id, alliance_type, strength)
+              - FactionTerritory: 80 bytes (faction_id, territory_id, control_level, resources)
 
-**Hot Path:** Reputation updates (1000 RPS/player), faction queries (2000 RPS), territory checks (500 RPS)
-**Backend optimizations:** Level 2 - Redis caching for reputation data, optimized queries, background reputation calculations
+                **Hot Path:** Reputation updates (1000 RPS/player), faction queries (2000 RPS), territory checks (500 RPS)
+                **Backend optimizations:** Level 2 - Redis caching for reputation data, optimized queries, background reputation calculations
+                
+                ## System Architecture
+                
+                ### Core Components
+                
+                ```mermaid
+                graph TB
+                subgraph "Faction Core Services"
+                FRS[Faction Reputation Service]
+                FAS[Faction Alliance Service]
+                FTS[Faction Territory Service]
+                FCS[Faction Conflict Service]
+                end
+                
+                subgraph "Integration Services"
+                FIS[Faction Interaction Service]
+                FRS[Faction Reward Service]
+                FNS[Faction Notification Service]
+                FAS[Faction Analytics Service]
+                end
+                
+                subgraph "Data Layer"
+                FRDB[(Faction Reputation DB)]
+                FADB[(Faction Alliance DB)]
+                FTDB[(Faction Territory DB)]
+                FCDB[(Faction Conflict DB)]
+                end
+                ```
 
-## System Architecture
+  ### Faction Types & Hierarchy
 
-### Core Components
+  #### Corporation Factions
+              - **Arasaka:** Military-industrial, high reputation requirements
+              - **Militech:** Arms manufacturer, combat-focused reputation
+              - **Kang Tao:** Intelligence and surveillance, stealth reputation
+              - **Virtua:** Entertainment and media, social reputation
+              - **Autonom:** Hackers collective, digital reputation
+              - **NeuroTech:** Biotechnology, medical reputation
+              - **Biotechnica:** Research and development, scientific reputation
 
-```mermaid
-graph TB
-    subgraph "Faction Core Services"
-        FRS[Faction Reputation Service]
-        FAS[Faction Alliance Service]
-        FTS[Faction Territory Service]
-        FCS[Faction Conflict Service]
-    end
+  #### Gang Factions
+              - **Maelstrom:** Cybernetic enhancement, combat reputation
+              - **Valentinos:** Traditional organized crime, loyalty reputation
+              - **Tyger Claws:** Asian organized crime, honor reputation
+              - **6th Street:** American organized crime, street reputation
+              - **Voodoo Boys:** Netrunners, digital reputation
+              - **Neon Vipers:** Runners and mercenaries, freelance reputation
 
-    subgraph "Integration Services"
-        FIS[Faction Interaction Service]
-        FRS[Faction Reward Service]
-        FNS[Faction Notification Service]
-        FAS[Faction Analytics Service]
-    end
+  #### Unique Factions
+              - **Chrome Liberation Front:** Cyberware rights activists
+              - **Church of the Digital God:** Religious technologists
+              - **Bio-Purists:** Anti-augmentation extremists
+              - **Free Net Coalition:** Digital freedom activists
 
-    subgraph "Data Layer"
-        FRDB[(Faction Reputation DB)]
-        FADB[(Faction Alliance DB)]
-        FTDB[(Faction Territory DB)]
-        FCDB[(Faction Conflict DB)]
-    end
-```
+  ## Reputation System
 
-### Faction Types & Hierarchy
+  ### Reputation Tiers
+              - **Hated (-100 to -51):** Enemies, restricted access, bounty hunting
+              - **Hostile (-50 to -11):** Limited access, higher prices, potential attacks
+              - **Neutral (-10 to 10):** Standard access, normal prices, no bonuses/penalties
+              - **Friendly (11 to 50):** Better prices, access to basic services, small bonuses
+              - **Honored (51 to 80):** Access to advanced services, significant bonuses
+              - **Revered (81 to 100):** Elite access, major bonuses, special rewards
 
-#### Corporation Factions
-- **Arasaka:** Military-industrial, high reputation requirements
-- **Militech:** Arms manufacturer, combat-focused reputation
-- **Kang Tao:** Intelligence and surveillance, stealth reputation
-- **Virtua:** Entertainment and media, social reputation
-- **Autonom:** Hackers collective, digital reputation
-- **NeuroTech:** Biotechnology, medical reputation
-- **Biotechnica:** Research and development, scientific reputation
+  ### Reputation Sources
+              - **Mission Completion:** +5 to +20 points based on mission difficulty
+              - **Faction-Specific Actions:** +10 to +50 for aligned activities
+              - **Betrayal/Hostile Actions:** -20 to -100 points
+              - **Time-Based Decay:** -1 to -5 points per week of inactivity
+              - **Group Activities:** Shared reputation for group missions
 
-#### Gang Factions
-- **Maelstrom:** Cybernetic enhancement, combat reputation
-- **Valentinos:** Traditional organized crime, loyalty reputation
-- **Tyger Claws:** Asian organized crime, honor reputation
-- **6th Street:** American organized crime, street reputation
-- **Voodoo Boys:** Netrunners, digital reputation
-- **Neon Vipers:** Runners and mercenaries, freelance reputation
+  ### Reputation Persistence
+              - **Individual Tracking:** Player-specific reputation per faction
+              - **Group Inheritance:** Clan reputation affects individual standing
+              - **Cross-Faction Impact:** Actions against one faction affect related factions
+              - **Reputation Recovery:** Time-based recovery with diminishing returns
 
-#### Unique Factions
-- **Chrome Liberation Front:** Cyberware rights activists
-- **Church of the Digital God:** Religious technologists
-- **Bio-Purists:** Anti-augmentation extremists
-- **Free Net Coalition:** Digital freedom activists
+  ## Alliance System
 
-## Reputation System
+  ### Alliance Types
+              - **Trade Alliance:** Economic cooperation, shared markets
+              - **Defense Pact:** Military cooperation, mutual defense
+              - **Research Agreement:** Technology sharing, joint development
+              - **Neutral Pact:** Non-aggression, diplomatic relations
 
-### Reputation Tiers
-- **Hated (-100 to -51):** Enemies, restricted access, bounty hunting
-- **Hostile (-50 to -11):** Limited access, higher prices, potential attacks
-- **Neutral (-10 to 10):** Standard access, normal prices, no bonuses/penalties
-- **Friendly (11 to 50):** Better prices, access to basic services, small bonuses
-- **Honored (51 to 80):** Access to advanced services, significant bonuses
-- **Revered (81 to 100):** Elite access, major bonuses, special rewards
+  ### Alliance Mechanics
+              - **Formation Requirements:** Minimum reputation levels with both factions
+              - **Alliance Strength:** 1-100 scale based on cooperation level
+              - **Benefit Sharing:** Proportional bonuses based on alliance strength
+              - **Break Conditions:** Betrayal or reputation drops below threshold
 
-### Reputation Sources
-- **Mission Completion:** +5 to +20 points based on mission difficulty
-- **Faction-Specific Actions:** +10 to +50 for aligned activities
-- **Betrayal/Hostile Actions:** -20 to -100 points
-- **Time-Based Decay:** -1 to -5 points per week of inactivity
-- **Group Activities:** Shared reputation for group missions
+  ### Alliance Benefits
+              - **Economic:** Shared market access, reduced trade costs
+              - **Military:** Joint operations, shared intelligence
+              - **Technological:** Access to faction-specific tech
+              - **Diplomatic:** Improved relations with allied factions
 
-### Reputation Persistence
-- **Individual Tracking:** Player-specific reputation per faction
-- **Group Inheritance:** Clan reputation affects individual standing
-- **Cross-Faction Impact:** Actions against one faction affect related factions
-- **Reputation Recovery:** Time-based recovery with diminishing returns
+  ## Territory Control System
 
-## Alliance System
+  ### Territory Types
+              - **Commercial Districts:** Economic control, trade bonuses
+              - **Industrial Zones:** Resource control, production bonuses
+              - **Residential Areas:** Population control, recruitment bonuses
+              - **Strategic Locations:** Military advantages, defensive bonuses
 
-### Alliance Types
-- **Trade Alliance:** Economic cooperation, shared markets
-- **Defense Pact:** Military cooperation, mutual defense
-- **Research Agreement:** Technology sharing, joint development
-- **Neutral Pact:** Non-aggression, diplomatic relations
+  ### Control Mechanics
+              - **Control Levels:** 0-100% based on faction influence
+              - **Resource Generation:** Proportional to control level
+              - **Defense Bonuses:** Increased when territory is controlled
+              - **Contested Territories:** Multiple factions competing for control
 
-### Alliance Mechanics
-- **Formation Requirements:** Minimum reputation levels with both factions
-- **Alliance Strength:** 1-100 scale based on cooperation level
-- **Benefit Sharing:** Proportional bonuses based on alliance strength
-- **Break Conditions:** Betrayal or reputation drops below threshold
+  ### Territory Wars
+              - **War Declaration:** Requires minimum reputation and resources
+              - **Battle Zones:** Designated PvP areas within territories
+              - **Victory Conditions:** Control percentage or time-based objectives
+              - **War Rewards:** Territory control, reputation gains, special loot
 
-### Alliance Benefits
-- **Economic:** Shared market access, reduced trade costs
-- **Military:** Joint operations, shared intelligence
-- **Technological:** Access to faction-specific tech
-- **Diplomatic:** Improved relations with allied factions
+  ## Conflict Resolution System
 
-## Territory Control System
+  ### Conflict Types
+              - **Territorial Disputes:** Territory control conflicts
+              - **Resource Wars:** Competition for limited resources
+              - **Ideological Clashes:** Faction philosophy conflicts
+              - **Corporate Espionage:** Covert operations and sabotage
 
-### Territory Types
-- **Commercial Districts:** Economic control, trade bonuses
-- **Industrial Zones:** Resource control, production bonuses
-- **Residential Areas:** Population control, recruitment bonuses
-- **Strategic Locations:** Military advantages, defensive bonuses
+  ### Conflict Resolution
+              - **Diplomatic Resolution:** Negotiation through alliance system
+              - **Economic Pressure:** Trade sanctions and embargoes
+              - **Military Action:** Territory wars and PvP conflicts
+              - **Intelligence Operations:** Espionage and counter-intelligence
 
-### Control Mechanics
-- **Control Levels:** 0-100% based on faction influence
-- **Resource Generation:** Proportional to control level
-- **Defense Bonuses:** Increased when territory is controlled
-- **Contested Territories:** Multiple factions competing for control
+  ### Escalation Mechanics
+              - **Tension Levels:** 1-5 scale of conflict intensity
+              - **Escalation Triggers:** Hostile actions, territory grabs, betrayals
+              - **De-escalation:** Diplomatic actions, compensation payments
+              - **Ceasefire Conditions:** Mutual agreements or exhaustion
 
-### Territory Wars
-- **War Declaration:** Requires minimum reputation and resources
-- **Battle Zones:** Designated PvP areas within territories
-- **Victory Conditions:** Control percentage or time-based objectives
-- **War Rewards:** Territory control, reputation gains, special loot
+  ## Integration with Gameplay
 
-## Conflict Resolution System
+  ### Quest Integration
+              - **Faction Quests:** Reputation-gated mission chains
+              - **Alliance Missions:** Multi-faction cooperative quests
+              - **Betrayal Arcs:** Dynamic storylines based on faction choices
+              - **Loyalty Rewards:** Special content for dedicated faction members
 
-### Conflict Types
-- **Territorial Disputes:** Territory control conflicts
-- **Resource Wars:** Competition for limited resources
-- **Ideological Clashes:** Faction philosophy conflicts
-- **Corporate Espionage:** Covert operations and sabotage
+  ### Economy Integration
+              - **Faction Markets:** Reputation-based pricing and availability
+              - **Trade Routes:** Alliance-controlled economic corridors
+              - **Black Markets:** Restricted goods for hostile factions
+              - **Faction Currency:** Special currencies with limited use
 
-### Conflict Resolution
-- **Diplomatic Resolution:** Negotiation through alliance system
-- **Economic Pressure:** Trade sanctions and embargoes
-- **Military Action:** Territory wars and PvP conflicts
-- **Intelligence Operations:** Espionage and counter-intelligence
-
-### Escalation Mechanics
-- **Tension Levels:** 1-5 scale of conflict intensity
-- **Escalation Triggers:** Hostile actions, territory grabs, betrayals
-- **De-escalation:** Diplomatic actions, compensation payments
-- **Ceasefire Conditions:** Mutual agreements or exhaustion
-
-## Integration with Gameplay
-
-### Quest Integration
-- **Faction Quests:** Reputation-gated mission chains
-- **Alliance Missions:** Multi-faction cooperative quests
-- **Betrayal Arcs:** Dynamic storylines based on faction choices
-- **Loyalty Rewards:** Special content for dedicated faction members
-
-### Economy Integration
-- **Faction Markets:** Reputation-based pricing and availability
-- **Trade Routes:** Alliance-controlled economic corridors
-- **Black Markets:** Restricted goods for hostile factions
-- **Faction Currency:** Special currencies with limited use
-
-### Combat Integration
-- **Faction Bonuses:** Combat modifiers based on reputation
-- **Alliance Support:** Temporary buffs from allied factions
-- **Territory Effects:** Combat advantages on controlled land
-- **Faction Conflicts:** PvP modifiers in contested areas
-
-## Database Architecture
-
-### Primary Database (PostgreSQL)
-
-```sql
--- Faction reputation tracking
-CREATE TABLE faction_reputation (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    player_id UUID NOT NULL,
-    faction_id VARCHAR(50) NOT NULL,
-    reputation_value INTEGER NOT NULL DEFAULT 0,
-    reputation_tier VARCHAR(20) NOT NULL DEFAULT 'neutral',
-    last_update TIMESTAMPTZ DEFAULT NOW(),
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    UNIQUE(player_id, faction_id)
-);
-
--- Faction alliances
-CREATE TABLE faction_alliances (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    faction_a_id VARCHAR(50) NOT NULL,
-    faction_b_id VARCHAR(50) NOT NULL,
-    alliance_type VARCHAR(30) NOT NULL,
-    alliance_strength INTEGER NOT NULL DEFAULT 1,
-    formed_at TIMESTAMPTZ DEFAULT NOW(),
-    last_activity TIMESTAMPTZ DEFAULT NOW(),
-    UNIQUE(faction_a_id, faction_b_id)
-);
-
--- Territory control
-CREATE TABLE faction_territories (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    faction_id VARCHAR(50) NOT NULL,
-    territory_id VARCHAR(50) NOT NULL,
-    control_level DECIMAL(5,2) NOT NULL DEFAULT 0.00,
-    resources_generated INTEGER DEFAULT 0,
-    last_battle TIMESTAMPTZ,
-    established_at TIMESTAMPTZ DEFAULT NOW(),
-    UNIQUE(faction_id, territory_id)
-);
-
--- Faction conflicts
-CREATE TABLE faction_conflicts (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    initiator_faction_id VARCHAR(50) NOT NULL,
-    target_faction_id VARCHAR(50) NOT NULL,
-    conflict_type VARCHAR(30) NOT NULL,
-    tension_level INTEGER NOT NULL DEFAULT 1,
-    started_at TIMESTAMPTZ DEFAULT NOW(),
-    resolved_at TIMESTAMPTZ,
-    resolution_type VARCHAR(30)
-);
-```
-
-### Redis Cache Schema
-
-```redis
-# Player faction reputation
-HSET player:123:faction_reputation {
-  "arasaka": 75,
-  "militech": -25,
-  "tyger_claws": 45
+  ### Combat Integration
+              - **Faction Bonuses:** Combat modifiers based on reputation
+              - **Alliance Support:** Temporary buffs from allied factions
+              - **Territory Effects:** Combat advantages on controlled land
+              - **Faction Conflicts:** PvP modifiers in contested areas
+                
+                ## Database Architecture
+                
+                ### Primary Database (PostgreSQL)
+                  
+                  ```sql
+                  -- Faction reputation tracking
+                  CREATE TABLE faction_reputation (
+                  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                  player_id UUID NOT NULL,
+                  faction_id VARCHAR(50) NOT NULL,
+                  reputation_value INTEGER NOT NULL DEFAULT 0,
+                  reputation_tier VARCHAR(20) NOT NULL DEFAULT 'neutral',
+                  last_update TIMESTAMPTZ DEFAULT NOW(),
+                  created_at TIMESTAMPTZ DEFAULT NOW(),
+                  UNIQUE(player_id, faction_id)
+                  );
+                  
+                  -- Faction alliances
+                  CREATE TABLE faction_alliances (
+                  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                  faction_a_id VARCHAR(50) NOT NULL,
+                  faction_b_id VARCHAR(50) NOT NULL,
+                  alliance_type VARCHAR(30) NOT NULL,
+                  alliance_strength INTEGER NOT NULL DEFAULT 1,
+                  formed_at TIMESTAMPTZ DEFAULT NOW(),
+                  last_activity TIMESTAMPTZ DEFAULT NOW(),
+                  UNIQUE(faction_a_id, faction_b_id)
+                  );
+                  
+                  -- Territory control
+                  CREATE TABLE faction_territories (
+                  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                  faction_id VARCHAR(50) NOT NULL,
+                  territory_id VARCHAR(50) NOT NULL,
+                  control_level DECIMAL(5,2) NOT NULL DEFAULT 0.00,
+                  resources_generated INTEGER DEFAULT 0,
+                  last_battle TIMESTAMPTZ,
+                  established_at TIMESTAMPTZ DEFAULT NOW(),
+                  UNIQUE(faction_id, territory_id)
+                  );
+                  
+                  -- Faction conflicts
+                  CREATE TABLE faction_conflicts (
+                  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                  initiator_faction_id VARCHAR(50) NOT NULL,
+                  target_faction_id VARCHAR(50) NOT NULL,
+                  conflict_type VARCHAR(30) NOT NULL,
+                  tension_level INTEGER NOT NULL DEFAULT 1,
+                  started_at TIMESTAMPTZ DEFAULT NOW(),
+                  resolved_at TIMESTAMPTZ,
+                  resolution_type VARCHAR(30)
+                  );
+                  ```
+                
+                ### Redis Cache Schema
+                  
+                  ```redis
+                # Player faction reputation
+                  HSET player:123:faction_reputation {
+"arasaka": 75,
+"militech": -25,
+"tyger_claws": 45
 }
 
 # Faction alliance data
-HSET alliance:arasaka:militech {
-  "type": "trade_alliance",
-  "strength": 85,
-  "formed_at": "2025-01-15T10:00:00Z"
+  HSET alliance:arasaka:militech {
+"type": "trade_alliance",
+"strength": 85,
+"formed_at": "2025-01-15T10:00:00Z"
 }
 
 # Territory control cache
-ZADD territory:night_city_center:control 95 "arasaka" 85 "militech" 75 "tyger_claws"
-```
-
-## API Specifications
-
-### Reputation API
-```yaml
+  ZADD territory:night_city_center:control 95 "arasaka" 85 "militech" 75 "tyger_claws"
+  ```
+  
+  ## API Specifications
+  
+  ### Reputation API
+  ```yaml
 openapi: 3.0.0
 paths:
   /api/v1/factions/reputation:
@@ -258,10 +258,10 @@ paths:
       summary: Get player reputation with specific faction
     post:
       summary: Update player reputation (admin/internal)
-```
-
-### Alliance API
-```yaml
+  ```
+  
+  ### Alliance API
+  ```yaml
 openapi: 3.0.0
 paths:
   /api/v1/factions/alliances:
@@ -274,10 +274,10 @@ paths:
       summary: Update alliance strength
     delete:
       summary: Break alliance
-```
-
-### Territory API
-```yaml
+  ```
+  
+  ### Territory API
+  ```yaml
 openapi: 3.0.0
 paths:
   /api/v1/factions/territories:
@@ -286,133 +286,133 @@ paths:
   /api/v1/factions/territories/{territoryId}/control:
     put:
       summary: Update territory control
-```
+  ```
 
-## Implementation Roadmap
+  ## Implementation Roadmap
 
-### Phase 1: Core Reputation System (3 weeks)
-- [ ] Implement reputation tracking and tier calculation
-- [ ] Create reputation update mechanisms
-- [ ] Add reputation-based access control
-- [ ] Set up reputation persistence and caching
-
-### Phase 2: Alliance System (2 weeks)
-- [ ] Build alliance formation and management
-- [ ] Implement alliance benefits distribution
-- [ ] Create alliance conflict resolution
-- [ ] Add alliance analytics and monitoring
-
-### Phase 3: Territory Control (3 weeks)
-- [ ] Develop territory ownership mechanics
-- [ ] Implement territory resource generation
-- [ ] Create territory war systems
-- [ ] Add territory-based gameplay modifiers
-
-### Phase 4: Conflict Resolution (2 weeks)
-- [ ] Build conflict detection and escalation
-- [ ] Implement diplomatic resolution options
-- [ ] Create economic pressure mechanics
-- [ ] Add intelligence operation framework
-
-### Phase 5: Gameplay Integration (2 weeks)
-- [ ] Integrate with quest system
-- [ ] Connect with economy system
-- [ ] Add combat faction bonuses
-- [ ] Implement cross-system reputation sharing
-
-## Security Considerations
-
-### Reputation Integrity
-- **Server-Side Validation:** All reputation changes validated on server
-- **Audit Trail:** Complete history of reputation changes
-- **Anti-Cheat:** Detection of reputation farming exploits
-- **Rate Limiting:** Prevent reputation spam updates
-
-### Alliance Security
-- **Authorization:** Only faction leaders can form alliances
-- **Verification:** Alliance benefits validated against permissions
-- **Monitoring:** Suspicious alliance patterns flagged
-
-## Monitoring & Observability
-
-### Key Metrics
-- **Reputation Distribution:** Average reputation levels per faction
-- **Alliance Stability:** Alliance formation/breakage rates
-- **Territory Control:** Percentage of controlled territories
-- **Conflict Frequency:** Number of active conflicts
-
-### Alerts
-- **Reputation Anomalies:** Unusual reputation changes
-- **Alliance Issues:** Broken alliances or benefit exploits
-- **Territory Threats:** Sudden control changes
-- **System Performance:** Latency spikes in faction operations
-
-## Scaling Strategy
-
-### Horizontal Scaling
-- **Reputation Service:** Sharded by player_id ranges
-- **Alliance Service:** Replicated for read-heavy operations
-- **Territory Service:** Geo-partitioned by region
-- **Conflict Service:** Event-driven with message queues
-
-### Geographic Distribution
-- **Regional Factions:** Factions limited to geographic areas
-- **Cross-Region Alliances:** Eventual consistency for alliances
-- **Global Reputation:** Unified reputation across regions
-
-## Risk Assessment
-
-### High Risk Scenarios
-- **Reputation Exploitation:** Players farming reputation unfairly
-- **Alliance Manipulation:** Exploits in alliance benefit systems
-- **Territory Griefing:** Constant territory flipping by griefers
-
-### Mitigation Strategies
-- **Validation Layers:** Multi-level reputation change validation
-- **Rate Limiting:** Prevent rapid reputation changes
-- **Monitoring:** Real-time anomaly detection
-- **Rollback Mechanisms:** Reputation rollback capabilities
-
-## Cost Optimization
-
-### Infrastructure Costs
-- **Database:** Aurora Serverless for variable faction activity
-- **Cache:** Redis Cluster for reputation data
-- **Compute:** Auto-scaling based on player activity
-
-### Operational Costs
-- **Monitoring:** Automated alerts reduce manual monitoring
-- **Caching:** Reduce database load for reputation queries
-- **Batch Processing:** Background reputation calculations
-
-## Follow-up Tasks
-
-### Database Agent (#2210)
-- Design PostgreSQL schema with proper indexing for reputation queries
-- Implement Redis caching strategy for hot reputation data
-- Create database migrations for faction system tables
-- Set up monitoring for reputation data integrity
-
-### API Designer (#2197)
-- Create OpenAPI specifications for all faction APIs
-- Define WebSocket events for reputation and alliance updates
-- Document request/response schemas for faction operations
-- Create API rate limiting specifications
-
-### Backend Agent (#2220)
-- Implement Faction Reputation Service with optimized calculations
-- Build Alliance Management Service with validation
-- Create Territory Control Service with conflict resolution
-- Develop Conflict Resolution Service with escalation mechanics
-
-### DevOps Agent (#2224)
-- Set up Kubernetes deployments for faction services
-- Configure Redis clusters for reputation caching
-- Implement monitoring dashboards for faction metrics
-- Create CI/CD pipelines for faction system updates
-
-### Content Writer (#2223)
-- Create faction-specific quest templates
-- Develop alliance storyline frameworks
-- Design territory control narratives
-- Build faction conflict story arcs
+  ### Phase 1: Core Reputation System (3 weeks)
+  - [ ] Implement reputation tracking and tier calculation
+  - [ ] Create reputation update mechanisms
+  - [ ] Add reputation-based access control
+  - [ ] Set up reputation persistence and caching
+  
+  ### Phase 2: Alliance System (2 weeks)
+  - [ ] Build alliance formation and management
+  - [ ] Implement alliance benefits distribution
+  - [ ] Create alliance conflict resolution
+  - [ ] Add alliance analytics and monitoring
+  
+  ### Phase 3: Territory Control (3 weeks)
+  - [ ] Develop territory ownership mechanics
+  - [ ] Implement territory resource generation
+  - [ ] Create territory war systems
+  - [ ] Add territory-based gameplay modifiers
+  
+  ### Phase 4: Conflict Resolution (2 weeks)
+  - [ ] Build conflict detection and escalation
+  - [ ] Implement diplomatic resolution options
+  - [ ] Create economic pressure mechanics
+  - [ ] Add intelligence operation framework
+  
+  ### Phase 5: Gameplay Integration (2 weeks)
+  - [ ] Integrate with quest system
+  - [ ] Connect with economy system
+  - [ ] Add combat faction bonuses
+  - [ ] Implement cross-system reputation sharing
+  
+  ## Security Considerations
+  
+  ### Reputation Integrity
+  - **Server-Side Validation:** All reputation changes validated on server
+  - **Audit Trail:** Complete history of reputation changes
+  - **Anti-Cheat:** Detection of reputation farming exploits
+  - **Rate Limiting:** Prevent reputation spam updates
+  
+  ### Alliance Security
+  - **Authorization:** Only faction leaders can form alliances
+  - **Verification:** Alliance benefits validated against permissions
+  - **Monitoring:** Suspicious alliance patterns flagged
+  
+  ## Monitoring & Observability
+  
+  ### Key Metrics
+  - **Reputation Distribution:** Average reputation levels per faction
+  - **Alliance Stability:** Alliance formation/breakage rates
+  - **Territory Control:** Percentage of controlled territories
+  - **Conflict Frequency:** Number of active conflicts
+  
+  ### Alerts
+  - **Reputation Anomalies:** Unusual reputation changes
+  - **Alliance Issues:** Broken alliances or benefit exploits
+  - **Territory Threats:** Sudden control changes
+  - **System Performance:** Latency spikes in faction operations
+  
+  ## Scaling Strategy
+  
+  ### Horizontal Scaling
+  - **Reputation Service:** Sharded by player_id ranges
+  - **Alliance Service:** Replicated for read-heavy operations
+  - **Territory Service:** Geo-partitioned by region
+  - **Conflict Service:** Event-driven with message queues
+  
+  ### Geographic Distribution
+  - **Regional Factions:** Factions limited to geographic areas
+  - **Cross-Region Alliances:** Eventual consistency for alliances
+  - **Global Reputation:** Unified reputation across regions
+  
+  ## Risk Assessment
+  
+  ### High Risk Scenarios
+  - **Reputation Exploitation:** Players farming reputation unfairly
+  - **Alliance Manipulation:** Exploits in alliance benefit systems
+  - **Territory Griefing:** Constant territory flipping by griefers
+  
+  ### Mitigation Strategies
+  - **Validation Layers:** Multi-level reputation change validation
+  - **Rate Limiting:** Prevent rapid reputation changes
+  - **Monitoring:** Real-time anomaly detection
+  - **Rollback Mechanisms:** Reputation rollback capabilities
+  
+  ## Cost Optimization
+  
+  ### Infrastructure Costs
+  - **Database:** Aurora Serverless for variable faction activity
+  - **Cache:** Redis Cluster for reputation data
+  - **Compute:** Auto-scaling based on player activity
+  
+  ### Operational Costs
+  - **Monitoring:** Automated alerts reduce manual monitoring
+  - **Caching:** Reduce database load for reputation queries
+  - **Batch Processing:** Background reputation calculations
+  
+  ## Follow-up Tasks
+  
+  ### Database Agent (#2210)
+  - Design PostgreSQL schema with proper indexing for reputation queries
+  - Implement Redis caching strategy for hot reputation data
+  - Create database migrations for faction system tables
+  - Set up monitoring for reputation data integrity
+  
+  ### API Designer (#2197)
+  - Create OpenAPI specifications for all faction APIs
+  - Define WebSocket events for reputation and alliance updates
+  - Document request/response schemas for faction operations
+  - Create API rate limiting specifications
+  
+  ### Backend Agent (#2220)
+  - Implement Faction Reputation Service with optimized calculations
+  - Build Alliance Management Service with validation
+  - Create Territory Control Service with conflict resolution
+  - Develop Conflict Resolution Service with escalation mechanics
+  
+  ### DevOps Agent (#2224)
+  - Set up Kubernetes deployments for faction services
+  - Configure Redis clusters for reputation caching
+  - Implement monitoring dashboards for faction metrics
+  - Create CI/CD pipelines for faction system updates
+  
+  ### Content Writer (#2223)
+  - Create faction-specific quest templates
+  - Develop alliance storyline frameworks
+  - Design territory control narratives
+  - Build faction conflict story arcs

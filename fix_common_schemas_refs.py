@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-import os
 import glob
+import os
 import re
 
 # Define correct paths for different directories
@@ -21,6 +21,7 @@ PATH_CORRECTIONS = {
     'proto/openapi/referral-domain/': '../common-schemas.yaml',
     'proto/openapi/cosmetic-domain/': '../common-schemas.yaml',
 }
+
 
 def fix_file(file_path, correct_path):
     """Fix common-schemas.yaml references in a file"""
@@ -44,6 +45,7 @@ def fix_file(file_path, correct_path):
         print(f"Error processing {file_path}: {e}")
         return False
 
+
 def main():
     """Main function"""
     fixed_count = 0
@@ -58,6 +60,7 @@ def main():
                     fixed_count += 1
 
     print(f"Fixed {fixed_count} files")
+
 
 if __name__ == '__main__':
     main()

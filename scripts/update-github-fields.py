@@ -12,15 +12,15 @@ Usage:
 """
 
 import argparse
-import sys
 import os
+import sys
 from pathlib import Path
 
 # Add scripts to path for imports
 sys.path.insert(0, str(Path(__file__).parent))
 
 from core.config import ConfigManager
-from core.logger import Logger
+
 
 class GitHubFieldsUpdater:
     """Updates TYPE and CHECK fields in GitHub Project items"""
@@ -106,13 +106,14 @@ class GitHubFieldsUpdater:
 
         return True
 
+
 def main():
     parser = argparse.ArgumentParser(description='Update GitHub Project TYPE and CHECK fields')
     parser.add_argument('--item-id', required=True, help='GitHub Project item ID')
     parser.add_argument('--type', choices=['API', 'MIGRATION', 'DATA', 'BACKEND', 'UE5'],
-                       help='Task type (API, MIGRATION, DATA, BACKEND, UE5)')
+                        help='Task type (API, MIGRATION, DATA, BACKEND, UE5)')
     parser.add_argument('--check', choices=['0', '1'],
-                       help='Check status (0=not checked, 1=checked)')
+                        help='Check status (0=not checked, 1=checked)')
 
     args = parser.parse_args()
 
@@ -131,6 +132,7 @@ def main():
     except Exception as e:
         print(f"[ERROR] Failed to update fields: {e}")
         sys.exit(1)
+
 
 if __name__ == '__main__':
     main()

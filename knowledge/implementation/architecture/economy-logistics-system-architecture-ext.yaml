@@ -1,135 +1,135 @@
-  database_schema:
-    tables:
-      - name: transport_shipments
-        description: Перевозки
-        fields:
-          - id: UUID (PK)
-          - player_id: UUID (FK accounts)
-          - origin_region_id: UUID (FK regions)
-          - destination_region_id: UUID (FK regions)
-          - transport_type: ENUM (ground, air, rail, courier, player_pickup)
-          - cargo_data: JSONB (список предметов, вес, объём, стоимость)
-          - route_data: JSONB (маршрут, расстояние, время доставки)
-          - status: ENUM (DRAFT, SCHEDULED, IN_TRANSIT, DELAYED, DELIVERED, LOST, CANCELLED)
-          - scheduled_departure: TIMESTAMP (nullable)
-          - actual_departure: TIMESTAMP (nullable)
-          - estimated_arrival: TIMESTAMP (nullable)
-          - actual_arrival: TIMESTAMP (nullable)
-          - current_position: POINT (nullable, для отслеживания)
-          - insurance_plan: ENUM (none, basic, premium, full, nullable)
-          - insurance_policy_id: UUID (FK insurance_policies, nullable)
-          - escort_type: ENUM (none, npc_escort, player_escort, armored_transport, nullable)
-          - escort_id: UUID (nullable)
-          - base_cost: DECIMAL(10,2)
-          - insurance_cost: DECIMAL(10,2)
-          - escort_cost: DECIMAL(10,2)
-          - total_cost: DECIMAL(10,2)
-          - sla_target_hours: INTEGER
-          - created_at: TIMESTAMP
-          - updated_at: TIMESTAMP
-        indexes:
-          - player_id, status
-          - status, scheduled_departure
-          - origin_region_id, destination_region_id
-          - current_position (GIST index для геопозиции)
+database_schema:
+  tables:
+    - name: transport_shipments
+      description: Перевозки
+      fields:
+        - id: UUID (PK)
+        - player_id: UUID (FK accounts)
+        - origin_region_id: UUID (FK regions)
+        - destination_region_id: UUID (FK regions)
+        - transport_type: ENUM (ground, air, rail, courier, player_pickup)
+        - cargo_data: JSONB (список предметов, вес, объём, стоимость)
+        - route_data: JSONB (маршрут, расстояние, время доставки)
+        - status: ENUM (DRAFT, SCHEDULED, IN_TRANSIT, DELAYED, DELIVERED, LOST, CANCELLED)
+        - scheduled_departure: TIMESTAMP (nullable)
+        - actual_departure: TIMESTAMP (nullable)
+        - estimated_arrival: TIMESTAMP (nullable)
+        - actual_arrival: TIMESTAMP (nullable)
+        - current_position: POINT (nullable, для отслеживания)
+        - insurance_plan: ENUM (none, basic, premium, full, nullable)
+        - insurance_policy_id: UUID (FK insurance_policies, nullable)
+        - escort_type: ENUM (none, npc_escort, player_escort, armored_transport, nullable)
+        - escort_id: UUID (nullable)
+        - base_cost: DECIMAL(10,2)
+        - insurance_cost: DECIMAL(10,2)
+        - escort_cost: DECIMAL(10,2)
+        - total_cost: DECIMAL(10,2)
+        - sla_target_hours: INTEGER
+        - created_at: TIMESTAMP
+        - updated_at: TIMESTAMP
+      indexes:
+        - player_id, status
+        - status, scheduled_departure
+        - origin_region_id, destination_region_id
+        - current_position (GIST index для геопозиции)
 
-      - name: transport_routes
-        description: Маршруты перевозок
-        fields:
-          - id: UUID (PK)
-          - shipment_id: UUID (FK transport_shipments)
-          - route_type: ENUM (local, regional, global)
-          - waypoints: POINT[] (массив точек маршрута)
-          - distance_km: DECIMAL(10,2)
-          - estimated_hours: DECIMAL(10,2)
-          - base_risk_level: DECIMAL(3,2) (0.00-1.00)
-          - created_at: TIMESTAMP
-        indexes:
-          - shipment_id
+    - name: transport_routes
+      description: Маршруты перевозок
+      fields:
+        - id: UUID (PK)
+        - shipment_id: UUID (FK transport_shipments)
+        - route_type: ENUM (local, regional, global)
+        - waypoints: POINT[] (массив точек маршрута)
+        - distance_km: DECIMAL(10,2)
+        - estimated_hours: DECIMAL(10,2)
+        - base_risk_level: DECIMAL(3,2) (0.00-1.00)
+        - created_at: TIMESTAMP
+      indexes:
+        - shipment_id
 
-      - name: transport_incidents
-        description: Инциденты перевозок
-        fields:
-          - id: UUID (PK)
-          - shipment_id: UUID (FK transport_shipments)
-          - incident_type: ENUM (bandit_attack, accident, customs_delay, weather, other)
-          - severity: ENUM (low, medium, high, critical)
-          - description: TEXT
-          - position: POINT
-          - occurred_at: TIMESTAMP
-          - resolved_at: TIMESTAMP (nullable)
-          - cargo_loss_percentage: DECIMAL(5,2) (0.00-100.00)
-          - delay_hours: INTEGER
-          - resolved: BOOLEAN
-        indexes:
-          - shipment_id, occurred_at
-          - incident_type, severity
+    - name: transport_incidents
+      description: Инциденты перевозок
+      fields:
+        - id: UUID (PK)
+        - shipment_id: UUID (FK transport_shipments)
+        - incident_type: ENUM (bandit_attack, accident, customs_delay, weather, other)
+        - severity: ENUM (low, medium, high, critical)
+        - description: TEXT
+        - position: POINT
+        - occurred_at: TIMESTAMP
+        - resolved_at: TIMESTAMP (nullable)
+        - cargo_loss_percentage: DECIMAL(5,2) (0.00-100.00)
+        - delay_hours: INTEGER
+        - resolved: BOOLEAN
+      indexes:
+        - shipment_id, occurred_at
+        - incident_type, severity
 
-      - name: transport_tracking
-        description: Отслеживание позиций перевозок
-        fields:
-          - id: UUID (PK)
-          - shipment_id: UUID (FK transport_shipments)
-          - position: POINT
-          - speed_kmh: DECIMAL(10,2)
-          - progress_percentage: DECIMAL(5,2) (0.00-100.00)
-          - recorded_at: TIMESTAMP
-        indexes:
-          - shipment_id, recorded_at
-          - position (GIST index)
+    - name: transport_tracking
+      description: Отслеживание позиций перевозок
+      fields:
+        - id: UUID (PK)
+        - shipment_id: UUID (FK transport_shipments)
+        - position: POINT
+        - speed_kmh: DECIMAL(10,2)
+        - progress_percentage: DECIMAL(5,2) (0.00-100.00)
+        - recorded_at: TIMESTAMP
+      indexes:
+        - shipment_id, recorded_at
+        - position (GIST index)
 
-      - name: transport_sla_metrics
-        description: Метрики SLA перевозок
-        fields:
-          - id: UUID (PK)
-          - shipment_id: UUID (FK transport_shipments)
-          - target_hours: INTEGER
-          - actual_hours: INTEGER (nullable)
-          - on_time: BOOLEAN (nullable)
-          - sla_violated: BOOLEAN
-          - violation_reason: TEXT (nullable)
-          - measured_at: TIMESTAMP
-        indexes:
-          - shipment_id
-          - sla_violated, measured_at
+    - name: transport_sla_metrics
+      description: Метрики SLA перевозок
+      fields:
+        - id: UUID (PK)
+        - shipment_id: UUID (FK transport_shipments)
+        - target_hours: INTEGER
+        - actual_hours: INTEGER (nullable)
+        - on_time: BOOLEAN (nullable)
+        - sla_violated: BOOLEAN
+        - violation_reason: TEXT (nullable)
+        - measured_at: TIMESTAMP
+      indexes:
+        - shipment_id
+        - sla_violated, measured_at
 
 technical_specification:
   backend_requirements:
     - Реализация Logistics Manager в logistics-service:
-      - CRUD операции с перевозками
-      - Управление жизненным циклом (переходы состояний)
-      - Валидация данных перевозок
+        - CRUD операции с перевозками
+        - Управление жизненным циклом (переходы состояний)
+        - Валидация данных перевозок
     - Реализация Quote Calculator:
-      - Расчёт базовой стоимости
-      - Учёт рисков, страхования, эскорта
-      - Финальная стоимость
+        - Расчёт базовой стоимости
+        - Учёт рисков, страхования, эскорта
+        - Финальная стоимость
     - Реализация Route Planner:
-      - Планирование маршрутов
-      - Расчёт расстояний и времени
-      - Оптимизация маршрутов
+        - Планирование маршрутов
+        - Расчёт расстояний и времени
+        - Оптимизация маршрутов
     - Реализация Transport Manager:
-      - Каталог транспорта
-      - Резервирование транспорта
+        - Каталог транспорта
+        - Резервирование транспорта
     - Реализация Risk Engine:
-      - Расчёт вероятностей рисков
-      - Моделирование инцидентов
-      - Интеграция с экономическими событиями
+        - Расчёт вероятностей рисков
+        - Моделирование инцидентов
+        - Интеграция с экономическими событиями
     - Реализация Insurance Manager:
-      - Расчёт стоимости страхования
-      - Создание полисов
-      - Обработка требований
+        - Расчёт стоимости страхования
+        - Создание полисов
+        - Обработка требований
     - Реализация Escort Manager:
-      - Найм эскорта
-      - Расчёт влияния на риски
+        - Найм эскорта
+        - Расчёт влияния на риски
     - Реализация Tracking Manager:
-      - Отслеживание позиций
-      - WebSocket поток
+        - Отслеживание позиций
+        - WebSocket поток
     - Реализация SLA Monitor:
-      - Мониторинг времени доставки
-      - Генерация алертов
+        - Мониторинг времени доставки
+        - Генерация алертов
     - Реализация Incident Manager:
-      - Обработка инцидентов
-      - Интеграция со страхованием
+        - Обработка инцидентов
+        - Интеграция со страхованием
     - Создание схемы БД (transport_shipments, transport_routes, transport_incidents, transport_tracking, transport_sla_metrics)
 
   performance_requirements:

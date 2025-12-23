@@ -13,7 +13,8 @@
 
 ## Краткое описание
 
-Inventory System управляет предметами игроков, экипировкой, хранилищем с поддержкой стеков, слотов, bind-on-pickup/equip и прочности предметов.
+Inventory System управляет предметами игроков, экипировкой, хранилищем с поддержкой стеков, слотов, bind-on-pickup/equip
+и прочности предметов.
 
 ## Связанные документы
 
@@ -88,18 +89,21 @@ flowchart TD
 **Подкомпоненты:**
 
 #### Storage Manager
+
 - Управление слотами (bag, bank)
 - Стаки предметов
 - Добавление/удаление
 - Сортировка
 
 #### Equipment Manager
+
 - Экипировка предметов
 - Валидация требований (level, class)
 - Слоты экипировки
 - Bonuses расчёт
 
 #### Durability Manager
+
 - Снижение прочности
 - Ремонт предметов
 - Разрушение при 0 durability
@@ -168,11 +172,13 @@ CREATE INDEX idx_item_rarity ON item_definitions(rarity);
 ### 3.1. Inventory Management
 
 #### GET /api/v1/economy/inventory
+
 **Получить инвентарь**
 
 Parameters: `storage_type` (bag, bank, equipped)
 
 Response:
+
 ```json
 {
   "items": [{
@@ -191,14 +197,17 @@ Response:
 ```
 
 #### POST /api/v1/economy/inventory/add
+
 **Добавить предмет** (internal, используется Loot Service)
 
 Request: `{"item_id": "uuid", "quantity": 5}`
 
 #### DELETE /api/v1/economy/inventory/{inventory_id}
+
 **Удалить предмет**
 
 #### POST /api/v1/economy/inventory/move
+
 **Переместить предмет**
 
 Request: `{"inventory_id": "uuid", "to_slot": 10}`
@@ -206,17 +215,20 @@ Request: `{"inventory_id": "uuid", "to_slot": 10}`
 ### 3.2. Equipment Management
 
 #### POST /api/v1/economy/inventory/equip
+
 **Экипировать**
 
 Request: `{"inventory_id": "uuid", "equipment_slot": "weapon"}`
 
 **Валидация:**
+
 - Проверка level requirement
 - Проверка class requirement
 - Проверка equipment slot
 - Bind-on-equip обработка
 
 #### POST /api/v1/economy/inventory/unequip
+
 **Снять**
 
 Request: `{"equipment_slot": "weapon"}`
@@ -224,6 +236,7 @@ Request: `{"equipment_slot": "weapon"}`
 ### 3.3. Durability
 
 #### POST /api/v1/economy/inventory/repair
+
 **Починить**
 
 Request: `{"inventory_id": "uuid"}`
@@ -236,11 +249,11 @@ Response: `{"repair_cost": 500, "durability_restored": 100}`
 
 ### 4.1. Storage Types
 
-| Type | Max Slots | Description |
-|------|-----------|-------------|
-| bag | 100 | Основная сумка |
-| bank | 500 | Банк (доступен в городах) |
-| equipped | 15 | Экипированные предметы |
+| Type     | Max Slots | Description               |
+|----------|-----------|---------------------------|
+| bag      | 100       | Основная сумка            |
+| bank     | 500       | Банк (доступен в городах) |
+| equipped | 15        | Экипированные предметы    |
 
 ### 4.2. Equipment Slots
 
@@ -254,9 +267,9 @@ Response: `{"repair_cost": 500, "durability_restored": 100}`
 
 | Bind Type | Когда срабатывает |
 |-----------|-------------------|
-| `none` | Не привязывается |
-| `pickup` | При подборе |
-| `equip` | При экипировке |
+| `none`    | Не привязывается  |
+| `pickup`  | При подборе       |
+| `equip`   | При экипировке    |
 
 ### 4.4. Durability
 
@@ -278,18 +291,23 @@ Response: `{"repair_cost": 500, "durability_restored": 100}`
 ## 6. Разбиение на подзадачи
 
 ### 6.1. Database Schema (P0)
+
 **Срок:** 1 неделя
 
 ### 6.2. Storage Manager (P0)
+
 **Срок:** 2 недели
 
 ### 6.3. Equipment Manager (P0)
+
 **Срок:** 2 недели
 
 ### 6.4. Durability System (P1)
+
 **Срок:** 1 неделя
 
 ### 6.5. Integration Layer (P1)
+
 **Срок:** 1 неделя
 
 ---
@@ -306,37 +324,4 @@ Response: `{"repair_cost": 500, "durability_restored": 100}`
 ---
 
 **Конец документа**
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

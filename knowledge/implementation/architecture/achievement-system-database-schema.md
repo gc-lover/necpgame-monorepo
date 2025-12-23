@@ -1,9 +1,11 @@
 <!-- Issue: #140887366 -->
+
 # Achievement System - Database Schema
 
 ## Обзор
 
-Схема базы данных для системы достижений, включающая определения достижений, прогресс игроков, титулы и лог событий для аналитики.
+Схема базы данных для системы достижений, включающая определения достижений, прогресс игроков, титулы и лог событий для
+аналитики.
 
 ## ERD Диаграмма
 
@@ -75,6 +77,7 @@ erDiagram
 Таблица определений достижений. Хранит информацию о всех доступных достижениях в игре.
 
 **Ключевые поля:**
+
 - `code`: Уникальный код достижения (VARCHAR(100), UNIQUE)
 - `type`: Тип достижения (one_time, progressive, recurring, hidden, seasonal, meta)
 - `category`: Категория (combat, quest, social, economy, exploration, skills, collections, special)
@@ -91,6 +94,7 @@ erDiagram
 - `sort_order`: Порядок сортировки
 
 **Индексы:**
+
 - Уникальный индекс по `code`
 - По `category` для фильтрации по категориям
 - По `type` для фильтрации по типам
@@ -103,6 +107,7 @@ erDiagram
 Таблица прогресса игроков по достижениям. Хранит информацию о прогрессе каждого игрока по каждому достижению.
 
 **Ключевые поля:**
+
 - `player_id`: ID персонажа (FK к characters)
 - `achievement_id`: ID достижения (FK к achievements)
 - `status`: Статус (locked, progress, unlocked)
@@ -112,6 +117,7 @@ erDiagram
 - `unlocked_at`: Время разблокировки (nullable)
 
 **Индексы:**
+
 - Уникальный индекс `(player_id, achievement_id)` - один прогресс на достижение
 - Композитный индекс `(player_id, status, updated_at DESC)` для получения достижений игрока
 - Композитный индекс `(achievement_id, status)` для статистики по достижениям
@@ -122,12 +128,14 @@ erDiagram
 Таблица титулов игроков. Хранит информацию о титулах, полученных за достижения.
 
 **Ключевые поля:**
+
 - `account_id`: ID аккаунта игрока
 - `title_id`: ID достижения, которое даёт титул (FK к achievements, где reward_type = title)
 - `is_equipped`: Флаг экипированного титула
 - `unlocked_at`: Время получения титула
 
 **Индексы:**
+
 - Уникальный индекс `(account_id, title_id)` - один титул на аккаунт
 - По `account_id` для поиска титулов игрока
 - Композитный индекс `(account_id, is_equipped)` для активного титула
@@ -138,6 +146,7 @@ erDiagram
 Таблица лога событий достижений для аналитики. Хранит все события, связанные с достижениями.
 
 **Ключевые поля:**
+
 - `account_id`: ID аккаунта игрока
 - `achievement_id`: ID достижения (FK к achievements)
 - `event_type`: Тип события (progress_updated, unlocked, reward_distributed)
@@ -145,6 +154,7 @@ erDiagram
 - `created_at`: Время события
 
 **Индексы:**
+
 - Композитный индекс `(account_id, created_at DESC)` для событий игрока
 - Композитный индекс `(achievement_id, created_at DESC)` для событий по достижению
 - По `created_at DESC` для аналитики по времени
@@ -214,23 +224,29 @@ erDiagram
 ### Партиционирование
 
 Для больших объемов данных рекомендуется партиционирование:
+
 - По `created_at` для таблицы `achievement_events_log` (логи событий)
 - По `account_id` для распределения нагрузки
 
 ## Миграции
 
 ### Существующие миграции:
+
 - `V1_13__achievement_tables.sql` - базовые таблицы (achievements, player_achievements)
-- `V1_50__achievement_system_enhancement.sql` - дополнение схемы (player_titles, achievement_events_log, дополнительные поля)
+- `V1_50__achievement_system_enhancement.sql` - дополнение схемы (player_titles, achievement_events_log, дополнительные
+  поля)
 
 ### Применение миграций:
+
 ```bash
 liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ```
 
 ## Соответствие архитектуре
 
-Схема БД полностью соответствует архитектуре из `knowledge/implementation/architecture/achievement-system-architecture.yaml`:
+Схема БД полностью соответствует архитектуре из
+`knowledge/implementation/architecture/achievement-system-architecture.yaml`:
+
 - [OK] Все таблицы из архитектуры созданы
 - [OK] Все поля соответствуют описанию
 - [OK] Индексы оптимизированы для частых запросов
@@ -243,6 +259,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### JSONB поля
 
 Использование JSONB для гибкого хранения:
+
 - `conditions`: Условия для разблокировки достижения
 - `rewards`: Награды за достижение (валюта, предметы, титулы)
 - `progress_data`: Дополнительные данные прогресса
@@ -251,6 +268,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Event-driven архитектура
 
 Система достижений полностью event-driven:
+
 - События обрабатываются асинхронно
 - Прогресс обновляется на основе событий
 - Лог событий используется для аналитики и восстановления состояния
@@ -258,8 +276,8 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Титулы
 
 Титулы связаны с достижениями через `title_id`:
+
 - Титул получается при разблокировке достижения с `reward_type = title`
 - Один аккаунт может иметь несколько титулов
 - Только один титул может быть экипирован одновременно
-
 

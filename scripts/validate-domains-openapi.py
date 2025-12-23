@@ -62,12 +62,12 @@ class DomainOpenAPIValidator:
         # Exclude component files that are not meant to be full OpenAPI specs
         component_patterns = [
             '-ext.yaml', '-ext1.yaml', '-ext2.yaml', '-ext3.yaml', '-ext4.yaml', '-ext5.yaml',  # Extension files
-            'schemas/',   # Schema directories
+            'schemas/',  # Schema directories
             'schemas.yaml',  # Schema files
-            'schemas/',     # Schema directories (catch all)
-            'paths/',     # Path directories
+            'schemas/',  # Schema directories (catch all)
+            'paths/',  # Path directories
             'requests/',  # Request directories
-            'responses/', # Response directories
+            'responses/',  # Response directories
             'combat-damage-service/',  # Known component subdirs
             'combat-sessions-service/',
             'combat-service/',
@@ -81,7 +81,7 @@ class DomainOpenAPIValidator:
             'notification-service/',
             'interactive-objects-service/',
             'achievement-system-service-go/',  # Exclude achievement component services
-            'realtime-subscription-service/',   # Exclude realtime subscription components
+            'realtime-subscription-service/',  # Exclude realtime subscription components
         ]
 
         filtered_yaml_files = []
@@ -98,7 +98,8 @@ class DomainOpenAPIValidator:
                 filtered_yaml_files.append(yaml_file)
 
         yaml_files = filtered_yaml_files
-        print(f"[INFO] Found {len(yaml_files)} component YAML files to validate in {domain_name} (excluded {len(all_yaml_files) - len(yaml_files) - 1} component files)")
+        print(
+            f"[INFO] Found {len(yaml_files)} component YAML files to validate in {domain_name} (excluded {len(all_yaml_files) - len(yaml_files) - 1} component files)")
 
         # Validate component files (they may not be full specs)
         domain_valid = True
@@ -223,7 +224,8 @@ class DomainOpenAPIValidator:
         if 'openapi' in spec:
             version = spec['openapi']
             if not version.startswith('3.0'):
-                self.errors.append(f"Unsupported OpenAPI version {version} in {spec_file} (need 3.0.x for Go generation)")
+                self.errors.append(
+                    f"Unsupported OpenAPI version {version} in {spec_file} (need 3.0.x for Go generation)")
                 valid = False
 
         # Check info section
@@ -263,7 +265,8 @@ class DomainOpenAPIValidator:
 
                     # operationId is required for Go code generation
                     if 'operationId' not in operation:
-                        self.errors.append(f"Missing operationId for {method.upper()} {path} in {spec_file} (required for Go generation)")
+                        self.errors.append(
+                            f"Missing operationId for {method.upper()} {path} in {spec_file} (required for Go generation)")
                         valid = False
 
                     # Check responses structure
@@ -279,7 +282,8 @@ class DomainOpenAPIValidator:
                         elif '/ws' in path or 'websocket' in path.lower():
                             success_codes = ['101', '200']
                         if not any(code in responses for code in success_codes):
-                            self.warnings.append(f"No success response ({'/'.join(success_codes)}) for {method.upper()} {path} in {spec_file}")
+                            self.warnings.append(
+                                f"No success response ({'/'.join(success_codes)}) for {method.upper()} {path} in {spec_file}")
 
         # Check schemas for Go generation compatibility
         if 'components' in spec and 'schemas' in spec['components']:
@@ -348,7 +352,8 @@ class DomainOpenAPIValidator:
                 print(f"   - {warning}")
 
         if total_errors == 0:
-            print("\n[SUCCESS] All domain OpenAPI specifications are valid for Go-backend generation (validated with oapi-codegen)!")
+            print(
+                "\n[SUCCESS] All domain OpenAPI specifications are valid for Go-backend generation (validated with oapi-codegen)!")
             return True
         else:
             print(f"\n[ERROR] {total_errors} validation errors found. Fix them before Go code generation.")

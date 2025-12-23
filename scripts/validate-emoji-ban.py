@@ -13,9 +13,9 @@ Exit codes:
     1 - Emoji/special characters found (failure)
 """
 
-import sys
 import os
 import re
+import sys
 from pathlib import Path
 
 # Forbidden Unicode character ranges (emoji and special characters)
@@ -25,22 +25,23 @@ FORBIDDEN_RANGES = [
     (0x1F300, 0x1F5FF),  # Misc Symbols and Pictographs
     (0x1F680, 0x1F6FF),  # Transport and Map
     (0x1F1E0, 0x1F1FF),  # Flags
-    (0x2600, 0x26FF),    # Misc symbols
-    (0x2700, 0x27BF),    # Dingbats
+    (0x2600, 0x26FF),  # Misc symbols
+    (0x2700, 0x27BF),  # Dingbats
     (0x1F926, 0x1F937),  # Gestures
     (0x1F645, 0x1F64F),  # Gestures
     (0x1F680, 0x1F6C5),  # Transport
     (0x1F170, 0x1F251),  # Enclosed Characters
     # Special decorative characters
-    (0x2750, 0x2757),    # Heavy punctuation
-    (0x2760, 0x2767),    # Ornamental punctuation
-    (0x2770, 0x2775),    # Dingbat arrows
-    (0x2780, 0x2789),    # Dingbat circled sans-serif numbers
-    (0x2794, 0x2797),    # Heavy arrows
-    (0x27A0, 0x27AF),    # Heavy arrows
-    (0x27B0, 0x27BF),    # Curved arrows
-    (0x2B00, 0x2BFF),    # Misc arrows and geometric shapes
+    (0x2750, 0x2757),  # Heavy punctuation
+    (0x2760, 0x2767),  # Ornamental punctuation
+    (0x2770, 0x2775),  # Dingbat arrows
+    (0x2780, 0x2789),  # Dingbat circled sans-serif numbers
+    (0x2794, 0x2797),  # Heavy arrows
+    (0x27A0, 0x27AF),  # Heavy arrows
+    (0x27B0, 0x27BF),  # Curved arrows
+    (0x2B00, 0x2BFF),  # Misc arrows and geometric shapes
 ]
+
 
 def is_forbidden_unicode(char):
     """Check if character is in forbidden Unicode ranges"""
@@ -50,11 +51,13 @@ def is_forbidden_unicode(char):
             return True
 
     # Additional specific forbidden characters (decorative symbols)
-    forbidden_chars = ['\u25ba', '\u25c4', '\u25b2', '\u25bc', '\u25c6', '\u25c7', '\u25cf', '\u25cb', '\u25a0', '\u25a1']
+    forbidden_chars = ['\u25ba', '\u25c4', '\u25b2', '\u25bc', '\u25c6', '\u25c7', '\u25cf', '\u25cb', '\u25a0',
+                       '\u25a1']
     if char in forbidden_chars:
         return True
 
     return False
+
 
 def check_file_for_emoji(file_path):
     """Check a single file for forbidden Unicode characters"""
@@ -80,6 +83,7 @@ def check_file_for_emoji(file_path):
         return []
 
     return violations
+
 
 def main():
     import argparse
@@ -147,6 +151,7 @@ def main():
         else:
             print("[INFO] No files to check for emoji")
         sys.exit(0)
+
 
 if __name__ == '__main__':
     main()

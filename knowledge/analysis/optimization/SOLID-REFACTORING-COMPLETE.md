@@ -5,62 +5,68 @@
 ### Созданные классы
 
 #### 1. PlayerIdResolver (SRP: разрешение ID игроков)
+
 - **Файлы**: `PlayerIdResolver.h`, `PlayerIdResolver.cpp`
 - **Размер**: ~100 строк
 - **Ответственность**: Только поиск и разрешение ID игроков
 - **Методы**:
-  - `GetPlayerIdFromController()` - получение ID из контроллера
-  - `FindControllerByPlayerId()` - поиск контроллера по ID
-  - `BuildControllerMap()` - построение карты контроллеров
+    - `GetPlayerIdFromController()` - получение ID из контроллера
+    - `FindControllerByPlayerId()` - поиск контроллера по ID
+    - `BuildControllerMap()` - построение карты контроллеров
 
 #### 2. EntityStateHistoryManager (SRP: управление историей)
+
 - **Файлы**: `EntityStateHistoryManager.h`, `EntityStateHistoryManager.cpp`
 - **Размер**: ~80 строк
 - **Ответственность**: Только управление историей состояний
 - **Методы**:
-  - `AddSnapshot()` - добавление снимка
-  - `GetHistory()` - получение истории
-  - `GetAllEntityIds()` - получение всех ID
-  - `CleanupOldSnapshots()` - очистка старых снимков
-  - `Clear()` - очистка всей истории
+    - `AddSnapshot()` - добавление снимка
+    - `GetHistory()` - получение истории
+    - `GetAllEntityIds()` - получение всех ID
+    - `CleanupOldSnapshots()` - очистка старых снимков
+    - `Clear()` - очистка всей истории
 
 #### 3. IMovementInterpolator + ULinearMovementInterpolator (OCP: интерполяция)
+
 - **Файлы**: `MovementInterpolator.h`, `MovementInterpolator.cpp`
 - **Размер**: ~50 строк
 - **Ответственность**: Только интерполяция значений
 - **Интерфейс**: `IMovementInterpolator`
 - **Реализация**: `ULinearMovementInterpolator`
 - **Методы**:
-  - `InterpolateLocation()` - интерполяция позиции
-  - `InterpolateYaw()` - интерполяция Yaw
-  - `InterpolateVelocity()` - интерполяция скорости
-  - `InterpolateSnapshot()` - интерполяция всего снимка
+    - `InterpolateLocation()` - интерполяция позиции
+    - `InterpolateYaw()` - интерполяция Yaw
+    - `InterpolateVelocity()` - интерполяция скорости
+    - `InterpolateSnapshot()` - интерполяция всего снимка
 
 #### 4. IRotationFilter + UYawOnlyRotationFilter (OCP: фильтрация ротации)
+
 - **Файлы**: `RotationFilter.h`, `RotationFilter.cpp`
 - **Размер**: ~40 строк
 - **Ответственность**: Только фильтрация ротации
 - **Интерфейс**: `IRotationFilter`
 - **Реализация**: `UYawOnlyRotationFilter`
 - **Методы**:
-  - `FilterRotation()` - фильтрация ротации (только Yaw)
-  - `ShouldUpdateRotation()` - проверка необходимости обновления
+    - `FilterRotation()` - фильтрация ротации (только Yaw)
+    - `ShouldUpdateRotation()` - проверка необходимости обновления
 
 #### 5. IMovementApplier + реализации (OCP + DIP: применение движения)
+
 - **Файлы**: `MovementApplier.h`, `MovementApplier.cpp`
 - **Размер**: ~150 строк
 - **Ответственность**: Только применение движения
 - **Интерфейс**: `IMovementApplier`
 - **Реализации**:
-  - `UCharacterMovementApplier` - для Character с CharacterMovementComponent
-  - `UBasicPawnMovementApplier` - для обычных Pawn
+    - `UCharacterMovementApplier` - для Character с CharacterMovementComponent
+    - `UBasicPawnMovementApplier` - для обычных Pawn
 - **Методы**:
-  - `ApplyLocation()` - применение позиции
-  - `ApplyRotation()` - применение ротации
-  - `ApplyVelocity()` - применение скорости
-  - `ShouldTeleport()` - проверка необходимости телепорта
+    - `ApplyLocation()` - применение позиции
+    - `ApplyRotation()` - применение ротации
+    - `ApplyVelocity()` - применение скорости
+    - `ShouldTeleport()` - проверка необходимости телепорта
 
 #### 6. WebSocketMovementSyncComponent (координатор)
+
 - **Файлы**: `WebSocketMovementSyncComponent.h`, `WebSocketMovementSyncComponent.cpp`
 - **Размер**: ~250 строк (было 587)
 - **Ответственность**: Только координация работы компонентов
@@ -69,6 +75,7 @@
 ## [SYMBOL] Сравнение до и после
 
 ### До рефакторинга:
+
 - **1 класс**: 587 строк
 - **6+ ответственностей**
 - **Жёсткая привязка** к Lyra классам
@@ -77,6 +84,7 @@
 - **Сложно расширять**
 
 ### После рефакторинга:
+
 - **6 классов**: ~100 строк каждый
 - **1 ответственность** на класс
 - **Зависимость от интерфейсов** (DIP)
@@ -87,6 +95,7 @@
 ## [TARGET] Соблюдение SOLID
 
 ### [OK] Single Responsibility Principle (SRP)
+
 - Каждый класс имеет одну ответственность
 - `PlayerIdResolver` - только поиск контроллеров
 - `EntityStateHistoryManager` - только управление историей
@@ -96,24 +105,28 @@
 - `WebSocketMovementSyncComponent` - только координация
 
 ### [OK] Open/Closed Principle (OCP)
+
 - Интерфейсы позволяют расширять функциональность без изменения кода
 - Можно добавить новые типы интерполяции через `IMovementInterpolator`
 - Можно добавить новые фильтры ротации через `IRotationFilter`
 - Можно добавить новые способы применения движения через `IMovementApplier`
 
 ### [OK] Liskov Substitution Principle (LSP)
+
 - Все реализации интерфейсов заменяемы
 - `ULinearMovementInterpolator` заменяет `IMovementInterpolator`
 - `UYawOnlyRotationFilter` заменяет `IRotationFilter`
 - `UCharacterMovementApplier` и `UBasicPawnMovementApplier` заменяют `IMovementApplier`
 
 ### [OK] Interface Segregation Principle (ISP)
+
 - Интерфейсы маленькие и специфичные
 - `IMovementInterpolator` - только интерполяция
 - `IRotationFilter` - только фильтрация
 - `IMovementApplier` - только применение
 
 ### [OK] Dependency Inversion Principle (DIP)
+
 - Зависимости на абстракциях, а не на конкретных классах
 - `WebSocketMovementSyncComponent` зависит от интерфейсов
 - Можно легко заменить реализации без изменения координатора
@@ -139,6 +152,7 @@ Net/
 ## [SYMBOL] Использование
 
 ### Инициализация компонентов
+
 ```cpp
 void UWebSocketMovementSyncComponent::BeginPlay()
 {
@@ -150,6 +164,7 @@ void UWebSocketMovementSyncComponent::BeginPlay()
 ```
 
 ### Использование интерфейсов
+
 ```cpp
 IMovementInterpolator* Interpolator = GetMovementInterpolator();
 IRotationFilter* Filter = GetRotationFilter();

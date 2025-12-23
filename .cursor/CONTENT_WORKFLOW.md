@@ -7,12 +7,15 @@
 **КРИТИЧНО:** Запрещено использовать эмодзи и специальные Unicode символы в коде!
 
 ### Почему запрещено:
+
 — [FORBIDDEN] Ломают выполнение скриптов на Windows
+
 - [FORBIDDEN] Могут вызывать ошибки в терминале
 - [FORBIDDEN] Создают проблемы с кодировкой
 - [FORBIDDEN] Нарушают совместимость между ОС
 
 ### Что use вместо:
+
 - [OK] `:smile:` вместо [EMOJI]
 - [OK] `[FORBIDDEN]` вместо [FORBIDDEN]
 - [OK] `[OK]` вместо [OK]
@@ -20,6 +23,7 @@
 - [OK] `[WARNING]` вместо [WARNING]
 
 ### Автоматическая проверка:
+
 - Pre-commit hooks блокируют коммиты с эмодзи
 - Git hooks проверяют staged файлы
 - Исключения: `.cursor/rules/*` (документация), `.githooks/*`
@@ -92,17 +96,18 @@ Issue: #{number}
 #### Сценарий C: Таблицы есть + >10 квестов (массовый импорт через миграции)
 
 - **Действие:** Генерация SQL миграций через оптимизированные скрипты
-- **Скрипты:** `scripts/generate-content-migrations.sh` (Bash) или `scripts/generate-content-migrations.ps1` (PowerShell)
+- **Скрипты:** `scripts/generate-content-migrations.sh` (Bash) или `scripts/generate-content-migrations.ps1` (
+  PowerShell)
 - **Формат:** 1 файл YAML = 1 миграция (с версией из `metadata.version`)
 - **Миграции в enterprise-grade структуре:**
-  - Квесты: `infrastructure/liquibase/migrations/data/quests/V*__data_quest_*.sql` (→ `specialized-domain`)
-  - NPC: `infrastructure/liquibase/migrations/data/npcs/V*__data_npc_*.sql` (→ `specialized-domain`)
-  - Диалоги: `infrastructure/liquibase/migrations/data/dialogues/V*__data_dialogue_*.sql` (→ `social-domain`)
+    - Квесты: `infrastructure/liquibase/migrations/data/quests/V*__data_quest_*.sql` (→ `specialized-domain`)
+    - NPC: `infrastructure/liquibase/migrations/data/npcs/V*__data_npc_*.sql` (→ `specialized-domain`)
+    - Диалоги: `infrastructure/liquibase/migrations/data/dialogues/V*__data_dialogue_*.sql` (→ `social-domain`)
 - **Связанные enterprise-grade домены:**
-  - Квесты → specialized-domain (gameplay mechanics)
-  - NPC → specialized-domain (NPC systems)
-  - Диалоги → social-domain (social interactions)
-  - See .cursor/DOMAIN_REFERENCE.md for complete list
+    - Квесты → specialized-domain (gameplay mechanics)
+    - NPC → specialized-domain (NPC systems)
+    - Диалоги → social-domain (social interactions)
+    - See .cursor/DOMAIN_REFERENCE.md for complete list
 - **Передача:** Status `Todo`, Agent `DB`
 
 **Комментарий (для Database):**

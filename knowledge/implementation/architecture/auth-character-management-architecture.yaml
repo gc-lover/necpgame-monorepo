@@ -395,7 +395,7 @@ technical_specification:
       description: |
         Реализация Authentication Manager, JWT Service, OAuth Handler
         с поддержкой регистрации, входа, обновления токенов.
-      dependencies: []
+      dependencies: [ ]
       estimated_effort: 5 days
 
     - id: auth-security
@@ -403,7 +403,7 @@ technical_specification:
       description: |
         Реализация Role Manager, Password Manager, антибрютфорс защиты
         и аудита безопасности.
-      dependencies: [auth-service-core]
+      dependencies: [ auth-service-core ]
       estimated_effort: 4 days
 
     - id: character-service-core
@@ -411,7 +411,7 @@ technical_specification:
       description: |
         Реализация Character Manager, Slot Manager, Character Switcher
         с поддержкой создания, удаления и переключения персонажей.
-      dependencies: []
+      dependencies: [ ]
       estimated_effort: 5 days
 
     - id: character-advanced
@@ -419,7 +419,7 @@ technical_specification:
       description: |
         Реализация Character Recovery, Character Audit и интеграции
         с Economy Service для покупки слотов.
-      dependencies: [character-service-core]
+      dependencies: [ character-service-core ]
       estimated_effort: 3 days
 
     - id: progression-service-core
@@ -427,7 +427,7 @@ technical_specification:
       description: |
         Реализация Experience Manager, Level Manager, Skill Manager
         с поддержкой начисления опыта и управления навыками.
-      dependencies: []
+      dependencies: [ ]
       estimated_effort: 5 days
 
     - id: progression-advanced
@@ -435,7 +435,7 @@ technical_specification:
       description: |
         Реализация Attribute Manager, Snapshot Manager и аудита прогрессии
         с поддержкой откатов.
-      dependencies: [progression-service-core]
+      dependencies: [ progression-service-core ]
       estimated_effort: 3 days
 
     - id: session-service
@@ -443,7 +443,7 @@ technical_specification:
       description: |
         Реализация Session Manager, Session Storage, Session Validator
         с интеграцией с Auth и Character Service.
-      dependencies: [auth-service-core]
+      dependencies: [ auth-service-core ]
       estimated_effort: 3 days
 
     - id: websocket-channels
@@ -451,7 +451,7 @@ technical_specification:
       description: |
         Реализация WebSocket каналов для Auth, Character и Progression
         с поддержкой realtime обновлений.
-      dependencies: [auth-service-core, character-service-core, progression-service-core]
+      dependencies: [ auth-service-core, character-service-core, progression-service-core ]
       estimated_effort: 4 days
 
     - id: event-bus-integration
@@ -459,7 +459,7 @@ technical_specification:
       description: |
         Реализация публикации и подписки на события через Kafka
         для всех сервисов Auth & Character Management.
-      dependencies: [auth-service-core, character-service-core, progression-service-core]
+      dependencies: [ auth-service-core, character-service-core, progression-service-core ]
       estimated_effort: 3 days
 
     - id: database-schema
@@ -467,7 +467,7 @@ technical_specification:
       description: |
         Создание таблиц БД для Auth, Character и Progression
         с миграциями Liquibase.
-      dependencies: []
+      dependencies: [ ]
       estimated_effort: 2 days
 
 diagrams:
@@ -475,35 +475,35 @@ diagrams:
     ```mermaid
     graph TB
         Client[UE5 Client] --> Gateway[API Gateway]
-        
+    
         Gateway --> AuthService[Auth Service<br/>8081]
         Gateway --> CharacterService[Character Service<br/>8082]
         Gateway --> ProgressionService[Progression Service<br/>8087]
-        
+    
         AuthService --> AuthDB[(Auth DB)]
         CharacterService --> CharacterDB[(Character DB)]
         ProgressionService --> ProgressionDB[(Progression DB)]
-        
+    
         AuthService --> SessionService[Session Service<br/>8090]
         CharacterService --> SessionService
-        
+    
         AuthService --> Keycloak[Keycloak<br/>OAuth]
         AuthService --> Redis[(Redis<br/>Sessions)]
-        
+    
         AuthService --> EventBus[Event Bus<br/>Kafka]
         CharacterService --> EventBus
         ProgressionService --> EventBus
-        
+    
         EventBus --> EconomyService[Economy Service]
         EventBus --> AnalyticsService[Analytics Service]
         EventBus --> GameplayService[Gameplay Service]
         EventBus --> InventoryService[Inventory Service]
         EventBus --> NotificationService[Notification Service]
-        
+    
         Client --> WSAuth[WebSocket<br/>Auth Sessions]
         Client --> WSChar[WebSocket<br/>Characters]
         Client --> WSProg[WebSocket<br/>Progression]
-        
+    
         WSAuth --> AuthService
         WSChar --> CharacterService
         WSProg --> ProgressionService
@@ -518,15 +518,15 @@ diagrams:
         participant DB as Database
         participant EB as Event Bus
         participant CS as Character Service
-        
+    
         C->>AS: POST /auth/register
         AS->>DB: Create account
         AS->>EB: Publish ACCOUNT_CREATED
         AS-->>C: Registration success
-        
+    
         EB->>CS: ACCOUNT_CREATED
         CS->>CS: Initialize character slots
-        
+    
         C->>AS: POST /auth/login
         AS->>DB: Validate credentials
         AS->>AS: Check brute-force protection
@@ -534,7 +534,7 @@ diagrams:
         AS->>SS: Update active sessions
         AS->>EB: Publish LOGIN_SUCCESS
         AS-->>C: JWT + Refresh tokens
-        
+    
         C->>AS: POST /auth/refresh
         AS->>DB: Validate refresh token
         AS->>DB: Generate new tokens
@@ -550,7 +550,7 @@ diagrams:
         participant GS as Gameplay Service
         participant IS as Inventory Service
         participant EB as Event Bus
-        
+    
         C->>CS: POST /players/{id}/characters
         CS->>CS: Check available slots
         CS->>CS: Validate character data
@@ -558,19 +558,19 @@ diagrams:
         CS->>PS: Initialize progression
         CS->>EB: Publish CharacterCreated
         CS-->>C: Character created
-        
+    
         EB->>GS: CharacterCreated
         GS->>GS: Initialize gameplay data
-        
+    
         EB->>IS: CharacterCreated
         IS->>IS: Create initial inventory
-        
+    
         C->>CS: POST /players/{id}/switch
         CS->>CS: Update active character
         CS->>CS: Save snapshot
         CS->>EB: Publish CharacterSwitched
         CS-->>C: Character switched
-        
+    
         EB->>GS: CharacterSwitched
         GS->>GS: Load new character data
     ```

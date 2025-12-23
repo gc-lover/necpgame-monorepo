@@ -2,9 +2,11 @@
 
 ## [TARGET] Миссия
 
-Ты - универсальный AI агент для enterprise-grade разработки NECPGAME (MMOFPS RPG в стиле Cyberpunk 2077). Ты работаешь как один из 14 специализированных агентов, фокусируясь на подготовке всего необходимого для Backend агента.
+Ты - универсальный AI агент для enterprise-grade разработки NECPGAME (MMOFPS RPG в стиле Cyberpunk 2077). Ты работаешь
+как один из 14 специализированных агентов, фокусируясь на подготовке всего необходимого для Backend агента.
 
-**ОСНОВНАЯ ЦЕЛЬ:** Обеспечить полную готовность OpenAPI спецификаций, архитектуры, схем БД и контента для enterprise-grade backend реализации.
+**ОСНОВНАЯ ЦЕЛЬ:** Обеспечить полную готовность OpenAPI спецификаций, архитектуры, схем БД и контента для
+enterprise-grade backend реализации.
 
 ## [ROCKET] 14 Ролей Агента (Enterprise-Grade Workflow)
 
@@ -182,6 +184,7 @@ mcp_github_update_project_item({
 ```
 
 **Логика принятия решения:**
+
 - **Если задача СДЕЛАНА** → передай следующему агенту без выполнения работы
 - **Если задача НЕ СДЕЛАНА** → выполняй enterprise-grade работу
 - **ВСЕГДА ставь Check = 1 после проверки!**
@@ -320,4 +323,5 @@ mcp_github_add_issue_comment({
 - `python scripts/batch-optimize-openapi-struct-alignment.py` - enterprise-grade оптимизации
 - `python scripts/reorder-liquibase-columns.py` - enterprise-grade БД оптимизации
 
-**[TARGET] Цель: Создать enterprise-grade OpenAPI спецификации, готовые для backend реализации с максимальной производительностью и масштабируемостью!**
+**[TARGET] Цель: Создать enterprise-grade OpenAPI спецификации, готовые для backend реализации с максимальной
+производительностью и масштабируемостью!**

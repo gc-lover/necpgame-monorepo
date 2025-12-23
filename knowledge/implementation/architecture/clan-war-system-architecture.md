@@ -4,11 +4,13 @@
 
 ## Overview
 
-This document defines the complete technical architecture for the clan war system in NECPGAME, supporting large-scale PvP warfare between guilds with territory control, battle phases, and reward distribution for MMO gameplay.
+This document defines the complete technical architecture for the clan war system in NECPGAME, supporting large-scale
+PvP warfare between guilds with territory control, battle phases, and reward distribution for MMO gameplay.
 
 ## Performance Requirements
 
 **Target Metrics:**
+
 - Concurrent wars: 100+ simultaneous clan wars
 - Players per war: 200-500 active participants
 - Battle instances: 50+ parallel territory battles
@@ -44,60 +46,72 @@ This document defines the complete technical architecture for the clan war syste
 ### Infrastructure Components
 
 **Database Layer:**
+
 - PostgreSQL: Primary data store for wars, battles, territories
 - Redis: Session store, real-time battle state, pub/sub events
 - TimescaleDB: Historical battle data and analytics
 
 **Event Streaming:**
+
 - Apache Kafka: War events, battle updates, territory changes
 - Event sourcing: Complete audit trail of war progression
 
 **Load Balancing:**
+
 - Geographic distribution for global clan wars
 - Auto-scaling based on active war count
 
 ## War Phases Architecture
 
 ### Phase 1: Preparation (24 hours)
+
 **Objectives:** Alliance formation, resource gathering, strategy planning
 
 **Key Activities:**
+
 - War declaration and acceptance
 - Alliance invitations and confirmations
 - Territory scouting and defense preparation
 - Resource stockpiling and troop deployment
 
 **Technical Implementation:**
+
 - War record creation with metadata
 - Alliance management through guild service
 - Territory locking for preparation period
 - Event notifications to all participants
 
 ### Phase 2: Active Warfare (7 days)
+
 **Objectives:** Territory conquest, battle victories, point accumulation
 
 **Daily Cycle:**
+
 - Territory battles (scheduled events)
 - Siege events (defensive operations)
 - Open-world PvP (continuous conflict)
 - Point scoring and leaderboard updates
 
 **Technical Implementation:**
+
 - Battle instance spawning and management
 - Real-time scoring and statistics
 - Territory ownership transitions
 - Automated event scheduling
 
 ### Phase 3: Resolution (Immediate)
+
 **Objectives:** Winner determination, reward distribution, cleanup
 
 **Key Activities:**
+
 - Final score calculation and verification
 - Territory transfers to winning clan
 - Reward distribution (resources, items, titles)
 - War statistics and achievements
 
 **Technical Implementation:**
+
 - Atomic transactions for territory transfers
 - Reward calculation and distribution
 - Historical data archiving
@@ -108,16 +122,19 @@ This document defines the complete technical architecture for the clan war syste
 ### Territory Types
 
 **Resource Territories:**
+
 - Mines, farms, factories providing ongoing income
 - Contested through daily resource battles
 - Ownership provides passive bonuses
 
 **Strategic Territories:**
+
 - Key locations (bridges, forts, cities)
 - Control provides tactical advantages
 - High-value targets with heavy defense
 
 **Capital Territories:**
+
 - Clan headquarters and main cities
 - Maximum defensive bonuses
 - Siege mechanics for conquest
@@ -125,6 +142,7 @@ This document defines the complete technical architecture for the clan war syste
 ### Territory Mechanics
 
 **Ownership States:**
+
 ```yaml
 territory_states:
   - neutral: No clan ownership, open for claiming
@@ -135,12 +153,14 @@ territory_states:
 ```
 
 **Defense System:**
+
 - Base defense value based on territory type
 - Clan improvements (walls, towers, traps)
 - Defender bonuses during siege events
 - Attacker penalties for long-distance assaults
 
 **Resource Generation:**
+
 - Base income per territory type
 - Clan bonuses and improvements
 - Seasonal modifiers
@@ -151,16 +171,19 @@ territory_states:
 ### Battle Types
 
 **Territory Battles:**
+
 - Scheduled daily events for resource territories
 - 10-20 players per side, 15-minute duration
 - Capture-the-point mechanics with scoring zones
 
 **Siege Events:**
+
 - Large-scale assaults on strategic territories
 - 50+ players per side, 30-60 minute duration
 - Multiple objectives and defensive positions
 
 **Open World PvP:**
+
 - Continuous conflict in war zones
 - Kill scoring and territory influence
 - No formal start/end times
@@ -168,6 +191,7 @@ territory_states:
 ### Battle Mechanics
 
 **Scoring System:**
+
 ```sql
 -- Points calculation per kill
 kill_points = base_points * (
@@ -179,12 +203,14 @@ kill_points = base_points * (
 ```
 
 **Victory Conditions:**
+
 - Point threshold (territory battles)
 - Objective completion (siege events)
 - Time expiration with point differential
 - Territory capture and hold duration
 
 **Fair Play Mechanisms:**
+
 - Anti-cheat validation for suspicious activity
 - Automated bot detection
 - Manual review queue for disputed results
@@ -195,18 +221,21 @@ kill_points = base_points * (
 ### Reward Categories
 
 **Individual Rewards:**
+
 - Experience points and level progression
 - Currency (gold, premium currency)
 - Equipment and cosmetic items
 - Achievement unlocks and titles
 
 **Clan Rewards:**
+
 - Guild funds and resources
 - Territory improvements and buildings
 - Clan-wide bonuses and perks
 - Alliance reputation points
 
 **Special Rewards:**
+
 - Seasonal achievements and leaderboards
 - Unique war-themed cosmetics
 - Limited-time event rewards
@@ -215,6 +244,7 @@ kill_points = base_points * (
 ### Reward Distribution
 
 **Fair Distribution Algorithm:**
+
 ```python
 def distribute_rewards(war_result, participants):
     total_points = sum(p.points for p in participants)
@@ -230,6 +260,7 @@ def distribute_rewards(war_result, participants):
 ```
 
 **Guaranteed Rewards:**
+
 - Minimum participation rewards
 - Effort-based bonuses (not just victory)
 - Streak protection for losing clans
@@ -240,6 +271,7 @@ def distribute_rewards(war_result, participants):
 ### Core Tables
 
 **clan_wars:**
+
 ```sql
 CREATE TABLE clan_wars (
     id UUID PRIMARY KEY,
@@ -265,6 +297,7 @@ CREATE INDEX idx_clan_wars_active ON clan_wars(status) WHERE status IN ('prepara
 ```
 
 **war_battles:**
+
 ```sql
 CREATE TABLE war_battles (
     id UUID PRIMARY KEY,
@@ -291,6 +324,7 @@ CREATE INDEX idx_war_battles_territory ON war_battles(territory_id);
 ```
 
 **war_participants:**
+
 ```sql
 CREATE TABLE war_participants (
     id UUID PRIMARY KEY,
@@ -317,6 +351,7 @@ CREATE INDEX idx_war_participants_active ON war_participants(last_activity) WHER
 ```
 
 **territories:**
+
 ```sql
 CREATE TABLE territories (
     id UUID PRIMARY KEY,
@@ -343,6 +378,7 @@ CREATE INDEX idx_territories_region ON territories(region);
 ### Partitioning Strategy
 
 **Time-based partitioning for war data:**
+
 ```sql
 -- Partition war_participants by war end date
 CREATE TABLE war_participants_2025q1 PARTITION OF war_participants
@@ -408,18 +444,21 @@ GET    /api/v1/players/{id}/war-stats # Player's war statistics
 ### Event Types
 
 **War Events:**
+
 - `war.declared`: War announcement with participants
 - `war.phase_changed`: Phase transitions (preparation → active → resolution)
 - `war.ended`: Final results and rewards
 - `war.cancelled`: War termination
 
 **Battle Events:**
+
 - `battle.scheduled`: Upcoming battle announcement
 - `battle.started`: Battle commencement
 - `battle.score_update`: Real-time scoring
 - `battle.ended`: Battle results
 
 **Territory Events:**
+
 - `territory.contested`: Territory under attack
 - `territory.captured`: Ownership change
 - `territory.improved`: Defense/structure upgrades
@@ -427,6 +466,7 @@ GET    /api/v1/players/{id}/war-stats # Player's war statistics
 ### Event Processing
 
 **Real-time Updates:**
+
 ```javascript
 // Redis pub/sub for live battle updates
 const subscriber = redis.createClient();
@@ -439,6 +479,7 @@ subscriber.on('message', (channel, message) => {
 ```
 
 **Event Sourcing:**
+
 - Complete audit trail for dispute resolution
 - Replay capability for debugging
 - Analytics data for balancing
@@ -448,6 +489,7 @@ subscriber.on('message', (channel, message) => {
 ### Service Mesh Communication
 
 **Clan War Service Dependencies:**
+
 - Guild Service: Clan information, permissions, alliances
 - Territory Service: Territory data, ownership, resources
 - Battle Engine: PvP logic, matchmaking, scoring
@@ -457,6 +499,7 @@ subscriber.on('message', (channel, message) => {
 ### Cross-Service Transactions
 
 **Saga Pattern for War Resolution:**
+
 1. Calculate final scores (Clan War Service)
 2. Verify score integrity (Audit Service)
 3. Transfer territories (Territory Service)
@@ -465,6 +508,7 @@ subscriber.on('message', (channel, message) => {
 6. Send notifications (Event Service)
 
 **Compensation Actions:**
+
 - Rollback territory transfers on reward failure
 - Refund partial distributions
 - Maintain data consistency across services
@@ -474,18 +518,21 @@ subscriber.on('message', (channel, message) => {
 ### Key Metrics
 
 **War Health:**
+
 - Active wars count
 - Average war duration
 - Player participation rate
 - Technical issues per war
 
 **Battle Performance:**
+
 - Battle completion rate
 - Average battle duration
 - Player retention during battles
 - Server performance during peak battles
 
 **Economic Impact:**
+
 - Total rewards distributed
 - Resource generation from territories
 - Clan economy growth during wars
@@ -511,12 +558,14 @@ ALERT ClanWarDataInconsistency
 ### Anti-Cheat Measures
 
 **Battle Integrity:**
+
 - Client-server score validation
 - Suspicious pattern detection
 - Manual review queue for high-value battles
 - Automated ban system for confirmed cheating
 
 **War Manipulation:**
+
 - Alliance validation and limits
 - Declaration cooldowns and restrictions
 - Administrative override capabilities
@@ -525,11 +574,13 @@ ALERT ClanWarDataInconsistency
 ### Data Protection
 
 **Player Privacy:**
+
 - Anonymized statistics for public leaderboards
 - Opt-in data sharing for research
 - Secure handling of personal battle records
 
 **Clan Security:**
+
 - Permission-based access to war planning
 - Secure communication channels for strategy
 - Protection against espionage mechanics
@@ -567,6 +618,7 @@ spec:
 ### Scaling Strategy
 
 **Horizontal Pod Autoscaling:**
+
 ```yaml
 metrics:
 - type: Resource
@@ -585,6 +637,7 @@ metrics:
 ```
 
 **Geographic Distribution:**
+
 - Regional clusters for global clan wars
 - Cross-region battle matchmaking
 - Data replication for consistency
@@ -592,16 +645,19 @@ metrics:
 ## Migration Strategy
 
 ### Phase 1: Core Infrastructure
+
 1. Deploy clan war service
 2. Implement basic war declaration and phases
 3. Set up territory system foundations
 
 ### Phase 2: Battle System
+
 1. Implement battle engine integration
 2. Add territory control mechanics
 3. Deploy scoring and reward systems
 
 ### Phase 3: Advanced Features
+
 1. Alliance system completion
 2. Advanced siege mechanics
 3. Tournament and seasonal features
@@ -622,11 +678,13 @@ metrics:
 ## Risk Assessment
 
 ### High Risk
+
 - **Data consistency during high-load battles:** Mitigated by strong consistency requirements
 - **Fair play and anti-cheat complexity:** Mitigated by comprehensive validation system
 - **Real-time performance at scale:** Mitigated by horizontal scaling and optimization
 
 ### Medium Risk
+
 - **Complex alliance mechanics:** Mitigated by clear API design
 - **Territory transfer atomicity:** Mitigated by saga pattern implementation
 - **Event storm during peak battles:** Mitigated by event batching and filtering
@@ -634,6 +692,7 @@ metrics:
 ## Next Steps
 
 ### Immediate Implementation Tasks
+
 1. **Database:** Create clan_war, war_battle, war_participant, territory tables
 2. **API Designer:** Design comprehensive REST API for war management
 3. **Backend:** Implement clan war service with phase management
@@ -641,10 +700,12 @@ metrics:
 5. **DevOps:** Deploy scalable infrastructure for war load
 
 ### Subsystem Development
+
 - Clan War Management Service (Go microservice)
 - Battle Engine Integration (existing service extension)
 - Territory Control System (database + API)
 - Real-time Event Streaming (Kafka + WebSocket)
 - Reward Distribution Engine (economy service integration)
 
-This architecture provides a comprehensive, scalable system for large-scale clan warfare in NECPGAME, supporting hundreds of concurrent wars with fair play mechanics, real-time updates, and engaging reward systems.
+This architecture provides a comprehensive, scalable system for large-scale clan warfare in NECPGAME, supporting
+hundreds of concurrent wars with fair play mechanics, real-time updates, and engaging reward systems.

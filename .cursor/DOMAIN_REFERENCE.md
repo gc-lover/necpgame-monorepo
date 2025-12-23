@@ -7,12 +7,14 @@
 **КРИТИЧНО:** Запрещено использовать эмодзи и специальные Unicode символы в коде!
 
 ### Почему запрещено:
+
 - [FORBIDDEN] Ломают выполнение скриптов на Windows
 - [FORBIDDEN] Могут вызывать ошибки в терминале
 - [FORBIDDEN] Создают проблемы с кодировкой
 - [FORBIDDEN] Нарушают совместимость между ОС
 
 ### Что use вместо:
+
 - [OK] `:smile:` вместо [EMOJI]
 - [OK] `[FORBIDDEN]` вместо [FORBIDDEN]
 - [OK] `[OK]` вместо [OK]
@@ -20,6 +22,7 @@
 - [OK] `[WARNING]` вместо [WARNING]
 
 ### Автоматическая проверка:
+
 - Pre-commit hooks блокируют коммиты с эмодзи
 - Git hooks проверяют staged файлы
 - Исключения: `.cursor/rules/*` (документация), `.githooks/*`
@@ -37,8 +40,10 @@
 ## [SYMBOL] КОНСОЛИДИРОВАННЫЕ ДОМЕНЫ (5 основных)
 
 ### [BUILDING] **system-domain** (553 файла)
+
 **Назначение:** Enterprise-grade системная инфраструктура
 **Модули:**
+
 - `admin/` - Администрирование и управление
 - `ai/` - ИИ и NPC системы (465 файлов!)
 - `analytics/` - Аналитика и метрики
@@ -54,8 +59,10 @@
 **Examples использования:** Health checks, metrics, logging, monitoring
 
 ### [TARGET] **specialized-domain** (157 файлов)
+
 **Назначение:** Продвинутые игровые механики и специализации
 **Модули:**
+
 - `combat/` - Боевые системы (30 файлов)
 - `crafting/` - Крафт и производство
 - `effects/` - Специальные эффекты
@@ -73,8 +80,10 @@
 **Examples использования:** Combat systems, crafting, NPC AI, weapon mechanics
 
 ### [PEOPLE] **social-domain** (91 файл)
+
 **Назначение:** Социальные взаимодействия и групповой геймплей
 **Модули:**
+
 - `chat/` - Чат системы (10 файлов)
 - `guilds/` - Гильдии (23 файла)
 - `mentorship/` - Менторинг
@@ -90,8 +99,10 @@
 **Examples использования:** Parties, guilds, chat, social interactions
 
 ### [MONEY] **economy-domain** (31 файл)
+
 **Назначение:** Экономические системы и торговля
 **Модули:**
+
 - `advertising/` - Реклама и маркетинг
 - `analytics/` - Экономическая аналитика
 - `auctions/` - Аукционы
@@ -106,8 +117,10 @@
 **Examples использования:** Trading, auctions, contracts, investments
 
 ### [WORLD] **world-domain** (57 файлов)
+
 **Назначение:** Игровой мир, окружение и география
 **Модули:**
+
 - `advanced/` - Продвинутый геймплей (23 файла)
 - `cities/` - Города
 - `combat/` - Бои в мире
@@ -124,24 +137,25 @@
 
 ## [TARGET] СПЕЦИАЛИЗИРОВАННЫЕ ДОМЕНЫ (10 доменов)
 
-| Домен | Назначение | API |
-|-------|------------|-----|
-| **arena-domain** | Арены и PvP | `proto/openapi/arena-domain/main.yaml` |
+| Домен                     | Назначение                 | API                                             |
+|---------------------------|----------------------------|-------------------------------------------------|
+| **arena-domain**          | Арены и PvP                | `proto/openapi/arena-domain/main.yaml`          |
 | **auth-expansion-domain** | Расширенная аутентификация | `proto/openapi/auth-expansion-domain/main.yaml` |
-| **cosmetic-domain** | Косметические предметы | `proto/openapi/cosmetic-domain/main.yaml` |
-| **cyberpunk-domain** | Киберпанковские механики | `proto/openapi/cyberpunk-domain/main.yaml` |
-| **economy-domain** | Экономика | `proto/openapi/economy-domain/main.yaml` |
-| **faction-domain** | Фракции и корпорации | `proto/openapi/faction-domain/main.yaml` |
-| **integration-domain** | Внешние интеграции | `proto/openapi/integration-domain/main.yaml` |
-| **misc-domain** | Утилиты и вспомогательные | `proto/openapi/misc-domain/main.yaml` |
-| **progression-domain** | Прогрессия персонажей | `proto/openapi/progression-domain/main.yaml` |
-| **referral-domain** | Реферальные системы | `proto/openapi/referral-domain/main.yaml` |
+| **cosmetic-domain**       | Косметические предметы     | `proto/openapi/cosmetic-domain/main.yaml`       |
+| **cyberpunk-domain**      | Киберпанковские механики   | `proto/openapi/cyberpunk-domain/main.yaml`      |
+| **economy-domain**        | Экономика                  | `proto/openapi/economy-domain/main.yaml`        |
+| **faction-domain**        | Фракции и корпорации       | `proto/openapi/faction-domain/main.yaml`        |
+| **integration-domain**    | Внешние интеграции         | `proto/openapi/integration-domain/main.yaml`    |
+| **misc-domain**           | Утилиты и вспомогательные  | `proto/openapi/misc-domain/main.yaml`           |
+| **progression-domain**    | Прогрессия персонажей      | `proto/openapi/progression-domain/main.yaml`    |
+| **referral-domain**       | Реферальные системы        | `proto/openapi/referral-domain/main.yaml`       |
 
 ---
 
 ## [GAME] ВЫБОР ДОМЕНА ПО ТИПУ ЗАДАЧИ
 
 ### API Designer
+
 - **System services** → `system-domain`
 - **Game mechanics** → `specialized-domain`
 - **Social features** → `social-domain`
@@ -150,22 +164,26 @@
 - **Security** → `security-domain`
 
 ### Backend Developer
+
 - **Генерация кода:** `python scripts/generate-all-domains-go.py` (генерирует все домены)
 - **Валидация:** `python scripts/validate-domains-openapi.py`
 - **Performance:** Следовать domain-specific оптимизациям
 - **Integration:** Использовать domain APIs для межсервисного взаимодействия
 
 ### Architect
+
 - **Структура:** Проектировать сервисы в контексте enterprise-grade доменов
 - **Performance:** Учитывать domain-specific нагрузку и требования
 - **Integration:** Планировать взаимодействие между доменами
 
 ### Database Engineer
+
 - **Schemas:** Оптимизировать таблицы для domain-specific queries
 - **Indexes:** Создавать covering indexes для hot paths доменов
 - **Partitioning:** Применять domain-aware partitioning стратегии
 
 ### Content Teams
+
 - **Квесты:** `specialized-domain` (gameplay mechanics)
 - **NPC:** `specialized-domain` (NPC systems)
 - **Диалоги:** `social-domain` (social interactions)
@@ -175,6 +193,7 @@
 ## [FAST] ГЕНЕРАЦИЯ КОДА ИЗ ДОМЕНОВ
 
 ### Backend: Генерация из доменов
+
 ```bash
 # Генерация из enterprise-grade домена
 npx --yes @redocly/cli bundle proto/openapi/{domain}/main.yaml -o openapi-bundled.yaml
@@ -186,6 +205,7 @@ ogen --target pkg/api --package api --clean proto/openapi/specialized-domain/mai
 ```
 
 ### API Designer: Создание в доменах
+
 ```bash
 # Создавать модули в enterprise-grade доменах
 proto/openapi/{domain}/{module}/main.yaml  # <1000 строк
@@ -196,6 +216,7 @@ proto/openapi/{domain}/{module}/main.yaml  # <1000 строк
 ## [SYMBOL] ПРАВИЛА РАБОТЫ С ДОМЕНАМИ
 
 ### [OK] ОБЯЗАТЕЛЬНО:
+
 - Все новые API создавать в enterprise-grade доменах
 - Использовать domain-specific генерацию кода
 - Следовать domain boundaries (не смешивать ответственности)
@@ -203,12 +224,14 @@ proto/openapi/{domain}/{module}/main.yaml  # <1000 строк
 - Валидировать domain APIs перед передачей
 
 ### [ERROR] ЗАПРЕЩЕНО:
+
 - Создавать файлы вне enterprise-grade доменов
 - Игнорировать domain boundaries
 - Создавать duplicate функциональность в разных доменах
 - Не обновлять main.yaml домена
 
 ### [SEARCH] ВАЛИДАЦИЯ:
+
 ```bash
 # Проверка доменной структуры
 redocly lint proto/openapi/{domain}/main.yaml

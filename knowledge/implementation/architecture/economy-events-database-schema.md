@@ -1,9 +1,11 @@
 <!-- Issue: #140890219 -->
+
 # Economy Events System - Database Schema
 
 ## Обзор
 
-Схема базы данных для системы экономических событий, управляющей событиями, которые влияют на цены, курсы валют и активность игроков. Включает события разных типов, масштабов и статусов.
+Схема базы данных для системы экономических событий, управляющей событиями, которые влияют на цены, курсы валют и
+активность игроков. Включает события разных типов, масштабов и статусов.
 
 ## ERD Диаграмма
 
@@ -56,6 +58,7 @@ erDiagram
 Таблица экономических событий. Хранит информацию о событиях, влияющих на экономику игры.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `event_type`: Тип события (economic_event_type ENUM, NOT NULL)
 - `scope`: Охват события (economic_event_scope ENUM, NOT NULL: 'GLOBAL', 'REGIONAL')
@@ -74,6 +77,7 @@ erDiagram
 - `updated_at`: Время последнего обновления
 
 **Индексы:**
+
 - По `event_type` для фильтрации по типу события
 - По `status` для фильтрации по статусу
 - По `scope` для фильтрации по охвату
@@ -83,6 +87,7 @@ erDiagram
 - По `(status, started_at)` для активных событий (WHERE status = 'ACTIVE')
 
 **Constraints:**
+
 - CHECK: (scope = 'REGIONAL' AND region_id IS NOT NULL) OR (scope = 'GLOBAL' AND region_id IS NULL)
 
 ### economic_event_history
@@ -90,6 +95,7 @@ erDiagram
 Таблица истории изменений событий. Хранит аудит всех изменений событий.
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `event_id`: ID события (FK к economic_events, NOT NULL)
 - `action`: Действие (economic_event_action ENUM, NOT NULL)
@@ -98,6 +104,7 @@ erDiagram
 - `timestamp`: Время изменения
 
 **Индексы:**
+
 - По `event_id` для истории конкретного события
 - По `timestamp DESC` для временных запросов
 - По `action` для фильтрации по типу действия
@@ -107,6 +114,7 @@ erDiagram
 Таблица метрик событий. Хранит метрики для мониторинга событий (PriceDeviation, TransactionVolume, EventUptime).
 
 **Ключевые поля:**
+
 - `id`: UUID первичный ключ
 - `event_id`: ID события (FK к economic_events, NOT NULL)
 - `metric_type`: Тип метрики (economic_event_metric_type ENUM, NOT NULL)
@@ -114,6 +122,7 @@ erDiagram
 - `recorded_at`: Время записи метрики
 
 **Индексы:**
+
 - По `event_id` для метрик конкретного события
 - По `metric_type` для фильтрации по типу метрики
 - По `recorded_at DESC` для временных запросов
@@ -122,6 +131,7 @@ erDiagram
 ## ENUM типы
 
 ### economic_event_type
+
 - `CRISIS`: Экономический кризис
 - `BOOM`: Экономический бум
 - `INFLATION`: Инфляция
@@ -132,10 +142,12 @@ erDiagram
 - `TECH_BREAKTHROUGH`: Технологический прорыв
 
 ### economic_event_scope
+
 - `GLOBAL`: Глобальное событие (влияет на весь мир)
 - `REGIONAL`: Региональное событие (влияет на конкретный регион)
 
 ### economic_event_status
+
 - `PLANNED`: Запланировано
 - `ANNOUNCED`: Анонсировано
 - `ACTIVE`: Активно
@@ -143,6 +155,7 @@ erDiagram
 - `ARCHIVED`: Архивировано
 
 ### economic_event_action
+
 - `CREATED`: Создано
 - `UPDATED`: Обновлено
 - `ANNOUNCED`: Анонсировано
@@ -150,6 +163,7 @@ erDiagram
 - `ARCHIVED`: Архивировано
 
 ### economic_event_metric_type
+
 - `PRICE_DEVIATION`: Отклонение цен
 - `TRANSACTION_VOLUME`: Объем транзакций
 - `EVENT_UPTIME`: Время работы события
@@ -218,13 +232,16 @@ erDiagram
 ## Миграции
 
 ### Применение миграций:
+
 ```bash
 liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ```
 
 ## Соответствие архитектуре
 
-Схема БД полностью соответствует архитектуре из `knowledge/implementation/architecture/economy-events-system-architecture.yaml`:
+Схема БД полностью соответствует архитектуре из
+`knowledge/implementation/architecture/economy-events-system-architecture.yaml`:
+
 - [OK] Все таблицы из архитектуры созданы
 - [OK] Все поля соответствуют описанию
 - [OK] Индексы оптимизированы для частых запросов
@@ -237,6 +254,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Жизненный цикл событий
 
 События проходят через следующие стадии:
+
 1. **PLANNED**: Событие запланировано, но еще не анонсировано
 2. **ANNOUNCED**: Событие анонсировано игрокам
 3. **ACTIVE**: Событие активно, эффекты применяются
@@ -246,6 +264,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Типы событий
 
 Система поддерживает следующие типы событий:
+
 - **CRISIS**: Экономический кризис (снижение цен, ликвидности)
 - **BOOM**: Экономический бум (рост цен, ликвидности)
 - **INFLATION**: Инфляция (общее повышение цен)
@@ -258,6 +277,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Охват событий
 
 События могут быть:
+
 - **GLOBAL**: Влияют на весь мир игры
 - **REGIONAL**: Влияют на конкретный регион (требует region_id)
 
@@ -269,6 +289,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### История и аудит
 
 Система истории событий включает:
+
 - **Действия**: CREATED, UPDATED, ANNOUNCED, ACTIVATED, ARCHIVED
 - **Изменения**: Детали изменений в JSONB
 - **Автор**: changed_by (user_id или system)
@@ -276,6 +297,7 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Метрики мониторинга
 
 Система метрик включает:
+
 - **PRICE_DEVIATION**: Отклонение цен от прогноза
 - **TRANSACTION_VOLUME**: Объем транзакций во время события
 - **EVENT_UPTIME**: Время работы события
@@ -283,11 +305,11 @@ liquibase update --changelog-file=infrastructure/liquibase/changelog.yaml
 ### Интеграция с другими системами
 
 Система экономических событий интегрируется с:
+
 - **Pricing Engine**: Применение эффектов к ценам товаров
 - **Currency Exchange**: Применение эффектов к курсам валют
 - **Stock Exchange**: Применение эффектов к котировкам акций
 - **Quest Service**: Триггеры событий от квестов
 - **Analytics Service**: Метрики и аналитика событий
 - **Notification Service**: Уведомления игроков о событиях
-
 

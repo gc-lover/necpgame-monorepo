@@ -1,107 +1,118 @@
-          - defender_clan_id: UUID (FK guilds)
-          - status: ENUM (DECLARED, PREPARATION, ACTIVE, ENDING, ENDED)
-          - phase: ENUM (PREPARATION, ACTIVE, ENDING)
-          - attacker_score: INTEGER (default: 0)
-          - defender_score: INTEGER (default: 0)
-          - winner_clan_id: UUID (FK guilds, nullable)
-          - allies_attacker: UUID[] (FK guilds)
-          - allies_defender: UUID[] (FK guilds)
-          - declared_at: TIMESTAMP
-          - preparation_started_at: TIMESTAMP (nullable)
-          - active_started_at: TIMESTAMP (nullable)
-          - ended_at: TIMESTAMP (nullable)
-          - created_at: TIMESTAMP
-          - updated_at: TIMESTAMP
-        indexes:
-          - attacker_clan_id, status
-          - defender_clan_id, status
-          - status, active_started_at
+- defender_clan_id: UUID (FK guilds)
+- status: ENUM (DECLARED, PREPARATION, ACTIVE, ENDING, ENDED)
+- phase: ENUM (PREPARATION, ACTIVE, ENDING)
+- attacker_score:
+    INTEGER (default: 0)
+- defender_score:
+    INTEGER (default: 0)
+- winner_clan_id: UUID (FK guilds, nullable)
+- allies_attacker: UUID[] (FK guilds)
+- allies_defender: UUID[] (FK guilds)
+- declared_at: TIMESTAMP
+- preparation_started_at: TIMESTAMP (nullable)
+- active_started_at: TIMESTAMP (nullable)
+- ended_at: TIMESTAMP (nullable)
+- created_at: TIMESTAMP
+- updated_at: TIMESTAMP
+indexes:
+  - attacker_clan_id, status
+  - defender_clan_id, status
+  - status, active_started_at
 
-      - name: war_battles
-        description: Битвы в войне
-        fields:
-          - id: UUID (PK)
-          - war_id: UUID (FK clan_wars)
-          - battle_type: ENUM (TERRITORY_BATTLE, SIEGE, OPEN_WORLD_PVP)
-          - territory_id: UUID (FK territories, nullable)
-          - status: ENUM (CREATED, ACTIVE, ENDED)
-          - attacker_score: INTEGER (default: 0)
-          - defender_score: INTEGER (default: 0)
-          - started_at: TIMESTAMP (nullable)
-          - ended_at: TIMESTAMP (nullable)
-          - created_at: TIMESTAMP
-        indexes:
-          - war_id, status
-          - territory_id, status
-          - status, started_at
+  - name: war_battles
+    description: Битвы в войне
+    fields:
+      - id: UUID (PK)
+      - war_id: UUID (FK clan_wars)
+      - battle_type: ENUM (TERRITORY_BATTLE, SIEGE, OPEN_WORLD_PVP)
+      - territory_id: UUID (FK territories, nullable)
+      - status: ENUM (CREATED, ACTIVE, ENDED)
+      - attacker_score:
+          INTEGER (default: 0)
+      - defender_score:
+          INTEGER (default: 0)
+      - started_at: TIMESTAMP (nullable)
+      - ended_at: TIMESTAMP (nullable)
+      - created_at: TIMESTAMP
+    indexes:
+      - war_id, status
+      - territory_id, status
+      - status, started_at
 
-      - name: territories
-        description: Территории
-        fields:
-          - id: UUID (PK)
-          - name: VARCHAR(255)
-          - owner_clan_id: UUID (FK guilds, nullable)
-          - resource_type: ENUM (ORE, ENERGY, DATA, MIXED)
-          - resource_amount: INTEGER (default: 0)
-          - defense_level: INTEGER (default: 1)
-          - siege_difficulty: INTEGER (default: 1)
-          - location_x: FLOAT
-          - location_y: FLOAT
-          - location_z: FLOAT
-          - is_active: BOOLEAN (default: true)
-          - captured_at: TIMESTAMP (nullable)
-          - created_at: TIMESTAMP
-          - updated_at: TIMESTAMP
-        indexes:
-          - owner_clan_id
-          - is_active
-          - location_x, location_y, location_z
+  - name: territories
+    description: Территории
+    fields:
+      - id: UUID (PK)
+      - name: VARCHAR(255)
+      - owner_clan_id: UUID (FK guilds, nullable)
+      - resource_type: ENUM (ORE, ENERGY, DATA, MIXED)
+      - resource_amount:
+          INTEGER (default: 0)
+      - defense_level:
+          INTEGER (default: 1)
+      - siege_difficulty:
+          INTEGER (default: 1)
+      - location_x: FLOAT
+      - location_y: FLOAT
+      - location_z: FLOAT
+      - is_active:
+          BOOLEAN (default: true)
+      - captured_at: TIMESTAMP (nullable)
+      - created_at: TIMESTAMP
+      - updated_at: TIMESTAMP
+    indexes:
+      - owner_clan_id
+      - is_active
+      - location_x, location_y, location_z
 
-      - name: war_participants
-        description: Участники войны
-        fields:
-          - id: UUID (PK)
-          - war_id: UUID (FK clan_wars)
-          - clan_id: UUID (FK guilds)
-          - role: ENUM (ATTACKER, DEFENDER, ALLY_ATTACKER, ALLY_DEFENDER)
-          - kills: INTEGER (default: 0)
-          - deaths: INTEGER (default: 0)
-          - score_contribution: INTEGER (default: 0)
-          - joined_at: TIMESTAMP
-        constraints: |
-          - UNIQUE(war_id, clan_id)
-        indexes:
-          - war_id, clan_id
-          - clan_id
+  - name: war_participants
+    description: Участники войны
+    fields:
+      - id: UUID (PK)
+      - war_id: UUID (FK clan_wars)
+      - clan_id: UUID (FK guilds)
+      - role: ENUM (ATTACKER, DEFENDER, ALLY_ATTACKER, ALLY_DEFENDER)
+      - kills:
+          INTEGER (default: 0)
+      - deaths:
+          INTEGER (default: 0)
+      - score_contribution:
+          INTEGER (default: 0)
+      - joined_at: TIMESTAMP
+    constraints: |
+      - UNIQUE(war_id, clan_id)
+    indexes:
+      - war_id, clan_id
+      - clan_id
 
-      - name: war_kill_logs
-        description: Логи убийств в войне
-        fields:
-          - id: UUID (PK)
-          - war_id: UUID (FK clan_wars)
-          - battle_id: UUID (FK war_battles, nullable)
-          - killer_id: UUID (FK accounts)
-          - victim_id: UUID (FK accounts)
-          - killer_clan_id: UUID (FK guilds)
-          - victim_clan_id: UUID (FK guilds)
-          - score_awarded: INTEGER
-          - killed_at: TIMESTAMP
-        indexes:
-          - war_id, killed_at
-          - battle_id, killed_at
-          - killer_clan_id, killed_at
+  - name: war_kill_logs
+    description: Логи убийств в войне
+    fields:
+      - id: UUID (PK)
+      - war_id: UUID (FK clan_wars)
+      - battle_id: UUID (FK war_battles, nullable)
+      - killer_id: UUID (FK accounts)
+      - victim_id: UUID (FK accounts)
+      - killer_clan_id: UUID (FK guilds)
+      - victim_clan_id: UUID (FK guilds)
+      - score_awarded: INTEGER
+      - killed_at: TIMESTAMP
+    indexes:
+      - war_id, killed_at
+      - battle_id, killed_at
+      - killer_clan_id, killed_at
 
 technical_specification:
   backend_requirements:
     - Реализация модулей в world-service-go:
-      - clan-war (управление войнами)
-      - clan-war-phases (фазы)
-      - clan-war-territory (территории)
-      - clan-war-battle (битвы)
-      - clan-war-scoring (очки)
-      - clan-war-rewards (награды)
-      - clan-war-alliance (союзы)
-      - clan-war-events (события)
+        - clan-war (управление войнами)
+        - clan-war-phases (фазы)
+        - clan-war-territory (территории)
+        - clan-war-battle (битвы)
+        - clan-war-scoring (очки)
+        - clan-war-rewards (награды)
+        - clan-war-alliance (союзы)
+        - clan-war-events (события)
     - Интеграция с guild-service для кланов
     - Интеграция с gameplay-service для боёв
     - Интеграция с economy-service для наград
@@ -363,5 +374,4 @@ history:
       - Спроектирована система наград
       - Создано техническое задание
       - Разбито на подзадачи
-
 

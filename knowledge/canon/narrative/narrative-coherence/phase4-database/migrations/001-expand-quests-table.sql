@@ -15,32 +15,32 @@
 BEGIN;
 
 -- Добавляем новые колонки в quests
-ALTER TABLE quests 
-ADD COLUMN IF NOT EXISTS category VARCHAR(50),
-ADD COLUMN IF NOT EXISTS difficulty VARCHAR(20),
-ADD COLUMN IF NOT EXISTS min_level INTEGER NOT NULL DEFAULT 1,
-ADD COLUMN IF NOT EXISTS max_level INTEGER,
-ADD COLUMN IF NOT EXISTS required_quests JSONB,
-ADD COLUMN IF NOT EXISTS required_flags JSONB,
-ADD COLUMN IF NOT EXISTS required_reputation JSONB,
-ADD COLUMN IF NOT EXISTS required_class VARCHAR(50),
-ADD COLUMN IF NOT EXISTS required_origin VARCHAR(50),
-ADD COLUMN IF NOT EXISTS has_branches BOOLEAN DEFAULT FALSE,
-ADD COLUMN IF NOT EXISTS dialogue_tree_root INTEGER,
-ADD COLUMN IF NOT EXISTS objectives JSONB NOT NULL DEFAULT '[]'::jsonb,
-ADD COLUMN IF NOT EXISTS reward_items JSONB,
-ADD COLUMN IF NOT EXISTS reward_reputation JSONB,
-ADD COLUMN IF NOT EXISTS era VARCHAR(20) NOT NULL DEFAULT '2090-2093',
-ADD COLUMN IF NOT EXISTS region VARCHAR(100),
-ADD COLUMN IF NOT EXISTS estimated_duration INTEGER,
-ADD COLUMN IF NOT EXISTS is_repeatable BOOLEAN DEFAULT FALSE,
-ADD COLUMN IF NOT EXISTS cooldown_hours INTEGER,
-ADD COLUMN IF NOT EXISTS max_concurrent_players INTEGER,
-ADD COLUMN IF NOT EXISTS tags JSONB,
-ADD COLUMN IF NOT EXISTS related_quests JSONB,
-ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE,
-ADD COLUMN IF NOT EXISTS version INTEGER DEFAULT 1,
-ADD COLUMN IF NOT EXISTS created_by VARCHAR(100);
+ALTER TABLE quests
+    ADD COLUMN IF NOT EXISTS category VARCHAR (50),
+    ADD COLUMN IF NOT EXISTS difficulty VARCHAR (20),
+    ADD COLUMN IF NOT EXISTS min_level INTEGER NOT NULL DEFAULT 1,
+    ADD COLUMN IF NOT EXISTS max_level INTEGER,
+    ADD COLUMN IF NOT EXISTS required_quests JSONB,
+    ADD COLUMN IF NOT EXISTS required_flags JSONB,
+    ADD COLUMN IF NOT EXISTS required_reputation JSONB,
+    ADD COLUMN IF NOT EXISTS required_class VARCHAR (50),
+    ADD COLUMN IF NOT EXISTS required_origin VARCHAR (50),
+    ADD COLUMN IF NOT EXISTS has_branches BOOLEAN DEFAULT FALSE,
+    ADD COLUMN IF NOT EXISTS dialogue_tree_root INTEGER,
+    ADD COLUMN IF NOT EXISTS objectives JSONB NOT NULL DEFAULT '[]'::jsonb,
+    ADD COLUMN IF NOT EXISTS reward_items JSONB,
+    ADD COLUMN IF NOT EXISTS reward_reputation JSONB,
+    ADD COLUMN IF NOT EXISTS era VARCHAR (20) NOT NULL DEFAULT '2090-2093',
+    ADD COLUMN IF NOT EXISTS region VARCHAR (100),
+    ADD COLUMN IF NOT EXISTS estimated_duration INTEGER,
+    ADD COLUMN IF NOT EXISTS is_repeatable BOOLEAN DEFAULT FALSE,
+    ADD COLUMN IF NOT EXISTS cooldown_hours INTEGER,
+    ADD COLUMN IF NOT EXISTS max_concurrent_players INTEGER,
+    ADD COLUMN IF NOT EXISTS tags JSONB,
+    ADD COLUMN IF NOT EXISTS related_quests JSONB,
+    ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE,
+    ADD COLUMN IF NOT EXISTS version INTEGER DEFAULT 1,
+    ADD COLUMN IF NOT EXISTS created_by VARCHAR (100);
 
 -- Обновляем тип type для новых значений
 ALTER TABLE quests ALTER COLUMN type TYPE VARCHAR(50);
@@ -78,14 +78,15 @@ BEGIN;
 -- UPDATE quests SET reward_items_new = reward_items::jsonb WHERE reward_items IS NOT NULL;
 
 -- Устанавливаем defaults для существующих записей
-UPDATE quests SET 
-    min_level = COALESCE(level, 1),
-    era = COALESCE(era, '2090-2093'),
+UPDATE quests
+SET min_level  = COALESCE(level, 1),
+    era        = COALESCE(era, '2090-2093'),
     objectives = COALESCE(objectives, '[]'::jsonb),
-    tags = COALESCE(tags, '[]'::jsonb),
-    is_active = COALESCE(is_active, TRUE),
-    version = COALESCE(version, 1)
-WHERE min_level IS NULL OR era IS NULL;
+    tags       = COALESCE(tags, '[]'::jsonb),
+    is_active  = COALESCE(is_active, TRUE),
+    version    = COALESCE(version, 1)
+WHERE min_level IS NULL
+   OR era IS NULL;
 
 COMMIT;
 

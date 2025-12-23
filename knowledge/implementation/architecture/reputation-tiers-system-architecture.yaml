@@ -28,7 +28,7 @@ components:
     integration:
       - reputation-core-service
       - notification-service
-    
+
   - name: "Effects Engine"
     type: core
     responsibilities:
@@ -41,7 +41,7 @@ components:
       - world-service
       - quest-service
       - npc-service
-    
+
   - name: "Recovery System"
     type: supporting
     responsibilities:
@@ -51,7 +51,7 @@ components:
     integration:
       - quest-service
       - social-service
-    
+
   - name: "Tier History Tracker"
     type: supporting
     responsibilities:
@@ -70,25 +70,25 @@ api_endpoints:
         description: "Текущий tier игрока с фракцией"
         expected_rps: 1000
         optimization_level: 2
-      
+
       - method: GET
         path: "/players/{id}/tier/effects"
         description: "Активные эффекты tier"
         expected_rps: 800
         optimization_level: 1
-      
+
       - method: GET
         path: "/players/{id}/tier/history"
         description: "История изменений tier"
         expected_rps: 200
         optimization_level: 1
-      
+
       - method: GET
         path: "/tiers"
         description: "Список всех tiers с описанием"
         expected_rps: 100
         optimization_level: 1
-      
+
       - method: GET
         path: "/players/{id}/recovery/options"
         description: "Доступные варианты восстановления"
@@ -121,7 +121,7 @@ data_model:
           description: "Максимальная репутация для tier"
       expected_struct_size: ~60 bytes
       static_data: 7 tiers (loaded from config)
-    
+
     - name: PlayerReputationTier
       description: "Текущий tier игрока с фракцией"
       fields_ordered_by_size:
@@ -144,7 +144,7 @@ data_model:
           type: timestamp
           size: 8 bytes
       expected_struct_size: ~80 bytes
-    
+
     - name: TierEffect
       description: "Эффект tier на систему"
       fields_ordered_by_size:
@@ -172,10 +172,10 @@ database_schema:
         - min_reputation INTEGER NOT NULL
         - max_reputation INTEGER NOT NULL
         - description TEXT
-      indexes: []
+      indexes: [ ]
       expected_rows: 7 (static)
       seed_data: true
-    
+
     - name: player_reputation_tiers
       description: "Текущие tiers игроков"
       columns:
@@ -192,7 +192,7 @@ database_schema:
       expected_rows: 100000 (10k players * 10 factions)
       hot_queries:
         - "SELECT tier_id FROM player_reputation_tiers WHERE player_id = ? AND faction_id = ?" (1000 QPS, <1ms)
-    
+
     - name: tier_effects
       description: "Эффекты каждого tier"
       columns:
@@ -205,7 +205,7 @@ database_schema:
         - "idx_tier_effects_tier ON tier_effects(tier_id, effect_type)"
       expected_rows: 50 (7 tiers * ~7 effects)
       seed_data: true
-    
+
     - name: tier_change_history
       description: "История изменений tier"
       columns:
@@ -231,7 +231,7 @@ event_bus_contracts:
         old_tier: string
         new_tier: string
         reputation: int32
-    
+
     - topic: "reputation.tier.effects.applied"
       description: "Эффекты tier применены"
       payload:
@@ -284,19 +284,19 @@ integration:
     - name: reputation-core-service
       integration_type: Event Bus
       description: "Получение reputation changes"
-    
+
     - name: economy-service
       integration_type: API
       description: "Применение price modifiers"
-    
+
     - name: world-service
       integration_type: API
       description: "Проверка доступа к территориям"
-    
+
     - name: quest-service
       integration_type: API
       description: "Фильтрация доступных квестов"
-    
+
     - name: npc-service
       integration_type: API
       description: "NPC реакции и агрессия"
@@ -304,51 +304,51 @@ integration:
 reputation_tiers_config:
   tiers:
     - id: hated
-      range: [-100, -76]
+      range: [ -100, -76 ]
       color: "#FF0000"
       effects:
         price_modifier: 2.0
         access_blocked: true
         npc_aggression: hostile
-    
+
     - id: hostile
-      range: [-75, -51]
+      range: [ -75, -51 ]
       color: "#FF4500"
       effects:
         price_modifier: 1.5
         access_limited: true
         npc_aggression: aggressive
-    
+
     - id: unfriendly
-      range: [-50, -26]
+      range: [ -50, -26 ]
       color: "#FFA500"
       effects:
         price_modifier: 1.2
         quest_limited: true
-    
+
     - id: neutral
-      range: [-25, 25]
+      range: [ -25, 25 ]
       color: "#FFFF00"
       effects:
         price_modifier: 1.0
         default_access: true
-    
+
     - id: friendly
-      range: [26, 50]
+      range: [ 26, 50 ]
       color: "#90EE90"
       effects:
         price_modifier: 0.9
         bonus_quests: true
-    
+
     - id: honored
-      range: [51, 75]
+      range: [ 51, 75 ]
       color: "#00FF00"
       effects:
         price_modifier: 0.8
         exclusive_access: true
-    
+
     - id: legendary
-      range: [76, 100]
+      range: [ 76, 100 ]
       color: "#FFD700"
       effects:
         price_modifier: 0.7
