@@ -1,0 +1,874 @@
+openapi: 3.0.3
+info:
+  title: Kafka Schema Management API - Enterprise-Grade Event Schema Management
+  description: |
+    **Enterprise-Grade Kafka Event Schema Management API for NECPGAME**
+
+    This API provides comprehensive management capabilities for Kafka event schemas used in the
+    microservices event-driven architecture. Enables creation, validation, versioning, and deployment
+    of JSON schemas for high-performance event streaming with 100k+ events/sec throughput.
+
+    ## Key Features
+    - **Schema CRUD Operations** - Create, read, update, delete JSON schemas
+    - **Version Management** - Semantic versioning with backward compatibility checks
+    - **Validation Services** - Real-time schema validation and compatibility testing
+    - **Deployment Control** - Safe schema deployment with rollback capabilities
+    - **Audit Trail** - Complete change history and approval workflows
+    - **Performance Optimized** - Memory-aligned structs for Go code generation
+
+    ## Domain Purpose
+    Centralizes management of Kafka event schemas to ensure data consistency, backward compatibility,
+    and performance across all microservices. Supports enterprise-grade event-driven architecture
+    with high throughput and low latency requirements.
+
+    ## Performance Targets
+    - P99 Latency: <50ms for validation operations
+    - Memory: <100KB per schema instance
+    - Throughput: 1000+ schema validations/sec
+    - Concurrent operations: 100+ simultaneous deployments
+    - Event throughput: 100k+ events/sec after deployment
+  version: 1.0.0
+  contact:
+    name: NECPGAME API Support
+    url: https://necpgame.com/support
+    email: api@necpgame.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+servers:
+  - url: https://api.necpgame.com/v1/kafka-schema-management
+    description: Production server
+  - url: https://staging-api.necpgame.com/v1/kafka-schema-management
+    description: Staging server
+  - url: http://localhost:8080/api/v1/kafka-schema-management
+    description: Local development server
+security:
+  - BearerAuth: []
+tags:
+  - name: Schema Management
+    description: Core schema CRUD operations
+  - name: Schema Validation
+    description: Schema validation and compatibility checking
+  - name: Schema Deployment
+    description: Schema deployment and rollback operations
+  - name: Schema Analytics
+    description: Schema usage analytics and monitoring
+  - name: Health Monitoring
+    description: System health and performance monitoring
+paths:
+  /health:
+    get:
+      summary: Kafka Schema Management health check
+      description: |
+        **Enterprise-grade health check endpoint**
+
+        Provides real-time health status of the Kafka Schema Management microservice.
+        Critical for service discovery, load balancing, and monitoring.
+
+        **Performance:** <1ms response time, cached for 30 seconds
+      operationId: kafkaSchemaHealthCheck
+      tags:
+        - Health Monitoring
+      parameters:
+        - name: Accept-Encoding
+          in: header
+          schema:
+            type: string
+            enum:
+              - gzip
+              - deflate
+              - br
+      responses:
+        '200':
+          description: Service is healthy
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: max-age=30, s-maxage=60
+            ETag:
+              schema:
+                type: string
+                example: '"health-v1.0"'
+            Content-Encoding:
+              schema:
+                type: string
+                enum:
+                  - gzip
+                  - deflate
+                  - br
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceHealth'
+        '429':
+          description: Rate limited
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '503':
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceHealth'
+components:
+  schemas:
+    KafkaSchema:
+      $ref: '#/components/schemas/KafkaEventSchema'
+    CreateSchemaRequest:
+      $ref: '#/components/schemas/CreateSchemaCommand'
+    UpdateSchemaRequest:
+      $ref: '#/components/schemas/UpdateSchemaCommand'
+    ValidateEventRequest:
+      $ref: '#/components/schemas/EventValidationRequest'
+    ValidationResponse:
+      $ref: '#/components/schemas/ValidationResult'
+    CompatibilityCheckRequest:
+      $ref: '#/components/schemas/CompatibilityCheckCommand'
+    CompatibilityResponse:
+      $ref: '#/components/schemas/CompatibilityReport'
+    SchemaAnalyticsResponse:
+      $ref: '#/components/schemas/SchemaUsageMetrics'
+    SchemaListResponse:
+      type: object
+      required:
+        - schemas
+        - pagination
+        - filters_applied
+      properties:
+        schemas:
+          type: array
+          items:
+            $ref: '#/components/schemas/SchemaSummary'
+        pagination:
+          $ref: '#/components/schemas/PaginationMetadata'
+        filters_applied:
+          $ref: '#/components/schemas/SchemaListFilter'
+        total_matching:
+          type: integer
+          example: 45
+    SchemaResponse:
+      type: object
+      required:
+        - schema
+      properties:
+        schema:
+          $ref: '#/components/schemas/KafkaEventSchema'
+    DeploymentResponse:
+      $ref: '#/components/schemas/DeploymentStatus'
+    HealthResponse:
+      $ref: '#/components/schemas/ServiceHealth'
+    ErrorResponse:
+      $ref: '#/components/schemas/ApiError'
+    ServiceHealth:
+      type: object
+      required:
+        - status
+        - timestamp
+        - service_name
+        - version
+      properties:
+        status:
+          type: string
+          enum:
+            - healthy
+            - degraded
+            - unhealthy
+          example: healthy
+        timestamp:
+          type: string
+          format: date-time
+          example: '2025-12-23T21:00:00Z'
+        service_name:
+          type: string
+          example: kafka-schema-management-service
+        version:
+          type: string
+          example: 1.0.0
+        uptime_seconds:
+          type: integer
+          example: 86400
+        checks:
+          type: object
+          properties:
+            database_connection:
+              type: string
+              enum:
+                - pass
+                - fail
+            kafka_connection:
+              type: string
+              enum:
+                - pass
+                - fail
+            redis_connection:
+              type: string
+              enum:
+                - pass
+                - fail
+            schema_registry:
+              type: string
+              enum:
+                - pass
+                - fail
+        memory_usage_mb:
+          type: integer
+          example: 256
+        active_connections:
+          type: integer
+          example: 15
+    ApiError:
+      type: object
+      required:
+        - error_code
+        - message
+        - timestamp
+      properties:
+        error_code:
+          type: string
+          example: SCHEMA_VALIDATION_FAILED
+        message:
+          type: string
+          example: Schema validation failed due to missing required field 'event_id'
+        timestamp:
+          type: string
+          format: date-time
+          example: '2025-12-23T21:00:00Z'
+        request_id:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174000
+        details:
+          type: object
+          description: Additional error context
+          example:
+            field: event_id
+            expected_type: string
+            actual_value: null
+        suggested_fixes:
+          type: array
+          items:
+            type: string
+          example:
+            - Add event_id field to your schema
+            - Ensure event_id is a valid UUID
+        documentation_url:
+          type: string
+          format: uri
+          example: https://docs.necpgame.com/api-errors/SCHEMA_VALIDATION_FAILED
+    KafkaEventSchema:
+      type: object
+      required:
+        - schema_id
+        - name
+        - domain
+        - version
+        - status
+        - created_at
+        - schema_definition
+      properties:
+        schema_definition:
+          type: object
+          description: Full JSON Schema Draft 7 definition
+          example:
+            $schema: http://json-schema.org/draft-07/schema#
+            type: object
+            required:
+              - event_id
+              - event_type
+              - timestamp
+            properties:
+              event_id:
+                type: string
+                format: uuid
+              event_type:
+                type: string
+                pattern: ^[a-z]+\.[a-z]+\.[a-z]+$
+              timestamp:
+                type: string
+                format: date-time
+              version:
+                type: string
+                pattern: ^\d+\.\d+\.\d+$
+              source:
+                type: string
+              correlation_id:
+                type: string
+                format: uuid
+              session_id:
+                type: string
+              player_id:
+                type: string
+                format: uuid
+              data:
+                type: object
+              metadata:
+                type: object
+        description:
+          type: string
+          maxLength: 500
+          example: JSON schema for combat session events
+        tags:
+          type: array
+          maxItems: 10
+          items:
+            type: string
+            maxLength: 20
+        deployed_to:
+          type: array
+          maxItems: 5
+          items:
+            type: string
+            enum:
+              - staging
+              - production
+        schema_id:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174000
+        name:
+          type: string
+          pattern: ^[a-z][a-z0-9-]*$
+          minLength: 3
+          maxLength: 50
+          example: combat-session-events
+        created_at:
+          type: string
+          format: date-time
+          example: '2025-12-23T20:00:00Z'
+        updated_at:
+          type: string
+          format: date-time
+          example: '2025-12-23T21:00:00Z'
+        deployed_at:
+          type: string
+          format: date-time
+          example: '2025-12-23T21:30:00Z'
+        domain:
+          type: string
+          enum:
+            - core
+            - combat
+            - economy
+            - social
+            - system
+          example: combat
+        version:
+          type: string
+          pattern: ^\d+\.\d+\.\d+$
+          example: 1.0.0
+        status:
+          type: string
+          enum:
+            - draft
+            - published
+            - deprecated
+            - archived
+          example: published
+        compatibility_mode:
+          type: string
+          enum:
+            - backward
+            - forward
+            - full
+          default: backward
+        is_active:
+          type: boolean
+          default: true
+    CreateSchemaCommand:
+      type: object
+      required:
+        - name
+        - domain
+        - version
+        - schema_definition
+      properties:
+        name:
+          type: string
+          pattern: ^[a-z][a-z0-9-]*$
+          minLength: 3
+          maxLength: 50
+        domain:
+          type: string
+          enum:
+            - core
+            - combat
+            - economy
+            - social
+            - system
+        version:
+          type: string
+          pattern: ^\d+\.\d+\.\d+$
+        schema_definition:
+          type: object
+        description:
+          type: string
+          maxLength: 500
+        compatibility_mode:
+          type: string
+          enum:
+            - backward
+            - forward
+            - full
+          default: backward
+        tags:
+          type: array
+          maxItems: 10
+          items:
+            type: string
+            maxLength: 20
+    UpdateSchemaCommand:
+      type: object
+      properties:
+        description:
+          type: string
+          maxLength: 500
+        schema_definition:
+          type: object
+        compatibility_mode:
+          type: string
+          enum:
+            - backward
+            - forward
+            - full
+        tags:
+          type: array
+          maxItems: 10
+          items:
+            type: string
+            maxLength: 20
+        status:
+          type: string
+          enum:
+            - draft
+            - published
+            - deprecated
+    EventValidationRequest:
+      type: object
+      required:
+        - event_data
+      properties:
+        event_data:
+          type: object
+        strict_mode:
+          type: boolean
+          default: true
+        schema_version:
+          type: string
+          pattern: ^\d+\.\d+\.\d+$
+    ValidationError:
+      type: object
+      required:
+        - field_path
+        - error_code
+        - message
+      properties:
+        field_path:
+          type: string
+          example: data.session_id
+        error_code:
+          type: string
+          example: REQUIRED_FIELD_MISSING
+        message:
+          type: string
+          example: Field is required but missing
+        severity:
+          type: string
+          enum:
+            - error
+            - warning
+            - info
+          default: error
+        suggestion:
+          type: string
+          example: Add the required field to your event data
+    ValidationResult:
+      type: object
+      required:
+        - is_valid
+        - errors
+        - warnings
+        - validated_at
+      properties:
+        is_valid:
+          type: boolean
+          example: true
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ValidationError'
+        warnings:
+          type: array
+          items:
+            $ref: '#/components/schemas/ValidationError'
+        validated_at:
+          type: string
+          format: date-time
+        processing_time_ms:
+          type: integer
+          example: 5
+        schema_used:
+          type: object
+          properties:
+            schema_id:
+              type: string
+              format: uuid
+            version:
+              type: string
+              pattern: ^\d+\.\d+\.\d+$
+    CompatibilityCheckCommand:
+      type: object
+      required:
+        - target_schema_definition
+      properties:
+        target_schema_definition:
+          type: object
+        compatibility_mode:
+          type: string
+          enum:
+            - backward
+            - forward
+            - full
+          default: backward
+        include_examples:
+          type: boolean
+          default: false
+    CompatibilityIssue:
+      type: object
+      required:
+        - issue_type
+        - severity
+        - field_path
+        - description
+      properties:
+        issue_type:
+          type: string
+          enum:
+            - breaking_change
+            - potential_risk
+            - warning
+            - info
+        severity:
+          type: string
+          enum:
+            - critical
+            - high
+            - medium
+            - low
+        field_path:
+          type: string
+          example: properties.event_type
+        description:
+          type: string
+          example: Required field removed - breaking change
+        suggestion:
+          type: string
+          example: Make field optional instead of removing
+        impact_assessment:
+          type: string
+          example: Will break existing event producers
+    CompatibilityReport:
+      type: object
+      required:
+        - is_compatible
+        - compatibility_mode
+        - issues
+        - checked_at
+      properties:
+        is_compatible:
+          type: boolean
+          example: true
+        compatibility_mode:
+          type: string
+          enum:
+            - backward
+            - forward
+            - full
+        issues:
+          type: array
+          items:
+            $ref: '#/components/schemas/CompatibilityIssue'
+        checked_at:
+          type: string
+          format: date-time
+        processing_time_ms:
+          type: integer
+          example: 25
+        compatibility_score:
+          type: number
+          minimum: 0
+          maximum: 1
+          example: 0.95
+    SchemaUsageMetrics:
+      type: object
+      required:
+        - schema_id
+        - time_range
+        - collected_at
+      properties:
+        schema_id:
+          type: string
+          format: uuid
+        time_range:
+          type: string
+          enum:
+            - 1h
+            - 24h
+            - 7d
+            - 30d
+        collected_at:
+          type: string
+          format: date-time
+        validation_metrics:
+          type: object
+          properties:
+            total_validations:
+              type: integer
+              example: 15420
+            successful_validations:
+              type: integer
+              example: 15200
+            failed_validations:
+              type: integer
+              example: 220
+            success_rate:
+              type: number
+              minimum: 0
+              maximum: 1
+              example: 0.9857
+            average_processing_time_ms:
+              type: number
+              example: 3.2
+        error_distribution:
+          type: object
+          additionalProperties:
+            type: integer
+          example:
+            REQUIRED_FIELD_MISSING: 120
+            INVALID_FORMAT: 85
+            TYPE_MISMATCH: 15
+        deployment_history:
+          type: array
+          maxItems: 20
+          items:
+            type: object
+            properties:
+              deployed_at:
+                type: string
+                format: date-time
+              environment:
+                type: string
+                enum:
+                  - staging
+                  - production
+              version:
+                type: string
+                pattern: ^\d+\.\d+\.\d+$
+              success:
+                type: boolean
+              rollback_performed:
+                type: boolean
+        consumer_metrics:
+          type: object
+          properties:
+            active_consumers:
+              type: integer
+              example: 5
+            total_events_processed:
+              type: integer
+              example: 500000
+            events_per_second:
+              type: number
+              example: 1250.5
+    SchemaSummary:
+      type: object
+      required:
+        - schema_id
+        - name
+        - domain
+        - version
+        - status
+        - created_at
+      properties:
+        schema_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        domain:
+          type: string
+          enum:
+            - core
+            - combat
+            - economy
+            - social
+            - system
+        version:
+          type: string
+          pattern: ^\d+\.\d+\.\d+$
+        status:
+          type: string
+          enum:
+            - draft
+            - published
+            - deprecated
+            - archived
+        description:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        deployed_to:
+          type: array
+          items:
+            type: string
+            enum:
+              - staging
+              - production
+    PaginationMetadata:
+      type: object
+      required:
+        - page
+        - limit
+        - total_items
+        - total_pages
+        - has_next
+        - has_previous
+      properties:
+        page:
+          type: integer
+          minimum: 1
+          example: 1
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+          example: 20
+        total_items:
+          type: integer
+          example: 150
+        total_pages:
+          type: integer
+          example: 8
+        has_next:
+          type: boolean
+          example: true
+        has_previous:
+          type: boolean
+          example: false
+        first_item_index:
+          type: integer
+          example: 1
+        last_item_index:
+          type: integer
+          example: 20
+    SchemaListFilter:
+      type: object
+      properties:
+        domain:
+          type: string
+          enum:
+            - core
+            - combat
+            - economy
+            - social
+            - system
+        status:
+          type: string
+          enum:
+            - draft
+            - published
+            - deprecated
+            - archived
+        version_pattern:
+          type: string
+          pattern: ^\d+\.\d+\.\d+$
+        name_pattern:
+          type: string
+          minLength: 2
+          maxLength: 50
+        tags:
+          type: array
+          maxItems: 5
+          items:
+            type: string
+            maxLength: 20
+        created_after:
+          type: string
+          format: date-time
+        created_before:
+          type: string
+          format: date-time
+        deployed_to:
+          type: string
+          enum:
+            - staging
+            - production
+    DeploymentStatus:
+      type: object
+      required:
+        - deployment_id
+        - status
+        - environment
+        - initiated_at
+      properties:
+        deployment_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum:
+            - pending
+            - validating
+            - deploying
+            - completed
+            - failed
+            - rolled_back
+        environment:
+          type: string
+          enum:
+            - staging
+            - production
+        initiated_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+        progress_percentage:
+          type: integer
+          minimum: 0
+          maximum: 100
+        current_step:
+          type: string
+          example: Validating schema compatibility
+        error_message:
+          type: string
+        rollback_available:
+          type: boolean
+          default: true
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        **JWT Bearer Authentication**
+
+        Use JWT token obtained from authentication service.
+        Required for all operations except health checks.
