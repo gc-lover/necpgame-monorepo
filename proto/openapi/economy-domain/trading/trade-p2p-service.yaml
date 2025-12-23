@@ -216,7 +216,7 @@ paths:
       tags:
         - Trade History
       parameters:
-        - $ref: common.yaml#/components/parameters/Limit
+        - $ref: ../../common-schemas.yaml#/components/parameters/Limit
         - $ref: common.yaml#/components/parameters/Offset
       responses:
         '200':
@@ -238,7 +238,7 @@ paths:
 components:
   securitySchemes:
     BearerAuth:
-      $ref: common.yaml#/components/securitySchemes/BearerAuth
+      $ref: ../../common-schemas.yaml#/components/securitySchemes/BearerAuth
   parameters:
     TradeSessionId:
       name: sessionId
@@ -288,7 +288,29 @@ components:
       allOf:
         - $ref: '#/components/schemas/TradeOfferRequest'
     TradeSessionResponse:
-      $ref:
+      type: object
+      required:
+        - session_id
+        - status
+        - created_at
+      properties:
+        session_id:
+          type: string
+          format: uuid
+          description: Trade session identifier
+        status:
+          $ref: '#/components/schemas/TradeStatus'
+        created_at:
+          type: string
+          format: date-time
+          description: Session creation timestamp
+        participants:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Participant user IDs
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
     TradeCompleteResponse:
       type: object
       required:

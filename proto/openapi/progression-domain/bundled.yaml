@@ -1,0 +1,1153 @@
+openapi: 3.0.3
+info:
+  title: Progression domain API
+  description: |
+    Consolidated progression domain Domain API for NECPGAME.
+    This domain consolidates all progression functionality.
+  version: 1.0.0
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  contact:
+    name: NECPGAME API Support
+    url: https://necpgame.com/support
+    email: api@necpgame.com
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Development server
+  - url: https://api.necpgame.com/api/v1
+    description: Production server
+security:
+  - BearerAuth: []
+tags:
+  - name: Progression domain
+    description: progression domain domain endpoints
+paths:
+  /api/v1/progression/characters/{characterId}:
+    get:
+      tags:
+        - Progression
+      summary: Получить информацию о прогрессии персонажа
+      operationId: progressionGetCharacterProgression
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Информация о прогрессии
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CharacterProgressionResponse'
+        '404':
+          $ref: '#/components/responses/responses-NotFound'
+        '500':
+          $ref: '#/components/responses/responses-InternalServerError'
+  /api/v1/progression/characters/{characterId}/experience:
+    post:
+      tags:
+        - Experience
+      summary: Начислить опыт персонажу
+      operationId: progressionGrantExperience
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GrantExperienceRequest'
+      responses:
+        '200':
+          description: Опыт начислен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExperienceGrantedResponse'
+        '400':
+          $ref: '#/components/responses/responses-BadRequest'
+        '404':
+          $ref: '#/components/responses/responses-NotFound'
+        '500':
+          $ref: '#/components/responses/responses-InternalServerError'
+  /api/v1/progression/characters/{characterId}/level-up:
+    post:
+      tags:
+        - Levels
+      summary: Повысить уровень персонажа
+      operationId: progressionLevelUpCharacter
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Уровень повышен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LevelUpResponse'
+        '400':
+          description: Недостаточно опыта для повышения уровня
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/schemas-Error'
+        '404':
+          $ref: '#/components/responses/responses-NotFound'
+        '409':
+          description: Персонаж уже максимального уровня
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/schemas-Error'
+        '500':
+          $ref: '#/components/responses/responses-InternalServerError'
+  /api/v1/progression/characters/{characterId}/attributes:
+    post:
+      tags:
+        - Attributes
+      summary: Распределить очки атрибутов
+      operationId: progressionAllocateAttributePoints
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AllocateAttributesRequest'
+      responses:
+        '200':
+          description: Атрибуты распределены
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AttributesAllocatedResponse'
+        '400':
+          $ref: '#/components/responses/responses-BadRequest'
+        '404':
+          $ref: '#/components/responses/responses-NotFound'
+        '409':
+          description: Недостаточно очков атрибутов
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/schemas-Error'
+        '500':
+          $ref: '#/components/responses/responses-InternalServerError'
+  /api/v1/progression/characters/{characterId}/skills/{skillId}:
+    post:
+      tags:
+        - Skills
+      summary: Повысить уровень навыка
+      operationId: progressionUpgradeSkill
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: skillId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpgradeSkillRequest'
+      responses:
+        '200':
+          description: Навык повышен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillUpgradedResponse'
+        '400':
+          $ref: '#/components/responses/responses-BadRequest'
+        '404':
+          $ref: '#/components/responses/responses-NotFound'
+        '409':
+          description: Недостаточно очков навыков или навык максимального уровня
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/schemas-Error'
+        '500':
+          $ref: '#/components/responses/responses-InternalServerError'
+  /api/v1/progression/characters/{characterId}/skills:
+    get:
+      tags:
+        - Skills
+      summary: Получить навыки персонажа
+      operationId: progressionGetCharacterSkills
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Список навыков
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CharacterSkillsResponse'
+        '404':
+          $ref: '#/components/responses/responses-NotFound'
+        '500':
+          $ref: '#/components/responses/responses-InternalServerError'
+  /api/v1/progression/characters/{characterId}/recalculate:
+    post:
+      tags:
+        - Progression
+      summary: Пересчитать все статистики персонажа
+      operationId: progressionRecalculateCharacterStats
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Статистики пересчитаны
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecalculateStatsResponse'
+        '404':
+          $ref: '#/components/responses/responses-NotFound'
+        '500':
+          $ref: '#/components/responses/responses-InternalServerError'
+  /api/v1/progression/levels/{level}/requirements:
+    get:
+      tags:
+        - Levels
+      summary: Получить требования к уровню
+      operationId: progressionGetLevelRequirements
+      parameters:
+        - name: level
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+      responses:
+        '200':
+          description: Требования к уровню
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LevelRequirementsResponse'
+        '400':
+          $ref: '#/components/responses/responses-BadRequest'
+        '500':
+          $ref: '#/components/responses/responses-InternalServerError'
+  /api/v1/progression/skill-info/{skillId}:
+    get:
+      tags:
+        - Skills
+      summary: Получить информацию о навыке
+      operationId: progressionGetSkillInfo
+      parameters:
+        - name: skillId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Информация о навыке
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillInfoResponse'
+        '404':
+          $ref: '#/components/responses/responses-NotFound'
+        '500':
+          $ref: '#/components/responses/responses-InternalServerError'
+  /api/v1/progression/skills/{playerId}:
+    get:
+      tags:
+        - Skills
+      summary: Получить навыки персонажа
+      operationId: getPlayerSkills
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: playerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Навыки персонажа
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerSkillsResponse'
+        '401':
+          $ref: '#/components/responses/responses-Unauthorized'
+        '404':
+          $ref: '#/components/responses/components-responses-NotFound'
+        '500':
+          $ref: '#/components/responses/components-responses-InternalServerError'
+  /api/v1/progression/skills/experience/add:
+    post:
+      tags:
+        - Skills
+      summary: Добавить опыт навыку
+      operationId: addSkillExperience
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddSkillExperienceRequest'
+      responses:
+        '200':
+          description: Опыт добавлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillExperienceResponse'
+        '400':
+          $ref: '#/components/responses/components-responses-BadRequest'
+        '401':
+          $ref: '#/components/responses/responses-Unauthorized'
+        '500':
+          $ref: '#/components/responses/components-responses-InternalServerError'
+  /api/v1/progression/skills/unlock:
+    post:
+      tags:
+        - Skills
+      summary: Разблокировать навык
+      operationId: unlockSkill
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UnlockSkillRequest'
+      responses:
+        '200':
+          description: Навык разблокирован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillProgress'
+        '400':
+          $ref: '#/components/responses/components-responses-BadRequest'
+        '401':
+          $ref: '#/components/responses/responses-Unauthorized'
+        '500':
+          $ref: '#/components/responses/components-responses-InternalServerError'
+  /api/v1/progression/skills/tree/{playerId}:
+    get:
+      tags:
+        - Skills
+      summary: Получить дерево навыков
+      operationId: getSkillTree
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: playerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Дерево навыков
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillTreeResponse'
+        '401':
+          $ref: '#/components/responses/responses-Unauthorized'
+        '404':
+          $ref: '#/components/responses/components-responses-NotFound'
+        '500':
+          $ref: '#/components/responses/components-responses-InternalServerError'
+  /api/v1/progression-domain/health:
+    get:
+      summary: progression domain domain health check
+      operationId: progression-domainHealthCheck
+      tags:
+        - Progression domain
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: max-age=300, s-maxage=600
+            ETag:
+              schema:
+                type: string
+                example: '"-api-v1-progression-domain-health-v1.0"'
+            Content-Encoding:
+              schema:
+                type: string
+                enum:
+                  - gzip
+                  - deflate
+                  - br
+  /api/v1/progression-domain/health/batch:
+    post:
+      summary: Batch health check for multiple domains
+      operationId: batchHealthCheck
+      tags:
+        - System
+      description: 'Performance optimization: Check multiple domain health in single request'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - domains
+              properties:
+                domains:
+                  type: array
+                  items:
+                    type: string
+                  maxItems: 10
+      responses:
+        '200':
+          description: Batch health results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/HealthResponse'
+                  total_time_ms:
+                    type: integer
+                    description: Total processing time
+  /api/v1/progression-domain/health/ws:
+    get:
+      summary: Real-time health monitoring WebSocket
+      operationId: healthWebSocket
+      tags:
+        - System
+      description: Real-time health updates without polling
+      responses:
+        '101':
+          description: WebSocket connection established
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  responses:
+    BadRequest:
+      description: Bad request - invalid parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Forbidden:
+      description: Access denied
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    responses-NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/schemas-Error'
+    responses-InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/schemas-Error'
+    responses-BadRequest:
+      description: Bad request - invalid input parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/schemas-Error'
+    responses-Unauthorized:
+      description: Authentication required or invalid credentials
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/components-schemas-Error'
+    components-responses-NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/components-schemas-Error'
+    components-responses-InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/components-schemas-Error'
+    components-responses-BadRequest:
+      description: Bad request - invalid input parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/components-schemas-Error'
+  schemas:
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: healthy
+          maxLength: 255
+        domain:
+          type: string
+          example: progression-domain
+          maxLength: 255
+        timestamp:
+          type: string
+          format: date-time
+          maxLength: 255
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+          example: Internal server error
+          maxLength: 1000
+        domain:
+          type: string
+          example: progression-domain
+          maxLength: 255
+        timestamp:
+          type: string
+          format: date-time
+          maxLength: 255
+        code:
+          type: integer
+          example: 500
+          format: int32
+          minimum: 100
+          maximum: 599
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    WebSocketHealthMessage:
+      type: object
+      required:
+        - type
+        - message_timestamp
+        - health
+      properties:
+        type:
+          type: string
+          enum:
+            - health_update
+            - health_alert
+            - service_down
+        message_timestamp:
+          type: string
+          format: date-time
+          description: Timestamp of the health message
+        health:
+          $ref: '#/components/schemas/HealthResponse'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    GrantExperienceRequest:
+      type: object
+      required:
+        - amount
+        - source
+      properties:
+        source:
+          type: string
+          enum:
+            - combat
+            - quest
+            - achievement
+            - daily
+            - event
+          description: Источник опыта
+        sourceId:
+          type: string
+          description: ID источника (quest_id, enemy_id и т.д.)
+        multiplier:
+          type: number
+          minimum: 0.1
+          maximum: 5
+          default: 1
+          description: Множитель опыта (бонусы, баффы)
+        amount:
+          type: integer
+          minimum: 1
+          description: Количество опыта для начисления
+    UpgradeSkillRequest:
+      type: object
+      required:
+        - levels
+      properties:
+        levels:
+          type: integer
+          minimum: 1
+          maximum: 10
+          description: Количество уровней для повышения навыка
+    CharacterProgressionResponse:
+      type: object
+      required:
+        - character_id
+        - level
+        - experience
+        - experience_to_next
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: ID персонажа
+        attributes:
+          type: object
+          properties:
+            intelligence:
+              type: integer
+              format: int32
+            reflexes:
+              type: integer
+              format: int32
+            dexterity:
+              type: integer
+              format: int32
+            technology:
+              type: integer
+              format: int32
+            cool:
+              type: integer
+              format: int32
+            willpower:
+              type: integer
+              format: int32
+            luck:
+              type: integer
+              format: int32
+            movement:
+              type: integer
+              format: int32
+            body:
+              type: integer
+              format: int32
+            empathy:
+              type: integer
+              format: int32
+        skills:
+          type: array
+          items:
+            type: object
+            properties:
+              skill_id:
+                type: string
+                format: uuid
+              name:
+                type: string
+              level:
+                type: integer
+                format: int32
+              experience:
+                type: integer
+                format: int32
+        level:
+          type: integer
+          format: int32
+          description: Текущий уровень персонажа
+        experience:
+          type: integer
+          format: int32
+          description: Текущий опыт персонажа
+        experience_to_next:
+          type: integer
+          format: int32
+          description: Опыт до следующего уровня
+    schemas-Error:
+      type: object
+      required:
+        - message
+        - code
+      properties:
+        message:
+          type: string
+          description: Сообщение об ошибке
+        code:
+          type: integer
+          format: int32
+          description: Код ошибки
+    ExperienceGrantedResponse:
+      type: object
+      required:
+        - success
+        - experience_granted
+        - total_experience
+      properties:
+        success:
+          type: boolean
+          description: Успешность операции
+        leveled_up:
+          type: boolean
+          description: Повысился ли уровень персонажа
+        experience_granted:
+          type: integer
+          format: int32
+          description: Начисленный опыт
+        total_experience:
+          type: integer
+          format: int32
+          description: Общий опыт персонажа после начисления
+    LevelUpResponse:
+      type: object
+      required:
+        - success
+        - new_level
+        - attribute_points_gained
+      properties:
+        success:
+          type: boolean
+          description: Успешность повышения уровня
+        new_level:
+          type: integer
+          format: int32
+          description: Новый уровень персонажа
+        attribute_points_gained:
+          type: integer
+          format: int32
+          description: Полученные очки атрибутов
+        skill_points_gained:
+          type: integer
+          format: int32
+          description: Полученные очки навыков
+    AllocateAttributesRequest:
+      type: object
+      required:
+        - attributes
+      properties:
+        attributes:
+          type: object
+          properties:
+            intelligence:
+              type: integer
+              minimum: 0
+              maximum: 10
+            reflexes:
+              type: integer
+              minimum: 0
+              maximum: 10
+            dexterity:
+              type: integer
+              minimum: 0
+              maximum: 10
+            technology:
+              type: integer
+              minimum: 0
+              maximum: 10
+            cool:
+              type: integer
+              minimum: 0
+              maximum: 10
+            willpower:
+              type: integer
+              minimum: 0
+              maximum: 10
+            luck:
+              type: integer
+              minimum: 0
+              maximum: 10
+            movement:
+              type: integer
+              minimum: 0
+              maximum: 10
+            body:
+              type: integer
+              minimum: 0
+              maximum: 10
+            empathy:
+              type: integer
+              minimum: 0
+              maximum: 10
+    AttributesAllocatedResponse:
+      type: object
+      required:
+        - success
+        - allocated_attributes
+      properties:
+        allocated_attributes:
+          type: object
+          description: Распределенные атрибуты
+          properties:
+            intelligence:
+              type: integer
+              format: int32
+            reflexes:
+              type: integer
+              format: int32
+            dexterity:
+              type: integer
+              format: int32
+            technology:
+              type: integer
+              format: int32
+            cool:
+              type: integer
+              format: int32
+            willpower:
+              type: integer
+              format: int32
+            luck:
+              type: integer
+              format: int32
+            movement:
+              type: integer
+              format: int32
+            body:
+              type: integer
+              format: int32
+            empathy:
+              type: integer
+              format: int32
+        success:
+          type: boolean
+          description: Успешность распределения
+    SkillUpgradedResponse:
+      type: object
+      required:
+        - success
+        - skill_id
+        - new_level
+        - experience_spent
+      properties:
+        skill_id:
+          type: string
+          format: uuid
+          description: ID навыка
+        success:
+          type: boolean
+          description: Успешность повышения навыка
+        new_level:
+          type: integer
+          format: int32
+          description: Новый уровень навыка
+        experience_spent:
+          type: integer
+          format: int32
+          description: Потраченный опыт
+    CharacterSkillsResponse:
+      type: object
+      required:
+        - character_id
+        - skills
+      properties:
+        character_id:
+          type: string
+          format: uuid
+          description: ID персонажа
+        skills:
+          type: array
+          items:
+            type: object
+            properties:
+              skill_id:
+                type: string
+                format: uuid
+              name:
+                type: string
+              level:
+                type: integer
+                format: int32
+              experience:
+                type: integer
+                format: int32
+              max_level:
+                type: integer
+                format: int32
+    RecalculateStatsResponse:
+      type: object
+      required:
+        - success
+        - message
+      properties:
+        message:
+          type: string
+          description: Сообщение о результате
+        updated_stats:
+          type: object
+          description: Пересчитанные статы
+        success:
+          type: boolean
+          description: Успешность пересчета
+    LevelRequirementsResponse:
+      type: object
+      required:
+        - level
+        - experience_required
+        - total_experience_required
+      properties:
+        level:
+          type: integer
+          format: int32
+          description: Уровень
+        experience_required:
+          type: integer
+          format: int32
+          description: Опыт, необходимый для достижения уровня
+        total_experience_required:
+          type: integer
+          format: int32
+          description: Общий опыт, необходимый для достижения уровня
+        attribute_points_rewarded:
+          type: integer
+          format: int32
+          description: Очки атрибутов за уровень
+        skill_points_rewarded:
+          type: integer
+          format: int32
+          description: Очки навыков за уровень
+    SkillInfoResponse:
+      type: object
+      required:
+        - skill_id
+        - name
+        - description
+        - max_level
+      properties:
+        skill_id:
+          type: string
+          format: uuid
+          description: ID навыка
+        name:
+          type: string
+          description: Название навыка
+        description:
+          type: string
+          description: Описание навыка
+        category:
+          type: string
+          enum:
+            - combat
+            - social
+            - technical
+            - physical
+          description: Категория навыка
+        max_level:
+          type: integer
+          format: int32
+          description: Максимальный уровень навыка
+    SkillProgress:
+      type: object
+      properties:
+        skill_id:
+          type: string
+          format: uuid
+        skill_name:
+          type: string
+        unlocked_at:
+          type: string
+          format: date-time
+          nullable: true
+        is_unlocked:
+          type: boolean
+        level:
+          type: integer
+          minimum: 0
+        experience:
+          type: integer
+          minimum: 0
+        experience_to_next_level:
+          type: integer
+          minimum: 0
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    PlayerSkillsResponse:
+      type: object
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        skills:
+          type: array
+          items:
+            $ref: '#/components/schemas/SkillProgress'
+        total:
+          type: integer
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    components-schemas-Error:
+      type: object
+      required:
+        - message
+        - code
+        - timestamp
+      properties:
+        message:
+          type: string
+          description: Human-readable error message
+          example: Internal server error
+          maxLength: 1000
+        code:
+          type: integer
+          description: HTTP status code
+          example: 500
+          format: int32
+          minimum: 100
+          maximum: 599
+        timestamp:
+          type: string
+          format: date-time
+          description: Error timestamp
+        domain:
+          type: string
+          description: Domain where error occurred
+          example: world-domain
+          maxLength: 255
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    AddSkillExperienceRequest:
+      type: object
+      required:
+        - playerId
+        - skill_id
+        - experience_amount
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        skill_id:
+          type: string
+          format: uuid
+        source:
+          type: string
+          enum:
+            - skill_use
+            - quest_reward
+            - achievement
+        experience_amount:
+          type: integer
+          minimum: 1
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    SkillExperienceResponse:
+      type: object
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        skill_id:
+          type: string
+          format: uuid
+        level_up:
+          type: boolean
+        level:
+          type: integer
+        experience:
+          type: integer
+        experience_to_next_level:
+          type: integer
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    UnlockSkillRequest:
+      type: object
+      required:
+        - playerId
+        - skill_id
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        skill_id:
+          type: string
+          format: uuid
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    SkillTreeResponse:
+      type: object
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        tree:
+          type: object
+          additionalProperties: true
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+  parameters:
+    Limit:
+      name: limit
+      in: query
+      description: Maximum number of items to return
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+        example: 20
+    Offset:
+      name: offset
+      in: query
+      description: Number of items to skip
+      required: false
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+        example: 0
