@@ -11,6 +11,7 @@ servers:
   - url: http://localhost:8117
 tags:
   - name: health
+    description: Health check and monitoring endpoints
 paths:
   /health:
     get:
@@ -29,31 +30,36 @@ paths:
                 properties:
                   status:
                     type: string
+        "401":
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Unauthorized"
+                  message:
+                    type: string
+                    example: "Authentication required"
+        "503":
+          description: Service is unavailable
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "unhealthy"
+                  message:
+                    type: string
+                    example: "Service temporarily unavailable"
 components:
   securitySchemes:
     BearerAuth:
       type: http
       scheme: bearer
       description: JWT Bearer token authentication
-  responses:
-    Unauthorized:
-      description: Unauthorized access
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              error:
-                type: string
-                example: "Unauthorized"
-    InternalServerError:
-      description: Internal server error
-      content:
-        application/json:
-          schema:
-            type: object
-            properties:
-              error:
-                type: string
-                example: "Internal server error"
 
