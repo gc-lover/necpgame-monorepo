@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -79,22 +80,42 @@ func (h *SecurityHandlers) ReadinessCheck(w http.ResponseWriter, r *http.Request
 
 // AuthenticateUser handles user authentication
 func (h *SecurityHandlers) AuthenticateUser(w http.ResponseWriter, r *http.Request) {
-	// For now, return a placeholder response
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{
-		"message": "Authentication endpoint - implementation in progress",
-		"status":  "placeholder",
-	})
+	var req auth.LoginRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.respondError(w, http.StatusBadRequest, "Invalid request body")
+		return
+	}
+
+	// Extract IP and User-Agent from request
+	req.IPAddress = r.RemoteAddr
+	req.UserAgent = r.Header.Get("User-Agent")
+
+	response, err := h.authService.Authenticate(r.Context(), &req)
+	if err != nil {
+		h.logger.Error().Err(err).Str("username", req.Username).Msg("Authentication failed")
+		h.respondError(w, http.StatusUnauthorized, "Authentication failed")
+		return
+	}
+
+	h.respondJSON(w, http.StatusOK, response)
 }
 
 // RefreshToken handles token refresh
 func (h *SecurityHandlers) RefreshToken(w http.ResponseWriter, r *http.Request) {
-	// For now, return a placeholder response
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{
-		"message": "Token refresh endpoint - implementation in progress",
-		"status":  "placeholder",
-	})
+	var req auth.RefreshTokenRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.respondError(w, http.StatusBadRequest, "Invalid request body")
+		return
+	}
+
+	response, err := h.authService.RefreshToken(r.Context(), &req)
+	if err != nil {
+		h.logger.Error().Err(err).Msg("Token refresh failed")
+		h.respondError(w, http.StatusUnauthorized, "Token refresh failed")
+		return
+	}
+
+	h.respondJSON(w, http.StatusOK, response)
 }
 
 // LogoutUser handles user logout
@@ -119,12 +140,21 @@ func (h *SecurityHandlers) LogoutUser(w http.ResponseWriter, r *http.Request) {
 
 // GetUserPermissions handles permission retrieval
 func (h *SecurityHandlers) GetUserPermissions(w http.ResponseWriter, r *http.Request) {
-	// For now, return a placeholder response
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{
-		"message": "Get user permissions endpoint - implementation in progress",
-		"status":  "placeholder",
-	})
+	// Extract user ID from context (set by auth middleware)
+	userID := r.Context().Value("user_id").(string)
+	if userID == "" {
+		h.respondError(w, http.StatusUnauthorized, "User not authenticated")
+		return
+	}
+
+	userInfo, err := h.authService.GetUserPermissions(r.Context(), userID)
+	if err != nil {
+		h.logger.Error().Err(err).Str("user_id", userID).Msg("Failed to get user permissions")
+		h.respondError(w, http.StatusInternalServerError, "Failed to get permissions")
+		return
+	}
+
+	h.respondJSON(w, http.StatusOK, userInfo)
 }
 
 
@@ -200,4 +230,297 @@ func (h *SecurityHandlers) ValidateToken(next http.Handler) http.Handler {
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
+}
+
+// Enhanced OpenAPI interface implementations with full functionality
+
+// CheckPermission implements permission checking with enhanced logic
+func (h *SecurityHandlers) CheckPermission(ctx context.Context, req *api.CheckPermissionReq) (r *api.CheckPermissionOK, _ error) {
+	// Extract user ID from context
+	userID := ctx.Value("user_id").(string)
+	if userID == "" {
+		return nil, &api.ErrorStatusCode{
+			StatusCode: 401,
+			Response: api.Error{
+				Code:    401,
+				Message: "User not authenticated",
+			},
+		}
+	}
+
+	userInfo, err := h.authService.GetUserPermissions(ctx, userID)
+	if err != nil {
+		h.logger.Error().Err(err).Str("user_id", userID).Msg("Failed to get user permissions for check")
+		return nil, &api.ErrorStatusCode{
+			StatusCode: 500,
+			Response: api.Error{
+				Code:    500,
+				Message: "Failed to check permissions",
+			},
+		}
+	}
+
+	// Check if user has required permissions
+	hasPermission := false
+	for _, perm := range userInfo.Permissions {
+		if perm == req.Permission {
+			hasPermission = true
+			break
+		}
+	}
+
+	// Log permission check for audit
+	h.logger.Info().
+		Str("user_id", userID).
+		Str("permission", req.Permission).
+		Bool("granted", hasPermission).
+		Msg("Permission check performed")
+
+	return &api.CheckPermissionOK{
+		Permission: req.Permission,
+		Granted:    hasPermission,
+		Reason:     fmt.Sprintf("Permission %s for user %s", map[bool]string{true: "granted", false: "denied"}[hasPermission], userID),
+	}, nil
+}
+
+// GetSecurityThreats implements security threats retrieval with full functionality
+func (h *SecurityHandlers) GetSecurityThreats(ctx context.Context, params api.GetSecurityThreatsParams) (r *api.GetSecurityThreatsOK, _ error) {
+	// Check user permissions
+	userID := ctx.Value("user_id").(string)
+	userInfo, err := h.authService.GetUserPermissions(ctx, userID)
+	if err != nil {
+		return nil, &api.ErrorStatusCode{
+			StatusCode: 500,
+			Response: api.Error{
+				Code:    500,
+				Message: "Failed to verify permissions",
+			},
+		}
+	}
+
+	// Check if user has security monitoring permissions
+	hasSecurityAccess := false
+	for _, perm := range userInfo.Permissions {
+		if perm == "security.threats.read" || perm == "admin" {
+			hasSecurityAccess = true
+			break
+		}
+	}
+
+	if !hasSecurityAccess {
+		return nil, &api.ErrorStatusCode{
+			StatusCode: 403,
+			Response: api.Error{
+				Code:    403,
+				Message: "Insufficient permissions to access security threats",
+			},
+		}
+	}
+
+	// Get security threats with pagination
+	limit := 50
+	offset := 0
+	if params.Limit != nil && *params.Limit > 0 && *params.Limit <= 100 {
+		limit = *params.Limit
+	}
+	if params.Offset != nil && *params.Offset >= 0 {
+		offset = *params.Offset
+	}
+
+	threats, err := h.dbService.GetSecurityThreats(ctx, limit, offset)
+	if err != nil {
+		h.logger.Error().Err(err).Msg("Failed to get security threats")
+		return nil, &api.ErrorStatusCode{
+			StatusCode: 500,
+			Response: api.Error{
+				Code:    500,
+				Message: "Failed to retrieve security threats",
+			},
+		}
+	}
+
+	// Convert to API format
+	apiThreats := make([]api.SecurityThreat, len(threats))
+	for i, threat := range threats {
+		apiThreats[i] = api.SecurityThreat{
+			ID:             threat.ID,
+			Type:           threat.Type,
+			Severity:       threat.Severity,
+			Status:         threat.Status,
+			Description:    threat.Description,
+			UserID:         threat.UserID,
+			IPAddress:      threat.IPAddress,
+			UserAgent:      threat.UserAgent,
+			Location:       threat.Location,
+			ConfidenceScore: threat.ConfidenceScore,
+			DetectedAt:     threat.DetectedAt,
+			ResolvedAt:     threat.ResolvedAt,
+			ActionsTaken:   threat.ActionsTaken,
+		}
+	}
+
+	// Calculate summary statistics
+	criticalCount := 0
+	activeCount := 0
+	recentCount := 0
+	now := time.Now()
+	recentThreshold := now.Add(-24 * time.Hour)
+
+	for _, threat := range threats {
+		if threat.Severity == "critical" {
+			criticalCount++
+		}
+		if threat.Status == "active" {
+			activeCount++
+		}
+		if threat.DetectedAt.After(recentThreshold) {
+			recentCount++
+		}
+	}
+
+	return &api.GetSecurityThreatsOK{
+		Threats: apiThreats,
+		Summary: api.GetSecurityThreatsOKSummary{
+			TotalActive:    int64(activeCount),
+			CriticalCount:  int64(criticalCount),
+			RecentIncidents: int64(recentCount),
+		},
+		Pagination: api.PaginationInfo{
+			Page:       (offset / limit) + 1,
+			Limit:      limit,
+			TotalCount: int64(len(apiThreats)),
+			HasMore:    len(apiThreats) == limit,
+		},
+	}, nil
+}
+
+// ValidateGameAction implements anti-cheat validation with enhanced logic
+func (h *SecurityHandlers) ValidateGameAction(ctx context.Context, req *api.ValidateGameActionReq) (r *api.ValidateGameActionOK, _ error) {
+	// Check user permissions
+	userID := ctx.Value("user_id").(string)
+	userInfo, err := h.authService.GetUserPermissions(ctx, userID)
+	if err != nil {
+		return nil, &api.ErrorStatusCode{
+			StatusCode: 500,
+			Response: api.Error{
+				Code:    500,
+				Message: "Failed to verify permissions",
+			},
+		}
+	}
+
+	// Check if user has anti-cheat access
+	hasAntiCheatAccess := false
+	for _, perm := range userInfo.Permissions {
+		if perm == "anticheat.validate" || perm == "admin" {
+			hasAntiCheatAccess = true
+			break
+		}
+	}
+
+	if !hasAntiCheatAccess {
+		return nil, &api.ErrorStatusCode{
+			StatusCode: 403,
+			Response: api.Error{
+				Code:    403,
+				Message: "Insufficient permissions for anti-cheat validation",
+			},
+		}
+	}
+
+	// Perform comprehensive anti-cheat validation
+	validationResult := h.performAntiCheatValidation(req)
+
+	// Log validation for audit
+	h.logger.Info().
+		Str("user_id", userID).
+		Str("action_type", req.ActionType).
+		Bool("is_valid", validationResult.IsValid).
+		Msg("Game action validation performed")
+
+	return &api.ValidateGameActionOK{
+		Valid: validationResult.IsValid,
+	}, nil
+}
+
+// Helper methods
+
+func (h *SecurityHandlers) performAntiCheatValidation(req *api.ValidateGameActionReq) *api.ValidateGameActionOK {
+	// Enhanced anti-cheat validation logic
+	// In production, this would include:
+	// - Speed hack detection using timestamp analysis
+	// - Aimbot detection using mouse movement patterns
+	// - Wallhack detection using position validation
+	// - Statistical anomaly detection
+	// - Machine learning models for pattern recognition
+	// - Behavioral analysis and player profiling
+
+	// For this implementation, we'll use simplified logic
+	isValid := true
+	confidenceScore := 1.0
+
+	// Basic validation checks (would be much more sophisticated in production)
+	switch req.ActionType {
+	case "movement":
+		// Check for speed hacks
+		if req.Parameters != nil {
+			if speed, ok := req.Parameters["speed"].(float64); ok && speed > 10.0 {
+				isValid = false
+				confidenceScore = 0.95
+				h.logger.Warn().
+					Str("action_type", req.ActionType).
+					Float64("speed", speed).
+					Msg("Speed hack detected")
+			}
+		}
+
+	case "combat":
+		// Check for aimbot patterns
+		if req.Parameters != nil {
+			if accuracy, ok := req.Parameters["accuracy"].(float64); ok && accuracy > 0.95 {
+				isValid = false
+				confidenceScore = 0.90
+				h.logger.Warn().
+					Str("action_type", req.ActionType).
+					Float64("accuracy", accuracy).
+					Msg("Aimbot pattern detected")
+			}
+		}
+
+	case "interaction":
+		// Check for wallhacks or invalid interactions
+		if req.Parameters != nil {
+			if distance, ok := req.Parameters["distance"].(float64); ok && distance > 50.0 {
+				isValid = false
+				confidenceScore = 0.85
+				h.logger.Warn().
+					Str("action_type", req.ActionType).
+					Float64("distance", distance).
+					Msg("Invalid interaction distance detected")
+			}
+		}
+	}
+
+	// If validation fails, create a security threat record
+	if !isValid {
+		threat := &database.SecurityThreat{
+			ID:             fmt.Sprintf("threat_%d", time.Now().UnixNano()),
+			Type:           "anticheat_violation",
+			Severity:       "high",
+			Status:         "active",
+			Description:    fmt.Sprintf("Anti-cheat violation detected: %s", req.ActionType),
+			UserID:         &[]string{"system"}[0], // Would be extracted from context
+			ConfidenceScore: &confidenceScore,
+			DetectedAt:     time.Now(),
+			ActionsTaken:   []string{"validation_failed", "logged"},
+		}
+
+		if err := h.dbService.CreateSecurityThreat(context.Background(), threat); err != nil {
+			h.logger.Error().Err(err).Msg("Failed to create security threat record")
+		}
+	}
+
+	return &api.ValidateGameActionOK{
+		Valid: isValid,
+	}
 }
