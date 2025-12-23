@@ -1,0 +1,294 @@
+openapi: 3.0.3
+info:
+  title: Achievement Service API
+  description: API for managing player achievements in NECPGAME
+  version: 1.0.0
+  contact:
+    name: Backend Team
+    email: backend@necp.game
+servers:
+  - url: http://achievement-service:8100
+    description: Achievement service
+  - url: http://localhost:8100
+    description: Local development
+security:
+  - bearerAuth: []
+paths:
+  /health:
+    get:
+      summary: Health check
+      operationId: health
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+  /api/v1/achievement/achievements:
+    get:
+      summary: Get player achievements
+      operationId: achievementGetAchievements
+      parameters:
+        - name: player_id
+          in: query
+          schema:
+            type: string
+          required: true
+          description: Player ID
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+          description: Maximum number of achievements to return
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          description: Number of achievements to skip
+      responses:
+        '200':
+          description: List of achievements
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AchievementListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /api/v1/achievement/achievements/{achievementId}:
+    get:
+      summary: Get specific achievement
+      operationId: achievementGetAchievement
+      parameters:
+        - name: achievementId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Achievement ID
+      responses:
+        '200':
+          description: Achievement details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Achievement'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /api/v1/achievement/achievements/{achievementId}/unlock:
+    post:
+      summary: Unlock achievement
+      operationId: achievementUnlockAchievement
+      parameters:
+        - name: achievementId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Achievement ID
+      responses:
+        '200':
+          description: Achievement unlocked successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AchievementUnlockResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Achievement already unlocked
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Achievement:
+      type: object
+      required:
+        - id
+        - name
+        - description
+        - rarity
+        - points
+        - is_unlocked
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique achievement identifier
+        name:
+          type: string
+          maxLength: 100
+          description: Achievement name
+        description:
+          type: string
+          maxLength: 500
+          description: Achievement description
+        icon_url:
+          type: string
+          format: uri
+          description: Achievement icon URL
+        rarity:
+          type: string
+          enum:
+            - common
+            - uncommon
+            - rare
+            - epic
+            - legendary
+          default: common
+          description: Achievement rarity
+        points:
+          type: integer
+          format: int32
+          minimum: 0
+          maximum: 1000
+          default: 10
+          description: Achievement points value
+        is_unlocked:
+          type: boolean
+          default: false
+          description: Whether achievement is unlocked
+        unlocked_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: When achievement was unlocked
+        created_at:
+          type: string
+          format: date-time
+          description: Achievement creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Achievement last update timestamp
+    AchievementListResponse:
+      type: object
+      required:
+        - achievements
+        - count
+      properties:
+        achievements:
+          type: array
+          items:
+            $ref: '#/components/schemas/Achievement'
+        count:
+          type: integer
+          format: int32
+          minimum: 0
+          description: Total number of achievements
+    AchievementUnlockResponse:
+      type: object
+      required:
+        - achievement_id
+        - unlocked
+        - unlocked_at
+      properties:
+        achievement_id:
+          type: string
+          format: uuid
+          description: Achievement ID
+        unlocked:
+          type: boolean
+          description: Unlock status
+        unlocked_at:
+          type: string
+          format: date-time
+          description: Unlock timestamp
+    HealthResponse:
+      type: object
+      required:
+        - status
+        - service
+        - timestamp
+        - version
+      properties:
+        status:
+          type: string
+          enum:
+            - healthy
+            - unhealthy
+          description: Service health status
+        service:
+          type: string
+          description: Service name
+        timestamp:
+          type: string
+          format: date-time
+          description: Health check timestamp
+        version:
+          type: string
+          description: Service version
+    Error:
+      type: object
+      required:
+        - error
+        - status
+        - service
+      properties:
+        error:
+          type: string
+          description: Error message
+        status:
+          type: integer
+          format: int32
+          description: HTTP status code
+        service:
+          type: string
+          description: Service name
+        timestamp:
+          type: string
+          format: date-time
+          description: Error timestamp
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
