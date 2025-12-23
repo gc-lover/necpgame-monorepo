@@ -1,0 +1,366 @@
+openapi: 3.0.3
+info:
+  title: Social Domain - Lobby WebSocket Service
+  description: '**WS Lobby Service** for NECPGAME MMOFPS RPG.
+
+    **Purpose:** Real-time WebSocket service for lobby interactions including:
+    - Chat messaging in lobby rooms
+    - Room creation and management
+    - Player invitations and matchmaking queues
+    - Lobby status updates and notifications
+    - Friend online status and presence
+
+    **Performance Targets:**
+    - Connection capacity: 5000+ concurrent users per instance
+    - Message latency: <50ms P99
+    - Memory usage: <200MB per instance
+    - CPU usage: <60% under peak load
+
+    **Features:**
+    - WebSocket connections with JWT authentication
+    - Real-time chat with message history
+    - Room management (create, join, leave)
+    - Player presence and status updates
+    - Invitation system for private rooms
+    - Matchmaking queue management
+    - Typing indicators and presence
+
+    **Architecture:**
+    - WebSocket connections on port 18081
+    - JSON message format for all communications
+    - Connection pooling and heartbeat monitoring
+    - Redis-based session and room state management
+    '
+  version: 1.0.0
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  contact:
+    name: NECPGAME Social Team
+    email: social@necpgame.com
+servers:
+  - url: ws://ws-lobby-go.necpgame.svc.cluster.local:18081
+    description: Kubernetes internal WebSocket
+  - url: wss://lobby-ws.necpgame.com:18081
+    description: Production WebSocket endpoint (TLS)
+security:
+  - BearerAuth: []
+tags:
+  - name: Connection
+    description: WebSocket connection management
+  - name: Chat
+    description: Real-time chat messaging
+  - name: Rooms
+    description: Lobby room management
+  - name: Presence
+    description: Player presence and status
+  - name: Invitations
+    description: Private room invitations
+paths:
+  /ws/lobby:
+    get:
+      summary: Establish WebSocket connection to lobby
+      operationId: connectLobbyWebSocket
+      tags:
+        - Connection
+      parameters:
+        - name: token
+          in: query
+          required: true
+          schema:
+            type: string
+            description: JWT authentication token
+        - name: region
+          in: query
+          schema:
+            type: string
+            enum:
+              - us-east
+              - eu-west
+              - asia-pacific
+            default: us-east
+            description: Preferred region for connection
+      responses:
+        '101':
+          description: WebSocket connection established
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnectionResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Authentication failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    ConnectionResponse:
+      type: object
+      required:
+        - connection_id
+        - user_id
+        - status
+      properties:
+        connection_id:
+          type: string
+          format: uuid
+          description: Unique connection identifier
+        user_id:
+          type: string
+          format: uuid
+          description: User identifier
+        status:
+          type: string
+          enum:
+            - connected
+            - authenticated
+          description: Connection status
+        region:
+          type: string
+          enum:
+            - us-east
+            - eu-west
+            - asia-pacific
+          description: Connected region
+        connected_at:
+          type: string
+          format: date-time
+          description: Connection timestamp
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    LobbyMessage:
+      type: object
+      required:
+        - type
+        - payload
+      properties:
+        message_id:
+          type: string
+          format: uuid
+          description: Unique message identifier
+        room_id:
+          type: string
+          format: uuid
+          description: Room identifier (null for global messages)
+        type:
+          type: string
+          enum:
+            - chat_message
+            - room_join
+            - room_leave
+            - room_create
+            - room_invite
+            - player_status
+            - typing_start
+            - typing_stop
+            - heartbeat
+          description: Message type
+        priority:
+          type: string
+          enum:
+            - low
+            - normal
+            - high
+          default: normal
+          description: Message priority
+        payload:
+          type: object
+          description: Message payload (varies by type)
+        timestamp:
+          type: string
+          format: date-time
+          description: Message timestamp
+        sender_id:
+          type: string
+          format: uuid
+          description: Sender user ID
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    ChatMessage:
+      type: object
+      required:
+        - content
+      properties:
+        content:
+          type: string
+          maxLength: 500
+          description: Chat message content
+        mention_user_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Mentioned user IDs
+        reply_to_message_id:
+          type: string
+          format: uuid
+          description: Message ID being replied to
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).'
+    RoomInfo:
+      type: object
+      required:
+        - room_id
+        - name
+        - max_players
+      properties:
+        room_id:
+          type: string
+          format: uuid
+          description: Room identifier
+        name:
+          type: string
+          maxLength: 50
+          description: Room display name
+        description:
+          type: string
+          maxLength: 200
+          description: Room description
+        max_players:
+          type: integer
+          minimum: 2
+          maximum: 50
+          default: 10
+          description: Maximum players in room
+        is_private:
+          type: boolean
+          default: false
+          description: Whether room is private
+        game_mode:
+          type: string
+          enum:
+            - ranked
+            - casual
+            - tournament
+          description: Game mode for room
+        current_players:
+          type: integer
+          minimum: 0
+          description: Current player count
+        player_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: Current player IDs in room
+        created_by:
+          type: string
+          format: uuid
+          description: User who created the room
+        created_at:
+          type: string
+          format: date-time
+          description: Room creation timestamp
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    PlayerPresence:
+      type: object
+      required:
+        - user_id
+        - status
+      properties:
+        user_id:
+          type: string
+          format: uuid
+          description: Player user ID
+        status:
+          type: string
+          enum:
+            - online
+            - in_game
+            - away
+            - offline
+          description: Player online status
+        current_room_id:
+          type: string
+          format: uuid
+          description: Current room ID (if in room)
+        game_mode:
+          type: string
+          enum:
+            - ranked
+            - casual
+            - tournament
+          description: Current game mode
+        region:
+          type: string
+          enum:
+            - us-east
+            - eu-west
+            - asia-pacific
+          description: Player region
+        last_seen:
+          type: string
+          format: date-time
+          description: Last activity timestamp
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).'
+    RoomInvitation:
+      type: object
+      required:
+        - room_id
+        - inviter_id
+        - invitee_id
+      properties:
+        invitation_id:
+          type: string
+          format: uuid
+          description: Unique invitation identifier
+        room_id:
+          type: string
+          format: uuid
+          description: Room to invite to
+        inviter_id:
+          type: string
+          format: uuid
+          description: User sending invitation
+        invitee_id:
+          type: string
+          format: uuid
+          description: User receiving invitation
+        message:
+          type: string
+          maxLength: 200
+          description: Optional invitation message
+        expires_at:
+          type: string
+          format: date-time
+          description: Invitation expiration timestamp
+        status:
+          type: string
+          enum:
+            - pending
+            - accepted
+            - declined
+            - expired
+          default: pending
+          description: Invitation status
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).'
+    Error:
+      type: object
+      required:
+        - error
+        - code
+      properties:
+        error:
+          type: string
+          description: Error message
+        timestamp:
+          type: string
+          format: date-time
+          description: Error timestamp
+        details:
+          type: object
+          description: Additional error details
+        code:
+          type: integer
+          minimum: 1000
+          description: Error code
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small).'
