@@ -59,6 +59,11 @@ def is_forbidden_unicode(char):
     return False
 
 
+def sanitize_context(context):
+    """Remove forbidden Unicode characters from context string"""
+    return ''.join(char for char in context if not is_forbidden_unicode(char))
+
+
 def check_file_for_emoji(file_path):
     """Check a single file for forbidden Unicode characters"""
     violations = []
@@ -75,7 +80,7 @@ def check_file_for_emoji(file_path):
                         'column': col + 1,
                         'char': char,
                         'code': ord(char),
-                        'context': line.strip()[:100]
+                        'context': sanitize_context(line.strip()[:100])
                     })
 
     except Exception as e:
@@ -129,7 +134,13 @@ def main():
         for file_path, violation in all_violations:
             print(f"File: {file_path}:{violation['line']}:{violation['column']}")
             print(f"Character: FORBIDDEN_CHAR (U+{violation['code']:04X})")
-            print(f"Context: {violation['context']}")
+            # Safely print context, handling encoding errors
+            try:
+                print(f"Context: {violation['context']}")
+            except UnicodeEncodeError:
+                # If context has encoding issues, print a safe version
+                safe_context = violation['context'].encode('ascii', 'replace').decode('ascii')
+                print(f"Context: {safe_context}")
             print()
 
         print("WHY THIS IS FORBIDDEN:")

@@ -116,7 +116,7 @@ mcp_github_update_project_item({
 - [OK] Используй: `scripts/core/base_script.py` (базовый фреймворк)
 - [ERROR] Forbidden: .sh, .ps1, .bat, .cmd, .pl, .rb, .js
 - Git hooks блокируют коммиты с запрещенными типами скриптов
-    - Корень только для: `README.md`, `CHANGELOG*.md`, основные конфиги
+  - Корень только для: `README.md`, `CHANGELOG*.md`, основные конфиги
     - НЕ создавать промежуточные/тестовые файлы в корне!
     - **OpenAPI ДОМЕНЫ (КРИТИЧНО! Новая enterprise-grade архитектура):**
         - Все enterprise-grade домены (see .cursor/DOMAIN_REFERENCE.md)
