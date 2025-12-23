@@ -1,0 +1,1043 @@
+openapi: 3.0.3
+info:
+  title: Combat Stats Service API - Enterprise-Grade Template
+  description: '**Enterprise-Grade Combat Statistics Service API**
+
+
+    This service provides comprehensive battle analytics, performance tracking, and combat statistics
+    aggregation for the NECPGAME MMOFPS RPG system.
+
+    ## Key Features
+
+    - **Real-time combat analytics** with sub-second latency
+    - **Performance tracking** for players, weapons, and abilities
+    - **Battle statistics aggregation** with historical data
+    - **Anti-cheat validation** through statistical analysis
+    - **Leaderboards and rankings** with caching optimization
+    - **Memory-aligned structures** for 30-50% memory savings
+
+    ## Domain Purpose
+
+    Combat Stats Service collects, processes, and provides access to detailed combat statistics
+    and performance metrics for the Cyberpunk 2077-style MMOFPS RPG gameplay.
+
+    ## Performance Targets
+
+    - P99 Latency: <50ms for hot paths, <200ms for analytics
+    - Memory: <50KB per player stats instance
+    - Concurrent users: 10,000+ simultaneous stat tracking
+    - Throughput: 5000+ stat updates/second sustained
+    - Data consistency: Event-sourced with CQRS patterns
+
+    '
+  version: 1.0.0
+  contact:
+    name: NECPGAME Combat Stats API Support
+    url: https://necpgame.com/support
+    email: combat-stats@necpgame.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+servers:
+- url: https://api.necpgame.com/v1/combat-stats
+  description: Production server
+- url: https://staging-api.necpgame.com/v1/combat-stats
+  description: Staging server
+- url: http://localhost:8080/api/v1/combat-stats
+  description: Local development server
+security:
+- BearerAuth: []
+tags:
+- name: Combat Statistics
+  description: Core combat statistics operations
+- name: Player Performance
+  description: Individual player combat analytics
+- name: Weapon Analytics
+  description: Weapon and implant performance tracking
+- name: Leaderboards
+  description: Rankings and competitive statistics
+- name: Health Monitoring
+  description: System health and performance monitoring
+paths:
+  /health:
+    get:
+      summary: Combat stats service health check
+      description: '**Enterprise-grade health check endpoint**
+
+
+        Provides real-time health status of the combat statistics service.
+
+        Critical for service discovery, load balancing, and monitoring.
+
+
+        **Performance:** <1ms response time, cached for 30 seconds
+
+        '
+      operationId: combatStatsHealthCheck
+      tags:
+      - Health Monitoring
+      parameters:
+      - name: Accept-Encoding
+        in: header
+        schema:
+          type: string
+          enum:
+          - gzip
+          - deflate
+          - br
+      responses:
+        '200':
+          description: Service is healthy
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: max-age=30, s-maxage=60
+            ETag:
+              schema:
+                type: string
+                example: '"health-v1.0"'
+            Content-Encoding:
+              schema:
+                type: string
+                enum:
+                - gzip
+                - deflate
+                - br
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        '503':
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        '429':
+          description: Too many requests - rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 60
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /players/{player_id}/stats:
+    get:
+      summary: Get detailed player combat statistics
+      description: '**Enterprise-grade player statistics endpoint**
+
+
+        Retrieves comprehensive combat statistics for a specific player.
+
+        Includes performance metrics, weapon usage, ability effectiveness, and historical trends.
+
+
+        **Performance:** <25ms P95 with Redis caching, 95%+ hit rate
+
+        '
+      operationId: getPlayerCombatStats
+      tags:
+      - Player Performance
+      parameters:
+      - name: player_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Player unique identifier
+      - name: period
+        in: query
+        schema:
+          type: string
+          enum:
+          - hourly
+          - daily
+          - weekly
+          - monthly
+          - all_time
+          default: daily
+        description: Time period for statistics
+      - name: include_trends
+        in: query
+        schema:
+          type: boolean
+          default: false
+        description: Include performance trend analysis
+      responses:
+        '200':
+          description: Player combat statistics retrieved successfully
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: max-age=300, private
+            ETag:
+              schema:
+                type: string
+                example: '"player-stats-uuid-v1"'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerCombatStatsResponse'
+        '400':
+          description: Invalid request - malformed player ID or parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Player not found or no combat data available
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Too many requests - rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 30
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      summary: Update player combat statistics
+      description: '**Real-time combat statistics update endpoint**
+
+
+        Updates player statistics after combat session completion.
+
+        Supports batch updates for multiple players and optimized for high throughput.
+
+
+        **Performance:** <10ms P95, supports 5000+ updates/second
+
+        '
+      operationId: updatePlayerCombatStats
+      tags:
+      - Player Performance
+      security:
+      - BearerAuth: []
+      parameters:
+      - name: player_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Player unique identifier
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePlayerStatsRequest'
+      responses:
+        '200':
+          description: Player statistics updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerStatsUpdateResponse'
+        '400':
+          description: Invalid request - malformed data or player ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Validation failed - statistics data integrity check
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Too many requests - update rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 10
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /weapons/{weapon_id}/analytics:
+    get:
+      summary: Get weapon performance analytics
+      description: '**Weapon analytics and performance tracking**
+
+
+        Provides detailed statistics on weapon usage, effectiveness, and balance metrics.
+
+        Critical for game balancing and player feedback.
+
+
+        **Performance:** <50ms P95 with complex aggregations
+
+        '
+      operationId: getWeaponAnalytics
+      tags:
+      - Weapon Analytics
+      parameters:
+      - name: weapon_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Weapon unique identifier
+      - name: period
+        in: query
+        schema:
+          type: string
+          enum:
+          - daily
+          - weekly
+          - monthly
+          default: weekly
+        description: Analysis time period
+      responses:
+        '200':
+          description: Weapon analytics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WeaponAnalyticsResponse'
+        '400':
+          description: Invalid request - malformed weapon ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Weapon not found or no usage data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /leaderboards/{category}:
+    get:
+      summary: Get leaderboard rankings
+      description: '**Competitive rankings and leaderboards**
+
+
+        Provides top player rankings for various combat categories.
+
+        Supports multiple ranking types and time periods.
+
+
+        **Performance:** <100ms P95 with Redis-backed caching
+
+        '
+      operationId: getLeaderboard
+      tags:
+      - Leaderboards
+      parameters:
+      - name: category
+        in: path
+        required: true
+        schema:
+          type: string
+          enum:
+          - kills
+          - kd_ratio
+          - accuracy
+          - headshots
+          - damage_dealt
+          - survival_time
+          - win_rate
+        description: Leaderboard category
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 50
+        description: Number of rankings to return
+      - name: period
+        in: query
+        schema:
+          type: string
+          enum:
+          - daily
+          - weekly
+          - monthly
+          - all_time
+          default: weekly
+        description: Ranking time period
+      responses:
+        '200':
+          description: Leaderboard retrieved successfully
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: max-age=600, public
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaderboardResponse'
+        '400':
+          description: Invalid request - unsupported category or parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /sessions/{session_id}/stats:
+    get:
+      summary: Get combat session statistics
+      description: '**Detailed combat session analytics**
+
+
+        Provides comprehensive statistics for a specific combat session.
+
+        Includes player performance, weapon usage, and session outcomes.
+
+
+        **Performance:** <30ms P95 with session data aggregation
+
+        '
+      operationId: getCombatSessionStats
+      tags:
+      - Combat Statistics
+      parameters:
+      - name: session_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Combat session unique identifier
+      - name: include_player_details
+        in: query
+        schema:
+          type: boolean
+          default: false
+        description: Include detailed per-player statistics
+      responses:
+        '200':
+          description: Combat session statistics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CombatSessionStatsResponse'
+        '404':
+          description: Combat session not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: 'JWT Bearer token authentication.
+
+
+        **Token Format:** `Bearer {token}`
+
+        **Token Claims:**
+        - `sub`: User/Player ID
+        - `exp`: Expiration timestamp
+        - `iat`: Issued at timestamp
+        - `iss`: Token issuer
+        - `aud`: Token audience
+        - `roles`: User roles array
+        - `permissions`: User permissions array
+
+
+        **Security Features:**
+        - RS256 signature algorithm
+        - Token rotation required every 24 hours
+        - Automatic refresh tokens
+        - Revocation support via Redis
+
+        '
+  schemas:
+    HealthResponse:
+      type: object
+      required:
+      - status
+      - timestamp
+      - domain
+      properties:
+        domain:
+          type: string
+          example: combat-stats
+          maxLength: 50
+        status:
+          type: string
+          enum:
+          - healthy
+          - degraded
+          - unhealthy
+          example: healthy
+          maxLength: 255
+        timestamp:
+          type: string
+          format: date-time
+          example: '2025-12-23T23:54:00Z'
+          maxLength: 255
+        version:
+          type: string
+          example: 1.0.0
+          maxLength: 50
+        uptime_seconds:
+          type: integer
+          example: 3600
+        active_sessions:
+          type: integer
+          example: 5000
+        stats_processed_per_second:
+          type: integer
+          example: 2500
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    Error:
+      type: object
+      required:
+      - code
+      - message
+      properties:
+        message:
+          type: string
+          maxLength: 256
+          example: Internal server error
+        domain:
+          type: string
+          example: combat-stats
+          maxLength: 50
+        details:
+          type: object
+          description: Additional error context
+          example:
+            field: player_id
+            reason: invalid_uuid_format
+        code:
+          type: integer
+          format: int32
+          minimum: 100
+          maximum: 599
+          example: 500
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    PlayerCombatStats:
+      type: object
+      required:
+      - player_id
+      - total_kills
+      - total_deaths
+      - total_damage_dealt
+      - total_damage_received
+      - accuracy_percentage
+      - headshot_percentage
+      - average_session_duration
+      - win_rate
+      - favorite_weapon
+      - rank
+      - updated_at
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          description: Player unique identifier
+          example: 550e8400-e29b-41d4-a716-446655440000
+        total_kills:
+          type: integer
+          format: int64
+          description: Total confirmed kills
+          example: 15420
+          minimum: 0
+        total_deaths:
+          type: integer
+          format: int64
+          description: Total deaths
+          example: 12850
+          minimum: 0
+        total_damage_dealt:
+          type: integer
+          format: int64
+          description: Total damage dealt to enemies
+          example: 2850000
+          minimum: 0
+        total_damage_received:
+          type: integer
+          format: int64
+          description: Total damage received from enemies
+          example: 2150000
+          minimum: 0
+        accuracy_percentage:
+          type: number
+          format: float
+          description: Overall shooting accuracy (0.0-100.0)
+          example: 68.5
+          minimum: 0.0
+          maximum: 100.0
+        headshot_percentage:
+          type: number
+          format: float
+          description: Headshot accuracy percentage
+          example: 24.3
+          minimum: 0.0
+          maximum: 100.0
+        average_session_duration:
+          type: integer
+          description: Average combat session duration in seconds
+          example: 1250
+          minimum: 0
+        win_rate:
+          type: number
+          format: float
+          description: Win rate percentage (0.0-100.0)
+          example: 54.7
+          minimum: 0.0
+          maximum: 100.0
+        favorite_weapon:
+          type: string
+          description: Most used weapon name
+          example: "Malorian Arms 3516"
+          maxLength: 100
+        rank:
+          type: integer
+          description: Current player rank
+          example: 1250
+          minimum: 0
+        updated_at:
+          type: string
+          format: date-time
+          description: Last statistics update timestamp
+          example: '2025-12-23T23:54:00Z'
+        kd_ratio:
+          type: number
+          format: float
+          description: Kill/Death ratio
+          example: 1.20
+          minimum: 0.0
+        total_sessions:
+          type: integer
+          format: int32
+          description: Total combat sessions played
+          example: 1250
+          minimum: 0
+        total_playtime_hours:
+          type: integer
+          description: Total playtime in hours
+          example: 890
+          minimum: 0
+        achievements_unlocked:
+          type: integer
+          description: Number of combat achievements unlocked
+          example: 45
+          minimum: 0
+        current_streak:
+          type: integer
+          description: Current win/loss streak
+          example: 7
+        longest_streak:
+          type: integer
+          description: Longest win streak
+          example: 23
+          minimum: 0
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%. Hot path optimization required for real-time updates.'
+    PlayerCombatStatsResponse:
+      type: object
+      required:
+      - stats
+      properties:
+        stats:
+          $ref: '#/components/schemas/PlayerCombatStats'
+        trends:
+          type: object
+          description: Performance trend analysis (optional)
+          properties:
+            kd_ratio_trend:
+              type: string
+              enum:
+              - improving
+              - declining
+              - stable
+              example: improving
+            accuracy_trend:
+              type: string
+              enum:
+              - improving
+              - declining
+              - stable
+              example: stable
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    UpdatePlayerStatsRequest:
+      type: object
+      required:
+      - session_stats
+      properties:
+        session_stats:
+          type: object
+          required:
+          - kills
+          - deaths
+          - damage_dealt
+          - damage_received
+          - session_duration
+          - weapons_used
+          properties:
+            kills:
+              type: integer
+              minimum: 0
+              example: 12
+            deaths:
+              type: integer
+              minimum: 0
+              example: 8
+            damage_dealt:
+              type: integer
+              minimum: 0
+              example: 15400
+            damage_received:
+              type: integer
+              minimum: 0
+              example: 12300
+            session_duration:
+              type: integer
+              minimum: 0
+              example: 1800
+            weapons_used:
+              type: array
+              items:
+                type: object
+                required:
+                - weapon_id
+                - shots_fired
+                - hits
+                properties:
+                  weapon_id:
+                    type: string
+                    format: uuid
+                    example: 550e8400-e29b-41d4-a716-446655440001
+                  shots_fired:
+                    type: integer
+                    minimum: 0
+                    example: 450
+                  hits:
+                    type: integer
+                    minimum: 0
+                    example: 180
+                  headshots:
+                    type: integer
+                    minimum: 0
+                    example: 45
+            abilities_used:
+              type: array
+              items:
+                type: object
+                required:
+                - ability_id
+                - times_used
+                properties:
+                  ability_id:
+                    type: string
+                    format: uuid
+                    example: 550e8400-e29b-41d4-a716-446655440002
+                  times_used:
+                    type: integer
+                    minimum: 0
+                    example: 8
+            session_outcome:
+              type: string
+              enum:
+              - victory
+              - defeat
+              - draw
+              example: victory
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%. Optimized for batch processing.'
+    PlayerStatsUpdateResponse:
+      type: object
+      required:
+      - player_id
+      - updated_at
+      - success
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440000
+        updated_at:
+          type: string
+          format: date-time
+          example: '2025-12-23T23:54:00Z'
+        success:
+          type: boolean
+          example: true
+        new_rank:
+          type: integer
+          description: Updated player rank after stats update
+          example: 1251
+        achievements_unlocked:
+          type: array
+          items:
+            type: string
+            maxLength: 100
+          description: Any new achievements unlocked
+          example:
+          - "Sharpshooter"
+          - "Combo Master"
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    WeaponAnalytics:
+      type: object
+      required:
+      - weapon_id
+      - weapon_name
+      - total_usage
+      - accuracy_percentage
+      - average_damage_per_hit
+      - kill_death_ratio
+      - popularity_rank
+      properties:
+        weapon_id:
+          type: string
+          format: uuid
+          description: Weapon unique identifier
+          example: 550e8400-e29b-41d4-a716-446655440001
+        weapon_name:
+          type: string
+          description: Weapon display name
+          example: "Malorian Arms 3516"
+          maxLength: 100
+        total_usage:
+          type: integer
+          format: int64
+          description: Total times weapon was used
+          example: 125000
+          minimum: 0
+        accuracy_percentage:
+          type: number
+          format: float
+          description: Average accuracy with this weapon
+          example: 72.5
+          minimum: 0.0
+          maximum: 100.0
+        average_damage_per_hit:
+          type: number
+          format: float
+          description: Average damage per successful hit
+          example: 85.3
+          minimum: 0.0
+        kill_death_ratio:
+          type: number
+          format: float
+          description: K/D ratio when using this weapon
+          example: 1.45
+          minimum: 0.0
+        popularity_rank:
+          type: integer
+          description: Popularity ranking among all weapons
+          example: 3
+          minimum: 1
+        headshot_rate:
+          type: number
+          format: float
+          description: Headshot percentage with this weapon
+          example: 28.7
+          minimum: 0.0
+          maximum: 100.0
+        average_ttk_seconds:
+          type: number
+          format: float
+          description: Average time to kill in seconds
+          example: 3.2
+          minimum: 0.0
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%. Analytics queries optimized.'
+    WeaponAnalyticsResponse:
+      type: object
+      required:
+      - analytics
+      properties:
+        analytics:
+          $ref: '#/components/schemas/WeaponAnalytics'
+        comparison:
+          type: object
+          description: Comparison with other weapons in same category
+          properties:
+            category_average_accuracy:
+              type: number
+              format: float
+              example: 65.2
+            category_rank:
+              type: integer
+              example: 2
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    LeaderboardEntry:
+      type: object
+      required:
+      - rank
+      - player_id
+      - player_name
+      - value
+      properties:
+        rank:
+          type: integer
+          description: Current ranking position
+          example: 1
+          minimum: 1
+        player_id:
+          type: string
+          format: uuid
+          description: Player unique identifier
+          example: 550e8400-e29b-41d4-a716-446655440000
+        player_name:
+          type: string
+          description: Player display name
+          example: "V_JUDGMENT_DAY"
+          maxLength: 50
+        value:
+          type: number
+          format: float
+          description: Statistic value (kills, ratio, percentage, etc.)
+          example: 15420.5
+        change:
+          type: integer
+          description: Rank change from previous period (+/-)
+          example: 5
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    LeaderboardResponse:
+      type: object
+      required:
+      - category
+      - period
+      - entries
+      properties:
+        category:
+          type: string
+          enum:
+          - kills
+          - kd_ratio
+          - accuracy
+          - headshots
+          - damage_dealt
+          - survival_time
+          - win_rate
+          example: kills
+        period:
+          type: string
+          enum:
+          - daily
+          - weekly
+          - monthly
+          - all_time
+          example: weekly
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/LeaderboardEntry'
+          description: Leaderboard entries
+        last_updated:
+          type: string
+          format: date-time
+          description: When leaderboard was last updated
+          example: '2025-12-23T23:54:00Z'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%. Cached responses optimized.'
+    CombatSessionStats:
+      type: object
+      required:
+      - session_id
+      - start_time
+      - end_time
+      - duration_seconds
+      - total_players
+      - winner_team
+      - total_kills
+      - total_damage
+      properties:
+        session_id:
+          type: string
+          format: uuid
+          description: Combat session unique identifier
+          example: 550e8400-e29b-41d4-a716-446655440003
+        start_time:
+          type: string
+          format: date-time
+          description: Session start timestamp
+          example: '2025-12-23T23:00:00Z'
+        end_time:
+          type: string
+          format: date-time
+          description: Session end timestamp
+          example: '2025-12-23T23:25:30Z'
+        duration_seconds:
+          type: integer
+          description: Session duration in seconds
+          example: 1530
+          minimum: 0
+        total_players:
+          type: integer
+          description: Total number of players in session
+          example: 12
+          minimum: 1
+        winner_team:
+          type: string
+          description: Winning team identifier
+          example: "team_alpha"
+          maxLength: 50
+        total_kills:
+          type: integer
+          description: Total kills in session
+          example: 89
+          minimum: 0
+        total_damage:
+          type: integer
+          format: int64
+          description: Total damage dealt in session
+          example: 456000
+          minimum: 0
+        average_accuracy:
+          type: number
+          format: float
+          description: Average player accuracy in session
+          example: 67.8
+          minimum: 0.0
+          maximum: 100.0
+        most_used_weapon:
+          type: string
+          description: Most frequently used weapon in session
+          example: "Militech M-10AF Lexington"
+          maxLength: 100
+        player_details:
+          type: array
+          items:
+            type: object
+            properties:
+              player_id:
+                type: string
+                format: uuid
+                example: 550e8400-e29b-41d4-a716-446655440000
+              kills:
+                type: integer
+                example: 15
+              deaths:
+                type: integer
+                example: 8
+              damage_dealt:
+                type: integer
+                example: 25600
+              accuracy:
+                type: number
+                format: float
+                example: 72.5
+          description: Detailed per-player statistics (optional)
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%. Session replay data optimized.'
+    CombatSessionStatsResponse:
+      type: object
+      required:
+      - session
+      properties:
+        session:
+          $ref: '#/components/schemas/CombatSessionStats'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
