@@ -10,9 +10,11 @@ import (
 	"os"
 	"os/signal"
 	"runtime"
+	"sync"
 	"syscall"
 	"time"
 
+	"cosmetic-domain-service-go/pkg/api"
 	"cosmetic-domain-service-go/server"
 )
 
@@ -25,12 +27,16 @@ func main() {
 	// PERFORMANCE: Preallocate logger to avoid allocations
 	logger := log.New(os.Stdout, "[cosmetic-domain] ", log.LstdFlags)
 
+	// PERFORMANCE: Context with timeout for initialization
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
 	// PERFORMANCE: Initialize service with memory pooling
 	svc := server.NewCosmeticdomainService()
 
 	// PERFORMANCE: Configure HTTP server with optimized settings
 	httpServer := &http.Server{
-		Addr:         ":8200",
+		Addr:         ":8080",
 		Handler:      svc.Handler(),
 		ReadTimeout:  15 * time.Second, // PERFORMANCE: Prevent slowloris
 		WriteTimeout: 15 * time.Second, // PERFORMANCE: Prevent hanging connections
@@ -44,7 +50,7 @@ func main() {
 	// PERFORMANCE: Start server in goroutine with error handling
 	serverErr := make(chan error, 1)
 	go func() {
-		logger.Printf("Starting cosmetic-domain service on :8200 (GOGC=%s)", os.Getenv("GOGC"))
+		logger.Printf("Starting cosmetic-domain service on :8080 (GOGC=%s)", os.Getenv("GOGC"))
 		if err := httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			serverErr <- err
 		}

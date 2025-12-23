@@ -1,0 +1,200 @@
+openapi: 3.0.3
+info:
+  title: Cyberpunk domain API
+  description: 'Consolidated cyberpunk domain Domain API for NECPGAME.
+
+    This domain consolidates all cyberpunk functionality.
+
+    '
+  version: 1.0.0
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  contact:
+    name: NECPGAME API Support
+    url: https://necpgame.com/support
+    email: api@necpgame.com
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Development server
+  - url: https://api.necpgame.com/api/v1
+    description: Production server
+security:
+  - BearerAuth: [ ]
+tags:
+  - name: Cyberpunk domain
+    description: cyberpunk domain domain endpoints
+paths:
+  # Battle Pass Integration - enterprise-grade progression system (requires YAML fix)
+  # /battle-pass/health: $ref: './battle-pass/main.yaml#/paths/~1api~1v1~1battle-pass~1health'
+  # /battle-pass/seasons: $ref: './battle-pass/main.yaml#/paths/~1api~1v1~1battle-pass~1seasons'
+
+  # Blackwall Integration - enterprise-grade netrunning system (requires YAML fix)
+  # /blackwall/health: $ref: './blackwall/main.yaml#/paths/~1api~1v1~1blackwall~1health'
+  # /blackwall/zones: $ref: './blackwall/main.yaml#/paths/~1api~1v1~1blackwall~1zones'
+
+  # Cyberware Integration - enterprise-grade implant system (requires schema fix)
+  # /cyberware/health: $ref: './cyberware-service-go/main.yaml#/paths/~1api~1v1~1cyberware~1health'
+  # /cyberware/implants: $ref: './cyberware-service-go/main.yaml#/paths/~1api~1v1~1cyberware~1implants'
+
+  # Hacking Integration - enterprise-grade netrunning mechanics (requires YAML fix)
+  # /hacking/health: $ref: './hacking/main.yaml#/paths/~1api~1v1~1hacking~1health'
+  # /hacking/systems: $ref: './hacking/main.yaml#/paths/~1api~1v1~1hacking~1systems'
+
+  /api/v1/cyberpunk-domain/health:
+    get:
+      summary: cyberpunk domain domain health check
+      operationId: cyberpunk-domainHealthCheck
+      tags:
+        - Cyberpunk domain
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: max-age=300, s-maxage=600
+            ETag:
+              schema:
+                type: string
+                example: '"-api-v1-cyberpunk-domain-health-v1.0"'
+            Content-Encoding:
+              schema:
+                type: string
+                enum:
+                  - gzip
+                  - deflate
+                  - br
+  /api/v1/cyberpunk-domain/health/batch:
+    post:
+      summary: Batch health check for multiple domains
+      operationId: batchHealthCheck
+      tags:
+        - System
+      description: 'Performance optimization: Check multiple domain health in single request'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - domains
+              properties:
+                domains:
+                  type: array
+                  items:
+                    type: string
+                  maxItems: 10
+      responses:
+        '200':
+          description: Batch health results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/HealthResponse'
+                  total_time_ms:
+                    type: integer
+                    description: Total processing time
+  /api/v1/cyberpunk-domain/health/ws:
+    get:
+      summary: Real-time health monitoring WebSocket
+      operationId: healthWebSocket
+      tags:
+        - System
+      description: Real-time health updates without polling
+      responses:
+        '101':
+          description: WebSocket connection established
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: healthy
+          maxLength: 255
+        domain:
+          type: string
+          example: cyberpunk-domain
+          maxLength: 255
+        timestamp:
+          type: string
+          format: date-time
+          maxLength: 255
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+          example: Internal server error
+          maxLength: 1000
+        domain:
+          type: string
+          example: cyberpunk-domain
+          maxLength: 255
+        timestamp:
+          type: string
+          format: date-time
+          maxLength: 255
+        code:
+          type: integer
+          example: 500
+          format: int32
+          minimum: 100
+          maximum: 599
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+    # Battle Pass schemas integration (requires YAML fix)
+    # BattlePassSeason: $ref: './battle-pass/main.yaml#/components/schemas/BattlePassSeason'
+    # BattlePassChallenge: $ref: './battle-pass/main.yaml#/components/schemas/BattlePassChallenge'
+
+    # Blackwall schemas integration (requires YAML fix)
+    # BlackwallZone: $ref: './blackwall/main.yaml#/components/schemas/BlackwallZone'
+    # BlackwallBreach: $ref: './blackwall/main.yaml#/components/schemas/BlackwallBreach'
+
+    # Cyberware schemas integration (requires schema fix)
+    # CyberwareImplant: $ref: './cyberware-service-go/main.yaml#/components/schemas/CyberwareImplant'
+    # CyberwareEffect: $ref: './cyberware-service-go/main.yaml#/components/schemas/CyberwareEffect'
+
+    # Hacking schemas integration (requires YAML fix)
+    # HackingSystem: $ref: './hacking/main.yaml#/components/schemas/HackingSystem'
+    # HackingSession: $ref: './hacking/main.yaml#/components/schemas/HackingSession'
+
+    WebSocketHealthMessage:
+      type: object
+      required:
+        - type
+        - message_timestamp
+        - health
+      properties:
+        type:
+          type: string
+          enum:
+            - health_update
+            - health_alert
+            - service_down
+        message_timestamp:
+          type: string
+          format: date-time
+          description: Timestamp of the health message
+        health:
+          $ref: '#/components/schemas/HealthResponse'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'

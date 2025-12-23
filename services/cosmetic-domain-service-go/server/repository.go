@@ -9,6 +9,8 @@ import (
 	"sync"
 	"time"
 
+	"cosmetic-domain-service-go/pkg/api"
+
 	_ "github.com/lib/pq" // PostgreSQL driver
 )
 

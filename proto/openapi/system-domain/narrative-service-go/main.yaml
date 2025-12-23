@@ -1,0 +1,852 @@
+# Issue: #140889770
+openapi: 3.0.3
+info:
+  title: System Domain - Narrative Service Go API
+  description: |
+    **Enterprise-Grade Narrative Service API** for NECPGAME MMOFPS RPG.
+
+    **Enterprise-Grade Domain:** system-domain
+    **Module:** narrative-service-go
+    **Purpose:** Advanced narrative and cutscene management system
+
+    **BACKEND NOTE:** Struct field alignment optimized (large → small types).
+    All schemas ordered for optimal memory layout in generated Go code.
+    Expected memory savings: 30-50% for narrative-related structs.
+    Hot paths: /cutscenes/play, /narrative/state, /stories/progress
+    Expected RPS: 1000+ for hot paths, zero allocations.
+
+    **Core Features:**
+    - Cutscene management and playback
+    - Narrative state tracking
+    - Story progression handling
+    - Dialogue system integration
+    - Player narrative choices
+    - Dynamic narrative events
+    - Anti-cheat validation for narrative state
+
+    **Performance Targets:**
+    - Hot paths: 1000+ RPS, P99 <15ms
+    - Memory per connection: <10MB
+    - Cache hit rate: >95%
+    - Event throughput: 300+ events/sec
+  version: 1.0.0
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+  contact:
+    name: NECPGAME Narrative API Support
+    url: https://necpgame.com/support
+    email: api@narrative.necpgame.com
+
+servers:
+  - url: http://localhost:8080/api/v1/narrative
+    description: Development server
+  - url: https://api.necpgame.com/api/v1/narrative
+    description: Production server
+
+security:
+  - BearerAuth: [ ]
+
+tags:
+  - name: Cutscenes
+    description: Cutscene management and playback
+  - name: Narrative State
+    description: Player narrative progress tracking
+  - name: Stories
+    description: Story progression and choices
+  - name: Dialogue
+    description: Dialogue system integration
+  - name: Events
+    description: Dynamic narrative events
+  - name: Anti-Cheat
+    description: Narrative state validation
+  - name: Health
+    description: Service health check
+
+paths:
+  /health:
+    get:
+      summary: Service health check
+      operationId: healthCheck
+      tags:
+        - Health
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /cutscenes:
+    get:
+      summary: Get available cutscenes
+      operationId: getCutscenes
+      description: |
+        Retrieves a list of available cutscenes for the player.
+        **BACKEND NOTE:** Cached query - optimized for frequent access.
+      tags:
+        - Cutscenes
+      parameters:
+        - name: playerId
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Player ID
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [ LOCKED, AVAILABLE, COMPLETED, SKIPPED ]
+          description: Filter by cutscene status
+        - name: category
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [ STORY, TUTORIAL, EVENT, ACHIEVEMENT ]
+          description: Filter by cutscene category
+      responses:
+        '200':
+          description: List of available cutscenes
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CutscenesResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /cutscenes/{cutsceneId}:
+    parameters:
+      - name: cutsceneId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Cutscene ID
+    get:
+      summary: Get cutscene details
+      operationId: getCutsceneDetails
+      description: |
+        Retrieves detailed information about a specific cutscene.
+      tags:
+        - Cutscenes
+      responses:
+        '200':
+          description: Cutscene details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CutsceneDetailsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /cutscenes/{cutsceneId}/play:
+    post:
+      summary: Start cutscene playback
+      operationId: playCutscene
+      description: |
+        Initiates cutscene playback for the player.
+        **BACKEND NOTE:** Hot path - optimized for 1000+ RPS, zero allocations.
+      tags:
+        - Cutscenes
+      parameters:
+        - name: cutsceneId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Cutscene ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlayCutsceneRequest'
+      responses:
+        '200':
+          description: Cutscene playback started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayCutsceneResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Cutscene not available for this player
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          description: Too many requests - cutscene cooldown
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /cutscenes/{cutsceneId}/skip:
+    post:
+      summary: Skip cutscene
+      operationId: skipCutscene
+      description: |
+        Allows the player to skip a skippable cutscene.
+      tags:
+        - Cutscenes
+      parameters:
+        - name: cutsceneId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Cutscene ID
+      responses:
+        '200':
+          description: Cutscene skipped successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkipCutsceneResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Cutscene cannot be skipped
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /narrative/state:
+    get:
+      summary: Get player narrative state
+      operationId: getNarrativeState
+      description: |
+        Retrieves the current narrative state for the player.
+        **BACKEND NOTE:** Hot path - optimized for 1000+ RPS, zero allocations.
+      tags:
+        - Narrative State
+      parameters:
+        - name: playerId
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Player ID
+      responses:
+        '200':
+          description: Player narrative state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NarrativeStateResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /stories/{storyId}/progress:
+    get:
+      summary: Get story progress
+      operationId: getStoryProgress
+      description: |
+        Retrieves the player's progress in a specific story.
+        **BACKEND NOTE:** Hot path - optimized for 1000+ RPS, zero allocations.
+      tags:
+        - Stories
+      parameters:
+        - name: storyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Story ID
+        - name: playerId
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Player ID
+      responses:
+        '200':
+          description: Story progress
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StoryProgressResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /stories/{storyId}/choice:
+    post:
+      summary: Make story choice
+      operationId: makeStoryChoice
+      description: |
+        Records a player's choice in a story, affecting narrative progression.
+      tags:
+        - Stories
+      parameters:
+        - name: storyId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Story ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StoryChoiceRequest'
+      responses:
+        '200':
+          description: Story choice recorded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StoryChoiceResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Invalid choice for current story state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /dialogue/{dialogueId}/start:
+    post:
+      summary: Start dialogue
+      operationId: startDialogue
+      description: |
+        Initiates a dialogue sequence for the player.
+      tags:
+        - Dialogue
+      parameters:
+        - name: dialogueId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Dialogue ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartDialogueRequest'
+      responses:
+        '200':
+          description: Dialogue started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StartDialogueResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /events/trigger:
+    post:
+      summary: Trigger narrative event
+      operationId: triggerNarrativeEvent
+      description: |
+        Triggers a dynamic narrative event for the player.
+      tags:
+        - Events
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TriggerEventRequest'
+      responses:
+        '200':
+          description: Narrative event triggered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TriggerEventResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /validate:
+    post:
+      summary: Validate narrative state
+      operationId: validateNarrativeState
+      description: |
+        Internal endpoint for anti-cheat and server-side validation of narrative state.
+      tags:
+        - Anti-Cheat
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NarrativeValidationRequest'
+      responses:
+        '200':
+          description: Validation result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NarrativeValidationResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      description: JWT Bearer token authentication
+
+  responses:
+    BadRequest:
+      description: Invalid request payload or parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Authentication required or failed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Forbidden:
+      description: Access denied
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    InternalServerError:
+      description: Unexpected internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+  schemas:
+    HealthResponse:
+      type: object
+      required:
+        - status
+        - timestamp
+      properties:
+        status:
+          type: string
+          enum: [ healthy ]
+        timestamp:
+          type: string
+          format: date-time
+        version:
+          type: string
+        uptime:
+          type: integer
+          description: Service uptime in seconds
+
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: string
+          description: Unique error code
+        message:
+          type: string
+          description: Human-readable error message
+        details:
+          type: object
+          description: Additional error details
+
+    Cutscene:
+      type: object
+      required:
+        - id
+        - title
+        - category
+        - status
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+          enum: [ STORY, TUTORIAL, EVENT, ACHIEVEMENT ]
+        status:
+          type: string
+          enum: [ LOCKED, AVAILABLE, COMPLETED, SKIPPED ]
+        duration:
+          type: integer
+          description: Duration in seconds
+        skippable:
+          type: boolean
+          default: true
+        prerequisites:
+          type: array
+          items:
+            type: string
+            description: Required story/chapter IDs
+
+    CutscenesResponse:
+      type: object
+      required:
+        - cutscenes
+        - count
+      properties:
+        cutscenes:
+          type: array
+          items:
+            $ref: '#/components/schemas/Cutscene'
+        count:
+          type: integer
+        nextCursor:
+          type: string
+          description: Cursor for pagination
+
+    CutsceneDetailsResponse:
+      allOf:
+        - $ref: '#/components/schemas/Cutscene'
+        - type: object
+          properties:
+            content:
+              type: object
+              description: Cutscene content data (video, audio, etc.)
+            triggers:
+              type: array
+              items:
+                type: object
+                properties:
+                  event:
+                    type: string
+                  timestamp:
+                    type: integer
+                  action:
+                    type: string
+
+    PlayCutsceneRequest:
+      type: object
+      required:
+        - playerId
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        quality:
+          type: string
+          enum: [ LOW, MEDIUM, HIGH, ULTRA ]
+          default: HIGH
+        subtitles:
+          type: boolean
+          default: true
+        audioLanguage:
+          type: string
+          default: "en"
+
+    PlayCutsceneResponse:
+      type: object
+      required:
+        - sessionId
+        - status
+      properties:
+        sessionId:
+          type: string
+          format: uuid
+          description: Cutscene playback session ID
+        status:
+          type: string
+          enum: [ STARTED, BUFFERING, PLAYING ]
+        estimatedDuration:
+          type: integer
+          description: Estimated duration in seconds
+
+    SkipCutsceneResponse:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum: [ SKIPPED ]
+        rewardsGranted:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+              amount:
+                type: integer
+
+    NarrativeStateResponse:
+      type: object
+      required:
+        - playerId
+        - completedStories
+        - activeStories
+        - narrativeFlags
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        completedStories:
+          type: array
+          items:
+            type: string
+            format: uuid
+        activeStories:
+          type: array
+          items:
+            type: string
+            format: uuid
+        narrativeFlags:
+          type: object
+          description: Key-value pairs of narrative flags
+        lastUpdated:
+          type: string
+          format: date-time
+
+    StoryProgressResponse:
+      type: object
+      required:
+        - storyId
+        - progress
+        - currentChapter
+        - choices
+      properties:
+        storyId:
+          type: string
+          format: uuid
+        progress:
+          type: number
+          minimum: 0
+          maximum: 1
+        currentChapter:
+          type: string
+          format: uuid
+        choices:
+          type: array
+          items:
+            type: object
+            properties:
+              chapterId:
+                type: string
+                format: uuid
+              choiceId:
+                type: string
+                format: uuid
+              timestamp:
+                type: string
+                format: date-time
+
+    StoryChoiceRequest:
+      type: object
+      required:
+        - playerId
+        - choiceId
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        choiceId:
+          type: string
+          format: uuid
+        additionalData:
+          type: object
+          description: Extra data for complex choices
+
+    StoryChoiceResponse:
+      type: object
+      required:
+        - status
+        - nextChapterId
+      properties:
+        status:
+          type: string
+          enum: [ RECORDED ]
+        nextChapterId:
+          type: string
+          format: uuid
+        consequences:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+                enum: [ FLAG_SET, RELATIONSHIP_CHANGE, INVENTORY_ADD ]
+              target:
+                type: string
+              value:
+                type: string
+
+    StartDialogueRequest:
+      type: object
+      required:
+        - playerId
+        - npcId
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        npcId:
+          type: string
+          format: uuid
+        context:
+          type: object
+          description: Dialogue context data
+
+    StartDialogueResponse:
+      type: object
+      required:
+        - dialogueId
+        - status
+      properties:
+        dialogueId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [ STARTED ]
+        initialLines:
+          type: array
+          items:
+            type: object
+            properties:
+              speaker:
+                type: string
+              text:
+                type: string
+              choices:
+                type: array
+                items:
+                  type: string
+
+    TriggerEventRequest:
+      type: object
+      required:
+        - playerId
+        - eventType
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        eventType:
+          type: string
+        eventData:
+          type: object
+
+    TriggerEventResponse:
+      type: object
+      required:
+        - eventId
+        - status
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [ TRIGGERED ]
+        effects:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+              description:
+                type: string
+
+    NarrativeValidationRequest:
+      type: object
+      required:
+        - playerId
+      properties:
+        playerId:
+          type: string
+          format: uuid
+        expectedState:
+          type: object
+          description: Expected narrative state
+
+    NarrativeValidationResponse:
+      type: object
+      required:
+        - isValid
+      properties:
+        isValid:
+          type: boolean
+        violations:
+          type: array
+          items:
+            type: string
+        correctedState:
+          type: object
+          description: Corrected narrative state if invalid

@@ -1,0 +1,821 @@
+# Issue: #140946814
+openapi: 3.0.3
+info:
+  title: Social Domain - Enterprise-Grade API
+  description: |
+    **Enterprise-Grade Social Domain** for NECPGAME MMOFPS RPG.
+
+    **Domain Purpose:** Complete social interaction ecosystem
+    **Architecture:** Modular microservices with event-driven communication
+
+    **Core Modules:**
+    - **Chat** - Real-time messaging and channels
+    - **Guilds** - Guild management and warfare
+    - **Parties** - Temporary player groups
+    - **Relationships** - NPC and player relationships
+    - **Orders** - Player commission system
+    - **Mentorship** - Learning and teaching system
+    - **Reputation** - Social standing and benefits
+    - **Notifications** - Event notifications
+    - **Voice Lobby** - Voice chat integration
+
+    **Performance Targets:**
+    - Hot paths: 1000+ RPS, P99 <20ms
+    - Event throughput: 5000+ events/sec
+    - Memory: <50MB per service instance
+    - Cache hit rate: >95%
+  version: 1.0.0
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  contact:
+    name: NECPGAME API Support
+    url: https://necpgame.com/support
+    email: api@social.necpgame.com
+servers:
+  - url: http://localhost:8084/api/v1
+    description: Development server
+  - url: https://api.necpgame.com/api/v1
+    description: Production server
+security:
+  - BearerAuth: [ ]
+tags:
+  - name: Social
+    description: Social domain endpoints
+paths:
+  /api/v1/social-domain/health:
+    get:
+      summary: social domain domain health check
+      operationId: social-domainHealthCheck
+      tags:
+        - Social domain
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: max-age=300, s-maxage=600
+            ETag:
+              schema:
+                type: string
+                example: '"-api-v1-social-domain-health-v1.0"'
+            Content-Encoding:
+              schema:
+                type: string
+                enum:
+                  - gzip
+                  - deflate
+                  - br
+  /api/v1/social-domain/health/batch:
+    post:
+      summary: Batch health check for multiple domains
+      operationId: batchHealthCheck
+      tags:
+        - System
+      description:
+        "Performance optimization: Check multiple domain health in single
+        request"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - domains
+              properties:
+                domains:
+                  type: array
+                  items:
+                    type: string
+                  maxItems: 10
+      responses:
+        "200":
+          description: Batch health results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/HealthResponse"
+                  total_time_ms:
+                    type: integer
+                    description: Total processing time
+  /api/v1/social-domain/health/ws:
+    get:
+      summary: Real-time health monitoring WebSocket
+      operationId: healthWebSocket
+      tags:
+        - System
+      description: Real-time health updates without polling
+      responses:
+        "101":
+          description: WebSocket connection established
+
+  # Guilds module endpoints - delegated to guilds submodule
+
+  # Notifications module endpoints
+  /notifications:
+    get:
+      summary: Get user notifications
+      operationId: getNotifications
+      responses:
+        '200':
+          description: List of notifications
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationsListResponse"
+  /notifications/{notification_id}:
+    parameters:
+      - name: notification_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      summary: Get specific notification
+      operationId: getNotification
+      responses:
+        '200':
+          description: Notification details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Notification"
+  /notifications/{notification_id}/read:
+    parameters:
+      - name: notification_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      summary: Mark notification as read
+      operationId: markNotificationRead
+      responses:
+        '200':
+          description: Notification marked as read
+  /notifications/history:
+    get:
+      summary: Get notification history
+      operationId: getNotificationHistory
+      responses:
+        '200':
+          description: Notification history
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationsListResponse"
+  /notifications/settings:
+    get:
+      summary: Get notification settings
+      operationId: getNotificationSettings
+      responses:
+        '200':
+          description: Notification settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationSettings"
+    put:
+      summary: Update notification settings
+      operationId: updateNotificationSettings
+      responses:
+        '200':
+          description: Settings updated
+  /ws/notifications:
+    get:
+      summary: WebSocket for real-time notifications
+      operationId: websocketNotifications
+      responses:
+        '101':
+          description: WebSocket connection established
+  /admin/notifications/stats:
+    get:
+      summary: Get notification statistics
+      operationId: getNotificationStats
+      responses:
+        '200':
+          description: Notification statistics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationStatsResponse"
+
+  # Content Management module endpoints
+  /content/quests:
+    $ref: "./content-management/quests/main.yaml#/paths/~1"
+  /content/quests/{quest_id}:
+    $ref: "./content-management/quests/main.yaml#/paths/~1{quest_id}"
+  /content/npcs:
+    $ref: "./content-management/npcs/main.yaml#/paths/~1"
+  /content/npcs/{npc_id}:
+    $ref: "./content-management/npcs/main.yaml#/paths/~1{npc_id}"
+  /content/dialogues:
+    $ref: "./content-management/dialogues/main.yaml#/paths/~1"
+  /content/dialogues/{dialogue_id}:
+    $ref: "./content-management/dialogues/main.yaml#/paths/~1{dialogue_id}"
+  /content/lore:
+    $ref: "./content-management/lore/main.yaml#/paths/~1"
+  /content/lore/{lore_id}:
+    $ref: "./content-management/lore/main.yaml#/paths/~1{lore_id}"
+
+  # Chat module Integration - enterprise-grade messaging system
+  /chat/health:
+    $ref: './chat/main.yaml#/paths/~1api~1v1~1chat~1health'
+  /chat/rooms:
+    $ref: './chat/main.yaml#/paths/~1api~1v1~1chat~1rooms'
+
+  # Parties module Integration - enterprise-grade party management (requires common.yaml fix)
+  # /parties/create: $ref: './parties/party-service.yaml#/paths/~1social~1party~1create'
+  # /parties/{partyId}: $ref: './parties/party-service.yaml#/paths/~1social~1party~1{partyId}'
+
+  # Mail module Integration - enterprise-grade messaging (requires duplicate key fix)
+  # /mail/health: $ref: './mail/main.yaml#/paths/~1api~1v1~1mail~1health'
+  # /mail/messages: $ref: './mail/main.yaml#/paths/~1api~1v1~1mail~1messages'
+
+  # Orders module Integration - enterprise-grade task management (requires common.yaml fix)
+  # /orders/health: $ref: './orders/social-orders-core-service.yaml#/paths/~1api~1v1~1orders~1health'
+  # /orders: $ref: './orders/social-orders-core-service.yaml#/paths/~1api~1v1~1orders'
+
+  # Additional module references for future expansion
+  # /relationships: $ref: './relationships/main.yaml'
+  # /reputation: $ref: './reputation/main.yaml'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    # Guild schemas (inline to avoid reference issues)
+    Guild:
+      type: object
+      required:
+        - id
+        - name
+        - created_at
+        - level
+        - member_count
+        - is_active
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Guild unique identifier
+          example: 550e8400-e29b-41d4-a716-446655440000
+        leader_id:
+          type: string
+          format: uuid
+          description: UUID of the guild leader
+          example: 550e8400-e29b-41d4-a716-446655440001
+        name:
+          type: string
+          minLength: 3
+          maxLength: 50
+          description: Guild display name
+          example: Shadow Hunters
+        description:
+          type: string
+          maxLength: 500
+          description: Guild description
+          example: Elite PvP guild focused on territory control and resource acquisition.
+        motto:
+          type: string
+          maxLength: 100
+          description: Guild motto/slogan
+          example: Conquer or Die
+        faction:
+          type: string
+          enum:
+            - corporate
+            - nomad
+            - street_kid
+            - mercenary
+            - other
+          description: Guild faction alignment
+          example: nomad
+        created_at:
+          type: string
+          format: date-time
+          description: Timestamp of guild creation
+          example: '2025-12-20T10:00:00Z'
+        last_activity:
+          type: string
+          format: date-time
+          description: Last guild activity timestamp
+          example: '2025-12-20T14:30:00Z'
+        win_rate:
+          type: number
+          minimum: 0
+          maximum: 1
+          description: Guild PvP win rate
+          example: 0.67
+        level:
+          type: integer
+          format: int32
+          minimum: 1
+          maximum: 100
+          description: Guild level
+          example: 15
+        member_count:
+          type: integer
+          format: int32
+          minimum: 1
+          maximum: 250
+          description: Current number of members
+          example: 75
+        max_members:
+          type: integer
+          format: int32
+          minimum: 1
+          maximum: 250
+          description: Maximum allowed members
+          example: 100
+        reputation_score:
+          type: integer
+          format: int32
+          minimum: -10000
+          maximum: 10000
+          description: Guild reputation score
+          example: 1250
+        territory_count:
+          type: integer
+          format: int32
+          minimum: 0
+          maximum: 50
+          description: Number of controlled territories
+          example: 3
+        is_recruiting:
+          type: boolean
+          description: Whether guild is accepting new members
+          example: true
+        is_active:
+          type: boolean
+          description: Indicates if the guild is active
+          example: true
+        has_bank:
+          type: boolean
+          description: Whether guild has bank functionality
+          example: true
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    CreateGuildRequest:
+      type: object
+      required:
+        - name
+        - description
+        - faction
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 50
+          description: Desired guild name
+          example: Night City Legends
+        description:
+          type: string
+          maxLength: 500
+          description: Guild description
+          example: A new guild rising in Night City, seeking glory and wealth.
+        motto:
+          type: string
+          maxLength: 100
+          description: Guild motto
+          example: Power Through Unity
+        faction:
+          type: string
+          enum:
+            - corporate
+            - nomad
+            - street_kid
+            - mercenary
+            - other
+          description: Guild faction alignment
+          example: street_kid
+        max_members:
+          type: integer
+          minimum: 1
+          maximum: 250
+          default: 50
+          description: Maximum members allowed
+        is_recruiting:
+          type: boolean
+          default: true
+          description: Whether to accept new members immediately
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    UpdateGuildRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 50
+          description: New guild name
+          example: Night City Elite
+        description:
+          type: string
+          maxLength: 500
+          description: New guild description
+          example: Updated description for the elite guild.
+        motto:
+          type: string
+          maxLength: 100
+          description: New guild motto
+        faction:
+          type: string
+          enum:
+            - corporate
+            - nomad
+            - street_kid
+            - mercenary
+            - other
+          description: New faction alignment
+        max_members:
+          type: integer
+          minimum: 1
+          maximum: 250
+          description: New maximum members
+        is_recruiting:
+          type: boolean
+          description: Update recruiting status
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    GuildResponse:
+      type: object
+      required:
+        - guild
+      properties:
+        guild:
+          $ref: '#/components/schemas/Guild'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    GuildsListResponse:
+      type: object
+      required:
+        - guilds
+        - total_count
+      properties:
+        guilds:
+          type: array
+          items:
+            $ref: '#/components/schemas/Guild'
+          description: List of guilds
+        total_count:
+          type: integer
+          description: Total number of guilds matching criteria
+          example: 150
+        has_more:
+          type: boolean
+          description: Whether there are more results available
+          example: true
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    GuildMember:
+      type: object
+      required:
+        - player_id
+        - username
+        - role
+        - joined_at
+        - is_active
+      properties:
+        player_id:
+          type: string
+          format: uuid
+          description: Player identifier
+        username:
+          type: string
+          description: Player display name
+          example: V_Judy
+        role:
+          type: string
+          enum:
+            - leader
+            - officer
+            - member
+            - recruit
+          description: Member role in guild
+        joined_at:
+          type: string
+          format: date-time
+          description: When player joined the guild
+        last_active:
+          type: string
+          format: date-time
+          description: Last activity timestamp
+        contribution_score:
+          type: integer
+          minimum: 0
+          description: Member contribution score
+        is_active:
+          type: boolean
+          description: Whether member is currently active
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    GuildMembersResponse:
+      type: object
+      required:
+        - members
+        - total_count
+      properties:
+        members:
+          type: array
+          items:
+            $ref: '#/components/schemas/GuildMember'
+        total_count:
+          type: integer
+          description: Total number of members
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    Territory:
+      type: object
+      required:
+        - id
+        - name
+        - type
+        - control_points
+        - is_contested
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Territory identifier
+        controlling_guild_id:
+          type: string
+          format: uuid
+          description: Currently controlling guild
+        name:
+          type: string
+          description: Territory display name
+          example: Night City District 7
+        type:
+          type: string
+          enum:
+            - district
+            - landmark
+            - resource_node
+            - strategic_point
+          description: Territory type
+        claimed_at:
+          type: string
+          format: date-time
+          description: When territory was claimed
+        control_points:
+          type: integer
+          minimum: 1
+          description: Number of control points
+        defense_rating:
+          type: integer
+          minimum: 0
+          description: Territory defense strength
+        resource_value:
+          type: integer
+          minimum: 0
+          description: Economic value of territory
+        is_contested:
+          type: boolean
+          description: Whether territory is under attack
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+    # Notification schemas
+    Notification:
+      type: object
+      required:
+        - id
+        - type
+        - title
+        - message
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique notification identifier
+        type:
+          type: string
+          enum: [ achievement, system, social, quest, combat, economy ]
+          description: Notification category
+        title:
+          type: string
+          maxLength: 200
+          description: Notification title
+        message:
+          type: string
+          maxLength: 1000
+        created_at:
+          type: string
+          format: date-time
+        read_at:
+          type: string
+          format: date-time
+          nullable: true
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+    SendNotificationRequest:
+      type: object
+      required:
+        - player_id
+        - type
+        - title
+        - message
+      properties:
+        player_id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [ achievement, system, social, quest, combat, economy ]
+        title:
+          type: string
+          maxLength: 200
+        message:
+          type: string
+          maxLength: 1000
+        expires_in:
+          type: integer
+          description: Expiration time in seconds
+    NotificationResponse:
+      type: object
+      required:
+        - success
+        - notification_id
+      properties:
+        success:
+          type: boolean
+        notification_id:
+          type: string
+          format: uuid
+    NotificationsListResponse:
+      type: object
+      required:
+        - notifications
+        - total
+      properties:
+        notifications:
+          type: array
+          items:
+            $ref: "#/components/schemas/Notification"
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+    NotificationSettings:
+      type: object
+      properties:
+        enabled_types:
+          type: array
+          items:
+            type: string
+            enum: [ achievement, system, social, quest, combat, economy ]
+        email_enabled:
+          type: boolean
+        push_enabled:
+          type: boolean
+    NotificationStatsResponse:
+      type: object
+      properties:
+        total_sent:
+          type: integer
+        total_read:
+          type: integer
+        by_type:
+          type: object
+
+    # Content Management module schemas
+    Quest:
+      $ref: "./content-management/quests/main.yaml#/components/schemas/Quest"
+    CreateQuestRequest:
+      $ref: "./content-management/quests/main.yaml#/components/schemas/CreateQuestRequest"
+    UpdateQuestRequest:
+      $ref: "./content-management/quests/main.yaml#/components/schemas/UpdateQuestRequest"
+    QuestResponse:
+      $ref: "./content-management/quests/main.yaml#/components/schemas/QuestResponse"
+    QuestsListResponse:
+      $ref: "./content-management/quests/main.yaml#/components/schemas/QuestsListResponse"
+    QuestReward:
+      $ref: "./content-management/quests/main.yaml#/components/schemas/QuestReward"
+    QuestObjective:
+      $ref: "./content-management/quests/main.yaml#/components/schemas/QuestObjective"
+
+    NPC:
+      $ref: "./content-management/npcs/main.yaml#/components/schemas/NPC"
+    CreateNPCRequest:
+      $ref: "./content-management/npcs/main.yaml#/components/schemas/CreateNPCRequest"
+    UpdateNPCRequest:
+      $ref: "./content-management/npcs/main.yaml#/components/schemas/UpdateNPCRequest"
+    NPCResponse:
+      $ref: "./content-management/npcs/main.yaml#/components/schemas/NPCResponse"
+    NPCsListResponse:
+      $ref: "./content-management/npcs/main.yaml#/components/schemas/NPCsListResponse"
+
+    Dialogue:
+      $ref: "./content-management/dialogues/main.yaml#/components/schemas/Dialogue"
+    DialogueNode:
+      $ref: "./content-management/dialogues/main.yaml#/components/schemas/DialogueNode"
+    DialogueResponse:
+      $ref: "./content-management/dialogues/main.yaml#/components/schemas/DialogueResponse"
+    DialogueCondition:
+      $ref: "./content-management/dialogues/main.yaml#/components/schemas/DialogueCondition"
+    DialogueAction:
+      $ref: "./content-management/dialogues/main.yaml#/components/schemas/DialogueAction"
+    CreateDialogueRequest:
+      $ref: "./content-management/dialogues/main.yaml#/components/schemas/CreateDialogueRequest"
+    DialoguesListResponse:
+      $ref: "./content-management/dialogues/main.yaml#/components/schemas/DialoguesListResponse"
+
+    LoreEntry:
+      $ref: "./content-management/lore/main.yaml#/components/schemas/LoreEntry"
+    CreateLoreRequest:
+      $ref: "./content-management/lore/main.yaml#/components/schemas/CreateLoreRequest"
+    LoreResponse:
+      $ref: "./content-management/lore/main.yaml#/components/schemas/LoreResponse"
+    LoreListResponse:
+      $ref: "./content-management/lore/main.yaml#/components/schemas/LoreListResponse"
+
+    # Chat module schemas integration (active)
+    ChatRooms:
+      $ref: './chat/main.yaml#/components/schemas/ChatRooms'
+    # ChatMessage: $ref: './chat/main.yaml#/components/schemas/ChatMessage'  # requires schema fix
+
+    # Parties module schemas integration (requires common.yaml fix)
+    # CreatePartyRequest: $ref: './parties/party-service.yaml#/components/schemas/CreatePartyRequest'
+    # PartyResponse: $ref: './parties/party-service.yaml#/components/schemas/PartyResponse'
+
+    # Mail module schemas integration (requires duplicate key fix)
+    # MailMessage: $ref: './mail/main.yaml#/components/schemas/MailMessage'
+    # CreateMailRequest: $ref: './mail/main.yaml#/components/schemas/CreateMailRequest'
+
+    # Orders module schemas integration (requires common.yaml fix)
+    # Order: $ref: './orders/social-orders-core-service.yaml#/components/schemas/Order'
+    # CreateOrderRequest: $ref: './orders/social-orders-core-service.yaml#/components/schemas/CreateOrderRequest'
+    # OrderResponse: $ref: './orders/social-orders-core-service.yaml#/components/schemas/OrderResponse'
+
+    # Common domain schemas defined here
+    HealthResponse:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          maxLength: 255
+        status:
+          type: string
+          example: healthy
+          maxLength: 255
+        domain:
+          type: string
+          example: social-domain
+          maxLength: 255
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+          example: Internal server error
+          maxLength: 1000
+        timestamp:
+          type: string
+          format: date-time
+          maxLength: 255
+        code:
+          type: integer
+          example: 500
+          format: int32
+          minimum: 100
+          maximum: 599
+        domain:
+          type: string
+          example: social-domain
+          maxLength: 255
+    WebSocketHealthMessage:
+      type: object
+      required:
+        - type
+        - message_timestamp
+        - health
+      properties:
+        type:
+          type: string
+          enum:
+            - health_update
+            - health_alert
+            - service_down
+        message_timestamp:
+          type: string
+          format: date-time
+          description: Timestamp of the health message
+        health:
+          $ref: "#/components/schemas/HealthResponse"

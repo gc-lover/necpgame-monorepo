@@ -1,0 +1,149 @@
+openapi: 3.0.3
+info:
+  title: Faction domain API
+  description: 'Consolidated faction domain Domain API for NECPGAME.
+
+    This domain consolidates all faction functionality.
+
+    '
+  version: 1.0.0
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  contact:
+    name: NECPGAME API Support
+    url: https://necpgame.com/support
+    email: api@necpgame.com
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Development server
+  - url: https://api.necpgame.com/api/v1
+    description: Production server
+security:
+  - BearerAuth: [ ]
+tags:
+  - name: Faction domain
+    description: faction domain domain endpoints
+paths:
+  # Basic health check - enterprise-grade faction domain monitoring
+  /api/v1/faction-domain/health:
+    get:
+      summary: Faction Domain Health Check
+      operationId: factionDomainHealthCheck
+      tags:
+        - Faction Domain
+      description: 'Enterprise-grade health check for faction domain. Performance targets: <50ms P95 response time.'
+      responses:
+        '200':
+          description: Domain is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: max-age=300, s-maxage=600
+            ETag:
+              schema:
+                type: string
+                example: '"-api-v1-faction-domain-health-v1.0"'
+
+  # Faction Core Integration - enterprise-grade faction management (requires YAML fixes in submodules)
+  # /api/v1/factions: $ref: './core/main.yaml#/paths/~1api~1v1~1factions'
+  # /api/v1/factions/{faction_id}: $ref: './core/main.yaml#/paths/~1api~1v1~1factions~1{faction_id}'
+  # /api/v1/factions/{faction_id}/members: $ref: './core/main.yaml#/paths/~1api~1v1~1factions~1{faction_id}~1members'
+
+  # Corporations Integration - enterprise-grade corporate faction management (requires YAML fixes in submodules)
+  # /api/v1/corporations: $ref: './corporations/main.yaml#/paths/~1api~1v1~1corporations'
+  # /api/v1/corporations/{corporation_id}: $ref: './corporations/main.yaml#/paths/~1api~1v1~1corporations~1{corporation_id}'
+  # /api/v1/corporations/{corporation_id}/hierarchy: $ref: './corporations/main.yaml#/paths/~1api~1v1~1corporations~1{corporation_id}~1hierarchy'
+
+  # Families Integration - enterprise-grade family relationship management (requires YAML fixes in submodules)
+  # /api/v1/families: $ref: './families/main.yaml#/paths/~1api~1v1~1families'
+  # /api/v1/families/{family_id}: $ref: './families/main.yaml#/paths/~1api~1v1~1families~1{family_id}'
+  # /api/v1/families/{family_id}/relationships: $ref: './families/main.yaml#/paths/~1api~1v1~1families~1{family_id}~1relationships'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: healthy
+          maxLength: 255
+        domain:
+          type: string
+          example: faction-domain
+          maxLength: 255
+        timestamp:
+          type: string
+          format: date-time
+          maxLength: 255
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+          example: Internal server error
+          maxLength: 1000
+        domain:
+          type: string
+          example: faction-domain
+          maxLength: 255
+        timestamp:
+          type: string
+          format: date-time
+          maxLength: 255
+        code:
+          type: integer
+          example: 500
+          format: int32
+          minimum: 100
+          maximum: 599
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+    WebSocketHealthMessage:
+      type: object
+      required:
+        - type
+        - message_timestamp
+        - health
+      properties:
+        type:
+          type: string
+          enum:
+            - health_update
+            - health_alert
+            - service_down
+        message_timestamp:
+          type: string
+          format: date-time
+          description: Timestamp of the health message
+        health:
+          $ref: '#/components/schemas/HealthResponse'
+      description: 'BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings: 30-50%.'
+
+    # Faction Core Schemas Integration (requires YAML fixes in submodules)
+    # Faction: $ref: './core/main.yaml#/components/schemas/Faction'
+    # FactionMember: $ref: './core/main.yaml#/components/schemas/FactionMember'
+    # FactionRelation: $ref: './core/main.yaml#/components/schemas/FactionRelation'
+    # FactionNiche: $ref: './core/main.yaml#/components/schemas/FactionNiche'
+
+    # Corporations Schemas Integration (requires YAML fixes in submodules)
+    # Corporation: $ref: './corporations/main.yaml#/components/schemas/Corporation'
+    # CorporationMember: $ref: './corporations/main.yaml#/components/schemas/CorporationMember'
+    # CorporationHierarchy: $ref: './corporations/main.yaml#/components/schemas/CorporationHierarchy'
+    # CorporationSalary: $ref: './corporations/main.yaml#/components/schemas/CorporationSalary'
+
+    # Families Schemas Integration (requires YAML fixes in submodules)
+    # Family: $ref: './families/main.yaml#/components/schemas/Family'
+    # FamilyRelationship: $ref: './families/main.yaml#/components/schemas/FamilyRelationship'
+    # FamilyInheritance: $ref: './families/main.yaml#/components/schemas/FamilyInheritance'
