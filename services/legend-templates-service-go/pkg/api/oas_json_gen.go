@@ -517,6 +517,12 @@ func (s *CreateTemplateRequest) encodeFields(e *jx.Encoder) {
 		e.Str(s.BaseTemplate)
 	}
 	{
+		if s.Conditions != nil {
+			e.FieldStart("conditions")
+			s.Conditions.Encode(e)
+		}
+	}
+	{
 		if s.Variables != nil {
 			e.FieldStart("variables")
 			e.ArrStart()
@@ -524,12 +530,6 @@ func (s *CreateTemplateRequest) encodeFields(e *jx.Encoder) {
 				e.Str(elem)
 			}
 			e.ArrEnd()
-		}
-	}
-	{
-		if s.Conditions != nil {
-			e.FieldStart("conditions")
-			s.Conditions.Encode(e)
 		}
 	}
 	{
@@ -548,8 +548,8 @@ var jsonFieldsNameOfCreateTemplateRequest = [6]string{
 	0: "type",
 	1: "category",
 	2: "base_template",
-	3: "variables",
-	4: "conditions",
+	3: "conditions",
+	4: "variables",
 	5: "variants",
 }
 
@@ -596,6 +596,18 @@ func (s *CreateTemplateRequest) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"base_template\"")
 			}
+		case "conditions":
+			if err := func() error {
+				s.Conditions = nil
+				var elem CreateTemplateRequestConditions
+				if err := elem.Decode(d); err != nil {
+					return err
+				}
+				s.Conditions = &elem
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"conditions\"")
+			}
 		case "variables":
 			if err := func() error {
 				s.Variables = make([]string, 0)
@@ -614,18 +626,6 @@ func (s *CreateTemplateRequest) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"variables\"")
-			}
-		case "conditions":
-			if err := func() error {
-				s.Conditions = nil
-				var elem CreateTemplateRequestConditions
-				if err := elem.Decode(d); err != nil {
-					return err
-				}
-				s.Conditions = &elem
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"conditions\"")
 			}
 		case "variants":
 			if err := func() error {
@@ -2866,6 +2866,24 @@ func (s *StoryTemplate) encodeFields(e *jx.Encoder) {
 		e.Str(s.BaseTemplate)
 	}
 	{
+		if s.CreatedAt.Set {
+			e.FieldStart("created_at")
+			s.CreatedAt.Encode(e, json.EncodeDateTime)
+		}
+	}
+	{
+		if s.UpdatedAt.Set {
+			e.FieldStart("updated_at")
+			s.UpdatedAt.Encode(e, json.EncodeDateTime)
+		}
+	}
+	{
+		if s.Conditions != nil {
+			e.FieldStart("conditions")
+			s.Conditions.Encode(e)
+		}
+	}
+	{
 		if s.Variables != nil {
 			e.FieldStart("variables")
 			e.ArrStart()
@@ -2873,12 +2891,6 @@ func (s *StoryTemplate) encodeFields(e *jx.Encoder) {
 				e.Str(elem)
 			}
 			e.ArrEnd()
-		}
-	}
-	{
-		if s.Conditions != nil {
-			e.FieldStart("conditions")
-			s.Conditions.Encode(e)
 		}
 	}
 	{
@@ -2897,18 +2909,6 @@ func (s *StoryTemplate) encodeFields(e *jx.Encoder) {
 			s.Active.Encode(e)
 		}
 	}
-	{
-		if s.CreatedAt.Set {
-			e.FieldStart("created_at")
-			s.CreatedAt.Encode(e, json.EncodeDateTime)
-		}
-	}
-	{
-		if s.UpdatedAt.Set {
-			e.FieldStart("updated_at")
-			s.UpdatedAt.Encode(e, json.EncodeDateTime)
-		}
-	}
 }
 
 var jsonFieldsNameOfStoryTemplate = [10]string{
@@ -2916,12 +2916,12 @@ var jsonFieldsNameOfStoryTemplate = [10]string{
 	1: "type",
 	2: "category",
 	3: "base_template",
-	4: "variables",
-	5: "conditions",
-	6: "variants",
-	7: "active",
-	8: "created_at",
-	9: "updated_at",
+	4: "created_at",
+	5: "updated_at",
+	6: "conditions",
+	7: "variables",
+	8: "variants",
+	9: "active",
 }
 
 // Decode decodes StoryTemplate from json.
@@ -2980,6 +2980,38 @@ func (s *StoryTemplate) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"base_template\"")
 			}
+		case "created_at":
+			if err := func() error {
+				s.CreatedAt.Reset()
+				if err := s.CreatedAt.Decode(d, json.DecodeDateTime); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"created_at\"")
+			}
+		case "updated_at":
+			if err := func() error {
+				s.UpdatedAt.Reset()
+				if err := s.UpdatedAt.Decode(d, json.DecodeDateTime); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"updated_at\"")
+			}
+		case "conditions":
+			if err := func() error {
+				s.Conditions = nil
+				var elem StoryTemplateConditions
+				if err := elem.Decode(d); err != nil {
+					return err
+				}
+				s.Conditions = &elem
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"conditions\"")
+			}
 		case "variables":
 			if err := func() error {
 				s.Variables = make([]string, 0)
@@ -2998,18 +3030,6 @@ func (s *StoryTemplate) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"variables\"")
-			}
-		case "conditions":
-			if err := func() error {
-				s.Conditions = nil
-				var elem StoryTemplateConditions
-				if err := elem.Decode(d); err != nil {
-					return err
-				}
-				s.Conditions = &elem
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"conditions\"")
 			}
 		case "variants":
 			if err := func() error {
@@ -3039,26 +3059,6 @@ func (s *StoryTemplate) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"active\"")
-			}
-		case "created_at":
-			if err := func() error {
-				s.CreatedAt.Reset()
-				if err := s.CreatedAt.Decode(d, json.DecodeDateTime); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"created_at\"")
-			}
-		case "updated_at":
-			if err := func() error {
-				s.UpdatedAt.Reset()
-				if err := s.UpdatedAt.Decode(d, json.DecodeDateTime); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"updated_at\"")
 			}
 		default:
 			return d.Skip()
@@ -3290,9 +3290,9 @@ func (s *TemplateVariant) encodeFields(e *jx.Encoder) {
 		e.Str(s.VariantText)
 	}
 	{
-		if s.Weight.Set {
-			e.FieldStart("weight")
-			s.Weight.Encode(e)
+		if s.CreatedAt.Set {
+			e.FieldStart("created_at")
+			s.CreatedAt.Encode(e, json.EncodeDateTime)
 		}
 	}
 	{
@@ -3302,9 +3302,9 @@ func (s *TemplateVariant) encodeFields(e *jx.Encoder) {
 		}
 	}
 	{
-		if s.CreatedAt.Set {
-			e.FieldStart("created_at")
-			s.CreatedAt.Encode(e, json.EncodeDateTime)
+		if s.Weight.Set {
+			e.FieldStart("weight")
+			s.Weight.Encode(e)
 		}
 	}
 }
@@ -3313,9 +3313,9 @@ var jsonFieldsNameOfTemplateVariant = [6]string{
 	0: "id",
 	1: "template_id",
 	2: "variant_text",
-	3: "weight",
+	3: "created_at",
 	4: "active",
-	5: "created_at",
+	5: "weight",
 }
 
 // Decode decodes TemplateVariant from json.
@@ -3364,15 +3364,15 @@ func (s *TemplateVariant) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"variant_text\"")
 			}
-		case "weight":
+		case "created_at":
 			if err := func() error {
-				s.Weight.Reset()
-				if err := s.Weight.Decode(d); err != nil {
+				s.CreatedAt.Reset()
+				if err := s.CreatedAt.Decode(d, json.DecodeDateTime); err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
-				return errors.Wrap(err, "decode field \"weight\"")
+				return errors.Wrap(err, "decode field \"created_at\"")
 			}
 		case "active":
 			if err := func() error {
@@ -3384,15 +3384,15 @@ func (s *TemplateVariant) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"active\"")
 			}
-		case "created_at":
+		case "weight":
 			if err := func() error {
-				s.CreatedAt.Reset()
-				if err := s.CreatedAt.Decode(d, json.DecodeDateTime); err != nil {
+				s.Weight.Reset()
+				if err := s.Weight.Decode(d); err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
-				return errors.Wrap(err, "decode field \"created_at\"")
+				return errors.Wrap(err, "decode field \"weight\"")
 			}
 		default:
 			return d.Skip()
@@ -3694,6 +3694,12 @@ func (s *UpdateTemplateRequest) encodeFields(e *jx.Encoder) {
 		}
 	}
 	{
+		if s.Conditions != nil {
+			e.FieldStart("conditions")
+			s.Conditions.Encode(e)
+		}
+	}
+	{
 		if s.Variables != nil {
 			e.FieldStart("variables")
 			e.ArrStart()
@@ -3701,12 +3707,6 @@ func (s *UpdateTemplateRequest) encodeFields(e *jx.Encoder) {
 				e.Str(elem)
 			}
 			e.ArrEnd()
-		}
-	}
-	{
-		if s.Conditions != nil {
-			e.FieldStart("conditions")
-			s.Conditions.Encode(e)
 		}
 	}
 	{
@@ -3731,8 +3731,8 @@ var jsonFieldsNameOfUpdateTemplateRequest = [7]string{
 	0: "type",
 	1: "category",
 	2: "base_template",
-	3: "variables",
-	4: "conditions",
+	3: "conditions",
+	4: "variables",
 	5: "variants",
 	6: "active",
 }
@@ -3775,6 +3775,18 @@ func (s *UpdateTemplateRequest) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"base_template\"")
 			}
+		case "conditions":
+			if err := func() error {
+				s.Conditions = nil
+				var elem UpdateTemplateRequestConditions
+				if err := elem.Decode(d); err != nil {
+					return err
+				}
+				s.Conditions = &elem
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"conditions\"")
+			}
 		case "variables":
 			if err := func() error {
 				s.Variables = make([]string, 0)
@@ -3793,18 +3805,6 @@ func (s *UpdateTemplateRequest) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"variables\"")
-			}
-		case "conditions":
-			if err := func() error {
-				s.Conditions = nil
-				var elem UpdateTemplateRequestConditions
-				if err := elem.Decode(d); err != nil {
-					return err
-				}
-				s.Conditions = &elem
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"conditions\"")
 			}
 		case "variants":
 			if err := func() error {
@@ -4175,23 +4175,23 @@ func (s *UpdateVariantRequest) encodeFields(e *jx.Encoder) {
 		}
 	}
 	{
-		if s.Weight.Set {
-			e.FieldStart("weight")
-			s.Weight.Encode(e)
-		}
-	}
-	{
 		if s.Active.Set {
 			e.FieldStart("active")
 			s.Active.Encode(e)
+		}
+	}
+	{
+		if s.Weight.Set {
+			e.FieldStart("weight")
+			s.Weight.Encode(e)
 		}
 	}
 }
 
 var jsonFieldsNameOfUpdateVariantRequest = [3]string{
 	0: "variant_text",
-	1: "weight",
-	2: "active",
+	1: "active",
+	2: "weight",
 }
 
 // Decode decodes UpdateVariantRequest from json.
@@ -4212,16 +4212,6 @@ func (s *UpdateVariantRequest) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"variant_text\"")
 			}
-		case "weight":
-			if err := func() error {
-				s.Weight.Reset()
-				if err := s.Weight.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"weight\"")
-			}
 		case "active":
 			if err := func() error {
 				s.Active.Reset()
@@ -4231,6 +4221,16 @@ func (s *UpdateVariantRequest) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"active\"")
+			}
+		case "weight":
+			if err := func() error {
+				s.Weight.Reset()
+				if err := s.Weight.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"weight\"")
 			}
 		default:
 			return d.Skip()
@@ -4621,16 +4621,6 @@ func (s *VariableRule) encodeFields(e *jx.Encoder) {
 		e.Str(s.Name)
 	}
 	{
-		e.FieldStart("rules")
-		s.Rules.Encode(e)
-	}
-	{
-		if s.Active.Set {
-			e.FieldStart("active")
-			s.Active.Encode(e)
-		}
-	}
-	{
 		if s.CreatedAt.Set {
 			e.FieldStart("created_at")
 			s.CreatedAt.Encode(e, json.EncodeDateTime)
@@ -4642,16 +4632,26 @@ func (s *VariableRule) encodeFields(e *jx.Encoder) {
 			s.UpdatedAt.Encode(e, json.EncodeDateTime)
 		}
 	}
+	{
+		e.FieldStart("rules")
+		s.Rules.Encode(e)
+	}
+	{
+		if s.Active.Set {
+			e.FieldStart("active")
+			s.Active.Encode(e)
+		}
+	}
 }
 
 var jsonFieldsNameOfVariableRule = [7]string{
 	0: "id",
 	1: "type",
 	2: "name",
-	3: "rules",
-	4: "active",
-	5: "created_at",
-	6: "updated_at",
+	3: "created_at",
+	4: "updated_at",
+	5: "rules",
+	6: "active",
 }
 
 // Decode decodes VariableRule from json.
@@ -4698,26 +4698,6 @@ func (s *VariableRule) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"name\"")
 			}
-		case "rules":
-			requiredBitSet[0] |= 1 << 3
-			if err := func() error {
-				if err := s.Rules.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"rules\"")
-			}
-		case "active":
-			if err := func() error {
-				s.Active.Reset()
-				if err := s.Active.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"active\"")
-			}
 		case "created_at":
 			if err := func() error {
 				s.CreatedAt.Reset()
@@ -4738,6 +4718,26 @@ func (s *VariableRule) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"updated_at\"")
 			}
+		case "rules":
+			requiredBitSet[0] |= 1 << 5
+			if err := func() error {
+				if err := s.Rules.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"rules\"")
+			}
+		case "active":
+			if err := func() error {
+				s.Active.Reset()
+				if err := s.Active.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"active\"")
+			}
 		default:
 			return d.Skip()
 		}
@@ -4748,7 +4748,7 @@ func (s *VariableRule) Decode(d *jx.Decoder) error {
 	// Validate required fields.
 	var failures []validate.FieldError
 	for i, mask := range [1]uint8{
-		0b00001111,
+		0b00100111,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.

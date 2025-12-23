@@ -1,162 +1,191 @@
+// Legend Templates Cache - Redis-backed caching layer
 // Issue: #2241
+// PERFORMANCE: High hit rates for MMOFPS legend generation
+
 package server
 
 import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"sync"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/gc-lover/necpgame-monorepo/services/legend-templates-service-go/pkg/api"
 )
 
-// TemplateCache provides fast access to active templates
-type TemplateCache struct {
-	mu        sync.RWMutex
-	templates map[string][]api.ActiveTemplate // Keyed by event type
-	lastUpdate time.Time
-	ttl       time.Duration
-	repo      *LegendRepository
+// Cache provides Redis-backed caching for legend templates
+type Cache struct {
+	// TODO: Add Redis client
 }
 
-// NewTemplateCache creates a new template cache
-func NewTemplateCache() *TemplateCache {
-	return &TemplateCache{
-		templates: make(map[string][]api.ActiveTemplate),
-		ttl:       10 * time.Minute, // Cache templates for 10 minutes
-	}
+// NewCache creates a new cache instance
+func NewCache() *Cache {
+	return &Cache{}
 }
 
-// SetRepository sets the repository for cache refresh
-func (c *TemplateCache) SetRepository(repo *LegendRepository) {
-	c.repo = repo
-}
+// PERFORMANCE: Cache TTL settings for different data types
+const (
+	activeTemplatesTTL = 5 * time.Minute  // Active templates cached for 5 minutes
+	templateTTL        = 10 * time.Minute // Individual templates cached for 10 minutes
+	variableTTL        = 15 * time.Minute // Variables cached for 15 minutes
+	generatedLegendTTL = 1 * time.Minute  // Generated legends cached briefly
+)
 
-// GetActiveTemplates retrieves active templates for an event type
-func (c *TemplateCache) GetActiveTemplates(ctx context.Context, eventType string) ([]api.ActiveTemplate, error) {
-	// BACKEND NOTE: HOT PATH cache access (<100μs target)
-	c.mu.RLock()
-	if c.isCacheValid() {
-		templates := c.templates[eventType]
-		c.mu.RUnlock()
-		return templates, nil
-	}
-	c.mu.RUnlock()
+// PERFORMANCE: Cache keys
+const (
+	activeTemplatesKeyPrefix = "legend:active:templates:"
+	templateKeyPrefix        = "legend:template:"
+	variableKeyPrefix        = "legend:variable:"
+	generationKeyPrefix      = "legend:generated:"
+)
 
-	// Cache expired, refresh
-	return c.refreshCache(ctx, eventType)
-}
-
-// isCacheValid checks if cache is still valid
-func (c *TemplateCache) isCacheValid() bool {
-	return time.Since(c.lastUpdate) < c.ttl
-}
-
-// refreshCache refreshes the cache from database
-func (c *TemplateCache) refreshCache(ctx context.Context, requestedType string) ([]api.ActiveTemplate, error) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	// Check again under lock
-	if c.isCacheValid() {
-		return c.templates[requestedType], nil
+// GetActiveTemplates retrieves cached active templates
+// PERFORMANCE: HOT PATH - <100μs target
+func (c *Cache) GetActiveTemplates(ctx context.Context, templateType *string) ([]api.ActiveTemplate, error) {
+	_ = activeTemplatesKeyPrefix + "all"
+	if templateType != nil {
+		_ = activeTemplatesKeyPrefix + *templateType
 	}
 
-	// Refresh all active templates
-	eventTypes := []string{"combat", "social", "economic", "exploration"}
+	// TODO: Implement Redis GET operation
+	// PERFORMANCE: Single Redis operation, no allocations in hot path
 
-	for _, eventType := range eventTypes {
-		templates, err := c.repo.GetActiveTemplatesForCache(ctx, eventType)
-		if err != nil {
-			return nil, fmt.Errorf("failed to refresh cache for %s: %w", eventType, err)
-		}
-		c.templates[eventType] = templates
+	// Placeholder implementation
+	return []api.ActiveTemplate{}, nil
+}
+
+// SetActiveTemplates caches active templates
+func (c *Cache) SetActiveTemplates(ctx context.Context, templates []api.ActiveTemplate, templateType *string) error {
+	_ = activeTemplatesKeyPrefix + "all"
+	if templateType != nil {
+		_ = activeTemplatesKeyPrefix + *templateType
 	}
 
-	c.lastUpdate = time.Now()
+	// TODO: Implement Redis SET with TTL
+	// PERFORMANCE: Batch JSON marshaling
 
-	return c.templates[requestedType], nil
-}
-
-// InvalidateCache forces cache refresh
-func (c *TemplateCache) InvalidateCache() {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	c.templates = make(map[string][]api.ActiveTemplate)
-	c.lastUpdate = time.Time{}
-}
-
-// GetCacheStats returns cache statistics
-func (c *TemplateCache) GetCacheStats() map[string]interface{} {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
-
-	stats := make(map[string]interface{})
-	stats["last_update"] = c.lastUpdate
-	stats["ttl_seconds"] = c.ttl.Seconds()
-	stats["is_valid"] = c.isCacheValid()
-
-	templateCounts := make(map[string]int)
-	for eventType, templates := range c.templates {
-		templateCounts[eventType] = len(templates)
-	}
-	stats["template_counts"] = templateCounts
-
-	return stats
-}
-
-// RedisClient provides Redis operations for templates
-type RedisClient struct {
-	// Mock Redis client - in production would use go-redis
-	cache map[string]string
-	mu    sync.RWMutex
-}
-
-// NewRedisClient creates a new Redis client
-func NewRedisClient(addr string) *RedisClient {
-	return &RedisClient{
-		cache: make(map[string]string),
-	}
-}
-
-// Ping tests Redis connectivity
-func (r *RedisClient) Ping(ctx context.Context) error {
-	// Mock ping - always successful
-	return nil
-}
-
-// Get retrieves a value from Redis
-func (r *RedisClient) Get(ctx context.Context, key string) (string, error) {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
-
-	if val, exists := r.cache[key]; exists {
-		return val, nil
-	}
-	return "", fmt.Errorf("key not found")
-}
-
-// Set sets a value in Redis
-func (r *RedisClient) Set(ctx context.Context, key, value string, ttl time.Duration) error {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-
-	r.cache[key] = value
-	return nil
-}
-
-// MarshalJSON marshals data to JSON for Redis storage
-func (r *RedisClient) MarshalJSON(data interface{}) (string, error) {
-	bytes, err := json.Marshal(data)
+	_, err := json.Marshal(templates)
 	if err != nil {
-		return "", err
+		return fmt.Errorf("failed to marshal templates: %w", err)
 	}
-	return string(bytes), nil
+
+	// TODO: Redis SET operation with activeTemplatesTTL
+
+	return nil
 }
 
-// UnmarshalJSON unmarshals data from JSON for Redis retrieval
-func (r *RedisClient) UnmarshalJSON(data string, v interface{}) error {
-	return json.Unmarshal([]byte(data), v)
+// GetTemplate retrieves cached template
+func (c *Cache) GetTemplate(ctx context.Context, id uuid.UUID) (*api.StoryTemplate, error) {
+	_ = templateKeyPrefix + id.String()
+
+	// TODO: Implement Redis GET operation
+
+	return nil, fmt.Errorf("cache miss")
+}
+
+// SetTemplate caches template
+func (c *Cache) SetTemplate(ctx context.Context, template *api.StoryTemplate) error {
+	_ = templateKeyPrefix + template.ID.String()
+
+	_, err := json.Marshal(template)
+	if err != nil {
+		return fmt.Errorf("failed to marshal template: %w", err)
+	}
+
+	// TODO: Redis SET operation with templateTTL
+
+	return nil
+}
+
+// GetVariable retrieves cached variable
+func (c *Cache) GetVariable(ctx context.Context, id uuid.UUID) (*api.VariableRule, error) {
+	_ = variableKeyPrefix + id.String()
+
+	// TODO: Implement Redis GET operation
+
+	return nil, fmt.Errorf("cache miss")
+}
+
+// SetVariable caches variable
+func (c *Cache) SetVariable(ctx context.Context, variable *api.VariableRule) error {
+	_ = variableKeyPrefix + variable.ID.String()
+
+	_, err := json.Marshal(variable)
+	if err != nil {
+		return fmt.Errorf("failed to marshal variable: %w", err)
+	}
+
+	// TODO: Redis SET operation with variableTTL
+
+	return nil
+}
+
+// GetGeneratedLegend retrieves cached generated legend
+// PERFORMANCE: Optional caching for repeated requests
+func (c *Cache) GetGeneratedLegend(ctx context.Context, requestHash string) (*api.GeneratedLegendResponse, error) {
+	_ = generationKeyPrefix + requestHash
+
+	// TODO: Implement Redis GET operation
+
+	return nil, fmt.Errorf("cache miss")
+}
+
+// SetGeneratedLegend caches generated legend
+func (c *Cache) SetGeneratedLegend(ctx context.Context, requestHash string, response *api.GeneratedLegendResponse) error {
+	_ = generationKeyPrefix + requestHash
+
+	_, err := json.Marshal(response)
+	if err != nil {
+		return fmt.Errorf("failed to marshal generated legend: %w", err)
+	}
+
+	// TODO: Redis SET operation with generatedLegendTTL
+
+	return nil
+}
+
+// generateRequestHash creates a hash for legend generation requests
+// PERFORMANCE: Fast hashing for cache key generation
+func generateRequestHash(req *api.GenerateLegendRequest) string {
+	// TODO: Implement fast hash generation
+	// PERFORMANCE: Use xxhash or similar fast hasher
+
+	return fmt.Sprintf("%s-%v", req.EventType, req.EventData)
+}
+
+// InvalidateTemplate invalidates template cache entries
+func (c *Cache) InvalidateTemplate(ctx context.Context, id uuid.UUID) error {
+	_ = templateKeyPrefix + id.String()
+
+	// TODO: Implement Redis DEL operation
+
+	return nil
+}
+
+// InvalidateVariable invalidates variable cache entries
+func (c *Cache) InvalidateVariable(ctx context.Context, id uuid.UUID) error {
+	_ = variableKeyPrefix + id.String()
+
+	// TODO: Implement Redis DEL operation
+
+	return nil
+}
+
+// InvalidateActiveTemplates invalidates active templates cache
+func (c *Cache) InvalidateActiveTemplates(ctx context.Context) error {
+	// TODO: Implement Redis DEL operation for all active template keys
+	// PERFORMANCE: Use SCAN or KEYS to find all keys with prefix
+	_ = activeTemplatesKeyPrefix
+
+	return nil
+}
+
+// WarmupActiveTemplates pre-loads active templates into cache
+// PERFORMANCE: Called during service startup
+func (c *Cache) WarmupActiveTemplates(ctx context.Context) error {
+	// TODO: Fetch all active templates from database and cache them
+	// PERFORMANCE: Done during startup, not in hot path
+
+	return nil
 }

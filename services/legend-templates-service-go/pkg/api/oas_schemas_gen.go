@@ -244,8 +244,8 @@ type CreateTemplateRequest struct {
 	Type         CreateTemplateRequestType        `json:"type"`
 	Category     string                           `json:"category"`
 	BaseTemplate string                           `json:"base_template"`
-	Variables    []string                         `json:"variables"`
 	Conditions   *CreateTemplateRequestConditions `json:"conditions"`
+	Variables    []string                         `json:"variables"`
 	Variants     []string                         `json:"variants"`
 }
 
@@ -264,14 +264,14 @@ func (s *CreateTemplateRequest) GetBaseTemplate() string {
 	return s.BaseTemplate
 }
 
-// GetVariables returns the value of Variables.
-func (s *CreateTemplateRequest) GetVariables() []string {
-	return s.Variables
-}
-
 // GetConditions returns the value of Conditions.
 func (s *CreateTemplateRequest) GetConditions() *CreateTemplateRequestConditions {
 	return s.Conditions
+}
+
+// GetVariables returns the value of Variables.
+func (s *CreateTemplateRequest) GetVariables() []string {
+	return s.Variables
 }
 
 // GetVariants returns the value of Variants.
@@ -294,14 +294,14 @@ func (s *CreateTemplateRequest) SetBaseTemplate(val string) {
 	s.BaseTemplate = val
 }
 
-// SetVariables sets the value of Variables.
-func (s *CreateTemplateRequest) SetVariables(val []string) {
-	s.Variables = val
-}
-
 // SetConditions sets the value of Conditions.
 func (s *CreateTemplateRequest) SetConditions(val *CreateTemplateRequestConditions) {
 	s.Conditions = val
+}
+
+// SetVariables sets the value of Variables.
+func (s *CreateTemplateRequest) SetVariables(val []string) {
+	s.Variables = val
 }
 
 // SetVariants sets the value of Variants.
@@ -2338,16 +2338,16 @@ type StoryTemplate struct {
 	// Event category.
 	Category string `json:"category"`
 	// Base template with {variable} placeholders.
-	BaseTemplate string `json:"base_template"`
-	// Required variables for this template.
-	Variables []string `json:"variables"`
+	BaseTemplate string      `json:"base_template"`
+	CreatedAt    OptDateTime `json:"created_at"`
+	UpdatedAt    OptDateTime `json:"updated_at"`
 	// Activation conditions.
 	Conditions *StoryTemplateConditions `json:"conditions"`
+	// Required variables for this template.
+	Variables []string `json:"variables"`
 	// Alternative template formulations.
-	Variants  []string    `json:"variants"`
-	Active    OptBool     `json:"active"`
-	CreatedAt OptDateTime `json:"created_at"`
-	UpdatedAt OptDateTime `json:"updated_at"`
+	Variants []string `json:"variants"`
+	Active   OptBool  `json:"active"`
 }
 
 // GetID returns the value of ID.
@@ -2370,14 +2370,24 @@ func (s *StoryTemplate) GetBaseTemplate() string {
 	return s.BaseTemplate
 }
 
-// GetVariables returns the value of Variables.
-func (s *StoryTemplate) GetVariables() []string {
-	return s.Variables
+// GetCreatedAt returns the value of CreatedAt.
+func (s *StoryTemplate) GetCreatedAt() OptDateTime {
+	return s.CreatedAt
+}
+
+// GetUpdatedAt returns the value of UpdatedAt.
+func (s *StoryTemplate) GetUpdatedAt() OptDateTime {
+	return s.UpdatedAt
 }
 
 // GetConditions returns the value of Conditions.
 func (s *StoryTemplate) GetConditions() *StoryTemplateConditions {
 	return s.Conditions
+}
+
+// GetVariables returns the value of Variables.
+func (s *StoryTemplate) GetVariables() []string {
+	return s.Variables
 }
 
 // GetVariants returns the value of Variants.
@@ -2388,16 +2398,6 @@ func (s *StoryTemplate) GetVariants() []string {
 // GetActive returns the value of Active.
 func (s *StoryTemplate) GetActive() OptBool {
 	return s.Active
-}
-
-// GetCreatedAt returns the value of CreatedAt.
-func (s *StoryTemplate) GetCreatedAt() OptDateTime {
-	return s.CreatedAt
-}
-
-// GetUpdatedAt returns the value of UpdatedAt.
-func (s *StoryTemplate) GetUpdatedAt() OptDateTime {
-	return s.UpdatedAt
 }
 
 // SetID sets the value of ID.
@@ -2420,14 +2420,24 @@ func (s *StoryTemplate) SetBaseTemplate(val string) {
 	s.BaseTemplate = val
 }
 
-// SetVariables sets the value of Variables.
-func (s *StoryTemplate) SetVariables(val []string) {
-	s.Variables = val
+// SetCreatedAt sets the value of CreatedAt.
+func (s *StoryTemplate) SetCreatedAt(val OptDateTime) {
+	s.CreatedAt = val
+}
+
+// SetUpdatedAt sets the value of UpdatedAt.
+func (s *StoryTemplate) SetUpdatedAt(val OptDateTime) {
+	s.UpdatedAt = val
 }
 
 // SetConditions sets the value of Conditions.
 func (s *StoryTemplate) SetConditions(val *StoryTemplateConditions) {
 	s.Conditions = val
+}
+
+// SetVariables sets the value of Variables.
+func (s *StoryTemplate) SetVariables(val []string) {
+	s.Variables = val
 }
 
 // SetVariants sets the value of Variants.
@@ -2438,16 +2448,6 @@ func (s *StoryTemplate) SetVariants(val []string) {
 // SetActive sets the value of Active.
 func (s *StoryTemplate) SetActive(val OptBool) {
 	s.Active = val
-}
-
-// SetCreatedAt sets the value of CreatedAt.
-func (s *StoryTemplate) SetCreatedAt(val OptDateTime) {
-	s.CreatedAt = val
-}
-
-// SetUpdatedAt sets the value of UpdatedAt.
-func (s *StoryTemplate) SetUpdatedAt(val OptDateTime) {
-	s.UpdatedAt = val
 }
 
 // Activation conditions.
@@ -2535,11 +2535,11 @@ type TemplateVariant struct {
 	ID         uuid.UUID `json:"id"`
 	TemplateID uuid.UUID `json:"template_id"`
 	// Alternative template text.
-	VariantText string `json:"variant_text"`
+	VariantText string      `json:"variant_text"`
+	CreatedAt   OptDateTime `json:"created_at"`
+	Active      OptBool     `json:"active"`
 	// Selection weight for this variant.
-	Weight    OptInt      `json:"weight"`
-	Active    OptBool     `json:"active"`
-	CreatedAt OptDateTime `json:"created_at"`
+	Weight OptInt `json:"weight"`
 }
 
 // GetID returns the value of ID.
@@ -2557,9 +2557,9 @@ func (s *TemplateVariant) GetVariantText() string {
 	return s.VariantText
 }
 
-// GetWeight returns the value of Weight.
-func (s *TemplateVariant) GetWeight() OptInt {
-	return s.Weight
+// GetCreatedAt returns the value of CreatedAt.
+func (s *TemplateVariant) GetCreatedAt() OptDateTime {
+	return s.CreatedAt
 }
 
 // GetActive returns the value of Active.
@@ -2567,9 +2567,9 @@ func (s *TemplateVariant) GetActive() OptBool {
 	return s.Active
 }
 
-// GetCreatedAt returns the value of CreatedAt.
-func (s *TemplateVariant) GetCreatedAt() OptDateTime {
-	return s.CreatedAt
+// GetWeight returns the value of Weight.
+func (s *TemplateVariant) GetWeight() OptInt {
+	return s.Weight
 }
 
 // SetID sets the value of ID.
@@ -2587,9 +2587,9 @@ func (s *TemplateVariant) SetVariantText(val string) {
 	s.VariantText = val
 }
 
-// SetWeight sets the value of Weight.
-func (s *TemplateVariant) SetWeight(val OptInt) {
-	s.Weight = val
+// SetCreatedAt sets the value of CreatedAt.
+func (s *TemplateVariant) SetCreatedAt(val OptDateTime) {
+	s.CreatedAt = val
 }
 
 // SetActive sets the value of Active.
@@ -2597,9 +2597,9 @@ func (s *TemplateVariant) SetActive(val OptBool) {
 	s.Active = val
 }
 
-// SetCreatedAt sets the value of CreatedAt.
-func (s *TemplateVariant) SetCreatedAt(val OptDateTime) {
-	s.CreatedAt = val
+// SetWeight sets the value of Weight.
+func (s *TemplateVariant) SetWeight(val OptInt) {
+	s.Weight = val
 }
 
 // BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
@@ -2689,8 +2689,8 @@ type UpdateTemplateRequest struct {
 	Type         OptUpdateTemplateRequestType     `json:"type"`
 	Category     OptString                        `json:"category"`
 	BaseTemplate OptString                        `json:"base_template"`
-	Variables    []string                         `json:"variables"`
 	Conditions   *UpdateTemplateRequestConditions `json:"conditions"`
+	Variables    []string                         `json:"variables"`
 	Variants     []string                         `json:"variants"`
 	Active       OptBool                          `json:"active"`
 }
@@ -2710,14 +2710,14 @@ func (s *UpdateTemplateRequest) GetBaseTemplate() OptString {
 	return s.BaseTemplate
 }
 
-// GetVariables returns the value of Variables.
-func (s *UpdateTemplateRequest) GetVariables() []string {
-	return s.Variables
-}
-
 // GetConditions returns the value of Conditions.
 func (s *UpdateTemplateRequest) GetConditions() *UpdateTemplateRequestConditions {
 	return s.Conditions
+}
+
+// GetVariables returns the value of Variables.
+func (s *UpdateTemplateRequest) GetVariables() []string {
+	return s.Variables
 }
 
 // GetVariants returns the value of Variants.
@@ -2745,14 +2745,14 @@ func (s *UpdateTemplateRequest) SetBaseTemplate(val OptString) {
 	s.BaseTemplate = val
 }
 
-// SetVariables sets the value of Variables.
-func (s *UpdateTemplateRequest) SetVariables(val []string) {
-	s.Variables = val
-}
-
 // SetConditions sets the value of Conditions.
 func (s *UpdateTemplateRequest) SetConditions(val *UpdateTemplateRequestConditions) {
 	s.Conditions = val
+}
+
+// SetVariables sets the value of Variables.
+func (s *UpdateTemplateRequest) SetVariables(val []string) {
+	s.Variables = val
 }
 
 // SetVariants sets the value of Variants.
@@ -2962,8 +2962,8 @@ func (s *UpdateVariableRequestType) UnmarshalText(data []byte) error {
 // Ref: #/components/schemas/UpdateVariantRequest
 type UpdateVariantRequest struct {
 	VariantText OptString `json:"variant_text"`
-	Weight      OptInt    `json:"weight"`
 	Active      OptBool   `json:"active"`
+	Weight      OptInt    `json:"weight"`
 }
 
 // GetVariantText returns the value of VariantText.
@@ -2971,14 +2971,14 @@ func (s *UpdateVariantRequest) GetVariantText() OptString {
 	return s.VariantText
 }
 
-// GetWeight returns the value of Weight.
-func (s *UpdateVariantRequest) GetWeight() OptInt {
-	return s.Weight
-}
-
 // GetActive returns the value of Active.
 func (s *UpdateVariantRequest) GetActive() OptBool {
 	return s.Active
+}
+
+// GetWeight returns the value of Weight.
+func (s *UpdateVariantRequest) GetWeight() OptInt {
+	return s.Weight
 }
 
 // SetVariantText sets the value of VariantText.
@@ -2986,14 +2986,14 @@ func (s *UpdateVariantRequest) SetVariantText(val OptString) {
 	s.VariantText = val
 }
 
-// SetWeight sets the value of Weight.
-func (s *UpdateVariantRequest) SetWeight(val OptInt) {
-	s.Weight = val
-}
-
 // SetActive sets the value of Active.
 func (s *UpdateVariantRequest) SetActive(val OptBool) {
 	s.Active = val
+}
+
+// SetWeight sets the value of Weight.
+func (s *UpdateVariantRequest) SetWeight(val OptInt) {
+	s.Weight = val
 }
 
 // BACKEND NOTE: Fields ordered for struct alignment (large → small). Expected memory savings:
@@ -3099,12 +3099,12 @@ type VariableRule struct {
 	ID   uuid.UUID        `json:"id"`
 	Type VariableRuleType `json:"type"`
 	// Variable placeholder name.
-	Name string `json:"name"`
+	Name      string      `json:"name"`
+	CreatedAt OptDateTime `json:"created_at"`
+	UpdatedAt OptDateTime `json:"updated_at"`
 	// Substitution rules (synonyms, transformations, etc.).
-	Rules     VariableRuleRules `json:"rules"`
-	Active    OptBool           `json:"active"`
-	CreatedAt OptDateTime       `json:"created_at"`
-	UpdatedAt OptDateTime       `json:"updated_at"`
+	Rules  VariableRuleRules `json:"rules"`
+	Active OptBool           `json:"active"`
 }
 
 // GetID returns the value of ID.
@@ -3122,16 +3122,6 @@ func (s *VariableRule) GetName() string {
 	return s.Name
 }
 
-// GetRules returns the value of Rules.
-func (s *VariableRule) GetRules() VariableRuleRules {
-	return s.Rules
-}
-
-// GetActive returns the value of Active.
-func (s *VariableRule) GetActive() OptBool {
-	return s.Active
-}
-
 // GetCreatedAt returns the value of CreatedAt.
 func (s *VariableRule) GetCreatedAt() OptDateTime {
 	return s.CreatedAt
@@ -3140,6 +3130,16 @@ func (s *VariableRule) GetCreatedAt() OptDateTime {
 // GetUpdatedAt returns the value of UpdatedAt.
 func (s *VariableRule) GetUpdatedAt() OptDateTime {
 	return s.UpdatedAt
+}
+
+// GetRules returns the value of Rules.
+func (s *VariableRule) GetRules() VariableRuleRules {
+	return s.Rules
+}
+
+// GetActive returns the value of Active.
+func (s *VariableRule) GetActive() OptBool {
+	return s.Active
 }
 
 // SetID sets the value of ID.
@@ -3157,16 +3157,6 @@ func (s *VariableRule) SetName(val string) {
 	s.Name = val
 }
 
-// SetRules sets the value of Rules.
-func (s *VariableRule) SetRules(val VariableRuleRules) {
-	s.Rules = val
-}
-
-// SetActive sets the value of Active.
-func (s *VariableRule) SetActive(val OptBool) {
-	s.Active = val
-}
-
 // SetCreatedAt sets the value of CreatedAt.
 func (s *VariableRule) SetCreatedAt(val OptDateTime) {
 	s.CreatedAt = val
@@ -3175,6 +3165,16 @@ func (s *VariableRule) SetCreatedAt(val OptDateTime) {
 // SetUpdatedAt sets the value of UpdatedAt.
 func (s *VariableRule) SetUpdatedAt(val OptDateTime) {
 	s.UpdatedAt = val
+}
+
+// SetRules sets the value of Rules.
+func (s *VariableRule) SetRules(val VariableRuleRules) {
+	s.Rules = val
+}
+
+// SetActive sets the value of Active.
+func (s *VariableRule) SetActive(val OptBool) {
+	s.Active = val
 }
 
 // Substitution rules (synonyms, transformations, etc.).

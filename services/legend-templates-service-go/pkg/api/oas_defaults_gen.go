@@ -29,12 +29,12 @@ func (s *StoryTemplate) setDefaults() {
 // setDefaults set default value of fields.
 func (s *TemplateVariant) setDefaults() {
 	{
-		val := int(1)
-		s.Weight.SetTo(val)
-	}
-	{
 		val := bool(true)
 		s.Active.SetTo(val)
+	}
+	{
+		val := int(1)
+		s.Weight.SetTo(val)
 	}
 }
 
